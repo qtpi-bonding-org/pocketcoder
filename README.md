@@ -27,4 +27,4 @@ We chose this license to ensure that if PocketCoder is ever used to provide a ne
 - [License](LICENSE) (AGPLv3)
 
 ---
-*A humble homage to the ideas of OpenClaw and the power of OpenCode.*
+*Built on the shoulders of giants. Inspired by the pioneering work of OpenClaw and the power of OpenCode.*
