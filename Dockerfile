@@ -27,11 +27,8 @@ RUN apk add --no-cache musl-dev gcc
 
 WORKDIR /app
 
-# 1. Build Dependencies (Cached)
+# 1. Build Source (Direct)
 COPY connector/Cargo.toml connector/Cargo.lock* ./
-RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release
-
-# 2. Build Source
 COPY connector/src ./src
 RUN cargo build --release
 
@@ -65,6 +62,7 @@ COPY <<EOF /app/entrypoint.sh
 #!/bin/bash
 
 echo "🚀 Starting PocketBase..."
+/app/pocketbase migrate up || true
 /app/pocketbase serve --http=0.0.0.0:8090 &
 
 echo "⏳ Waiting for PocketBase to boot..."

@@ -1,4 +1,4 @@
-package migrations
+package pb_migrations
 
 import (
 	"github.com/pocketbase/pocketbase/core"
@@ -8,17 +8,22 @@ import (
 func init() {
 	migrations.Register(func(app core.App) error {
 		// 1. SETUP WHITELISTS COLLECTION
+		// "The Policy" - If a record exists here for a Command, it is Auto-Approved.
 		whitelists := core.NewCollection(core.CollectionTypeBase, "whitelists")
 		whitelists.Name = "whitelists"
 
-		whitelists.Fields.Add(&core.SelectField{
-			Name:      "type",
-			Required:  true,
+		// Get the Commands collection ID for Relation
+		commands, err := app.FindCollectionByNameOrId("commands")
+		if err != nil {
+			return err
+		}
+
+		whitelists.Fields.Add(&core.RelationField{
+			Name:     "command",
+			Required: true,
+			CollectionId: commands.Id,
 			MaxSelect: 1,
-			Values:    []string{"terminal", "filesystem", "browser", "other"},
 		})
-		whitelists.Fields.Add(&core.TextField{Name: "pattern", Required: true})
-		whitelists.Fields.Add(&core.TextField{Name: "reason"})
 		whitelists.Fields.Add(&core.BoolField{Name: "active"})
 
 		// -------------------------------------------------------------------------
@@ -33,25 +38,6 @@ func init() {
 
 		if err := app.Save(whitelists); err != nil {
 			return err
-		}
-
-		// 2. ADD DEFAULT WHITELISTS
-		// We can seed some basic "safe" patterns
-		defaultPatterns := []map[string]interface{}{
-			{"type": "terminal", "pattern": "git status*", "reason": "Safe read-only git command", "active": true},
-			{"type": "terminal", "pattern": "ls *", "reason": "List directory contents", "active": true},
-			{"type": "terminal", "pattern": "pwd", "reason": "Print working directory", "active": true},
-		}
-
-		for _, p := range defaultPatterns {
-			record := core.NewRecord(whitelists)
-			record.Set("type", p["type"])
-			record.Set("pattern", p["pattern"])
-			record.Set("reason", p["reason"])
-			record.Set("active", p["active"])
-			if err := app.Save(record); err != nil {
-				return err
-			}
 		}
 
 		return nil

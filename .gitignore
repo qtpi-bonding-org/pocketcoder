@@ -17,9 +17,12 @@ backend/pb_data/
 sandbox_data/
 
 # Build Artifacts
+target/
+**/target/
 dist/
 build/
 pocketbase
+backend/pocketbase
 *.bun-build
 
 # Local/Independent Repos (Opencode)
