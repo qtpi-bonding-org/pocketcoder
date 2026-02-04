@@ -45,9 +45,27 @@ func main() {
 
 
 	// ------------------------------------------------------------
-	// 📡 EXECUTION FIREWALL LOGIC
-	// Orchestrated by Rust Gateway (connector)
+	// 📡 SOVEREIGN AUTHORITY (Permission Firewall)
+	// PocketBase decides what is allowed.
 	// ------------------------------------------------------------
+	app.OnRecordCreate("permissions").Bind(&hook.Handler[*core.RecordEvent]{
+		Func: func(e *core.RecordEvent) error {
+			permission := e.Record.GetString("permission")
+
+			// AUTHORITY LOGIC:
+			// Read/Write (edit) are authorized automatically.
+			// Bash execution is gated (Draft).
+			if permission != "bash" {
+				log.Printf("🛡️ [PocketCoder Authority] Auto-authorizing: %s", permission)
+				e.Record.Set("status", "authorized")
+			} else {
+				log.Printf("🛡️ [PocketCoder Authority] Gating execution: %s", permission)
+				e.Record.Set("status", "draft")
+			}
+
+			return e.Next()
+		},
+	})
 
 
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
