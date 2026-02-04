@@ -1,0 +1,67 @@
+services:
+  # 🏰 POCKETBASE CORE (Backend + Gateway)
+  pocketbase:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pocketcoder-pocketbase
+    ports:
+      - "8090:8090" # PocketBase UI
+      - "3001:3001" # MCP Server
+    volumes:
+      - pb_data:/app/pb_data
+      - tmux_socket:/tmp/tmux
+    environment:
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - TMUX_TMPDIR=/tmp/tmux
+      - TMUX_SOCKET=/tmp/tmux/pocketcoder
+    restart: unless-stopped
+    networks:
+      - pocketcoder-net
+
+  # 🧠 OPENCODE (Reasoning Engine)
+  opencode:
+    build:
+      context: .
+      dockerfile: Dockerfile.opencode
+    container_name: pocketcoder-opencode
+    volumes:
+      - ./connector/pocketcoder-plugin.ts:/pocketcoder-plugin.ts:ro
+    environment:
+      - PORT=3000
+      - POCKETBASE_URL=http://pocketbase:8090
+      - AGENT_EMAIL=${AGENT_EMAIL}
+      - AGENT_PASSWORD=${AGENT_PASSWORD}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENCODE_CONFIG_CONTENT={"plugin":["file:///pocketcoder-plugin.ts"],"mcp":{"pocketbase_mcp":{"type":"remote","url":"http://pocketbase:3001/sse","enabled":true}}}
+    restart: unless-stopped
+    networks:
+      - pocketcoder-net
+    depends_on:
+      - pocketbase
+
+  # 🔨 SANDBOX (Execution Environment)
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox
+    container_name: pocketcoder-sandbox
+    volumes:
+      - sandbox_data:/sandbox
+      - tmux_socket:/tmp/tmux
+    environment:
+      - TMUX_TMPDIR=/tmp/tmux
+      - TMUX_SOCKET=/tmp/tmux/pocketcoder
+    restart: unless-stopped
+    networks:
+      - pocketcoder-net
+
+volumes:
+  pb_data:
+  sandbox_data:
+  tmux_socket:
+
+networks:
+  pocketcoder-net:
+    driver: bridge
