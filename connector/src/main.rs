@@ -77,138 +77,6 @@ pub trait ActionProvider: Send + Sync {
 }
 
 // --------------------------------------------------------------------------
-// PocketBase Provider implementation
-// --------------------------------------------------------------------------
-
-pub struct PocketBaseProvider {
-    url: String,
-    admin_token: String,
-}
-
-impl PocketBaseProvider {
-    pub async fn new(url: String, email: String, pass: String) -> Result<Self> {
-        let client = reqwest::Client::new();
-        let mut attempts = 0;
-        while attempts < 15 {
-            let res = client.post(format!("{}/api/collections/users/auth-with-password", url))
-                .json(&serde_json::json!({ "identity": email, "password": pass }))
-                .send()
-                .await;
-
-            match res {
-                Ok(resp) if resp.status().is_success() => {
-                    let auth: serde_json::Value = resp.json().await?;
-                    let token = auth["token"].as_str().ok_or_else(|| anyhow!("PocketBase Auth Failed: No token"))?.to_string();
-                    return Ok(Self { url, admin_token: token });
-                },
-                Ok(resp) => {
-                    let err_text = resp.text().await.unwrap_or_default();
-                    eprintln!("⚠️ [PocketCoder] Auth failure (Attempt {}): {} - {}", attempts, err_text, url);
-                },
-                Err(e) => {
-                    eprintln!("⚠️ [PocketCoder] Connection failure (Attempt {}): {} at {}", attempts, e, url);
-                }
-            }
-            attempts += 1;
-            sleep(Duration::from_secs(2)).await;
-        }
-        Err(anyhow!("Failed to connect and authenticate with PocketBase Law after multiple attempts."))
-    }
-
-    // Helper to make authenticated requests
-    async fn request(&self, method: reqwest::Method, endpoint: &str, json: Option<serde_json::Value>) -> Result<reqwest::Response> {
-        let client = reqwest::Client::new();
-        let mut req = client.request(method, format!("{}{}", self.url, endpoint))
-            .header("Authorization", format!("Bearer {}", self.admin_token));
-        
-        if let Some(body) = json {
-            req = req.json(&body);
-        }
-
-        let resp = req.send().await?;
-        if !resp.status().is_success() {
-             let status = resp.status();
-             let text = resp.text().await.unwrap_or_default();
-             return Err(anyhow!("PocketBase Request Failed [{}]: {}", status, text));
-        }
-        Ok(resp)
-    }
-}
-
-#[async_trait]
-impl ActionProvider for PocketBaseProvider {
-    async fn get_command_by_hash(&self, hash: &str) -> Result<Option<CommandRecord>> {
-        // filter=(hash='abc')
-        let filter_str = format!("hash='{}'", hash);
-        let encoded_filter = urlencoding::encode(&filter_str);
-        let resp = self.request(reqwest::Method::GET, &format!("/api/collections/commands/records?filter=({})", encoded_filter), None).await?;
-        let json: serde_json::Value = resp.json().await?;
-        
-        if let Some(items) = json["items"].as_array() {
-            if let Some(first) = items.first() {
-                let rec: CommandRecord = serde_json::from_value(first.clone())?;
-                return Ok(Some(rec));
-            }
-        }
-        Ok(None)
-    }
-
-    async fn create_command(&self, cmd: &str, hash: &str) -> Result<CommandRecord> {
-        let body = serde_json::json!({ "command": cmd, "hash": hash });
-        let resp = self.request(reqwest::Method::POST, "/api/collections/commands/records", Some(body)).await?;
-        let rec: CommandRecord = resp.json().await?;
-        Ok(rec)
-    }
-
-    async fn is_whitelisted(&self, command_id: &str) -> Result<bool> {
-        // filter=(command='id' && active=true)
-        let filter_str = format!("command='{}' && active=true", command_id);
-        let encoded_filter = urlencoding::encode(&filter_str);
-        let resp = self.request(reqwest::Method::GET, &format!("/api/collections/whitelists/records?filter=({})", encoded_filter), None).await?;
-        let json: serde_json::Value = resp.json().await?;
-
-        if let Some(items) = json["items"].as_array() {
-             return Ok(!items.is_empty());
-        }
-        Ok(false)
-    }
-
-    async fn create_execution(&self, cmd_id: &str, cwd: &str, status: &str, source: &str, metadata: Option<serde_json::Value>, usage_id: Option<&str>) -> Result<ExecutionRecord> {
-        let mut body = serde_json::json!({
-            "command": cmd_id,
-            "cwd": cwd,
-            "status": status,
-            "source": source
-        });
-        if let Some(meta) = metadata {
-            body["metadata"] = meta;
-        }
-        if let Some(uid) = usage_id {
-            body["usage"] = uid.into();
-        }
-
-        let resp = self.request(reqwest::Method::POST, "/api/collections/executions/records", Some(body)).await?;
-        let rec: ExecutionRecord = resp.json().await?;
-        Ok(rec)
-    }
-    
-    async fn get_execution(&self, id: &str) -> Result<ExecutionRecord> {
-        let resp = self.request(reqwest::Method::GET, &format!("/api/collections/executions/records/{}", id), None).await?;
-        let rec: ExecutionRecord = resp.json().await?;
-        Ok(rec)
-    }
-
-    async fn update_execution_status(&self, id: &str, status: &str, output: Option<serde_json::Value>, exit_code: Option<i32>) -> Result<()> {
-        let mut body = serde_json::json!({ "status": status });
-        if let Some(o) = output { body["outputs"] = o; }
-        if let Some(e) = exit_code { body["exit_code"] = e.into(); }
-
-        self.request(reqwest::Method::PATCH, &format!("/api/collections/executions/records/{}", id), Some(body)).await?;
-        Ok(())
-    }
-}
-
-// --------------------------------------------------------------------------
 // PocketCoder Execution Driver (Shared Socket Sentinel)
 // --------------------------------------------------------------------------
 
@@ -304,7 +172,6 @@ impl PocketCoderDriver {
 type SessionMap = Arc<RwLock<HashMap<String, mpsc::Sender<serde_json::Value>>>>;
 
 struct AppState {
-    provider: Arc<dyn ActionProvider>,
     sessions: SessionMap,
     driver: Arc<PocketCoderDriver>,
 }
@@ -336,9 +203,9 @@ async fn sse_handler(
     Sse::new(stream)
 }
 
-// The 'message_handler' for JSON-RPC is likely not needed for the Bridge unless we want to keep it backward compatible 
-// or for other tools. For this v1, the Bridge uses /exec directly.
-// We can keep a stub or minimal version if necessary, but focusing on /exec.
+async fn health_handler() -> Json<serde_json::Value> {
+    Json(serde_json::json!({ "status": "ok" }))
+}
 
 async fn exec_handler(
     State(state): State<Arc<AppState>>,
@@ -347,46 +214,17 @@ async fn exec_handler(
     // The Gateway trusts that commands reaching it are already authorized by the Plugin.
     // No permission checking happens here - we just execute and log results.
     
-    // 1. Calculate Hash
-    let mut hasher = Sha256::new();
-    hasher.update(payload.cmd.as_bytes());
-    let result = hasher.finalize();
-    let hash = hex::encode(result);
-
-    // 2. Get or Create Command
-    let cmd_record = match state.provider.get_command_by_hash(&hash).await {
-        Ok(Some(rec)) => rec,
-        Ok(None) => match state.provider.create_command(&payload.cmd, &hash).await {
-            Ok(rec) => rec,
-            Err(e) => return Json(serde_json::json!({ "error": format!("Failed to create command record: {}", e) }))
-        },
-        Err(e) => return Json(serde_json::json!({ "error": format!("Failed to fetch command record: {}", e) }))
-    };
-
     let cwd = payload.cwd.as_deref().unwrap_or("/workspace");
 
-    // 3. Create Execution Record (start executing immediately)
-    let exec_record = match state.provider.create_execution(&cmd_record.id, cwd, "executing", "gateway", payload.metadata.clone(), payload.usage_id.as_deref()).await {
-        Ok(rec) => rec,
-        Err(e) => return Json(serde_json::json!({ "error": format!("Failed to create execution record: {}", e) }))
-    };
-
-    // 4. Execute in tmux!
     println!("⚡ [Gateway] Executing: {}", payload.cmd);
     match state.driver.exec(&payload.cmd, Some(cwd)).await {
         Ok(res) => {
-             let _ = state.provider.update_execution_status(&exec_record.id, "completed", 
-                Some(serde_json::json!({ "stdout": res.output })), 
-                Some(res.exit_code)
-             ).await;
-             
              Json(serde_json::json!({
                  "stdout": res.output,
                  "exit_code": res.exit_code
              }))
         },
         Err(e) => {
-            let _ = state.provider.update_execution_status(&exec_record.id, "failed", Some(serde_json::json!({ "error": e.to_string() })), None).await;
             Json(serde_json::json!({ "error": e.to_string(), "exit_code": 1 }))
         }
     }
@@ -399,30 +237,26 @@ async fn exec_handler(
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let pb_url = env::var("POCKETBASE_URL").unwrap_or_else(|_| "http://localhost:8090".to_string());
-    let admin_email = env::var("ADMIN_EMAIL").expect("ADMIN_EMAIL required");
-    let admin_pass = env::var("ADMIN_PASSWORD").expect("ADMIN_PASSWORD required");
+    // We no longer need PocketBase credentials. 
+    // The Gateway is a dumb execution proxy.
     let socket_path = env::var("TMUX_SOCKET").unwrap_or_else(|_| "/tmp/tmux/pocketcoder".to_string());
     let session_name = env::var("TMUX_SESSION").unwrap_or_else(|_| "pocketcoder_session".to_string());
 
     println!("🏰 [PocketCoder] Gateway starting up...");
-    println!("📍 Core: {}", pb_url);
+    println!("📍 Mode: Dumb Execution Proxy");
     
-    // 2. Initialize the Provider
-    let provider = Arc::new(PocketBaseProvider::new(pb_url.clone(), admin_email, admin_pass).await?);
-
-    // 3. Initialize the Execution Driver
+    // Initialize the Execution Driver
     let driver = Arc::new(PocketCoderDriver::new(&socket_path, &session_name));
 
     let state = Arc::new(AppState {
-        provider,
         sessions: Arc::new(RwLock::new(HashMap::new())),
         driver,
     });
 
-    // 4. Setup Router
+    // Setup Router
     let app = Router::new()
         .route("/sse", get(sse_handler))
+        .route("/health", get(health_handler))
         .route("/exec", post(exec_handler)) 
         .layer(tower_http::cors::CorsLayer::permissive())
         .with_state(state);

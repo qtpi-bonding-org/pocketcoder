@@ -16,7 +16,7 @@ services:
       - AGENT_PASSWORD=${AGENT_PASSWORD}
     restart: unless-stopped
     networks:
-      - pocketcoder-internal
+      - pocketcoder-memory
 
   # 🌉 GATEWAY (Execution Bridge)
   gateway:
@@ -32,15 +32,12 @@ services:
     environment:
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
-      - ADMIN_EMAIL=${ADMIN_EMAIL}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - POCKETBASE_URL=http://pocketbase:8090
     restart: unless-stopped
     networks:
-      pocketcoder-internal:
+      pocketcoder-control:
         aliases:
           - gateway
-      pocketcoder-sandbox:
+      pocketcoder-execution:
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -74,7 +71,8 @@ services:
       exec opencode serve"
     restart: unless-stopped
     networks:
-      - pocketcoder-internal
+      - pocketcoder-memory
+      - pocketcoder-control
 
     depends_on:
       - pocketbase
@@ -94,7 +92,7 @@ services:
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
     restart: unless-stopped
     networks:
-      - pocketcoder-sandbox
+      - pocketcoder-execution
 
 volumes:
   pb_data:
@@ -103,8 +101,10 @@ volumes:
   bridge_bin:
 
 networks:
-  pocketcoder-internal:
+  pocketcoder-memory:
     driver: bridge
-  pocketcoder-sandbox:
+  pocketcoder-control:
     driver: bridge
-    internal: true # Sandbox cannot reach the internet OR the internal net
+  pocketcoder-execution:
+    driver: bridge
+    internal: true # Sandbox cannot reach the internet OR the other nets
