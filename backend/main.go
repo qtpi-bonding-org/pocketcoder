@@ -59,7 +59,9 @@ func main() {
 			if permission == "bash" {
 				// We need to check if the command being requested exists in the whitelist.
 				// OpenCode metadata often contains the command being run.
-				metadata := e.Record.Get("metadata").(map[string]any)
+				metadata, ok := e.Record.Get("metadata").(map[string]any)
+				if ok {
+
 				if cmd, ok := metadata["command"].(string); ok {
 					// Check whitelists. Whitelists are connected to commands.
 					// 1. Find the command record by string (or hash match)
@@ -71,6 +73,7 @@ func main() {
 							isWhitelisted = true
 						}
 					}
+				}
 				}
 			}
 
