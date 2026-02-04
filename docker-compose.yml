@@ -18,7 +18,9 @@ services:
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
     restart: unless-stopped
     networks:
-      - pocketcoder-net
+      pocketcoder-net:
+        aliases:
+          - gateway  # Allows 'http://gateway:3001'
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -28,16 +30,21 @@ services:
     container_name: pocketcoder-opencode
     volumes:
       - ./connector/pocketcoder-plugin.ts:/pocketcoder-plugin.ts:ro
+      - ./shell_wrapper.sh:/usr/local/bin/pocketcoder-shell:ro  # Mount the Bridge Script
+      - workspace_data:/workspace                               # Shared Workspace
     environment:
       - PORT=3000
       - POCKETBASE_URL=http://pocketbase:8090
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - OPENCODE_CONFIG_CONTENT={"plugin":["file:///pocketcoder-plugin.ts"],"mcp":{"pocketbase_mcp":{"type":"remote","url":"http://pocketbase:3001/sse","enabled":true}}}
+      - OPENCODE_CONFIG_CONTENT={"plugin":["file:///pocketcoder-plugin.ts"],"mcp":{"pocketbase_mcp":{"type":"remote","url":"http://gateway:3001/sse","enabled":true}}}
+      - SHELL=/usr/local/bin/pocketcoder-shell                # THE BRIDGE
+    working_dir: /workspace
     restart: unless-stopped
     networks:
       - pocketcoder-net
+
     depends_on:
       - pocketbase
 
@@ -48,8 +55,9 @@ services:
       dockerfile: Dockerfile.sandbox
     container_name: pocketcoder-sandbox
     volumes:
-      - sandbox_data:/sandbox
+      - workspace_data:/workspace   # Shared Workspace
       - tmux_socket:/tmp/tmux
+    working_dir: /workspace
     environment:
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
@@ -59,7 +67,7 @@ services:
 
 volumes:
   pb_data:
-  sandbox_data:
+  workspace_data: # Renamed from sandbox_data
   tmux_socket:
 
 networks:
