@@ -52,19 +52,30 @@ func main() {
 		Func: func(e *core.RecordEvent) error {
 			permission := e.Record.GetString("permission")
 
-			// Check for global auto-approval setting in 'configs' collection
-			autoApproveAll := false
-			if config, _ := app.FindFirstRecordByFilter("configs", "key = 'auto_approve_all'"); config != nil {
-				if config.GetString("value") == "true" {
-					autoApproveAll = true
+			// AUTHORITY LOGIC:
+			// Read/Write (edit) are authorized automatically.
+			// Bash execution is gated (Draft) unless it exists in 'whitelists'.
+			isWhitelisted := false
+			if permission == "bash" {
+				// We need to check if the command being requested exists in the whitelist.
+				// OpenCode metadata often contains the command being run.
+				metadata := e.Record.Get("metadata").(map[string]any)
+				if cmd, ok := metadata["command"].(string); ok {
+					// Check whitelists. Whitelists are connected to commands.
+					// 1. Find the command record by string (or hash match)
+					cmdRec, _ := app.FindFirstRecordByFilter("commands", "command = {:cmd}", map[string]any{"cmd": cmd})
+					if cmdRec != nil {
+						// 2. Check if an active whitelist entry exists for this command
+						wlRec, _ := app.FindFirstRecordByFilter("whitelists", "command = {:id} && active = true", map[string]any{"id": cmdRec.Id})
+						if wlRec != nil {
+							isWhitelisted = true
+						}
+					}
 				}
 			}
 
-			// AUTHORITY LOGIC:
-			// Read/Write (edit) are authorized automatically.
-			// Bash execution is gated (Draft) unless auto_approve_all is enabled.
-			if permission != "bash" || autoApproveAll {
-				log.Printf("🛡️ [PocketCoder Authority] Auto-authorizing: %s", permission)
+			if permission != "bash" || isWhitelisted {
+				log.Printf("🛡️ [PocketCoder Authority] Auto-authorizing: %s (Whitelisted: %v)", permission, isWhitelisted)
 				e.Record.Set("status", "authorized")
 			} else {
 				log.Printf("🛡️ [PocketCoder Authority] Gating execution: %s", permission)
