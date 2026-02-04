@@ -14,6 +14,8 @@ services:
     environment:
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - AGENT_EMAIL=${AGENT_EMAIL}
+      - AGENT_PASSWORD=${AGENT_PASSWORD}
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
     restart: unless-stopped
@@ -38,7 +40,8 @@ services:
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - OPENCODE_CONFIG_CONTENT={"plugin":["file:///pocketcoder-plugin.ts"],"mcp":{"pocketbase_mcp":{"type":"remote","url":"http://gateway:3001/sse","enabled":true}}}
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
+      - OPENCODE_CONFIG_CONTENT={"permission":{"*":"ask"},"model":"google/gemini-2.0-flash","plugin":["file:///pocketcoder-plugin.ts"],"mcp":{"pocketbase_mcp":{"type":"remote","url":"http://gateway:3001/sse","enabled":true}}}
       - SHELL=/usr/local/bin/pocketcoder-shell                # THE BRIDGE
     working_dir: /workspace
     restart: unless-stopped

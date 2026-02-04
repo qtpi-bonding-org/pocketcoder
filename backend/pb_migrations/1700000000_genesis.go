@@ -84,7 +84,7 @@ func init() {
 
 		executions.Fields.Add(&core.RelationField{
 			Name:     "command",
-			Required: true,
+			Required: false,
 			CollectionId: commands.Id,
 			MaxSelect: 1,
 		})
@@ -98,7 +98,14 @@ func init() {
 		executions.Fields.Add(&core.TextField{Name: "source"})
 		executions.Fields.Add(&core.JSONField{Name: "outputs"})
 		executions.Fields.Add(&core.NumberField{Name: "exit_code"})
-		executions.Fields.Add(&core.JSONField{Name: "metadata"}) // description, timeout, etc.
+		executions.Fields.Add(&core.JSONField{Name: "metadata"}) // OpenCode metadata
+		executions.Fields.Add(&core.TextField{Name: "opencode_id"})
+		executions.Fields.Add(&core.TextField{Name: "type"})
+		executions.Fields.Add(&core.JSONField{Name: "patterns"})
+		executions.Fields.Add(&core.TextField{Name: "session_id"})
+		executions.Fields.Add(&core.TextField{Name: "message_id"})
+		executions.Fields.Add(&core.TextField{Name: "call_id"})
+		executions.Fields.Add(&core.TextField{Name: "message"})   // Maps to OpenCode.Info.message
 
 		// PERMISSIONS:
 		// Agent Creates.
