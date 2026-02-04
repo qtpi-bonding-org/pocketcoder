@@ -1,0 +1,22 @@
+FROM oven/bun:latest
+
+RUN apt-get update && apt-get install -y \
+    bash \
+    tmux \
+    curl \
+    git \
+    jq \
+    ripgrep \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /sandbox
+
+# Copy the Socket Listener source
+COPY sandbox/listener.ts /sandbox/listener.ts
+COPY sandbox/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Use the new entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
