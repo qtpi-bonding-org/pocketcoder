@@ -3,9 +3,10 @@
 # This script replaces /bin/bash in the OpenCode container.
 # It intercepts execution and forwards it to the Rust Gateway.
 
-# 1. Fallback for interactive mode or non-command usage
+# 1. Restricted Mode: Block interactive or non-conforming calls
 if [ "$1" != "-c" ]; then
-    exec /bin/sh "$@"
+    echo "\x1b[31m🔥 [Firewall Blocked]: Interactive or raw shell invocation is restricted for security. Always execute commands via 'bash -c \"command\"'.\x1b[0m" >&2
+    exit 1
 fi
 
 export CMD="$2"

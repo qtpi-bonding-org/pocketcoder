@@ -67,6 +67,18 @@ else
     exit 1
 fi
 
+# --- STAGE 1.1: INTERACTIVE BLOCK VERIFICATION ---
+log_info "STAGE 1.1: Interactive Shell Block Verification"
+# We try to run /bin/bash without -c. It should be blocked with our security message.
+BLOCK_MSG=$(docker exec pocketcoder-opencode /bin/bash -i 2>&1 || true)
+
+if echo "$BLOCK_MSG" | grep -q "Firewall Blocked"; then
+    log_success "Interactive shell correctly blocked with security feedback."
+else
+    log_error "Interactive shell block failed or message missing. Output: $BLOCK_MSG"
+    exit 1
+fi
+
 # --- STAGE 2: OPENCODE RUN HIJACK & USAGE ---
 log_info "STAGE 2: OpenCode 'run bash' & Usage Linking"
 USAGE_SIGNAL="USAGE_SIGNAL_$(date +%s)"
