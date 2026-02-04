@@ -1,5 +1,5 @@
 services:
-  # 🏰 POCKETBASE CORE (Backend + Gateway)
+  # 🏰 POCKETBASE CORE (Backend Only)
   pocketbase:
     build:
       context: .
@@ -7,22 +7,40 @@ services:
     container_name: pocketcoder-pocketbase
     ports:
       - "8090:8090" # PocketBase UI
-      - "3001:3001" # MCP Server
     volumes:
       - pb_data:/app/pb_data
-      - tmux_socket:/tmp/tmux
     environment:
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
-      - TMUX_TMPDIR=/tmp/tmux
-      - TMUX_SOCKET=/tmp/tmux/pocketcoder
     restart: unless-stopped
     networks:
-      pocketcoder-net:
+      - pocketcoder-internal
+
+  # 🌉 GATEWAY (Execution Bridge)
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: pocketcoder-gateway
+    ports:
+      - "3001:3001"
+    volumes:
+      - bridge_bin:/app/bridge_share        # Source for compiled bridge
+      - tmux_socket:/tmp/tmux
+    environment:
+      - TMUX_TMPDIR=/tmp/tmux
+      - TMUX_SOCKET=/tmp/tmux/pocketcoder
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - POCKETBASE_URL=http://pocketbase:8090
+    restart: unless-stopped
+    networks:
+      pocketcoder-internal:
         aliases:
-          - gateway  # Allows 'http://gateway:3001'
+          - gateway
+      pocketcoder-sandbox:
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -32,7 +50,7 @@ services:
     container_name: pocketcoder-opencode
     volumes:
       - ./connector/pocketcoder-plugin.ts:/pocketcoder-plugin.ts:ro
-      - ./shell_wrapper.sh:/usr/local/bin/pocketcoder-shell:ro  # Mount the Bridge Script
+      - bridge_bin:/bridge:ro                                     # Read compiled bridge
       - workspace_data:/workspace                               # Shared Workspace
     environment:
       - PORT=3000
@@ -42,25 +60,26 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
       - OPENCODE_CONFIG_CONTENT={"permission":{"*":"ask"},"model":"google/gemini-2.0-flash","plugin":["file:///pocketcoder-plugin.ts"],"mcp":{"pocketbase_mcp":{"type":"remote","url":"http://gateway:3001/sse","enabled":true}}}
-      - SHELL=/usr/local/bin/pocketcoder-shell                # THE BRIDGE
+      - SHELL=/bridge/pocketcoder-shell                        # THE BRIDGE
     working_dir: /workspace
     user: root
     entrypoint: /bin/sh
     command: >
       -c "
-      echo '🛡️ Implementing Bash Hijack...' &&
-      ln -sf /usr/local/bin/pocketcoder-shell /bin/bash &&
-      ln -sf /usr/local/bin/pocketcoder-shell /usr/bin/bash &&
+      echo '🛡️ Implementing Total Shell Hijack (Binary)...' &&
+      ln -sf /bridge/pocketcoder-shell /bin/bash &&
+      ln -sf /bridge/pocketcoder-shell /usr/bin/bash &&
+      ln -sf /bridge/pocketcoder-shell /bin/sh &&
       echo '🚀 Starting OpenCode Serve...' &&
       exec opencode serve"
     restart: unless-stopped
     networks:
-      - pocketcoder-net
+      - pocketcoder-internal
 
     depends_on:
       - pocketbase
 
-  # 🔨 SANDBOX (Execution Environment)
+  # 🔨 SANDBOX (Isolated Execution Environment)
   sandbox:
     build:
       context: .
@@ -75,13 +94,17 @@ services:
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
     restart: unless-stopped
     networks:
-      - pocketcoder-net
+      - pocketcoder-sandbox
 
 volumes:
   pb_data:
-  workspace_data: # Renamed from sandbox_data
+  workspace_data:
   tmux_socket:
+  bridge_bin:
 
 networks:
-  pocketcoder-net:
+  pocketcoder-internal:
     driver: bridge
+  pocketcoder-sandbox:
+    driver: bridge
+    internal: true # Sandbox cannot reach the internet OR the internal net
