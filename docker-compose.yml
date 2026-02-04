@@ -44,6 +44,15 @@ services:
       - OPENCODE_CONFIG_CONTENT={"permission":{"*":"ask"},"model":"google/gemini-2.0-flash","plugin":["file:///pocketcoder-plugin.ts"],"mcp":{"pocketbase_mcp":{"type":"remote","url":"http://gateway:3001/sse","enabled":true}}}
       - SHELL=/usr/local/bin/pocketcoder-shell                # THE BRIDGE
     working_dir: /workspace
+    user: root
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      echo '🛡️ Implementing Bash Hijack...' &&
+      ln -sf /usr/local/bin/pocketcoder-shell /bin/bash &&
+      ln -sf /usr/local/bin/pocketcoder-shell /usr/bin/bash &&
+      echo '🚀 Starting OpenCode Serve...' &&
+      exec opencode serve"
     restart: unless-stopped
     networks:
       - pocketcoder-net

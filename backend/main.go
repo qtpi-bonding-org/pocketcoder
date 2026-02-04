@@ -52,10 +52,18 @@ func main() {
 		Func: func(e *core.RecordEvent) error {
 			permission := e.Record.GetString("permission")
 
+			// Check for global auto-approval setting in 'configs' collection
+			autoApproveAll := false
+			if config, _ := app.FindFirstRecordByFilter("configs", "key = 'auto_approve_all'"); config != nil {
+				if config.GetString("value") == "true" {
+					autoApproveAll = true
+				}
+			}
+
 			// AUTHORITY LOGIC:
 			// Read/Write (edit) are authorized automatically.
-			// Bash execution is gated (Draft).
-			if permission != "bash" {
+			// Bash execution is gated (Draft) unless auto_approve_all is enabled.
+			if permission != "bash" || autoApproveAll {
 				log.Printf("🛡️ [PocketCoder Authority] Auto-authorizing: %s", permission)
 				e.Record.Set("status", "authorized")
 			} else {
