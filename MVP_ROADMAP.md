@@ -9,14 +9,15 @@ This roadmap outlines the path from initial setup to a lean, professional AI cod
 - [x] **The Full Loop**: Prove an Intent can be created, auto-authorized, and executed in the Sandbox.
 - [x] **Agent Identity**: Establish the `agent` role and secure authentication.
 
-## Phase 2: The Execution Firewall 🚧
+## Phase 2: The Execution Firewall ✅
 - [x] **Direct Tmux Driver**: Deeply integrated Rust driver for stateful command execution.
-- [ ] **Shared Workspace**: Configure Docker Compose to share `pocketcoder_workspace` volume between OpenCode (Brain) and Sandbox (Hands).
-- [ ] **Native File Access**: Allow OpenCode to use its native `read`, `write`, `ls`, `grep` tools on the shared volume for maximum speed and context quality.
-- [ ] **The "Execution Only" Gateway**:
-    -   **Disable** the native `bash` tool in OpenCode.
-    -   **Replace** it with the Rust Gateway's `shell` tool.
-    -   This ensures **only execution** is gated; code generation is free and fast.
+- [x] **Shared Workspace**: Configured Docker Compose to share `workspace_data` volume between OpenCode (Brain) and Sandbox (Hands).
+- [x] **Native File Access**: OpenCode uses native tools on the shared volume for speed, while execution is handled by the Bridge.
+- [x] **The "Execution Only" Gateway**:
+    -   **Intercepted** the native shell via `shell_wrapper.sh`.
+    -   **Enforced** gating through the Rust Gateway and PocketBase.
+    -   **Verified** that only execution is gated; file writes remain fast and native.
+
 
 ## Phase 3: User Experience 🔐
 - [ ] **Passkey Auth (Go)**: Implement WebAuthn in the backend for biometric "Intent Signing."
