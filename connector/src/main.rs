@@ -57,6 +57,7 @@ pub struct ExecRequest {
     pub cmd: String,
     pub cwd: Option<String>,
     pub metadata: Option<serde_json::Value>,
+    pub usage_id: Option<String>,
 }
 
 #[async_trait]
@@ -70,7 +71,7 @@ pub trait ActionProvider: Send + Sync {
     async fn is_whitelisted(&self, command_id: &str) -> Result<bool>;
     
     // Execution Logic
-    async fn create_execution(&self, cmd_id: &str, cwd: &str, status: &str, source: &str, metadata: Option<serde_json::Value>) -> Result<ExecutionRecord>;
+    async fn create_execution(&self, cmd_id: &str, cwd: &str, status: &str, source: &str, metadata: Option<serde_json::Value>, usage_id: Option<&str>) -> Result<ExecutionRecord>;
     async fn get_execution(&self, id: &str) -> Result<ExecutionRecord>;
     async fn update_execution_status(&self, id: &str, status: &str, output: Option<serde_json::Value>, exit_code: Option<i32>) -> Result<()>;
 }
@@ -172,7 +173,7 @@ impl ActionProvider for PocketBaseProvider {
         Ok(false)
     }
 
-    async fn create_execution(&self, cmd_id: &str, cwd: &str, status: &str, source: &str, metadata: Option<serde_json::Value>) -> Result<ExecutionRecord> {
+    async fn create_execution(&self, cmd_id: &str, cwd: &str, status: &str, source: &str, metadata: Option<serde_json::Value>, usage_id: Option<&str>) -> Result<ExecutionRecord> {
         let mut body = serde_json::json!({
             "command": cmd_id,
             "cwd": cwd,
@@ -181,6 +182,9 @@ impl ActionProvider for PocketBaseProvider {
         });
         if let Some(meta) = metadata {
             body["metadata"] = meta;
+        }
+        if let Some(uid) = usage_id {
+            body["usage"] = uid.into();
         }
 
         let resp = self.request(reqwest::Method::POST, "/api/collections/executions/records", Some(body)).await?;
@@ -362,7 +366,7 @@ async fn exec_handler(
     let cwd = payload.cwd.as_deref().unwrap_or("/workspace");
 
     // 3. Create Execution Record (start executing immediately)
-    let exec_record = match state.provider.create_execution(&cmd_record.id, cwd, "executing", "gateway", payload.metadata.clone()).await {
+    let exec_record = match state.provider.create_execution(&cmd_record.id, cwd, "executing", "gateway", payload.metadata.clone(), payload.usage_id.as_deref()).await {
         Ok(rec) => rec,
         Err(e) => return Json(serde_json::json!({ "error": format!("Failed to create execution record: {}", e) }))
     };
