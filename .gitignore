@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+bun.lockb
+
+# EnvironmentVariables
+.env
+
+# System
+.DS_Store
+**/.DS_Store
+
+# PocketBase Data (Persistent Volume)
+pb_data/
+backend/pb_data/
+
+# Sandbox Data
+sandbox_data/
+
+# Build Artifacts
+dist/
+build/
+pocketbase
+*.bun-build
+
+# Local/Independent Repos (Opencode)
+.independent_repos/
+opencode/
+code/
+
+# Legacy/Misc
+.vscode/
+.idea/
+coverage/
+*.log
