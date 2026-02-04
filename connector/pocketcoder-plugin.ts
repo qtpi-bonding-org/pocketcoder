@@ -1,10 +1,14 @@
 /**
- * 🏰 POCKETCODER SOVEREIGN GATEKEEPER
+ * 🏰 POCKETCODER SOVEREIGN PLUGIN (GATEKEEPER)
+ * 
+ * This plugin is a PURE INTERCEPTOR. 
+ * Every permission request is sent to PocketBase. 
+ * PocketBase is the SOVEREIGN AUTHORITY on whether to allow or draft.
  */
-export const PocketCoderPlugin = async ({ client }: any) => {
-    console.log("🏰 [PocketCoder] Sovereign Gatekeeper Active");
 
-    // Explicit URLs for Docker network
+export const PocketCoderPlugin = async ({ client }: any) => {
+    console.log("🏰 [PocketCoder] Sovereign Gatekeeper Active (Auth: PocketBase)");
+
     const POCKETBASE_URL = "http://pocketbase:8090";
     const AGENT_EMAIL = (typeof process !== 'undefined' ? process.env.AGENT_EMAIL : 'agent@pocketcoder.local');
     const AGENT_PASS = (typeof process !== 'undefined' ? process.env.AGENT_PASSWORD : 'EJ6IiRKdHR8Do6IogD7PApyErxDZhUmp');
@@ -15,16 +19,12 @@ export const PocketCoderPlugin = async ({ client }: any) => {
     async function getAuthToken() {
         if (token) return token;
         try {
-            console.log(`🏰 [PocketCoder] Authenticating with ${POCKETBASE_URL} as ${AGENT_EMAIL}...`);
             const res = await fetch(`${POCKETBASE_URL}/api/collections/users/auth-with-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ identity: AGENT_EMAIL, password: AGENT_PASS }),
             });
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`Auth Failed: ${res.status} ${text}`);
-            }
+            if (!res.ok) throw new Error("PocketBase Auth Failed");
             const data = await res.json() as any;
             token = data.token;
             return token;
@@ -38,74 +38,84 @@ export const PocketCoderPlugin = async ({ client }: any) => {
         if (handled.has(info.id)) return;
         handled.add(info.id);
 
-        console.log(`\n🏰 [PocketCoder] INTERCEPT: ${info.permission || info.type}`);
+        console.log(`\n🏰 [PocketCoder] REQUEST: ${info.permission || info.type} for ${info.patterns?.join(', ') || info.pattern}`);
 
         try {
             const authToken = await getAuthToken();
             if (!authToken) return;
 
-            const intentRes = await fetch(`${POCKETBASE_URL}/api/collections/executions/records`, {
+            // 1. Create permission record (matches OpenCode PermissionNext.Request)
+            const permissionRes = await fetch(`${POCKETBASE_URL}/api/collections/permissions/records`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
                 body: JSON.stringify({
                     opencode_id: info.id,
-                    type: info.permission || info.type,
-                    message: info.message || "Requested via OpenCode",
-                    patterns: info.patterns || (Array.isArray(info.pattern) ? info.pattern : (info.pattern ? [info.pattern] : [])),
                     session_id: info.sessionID,
+                    permission: info.permission || info.type,
+                    patterns: info.patterns || (Array.isArray(info.pattern) ? info.pattern : (info.pattern ? [info.pattern] : [])),
+                    metadata: info.metadata || {},
+                    always: info.always || [],
+                    message_id: info.tool?.messageID || info.messageID,
+                    call_id: info.tool?.callID || info.callID,
                     source: "opencode-plugin",
-                    status: "draft"
+                    status: "draft", // Backend will auto-authorize if not bash
+                    message: info.message || "Requested via OpenCode"
                 }),
             });
 
-            if (!intentRes.ok) {
-                console.error(`🏰 [PocketCoder] Database Write Failed: ${await intentRes.text()}`);
+            if (!permissionRes.ok) {
+                console.error(`🏰 [PocketCoder] Database Error: ${await permissionRes.text()}`);
                 return;
             }
 
-            const intent = await intentRes.json() as any;
-            console.log(`🏰 [PocketCoder] Intent ${intent.id} created. Polling for authorization...`);
+            let permission = await permissionRes.json() as any;
+            console.log(`🏰 [PocketCoder] Recorded Permission ${permission.id} (Status: ${permission.status})`);
 
+            // 2. Poll/Wait for Authorization
             const startTime = Date.now();
             while (Date.now() - startTime < 600000) {
-                const checkRes = await fetch(`${POCKETBASE_URL}/api/collections/executions/records/${intent.id}`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                const check = await checkRes.json() as any;
-
-                if (check.status === 'authorized') {
-                    console.log(`🏰 [PocketCoder] ✅ AUTHORIZED: ${intent.id}`);
+                // If the backend auto-authorized it on CREATE, we might already be done.
+                if (permission.status === 'authorized') {
+                    console.log(`🏰 [PocketCoder] ✅ AUTHORIZED: ${permission.id}`);
                     if (isHook && output) {
                         output.status = "allow";
                     } else {
                         await client.postSessionByIdPermissionsByPermissionId({
                             path: { id: info.sessionID, permissionID: info.id },
                             body: { response: "once" }
-                        });
+                        }).catch(() => { });
                     }
                     return;
                 }
-                if (check.status === 'denied') {
-                    console.log(`🏰 [PocketCoder] ❌ DENIED: ${intent.id}`);
+
+                if (permission.status === 'denied') {
+                    console.log(`🏰 [PocketCoder] ❌ DENIED: ${permission.id}`);
                     if (isHook && output) output.status = "deny";
                     return;
                 }
+
+                // Check for updates
+                const checkRes = await fetch(`${POCKETBASE_URL}/api/collections/permissions/records/${permission.id}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                permission = await checkRes.json() as any;
+
                 await new Promise(r => setTimeout(r, 1000));
             }
+
+            if (isHook && output) output.status = "deny";
+
         } catch (err) {
             console.error("🏰 [PocketCoder] Gatekeeper Error:", err);
+            if (isHook && output) output.status = "deny";
         }
     }
 
     return {
         name: "pocketcoder-plugin",
-        "event": async (input: any) => {
-            const event = input.event;
-            // Pulse logging
-            if (event.type.includes("permission") || event.type === "message.part.updated") {
-                if (event.type === "permission.asked") {
-                    await handlePermission(event.properties, false);
-                }
+        "event": async ({ event }: any) => {
+            if (event.type === "permission.asked") {
+                await handlePermission(event.properties, false);
             }
         },
         "permission.ask": async (info: any, output: any) => {
