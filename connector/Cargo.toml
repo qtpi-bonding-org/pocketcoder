@@ -17,3 +17,8 @@ tower-http = { version = "0.5", features = ["cors"] }
 futures-util = "0.3"
 tokio-stream = "0.1"
 parking_lot = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+urlencoding = "2"
+
+

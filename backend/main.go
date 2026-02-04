@@ -10,6 +10,8 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+
 	"github.com/pocketbase/pocketbase/tools/hook"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
@@ -36,49 +38,17 @@ func matchWildcard(str string, pattern string) bool {
 func main() {
 	app := pocketbase.New()
 
-	// ------------------------------------------------------------
-	// 📡 INTENT LOGGING & AUTO-AUTHORIZATION
-	// ------------------------------------------------------------
-	app.OnRecordCreate("intents").Bind(&hook.Handler[*core.RecordEvent]{
-		Func: func(e *core.RecordEvent) error {
-			intentType := e.Record.GetString("type")
-			message := e.Record.GetString("message")
-
-			log.Printf("📡 [Gatekeeper] New Intent: %s (Type: %s)", e.Record.Id, intentType)
-
-			// 1. Fetch all active whitelists for this tool type
-			whitelists, err := app.FindRecordsByFilter(
-				"whitelists",
-				"active = true && type = {:type}",
-				"-created",
-				100,
-				0,
-				map[string]any{"type": intentType},
-			)
-
-			if err == nil {
-				for _, w := range whitelists {
-					pattern := w.GetString("pattern")
-					if matchWildcard(message, pattern) {
-						log.Printf("✅ [Gatekeeper] Auto-Authorizing Intent %s (Matched: %s)", e.Record.Id, pattern)
-						e.Record.Set("status", "authorized")
-						e.Record.Set("reasoning", "Auto-authorized by whitelist: " + pattern)
-						break
-					}
-				}
-			}
-
-			return e.Next()
-		},
+	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
+		Automigrate: true, // auto-run migrations on serve? No, this enables command.
 	})
 
-	app.OnRecordUpdate("intents").Bind(&hook.Handler[*core.RecordEvent]{
-		Func: func(e *core.RecordEvent) error {
-			status := e.Record.GetString("status")
-			log.Printf("🔄 [Gatekeeper] Intent Updated: %s -> %s", e.Record.Id, status)
-			return e.Next()
-		},
-	})
+
+
+	// ------------------------------------------------------------
+	// 📡 EXECUTION FIREWALL LOGIC
+	// Orchestrated by Rust Gateway (connector)
+	// ------------------------------------------------------------
+
 
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
 		Func: func(e *core.ServeEvent) error {

@@ -1,4 +1,4 @@
-package migrations
+package pb_migrations
 
 import (
 	"github.com/pocketbase/pocketbase/core"
@@ -41,8 +41,6 @@ func init() {
 		users.CreateRule = ptr("@request.auth.role = 'admin'")
 		
 		// Update: Self (cannot change role) or Admin
-		// The rule (@request.body.role = role) ensures that if a non-admin is updating, 
-		// the role being set MUST match the current role.
 		users.UpdateRule = ptr(`
 			(@request.auth.id = id && @request.body.role = role) || 
 			@request.auth.role = 'admin'
@@ -55,63 +53,80 @@ func init() {
 			return err
 		}
 
-		// 2. SETUP INTENTS COLLECTION (The Law)
-		intents := core.NewCollection(core.CollectionTypeBase, "intents")
-		intents.Name = "intents"
+		// 2. SETUP COMMANDS COLLECTION (Definitions)
+		// This stores the unique command strings and their hashes.
+		commands := core.NewCollection(core.CollectionTypeBase, "commands")
+		commands.Name = "commands"
 
-		// 1:1 Parity with OpenCode Permission.Info
-		intents.Fields.Add(&core.TextField{Name: "opencode_id", Required: true})
-		intents.Fields.Add(&core.TextField{Name: "type", Required: true})
-		intents.Fields.Add(&core.TextField{Name: "message"})
-		intents.Fields.Add(&core.JSONField{Name: "metadata"})
-		intents.Fields.Add(&core.JSONField{Name: "pattern"})
-		intents.Fields.Add(&core.TextField{Name: "session_id"})
-		intents.Fields.Add(&core.TextField{Name: "message_id"})
-		intents.Fields.Add(&core.TextField{Name: "call_id"})
-		intents.Fields.Add(&core.NumberField{Name: "time_created"})
+		commands.Fields.Add(&core.TextField{Name: "hash", Required: true}) // SHA256
+		commands.Fields.Add(&core.TextField{Name: "command", Required: true})
+		
+		// Add Unique Index on Hash
+		commands.AddIndex("idx_commands_hash", true, "hash", "")
 
-		// Authorization Logic Fields
-		intents.Fields.Add(&core.TextField{Name: "reasoning"})
-		intents.Fields.Add(&core.SelectField{
+		// PERMISSIONS:
+		// Agent can create (when proposing new command).
+		// Everyone can read.
+		commands.ListRule = ptr("@request.auth.id != ''")
+		commands.ViewRule = ptr("@request.auth.id != ''")
+		commands.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		commands.UpdateRule = ptr("@request.auth.role = 'admin'") // Only admin can edit definitions manually
+		commands.DeleteRule = ptr("@request.auth.role = 'admin'")
+
+		if err := app.Save(commands); err != nil {
+			return err
+		}
+
+		// 3. SETUP EXECUTIONS COLLECTION (Instances)
+		// This stores the actual run history.
+		executions := core.NewCollection(core.CollectionTypeBase, "executions")
+		executions.Name = "executions"
+
+		executions.Fields.Add(&core.RelationField{
+			Name:     "command",
+			Required: true,
+			CollectionId: commands.Id,
+			MaxSelect: 1,
+		})
+		executions.Fields.Add(&core.TextField{Name: "cwd"})
+		executions.Fields.Add(&core.SelectField{
 			Name:      "status",
 			Required:  true,
 			MaxSelect: 1,
 			Values:    []string{"draft", "authorized", "denied", "executing", "completed", "failed"},
 		})
-		intents.Fields.Add(&core.JSONField{Name: "output"})
+		executions.Fields.Add(&core.TextField{Name: "source"})
+		executions.Fields.Add(&core.JSONField{Name: "outputs"})
+		executions.Fields.Add(&core.NumberField{Name: "exit_code"})
+		executions.Fields.Add(&core.JSONField{Name: "metadata"}) // description, timeout, etc.
 
-		// -------------------------------------------------------------------------
-		// INTENT PERMISSIONS (Authorization Workflow)
-		// -------------------------------------------------------------------------
+		// PERMISSIONS:
+		// Agent Creates.
+		// Admin/User Updates (Signs).
+		// Agent Updates (Reports result).
+		executions.ListRule = ptr("@request.auth.id != ''")
+		executions.ViewRule = ptr("@request.auth.id != ''")
+		executions.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
 		
-		// CREATE: Agents can only create DRAFT intents.
-		// Using 'status' here refers to the value being created.
-		intents.CreateRule = ptr("(@request.auth.role = 'agent' && status = 'draft') || @request.auth.role = 'admin'")
-		
-		// VIEW: Any authenticated user can see the logs.
-		intents.ListRule = ptr("@request.auth.id != ''")
-		intents.ViewRule = ptr("@request.auth.id != ''")
-		
-		// UPDATE (The State Machine):
-		// Simplified for Genesis to avoid syntax errors with @request.data
-		// 1. ADMIN/USER: Can update only if current status is 'draft'
-		// 2. AGENT: Can update only if current status is 'authorized' (to move to executing/completed)
-		intents.UpdateRule = ptr(`
+		// UPDATE:
+		// 1. User/Admin can sign DRAFTS.
+		// 2. Agent can update AUTHORIZED -> EXECUTING -> COMPLETED/FAILED.
+		executions.UpdateRule = ptr(`
 			((@request.auth.role = 'user' || @request.auth.role = 'admin') && status = 'draft') || 
-			(@request.auth.role = 'agent' && status = 'authorized')
+			(@request.auth.role = 'agent' && (status = 'authorized' || status = 'executing'))
 		`)
 		
-		// DELETE: Strictly Admin only.
-		intents.DeleteRule = ptr("@request.auth.role = 'admin'")
+		executions.DeleteRule = ptr("@request.auth.role = 'admin'")
 
-		if err := app.Save(intents); err != nil {
+		if err := app.Save(executions); err != nil {
 			return err
 		}
 
 		return nil
 	}, func(app core.App) error {
-		i, _ := app.FindCollectionByNameOrId("intents")
-		if i != nil { app.Delete(i) }
+		// Cleanup
+		if c, _ := app.FindCollectionByNameOrId("executions"); c != nil { app.Delete(c) }
+		if c, _ := app.FindCollectionByNameOrId("commands"); c != nil { app.Delete(c) }
 		return nil
 	})
 }

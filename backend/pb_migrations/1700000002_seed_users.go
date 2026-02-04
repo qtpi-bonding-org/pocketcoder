@@ -1,4 +1,4 @@
-package migrations
+package pb_migrations
 
 import (
 	"github.com/pocketbase/pocketbase/core"

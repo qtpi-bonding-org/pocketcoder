@@ -1,36 +1,39 @@
 # PocketCoder MVP Roadmap 🚀
 
-This roadmap outlines the path from our initial setup to a fully functional AI coding assistant.
+This roadmap outlines the path from initial setup to a lean, professional AI coding assistant.
 
-## Phase 1: The Gatekeeper (Current Focus)
+## Phase 1: The Gatekeeper ✅
 - [x] **Minimal Architecture**: Refactor from OpenClaw to PocketCoder.
 - [x] **The Core (PocketBase)**: Define `intents` and `users` collections.
 - [x] **The Whitelist**: Implement persistent, regex-based auto-authorization for safe commands.
 - [x] **The Full Loop**: Prove an Intent can be created, auto-authorized, and executed in the Sandbox.
-- [ ] **Agent Identity**: Ensure `opencode` authenticates as a scoped `agent` user in PocketBase.
+- [x] **Agent Identity**: Establish the `agent` role and secure authentication.
 
-## Phase 2: Professional Tooling & MCP
-- [ ] **Unified Connector**: Refactor `connector/index.ts` to be a robust proxy for multiple MCP servers.
-- [ ] **Sandbox Shell**: Implement a professional shell tool that uses the Sandbox's Tmux listener.
-- [ ] **Filesystem Tool**: Implement a secure file read/write tool with Intent gating.
-- [ ] **Autonomous Registry**: A way for the AI to "propose" adding a new MCP server (via shell command) and having it registered in the Connector.
+## Phase 2: The Execution Firewall 🚧
+- [x] **Direct Tmux Driver**: Deeply integrated Rust driver for stateful command execution.
+- [ ] **Shared Workspace**: Configure Docker Compose to share `pocketcoder_workspace` volume between OpenCode (Brain) and Sandbox (Hands).
+- [ ] **Native File Access**: Allow OpenCode to use its native `read`, `write`, `ls`, `grep` tools on the shared volume for maximum speed and context quality.
+- [ ] **The "Execution Only" Gateway**:
+    -   **Disable** the native `bash` tool in OpenCode.
+    -   **Replace** it with the Rust Gateway's `shell` tool.
+    -   This ensures **only execution** is gated; code generation is free and fast.
 
-## Phase 3: User Experience
+## Phase 3: User Experience 🔐
 - [ ] **Passkey Auth (Go)**: Implement WebAuthn in the backend for biometric "Intent Signing."
 - [ ] **Flutter Ledger**: A minimal companion app to view the Intent ledger and swipe to authorize.
 - [ ] **Real-time logs**: Stream Sandbox terminal output back to the Flutter app via PocketBase.
 
-## Phase 4: Polish & Release
-- [ ] **Self-Hosting Guide**: One-click deployment (Docker Compose) for VPS/Pikapods.
-- [ ] **Documentation**: A humble, clear guide for the "open source spirit."
+## Phase 4: Polish & Release 📦
+- [ ] **Self-Hosting Guide**: One-click deployment (Docker Compose).
+- [ ] **Documentation**: A humble, clear guide for the open-source community.
 
 ---
 
-### 🛡️ Architectural Discussion: "Do we need permissioned installs?"
+### 🛡️ Architectural Discussion: "The Execution Firewall"
 
-**Decision: No.**
-Because we treat the AI as a scoped user, every action—including installing new tools—must go through the **Intent Gate**.
-- If the AI wants to install a new MCP via `npm install -g mcp-whatever`, it must create an Intent.
-- If the human authorizes the shell command, the tool is installed.
-- The system remains "Air Tight" because the boundary is the **Command**, not just the **Configuration**.
-- This keeps the system lean and avoids a redundant secondary permission layer.
+**Decision: Ungated Writes, Gated Execution.**
+We adopt a hybrid security model:
+1.  **Filesystem (Read/Write)**: The AI has native, ungated access via a shared Docker volume. This allows it to refactor, write, and explore code at full speed with high-quality native tools (`read`, `grep`, `lsp`).
+2.  **Execution (Bash)**: We strip the native `bash` tool and replace it with our **Gatekeeper Shell**.
+    -   The AI can *write* a dangerous script, but it cannot *run* it without a signed Intent.
+    -   This maximizes utility while preserving absolute safety.
