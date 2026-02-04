@@ -340,6 +340,9 @@ async fn exec_handler(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<ExecRequest>,
 ) -> Json<serde_json::Value> {
+    // The Gateway trusts that commands reaching it are already authorized by the Plugin.
+    // No permission checking happens here - we just execute and log results.
+    
     // 1. Calculate Hash
     let mut hasher = Sha256::new();
     hasher.update(payload.cmd.as_bytes());
@@ -356,55 +359,16 @@ async fn exec_handler(
         Err(e) => return Json(serde_json::json!({ "error": format!("Failed to fetch command record: {}", e) }))
     };
 
-    // 3. Check Whitelist
-    let whitelisted = state.provider.is_whitelisted(&cmd_record.id).await.unwrap_or(false);
-    
-    let initial_status = if whitelisted { "authorized" } else { "draft" };
     let cwd = payload.cwd.as_deref().unwrap_or("/workspace");
 
-    // 4. Create Execution
-    let exec_record = match state.provider.create_execution(&cmd_record.id, cwd, initial_status, "bridge_v1", payload.metadata.clone()).await {
+    // 3. Create Execution Record (start executing immediately)
+    let exec_record = match state.provider.create_execution(&cmd_record.id, cwd, "executing", "gateway", payload.metadata.clone()).await {
         Ok(rec) => rec,
         Err(e) => return Json(serde_json::json!({ "error": format!("Failed to create execution record: {}", e) }))
     };
 
-    // 5. Blocking Poll Loop (The Firewall)
-    if initial_status == "draft" {
-        let start = tokio::time::Instant::now();
-        let timeout = Duration::from_secs(300); // 5 min timeout for human approval
-        let mut approved = false; 
-
-        println!("🔒 [Firewall] Execution {} is DRAFT. Waiting for sign-off...", exec_record.id);
-
-        while start.elapsed() < timeout {
-             // Poll status
-             match state.provider.get_execution(&exec_record.id).await {
-                 Ok(rec) => {
-                     if rec.status == "authorized" {
-                         approved = true;
-                         break;
-                     }
-                     if rec.status == "denied" || rec.status == "failed" {
-                         return Json(serde_json::json!({ "error": "Execution denied by Gatekeeper." }));
-                     }
-                 },
-                 Err(_) => {} // ignore errors during poll
-             }
-             sleep(Duration::from_secs(1)).await;
-        }
-
-        if !approved {
-             // Timeout
-             let _ = state.provider.update_execution_status(&exec_record.id, "failed", Some(serde_json::json!({ "error": "Timeout waiting for approval" })), None).await;
-             return Json(serde_json::json!({ "error": "Execution timed out waiting for approval." }));
-        }
-    }
-
-    // 6. Execute!
-    // Mark as Executing
-    let _ = state.provider.update_execution_status(&exec_record.id, "executing", None, None).await;
-
-    println!("⚡ [Firewall] Executing: {}", payload.cmd);
+    // 4. Execute in tmux!
+    println!("⚡ [Gateway] Executing: {}", payload.cmd);
     match state.driver.exec(&payload.cmd, Some(cwd)).await {
         Ok(res) => {
              let _ = state.provider.update_execution_status(&exec_record.id, "completed", 
