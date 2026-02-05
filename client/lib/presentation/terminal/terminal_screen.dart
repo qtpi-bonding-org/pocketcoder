@@ -6,6 +6,7 @@ import '../../app_router.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/poco_animator.dart';
 import '../core/widgets/terminal_footer.dart';
+import '../core/widgets/terminal_input.dart';
 
 class TerminalScreen extends StatefulWidget {
   const TerminalScreen({super.key});
@@ -15,17 +16,42 @@ class TerminalScreen extends StatefulWidget {
 }
 
 class _TerminalScreenState extends State<TerminalScreen> {
+  final TextEditingController _inputController = TextEditingController();
   final List<String> _logs = [
     'SYSTEM INITIALIZED',
     'GATEKEEPER ACTIVE',
     'WAITING FOR INPUT...',
   ];
 
+  @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
+  }
+
   void _addLog(String message) {
     setState(() {
       _logs.add('>> $message');
       if (_logs.length > 20) _logs.removeAt(0);
     });
+  }
+
+  Future<void> _handleInputSubmit() async {
+    final input = _inputController.text.trim();
+    if (input.isEmpty) return;
+
+    _addLog('% $input');
+    _inputController.clear();
+
+    if (input.toUpperCase() == 'REGISTER') {
+      await _handleRegistration();
+    } else if (input.toUpperCase() == 'AUTHORIZE') {
+      await _handleSign();
+    } else if (input.toUpperCase() == 'HELP') {
+      _addLog('AVAILABLE COMMANDS: REGISTER, AUTHORIZE, HELP');
+    } else {
+      _addLog('UNKNOWN COMMAND. TYPE "HELP" FOR OPTIONS.');
+    }
   }
 
   Future<void> _handleRegistration() async {
@@ -68,10 +94,24 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 _buildHeader(),
                 const SizedBox(height: 24),
                 Expanded(
-                  child: _buildLogView(),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color:
+                              const Color(0xFF39FF14).withValues(alpha: 0.2)),
+                      color: Colors.black.withValues(alpha: 0.3),
+                    ),
+                    child: Column(
+                      children: [
+                        Expanded(child: _buildLogView()),
+                        _buildInput(),
+                        const SizedBox(height: 8), // Padding bottom for input
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 24),
-                _buildActions(),
+                const SizedBox(height: 12),
               ],
             ),
           ),
@@ -141,93 +181,29 @@ class _TerminalScreenState extends State<TerminalScreen> {
   }
 
   Widget _buildLogView() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border:
-            Border.all(color: const Color(0xFF39FF14).withValues(alpha: 0.2)),
-        color: Colors.black.withValues(alpha: 0.3),
-      ),
-      child: ListView.builder(
-        itemCount: _logs.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              _logs[index],
-              style: const TextStyle(
-                color: Color(0xFF33FF33),
-                fontSize: 14,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildActions() {
-    return Row(
-      children: [
-        Expanded(
-          child: _TerminalButton(
-            label: 'REGISTER',
-            onPressed: _handleRegistration,
-            color: const Color(0xFF00FFFF),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _TerminalButton(
-            label: 'AUTHORIZE',
-            onPressed: _handleSign,
-            color: const Color(0xFFFF00FF),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TerminalButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-  final Color color;
-
-  const _TerminalButton({
-    required this.label,
-    required this.onPressed,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      child: Container(
-        height: 50,
-        decoration: BoxDecoration(
-          border: Border.all(color: color),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.2),
-              blurRadius: 8,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        child: Center(
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _logs.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4.0),
           child: Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
+            _logs[index],
+            style: const TextStyle(
+              color: Color(0xFF33FF33),
+              fontSize: 14,
+              fontFamily: 'Noto Sans Mono',
             ),
           ),
-        ),
-      ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInput() {
+    return TerminalInput(
+      controller: _inputController,
+      onSubmitted: _handleInputSubmit,
     );
   }
 }
