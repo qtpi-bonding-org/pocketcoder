@@ -15,29 +15,34 @@ class AppAscii {
         \/_____/   \/_____/   \/____/   \/_____/   \/_/ /_/   ''';
 
   static const String pocoSleepy = r'''
-┌───┐
-│>_<│
-└───┘''';
+┌─────┐
+│ -_- │
+└─────┘''';
+
+  static const String pocoThinking = r'''
+┌─────┐
+│ >_< │
+└─────┘''';
 
   static const String pocoAwake = r'''
-┌───┐
-│o_o│
-└───┘''';
+┌─────┐
+│ o_o │
+└─────┘''';
 
   static const String pocoHappy = r'''
-┌───┐
-│^_^│
-└───┘''';
+┌─────┐
+│ ^_^ │
+└─────┘''';
 
   static const String pocoSurprised = r'''
-┌───┐
-│O_O│
-└───┘''';
+┌─────┐
+│ O_O │
+└─────┘''';
 
   static const String pocoMistaken = r'''
-┌───┐
-│X_X│
-└───┘''';
+┌─────┐
+│ X_X │
+└─────┘''';
 }
 
 class AsciiFace extends StatelessWidget {

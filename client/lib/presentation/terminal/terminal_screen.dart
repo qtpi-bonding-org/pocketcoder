@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:test_app/app/bootstrap.dart';
 import 'package:test_app/domain/auth/i_auth_repository.dart';
+import 'package:go_router/go_router.dart';
+import '../../app_router.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/ascii_logo.dart';
 import '../core/widgets/ascii_art.dart';
+import '../core/widgets/poco_animator.dart';
+import '../core/widgets/terminal_footer.dart';
 
 class TerminalScreen extends StatefulWidget {
   const TerminalScreen({super.key});
@@ -75,6 +79,25 @@ class _TerminalScreenState extends State<TerminalScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: TerminalFooter(
+        actions: [
+          TerminalAction(
+            keyLabel: 'F1',
+            label: 'ARTIFACTS',
+            onTap: () => context.goNamed(RouteNames.artifact),
+          ),
+          TerminalAction(
+            keyLabel: 'F3',
+            label: 'SETTINGS',
+            onTap: () => context.goNamed(RouteNames.settings),
+          ),
+          TerminalAction(
+            keyLabel: 'F10',
+            label: 'LOGOUT',
+            onTap: () => context.goNamed(RouteNames.onboarding),
+          ),
+        ],
+      ),
     );
   }
 
@@ -82,16 +105,16 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(
+            Expanded(
               child: AsciiLogo(
                 text: AppAscii.pocketCoderLogo,
               ),
             ),
-            const SizedBox(width: 16),
-            AsciiFace.pocoSleepy(fontSize: 20),
+            SizedBox(width: 16),
+            PocoAnimator(fontSize: 20),
           ],
         ),
         const SizedBox(height: 16),
