@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../design_system/primitives/app_fonts.dart';
+import '../../../design_system/primitives/app_palette.dart';
+import '../../../design_system/primitives/app_sizes.dart';
 
 class TerminalInput extends StatelessWidget {
   final TextEditingController controller;
@@ -15,32 +18,33 @@ class TerminalInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.black,
+      padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
+      decoration: BoxDecoration(
+        color: AppPalette.primary.backgroundPrimary,
       ),
       child: Row(
         children: [
           Text(
             '$prompt ',
-            style: const TextStyle(
-              color: Color(0xFF39FF14),
-              fontFamily: 'Noto Sans Mono',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+            style: TextStyle(
+              color: AppPalette.primary.textPrimary,
+              fontFamily: AppFonts.bodyFamily,
+              fontSize: AppSizes.fontStandard,
+              fontWeight: AppFonts.heavy,
             ),
           ),
           Expanded(
             child: TextField(
               controller: controller,
               onSubmitted: (_) => onSubmitted(),
-              style: const TextStyle(
-                color: Color(0xFF39FF14),
-                fontFamily: 'Noto Sans Mono',
-                fontSize: 16,
+              style: TextStyle(
+                color: AppPalette.primary.textPrimary,
+                fontFamily: AppFonts.bodyFamily,
+                fontSize: AppSizes.fontStandard,
               ),
-              cursorColor: const Color(0xFF39FF14),
-              cursorWidth: 10.0, // Block style
+              cursorColor: AppPalette.primary.textPrimary,
+              cursorWidth: AppSizes.fontTiny, // Block style
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 isDense: true,

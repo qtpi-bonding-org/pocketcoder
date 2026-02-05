@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../design_system/primitives/app_fonts.dart';
+import '../../../design_system/primitives/app_palette.dart';
+import '../../../design_system/primitives/app_sizes.dart';
+import '../../../design_system/primitives/spacers.dart';
 
 /// A configuration object for a single footer button
 class TerminalAction {
@@ -26,10 +30,12 @@ class TerminalFooter extends StatelessWidget {
     // A single green line to separate footer from content
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.black, // Background of the footer bar
+      decoration: BoxDecoration(
+        color: AppPalette.primary.backgroundPrimary,
         border: Border(
-          top: BorderSide(color: Color(0xFF39FF14), width: 1),
+          top: BorderSide(
+              color: AppPalette.primary.textPrimary,
+              width: AppSizes.borderWidth),
         ),
       ),
       child: SingleChildScrollView(
@@ -52,14 +58,17 @@ class TerminalFooter extends StatelessWidget {
       child: InkWell(
         onTap: action.onTap,
         // The "Inverted" hover effect color (using Cyberpunk Green)
-        splashColor: const Color(0xFF39FF14).withValues(alpha: 0.3),
-        highlightColor: const Color(0xFF39FF14).withValues(alpha: 0.1),
+        splashColor: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
+        highlightColor: AppPalette.primary.textPrimary.withValues(alpha: 0.1),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          decoration: const BoxDecoration(
+          padding: EdgeInsets.symmetric(
+              horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
+          decoration: BoxDecoration(
             // Adds a subtle divider line between buttons
             border: Border(
-              right: BorderSide(color: Color(0xFF004400), width: 1),
+              right: BorderSide(
+                  color: AppPalette.primary.textSecondary,
+                  width: AppSizes.borderWidth),
             ),
           ),
           child: Row(
@@ -67,26 +76,28 @@ class TerminalFooter extends StatelessWidget {
             children: [
               // The "F-Key" part (Inverted block look)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                color: const Color(0xFF39FF14), // Solid Green Block
+                padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.space * 0.5, vertical: 0),
+                color: AppPalette.primary.textPrimary, // Solid Green Block
                 child: Text(
                   action.keyLabel,
-                  style: const TextStyle(
-                    fontFamily: 'VT323',
-                    color: Colors.black, // Black text on Green block
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                    fontFamily: AppFonts.bodyFamily,
+                    color: AppPalette
+                        .primary.backgroundPrimary, // Black text on Green block
+                    fontSize: AppSizes.fontBig,
+                    fontWeight: AppFonts.heavy,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              HSpace.x1,
               // The Label part
               Text(
                 action.label,
-                style: const TextStyle(
-                  fontFamily: 'VT323',
-                  color: Color(0xFF39FF14), // Green text
-                  fontSize: 18,
+                style: TextStyle(
+                  fontFamily: AppFonts.bodyFamily,
+                  color: AppPalette.primary.textPrimary, // Green text
+                  fontSize: AppSizes.fontBig,
                 ),
               ),
             ],
