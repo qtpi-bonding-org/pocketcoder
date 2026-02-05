@@ -1,0 +1,12 @@
+{
+  "@@locale": "en",
+  "appTitle": "Flutter Template",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "errorNetwork": "Network error occurred",
+  "errorTimeout": "Operation timed out",
+  "errorAuthUnauthorized": "Unauthorized access",
+  "errorAuthFailed": "Authentication failed",
+  "errorGeneric": "Something went wrong"
+}
