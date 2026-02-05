@@ -45,6 +45,10 @@ dependencies:
   # Utilities
   uuid: ^4.0.0
   flutter_dotenv: ^5.1.0
+  webcrypto: ^0.6.0
+  local_auth: ^3.0.0
+  flutter_secure_storage: ^10.0.0
+  pocketbase: ^0.23.2
 
 dev_dependencies:
   flutter_test:
