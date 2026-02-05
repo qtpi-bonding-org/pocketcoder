@@ -24,7 +24,7 @@ class OnboardingScreen extends StatelessWidget {
                   text: AppAscii.pocketCoderLogo,
                   fontSize: 16,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 64),
                 const PocoAnimator(fontSize: 24),
                 const SizedBox(height: 16),
                 const Text(
