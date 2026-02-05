@@ -53,6 +53,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.41
   path_provider: ^2.1.5
   path: ^1.9.1
+  pocketbase: ^0.23.2
 
 dev_dependencies:
   flutter_test:
@@ -72,3 +73,15 @@ flutter:
   generate: true
   assets:
     - assets/pb_schema.json
+
+  fonts:
+    - family: Share Tech Mono
+      fonts:
+        - asset: assets/Share_Tech_Mono/ShareTechMono-Regular.ttf
+    - family: Noto Sans Mono
+      fonts:
+        - asset: assets/Noto_Sans_Mono/static/NotoSansMono-Regular.ttf
+        - asset: assets/Noto_Sans_Mono/static/NotoSansMono-Medium.ttf
+          weight: 500
+        - asset: assets/Noto_Sans_Mono/static/NotoSansMono-Bold.ttf
+          weight: 700

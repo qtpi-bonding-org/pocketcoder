@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/pocketbase/pocketbase/tools/hook"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/crypto"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
 
@@ -153,6 +154,11 @@ func main() {
 
 				return c.JSON(200, map[string]string{"status": "ok"})
 			})
+
+			// ------------------------------------------------------------
+			// 🔐 SECURITY VERIFIER (Soft Passkey)
+			// ------------------------------------------------------------
+			crypto.BindSecurityRoutes(app, e)
 
 			// ------------------------------------------------------------
 			// 🛡️ RUNTIME SEEDING (User Account Setup)

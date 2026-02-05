@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:test_app/presentation/terminal/terminal_screen.dart';
 
 /// App routing configuration.
 class AppRouter {
@@ -13,9 +14,7 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.home,
         name: RouteNames.home,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Home Page')),
-        ),
+        builder: (context, state) => const TerminalScreen(),
       ),
       GoRoute(
         path: AppRoutes.settings,
