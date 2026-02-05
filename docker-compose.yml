@@ -47,8 +47,8 @@ services:
       dockerfile: Dockerfile.opencode
     container_name: pocketcoder-opencode
     volumes:
-      - ./connector/pocketcoder-plugin.ts:/pocketcoder-plugin.ts:ro
-      - ./connector/chat-plugin.ts:/chat-plugin.ts:ro
+      - ./plugins/pocketcoder-plugin.ts:/pocketcoder-plugin.ts:ro
+      - ./plugins/chat-plugin.ts:/chat-plugin.ts:ro
       - bridge_bin:/bridge:ro                                     # Read compiled bridge
       - workspace_data:/workspace                               # Shared Workspace
       - pocketcoder-logs:/logs                                  # Cold Pipe (Logs)
