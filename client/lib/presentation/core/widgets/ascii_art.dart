@@ -22,6 +22,11 @@ class AppAscii {
 │ -_- │
 └─────┘''';
 
+  static const String pocoNervous = r'''
+┌─────┐
+│ ~_~ │
+└─────┘''';
+
   static const String pocoThinking = r'''
 ┌─────┐
 │ >_< │
@@ -47,37 +52,28 @@ class AppAscii {
 │ X_X │
 └─────┘''';
 
-  // 3. The "Panic" (Use for critical system failures or 500 errors)
   static const String pocoPanic = r'''
 ┌─────┐
 │ @_@ │
 └─────┘''';
-
-  // 4. The "Sad" (Use when a task is cancelled or fails)
   static const String pocoSad = r'''
 ┌─────┐
 │ T_T │
 └─────┘''';
 
-  // 5. The "Sassy" (Use for random flavor or Easter eggs)
   static const String pocoCheeky = r'''
 ┌─────┐
 │ ^_~ │
 └─────┘''';
-
-  // 6. The "Suspicious" (Use when confidence is low or verifying keys)
   static const String pocoSuspicious = r'''
 ┌─────┐
 │ >_> │
 └─────┘''';
 
-  // 7. The "Greedy" (Use if you ever add a paid feature or commercial license check)
   static const String pocoGreedy = r'''
 ┌─────┐
 │ $_$ │
 └─────┘''';
-
-  // 8. The "Focus" (Use during really hard computations)
   static const String pocoMad = r'''
 ┌─────┐
 │ ò_ó │
