@@ -4,8 +4,6 @@ import 'package:test_app/domain/auth/i_auth_repository.dart';
 import 'package:go_router/go_router.dart';
 import '../../app_router.dart';
 import '../core/widgets/scanline_widget.dart';
-import '../core/widgets/ascii_logo.dart';
-import '../core/widgets/ascii_art.dart';
 import '../core/widgets/poco_animator.dart';
 import '../core/widgets/terminal_footer.dart';
 
@@ -105,17 +103,11 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: AsciiLogo(
-                text: AppAscii.pocketCoderLogo,
-              ),
-            ),
-            SizedBox(width: 16),
-            PocoAnimator(fontSize: 20),
-          ],
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 8.0),
+            child: PocoAnimator(fontSize: 20),
+          ),
         ),
         const SizedBox(height: 16),
         Row(
