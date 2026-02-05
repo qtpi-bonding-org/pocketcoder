@@ -5,6 +5,8 @@ import 'package:test_app/presentation/onboarding/onboarding_screen.dart';
 import 'package:test_app/presentation/artifact/artifact_screen.dart';
 import 'package:test_app/presentation/settings/settings_screen.dart';
 
+import 'package:test_app/presentation/core/widgets/terminal_transition.dart';
+
 /// App routing configuration.
 class AppRouter {
   AppRouter._();
@@ -17,22 +19,38 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.onboarding,
         name: RouteNames.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const OnboardingScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.home,
         name: RouteNames.home,
-        builder: (context, state) => const TerminalScreen(),
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const TerminalScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.artifact,
         name: RouteNames.artifact,
-        builder: (context, state) => const ArtifactScreen(),
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const ArtifactScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.settings,
         name: RouteNames.settings,
-        builder: (context, state) => const SettingsScreen(),
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const SettingsScreen(),
+        ),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
