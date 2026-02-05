@@ -1,8 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketcoder/domain/auth/auth_failure.dart';
-import 'package:pocketcoder/domain/auth/i_auth_repository.dart';
-import 'package:pocketcoder/infrastructure/security/security_service.dart';
+import 'package:test_app/domain/auth/i_auth_repository.dart';
+import 'package:test_app/infrastructure/security/security_service.dart';
 
 @LazySingleton(as: IAuthRepository)
 class AuthRepository implements IAuthRepository {
@@ -12,70 +11,30 @@ class AuthRepository implements IAuthRepository {
   AuthRepository(this._pocketBase, this._securityService);
 
   @override
-  Future<RecordModel?> getSignedInUser() async {
-    final user = _pocketBase.authStore.model;
-    if (user is RecordModel) {
-      return user;
-    }
-    return null;
-  }
-
-  @override
-  Future<AuthFailure?> signInWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> registerDevice() async {
     try {
-      await _pocketBase.collection('users').authWithPassword(email, password);
-      return null;
-    } on ClientException catch (_) {
-      return const AuthFailure.invalidEmailAndPasswordCombination();
-    } catch (_) {
-      return const AuthFailure.serverError();
-    }
-  }
-
-  @override
-  Future<void> signOut() async {
-    _pocketBase.authStore.clear();
-  }
-
-  @override
-  Future<AuthFailure?> registerDevice() async {
-    try {
-      // 1. Generate local key pair
       final publicJwk = await _securityService.generateAndStoreKeyPair();
 
-      // 2. Send Public Key to Backend
-      // We update the current user's record with the public key.
-      // Assuming 'publicKey' field exists in 'users' collection (JSON type).
-      final user = _pocketBase.authStore.model;
+      final user = _pocketBase.authStore.record;
       if (user is RecordModel) {
         await _pocketBase.collection('users').update(user.id, body: {
           'publicKey': publicJwk,
         });
-        return null;
+        return true;
       }
-      return const AuthFailure.serverError();
+      return false;
     } catch (e) {
-      return const AuthFailure.serverError();
+      return false;
     }
   }
 
   @override
-  Future<({AuthFailure? failure, String? signature})> signChallenge(
-      String challenge) async {
+  Future<String?> signChallenge(String challenge) async {
     try {
-      if (!await _securityService.hasKey()) {
-        return (failure: const AuthFailure.keyPairMissing(), signature: null);
-      }
-      final signature = await _securityService.signChallenge(challenge);
-      return (failure: null, signature: signature);
+      if (!await _securityService.hasKey()) return null;
+      return await _securityService.signChallenge(challenge);
     } catch (e) {
-      return (
-        failure: AuthFailure.biometricError(e.toString()),
-        signature: null
-      );
+      return null;
     }
   }
 }
