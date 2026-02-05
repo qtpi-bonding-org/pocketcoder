@@ -14,7 +14,7 @@ class PocoAnimator extends StatefulWidget {
     this.sequence = const [
       (AppAscii.pocoAwake, 2000),
       (AppAscii.pocoSleepy, 150), // Blink
-      (AppAscii.pocoAwake, 3000),
+      (AppAscii.pocoThinking, 3000),
       (AppAscii.pocoHappy, 2000),
       (AppAscii.pocoAwake, 2500),
       (AppAscii.pocoSleepy, 150), // Blink
