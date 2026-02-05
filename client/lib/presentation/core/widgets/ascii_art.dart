@@ -86,7 +86,9 @@ class AsciiFace extends StatelessWidget {
         color: color,
         fontSize: fontSize,
         height: 1.0,
-        fontFamily: 'VT323',
+        fontFamily: 'Noto Sans Mono',
+        leadingDistribution: TextLeadingDistribution.even,
+        letterSpacing: 0,
         fontWeight: FontWeight.bold,
       ),
     );
