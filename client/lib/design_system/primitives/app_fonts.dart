@@ -7,7 +7,7 @@ import 'app_sizes.dart';
 class AppFonts {
   /// Header font family
   static const List<String> headerFontFallbacks = [
-    'Atkinson Hyperlegible Mono',
+    'Share Tech Mono',
   ];
 
   /// Body font family
@@ -15,7 +15,7 @@ class AppFonts {
     'Noto Sans Mono',
   ];
 
-  static const String headerFamily = 'Atkinson Hyperlegible Mono';
+  static const String headerFamily = 'Share Tech Mono';
   static const String bodyFamily = 'Noto Sans Mono';
 
   // Weight Classes
