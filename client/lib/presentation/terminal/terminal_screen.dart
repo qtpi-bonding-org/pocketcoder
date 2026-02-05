@@ -6,6 +6,11 @@ import '../../app_router.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/poco_animator.dart';
 import '../core/widgets/terminal_footer.dart';
+import '../../design_system/primitives/app_fonts.dart';
+import '../../design_system/primitives/app_palette.dart';
+import '../../design_system/primitives/app_sizes.dart';
+import '../../design_system/primitives/spacers.dart';
+import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/terminal_input.dart';
 
 class TerminalScreen extends StatefulWidget {
@@ -83,35 +88,37 @@ class _TerminalScreenState extends State<TerminalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppPalette.primary.backgroundPrimary,
       body: ScanlineWidget(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: EdgeInsets.all(AppSizes.space * 3),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                const SizedBox(height: 24),
+                VSpace.x3,
                 Expanded(
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color:
-                              const Color(0xFF39FF14).withValues(alpha: 0.2)),
-                      color: Colors.black.withValues(alpha: 0.3),
+                        color: AppPalette.primary.textPrimary
+                            .withValues(alpha: 0.2),
+                      ),
+                      color: AppPalette.primary.backgroundPrimary
+                          .withValues(alpha: 0.3),
                     ),
                     child: Column(
                       children: [
                         Expanded(child: _buildLogView()),
                         _buildInput(),
-                        const SizedBox(height: 8), // Padding bottom for input
+                        VSpace.x1, // Padding bottom for input
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                VSpace.x1_5,
               ],
             ),
           ),
@@ -143,38 +150,53 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Center(
+        Center(
           child: Padding(
-            padding: EdgeInsets.only(bottom: 8.0),
-            child: PocoAnimator(fontSize: 20),
+            padding: EdgeInsets.only(bottom: AppSizes.space),
+            child: Column(
+              children: [
+                PocoAnimator(fontSize: AppSizes.fontBig),
+                VSpace.x0_5,
+                Text(
+                  'Poco',
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color:
+                        AppPalette.primary.textPrimary.withValues(alpha: 0.8),
+                    fontFamily: AppFonts.bodyFamily,
+                    fontSize: AppSizes.fontTiny,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 16),
+        VSpace.x2,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'POCKETCODER v1.0.4',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF39FF14),
-                    letterSpacing: 2,
-                  ),
+              style: context.textTheme.titleSmall?.copyWith(
+                color: AppPalette.primary.textPrimary,
+                letterSpacing: 2,
+              ),
             ),
-            const Text(
+            Text(
               '[ ENCRYPTED CONNECTION ]',
               style: TextStyle(
-                color: Color(0xFF39FF14),
-                fontSize: 10,
+                color: AppPalette.primary.textPrimary,
+                fontSize: AppSizes.fontMini,
                 letterSpacing: 1,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        VSpace.x1,
         Container(
           height: 1,
           width: double.infinity,
-          color: const Color(0xFF39FF14).withValues(alpha: 0.3),
+          color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
         ),
       ],
     );
@@ -182,17 +204,21 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
   Widget _buildLogView() {
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.space * 2,
+        vertical: AppSizes.space,
+      ),
       itemCount: _logs.length,
       itemBuilder: (context, index) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
+          padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
           child: Text(
             _logs[index],
-            style: const TextStyle(
-              color: Color(0xFF33FF33),
-              fontSize: 14,
-              fontFamily: 'Noto Sans Mono',
+            style: TextStyle(
+              color: AppPalette.primary
+                  .primaryColor, // Using slightly different green for logs
+              fontSize: AppSizes.fontSmall,
+              fontFamily: AppFonts.bodyFamily,
             ),
           ),
         );
