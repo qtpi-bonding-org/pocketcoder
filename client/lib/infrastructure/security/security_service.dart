@@ -41,10 +41,6 @@ class SecurityService {
     // 1. Authenticate User (FaceID/TouchID)
     final didAuthenticate = await _localAuth.authenticate(
       localizedReason: 'Please authenticate to sign this action',
-      options: const AuthenticationOptions(
-        stickyAuth: true,
-        biometricOnly: true,
-      ),
     );
 
     if (!didAuthenticate) {

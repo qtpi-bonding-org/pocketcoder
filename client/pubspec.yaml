@@ -48,7 +48,11 @@ dependencies:
   webcrypto: ^0.6.0
   local_auth: ^3.0.0
   flutter_secure_storage: ^10.0.0
-  pocketbase: ^0.23.2
+  pocketbase_drift: ^0.3.13
+  drift: ^2.31.0
+  sqlite3_flutter_libs: ^0.5.41
+  path_provider: ^2.1.5
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
@@ -66,3 +70,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/pb_schema.json
