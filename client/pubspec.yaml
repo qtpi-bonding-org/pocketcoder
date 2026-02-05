@@ -85,3 +85,6 @@ flutter:
           weight: 500
         - asset: assets/Noto_Sans_Mono/static/NotoSansMono-Bold.ttf
           weight: 700
+    - family: VT323
+      fonts:
+        - asset: assets/VT323/VT323-Regular.ttf
