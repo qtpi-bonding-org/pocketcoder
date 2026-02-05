@@ -786,7 +786,7 @@ packages:
     source: hosted
     version: "2.1.8"
   pocketbase:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: pocketbase
       sha256: b94e63f00ce29c5f465e8122ae63cdf4e3c37f9b3dc6d04f0dfe6625bcdb8839
