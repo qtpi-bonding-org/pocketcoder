@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:test_app/app/bootstrap.dart';
 import 'package:test_app/domain/auth/i_auth_repository.dart';
 import '../core/widgets/scanline_widget.dart';
+import '../core/widgets/ascii_logo.dart';
+import '../core/widgets/ascii_art.dart';
 
 class TerminalScreen extends StatefulWidget {
   const TerminalScreen({super.key});
@@ -80,15 +82,42 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'POCKETCODER v1.0.4',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: const Color(0xFF39FF14),
-                letterSpacing: 2,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(
+              child: AsciiLogo(
+                text: AppAscii.logo,
               ),
+            ),
+            const SizedBox(width: 16),
+            AsciiFace.neutral(fontSize: 20),
+          ],
         ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'POCKETCODER v1.0.4',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFF39FF14),
+                    letterSpacing: 2,
+                  ),
+            ),
+            const Text(
+              '[ ENCRYPTED CONNECTION ]',
+              style: TextStyle(
+                color: Color(0xFF39FF14),
+                fontSize: 10,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         Container(
-          height: 2,
+          height: 1,
           width: double.infinity,
           color: const Color(0xFF39FF14).withValues(alpha: 0.3),
         ),
