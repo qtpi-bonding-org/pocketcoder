@@ -9,6 +9,7 @@ class AppSizes {
   static double get space => UiScaler.instance.px(8.0);
 
   // --- Font Sizes (Semantic) ---
+  static double get fontTiny => UiScaler.instance.sp(10.0);
   static double get fontMini => UiScaler.instance.sp(12.0);
   static double get fontSmall => UiScaler.instance.sp(14.0);
   static double get fontStandard => UiScaler.instance.sp(16.0);

@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../design_system/primitives/app_palette.dart';
+import '../../../design_system/primitives/app_sizes.dart';
 import 'ascii_art.dart';
 
 class PocoAnimator extends StatefulWidget {
-  final double fontSize;
-  final Color color;
+  final double? fontSize;
+  final Color? color;
   final List<(String, int)> sequence;
 
   const PocoAnimator({
     super.key,
-    this.fontSize = 16,
-    this.color = const Color(0xFF39FF14),
+    this.fontSize,
+    this.color,
     this.sequence = const [
       (AppAscii.pocoAwake, 2000),
       (AppAscii.pocoSleepy, 150), // Blink
@@ -69,8 +71,8 @@ class _PocoAnimatorState extends State<PocoAnimator> {
   Widget build(BuildContext context) {
     return AsciiFace(
       face: _currentFace,
-      fontSize: widget.fontSize,
-      color: widget.color,
+      fontSize: widget.fontSize ?? AppSizes.fontStandard,
+      color: widget.color ?? AppPalette.primary.textPrimary,
     );
   }
 }
