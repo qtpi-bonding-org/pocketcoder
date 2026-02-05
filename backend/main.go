@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/pocketbase/pocketbase/tools/subscriptions"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/pocketbase/pocketbase/tools/hook"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
@@ -94,6 +97,62 @@ func main() {
 		Func: func(e *core.ServeEvent) error {
 			// Serve static files
 			e.Router.GET("/{path...}", apis.Static(os.DirFS("./pb_public"), false))
+
+			// ------------------------------------------------------------
+			// ⚡ EPHEMERAL STREAM (Ghost Stream)
+			// ------------------------------------------------------------
+			// This endpoint allows the Agent to pipe high-volume logs directly
+			// to connected clients (Flutter) without saving to the DB.
+			e.Router.POST("/api/pocketcoder/stream", func(c *core.RequestEvent) error {
+				// 1. Security Check: Only Agent or Admin can broadcast
+				authRec := c.Auth
+				if authRec == nil || (authRec.GetString("role") != "agent" && authRec.GetString("role") != "admin") {
+					return apis.NewForbiddenError("Only agents can broadcast streams", nil)
+				}
+
+				// 2. Parse Payload
+				var payload struct {
+					Topic string `json:"topic"`
+					Data  any    `json:"data"`
+				}
+				if err := c.BindBody(&payload); err != nil {
+					return apis.NewBadRequestError("Invalid payload", err)
+				}
+
+				// 3. Broadcast to Subscribers
+				dataBytes, err := json.Marshal(payload.Data)
+				if err != nil {
+					return err
+				}
+
+				message := subscriptions.Message{
+					Name: payload.Topic,
+					Data: dataBytes,
+				}
+
+				// app.SubscriptionsBroker().ChunkedClients(300) returns chunks of clients
+				// We iterate and send to those who subscribed to this topic.
+				chunks := c.App.SubscriptionsBroker().ChunkedClients(300)
+				group := new(errgroup.Group)
+
+				for _, chunk := range chunks {
+					group.Go(func() error {
+						for _, client := range chunk {
+							if !client.HasSubscription(payload.Topic) {
+								continue
+							}
+							client.Send(message)
+						}
+						return nil
+					})
+				}
+
+				if err := group.Wait(); err != nil {
+					return err
+				}
+
+				return c.JSON(200, map[string]string{"status": "ok"})
+			})
 
 			// ------------------------------------------------------------
 			// 🛡️ RUNTIME SEEDING (User Account Setup)
