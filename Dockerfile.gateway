@@ -1,0 +1,18 @@
+FROM rust:1.83-alpine AS builder
+RUN apk add --no-cache musl-dev gcc
+WORKDIR /app
+COPY connector/Cargo.toml connector/Cargo.lock* ./
+COPY connector/src ./src
+RUN cargo build --release --bin pocketcoder-gateway
+RUN cargo build --release --bin shell_bridge
+
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates tmux bash
+WORKDIR /app
+COPY --from=builder /app/target/release/pocketcoder-gateway /app/pocketcoder-gateway
+COPY --from=builder /app/target/release/shell_bridge /app/shell_bridge
+
+# Create the share directory for the binary bridge
+RUN mkdir -p /app/bridge_share &&     cp /app/shell_bridge /app/bridge_share/pocketcoder-shell &&     chmod +x /app/bridge_share/pocketcoder-shell
+
+CMD ["/app/pocketcoder-gateway"]
