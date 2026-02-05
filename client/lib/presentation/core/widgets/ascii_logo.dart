@@ -22,9 +22,10 @@ class AsciiLogo extends StatelessWidget {
         style: TextStyle(
           color: color,
           fontSize: fontSize,
-          height: 1.1,
+          height: 1.0,
+          leadingDistribution: TextLeadingDistribution.even,
           fontWeight: FontWeight.bold,
-          fontFamily: 'VT323',
+          fontFamily: 'Noto Sans Mono',
           shadows: [
             Shadow(
               color: color.withValues(alpha: 0.5),
