@@ -87,11 +87,11 @@ class _TerminalScreenState extends State<TerminalScreen> {
           children: [
             const Expanded(
               child: AsciiLogo(
-                text: AppAscii.logo,
+                text: AppAscii.pocketCoderLogo,
               ),
             ),
             const SizedBox(width: 16),
-            AsciiFace.neutral(fontSize: 20),
+            AsciiFace.pocoSleepy(fontSize: 20),
           ],
         ),
         const SizedBox(height: 16),
