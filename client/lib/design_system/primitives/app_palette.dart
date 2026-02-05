@@ -5,25 +5,25 @@ import 'package:flutter_color_palette/flutter_color_palette.dart';
 class AppPalette {
   static final IColorPalette primary = AppColorPalette(
     colors: const {
-      // Core palette (light mode)
-      'color1': Color(0xFFFAF7F0), // Background
-      'color2': Color(0xFF2B2B2B), // Text
-      'color3': Color(0xFF006280), // Teal - Primary
-      'neutral1': Color(0xFF4D5B60), // Secondary text
+      // Core palette (Cyberpunk Terminal)
+      'color1': Color(0xFF050505), // Background (Deep Black)
+      'color2': Color(0xFF00FF41), // Text (Neon Green)
+      'color3': Color(0xFF008F11), // Dimmer Green - Primary/Accent
+      'neutral1': Color(0xFF003B00), // Very dim green - Secondary text
 
       // Interactable color
-      'interactable': Color(0xFF006280),
+      'interactable': Color(0xFF00FF41), // Neon Green
 
       // Semantic colors
-      'info': Color(0xFFB9D9ED), // Blue
-      'success': Color(0xFFCDE8C4), // Green
-      'error': Color(0xFFF4C1C1), // Pink
-      'warning': Color(0xFFF5E6A3), // Yellow
+      'info': Color(0xFF008F11), // Dim Green
+      'success': Color(0xFF00FF41), // Neon Green
+      'error': Color(0xFFFF0033), // Terminal Red
+      'warning': Color(0xFFFFFF00), // Terminal Yellow
 
       // Destructive color
-      'destructive': Color(0xFFBC4B41), // Red
+      'destructive': Color(0xFFFF0033), // Red
     },
-    name: 'App Primary',
+    name: 'PocketCoder Terminal',
   );
 
   /// Automatic dark mode via luminance inversion
