@@ -12,6 +12,8 @@ import 'package:test_app/presentation/core/widgets/terminal_input.dart';
 import '../core/widgets/ascii_art.dart';
 import '../core/widgets/poco_widget.dart';
 import '../../application/system/poco_cubit.dart';
+import '../../domain/auth/i_auth_repository.dart';
+import '../../app/bootstrap.dart';
 
 class BootScreen extends StatefulWidget {
   const BootScreen({super.key});
@@ -120,14 +122,11 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   Future<void> _checkConnection() async {
-    // Simulate failure by default, but allow checking the variable to avoid dead code warning
-    final connected = _urlController.text.contains('success');
-
     if (mounted) {
       context.read<PocoCubit>().updateMessage("Checking secure connection...");
     }
 
-    await Future.delayed(const Duration(seconds: 2));
+    final connected = await getIt<IAuthRepository>().healthCheck();
 
     if (mounted) {
       if (connected) {
@@ -154,6 +153,9 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   Future<void> _handleConfigRetry() async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return;
+
     if (mounted) {
       context.read<PocoCubit>().updateMessage(
             "Pinging... Hello?",
@@ -164,15 +166,27 @@ class _BootScreenState extends State<BootScreen> {
       });
     }
 
-    await Future.delayed(const Duration(seconds: 1));
+    final repo = getIt<IAuthRepository>();
+    repo.updateBaseUrl(url);
+    final connected = await repo.healthCheck();
 
     if (mounted) {
-      context.read<PocoCubit>().updateMessage(
-            "Home Sweet Localhost! We are safe.",
-            sequence: PocoExpressions.happy,
-          );
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) context.goNamed('onboarding');
+      if (connected) {
+        context.read<PocoCubit>().updateMessage(
+              "Home Sweet Localhost! We are safe.",
+              sequence: PocoExpressions.happy,
+            );
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) context.goNamed('onboarding');
+      } else {
+        context.read<PocoCubit>().updateMessage(
+              "Still no response... checking frequencies...",
+              sequence: PocoExpressions.nervous,
+            );
+        setState(() {
+          _showConfig = true;
+        });
+      }
     }
   }
 
