@@ -11,12 +11,12 @@ services:
       - pb_data:/app/pb_data
       - pocketcoder-logs:/app/pb_public/logs
     environment:
-      - ADMIN_EMAIL=${ADMIN_EMAIL}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
+      - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
+      - POCKETBASE_USER_EMAIL=${POCKETBASE_USER_EMAIL}
+      - POCKETBASE_USER_PASSWORD=${POCKETBASE_USER_PASSWORD}
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
-      - USER_EMAIL=${USER_EMAIL}
-      - USER_PASSWORD=${USER_PASSWORD}
     restart: unless-stopped
     networks:
       - pocketcoder-memory
