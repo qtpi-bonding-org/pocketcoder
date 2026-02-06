@@ -65,9 +65,13 @@ class AppAscii {
 ┌─────┐
 │ ^_~ │
 └─────┘''';
-  static const String pocoSuspicious = r'''
+  static const String pocoLookRight = r'''
 ┌─────┐
 │ >_> │
+└─────┘''';
+  static const String pocoLookLeft = r'''
+┌─────┐
+│ <_< │
 └─────┘''';
 
   static const String pocoGreedy = r'''
