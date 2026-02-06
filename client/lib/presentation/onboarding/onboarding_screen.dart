@@ -24,24 +24,15 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _urlController = TextEditingController(text: 'http://127.0.0.1:8090');
 
   bool _isLoading = false;
-  bool _showConfig = false;
   String? _errorMessage;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _urlController.dispose();
     super.dispose();
-  }
-
-  void _toggleConfig() {
-    setState(() {
-      _showConfig = !_showConfig;
-    });
   }
 
   Future<void> _handleLogin() async {
@@ -104,12 +95,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   PocoAnimator(fontSize: AppSizes.fontLarge),
                   VSpace.x2,
                   TypewriterText(
-                    text: 'HI! I AM POCO THE POCKETCODER.',
+                    text:
+                        'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.',
                     speed: const Duration(milliseconds: 60),
                     style: TextStyle(
                       fontFamily: AppFonts.headerFamily,
                       color: AppPalette.primary.textPrimary,
-                      fontSize: AppSizes.fontLarge,
+                      fontSize: AppSizes.fontStandard,
                       letterSpacing: 2,
                       fontWeight: AppFonts.heavy,
                     ),
@@ -126,37 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     VSpace.x2,
                   ],
-                  if (_showConfig) ...[
-                    Container(
-                      padding: EdgeInsets.all(AppSizes.space),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: AppPalette.primary.textPrimary
-                              .withValues(alpha: 0.3),
-                          style: BorderStyle.solid,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'SERVER CONFIGURATION',
-                            style: TextStyle(
-                              fontFamily: AppFonts.headerFamily,
-                              color: AppPalette.primary.textPrimary,
-                              fontSize: AppSizes.fontStandard,
-                            ),
-                          ),
-                          VSpace.x2,
-                          _buildTextField(
-                            controller: _urlController,
-                            label: 'HOST URL',
-                            hint: 'http://127.0.0.1:8090',
-                          ),
-                        ],
-                      ),
-                    ),
-                    VSpace.x4,
-                  ],
+                  VSpace.x4,
                   _buildTextField(
                     controller: _emailController,
                     label: 'IDENTITY',
@@ -192,11 +154,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             keyLabel: 'F1',
             label: _isLoading ? 'PROCESSING...' : 'LOGIN',
             onTap: _isLoading ? () {} : _handleLogin,
-          ),
-          TerminalAction(
-            keyLabel: 'F10',
-            label: _showConfig ? 'HIDE CONFIG' : 'CONFIG',
-            onTap: _toggleConfig,
           ),
         ],
       ),
