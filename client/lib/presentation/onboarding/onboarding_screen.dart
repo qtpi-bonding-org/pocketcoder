@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import '../../app_router.dart';
 import '../../design_system/primitives/app_fonts.dart';
 import '../../design_system/primitives/app_palette.dart';
 import '../../design_system/primitives/app_sizes.dart';
 import '../../design_system/primitives/spacers.dart';
+import '../../application/system/auth_cubit.dart';
+import '../../application/system/poco_cubit.dart';
 import '../core/widgets/ascii_art.dart';
 import '../core/widgets/ascii_logo.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
-import '../core/widgets/poco_animator.dart';
-import '../core/widgets/typewriter_text.dart';
+import '../core/widgets/poco_widget.dart';
 import '../../app/bootstrap.dart';
-import '../../domain/auth/i_auth_repository.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -25,8 +27,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _isLoading = false;
-  String? _errorMessage;
+  @override
+  void initState() {
+    super.initState();
+    // Reset Poco for this screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PocoCubit>().reset(
+          'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.');
+      context.read<PocoCubit>().setExpression(PocoExpressions.scanning);
+    });
+  }
 
   @override
   void dispose() {
@@ -35,127 +45,100 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final repo = getIt<IAuthRepository>();
-      // TODO: Configure repo with _urlController.text if needed
-
-      final success = await repo.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
-      if (mounted) {
-        if (success) {
-          context.goNamed(RouteNames.home);
-        } else {
-          setState(() {
-            _errorMessage = 'ACCESS DENIED. CHECK CREDENTIALS.';
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'SYSTEM ERROR: ${e.toString()}';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppPalette.primary.backgroundPrimary,
-      body: ScanlineWidget(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 600),
-              padding: EdgeInsets.all(AppSizes.space * 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AsciiLogo(
-                    text: AppAscii.pocketCoderLogo,
-                    fontSize: AppSizes.fontTiny,
-                  ),
-                  VSpace.x8,
-                  PocoAnimator(fontSize: AppSizes.fontLarge),
-                  VSpace.x2,
-                  TypewriterText(
-                    text:
-                        'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.',
-                    speed: const Duration(milliseconds: 60),
-                    style: TextStyle(
-                      fontFamily: AppFonts.headerFamily,
-                      color: AppPalette.primary.textPrimary,
-                      fontSize: AppSizes.fontStandard,
-                      letterSpacing: 2,
-                      fontWeight: AppFonts.heavy,
-                    ),
-                  ),
-                  VSpace.x4,
-                  if (_errorMessage != null) ...[
-                    Text(
-                      _errorMessage!,
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: AppPalette.primary.errorColor,
-                        fontSize: AppSizes.fontSmall,
+    return BlocProvider(
+      create: (context) => getIt<AuthCubit>(),
+      child: BlocListener<AuthCubit, AuthState>(
+        listener: (context, state) {
+          if (state.status == UiFlowStatus.loading) {
+            context.read<PocoCubit>().setExpression(PocoExpressions.scanning);
+          } else if (state.status == UiFlowStatus.success) {
+            context.read<PocoCubit>().updateMessage(
+                'Identity verified! Welcome home. I knew it was you—just had to make sure the Cloud wasn\'t spoofing your signature.',
+                sequence: PocoExpressions.happy);
+            Future.delayed(const Duration(seconds: 2), () {
+              if (context.mounted) context.goNamed(RouteNames.home);
+            });
+          } else if (state.status == UiFlowStatus.failure) {
+            context.read<PocoCubit>().updateMessage(
+                state.error?.toString() ?? 'ACCESS DENIED.',
+                sequence: PocoExpressions.nervous);
+          }
+        },
+        child: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, authState) {
+            final isLoading = authState.status == UiFlowStatus.loading;
+
+            return Scaffold(
+              backgroundColor: AppPalette.primary.backgroundPrimary,
+              body: ScanlineWidget(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      padding: EdgeInsets.all(AppSizes.space * 4),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AsciiLogo(
+                            text: AppAscii.pocketCoderLogo,
+                            fontSize: AppSizes.fontTiny,
+                          ),
+                          VSpace.x8,
+                          PocoWidget(pocoSize: AppSizes.fontLarge),
+                          VSpace.x4,
+                          _buildTextField(
+                            controller: _emailController,
+                            label: 'IDENTITY',
+                            hint: 'ENTER EMAIL',
+                          ),
+                          VSpace.x2,
+                          _buildTextField(
+                            controller: _passwordController,
+                            label: 'PASSPHRASE',
+                            hint: 'ENTER PASSWORD',
+                            obscureText: true,
+                            onSubmitted: (_) => isLoading
+                                ? null
+                                : context.read<AuthCubit>().login(
+                                      _emailController.text.trim(),
+                                      _passwordController.text,
+                                    ),
+                          ),
+                          VSpace.x2,
+                          if (isLoading)
+                            Text(
+                              'AUTHENTICATING...',
+                              style: TextStyle(
+                                fontFamily: AppFonts.bodyFamily,
+                                color: AppPalette.primary.textPrimary,
+                                fontSize: AppSizes.fontSmall,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    VSpace.x2,
-                  ],
-                  VSpace.x4,
-                  _buildTextField(
-                    controller: _emailController,
-                    label: 'IDENTITY',
-                    hint: 'ENTER EMAIL',
                   ),
-                  VSpace.x2,
-                  _buildTextField(
-                    controller: _passwordController,
-                    label: 'PASSPHRASE',
-                    hint: 'ENTER PASSWORD',
-                    obscureText: true,
-                    onSubmitted: (_) => _handleLogin(),
+                ),
+              ),
+              bottomNavigationBar: TerminalFooter(
+                actions: [
+                  TerminalAction(
+                    keyLabel: 'F1',
+                    label: isLoading ? 'PROCESSING...' : 'LOGIN',
+                    onTap: isLoading
+                        ? () {}
+                        : () => context.read<AuthCubit>().login(
+                              _emailController.text.trim(),
+                              _passwordController.text,
+                            ),
                   ),
-                  VSpace.x2,
-                  if (_isLoading)
-                    Text(
-                      'AUTHENTICATING...',
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: AppPalette.primary.textPrimary,
-                        fontSize: AppSizes.fontSmall,
-                      ),
-                    ),
                 ],
               ),
-            ),
-          ),
+            );
+          },
         ),
-      ),
-      bottomNavigationBar: TerminalFooter(
-        actions: [
-          TerminalAction(
-            keyLabel: 'F1',
-            label: _isLoading ? 'PROCESSING...' : 'LOGIN',
-            onTap: _isLoading ? () {} : _handleLogin,
-          ),
-        ],
       ),
     );
   }
@@ -173,14 +156,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Text(
           label,
           style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
+            fontFamily: AppFonts.headerFamily,
             color: AppPalette.primary.textPrimary.withValues(alpha: 0.7),
             fontSize: AppSizes.fontTiny,
-            letterSpacing: 1,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: AppSizes.space * 0.5),
+        const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: obscureText,
@@ -189,40 +171,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             fontFamily: AppFonts.bodyFamily,
             color: AppPalette.primary.textPrimary,
             fontSize: AppSizes.fontStandard,
-            height: 1.5,
           ),
-          cursorColor: AppPalette.primary.textPrimary,
+          cursorColor: AppPalette.primary.primaryColor,
           decoration: InputDecoration(
-            isDense: true,
             hintText: hint,
-            prefixText: '\$ ',
-            prefixStyle: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
-              color: AppPalette.primary.textPrimary,
-              fontSize: AppSizes.fontStandard,
-              fontWeight: FontWeight.bold,
-            ),
             hintStyle: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
               color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
-              fontSize: AppSizes.fontStandard,
+              fontFamily: AppFonts.bodyFamily,
             ),
+            fillColor: Colors.black,
+            filled: true,
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
-                width: 1,
+                color: AppPalette.primary.primaryColor.withValues(alpha: 0.3),
               ),
               borderRadius: BorderRadius.zero,
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: AppPalette.primary.textPrimary,
-                width: 2,
+                color: AppPalette.primary.primaryColor,
               ),
               borderRadius: BorderRadius.zero,
             ),
-            contentPadding: EdgeInsets.all(AppSizes.space),
-            filled: false,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
           ),
         ),
       ],
