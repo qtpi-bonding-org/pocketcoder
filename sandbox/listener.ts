@@ -75,12 +75,18 @@ class TmuxSession {
 
 const sessions = new Map<string, TmuxSession>();
 
-const server = Bun.serve({
-    port: 4242,
-    async fetch(req) {
-        if (req.method === 'POST') {
+
+import * as http from 'http';
+
+const server = http.createServer(async (req, res) => {
+    if (req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', async () => {
             try {
-                const { command, session_id } = await req.json();
+                const { command, session_id } = JSON.parse(body);
                 const sid = session_id || 'default';
 
                 let session = sessions.get(sid);
@@ -90,13 +96,19 @@ const server = Bun.serve({
                 }
 
                 const result = await session.exec(command);
-                return Response.json(result);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(result));
             } catch (err: any) {
-                return Response.json({ error: err.message }, { status: 500 });
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: err.message }));
             }
-        }
-        return new Response('PocketCoder Sandbox (Control Mode) Active', { status: 200 });
-    },
+        });
+    } else {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('PocketCoder Sandbox (Control Mode) Active');
+    }
 });
 
-console.log('🐚 PocketCoder Sandbox (Tmux-C) listening on port 4242...');
+server.listen(4242, () => {
+    console.log('🐚 PocketCoder Sandbox (Tmux-C) listening on port 4242...');
+});

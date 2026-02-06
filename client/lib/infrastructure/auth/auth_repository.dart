@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:test_app/domain/auth/i_auth_repository.dart';
 import 'package:test_app/infrastructure/security/security_service.dart';
 
@@ -9,6 +9,24 @@ class AuthRepository implements IAuthRepository {
   final SecurityService _securityService;
 
   AuthRepository(this._pocketBase, this._securityService);
+
+  @override
+  Stream<bool> get connectionStatus {
+    if (_pocketBase is $PocketBase) {
+      return (_pocketBase as $PocketBase).connectivity.statusStream;
+    }
+    return Stream.value(true); // Fallback if not using drift wrapper
+  }
+
+  @override
+  Future<bool> login(String email, String password) async {
+    try {
+      await _pocketBase.collection('users').authWithPassword(email, password);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
   @override
   Future<bool> registerDevice() async {

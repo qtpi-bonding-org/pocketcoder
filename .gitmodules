@@ -1,0 +1,3 @@
+[submodule "sandbox/cao"]
+	path = sandbox/cao
+	url = git@github.com:qtpi-automaton/cli-agent-orchestrator.git

@@ -19,7 +19,18 @@ COPY sandbox/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Install Dependencies for Listener (Need TS execution, likely ts-node or bun is gone now)
 # We will use 'tsx' to execute typescript directly with Node
-RUN npm install -g tsx
+RUN npm install -g tsx opencode-ai
+# --- CAO Setup (PocketCoder Integration) ---
+# Copy CAO Source (Vendored)
+COPY sandbox/cao /app/cao
+
+# Install Python dependencies and CAO in editable mode
+# We do this in one step to ensure all files (README etc) are present
+RUN pip install --no-cache-dir -e /app/cao
+
+# Set Shared Tmux Socket by default for CAO
+ENV TMUX_SOCKET=/tmp/tmux/pocketcoder
+# -------------------------------------------
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 

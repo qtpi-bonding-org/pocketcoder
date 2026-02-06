@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:test_app/l10n/app_localizations.dart';
+import 'package:test_app/application/system/system_status_cubit.dart';
 
 import '../app_router.dart';
 import '../design_system/theme/app_theme.dart';
@@ -22,34 +24,42 @@ class App extends StatelessWidget {
     return ListenableBuilder(
       listenable: themeService,
       builder: (context, _) {
-        return MaterialApp.router(
-          title: 'Test App',
-          routerConfig: AppRouter.router,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (context) => getIt<SystemStatusCubit>(),
+            ),
           ],
-          supportedLocales: const [Locale('en')],
-          builder: (context, child) {
-            // Initialize UI Scaler
-            UiScaler.instance.init(context);
+          child: MaterialApp.router(
+            title: 'Test App',
+            routerConfig: AppRouter.router,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode:
+                themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('en')],
+            builder: (context, child) {
+              // Initialize UI Scaler
+              UiScaler.instance.init(context);
 
-            // Update Localization Service
-            final l10n = AppLocalizations.of(context);
-            if (l10n != null) {
-              final service = getIt<cubit_ui_flow.ILocalizationService>();
-              if (service is AppLocalizationService) {
-                service.update(l10n);
+              // Update Localization Service
+              final l10n = AppLocalizations.of(context);
+              if (l10n != null) {
+                final service = getIt<cubit_ui_flow.ILocalizationService>();
+                if (service is AppLocalizationService) {
+                  service.update(l10n);
+                }
               }
-            }
 
-            return child ?? const SizedBox.shrink();
-          },
+              return child ?? const SizedBox.shrink();
+            },
+          ),
         );
       },
     );
