@@ -51,34 +51,24 @@ class _TerminalScreenState extends State<TerminalScreen> {
     _addLog('% $input');
     _inputController.clear();
 
-    if (input.toUpperCase() == 'REGISTER') {
-      await _handleRegistration();
-    } else if (input.toUpperCase().startsWith('LOGIN')) {
+    if (input.toUpperCase().startsWith('LOGIN')) {
       final parts = input.trim().split(' ');
       if (parts.length == 3) {
         await _handleLogin(parts[1], parts[2]);
       } else {
         _addLog('USAGE: LOGIN <EMAIL> <PASSWORD>');
       }
-    } else if (input.toUpperCase() == 'AUTHORIZE') {
-      await _handleSign();
+    } else if (input.toUpperCase().startsWith('AUTHORIZE')) {
+      final parts = input.trim().split(' ');
+      if (parts.length == 2) {
+        await _handleAuthorize(parts[1]);
+      } else {
+        _addLog('USAGE: AUTHORIZE <PERMISSION_ID>');
+      }
     } else if (input.toUpperCase() == 'HELP') {
-      _addLog('AVAILABLE COMMANDS: REGISTER, AUTHORIZE, HELP');
+      _addLog('AVAILABLE COMMANDS: LOGIN, AUTHORIZE, HELP');
     } else {
       _addLog('UNKNOWN COMMAND. TYPE "HELP" FOR OPTIONS.');
-    }
-  }
-
-  Future<void> _handleRegistration() async {
-    _addLog('INITIATING DEVICE REGISTRATION...');
-    final repo = getIt<IAuthRepository>();
-    final success = await repo.registerDevice();
-
-    if (success) {
-      _addLog('DEVICE REGISTERED SUCCESSFULLY');
-      _addLog('SECURE ENCLAVE KEY PERSISTED');
-    } else {
-      _addLog('REGISTRATION FAILED: CHECK AUTH STATE');
     }
   }
 
@@ -95,16 +85,15 @@ class _TerminalScreenState extends State<TerminalScreen> {
     }
   }
 
-  Future<void> _handleSign() async {
-    _addLog('REQUESTING SIGNATURE FOR CHALLENGE: [CHAL_821]');
+  Future<void> _handleAuthorize(String permissionId) async {
+    _addLog('APPROVING PERMISSION: $permissionId...');
     final repo = getIt<IAuthRepository>();
-    final signature = await repo.signChallenge('CHAL_821');
+    final success = await repo.approvePermission(permissionId);
 
-    if (signature != null) {
-      _addLog('SIGNATURE GENERATED: ${signature.substring(0, 10)}...');
-      _addLog('IDENTITY VERIFIED VIA BIOMETRICS');
+    if (success) {
+      _addLog('PERMISSION GRANTED. EXECUTING...');
     } else {
-      _addLog('SIGNATURE REJECTED OR ABORTED');
+      _addLog('AUTHORIZATION FAILED. CHECK SYSTEM STATUS.');
     }
   }
 
