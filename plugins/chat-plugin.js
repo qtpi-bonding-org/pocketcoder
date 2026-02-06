@@ -7,18 +7,19 @@
  * 3. Chat Sync: (Future) Poll/Push messages between DB and OpenCode.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+const fs = require('fs');
+const path = require('path');
 
-export default async ({ client }: any) => {
+module.exports = async ({ client }) => {
     console.log("📡 [PocketCoder] Communications Officer On Deck");
+    try { fs.writeFileSync('/logs/plugin_startup.txt', 'Plugin Loaded at ' + new Date().toISOString()); } catch (e) { }
 
     const POCKETBASE_URL = process.env.POCKETBASE_URL || "http://pocketbase:8090";
     const AGENT_EMAIL = process.env.AGENT_EMAIL || 'agent@pocketcoder.local';
     const AGENT_PASSWORD = process.env.AGENT_PASSWORD || 'EJ6IiRKdHR8Do6IogD7PApyErxDZhUmp';
     const LOG_DIR = "/logs";
 
-    let token: string | null = null;
+    let token = null;
     let jobID = "default"; // TODO: Get from session ID or environment
 
     // Ensure log directory exists (should be mounted, but safe check)
@@ -39,7 +40,7 @@ export default async ({ client }: any) => {
                 body: JSON.stringify({ identity: AGENT_EMAIL, password: AGENT_PASSWORD }),
             });
             if (!res.ok) throw new Error("Auth Failed");
-            const data = await res.json() as any;
+            const data = await res.json();
             token = data.token;
             return token;
         } catch (e) {
@@ -51,7 +52,7 @@ export default async ({ client }: any) => {
     /**
      * 🧊 COLD PIPE: File Logging
      */
-    function logToFile(text: string) {
+    function logToFile(text) {
         try {
             const logFile = path.join(LOG_DIR, `job_${jobID}.log`);
             const timestamp = new Date().toISOString();
@@ -64,7 +65,7 @@ export default async ({ client }: any) => {
     /**
      * 🔥 HOT PIPE: Ephemeral Stream
      */
-    async function streamToUI(topic: string, data: any) {
+    async function streamToUI(topic, data) {
         const authToken = await getAuthToken();
         if (!authToken) return;
 
@@ -91,13 +92,25 @@ export default async ({ client }: any) => {
      */
     let lastCheck = new Date().toISOString();
 
+    /**
+     * 📥 INBOUND PIPE: Poll for User Messages
+     */
     async function pollInbox() {
-        // Authenticate if needed
         const authToken = await getAuthToken();
-        if (!authToken) return;
+        if (!authToken) {
+            setTimeout(pollInbox, 1000);
+            return;
+        }
 
         try {
-            // Fetch newer messages
+            // Fetch NEW messages (user role, not processed)
+            // Note: PocketBase filter syntax for JSON fields is tricky. 
+            // Simpler: Fetch user messages created > last check, then check metadata client-side if needed 
+            // OR use a dedicated 'read' field if we had one.
+            // Let's stick to created > lastCheck for the "Tail" behavior, 
+            // BUT we also need to ensure we don't re-process if we crash/restart.
+            // For this prototype, 'created' > 'now' (at startup) + memory cursor is safest to prevent replay loops on restart.
+
             const filter = `role = 'user' && created > '${lastCheck}'`;
             const url = `${POCKETBASE_URL}/api/collections/messages/records?filter=${encodeURIComponent(filter)}&sort=created`;
 
@@ -106,12 +119,47 @@ export default async ({ client }: any) => {
             });
 
             if (res.ok) {
-                const data = await res.json() as any;
+                const data = await res.json();
                 if (data.items && data.items.length > 0) {
                     for (const msg of data.items) {
-                        // Update Cursor
                         lastCheck = msg.created;
-                        console.log(`📨 [PocketCoder] INBOUND MESSAGE: ${JSON.stringify(msg.parts)}`);
+
+                        // Skip if already processed (double safety)
+                        if (msg.metadata?.processed) continue;
+
+                        console.log(`📨 [PocketCoder] INBOUND MESSAGE: ${msg.id}`);
+
+                        // Extract Text Parts
+                        const textParts = (msg.parts || [])
+                            .filter(p => p.type === 'text')
+                            .map(p => ({ type: 'text', text: p.content }));
+
+                        if (textParts.length > 0) {
+                            try {
+                                console.log(`🧠 [PocketCoder] Injecting into Brain (Session: ${jobID})`);
+                                await client.session.prompt({
+                                    path: { id: jobID },
+                                    body: {
+                                        parts: textParts
+                                    }
+                                });
+
+                                // Mark as processed
+                                await fetch(`${POCKETBASE_URL}/api/collections/messages/records/${msg.id}`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                        'Authorization': `Bearer ${authToken}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        metadata: { ...msg.metadata, processed: true }
+                                    })
+                                });
+
+                            } catch (err) {
+                                console.error("🧠 [PocketCoder] Injection Failed:", err);
+                            }
+                        }
                     }
                 }
             }
@@ -119,7 +167,6 @@ export default async ({ client }: any) => {
             console.error("📡 [PocketCoder] Inbound Poll Error:", e);
         }
 
-        // Loop
         setTimeout(pollInbox, 1000);
     }
 
@@ -128,7 +175,7 @@ export default async ({ client }: any) => {
 
     return {
         name: "chat-plugin",
-        "event": async ({ event }: any) => {
+        "event": async ({ event }) => {
             // Update Job ID if session changes
             if (event.properties?.info?.sessionID) {
                 jobID = event.properties.info.sessionID;
@@ -149,9 +196,6 @@ export default async ({ client }: any) => {
 
                     // Hot Pipe
                     streamToUI("logs", payload);
-
-                    // Cold Pipe (maybe too verbose? logging chunks is messy. Log full message on finish instead?)
-                    // For now, let's log major events to cold pipe.
                 }
             }
 
