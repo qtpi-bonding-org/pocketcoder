@@ -10,6 +10,7 @@ import 'package:test_app/presentation/core/widgets/poco_animator.dart';
 import 'package:test_app/presentation/core/widgets/scanline_widget.dart';
 import 'package:test_app/presentation/core/widgets/terminal_input.dart';
 import 'package:test_app/presentation/core/widgets/ascii_art.dart';
+import 'package:test_app/presentation/core/widgets/typewriter_text.dart';
 
 class BootScreen extends StatefulWidget {
   const BootScreen({super.key});
@@ -33,6 +34,7 @@ class _BootScreenState extends State<BootScreen> {
 
   // Animation
   List<(String, int)> _pocoSequence = [(AppAscii.pocoSleepy, 1000)];
+  final List<String> _pocoHistory = [];
   String _pocoMessage = "";
 
   @override
@@ -49,39 +51,47 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   void _startBootSequence() async {
-    // Phase 1: Raw Logs (0s - depending on log length)
+    // Schedule the "Director" cue: Wake up Poco at 2.5s mark
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) _wakeUpPoco();
+    });
+
+    // Phase 1: Raw Logs
     String fileContent = await rootBundle.loadString('assets/boot_log.txt');
     final bootLogs = fileContent.split('\n');
 
-    // Stream logs rapidly
-    for (var i = 0; i < bootLogs.length; i++) {
-      if (!mounted) return;
-
-      // Variable speed to simulate processing
-      // Fast scroll for the bulk, slow down for important bits
-      int delay = 10;
-      if (i < 10) delay = 200; // Slow start (kernel)
-      if (i > bootLogs.length - 20) delay = 100; // Slow end (services)
-
-      await Future.delayed(Duration(milliseconds: delay));
-
+    // Load ALL logs instantly
+    if (mounted) {
       setState(() {
-        _logs.add(bootLogs[i]);
+        _logs.addAll(bootLogs);
       });
-      _scrollToBottom();
     }
 
-    // Phase 2: Wake Up
-    _wakeUpPoco();
+    // Scroll linearly (Cinematic credits style)
+    // Wait one frame for layout to compute maxExtent
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        // Calculate duration based on length to ensure constant speed
+        // e.g., 20ms per line equivalent
+        final duration = Duration(milliseconds: bootLogs.length * 20);
 
-    // Continue adding background noise logs forever
-    _startBackgroundLogs();
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: duration,
+          curve: Curves.linear,
+        );
+      }
+    });
+
+    // Background noise will just append later
+    // We can start it after the scroll finishes or just let it be
+    Future.delayed(Duration(milliseconds: bootLogs.length * 20), () {
+      if (mounted) _startBackgroundLogs();
+    });
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    }
+    // No-op now, handled by animation
   }
 
   void _wakeUpPoco() async {
@@ -95,20 +105,12 @@ class _BootScreenState extends State<BootScreen> {
           (AppAscii.pocoSleepy, 200),
           (AppAscii.pocoAwake, 2000),
         ];
-        _pocoMessage = "Hi! I am Poco the PocketCoder.";
+        _pocoMessage =
+            "Hi! I'm Poco, your Private Operations Coding Officer representing the PocketCoder Initiative.";
       });
     }
 
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (mounted) {
-      setState(() {
-        _pocoSequence = [(AppAscii.pocoHappy, 2000)];
-        _pocoMessage = "That's a lot of noise. Let me translate.";
-      });
-    }
-
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 4));
 
     if (mounted) {
       _checkConnection();
@@ -141,14 +143,20 @@ class _BootScreenState extends State<BootScreen> {
     // TODO: Real connection check here.
     bool connected = false; // Simulate fail for demo
 
-    // Simulate network time
-    if (mounted) setState(() => _pocoMessage = "Checking connection...");
-    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      setState(() {
+        if (_pocoMessage.isNotEmpty) _pocoHistory.add(_pocoMessage);
+        _pocoMessage = "Checking secure connection...";
+      });
+    }
+
+    await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
       if (connected) {
         // Success Path
         setState(() {
+          if (_pocoMessage.isNotEmpty) _pocoHistory.add(_pocoMessage);
           _pocoSequence = [(AppAscii.pocoHappy, 2000)];
           _pocoMessage = "Systems nominal. I'm ready.";
         });
@@ -157,12 +165,13 @@ class _BootScreenState extends State<BootScreen> {
       } else {
         // Fail Path
         setState(() {
+          if (_pocoMessage.isNotEmpty) _pocoHistory.add(_pocoMessage);
           _pocoSequence = [
             (AppAscii.pocoNervous, 500),
             (AppAscii.pocoPanic, 2000),
             (AppAscii.pocoNervous, 1000),
           ];
-          _pocoMessage = "Whoops! I can't reach the server.";
+          _pocoMessage = "I lost the signal... Where is homeserver?";
           _showConfig = true;
         });
       }
@@ -171,9 +180,10 @@ class _BootScreenState extends State<BootScreen> {
 
   Future<void> _handleConfigRetry() async {
     setState(() {
+      if (_pocoMessage.isNotEmpty) _pocoHistory.add(_pocoMessage);
       _showConfig = false;
       _pocoSequence = [(AppAscii.pocoThinking, 1000)];
-      _pocoMessage = "Retrying connection...";
+      _pocoMessage = "Pinging... Hello?";
     });
 
     // TODO: Update ExternalModule with new URL
@@ -182,8 +192,9 @@ class _BootScreenState extends State<BootScreen> {
 
     if (mounted) {
       setState(() {
+        if (_pocoMessage.isNotEmpty) _pocoHistory.add(_pocoMessage);
         _pocoSequence = [(AppAscii.pocoHappy, 2000)];
-        _pocoMessage = "Found it! We are online.";
+        _pocoMessage = "Home Sweet Localhost! We are safe.";
       });
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) context.goNamed('onboarding');
@@ -244,13 +255,32 @@ class _BootScreenState extends State<BootScreen> {
                             border: Border.all(
                                 color: AppPalette.primary.primaryColor),
                           ),
-                          child: Text(
-                            _pocoMessage,
-                            style: TextStyle(
-                              fontFamily: AppFonts.bodyFamily,
-                              color: AppPalette.primary.textPrimary,
-                              fontSize: AppSizes.fontStandard,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ..._pocoHistory.map((msg) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 4.0),
+                                    child: Text(
+                                      msg,
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.bodyFamily,
+                                        color: AppPalette.primary.textPrimary
+                                            .withValues(alpha: 0.5),
+                                        fontSize: AppSizes.fontStandard,
+                                      ),
+                                    ),
+                                  )),
+                              TypewriterText(
+                                key: ValueKey(_pocoMessage),
+                                text: _pocoMessage,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.bodyFamily,
+                                  color: AppPalette.primary.textPrimary,
+                                  fontSize: AppSizes.fontStandard,
+                                ),
+                                speed: const Duration(milliseconds: 20),
+                              ),
+                            ],
                           ),
                         ),
 
@@ -264,19 +294,9 @@ class _BootScreenState extends State<BootScreen> {
                               children: [
                                 TerminalInput(
                                   controller: _urlController,
-                                  prompt: 'SERVER_URL \$',
+                                  prompt: '\$',
                                   onSubmitted: _handleConfigRetry,
                                 ),
-                                VSpace.x2,
-                                Text(
-                                  '[ ENTER ] RETRY CONNECTION',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.bodyFamily,
-                                    color: AppPalette.primary.textPrimary
-                                        .withValues(alpha: 0.5),
-                                    fontSize: AppSizes.fontTiny,
-                                  ),
-                                )
                               ],
                             ),
                           ),
