@@ -248,6 +248,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     return TerminalInput(
       controller: _inputController,
       onSubmitted: _handleInputSubmit,
+      prompt: '#',
     );
   }
 }
