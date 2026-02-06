@@ -37,4 +37,19 @@ class AuthRepository implements IAuthRepository {
       return false;
     }
   }
+
+  @override
+  Future<bool> healthCheck() async {
+    try {
+      final health = await _pocketBase.health.check();
+      return health.code == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  void updateBaseUrl(String url) {
+    _pocketBase.baseURL = url;
+  }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_app/presentation/terminal/terminal_screen.dart';
+import 'package:test_app/presentation/chat/chat_screen.dart';
 import 'package:test_app/presentation/onboarding/onboarding_screen.dart';
 import 'package:test_app/presentation/artifact/artifact_screen.dart';
 import 'package:test_app/presentation/settings/settings_screen.dart';
@@ -41,7 +41,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const TerminalScreen(),
+          child: const ChatScreen(),
         ),
       ),
       GoRoute(
