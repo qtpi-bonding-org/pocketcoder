@@ -1,4 +1,10 @@
 abstract class IAuthRepository {
+  /// Stream of online/offline status
+  Stream<bool> get connectionStatus;
+
+  /// Authenticates using email and password.
+  Future<bool> login(String email, String password);
+
   /// Generates a key pair and registers it with the backend for the current user.
   Future<bool> registerDevice();
 
