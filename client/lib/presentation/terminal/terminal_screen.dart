@@ -12,6 +12,9 @@ import '../../design_system/primitives/app_sizes.dart';
 import '../../design_system/primitives/spacers.dart';
 import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/terminal_input.dart';
+import 'package:test_app/application/system/system_status_cubit.dart';
+import 'package:test_app/application/system/system_status_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TerminalScreen extends StatefulWidget {
   const TerminalScreen({super.key});
@@ -50,6 +53,13 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
     if (input.toUpperCase() == 'REGISTER') {
       await _handleRegistration();
+    } else if (input.toUpperCase().startsWith('LOGIN')) {
+      final parts = input.trim().split(' ');
+      if (parts.length == 3) {
+        await _handleLogin(parts[1], parts[2]);
+      } else {
+        _addLog('USAGE: LOGIN <EMAIL> <PASSWORD>');
+      }
     } else if (input.toUpperCase() == 'AUTHORIZE') {
       await _handleSign();
     } else if (input.toUpperCase() == 'HELP') {
@@ -69,6 +79,19 @@ class _TerminalScreenState extends State<TerminalScreen> {
       _addLog('SECURE ENCLAVE KEY PERSISTED');
     } else {
       _addLog('REGISTRATION FAILED: CHECK AUTH STATE');
+    }
+  }
+
+  Future<void> _handleLogin(String email, String password) async {
+    _addLog('AUTHENTICATING USER: $email...');
+    final repo = getIt<IAuthRepository>();
+    final success = await repo.login(email, password);
+
+    if (success) {
+      _addLog('LOGIN SUCCESSFUL. WELCOME OPERATOR.');
+      _addLog('SESSION TOKEN ACQUIRED.');
+    } else {
+      _addLog('LOGIN FAILED. CHECK CREDENTIALS.');
     }
   }
 
@@ -172,26 +195,32 @@ class _TerminalScreenState extends State<TerminalScreen> {
           ),
         ),
         VSpace.x2,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'POCKETCODER v1.0.4',
-              style: context.textTheme.titleSmall?.copyWith(
-                color: AppPalette.primary.textPrimary,
-                letterSpacing: 2,
+        BlocBuilder<SystemStatusCubit, SystemStatusState>(
+            builder: (context, state) {
+          final isConnected = state.isConnected;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'POCKETCODER v1.0.4',
+                style: context.textTheme.titleSmall?.copyWith(
+                  color: AppPalette.primary.textPrimary,
+                  letterSpacing: 2,
+                ),
               ),
-            ),
-            Text(
-              '[ ENCRYPTED CONNECTION ]',
-              style: TextStyle(
-                color: AppPalette.primary.textPrimary,
-                fontSize: AppSizes.fontMini,
-                letterSpacing: 1,
+              Text(
+                '[ ${isConnected ? 'ONLINE' : 'OFFLINE'} ]',
+                style: TextStyle(
+                  color: isConnected
+                      ? AppPalette.primary.textPrimary
+                      : AppPalette.primary.errorColor,
+                  fontSize: AppSizes.fontMini,
+                  letterSpacing: 1,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
         VSpace.x1,
         Container(
           height: 1,
