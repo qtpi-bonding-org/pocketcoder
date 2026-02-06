@@ -24,14 +24,24 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _urlController = TextEditingController(text: 'http://127.0.0.1:8090');
+
   bool _isLoading = false;
+  bool _showConfig = false;
   String? _errorMessage;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _urlController.dispose();
     super.dispose();
+  }
+
+  void _toggleConfig() {
+    setState(() {
+      _showConfig = !_showConfig;
+    });
   }
 
   Future<void> _handleLogin() async {
@@ -42,6 +52,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     try {
       final repo = getIt<IAuthRepository>();
+      // TODO: Configure repo with _urlController.text if needed
+
       final success = await repo.login(
         _emailController.text.trim(),
         _passwordController.text,
@@ -114,6 +126,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     VSpace.x2,
                   ],
+                  if (_showConfig) ...[
+                    Container(
+                      padding: EdgeInsets.all(AppSizes.space),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: AppPalette.primary.textPrimary
+                              .withValues(alpha: 0.3),
+                          style: BorderStyle.solid,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'SERVER CONFIGURATION',
+                            style: TextStyle(
+                              fontFamily: AppFonts.headerFamily,
+                              color: AppPalette.primary.textPrimary,
+                              fontSize: AppSizes.fontStandard,
+                            ),
+                          ),
+                          VSpace.x2,
+                          _buildTextField(
+                            controller: _urlController,
+                            label: 'HOST URL',
+                            hint: 'http://127.0.0.1:8090',
+                          ),
+                        ],
+                      ),
+                    ),
+                    VSpace.x4,
+                  ],
                   _buildTextField(
                     controller: _emailController,
                     label: 'IDENTITY',
@@ -152,8 +195,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           TerminalAction(
             keyLabel: 'F10',
-            label: 'SHUTDOWN',
-            onTap: () {},
+            label: _showConfig ? 'HIDE CONFIG' : 'CONFIG',
+            onTap: _toggleConfig,
           ),
         ],
       ),
@@ -177,6 +220,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             color: AppPalette.primary.textPrimary.withValues(alpha: 0.7),
             fontSize: AppSizes.fontTiny,
             letterSpacing: 1,
+            fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(height: AppSizes.space * 0.5),
@@ -188,11 +232,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             fontFamily: AppFonts.bodyFamily,
             color: AppPalette.primary.textPrimary,
             fontSize: AppSizes.fontStandard,
+            height: 1.5,
           ),
           cursorColor: AppPalette.primary.textPrimary,
           decoration: InputDecoration(
             isDense: true,
             hintText: hint,
+            prefixText: '\$ ',
+            prefixStyle: TextStyle(
+              fontFamily: AppFonts.bodyFamily,
+              color: AppPalette.primary.textPrimary,
+              fontSize: AppSizes.fontStandard,
+              fontWeight: FontWeight.bold,
+            ),
             hintStyle: TextStyle(
               fontFamily: AppFonts.bodyFamily,
               color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
@@ -200,7 +252,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: AppPalette.primary.textPrimary.withValues(alpha: 0.5),
+                color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
                 width: 1,
               ),
               borderRadius: BorderRadius.zero,
@@ -213,8 +265,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               borderRadius: BorderRadius.zero,
             ),
             contentPadding: EdgeInsets.all(AppSizes.space),
-            filled: true,
-            fillColor: AppPalette.primary.textPrimary.withValues(alpha: 0.05),
+            filled: false,
           ),
         ),
       ],

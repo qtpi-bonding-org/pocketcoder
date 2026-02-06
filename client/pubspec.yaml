@@ -71,6 +71,7 @@ flutter:
   generate: true
   assets:
     - assets/pb_schema.json
+    - assets/boot_log.txt
 
   fonts:
     - family: Share Tech Mono
