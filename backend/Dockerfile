@@ -30,7 +30,12 @@ COPY pb_migrations /pb/pb_migrations
 COPY pb_hooks /pb/pb_hooks
 COPY pb_public /pb/pb_public
 
+# Copy entrypoint script
+COPY entrypoint.sh /pb/entrypoint.sh
+RUN chmod +x /pb/entrypoint.sh
+
 EXPOSE 8080
 
+ENTRYPOINT ["/pb/entrypoint.sh"]
 # Start PocketBase
 CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8080"]

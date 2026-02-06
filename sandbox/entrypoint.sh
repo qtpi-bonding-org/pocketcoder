@@ -17,6 +17,10 @@ fi
 echo "🚀 [PocketCoder] Starting Listener in background..."
 tsx /sandbox/listener.ts &
 
+# Start CAO API Server
+echo "🧠 [PocketCoder] Starting CAO Orchestrator API..."
+nohup uvicorn cli_agent_orchestrator.api.main:app --host 0.0.0.0 --port 9889 > /tmp/cao_server.log 2>&1 &
+
 # Keep the container alive by tailing the tmux session output OR just sleeping
 echo "✅ [PocketCoder] Sandbox is LIVE and waiting for direct commands."
 tail -f /dev/null

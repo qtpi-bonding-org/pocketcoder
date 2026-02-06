@@ -217,6 +217,23 @@ func main() {
 				}
 			}
 
+			// Ensure App Owner (Daily Driver Admin) exists
+			userEmail := os.Getenv("USER_EMAIL")
+			if userEmail != "" {
+				existing, _ := app.FindFirstRecordByFilter("users", "email = {:email}", map[string]any{"email": userEmail})
+				if existing == nil {
+					log.Printf("👤 [PocketCoder Core] Seeding Owner (Admin): %s", userEmail)
+					user := core.NewRecord(users)
+					user.Set("email", userEmail)
+					user.Set("password", os.Getenv("USER_PASSWORD"))
+					user.Set("role", "admin") // Owner gets admin privileges in the app
+					user.SetVerified(true)
+					if err := app.Save(user); err != nil {
+						log.Printf("❌ Failed to seed owner: %v", err)
+					}
+				}
+			}
+
 			return e.Next()
 		},
 	})
