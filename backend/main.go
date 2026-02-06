@@ -13,6 +13,9 @@ import (
 
 	"github.com/pocketbase/pocketbase/tools/hook"
 	"github.com/google/uuid"
+	"net/http"
+	"github.com/labstack/echo/v4"
+	"github.com/pocketbase/pocketbase/apis"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
 
@@ -87,6 +90,27 @@ func main() {
 	// ------------------------------------------------------------
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
 		Func: func(e *core.ServeEvent) error {
+			// 0. Custom Live Wire Stream Endpoint
+			e.Router.POST("/api/pocketcoder/stream", func(c echo.Context) error {
+				info := apis.RequestInfo(c)
+				if info.Auth == nil || info.Auth.GetString("role") != "agent" {
+					return apis.NewForbiddenError("Only agents can stream.", nil)
+				}
+
+				var data struct {
+					Topic string `json:"topic"`
+					Data  any    `json:"data"`
+				}
+				if err := c.Bind(&data); err != nil {
+					return err
+				}
+
+				// Broadcast to all clients subscribed to the topic
+				app.SubscriptionsBroker().Publish(data.Topic, data.Data)
+
+				return c.NoContent(http.StatusNoContent)
+			})
+
 			// A. Seed Superuser (Dashboard Admin)
 			superusers, _ := app.FindCollectionByNameOrId("_superusers")
 			if superusers != nil {
