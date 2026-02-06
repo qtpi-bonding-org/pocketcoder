@@ -4,6 +4,7 @@ import 'package:test_app/presentation/terminal/terminal_screen.dart';
 import 'package:test_app/presentation/onboarding/onboarding_screen.dart';
 import 'package:test_app/presentation/artifact/artifact_screen.dart';
 import 'package:test_app/presentation/settings/settings_screen.dart';
+import 'package:test_app/presentation/boot/boot_screen.dart';
 
 import 'package:test_app/presentation/core/widgets/terminal_transition.dart';
 
@@ -14,8 +15,17 @@ class AppRouter {
   static GoRouter get router => _router;
 
   static final GoRouter _router = GoRouter(
-    initialLocation: AppRoutes.onboarding,
+    initialLocation: AppRoutes.boot,
     routes: [
+      GoRoute(
+        path: AppRoutes.boot,
+        name: RouteNames.boot,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const BootScreen(),
+        ),
+      ),
       GoRoute(
         path: AppRoutes.onboarding,
         name: RouteNames.onboarding,
@@ -66,6 +76,7 @@ class AppRoutes {
   static const String home = '/';
   static const String settings = '/settings';
   static const String onboarding = '/onboarding';
+  static const String boot = '/boot';
   static const String artifact = '/artifacts';
 }
 
@@ -74,6 +85,7 @@ class RouteNames {
   static const String home = 'home';
   static const String settings = 'settings';
   static const String onboarding = 'onboarding';
+  static const String boot = 'boot';
   static const String artifact = 'artifact';
 }
 
