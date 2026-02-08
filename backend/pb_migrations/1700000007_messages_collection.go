@@ -44,8 +44,8 @@ func init() {
 		messages.AddIndex("idx_messages_chat", false, "chat", "")
 
 		// Permissions
-		messages.ListRule = ptr("@request.auth.id != '' && (chat.user.id = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
-		messages.ViewRule = ptr("@request.auth.id != '' && (chat.user.id = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
+		messages.ListRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user.id = @request.auth.id)")
+		messages.ViewRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user.id = @request.auth.id)")
 		// Create: Users in own chat, Agents anywhere
 		messages.CreateRule = ptr("@request.auth.id != ''")
 		// Update: Agents (appending tokens/status) or Admin
