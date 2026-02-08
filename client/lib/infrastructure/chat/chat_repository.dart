@@ -87,7 +87,7 @@ class ChatRepository implements IChatRepository {
       'chat': chatId,
       'role': 'user',
       'parts': [
-        {'type': 'text', 'content': content}
+        {'type': 'text', 'text': content}
       ],
     });
   }

@@ -88,12 +88,13 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
+  // ...
   void _onHotDelta(HotPipeDelta delta) {
     // 1. Get or Create Hot Message
     final currentHot = state.hotMessage ??
         ChatMessage(
-          id: 'hot-${_uuid.v4()}',
-          chatId: 'current', // Placeholder
+          id: _uuid.v4(),
+          chatId: _currentChatId ?? 'temp',
           role: MessageRole.assistant,
           parts: [],
           isLive: true,
@@ -103,24 +104,23 @@ class ChatCubit extends Cubit<ChatState> {
     List<MessagePart> parts = List.from(currentHot.parts);
 
     // 2. Apply Delta
-    // Ideally we match by callID or just append to the last part if compatible.
-    // Simplifying: If content, find last TextPart or create one.
-
     if (delta.content.isNotEmpty) {
       if (parts.isNotEmpty && parts.last is MessagePartText) {
         final last = parts.last as MessagePartText;
         parts[parts.length - 1] =
-            last.copyWith(content: last.content + delta.content);
+            last.copyWith(text: last.text + delta.content);
       } else {
-        parts.add(MessagePart.text(content: delta.content));
+        parts.add(MessagePart.text(text: delta.content));
       }
     }
 
-    // Tools logic (simplified for now)
+    // Tools logic
     if (delta.tool != null) {
-      // Create a specialized tool part
-      parts.add(MessagePart.tool(
-          tool: delta.tool!, callId: delta.callId ?? 'unknown'));
+      parts.add(MessagePart.toolCall(
+        tool: delta.tool!,
+        callID: delta.callId ?? 'unknown',
+        args: {}, // Empty args for now in delta
+      ));
     }
 
     emit(state.copyWith(
@@ -130,9 +130,6 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   void _onHotSystem(HotPipeSystem system) {
-    // System events (logs) might just flash on the screen or be added as "Reasoning" parts.
-    // For now, let's treat them as reasoning text only if we want to show them.
-    // Or just set the "Thinking" state.
     emit(state.copyWith(isPocoThinking: true));
   }
 
@@ -144,19 +141,19 @@ class ChatCubit extends Cubit<ChatState> {
       messages: [],
     ));
 
-    // 2. User Message (Immediate)
+    // 2. User Message
     final userMsg = ChatMessage(
-      id: 'sim-user-1',
-      chatId: 'current',
-      role: MessageRole.user,
-      parts: [const MessagePart.text(content: "Check the server status.")],
-      createdAt: DateTime.now(),
-    );
+        id: 'sim-user-1',
+        chatId: 'current',
+        role: MessageRole.user,
+        parts: [const MessagePart.text(text: "Check the server status.")],
+        createdAt: DateTime.now());
+
     emit(state.copyWith(messages: [userMsg]));
 
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // 3. Hot Pipe: Thinking (Streaming Reasoning)
+    // 3. Hot Pipe: Thinking
     final thoughts = [
       "Accessing internal gateway...",
       "Resolving host 'pocketbase'...",
@@ -175,24 +172,18 @@ class ChatCubit extends Cubit<ChatState> {
       tool: "curl",
       callId: "call-1",
     ));
-    // Simulate tool running (show input)
-    // Note: Our _onHotDelta logic for tools was simple ADD.
-    // Ideally we update the tool with input.
-    // For this sim, let's just assume the UI renders the tool block.
 
     await Future.delayed(const Duration(milliseconds: 1500));
 
-    // 5. Hot Pipe: Result parsing & Final Answer
+    // 5. Hot Pipe: Result & Final Answer
     _onHotDelta(
         const HotPipeDelta(content: "Status 200 OK. JSON payload valid.\n"));
 
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Stream the final answer too, so it appears in the log before "crystallizing"
     const finalAnswer =
         "The server is online and responding normally, Operator.";
     for (int i = 0; i < finalAnswer.length; i += 5) {
-      // Stream in chunks
       final end = (i + 5 < finalAnswer.length) ? i + 5 : finalAnswer.length;
       _onHotDelta(HotPipeDelta(content: finalAnswer.substring(i, end)));
       await Future.delayed(const Duration(milliseconds: 30));
@@ -200,36 +191,28 @@ class ChatCubit extends Cubit<ChatState> {
 
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // 6. Cold Pipe: Final Answer arrives (Buffer Flush)
-    // MUST MATCH EXACTLY what was streamed found above.
+    // 6. Cold Pipe: Final Answer
     final assistantMsg = ChatMessage(
       id: 'sim-asst-1',
       chatId: 'current',
       role: MessageRole.assistant,
       parts: [
-        // Thought 1
         const MessagePart.text(
-            content:
+            text:
                 "Accessing internal gateway...\nResolving host 'pocketbase'...\nConnection established.\n"),
-        // Tool
-        const MessagePart.tool(
-            tool: "curl",
-            callId: "call-1",
-            input: "GET /api/health"), // Typo fixed in next step if generic
-        // Thought 2 (Result) + Final Answer
-        // In reality, OpenCode might split these or keep them together.
-        // Let's group them to match the stream.
+        const MessagePart.toolCall(
+            tool: "curl", callID: "call-1", args: {'url': '/api/health'}),
         const MessagePart.text(
-            content:
+            text:
                 "Status 200 OK. JSON payload valid.\nThe server is online and responding normally, Operator."),
       ],
       createdAt: DateTime.now(),
     );
 
     emit(state.copyWith(
-      hotMessage: null, // Clear hot buffer
+      hotMessage: null,
       isPocoThinking: false,
-      messages: [userMsg, assistantMsg], // Append to history
+      messages: [userMsg, assistantMsg],
     ));
   }
 }
