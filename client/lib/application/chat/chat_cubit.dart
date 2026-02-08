@@ -48,7 +48,9 @@ class ChatCubit extends Cubit<ChatState> {
   // ...
 
   Future<void> sendMessage(String unusedChatId, String content) async {
+    print('ChatCubit: Sending message "$content"...'); // Log entry
     if (_currentChatId == null) {
+      print('ChatCubit: Error - Chat not initialized'); // Log error
       emit(state.copyWith(error: "Chat not initialized"));
       return;
     }
@@ -59,7 +61,10 @@ class ChatCubit extends Cubit<ChatState> {
 
     try {
       await _repository.sendMessage(_currentChatId!, content);
+      print(
+          'ChatCubit: Message sent successfully to repository'); // Log success
     } catch (e) {
+      print('ChatCubit: Failed to send message: $e'); // Log exception
       emit(state.copyWith(error: "Failed to send: $e"));
     }
   }

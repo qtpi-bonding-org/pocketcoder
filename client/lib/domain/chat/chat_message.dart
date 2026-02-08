@@ -27,11 +27,16 @@ enum MessageRole {
   system,
 }
 
+Object? _readText(Map<dynamic, dynamic> json, String key) {
+  return json['text'] ?? json['content'];
+}
+
 @Freezed(unionKey: 'type')
 class MessagePart with _$MessagePart {
   // 1. Text
   const factory MessagePart.text({
-    required String text,
+    // ignore: invalid_annotation_target
+    @JsonKey(readValue: _readText) required String text,
   }) = MessagePartText;
 
   // 2. Tool Call (OpenCode: 'tool-call')

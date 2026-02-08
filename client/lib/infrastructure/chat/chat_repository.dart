@@ -83,13 +83,20 @@ class ChatRepository implements IChatRepository {
 
   @override
   Future<void> sendMessage(String chatId, String content) async {
-    await _pb.collection('messages').create(body: {
-      'chat': chatId,
-      'role': 'user',
-      'parts': [
-        {'type': 'text', 'text': content}
-      ],
-    });
+    print('ChatRepo: Creating message in PB chat=$chatId content="$content"');
+    try {
+      await _pb.collection('messages').create(body: {
+        'chat': chatId,
+        'role': 'user',
+        'parts': [
+          {'type': 'text', 'text': content}
+        ],
+      });
+      print('ChatRepo: Message created successfully');
+    } catch (e) {
+      print('ChatRepo: Failed to create message: $e');
+      rethrow;
+    }
   }
 
   @override
