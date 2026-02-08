@@ -50,31 +50,25 @@ services:
     container_name: pocketcoder-opencode
     environment:
       - PORT=3000
-      - POCKETBASE_URL=http://pocketbase:8090
-      - AGENT_EMAIL=${AGENT_EMAIL}
-      - AGENT_PASSWORD=${AGENT_PASSWORD}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
-      - OPENCODE_CONFIG_CONTENT={"permission":{"*":"ask"},"model":"google/gemini-2.0-flash","mcp":{"pocketbase_mcp":{"type":"remote","url":"http://gateway:3001/sse","enabled":true},"cao_mcp":{"type":"remote","url":"http://sandbox:9889/mcp/sse","enabled":true}}}
       - SHELL=/bridge/pocketcoder-shell                        # THE BRIDGE
     working_dir: /workspace
     user: root
     volumes:
-      - ./plugins/pocketcoder-plugin.mjs:/root/.opencode/plugins/pocketcoder-plugin.js:ro
-      - ./plugins/chat-plugin.mjs:/root/.opencode/plugins/chat-plugin.js:ro
       - bridge_bin:/bridge:ro                                     # Read compiled bridge
       - workspace_data:/workspace                               # Shared Workspace
-      - pocketcoder-logs:/logs                                  # Cold Pipe (Logs)
+      - ./opencode.config.json:/root/.opencode/opencode.json:ro  # Config
     entrypoint: /bin/sh
     command: >
       -c "
+      echo '⏳ Waiting for PocketCoder Shell...' &&
+      while [ ! -f /bridge/pocketcoder-shell ]; do sleep 1; done &&
       echo '🛡️ Implementing Total Shell Hijack (Binary)...' &&
       ln -sf /bridge/pocketcoder-shell /bin/bash &&
       ln -sf /bridge/pocketcoder-shell /usr/bin/bash &&
       ln -sf /bridge/pocketcoder-shell /bin/sh &&
       ln -sf /bridge/pocketcoder-shell /usr/bin/glob &&
-      mkdir -p /root/.opencode &&
-      echo \"$$OPENCODE_CONFIG_CONTENT\" > /root/.opencode/opencode.json &&
       echo '🚀 Starting OpenCode Serve...' &&
       exec opencode serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG"
     ports:
@@ -86,6 +80,28 @@ services:
 
     depends_on:
       - pocketbase
+
+  # 🌉 CHAT BRIDGE (API-based PocketBase ↔ OpenCode connector)
+  bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile.bridge
+    container_name: pocketcoder-bridge
+    environment:
+      - POCKETBASE_URL=http://pocketbase:8090
+      - OPENCODE_URL=http://opencode:3000
+      - AGENT_EMAIL=${AGENT_EMAIL}
+      - AGENT_PASSWORD=${AGENT_PASSWORD}
+    volumes:
+      - ./bridge:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - pocketcoder-memory
+      - pocketcoder-control
+    depends_on:
+      - pocketbase
+      - opencode
 
   # 🔨 SANDBOX (Isolated Execution Environment)
   sandbox:

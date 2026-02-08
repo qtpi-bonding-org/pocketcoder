@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     jq \
     tmux \
     build-essential \
+    sed \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -32,6 +33,9 @@ RUN pip install --no-cache-dir -e /app/cao
 ENV TMUX_SOCKET=/tmp/tmux/pocketcoder
 # -------------------------------------------
 
+
+# Remove CRLF if any (Windows compat)
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Use the new entrypoint
