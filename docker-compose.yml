@@ -64,13 +64,15 @@ services:
       -c "
       echo '⏳ Waiting for PocketCoder Shell...' &&
       while [ ! -f /bridge/pocketcoder-shell ]; do sleep 1; done &&
-      echo '🛡️ Implementing Total Shell Hijack (Binary)...' &&
+      echo '🛡️ Implementing Safe Shell Hijack...' &&
+      if [ ! -f /bin/real_sh ]; then mv /bin/sh /bin/real_sh; fi &&
+      if [ ! -f /bin/real_bash ] && [ -f /bin/bash ]; then mv /bin/bash /bin/real_bash; fi &&
       ln -sf /bridge/pocketcoder-shell /bin/bash &&
       ln -sf /bridge/pocketcoder-shell /usr/bin/bash &&
       ln -sf /bridge/pocketcoder-shell /bin/sh &&
       ln -sf /bridge/pocketcoder-shell /usr/bin/glob &&
       echo '🚀 Starting OpenCode Serve...' &&
-      exec opencode serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG"
+      exec /bin/real_sh -c 'opencode serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG'"
     ports:
       - "3000:3000"
     restart: unless-stopped
