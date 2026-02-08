@@ -4,6 +4,8 @@ bun.lockb
 
 # EnvironmentVariables
 .env
+.env.*
+!.env.example
 
 # System
 .DS_Store
