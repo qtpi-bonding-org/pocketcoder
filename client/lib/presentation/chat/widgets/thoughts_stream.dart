@@ -39,14 +39,10 @@ class ThoughtsStream extends StatelessWidget {
   Widget _buildPart(BuildContext context, MessagePart part) {
     return part.map(
       text: (textPart) {
-        // Only show "thinking" or "reasoning" text here.
-        // Assuming raw text appearing in this stream is reasoning.
-        // In OpenCode, 'reasoning' is a specific type, but we simplified earlier.
-        // For now, let's render it as gray text.
         return Padding(
           padding: const EdgeInsets.only(bottom: 4.0),
           child: Text(
-            '> ${textPart.content}',
+            '> ${textPart.text}',
             style: TextStyle(
               color: AppPalette.primary.textPrimary.withValues(alpha: 0.6),
               fontFamily: AppFonts.headerFamily,
@@ -55,7 +51,7 @@ class ThoughtsStream extends StatelessWidget {
           ),
         );
       },
-      tool: (toolPart) {
+      toolCall: (toolPart) {
         return Container(
           margin: const EdgeInsets.only(bottom: 8.0, top: 4.0),
           padding: const EdgeInsets.all(8.0),
@@ -76,17 +72,17 @@ class ThoughtsStream extends StatelessWidget {
                   fontSize: 10,
                 ),
               ),
-              if (toolPart.input != null)
+              if (toolPart.args != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 2.0),
                   child: Text(
-                    toolPart.input!,
+                    toolPart.args.toString(),
                     style: TextStyle(
                       color:
                           AppPalette.primary.textPrimary.withValues(alpha: 0.8),
                       fontSize: 10,
                     ),
-                    maxLines: 2,
+                    maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -94,6 +90,33 @@ class ThoughtsStream extends StatelessWidget {
           ),
         );
       },
+      toolResult: (resultPart) => Padding(
+        padding: const EdgeInsets.only(bottom: 4.0),
+        child: Text(
+          'RESULT [${resultPart.tool}]: ${resultPart.content ?? "No content"}',
+          style: TextStyle(
+            color: (resultPart.isError ?? false) ? Colors.red : Colors.green,
+            fontSize: 9,
+          ),
+        ),
+      ),
+      stepStart: (startPart) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Divider(
+            color: AppPalette.primary.textPrimary.withValues(alpha: 0.1),
+            height: 1),
+      ),
+      stepFinish: (finishPart) => Padding(
+        padding: const EdgeInsets.only(bottom: 8.0),
+        child: Text(
+          'STEP COMPLETE (${finishPart.reason})',
+          style: TextStyle(
+            color: AppPalette.primary.textPrimary.withValues(alpha: 0.4),
+            fontSize: 9,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ),
     );
   }
 }

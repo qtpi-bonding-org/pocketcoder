@@ -27,18 +27,43 @@ enum MessageRole {
   system,
 }
 
-@freezed
+@Freezed(unionKey: 'type')
 class MessagePart with _$MessagePart {
+  // 1. Text
   const factory MessagePart.text({
-    required String content,
+    required String text,
   }) = MessagePartText;
 
-  const factory MessagePart.tool({
+  // 2. Tool Call (OpenCode: 'tool-call')
+  @FreezedUnionValue('tool-call')
+  const factory MessagePart.toolCall({
     required String tool,
-    required String callId,
-    String? input,
-    String? output,
-  }) = MessagePartTool;
+    required String callID,
+    Map<String, dynamic>? args,
+  }) = MessagePartToolCall;
+
+  // 3. Tool Result (OpenCode: 'tool-result')
+  @FreezedUnionValue('tool-result')
+  const factory MessagePart.toolResult({
+    required String tool,
+    required String callID,
+    String? content,
+    bool? isError,
+  }) = MessagePartToolResult;
+
+  // 4. Step Start (OpenCode: 'step-start')
+  @FreezedUnionValue('step-start')
+  const factory MessagePart.stepStart({
+    required String id,
+  }) = MessagePartStepStart;
+
+  // 5. Step Finish (OpenCode: 'step-finish')
+  @FreezedUnionValue('step-finish')
+  const factory MessagePart.stepFinish({
+    required String id,
+    String? reason,
+    double? cost,
+  }) = MessagePartStepFinish;
 
   factory MessagePart.fromJson(Map<String, dynamic> json) =>
       _$MessagePartFromJson(json);

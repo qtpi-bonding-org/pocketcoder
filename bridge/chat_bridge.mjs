@@ -207,12 +207,21 @@ async function pollOpenCodeResponse(sessionId, opencodeMsgId, pbChatId) {
  */
 async function saveAssistantResponse(chatId, opencodeMessage) {
     try {
-        const parts = opencodeMessage.parts.map(part => ({
-            type: part.type,
-            content: part.content || part.text || '',
-            tool: part.tool,
-            callId: part.callID
-        }));
+        console.log(`💾 [Chat Bridge] Saving response with parts:`, JSON.stringify(opencodeMessage.parts, null, 2));
+
+        if (!opencodeMessage.parts || opencodeMessage.parts.length === 0) {
+            console.warn("⚠️ [Chat Bridge] No parts to save");
+            return;
+        }
+
+        // Pass parts through to PocketBase. Dart client handles the schema matching.
+        // We only ensure 'text' is set for text parts if it's missing (legacy support).
+        const parts = opencodeMessage.parts.map(p => {
+            if (p.type === 'text' && !p.text && p.content) {
+                return { ...p, text: p.content };
+            }
+            return p;
+        });
 
         await pb.collection('messages').create({
             chat: chatId,
@@ -233,20 +242,6 @@ async function start() {
         // 1. Authenticate
         await pb.collection('users').authWithPassword(AGENT_EMAIL, AGENT_PASSWORD);
         console.log("✅ [Chat Bridge] Logged in to PocketBase");
-
-        // 2. Recovery Poll: Process any missed messages
-        // console.log("🔍 [Chat Bridge] Running recovery poll...");
-        // const missed = await pb.collection('messages').getFullList({
-        //     filter: 'role = "user"',
-        //     sort: 'created'
-        // });
-
-        // if (missed.length > 0) {
-        //     console.log(`📨 [Chat Bridge] Found ${missed.length} missed messages`);
-        //     for (const msg of missed) {
-        //         await processUserMessage(msg);
-        //     }
-        // }
 
         // 3. Subscribe to Realtime
         console.log("📡 [Chat Bridge] Subscribing to messages...");
