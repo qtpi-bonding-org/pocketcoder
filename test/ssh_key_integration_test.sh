@@ -269,7 +269,7 @@ test_deactivate_key() {
 test_deactivated_key_not_synced() {
     log_test "Verifying deactivated key is not synced..."
     
-    KEYS_RESPONSE=$(curl -s "$POCKETBASE_URL/api/openclaw/ssh_keys")
+    KEYS_RESPONSE=$(curl -s "$POCKETBASE_URL/api/pocketcoder/ssh_keys")
     
     if ! echo "$KEYS_RESPONSE" | grep -q "$(echo "$TEST_PUBLIC_KEY" | awk '{print $2}')"; then
         log_success "Deactivated key not in sync endpoint"

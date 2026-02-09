@@ -26,7 +26,7 @@ docker exec pocketcoder-opencode sh -c "echo '$TEST_CONTENT' > /workspace/$TEST_
 
 echo "🔍 Fetching artifact via API..."
 # Endpoint: /api/openclaw/artifact/{path...}
-URL="$POCKETBASE_URL/api/openclaw/artifact/$TEST_FILE"
+URL="$POCKETBASE_URL/api/pocketcoder/artifact/$TEST_FILE"
 RESPONSE=$(curl -s -H "Authorization: $ADMIN_TOKEN" "$URL")
 
 if [[ "$RESPONSE" == "$TEST_CONTENT" ]]; then
