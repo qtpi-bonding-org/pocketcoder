@@ -39,8 +39,8 @@ class MessagePart with _$MessagePart {
     @JsonKey(readValue: _readText) required String text,
   }) = MessagePartText;
 
-  // 2. Tool Call (OpenCode: 'tool-call')
-  @FreezedUnionValue('tool-call')
+  // 2. Tool Call (OpenCode: 'tool')
+  @FreezedUnionValue('tool')
   const factory MessagePart.toolCall({
     required String tool,
     required String callID,
