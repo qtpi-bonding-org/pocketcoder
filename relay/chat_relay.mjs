@@ -58,60 +58,66 @@ async function listenForPermissions() {
     };
 }
 
-// 2. Handle 'permission.asked' -> Create 'draft' in PocketBase
+// 2. Handle 'permission.asked' -> Query the Sovereign Authority
 async function handlePermissionAsked(payload) {
     const permId = payload.id;
-    console.log(`🔒 [Gatekeeper] Permission Requested: ${permId} (${payload.permission})`);
+    console.log(`🛡️ [Relay] Intent Received: ${permId} (${payload.permission})`);
 
     try {
-        // Check if message exists first to get the Chat ID
-        // The permission payload keys sessionID and usually maps to a message.
-        // We'll trust the payload has what we need.
-
         let chatId = sessionToChat.get(payload.sessionID);
         if (!chatId) {
             try {
-                // Try to find chat by the sessionID mapping we store in PB
                 const chat = await pb.collection('chats').getFirstListItem(`opencode_id = "${payload.sessionID}"`);
                 chatId = chat.id;
                 sessionToChat.set(payload.sessionID, chatId);
-                console.log(`📍 [Gatekeeper] Recovered chat context: ${chatId} for session ${payload.sessionID}`);
             } catch (e) {
-                console.warn(`⚠️ [Gatekeeper] Could not find chat for session ${payload.sessionID}, using fallback: ${currentChatId}`);
+                console.warn(`⚠️ [Relay] No chat context for session ${payload.sessionID}`);
                 chatId = currentChatId;
             }
         }
 
-        await pb.collection('permissions').create({
-            opencode_id: payload.id,
-            session_id: payload.sessionID,
-            chat: chatId,
-            permission: payload.permission,
-            patterns: payload.patterns,
-            metadata: payload.metadata,
-            always: payload.always,
-            message_id: payload.tool?.messageID,
-            call_id: payload.tool?.callID,
-            status: 'draft',
-            source: 'opencode-plugin',
-            message: `Request to use tool: ${payload.permission}`
+        // --- QUERY SOVEREIGN AUTHORITY ---
+        const authRes = await fetch(`${POCKETBASE_URL}/api/pocketcoder/permission`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                permission: payload.permission,
+                patterns: payload.patterns || [],
+                chat_id: chatId,
+                session_id: payload.sessionID,
+                opencode_id: payload.id,
+                metadata: payload.metadata || {},
+                message: payload.message || "Requested via OpenCode",
+                message_id: payload.tool?.messageID,
+                call_id: payload.tool?.callID
+            })
         });
 
-        console.log(`📝 [Gatekeeper] Draft created for ${permId}`);
-    } catch (e) {
-        // Ignore if already exists (duplicate event)
-        if (e.status !== 400) {
-            console.error(`❌ [Gatekeeper] Failed to create draft:`, e);
-            if (e.response) console.error("PB Response:", e.response);
+        if (!authRes.ok) throw new Error(`Authority Error: ${authRes.status}`);
+
+        const decision = await authRes.json();
+
+        if (decision.permitted) {
+            console.log(`✅ [Relay] Sovereign Authority: AUTO-AUTHORIZED ${permId}`);
+            await replyToOpenCode(payload.id, 'once');
+        } else {
+            console.log(`⏳ [Relay] Sovereign Authority: GATED ${permId} (Status: ${decision.status})`);
+            // The /permission endpoint created the 'draft' record. 
+            // The PB subscription (subscribeToPermissionUpdates) will handle manual auth.
         }
+
+    } catch (e) {
+        console.error(`❌ [Relay] Permission handling failed:`, e.message);
     }
 }
 
-// 3. Listen for PocketBase 'authorized'/'denied' -> Reply to OpenCode
+// 3. Listen for PocketBase 'authorized'/'denied' (Manual Auth) -> Reply to OpenCode
 async function subscribeToPermissionUpdates() {
-    console.log("📡 [Gatekeeper] Subscribing to permission updates...");
+    console.log("📡 [Relay] Subscribing to permission updates...");
     pb.collection('permissions').subscribe('*', async (e) => {
-        if (e.action === 'update' || e.action === 'create') {
+        // We only care about UPDATES here (User moving from 'draft' -> 'authorized'/'denied')
+        // Initial 'create' for auto-auth is handled synchronously in handlePermissionAsked.
+        if (e.action === 'update') {
             const record = e.record;
             if (record.status === 'authorized') {
                 await replyToOpenCode(record.opencode_id, 'once');
