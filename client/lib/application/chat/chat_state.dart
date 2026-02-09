@@ -13,6 +13,7 @@ class ChatState with _$ChatState {
     // The "Hot Pipe" message that is currently being streamed.
     // This is ephemeral and constructed from deltas.
     ChatMessage? hotMessage,
+    String? chatId,
     String? error,
   }) = _ChatState;
 }
