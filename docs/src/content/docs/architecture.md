@@ -1,4 +1,8 @@
-# PocketCoder Architecture
+---
+title: Architecture
+description: Detailed overview of PocketCoder's Sovereign Authority architecture.
+---
+
 
 This document provides a detailed overview of PocketCoder's architecture, outlining its core services, their interactions, and the design principles that govern the system. It aims to offer a clear understanding of how the various components work together to deliver a secure, self-hosted AI assistant.
 
