@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # 📚 DOCUMENTATION (Astro + Starlight)
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile.docs
+    container_name: pocketcoder-docs
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./docs:/app/docs
+      - /app/docs/node_modules
+      - ./backend:/app/backend:ro
+      - ./relay:/app/relay:ro
+      - ./proxy:/app/proxy:ro
+      - ./ARCHITECTURE.md:/app/ARCHITECTURE.md:ro
+      - ./DEVELOPMENT.md:/app/DEVELOPMENT.md:ro
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    # Use host network binding by default for standalone usage, 
+    # or rely on default bridge.

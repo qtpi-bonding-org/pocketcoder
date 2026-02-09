@@ -31,28 +31,38 @@ else
     echo -e "${GREEN}✓ Services are up.${NC}"
 fi
 
-# 2. Run Permission Flow Test
-echo -e "\n${YELLOW}Step 2: Testing Permission & Reasoning Flow...${NC}"
-echo -e "${YELLOW}(opencode <-> relay <-> pocketbase)${NC}"
-if ./test/permission_flow_full.sh; then
-    echo -e "${GREEN}✓ Permission Flow Passed.${NC}"
-else
-    echo -e "${RED}✗ Permission Flow Failed.${NC}"
-    exit 1
-fi
+RUN_FAILED=false
 
-# 3. Run SSH Integration tests
-echo -e "\n${YELLOW}Step 3: Testing SSH & Sandbox Integration...${NC}"
-echo -e "${YELLOW}(pocketbase <-> relay <-> sandbox)${NC}"
-# run_integration_tests.sh already handles start/stop if needed, 
-# but we have services up, so it will use existing.
-if ./test/run_integration_tests.sh; then
-    echo -e "${GREEN}✓ SSH Integration Passed.${NC}"
-else
-    echo -e "${RED}✗ SSH Integration Failed.${NC}"
-    exit 1
-fi
+# Helper to run a test
+run_test() {
+    local script=$1
+    local name=$2
+    echo -e "\n${YELLOW}Running: $name...${NC}"
+    if ./test/$script; then
+        echo -e "${GREEN}✓ $name Passed.${NC}"
+    else
+        echo -e "${RED}✗ $name Failed.${NC}"
+        RUN_FAILED=true
+    fi
+}
+
+# 2. Key Integration Tests (Foundational)
+run_test "run_integration_tests.sh" "SSH Integration & Sandbox"
+
+# 3. Core Logic Flow
+run_test "permission_flow_full.sh" "Permission & Reasoning Flow"
+
+# 4. Feature Specific Tests
+run_test "feature_artifacts.sh" "Artifact Serving API"
+# Add other feature tests here as they become reliable
+# run_test "feature_registry.sh" "AI Registry"
+# run_test "feature_whitelist.sh" "Whitelist System"
 
 echo -e "\n${GREEN}========================================${NC}"
-echo -e "${GREEN}✅ ALL TESTS PASSED SUCCESSFULLY!${NC}"
-echo -e "${GREEN}========================================${NC}"
+if [ "$RUN_FAILED" = true ]; then
+    echo -e "${RED}❌ SOME TESTS FAILED.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}✅ ALL TESTS PASSED SUCCESSFULLY!${NC}"
+    exit 0
+fi
