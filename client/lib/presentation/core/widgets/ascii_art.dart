@@ -3,6 +3,35 @@ import '../../../design_system/primitives/app_fonts.dart';
 import '../../../design_system/primitives/app_palette.dart';
 import '../../../design_system/primitives/app_sizes.dart';
 
+class PocoExpression {
+  static const String sleepy = '-_-';
+  static const String nervous = '~_~';
+  static const String thinking = '>_<';
+  static const String awake = 'o_o';
+  static const String happy = '^_^';
+  static const String surprised = 'O_O';
+  static const String mistaken = 'X_X';
+  static const String panic = '@_@';
+  static const String sad = 'T_T';
+  static const String cheeky = '^_~';
+  static const String lookRight = '>_>';
+  static const String lookLeft = '<_<';
+  static const String greedy = '\$_\$';
+  static const String mad = 'ò_ó';
+  static const String skeptical = '¬_¬';
+  static const String amazed = '*_*';
+  static const String shy = 'u_u';
+  static const String winkLeft = '^_-';
+  static const String winkRight = '-_^';
+  static const String vigilantLeft = 'o_-';
+  static const String vigilantRight = '-_o';
+}
+
+enum PocoArmor {
+  standard,
+  fortified,
+}
+
 class AppAscii {
   static const String pocketCoderLogo = r'''
  ______   ______     ______     __  __     ______     ______  
@@ -17,99 +46,100 @@ class AppAscii {
        \ \_____\  \ \_____\  \ \____-  \ \_____\  \ \_\ \_\   
         \/_____/   \/_____/   \/____/   \/_____/   \/_/ /_/   ''';
 
-  static const String pocoSleepy = r'''
-┌─────┐
-│ -_- │
-└─────┘''';
+  static String build(String expression,
+      [PocoArmor armor = PocoArmor.standard]) {
+    switch (armor) {
+      case PocoArmor.fortified:
+        return '''
+╔═════╗
+║ $expression ║
+╚═════╝''';
 
-  static const String pocoNervous = r'''
+      case PocoArmor.standard:
+        return '''
 ┌─────┐
-│ ~_~ │
+│ $expression │
 └─────┘''';
-
-  static const String pocoThinking = r'''
-┌─────┐
-│ >_< │
-└─────┘''';
-
-  static const String pocoAwake = r'''
-┌─────┐
-│ o_o │
-└─────┘''';
-
-  static const String pocoHappy = r'''
-┌─────┐
-│ ^_^ │
-└─────┘''';
-
-  static const String pocoSurprised = r'''
-┌─────┐
-│ O_O │
-└─────┘''';
-
-  static const String pocoMistaken = r'''
-┌─────┐
-│ X_X │
-└─────┘''';
-
-  static const String pocoPanic = r'''
-┌─────┐
-│ @_@ │
-└─────┘''';
-  static const String pocoSad = r'''
-┌─────┐
-│ T_T │
-└─────┘''';
-
-  static const String pocoCheeky = r'''
-┌─────┐
-│ ^_~ │
-└─────┘''';
-  static const String pocoLookRight = r'''
-┌─────┐
-│ >_> │
-└─────┘''';
-  static const String pocoLookLeft = r'''
-┌─────┐
-│ <_< │
-└─────┘''';
-
-  static const String pocoGreedy = r'''
-┌─────┐
-│ $_$ │
-└─────┘''';
-  static const String pocoMad = r'''
-┌─────┐
-│ ò_ó │
-└─────┘''';
+    }
+  }
 }
 
 class AsciiFace extends StatelessWidget {
-  final String face;
+  final String expression;
+  final PocoArmor armor;
   final Color? color;
   final double? fontSize;
 
   const AsciiFace({
     super.key,
-    required this.face,
+    required this.expression,
+    this.armor = PocoArmor.standard,
     this.color,
     this.fontSize,
   });
 
-  factory AsciiFace.pocoSleepy({Color? color, double? fontSize}) =>
-      AsciiFace(face: AppAscii.pocoSleepy, color: color, fontSize: fontSize);
+  // --- Factory Constructors ---
+  // You can now pass 'armor' to any of these if you want to override the default.
 
-  factory AsciiFace.pocoAwake({Color? color, double? fontSize}) =>
-      AsciiFace(face: AppAscii.pocoAwake, color: color, fontSize: fontSize);
+  factory AsciiFace.sleepy(
+          {PocoArmor armor = PocoArmor.standard,
+          Color? color,
+          double? fontSize}) =>
+      AsciiFace(
+          expression: PocoExpression.sleepy,
+          armor: armor,
+          color: color,
+          fontSize: fontSize);
 
-  factory AsciiFace.pocoHappy({Color? color, double? fontSize}) =>
-      AsciiFace(face: AppAscii.pocoHappy, color: color, fontSize: fontSize);
+  factory AsciiFace.awake(
+          {PocoArmor armor = PocoArmor.standard,
+          Color? color,
+          double? fontSize}) =>
+      AsciiFace(
+          expression: PocoExpression.awake,
+          armor: armor,
+          color: color,
+          fontSize: fontSize);
 
-  factory AsciiFace.pocoSurprised({Color? color, double? fontSize}) =>
-      AsciiFace(face: AppAscii.pocoSurprised, color: color, fontSize: fontSize);
+  factory AsciiFace.happy(
+          {PocoArmor armor = PocoArmor.standard,
+          Color? color,
+          double? fontSize}) =>
+      AsciiFace(
+          expression: PocoExpression.happy,
+          armor: armor,
+          color: color,
+          fontSize: fontSize);
 
-  factory AsciiFace.pocoMistaken({Color? color, double? fontSize}) =>
-      AsciiFace(face: AppAscii.pocoMistaken, color: color, fontSize: fontSize);
+  factory AsciiFace.surprised(
+          {PocoArmor armor = PocoArmor.standard,
+          Color? color,
+          double? fontSize}) =>
+      AsciiFace(
+          expression: PocoExpression.surprised,
+          armor: armor,
+          color: color,
+          fontSize: fontSize);
+
+  factory AsciiFace.mistaken(
+          {PocoArmor armor = PocoArmor.standard,
+          Color? color,
+          double? fontSize}) =>
+      AsciiFace(
+          expression: PocoExpression.mistaken,
+          armor: armor,
+          color: color,
+          fontSize: fontSize);
+
+  factory AsciiFace.thinking(
+          {PocoArmor armor = PocoArmor.standard,
+          Color? color,
+          double? fontSize}) =>
+      AsciiFace(
+          expression: PocoExpression.thinking,
+          armor: armor,
+          color: color,
+          fontSize: fontSize);
 
   @override
   Widget build(BuildContext context) {
@@ -117,8 +147,11 @@ class AsciiFace extends StatelessWidget {
     final effectiveColor = color ?? AppPalette.primary.textPrimary;
     final effectiveSize = fontSize ?? AppSizes.fontStandard;
 
+    // Dynamically build the string based on Armor + Expression
+    final fullFaceString = AppAscii.build(expression, armor);
+
     return Text(
-      face,
+      fullFaceString,
       style: TextStyle(
         color: effectiveColor,
         fontSize: effectiveSize,

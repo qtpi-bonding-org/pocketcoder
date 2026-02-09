@@ -11,6 +11,8 @@
 
 import PocketBase from 'pocketbase';
 import { EventSource } from 'eventsource';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Required for PocketBase Realtime in Node.js
 global.EventSource = EventSource;
@@ -151,6 +153,50 @@ async function replyToOpenCode(requestID, replyType) {
     }
 }
 
+/**
+ * 🤖 AI REGISTRY: Deploy Agents
+ */
+async function subscribeToAgentUpdates() {
+    console.log("📡 [Relay] Subscribing to AI Registry updates...");
+
+    const deployAgent = async (agent) => {
+        const { name, is_init, config } = agent;
+        if (!name || !config) return;
+
+        const fileName = `${name}.md`;
+        // Target paths (relative to container or absolute if matched to host)
+        const targetDir = is_init
+            ? "/workspace/.opencode/agents"
+            : "/workspace/sandbox/cao/agent_store";
+
+        try {
+            await fs.mkdir(targetDir, { recursive: true });
+            const filePath = path.join(targetDir, fileName);
+            await fs.writeFile(filePath, config);
+            console.log(`🚀 [Relay] Deployed Agent: ${name} -> ${filePath}`);
+        } catch (e) {
+            console.error(`❌ [Relay] Failed to deploy agent ${name}:`, e.message);
+        }
+    };
+
+    // 1. Initial Sync (Catch up)
+    try {
+        const agents = await pb.collection('ai_agents').getFullList();
+        for (const agent of agents) {
+            await deployAgent(agent);
+        }
+    } catch (e) {
+        console.warn("⚠️ [Relay] Initial agent sync failed:", e.message);
+    }
+
+    // 2. Realtime Watch
+    pb.collection('ai_agents').subscribe('*', async (e) => {
+        if (e.action === 'create' || e.action === 'update') {
+            await deployAgent(e.record);
+        }
+    });
+}
+
 
 /**
  * Get or create OpenCode session for a specific chat
@@ -160,8 +206,11 @@ async function ensureOpencodeSession(chatId) {
 
     try {
         console.log(`🔍 [Chat Relay] ensureOpencodeSession: fetching chat ${chatId}`);
-        const chat = await pb.collection('chats').getOne(chatId);
-        console.log(`🔍 [Chat Relay] ensureOpencodeSession: chat found, opencode_id: ${chat.opencode_id}`);
+        const chat = await pb.collection('chats').getOne(chatId, {
+            expand: 'agent'
+        });
+        const agentName = chat.expand?.agent?.name || 'poco'; // Default to poco
+        console.log(`🔍 [Chat Relay] ensureOpencodeSession: chat found, opencode_id: ${chat.opencode_id}, agent: ${agentName}`);
         if (chat.opencode_id) {
             // Check if session is still alive
             try {
@@ -192,7 +241,10 @@ async function ensureOpencodeSession(chatId) {
             const res = await fetch(`${OPENCODE_URL}/session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ directory: "/workspace" }),
+                body: JSON.stringify({
+                    directory: "/workspace",
+                    agent: agentName
+                }),
             });
 
             console.log(`🔍 [Chat Relay] ensureOpencodeSession: create session status: ${res.status}`);
@@ -428,6 +480,9 @@ async function start() {
                 processUserMessage(e.record);
             }
         });
+
+        // 4. Subscribe to Agent Registry (Deployment)
+        await subscribeToAgentUpdates();
 
     } catch (e) {
         console.error("❌ [Chat Relay] Critical Error:", e);

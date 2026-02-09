@@ -21,7 +21,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final List<(String, String)> _options = [
     ('BOOT SEQUENCE', '[INTERNAL]'),
     ('SECURITY LEVEL', '[HIGH]'),
-    ('AI MODEL', '[GPT-4o]'),
+    ('AI REGISTRY', '[MANAGE]'),
+    ('WHITELIST RULES', '[SETUP]'),
+    ('AI MODEL', '[Gemini Flash]'),
     ('THEME', '[CYBERPUNK]'),
   ];
 
@@ -43,7 +45,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       label: _options[i].$1,
                       value: _options[i].$2,
                       isSelected: i == _selectedIndex,
-                      onTap: () => setState(() => _selectedIndex = i),
+                      onTap: () {
+                        setState(() => _selectedIndex = i);
+                        if (_options[i].$1 == 'AI REGISTRY') {
+                          context.pushNamed(RouteNames.aiRegistry);
+                        } else if (_options[i].$1 == 'WHITELIST RULES') {
+                          context.pushNamed(RouteNames.whitelist);
+                        }
+                      },
                     ),
                   VSpace.x2,
                   Text(

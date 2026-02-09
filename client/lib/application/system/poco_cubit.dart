@@ -16,8 +16,8 @@ class PocoState with _$PocoState {
   factory PocoState.initial() => const PocoState(
         message: "Awaiting instructions...",
         sequence: [
-          (AppAscii.pocoAwake, 2000),
-          (AppAscii.pocoSleepy, 150),
+          (PocoExpression.awake, 2000),
+          (PocoExpression.sleepy, 150),
         ],
       );
 }
@@ -55,14 +55,14 @@ class PocoCubit extends Cubit<PocoState> {
 
 class PocoExpressions {
   static const scanning = [
-    (AppAscii.pocoLookLeft, 2000),
-    (AppAscii.pocoSleepy, 150),
-    (AppAscii.pocoLookRight, 2000),
-    (AppAscii.pocoSleepy, 150),
-    (AppAscii.pocoSurprised, 1500),
+    (PocoExpression.lookLeft, 2000),
+    (PocoExpression.sleepy, 150),
+    (PocoExpression.lookRight, 2000),
+    (PocoExpression.sleepy, 150),
+    (PocoExpression.surprised, 1500),
   ];
 
-  static const happy = [(AppAscii.pocoHappy, 5000)];
-  static const thinking = [(AppAscii.pocoThinking, 3000)];
-  static const nervous = [(AppAscii.pocoNervous, 1000)];
+  static const happy = [(PocoExpression.happy, 5000)];
+  static const thinking = [(PocoExpression.thinking, 3000)];
+  static const nervous = [(PocoExpression.nervous, 1000)];
 }

@@ -4,6 +4,8 @@ import 'package:test_app/presentation/chat/chat_screen.dart';
 import 'package:test_app/presentation/onboarding/onboarding_screen.dart';
 import 'package:test_app/presentation/artifact/artifact_screen.dart';
 import 'package:test_app/presentation/settings/settings_screen.dart';
+import 'package:test_app/presentation/settings/agent_management_screen.dart';
+import 'package:test_app/presentation/whitelist/whitelist_screen.dart';
 import 'package:test_app/presentation/boot/boot_screen.dart';
 
 import 'package:test_app/presentation/core/widgets/terminal_transition.dart';
@@ -62,6 +64,24 @@ class AppRouter {
           child: const SettingsScreen(),
         ),
       ),
+      GoRoute(
+        path: AppRoutes.aiRegistry,
+        name: RouteNames.aiRegistry,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const AgentManagementScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.whitelist,
+        name: RouteNames.whitelist,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const WhitelistScreen(),
+        ),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -78,6 +98,8 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String boot = '/boot';
   static const String artifact = '/artifacts';
+  static const String aiRegistry = '/settings/ai';
+  static const String whitelist = '/settings/whitelist';
 }
 
 class RouteNames {
@@ -87,6 +109,8 @@ class RouteNames {
   static const String onboarding = 'onboarding';
   static const String boot = 'boot';
   static const String artifact = 'artifact';
+  static const String aiRegistry = 'aiRegistry';
+  static const String whitelist = 'whitelist';
 }
 
 class AppNavigation {
@@ -95,6 +119,8 @@ class AppNavigation {
   static void toHome(BuildContext context) => context.goNamed(RouteNames.home);
   static void toSettings(BuildContext context) =>
       context.pushNamed(RouteNames.settings);
+  static void toWhitelist(BuildContext context) =>
+      context.pushNamed(RouteNames.whitelist);
 
   static void back(BuildContext context) {
     if (context.canPop()) {
