@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'chat_message.dart';
 
 part 'i_chat_repository.freezed.dart';
@@ -15,6 +16,12 @@ abstract class IChatRepository {
 
   /// Ensures a chat exists with the given title and returns its ID
   Future<String> ensureChat(String title);
+
+  /// Gets the OpenCode session ID for a chat
+  Future<String?> getOpencodeId(String chatId);
+
+  /// Watches a specific chat record for changes (e.g. opencode_id updates)
+  Stream<RecordModel> watchChat(String chatId);
 }
 
 @freezed

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:test_app/app/bootstrap.dart';
-import 'package:test_app/domain/auth/i_auth_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:xterm/xterm.dart';
+import 'package:test_app/app/bootstrap.dart';
+import 'package:test_app/application/terminal/terminal_cubit.dart';
+import 'package:test_app/application/terminal/terminal_state.dart';
+import 'package:test_app/application/chat/chat_cubit.dart';
 import '../../app_router.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/poco_animator.dart';
@@ -11,90 +15,47 @@ import '../../design_system/primitives/app_palette.dart';
 import '../../design_system/primitives/app_sizes.dart';
 import '../../design_system/primitives/spacers.dart';
 import '../../design_system/theme/app_theme.dart';
-import '../core/widgets/terminal_input.dart';
 import 'package:test_app/application/system/system_status_cubit.dart';
 import 'package:test_app/application/system/system_status_state.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-class TerminalScreen extends StatefulWidget {
+class TerminalScreen extends StatelessWidget {
   const TerminalScreen({super.key});
 
   @override
-  State<TerminalScreen> createState() => _TerminalScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => getIt<SshTerminalCubit>(),
+      child: const _TerminalView(),
+    );
+  }
 }
 
-class _TerminalScreenState extends State<TerminalScreen> {
-  final TextEditingController _inputController = TextEditingController();
-  final List<String> _logs = [
-    'SYSTEM INITIALIZED',
-    'GATEKEEPER ACTIVE',
-    'WAITING FOR INPUT...',
-  ];
+class _TerminalView extends StatefulWidget {
+  const _TerminalView();
 
   @override
-  void dispose() {
-    _inputController.dispose();
-    super.dispose();
-  }
+  State<_TerminalView> createState() => _TerminalViewState();
+}
 
-  void _addLog(String message) {
-    setState(() {
-      _logs.add('>> $message');
-      if (_logs.length > 20) _logs.removeAt(0);
+class _TerminalViewState extends State<_TerminalView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _connect();
     });
   }
 
-  Future<void> _handleInputSubmit() async {
-    final input = _inputController.text.trim();
-    if (input.isEmpty) return;
+  void _connect() {
+    final chatState = context.read<ChatCubit>().state;
+    final opencodeId = chatState.opencodeId;
 
-    _addLog('% $input');
-    _inputController.clear();
-
-    if (input.toUpperCase().startsWith('LOGIN')) {
-      final parts = input.trim().split(' ');
-      if (parts.length == 3) {
-        await _handleLogin(parts[1], parts[2]);
-      } else {
-        _addLog('USAGE: LOGIN <EMAIL> <PASSWORD>');
-      }
-    } else if (input.toUpperCase().startsWith('AUTHORIZE')) {
-      final parts = input.trim().split(' ');
-      if (parts.length == 2) {
-        await _handleAuthorize(parts[1]);
-      } else {
-        _addLog('USAGE: AUTHORIZE <PERMISSION_ID>');
-      }
-    } else if (input.toUpperCase() == 'HELP') {
-      _addLog('AVAILABLE COMMANDS: LOGIN, AUTHORIZE, HELP');
-    } else {
-      _addLog('UNKNOWN COMMAND. TYPE "HELP" FOR OPTIONS.');
-    }
-  }
-
-  Future<void> _handleLogin(String email, String password) async {
-    _addLog('AUTHENTICATING USER: $email...');
-    final repo = getIt<IAuthRepository>();
-    final success = await repo.login(email, password);
-
-    if (success) {
-      _addLog('LOGIN SUCCESSFUL. WELCOME OPERATOR.');
-      _addLog('SESSION TOKEN ACQUIRED.');
-    } else {
-      _addLog('LOGIN FAILED. CHECK CREDENTIALS.');
-    }
-  }
-
-  Future<void> _handleAuthorize(String permissionId) async {
-    _addLog('APPROVING PERMISSION: $permissionId...');
-    final repo = getIt<IAuthRepository>();
-    final success = await repo.approvePermission(permissionId);
-
-    if (success) {
-      _addLog('PERMISSION GRANTED. EXECUTING...');
-    } else {
-      _addLog('AUTHORIZATION FAILED. CHECK SYSTEM STATUS.');
-    }
+    context.read<SshTerminalCubit>().connect(
+          host: 'localhost', // Sandbox is exposed on localhost for the client
+          port: 2222,
+          username: 'worker',
+          sessionId: opencodeId,
+        );
   }
 
   @override
@@ -121,12 +82,42 @@ class _TerminalScreenState extends State<TerminalScreen> {
                       color: AppPalette.primary.backgroundPrimary
                           .withValues(alpha: 0.3),
                     ),
-                    child: Column(
-                      children: [
-                        Expanded(child: _buildLogView()),
-                        _buildInput(),
-                        VSpace.x1, // Padding bottom for input
-                      ],
+                    child: BlocBuilder<SshTerminalCubit, SshTerminalState>(
+                      builder: (context, state) {
+                        final cubit = context.read<SshTerminalCubit>();
+
+                        if (state.isConnecting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+
+                        if (state.error != null) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('CONNECTION FAILED',
+                                    style: TextStyle(
+                                        color: AppPalette.primary.errorColor)),
+                                VSpace.x1,
+                                Text(state.error!,
+                                    style: TextStyle(
+                                        color: AppPalette.primary.textPrimary,
+                                        fontSize: AppSizes.fontTiny)),
+                                VSpace.x2,
+                                ElevatedButton(
+                                    onPressed: _connect,
+                                    child: const Text('RETRY')),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return TerminalView(
+                          cubit.terminal,
+                          autofocus: true,
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -140,18 +131,18 @@ class _TerminalScreenState extends State<TerminalScreen> {
         actions: [
           TerminalAction(
             keyLabel: 'F1',
-            label: 'ARTIFACTS',
-            onTap: () => context.goNamed(RouteNames.artifact),
+            label: 'BACK TO CHAT',
+            onTap: () => context.goNamed(RouteNames.home),
           ),
           TerminalAction(
-            keyLabel: 'F3',
-            label: 'SETTINGS',
-            onTap: () => context.goNamed(RouteNames.settings),
+            keyLabel: 'F5',
+            label: 'RECONNECT',
+            onTap: _connect,
           ),
           TerminalAction(
-            keyLabel: 'F10',
+            keyLabel: 'ESC',
             label: 'LOGOUT',
-            onTap: () => context.goNamed(RouteNames.onboarding),
+            onTap: () => context.goNamed(RouteNames.boot),
           ),
         ],
       ),
@@ -170,7 +161,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
                 PocoAnimator(fontSize: AppSizes.fontBig),
                 VSpace.x0_5,
                 Text(
-                  'Poco',
+                  'Terminal Mirror',
                   style: context.textTheme.labelSmall?.copyWith(
                     color:
                         AppPalette.primary.textPrimary.withValues(alpha: 0.8),
@@ -191,7 +182,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'POCKETCODER v1.0.4',
+                'SSH SESSION: sandbox:2222',
                 style: context.textTheme.titleSmall?.copyWith(
                   color: AppPalette.primary.textPrimary,
                   letterSpacing: 2,
@@ -217,38 +208,6 @@ class _TerminalScreenState extends State<TerminalScreen> {
           color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
         ),
       ],
-    );
-  }
-
-  Widget _buildLogView() {
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSizes.space * 2,
-        vertical: AppSizes.space,
-      ),
-      itemCount: _logs.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
-          child: Text(
-            _logs[index],
-            style: TextStyle(
-              color: AppPalette.primary
-                  .primaryColor, // Using slightly different green for logs
-              fontSize: AppSizes.fontSmall,
-              fontFamily: AppFonts.bodyFamily,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildInput() {
-    return TerminalInput(
-      controller: _inputController,
-      onSubmitted: _handleInputSubmit,
-      prompt: '#',
     );
   }
 }

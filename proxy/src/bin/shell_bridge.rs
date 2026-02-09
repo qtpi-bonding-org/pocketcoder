@@ -8,6 +8,7 @@ struct ExecRequest {
     cmd: String,
     cwd: String,
     usage_id: Option<String>,
+    session_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -46,11 +47,13 @@ fn main() {
 
     let cwd = env::current_dir().unwrap_or_default().to_string_lossy().to_string();
     let usage_id = env::var("POCKETCODER_USAGE_ID").ok();
+    let session_id = env::var("OPENCODE_SESSION_ID").ok();
 
     let request = ExecRequest {
         cmd,
         cwd,
         usage_id,
+        session_id,
     };
 
     // 2. The Proxy (Rust Synchronous Request)

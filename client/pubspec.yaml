@@ -52,6 +52,10 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.1
   pocketbase: ^0.23.2
+  xterm: ^4.0.0
+  dartssh2: ^2.13.0
+  cryptography: ^2.7.0
+  openssh_ed25519: ^1.1.0
 
 dev_dependencies:
   flutter_test:

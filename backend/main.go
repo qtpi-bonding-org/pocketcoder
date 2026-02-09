@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -65,6 +66,7 @@ func main() {
 	// 🛡️ RUNTIME SEEDING & ENDPOINTS
 	// ------------------------------------------------------------
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		log.Printf("🚀 Registering custom endpoints...")
 		
 		// 📡 PERMISSION EVALUATION ENDPOINT
 		// This endpoint evaluates an Intent and creates the permission record.
@@ -250,6 +252,28 @@ func main() {
 
 			http.ServeFile(re.Response, re.Request, cleanPath)
 			return nil
+		})
+
+		// 🔑 SSH PUBLIC KEYS SYNC ENDPOINT
+		// Returns all authorized public keys as a newline-separated list
+		e.Router.GET("/api/openclaw/ssh_keys", func(re *core.RequestEvent) error {
+			// Fetch all active SSH keys from the ssh_keys collection
+			// Note: Empty string for sort means no sorting
+			sshKeys, err := app.FindRecordsByFilter("ssh_keys", "is_active = TRUE", "", 1000, 0, nil)
+			if err != nil {
+				log.Printf("❌ Failed to fetch SSH keys: %v", err)
+				return re.String(500, fmt.Sprintf("Failed to fetch SSH keys: %v", err))
+			}
+			
+			var keys []string
+			for _, record := range sshKeys {
+				key := record.GetString("public_key")
+				if key != "" {
+					keys = append(keys, key)
+				}
+			}
+
+			return re.String(200, strings.Join(keys, "\n"))
 		})
 
 		return e.Next()
