@@ -1,4 +1,8 @@
-# PocketCoder Development Guide
+---
+title: Development
+description: How to set up and build PocketCoder locally.
+---
+
 
 This document provides instructions for setting up a local development environment and running the PocketCoder test suite.
 

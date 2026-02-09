@@ -5,9 +5,6 @@ export default defineConfig({
     integrations: [
         starlight({
             title: 'PocketCoder',
-            social: {
-                github: 'https://github.com/pocketcoder-ai/pocketcoder',
-            },
             sidebar: [
                 {
                     label: 'Guides',
@@ -18,7 +15,18 @@ export default defineConfig({
                 },
                 {
                     label: 'Reference',
-                    autogenerate: { directory: 'reference' },
+                    items: [
+                        { label: 'Backend (Go)', link: '/reference/backend' },
+                        { label: 'Relay (Node.js)', link: '/reference/relay' },
+                        { label: 'Proxy (Rust)', link: '/reference/proxy' },
+                    ],
+                },
+            ],
+            social: [
+                {
+                    label: 'GitHub',
+                    href: 'https://github.com/pocketcoder-ai/pocketcoder',
+                    icon: 'github',
                 },
             ],
         }),

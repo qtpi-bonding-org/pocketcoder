@@ -29,6 +29,8 @@ backend/pocketbase
 
 # Local/Independent Repos (Opencode)
 .independent_repos/
+!.independent_repos/openclaw_reference/
+!.independent_repos/openclaw_reference/README.md
 opencode/
 code/
 
@@ -37,3 +39,5 @@ code/
 .idea/
 coverage/
 *.log
+docs/.astro/
+docs/src/.astro/

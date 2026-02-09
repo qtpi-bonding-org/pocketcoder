@@ -52,6 +52,8 @@ pub struct CommandResult {
     pub exit_code: i32,
 }
 
+/// ExecRequest represents a shell command execution request.
+/// It includes the command string, working directory, and metadata for audit trails.
 #[derive(Debug, Deserialize)]
 pub struct ExecRequest {
     pub cmd: String,
@@ -81,6 +83,9 @@ pub trait ActionProvider: Send + Sync {
 // PocketCoder Execution Driver (Shared Socket Sentinel)
 // --------------------------------------------------------------------------
 
+/// PocketCoderDriver is the core execution engine for the Proxy.
+/// It interacts with TMUX via a UNIX socket to run commands in isolated sessions.
+/// Each session represents a sandboxed environment for a user or agent.
 pub struct PocketCoderDriver {
     socket_path: String,
     session_name: String,
@@ -94,6 +99,18 @@ impl PocketCoderDriver {
         }
     }
 
+    /// Executes a command within a specific TMUX session, capturing output and exit code.
+    ///
+    /// The execution flow involves:
+    /// 1. Ensuring the target TMUX session exists.
+    /// 2. Clearing the session history to ensure a clean capture.
+    /// 3. Injecting the command along with a sentinel value to detect completion.
+    /// 4. Polling the session output until the sentinel is found or a timeout occurs.
+    ///
+    /// # Arguments
+    /// * `cmd` - The command to execute.
+    /// * `cwd` - Optional working directory to execute the command in.
+    /// * `session_override` - Optional session name override. If not provided, uses the default session.
     pub async fn exec(&self, cmd: &str, cwd: Option<&str>, session_override: Option<&str>) -> Result<CommandResult> {
         let session = session_override.unwrap_or(&self.session_name);
         
@@ -204,6 +221,11 @@ struct SseQuery {
 // Handlers
 // --------------------------------------------------------------------------
 
+/// SSE (Server-Sent Events) Handler
+/// Establishes a persistent connection for real-time updates.
+///
+/// # Query Parameters
+/// * `sessionId` - Optional session ID. If not provided, a new UUID is generated.
 async fn sse_handler(
     State(state): State<Arc<AppState>>,
     Query(query): Query<SseQuery>,
@@ -221,10 +243,20 @@ async fn sse_handler(
     Sse::new(stream)
 }
 
+/// Health Check Handler
+/// Returns a simple JSON status to indicate the service is running.
 async fn health_handler() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "status": "ok" }))
 }
 
+/// Execution Handler
+/// Accepts a command execution request and forwards it to the TMUX driver.
+/// This endpoint assumes that authorization has already been handled by the caller (e.g., Relay).
+///
+/// # Payload
+/// * `cmd` - The command string to execute.
+/// * `cwd` - Optional working directory. Defaults to `/workspace`.
+/// * `session_id` - Optional session ID for isolating the execution context.
 async fn exec_handler(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<ExecRequest>,
