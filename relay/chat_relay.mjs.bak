@@ -41,11 +41,11 @@ async function listenForPermissions() {
 
     evtSource.onmessage = async (event) => {
         try {
-            console.log("📥 [Gatekeeper] Event received:", event.data);
             const data = JSON.parse(event.data);
 
             if (data.type === 'permission.asked') {
-                console.log("🛡️ [Gatekeeper] Permission Asked! Payload:", JSON.stringify(data));
+                console.log("RAW EVENT:", JSON.stringify(data));
+                // OpenCode v1 events usually have properties in .properties or at root depending on version
                 const payload = data.properties || data;
                 await handlePermissionAsked(payload);
             }
@@ -204,13 +204,12 @@ async function subscribeToAgentUpdates() {
 async function ensureOpencodeSession(chatId) {
     if (!chatId) return null;
 
-    let agentName = 'poco'; // Default
     try {
         console.log(`🔍 [Chat Relay] ensureOpencodeSession: fetching chat ${chatId}`);
         const chat = await pb.collection('chats').getOne(chatId, {
             expand: 'agent'
         });
-        agentName = chat.expand?.agent?.name || 'poco';
+        const agentName = chat.expand?.agent?.name || 'poco'; // Default to poco
         console.log(`🔍 [Chat Relay] ensureOpencodeSession: chat found, opencode_id: ${chat.opencode_id}, agent: ${agentName}`);
         if (chat.opencode_id) {
             // Check if session is still alive
@@ -335,7 +334,6 @@ async function processUserMessage(msg) {
         }
 
         const promptData = await res.json();
-        console.log("📥 [Chat Relay] OpenCode Prompt Response:", JSON.stringify(promptData));
         // ID is in info.id for the initial response!
         const opencodeMsgId = promptData.id || promptData.info?.id;
 
@@ -468,11 +466,8 @@ async function saveAssistantResponse(chatId, opencodeMessage) {
 async function start() {
     try {
         // 1. Authenticate
-        console.log(`🔑 [Chat Relay] Attempting login as ${AGENT_EMAIL}...`);
         await pb.collection('users').authWithPassword(AGENT_EMAIL, AGENT_PASSWORD);
         console.log("✅ [Chat Relay] Logged in to PocketBase");
-        console.log("   Auth ID:", pb.authStore.model.id);
-        console.log("   Auth Role:", pb.authStore.model.role);
 
         // 2. Start Gatekeeper (Permissions)
         await listenForPermissions();

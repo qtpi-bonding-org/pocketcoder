@@ -27,11 +27,11 @@ func init() {
 			MaxSelect:    1,
 		})
 
-		chats.ListRule = ptr("@request.auth.id = user.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
-		chats.ViewRule = ptr("@request.auth.id = user.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		chats.ListRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
+		chats.ViewRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
 		chats.CreateRule = ptr("@request.auth.id != ''")
-		chats.UpdateRule = ptr("@request.auth.id = user.id || @request.auth.role = 'admin'")
-		chats.DeleteRule = ptr("@request.auth.id = user.id || @request.auth.role = 'admin'")
+		chats.UpdateRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		chats.DeleteRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
 
 		if err := app.Save(chats); err != nil {
 			return err
@@ -61,8 +61,8 @@ func init() {
 		messages.Fields.Add(&core.JSONField{Name: "metadata"})
 		messages.AddIndex("idx_messages_chat", false, "chat", "")
 
-		messages.ListRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user.id = @request.auth.id)")
-		messages.ViewRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user.id = @request.auth.id)")
+		messages.ListRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user = @request.auth.id)")
+		messages.ViewRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user = @request.auth.id)")
 		messages.CreateRule = ptr("@request.auth.id != ''")
 		messages.UpdateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
 		messages.DeleteRule = ptr("@request.auth.role = 'admin'")
@@ -119,7 +119,19 @@ func init() {
 			Values:    []string{"draft", "authorized", "denied"},
 		})
 		permissions.Fields.Add(&core.TextField{Name: "message"})
-		
+		permissions.Fields.Add(&core.TextField{Name: "source"})
+		permissions.Fields.Add(&core.TextField{Name: "message_id"})
+		permissions.Fields.Add(&core.TextField{Name: "call_id"})
+		permissions.Fields.Add(&core.TextField{Name: "challenge"})
+
+		// Relation to Chat
+		permissions.Fields.Add(&core.RelationField{
+			Name:         "chat",
+			Required:     false,
+			CollectionId: chats.Id,
+			MaxSelect:    1,
+		})
+
 		// Relation to Usage (Optional)
 		permissions.Fields.Add(&core.RelationField{
 			Name:         "usage",
@@ -230,6 +242,8 @@ func init() {
 		wlTargets.Fields.Add(&core.TextField{Name: "name", Required: true})
 		wlTargets.Fields.Add(&core.TextField{Name: "pattern", Required: true}) // e.g. "github.com/myorg/*"
 		wlTargets.Fields.Add(&core.SelectField{Name: "type", Values: []string{"domain", "repo", "path"}})
+		wlTargets.Fields.Add(&core.BoolField{Name: "active"})
+
 		wlTargets.ListRule = ptr("@request.auth.id != ''")
 		wlTargets.ViewRule = ptr("@request.auth.id != ''")
 		wlTargets.CreateRule = ptr("@request.auth.role = 'admin'")
@@ -240,9 +254,12 @@ func init() {
 		// Whitelist Actions (e.g. "git clone", "curl")
 		wlActions := core.NewCollection(core.CollectionTypeBase, "whitelist_actions")
 		wlActions.Name = "whitelist_actions"
-		wlActions.Fields.Add(&core.TextField{Name: "command", Required: true}) // e.g. "git clone"
+		wlActions.Fields.Add(&core.TextField{Name: "permission", Required: true})
+		wlActions.Fields.Add(&core.SelectField{Name: "kind", Values: []string{"strict", "pattern"}, MaxSelect: 1})
+		wlActions.Fields.Add(&core.TextField{Name: "value"})
+		wlActions.Fields.Add(&core.TextField{Name: "command"})
 		wlActions.Fields.Add(&core.RelationField{Name: "target", CollectionId: wlTargets.Id, MaxSelect: 1})
-		wlActions.Fields.Add(&core.BoolField{Name: "is_active"})
+		wlActions.Fields.Add(&core.BoolField{Name: "active"})
 		wlActions.ListRule = ptr("@request.auth.id != ''")
 		wlActions.ViewRule = ptr("@request.auth.id != ''")
 		wlActions.CreateRule = ptr("@request.auth.role = 'admin'")

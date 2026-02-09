@@ -180,7 +180,7 @@ test_register_ssh_key() {
 test_ssh_keys_endpoint() {
     log_test "Checking SSH keys sync endpoint..."
     
-    KEYS_RESPONSE=$(curl -s "$POCKETBASE_URL/api/openclaw/ssh_keys")
+    KEYS_RESPONSE=$(curl -s "$POCKETBASE_URL/api/pocketcoder/ssh_keys")
     
     if echo "$KEYS_RESPONSE" | grep -q "$(echo "$TEST_PUBLIC_KEY" | awk '{print $2}')"; then
         log_success "SSH key appears in sync endpoint"
