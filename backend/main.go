@@ -18,6 +18,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// matchWildcard implements a simple glob-like pattern matching (e.g. /workspace/**).
+// It converts internal wildcards (*, ?) into regex patterns.
 func matchWildcard(str string, pattern string) bool {
 	escaped := regexp.QuoteMeta(pattern)
 	escaped = strings.ReplaceAll(escaped, "\\*", ".*")

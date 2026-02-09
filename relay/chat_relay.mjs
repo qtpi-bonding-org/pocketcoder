@@ -35,6 +35,11 @@ console.log(`   OpenCode: ${OPENCODE_URL}`);
  */
 
 // 1. Listen for new permissions from OpenCode (SSE)
+/**
+ * 👂 listenForPermissions
+ * Connects to the OpenCode Server-Sent Events (SSE) stream.
+ * Listens for 'permission.asked' events and triggers the Gatekeeper flow.
+ */
 async function listenForPermissions() {
     console.log("🛡️ [Gatekeeper] Connecting to OpenCode Event Stream...");
     const evtSource = new EventSource(`${OPENCODE_URL}/event`);
@@ -61,6 +66,15 @@ async function listenForPermissions() {
 }
 
 // 2. Handle 'permission.asked' -> Query the Sovereign Authority
+/**
+ * 🛡️ handlePermissionAsked
+ * The entry point for the "Sovereign Authority" flow.
+ * 1. Resolves the Chat ID from the OpenCode Session ID.
+ * 2. POSTs the intent to the PocketBase /api/pocketcoder/permission endpoint.
+ * 3. Acts on the decision (Auto-Authorize or Manual Gate).
+ * 
+ * @param {Object} payload - The permission request payload from OpenCode.
+ */
 async function handlePermissionAsked(payload) {
     const permId = payload.id;
     console.log(`🛡️ [Relay] Intent Received: ${permId} (${payload.permission})`);
