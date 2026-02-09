@@ -1,7 +1,7 @@
 #!/bin/bash
-# test/gatekeeper_flow_full.sh
-# Automates the full Gatekeeper flow: 
-# Auth -> Chat Creation -> AI Message -> Permission Detection -> User Authorization -> Success
+# test/permission_flow_full.sh
+# Automates the full Permission flow: 
+# Auth → Chat Creation → AI Message → Permission Detection → User Authorization → Success
 
 set -e
 
@@ -64,7 +64,7 @@ MSG_RES=$(curl -s -X POST "$PB_URL/api/collections/messages/records" \
         \"metadata\": { \"processed\": false }
     }")
 
-echo "✅ User message created. Waiting for Gatekeeper challenge..."
+echo "✅ User message created. Waiting for Permission request..."
 
 # 5. Poll for Permission Request
 PERM_ID=""
@@ -76,14 +76,14 @@ for i in {1..15}; do
     PERM_ID=$(echo "$PERMS_RES" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 | head -n 1)
     
     if [ ! -z "$PERM_ID" ]; then
-        echo "🛡️  Gatekeeper Challenge Found: $PERM_ID"
+        echo "🛡️  Permission Request Found: $PERM_ID"
         break
     fi
     sleep 2
 done
 
 if [ -z "$PERM_ID" ]; then
-    echo "❌ No permission request found. Did the relay fail?"
+    echo "❌ No permission request found. Did the Relay fail?"
     exit 1
 fi
 
