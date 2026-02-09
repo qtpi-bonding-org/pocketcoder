@@ -1,6 +1,6 @@
 #!/bin/bash
 # 🧪 PocketCoder Chat Loop Tester
-# This script sends a message to PocketBase as the Admin user to trigger the bridge -> OpenCode loop.
+# This script sends a message to PocketBase as the Admin user to trigger the relay -> OpenCode loop.
 
 POCKETBASE_URL="http://127.0.0.1:8090"
 
