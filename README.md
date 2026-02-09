@@ -23,15 +23,28 @@ We chose this license to ensure that if PocketCoder is ever used to provide a ne
 *   **Individuals & Researchers**: Free to use, modify, and explore.
 *   **Commercial/Proprietary**: If you wish to embed this into a closed-source product, please reach out regarding a commercial license.
 
+## 🚀 Getting Started (TODO: Detailed Guide Here)
+
+This section will provide a quick start guide for new users to get PocketCoder up and running locally.
+
+<!-- TODO:
+- Prerequisites (Docker, Git, etc.)
+- Clone the repository
+- `docker-compose up -d`
+- Initial configuration steps
+- How to access the Flutter UI
+- Basic first interaction with the AI assistant
+-->
+
 ## 🔗 Links
 - [License](LICENSE) (AGPLv3)
 
 ---
 *Built on the shoulders of giants. Inspired by the pioneering work of OpenClaw and the power of OpenCode.*
 
-## 🏗️ Architecture: The "Sovereign Loop"
+## Architecture: The Sovereign Loop
 
-PocketCoder operates on a **Physical Separation of Concerns**. The "Brain" (AI) is isolated from the "Hands" (Execution) by a security firewall.
+PocketCoder operates on a **Physical Separation of Concerns**. The reasoning engine is isolated from the execution environment by a security relay.
 
 ```mermaid
 graph TD
@@ -40,54 +53,43 @@ graph TD
         UI[User Interface]
     end
 
-    subgraph Core ["🏰 Control Plane"]
+    subgraph ControlPlane ["Control Plane"]
         PB[(PocketBase)]
-        Auth[Auth System]
-        Stream[Hot Pipe Stream]
-        ColdPipe[Cold Pipe Logs]
+        Relay[Relay]
     end
 
-    subgraph Brain ["🧠 OpenCode Agent"]
-        Logic[Reasoning Engine]
-        subgraph Plugins
-            Gatekeeper[🛡️ Gatekeeper Plugin]
-            Comms[📡 Chat Plugin]
-        end
+    subgraph Reasoning ["Reasoning"]
+        OC[OpenCode]
     end
 
-    subgraph Security ["🔥 The Firewall"]
-        Gateway[Gateway Proxy]
+    subgraph Security ["Security"]
+        Proxy[Proxy]
     end
 
-    subgraph Hands ["🛠️ Sandbox"]
+    subgraph Execution ["Execution"]
+        SB[Sandbox]
         Tmux[Tmux Session]
-        Shell[Bash Shell]
     end
 
     %% Flows
     User <--> UI
-    UI <-->|"HTTP / Realtime"| PB
+    UI <--> PB
     
-    Logic <-->|"Auth & Data"| PB
-    Comms -->|"Stream Logs"| Stream
-    Comms -->|"Write Files"| ColdPipe
-
-    Logic -->|"Execute Command"| Gateway
-    Gateway --"Intercepts"--> Tmux
-    Tmux --"Runs"--> Shell
-    Shell --"Output"--> Tmux
-    Tmux --> Gateway --> Logic
+    PB <-. Subscription .-> Relay
+    Relay <--> OC
+    
+    OC <--> Proxy
+    Proxy <--> SB
+    SB <--> Tmux
 ```
 
-## 📊 Codebase Stats: "Featherweight Industrial"
+## Codebase Stats: "Featherweight Industrial"
+*(LOC counts are approximate and for initial estimation only.)*
 
 We prioritize high-leverage tools over custom code. The entire platform matches Enterprise capabilities with less than 2,000 lines of code.
 
-| Component | Technology | LOC | Role |
-| :--- | :--- | :--- | :--- |
-| **Backend** | Go (PocketBase) | ~830 | **The Authority**: Identity, Realtime, Schema |
-| **Gateway** | Rust | ~340 | **The Enforcer**: Security Firewall, Dumb Proxy |
-| **Plugins** | TypeScript | ~390 | **The Diplomats**: Permissions logic, Logging |
-| **Sandbox** | Bash / TS | ~125 | **The Hands**: Pure execution environment |
-| **Infra** | Docker Compose | ~120 | **The Universe**: Orchestration & Networking |
-| **TOTAL** | | **~1,805** | **Efficient, Auditable, Maintainable** |
+| **pocketbase** | Go | ~900 | **Sovereign Authority**: Identity, Realtime, Permission Whitelisting |
+| **relay** | Node.js | ~650 | **Control Plane**: Proxies messages, handles intents, syncs SSH keys |
+| **proxy** | Rust | ~300 | **Execution Proxy**: Secure TMUX bridge for shell commands |
+| **sandbox** | Docker/Tmux | ~100 | **Isolated Runtime**: Persistent terminal sessions |
+| **TOTAL** | | **~1,950** | **Lean, Auditable, High-Leverage** |
