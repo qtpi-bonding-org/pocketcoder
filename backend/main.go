@@ -68,7 +68,7 @@ func main() {
 				}
 			}
 
-			if permission != "bash" || isWhitelisted {
+			if isWhitelisted {
 				log.Printf("🛡️ [Gatekeeper] Auto-authorizing: %s (Whitelisted: %v)", permission, isWhitelisted)
 				e.Record.Set("status", "authorized")
 			} else {

@@ -21,23 +21,160 @@ const AGENT_EMAIL = process.env.AGENT_EMAIL || 'agent@pocketcoder.local';
 const AGENT_PASSWORD = process.env.AGENT_PASSWORD || 'EJ6IiRKdHR8Do6IogD7PApyErxDZhUmp';
 
 const pb = new PocketBase(POCKETBASE_URL);
-let opencodeSessionId = null;
+let currentChatId = null;
+const sessionToChat = new Map(); // sessionID -> chatId
 
 console.log("🌉 [Chat Bridge] Starting Realtime Bridge...");
 console.log(`   PocketBase: ${POCKETBASE_URL}`);
 console.log(`   OpenCode: ${OPENCODE_URL}`);
 
 /**
- * Get or create OpenCode session
+ * 🛡️ GATEKEEPER: Sync Permissions
  */
-async function ensureOpencodeSession() {
-    if (opencodeSessionId) {
+
+// 1. Listen for new permissions from OpenCode (SSE)
+async function listenForPermissions() {
+    console.log("🛡️ [Gatekeeper] Connecting to OpenCode Event Stream...");
+    const evtSource = new EventSource(`${OPENCODE_URL}/event`);
+
+    evtSource.onmessage = async (event) => {
         try {
-            const res = await fetch(`${OPENCODE_URL}/session/${opencodeSessionId}`);
-            if (res.ok) return opencodeSessionId;
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'permission.asked') {
+                console.log("RAW EVENT:", JSON.stringify(data));
+                // OpenCode v1 events usually have properties in .properties or at root depending on version
+                const payload = data.properties || data;
+                await handlePermissionAsked(payload);
+            }
         } catch (e) {
-            console.warn("⚠️ [Chat Bridge] Cached OpenCode session invalid");
+            console.error("❌ [Gatekeeper] Event error:", e.message);
         }
+    };
+
+    evtSource.onerror = (err) => {
+        console.error("❌ [Gatekeeper] SSE Error. Reconnecting...", err);
+        // EventSource auto-reconnects, but we log it.
+    };
+}
+
+// 2. Handle 'permission.asked' -> Create 'draft' in PocketBase
+async function handlePermissionAsked(payload) {
+    const permId = payload.id;
+    console.log(`🔒 [Gatekeeper] Permission Requested: ${permId} (${payload.permission})`);
+
+    try {
+        // Check if message exists first to get the Chat ID
+        // The permission payload keys sessionID and usually maps to a message.
+        // We'll trust the payload has what we need.
+
+        let chatId = sessionToChat.get(payload.sessionID);
+        if (!chatId) {
+            try {
+                // Try to find chat by the sessionID mapping we store in PB
+                const chat = await pb.collection('chats').getFirstListItem(`opencode_id = "${payload.sessionID}"`);
+                chatId = chat.id;
+                sessionToChat.set(payload.sessionID, chatId);
+                console.log(`📍 [Gatekeeper] Recovered chat context: ${chatId} for session ${payload.sessionID}`);
+            } catch (e) {
+                console.warn(`⚠️ [Gatekeeper] Could not find chat for session ${payload.sessionID}, using fallback: ${currentChatId}`);
+                chatId = currentChatId;
+            }
+        }
+
+        await pb.collection('permissions').create({
+            opencode_id: payload.id,
+            session_id: payload.sessionID,
+            chat: chatId,
+            permission: payload.permission,
+            patterns: payload.patterns,
+            metadata: payload.metadata,
+            always: payload.always,
+            message_id: payload.tool?.messageID,
+            call_id: payload.tool?.callID,
+            status: 'draft',
+            source: 'opencode-plugin',
+            message: `Request to use tool: ${payload.permission}`
+        });
+
+        console.log(`📝 [Gatekeeper] Draft created for ${permId}`);
+    } catch (e) {
+        // Ignore if already exists (duplicate event)
+        if (e.status !== 400) {
+            console.error(`❌ [Gatekeeper] Failed to create draft:`, e);
+            if (e.response) console.error("PB Response:", e.response);
+        }
+    }
+}
+
+// 3. Listen for PocketBase 'authorized'/'denied' -> Reply to OpenCode
+async function subscribeToPermissionUpdates() {
+    console.log("📡 [Gatekeeper] Subscribing to permission updates...");
+    pb.collection('permissions').subscribe('*', async (e) => {
+        if (e.action === 'update' || e.action === 'create') {
+            const record = e.record;
+            if (record.status === 'authorized') {
+                await replyToOpenCode(record.opencode_id, 'once');
+            } else if (record.status === 'denied') {
+                await replyToOpenCode(record.opencode_id, 'reject');
+            }
+        }
+    });
+}
+
+// 4. Send Reply to OpenCode
+async function replyToOpenCode(requestID, replyType) {
+    console.log(`🔓 [Gatekeeper] Replying to OpenCode: ${requestID} -> ${replyType}`);
+    try {
+        const res = await fetch(`${OPENCODE_URL}/permission/${requestID}/reply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                reply: replyType,
+                message: replyType === 'reject' ? "User denied permission." : undefined
+            })
+        });
+
+        if (!res.ok) {
+            console.error(`❌ [Gatekeeper] Reply failed: ${res.status}`);
+        } else {
+            console.log(`✅ [Gatekeeper] ${replyType.toUpperCase()} sent successfully.`);
+        }
+    } catch (e) {
+        console.error(`❌ [Gatekeeper] Network error replying: ${e.message}`);
+    }
+}
+
+
+/**
+ * Get or create OpenCode session for a specific chat
+ */
+async function ensureOpencodeSession(chatId) {
+    if (!chatId) return null;
+
+    try {
+        console.log(`🔍 [Chat Bridge] ensureOpencodeSession: fetching chat ${chatId}`);
+        const chat = await pb.collection('chats').getOne(chatId);
+        console.log(`🔍 [Chat Bridge] ensureOpencodeSession: chat found, opencode_id: ${chat.opencode_id}`);
+        if (chat.opencode_id) {
+            // Check if session is still alive
+            try {
+                const url = `${OPENCODE_URL}/session/${chat.opencode_id}`;
+                console.log(`🔍 [Chat Bridge] ensureOpencodeSession: checking session via ${url}`);
+                const res = await fetch(url);
+                console.log(`🔍 [Chat Bridge] ensureOpencodeSession: check session status: ${res.status}`);
+                if (res.ok) {
+                    sessionToChat.set(chat.opencode_id, chatId);
+                    return chat.opencode_id;
+                }
+            } catch (e) {
+                console.warn(`⚠️ [Chat Bridge] Session ${chat.opencode_id} invalid, creating new one... ${e.message}`);
+            }
+        }
+    } catch (e) {
+        console.error(`❌ [Chat Bridge] Failed to fetch chat ${chatId}:`, e.message);
+        // If chat fetch fails, we can't safely proceed
+        return null;
     }
 
     let retryCount = 0;
@@ -45,29 +182,31 @@ async function ensureOpencodeSession() {
 
     while (retryCount < maxRetries) {
         try {
+            console.log(`🔍 [Chat Bridge] ensureOpencodeSession: creating new session (Attempt ${retryCount + 1})`);
             const res = await fetch(`${OPENCODE_URL}/session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ directory: "/workspace" }),
             });
 
+            console.log(`🔍 [Chat Bridge] ensureOpencodeSession: create session status: ${res.status}`);
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(`OpenCode session creation failed: ${res.status} - ${text.slice(0, 100)}`);
             }
 
-            const text = await res.text();
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error(`❌ [Chat Bridge] Response from ${OPENCODE_URL}/session was not JSON:`, text);
-                throw new Error(`OpenCode response was not JSON`);
-            }
+            const data = await res.json();
+            const sessionId = data.id;
+            console.log(`🔍 [Chat Bridge] ensureOpencodeSession: session created: ${sessionId}, linking to chat...`);
 
-            opencodeSessionId = data.id;
-            console.log(`✅ [Chat Bridge] OpenCode session: ${opencodeSessionId}`);
-            return opencodeSessionId;
+            // Link this chat to the new session
+            await pb.collection('chats').update(chatId, {
+                opencode_id: sessionId
+            });
+
+            sessionToChat.set(sessionId, chatId);
+            console.log(`✅ [Chat Bridge] Linked chat ${chatId} to OpenCode session: ${sessionId}`);
+            return sessionId;
         } catch (e) {
             retryCount++;
             console.warn(`⚠️ [Chat Bridge] Failed to connect to OpenCode (Attempt ${retryCount}/${maxRetries}):`, e.message);
@@ -87,6 +226,12 @@ async function processUserMessage(msg) {
     if (msg.role !== 'user' || msg.metadata?.processed === true) return;
 
     console.log(`📨 [Chat Bridge] Processing message: ${msg.id}`);
+    if (msg.chat) {
+        currentChatId = msg.chat;
+        console.log(`📍 [Chat Bridge] Current chat context set to: ${currentChatId}`);
+    } else {
+        console.warn(`⚠️ [Chat Bridge] Message ${msg.id} has no chat association!`);
+    }
 
     // Mark as processed immediately to prevent double-processing
     try {
@@ -98,7 +243,7 @@ async function processUserMessage(msg) {
         return;
     }
 
-    const sessionId = await ensureOpencodeSession();
+    const sessionId = await ensureOpencodeSession(msg.chat);
     if (!sessionId) {
         console.error("❌ [Chat Bridge] No OpenCode session, skipping message");
         return;
@@ -182,10 +327,12 @@ async function pollOpenCodeResponse(sessionId, opencodeMsgId, pbChatId) {
             }
 
             // Sync parts to PocketBase periodically or on finish
+            // This allows the UI to see "tool use" parts before the message is complete!
             if (message.parts && message.parts.length > 0) {
-                // If done, save the final version
+                await saveAssistantResponse(pbChatId, message);
+
+                // If done, we stop polling
                 if (isCompleted) {
-                    await saveAssistantResponse(pbChatId, message);
                     console.log(`✅ [Chat Bridge] Response finalized for chat ${pbChatId}`);
                     return;
                 }
@@ -207,15 +354,19 @@ async function pollOpenCodeResponse(sessionId, opencodeMsgId, pbChatId) {
  */
 async function saveAssistantResponse(chatId, opencodeMessage) {
     try {
-        console.log(`💾 [Chat Bridge] Saving response with parts:`, JSON.stringify(opencodeMessage.parts, null, 2));
+        const msgId = opencodeMessage.id || opencodeMessage.info?.id;
 
         if (!opencodeMessage.parts || opencodeMessage.parts.length === 0) {
-            console.warn("⚠️ [Chat Bridge] No parts to save");
+            console.log(`🔍 [Chat Bridge] saveAssistantResponse: no parts for message ${msgId}, skipping sync`);
+            return;
+        }
+
+        if (!msgId) {
+            console.error("❌ [Chat Bridge] Cannot save assistant response: missing message ID", JSON.stringify(opencodeMessage).slice(0, 200));
             return;
         }
 
         // Pass parts through to PocketBase. Dart client handles the schema matching.
-        // We only ensure 'text' is set for text parts if it's missing (legacy support).
         const parts = opencodeMessage.parts.map(p => {
             if (p.type === 'text' && !p.text && p.content) {
                 return { ...p, text: p.content };
@@ -223,14 +374,31 @@ async function saveAssistantResponse(chatId, opencodeMessage) {
             return p;
         });
 
-        await pb.collection('messages').create({
-            chat: chatId,
-            role: 'assistant',
-            parts: parts,
-            metadata: { opencodeId: opencodeMessage.id }
-        });
+        // Check if message already exists (upsert logic)
+        try {
+            const existing = await pb.collection('messages').getFirstListItem(`metadata.opencodeId = "${msgId}"`);
+
+            // Update
+            await pb.collection('messages').update(existing.id, {
+                parts: parts
+            });
+        } catch (e) {
+            // Create New
+            if (e.status === 404) {
+                await pb.collection('messages').create({
+                    chat: chatId,
+                    role: 'assistant',
+                    parts: parts,
+                    metadata: { opencodeId: msgId }
+                });
+                console.log(`💾 [Chat Bridge] Created response for ${msgId}`);
+            } else {
+                throw e;
+            }
+        }
+
     } catch (e) {
-        console.error("❌ [Chat Bridge] Failed to save assistant response:", e.message);
+        console.error("❌ [Chat Bridge] Failed to save/update assistant response:", e.message);
     }
 }
 
@@ -243,7 +411,11 @@ async function start() {
         await pb.collection('users').authWithPassword(AGENT_EMAIL, AGENT_PASSWORD);
         console.log("✅ [Chat Bridge] Logged in to PocketBase");
 
-        // 3. Subscribe to Realtime
+        // 2. Start Gatekeeper (Permissions)
+        await listenForPermissions();
+        await subscribeToPermissionUpdates();
+
+        // 3. Subscribe to Chat Messages
         console.log("📡 [Chat Bridge] Subscribing to messages...");
         pb.collection('messages').subscribe('*', (e) => {
             if (e.action === 'create') {

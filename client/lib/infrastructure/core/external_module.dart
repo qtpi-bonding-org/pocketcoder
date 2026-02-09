@@ -8,18 +8,17 @@ abstract class ExternalModule {
   @preResolve
   @singleton
   Future<PocketBase> get pocketBase async {
-    // 1. Get Application Documents Directory for Persistent Storage
-    // final docsDir = await getApplicationDocumentsDirectory();
-    // final dbPath = p.join(docsDir.path, 'pocketcoder.db');
+    debugPrint('PocketBaseInit: Starting...');
 
-    // 2. Load Schema (for offline capabilities) - gracefully handle missing schema
+    // 2. Load Schema (for offline capabilities)
     String? schemaJson;
     try {
+      debugPrint('PocketBaseInit: Loading assets/pb_schema.json...');
       schemaJson = await rootBundle.loadString('assets/pb_schema.json');
+      debugPrint('PocketBaseInit: Schema loaded (${schemaJson.length} chars)');
     } catch (e) {
-      // Schema not found (dev mode or first run), offline sync might be limited
       debugPrint(
-          '⚠️ Warning: assets/pb_schema.json not found. Offline capability limited.');
+          'PocketBaseInit: ⚠️ Warning - failed to load schema asset: $e');
     }
 
     // 3. Initialize PocketBase Drift Client
@@ -29,10 +28,18 @@ abstract class ExternalModule {
     );
 
     if (schemaJson != null && schemaJson.isNotEmpty && schemaJson != '[]') {
-      // Only cache if valid schema exists
-      await client.cacheSchema(schemaJson);
+      try {
+        debugPrint('PocketBaseInit: Caching schema...');
+        await client.cacheSchema(schemaJson);
+        debugPrint('PocketBaseInit: Schema cached successfully');
+      } catch (e) {
+        debugPrint('PocketBaseInit: ❌ Error caching schema: $e');
+      }
+    } else {
+      debugPrint('PocketBaseInit: ⚠️ No valid schema found to cache');
     }
 
+    debugPrint('PocketBaseInit: Complete');
     return client;
   }
 }

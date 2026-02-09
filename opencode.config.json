@@ -1,0 +1,7 @@
+{
+    "permission": {
+        "*": "ask"
+    },
+    "model": "google/gemini-2.0-flash",
+    "mcp": {}
+}
