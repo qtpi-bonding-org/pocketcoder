@@ -4,22 +4,21 @@
 # This script ensures the tmux server is running on the shared socket
 # and then optionally starts the Bun listener for future extensibility.
 
+# Start sshd
+echo "🔑 [PocketCoder] Starting SSH Daemon on port 2222..."
+/usr/sbin/sshd
+
+# Start the SSH Key Sync Loop (Background)
+(
+  while true; do
+    /usr/local/bin/sync_keys.sh
+    sleep 300 # Sync every 5 minutes
+  done
+) &
+
+# Ensure /tmp/tmux exists and is accessible for the worker user
 mkdir -p /tmp/tmux
 chmod 777 /tmp/tmux
-
-# Start tmux server if not already running on the shared socket
-if ! tmux -S /tmp/tmux/pocketcoder has-session -t pocketcoder_session 2>/dev/null; then
-    echo "🧶 [PocketCoder] Initializing Sandbox Tmux Session on shared socket..."
-    tmux -S /tmp/tmux/pocketcoder new-session -d -s pocketcoder_session
-fi
-
-# Bring the Listener up (now using tsx)
-echo "🚀 [PocketCoder] Starting Listener in background..."
-tsx /sandbox/listener.ts &
-
-# Start CAO API Server
-echo "🧠 [PocketCoder] Starting CAO Orchestrator API..."
-nohup uvicorn cli_agent_orchestrator.api.main:app --host 0.0.0.0 --port 9889 > /tmp/cao_server.log 2>&1 &
 
 # Keep the container alive by tailing the tmux session output OR just sleeping
 echo "✅ [PocketCoder] Sandbox is LIVE and waiting for direct commands."

@@ -215,8 +215,8 @@ class _ChatViewState extends State<_ChatView> {
           ),
           TerminalAction(
             keyLabel: 'F2',
-            label: 'SIMULATE',
-            onTap: () => context.read<ChatCubit>().simulateInteraction(),
+            label: 'TERMINAL',
+            onTap: () => context.goNamed(RouteNames.terminal),
           ),
           TerminalAction(
             keyLabel: 'F3',

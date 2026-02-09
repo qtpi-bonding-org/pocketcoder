@@ -58,6 +58,7 @@ pub struct ExecRequest {
     pub cwd: Option<String>,
     pub metadata: Option<serde_json::Value>,
     pub usage_id: Option<String>,
+    pub session_id: Option<String>,
 }
 
 #[async_trait]
@@ -93,8 +94,25 @@ impl PocketCoderDriver {
         }
     }
 
-    pub async fn exec(&self, cmd: &str, cwd: Option<&str>) -> Result<CommandResult> {
-        let pane = format!("{}:0.0", self.session_name);
+    pub async fn exec(&self, cmd: &str, cwd: Option<&str>, session_override: Option<&str>) -> Result<CommandResult> {
+        let session = session_override.unwrap_or(&self.session_name);
+        
+        // Ensure the session exists before executing
+        let tmux_args = ["-S", &self.socket_path];
+        let status = Command::new("tmux")
+            .args(&tmux_args)
+            .args(["has-session", "-t", session])
+            .status();
+
+        if !status.is_ok() || !status.unwrap().success() {
+             println!("🧶 [Proxy] Creating new session: {}", session);
+             let _ = Command::new("tmux")
+                .args(&tmux_args)
+                .args(["new-session", "-d", "-s", session])
+                .status();
+        }
+
+        let pane = format!("{}:0.0", session);
         let sentinel_id = Uuid::new_v4().to_string();
         
         let tmux_args = ["-S", &self.socket_path];
@@ -215,9 +233,10 @@ async fn exec_handler(
     // No permission checking happens here - we just execute and log results.
     
     let cwd = payload.cwd.as_deref().unwrap_or("/workspace");
+    let session_name = payload.session_id.map(|id| format!("pc_{}", id));
 
-    println!("⚡ [Proxy] Executing: {}", payload.cmd);
-    match state.driver.exec(&payload.cmd, Some(cwd)).await {
+    println!("⚡ [Proxy] Executing in session {:?}: {}", session_name, payload.cmd);
+    match state.driver.exec(&payload.cmd, Some(cwd), session_name.as_deref()).await {
         Ok(res) => {
              Json(serde_json::json!({
                  "stdout": res.output,

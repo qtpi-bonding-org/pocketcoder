@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     tmux \
     build-essential \
     sed \
+    openssh-server \
+    sudo \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -17,6 +19,8 @@ WORKDIR /sandbox
 # Copy the Socket Listener source
 COPY sandbox/listener.ts /sandbox/listener.ts
 COPY sandbox/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY sandbox/sync_keys.sh /usr/local/bin/sync_keys.sh
+RUN chmod +x /usr/local/bin/sync_keys.sh
 
 # Install Dependencies for Listener (Need TS execution, likely ts-node or bun is gone now)
 # We will use 'tsx' to execute typescript directly with Node
@@ -34,7 +38,15 @@ ENV TMUX_SOCKET=/tmp/tmux/pocketcoder
 # -------------------------------------------
 
 
-# Remove CRLF if any (Windows compat)
+# --- SSH & Terminal Mirroring Setup ---
+RUN useradd -m -s /bin/bash worker && echo "worker:password" | chpasswd && adduser worker sudo
+RUN mkdir -p /var/run/sshd
+RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+# Allow root for debugging if needed, but worker is preferred
+RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+
+# Fix entrypoint permissions
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
