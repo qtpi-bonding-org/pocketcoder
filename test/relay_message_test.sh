@@ -1,6 +1,6 @@
 #!/bin/bash
-# 🧪 PocketCoder Chat Loop Tester
-# This script sends a message to PocketBase as the Admin user to trigger the relay -> OpenCode loop.
+# test/relay_message_test.sh
+# This script sends a message to PocketBase as the Admin user to trigger the Relay → OpenCode loop.
 
 POCKETBASE_URL="http://127.0.0.1:8090"
 
@@ -76,4 +76,4 @@ if [ -z "$MSG_ID" ]; then
     exit 1
 fi
 
-echo "🚀 Message Sent (ID: $MSG_ID). Waiting for Bridge -> OpenCode..."
+echo "🚀 Message Sent (ID: $MSG_ID). Waiting for Relay → OpenCode..."
