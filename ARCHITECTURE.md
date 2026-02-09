@@ -30,7 +30,7 @@ PocketCoder is a permission-gated AI coding assistant with three core components
 ┌─────────────────────────────────────────────────────────────┐
 │  OpenCode Container (AI Reasoning)                          │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  Plugin (TypeScript)                                  │  │
+│  │  Relay (JS/TS)                                        │  │
 │  │  - Intercepts permission requests                     │  │
 │  │  - Logs to permissions collection                     │  │
 │  │  - Polls for authorization                            │  │
@@ -50,7 +50,7 @@ PocketCoder is a permission-gated AI coding assistant with three core components
 │  │  - Auto-authorization hook (non-bash → authorized)    │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  Gateway (Rust) :3001                                 │  │
+│  │  Proxy (Rust) :3001                                   │  │
 │  │  - Receives bash commands (when shell wrapper active) │  │
 │  │  - Executes in Sandbox via tmux                       │  │
 │  │  - Logs results to executions collection              │  │
@@ -72,22 +72,22 @@ PocketCoder is a permission-gated AI coding assistant with three core components
 
 ---
 
-## Permission Flow (Current: Plugin Active)
+## Permission Flow (Current: Relay Active)
 
 ### Read/Write Permissions (Auto-Authorized)
 
 ```
 AI: "Read file.ts"
     ↓
-Plugin: Intercepts permission request
+Relay: Intercepts permission request
     ↓
-Plugin: POST /permissions (permission: "read", status: "draft")
+Relay: POST /permissions (permission: "read", status: "draft")
     ↓
 PocketBase Hook: Auto-authorizes (status: "authorized")
     ↓
-Plugin: Polls, sees "authorized"
+Relay: Polls, sees "authorized"
     ↓
-Plugin: Returns "allow" to OpenCode
+Relay: Returns "allow" to OpenCode
     ↓
 OpenCode: Executes read directly
 ```
@@ -152,7 +152,7 @@ OpenCode: Executes bash directly (shell wrapper dormant)
 | `status` | select | executing, completed, failed |
 | `outputs` | json | stdout/stderr |
 | `exit_code` | number | Process exit code |
-| `source` | text | "gateway" or "opencode-plugin" |
+| `source` | text | "proxy" or "opencode-plugin" |
 
 **Deprecated fields** (kept for backward compatibility):
 - `opencode_id`, `type`, `patterns`, `session_id`, `message_id`, `call_id`, `message`, `metadata`
@@ -301,9 +301,9 @@ Run `./test_split.sh` to verify:
 ## Files
 
 - `backend/pb_migrations/1700000003_permissions.go` - Permissions collection migration
-- `connector/pocketcoder-plugin.ts` - Plugin (uses /permissions)
+- `relay/chat_relay.mjs` - Relay (uses /permissions)
 - `backend/main.go` - PocketBase (auto-authorization hook)
-- `connector/src/main.rs` - Gateway (execution engine)
+- `proxy/src/main.rs` - Proxy (execution engine)
 - `test_split.sh` - Test script
 - `IMPLEMENTATION_PLAN.md` - Implementation guide
 - `SPLIT_COMPLETE.md` - Completion summary

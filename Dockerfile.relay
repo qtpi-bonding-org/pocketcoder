@@ -1,0 +1,18 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy dependency manifests
+COPY relay/package.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the relay script
+COPY relay/chat_relay.mjs ./
+
+# Make it executable
+RUN chmod +x ./chat_relay.mjs
+
+# Run the relay
+CMD ["node", "chat_relay.mjs"]
