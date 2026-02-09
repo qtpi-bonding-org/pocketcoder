@@ -2,6 +2,7 @@
     "permission": {
         "*": "ask"
     },
+    "agents": "/workspace/.opencode/agents",
     "model": "google/gemini-2.0-flash",
     "mcp": {}
 }

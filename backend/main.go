@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
-
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	"gopkg.in/yaml.v3"
 )
 
 func matchWildcard(str string, pattern string) bool {
@@ -222,6 +224,142 @@ func main() {
 				}
 			}
 		}
+
+		// 📂 ARTIFACT SERVING
+		e.Router.GET("/api/openclaw/artifact/{path...}", func(re *core.RequestEvent) error {
+			if re.Auth == nil {
+				return re.ForbiddenError("Auth required", nil)
+			}
+			
+			// PocketBase v0.23+ uses Go 1.22 routing
+			pathParam := re.Request.PathValue("path")
+			if pathParam == "" {
+				return re.BadRequestError("Path required", nil)
+			}
+
+			cleanPath := filepath.Join("/workspace", pathParam)
+			finalPath := filepath.Clean(cleanPath)
+
+			if !strings.HasPrefix(finalPath, "/workspace") {
+				return re.ForbiddenError("Invalid path", nil)
+			}
+
+			if _, err := os.Stat(finalPath); os.IsNotExist(err) {
+				return re.NotFoundError("File not found", nil)
+			}
+
+			http.ServeFile(re.Response, re.Request, cleanPath)
+			return nil
+		})
+
+		return e.Next()
+	})
+
+	// 🤖 AI AGENT ASSEMBLY LOGIC
+	getAgentBundle := func(agent *core.Record) (string, error) {
+		// 1. Expand dependencies (if not already expanded)
+		app.ExpandRecord(agent, []string{"prompt", "model"}, nil)
+
+		// 2. Fetch Permission Rules
+		rules, _ := app.FindRecordsByFilter(
+			"ai_permission_rules",
+			"agent = {:id}",
+			"pattern", 100, 0,
+			map[string]any{"id": agent.Id},
+		)
+
+		// 3. Build Frontmatter
+		frontmatter := make(map[string]any)
+		if desc := agent.GetString("description"); desc != "" {
+			frontmatter["description"] = desc
+		}
+		if mode := agent.GetString("mode"); mode != "" {
+			frontmatter["mode"] = mode
+		}
+		if model := agent.ExpandedOne("model"); model != nil {
+			frontmatter["model"] = model.GetString("identifier")
+		}
+		if steps := agent.GetInt("steps"); steps > 0 {
+			frontmatter["steps"] = steps
+		}
+
+		if len(rules) > 0 {
+			perms := make(map[string]string)
+			for _, r := range rules {
+				perms[r.GetString("pattern")] = r.GetString("action")
+			}
+			frontmatter["permission"] = perms
+		}
+
+		yamlBytes, err := yaml.Marshal(frontmatter)
+		if err != nil {
+			return "", err
+		}
+
+		// 4. Combine with Prompt Body
+		body := ""
+		if prompt := agent.ExpandedOne("prompt"); prompt != nil {
+			body = prompt.GetString("body")
+		}
+
+		return "---\n" + string(yamlBytes) + "---\n\n" + body, nil
+	}
+
+	updateAgentConfig := func(agent *core.Record) error {
+		bundle, err := getAgentBundle(agent)
+		if err != nil {
+			return err
+		}
+		if agent.GetString("config") == bundle {
+			return nil
+		}
+		agent.Set("config", bundle)
+		return app.Save(agent)
+	}
+
+	// ------------------------------------------------------------
+	// ⚓ HOOKS
+	// ------------------------------------------------------------
+
+	// Trigger assembly on Agents change (Modify record BEFORE save to avoid extra writes/recursion)
+	app.OnRecordCreateRequest("ai_agents").BindFunc(func(e *core.RecordRequestEvent) error {
+		bundle, err := getAgentBundle(e.Record)
+		if err == nil {
+			e.Record.Set("config", bundle)
+		}
+		return e.Next()
+	})
+
+	app.OnRecordUpdateRequest("ai_agents").BindFunc(func(e *core.RecordRequestEvent) error {
+		bundle, err := getAgentBundle(e.Record)
+		if err == nil {
+			e.Record.Set("config", bundle)
+		}
+		return e.Next()
+	})
+
+	// For rules, prompts, and models, we find the affected agents and re-assemble them (REQUIRES Save)
+	app.OnRecordAfterUpdateSuccess("ai_permission_rules", "ai_prompts", "ai_models").BindFunc(func(e *core.RecordEvent) error {
+		collection := e.Record.Collection().Name
+		
+		if collection == "ai_permission_rules" {
+			agentId := e.Record.GetString("agent")
+			if agentId != "" {
+				agent, _ := app.FindRecordById("ai_agents", agentId)
+				if agent != nil { updateAgentConfig(agent) }
+			}
+		}
+		
+		if collection == "ai_prompts" {
+			agents, _ := app.FindRecordsByFilter("ai_agents", "prompt = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
+			for _, a := range agents { updateAgentConfig(a) }
+		}
+
+		if collection == "ai_models" {
+			agents, _ := app.FindRecordsByFilter("ai_agents", "model = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
+			for _, a := range agents { updateAgentConfig(a) }
+		}
+
 		return e.Next()
 	})
 

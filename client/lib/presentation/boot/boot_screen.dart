@@ -83,10 +83,10 @@ class _BootScreenState extends State<BootScreen> {
             "Hi! I'm Poco, your Private Operations Coding Officer representing the PocketCoder Initiative.",
           );
       context.read<PocoCubit>().setExpression([
-        (AppAscii.pocoSleepy, 1000),
-        (AppAscii.pocoAwake, 200), // Blink
-        (AppAscii.pocoSleepy, 200),
-        (AppAscii.pocoAwake, 2000),
+        (PocoExpression.sleepy, 1000),
+        (PocoExpression.awake, 200), // Blink
+        (PocoExpression.sleepy, 200),
+        (PocoExpression.awake, 2000),
       ]);
       setState(() {
         _logsDimmed = true;
@@ -140,9 +140,9 @@ class _BootScreenState extends State<BootScreen> {
         context.read<PocoCubit>().updateMessage(
           "I lost the signal... Where is home?",
           sequence: [
-            (AppAscii.pocoNervous, 500),
-            (AppAscii.pocoPanic, 2000),
-            (AppAscii.pocoNervous, 1000),
+            (PocoExpression.nervous, 500),
+            (PocoExpression.panic, 2000),
+            (PocoExpression.nervous, 1000),
           ],
         );
         setState(() {

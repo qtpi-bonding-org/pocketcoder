@@ -114,9 +114,14 @@ class ChatRepository implements IChatRepository {
         return records.items.first.id;
       }
 
+      final agentRecord = await _pb.collection('ai_agents').getFirstListItem(
+            'name = "poco"',
+          );
+
       final newChat = await _pb.collection('chats').create(body: {
         'title': title,
         'user': userId,
+        'agent': agentRecord.id,
       });
       return newChat.id;
     } catch (e) {

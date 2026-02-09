@@ -14,12 +14,12 @@ class PocoAnimator extends StatefulWidget {
     this.fontSize,
     this.color,
     this.sequence = const [
-      (AppAscii.pocoAwake, 2000),
-      (AppAscii.pocoSleepy, 150), // Blink
-      (AppAscii.pocoThinking, 3000),
-      (AppAscii.pocoHappy, 2000),
-      (AppAscii.pocoAwake, 2500),
-      (AppAscii.pocoSleepy, 150), // Blink
+      (PocoExpression.awake, 2000),
+      (PocoExpression.sleepy, 150), // Blink
+      (PocoExpression.thinking, 3000),
+      (PocoExpression.happy, 2000),
+      (PocoExpression.awake, 2500),
+      (PocoExpression.sleepy, 150), // Blink
     ],
   });
 
@@ -39,7 +39,7 @@ class _PocoAnimatorState extends State<PocoAnimator> {
       _currentFace = widget.sequence[0].$1;
       _scheduleNextFrame();
     } else {
-      _currentFace = AppAscii.pocoAwake;
+      _currentFace = PocoExpression.awake;
     }
   }
 
@@ -70,7 +70,7 @@ class _PocoAnimatorState extends State<PocoAnimator> {
   @override
   Widget build(BuildContext context) {
     return AsciiFace(
-      face: _currentFace,
+      expression: _currentFace,
       fontSize: widget.fontSize ?? AppSizes.fontStandard,
       color: widget.color ?? AppPalette.primary.textPrimary,
     );
