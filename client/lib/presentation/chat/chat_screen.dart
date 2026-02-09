@@ -7,6 +7,9 @@ import 'package:test_app/application/chat/chat_state.dart';
 import 'package:test_app/presentation/core/widgets/poco_animator.dart';
 import 'package:test_app/presentation/chat/widgets/thoughts_stream.dart';
 import 'package:test_app/presentation/chat/widgets/speech_bubble.dart';
+import 'package:test_app/application/permission/permission_cubit.dart';
+import 'package:test_app/application/permission/permission_state.dart';
+import 'package:test_app/presentation/chat/widgets/permission_prompt.dart';
 
 import '../../app_router.dart';
 
@@ -23,8 +26,11 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<ChatCubit>()..initialize(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => getIt<ChatCubit>()..initialize()),
+        BlocProvider(create: (context) => getIt<PermissionCubit>()),
+      ],
       child: const _ChatView(),
     );
   }
@@ -54,128 +60,149 @@ class _ChatViewState extends State<_ChatView> {
       backgroundColor: AppPalette.primary.backgroundPrimary,
       body: ScanlineWidget(
         child: SafeArea(
-          child: Column(
-            children: [
-              // 1. TOP: The Thoughts / Cloud (Flexible height)
-              Expanded(
-                flex: 3,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppPalette.primary.textPrimary
-                            .withValues(alpha: 0.1),
-                        width: 1,
+          child: MultiBlocListener(
+            listeners: [
+              BlocListener<ChatCubit, ChatState>(
+                listenWhen: (prev, curr) => prev.chatId != curr.chatId,
+                listener: (context, state) {
+                  if (state.chatId != null) {
+                    context.read<PermissionCubit>().watchChat(state.chatId!);
+                  }
+                },
+              ),
+            ],
+            child: Column(
+              children: [
+                // 1. TOP: The Thoughts / Cloud (Flexible height)
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppPalette.primary.textPrimary
+                              .withValues(alpha: 0.1),
+                          width: 1,
+                        ),
                       ),
                     ),
-                  ),
-                  child: BlocBuilder<ChatCubit, ChatState>(
-                    builder: (context, state) {
-                      // Collect ALL thoughts from history + current hot message
-                      final allMessages = [
-                        ...state.messages,
-                        if (state.hotMessage != null) state.hotMessage!
-                      ];
+                    child: BlocBuilder<ChatCubit, ChatState>(
+                      builder: (context, state) {
+                        // Collect ALL thoughts from history + current hot message
+                        final allMessages = [
+                          ...state.messages,
+                          if (state.hotMessage != null) state.hotMessage!
+                        ];
 
-                      // Flatten into a single parts list, but filter for "Thoughts"
-                      // "Thoughts" = Tool parts OR Reasoning Parts (which we currently store as text)
-                      // Ideally, we need a better check. For now, let's say:
-                      // If it's a Tool -> Thought
-                      // If it's Text AND it's not the last part of a message? No, that's brittle.
-                      // Let's rely on our assumption: In this stream, we show everything.
-                      // BUT we probably don't want to double-show the "Final Answer" if it's identical.
+                        final assistantMessages = allMessages
+                            .where((m) => m.role == MessageRole.assistant);
 
-                      // Simplification for the Prototype:
-                      // Show ALL parts in the top stream.
-                      // The user can see the final reply in both if they want, or we can filter 'text' if needed.
-                      // Let's filter out 'User' messages from thoughts. Thoughts are Poco's brain.
+                        final List<MessagePart> brainParts = [];
 
-                      final assistantMessages = allMessages
-                          .where((m) => m.role == MessageRole.assistant);
+                        for (final msg in assistantMessages) {
+                          final parts = msg.parts;
+                          if (parts.isEmpty) continue;
 
-                      final List<MessagePart> brainParts = [];
+                          // If it's the HOT message (still thinking), show everything!
+                          if (msg.isLive) {
+                            brainParts.addAll(parts);
+                            continue;
+                          }
 
-                      for (final msg in assistantMessages) {
-                        final parts = msg.parts;
-                        if (parts.isEmpty) continue;
-
-                        // If it's the HOT message (still thinking), show everything!
-                        if (msg.isLive) {
+                          // For finalized messages:
+                          // Show EVERYTHING in the brain log (redundancy is fine).
                           brainParts.addAll(parts);
-                          continue;
                         }
 
-                        // For finalized messages:
-                        // Show EVERYTHING in the brain log (redundancy is fine).
-                        brainParts.addAll(parts);
-                      }
+                        return ThoughtsStream(parts: brainParts);
+                      },
+                    ),
+                  ),
+                ),
 
-                      return ThoughtsStream(parts: brainParts);
+                // 2. MIDDLE: Poco (The Entity)
+                Container(
+                  height: 120,
+                  width: double.infinity,
+                  alignment: Alignment.center,
+                  child: const PocoAnimator(
+                      fontSize: 14), // Smaller, integrated face
+                ),
+
+                // 3. BOTTOM: The Dialogue (History)
+                Expanded(
+                  flex: 4,
+                  child: BlocBuilder<ChatCubit, ChatState>(
+                    builder: (context, state) {
+                      // We need to reverse the list to stick to bottom
+                      final reversedMessages = state.messages.reversed.toList();
+
+                      return ListView.builder(
+                        reverse: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: reversedMessages.length,
+                        itemBuilder: (context, index) {
+                          final msg = reversedMessages[index];
+
+                          // For USER: Show all text.
+                          if (msg.role == MessageRole.user) {
+                            final textParts =
+                                msg.parts.whereType<MessagePartText>().toList();
+                            return SpeechBubble(
+                                textParts: textParts, isUser: true);
+                          }
+
+                          // For ASSISTANT: Show ONLY the LAST text part.
+                          // (Hide reasoning/tools from speech bubble)
+                          final textParts =
+                              msg.parts.whereType<MessagePartText>().toList();
+                          final finalAnswer = textParts.isNotEmpty
+                              ? [textParts.last]
+                              : <MessagePartText>[];
+
+                          return SpeechBubble(
+                              textParts: finalAnswer, isUser: false);
+                        },
+                      );
                     },
                   ),
                 ),
-              ),
 
-              // 2. MIDDLE: Poco (The Entity)
-              Container(
-                height: 120,
-                width: double.infinity,
-                alignment: Alignment.center,
-                child: const PocoAnimator(
-                    fontSize: 14), // Smaller, integrated face
-              ),
-
-              // 3. BOTTOM: The Dialogue (History)
-              Expanded(
-                flex: 4,
-                child: BlocBuilder<ChatCubit, ChatState>(
+                // 3.5 GATEKEEPER PROMPT (Conditional)
+                BlocBuilder<PermissionCubit, PermissionState>(
                   builder: (context, state) {
-                    // We need to reverse the list to stick to bottom
-                    final reversedMessages = state.messages.reversed.toList();
-
-                    return ListView.builder(
-                      reverse: true,
-                      padding: EdgeInsets.zero,
-                      itemCount: reversedMessages.length,
-                      itemBuilder: (context, index) {
-                        final msg = reversedMessages[index];
-
-                        // For USER: Show all text.
-                        if (msg.role == MessageRole.user) {
-                          final textParts =
-                              msg.parts.whereType<MessagePartText>().toList();
-                          return SpeechBubble(
-                              textParts: textParts, isUser: true);
-                        }
-
-                        // For ASSISTANT: Show ONLY the LAST text part.
-                        // (Hide reasoning/tools from speech bubble)
-                        final textParts =
-                            msg.parts.whereType<MessagePartText>().toList();
-                        final finalAnswer = textParts.isNotEmpty
-                            ? [textParts.last]
-                            : <MessagePartText>[];
-
-                        return SpeechBubble(
-                            textParts: finalAnswer, isUser: false);
+                    return state.maybeWhen(
+                      loaded: (requests) {
+                        if (requests.isEmpty) return const SizedBox.shrink();
+                        // Show the oldest request first
+                        final request = requests.first;
+                        return PermissionPrompt(
+                          request: request,
+                          onAuthorize: () => context
+                              .read<PermissionCubit>()
+                              .authorize(request.id),
+                          onDeny: () =>
+                              context.read<PermissionCubit>().deny(request.id),
+                        );
                       },
+                      orElse: () => const SizedBox.shrink(),
                     );
                   },
                 ),
-              ),
 
-              // 4. INPUT
-              Padding(
-                padding: EdgeInsets.all(AppSizes.space),
-                child: TerminalInput(
-                  controller: _inputController,
-                  onSubmitted: () => _handleSubmit(context),
-                  prompt: 'SAY:',
+                // 4. INPUT
+                Padding(
+                  padding: EdgeInsets.all(AppSizes.space),
+                  child: TerminalInput(
+                    controller: _inputController,
+                    onSubmitted: () => _handleSubmit(context),
+                    prompt: 'SAY:',
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
