@@ -14,6 +14,7 @@ class ChatState with _$ChatState {
     // This is ephemeral and constructed from deltas.
     ChatMessage? hotMessage,
     String? chatId,
+    String? opencodeId,
     String? error,
   }) = _ChatState;
 }
