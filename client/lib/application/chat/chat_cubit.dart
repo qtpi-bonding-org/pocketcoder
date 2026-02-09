@@ -26,7 +26,8 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> initialize([String title = 'PocketCoder Main']) async {
     try {
       _currentChatId = await _repository.ensureChat(title);
-      emit(state.copyWith(chatId: _currentChatId));
+      final opencodeId = await _repository.getOpencodeId(_currentChatId!);
+      emit(state.copyWith(chatId: _currentChatId, opencodeId: opencodeId));
       _subscribeToColdPipe(_currentChatId!);
       _subscribeToHotPipe();
     } catch (e) {

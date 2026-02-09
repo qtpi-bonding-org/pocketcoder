@@ -88,10 +88,14 @@ services:
       - OPENCODE_URL=http://opencode:3000
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
+      - SSH_KEYS_FILE=/ssh_keys/authorized_keys
+      - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
+      - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
     volumes:
       - ./relay:/app
       - /app/node_modules
       - workspace_data:/workspace
+      - ssh_keys:/ssh_keys  # Shared volume for SSH keys
     restart: unless-stopped
     networks:
       - pocketcoder-memory
@@ -109,11 +113,14 @@ services:
     volumes:
       - workspace_data:/workspace   # Shared Workspace
       - tmux_socket:/tmp/tmux
+      - ssh_keys:/ssh_keys:ro  # Read-only access to SSH keys
     working_dir: /workspace
     environment:
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
-    restart: unless-stopped
+      - SSH_KEYS_FILE=/ssh_keys/authorized_keys
+    ports:
+      - "2222:2222"
     networks:
       - pocketcoder-execution
 
@@ -123,6 +130,7 @@ volumes:
   workspace_data:
   tmux_socket:
   proxy_bin:
+  ssh_keys:  # Shared volume for SSH keys
 
 networks:
   pocketcoder-memory:

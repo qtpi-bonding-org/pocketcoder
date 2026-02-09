@@ -128,4 +128,33 @@ class ChatRepository implements IChatRepository {
       throw Exception('Failed to ensure chat: $e');
     }
   }
+
+  @override
+  Future<String?> getOpencodeId(String chatId) async {
+    try {
+      final chat = await _pb.collection('chats').getOne(chatId);
+      return chat.getStringValue('opencode_id');
+    } catch (e) {
+      print('ChatRepo: Failed to get opencode_id for $chatId: $e');
+      return null;
+    }
+  }
+
+  @override
+  Stream<RecordModel> watchChat(String chatId) async* {
+    final controller = StreamController<RecordModel>();
+
+    final unsubscribe = await _pb.collection('chats').subscribe(chatId, (e) {
+      if (e.record != null) {
+        controller.add(e.record!);
+      }
+    });
+
+    try {
+      yield* controller.stream;
+    } finally {
+      unsubscribe();
+      controller.close();
+    }
+  }
 }

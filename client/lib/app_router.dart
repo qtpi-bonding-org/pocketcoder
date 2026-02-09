@@ -7,6 +7,7 @@ import 'package:test_app/presentation/settings/settings_screen.dart';
 import 'package:test_app/presentation/settings/agent_management_screen.dart';
 import 'package:test_app/presentation/whitelist/whitelist_screen.dart';
 import 'package:test_app/presentation/boot/boot_screen.dart';
+import 'package:test_app/presentation/terminal/terminal_screen.dart';
 
 import 'package:test_app/presentation/core/widgets/terminal_transition.dart';
 
@@ -82,6 +83,15 @@ class AppRouter {
           child: const WhitelistScreen(),
         ),
       ),
+      GoRoute(
+        path: AppRoutes.terminal,
+        name: RouteNames.terminal,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const TerminalScreen(),
+        ),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -100,6 +110,7 @@ class AppRoutes {
   static const String artifact = '/artifacts';
   static const String aiRegistry = '/settings/ai';
   static const String whitelist = '/settings/whitelist';
+  static const String terminal = '/terminal';
 }
 
 class RouteNames {
@@ -111,6 +122,7 @@ class RouteNames {
   static const String artifact = 'artifact';
   static const String aiRegistry = 'aiRegistry';
   static const String whitelist = 'whitelist';
+  static const String terminal = 'terminal';
 }
 
 class AppNavigation {
