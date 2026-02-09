@@ -5,10 +5,9 @@ import 'package:test_app/l10n/app_localizations.dart';
 
 import 'package:test_app/l10n/l10n_key_resolver.g.dart';
 
-
 /// Service for managing application localization and providing global access to translations.
 ///
-/// This service acts as a bridge between Flutter's localization system and the rest
+/// This service acts as a link between Flutter's localization system and the rest
 /// of the application, allowing access to translations without requiring BuildContext.
 /// Implements cubit_ui_flow.ILocalizationService for integration with the UI flow library.
 @LazySingleton(as: cubit_ui_flow.ILocalizationService)

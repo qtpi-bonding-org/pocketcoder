@@ -43,7 +43,7 @@ The core goal is to provide a persistent, transparent environment where an AI ca
 *   **Zero-Trust by Default**: The Reasoning engine is a guest in the system. It only accesses tools through the secure gatekeeper.
 
 ### 2. File Organization
-*   `/connector`: The bridge between the brain and the database.
+*   `/relay`: The relay between the brain and the database.
 *   `/backend`: The Go source for the PocketBase instance and rules.
 *   `/sandbox`: The logic for the isolated execution environment.
 *   `Dockerfile.*`: Optimized, simple images designed to run anywhere.

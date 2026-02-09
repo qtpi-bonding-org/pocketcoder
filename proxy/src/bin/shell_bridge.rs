@@ -53,8 +53,8 @@ fn main() {
         usage_id,
     };
 
-    // 2. The Bridge (Rust Synchronous Request)
-    match ureq::post("http://gateway:3001/exec")
+    // 2. The Proxy (Rust Synchronous Request)
+    match ureq::post("http://proxy:3001/exec")
         .send_json(serde_json::to_value(request).unwrap())
     {
         Ok(res) => {

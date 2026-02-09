@@ -1,0 +1,20 @@
+FROM rust:1.83-alpine AS builder
+RUN apk add --no-cache musl-dev gcc
+WORKDIR /app
+COPY proxy/Cargo.toml proxy/Cargo.lock* ./
+COPY proxy/src ./src
+RUN cargo build --release --bin pocketcoder-proxy
+RUN cargo build --release --bin shell_bridge
+
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates tmux bash
+WORKDIR /app
+COPY --from=builder /app/target/release/pocketcoder-proxy /app/pocketcoder-proxy
+COPY --from=builder /app/target/release/shell_bridge /app/shell_bridge
+
+# Create the share directory for the binary proxy
+RUN mkdir -p /app/proxy_share && \
+    cp /app/shell_bridge /app/proxy_share/pocketcoder-shell && \
+    chmod +x /app/proxy_share/pocketcoder-shell
+
+CMD ["/app/pocketcoder-proxy"]

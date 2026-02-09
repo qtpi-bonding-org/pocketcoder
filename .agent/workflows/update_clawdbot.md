@@ -148,11 +148,11 @@ open /Applications/Clawdbot.app
 After rebuilding the macOS app, always verify it works correctly:
 
 ```bash
-# Check gateway health
+# Check proxy health
 pnpm clawdbot health
 
 # Verify no zombie processes
-ps aux | grep -E "(clawdbot|gateway)" | grep -v grep
+ps aux | grep -E "(clawdbot|proxy)" | grep -v grep
 
 # Test agent functionality by sending a verification message
 pnpm clawdbot agent --message "Verification: macOS app rebuild successful - agent is responding." --session-id YOUR_TELEGRAM_SESSION_ID
@@ -161,7 +161,7 @@ pnpm clawdbot agent --message "Verification: macOS app rebuild successful - agen
 # (Check your Telegram chat with the bot)
 ```
 
-**Important:** Always wait for the Telegram verification message before proceeding. If the agent doesn't respond, troubleshoot the gateway or model configuration before pushing.
+**Important:** Always wait for the Telegram verification message before proceeding. If the agent doesn't respond, troubleshoot the proxy or model configuration before pushing.
 
 ---
 
@@ -347,7 +347,7 @@ pnpm clawdbot doctor
 echo "==> Rebuilding macOS app..."
 ./scripts/restart-mac.sh
 
-echo "==> Verifying gateway health..."
+echo "==> Verifying proxy health..."
 pnpm clawdbot health
 
 echo "==> Checking for Swift 6.2 compatibility issues..."

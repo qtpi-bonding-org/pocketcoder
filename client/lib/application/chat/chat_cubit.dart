@@ -161,7 +161,7 @@ class ChatCubit extends Cubit<ChatState> {
 
     // 3. Hot Pipe: Thinking
     final thoughts = [
-      "Accessing internal gateway...",
+      "Accessing internal proxy...",
       "Resolving host 'pocketbase'...",
       "Connection established.",
     ];
@@ -205,7 +205,7 @@ class ChatCubit extends Cubit<ChatState> {
       parts: [
         const MessagePart.text(
             text:
-                "Accessing internal gateway...\nResolving host 'pocketbase'...\nConnection established.\n"),
+                "Accessing internal proxy...\nResolving host 'pocketbase'...\nConnection established.\n"),
         const MessagePart.toolCall(
             tool: "curl", callID: "call-1", args: {'url': '/api/health'}),
         const MessagePart.text(

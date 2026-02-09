@@ -1,8 +1,8 @@
 {
-    "name": "pocketcoder-chat-bridge",
+    "name": "pocketcoder-chat-relay",
     "version": "1.0.0",
-    "description": "Bridge between PocketBase and OpenCode",
-    "main": "chat_bridge.mjs",
+    "description": "Relay between PocketBase and OpenCode",
+    "main": "chat_relay.mjs",
     "type": "module",
     "dependencies": {
         "pocketbase": "^0.25.0",
