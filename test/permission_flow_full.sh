@@ -47,7 +47,7 @@ CHAT_RES=$(curl -s -X POST "$PB_URL/api/collections/chats/records" \
     }")
 
 CHAT_ID=$(echo "$CHAT_RES" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 | head -n 1)
-echo "✅ Chat Created: $CHAT_ID"
+echo "✅ Chat Created: $CHAT_ID ($CHAT_RES)"
 
 # 4. Trigger AI Message
 # We create a message in PB, which the Relay will pick up.
@@ -64,7 +64,8 @@ MSG_RES=$(curl -s -X POST "$PB_URL/api/collections/messages/records" \
         \"metadata\": { \"processed\": false }
     }")
 
-echo "✅ User message created. Waiting for Permission request..."
+echo "✅ User message created: $MSG_RES"
+echo "⏳ Waiting for Relay to process and ask for permission..."
 
 # 5. Poll for Permission Request
 PERM_ID=""

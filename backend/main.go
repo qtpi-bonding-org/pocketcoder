@@ -167,7 +167,7 @@ func main() {
 			record.Set("message_id", input.MessageID)
 			record.Set("call_id", input.CallID)
 			record.Set("status", status)
-			record.Set("source", "opencode-plugin")
+			record.Set("source", "relay")
 			record.Set("message", input.Message)
 			record.Set("challenge", uuid.NewString())
 
@@ -228,7 +228,7 @@ func main() {
 		}
 
 		// 📂 ARTIFACT SERVING
-		e.Router.GET("/api/openclaw/artifact/{path...}", func(re *core.RequestEvent) error {
+		e.Router.GET("/api/pocketcoder/artifact/{path...}", func(re *core.RequestEvent) error {
 			if re.Auth == nil {
 				return re.ForbiddenError("Auth required", nil)
 			}
@@ -256,7 +256,7 @@ func main() {
 
 		// 🔑 SSH PUBLIC KEYS SYNC ENDPOINT
 		// Returns all authorized public keys as a newline-separated list
-		e.Router.GET("/api/openclaw/ssh_keys", func(re *core.RequestEvent) error {
+		e.Router.GET("/api/pocketcoder/ssh_keys", func(re *core.RequestEvent) error {
 			// Fetch all active SSH keys from the ssh_keys collection
 			// Note: Empty string for sort means no sorting
 			sshKeys, err := app.FindRecordsByFilter("ssh_keys", "is_active = TRUE", "", 1000, 0, nil)

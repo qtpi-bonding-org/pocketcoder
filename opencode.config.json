@@ -1,8 +1,22 @@
 {
+    "agent": {
+        "poco": {
+            "description": "Primary development agent for PocketCoder",
+            "mode": "primary",
+            "tools": {
+                "write": true,
+                "edit": true,
+                "bash": true
+            },
+            "permission": {
+                "bash": "ask",
+                "write": "ask"
+            }
+        }
+    },
     "permission": {
         "*": "ask"
     },
-    "agents": "/workspace/.opencode/agents",
     "model": "google/gemini-2.0-flash",
     "mcp": {}
 }
