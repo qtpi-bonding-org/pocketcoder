@@ -25,7 +25,7 @@ echo "📁 [Artifacts] Creating test file in workspace..."
 docker exec pocketcoder-opencode sh -c "echo '$TEST_CONTENT' > /workspace/$TEST_FILE"
 
 echo "🔍 Fetching artifact via API..."
-# Endpoint: /api/openclaw/artifact/{path...}
+# Endpoint: /api/pocketcoder/artifact/{path...}
 URL="$POCKETBASE_URL/api/pocketcoder/artifact/$TEST_FILE"
 RESPONSE=$(curl -s -H "Authorization: $ADMIN_TOKEN" "$URL")
 
