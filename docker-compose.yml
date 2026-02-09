@@ -21,16 +21,16 @@ services:
     networks:
       - pocketcoder-memory
 
-  # 🌉 GATEWAY (Execution Bridge)
-  gateway:
+  # 🏰 PROXY (Execution Relay)
+  proxy:
     build:
       context: .
-      dockerfile: Dockerfile.gateway
-    container_name: pocketcoder-gateway
+      dockerfile: Dockerfile.proxy
+    container_name: pocketcoder-proxy
     ports:
       - "3001:3001"
     volumes:
-      - bridge_bin:/app/bridge_share        # Source for compiled bridge
+      - proxy_bin:/app/proxy_share        # Source for compiled proxy
       - tmux_socket:/tmp/tmux
     environment:
       - TMUX_TMPDIR=/tmp/tmux
@@ -39,7 +39,7 @@ services:
     networks:
       pocketcoder-control:
         aliases:
-          - gateway
+          - proxy
       pocketcoder-execution:
 
   # 🧠 OPENCODE (Reasoning Engine)
@@ -52,25 +52,25 @@ services:
       - PORT=3000
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
-      - SHELL=/bridge/pocketcoder-shell                        # THE BRIDGE
+      - SHELL=/proxy/pocketcoder-shell                        # THE PROXY
     working_dir: /workspace
     user: root
     volumes:
-      - bridge_bin:/bridge:ro                                     # Read compiled bridge
+      - proxy_bin:/proxy:ro                                     # Read compiled proxy
       - workspace_data:/workspace                               # Shared Workspace
       - ./opencode.config.json:/root/.opencode/opencode.json:ro  # Config
     entrypoint: /bin/sh
     command: >
       -c "
       echo '⏳ Waiting for PocketCoder Shell...' &&
-      while [ ! -f /bridge/pocketcoder-shell ]; do sleep 1; done &&
+      while [ ! -f /proxy/pocketcoder-shell ]; do sleep 1; done &&
       echo '🛡️ Implementing Safe Shell Hijack...' &&
       if [ ! -f /bin/real_sh ]; then mv /bin/sh /bin/real_sh; fi &&
       if [ ! -f /bin/real_bash ] && [ -f /bin/bash ]; then mv /bin/bash /bin/real_bash; fi &&
-      ln -sf /bridge/pocketcoder-shell /bin/bash &&
-      ln -sf /bridge/pocketcoder-shell /usr/bin/bash &&
-      ln -sf /bridge/pocketcoder-shell /bin/sh &&
-      ln -sf /bridge/pocketcoder-shell /usr/bin/glob &&
+      ln -sf /proxy/pocketcoder-shell /bin/bash &&
+      ln -sf /proxy/pocketcoder-shell /usr/bin/bash &&
+      ln -sf /proxy/pocketcoder-shell /bin/sh &&
+      ln -sf /proxy/pocketcoder-shell /usr/bin/glob &&
       echo '🚀 Starting OpenCode Serve...' &&
       exec /bin/real_sh -c 'opencode serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG'"
     ports:
@@ -83,19 +83,19 @@ services:
     depends_on:
       - pocketbase
 
-  # 🌉 CHAT BRIDGE (API-based PocketBase ↔ OpenCode connector)
-  bridge:
+  # 🌉 CHAT RELAY (API-based PocketBase ↔ OpenCode connector)
+  relay:
     build:
       context: .
-      dockerfile: Dockerfile.bridge
-    container_name: pocketcoder-bridge
+      dockerfile: Dockerfile.relay
+    container_name: pocketcoder-relay
     environment:
       - POCKETBASE_URL=http://pocketbase:8090
       - OPENCODE_URL=http://opencode:3000
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
     volumes:
-      - ./bridge:/app
+      - ./relay:/app
       - /app/node_modules
     restart: unless-stopped
     networks:
@@ -127,7 +127,7 @@ volumes:
   pocketcoder-logs:
   workspace_data:
   tmux_socket:
-  bridge_bin:
+  proxy_bin:
 
 networks:
   pocketcoder-memory:

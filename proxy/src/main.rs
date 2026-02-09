@@ -103,7 +103,7 @@ impl PocketCoderDriver {
         let _ = Command::new("tmux").args(&tmux_args).args(["send-keys", "-t", &pane, "C-c"]).status();
         
         // Optional: If cwd is provided, try to switch to it first (or ensure we are there).
-        // For the 'bridge', the user might be in a subdir.
+        // For the 'relay', the user might be in a subdir.
         // We can just inject "cd <cwd> && <cmd>"
         // But let's keep it simple. We will inject "cd <cwd> 2>/dev/null; <cmd>"
         
@@ -211,12 +211,12 @@ async fn exec_handler(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<ExecRequest>,
 ) -> Json<serde_json::Value> {
-    // The Gateway trusts that commands reaching it are already authorized by the Plugin.
+    // The Proxy trusts that commands reaching it are already authorized by the Plugin.
     // No permission checking happens here - we just execute and log results.
     
     let cwd = payload.cwd.as_deref().unwrap_or("/workspace");
 
-    println!("⚡ [Gateway] Executing: {}", payload.cmd);
+    println!("⚡ [Proxy] Executing: {}", payload.cmd);
     match state.driver.exec(&payload.cmd, Some(cwd)).await {
         Ok(res) => {
              Json(serde_json::json!({
@@ -242,7 +242,7 @@ async fn main() -> Result<()> {
     let socket_path = env::var("TMUX_SOCKET").unwrap_or_else(|_| "/tmp/tmux/pocketcoder".to_string());
     let session_name = env::var("TMUX_SESSION").unwrap_or_else(|_| "pocketcoder_session".to_string());
 
-    println!("🏰 [PocketCoder] Gateway starting up...");
+    println!("🏰 [PocketCoder] Proxy starting up...");
     println!("📍 Mode: Dumb Execution Proxy");
     
     // Initialize the Execution Driver
@@ -264,7 +264,7 @@ async fn main() -> Result<()> {
     let port = env::var("PORT").unwrap_or_else(|_| "3001".to_string());
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
 
-    println!("✅ [PocketCoder] Gateway is LIVE on :{}", port);
+    println!("✅ [PocketCoder] Proxy is LIVE on :{}", port);
     axum::serve(listener, app).await?;
 
     Ok(())

@@ -40,6 +40,12 @@ repos:
           - --exclude-lines
           - '"gateway\.auth\.password"'
           - --exclude-lines
+          - '"proxy\.remote\.password"'
+          - --exclude-lines
+          - '"relay\.auth\.password"'
+          - --exclude-lines
+          - '"POCKETBASE_USER_PASSWORD"'
+          - --exclude-lines
           - '"talk\.apiKey"'
           - --exclude-lines
           - '=== "string"'

@@ -50,8 +50,8 @@ CHAT_ID=$(echo "$CHAT_RES" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 | head -n 1)
 echo "✅ Chat Created: $CHAT_ID"
 
 # 4. Trigger AI Message
-# We create a message in PB, which the Bridge will pick up.
-echo "📩 Sending 'Write File' prompt to Bridge via PocketBase..."
+# We create a message in PB, which the Relay will pick up.
+echo "📩 Sending 'Write File' prompt to Relay via PocketBase..."
 MSG_RES=$(curl -s -X POST "$PB_URL/api/collections/messages/records" \
     -H "Authorization: $USER_TOKEN" \
     -H "Content-Type: application/json" \
@@ -83,7 +83,7 @@ for i in {1..15}; do
 done
 
 if [ -z "$PERM_ID" ]; then
-    echo "❌ No permission request found. Did the bridge fail?"
+    echo "❌ No permission request found. Did the relay fail?"
     exit 1
 fi
 
@@ -94,7 +94,7 @@ curl -s -X PATCH "$PB_URL/api/collections/permissions/records/$PERM_ID" \
     -H "Content-Type: application/json" \
     -d "{ \"status\": \"authorized\" }" > /dev/null
 
-echo "✅ Authorized. The Bridge should now tell AI to proceed."
+echo "✅ Authorized. The Relay should now tell AI to proceed."
 
 # 7. Final Verification
 echo "⏳ Waiting for AI to complete action..."

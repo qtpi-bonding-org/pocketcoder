@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * 🌉 POCKETCODER CHAT BRIDGE (SDK VERSION)
+ * 🌉 POCKETCODER CHAT RELAY (SDK VERSION)
  * 
- * This service bridges PocketBase and OpenCode using the PocketBase JS SDK:
+ * This service relays between PocketBase and OpenCode using the PocketBase JS SDK:
  * 1. Subscribes to new user messages in PocketBase (Realtime)
  * 2. Catches up on missed messages on startup (Recovery)
  * 3. Sends them to OpenCode via REST API
@@ -24,7 +24,7 @@ const pb = new PocketBase(POCKETBASE_URL);
 let currentChatId = null;
 const sessionToChat = new Map(); // sessionID -> chatId
 
-console.log("🌉 [Chat Bridge] Starting Realtime Bridge...");
+console.log("🌉 [Chat Relay] Starting Realtime Relay...");
 console.log(`   PocketBase: ${POCKETBASE_URL}`);
 console.log(`   OpenCode: ${OPENCODE_URL}`);
 
@@ -153,26 +153,26 @@ async function ensureOpencodeSession(chatId) {
     if (!chatId) return null;
 
     try {
-        console.log(`🔍 [Chat Bridge] ensureOpencodeSession: fetching chat ${chatId}`);
+        console.log(`🔍 [Chat Relay] ensureOpencodeSession: fetching chat ${chatId}`);
         const chat = await pb.collection('chats').getOne(chatId);
-        console.log(`🔍 [Chat Bridge] ensureOpencodeSession: chat found, opencode_id: ${chat.opencode_id}`);
+        console.log(`🔍 [Chat Relay] ensureOpencodeSession: chat found, opencode_id: ${chat.opencode_id}`);
         if (chat.opencode_id) {
             // Check if session is still alive
             try {
                 const url = `${OPENCODE_URL}/session/${chat.opencode_id}`;
-                console.log(`🔍 [Chat Bridge] ensureOpencodeSession: checking session via ${url}`);
+                console.log(`🔍 [Chat Relay] ensureOpencodeSession: checking session via ${url}`);
                 const res = await fetch(url);
-                console.log(`🔍 [Chat Bridge] ensureOpencodeSession: check session status: ${res.status}`);
+                console.log(`🔍 [Chat Relay] ensureOpencodeSession: check session status: ${res.status}`);
                 if (res.ok) {
                     sessionToChat.set(chat.opencode_id, chatId);
                     return chat.opencode_id;
                 }
             } catch (e) {
-                console.warn(`⚠️ [Chat Bridge] Session ${chat.opencode_id} invalid, creating new one... ${e.message}`);
+                console.warn(`⚠️ [Chat Relay] Session ${chat.opencode_id} invalid, creating new one... ${e.message}`);
             }
         }
     } catch (e) {
-        console.error(`❌ [Chat Bridge] Failed to fetch chat ${chatId}:`, e.message);
+        console.error(`❌ [Chat Relay] Failed to fetch chat ${chatId}:`, e.message);
         // If chat fetch fails, we can't safely proceed
         return null;
     }
@@ -182,14 +182,14 @@ async function ensureOpencodeSession(chatId) {
 
     while (retryCount < maxRetries) {
         try {
-            console.log(`🔍 [Chat Bridge] ensureOpencodeSession: creating new session (Attempt ${retryCount + 1})`);
+            console.log(`🔍 [Chat Relay] ensureOpencodeSession: creating new session (Attempt ${retryCount + 1})`);
             const res = await fetch(`${OPENCODE_URL}/session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ directory: "/workspace" }),
             });
 
-            console.log(`🔍 [Chat Bridge] ensureOpencodeSession: create session status: ${res.status}`);
+            console.log(`🔍 [Chat Relay] ensureOpencodeSession: create session status: ${res.status}`);
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(`OpenCode session creation failed: ${res.status} - ${text.slice(0, 100)}`);
@@ -197,7 +197,7 @@ async function ensureOpencodeSession(chatId) {
 
             const data = await res.json();
             const sessionId = data.id;
-            console.log(`🔍 [Chat Bridge] ensureOpencodeSession: session created: ${sessionId}, linking to chat...`);
+            console.log(`🔍 [Chat Relay] ensureOpencodeSession: session created: ${sessionId}, linking to chat...`);
 
             // Link this chat to the new session
             await pb.collection('chats').update(chatId, {
@@ -205,16 +205,16 @@ async function ensureOpencodeSession(chatId) {
             });
 
             sessionToChat.set(sessionId, chatId);
-            console.log(`✅ [Chat Bridge] Linked chat ${chatId} to OpenCode session: ${sessionId}`);
+            console.log(`✅ [Chat Relay] Linked chat ${chatId} to OpenCode session: ${sessionId}`);
             return sessionId;
         } catch (e) {
             retryCount++;
-            console.warn(`⚠️ [Chat Bridge] Failed to connect to OpenCode (Attempt ${retryCount}/${maxRetries}):`, e.message);
+            console.warn(`⚠️ [Chat Relay] Failed to connect to OpenCode (Attempt ${retryCount}/${maxRetries}):`, e.message);
             if (retryCount < maxRetries) await new Promise(r => setTimeout(r, 2000));
         }
     }
 
-    console.error("❌ [Chat Bridge] Could not establish OpenCode session after multiple attempts.");
+    console.error("❌ [Chat Relay] Could not establish OpenCode session after multiple attempts.");
     return null;
 }
 
@@ -225,12 +225,12 @@ async function processUserMessage(msg) {
     // Skip if not a user message or already processed
     if (msg.role !== 'user' || msg.metadata?.processed === true) return;
 
-    console.log(`📨 [Chat Bridge] Processing message: ${msg.id}`);
+    console.log(`📨 [Chat Relay] Processing message: ${msg.id}`);
     if (msg.chat) {
         currentChatId = msg.chat;
-        console.log(`📍 [Chat Bridge] Current chat context set to: ${currentChatId}`);
+        console.log(`📍 [Chat Relay] Current chat context set to: ${currentChatId}`);
     } else {
-        console.warn(`⚠️ [Chat Bridge] Message ${msg.id} has no chat association!`);
+        console.warn(`⚠️ [Chat Relay] Message ${msg.id} has no chat association!`);
     }
 
     // Mark as processed immediately to prevent double-processing
@@ -239,13 +239,13 @@ async function processUserMessage(msg) {
             metadata: { ...msg.metadata, processed: true }
         });
     } catch (e) {
-        console.error(`❌ [Chat Bridge] Failed to mark message ${msg.id} as processed:`, e.message);
+        console.error(`❌ [Chat Relay] Failed to mark message ${msg.id} as processed:`, e.message);
         return;
     }
 
     const sessionId = await ensureOpencodeSession(msg.chat);
     if (!sessionId) {
-        console.error("❌ [Chat Bridge] No OpenCode session, skipping message");
+        console.error("❌ [Chat Relay] No OpenCode session, skipping message");
         return;
     }
 
@@ -256,7 +256,7 @@ async function processUserMessage(msg) {
         .join('\n');
 
     if (!textParts) {
-        console.warn(`⚠️ [Chat Bridge] Message ${msg.id} has no text parts, skipping`);
+        console.warn(`⚠️ [Chat Relay] Message ${msg.id} has no text parts, skipping`);
         return;
     }
 
@@ -279,16 +279,16 @@ async function processUserMessage(msg) {
         // ID is in info.id for the initial response!
         const opencodeMsgId = promptData.id || promptData.info?.id;
 
-        console.log(`✅ [Chat Bridge] Prompt sent, OpenCode message ID: ${opencodeMsgId}`);
+        console.log(`✅ [Chat Relay] Prompt sent, OpenCode message ID: ${opencodeMsgId}`);
 
         if (!opencodeMsgId) {
-            console.error("❌ [Chat Bridge] Could not extract message ID from response:", JSON.stringify(promptData));
+            console.error("❌ [Chat Relay] Could not extract message ID from response:", JSON.stringify(promptData));
             return;
         }
 
         // Check if already completed (synchronous response)
         if (promptData.info?.time?.completed || promptData.finish) {
-            console.log(`⚡ [Chat Bridge] Response completed immediately.`);
+            console.log(`⚡ [Chat Relay] Response completed immediately.`);
             await saveAssistantResponse(msg.chat, promptData);
             return;
         }
@@ -297,7 +297,7 @@ async function processUserMessage(msg) {
         await pollOpenCodeResponse(sessionId, opencodeMsgId, msg.chat);
 
     } catch (e) {
-        console.error("❌ [Chat Bridge] OpenCode error:", e.message);
+        console.error("❌ [Chat Relay] OpenCode error:", e.message);
     }
 }
 
@@ -322,7 +322,7 @@ async function pollOpenCodeResponse(sessionId, opencodeMsgId, pbChatId) {
             const isCompleted = !!message.info?.time?.completed;
 
             if (isCompleted !== lastStatus) {
-                console.log(`🔄 [Chat Bridge] OpenCode message complete: ${isCompleted}`);
+                console.log(`🔄 [Chat Relay] OpenCode message complete: ${isCompleted}`);
                 lastStatus = isCompleted;
             }
 
@@ -333,7 +333,7 @@ async function pollOpenCodeResponse(sessionId, opencodeMsgId, pbChatId) {
 
                 // If done, we stop polling
                 if (isCompleted) {
-                    console.log(`✅ [Chat Bridge] Response finalized for chat ${pbChatId}`);
+                    console.log(`✅ [Chat Relay] Response finalized for chat ${pbChatId}`);
                     return;
                 }
             }
@@ -341,12 +341,12 @@ async function pollOpenCodeResponse(sessionId, opencodeMsgId, pbChatId) {
             await new Promise(r => setTimeout(r, 1000));
             attempts++;
         } catch (e) {
-            console.error("❌ [Chat Bridge] Polling error:", e.message);
+            console.error("❌ [Chat Relay] Polling error:", e.message);
             await new Promise(r => setTimeout(r, 2000));
             attempts++;
         }
     }
-    console.warn("⚠️ [Chat Bridge] Response timeout");
+    console.warn("⚠️ [Chat Relay] Response timeout");
 }
 
 /**
@@ -357,12 +357,12 @@ async function saveAssistantResponse(chatId, opencodeMessage) {
         const msgId = opencodeMessage.id || opencodeMessage.info?.id;
 
         if (!opencodeMessage.parts || opencodeMessage.parts.length === 0) {
-            console.log(`🔍 [Chat Bridge] saveAssistantResponse: no parts for message ${msgId}, skipping sync`);
+            console.log(`🔍 [Chat Relay] saveAssistantResponse: no parts for message ${msgId}, skipping sync`);
             return;
         }
 
         if (!msgId) {
-            console.error("❌ [Chat Bridge] Cannot save assistant response: missing message ID", JSON.stringify(opencodeMessage).slice(0, 200));
+            console.error("❌ [Chat Relay] Cannot save assistant response: missing message ID", JSON.stringify(opencodeMessage).slice(0, 200));
             return;
         }
 
@@ -391,14 +391,14 @@ async function saveAssistantResponse(chatId, opencodeMessage) {
                     parts: parts,
                     metadata: { opencodeId: msgId }
                 });
-                console.log(`💾 [Chat Bridge] Created response for ${msgId}`);
+                console.log(`💾 [Chat Relay] Created response for ${msgId}`);
             } else {
                 throw e;
             }
         }
 
     } catch (e) {
-        console.error("❌ [Chat Bridge] Failed to save/update assistant response:", e.message);
+        console.error("❌ [Chat Relay] Failed to save/update assistant response:", e.message);
     }
 }
 
@@ -409,14 +409,14 @@ async function start() {
     try {
         // 1. Authenticate
         await pb.collection('users').authWithPassword(AGENT_EMAIL, AGENT_PASSWORD);
-        console.log("✅ [Chat Bridge] Logged in to PocketBase");
+        console.log("✅ [Chat Relay] Logged in to PocketBase");
 
         // 2. Start Gatekeeper (Permissions)
         await listenForPermissions();
         await subscribeToPermissionUpdates();
 
         // 3. Subscribe to Chat Messages
-        console.log("📡 [Chat Bridge] Subscribing to messages...");
+        console.log("📡 [Chat Relay] Subscribing to messages...");
         pb.collection('messages').subscribe('*', (e) => {
             if (e.action === 'create') {
                 processUserMessage(e.record);
@@ -424,7 +424,7 @@ async function start() {
         });
 
     } catch (e) {
-        console.error("❌ [Chat Bridge] Critical Error:", e);
+        console.error("❌ [Chat Relay] Critical Error:", e);
         if (e.response) console.error("   Response:", e.response);
         setTimeout(start, 5000); // Retry after 5s
     }

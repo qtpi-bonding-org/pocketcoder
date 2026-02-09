@@ -169,9 +169,9 @@ app.OnRecordCreate("permissions").Bind(&hook.Handler[*core.RecordEvent]{
 })
 ```
 
-### 4. Update Gateway (Rust)
+### 4. Update Proxy (Rust)
 
-**File:** `connector/src/main.rs`
+**File:** `proxy/src/main.rs`
 
 **Changes:**
 ```rust
@@ -179,7 +179,7 @@ app.OnRecordCreate("permissions").Bind(&hook.Handler[*core.RecordEvent]{
 // OLD:
 let initial_status = if whitelisted { "authorized" } else { "draft" };
 let exec_record = state.provider.create_execution(
-    &cmd_record.id, cwd, initial_status, "gateway", metadata
+    &cmd_record.id, cwd, initial_status, "proxy", metadata
 ).await?;
 
 if initial_status == "draft" {
@@ -191,7 +191,7 @@ let exec_record = state.provider.create_execution(
     &cmd_record.id, 
     cwd, 
     "executing",  // Start immediately
-    "gateway", 
+    "proxy", 
     metadata
 ).await?;
 
@@ -214,7 +214,7 @@ if let Some(permission_id) = payload.metadata.get("permission_id") {
 
 ✅ **No Duplicate Records**: Each bash command creates one permission + one execution
 ✅ **Clear Audit Trail**: Permission → Execution relationship
-✅ **Separation of Concerns**: Plugin = authorization, Gateway = execution
+✅ **Separation of Concerns**: Plugin = authorization, Proxy = execution
 ✅ **OpenCode Compatible**: Schema matches OpenCode's internal structure
 ✅ **Backward Compatible**: Deprecated fields remain for legacy support
 
@@ -223,7 +223,7 @@ if let Some(permission_id) = payload.metadata.get("permission_id") {
 1. Deploy migration (creates `permissions` table)
 2. Update Plugin to use `/permissions` endpoint
 3. Update PocketBase hooks to work on `permissions`
-4. Update Gateway to remove permission logic
+4. Update Proxy to remove permission logic
 5. Test full flow
 6. (Future) Remove deprecated fields from `executions`
 
@@ -232,7 +232,7 @@ if let Some(permission_id) = payload.metadata.get("permission_id") {
 - [ ] Plugin creates permission record for read/write (auto-authorized)
 - [ ] Plugin creates permission record for bash (draft)
 - [ ] User can authorize bash permission via PocketBase UI
-- [ ] Gateway creates execution record linked to permission
-- [ ] Gateway executes without re-checking permission
+- [ ] Proxy creates execution record linked to permission
+- [ ] Proxy executes without re-checking permission
 - [ ] Execution record shows correct outputs and exit code
 - [ ] No duplicate records in database
