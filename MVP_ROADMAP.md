@@ -19,22 +19,25 @@ This roadmap outlines the path from initial setup to a lean, professional AI cod
     -   **Verified** that only execution is gated; file writes remain fast and native.
 
 
-## Phase 3: User Experience 🔐
-- [ ] **Passkey Auth (Go)**: Implement WebAuthn in the backend for biometric "Intent Signing."
-- [ ] **Flutter Ledger**: A minimal companion app to view the Intent ledger and swipe to authorize.
-- [ ] **Real-time logs**: Stream Sandbox terminal output back to the Flutter app via PocketBase.
+## Phase 3: The User Experience 🏗️
+- [x] **Secure Access**: Standardized on robust password-based auth for simplicity and speed.
+- [x] **Universal Gating**: Every tool request (bash, read, write) creates a "Draft" intent by default.
+- [ ] **Live Terminal Mirror**: Stream real-time `tmux` pane output back to the Flutter app.
+- [ ] **Artifact Ledger**: A dedicated F1 dashboard for "finalized" outputs (files, UIs, code blocks).
+- [ ] **Enhanced Whitelisting**: Extend the regex-based auto-auth to non-bash tools (e.g., allow `read` on certain paths).
 
 ## Phase 4: Polish & Release 📦
-- [ ] **Self-Hosting Guide**: One-click deployment (Docker Compose).
-- [ ] **Documentation**: A humble, clear guide for the open-source community.
+- [ ] **Local-First Packaging**: One-click deployment script using `docker-compose`.
+- [ ] **Zero-Config Setup**: Automatic user seeding and environment validation on first boot.
+- [ ] **Documentation**: A humble, clear guide for self-hosters and contributors.
 
 ---
 
-### 🛡️ Architectural Discussion: "The Execution Firewall"
+### 🛡️ Architectural Discussion: "Max Security"
 
-**Decision: Ungated Writes, Gated Execution.**
-We adopt a hybrid security model:
-1.  **Filesystem (Read/Write)**: The AI has native, ungated access via a shared Docker volume. This allows it to refactor, write, and explore code at full speed with high-quality native tools (`read`, `grep`, `lsp`).
-2.  **Execution (Bash)**: We strip the native `bash` tool and replace it with our **Gatekeeper Shell**.
-    -   The AI can *write* a dangerous script, but it cannot *run* it without a signed Intent.
-    -   This maximizes utility while preserving absolute safety.
+**Decision: Zero-Trust by default.**
+Contrary to earlier discussions, we have settled on a **Zero-Trust** model:
+1.  **Total Gating**: Every single tool request from the AI—whether it is reading a file, writing one, or executing a command—is intercepted as a `permission` record.
+2.  **Explicit Consent**: The human must authorize the "Intent" before the AI can proceed.
+3.  **Efficiency via Whitelisting**: To avoid "Authorize Fatigue," we use a persistent Whitelist collection for common, safe patterns (like `git status` or `ls`).
+4.  **Local Authority**: PocketCoder is a local-first appliance where the human is the final signing authority.
