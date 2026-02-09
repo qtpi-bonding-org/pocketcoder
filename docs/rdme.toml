@@ -1,0 +1,7 @@
+[rdme]
+# Use comments from main.rs
+entry-path = "src/main.rs"
+# Output to README.md in the proxy folder
+output-path = "README.md"
+# Don't require a license or version in the header
+introspect = false
