@@ -114,7 +114,7 @@ class _ChatViewState extends State<_ChatView> {
                         final List<MessagePart> brainParts = [];
 
                         for (final msg in assistantMessages) {
-                          final parts = msg.parts;
+                          final parts = msg.parts ?? [];
                           if (parts.isEmpty) continue;
 
                           // If it's the HOT message (still thinking), show everything!
@@ -160,16 +160,18 @@ class _ChatViewState extends State<_ChatView> {
 
                           // For USER: Show all text.
                           if (msg.role == MessageRole.user) {
-                            final textParts =
-                                msg.parts.whereType<MessagePartText>().toList();
+                            final textParts = (msg.parts ?? [])
+                                .whereType<MessagePartText>()
+                                .toList();
                             return SpeechBubble(
                                 textParts: textParts, isUser: true);
                           }
 
                           // For ASSISTANT: Show ONLY the LAST text part.
                           // (Hide reasoning/tools from speech bubble)
-                          final textParts =
-                              msg.parts.whereType<MessagePartText>().toList();
+                          final textParts = (msg.parts ?? [])
+                              .whereType<MessagePartText>()
+                              .toList();
                           final finalAnswer = textParts.isNotEmpty
                               ? [textParts.last]
                               : <MessagePartText>[];

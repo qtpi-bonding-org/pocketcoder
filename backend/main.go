@@ -195,49 +195,7 @@ func main() {
 			})
 		})
 
-		// Seeding (Existing)
-		superusers, _ := app.FindCollectionByNameOrId("_superusers")
-		if superusers != nil {
-			suEmail := os.Getenv("POCKETBASE_SUPERUSER_EMAIL")
-			if suEmail != "" {
-				existing, _ := app.FindFirstRecordByFilter("_superusers", "email = {:email}", map[string]any{"email": suEmail})
-				if existing == nil {
-					su := core.NewRecord(superusers)
-					su.Set("email", suEmail)
-					su.Set("password", os.Getenv("POCKETBASE_SUPERUSER_PASSWORD"))
-					app.Save(su)
-				}
-			}
-		}
-
-		users, _ := app.FindCollectionByNameOrId("users")
-		if users != nil {
-			adminEmail := os.Getenv("POCKETBASE_USER_EMAIL")
-			if adminEmail != "" {
-				existing, _ := app.FindFirstRecordByFilter("users", "email = {:email}", map[string]any{"email": adminEmail})
-				if existing == nil {
-					admin := core.NewRecord(users)
-					admin.Set("email", adminEmail)
-					admin.Set("password", os.Getenv("POCKETBASE_USER_PASSWORD"))
-					admin.Set("role", "admin")
-					admin.SetVerified(true)
-					app.Save(admin)
-				}
-			}
-			
-			agentEmail := os.Getenv("AGENT_EMAIL")
-			if agentEmail != "" {
-				existing, _ := app.FindFirstRecordByFilter("users", "email = {:email}", map[string]any{"email": agentEmail})
-				if existing == nil {
-					agent := core.NewRecord(users)
-					agent.Set("email", agentEmail)
-					agent.Set("password", os.Getenv("AGENT_PASSWORD"))
-					agent.Set("role", "agent")
-					agent.SetVerified(true)
-					app.Save(agent)
-				}
-			}
-		}
+		// Seeding moved to migrations
 
 		// 📂 ARTIFACT SERVING
 		e.Router.GET("/api/pocketcoder/artifact/{path...}", func(re *core.RequestEvent) error {
@@ -293,7 +251,7 @@ func main() {
 
 	// 🤖 AI AGENT ASSEMBLY LOGIC
 	getAgentBundle := func(agent *core.Record) (string, error) {
-		// 1. Expand dependencies (if not already expanded)
+		// 1. Expand dependencies
 		app.ExpandRecord(agent, []string{"prompt", "model"}, nil)
 
 		// 2. Fetch Permission Rules
@@ -312,9 +270,18 @@ func main() {
 		if mode := agent.GetString("mode"); mode != "" {
 			frontmatter["mode"] = mode
 		}
-		if model := agent.ExpandedOne("model"); model != nil {
+		
+		model := agent.ExpandedOne("model")
+		if model == nil {
+			modelID := agent.GetString("model")
+			if modelID != "" {
+				model, _ = app.FindRecordById("ai_models", modelID)
+			}
+		}
+		if model != nil {
 			frontmatter["model"] = model.GetString("identifier")
 		}
+		
 		if steps := agent.GetInt("steps"); steps > 0 {
 			frontmatter["steps"] = steps
 		}
@@ -334,7 +301,15 @@ func main() {
 
 		// 4. Combine with Prompt Body
 		body := ""
-		if prompt := agent.ExpandedOne("prompt"); prompt != nil {
+		prompt := agent.ExpandedOne("prompt")
+		if prompt == nil {
+			promptID := agent.GetString("prompt")
+			if promptID != "" {
+				prompt, _ = app.FindRecordById("ai_prompts", promptID)
+			}
+		}
+		
+		if prompt != nil {
 			body = prompt.GetString("body")
 		}
 
