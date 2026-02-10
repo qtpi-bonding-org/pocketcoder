@@ -70,6 +70,18 @@ class _ChatViewState extends State<_ChatView> {
                   }
                 },
               ),
+              BlocListener<ChatCubit, ChatState>(
+                listenWhen: (prev, curr) =>
+                    prev.error != curr.error && curr.error != null,
+                listener: (context, state) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.error!),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+              ),
             ],
             child: Column(
               children: [
@@ -195,10 +207,15 @@ class _ChatViewState extends State<_ChatView> {
                 // 4. INPUT
                 Padding(
                   padding: EdgeInsets.all(AppSizes.space),
-                  child: TerminalInput(
-                    controller: _inputController,
-                    onSubmitted: () => _handleSubmit(context),
-                    prompt: 'SAY:',
+                  child: BlocBuilder<ChatCubit, ChatState>(
+                    builder: (context, state) {
+                      return TerminalInput(
+                        controller: _inputController,
+                        onSubmitted: () => _handleSubmit(context),
+                        prompt: 'SAY:',
+                        enabled: !state.isLoading && state.chatId != null,
+                      );
+                    },
                   ),
                 ),
               ],
