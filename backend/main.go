@@ -14,6 +14,7 @@ import (
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
 	"github.com/google/uuid"
+	"github.com/qtpi-automaton/pocketcoder/backend/pkg/relay"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 	"gopkg.in/yaml.v3"
 )
@@ -69,7 +70,19 @@ func main() {
 	// ------------------------------------------------------------
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		log.Printf("🚀 Registering custom endpoints...")
-		
+
+		// Initialize Relay Service (Optional toggle during migration)
+		if os.Getenv("ENABLE_GO_RELAY") == "true" {
+			openCodeURL := os.Getenv("OPENCODE_URL")
+			if openCodeURL == "" {
+				openCodeURL = "http://opencode:3000"
+			}
+			relaySvc := relay.NewRelayService(app, openCodeURL)
+			relaySvc.Start()
+		} else {
+			log.Println("🌉 [Relay] Go-based Relay is DISABLED (ENABLE_GO_RELAY != true)")
+		}
+
 		// 📡 PERMISSION EVALUATION ENDPOINT
 		// This endpoint evaluates an Intent and creates the permission record.
 		e.Router.POST("/api/pocketcoder/permission", func(re *core.RequestEvent) error {

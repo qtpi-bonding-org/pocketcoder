@@ -7,17 +7,20 @@ class TerminalInput extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSubmitted;
   final String prompt;
+  final bool enabled;
 
   const TerminalInput({
     super.key,
     required this.controller,
     required this.onSubmitted,
     this.prompt = '%',
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      // ... same container props ...
       padding: EdgeInsets.symmetric(
           horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
       decoration: BoxDecoration(
@@ -28,7 +31,7 @@ class TerminalInput extends StatelessWidget {
           Text(
             '$prompt ',
             style: TextStyle(
-              color: AppPalette.primary.textPrimary,
+              color: enabled ? AppPalette.primary.textPrimary : Colors.grey,
               fontFamily: AppFonts.bodyFamily,
               fontSize: AppSizes.fontStandard,
               fontWeight: AppFonts.heavy,
@@ -36,6 +39,7 @@ class TerminalInput extends StatelessWidget {
           ),
           Expanded(
             child: TextField(
+              enabled: enabled,
               controller: controller,
               onSubmitted: (_) => onSubmitted(),
               style: TextStyle(

@@ -11,6 +11,7 @@ services:
       - pb_data:/app/pb_data
       - pocketcoder-logs:/app/pb_public/logs
       - workspace_data:/workspace
+      - ssh_keys:/ssh_keys
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -18,6 +19,8 @@ services:
       - POCKETBASE_USER_PASSWORD=${POCKETBASE_USER_PASSWORD}
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
+      - ENABLE_GO_RELAY=${ENABLE_GO_RELAY}
+      - OPENCODE_URL=${OPENCODE_URL}
     restart: unless-stopped
     networks:
       - pocketcoder-memory
