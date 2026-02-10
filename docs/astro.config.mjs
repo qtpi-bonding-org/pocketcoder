@@ -5,6 +5,8 @@ export default defineConfig({
     integrations: [
         starlight({
             title: 'PocketCoder',
+            description: 'PocketCoder Documentation',
+            head: [],
             sidebar: [
                 {
                     label: 'Guides',
@@ -17,7 +19,6 @@ export default defineConfig({
                     label: 'Reference',
                     items: [
                         { label: 'Backend (Go)', link: '/reference/backend' },
-                        { label: 'Relay (Node.js)', link: '/reference/relay' },
                         { label: 'Proxy (Rust)', link: '/reference/proxy' },
                     ],
                 },

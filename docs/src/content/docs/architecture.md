@@ -1,6 +1,7 @@
 ---
 title: Architecture
 description: Detailed overview of PocketCoder's Sovereign Authority architecture.
+head: []
 ---
 
 
