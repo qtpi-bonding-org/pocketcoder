@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'chat_message.dart';
+import 'chat.dart';
 
 part 'i_chat_repository.freezed.dart';
 
@@ -22,6 +23,9 @@ abstract class IChatRepository {
 
   /// Watches a specific chat record for changes (e.g. opencode_id updates)
   Stream<RecordModel> watchChat(String chatId);
+
+  /// Fetches a list of all chat records, sorted by last_active descending.
+  Future<List<Chat>> fetchChatHistory();
 }
 
 @freezed

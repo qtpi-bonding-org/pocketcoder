@@ -43,6 +43,19 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
+  Future<void> loadChatHistory() async {
+    emit(state.copyWith(isLoading: true));
+    try {
+      final chats = await _repository.fetchChatHistory();
+      emit(state.copyWith(chats: chats, isLoading: false));
+    } catch (e) {
+      emit(state.copyWith(
+        error: 'Failed to load chat history: $e',
+        isLoading: false,
+      ));
+    }
+  }
+
   void _subscribeToColdPipe(String chatId) {
     _coldSub?.cancel();
     _coldSub = _repository.watchColdPipe(chatId).listen(
@@ -116,14 +129,14 @@ class ChatCubit extends Cubit<ChatState> {
           createdAt: DateTime.now(),
         );
 
-    List<MessagePart> parts = List.from(currentHot.parts);
+    List<MessagePart> parts = List.from(currentHot.parts ?? []);
 
     // 2. Apply Delta
     if (delta.content.isNotEmpty) {
       if (parts.isNotEmpty && parts.last is MessagePartText) {
         final last = parts.last as MessagePartText;
         parts[parts.length - 1] =
-            last.copyWith(text: last.text + delta.content);
+            last.copyWith(text: (last.text ?? '') + delta.content);
       } else {
         parts.add(MessagePart.text(text: delta.content));
       }
@@ -131,10 +144,10 @@ class ChatCubit extends Cubit<ChatState> {
 
     // Tools logic
     if (delta.tool != null) {
-      parts.add(MessagePart.toolCall(
+      parts.add(MessagePart.tool(
         tool: delta.tool!,
         callID: delta.callId ?? 'unknown',
-        args: {}, // Empty args for now in delta
+        state: ToolState.running(input: {}),
       ));
     }
 
@@ -212,14 +225,20 @@ class ChatCubit extends Cubit<ChatState> {
       chatId: 'current',
       role: MessageRole.assistant,
       parts: [
-        const MessagePart.text(
+        MessagePart.text(
             text:
                 "Accessing internal proxy...\nResolving host 'pocketbase'...\nConnection established.\n"),
-        const MessagePart.toolCall(
-            tool: "curl", callID: "call-1", args: {'url': '/api/health'}),
+        MessagePart.tool(
+          tool: "curl",
+          callID: "call-1",
+          state: ToolState.completed(
+            input: {'url': '/api/health'},
+            output: 'Status 200 OK. JSON payload valid.',
+            title: 'Health Check',
+          ),
+        ),
         const MessagePart.text(
-            text:
-                "Status 200 OK. JSON payload valid.\nThe server is online and responding normally, Operator."),
+            text: "\nThe server is online and responding normally, Operator."),
       ],
       createdAt: DateTime.now(),
     );

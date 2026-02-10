@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../domain/chat/chat_message.dart';
 import '../../domain/chat/i_chat_repository.dart';
+import '../../domain/chat/chat.dart';
 
 @LazySingleton(as: IChatRepository)
 class ChatRepository implements IChatRepository {
@@ -37,8 +38,18 @@ class ChatRepository implements IChatRepository {
             ChatMessage.fromJson({...e.record!.toJson(), 'chatId': chatId});
         messages = [...messages, newMsg];
         controller.add(messages);
+      } else if (e.action == 'update') {
+        final updatedMsg =
+            ChatMessage.fromJson({...e.record!.toJson(), 'chatId': chatId});
+        final index = messages.indexWhere((m) => m.id == updatedMsg.id);
+        if (index != -1) {
+          messages[index] = updatedMsg;
+        } else {
+          // If for some reason we missed the create, treat it as one
+          messages = [...messages, updatedMsg];
+        }
+        controller.add(messages);
       }
-      // TODO: Handle update/delete if needed
     }, filter: 'chat = "$chatId"');
 
     try {
@@ -155,6 +166,20 @@ class ChatRepository implements IChatRepository {
     } finally {
       unsubscribe();
       controller.close();
+    }
+  }
+
+  @override
+  Future<List<Chat>> fetchChatHistory() async {
+    try {
+      final records = await _pb.collection('chats').getList(
+            sort: '-last_active',
+            // filter: 'user = "${_pb.authStore.record?.id}"', // Uncomment if chat history should be user-specific
+          );
+      return records.items.map((e) => Chat.fromJson(e.toJson())).toList();
+    } catch (e) {
+      print('ChatRepository: Failed to fetch chat history: $e');
+      rethrow;
     }
   }
 }

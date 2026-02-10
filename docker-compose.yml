@@ -62,6 +62,7 @@ services:
     volumes:
       - proxy_bin:/proxy:ro                                     # Read compiled proxy
       - workspace_data:/workspace                               # Shared Workspace
+      - opencode_data:/root/.local/share/opencode              # Persistent Storage
       - ./opencode.config.json:/root/.opencode/opencode.json:ro  # Config
     entrypoint: /bin/sh
     command: >
@@ -107,6 +108,7 @@ volumes:
   pb_data:
   pocketcoder-logs:
   workspace_data:
+  opencode_data:
   tmux_socket:
   proxy_bin:
   ssh_keys:  # Shared volume for SSH keys
