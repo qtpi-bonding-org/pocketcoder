@@ -1,0 +1,1165 @@
+Extend with Go - Database
+core.App is the main interface to interact with the database.
+
+App.DB() returns a dbx.Builder that can run all kinds of SQL statements, including raw queries.
+
+Most of the common DB operations are listed below, but you can find further information in the dbx package godoc .
+
+For more details and examples how to interact with Record and Collection models programmatically you could also check Collection operations and Record operations sections.
+
+Executing queries
+Binding parameters
+Query builder
+Select(), AndSelect(), Distinct()
+From()
+Join()
+Where(), AndWhere(), OrWhere()
+OrderBy(), AndOrderBy()
+GroupBy(), AndGroupBy()
+Having(), AndHaving(), OrHaving()
+Limit()
+Offset()
+Transaction
+To execute DB queries you can start with the NewQuery("...") statement and then call one of:
+
+ - for any query statement that is not meant to retrieve data:
+
+res, err := app.DB().
+    NewQuery("DELETE FROM articles WHERE status = 'archived'").
+    Execute()
+ - to populate a single row into a struct:
+
+type User struct {
+    Id     string                  `db:"id" json:"id"`
+    Status bool                    `db:"status" json:"status"`
+    Age    int                     `db:"age" json:"age"`
+    Roles  types.JSONArray[string] `db:"roles" json:"roles"`
+}
+
+user := User{}
+
+err := app.DB().
+    NewQuery("SELECT id, status, age, roles FROM users WHERE id=1").
+    One(&user)
+ - to populate multiple rows into a slice of structs:
+
+type User struct {
+    Id     string                  `db:"id" json:"id"`
+    Status bool                    `db:"status" json:"status"`
+    Age    int                     `db:"age" json:"age"`
+    Roles  types.JSONArray[string] `db:"roles" json:"roles"`
+}
+
+users := []User{}
+
+err := app.DB().
+    NewQuery("SELECT id, status, age, roles FROM users LIMIT 100").
+    All(&users)
+To prevent SQL injection attacks, you should use named parameters for any expression value that comes from user input. This could be done using the named {:paramName} placeholders in your SQL statement and then define the parameter values for the query with Bind(params). For example:
+
+type Post struct {
+    Name     string         `db:"name" json:"name"`
+    Created  types.DateTime `db:"created" json:"created"`
+}
+
+posts := []Post{}
+
+err := app.DB().
+    NewQuery("SELECT name, created FROM posts WHERE created >= {:from} and created <= {:to}").
+    Bind(dbx.Params{
+        "from": "2023-06-25 00:00:00.000Z",
+        "to":   "2023-06-28 23:59:59.999Z",
+    }).
+    All(&posts)
+Instead of writing plain SQLs, you can also compose SQL statements programmatically using the db query builder.
+Every SQL keyword has a corresponding query building method. For example, SELECT corresponds to Select(), FROM corresponds to From(), WHERE corresponds to Where(), and so on.
+
+users := []struct {
+    Id    string `db:"id" json:"id"`
+    Email string `db:"email" json:"email"`
+}{}
+
+app.DB().
+    Select("id", "email").
+    From("users").
+    AndWhere(dbx.Like("email", "example.com")).
+    Limit(100).
+    OrderBy("created ASC").
+    All(&users)
+The Select(...cols) method initializes a SELECT query builder. It accepts a list of the column names to be selected.
+To add additional columns to an existing select query, you can call AndSelect().
+To select distinct rows, you can call Distinct(true).
+
+app.DB().
+    Select("id", "avatar as image").
+    AndSelect("(firstName || ' ' || lastName) as fullName").
+    Distinct(true)
+    ...
+The From(...tables) method specifies which tables to select from (plain table names are automatically quoted).
+
+app.DB().
+    Select("table1.id", "table2.name").
+    From("table1", "table2")
+    ...
+The Join(type, table, on) method specifies a JOIN clause. It takes 3 parameters:
+
+type - join type string like INNER JOIN, LEFT JOIN, etc.
+table - the name of the table to be joined
+on - optional dbx.Expression as an ON clause
+For convenience, you can also use the shortcuts InnerJoin(table, on), LeftJoin(table, on), RightJoin(table, on) to specify INNER JOIN, LEFT JOIN and RIGHT JOIN, respectively.
+
+app.DB().
+    Select("users.*").
+    From("users").
+    InnerJoin("profiles", dbx.NewExp("profiles.user_id = users.id")).
+    Join("FULL OUTER JOIN", "department", dbx.NewExp("department.id = {:id}", dbx.Params{ "id": "someId" }))
+    ...
+The Where(exp) method specifies the WHERE condition of the query.
+You can also use AndWhere(exp) or OrWhere(exp) to append additional one or more conditions to an existing WHERE clause.
+Each where condition accepts a single dbx.Expression (see below for full list).
+
+/*
+SELECT users.*
+FROM users
+WHERE id = "someId" AND
+    status = "public" AND
+    name like "%john%" OR
+    (
+        role = "manager" AND
+        fullTime IS TRUE AND
+        experience > 10
+    )
+*/
+app.DB().
+    Select("users.*").
+    From("users").
+    Where(dbx.NewExp("id = {:id}", dbx.Params{ "id": "someId" })).
+    AndWhere(dbx.HashExp{"status": "public"}).
+    AndWhere(dbx.Like("name", "john")).
+    OrWhere(dbx.And(
+        dbx.HashExp{
+            "role":     "manager",
+            "fullTime": true,
+        },
+        dbx.NewExp("experience > {:exp}", dbx.Params{ "exp": 10 })
+    ))
+    ...
+The following dbx.Expression methods are available:
+
+
+Generates an expression with the specified raw query fragment. Use the optParams to bind dbx.Params to the expression.
+dbx.NewExp("status = 'public'")
+dbx.NewExp("total > {:min} AND total < {:max}", dbx.Params{ "min": 10, "max": 30 })
+
+Generates a hash expression from a map whose keys are DB column names which need to be filtered according to the corresponding values.
+// slug = "example" AND active IS TRUE AND tags in ("tag1", "tag2", "tag3") AND parent IS NULL
+dbx.HashExp{
+    "slug":   "example",
+    "active": true,
+    "tags":   []any{"tag1", "tag2", "tag3"},
+    "parent": nil,
+}
+
+Negates a single expression by wrapping it with NOT().
+// NOT(status = 1)
+dbx.Not(dbx.NewExp("status = 1"))
+
+Creates a new expression by concatenating the specified ones with AND.
+// (status = 1 AND username like "%john%")
+dbx.And(
+    dbx.NewExp("status = 1"),
+    dbx.Like("username", "john"),
+)
+
+Creates a new expression by concatenating the specified ones with OR.
+// (status = 1 OR username like "%john%")
+dbx.Or(
+    dbx.NewExp("status = 1"),
+    dbx.Like("username", "john")
+)
+
+Generates an IN expression for the specified column and the list of allowed values.
+// status IN ("public", "reviewed")
+dbx.In("status", "public", "reviewed")
+
+Generates an NOT IN expression for the specified column and the list of allowed values.
+// status NOT IN ("public", "reviewed")
+dbx.NotIn("status", "public", "reviewed")
+
+Generates a LIKE expression for the specified column and the possible strings that the column should be like. If multiple values are present, the column should be like all of them.
+By default, each value will be surrounded by "%" to enable partial matching. Special characters like "%", "\", "_" will also be properly escaped. You may call Escape(...pairs) and/or Match(left, right) to change the default behavior.
+// name LIKE "%test1%" AND name LIKE "%test2%"
+dbx.Like("name", "test1", "test2")
+
+// name LIKE "test1%"
+dbx.Like("name", "test1").Match(false, true)
+
+Generates a NOT LIKE expression in similar manner as Like().
+// name NOT LIKE "%test1%" AND name NOT LIKE "%test2%"
+dbx.NotLike("name", "test1", "test2")
+
+// name NOT LIKE "test1%"
+dbx.NotLike("name", "test1").Match(false, true)
+
+This is similar to Like() except that the column must be one of the provided values, aka. multiple values are concatenated with OR instead of AND.
+// name LIKE "%test1%" OR name LIKE "%test2%"
+dbx.OrLike("name", "test1", "test2")
+
+// name LIKE "test1%" OR name LIKE "test2%"
+dbx.OrLike("name", "test1", "test2").Match(false, true)
+
+This is similar to NotLike() except that the column must not be one of the provided values, aka. multiple values are concatenated with OR instead of AND.
+// name NOT LIKE "%test1%" OR name NOT LIKE "%test2%"
+dbx.OrNotLike("name", "test1", "test2")
+
+// name NOT LIKE "test1%" OR name NOT LIKE "test2%"
+dbx.OrNotLike("name", "test1", "test2").Match(false, true)
+
+Prefix with EXISTS the specified expression (usually a subquery).
+// EXISTS (SELECT 1 FROM users WHERE status = 'active')
+dbx.Exists(dbx.NewExp("SELECT 1 FROM users WHERE status = 'active'"))
+
+Prefix with NOT EXISTS the specified expression (usually a subquery).
+// NOT EXISTS (SELECT 1 FROM users WHERE status = 'active')
+dbx.NotExists(dbx.NewExp("SELECT 1 FROM users WHERE status = 'active'"))
+
+Generates a BETWEEN expression with the specified range.
+// age BETWEEN 3 and 99
+dbx.Between("age", 3, 99)
+
+Generates a NOT BETWEEN expression with the specified range.
+// age NOT BETWEEN 3 and 99
+dbx.NotBetween("age", 3, 99)
+The OrderBy(...cols) specifies the ORDER BY clause of the query.
+A column name can contain "ASC" or "DESC" to indicate its ordering direction.
+You can also use AndOrderBy(...cols) to append additional columns to an existing ORDER BY clause.
+
+app.DB().
+    Select("users.*").
+    From("users").
+    OrderBy("created ASC", "updated DESC").
+    AndOrderBy("title ASC")
+    ...
+The GroupBy(...cols) specifies the GROUP BY clause of the query.
+You can also use AndGroupBy(...cols) to append additional columns to an existing GROUP BY clause.
+
+app.DB().
+    Select("users.*").
+    From("users").
+    GroupBy("department", "level")
+    ...
+The Having(exp) specifies the HAVING clause of the query.
+Similarly to Where(exp), it accept a single dbx.Expression (see all available expressions listed above).
+You can also use AndHaving(exp) or OrHaving(exp) to append additional one or more conditions to an existing HAVING clause.
+
+app.DB().
+    Select("users.*").
+    From("users").
+    GroupBy("department", "level").
+    Having(dbx.NewExp("sum(level) > {:sum}", dbx.Params{ sum: 10 }))
+    ...
+The Limit(number) method specifies the LIMIT clause of the query.
+
+app.DB().
+    Select("users.*").
+    From("users").
+    Limit(30)
+    ...
+The Offset(number) method specifies the OFFSET clause of the query. Usually used together with Limit(number).
+
+app.DB().
+    Select("users.*").
+    From("users").
+    Offset(5).
+    Limit(30)
+    ...
+To execute multiple queries in a transaction you can use app.RunInTransaction(fn) .
+
+The DB operations are persisted only if the transaction returns nil.
+
+It is safe to nest RunInTransaction calls as long as you use the callback's txApp argument.
+
+Inside the transaction function always use its txApp argument and not the original app instance because we allow only a single writer/transaction at a time and it could result in a deadlock.
+
+To avoid performance issues, try to minimize slow/long running tasks such as sending emails, connecting to external services, etc. as part of the transaction.
+
+err := app.RunInTransaction(func(txApp core.App) error {
+    // update a record
+    record, err := txApp.FindRecordById("articles", "RECORD_ID")
+    if err != nil {
+        return err
+    }
+    record.Set("status", "active")
+    if err := txApp.Save(record); err != nil {
+        return err
+    }
+
+    // run a custom raw query (doesn't fire event hooks)
+    rawQuery := "DELETE FROM articles WHERE status = 'pending'"
+    if _, err := txApp.DB().NewQuery(rawQuery).Execute(); err != nil {
+        return err
+    }
+
+    return nil
+})
+
+
+xtend with Go - Record operations
+The most common task when using PocketBase as framework probably would be querying and working with your collection records.
+
+You could find detailed documentation about all the supported Record model methods in core.Record but below are some examples with the most common ones.
+
+Set field value
+Get field value
+Auth accessors
+Copies
+Hide/Unhide fields
+Fetch records
+Fetch single record
+Fetch multiple records
+Fetch auth records
+Custom record query
+Create new record
+Create new record programmatically
+Intercept create request
+Update existing record
+Update existing record programmatically
+Intercept update request
+Delete record
+Transaction
+Programmatically expanding relations
+Check if record can be accessed
+Generating and validating tokens
+// sets the value of a single record field
+// (field type specific modifiers are also supported)
+record.Set("title", "example")
+record.Set("users+", "6jyr1y02438et52") // append to existing value
+
+// populates a record from a data map
+// (calls Set for each entry of the map)
+record.Load(data)
+// retrieve a single record field value
+// (field specific modifiers are also supported)
+record.Get("someField")            // -> any (without cast)
+record.GetBool("someField")        // -> cast to bool
+record.GetString("someField")      // -> cast to string
+record.GetInt("someField")         // -> cast to int
+record.GetFloat("someField")       // -> cast to float64
+record.GetDateTime("someField")    // -> cast to types.DateTime
+record.GetStringSlice("someField") // -> cast to []string
+
+// retrieve the new uploaded files
+// (e.g. for inspecting and modifying the file(s) before save)
+record.GetUnsavedFiles("someFileField")
+
+// unmarshal a single "json" field value into the provided result
+record.UnmarshalJSONField("someJSONField", &result)
+
+// retrieve a single or multiple expanded data
+record.ExpandedOne("author")     // -> nil|*core.Record
+record.ExpandedAll("categories") // -> []*core.Record
+
+// export all the public safe record fields as map[string]any
+// (note: "json" type field values are exported as types.JSONRaw bytes slice)
+record.PublicExport()
+record.IsSuperuser() // alias for record.Collection().Name == "_superusers"
+
+record.Email()         // alias for record.Get("email")
+record.SetEmail(email) // alias for record.Set("email", email)
+
+record.Verified()         // alias for record.Get("verified")
+record.SetVerified(false) // alias for record.Set("verified", false)
+
+record.TokenKey()        // alias for record.Get("tokenKey")
+record.SetTokenKey(key)  // alias for record.Set("tokenKey", key)
+record.RefreshTokenKey() // alias for record.Set("tokenKey:autogenerate", "")
+
+record.ValidatePassword(pass)
+record.SetPassword(pass)   // alias for record.Set("password", pass)
+record.SetRandomPassword() // sets cryptographically random 30 characters string as password
+// returns a shallow copy of the current record model populated
+// with its ORIGINAL db data state and everything else reset to the defaults
+// (usually used for comparing old and new field values)
+record.Original()
+
+// returns a shallow copy of the current record model populated
+// with its LATEST data state and everything else reset to the defaults
+// (aka. no expand, no custom fields and with default visibility flags)
+record.Fresh()
+
+// returns a shallow copy of the current record model populated
+// with its ALL collection and custom fields data, expand and visibility flags
+record.Clone()
+Collection fields can be marked as "Hidden" from the Dashboard to prevent regular user access to the field values.
+
+Record models provide an option to further control the fields serialization visibility in addition to the "Hidden" fields option using the record.Hide(fieldNames...) and record.Unhide(fieldNames...) methods.
+
+Often the Hide/Unhide methods are used in combination with the OnRecordEnrich hook invoked on every record enriching (list, view, create, update, realtime change, etc.). For example:
+
+app.OnRecordEnrich("articles").BindFunc(func(e *core.RecordEnrichEvent) error {
+    // dynamically show/hide a record field depending on whether the current
+    // authenticated user has a certain "role" (or any other field constraint)
+    if e.RequestInfo.Auth == nil ||
+        (!e.RequestInfo.Auth.IsSuperuser() && e.RequestInfo.Auth.GetString("role") != "staff") {
+        e.Record.Hide("someStaffOnlyField")
+    }
+
+    return e.Next()
+})
+For custom fields, not part of the record collection schema, it is required to call explicitly record.WithCustomData(true) to allow them in the public serialization.
+
+All single record retrieval methods return nil and sql.ErrNoRows error if no record is found.
+
+// retrieve a single "articles" record by its id
+record, err := app.FindRecordById("articles", "RECORD_ID")
+
+// retrieve a single "articles" record by a single key-value pair
+record, err := app.FindFirstRecordByData("articles", "slug", "test")
+
+// retrieve a single "articles" record by a string filter expression
+// (NB! use "{:placeholder}" to safely bind untrusted user input parameters)
+record, err := app.FindFirstRecordByFilter(
+    "articles",
+    "status = 'public' && category = {:category}",
+    dbx.Params{ "category": "news" },
+)
+All multiple records retrieval methods return empty slice and nil error if no records are found.
+
+// retrieve multiple "articles" records by their ids
+records, err := app.FindRecordsByIds("articles", []string{"RECORD_ID1", "RECORD_ID2"})
+
+// retrieve the total number of "articles" records in a collection with optional dbx expressions
+totalPending, err := app.CountRecords("articles", dbx.HashExp{"status": "pending"})
+
+// retrieve multiple "articles" records with optional dbx expressions
+records, err := app.FindAllRecords("articles",
+    dbx.NewExp("LOWER(username) = {:username}", dbx.Params{"username": "John.Doe"}),
+    dbx.HashExp{"status": "pending"},
+)
+
+// retrieve multiple paginated "articles" records by a string filter expression
+// (NB! use "{:placeholder}" to safely bind untrusted user input parameters)
+records, err := app.FindRecordsByFilter(
+    "articles",                                    // collection
+    "status = 'public' && category = {:category}", // filter
+    "-published",                                   // sort
+    10,                                            // limit
+    0,                                             // offset
+    dbx.Params{ "category": "news" },              // optional filter params
+)
+// retrieve a single auth record by its email
+user, err := app.FindAuthRecordByEmail("users", "test@example.com")
+
+// retrieve a single auth record by JWT
+// (you could also specify an optional list of accepted token types)
+user, err := app.FindAuthRecordByToken("YOUR_TOKEN", core.TokenTypeAuth)
+In addition to the above query helpers, you can also create custom Record queries using RecordQuery(collection) method. It returns a SELECT DB builder that can be used with the same methods described in the Database guide.
+
+import (
+    "github.com/pocketbase/dbx"
+    "github.com/pocketbase/pocketbase/core"
+)
+
+...
+
+func FindActiveArticles(app core.App) ([]*core.Record, error) {
+    records := []*core.Record{}
+
+    err := app.RecordQuery("articles").
+        AndWhere(dbx.HashExp{"status": "active"}).
+        OrderBy("published DESC").
+        Limit(10).
+        All(&records)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return records, nil
+}
+import (
+    "github.com/pocketbase/pocketbase/core"
+    "github.com/pocketbase/pocketbase/tools/filesystem"
+)
+
+...
+
+collection, err := app.FindCollectionByNameOrId("articles")
+if err != nil {
+    return err
+}
+
+record := core.NewRecord(collection)
+
+record.Set("title", "Lorem ipsum")
+record.Set("active", true)
+
+// field type specific modifiers can also be used
+record.Set("slug:autogenerate", "post-")
+
+// new files must be one or a slice of *filesystem.File values
+//
+// note1: see all factories in https://pkg.go.dev/github.com/pocketbase/pocketbase/tools/filesystem#File
+// note2: for reading files from a request event you can also use e.FindUploadedFiles("fileKey")
+f1, _ := filesystem.NewFileFromPath("/local/path/to/file1.txt")
+f2, _ := filesystem.NewFileFromBytes([]byte{"test content"}, "file2.txt")
+f3, _ := filesystem.NewFileFromURL(context.Background(), "https://example.com/file3.pdf")
+record.Set("documents", []*filesystem.File{f1, f2, f3})
+
+// validate and persist
+// (use SaveNoValidate to skip fields validation)
+err = app.Save(record);
+if err != nil {
+    return err
+}
+import (
+    "github.com/pocketbase/pocketbase/core"
+)
+
+...
+
+app.OnRecordCreateRequest("articles").BindFunc(func(e *core.RecordRequestEvent) error {
+    // ignore for superusers
+    if e.HasSuperuserAuth() {
+        return e.Next()
+    }
+
+    // overwrite the submitted "status" field value
+    e.Record.Set("status", "pending")
+
+    // or you can also prevent the create event by returning an error
+    status := e.Record.GetString("status")
+    if (status != "pending" &&
+        // guest or not an editor
+        (e.Auth == nil || e.Auth.GetString("role") != "editor")) {
+        return e.BadRequestError("Only editors can set a status different from pending", nil)
+    }
+
+    return e.Next()
+})
+record, err := app.FindRecordById("articles", "RECORD_ID")
+if err != nil {
+    return err
+}
+
+record.Set("title", "Lorem ipsum")
+
+// delete existing record files by specifying their file names
+record.Set("documents-", []string{"file1_abc123.txt", "file3_abc123.txt"})
+
+// append one or more new files to the already uploaded list
+//
+// note1: see all factories in https://pkg.go.dev/github.com/pocketbase/pocketbase/tools/filesystem#File
+// note2: for reading files from a request event you can also use e.FindUploadedFiles("fileKey")
+f1, _ := filesystem.NewFileFromPath("/local/path/to/file1.txt")
+f2, _ := filesystem.NewFileFromBytes([]byte{"test content"}, "file2.txt")
+f3, _ := filesystem.NewFileFromURL(context.Background(), "https://example.com/file3.pdf")
+record.Set("documents+", []*filesystem.File{f1, f2, f3})
+
+// validate and persist
+// (use SaveNoValidate to skip fields validation)
+err = app.Save(record);
+if err != nil {
+    return err
+}
+import (
+    "github.com/pocketbase/pocketbase/core"
+)
+
+...
+
+app.OnRecordUpdateRequest("articles").Add(func(e *core.RecordRequestEvent) error {
+    // ignore for superusers
+    if e.HasSuperuserAuth() {
+        return e.Next()
+    }
+
+    // overwrite the submitted "status" field value
+    e.Record.Set("status", "pending")
+
+    // or you can also prevent the update event by returning an error
+    status := e.Record.GetString("status")
+    if (status != "pending" &&
+        // guest or not an editor
+        (e.Auth == nil || e.Auth.GetString("role") != "editor")) {
+        return e.BadRequestError("Only editors can set a status different from pending", nil)
+    }
+
+    return e.Next()
+})
+record, err := app.FindRecordById("articles", "RECORD_ID")
+if err != nil {
+    return err
+}
+
+err = app.Delete(record)
+if err != nil {
+    return err
+}
+To execute multiple queries in a transaction you can use app.RunInTransaction(fn) .
+
+The DB operations are persisted only if the transaction returns nil.
+
+It is safe to nest RunInTransaction calls as long as you use the callback's txApp argument.
+
+Inside the transaction function always use its txApp argument and not the original app instance because we allow only a single writer/transaction at a time and it could result in a deadlock.
+
+To avoid performance issues, try to minimize slow/long running tasks such as sending emails, connecting to external services, etc. as part of the transaction.
+
+import (
+    "github.com/pocketbase/pocketbase/core"
+)
+
+...
+
+titles := []string{"title1", "title2", "title3"}
+
+collection, err := app.FindCollectionByNameOrId("articles")
+if err != nil {
+    return err
+}
+
+// create new record for each title
+app.RunInTransaction(func(txApp core.App) error {
+    for _, title := range titles {
+        record := core.NewRecord(collection)
+        record.Set("title", title)
+
+        if err := txApp.Save(record); err != nil {
+            return err
+        }
+    }
+
+    return nil
+})
+To expand record relations programmatically you can use app.ExpandRecord(record, expands, optFetchFunc) for single or app.ExpandRecords(records, expands, optFetchFunc) for multiple records.
+
+Once loaded, you can access the expanded relations via record.ExpandedOne(relName) or record.ExpandedAll(relName) .
+
+For example:
+
+record, err := app.FindFirstRecordByData("articles", "slug", "lorem-ipsum")
+if err != nil {
+    return err
+}
+
+// expand the "author" and "categories" relations
+errs := app.ExpandRecord(record, []string{"author", "categories"}, nil)
+if len(errs) > 0 {
+    return fmt.Errorf("failed to expand: %v", errs)
+}
+
+// print the expanded records
+log.Println(record.ExpandedOne("author"))
+log.Println(record.ExpandedAll("categories"))
+To check whether a custom client request or user can access a single record, you can use the app.CanAccessRecord(record, requestInfo, rule) method.
+
+Below is an example of creating a custom route to retrieve a single article and checking if the request satisfy the View API rule of the record collection:
+
+package main
+
+import (
+    "log"
+    "net/http"
+
+    "github.com/pocketbase/pocketbase"
+    "github.com/pocketbase/pocketbase/core"
+)
+
+func main() {
+    app := pocketbase.New()
+
+    app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+        se.Router.GET("/articles/{slug}", func(e *core.RequestEvent) error {
+            slug := e.Request.PathValue("slug")
+
+            record, err := e.App.FindFirstRecordByData("articles", "slug", slug)
+            if err != nil {
+                return e.NotFoundError("Missing or invalid slug", err)
+            }
+
+            info, err := e.RequestInfo()
+            if err != nil {
+                return e.BadRequestError("Failed to retrieve request info", err)
+            }
+
+            canAccess, err := e.App.CanAccessRecord(record, info, record.Collection().ViewRule)
+            if !canAccess {
+                return e.ForbiddenError("", err)
+            }
+
+            return e.JSON(http.StatusOK, record)
+        })
+
+        return se.Next()
+    })
+
+    if err := app.Start(); err != nil {
+        log.Fatal(err)
+    }
+}
+PocketBase Web APIs are fully stateless (aka. there are no sessions in the traditional sense) and an auth record is considered authenticated if the submitted request contains a valid Authorization: TOKEN header (see also Builtin auth middlewares and Retrieving the current auth state from a route ) .
+
+If you want to issue and verify manually a record JWT (auth, verification, password reset, etc.), you could do that using the record token type specific methods:
+
+token, err := record.NewAuthToken()
+
+token, err := record.NewVerificationToken()
+
+token, err := record.NewPasswordResetToken()
+
+token, err := record.NewEmailChangeToken(newEmail)
+
+token, err := record.NewFileToken() // for protected files
+
+token, err := record.NewStaticAuthToken(optCustomDuration) // nonrenewable auth token
+Each token type has its own secret and the token duration is managed via its type related collection auth option (the only exception is NewStaticAuthToken).
+
+To validate a record token you can use the app.FindAuthRecordByToken method. The token related auth record is returned only if the token is not expired and its signature is valid.
+
+Here is an example how to validate an auth token:
+
+record, err := app.FindAuthRecordByToken("YOUR_TOKEN", core.TokenTypeAuth)
+
+
+Extend with Go - Collection operations
+Collections are usually managed via the Dashboard interface, but there are some situations where you may want to create or edit a collection programmatically (usually as part of a DB migration). You can find all available Collection related operations and methods in core.App and core.Collection , but below are listed some of the most common ones:
+
+Fetch collections
+Fetch single collection
+Fetch multiple collections
+Custom collection query
+Collection properties
+Field definitions
+Create new collection
+Update existing collection
+Delete collection
+All single collection retrieval methods return nil and sql.ErrNoRows error if no collection is found.
+
+collection, err := app.FindCollectionByNameOrId("example")
+All multiple collections retrieval methods return empty slice and nil error if no collections are found.
+
+allCollections, err := app.FindAllCollections()
+
+authAndViewCollections, err := app.FindAllCollections(core.CollectionTypeAuth, core.CollectionTypeView)
+In addition to the above query helpers, you can also create custom Collection queries using CollectionQuery() method. It returns a SELECT DB builder that can be used with the same methods described in the Database guide.
+
+import (
+    "github.com/pocketbase/dbx"
+    "github.com/pocketbase/pocketbase/core"
+)
+
+...
+
+func FindSystemCollections(app core.App) ([]*core.Collection, error) {
+    collections := []*core.Collection{}
+
+    err := app.CollectionQuery().
+        AndWhere(dbx.HashExp{"system": true}).
+        OrderBy("created DESC").
+        All(&collections)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return collections, nil
+}
+Id      string
+Name    string
+Type    string // "base", "view", "auth"
+System  bool // !prevent collection rename, deletion and rules change of internal collections like _superusers
+Fields  core.FieldsList
+Indexes types.JSONArray[string]
+Created types.DateTime
+Updated types.DateTime
+
+// CRUD rules
+ListRule   *string
+ViewRule   *string
+CreateRule *string
+UpdateRule *string
+DeleteRule *string
+
+// "view" type specific options
+// (see https://github.com/pocketbase/pocketbase/blob/master/core/collection_model_view_options.go)
+ViewQuery string
+
+// "auth" type specific options
+// (see https://github.com/pocketbase/pocketbase/blob/master/core/collection_model_auth_options.go)
+AuthRule                   *string
+ManageRule                 *string
+AuthAlert                  core.AuthAlertConfig
+OAuth2                     core.OAuth2Config
+PasswordAuth               core.PasswordAuthConfig
+MFA                        core.MFAConfig
+OTP                        core.OTPConfig
+AuthToken                  core.TokenConfig
+PasswordResetToken         core.TokenConfig
+EmailChangeToken           core.TokenConfig
+VerificationToken          core.TokenConfig
+FileToken                  core.TokenConfig
+VerificationTemplate       core.EmailTemplate
+ResetPasswordTemplate      core.EmailTemplate
+ConfirmEmailChangeTemplate core.EmailTemplate
+core.BoolField
+core.NumberField
+core.TextField
+core.EmailField
+core.URLField
+core.EditorField
+core.DateField
+core.AutodateField
+core.SelectField
+core.FileField
+core.RelationField
+core.JSONField
+core.GeoPointField
+import (
+    "github.com/pocketbase/pocketbase/core"
+    "github.com/pocketbase/pocketbase/tools/types"
+)
+
+...
+
+// core.NewAuthCollection("example")
+// core.NewViewCollection("example")
+collection := core.NewBaseCollection("example")
+
+// set rules
+collection.ViewRule = types.Pointer("@request.auth.id != ''")
+collection.CreateRule = types.Pointer("@request.auth.id != '' && @request.body.user = @request.auth.id")
+collection.UpdateRule = types.Pointer(`
+    @request.auth.id != '' &&
+    user = @request.auth.id &&
+    (@request.body.user:isset = false || @request.body.user = @request.auth.id)
+`)
+
+// add text field
+collection.Fields.Add(&core.TextField{
+    Name:     "title",
+    Required: true,
+    Max:      100,
+})
+
+// add relation field
+usersCollection, err := app.FindCollectionByNameOrId("users")
+if err != nil {
+    return err
+}
+collection.Fields.Add(&core.RelationField{
+    Name:          "user",
+    Required:      true,
+    Max:           100,
+    CascadeDelete: true,
+    CollectionId:  usersCollection.Id,
+})
+
+// add autodate/timestamp fields (created/updated)
+collection.Fields.Add(&core.AutodateField{
+    Name:     "created",
+    OnCreate: true,
+})
+collection.Fields.Add(&core.AutodateField{
+    Name:     "updated",
+    OnCreate: true,
+    OnUpdate: true,
+})
+
+// or: collection.Indexes = []string{"CREATE UNIQUE INDEX idx_example_user ON example (user)"}
+collection.AddIndex("idx_example_user", true, "user", "")
+
+// validate and persist
+// (use SaveNoValidate to skip fields validation)
+err = app.Save(collection)
+if err != nil {
+    return err
+}
+import (
+    "github.com/pocketbase/pocketbase/core"
+    "github.com/pocketbase/pocketbase/tools/types"
+)
+
+...
+
+collection, err := app.FindCollectionByNameOrId("example")
+if err != nil {
+    return err
+}
+
+// change rule
+collection.DeleteRule = types.Pointer("@request.auth.id != ''")
+
+// add new editor field
+collection.Fields.Add(&core.EditorField{
+    Name:     "description",
+    Required: true,
+})
+
+// change existing field
+// (returns a pointer and direct modifications are allowed without the need of reinsert)
+titleField := collection.Fields.GetByName("title").(*core.TextField)
+titleField.Min = 10
+
+// or: collection.Indexes = append(collection.Indexes, "CREATE INDEX idx_example_title ON example (title)")
+collection.AddIndex("idx_example_title", false, "title", "")
+
+// validate and persist
+// (use SaveNoValidate to skip fields validation)
+err = app.Save(collection)
+if err != nil {
+    return err
+}
+collection, err := app.FindCollectionByNameOrId("example")
+if err != nil {
+    return err
+}
+
+err = app.Delete(collection)
+if err != nil {
+    return err
+}
+
+
+Extend with Go - Migrations
+PocketBase comes with a builtin DB and data migration utility, allowing you to version your DB structure, create collections programmatically, initialize default settings, etc.
+
+Because the migrations are regular Go functions, besides applying schema changes, they could be used also to adjust existing data to fit the new schema or any other app specific logic that you want to run only once.
+
+And as a bonus, being .go files also ensure that the migrations will be embedded seamlessly in your final executable.
+
+Quick setup
+0. Register the migrate command
+1. Create new migration
+2. Load migrations
+3. Run migrations
+Collections snapshot
+Migrations history
+Examples
+Executing raw SQL statements
+Initialize default application settings
+Creating initial superuser
+Creating collection programmatically
+You can find all available config options in the migratecmd subpackage.
+
+// main.go
+package main
+
+import (
+    "log"
+    "strings"
+
+    "github.com/pocketbase/pocketbase"
+    "github.com/pocketbase/pocketbase/plugins/migratecmd"
+
+    // enable once you have at least one migration
+    // _ "yourpackage/migrations"
+)
+
+func main() {
+    app := pocketbase.New()
+
+    // loosely check if it was executed using "go run"
+    isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
+
+    migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
+        // enable auto creation of migration files when making collection changes in the Dashboard
+        // (the isGoRun check is to enable it only during development)
+        Automigrate: isGoRun,
+    })
+
+    if err := app.Start(); err != nil {
+        log.Fatal(err)
+    }
+}
+To create a new blank migration you can run migrate create.
+
+// Since the "create" command makes sense only during development,
+// it is expected the user to be in the app working directory
+// and to be using "go run"
+
+[root@dev app]$ go run . migrate create "your_new_migration"
+// migrations/1655834400_your_new_migration.go
+package migrations
+
+import (
+    "github.com/pocketbase/pocketbase/core"
+    m "github.com/pocketbase/pocketbase/migrations"
+)
+
+func init() {
+    m.Register(func(app core.App) error {
+        // add up queries...
+
+        return nil
+    }, func(app core.App) error {
+        // add down queries...
+
+        return nil
+    })
+}
+The above will create a new blank migration file inside the default command migrations directory.
+
+Each migration file should have a single m.Register(upFunc, downFunc) call.
+
+In the migration file, you are expected to write your "upgrade" code in the upFunc callback.
+The downFunc is optional and it should contain the "downgrade" operations to revert the changes made by the upFunc.
+Both callbacks accept a transactional core.App instance.
+
+You can explore the Database guide, Collection operations and Record operations for more details how to interact with the database. You can also find some examples further below in this guide.
+
+To make your application aware of the registered migrations, you have to import the above migrations package in one of your main package files:
+
+package main
+
+import _ "yourpackage/migrations"
+
+// ...
+New unapplied migrations are automatically executed when the application server starts, aka. on serve.
+
+Alternatively, you can also apply new migrations manually by running migrate up.
+To revert the last applied migration(s), you can run migrate down [number].
+When manually applying or reverting migrations, the serve process needs to be restarted so that it can refresh its cached collections state.
+
+The migrate collections command generates a full snapshot of your current collections configuration without having to type it manually. Similar to the migrate create command, this will generate a new migration file in the migrations directory.
+
+// Since the "collections" command makes sense only during development,
+// it is expected the user to be in the app working directory
+// and to be using "go run"
+
+[root@dev app]$ go run . migrate collections
+By default the collections snapshot is imported in extend mode, meaning that collections and fields that don't exist in the snapshot are preserved. If you want the snapshot to delete missing collections and fields, you can edit the generated file and change the last argument of ImportCollectionsByMarshaledJSON method to true.
+
+All applied migration filenames are stored in the internal _migrations table.
+During local development often you might end up making various collection changes to test different approaches.
+When Automigrate is enabled this could lead in a migration history with unnecessary intermediate steps that may not be wanted in the final migration history.
+
+To avoid the clutter and to prevent applying the intermediate steps in production, you can remove (or squash) the unnecessary migration files manually and then update the local migrations history by running:
+
+[root@dev app]$ go run . migrate history-sync
+The above command will remove any entry from the _migrations table that doesn't have a related migration file associated with it.
+
+// migrations/1687801090_set_pending_status.go
+package migrations
+
+import (
+    "github.com/pocketbase/pocketbase/core"
+    m "github.com/pocketbase/pocketbase/migrations"
+)
+
+// set a default "pending" status to all empty status articles
+func init() {
+    m.Register(func(app core.App) error {
+        _, err := app.DB().NewQuery("UPDATE articles SET status = 'pending' WHERE status = ''").Execute()
+        return err
+    }, nil)
+}
+// migrations/1687801090_initial_settings.go
+package migrations
+
+import (
+    "github.com/pocketbase/pocketbase/core"
+    m "github.com/pocketbase/pocketbase/migrations"
+)
+
+func init() {
+    m.Register(func(app core.App) error {
+        settings := app.Settings()
+
+        // for all available settings fields you could check
+        // https://github.com/pocketbase/pocketbase/blob/develop/core/settings_model.go#L121-L130
+        settings.Meta.AppName = "test"
+        settings.Meta.AppURL = "https://example.com"
+        settings.Logs.MaxDays = 2
+        settings.Logs.LogAuthId = true
+        settings.Logs.LogIP = false
+
+        return app.Save(settings)
+    }, nil)
+}
+For all supported record methods, you can refer to Record operations .
+
+You can also create the initial super user using the ./pocketbase superuser create EMAIL PASS command.
+
+// migrations/1687801090_initial_superuser.go
+package migrations
+
+import (
+    "github.com/pocketbase/pocketbase/core"
+    m "github.com/pocketbase/pocketbase/migrations"
+)
+
+func init() {
+    m.Register(func(app core.App) error {
+        superusers, err := app.FindCollectionByNameOrId(core.CollectionNameSuperusers)
+        if err != nil {
+            return err
+        }
+
+        record := core.NewRecord(superusers)
+
+        // note: the values can be eventually loaded via os.Getenv(key)
+        // or from a special local config file
+        record.Set("email", "test@example.com")
+        record.Set("password", "1234567890")
+
+        return app.Save(record)
+    }, func(app core.App) error { // optional revert operation
+        record, _ := app.FindAuthRecordByEmail(core.CollectionNameSuperusers, "test@example.com")
+        if record == nil {
+            return nil // probably already deleted
+        }
+
+        return app.Delete(record)
+    })
+}
+For all supported collection methods, you can refer to Collection operations .
+
+// migrations/1687801090_create_clients_collection.go
+package migrations
+
+import (
+    "github.com/pocketbase/pocketbase/core"
+    "github.com/pocketbase/pocketbase/tools/types"
+
+    m "github.com/pocketbase/pocketbase/migrations"
+)
+
+func init() {
+    m.Register(func(app core.App) error {
+        // init a new auth collection with the default system fields and auth options
+        collection := core.NewAuthCollection("clients")
+
+        // restrict the list and view rules for record owners
+        collection.ListRule = types.Pointer("id = @request.auth.id")
+        collection.ViewRule = types.Pointer("id = @request.auth.id")
+
+        // add extra fields in addition to the default ones
+        collection.Fields.Add(
+            &core.TextField{
+                Name:     "company",
+                Required: true,
+                Max:      100,
+            },
+            &core.URLField{
+                Name:        "website",
+                Presentable: true,
+            },
+        )
+
+        // disable password auth and enable OTP only
+        collection.PasswordAuth.Enabled = false
+        collection.OTP.Enabled = true
+
+        collection.AddIndex("idx_clients_company", false, "company", "")
+
+        return app.Save(collection)
+    }, func(app core.App) error { // optional revert operation
+        collection, err := app.FindCollectionByNameOrId("clients")
+        if err != nil {
+            return err
+        }
+
+        return app.Delete(collection)
+    })
+}
