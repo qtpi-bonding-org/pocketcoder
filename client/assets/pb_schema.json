@@ -1701,7 +1701,7 @@
         "maxSize": 0,
         "name": "parts",
         "presentable": false,
-        "required": true,
+        "required": false,
         "system": false,
         "type": "json"
       },

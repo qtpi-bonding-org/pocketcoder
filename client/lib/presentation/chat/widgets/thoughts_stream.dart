@@ -42,7 +42,7 @@ class ThoughtsStream extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 4.0),
           child: Text(
-            '> ${textPart.text}',
+            '> ${textPart.text ?? ""}',
             style: TextStyle(
               color: AppPalette.primary.textPrimary.withValues(alpha: 0.6),
               fontFamily: AppFonts.headerFamily,
@@ -51,53 +51,57 @@ class ThoughtsStream extends StatelessWidget {
           ),
         );
       },
-      toolCall: (toolPart) {
+      reasoning: (reasoningPart) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4.0),
+          child: Text(
+            'THOUGHT: ${reasoningPart.text ?? ""}',
+            style: TextStyle(
+              color: AppPalette.primary.textPrimary.withValues(alpha: 0.4),
+              fontFamily: AppFonts.bodyFamily,
+              fontSize: 10,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        );
+      },
+      tool: (toolPart) {
+        final state = toolPart.state;
         return Container(
           margin: const EdgeInsets.only(bottom: 8.0, top: 4.0),
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.3),
-            border: Border(
-                left: BorderSide(
-                    color: AppPalette.primary.primaryColor, width: 2)),
+            border:
+                Border(left: BorderSide(color: _getToolColor(state), width: 2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'EXEC: ${toolPart.tool.toUpperCase()}',
-                style: TextStyle(
-                  color: AppPalette.primary.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                ),
-              ),
-              if (toolPart.args != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2.0),
-                  child: Text(
-                    toolPart.args.toString(),
+              Row(
+                children: [
+                  Text(
+                    'EXEC: ${toolPart.tool.toUpperCase()}',
                     style: TextStyle(
-                      color:
-                          AppPalette.primary.textPrimary.withValues(alpha: 0.8),
+                      color: _getToolColor(state),
+                      fontWeight: FontWeight.bold,
                       fontSize: 10,
                     ),
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  _buildToolStatus(state),
+                ],
+              ),
+              _buildToolPayload(state),
             ],
           ),
         );
       },
-      toolResult: (resultPart) => Padding(
+      file: (filePart) => Padding(
         padding: const EdgeInsets.only(bottom: 4.0),
         child: Text(
-          'RESULT [${resultPart.tool}]: ${resultPart.content ?? "No content"}',
-          style: TextStyle(
-            color: (resultPart.isError ?? false) ? Colors.red : Colors.green,
-            fontSize: 9,
-          ),
+          'FILE [${filePart.mime}]: ${filePart.filename ?? filePart.url}',
+          style: const TextStyle(color: Colors.blue, fontSize: 9),
         ),
       ),
       stepStart: (startPart) => Padding(
@@ -117,6 +121,74 @@ class ThoughtsStream extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Color _getToolColor(ToolState state) {
+    return state.map(
+      pending: (_) => Colors.grey,
+      running: (_) => AppPalette.primary.primaryColor,
+      completed: (_) => Colors.green,
+      error: (_) => Colors.red,
+    );
+  }
+
+  Widget _buildToolStatus(ToolState state) {
+    String label = state.map(
+      pending: (_) => '[PENDING]',
+      running: (_) => '[RUNNING...]',
+      completed: (_) => '[FINISHED]',
+      error: (_) => '[FAILED]',
+    );
+    return Text(
+      label,
+      style: TextStyle(
+        color: _getToolColor(state).withValues(alpha: 0.6),
+        fontSize: 8,
+      ),
+    );
+  }
+
+  Widget _buildToolPayload(ToolState state) {
+    return state.map(
+      pending: (s) => _jsonText(s.input),
+      running: (s) => _jsonText(s.input),
+      completed: (s) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _jsonText(s.input),
+          const Divider(height: 8, color: Colors.white12),
+          Text(
+            s.output,
+            style: const TextStyle(color: Colors.green, fontSize: 9),
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+      error: (s) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _jsonText(s.input),
+          const Divider(height: 8, color: Colors.white12),
+          Text(
+            s.error,
+            style: const TextStyle(color: Colors.red, fontSize: 9),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _jsonText(Map<String, dynamic> json) {
+    return Text(
+      json.toString(),
+      style: TextStyle(
+        color: AppPalette.primary.textPrimary.withValues(alpha: 0.8),
+        fontSize: 9,
+      ),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }

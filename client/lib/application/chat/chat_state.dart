@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/chat/chat_message.dart';
+import '../../domain/chat/chat.dart';
 
 part 'chat_state.freezed.dart';
 
@@ -7,6 +8,7 @@ part 'chat_state.freezed.dart';
 class ChatState with _$ChatState {
   const factory ChatState({
     @Default([]) List<ChatMessage> messages,
+    @Default([]) List<Chat> chats,
     @Default(false) bool isLoading,
     @Default(false) bool isPocoThinking,
 

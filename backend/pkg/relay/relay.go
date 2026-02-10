@@ -35,6 +35,10 @@ func (r *RelayService) Start() {
 	r.registerMessageHooks()
 	r.registerAgentHooks()
 	r.registerSSHKeyHooks()
+	r.registerPermissionHooks()
+
+	// 3. Catch up on missed messages
+	go r.recoverMissedMessages()
 }
 
 func (r *RelayService) registerMessageHooks() {

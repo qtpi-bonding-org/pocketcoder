@@ -128,6 +128,7 @@ func (r *RelayService) listenForEvents() {
 					var event map[string]interface{}
 					if err := json.Unmarshal([]byte(jsonStr), &event); err == nil {
 						eventType, _ := event["type"].(string)
+						log.Printf("📥 [Relay/SSE] Event: %s", eventType)
 						properties, _ := event["properties"].(map[string]interface{})
 						if properties == nil {
 							properties = event // Fallback
@@ -144,7 +145,11 @@ func (r *RelayService) listenForEvents() {
 								chatID := r.resolveChatID(sessionID)
 								if chatID != "" {
 									go r.syncAssistantMessage(chatID, properties)
+								} else {
+									log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session: %s", sessionID)
 								}
+							} else {
+								log.Printf("⚠️ [Relay/SSE] message.updated missing 'info' block")
 							}
 
 						case "message.part.updated":
@@ -154,10 +159,9 @@ func (r *RelayService) listenForEvents() {
 								msgID, _ := part["messageID"].(string)
 								chatID := r.resolveChatID(sessionID)
 								if chatID != "" {
-									// Trigger a poll or fetch the full message to ensure we have all parts
-									// For deltas, we might want to be more efficient, but syncing the whole message
-									// ensures we don't miss anything.
 									go r.triggerMessageSync(chatID, sessionID, msgID)
+								} else {
+									log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session (part): %s", sessionID)
 								}
 							}
 						}
@@ -187,9 +191,14 @@ func (r *RelayService) triggerMessageSync(chatID, sessionID, msgID string) {
 
 func (r *RelayService) replyToOpenCode(requestID string, replyType string) {
 	url := fmt.Sprintf("%s/permission/%s/reply", r.openCodeURL, requestID)
-	payload := map[string]string{
+	
+	payload := map[string]interface{}{
 		"reply": replyType,
 	}
+	if replyType == "reject" {
+		payload["message"] = "User denied permission."
+	}
+	
 	body, _ := json.Marshal(payload)
 
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(body)))
@@ -204,4 +213,20 @@ func (r *RelayService) replyToOpenCode(requestID string, replyType string) {
 	} else {
 		log.Printf("✅ [Relay] Reply sent: %s -> %s", requestID, replyType)
 	}
+}
+
+func (r *RelayService) registerPermissionHooks() {
+	r.app.OnRecordAfterUpdateSuccess("permissions").BindFunc(func(e *core.RecordEvent) error {
+		status := e.Record.GetString("status")
+		id := e.Record.GetString("opencode_id")
+
+		if status == "authorized" {
+			log.Printf("🔓 [Relay] Permission AUTHORIZED: %s. Replying to OpenCode...", id)
+			go r.replyToOpenCode(id, "once")
+		} else if status == "denied" {
+			log.Printf("🚫 [Relay] Permission DENIED: %s. Replying to OpenCode...", id)
+			go r.replyToOpenCode(id, "reject")
+		}
+		return e.Next()
+	})
 }

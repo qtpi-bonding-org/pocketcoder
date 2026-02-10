@@ -1,7 +1,6 @@
 package pb_migrations
 
 import (
-	"os"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/migrations"
 )
@@ -16,6 +15,15 @@ func init() {
 				return collection, nil
 			}
 			return core.NewCollection(typeStr, name), nil
+		}
+		
+		// Helper to safely add fields (Moved to a more global scope)
+		addFields := func(c *core.Collection, fields ...core.Field) {
+			for _, f := range fields {
+				if existing := c.Fields.GetByName(f.GetName()); existing == nil {
+					c.Fields.Add(f)
+				}
+			}
 		}
 
 		// =========================================================================
@@ -36,44 +44,6 @@ func init() {
 			return err
 		}
 
-		// --- SEEDING BLOCK ---
-		seedUser := func(email, password, role string) error {
-			if password == "" {
-				return nil
-			}
-			existing, _ := app.FindAuthRecordByEmail("users", email)
-			if existing != nil {
-				return nil
-			}
-			
-			collection, _ := app.FindCollectionByNameOrId("users")
-			record := core.NewRecord(collection)
-			record.SetEmail(email)
-			record.SetPassword(password)
-			record.Set("role", role)
-			record.Set("verified", true)
-			return app.Save(record)
-		}
-
-		// Seed App Human and Agent
-		seedUser(os.Getenv("POCKETBASE_USER_EMAIL"), os.Getenv("POCKETBASE_USER_PASSWORD"), "admin")
-		seedUser(os.Getenv("AGENT_EMAIL"), os.Getenv("AGENT_PASSWORD"), "agent")
-
-		// Seed Superuser (System Admin)
-		superEmail := os.Getenv("POCKETBASE_SUPERUSER_EMAIL")
-		superPass := os.Getenv("POCKETBASE_SUPERUSER_PASSWORD")
-		if superEmail != "" && superPass != "" {
-			existing, _ := app.FindAuthRecordByEmail("_superusers", superEmail)
-			if existing == nil {
-				collection, _ := app.FindCollectionByNameOrId("_superusers")
-				if collection != nil {
-					super := core.NewRecord(collection)
-					super.SetEmail(superEmail)
-					super.SetPassword(superPass)
-					app.Save(super)
-				}
-			}
-		}
 
 		// =========================================================================
 		// 2. CHATS COLLECTION
@@ -93,6 +63,17 @@ func init() {
 				MaxSelect:    1,
 			})
 		}
+		if f := chats.Fields.GetByName("agent"); f == nil {
+			chats.Fields.Add(&core.RelationField{
+				Name:         "agent",
+				CollectionId: "ai_agents", // Using ID name since it's created later in file but name works if it exists
+				MaxSelect:    1,
+			})
+		}
+		addFields(chats,
+			&core.DateField{Name: "last_active"},
+			&core.TextField{Name: "preview"},
+		)
 
 		chats.ListRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
 		chats.ViewRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
@@ -109,14 +90,7 @@ func init() {
 		// =========================================================================
 		messages, _ := getOrCreateCollection("messages", core.CollectionTypeBase)
 		
-		// Helper to safely add fields
-		addFields := func(c *core.Collection, fields ...core.Field) {
-			for _, f := range fields {
-				if existing := c.Fields.GetByName(f.GetName()); existing == nil {
-					c.Fields.Add(f)
-				}
-			}
-		}
+
 
 		addFields(messages, 
 			&core.RelationField{Name: "chat", Required: true, CollectionId: chats.Id, MaxSelect: 1},
