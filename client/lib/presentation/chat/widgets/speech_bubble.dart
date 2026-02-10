@@ -20,7 +20,7 @@ class SpeechBubble extends StatelessWidget {
     if (textParts.isEmpty) return const SizedBox.shrink();
 
     // Consolidate text for now
-    final fullText = textParts.map((e) => e.text).join('\n');
+    final fullText = textParts.map((e) => e.text ?? '').join('\n');
 
     return Container(
       width: double.infinity,
