@@ -1,6 +1,7 @@
 ---
 title: Development
 description: How to set up and build PocketCoder locally.
+head: []
 ---
 
 
@@ -86,3 +87,14 @@ This will:
 - **Zero-Trust**: Never bypass the PocketBase permission endpoint.
 - **Isolation**: Commands MUST run in the Sandbox via the Proxy.
 - **Visibility**: All AI intents MUST be recorded in the `permissions` collection.
+
+## 5. Documentation
+
+The documentation is built with Astro and Starlight. It runs in a separate container to isolate the build dependencies.
+
+### Running Docs
+To start the documentation server:
+```bash
+docker-compose -f docker-compose.docs.yml up
+```
+The site will be available at `http://localhost:4321`.

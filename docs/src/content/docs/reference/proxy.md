@@ -1,5 +1,6 @@
 ---
 title: Proxy Reference
+head: []
 ---
 
 ExecRequest represents a shell command execution request.

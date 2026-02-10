@@ -5,6 +5,7 @@ echo "🔄 [Sovereign Docs] Starting polyglot documentation extraction..."
 
 # Clean up previous extractions
 rm -rf ./src/content/docs/reference
+rm -f ./src/content/docs/*.md ./src/content/docs/*.mdx
 mkdir -p ./src/content/docs/reference
 
 # Function to extract body content (skip H1 if present)
@@ -21,15 +22,15 @@ extract_body() {
 # 1. Sync Root Markdown Files
 echo "📝 Syncing root guides..."
 
-echo -e "---\ntitle: Architecture\ndescription: Detailed overview of PocketCoder's Sovereign Authority architecture.\n---\n" > ./src/content/docs/architecture.md
+echo -e "---\ntitle: Architecture\ndescription: Detailed overview of PocketCoder's Sovereign Authority architecture.\nhead: []\n---\n" > ./src/content/docs/architecture.md
 extract_body ../ARCHITECTURE.md >> ./src/content/docs/architecture.md
 
-echo -e "---\ntitle: Development\ndescription: How to set up and build PocketCoder locally.\n---\n" > ./src/content/docs/development.md
+echo -e "---\ntitle: Development\ndescription: How to set up and build PocketCoder locally.\nhead: []\n---\n" > ./src/content/docs/development.md
 extract_body ../DEVELOPMENT.md >> ./src/content/docs/development.md
 
 # 2. Extract Go Docs (Backend)
 echo "🐹 Extracting Go docs (backend)..."
-echo -e "---\ntitle: Backend Reference\n---\n" > ./src/content/docs/reference/backend.md
+echo -e "---\ntitle: Backend Reference\nhead: []\n---\n" > ./src/content/docs/reference/backend.md
 if command -v gomarkdoc &> /dev/null; then
   gomarkdoc -u ../backend >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
 else
@@ -38,20 +39,9 @@ fi
 LOC_BACKEND=$(find ../backend -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
 echo -e "\n\n**Lines of Code:** $LOC_BACKEND" >> ./src/content/docs/reference/backend.md
 
-# 3. Extract Node.js Docs (Relay)
-echo "🟢 Extracting Relay docs (Node.js)..."
-echo -e "---\ntitle: Relay Reference\n---\n" > ./src/content/docs/reference/relay.md
-if command -v documentation &> /dev/null; then
-  documentation build ../relay/chat_relay.mjs -f md >> ./src/content/docs/reference/relay.md || echo "⚠️ JS doc extraction had warnings"
-else
-  echo "⚠️ documentation (js) not found, skipping relay docs"
-fi
-LOC_RELAY=$(find ../relay -name "*.mjs" -o -name "*.js" | xargs wc -l | tail -n 1 | awk '{print $1}')
-echo -e "\n\n**Lines of Code:** $LOC_RELAY" >> ./src/content/docs/reference/relay.md
-
-# 4. Extract Rust Docs (Proxy)
+# 3. Extract Rust Docs (Proxy)
 echo "🦀 Extracting Proxy docs (Rust)..."
-echo -e "---\ntitle: Proxy Reference\n---\n" > ./src/content/docs/reference/proxy.md
+echo -e "---\ntitle: Proxy Reference\nhead: []\n---\n" > ./src/content/docs/reference/proxy.md
 
 if command -v cargo-rdme &> /dev/null; then
     current_dir=$(pwd)
@@ -83,8 +73,8 @@ fi
 LOC_PROXY=$(find ../proxy/src -name "*.rs" | xargs wc -l | tail -n 1 | awk '{print $1}')
 echo -e "\n\n**Lines of Code:** $LOC_PROXY" >> ./src/content/docs/reference/proxy.md
 
-# 5. Update Landing Page with Total LOC
-TOTAL_LOC=$((LOC_BACKEND + LOC_RELAY + LOC_PROXY))
+# 4. Update Landing Page with Total LOC
+TOTAL_LOC=$((LOC_BACKEND + LOC_PROXY))
 echo "📊 Total Lines of Code: $TOTAL_LOC"
 
 echo "📝 Updating index.mdx with real stats..."
@@ -92,6 +82,7 @@ cat > ./src/content/docs/index.mdx <<EOF
 ---
 title: Welcome to PocketCoder
 description: Get started building your personal AI assistant.
+head: []
 template: splash
 hero:
   tagline: The Featherweight Industrial AI Agent Platform.

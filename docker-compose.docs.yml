@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # 📚 DOCUMENTATION (Astro + Starlight)
@@ -13,7 +12,6 @@ services:
       - ./docs:/app/docs
       - /app/docs/node_modules
       - ./backend:/app/backend:ro
-      - ./relay:/app/relay:ro
       - ./proxy:/app/proxy:ro
       - ./ARCHITECTURE.md:/app/ARCHITECTURE.md:ro
       - ./DEVELOPMENT.md:/app/DEVELOPMENT.md:ro
