@@ -72,16 +72,13 @@ func main() {
 		log.Printf("🚀 Registering custom endpoints...")
 
 		// Initialize Relay Service (Optional toggle during migration)
-		if os.Getenv("ENABLE_GO_RELAY") == "true" {
-			openCodeURL := os.Getenv("OPENCODE_URL")
-			if openCodeURL == "" {
-				openCodeURL = "http://opencode:3000"
-			}
-			relaySvc := relay.NewRelayService(app, openCodeURL)
-			relaySvc.Start()
-		} else {
-			log.Println("🌉 [Relay] Go-based Relay is DISABLED (ENABLE_GO_RELAY != true)")
+		// Initialize Relay Service
+		openCodeURL := os.Getenv("OPENCODE_URL")
+		if openCodeURL == "" {
+			openCodeURL = "http://opencode:3000"
 		}
+		relaySvc := relay.NewRelayService(app, openCodeURL)
+		relaySvc.Start()
 
 		// 📡 PERMISSION EVALUATION ENDPOINT
 		// This endpoint evaluates an Intent and creates the permission record.
