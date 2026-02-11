@@ -61,11 +61,11 @@ func (r *RelayService) Start() {
 func (r *RelayService) registerMessageHooks() {
 	// Intercept new user messages and send to OpenCode
 	r.app.OnRecordAfterCreateSuccess("messages").BindFunc(func(e *core.RecordEvent) error {
-		// Only process user messages that haven't been processed
 		role := e.Record.GetString("role")
-		processed := e.Record.GetBool("metadata.processed")
+		delivery := e.Record.GetString("delivery")
 
-		if role == "user" && !processed {
+		// If no delivery status is set, default to pending for user messages
+		if role == "user" && (delivery == "pending" || delivery == "") {
 			fmt.Printf("[Relay] Intercepted user message: %s\n", e.Record.Id)
 			go r.processUserMessage(e.Record)
 		}

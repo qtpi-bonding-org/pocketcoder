@@ -44,7 +44,7 @@ curl -s -X POST "$PB_URL/api/collections/messages/records" \
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
         \"parts\": [{\"type\": \"text\", \"text\": \"Write one bullet point about encryption\"}],
-        \"metadata\": { \"processed\": false }
+        \"delivery\": \"pending\"
     }" > /dev/null
 
 sleep 1
@@ -64,7 +64,7 @@ curl -s -X POST "$PB_URL/api/collections/messages/records" \
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
         \"parts\": [{\"type\": \"text\", \"text\": \"Actually, make it about local storage\"}],
-        \"metadata\": { \"processed\": false }
+        \"delivery\": \"pending\"
     }" > /dev/null
 
 echo "📩 Sending Message 3: 'And mention Poco'..."
@@ -75,7 +75,7 @@ curl -s -X POST "$PB_URL/api/collections/messages/records" \
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
         \"parts\": [{\"type\": \"text\", \"text\": \"And mention Poco\"}],
-        \"metadata\": { \"processed\": false }
+        \"delivery\": \"pending\"
     }" > /dev/null
 
 echo "⏳ Waiting for Poco to finish and trigger the batch pump..."

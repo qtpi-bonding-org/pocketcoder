@@ -14,8 +14,8 @@ import (
 
 func (r *RelayService) recoverMissedMessages() {
 	log.Println("🔄 [Relay/Go] Recovery Pump: Checking for unsent user messages...")
-	// We check for user messages that haven't been sent to OpenCode yet (opencode_id is empty)
-	records, err := r.app.FindRecordsByFilter("messages", "role = 'user' && opencode_id = ''", "created", 100, 0)
+	// We check for user messages that are pending or were stuck in 'sending'
+	records, err := r.app.FindRecordsByFilter("messages", "role = 'user' && (delivery = 'pending' || delivery = '')", "created", 100, 0)
 	if err != nil {
 		log.Printf("⚠️ [Relay/Go] Recovery check failed: %v", err)
 		return
@@ -35,25 +35,7 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	log.Printf("📨 [Relay/Go] Processing Message: %s", msg.Id)
 
 	chatID := msg.GetString("chat")
-	if chatID == "" {
-		log.Printf("⚠️ [Relay/Go] Message %s has no chat session", msg.Id)
-		return
-	}
-
-	// 1. Mark as processed immediately (idempotency)
-	meta, _ := msg.Get("metadata").(map[string]any)
-	if meta == nil {
-		meta = make(map[string]any)
-	}
-	meta["processed"] = true
-	msg.Set("metadata", meta)
-
-	if err := r.app.Save(msg); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to update message %s: %v", msg.Id, err)
-		return
-	}
-
-	// Update parent chat record
+	// 1. Get Chat Record
 	chat, err := r.app.FindRecordById("chats", chatID)
 	if err != nil {
 		log.Printf("⚠️ [Relay/Go] Could not find chat %s for message %s: %v", chatID, msg.Id, err)
@@ -64,6 +46,14 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	turn := chat.GetString("turn")
 	if turn == "assistant" {
 		log.Printf("⏳ [Relay/Go] Chat %s is in 'assistant' turn. Queuing message %s.", chatID, msg.Id)
+		// Leave it as 'pending' (or empty) so the Recovery Pump or next idle event picks it up
+		return
+	}
+
+	// 1. Mark as sending immediately (Claim the lock)
+	msg.Set("delivery", "sending")
+	if err := r.app.Save(msg); err != nil {
+		log.Printf("❌ [Relay/Go] Failed to claim message %s: %v", msg.Id, err)
 		return
 	}
 
@@ -71,7 +61,7 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	chat.Set("turn", "assistant")
 
 	// 4. Batch ALL pending messages (Double Texting support)
-	pending, err := r.app.FindRecordsByFilter("messages", "chat = {:chat} && role = 'user' && opencode_id = ''", "created", 50, 0, map[string]any{"chat": chatID})
+	pending, err := r.app.FindRecordsByFilter("messages", "chat = {:chat} && role = 'user' && (delivery = 'pending' || delivery = '' || delivery = 'sending')", "created", 50, 0, map[string]any{"chat": chatID})
 	if err != nil {
 		log.Printf("⚠️ [Relay/Go] Failed to fetch pending messages for batching: %v", err)
 	}
@@ -83,14 +73,8 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 
 	var batchedParts []interface{}
 	for _, pMsg := range pending {
-		// Mark as processed (in case they weren't yet)
-		meta, _ := pMsg.Get("metadata").(map[string]any)
-		if meta == nil {
-			meta = make(map[string]any)
-		}
-		meta["processed"] = true
-		pMsg.Set("metadata", meta)
-
+		// Mark as sending (in case they weren't yet)
+		pMsg.Set("delivery", "sending")
 		r.app.Save(pMsg)
 
 		// Aggregate parts
@@ -154,12 +138,16 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 
 	if err != nil {
 		log.Printf("❌ [Relay/Go] OpenCode prompt failed: %v", err)
+		msg.Set("delivery", "failed")
+		r.app.Save(msg)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
 		log.Printf("❌ [Relay/Go] OpenCode prompt rejected: %s", resp.Status)
+		msg.Set("delivery", "failed")
+		r.app.Save(msg)
 		return
 	}
 
@@ -176,11 +164,12 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	if msgID_OC != "" {
 		for _, pMsg := range pending {
 			pMsg.Set("opencode_id", msgID_OC)
+			pMsg.Set("delivery", "sent")
 			if err := r.app.Save(pMsg); err != nil {
-				log.Printf("❌ [Relay/Go] Failed to save opencode_id for message %s: %v", pMsg.Id, err)
+				log.Printf("❌ [Relay/Go] Failed to save opencode_id/delivery for message %s: %v", pMsg.Id, err)
 			}
 		}
-		log.Printf("✅ [Relay/Go] Batch accepted (%d msgs). OC Msg: %s", len(pending), msgID_OC)
+		log.Printf("✅ [Relay/Go] Batch delivered (%d msgs). OC Msg: %s", len(pending), msgID_OC)
 	}
 }
 
