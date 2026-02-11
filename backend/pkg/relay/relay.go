@@ -21,13 +21,18 @@ package relay
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/pocketbase/pocketbase/core"
 )
 
 // RelayService orchestrates communication between PocketBase and OpenCode
 type RelayService struct {
-	app         core.App
-	openCodeURL string
+	app           core.App
+	openCodeURL   string
+	lastHeartbeat int64 // Unix timestamp
+	isReady       bool
 }
 
 // NewRelayService creates a new Relay instance
@@ -42,6 +47,7 @@ func NewRelayService(app core.App, openCodeURL string) *RelayService {
 // 1. Permission Listener (SSE)
 // 2. Message Pump (Hooks)
 // 3. Agent Sync (Hooks)
+// 4. Health Monitor Watchdog
 func (r *RelayService) Start() {
 	fmt.Println("[Relay] Starting Go-based Relay Service...")
 
@@ -56,6 +62,33 @@ func (r *RelayService) Start() {
 
 	// 3. Catch up on missed messages
 	go r.recoverMissedMessages()
+
+	// 4. Start Health Monitor Watchdog
+	go r.startHealthMonitor()
+}
+
+func (r *RelayService) startHealthMonitor() {
+	ticker := time.NewTicker(20 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		now := time.Now().Unix()
+		// Watchdog: If we haven't seen ANYTHING from OpenCode in 45 seconds, it's offline.
+		if r.lastHeartbeat > 0 && now-r.lastHeartbeat > 45 {
+			if r.isReady {
+				log.Println("⚠️ [Relay/Health] OpenCode responsiveness lost (Watchdog triggered).")
+				r.isReady = false
+				r.updateHealthcheck("offline")
+			}
+		} else if r.lastHeartbeat > 0 {
+			// If we see activity again, recover to ready
+			if !r.isReady {
+				log.Println("💓 [Relay/Health] OpenCode responsiveness recovered.")
+				r.isReady = true
+				r.updateHealthcheck("ready")
+			}
+		}
+	}
 }
 
 func (r *RelayService) registerMessageHooks() {
