@@ -27,7 +27,7 @@ func init() {
 			return app.Save(record)
 		}
 
-		seedUser(os.Getenv("POCKETBASE_USER_EMAIL"), os.Getenv("POCKETBASE_USER_PASSWORD"), "admin")
+		seedUser(os.Getenv("POCKETBASE_ADMIN_EMAIL"), os.Getenv("POCKETBASE_ADMIN_PASSWORD"), "admin")
 		seedUser(os.Getenv("AGENT_EMAIL"), os.Getenv("AGENT_PASSWORD"), "agent")
 
 		// Superuser

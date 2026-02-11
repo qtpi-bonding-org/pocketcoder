@@ -7,25 +7,27 @@
             "tools": {
                 "write": true,
                 "edit": true,
-                "bash": true,
+                "bash": false,
                 "question": true,
                 "lsp": false,
                 "read": true,
                 "grep": true,
                 "glob": true,
-                "list": true
+                "list": true,
+                "skill": true
             },
             "permission": {
-                "bash": "ask",
-                "edit": "ask"
+                "bash": "deny",
+                "edit": "ask",
+                "skill": "ask"
             }
         }
     },
     "permission": {
         "bash": "ask",
         "edit": "ask",
+        "skill": "ask",
         "*": "ask"
     },
-    "model": "google/gemini-2.0-flash",
-    "mcp": {}
+    "model": "google/gemini-2.0-flash"
 }
