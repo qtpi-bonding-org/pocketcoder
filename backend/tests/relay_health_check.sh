@@ -73,10 +73,10 @@ sleep 5
 
 VERIFY_RES=$(curl -s "$POCKETBASE_URL/api/collections/messages/records/$MSG_ID" \
     -H "Authorization: Bearer $USER_TOKEN")
-PROCESSED=$(echo $VERIFY_RES | grep -o '"processed":true')
+DELIVERY=$(echo $VERIFY_RES | grep -o '"delivery":"sent"')
 
-if [ -z "$PROCESSED" ]; then
-    echo -e "${C_RED}❌ FAILED: Relay did not mark message as processed.${C_NC}"
+if [ -z "$DELIVERY" ]; then
+    echo -e "${C_RED}❌ FAILED: Relay did not mark message as delivered.${C_NC}"
     echo "Check PocketBase logs: docker-compose logs pocketbase"
     exit 1
 fi
