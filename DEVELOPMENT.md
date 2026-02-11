@@ -1,95 +1,61 @@
-# PocketCoder Development Guide
+# Development Guide 🛠
 
-This document provides instructions for setting up a local development environment and running the PocketCoder test suite.
+Welcome to the PocketCoder assembly line. This document provides a deeper dive into the architecture and setup for developers.
 
-## Prerequisites
+## 🏗 High-Level Architecture
 
-- **Docker & Docker Compose**: Core for orchestrating all services.
-- **Go 1.22+**: For the `pocketbase` backend.
-- **Node.js 20+**: For the `relay` services.
-- **Rust**: For the `proxy` service.
-- **Flutter**: For the `client` app.
-- **OpenCode**: The reasoning binary (configured in `docker-compose.yml`).
+PocketCoder follows a **Physical Separation of Concerns**:
 
----
+1.  **Reasoning (OpenCode)**: The "Brain." It runs in a container with a proxied shell.
+2.  **Relay (Go/PocketBase)**: The "Spinal Cord." It listens to PocketBase events and orchestrates the flow.
+3.  **Proxy (Rust)**: The "Muscle." A secure, minimal bridge that translates high-level intents into `tmux` instructions.
+4.  **Sandbox (Tmux/Docker)**: The "Reality." An isolated Linux environment where files are written and commands are executed.
 
-## 1. Initial Setup
+## 🛠 Local Setup
 
-1.  **Clone the Repository**:
+### Prerequisites
+- Docker & Docker Compose
+- A Gemini API Key ([Get one here](https://aistudio.google.com/app/apikey))
+
+### Steps
+1.  **Clone and Prep**:
     ```bash
-    git clone https://github.com/pocketcoder-ai/pocketcoder.git
+    git clone https://github.com/qtpi-bonding/pocketcoder.git
     cd pocketcoder
-    ```
-
-2.  **Configure Environment**:
-    Copy `.env.example` to `.env` and fill in your details (PocketBase passwords, OpenCode keys, etc.).
-    ```bash
     cp .env.example .env
+    # Edit .env and enter your GEMINI_API_KEY
     ```
-
-3.  **Start Services**:
+2.  **Spin up the Foundry**:
     ```bash
     docker-compose up -d --build
     ```
+3.  **Bootstrap PocketBase**:
+    Access `http://localhost:8090/_/` and follow the auto-migration logs to ensure the schema is ready.
 
----
+## 🧪 Testing
 
-## 2. Service Development
+We rely heavily on **Integration Tests** to verify the "Sovereign Loop."
 
-### Backend (`pocketbase`)
-The backend is a Go application using the PocketBase library.
-- **Location**: `/backend`
-- **Build**: `cd backend && go build -o pocketbase main.go`
-- **Migrations**: New migrations should be placed in `backend/pb_migrations`. They are applied automatically on startup.
-
-### Relay (`relay`)
-The Relay handles communication and real-time syncing.
-- **Location**: `/relay`
-- **Main Script**: `chat_relay.mjs`
-- **SSH Sync**: `sync_ssh_keys.mjs`
-- **Run Locally**: `cd relay && npm install && node chat_relay.mjs`
-
-### Proxy (`proxy`)
-A high-performance Rust proxy for TMUX execution.
-- **Location**: `/proxy`
-- **Build**: `cd proxy && cargo build`
-
----
-
-## 3. Testing
-
-PocketCoder includes a comprehensive integration test suite that validates the "Sovereign Loop".
-
-### Running All Tests
-From the project root:
 ```bash
+# Run the full test suite
 ./test/run_all_tests.sh
 ```
 
-This will:
-1.  Verify service health.
-2.  Run the **Permission Flow** test (User -> Relay -> PB Whitelist / Manual Auth -> OpenCode -> Sandbox).
-3.  Run the **SSH Integration** test (PB SSH Key -> Relay Sync -> Sandbox authorized_keys -> SSH connect).
+Tests cover:
+- **SSH Key Sync**: Ensures keys added to DB reach the sandbox.
+- **Permission Flow**: Validates the "Always Ask" Gatekeeper.
+- **Batching**: Tests turn-based conversation handling.
+- **FS Serving**: Verifies the artifact serving API.
 
-### Debugging Tools
-- **Relay Access Check**: `node relay/check_relay_access.mjs` (Verifies Relay-PocketBase connection).
-- **Service Logs**: `docker-compose logs -f [service_name]`
+## 📁 Repository Structure
 
----
+- `backend/`: Go source for the PocketBase instance and custom hooks.
+- `proxy/`: Rust implementation of the secure shell proxy.
+- `sandbox/`: Docker configuration and entrypoint for the isolated environment.
+- `client/`: (Optional) Flutter application source.
+- `docs/`: Starlight-based documentation site.
 
-## 4. Architecture Standards
+## 🛡 Security Notes
 
-- **Zero-Trust**: Never bypass the PocketBase permission endpoint.
-- **Isolation**: Commands MUST run in the Sandbox via the Proxy.
-- **Visibility**: All AI intents MUST be recorded in the `permissions` collection.
-
-## 5. Documentation
-
-The documentation is built with Astro and Starlight. It runs in a separate container to isolate the build dependencies.
-
-### Running Docs
-To start the documentation server:
-```bash
-docker-compose -f docker-compose.docs.yml up
-```
-The site will be available at `http://localhost:4321`.
+- **The /workspace Volume**: This is the shared source of truth. It is mounted in the Sandbox (Read/Write), the Proxy (indirectly via tmux), and OpenCode (Read/Write).
+- **Hooks**: All sensitive updates (like making an action 'authorized') are handled via PocketBase Go hooks for auditability.
