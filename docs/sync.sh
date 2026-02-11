@@ -8,6 +8,10 @@ rm -rf ./src/content/docs/reference
 rm -f ./src/content/docs/*.md ./src/content/docs/*.mdx
 mkdir -p ./src/content/docs/reference
 
+# Programmatically generate Codebase Audit
+echo "🦅 Generating Sovereign Audit..."
+../scripts/generate_audit.sh
+
 # Function to extract body content (skip H1 if present)
 extract_body() {
   local file=$1

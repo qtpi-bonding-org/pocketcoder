@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# @pocketcoder-core: Key Guard. Periodically pulls authorized keys from the PocketBase API.
 # 🔑 POCKETCODER SSH KEY SYNC
 # This script copies authorized public keys from the shared volume
 # (populated by the relay) to the worker's authorized_keys file.

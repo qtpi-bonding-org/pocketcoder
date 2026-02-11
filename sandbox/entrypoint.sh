@@ -16,6 +16,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+# @pocketcoder-core: Runtime Boot. Starts SSHD and ensures the tmux socket is shared.
+# @pocketcoder-core: Key Guard. Periodically pulls authorized keys from the API into the sandbox.
+# 🗝️ POCKETCODER SSH SYNC
 # 🏰 POCKETCODER SANDBOX ENTRYPOINT
 # This script ensures the tmux server is running on the shared socket
 # and then optionally starts the Bun listener for future extensibility.
