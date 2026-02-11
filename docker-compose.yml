@@ -11,12 +11,14 @@ services:
       - pb_data:/app/pb_data
       - pocketcoder-logs:/app/pb_public/logs
       - workspace_data:/workspace
+      - ./proposals:/workspace/.opencode/proposals
+      - ./skills:/workspace/.opencode/skills
       - ssh_keys:/ssh_keys
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
-      - POCKETBASE_USER_EMAIL=${POCKETBASE_USER_EMAIL}
-      - POCKETBASE_USER_PASSWORD=${POCKETBASE_USER_PASSWORD}
+      - POCKETBASE_ADMIN_EMAIL=${POCKETBASE_ADMIN_EMAIL}
+      - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD}
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
       - ENABLE_GO_RELAY=${ENABLE_GO_RELAY}
@@ -64,6 +66,8 @@ services:
     volumes:
       - proxy_bin:/proxy:ro                                     # Read compiled proxy
       - workspace_data:/workspace                               # Shared Workspace
+      - ./proposals:/workspace/.opencode/proposals
+      - ./skills:/workspace/.opencode/skills:ro
       - opencode_data:/root/.local/share/opencode              # Persistent Storage
       - ./opencode.config.json:/root/.config/opencode/opencode.json:ro 
       - ./opencode.config.json:/root/.config/opencode/config.json:ro
@@ -95,6 +99,7 @@ services:
     container_name: pocketcoder-sandbox
     volumes:
       - workspace_data:/workspace   # Shared Workspace
+      - ./proposals:/workspace/.opencode/proposals
       - tmux_socket:/tmp/tmux
       - ssh_keys:/ssh_keys:ro  # Read-only access to SSH keys
     working_dir: /workspace

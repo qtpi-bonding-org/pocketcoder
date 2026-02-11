@@ -31,6 +31,7 @@ import (
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/api"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/provisioning"
 	"github.com/qtpi-automaton/pocketcoder/backend/pkg/relay"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
@@ -47,12 +48,16 @@ func main() {
 	hooks.RegisterGlobalTimestamps(app)
 	hooks.RegisterPermissionHooks(app)
 	hooks.RegisterAgentHooks(app)
+	hooks.RegisterSopHooks(app)
 
 	// 3. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		log.Printf("🚀 Starting PocketCoder Sovereign Backend...")
 
-		// A. Initialize & Start Relay Service
+		// A. Provision SOPs from filesystem
+		provisioning.ProvisionSops(app)
+
+		// B. Initialize & Start Relay Service
 		openCodeURL := os.Getenv("OPENCODE_URL")
 		if openCodeURL == "" {
 			openCodeURL = "http://opencode:3000"
