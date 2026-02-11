@@ -305,6 +305,7 @@ async fn exec_handler(
 // --------------------------------------------------------------------------
 
 #[tokio::main]
+/// @pocketcoder-core: Sovereign Proxy. The "Muscle" that securely bridges the Brain to the Sandbox.
 async fn main() -> Result<()> {
     // We no longer need PocketBase credentials. 
     // The Gateway is a dumb execution proxy.
