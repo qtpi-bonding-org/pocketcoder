@@ -22,7 +22,7 @@ This document provides instructions for setting up a local development environme
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/pocketcoder-ai/pocketcoder.git
+    git clone https://github.com/qtpi-bonding-org/pocketcoder.git
     cd pocketcoder
     ```
 

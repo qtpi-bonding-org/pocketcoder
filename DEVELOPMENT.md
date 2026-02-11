@@ -26,7 +26,7 @@ I chose these tools for their **leverage**:
 ### Steps
 1.  **Prep**:
     ```bash
-    git clone https://github.com/qtpi-bonding/pocketcoder.git
+    git clone https://github.com/qtpi-bonding-org/pocketcoder.git
     cd pocketcoder
     cp .env.example .env
     # Add your GEMINI_API_KEY to .env
