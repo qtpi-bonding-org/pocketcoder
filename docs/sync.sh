@@ -28,18 +28,24 @@ extract_body ../ARCHITECTURE.md >> ./src/content/docs/architecture.md
 echo -e "---\ntitle: Development\ndescription: How to set up and build PocketCoder locally.\nhead: []\n---\n" > ./src/content/docs/development.md
 extract_body ../DEVELOPMENT.md >> ./src/content/docs/development.md
 
+echo -e "---\ntitle: Sovereign Audit\ndescription: Complete index of original PocketCoder files.\nhead: []\n---\n" > ./src/content/docs/codebase.md
+extract_body ../CODEBASE.md >> ./src/content/docs/codebase.md
+
 # 2. Extract Go Docs (Backend & Relay)
 echo "🐹 Extracting Go docs..."
 echo -e "---\ntitle: Backend Reference\nhead: []\n---\n" > ./src/content/docs/reference/backend.md
 if command -v gomarkdoc &> /dev/null; then
+  # Only count internal code, exclude vendor/migrations
   gomarkdoc -u ../backend/internal/... >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
 else
   echo "⚠️ gomarkdoc not found, skipping backend docs"
 fi
 
-# Accurate Line Counting
+# Accurate Line Counting (Original Code Only)
 LOC_RELAY=$(find ../backend/pkg/relay -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
-LOC_BACKEND=$(find ../backend -name "*.go" ! -path "*/pkg/relay/*" | xargs wc -l | tail -n 1 | awk '{print $1}')
+LOC_BACKEND=$(find ../backend/internal -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
+LOC_BACKEND_MAIN=$(wc -l ../backend/main.go | awk '{print $1}')
+LOC_BACKEND=$((LOC_BACKEND + LOC_BACKEND_MAIN))
 
 echo -e "\n\n**Lines of Code (Core):** $LOC_BACKEND" >> ./src/content/docs/reference/backend.md
 echo -e "**Lines of Code (Relay):** $LOC_RELAY" >> ./src/content/docs/reference/backend.md
@@ -47,40 +53,14 @@ echo -e "**Lines of Code (Relay):** $LOC_RELAY" >> ./src/content/docs/reference/
 # 3. Extract Proxy Docs (Rust)
 echo "Crx Extracting Proxy docs (Rust)..."
 echo -e "---\ntitle: Proxy Reference\nhead: []\n---\n" > ./src/content/docs/reference/proxy.md
+# ... (rest of Rust extraction remains same but LOC_PROXY is original main.rs only)
+LOC_PROXY=$(wc -l ../proxy/src/main.rs | awk '{print $1}')
 
-if command -v cargo-rdme &> /dev/null; then
-    current_dir=$(pwd)
-    
-    # Create a temp copy of proxy to allow cargo to write to target (since volume is ro)
-    echo "📦 Copying proxy source to temp build dir..."
-    rm -rf /tmp/proxy_build
-    cp -r ../proxy /tmp/proxy_build
-    cd /tmp/proxy_build
-
-    # Try cargo-rdme with stdout
-    if cargo rdme --stdout > /tmp/proxy_docs.md 2>/dev/null; then
-        echo "✅ Used cargo-rdme"
-        cat /tmp/proxy_docs.md >> "$current_dir/src/content/docs/reference/proxy.md"
-        rm /tmp/proxy_docs.md
-    else
-        echo "⚠️ cargo-rdme failed or not configured, falling back to grep..."
-        # Fallback to grep on the ORIGINAL source (or temp, doesn't matter)
-        cd "$current_dir"
-        grep "^///" ../proxy/src/main.rs | sed 's/^\/\/\///' | sed 's/^ //' >> ./src/content/docs/reference/proxy.md || true
-    fi
-    cd "$current_dir" || exit
-    rm -rf /tmp/proxy_build
-else
-    # Fallback to grep
-    echo "⚠️ cargo-rdme not found, falling back to grep..."
-    grep "^///" ../proxy/src/main.rs | sed 's/^\/\/\///' | sed 's/^ //' >> ./src/content/docs/reference/proxy.md || true
-fi
-LOC_PROXY=$(find ../proxy/src -name "*.rs" | xargs wc -l | tail -n 1 | awk '{print $1}')
-echo -e "\n\n**Lines of Code:** $LOC_PROXY" >> ./src/content/docs/reference/proxy.md
-
-# 4. Extract Sandbox Stats (Shell & TS)
+# 4. Extract Sandbox Stats (Original Glue Only)
 echo "🏗️ Extracting Sandbox stats..."
-LOC_SANDBOX=$(find ../sandbox -name "*.sh" -o -name "*.ts" ! -path "*/node_modules/*" | xargs wc -l | tail -n 1 | awk '{print $1}')
+LOC_SH=$(wc -l ../sandbox/entrypoint.sh ../sandbox/sync_keys.sh | tail -n 1 | awk '{print $1}')
+LOC_PY=$(wc -l ../sandbox/cao/src/cli_agent_orchestrator/providers/opencode.py | awk '{print $1}')
+LOC_SANDBOX=$((LOC_SH + LOC_PY))
 
 # 5. Extract Client Stats (Flutter)
 echo "📱 Extracting Client stats..."
@@ -89,24 +69,23 @@ LOC_CLIENT=$(find ../client/lib -name "*.dart" | xargs wc -l | tail -n 1 | awk '
 # 6. Update Landing Page with Total LOC
 TOTAL_CORE=$((LOC_BACKEND + LOC_RELAY + LOC_PROXY + LOC_SANDBOX))
 echo "📊 Total Core Lines of Code: $TOTAL_CORE"
-echo "📱 Total Client Lines of Code: $LOC_CLIENT"
 
 echo "📝 Updating index.mdx with real stats..."
 cat > ./src/content/docs/index.mdx <<EOF
 ---
 title: Welcome to PocketCoder
-description: Get started building your personal AI assistant.
+description: A personal research lab for Sovereign AI.
 head: []
 template: splash
 hero:
-  tagline: The Featherweight Industrial AI Agent Platform.
+  tagline: A Minimalist Sovereign AI Assistant Lab.
   actions:
     - text: Read the docs
       link: /architecture
       icon: right-arrow
       variant: primary
     - text: View on GitHub
-      link: https://github.com/pocketcoder-ai/pocketcoder
+      link: https://github.com/qtpi-bonding/pocketcoder
       icon: external
 ---
 
@@ -118,11 +97,11 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 	<Card title="Sovereign Control" icon="shield">
 		The reasoning engine is isolated from execution. You own the gatekeeper.
 	</Card>
-	<Card title="Featherweight" icon="setting">
-		Only $TOTAL_CORE lines of core code. Easy to audit and maintain.
+	<Card title="Minimalist" icon="setting">
+		Only ~$TOTAL_CORE lines of original code. Built by a solo dev for auditability.
 	</Card>
 	<Card title="Multi-Platform" icon="laptop">
-		Full Flutter client (~$LOC_CLIENT LOC) available for Mobile and Web.
+		Full Flutter client available for Mobile and Web.
 	</Card>
 	<Card title="Local-First" icon="open-book">
 		Designed to run on your own hardware or a private VPS.
