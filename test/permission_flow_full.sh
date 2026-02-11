@@ -69,8 +69,8 @@ echo "⏳ Waiting for Relay to process and ask for permission..."
 
 # 5. Poll for Permission Request
 PERM_ID=""
-for i in {1..15}; do
-    echo "🔍 Checking for pending permissions... (Attempt $i/15)"
+for i in {1..10}; do
+    echo "🔍 Checking for pending permissions... (Attempt $i/10)"
     PERMS_RES=$(curl -s -X GET "$PB_URL/api/collections/permissions/records?filter=(chat%3D%27$CHAT_ID%27%20%26%26%20status%3D%27draft%27)" \
         -H "Authorization: $USER_TOKEN")
     
