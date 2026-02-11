@@ -26,7 +26,7 @@ export default defineConfig({
             social: [
                 {
                     label: 'GitHub',
-                    href: 'https://github.com/pocketcoder-ai/pocketcoder',
+                    href: 'https://github.com/qtpi-bonding-org/pocketcoder',
                     icon: 'github',
                 },
             ],

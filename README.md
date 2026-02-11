@@ -17,7 +17,7 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 
 ## 🚀 Quick Start (Local Setup)
 
-1.  **Clone**: `git clone https://github.com/qtpi-bonding/pocketcoder.git`
+1.  **Clone**: `git clone https://github.com/qtpi-bonding-org/pocketcoder.git`
 2.  **Env**: `cp .env.example .env` (Add your Gemini API key)
 3.  **Boot**: `docker-compose up -d`
 4.  **Explore**: Access the PocketBase UI at `http://localhost:8090/_/`

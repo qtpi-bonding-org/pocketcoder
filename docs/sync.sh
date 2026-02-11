@@ -89,7 +89,7 @@ hero:
       icon: right-arrow
       variant: primary
     - text: View on GitHub
-      link: https://github.com/qtpi-bonding/pocketcoder
+      link: https://github.com/qtpi-bonding-org/pocketcoder
       icon: external
 ---
 
