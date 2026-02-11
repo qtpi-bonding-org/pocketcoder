@@ -1,20 +1,18 @@
 package relay
 
 import (
-	"log"
-
-	"github.com/pocketbase/pocketbase"
+	"fmt"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 // RelayService orchestrates communication between PocketBase and OpenCode
 type RelayService struct {
-	app         *pocketbase.PocketBase
+	app         core.App
 	openCodeURL string
 }
 
 // NewRelayService creates a new Relay instance
-func NewRelayService(app *pocketbase.PocketBase, openCodeURL string) *RelayService {
+func NewRelayService(app core.App, openCodeURL string) *RelayService {
 	return &RelayService{
 		app:         app,
 		openCodeURL: openCodeURL,
@@ -26,7 +24,7 @@ func NewRelayService(app *pocketbase.PocketBase, openCodeURL string) *RelayServi
 // 2. Message Pump (Hooks)
 // 3. Agent Sync (Hooks)
 func (r *RelayService) Start() {
-	log.Println("🌉 [Relay] Starting Go-based Relay Service...")
+	fmt.Println("[Relay] Starting Go-based Relay Service...")
 
 	// 1. Start SSE Listener (in background)
 	go r.listenForEvents()
@@ -49,9 +47,7 @@ func (r *RelayService) registerMessageHooks() {
 		processed := e.Record.GetBool("metadata.processed")
 
 		if role == "user" && !processed {
-			log.Printf("📨 [Relay] Intercepted user message: %s", e.Record.Id)
-			// Small delay or reload might be needed if using AfterCreate goroutine,
-			// but PocketBase v0.23 After hooks are usually safe for this.
+			fmt.Printf("[Relay] Intercepted user message: %s\n", e.Record.Id)
 			go r.processUserMessage(e.Record)
 		}
 		return e.Next()
