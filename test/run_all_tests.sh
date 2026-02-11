@@ -55,9 +55,8 @@ run_test "feature_turn_batching.sh" "Turn-Based Message Batching"
 
 # 4. Feature Specific Tests
 run_test "feature_artifacts.sh" "Artifact Serving API"
-# Add other feature tests here as they become reliable
-# run_test "feature_registry.sh" "AI Registry"
-# run_test "feature_whitelist.sh" "Whitelist System"
+run_test "feature_whitelist_integration.sh" "Sovereign Authority Evaluator"
+run_test "feature_whitelist.sh" "Whitelist Collection Management"
 
 echo -e "\n${GREEN}========================================${NC}"
 if [ "$RUN_FAILED" = true ]; then

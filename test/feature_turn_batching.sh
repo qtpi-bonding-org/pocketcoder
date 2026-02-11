@@ -36,14 +36,14 @@ if [ "$TURN" != "user" ] && [ "$TURN" != "" ] && [ "$TURN" != "null" ]; then
 fi
 
 # 3. Send Message 1 (Long Task to keep him busy)
-echo "📩 Sending Message 1: 'Write a long poem about encryption'..."
+echo "📩 Sending Message 1: 'Write one bullet point about encryption'..."
 curl -s -X POST "$PB_URL/api/collections/messages/records" \
     -H "Authorization: $USER_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Write a long poem about encryption\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Write one bullet point about encryption\"}],
         \"metadata\": { \"processed\": false }
     }" > /dev/null
 
@@ -81,8 +81,8 @@ curl -s -X POST "$PB_URL/api/collections/messages/records" \
 echo "⏳ Waiting for Poco to finish and trigger the batch pump..."
 
 # 6. Wait for responses
-for i in {1..30}; do
-    echo "🔍 Checking for batch resolution... (Attempt $i/30)"
+for i in {1..10}; do
+    echo "🔍 Checking for batch resolution... (Attempt $i/10)"
     
     # Check if turn flipped back to user
     CHAT_STATE=$(curl -s -X GET "$PB_URL/api/collections/chats/records/$CHAT_ID" \

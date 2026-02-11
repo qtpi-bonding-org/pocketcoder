@@ -9,7 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/permission"
 )
 
 // handlePermissionAsked is triggered when OpenCode sends a 'permission.asked' event via SSE
@@ -20,7 +22,7 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 		return
 	}
 
-	permission, _ := properties["permission"].(string)
+	permissionStr, _ := properties["permission"].(string)
 	sessionID, _ := properties["sessionID"].(string)
 	patterns, _ := properties["patterns"].([]interface{})
 	metadata, _ := properties["metadata"].(map[string]interface{})
@@ -33,7 +35,7 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 		callID, _ = tool["callID"].(string)
 	}
 
-	log.Printf("🛡️ [Relay] Permission Requested: %s (%s)", permID, permission)
+	log.Printf("🛡️ [Relay] Permission Requested: %s (%s)", permID, permissionStr)
 
 	// 1. Resolve Chat ID
 	chatID := r.resolveChatID(sessionID)
@@ -44,21 +46,21 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 	}
 
 	// 2. Query Sovereign Authority
-	// Since we are INSIDE the Go app, we can call the internal logic directly?
-	// But sticking to the API keeps the separation clean and tests the endpoint.
-	// Actually, for performance, we should ideally invoke the same logic as the endpoint.
-	// Let's call the internal API endpoint via loopback or refactor logic.
-	// For MVP parity, let's use the DB DIRECTLY here to create the permission record.
-	// This replaces the "POST /api/pocketcoder/permission" call.
+	// We use the shared internal permission package to evaluate against whitelists.
 
-	// A. Check Whitelists (Replicating main.go logic here or calling shared func)
-	isWhitelisted := r.checkWhitelist(permission, patterns, metadata)
-
-	// B. Create Permission Record
-	status := "draft"
-	if isWhitelisted {
-		status = "authorized"
+	// A. Check Whitelists using shared authority
+	patternsList := make([]string, 0, len(patterns))
+	for _, p := range patterns {
+		if s, ok := p.(string); ok {
+			patternsList = append(patternsList, s)
+		}
 	}
+
+	isWhitelisted, status := permission.Evaluate(r.app.(*pocketbase.PocketBase), permission.EvaluationInput{
+		Permission: permissionStr,
+		Patterns:   patternsList,
+		Metadata:   metadata,
+	})
 
 	collection, err := r.app.FindCollectionByNameOrId("permissions")
 	if err != nil {
@@ -70,7 +72,7 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 	record.Set("opencode_id", permID)
 	record.Set("session_id", sessionID)
 	record.Set("chat", chatID)
-	record.Set("permission", permission)
+	record.Set("permission", permissionStr)
 	record.Set("patterns", patterns)
 	record.Set("metadata", metadata)
 	record.Set("message_id", messageID)

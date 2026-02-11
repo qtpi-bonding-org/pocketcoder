@@ -32,18 +32,18 @@ echo "⚡ Creating Whitelist Action..."
 ACTION_ID=$(curl -s -X POST "$POCKETBASE_URL/api/collections/whitelist_actions/records" \
     -H "Authorization: $ADMIN_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{\"command\":\"git clone\", \"target\":\"$TARGET_ID\", \"is_active\": true}" | jq -r '.id')
+    -d "{\"permission\":\"git\", \"kind\":\"pattern\", \"value\":\"clone *\", \"active\": true}" | jq -r '.id')
 echo "✅ Action ID: $ACTION_ID"
 
 # 3. Verify Retrieval
 echo "🔍 Verifying Action Data..."
-ACTION_DETAIL=$(curl -s "$POCKETBASE_URL/api/collections/whitelist_actions/records/$ACTION_ID?expand=target" \
+ACTION_DETAIL=$(curl -s "$POCKETBASE_URL/api/collections/whitelist_actions/records/$ACTION_ID" \
     -H "Authorization: $ADMIN_TOKEN")
 
-COMMAND=$(echo $ACTION_DETAIL | jq -r '.command')
-PATTERN=$(echo $ACTION_DETAIL | jq -r '.expand.target.pattern')
+PERMISSION=$(echo $ACTION_DETAIL | jq -r '.permission')
+VALUE=$(echo $ACTION_DETAIL | jq -r '.value')
 
-if [[ "$COMMAND" == "git clone" ]] && [[ "$PATTERN" == "github.com/pocketcoder/*" ]]; then
+if [[ "$PERMISSION" == "git" ]] && [[ "$VALUE" == "clone *" ]]; then
     echo "✅ Whitelist Persistence Working."
 else
     echo "❌ Whitelist Verification Failed."
