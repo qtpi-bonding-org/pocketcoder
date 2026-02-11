@@ -16,8 +16,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /sandbox
 
-# Copy the Socket Listener source
-COPY sandbox/listener.ts /sandbox/listener.ts
+# Copy Sandbox entrypoints
 COPY sandbox/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY sandbox/sync_keys.sh /usr/local/bin/sync_keys.sh
 RUN chmod +x /usr/local/bin/sync_keys.sh
