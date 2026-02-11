@@ -61,7 +61,7 @@ MSG_RES=$(curl -s -X POST "$PB_URL/api/collections/messages/records" \
         \"parts\": [
             { \"type\": \"text\", \"text\": \"Please write a file named automated_test.txt with content 'Flow Complete'\" }
         ],
-        \"metadata\": { \"processed\": false }
+        \"delivery\": \"pending\"
     }")
 
 echo "✅ User message created: $MSG_RES"

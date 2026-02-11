@@ -50,7 +50,7 @@ curl -s -X POST "$PB_URL/api/collections/messages/records" \
         \"parts\": [
             { \"type\": \"text\", \"text\": \"$PROMPT\" }
         ],
-        \"metadata\": { \"processed\": false }
+        \"delivery\": \"pending\"
     }" > /dev/null
 
 echo "⏳ Waiting for response..."

@@ -103,6 +103,7 @@ func init() {
 			&core.RelationField{Name: "chat", Required: true, CollectionId: chats.Id, MaxSelect: 1},
 			&core.SelectField{Name: "role", Required: true, MaxSelect: 1, Values: []string{"user", "assistant", "system"}},
 			&core.SelectField{Name: "status", MaxSelect: 1, Values: []string{"processing", "completed", "failed", "aborted"}},
+			&core.SelectField{Name: "delivery", MaxSelect: 1, Values: []string{"draft", "pending", "sending", "sent", "failed"}},
 			&core.TextField{Name: "opencode_id"},
 			&core.TextField{Name: "parent_id"},
 			&core.TextField{Name: "agent"},

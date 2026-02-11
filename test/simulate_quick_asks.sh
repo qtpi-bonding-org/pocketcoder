@@ -13,8 +13,8 @@ CHAT_RES=$(curl -s -X POST "$PB_URL/api/collections/chats/records" \
 CHAT_ID=$(echo "$CHAT_RES" | jq -r .id)
 
 echo "🔥 Sending two messages instantly..."
-curl -s -X POST "$PB_URL/api/collections/messages/records" -H "Authorization: $USER_TOKEN" -H "Content-Type: application/json" -d "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"First message\"}], \"metadata\": {\"processed\": false}}" &
-curl -s -X POST "$PB_URL/api/collections/messages/records" -H "Authorization: $USER_TOKEN" -H "Content-Type: application/json" -d "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Second message\"}], \"metadata\": {\"processed\": false}}" &
+curl -s -X POST "$PB_URL/api/collections/messages/records" -H "Authorization: $USER_TOKEN" -H "Content-Type: application/json" -d "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"First message\"}], \"delivery\": \"pending\"}" &
+curl -s -X POST "$PB_URL/api/collections/messages/records" -H "Authorization: $USER_TOKEN" -H "Content-Type: application/json" -d "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Second message\"}], \"delivery\": \"pending\"}" &
 
 wait
 echo "⏳ Waiting for PBP logs to show syncs..."
