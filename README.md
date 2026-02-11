@@ -1,68 +1,47 @@
 # 🦅 PocketCoder
 
-**PocketCoder** is an experimental, self-hosted AI assistant. It explores the intersection of personal sovereignty and AI agent capabilities, designed to live quietly in your pocket or on your VPS.
+**PocketCoder** is a personal research lab and an experiment in building a "Sovereign AI." It is a minimalist, local-first coding assistant designed with the philosophy of **Alpine Linux**: a tiny surface area that leverages the power of standard Unix tools.
+
+I am building this as a solo developer because I believe that the most powerful tools shouldn't need a complex "Enterprise" footprint. Instead, PocketCoder uses high-leverage "giant's shoulders" like **PocketBase**, **Tmux**, and **OpenCode** to keep the custom glue code to an absolute minimum.
 
 ## 🧪 The Experiment
-PocketCoder is a research project investigating a simple question: *Can we build a powerful, professional-grade coding assistant that is 100% self-hosted and user-controlled?*
+The goal is simple: *Can I build a secure, professional-grade coding environment that I can audit in a single afternoon?*
 
-To answer this, we are stitching together some of the best open-source technologies into a cohesive system:
-- **OpenCode**: For high-level reasoning and agentic loops.
-- **PocketBase**: For a lightweight, portable backend and permission system.
-- **Tmux**: For resilient, recovering shell sessions.
+## 🛡 Personal Principles
+- **Minimal Surface Area**: I prefer well-worn Unix tools over bespoke frameworks.
+- **Sovereign Authority**: The reasoning engine is treated as a guest. All actions are gated by a human-inspectable log in PocketBase.
+- **Extreme Portability**: The entire stack runs in a few lightweight Docker containers. It should feel as easy to self-host as your favorite static site.
 
-## 🛡 Core Values
-- **Minimal Surface Area**: We rely on battle-tested infrastructure (PocketBase, Tmux, Docker) with minimal custom glue code (~1,800 LOC). Less code means fewer bugs and a smaller attack surface.
-- **Ownership**: You should own your data, your logs, and your API keys.
-- **Privacy**: No telemetry. No hidden usage tracking. Just code.
+## ⚠️ Disclaimer
+PocketCoder is an active research project. As a solo developer, I’m building this in the open to share my progress. It is not a commercial product, and there are no support SLAs. If you find a bug, I'd love to hear about it, but please understand I'm moving at my own pace!
 
-## ⚠️ License & Use
-PocketCoder is open-source software licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
+## 🚀 Quick Start (Local Setup)
 
-We chose this license to ensure that if PocketCoder is ever used to provide a network service, the improvements returned to the community remain open.
-
-*   **Individuals & Researchers**: Free to use, modify, and explore.
-*   **Commercial/Proprietary**: If you wish to embed this into a closed-source product, please reach out regarding a commercial license.
-
-## 🚀 Getting Started
-
-PocketCoder is designed to run anywhere Docker is available.
-
-1.  **Clone the Repository**:
-    ```bash
-    git clone https://github.com/qtpi-bonding/pocketcoder.git
-    cd pocketcoder
-    ```
-2.  **Configure Environment**:
-    ```bash
-    cp .env.example .env
-    # Add your Gemini/OpenCode API keys to .env
-    ```
-3.  **Boot the Stack**:
-    ```bash
-    docker-compose up -d
-    ```
-4.  **Access the Dashboard**:
-    Open `http://localhost:8080/_/` (PocketBase Admin) or use the Flutter client.
+1.  **Clone**: `git clone https://github.com/qtpi-bonding/pocketcoder.git`
+2.  **Env**: `cp .env.example .env` (Add your Gemini API key)
+3.  **Boot**: `docker-compose up -d`
+4.  **Explore**: Access the PocketBase UI at `http://localhost:8090/_/`
 
 ## 🔗 Links
 - [License](LICENSE) (AGPLv3)
+- [Contributing](CONTRIBUTING.md)
 
 ---
-*Built on the shoulders of giants. Inspired by the pioneering work of OpenClaw and the power of OpenCode.*
+*Built with heart by a solo dev in collaboration with **Gemini** (Google's agentic AI assistant). This project is as much an experiment in human-AI partnership as it is in software architecture.*
 
 ## Architecture: The Sovereign Loop
 
-PocketCoder operates on a **Physical Separation of Concerns**. The reasoning engine is isolated from the execution environment by a security relay.
+PocketCoder uses a **Physical Separation of Concerns**. The "Brain" (Reasoning) is isolated from the "Reality" (Sandbox) by a security relay.
 
 ```mermaid
 graph TD
     User((👤 User))
-    subgraph Client ["📱 Flutter App"]
-        UI[User Interface]
+    subgraph Client ["Client Interface"]
+        UI[Flutter App]
     end
 
-    subgraph ControlPlane ["Control Plane"]
-        PB[(PocketBase)]
+    subgraph ControlPlane ["Control Plane (PocketBase)"]
+        PB[(DB & Auth)]
         Relay[Relay / Go]
     end
 
@@ -74,7 +53,7 @@ graph TD
         Proxy[Proxy / Rust]
     end
 
-    subgraph Execution ["Execution"]
+    subgraph Execution ["Execution (Isolated)"]
         SB[Sandbox / Docker]
         Tmux[Tmux Session]
     end
@@ -83,7 +62,7 @@ graph TD
     User <--> UI
     UI <--> PB
     
-    PB <-. Subscription .-> Relay
+    PB <-. Event Subscription .-> Relay
     Relay <--> OC
     
     OC <--> Proxy
@@ -91,15 +70,15 @@ graph TD
     SB <--> Tmux
 ```
 
-## Codebase Stats: "Featherweight Industrial"
-*(LOC counts as of Feb 2026)*
+## "Featherweight" Stats
+*(Approximate Code counts as of Feb 2026)*
 
-We prioritize high-leverage tools over custom code. The core system is auditable in an afternoon.
+The value of PocketCoder isn't in how much code I wrote, but in how much I **didn't** have to write by leveraging great tools.
 
-| **Component** | Tech | Lines | Role |
+| Component | Tech | Lines | Role |
 | :--- | :--- | :--- | :--- |
-| **backend** | Go | ~900 | **Identity & Rules**: Gating, Auth, API Management |
-| **relay** | Go | ~950 | **Control Plane**: Intent Analysis & OpenCode Orchestration |
-| **proxy** | Rust | ~400 | **Execution Proxy**: Secure shell/tmux bridge |
-| **sandbox** | Bash/TS | ~750 | **Runtime**: Isolated execution & key management |
-| **TOTAL** | | **~3,000** | **Lean, Sovereign, Auditable** |
+| **backend** | Go | ~900 | The "Gatekeeper" (Rules & Auth) |
+| **relay** | Go | ~950 | The "Spinal Cord" (Reasoning Sync) |
+| **proxy** | Rust | ~400 | The "Muscle" (Secure Tmux Bridge) |
+| **sandbox** | Bash/TS | ~750 | The "Reality" (Isolated Runtime) |
+| **CORE TOTAL**| | **~3,000** | **Tiny, Auditable, Transparent** |
