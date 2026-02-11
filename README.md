@@ -71,14 +71,14 @@ graph TD
 ```
 
 ## "Featherweight" Stats
-*(Approximate Code counts as of Feb 2026)*
+*(Strictly original PocketCoder code as of Feb 2026)*
 
 The value of PocketCoder isn't in how much code I wrote, but in how much I **didn't** have to write by leveraging great tools.
 
 | Component | Tech | Lines | Role |
 | :--- | :--- | :--- | :--- |
-| **backend** | Go | ~900 | The "Gatekeeper" (Rules & Auth) |
-| **relay** | Go | ~950 | The "Spinal Cord" (Reasoning Sync) |
-| **proxy** | Rust | ~400 | The "Muscle" (Secure Tmux Bridge) |
-| **sandbox** | Bash/Python | ~750 | The "Reality" (Isolated Runtime) |
-| **CORE TOTAL**| | **~3,000** | **Tiny, Auditable, Transparent** |
+| **backend** | Go | ~530 | Custom hooks, API gating, and security rules. |
+| **relay** | Go | ~940 | The logic for syncing reasoning with reality. |
+| **proxy** | Rust | ~430 | Secure bridge between the brain and sandbox. |
+| **sandbox** | Bash/Python| ~220 | The original glue for key-sync and OpenCode. |
+| **CORE TOTAL**| | **~2,120** | **Truly Minimal, Fully Sovereign.** |
