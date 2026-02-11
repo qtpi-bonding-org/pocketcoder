@@ -128,10 +128,6 @@ func (r *RelayService) listenForEvents() {
 			}
 
 			eventType, _ := event["type"].(string)
-			if eventType == "server.heartbeat" {
-				continue
-			}
-
 			log.Printf("📥 [Relay/SSE] Event: %s", eventType)
 			properties, _ := event["properties"].(map[string]interface{})
 			if properties == nil {
@@ -139,60 +135,68 @@ func (r *RelayService) listenForEvents() {
 			}
 
 			switch eventType {
-						case "permission.asked":
-							go r.handlePermissionAsked(properties)
-						
-						case "message.updated":
-							// properties.info is the message envelope
-							if info, ok := properties["info"].(map[string]interface{}); ok {
-								role, _ := info["role"].(string)
-								if role != "assistant" {
-									// Only sync assistant messages to prevent mirror echos
-									log.Printf("⏭️ [Relay/SSE] Skipping sync for role: %s", role)
-									continue
-								}
-								sessionID, _ := info["sessionID"].(string)
-								chatID := r.resolveChatID(sessionID)
-								if chatID != "" {
-									go r.syncAssistantMessage(chatID, properties)
-								} else {
-									log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session: %s", sessionID)
-								}
-							} else {
-								log.Printf("⚠️ [Relay/SSE] message.updated missing 'info' block")
-							}
+			case "server.heartbeat":
+				r.lastHeartbeat = time.Now().Unix()
+				if !r.isReady {
+					log.Println("💓 [Relay/SSE] First heartbeat received. System ready.")
+					r.isReady = true
+					r.updateHealthcheck("ready")
+				}
+				continue
 
-						case "message.part.updated":
-							// properties.part is the part, properties.delta is optional
-							if part, ok := properties["part"].(map[string]interface{}); ok {
-								sessionID, _ := part["sessionID"].(string)
-								msgID, _ := part["messageID"].(string)
-								chatID := r.resolveChatID(sessionID)
-								if chatID != "" {
-									go r.triggerMessageSync(chatID, sessionID, msgID)
-								} else {
-									log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session (part): %s", sessionID)
-								}
-							}
+			case "permission.asked":
+				go r.handlePermissionAsked(properties)
 
-						case "session.idle":
-							log.Printf("😴 [Relay/SSE] session.idle properties: %v", properties)
-							sID, _ := properties["id"].(string)
-							if sID == "" { sID, _ = properties["sessionID"].(string) }
-							if sID != "" {
-								go r.handleSessionIdle(sID)
-							}
-
-						case "session.updated":
-							log.Printf("🔄 [Relay/SSE] session.updated properties: %v", properties)
-							status, _ := properties["status"].(string)
-							sID, _ := properties["id"].(string)
-							if sID == "" { sID, _ = properties["sessionID"].(string) }
-							if status == "idle" && sID != "" {
-								go r.handleSessionIdle(sID)
-							}
-						}
+			case "message.updated":
+				if info, ok := properties["info"].(map[string]interface{}); ok {
+					role, _ := info["role"].(string)
+					if role != "assistant" {
+						// Only sync assistant messages to prevent mirror echos
+						log.Printf("⏭️ [Relay/SSE] Skipping sync for role: %s", role)
+						continue
 					}
+					sessionID, _ := info["sessionID"].(string)
+					chatID := r.resolveChatID(sessionID)
+					if chatID != "" {
+						go r.syncAssistantMessage(chatID, properties)
+					} else {
+						log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session: %s", sessionID)
+					}
+				} else {
+					log.Printf("⚠️ [Relay/SSE] message.updated missing 'info' block")
+				}
+
+			case "message.part.updated":
+				// properties.part is the part, properties.delta is optional
+				if part, ok := properties["part"].(map[string]interface{}); ok {
+					sessionID, _ := part["sessionID"].(string)
+					msgID, _ := part["messageID"].(string)
+					chatID := r.resolveChatID(sessionID)
+					if chatID != "" {
+						go r.triggerMessageSync(chatID, sessionID, msgID)
+					} else {
+						log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session (part): %s", sessionID)
+					}
+				}
+
+			case "session.idle":
+				log.Printf("😴 [Relay/SSE] session.idle properties: %v", properties)
+				sID, _ := properties["id"].(string)
+				if sID == "" { sID, _ = properties["sessionID"].(string) }
+				if sID != "" {
+					go r.handleSessionIdle(sID)
+				}
+
+			case "session.updated":
+				log.Printf("🔄 [Relay/SSE] session.updated properties: %v", properties)
+				status, _ := properties["status"].(string)
+				sID, _ := properties["id"].(string)
+				if sID == "" { sID, _ = properties["sessionID"].(string) }
+				if status == "idle" && sID != "" {
+					go r.handleSessionIdle(sID)
+				}
+			}
+		}
 		resp.Body.Close()
 		time.Sleep(1 * time.Second)
 	}
@@ -267,6 +271,32 @@ func (r *RelayService) replyToOpenCode(requestID string, replyType string) {
 		log.Printf("❌ [Relay] Reply rejected: %s", resp.Status)
 	} else {
 		log.Printf("✅ [Relay] Reply sent: %s -> %s", requestID, replyType)
+	}
+}
+
+func (r *RelayService) updateHealthcheck(status string) {
+	collection, err := r.app.FindCollectionByNameOrId("healthchecks")
+	if err != nil {
+		log.Printf("⚠️ [Relay] healthchecks collection not found, skipping sync")
+		return
+	}
+
+	// We use a single record with a specific ID or just the first one
+	existing, _ := r.app.FindFirstRecordByFilter("healthchecks", "name = 'opencode'")
+
+	var record *core.Record
+	if existing != nil {
+		record = existing
+	} else {
+		record = core.NewRecord(collection)
+		record.Set("name", "opencode")
+	}
+
+	record.Set("status", status)
+	record.Set("last_ping", time.Now().Format("2006-01-02 15:04:05.000Z"))
+
+	if err := r.app.Save(record); err != nil {
+		log.Printf("❌ [Relay] Failed to save healthcheck: %v", err)
 	}
 }
 
