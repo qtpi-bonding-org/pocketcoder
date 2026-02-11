@@ -59,6 +59,7 @@ echo -e "${GREEN}Running integration tests...${NC}"
 echo ""
 
 # Run the integration tests
+./test/healthcheck_test.sh
 ./test/ssh_key_integration_test.sh
 
 TEST_EXIT_CODE=$?
