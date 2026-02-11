@@ -1,9 +1,9 @@
 package relay
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -13,22 +13,22 @@ import (
 )
 
 // handlePermissionAsked is triggered when OpenCode sends a 'permission.asked' event via SSE
-func (r *RelayService) handlePermissionAsked(payload map[string]interface{}) {
-	permID, ok := payload["id"].(string)
+func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) {
+	permID, ok := properties["id"].(string)
 	if !ok {
 		log.Printf("⚠️ [Relay] Permission payload missing ID")
 		return
 	}
 
-	permission, _ := payload["permission"].(string)
-	sessionID, _ := payload["sessionID"].(string)
-	patterns, _ := payload["patterns"].([]interface{})
-	metadata, _ := payload["metadata"].(map[string]interface{})
-	message, _ := payload["message"].(string)
+	permission, _ := properties["permission"].(string)
+	sessionID, _ := properties["sessionID"].(string)
+	patterns, _ := properties["patterns"].([]interface{})
+	metadata, _ := properties["metadata"].(map[string]interface{})
+	message, _ := properties["message"].(string)
 	
 	// OpenCode sometimes nests tool info
 	var messageID, callID string
-	if tool, ok := payload["tool"].(map[string]interface{}); ok {
+	if tool, ok := properties["tool"].(map[string]interface{}); ok {
 		messageID, _ = tool["messageID"].(string)
 		callID, _ = tool["callID"].(string)
 	}
@@ -107,40 +107,48 @@ func (r *RelayService) listenForEvents() {
 			continue
 		}
 
-		reader := resp.Body
-		defer reader.Close()
-
-		for {
-			buf := make([]byte, 4096)
-			n, err := reader.Read(buf)
-			if err != nil {
-				if err != io.EOF {
-					log.Printf("❌ [Relay] SSE Read error: %v", err)
-				}
-				break // Reconnect
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if !strings.HasPrefix(line, "data: ") {
+				continue
 			}
-			
-			data := string(buf[:n])
-			lines := strings.Split(data, "\n")
-			for _, line := range lines {
-				if strings.HasPrefix(line, "data: ") {
-					jsonStr := strings.TrimPrefix(line, "data: ")
-					var event map[string]interface{}
-					if err := json.Unmarshal([]byte(jsonStr), &event); err == nil {
-						eventType, _ := event["type"].(string)
-						log.Printf("📥 [Relay/SSE] Event: %s", eventType)
-						properties, _ := event["properties"].(map[string]interface{})
-						if properties == nil {
-							properties = event // Fallback
-						}
 
-						switch eventType {
+			jsonStr := strings.TrimPrefix(line, "data: ")
+			if jsonStr == "" || jsonStr == "{}" {
+				continue
+			}
+
+			var event map[string]interface{}
+			if err := json.Unmarshal([]byte(jsonStr), &event); err != nil {
+				log.Printf("❌ [Relay/SSE] Failed to unmarshal event: %v | Data: %s", err, jsonStr)
+				continue
+			}
+
+			eventType, _ := event["type"].(string)
+			if eventType == "server.heartbeat" {
+				continue
+			}
+
+			log.Printf("📥 [Relay/SSE] Event: %s", eventType)
+			properties, _ := event["properties"].(map[string]interface{})
+			if properties == nil {
+				properties = event // Fallback
+			}
+
+			switch eventType {
 						case "permission.asked":
 							go r.handlePermissionAsked(properties)
 						
 						case "message.updated":
 							// properties.info is the message envelope
 							if info, ok := properties["info"].(map[string]interface{}); ok {
+								role, _ := info["role"].(string)
+								if role != "assistant" {
+									// Only sync assistant messages to prevent mirror echos
+									log.Printf("⏭️ [Relay/SSE] Skipping sync for role: %s", role)
+									continue
+								}
 								sessionID, _ := info["sessionID"].(string)
 								chatID := r.resolveChatID(sessionID)
 								if chatID != "" {
@@ -164,12 +172,57 @@ func (r *RelayService) listenForEvents() {
 									log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session (part): %s", sessionID)
 								}
 							}
+
+						case "session.idle":
+							log.Printf("😴 [Relay/SSE] session.idle properties: %v", properties)
+							sID, _ := properties["id"].(string)
+							if sID == "" { sID, _ = properties["sessionID"].(string) }
+							if sID != "" {
+								go r.handleSessionIdle(sID)
+							}
+
+						case "session.updated":
+							log.Printf("🔄 [Relay/SSE] session.updated properties: %v", properties)
+							status, _ := properties["status"].(string)
+							sID, _ := properties["id"].(string)
+							if sID == "" { sID, _ = properties["sessionID"].(string) }
+							if status == "idle" && sID != "" {
+								go r.handleSessionIdle(sID)
+							}
 						}
 					}
-				}
-			}
-		}
+		resp.Body.Close()
 		time.Sleep(1 * time.Second)
+	}
+}
+
+// handleSessionIdle flips the turn back to the user and triggers the pump
+func (r *RelayService) handleSessionIdle(sessionID string) {
+	log.Printf("😴 [Relay/SSE] Session %s reported IDLE", sessionID)
+	chatID := r.resolveChatID(sessionID)
+	if chatID == "" {
+		log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session %s", sessionID)
+		return
+	}
+
+	chat, err := r.app.FindRecordById("chats", chatID)
+	if err != nil {
+		log.Printf("⚠️ [Relay/SSE] Could not find chat %s: %v", chatID, err)
+		return
+	}
+
+	turn := chat.GetString("turn")
+	log.Printf("🔄 [Relay/SSE] Chat %s current turn: %s", chatID, turn)
+
+	if turn == "assistant" {
+		log.Printf("😴 [Relay/SSE] Flipping turn for chat %s -> user", chatID)
+		chat.Set("turn", "user")
+		if err := r.app.Save(chat); err != nil {
+			log.Printf("❌ [Relay] Failed to flip turn: %v", err)
+		} else {
+			// Trigger "The Pump" to catch any double-texting that was queued
+			go r.recoverMissedMessages()
+		}
 	}
 }
 

@@ -73,6 +73,13 @@ func init() {
 		addFields(chats,
 			&core.DateField{Name: "last_active"},
 			&core.TextField{Name: "preview"},
+			&core.SelectField{
+				Name:      "turn",
+				MaxSelect: 1,
+				Values:    []string{"user", "assistant"},
+			},
+			&core.DateField{Name: "created"},
+			&core.DateField{Name: "updated"},
 		)
 
 		chats.ListRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
@@ -107,6 +114,8 @@ func init() {
 			&core.TextField{Name: "finish_reason"},
 			&core.JSONField{Name: "parts"},
 			&core.JSONField{Name: "metadata"},
+			&core.DateField{Name: "created"},
+			&core.DateField{Name: "updated"},
 		)
 
 		messages.ListRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user = @request.auth.id)")
@@ -132,6 +141,8 @@ func init() {
 			&core.NumberField{Name: "tokens_reasoning"},
 			&core.NumberField{Name: "cost"},
 			&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"in-progress", "completed", "error"}},
+			&core.DateField{Name: "created"},
+			&core.DateField{Name: "updated"},
 		)
 		
 		usages.ListRule = ptr("@request.auth.id != ''")
@@ -159,6 +170,8 @@ func init() {
 			&core.TextField{Name: "challenge"},
 			&core.RelationField{Name: "chat", CollectionId: chats.Id, MaxSelect: 1},
 			&core.RelationField{Name: "usage", CollectionId: usages.Id, MaxSelect: 1},
+			&core.DateField{Name: "created"},
+			&core.DateField{Name: "updated"},
 		)
 
 		permissions.ListRule = ptr("@request.auth.id != ''")
@@ -179,6 +192,8 @@ func init() {
 			&core.TextField{Name: "fingerprint", Required: true},
 			&core.DateField{Name: "last_used"},
 			&core.BoolField{Name: "is_active"},
+			&core.DateField{Name: "created"},
+			&core.DateField{Name: "updated"},
 		)
 
 		sshKeys.ListRule = ptr("@request.auth.id != ''")
@@ -245,7 +260,9 @@ func init() {
 		wlActions.ListRule = ptr("@request.auth.id != ''")
 		if err := app.Save(wlActions); err != nil { return err }
 
-		return nil
+		// 8. INITIALIZE TURN STATE
+		_, err = app.DB().NewQuery("UPDATE chats SET turn = 'user' WHERE turn = '' OR turn IS NULL").Execute()
+		return err
 	}, func(app core.App) error {
 		return nil
 	})

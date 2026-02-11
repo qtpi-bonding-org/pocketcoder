@@ -51,6 +51,7 @@ run_test "run_integration_tests.sh" "SSH Integration & Sandbox"
 
 # 3. Core Logic Flow
 run_test "permission_flow_full.sh" "Permission & Reasoning Flow"
+run_test "feature_turn_batching.sh" "Turn-Based Message Batching"
 
 # 4. Feature Specific Tests
 run_test "feature_artifacts.sh" "Artifact Serving API"

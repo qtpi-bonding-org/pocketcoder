@@ -7,15 +7,23 @@
             "tools": {
                 "write": true,
                 "edit": true,
-                "bash": true
+                "bash": true,
+                "question": true,
+                "lsp": false,
+                "read": true,
+                "grep": true,
+                "glob": true,
+                "list": true
             },
             "permission": {
                 "bash": "ask",
-                "write": "ask"
+                "edit": "ask"
             }
         }
     },
     "permission": {
+        "bash": "ask",
+        "edit": "ask",
         "*": "ask"
     },
     "model": "google/gemini-2.0-flash",
