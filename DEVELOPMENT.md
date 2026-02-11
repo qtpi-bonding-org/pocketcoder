@@ -1,15 +1,21 @@
 # Development Guide 🛠
 
-Welcome to the PocketCoder assembly line. This document provides a deeper dive into the architecture and setup for developers.
+Welcome to the PocketCoder workbench. This document explains how I've pieced the system together and how you can run it locally for development.
 
-## 🏗 High-Level Architecture
+## 🏗 Architecture & Leverage
 
-PocketCoder follows a **Physical Separation of Concerns**:
+PocketCoder doesn't try to reinvent the wheel. It uses a **Physical Separation of Concerns** to keep things simple and secure:
 
-1.  **Reasoning (OpenCode)**: The "Brain." It runs in a container with a proxied shell.
-2.  **Relay (Go/PocketBase)**: The "Spinal Cord." It listens to PocketBase events and orchestrates the flow.
-3.  **Proxy (Rust)**: The "Muscle." A secure, minimal bridge that translates high-level intents into `tmux` instructions.
-4.  **Sandbox (Tmux/Docker)**: The "Reality." An isolated Linux environment where files are written and commands are executed.
+1.  **Reasoning (OpenCode)**: The "Brain." It runs in an isolated container.
+2.  **Relay (Go/PocketBase)**: The "Spinal Cord." It uses PocketBase's event system to orchestrate the flow.
+3.  **Proxy (Rust)**: The "Muscle." A tiny, secure bridge that translates intents into `tmux` instructions.
+4.  **Sandbox (Tmux/Docker)**: The "Reality." A standard Linux environment where the actual work happens.
+
+### Why this stack?
+I chose these tools for their **leverage**:
+- **Tmux**: Gives us resilient, attachable sessions for free.
+- **PocketBase**: Handles auth, database, and a nice UI in a single Go binary.
+- **Docker**: Provides the isolation needed to run AI-generated code safely.
 
 ## 🛠 Local Setup
 
@@ -18,14 +24,14 @@ PocketCoder follows a **Physical Separation of Concerns**:
 - A Gemini API Key ([Get one here](https://aistudio.google.com/app/apikey))
 
 ### Steps
-1.  **Clone and Prep**:
+1.  **Prep**:
     ```bash
     git clone https://github.com/qtpi-bonding/pocketcoder.git
     cd pocketcoder
     cp .env.example .env
-    # Edit .env and enter your GEMINI_API_KEY
+    # Add your GEMINI_API_KEY to .env
     ```
-2.  **Spin up the Foundry**:
+2.  **Run**:
     ```bash
     docker-compose up -d --build
     ```
