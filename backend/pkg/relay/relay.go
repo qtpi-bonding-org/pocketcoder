@@ -59,6 +59,7 @@ func (r *RelayService) Start() {
 	r.registerAgentHooks()
 	r.registerSSHKeyHooks()
 	r.registerPermissionHooks()
+	r.registerSopHooks()
 
 	// 3. Catch up on missed messages
 	go r.recoverMissedMessages()

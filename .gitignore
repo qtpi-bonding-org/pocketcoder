@@ -39,5 +39,10 @@ code/
 .idea/
 coverage/
 *.log
+# SOP Governance (Ignore Test Artifacts)
+proposals/test_*
+skills/test_*
+
+# Docs & Other
 docs/.astro/
 docs/src/.astro/
