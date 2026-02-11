@@ -8,19 +8,20 @@
 
 ## Reporting a Vulnerability
 
-We take the security of PocketCoder very seriously. Our goal is to ensure that your personal AI remains under your sovereign control.
+I take the security of PocketCoder seriously. Because I am a solo developer, I don't have a 24/7 security team, but I will review any reported vulnerabilities as quickly as I am able.
 
-If you find a security vulnerability, please **do not open a public issue**. Instead, please report it privately through one of the following methods:
+If you find a security vulnerability, please **do not open a public issue.** Instead, please reach out to me via:
 
-1.  **Email**: security@pocketcoder.ai (Placeholder)
-2.  **Private Message**: Contact the maintainers directly on official community channels.
+1.  **Direct Message**: [Insert preferred social/GH contact]
+2.  **Email**: [Optional: personal/lab email]
 
-### Our Process
+### My Process
+1.  **Acknowledgment**: I'll aim to acknowledge your message as soon as I see it.
+2.  **Investigation**: I'll look into the impact and validatity of the report.
+3.  **Fix**: I'll work on a patch as a high priority.
 
-1.  **Acknowledgment**: We will acknowledge your report within 48 hours.
-2.  **Investigation**: We will investigate the issue and determine its impact.
-3.  **Fix**: We will work on a patch and coordinate a public release.
-4.  **Credit**: With your permission, we will credit you for the discovery in our release notes.
+## Sovereign Defense
+PocketCoder is designed to keep you safe even if the "Brain" misbehaves:
 
 ## Sovereign Principles
 

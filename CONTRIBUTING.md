@@ -1,30 +1,28 @@
 # Contributing to PocketCoder 🦅
 
-Thank you for your interest in contributing to PocketCoder! We are building an accessible, secure, and user-friendly open-source coding assistant platform. We value **sovereignty**, **transparency**, and **minimalism**.
+Thanks for checking out PocketCoder! I'm building this as a way to explore how we can live safely with AI agents. I value **sovereignty**, **transparency**, and **minimalism**.
 
 ## 🏛 Core Philosophy
 
-*   **Humble Minimalism**: We favor standard, well-worn tools over complex, bespoke frameworks. We aim for a small, auditable surface area.
-*   **Zero-Trust by Default**: The reasoning engine (OpenCode) is a guest. It never touches your system except through the secure Gatekeeper (PocketBase Hooks) and the isolated Sandbox.
-*   **Auditability**: Every intent and action must be recorded and inspectable by the user.
+*   **Sovereign Simplicity**: I favor standard, well-worn tools over complex, bespoke frameworks. Small surface area = more trust.
+*   **Zero-Trust by Default**: The reasoning engine (OpenCode) is a guest. It only interacts with the world through the "Gatekeeper" (PocketBase) and an isolated Sandbox.
+*   **Auditability**: Every intent and action is recorded in a way that you can easily inspect.
 
-## 🚀 How to Contribute
+## 🚀 How to Help
 
-1.  **Report Bugs**: Open an issue with a clear description and steps to reproduce.
-2.  **Suggest Features**: Share your ideas! We prioritize features that enhance user ownership and safety.
-3.  **Submit Pull Requests**:
-    *   Keep PRs small and focused.
-    *   Follow the existing architectural patterns.
+1.  **Open Issues**: If you find a bug or have a suggestion, please open an issue! As a solo dev, I might not get to it immediately, but I do read them all.
+2.  **Discussions**: Share how you're using PocketCoder or what you'd like to see next.
+3.  **Pull Requests**:
+    *   I'm happy to look at PRs, but please keep them small and focused.
+    *   Large, sweeping refactors are hard for me to review alone.
     *   Ensure all tests pass (`./test/run_all_tests.sh`).
 
-## 🛠 Development Workflow
+## 🛠 Development Flow
 
-1.  **Setup**: Follow the guide in `DEVELOPMENT.md`.
-2.  **Branching**: Use descriptive branch names (e.g., `feature/ssh-sync`, `fix/permission-gate`).
-3.  **Code Style**: 
-    *   **Go**: Run `go fmt` and `go vet`.
-    *   **Architecture**: Logic should be decentralized into `internal/` packages. Keep `main.go` thin.
-4.  **Testing**: Any new feature should ideally include an integration test in the `test/` directory.
+1.  **Setup**: Check out `DEVELOPMENT.md`.
+2.  **Style**:
+    *   **Go**: Logic should be decentralized into `internal/` packages. Keep `main.go` thin.
+    *   **Philosophy**: If a feature can be solved with a standard Unix tool (like `grep` or `tmux`), let's use that instead of writing new code.
 
 ## 🛡 Security First
 
