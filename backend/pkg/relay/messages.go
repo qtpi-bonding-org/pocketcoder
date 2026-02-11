@@ -7,27 +7,27 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
 func (r *RelayService) recoverMissedMessages() {
-	log.Println("🔄 [Relay/Go] Checking for missed user messages...")
-	// We check for user messages where metadata.processed is NOT true
-	// Note: In SQLite/PocketBase, nested JSON checks look like this or use FindRecordsByFilter
-	records, err := r.app.FindRecordsByFilter("messages", "role = 'user' && metadata.processed != true", "", 100, 0)
+	log.Println("🔄 [Relay/Go] Recovery Pump: Checking for unsent user messages...")
+	// We check for user messages that haven't been sent to OpenCode yet (opencode_id is empty)
+	records, err := r.app.FindRecordsByFilter("messages", "role = 'user' && opencode_id = ''", "created", 100, 0)
 	if err != nil {
 		log.Printf("⚠️ [Relay/Go] Recovery check failed: %v", err)
 		return
 	}
 
 	if len(records) > 0 {
-		log.Printf("🔄 [Relay/Go] Found %d missed messages. Processing...", len(records))
+		log.Printf("🔄 [Relay/Go] Pump found %d unsent messages. Processing...", len(records))
 		for _, msg := range records {
 			go r.processUserMessage(msg)
 		}
 	} else {
-		log.Println("✅ [Relay/Go] No missed messages found.")
+		log.Println("✅ [Relay/Go] Recovery Pump: All messages sent.")
 	}
 }
 
@@ -47,6 +47,7 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	}
 	meta["processed"] = true
 	msg.Set("metadata", meta)
+
 	if err := r.app.Save(msg); err != nil {
 		log.Printf("❌ [Relay/Go] Failed to update message %s: %v", msg.Id, err)
 		return
@@ -59,32 +60,68 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 		return
 	}
 
-	chat.Set("last_active", time.Now())
-	
-	// Extract preview from message parts
-	var messageParts []interface{}
-	partsRaw := msg.Get("parts")
-	if partsRaw != nil {
+	// 2. Check Turn Sovereignty
+	turn := chat.GetString("turn")
+	if turn == "assistant" {
+		log.Printf("⏳ [Relay/Go] Chat %s is in 'assistant' turn. Queuing message %s.", chatID, msg.Id)
+		return
+	}
+
+	// 3. It's the AI's turn! Flip the switch.
+	chat.Set("turn", "assistant")
+
+	// 4. Batch ALL pending messages (Double Texting support)
+	pending, err := r.app.FindRecordsByFilter("messages", "chat = {:chat} && role = 'user' && opencode_id = ''", "created", 50, 0, map[string]any{"chat": chatID})
+	if err != nil {
+		log.Printf("⚠️ [Relay/Go] Failed to fetch pending messages for batching: %v", err)
+	}
+
+	// Fallback to current message if batching query fails or is empty
+	if len(pending) == 0 {
+		pending = append(pending, msg)
+	}
+
+	var batchedParts []interface{}
+	for _, pMsg := range pending {
+		// Mark as processed (in case they weren't yet)
+		meta, _ := pMsg.Get("metadata").(map[string]any)
+		if meta == nil {
+			meta = make(map[string]any)
+		}
+		meta["processed"] = true
+		pMsg.Set("metadata", meta)
+
+		r.app.Save(pMsg)
+
+		// Aggregate parts
+		partsRaw := pMsg.Get("parts")
 		if jsonRaw, ok := partsRaw.(types.JSONRaw); ok {
-			err := json.Unmarshal(jsonRaw, &messageParts)
-			if err != nil {
-				log.Printf("⚠️ [Relay/Go] Failed to unmarshal message parts: %v", err)
+			var p []interface{}
+			if err := json.Unmarshal(jsonRaw, &p); err == nil {
+				batchedParts = append(batchedParts, p...)
 			}
-		} else {
-			// If not JSONRaw, it might be directly []interface{} from another source
-			if p, ok := partsRaw.([]interface{}); ok {
-				messageParts = p
-			} else {
-				log.Printf("⚠️ [Relay/Go] Message parts is neither JSONRaw nor []interface{}: %T", partsRaw)
-			}
+		} else if p, ok := partsRaw.([]interface{}); ok {
+			batchedParts = append(batchedParts, p...)
 		}
 	}
+
+	if len(batchedParts) == 0 {
+		return // Nothing to send
+	}
+
+	// Extract preview from the LAST message in the batch
 	preview := ""
-	for _, part := range messageParts {
-		if partMap, ok := part.(map[string]interface{}); ok {
-			if text, textOk := partMap["text"].(string); textOk {
-				preview = text
-				break
+	lastMsg := pending[len(pending)-1]
+	lpRaw := lastMsg.Get("parts")
+	if jsonRaw, ok := lpRaw.(types.JSONRaw); ok {
+		var p []interface{}
+		json.Unmarshal(jsonRaw, &p)
+		for _, part := range p {
+			if partMap, ok := part.(map[string]interface{}); ok {
+				if text, textOk := partMap["text"].(string); textOk {
+					preview = text
+					break
+				}
 			}
 		}
 	}
@@ -94,74 +131,73 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	chat.Set("preview", preview)
 
 	if err := r.app.Save(chat); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to update chat %s last_active and preview: %v", chatID, err)
+		log.Printf("❌ [Relay/Go] Failed to update chat turn/preview: %v", err)
 	}
 
-	// 2. Get OpenCode Session (Resolve via Chat)
+	// 5. Get OpenCode Session
 	sessionID, err := r.ensureSession(chatID)
 	if err != nil {
-		log.Printf("❌ [Relay/Go] Session failure for chat %s: %v", chatID, err)
+		log.Printf("❌ [Relay/Go] Session failure: %v", err)
 		return
 	}
-	log.Printf("🔍 [Relay/Go] Using Session: %s for Chat: %s", sessionID, chatID)
 
-	// 3. Just Send (Pure Pass-through - No filtering, no blanks)
-	parts := msg.Get("parts")
-	
-	// 4. Send to OpenCode
+	// 6. Send to OpenCode
 	url := fmt.Sprintf("%s/session/%s/message", r.openCodeURL, sessionID)
 	payload := map[string]interface{}{
-		"parts": parts,
+		"parts": batchedParts,
 	}
 	body, _ := json.Marshal(payload)
-	log.Printf("📡 [Relay/Go] 📤 PUSHING TO AI: %s", string(body))
+	log.Printf("📡 [Relay/Go] 📤 BATCH PUSHING (%d msgs): %s", len(pending), string(body))
 
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Post(url, "application/json", strings.NewReader(string(body)))
-	
+
 	if err != nil {
 		log.Printf("❌ [Relay/Go] OpenCode prompt failed: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	log.Printf("📡 [Relay/Go] 📥 AI RESPONSE: %v", resp.Status)
-
 	if resp.StatusCode >= 400 {
 		log.Printf("❌ [Relay/Go] OpenCode prompt rejected: %s", resp.Status)
 		return
 	}
 
-	// 5. Poll for Response (Simplest MVP match for Node behavior)
+	// 7. Update opencode_id for the batched messages so they aren't re-sent
 	var promptRes map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&promptRes)
-	
-	msgID_OC, _ := promptRes["id"].(string) 
+	msgID_OC, _ := promptRes["id"].(string)
 	if msgID_OC == "" {
-		// Try info.id
 		if info, ok := promptRes["info"].(map[string]interface{}); ok {
 			msgID_OC, _ = info["id"].(string)
 		}
 	}
 
 	if msgID_OC != "" {
-		log.Printf("✅ [Relay/Go] Prompt accepted. OpenCode Msg: %s. Waiting for SSE...", msgID_OC)
-		// Perform one immediate sync in case it's already finished or has immediate data
-		go r.triggerMessageSync(chatID, sessionID, msgID_OC)
+		for _, pMsg := range pending {
+			pMsg.Set("opencode_id", msgID_OC)
+			if err := r.app.Save(pMsg); err != nil {
+				log.Printf("❌ [Relay/Go] Failed to save opencode_id for message %s: %v", pMsg.Id, err)
+			}
+		}
+		log.Printf("✅ [Relay/Go] Batch accepted (%d msgs). OC Msg: %s", len(pending), msgID_OC)
 	}
 }
-
 
 func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]interface{}) {
 	log.Printf("🔄 [Relay/Go] Syncing Assistant Message for chat %s", chatID)
 	info, _ := ocData["info"].(map[string]interface{})
 	if info == nil {
-		// Try flat structure
 		info = ocData
 	}
-
 	ocMsgID, _ := info["id"].(string)
 	if ocMsgID == "" {
+		return
+	}
+
+	role, _ := info["role"].(string)
+	if role != "" && role != "assistant" {
+		// Only sync assistant messages to prevent mirror echoes
 		return
 	}
 
@@ -173,8 +209,15 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	existing, _ := r.app.FindFirstRecordByFilter("messages", "opencode_id = {:id}", map[string]any{"id": ocMsgID})
 
 	var record *core.Record
+	now := time.Now().Format("2006-01-02 15:04:05.000Z")
+
 	if existing != nil {
+		if existing.GetString("role") == "user" {
+			// This is just a mirror of a user message we sent. Skip!
+			return
+		}
 		record = existing
+		record.Set("updated", now)
 	} else {
 		collection, err := r.app.FindCollectionByNameOrId("messages")
 		if err != nil {
@@ -185,6 +228,8 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 		record.Set("chat", chatID)
 		record.Set("role", "assistant")
 		record.Set("opencode_id", ocMsgID)
+		record.Set("created", now)
+		record.Set("updated", now)
 	}
 
 	// 2. Set Envelope Fields (1:1)
@@ -236,10 +281,12 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 		return
 	}
 
-	chat.Set("last_active", time.Now())
-	
+	now = time.Now().Format("2006-01-02 15:04:05.000Z")
+	chat.Set("last_active", now)
+	chat.Set("updated", now)
+
 	// Extract preview from message parts
-	var messageParts []interface{} // Renamed from 'parts' to avoid conflict and for clarity
+	var messageParts []interface{}
 	partsRaw := record.Get("parts")
 	if partsRaw != nil {
 		if jsonRaw, ok := partsRaw.(types.JSONRaw); ok {
@@ -247,13 +294,8 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 			if err != nil {
 				log.Printf("⚠️ [Relay/Go] Failed to unmarshal message parts in syncAssistantMessage: %v", err)
 			}
-		} else {
-			// If not JSONRaw, it might be directly []interface{} from another source
-			if p, ok := partsRaw.([]interface{}); ok {
-				messageParts = p
-			} else {
-				log.Printf("⚠️ [Relay/Go] Message parts in syncAssistantMessage is neither JSONRaw nor []interface{}: %T", partsRaw)
-			}
+		} else if p, ok := partsRaw.([]interface{}); ok {
+			messageParts = p
 		}
 	}
 	preview := ""
@@ -282,24 +324,49 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 		log.Printf("❌ [Relay/Go] Chat lookup failed for %s: %v", chatID, err)
 		return "", err
 	}
-	
+
 	existingSession := chat.GetString("opencode_id")
 	if existingSession != "" {
-		log.Printf("🔍 [Relay/Go] Found existing session %s for chat %s", existingSession, chatID)
-		return existingSession, nil
+		// Verification: Is this session still alive on OpenCode?
+		verifyURL := fmt.Sprintf("%s/session/%s", r.openCodeURL, existingSession)
+		client := &http.Client{Timeout: 5 * time.Second}
+		vResp, vErr := client.Get(verifyURL)
+		
+		if vErr == nil {
+			defer vResp.Body.Close()
+			if vResp.StatusCode == 200 {
+				log.Printf("✅ [Relay/Go] Existing session %s is still alive.", existingSession)
+				return existingSession, nil
+			}
+			
+			log.Printf("⚠️ [Relay/Go] Existing session %s returned status %d.", existingSession, vResp.StatusCode)
+			if vResp.StatusCode == http.StatusNotFound {
+				log.Printf("⚠️ [Relay/Go] Session %s is gone (404), cleaning up...", existingSession)
+				chat.Set("opencode_id", "")
+				r.app.Save(chat)
+			}
+		} else {
+			log.Printf("⚠️ [Relay/Go] Error verifying session %s: %v", existingSession, vErr)
+			// On network error, we don't clear it immediately to allow for transient issues
+		}
+
+		// If we haven't cleared it, it means we're opting to try using it for stability
+		if chat.GetString("opencode_id") != "" {
+			return existingSession, nil
+		}
 	}
-	
+
 	// Create new session
 	log.Printf("🆕 [Relay/Go] Creating new OpenCode session for chat %s", chatID)
 	reqURL := fmt.Sprintf("%s/session", r.openCodeURL)
-	payload := `{"directory": "/workspace", "agent": "poco"}`
+	payload := `{"directory": "/workspace", "agent": "build"}`
 	resp, err := http.Post(reqURL, "application/json", strings.NewReader(payload))
 	if err != nil {
 		log.Printf("❌ [Relay/Go] OpenCode session creation request failed: %v", err)
 		return "", err
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode >= 400 {
 		log.Printf("❌ [Relay/Go] OpenCode session creation rejected: %s", resp.Status)
 		return "", fmt.Errorf("opencode rejected session creation: %s", resp.Status)
@@ -310,7 +377,7 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 		log.Printf("❌ [Relay/Go] Failed to decode session response: %v", err)
 	}
 	log.Printf("📥 [Relay/Go] OpenCode session creation response: %+v", res)
-	
+
 	newID, _ := res["id"].(string)
 	if newID != "" {
 		chat.Set("opencode_id", newID)
@@ -321,6 +388,6 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 		}
 		return newID, nil
 	}
-	
+
 	return "", fmt.Errorf("failed to extract session id from response")
 }
