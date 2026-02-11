@@ -80,5 +80,5 @@ The value of PocketCoder isn't in how much code I wrote, but in how much I **did
 | **backend** | Go | ~900 | The "Gatekeeper" (Rules & Auth) |
 | **relay** | Go | ~950 | The "Spinal Cord" (Reasoning Sync) |
 | **proxy** | Rust | ~400 | The "Muscle" (Secure Tmux Bridge) |
-| **sandbox** | Bash/TS | ~750 | The "Reality" (Isolated Runtime) |
+| **sandbox** | Bash/Python | ~750 | The "Reality" (Isolated Runtime) |
 | **CORE TOTAL**| | **~3,000** | **Tiny, Auditable, Transparent** |
