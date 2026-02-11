@@ -23,18 +23,26 @@ We chose this license to ensure that if PocketCoder is ever used to provide a ne
 *   **Individuals & Researchers**: Free to use, modify, and explore.
 *   **Commercial/Proprietary**: If you wish to embed this into a closed-source product, please reach out regarding a commercial license.
 
-## 🚀 Getting Started (TODO: Detailed Guide Here)
+## 🚀 Getting Started
 
-This section will provide a quick start guide for new users to get PocketCoder up and running locally.
+PocketCoder is designed to run anywhere Docker is available.
 
-<!-- TODO:
-- Prerequisites (Docker, Git, etc.)
-- Clone the repository
-- `docker-compose up -d`
-- Initial configuration steps
-- How to access the Flutter UI
-- Basic first interaction with the AI assistant
--->
+1.  **Clone the Repository**:
+    ```bash
+    git clone https://github.com/qtpi-bonding/pocketcoder.git
+    cd pocketcoder
+    ```
+2.  **Configure Environment**:
+    ```bash
+    cp .env.example .env
+    # Add your Gemini/OpenCode API keys to .env
+    ```
+3.  **Boot the Stack**:
+    ```bash
+    docker-compose up -d
+    ```
+4.  **Access the Dashboard**:
+    Open `http://localhost:8080/_/` (PocketBase Admin) or use the Flutter client.
 
 ## 🔗 Links
 - [License](LICENSE) (AGPLv3)
@@ -55,7 +63,7 @@ graph TD
 
     subgraph ControlPlane ["Control Plane"]
         PB[(PocketBase)]
-        Relay[Relay]
+        Relay[Relay / Go]
     end
 
     subgraph Reasoning ["Reasoning"]
@@ -63,11 +71,11 @@ graph TD
     end
 
     subgraph Security ["Security"]
-        Proxy[Proxy]
+        Proxy[Proxy / Rust]
     end
 
     subgraph Execution ["Execution"]
-        SB[Sandbox]
+        SB[Sandbox / Docker]
         Tmux[Tmux Session]
     end
 
@@ -84,12 +92,14 @@ graph TD
 ```
 
 ## Codebase Stats: "Featherweight Industrial"
-*(LOC counts are approximate and for initial estimation only.)*
+*(LOC counts as of Feb 2026)*
 
-We prioritize high-leverage tools over custom code. The entire platform matches Enterprise capabilities with less than 2,000 lines of code.
+We prioritize high-leverage tools over custom code. The core system is auditable in an afternoon.
 
-| **pocketbase** | Go | ~900 | **Sovereign Authority**: Identity, Realtime, Permission Whitelisting |
-| **relay** | Node.js | ~650 | **Control Plane**: Proxies messages, handles intents, syncs SSH keys |
-| **proxy** | Rust | ~300 | **Execution Proxy**: Secure TMUX bridge for shell commands |
-| **sandbox** | Docker/Tmux | ~100 | **Isolated Runtime**: Persistent terminal sessions |
-| **TOTAL** | | **~1,950** | **Lean, Auditable, High-Leverage** |
+| **Component** | Tech | Lines | Role |
+| :--- | :--- | :--- | :--- |
+| **backend** | Go | ~900 | **Identity & Rules**: Gating, Auth, API Management |
+| **relay** | Go | ~950 | **Control Plane**: Intent Analysis & OpenCode Orchestration |
+| **proxy** | Rust | ~400 | **Execution Proxy**: Secure shell/tmux bridge |
+| **sandbox** | Bash/TS | ~750 | **Runtime**: Isolated execution & key management |
+| **TOTAL** | | **~3,000** | **Lean, Sovereign, Auditable** |
