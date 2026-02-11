@@ -13,6 +13,8 @@ services:
       - /app/docs/node_modules
       - ./backend:/app/backend:ro
       - ./proxy:/app/proxy:ro
+      - ./sandbox:/app/sandbox:ro
+      - ./client:/app/client:ro
       - ./ARCHITECTURE.md:/app/ARCHITECTURE.md:ro
       - ./DEVELOPMENT.md:/app/DEVELOPMENT.md:ro
     environment:

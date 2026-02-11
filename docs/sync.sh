@@ -28,19 +28,24 @@ extract_body ../ARCHITECTURE.md >> ./src/content/docs/architecture.md
 echo -e "---\ntitle: Development\ndescription: How to set up and build PocketCoder locally.\nhead: []\n---\n" > ./src/content/docs/development.md
 extract_body ../DEVELOPMENT.md >> ./src/content/docs/development.md
 
-# 2. Extract Go Docs (Backend)
-echo "🐹 Extracting Go docs (backend)..."
+# 2. Extract Go Docs (Backend & Relay)
+echo "🐹 Extracting Go docs..."
 echo -e "---\ntitle: Backend Reference\nhead: []\n---\n" > ./src/content/docs/reference/backend.md
 if command -v gomarkdoc &> /dev/null; then
-  gomarkdoc -u ../backend >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
+  gomarkdoc -u ../backend/internal/... >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
 else
   echo "⚠️ gomarkdoc not found, skipping backend docs"
 fi
-LOC_BACKEND=$(find ../backend -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
-echo -e "\n\n**Lines of Code:** $LOC_BACKEND" >> ./src/content/docs/reference/backend.md
 
-# 3. Extract Rust Docs (Proxy)
-echo "🦀 Extracting Proxy docs (Rust)..."
+# Accurate Line Counting
+LOC_RELAY=$(find ../backend/pkg/relay -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
+LOC_BACKEND=$(find ../backend -name "*.go" ! -path "*/pkg/relay/*" | xargs wc -l | tail -n 1 | awk '{print $1}')
+
+echo -e "\n\n**Lines of Code (Core):** $LOC_BACKEND" >> ./src/content/docs/reference/backend.md
+echo -e "**Lines of Code (Relay):** $LOC_RELAY" >> ./src/content/docs/reference/backend.md
+
+# 3. Extract Proxy Docs (Rust)
+echo "Crx Extracting Proxy docs (Rust)..."
 echo -e "---\ntitle: Proxy Reference\nhead: []\n---\n" > ./src/content/docs/reference/proxy.md
 
 if command -v cargo-rdme &> /dev/null; then
@@ -73,9 +78,18 @@ fi
 LOC_PROXY=$(find ../proxy/src -name "*.rs" | xargs wc -l | tail -n 1 | awk '{print $1}')
 echo -e "\n\n**Lines of Code:** $LOC_PROXY" >> ./src/content/docs/reference/proxy.md
 
-# 4. Update Landing Page with Total LOC
-TOTAL_LOC=$((LOC_BACKEND + LOC_PROXY))
-echo "📊 Total Lines of Code: $TOTAL_LOC"
+# 4. Extract Sandbox Stats (Shell & TS)
+echo "🏗️ Extracting Sandbox stats..."
+LOC_SANDBOX=$(find ../sandbox -name "*.sh" -o -name "*.ts" ! -path "*/node_modules/*" | xargs wc -l | tail -n 1 | awk '{print $1}')
+
+# 5. Extract Client Stats (Flutter)
+echo "📱 Extracting Client stats..."
+LOC_CLIENT=$(find ../client/lib -name "*.dart" | xargs wc -l | tail -n 1 | awk '{print $1}')
+
+# 6. Update Landing Page with Total LOC
+TOTAL_CORE=$((LOC_BACKEND + LOC_RELAY + LOC_PROXY + LOC_SANDBOX))
+echo "📊 Total Core Lines of Code: $TOTAL_CORE"
+echo "📱 Total Client Lines of Code: $LOC_CLIENT"
 
 echo "📝 Updating index.mdx with real stats..."
 cat > ./src/content/docs/index.mdx <<EOF
@@ -105,7 +119,10 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 		The reasoning engine is isolated from execution. You own the gatekeeper.
 	</Card>
 	<Card title="Featherweight" icon="setting">
-		Only $TOTAL_LOC lines of core code. Easy to audit and maintain.
+		Only $TOTAL_CORE lines of core code. Easy to audit and maintain.
+	</Card>
+	<Card title="Multi-Platform" icon="laptop">
+		Full Flutter client (~$LOC_CLIENT LOC) available for Mobile and Web.
 	</Card>
 	<Card title="Local-First" icon="open-book">
 		Designed to run on your own hardware or a private VPS.
