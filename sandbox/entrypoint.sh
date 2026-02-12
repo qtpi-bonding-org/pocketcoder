@@ -39,6 +39,12 @@ echo "🔑 [PocketCoder] Starting SSH Daemon on port 2222..."
 mkdir -p /tmp/tmux
 chmod 777 /tmp/tmux
 
+# Start CAO Server (Background)
+echo "🤖 [PocketCoder] Starting CAO Server on port 9889..."
+(
+  cd /app/cao && uv run cao-server
+) &
+
 # Keep the container alive by tailing the tmux session output OR just sleeping
 echo "✅ [PocketCoder] Sandbox is LIVE and waiting for direct commands."
 tail -f /dev/null
