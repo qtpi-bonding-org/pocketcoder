@@ -24,6 +24,11 @@ RUN chmod +x /usr/local/bin/sync_keys.sh
 # Install Dependencies for Listener (Need TS execution, likely ts-node or bun is gone now)
 # We will use 'tsx' to execute typescript directly with Node
 RUN npm install -g tsx opencode-ai
+
+# Install uv (Python package manager for CAO)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
 # --- CAO Setup (PocketCoder Integration) ---
 # Copy CAO Source (Vendored)
 COPY sandbox/cao /app/cao
