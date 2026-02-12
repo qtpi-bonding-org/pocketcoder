@@ -18,12 +18,12 @@ PB_URL="http://127.0.0.1:8090"
 OC_URL="http://127.0.0.1:3000"
 
 # 2. Authenticate as User
-echo "🔑 Logging into PocketBase as Human ($POCKETBASE_USER_EMAIL)..."
+echo "🔑 Logging into PocketBase as Human ($POCKETBASE_ADMIN_EMAIL)..."
 AUTH_RES=$(curl -s -X POST "$PB_URL/api/collections/users/auth-with-password" \
     -H "Content-Type: application/json" \
     -d "{
-        \"identity\": \"$POCKETBASE_USER_EMAIL\",
-        \"password\": \"$POCKETBASE_USER_PASSWORD\"
+        \"identity\": \"$POCKETBASE_ADMIN_EMAIL\",
+        \"password\": \"$POCKETBASE_ADMIN_PASSWORD\"
     }")
 
 USER_TOKEN=$(echo "$AUTH_RES" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)

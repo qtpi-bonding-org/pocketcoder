@@ -20,8 +20,8 @@ case $ROLE in
         COLLECTION="_superusers"
         ;;
     "user")
-        IDENTITY=$POCKETBASE_USER_EMAIL
-        PASSWORD=$POCKETBASE_USER_PASSWORD
+        IDENTITY=$POCKETBASE_ADMIN_EMAIL
+        PASSWORD=$POCKETBASE_ADMIN_PASSWORD
         COLLECTION="users"
         ;;
     "agent")
