@@ -46,3 +46,6 @@ skills/test_*
 # Docs & Other
 docs/.astro/
 docs/src/.astro/
+
+*.txt
+*.tmp
