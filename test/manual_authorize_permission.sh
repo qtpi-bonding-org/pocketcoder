@@ -6,8 +6,8 @@ PB_URL="http://127.0.0.1:8090"
 
 # Load credentials from .env
 if [ -f .env ]; then
-    EMAIL=$(grep "^POCKETBASE_USER_EMAIL=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
-    PASS=$(grep "^POCKETBASE_USER_PASSWORD=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
+    EMAIL=$(grep "^POCKETBASE_ADMIN_EMAIL=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
+    PASS=$(grep "^POCKETBASE_ADMIN_PASSWORD=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
 else
     echo "❌ .env file not found"
     exit 1
