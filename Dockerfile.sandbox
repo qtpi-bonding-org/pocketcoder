@@ -37,6 +37,9 @@ COPY sandbox/cao /app/cao
 # We do this in one step to ensure all files (README etc) are present
 RUN pip install --no-cache-dir -e /app/cao
 
+# Pre-sync uv dependencies so MCP server starts instantly
+RUN cd /app/cao && uv sync
+
 # Set Shared Tmux Socket by default for CAO
 ENV TMUX_SOCKET=/tmp/tmux/pocketcoder
 # -------------------------------------------
