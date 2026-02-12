@@ -27,7 +27,27 @@
         "bash": "ask",
         "edit": "ask",
         "skill": "ask",
+        "cao_*": "ask",
         "*": "ask"
+    },
+    "mcp": {
+        "cao": {
+            "type": "local",
+            "command": [
+                "uv",
+                "run",
+                "--directory",
+                "/app/cao",
+                "cao-mcp-server"
+            ],
+            "enabled": true,
+            "environment": {
+                "CAO_ENABLE_WORKING_DIRECTORY": "false"
+            }
+        }
+    },
+    "tools": {
+        "cao_*": true
     },
     "model": "google/gemini-2.0-flash"
 }
