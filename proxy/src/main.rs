@@ -81,6 +81,14 @@ pub struct ExecRequest {
     pub session_id: Option<String>,
 }
 
+/// NotifyRequest representing a signal from the Sandbox to the Brain.
+#[derive(Debug, Deserialize)]
+pub struct NotifyRequest {
+    pub session_id: String,
+    pub event_type: String,
+    pub payload: serde_json::Value,
+}
+
 #[async_trait]
 pub trait ActionProvider: Send + Sync {
     // Command Logic
@@ -299,6 +307,39 @@ async fn exec_handler(
     }
 }
 
+/// Notification Handler
+/// Forwards a "pulse" from the Sandbox to the OpenCode brain.
+async fn notify_handler(
+    State(_state): State<Arc<AppState>>,
+    Json(payload): Json<NotifyRequest>,
+) -> Json<serde_json::Value> {
+    println!("🔔 [Proxy] Received notification for session {}: {}", payload.session_id, payload.event_type);
+    
+    let client = reqwest::Client::new();
+    let opencode_url = env::var("OPENCODE_URL").unwrap_or_else(|_| "http://opencode:3000".to_string());
+    
+    // Nudge the Brain: Forward task output to Poco's async prompt endpoint
+    let nudge_message = payload.payload.get("output")
+        .and_then(|o| o.as_str())
+        .unwrap_or("Task completed via CAO.");
+
+    let body = serde_json::json!({
+        "role": "user",
+        "parts": [{"type": "text", "text": format!("**[Reflex Arc]** Worker task completed:\n\n{}", nudge_message)}]
+    });
+
+    match client.post(format!("{}/session/{}/prompt_async", opencode_url, payload.session_id))
+        .json(&body)
+        .send()
+        .await {
+            Ok(_) => Json(serde_json::json!({ "status": "brain_nudged" })),
+            Err(e) => {
+                println!("⚠️ [Proxy] Failed to nudge brain: {}", e);
+                Json(serde_json::json!({ "error": e.to_string() }))
+            }
+        }
+}
+
 
 // --------------------------------------------------------------------------
 // Main
@@ -328,6 +369,7 @@ async fn main() -> Result<()> {
         .route("/sse", get(sse_handler))
         .route("/health", get(health_handler))
         .route("/exec", post(exec_handler)) 
+        .route("/notify", post(notify_handler))
         .layer(tower_http::cors::CorsLayer::permissive())
         .with_state(state);
 
