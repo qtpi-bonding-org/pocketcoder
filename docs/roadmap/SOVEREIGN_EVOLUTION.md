@@ -43,8 +43,8 @@ How Poco stays awake during complex builds without the User babysitting.
     - **Observations**: Write-Access for Poco (Patterns/Scratchpad), Approval-Access for Human.
   - **Vector Acceleration**: We will load `sqlite-vec` into the PocketBase instance to enable semantic search over the shared collections.
 - [ ] **Data Hygiene**: How do we prevent Poco from "poisoning" his own memory with malicious observations? (Thresholds, Audits, or separate 'Draft' tables?)
-- [ ] **The "Chain of Command"**: If Poco deploys a sub-agent, does that agent talk to the User, or only to Poco?
-- [ ] **Mobile UI**: How do we visualize a multi-step "Intent Plan" on a small screen? (Progress bars? Checklists?)
+- [x] **Continuity & Heartbeat**: Implemented via the **Reflex Arc**. The system no longer "sleeps" during handoffs; the Proxy nudges the Brain instantly.
+- [x] **The "Chain of Command"**: Sub-agents (CAO) report directly to Poco via the Proxy Sensory bridge. Poco remains the OIC (Officer in Charge).
 - [ ] **Persistence**: Since OpenCode handles chat history, how do we "inject" our local DB (SOPs/Observations) into that context efficiently?
 
 ---

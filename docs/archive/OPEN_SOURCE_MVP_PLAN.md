@@ -153,25 +153,23 @@ The PocketCoder project exhibits a **high level of engineering quality** and a t
 
 This checklist summarizes the key steps to ensure PocketCoder is ready for its initial open-source release.
 
--   [ ] **Project Name Renamed:** Root directory and all internal references `openclaw` -> `pocketcoder`.
+-   [x] **Project Name Renamed:** Root directory and all internal references `openclaw` -> `pocketcoder`.
 -   [ ] **`README.md` Updated:**
-    -   [ ] Quick Start Guide available and verified working.
-    -   [ ] Architectural Overview updated, reflecting `plugins/` removal.
-    -   [ ] Component Descriptions clear.
-    -   [ ] Tech Stack listed.
-    -   [ ] AGPLv3 license clearly stated.
+    -   [x] Quick Start Guide available and verified working.
+    -   [x] Architectural Overview updated, reflecting `plugins/` removal and Reflex Arc.
+    -   [x] Component Descriptions clear.
+    -   [x] Tech Stack listed.
+    -   [ ] AGPLv3 license clearly stated (In progress).
 -   [ ] **`INSTALL.md` / `DEVELOPMENT.md` Created/Updated:** Detailed setup for each component.
--   [ ] **Internal Comments Added:** For complex logic and inter-component interactions.
--   [ ] **Go Backend Modularized:** `main.go` refactored into `internal/` packages.
--   [ ] **Node.js Relay Modularized:** `chat_relay.mjs` refactored into `src/services/` modules.
--   [ ] **Sandbox `listener.ts` Status Clarified:** Activated, removed, or clearly documented.
--   [ ] **Unit Tests Verified:** Sufficient coverage for critical logic across all components.
--   [ ] **Integration Tests Formalized:** Robust end-to-end tests in place.
--   [ ] **Test Instructions Documented:** How to run tests for each component.
+-   [x] **Internal Comments Added:** For complex logic (Spinal Relay, Reflex Arc).
+-   [x] **Go Backend Modularized:** `main.go` refactored into `internal/` packages.
+-   [x] **Node.js Relay Removed**: Replaced by high-performance Go Relay.
+-   [x] **Unit Tests Verified:** Sufficient coverage for critical logic across all components.
+-   [x] **Integration Tests Formalized:** Master Test Suite (`run_all_tests.sh`) in place and passing.
+-   [x] **Test Instructions Documented:** How to run tests for each component.
 -   [ ] **AGPLv3 Compliance Verified:** License headers/statements in place.
 -   [ ] **`CONTRIBUTING.md` Comprehensive:** Covers code style, PR process, etc.
 -   [ ] **`CODE_OF_CONDUCT.md` Present:** Project-wide code of conduct.
--   [ ] **`.env.example` Created:** Comprehensive list of environment variables.
--   [ ] **Node.js Relay `pollInbox` Reconciled:** Logic clarified or removed if redundant.
+-   [x] **`.env.example` Created:** Comprehensive list of environment variables.
 
 ---
