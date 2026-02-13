@@ -114,8 +114,8 @@ echo "⏳ Waiting for Poco and Sub-Agent to complete (polling for final hash)...
 EXPECTED_HASH="7bb83f2fba9710ec82266a636ba92d9947f980680b1c9a96445b954f6fd017c5"
 FOUND_HASH="false"
 
-for i in {1..10}; do
-    echo "🔍 Checking for final result... (Attempt $i/10)"
+for i in {1..20}; do
+    echo "🔍 Checking for final result... (Attempt $i/20)"
     MSGS_RES=$(curl -s -X GET "$PB_URL/api/collections/messages/records?filter=(chat%3D%27$CHAT_ID%27)&sort=-created" \
         -H "Authorization: $USER_TOKEN")
     

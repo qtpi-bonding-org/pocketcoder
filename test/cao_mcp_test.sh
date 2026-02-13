@@ -33,8 +33,8 @@ fi
 
 # Check OpenCode config has CAO MCP configured
 echo "📝 Checking OpenCode configuration..."
-if grep -q '"cao"' opencode.config.json; then
-    echo "✅ CAO MCP server is configured in opencode.config.json"
+if grep -q '"cao"' opencode.json; then
+    echo "✅ CAO MCP server is configured in opencode.json"
 else
     echo "❌ CAO MCP server not found in config"
     exit 1
