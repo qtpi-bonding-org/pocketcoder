@@ -5,11 +5,11 @@ This document provides a detailed overview of PocketCoder's architecture, outlin
 ## TL;DR - Current State
 
 **Services:**
-- ✅ **relay** (Go) - The asynchronous "Spinal Cord." Intercepts tool/permission requests, handles agent deployment, and orchestrates the event firehose via SSE.
-- ✅ **pocketbase** (Go) - The central "Sovereign Authority." Handles auth, storage, and auto-authorizes safe operations.
-- ✅ **proxy** (Rust) - The "Muscle & Senses." High-performance execution driver that nudges the brain when tasks complete.
-- ✅ **sandbox** (Tmux) - Isolated "Reality." Stateful execution environment.
-- ✅ **opencode** (Reasoning) - The "Brain." A native agentic engine that natively queues and processes pulses.
+- ✅ **pocketbase** (Go) - The central "Sovereign Authority." Now includes the embedded **Go Relay** ("The Spinal Cord"), which handles event orchestration and permission gating.
+- ✅ **proxy** (Rust) - The "Muscle." A high-performance, dumb execution driver. It executes authorized commands in the sandbox and nudges the brain upon completion.
+- ✅ **sandbox** (Tmux) - Isolated "Reality." Stateful execution environment where all actual work occurs.
+- ✅ **opencode** (Reasoning) - The "Brain" (Poco). A native agentic engine that plans, reasons, and requests actions.
+- ✅ **cao** (Python) - The "Subagent Orchestrator." An MCP server running in the sandbox that allows Poco to spawn and manage specialist sub-agents.
 
 ---
 
@@ -17,145 +17,129 @@ This document provides a detailed overview of PocketCoder's architecture, outlin
 
 PocketCoder is a permission-gated AI coding assistant designed with a clear separation of concerns, orchestrating interactions between its core services:
 
-1.  **Client (Flutter App):** The user interface for interacting with PocketCoder, displaying information, and allowing user intervention for permissions.
-2.  **opencode (Reasoning Engine):** The external AI agent that performs high-level reasoning and decision-making, requesting permissions and command execution from the system.
-3.  **pocketbase (Go Backend):** The central authority for identity, data persistence, real-time events, and initial permission arbitration. All state, audit logs, and agent configurations are stored here.
-4.  **relay (Go):** The asynchronous orchestrator. It listens to the OpenCode SSE firehose and syncs all activity (thinking, tool-calls, text) directly to PocketBase in real-time. It no longer blocks on turns, but rather "records the game" as it happens.
-5.  **proxy (Rust):** A high-performance sensory relay. It executes commands in the sandbox and "nudges" the Brain (OpenCode) immediately upon completion via the **Reflex Arc**.
-6.  **sandbox (Docker/Tmux):** The stateful "Reality." An isolated Linux environment managed via Tmux, ensuring command persistence even if a container restarts.
+1.  **Client (Flutter App):** The user interface for interacting with **PocketBase**. It subscribes to real-time events to display thoughts, tool calls, and permission requests.
+2.  **opencode (Poco):** The reasoning engine. It operates in a container but has no direct access to the host or the sandbox's shell. It "thinks" and issues tool calls.
+3.  **pocketbase (Backend & Relay):**
+    *   **Core:** Handles identity, data persistence, and rules.
+    *   **Relay (Go Module):** The embedded orchestrator. It intercepts OpenCode's activities (via SSE), logs them to the database, and enforces the "Ask for Permission" protocol.
+4.  **proxy (Rust):** A purely functional execution gateway. It accepts command requests (via HTTP) and executes them in the **sandbox** via Tmux. It trusts that the upstream request has already been permission-gated by the system (OpenCode/Relay).
+5.  **sandbox (Docker/Tmux):** The isolated runtime environment.
+    *   **Tools:** Contains all dev tools (git, node, python, etc.).
+    *   **CAO:** Runs the `cli-agent-orchestrator` MCP server, enabling the creation of sub-agent hierarchies.
 
-These services form the "Sovereign Loop," where the reasoning engine (`opencode`) is strictly isolated from direct execution, with all critical actions and data flows mediated and audited through the control plane (`pocketbase` and `relay`) and the security relay (`proxy`).
-
-### Service Diagram (Simplified)
+### Service Diagram
 
 ```mermaid
 graph TD
     User((👤 User))
     subgraph Client ["📱 Flutter App"]
         UI[User Interface]
+        SSE[Realtime Events]
     end
 
-    subgraph ControlPlane ["🎛️ Control Plane (Go)"]
-        PB[(pocketbase)]
-        Relay[relay / Go]
+    subgraph ControlPlane ["🎛️ PocketBase (Go)"]
+        PB[Database & Auth]
+        Relay[Relay Module]
     end
 
-    subgraph Reasoning ["🧠 Reasoning"]
-        OC[opencode]
+    subgraph Reasoning ["🧠 OpenCode"]
+        Poco[Poco (Main Agent)]
     end
 
-    subgraph Security ["⚡ Security & Sensation"]
-        Proxy[proxy / Rust]
+    subgraph Security ["⚡ Proxy"]
+        Proxy[Rust Proxy]
     end
 
-    subgraph Execution ["🛠️ Execution"]
-        SB[sandbox]
-        Tmux[Tmux Session]
+    subgraph Execution ["🛠️ Sandbox"]
+        SB[Tmux Sessions]
+        CAO[CAO Subagents]
     end
 
     %% Flows
     User <--> UI
-    UI <---> PB
+    UI <-- "Events" --> Relay
     
-    PB <--- Event Stream (SSE) ---> Relay
-    Relay <--- HTTP / Radio ---> OC
+    Poco -- "SSE Firehose" --> Relay
+    Poco -- "Tool Calls (Permitted?)" --> Proxy
     
-    OC <--- Requests ---> Proxy
-    Proxy --- Reflex Arc (Notify) ---> OC
-    Proxy <---> SB
-    SB <--> Tmux
+    Relay -- "Permission Gate" --> PB
+    
+    Proxy -- "Executes" --> SB
+    Proxy -- "Nudge (Reflex Arc)" --> Poco
+    
+    Poco -- "Spawn Subagent" --> CAO
+    CAO -- "Orchestrate" --> SB
 ```
-
-
 
 ---
 
 ## The Pulse & Reflex Arc (Event-Driven Coordination)
 
-PocketCoder has evolved from a blocking "Request-Response" model to a biological "Pulse & Reflex" architecture.
+PocketCoder uses a "Pulse & Reflex" architecture to maintain responsiveness without busy-waiting.
 
 ### 1. The Pulse (Thinking & Tooling)
-- **OpenCode** emits a continuous SSE stream ("Firehose") of events: *Thinking*, *StepStart*, *ToolCall*, *MessageUpdate*.
-- **Relay** sits on the "Radio" and syncs these pulses to PocketBase instantly. 
-- The **User UI** (Flutter) subscribes to PocketBase and displays the "Thoughts" in real-time without polling.
+- **OpenCode** emits a continuous stream of events (Thinking, ToolCall).
+- **Relay (in PocketBase)** consumes this stream, logs it, and pushes updates to the frontend.
+- **Permissioning:** When OpenCode attempts a sensitive action (like `bash` or `edit`), it pauses. The Relay creates a `permission` record. The User approves it via the UI. The Relay then signals OpenCode to proceed.
 
 ### 2. The Reflex Arc (Fast Handoff)
-- When a sub-agent (CAO) finishes a task in the **Sandbox**, it sends a notification to the **Proxy**.
-- The **Proxy (Muscle)** immediately hits the **OpenCode (Brain)** `/prompt_async` endpoint.
-- This "Reflex" wakes up the Brain instantly. The Brain processes the worker's result and continues the plan.
-- The **Relay** sees the resulting events on the stream and syncs them.
+- When a command finishes in the **Sandbox**, the **Proxy** captures the result.
+- Instead of waiting for OpenCode to poll, the Proxy hits the **Reflex Endpoint** (`/prompt_async`) on OpenCode.
+- This immediately wakes up the agent to process the result and continue its train of thought.
 
 ---
 
 ## Permission Flow: The Sovereign Authority
 
-PocketCoder uses a **Whitelist-First** security model, where PocketBase acts as the "Sovereign Authority" for all agent intents.
+Security is enforced via a **permissions** system managed by PocketBase.
 
-### Whitelist-First Execution (Auto-Authorized)
-
-1. **OpenCode** asks for permission (e.g., `bash: git status`).
-2. **Relay** receives the request and POSTs to PocketBase `/api/pocketcoder/permission`.
-3. **PocketBase** evaluates the intent against `whitelist_actions` (Verbs) and `whitelist_targets` (Nouns).
-4. If a match is found:
-    - PocketBase creates a `permissions` record with status `authorized`.
-    - PocketBase returns `{ permitted: true }`.
-    - **Relay** immediately tells **OpenCode** to proceed (`once`).
-5. If NO match is found:
-    - PocketBase creates a `permissions` record with status `draft`.
-    - PocketBase returns `{ permitted: false, status: "draft" }`.
-    - **Relay** waits for a realtime update on the `permissions` collection.
-    - **User** approves manually via the UI.
-    - **Relay** receives the `authorized` event and tells **OpenCode** to proceed.
+1.  **Request:** OpenCode initiates a tool call (e.g., `bash: ls -la`).
+2.  **Interception:** The tool call is intercepted (configured as `ask` in `opencode.json`).
+3.  **Gatekeeper:** The Relay creates a pending permission request in PocketBase.
+4.  **Arbitration:**
+    *   **Auto-Approve:** If the action matches a whitelist rule (e.g., safe read-only commands), it is automatically approved.
+    *   **User Review:** Otherwise, it waits in `draft` status. The User sees a prompt in the UI and clicks "Approve" or "Deny".
+5.  **Execution:** Once approved, the tool call proceeds to the **Proxy** for execution in the Sandbox.
 
 ---
 
-## Database Schema
+## Subagents (CAO Integration)
 
-### `permissions` Collection (Intents)
-- `opencode_id`: Unique ID from the reasoning engine.
-- `session_id`: OpenCode session context.
-- `chat`: Relation to the `chats` collection.
-- `permission`: Type (bash, write, read, etc).
-- `patterns`: List of target nouns (file paths, URLs).
-- `status`: `draft`, `authorized`, `denied`.
-- `message`: Descriptive request summary.
-- `source`: Service that initiated the intent.
-- `challenge`: Random UUID for cryptographic signing (future proofing).
+Poco is the "Manager," but he can hire help.
 
-### `whitelist_actions` / `whitelist_targets`
-- Collections used by the Sovereign Authority to auto-approve intents based on patterns (e.g., `bash: git status` or `write: /workspace/**`).
+*   **CAO (CLI Agent Orchestrator):** An MCP server running inside the Sandbox.
+*   **Capabilities:**
+    -   **Spawn:** Poco can create new, isolated sub-agents (e.g., "terraformer", "researcher").
+    -   **Context:** Sub-agents run in their own Tmux sessions, keeping their context separate from Poco's main thread.
+    -   **Tools:** Sub-agents have access to tools installed in the Sandbox (Terraform, AWS CLI, etc.).
+*   **Flow:** Poco calls `cao_handoff` -> CAO starts a sub-agent -> CAO manages sub-agent inputs/outputs -> Result returned to Poco.
 
 ---
 
 ## Service Responsibilities
 
-### relay (Go)
-- **Asynchronous Spinal Cord**: Orchestrates communication between PocketBase and OpenCode without blocking the event loop.
-- **SSE Consumer**: Listens to the `/event` firehose and mirrors agent activity into the Sovereign Ledger (PB).
-- **Agent Deployer**: Syncs prompt files, model configs, and agent rules from PocketBase to the OpenCode engine on-the-fly.
-
 ### pocketbase (Go)
-- **Sovereign Authority**: Custom Go logic implements the `/api/pocketcoder/permission` endpoint for centralized intent arbitration.
-- **Rule Engine**: Standard PocketBase API rules restrict data access for "Agents" vs "Humans".
+- **Identity & Data:** The single source of truth.
+- **Relay Module:** Embeds the logic for orchestrating OpenCode interaction and managing permissions.
+- **Rule Engine:** Enforces data access policies.
 
 ### proxy (Rust)
-- **Sensory Execution Proxy**: A high-performance Rust service that exposes an `/exec` endpoint.
-- **Reflex Node**: Includes a `/notify` endpoint that triggers immediate brainHand-offs, bypassing standard polling delays.
-- **TMUX Controller**: Directly communicates with the TMUX socket in the sandbox to run commands and monitor stateful sessions.
+- **Dumb Execution:** Simply executes what it receives. It assumes the caller (OpenCode/Relay) has already handled permissions.
+- **Reflex Node:** Triggers the "Brain" when commands complete.
+- **Protocol:** Speaks HTTP to OpenCode and Socket to Tmux.
 
-### sandbox (Docker/Tmux)
-- **Isolated User-space**: Persistent terminal sessions managed by TMUX.
-- **Key Manager**: Receives synced SSH keys via a shared volume to enable secure external access.
+### sandbox (Docker)
+- **The Workshop:** Contains all the tools and runtime binaries.
+- **Persistence:** Tmux ensures long-running processes survive connection drops.
+
+### opencode (Poco)
+- **The Brain:** Pure reasoning. It sees the world through the Proxy and interacts via the Relay.
 
 ---
 
 ## Key Design Principles
 
-1. **Physical Separation**: Reasoning (`opencode`) is networking-isolated from Execution (`sandbox`).
-2. **Persistence**: Every intent and result is stored in `pocketbase` for auditability and recovery.
-3. **Zero-Trust**: The reasoning engine (`opencode`) is treated as a guest. It cannot execute anything that hasn't been explicitly authorized by the user (or an auto-authorization rule) in `pocketbase`.
-4. **Auditability**: All actions, permissions, and command executions are logged in `pocketbase` for a complete audit trail.
-5. **Resilience**: Leveraging `tmux` in the `sandbox` for persistent sessions and `pocketbase` for state ensures operational resilience.
-
----
-
+1.  **Physical Separation:** Brain (OpenCode) != Body (Sandbox).
+2.  **Sovereign Data:** All state lives in PocketBase, owned by the user.
+3.  **Subagent Delegation:** Complex tasks can be delegated to specialist sub-agents via CAO.
+4.  **Dumb Robustness:** The execution layer (Proxy/Sandbox) is kept simple and robust, focusing on reliability over logic.
