@@ -15,8 +15,11 @@ services:
       - ./proxy:/app/proxy:ro
       - ./sandbox:/app/sandbox:ro
       - ./client:/app/client:ro
+      - ./scripts:/app/scripts:ro
       - ./ARCHITECTURE.md:/app/ARCHITECTURE.md:ro
       - ./DEVELOPMENT.md:/app/DEVELOPMENT.md:ro
+      - ./SECURITY.md:/app/SECURITY.md:ro
+      - ./CODEBASE.md:/app/CODEBASE.md:rw
     environment:
       - NODE_ENV=development
     restart: unless-stopped
