@@ -19,9 +19,6 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo install cargo-rdme
 
-# Install JS doc tools
-RUN npm install -g jsdoc-to-markdown documentation
-
 WORKDIR /app/docs
 
 # Copy package files and install dependencies

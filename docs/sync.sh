@@ -5,12 +5,14 @@ echo "🔄 [Sovereign Docs] Starting polyglot documentation extraction..."
 
 # Clean up previous extractions
 rm -rf ./src/content/docs/reference
+rm -rf ./src/content/docs/guides
 rm -f ./src/content/docs/*.md ./src/content/docs/*.mdx
 mkdir -p ./src/content/docs/reference
+mkdir -p ./src/content/docs/guides
 
 # Programmatically generate Codebase Audit
 echo "🦅 Generating Sovereign Audit..."
-../scripts/generate_audit.sh
+(cd .. && ./scripts/generate_audit.sh)
 
 # Function to extract body content (skip H1 if present)
 extract_body() {
@@ -35,17 +37,29 @@ extract_body ../DEVELOPMENT.md >> ./src/content/docs/development.md
 echo -e "---\ntitle: Sovereign Audit\ndescription: Complete index of original PocketCoder files.\nhead: []\n---\n" > ./src/content/docs/codebase.md
 extract_body ../CODEBASE.md >> ./src/content/docs/codebase.md
 
+echo -e "---\ntitle: Security Architecture\ndescription: How PocketCoder enforces sovereign isolation.\nhead: []\n---\n" > ./src/content/docs/security.md
+extract_body ../SECURITY.md >> ./src/content/docs/security.md
+
+# 1b. Sync Guides
+echo "📖 Syncing guides..."
+for guide in ./guides/*.md; do
+  if [ -f "$guide" ]; then
+    name=$(basename "$guide" .md)
+    title=$(echo "$name" | sed 's/_/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1')
+    echo -e "---\ntitle: $title\nhead: []\n---\n" > "./src/content/docs/guides/$name.md"
+    extract_body "$guide" >> "./src/content/docs/guides/$name.md"
+  fi
+done
+
 # 2. Extract Go Docs (Backend & Relay)
 echo "🐹 Extracting Go docs..."
 echo -e "---\ntitle: Backend Reference\nhead: []\n---\n" > ./src/content/docs/reference/backend.md
 if command -v gomarkdoc &> /dev/null; then
-  # Only count internal code, exclude vendor/migrations
   gomarkdoc -u ../backend/internal/... >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
 else
   echo "⚠️ gomarkdoc not found, skipping backend docs"
 fi
 
-# Accurate Line Counting (Original Code Only)
 LOC_RELAY=$(find ../backend/pkg/relay -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
 LOC_BACKEND=$(find ../backend/internal -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
 LOC_BACKEND_MAIN=$(wc -l ../backend/main.go | awk '{print $1}')
@@ -55,10 +69,17 @@ echo -e "\n\n**Lines of Code (Core):** $LOC_BACKEND" >> ./src/content/docs/refer
 echo -e "**Lines of Code (Relay):** $LOC_RELAY" >> ./src/content/docs/reference/backend.md
 
 # 3. Extract Proxy Docs (Rust)
-echo "Crx Extracting Proxy docs (Rust)..."
+echo "🦀 Extracting Proxy docs (Rust)..."
 echo -e "---\ntitle: Proxy Reference\nhead: []\n---\n" > ./src/content/docs/reference/proxy.md
-# ... (rest of Rust extraction remains same but LOC_PROXY is original main.rs only)
+echo -e "Detailed documentation for the Rust-based Sovereign Proxy.\n" >> ./src/content/docs/reference/proxy.md
+
+# Extract high-level module docs and public functions
+grep -E "^\s*///" ../proxy/src/main.rs | sed 's/^\s*\/\/\///' >> ./src/content/docs/reference/proxy.md
+echo -e "\n### Public Interface (Main)\n" >> ./src/content/docs/reference/proxy.md
+grep -E "^\s*pub (async )?fn" ../proxy/src/main.rs | sed 's/^\s*//' | sed 's/ {\s*$//' | sed 's/$/;/' | sed 's/^/- `/' | sed 's/$/`/' >> ./src/content/docs/reference/proxy.md
+
 LOC_PROXY=$(wc -l ../proxy/src/main.rs | awk '{print $1}')
+echo -e "\n\n**Lines of Code:** $LOC_PROXY" >> ./src/content/docs/reference/proxy.md
 
 # 4. Extract Sandbox Stats (Original Glue Only)
 echo "🏗️ Extracting Sandbox stats..."
