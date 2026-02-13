@@ -61,6 +61,9 @@ run_test "feature_whitelist.sh" "Whitelist Collection Management"
 # 5. SOP Governance
 run_test "sop_workflow_test.sh" "SOP Governance Master Signature"
 
+# 6. Multi-Agent Coordination (Reflex Arc)
+run_test "cao_delegation_test.sh" "Sub-Agent Delegation & Reflex Arc"
+
 echo -e "\n${GREEN}========================================${NC}"
 if [ "$RUN_FAILED" = true ]; then
     echo -e "${RED}❌ SOME TESTS FAILED.${NC}"
