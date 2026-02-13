@@ -1,5 +1,6 @@
 #!/bin/bash
 # scripts/generate_audit.sh
+# @pocketcoder-core: Audit Generator. Programmatically builds the index of original code.
 # Dynamically generates CODEBASE.md by searching for @pocketcoder-core tags in headers.
 
 TARGET_FILE="CODEBASE.md"
@@ -28,7 +29,7 @@ grep -r "@pocketcoder-core:" . \
     
     # Parse description (everything after the tag)
     # We use a greedy match but try to be careful about the separator
-    DESCRIPTION=$(echo "$line" | grep -o "@pocketcoder-core: .*" | cut -d: -f2- | sed 's/^ //')
+    DESCRIPTION=$(echo "$line" | grep -o "@pocketcoder""-core: .*" | cut -d: -f2- | sed 's/^ //')
     
     if [[ -z "$DESCRIPTION" ]]; then continue; fi
 
