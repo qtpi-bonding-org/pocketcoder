@@ -19,17 +19,18 @@ This roadmap outlines the path from initial setup to a lean, professional AI cod
     -   **Verified** that only execution is gated; file writes remain fast and native.
 
 
-## Phase 3: The User Experience 🏗️
+## Phase 3: The Pulse & Reflex Arc ✅
 - [x] **Secure Access**: Standardized on robust password-based auth for simplicity and speed.
 - [x] **Universal Gating**: Every tool request (bash, read, write) creates a "Draft" intent by default.
-- [ ] **Live Terminal Mirror**: Stream real-time `tmux` pane output back to the Flutter app.
-- [ ] **Artifact Ledger**: A dedicated F1 dashboard for "finalized" outputs (files, UIs, code blocks).
-- [ ] **Enhanced Whitelisting**: Extend the regex-based auto-auth to non-bash tools (e.g., allow `read` on certain paths).
+- [x] **Event-Driven Nervous System**: Migrated the Relay to Go for non-blocking, asynchronous coordination.
+- [x] **The Reflex Arc**: Proxy-based brainHand-offs that eliminate 30s polling delays.
+- [x] **Asynchronous State Sync**: SSE-based mirroring of Thinking and Tooling pulses into PocketBase.
 
-## Phase 4: Polish & Release 📦
-- [ ] **Local-First Packaging**: One-click deployment script using `docker-compose`.
-- [ ] **Zero-Config Setup**: Automatic user seeding and environment validation on first boot.
-- [ ] **Documentation**: A humble, clear guide for self-hosters and contributors.
+## Phase 4: Polish & Release 🏗️
+- [x] **Master Test Suite**: A comprehensive `run_all_tests.sh` that validates the entire Sovereign Loop.
+- [ ] **One-Click Genesis**: Finalize the `genesis.sh` script for zero-config onboarding.
+- [ ] **Documentation Audit**: Final pass on `README.md` and `DEVELOPMENT.md`.
+- [ ] **Community Readiness**: AGPLv3 compliance headers across the codebase.
 
 ---
 

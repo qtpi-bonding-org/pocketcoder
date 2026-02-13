@@ -23,15 +23,21 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 4.  **Explore**: Access the PocketBase UI at `http://localhost:8090/_/`
 
 ## 🔗 Links
+- [Detailed Architecture](docs/architecture/ARCHITECTURE.md)
+- [Project Roadmap](docs/roadmap/MVP_ROADMAP.md)
 - [License](LICENSE) (AGPLv3)
 - [Contributing](CONTRIBUTING.md)
+- [Development Guide](DEVELOPMENT.md)
 
 ---
 *Built with heart by a solo dev in collaboration with **Gemini** (Google's agentic AI assistant). This project is as much an experiment in human-AI partnership as it is in software architecture.*
 
-## Architecture: The Sovereign Loop
+## Architecture: The Event-Driven Loop
 
-PocketCoder uses a **Physical Separation of Concerns**. The "Brain" (Reasoning) is isolated from the "Reality" (Sandbox) by a security relay.
+PocketCoder uses a **Pulse & Reflex** nervous system. The "Brain" (Reasoning) is isolated from "Reality" (Sandbox) by a sensory security relay.
+
+- **The Pulse**: All agent thoughts and tool calls are streamed instantly via SSE and recorded in the Sovereign Ledger.
+- **The Reflex**: Sub-agents in the Sandbox "nudge" the Brain via the Proxy, eliminating handoff delays.
 
 ```mermaid
 graph TD
@@ -40,21 +46,21 @@ graph TD
         UI[Flutter App]
     end
 
-    subgraph ControlPlane ["Control Plane (PocketBase)"]
-        PB[(DB & Auth)]
-        Relay[Relay / Go]
+    subgraph ControlPlane ["Control Plane (Go)"]
+        PB[(PocketBase)]
+        Relay[Relay / Spinal Cord]
     end
 
     subgraph Reasoning ["Reasoning"]
-        OC[OpenCode]
+        OC[OpenCode / Brain]
     end
 
-    subgraph Security ["Security"]
-        Proxy[Proxy / Rust]
+    subgraph Security ["Security & Senses"]
+        Proxy[Proxy / Muscle]
     end
 
     subgraph Execution ["Execution (Isolated)"]
-        SB[Sandbox / Docker]
+        SB[Sandbox / Reality]
         Tmux[Tmux Session]
     end
 
@@ -62,23 +68,21 @@ graph TD
     User <--> UI
     UI <--> PB
     
-    PB <-. Event Subscription .-> Relay
-    Relay <--> OC
+    PB <--- Event Sync ---> Relay
+    Relay <--- HTTP/SSE ---> OC
     
     OC <--> Proxy
+    Proxy -- Reflex Arc --> OC
     Proxy <--> SB
     SB <--> Tmux
 ```
 
-## "Featherweight" Stats
+## "Featherweight" High-Performance Stats
 *(Strictly original PocketCoder code as of Feb 2026)*
-
-The value of PocketCoder isn't in how much code I wrote, but in how much I **didn't** have to write by leveraging great tools.
 
 | Component | Tech | Lines | Role |
 | :--- | :--- | :--- | :--- |
-| **backend** | Go | ~530 | Custom hooks, API gating, and security rules. |
-| **relay** | Go | ~940 | The logic for syncing reasoning with reality. |
-| **proxy** | Rust | ~430 | Secure bridge between the brain and sandbox. |
-| **sandbox** | Bash/Python| ~220 | The original glue for key-sync and OpenCode. |
-| **CORE TOTAL**| | **~2,120** | **Truly Minimal, Fully Sovereign.** |
+| **backend** | Go | ~1,200 | Sovereign Authority, Asynchronous Relay, and API. |
+| **proxy** | Rust | ~450 | Sensory bridge with Brain-Nudge support. |
+| **sandbox** | Bash/Python| ~250 | The isolated environment glue. |
+| **CORE TOTAL**| | **~1,900** | **Leaner, Faster, Fully Sovereign.** |
