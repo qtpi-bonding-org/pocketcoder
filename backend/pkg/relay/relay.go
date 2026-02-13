@@ -61,9 +61,6 @@ func (r *RelayService) Start() {
 	r.registerPermissionHooks()
 	r.registerSopHooks()
 
-	// 3. Catch up on missed messages
-	go r.recoverMissedMessages()
-
 	// 4. Start Health Monitor Watchdog
 	go r.startHealthMonitor()
 }
