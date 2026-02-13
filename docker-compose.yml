@@ -69,10 +69,8 @@ services:
       - ./proposals:/workspace/.opencode/proposals
       - ./skills:/workspace/.opencode/skills:ro
       - opencode_data:/root/.local/share/opencode              # Persistent Storage
-      - ./opencode.config.json:/root/.config/opencode/opencode.json:ro 
-      - ./opencode.config.json:/root/.config/opencode/config.json:ro
-      - ./opencode.config.json:/root/.opencode/opencode.json:ro
-      - ./opencode.config.json:/root/.opencode/config.json:ro
+      - ./opencode.json:/root/.config/opencode/opencode.json:ro
+      - ./sandbox/cao/src:/app/cao/src:ro                       # Mount ONLY src for live-editing
     entrypoint: /bin/sh
     command: >
       -c "
@@ -86,6 +84,7 @@ services:
     networks:
       - pocketcoder-memory
       - pocketcoder-control
+      - pocketcoder-execution
 
 
 
@@ -102,6 +101,7 @@ services:
       - ./proposals:/workspace/.opencode/proposals
       - tmux_socket:/tmp/tmux
       - ssh_keys:/ssh_keys:ro  # Read-only access to SSH keys
+      - ./sandbox/cao/src:/app/cao/src                          # Mount ONLY src for live-editing
     working_dir: /workspace
     environment:
       - TMUX_TMPDIR=/tmp/tmux

@@ -38,7 +38,7 @@ else
     MAX_RETRIES=30
     RETRY=0
     while [ $RETRY -lt $MAX_RETRIES ]; do
-        if curl -s -f http://localhost:8080/api/health > /dev/null 2>&1; then
+        if curl -s -f http://localhost:8090/api/health > /dev/null 2>&1; then
             echo -e "${GREEN}PocketBase is ready${NC}"
             break
         fi
@@ -61,6 +61,7 @@ echo ""
 # Run the integration tests
 ./test/healthcheck_test.sh
 ./test/ssh_key_integration_test.sh
+./test/cao_delegation_test.sh
 
 TEST_EXIT_CODE=$?
 
