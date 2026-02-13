@@ -14,12 +14,14 @@
         "grep": true,
         "glob": true,
         "list": true,
-        "skill": true
+        "skill": true,
+        "cao_handoff": true
       },
       "permission": {
         "bash": "deny",
         "edit": "ask",
-        "skill": "ask"
+        "skill": "ask",
+        "cao_handoff": "ask"
       }
     }
   },
@@ -27,29 +29,29 @@
     "bash": "ask",
     "edit": "ask",
     "skill": "ask",
-    "cao_*": "ask",
+    "cao_handoff": "ask",
     "*": "ask"
   },
   "mcp": {
     "cao": {
       "type": "local",
       "command": [
-        "uv",
-        "run",
-        "--directory",
-        "/app/cao",
-        "cao-mcp-server"
+        "/app/cao/.venv/bin/python3",
+        "-m",
+        "cli_agent_orchestrator.mcp_server.server"
       ],
       "enabled": true,
       "environment": {
         "CAO_ENABLE_WORKING_DIRECTORY": "false",
-        "SERVER_HOST": "sandbox",
-        "SERVER_PORT": "9889"
+        "CAO_SERVER_HOST": "sandbox",
+        "CAO_SERVER_PORT": "9889",
+        "CAO_LOG_LEVEL": "DEBUG",
+        "PYTHONPATH": "/app/cao/src"
       }
     }
   },
   "tools": {
-    "cao_*": true
+    "cao_handoff": true
   },
   "model": "google/gemini-2.0-flash"
 }
