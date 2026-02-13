@@ -23,7 +23,7 @@ use anyhow::{Result, anyhow};
 use std::sync::Arc;
 use axum::{
     extract::{State, Query},
-    response::sse::{Event, Sse},
+    response::{sse::{Event, Sse}, IntoResponse},
     routing::{get, post},
     Json, Router,
 };
@@ -36,8 +36,6 @@ use parking_lot::RwLock;
 use tokio::time::{sleep, Duration};
 use std::process::Command;
 use uuid::Uuid;
-use sha2::{Sha256, Digest};
-use hex;
 
 // --------------------------------------------------------------------------
 // Core Models (Normalized Schema)
@@ -340,6 +338,45 @@ async fn notify_handler(
         }
 }
 
+/// CAO Proxy Handler
+/// Forwards all requests on 9889 to the Sandbox.
+/// This allows the Brain (OpenCode) to communicate with CAO without being on the execution network.
+async fn cao_proxy_handler(
+    method: axum::http::Method,
+    uri: axum::http::Uri,
+    headers: axum::http::HeaderMap,
+    body: axum::body::Bytes,
+) -> impl axum::response::IntoResponse {
+    let client = reqwest::Client::new();
+    let path_query = uri.path_and_query().map(|pq| pq.as_str()).unwrap_or("");
+    let sandbox_url = format!("http://sandbox:9889{}", path_query);
+
+    let req_method = reqwest::Method::from_bytes(method.as_str().as_bytes()).unwrap_or(reqwest::Method::GET);
+    let mut req_builder = client.request(req_method, sandbox_url).body(body);
+
+    for (key, value) in headers.iter() {
+        if key.as_str().to_lowercase() != "host" {
+            req_builder = req_builder.header(key.clone(), value.clone());
+        }
+    }
+
+    match req_builder.send().await {
+        Ok(res) => {
+            let status = axum::http::StatusCode::from_u16(res.status().as_u16()).unwrap_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+            let mut res_headers = axum::http::HeaderMap::new();
+            for (key, value) in res.headers().iter() {
+                res_headers.insert(key.clone(), value.clone());
+            }
+            let bytes = res.bytes().await.unwrap_or_default();
+            (status, res_headers, bytes).into_response()
+        }
+        Err(e) => {
+            println!("⚠️ [Proxy] CAO Forwarder Error: {}", e);
+            (axum::http::StatusCode::BAD_GATEWAY, e.to_string()).into_response()
+        }
+    }
+}
+
 
 // --------------------------------------------------------------------------
 // Main
@@ -364,7 +401,7 @@ async fn main() -> Result<()> {
         driver,
     });
 
-    // Setup Router
+    // Setup Main App Router (3001)
     let app = Router::new()
         .route("/sse", get(sse_handler))
         .route("/health", get(health_handler))
@@ -373,11 +410,28 @@ async fn main() -> Result<()> {
         .layer(tower_http::cors::CorsLayer::permissive())
         .with_state(state);
 
+    // Setup CAO Forwarder Router (9889)
+    let cao_app = Router::new()
+        .fallback(cao_proxy_handler)
+        .layer(tower_http::cors::CorsLayer::permissive());
+
     let port = env::var("PORT").unwrap_or_else(|_| "3001".to_string());
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
+    let addr3001 = format!("0.0.0.0:{}", port);
+    let addr9889 = "0.0.0.0:9889";
 
     println!("✅ [PocketCoder] Proxy is LIVE on :{}", port);
-    axum::serve(listener, app).await?;
+    println!("🤖 [PocketCoder] CAO Forwarder is LIVE on :9889");
+
+    let listener3001 = tokio::net::TcpListener::bind(addr3001).await?;
+    let listener9889 = tokio::net::TcpListener::bind(addr9889).await?;
+
+    let server3001 = axum::serve(listener3001, app);
+    let server9889 = axum::serve(listener9889, cao_app);
+
+    tokio::select! {
+        res = server3001 => res?,
+        res = server9889 => res?,
+    }
 
     Ok(())
 }
