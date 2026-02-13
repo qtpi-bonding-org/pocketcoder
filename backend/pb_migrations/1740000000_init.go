@@ -9,15 +9,17 @@ func init() {
 	migrations.Register(func(app core.App) error {
 		// --- HELPERS ---
 		// getOrCreate simplifies our migration by handling both fresh and existing DBs
-		getOrCreateCollection := func(name string, typeStr string) (*core.Collection, error) {
+		getOrCreateCollection := func(id, name, typeStr string) (*core.Collection, error) {
 			collection, _ := app.FindCollectionByNameOrId(name)
 			if collection != nil {
 				return collection, nil
 			}
-			return core.NewCollection(typeStr, name), nil
+			c := core.NewCollection(typeStr, name)
+			c.Id = id
+			return c, nil
 		}
 		
-		// Helper to safely add fields (Moved to a more global scope)
+		// Helper to safely add fields
 		addFields := func(c *core.Collection, fields ...core.Field) {
 			for _, f := range fields {
 				if existing := c.Fields.GetByName(f.GetName()); existing == nil {
@@ -30,75 +32,59 @@ func init() {
 		// 1. USERS COLLECTION (Enhance)
 		// =========================================================================
 		users, err := app.FindCollectionByNameOrId("users")
-		if err != nil {
-			return err
-		}
+		if err != nil { return err }
 		if f := users.Fields.GetByName("role"); f == nil {
-			users.Fields.Add(&core.SelectField{
-				Name:      "role",
-				MaxSelect: 1,
-				Values:    []string{"admin", "agent", "user"},
-			})
+			users.Fields.Add(&core.SelectField{Name: "role", MaxSelect: 1, Values: []string{"admin", "agent", "user"}})
 		}
-		if err := app.Save(users); err != nil {
-			return err
-		}
-
+		if err := app.Save(users); err != nil { return err }
 
 		// =========================================================================
-		// 2. CHATS COLLECTION
+		// 2. AI REGISTRY
 		// =========================================================================
-		chats, _ := getOrCreateCollection("chats", core.CollectionTypeBase)
-		if f := chats.Fields.GetByName("title"); f == nil {
-			chats.Fields.Add(&core.TextField{Name: "title", Required: true})
-		}
-		if f := chats.Fields.GetByName("opencode_id"); f == nil {
-			chats.Fields.Add(&core.TextField{Name: "opencode_id"})
-		}
-		if f := chats.Fields.GetByName("user"); f == nil {
-			chats.Fields.Add(&core.RelationField{
-				Name:         "user",
-				Required:     true,
-				CollectionId: users.Id,
-				MaxSelect:    1,
-			})
-		}
-		if f := chats.Fields.GetByName("agent"); f == nil {
-			chats.Fields.Add(&core.RelationField{
-				Name:         "agent",
-				CollectionId: "ai_agents", // Using ID name since it's created later in file but name works if it exists
-				MaxSelect:    1,
-			})
-		}
+		prompts, _ := getOrCreateCollection("pc_ai_prompts", "ai_prompts", core.CollectionTypeBase)
+		addFields(prompts, &core.TextField{Name: "name", Required: true}, &core.TextField{Name: "body", Required: true})
+		prompts.ListRule = ptr("@request.auth.id != ''")
+		if err := app.Save(prompts); err != nil { return err }
+
+		models, _ := getOrCreateCollection("pc_ai_models", "ai_models", core.CollectionTypeBase)
+		addFields(models, &core.TextField{Name: "name", Required: true}, &core.TextField{Name: "identifier", Required: true})
+		models.ListRule = ptr("@request.auth.id != ''")
+		if err := app.Save(models); err != nil { return err }
+
+		agents, _ := getOrCreateCollection("pc_ai_agents", "ai_agents", core.CollectionTypeBase)
+		addFields(agents, 
+			&core.TextField{Name: "name", Required: true}, 
+			&core.BoolField{Name: "is_init"},
+			&core.RelationField{Name: "prompt", CollectionId: prompts.Id, MaxSelect: 1},
+			&core.RelationField{Name: "model", CollectionId: models.Id, MaxSelect: 1},
+			&core.TextField{Name: "config"},
+		)
+		agents.ListRule = ptr("@request.auth.id != ''")
+		if err := app.Save(agents); err != nil { return err }
+
+		// =========================================================================
+		// 3. CHATS & MESSAGES
+		// =========================================================================
+		chats, _ := getOrCreateCollection("pc_chats", "chats", core.CollectionTypeBase)
 		addFields(chats,
+			&core.TextField{Name: "title", Required: true},
+			&core.TextField{Name: "opencode_id"},
+			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1},
+			&core.RelationField{Name: "agent", CollectionId: agents.Id, MaxSelect: 1},
 			&core.DateField{Name: "last_active"},
 			&core.TextField{Name: "preview"},
-			&core.SelectField{
-				Name:      "turn",
-				MaxSelect: 1,
-				Values:    []string{"user", "assistant"},
-			},
+			&core.SelectField{Name: "turn", MaxSelect: 1, Values: []string{"user", "assistant"}},
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
-
 		chats.ListRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
 		chats.ViewRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')")
 		chats.CreateRule = ptr("@request.auth.id != ''")
 		chats.UpdateRule = ptr("user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
 		chats.DeleteRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		if err := app.Save(chats); err != nil { return err }
 
-		if err := app.Save(chats); err != nil {
-			return err
-		}
-
-		// =========================================================================
-		// 3. MESSAGES COLLECTION
-		// =========================================================================
-		messages, _ := getOrCreateCollection("messages", core.CollectionTypeBase)
-		
-
-
+		messages, _ := getOrCreateCollection("pc_messages", "messages", core.CollectionTypeBase)
 		addFields(messages, 
 			&core.RelationField{Name: "chat", Required: true, CollectionId: chats.Id, MaxSelect: 1},
 			&core.SelectField{Name: "role", Required: true, MaxSelect: 1, Values: []string{"user", "assistant", "system"}},
@@ -118,21 +104,17 @@ func init() {
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
-
 		messages.ListRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user = @request.auth.id)")
 		messages.ViewRule = ptr("@request.auth.id != '' && (@request.auth.role = 'agent' || @request.auth.role = 'admin' || chat.user = @request.auth.id)")
 		messages.CreateRule = ptr("@request.auth.id != ''")
 		messages.UpdateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
 		messages.DeleteRule = ptr("@request.auth.role = 'admin'")
-
-		if err := app.Save(messages); err != nil {
-			return err
-		}
+		if err := app.Save(messages); err != nil { return err }
 
 		// =========================================================================
-		// 4. USAGES COLLECTION
+		// 4. USAGES & PERMISSIONS
 		// =========================================================================
-		usages, _ := getOrCreateCollection("usages", core.CollectionTypeBase)
+		usages, _ := getOrCreateCollection("pc_usages", "usages", core.CollectionTypeBase)
 		addFields(usages,
 			&core.TextField{Name: "message_id"},
 			&core.TextField{Name: "part_id"},
@@ -145,18 +127,11 @@ func init() {
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
-		
 		usages.ListRule = ptr("@request.auth.id != ''")
 		usages.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		if err := app.Save(usages); err != nil { return err }
 
-		if err := app.Save(usages); err != nil {
-			return err
-		}
-
-		// =========================================================================
-		// 5. PERMISSIONS COLLECTION
-		// =========================================================================
-		permissions, _ := getOrCreateCollection("permissions", core.CollectionTypeBase)
+		permissions, _ := getOrCreateCollection("pc_permissions", "permissions", core.CollectionTypeBase)
 		addFields(permissions,
 			&core.TextField{Name: "opencode_id", Required: true},
 			&core.TextField{Name: "session_id", Required: true},
@@ -174,18 +149,14 @@ func init() {
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
-
 		permissions.ListRule = ptr("@request.auth.id != ''")
 		permissions.UpdateRule = ptr("((@request.auth.role = 'user' || @request.auth.role = 'admin') && status = 'draft')")
-
-		if err := app.Save(permissions); err != nil {
-			return err
-		}
+		if err := app.Save(permissions); err != nil { return err }
 
 		// =========================================================================
-		// 6. SSH KEYS COLLECTION
+		// 5. INFRASTRUCTURE (SSH, Whitelists)
 		// =========================================================================
-		sshKeys, _ := getOrCreateCollection("ssh_keys", core.CollectionTypeBase)
+		sshKeys, _ := getOrCreateCollection("pc_ssh_keys", "ssh_keys", core.CollectionTypeBase)
 		addFields(sshKeys,
 			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1},
 			&core.TextField{Name: "public_key", Required: true},
@@ -196,72 +167,22 @@ func init() {
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
-
 		sshKeys.ListRule = ptr("@request.auth.id != ''")
 		sshKeys.ViewRule = ptr("@request.auth.id != '' && user = @request.auth.id")
 		sshKeys.CreateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
 		sshKeys.UpdateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
 		sshKeys.DeleteRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		if err := app.Save(sshKeys); err != nil { return err }
 
-		if err := app.Save(sshKeys); err != nil {
-			return err
-		}
-
-		// =========================================================================
-		// 7. AI REGISTRY & WHITELISTS
-		// =========================================================================
-		
-		// AI Prompts
-		prompts, _ := getOrCreateCollection("ai_prompts", core.CollectionTypeBase)
-		addFields(prompts,
-			&core.TextField{Name: "name", Required: true},
-			&core.TextField{Name: "body", Required: true},
-		)
-		prompts.ListRule = ptr("@request.auth.id != ''")
-		if err := app.Save(prompts); err != nil { return err }
-
-		// AI Models
-		models, _ := getOrCreateCollection("ai_models", core.CollectionTypeBase)
-		addFields(models,
-			&core.TextField{Name: "name", Required: true},
-			&core.TextField{Name: "identifier", Required: true},
-		)
-		models.ListRule = ptr("@request.auth.id != ''")
-		if err := app.Save(models); err != nil { return err }
-
-		// AI Agents
-		agents, _ := getOrCreateCollection("ai_agents", core.CollectionTypeBase)
-		addFields(agents,
-			&core.TextField{Name: "name", Required: true},
-			&core.BoolField{Name: "is_init"},
-			&core.RelationField{Name: "prompt", CollectionId: prompts.Id, MaxSelect: 1},
-			&core.RelationField{Name: "model", CollectionId: models.Id, MaxSelect: 1},
-			&core.TextField{Name: "config"},
-		)
-		agents.ListRule = ptr("@request.auth.id != ''")
-		if err := app.Save(agents); err != nil { return err }
-
-		// Whitelists
-		wlTargets, _ := getOrCreateCollection("whitelist_targets", core.CollectionTypeBase)
-		addFields(wlTargets,
-			&core.TextField{Name: "name", Required: true},
-			&core.TextField{Name: "pattern", Required: true},
-			&core.BoolField{Name: "active"},
-		)
-		wlTargets.ListRule = ptr("@request.auth.id != ''")
+		wlTargets, _ := getOrCreateCollection("pc_whitelist_targets", "whitelist_targets", core.CollectionTypeBase)
+		addFields(wlTargets, &core.TextField{Name: "name", Required: true}, &core.TextField{Name: "pattern", Required: true}, &core.BoolField{Name: "active"})
 		if err := app.Save(wlTargets); err != nil { return err }
 
-		wlActions, _ := getOrCreateCollection("whitelist_actions", core.CollectionTypeBase)
-		addFields(wlActions,
-			&core.TextField{Name: "permission", Required: true},
-			&core.SelectField{Name: "kind", Values: []string{"strict", "pattern"}, MaxSelect: 1},
-			&core.TextField{Name: "value"},
-			&core.BoolField{Name: "active"},
-		)
-		wlActions.ListRule = ptr("@request.auth.id != ''")
+		wlActions, _ := getOrCreateCollection("pc_whitelist_actions", "whitelist_actions", core.CollectionTypeBase)
+		addFields(wlActions, &core.TextField{Name: "permission", Required: true}, &core.SelectField{Name: "kind", Values: []string{"strict", "pattern"}, MaxSelect: 1}, &core.TextField{Name: "value"}, &core.BoolField{Name: "active"})
 		if err := app.Save(wlActions); err != nil { return err }
 
-		// 8. INITIALIZE TURN STATE
+		// Fix turn state
 		_, err = app.DB().NewQuery("UPDATE chats SET turn = 'user' WHERE turn = '' OR turn IS NULL").Execute()
 		return err
 	}, func(app core.App) error {
