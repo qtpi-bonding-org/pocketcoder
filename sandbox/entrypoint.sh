@@ -42,7 +42,7 @@ chmod 777 /tmp/tmux
 # Start CAO Server (Background)
 echo "🤖 [PocketCoder] Starting CAO Server on port 9889..."
 (
-  cd /app/cao && uv run cao-server
+  cd /app/cao && CAO_SERVER_HOST=0.0.0.0 uv run cao-server
 ) &
 
 # Keep the container alive by tailing the tmux session output OR just sleeping
