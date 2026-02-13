@@ -37,6 +37,7 @@ services:
     container_name: pocketcoder-proxy
     ports:
       - "3001:3001"
+      - "9889:9889" # CAO Forwarder
     volumes:
       - proxy_bin:/app/proxy_share        # Source for compiled proxy
       - tmux_socket:/tmp/tmux
@@ -49,6 +50,8 @@ services:
         aliases:
           - proxy
       pocketcoder-execution:
+        aliases:
+          - proxy
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -84,8 +87,6 @@ services:
     networks:
       - pocketcoder-memory
       - pocketcoder-control
-      - pocketcoder-execution
-
 
 
 

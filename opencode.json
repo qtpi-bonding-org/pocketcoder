@@ -43,7 +43,7 @@
       "enabled": true,
       "environment": {
         "CAO_ENABLE_WORKING_DIRECTORY": "false",
-        "CAO_SERVER_HOST": "sandbox",
+        "CAO_SERVER_HOST": "proxy",
         "CAO_SERVER_PORT": "9889",
         "CAO_LOG_LEVEL": "DEBUG",
         "PYTHONPATH": "/app/cao/src"
