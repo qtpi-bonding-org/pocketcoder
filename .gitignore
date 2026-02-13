@@ -46,6 +46,13 @@ skills/test_*
 # Docs & Other
 docs/.astro/
 docs/src/.astro/
+docs/src/content/docs/reference/*.md
+docs/src/content/docs/guides/*.md
+docs/src/content/docs/[a-z]*.md
+docs/src/content/docs/index.mdx
+
+# Sovereign Audit 
+CODEBASE.md
 
 *.txt
 *.tmp
