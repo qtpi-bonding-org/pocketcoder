@@ -42,98 +42,48 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 		return
 	}
 
-	// 2. Check Turn Sovereignty
-	turn := chat.GetString("turn")
-	if turn == "assistant" {
-		log.Printf("⏳ [Relay/Go] Chat %s is in 'assistant' turn. Queuing message %s.", chatID, msg.Id)
-		// Leave it as 'pending' (or empty) so the Recovery Pump or next idle event picks it up
-		return
-	}
-
-	// 1. Mark as sending immediately (Claim the lock)
+	// 2. Mark as sending
 	msg.Set("delivery", "sending")
 	if err := r.app.Save(msg); err != nil {
 		log.Printf("❌ [Relay/Go] Failed to claim message %s: %v", msg.Id, err)
 		return
 	}
 
-	// 3. It's the AI's turn! Flip the switch.
+	// 3. Set turn to assistant immediately to indicate thinking
 	chat.Set("turn", "assistant")
-
-	// 4. Batch ALL pending messages (Double Texting support)
-	pending, err := r.app.FindRecordsByFilter("messages", "chat = {:chat} && role = 'user' && (delivery = 'pending' || delivery = '' || delivery = 'sending')", "created", 50, 0, map[string]any{"chat": chatID})
-	if err != nil {
-		log.Printf("⚠️ [Relay/Go] Failed to fetch pending messages for batching: %v", err)
-	}
-
-	// Fallback to current message if batching query fails or is empty
-	if len(pending) == 0 {
-		pending = append(pending, msg)
-	}
-
-	var batchedParts []interface{}
-	for _, pMsg := range pending {
-		// Mark as sending (in case they weren't yet)
-		pMsg.Set("delivery", "sending")
-		r.app.Save(pMsg)
-
-		// Aggregate parts
-		partsRaw := pMsg.Get("parts")
-		if jsonRaw, ok := partsRaw.(types.JSONRaw); ok {
-			var p []interface{}
-			if err := json.Unmarshal(jsonRaw, &p); err == nil {
-				batchedParts = append(batchedParts, p...)
-			}
-		} else if p, ok := partsRaw.([]interface{}); ok {
-			batchedParts = append(batchedParts, p...)
-		}
-	}
-
-	if len(batchedParts) == 0 {
-		return // Nothing to send
-	}
-
-	// Extract preview from the LAST message in the batch
-	preview := ""
-	lastMsg := pending[len(pending)-1]
-	lpRaw := lastMsg.Get("parts")
-	if jsonRaw, ok := lpRaw.(types.JSONRaw); ok {
-		var p []interface{}
-		json.Unmarshal(jsonRaw, &p)
-		for _, part := range p {
-			if partMap, ok := part.(map[string]interface{}); ok {
-				if text, textOk := partMap["text"].(string); textOk {
-					preview = text
-					break
-				}
-			}
-		}
-	}
-	if len(preview) > 50 {
-		preview = preview[:50] + "..."
-	}
-	chat.Set("preview", preview)
-
 	if err := r.app.Save(chat); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to update chat turn/preview: %v", err)
+		log.Printf("❌ [Relay/Go] Failed to update chat turn: %v", err)
 	}
 
-	// 5. Get OpenCode Session
+	// 4. Get OpenCode Session
 	sessionID, err := r.ensureSession(chatID)
 	if err != nil {
 		log.Printf("❌ [Relay/Go] Session failure: %v", err)
+		msg.Set("delivery", "failed")
+		r.app.Save(msg)
 		return
 	}
 
-	// 6. Send to OpenCode
-	url := fmt.Sprintf("%s/session/%s/message", r.openCodeURL, sessionID)
+	// 5. Send to OpenCode via prompt_async
+	// We use prompt_async to avoid long-running HTTP timeouts. 
+	// The SSE listener will handle syncing the assistant's response.
+	url := fmt.Sprintf("%s/session/%s/prompt_async", r.openCodeURL, sessionID)
+	
+	var parts []interface{}
+	partsRaw := msg.Get("parts")
+	if jsonRaw, ok := partsRaw.(types.JSONRaw); ok {
+		json.Unmarshal(jsonRaw, &parts)
+	} else if p, ok := partsRaw.([]interface{}); ok {
+		parts = p
+	}
+
 	payload := map[string]interface{}{
-		"parts": batchedParts,
+		"parts": parts,
 	}
 	body, _ := json.Marshal(payload)
-	log.Printf("📡 [Relay/Go] 📤 BATCH PUSHING (%d msgs): %s", len(pending), string(body))
+	log.Printf("📡 [Relay/Go] 📤 ASYNC PUSH (Msg: %s): %s", msg.Id, string(body))
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Post(url, "application/json", strings.NewReader(string(body)))
 
 	if err != nil {
@@ -151,27 +101,14 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 		return
 	}
 
-	// 7. Update opencode_id for the batched messages so they aren't re-sent
-	var promptRes map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&promptRes)
-	msgID_OC, _ := promptRes["id"].(string)
-	if msgID_OC == "" {
-		if info, ok := promptRes["info"].(map[string]interface{}); ok {
-			msgID_OC, _ = info["id"].(string)
-		}
+	// Success! Mark as delivered. We don't wait for the assistant response here.
+	msg.Set("delivery", "delivered")
+	if err := r.app.Save(msg); err != nil {
+		log.Printf("❌ [Relay/Go] Failed to update message %s after delivery: %v", msg.Id, err)
 	}
-
-	if msgID_OC != "" {
-		for _, pMsg := range pending {
-			pMsg.Set("opencode_id", msgID_OC)
-			pMsg.Set("delivery", "sent")
-			if err := r.app.Save(pMsg); err != nil {
-				log.Printf("❌ [Relay/Go] Failed to save opencode_id/delivery for message %s: %v", pMsg.Id, err)
-			}
-		}
-		log.Printf("✅ [Relay/Go] Batch delivered (%d msgs). OC Msg: %s", len(pending), msgID_OC)
-	}
+	log.Printf("✅ [Relay/Go] Message %s delivered to OpenCode.", msg.Id)
 }
+
 
 func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]interface{}) {
 	log.Printf("🔄 [Relay/Go] Syncing Assistant Message for chat %s", chatID)
