@@ -24,6 +24,7 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 
 ## 🔗 Links
 - [Detailed Architecture](docs/architecture/ARCHITECTURE.md)
+- [Security Architecture](docs/architecture/SECURITY.md)
 - [Project Roadmap](docs/roadmap/MVP_ROADMAP.md)
 - [License](LICENSE) (AGPLv3)
 - [Contributing](CONTRIBUTING.md)
@@ -32,50 +33,35 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 ---
 *Built with heart by a solo dev in collaboration with **Gemini** (Google's agentic AI assistant). This project is as much an experiment in human-AI partnership as it is in software architecture.*
 
-## Architecture: The Event-Driven Loop
+## Architecture: The Fractal Agent
 
-PocketCoder uses a **Pulse & Reflex** nervous system. The "Brain" (Reasoning) is isolated from "Reality" (Sandbox) by a sensory security relay.
+PocketCoder is designed as a **Fractal Agent** system. It separates high-level reasoning (The Brain) from isolated execution environments (The Body).
 
-- **The Pulse**: All agent thoughts and tool calls are streamed instantly via SSE and recorded in the Sovereign Ledger.
-- **The Reflex**: Sub-agents in the Sandbox "nudge" the Brain via the Proxy, eliminating handoff delays.
+- **The Brain (Poco)**: A sovereign coordinator that plans and orchestrates work.
+- **The Body (Sandbox)**: A secure environment where Sub-Agents execute tasks using powerful tools (Terraform, Node, etc.).
+- **The Relay (Nervous System)**: A Rust/Go bridge that connects thought to action while enforcing user permission.
 
-```mermaid
-graph TD
-    User((👤 User))
-    subgraph Client ["Client Interface"]
-        UI[Flutter App]
-    end
+See [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for the full deep dive.
 
-    subgraph ControlPlane ["Control Plane (Go)"]
-        PB[(PocketBase)]
-        Relay[Relay / Spinal Cord]
-    end
+## Customize Your PocketCoder
 
-    subgraph Reasoning ["Reasoning"]
-        OC[OpenCode / Brain]
-    end
+PocketCoder is built to be extended. You "train" the system by modifying two distinct layers:
 
-    subgraph Security ["Security & Senses"]
-        Proxy[Proxy / Muscle]
-    end
+### 1. Teach the Brain (Skills) -> `Poco`
+**"Skills are just Markdown for Poco."**
+To give the main agent standardized procedural knowledge (e.g., "How to deploy to AWS" or "The team's Python style guide"), you add **Skills**.
+- **Format**: Simple Markdown files (`skills/MY_SKILL.md`).
+- **Use Case**: SOPs, best practices, and "memory" for the orchestrator.
+- **Location**: `./skills/`
 
-    subgraph Execution ["Execution (Isolated)"]
-        SB[Sandbox / Reality]
-        Tmux[Tmux Session]
-    end
+### 2. Equip the Body (Tools) -> `Subagents`
+**"MCPs are for Subagents."**
+To give the execution agents actual capabilities (e.g., `postgres-access`, `github-api`, `web-search`), you define **MCP Servers**.
+- **Format**: Added directly to the sub-agent's definition file in `./sandbox/cao/agent_store/`.
+- **Zero-Install**: No complex Docker builds required. Just specify the server (e.g., `uvx mcp-server-postgres`), and the sandbox spins it up ephemerally on demand.
+- **Function**: Gives the "hands" the specific tools they need for the task.
 
-    %% Flows
-    User <--> UI
-    UI <--> PB
-    
-    PB <--- Event Sync ---> Relay
-    Relay <--- HTTP/SSE ---> OC
-    
-    OC <--> Proxy
-    Proxy -- Reflex Arc --> OC
-    Proxy <--> SB
-    SB <--> Tmux
-```
+*Think of it this way: You give Poco the **Manual** (Skills), and you give the Subagents the **Power Tools** (MCPs).*
 
 ## "Featherweight" High-Performance Stats
 *(Strictly original PocketCoder code as of Feb 2026)*
