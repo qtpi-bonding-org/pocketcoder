@@ -2,42 +2,71 @@
 # PocketCoder: An accessible, secure, and user-friendly open-source coding assistant platform.
 # Copyright (C) 2026 Qtpi Bonding LLC
 
-# Start sshd
-echo "🔑 [PocketCoder] Starting SSH Daemon on port 2222..."
-/usr/sbin/sshd
+echo "🏗️  [PocketCoder] Initializing Hardened Sandbox..."
 
-# Start the SSH Key Sync Loop (Background)
-(
-  while true; do
-    /usr/local/bin/sync_keys.sh
-    sleep 2 # Aggressive polling for instant key sync
-  done
-) &
+# --- 🧹 CLEANUP RITUAL (Ensuring Statelessness) ---
+echo "🧹 Cleaning up stale sockets and locks..."
 
-# Ensure /tmp/tmux exists and is accessible for the worker user
+# 1. Wipe TMUX sockets to prevent 'Address already in use' or 'Ghost' sessions
+rm -rf /tmp/tmux/*
 mkdir -p /tmp/tmux
 chmod 777 /tmp/tmux
 
-# Start CAO MCP Server in SSE Mode (Background)
-echo "🤖 [PocketCoder] Starting CAO MCP Server (SSE) on port 9888..."
+# 2. Clear CAO internal lock/journal files
+CAO_HOME_BASE="/root/.aws/cli-agent-orchestrator"
+if [ -d "$CAO_HOME_BASE" ]; then
+    echo "🔍 Clearing stale CAO state from $CAO_HOME_BASE..."
+    find "$CAO_HOME_BASE" -name "*.db-journal" -delete
+    find "$CAO_HOME_BASE" -name "*.lock" -delete
+    find "$CAO_HOME_BASE" -name "*.pid" -delete
+fi
+
+# --- 🚀 SERVICE STARTUP ---
+
+# 3. Start sshd
+echo "🔑 Starting SSH Daemon on port 2222..."
+mkdir -p /var/run/sshd
+/usr/sbin/sshd
+
+# 4. SSH Key Localization (Smart Retry)
+# We copy from the read-only host mount to the worker's home with correct perms.
+# We poll until the key is found, then we stop polling to save resources.
+echo "🔄 Localizing SSH keys for 'worker' user..."
+(
+  # Attempt 10 times with 1s sleep to handle mount race condition
+  for i in {1..10}; do
+    /usr/local/bin/sync_keys.sh > /dev/null 2>&1
+    if [ -s "/home/worker/.ssh/authorized_keys" ]; then
+      echo "✅ [PocketCoder] SSH Key localized successfully."
+      break
+    fi
+    echo "⏳ Waiting for SSH key volume mount... (Attempt $i/10)"
+    sleep 1
+  done
+) &
+
+# 5. Start CAO API Server (The Conductor)
+echo "🤖 Starting CAO API Server on port 9889..."
+(
+  export CAO_SERVER_HOST=0.0.0.0
+  export PYTHONUNBUFFERED=1
+  cd /app/cao && /usr/local/bin/uv run cao-server
+) &
+
+# 6. Start CAO MCP Server (SSE Mode) (Background)
+echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
 (
   export CAO_MCP_TRANSPORT=http
   export CAO_MCP_PORT=9888
   export PYTHONUNBUFFERED=1
-  export CAO_LOG_LEVEL=DEBUG
-  cd /app/cao && uv run cao-mcp-server
+  export CAO_LOG_LEVEL=INFO
+  cd /app/cao && /usr/local/bin/uv run cao-mcp-server
 ) &
 
-# Start CAO Server (Background)
-echo "🤖 [PocketCoder] Starting CAO Server on port 9889..."
-(
-  cd /app/cao && CAO_SERVER_HOST=0.0.0.0 uv run cao-server
-) &
-
-# Start the core TMUX session that the Proxy will attach to
-echo "🧵 [PocketCoder] Initializing TMUX Session 'pocketcoder_session' on /tmp/tmux/pocketcoder..."
-tmux -S /tmp/tmux/pocketcoder new-session -d -s pocketcoder_session -n main "/bin/bash"
+# 7. Start the core TMUX session
+echo "🧵 Initializing TMUX Session 'pocketcoder_session'..."
+/usr/bin/tmux -S /tmp/tmux/pocketcoder new-session -d -s pocketcoder_session -n main "/bin/bash"
 chmod 777 /tmp/tmux/pocketcoder
 
-echo "✅ [PocketCoder] Sandbox is LIVE and waiting for direct commands."
+echo "✅ [PocketCoder] Sandbox is LIVE and HARDENED."
 tail -f /dev/null
