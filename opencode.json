@@ -15,13 +15,13 @@
         "glob": true,
         "list": true,
         "skill": true,
-        "cao_handoff": true
+        "cao_*": true
       },
       "permission": {
         "bash": "ask",
         "edit": "ask",
         "skill": "ask",
-        "cao_handoff": "ask"
+        "cao_*": "ask"
       }
     }
   },
@@ -29,7 +29,6 @@
     "bash": "ask",
     "edit": "ask",
     "skill": "ask",
-    "cao_handoff": "ask",
     "*": "ask"
   },
   "mcp": {
@@ -39,8 +38,6 @@
       "enabled": true
     }
   },
-  "tools": {
-    "cao_handoff": true
-  },
+  "tools": {},
   "model": "google/gemini-2.0-flash"
 }
