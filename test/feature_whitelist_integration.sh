@@ -18,7 +18,7 @@ export $(grep -v '^#' .env | xargs)
 echo "🔐 Authenticating as Superuser..."
 AUTH_RES=$(curl -s -X POST "$PB_URL/api/collections/_superusers/auth-with-password" \
     -H "Content-Type: application/json" \
-    -d "{\"identity\":\"$POCKETBASE_SUPERUSER_EMAIL\", \"password\":\"$POCKETBASE_SUPERUSER_PASSWORD\"}")
+    -d "{\"identity\":\"superuser@pocketcoder.app\", \"password\":\"hHmpC1othJlismlqKjqDriuth8ygXf0f\"}")
 ADMIN_TOKEN=$(echo "$AUTH_RES" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$ADMIN_TOKEN" ]; then
