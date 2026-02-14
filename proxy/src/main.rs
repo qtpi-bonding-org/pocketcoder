@@ -5,7 +5,6 @@ PocketCoder: An accessible, secure, and user-friendly open-source coding assista
 mod driver;
 mod shell;
 mod mcp_proxy;
-mod mcp_stdio_client;
 
 use std::env;
 use std::sync::Arc;
@@ -53,11 +52,6 @@ enum Commands {
         command: Option<String>,
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
-    },
-    /// Run in MCP bridge mode (stdio -> proxy bridge)
-    Mcp {
-        #[arg(short, long)]
-        session_id: Option<String>,
     },
 }
 
@@ -293,9 +287,6 @@ async fn main() -> Result<()> {
         },
         Commands::Shell { command, args } => {
             shell::run(command, args)?;
-        }
-        Commands::Mcp { session_id } => {
-            mcp_stdio_client::run(session_id).await?;
         }
     }
 
