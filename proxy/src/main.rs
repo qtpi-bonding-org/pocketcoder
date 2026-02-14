@@ -4,7 +4,8 @@ PocketCoder: An accessible, secure, and user-friendly open-source coding assista
 
 mod driver;
 mod shell;
-mod mcp;
+mod mcp_proxy;
+mod mcp_stdio_client;
 
 use std::env;
 use std::sync::Arc;
@@ -25,7 +26,7 @@ use tokio_stream::StreamExt;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::driver::{PocketCoderDriver, ExecRequest, NotifyRequest};
-use crate::mcp::{SseQuery, mcp_sse_relay_handler, mcp_message_proxy_handler};
+use crate::mcp_proxy::{mcp_ws_handler, McpQuery};
 
 // --------------------------------------------------------------------------
 // CLI Definition
@@ -53,6 +54,11 @@ enum Commands {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
+    /// Run in MCP bridge mode (stdio -> proxy bridge)
+    Mcp {
+        #[arg(short, long)]
+        session_id: Option<String>,
+    },
 }
 
 // --------------------------------------------------------------------------
@@ -61,9 +67,9 @@ enum Commands {
 
 type SessionMap = Arc<RwLock<HashMap<String, mpsc::Sender<serde_json::Value>>>>;
 
-struct AppState {
-    sessions: SessionMap,
-    driver: Arc<PocketCoderDriver>,
+pub struct AppState {
+    pub sessions: SessionMap,
+    pub driver: Arc<PocketCoderDriver>,
 }
 
 async fn health_handler() -> &'static str {
@@ -72,7 +78,7 @@ async fn health_handler() -> &'static str {
 
 async fn sse_handler(
     State(state): State<Arc<AppState>>,
-    Query(query): Query<SseQuery>,
+    Query(query): Query<McpQuery>,
 ) -> Sse<impl Stream<Item = Result<Event, std::convert::Infallible>>> {
     let session_id = query.session_id.unwrap_or_else(|| Uuid::new_v4().to_string());
     println!("📡 [Server/SSE] New session: {}", session_id);
@@ -193,8 +199,7 @@ async fn main() -> Result<()> {
                 .route("/health", get(health_handler))
                 .route("/exec", post(exec_handler)) 
                 .route("/notify", post(notify_handler))
-                .route("/mcp/sse", get(mcp_sse_relay_handler))
-                .route("/mcp/messages", post(mcp_message_proxy_handler))
+                .route("/mcp/ws", get(mcp_ws_handler))
                 .layer(tower_http::cors::CorsLayer::permissive())
                 .with_state(state);
 
@@ -220,6 +225,9 @@ async fn main() -> Result<()> {
         },
         Commands::Shell { command, args } => {
             shell::run(command, args)?;
+        }
+        Commands::Mcp { session_id } => {
+            mcp_stdio_client::run(session_id).await?;
         }
     }
 
