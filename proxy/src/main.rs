@@ -18,7 +18,7 @@ use clap::{Parser, Subcommand};
 use axum::{
     extract::{State, Query},
     response::{sse::{Event, Sse}, IntoResponse},
-    routing::{get, post},
+    routing::{get, post, any},
     Json, Router,
 };
 use futures_util::stream::Stream;
@@ -107,6 +107,65 @@ async fn exec_handler(
     }
 }
 
+async fn mcp_sse_relay_handler(
+    method: axum::http::Method,
+    uri: axum::http::Uri,
+    headers: axum::http::HeaderMap,
+    body: axum::body::Bytes,
+) -> impl axum::response::IntoResponse {
+    let client = reqwest::Client::new();
+    let path_query = uri.path_and_query().map(|pq| pq.as_str()).unwrap_or("");
+    // Forward /mcp/... to sandbox:9888/...
+    // Also strip "ses_" prefix from session_id if OpenCode added it
+    let target_path = path_query.replace("/mcp", "").replace("session_id=ses_", "session_id=");
+    let sandbox_url = format!("http://sandbox:9888{}", target_path);
+
+    println!("📡 [Proxy/MCP] Incoming: {} {}", method, uri);
+    println!("📡 [Proxy/MCP] Relaying to Sandbox: {}", sandbox_url);
+
+    let req_method = reqwest::Method::from_bytes(method.as_str().as_bytes()).unwrap_or(reqwest::Method::GET);
+    let mut req_builder = client.request(req_method, sandbox_url).body(body);
+    for (key, value) in headers.iter() {
+        if key.as_str().to_lowercase() != "host" {
+            // println!("   Header: {}: {:?}", key, value);
+            req_builder = req_builder.header(key.clone(), value.clone());
+        }
+    }
+
+    match req_builder.send().await {
+        Ok(res) => {
+            let status_code = res.status().as_u16();
+            println!("✅ [Proxy/MCP] Sandbox responded: {}", status_code);
+            let status = axum::http::StatusCode::from_u16(status_code).unwrap_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+            let mut res_headers = axum::http::HeaderMap::new();
+            for (key, value) in res.headers().iter() {
+                res_headers.insert(key.clone(), value.clone());
+            }
+            // STREAM the body, do not await bytes()!
+            // We need to rewrite the endpoint URL on the fly.
+            // Since the endpoint event is sent at the start, a simple replace on chunks works 99% of the time,
+            // assuming the URL doesn't split across chunk boundaries (unlikely for the first packet).
+            let stream = res.bytes_stream().map(|result| {
+                result.map(|bytes| {
+                    let s = String::from_utf8_lossy(&bytes);
+                    // 1. Rewrite relative paths to absolute proxy paths
+                    // 2. Prefix session_id with "ses_" for OpenCode validation
+                    let replaced = s.replace("data: /", "data: http://proxy:3001/mcp/")
+                                    .replace("session_id=", "session_id=ses_");
+                    axum::body::Bytes::from(replaced.into_bytes())
+                })
+            });
+            
+            let body = axum::body::Body::from_stream(stream);
+            (status, res_headers, body).into_response()
+        }
+        Err(e) => {
+            println!("❌ [Proxy/MCP] Sandbox request failed: {}", e);
+            (axum::http::StatusCode::BAD_GATEWAY, e.to_string()).into_response()
+        }
+    }
+}
+
 async fn notify_handler(
     State(_state): State<Arc<AppState>>,
     Json(payload): Json<NotifyRequest>,
@@ -125,7 +184,14 @@ async fn notify_handler(
         "parts": [{"type": "text", "text": format!("**[Reflex Arc]** Worker task completed:\n\n{}", nudge_message)}]
     });
 
-    match client.post(format!("{}/session/{}/prompt_async", opencode_url, payload.session_id))
+    // OPENCODE REQUIRES session IDs to start with "ses_"
+    let display_session_id = if payload.session_id.starts_with("ses_") {
+        payload.session_id.clone()
+    } else {
+        format!("ses_{}", payload.session_id)
+    };
+
+    match client.post(format!("{}/session/{}/prompt_async", opencode_url, display_session_id))
         .json(&body)
         .send()
         .await {
@@ -200,6 +266,8 @@ async fn main() -> Result<()> {
                 .route("/exec", post(exec_handler)) 
                 .route("/notify", post(notify_handler))
                 .route("/mcp/ws", get(mcp_ws_handler))
+                .route("/mcp/*path", any(mcp_sse_relay_handler))
+                .route("/messages/*path", any(mcp_sse_relay_handler))
                 .layer(tower_http::cors::CorsLayer::permissive())
                 .with_state(state);
 
