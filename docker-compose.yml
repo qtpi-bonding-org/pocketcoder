@@ -73,7 +73,6 @@ services:
       - ./skills:/workspace/.opencode/skills:ro
       - opencode_data:/root/.local/share/opencode              # Persistent Storage
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
-      - ./sandbox/cao/src:/app/cao/src:ro                       # Mount ONLY src for live-editing
     entrypoint: /bin/sh
     command: >
       -c "
