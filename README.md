@@ -38,10 +38,11 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 PocketCoder is designed as a **Fractal Agent** system. It separates high-level reasoning (The Brain) from isolated execution environments (The Body).
 
 - **The Brain (Poco)**: A sovereign coordinator that plans and orchestrates work.
-- **The Body (Sandbox)**: A secure environment where Sub-Agents execute tasks using powerful tools (Terraform, Node, etc.).
-- **The Relay (Nervous System)**: A Rust/Go bridge that connects thought to action while enforcing user permission.
+- **The Body (Sandbox)**: A secure environment where Sub-Agents execute tasks.
+- **The Proxy (Immune System)**: A Rust gateway that relays thoughts to actions, enforcing protocol and user intent.
+- **The State (Memory)**: PocketBase acts as the ledger of record.
 
-See [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for the full deep dive.
+See [BACKEND_STATUS.md](BACKEND_STATUS.md) for the current architectural state.
 
 ## Customize Your PocketCoder
 
