@@ -20,7 +20,6 @@ services:
       - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD}
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
-      - ENABLE_GO_RELAY=${ENABLE_GO_RELAY}
       - OPENCODE_URL=${OPENCODE_URL}
     command: >
       sh -c "echo '⏳ Waiting for OpenCode to be ready...' && while ! curl -I -s --connect-timeout 2 http://opencode:3000 > /dev/null; do echo 'OpenCode not yet ready, retrying in 1 second...' && sleep 1; done; echo '🚀 OpenCode is ready. Starting PocketBase...' && /app/entrypoint.sh"
