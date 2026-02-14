@@ -1,6 +1,7 @@
 FROM oven/bun:alpine
 
 # Install basic system dependencies (CURL is needed for health checks/scripts)
+# (Alpine doesn't use bash by default, we keep it minimal)
 RUN apk add --no-cache curl
 
 # Install OpenCode (The Reasoning Engine)
@@ -9,6 +10,10 @@ RUN bun install -g opencode-ai@latest
 # Set the working directory
 WORKDIR /app
 
-# The command will be overridden by docker-compose, 
-# but defaulting to opencode is good practice.
-ENTRYPOINT ["opencode"]
+# 🛡️ HARD SHELL ENFORCEMENT
+# We use a custom entrypoint to harden the shell at runtime.
+COPY opencode_entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/opencode_entrypoint.sh
+
+# Use our custom hardened entrypoint
+ENTRYPOINT ["opencode_entrypoint.sh"]
