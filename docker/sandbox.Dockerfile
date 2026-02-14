@@ -11,8 +11,13 @@ RUN apt-get update && apt-get install -y \
     openssh-server \
     sudo \
     unzip \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV BUN_INSTALL=/usr/local
+ENV PATH=$BUN_INSTALL/bin:$PATH
+
+RUN curl -fsSL https://bun.sh/install | bash \
+    && ln -s /usr/local/bin/bun /usr/local/bin/node \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /sandbox
@@ -22,9 +27,9 @@ COPY sandbox/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY sandbox/sync_keys.sh /usr/local/bin/sync_keys.sh
 RUN chmod +x /usr/local/bin/sync_keys.sh
 
-# Install Dependencies for Listener (Need TS execution, likely ts-node or bun is gone now)
-# We will use 'tsx' to execute typescript directly with Node
-RUN npm install -g tsx opencode-ai
+# Install Dependencies for Listener (Bun handles TS natively)
+# Bun globals go to /usr/local/bin if BUN_INSTALL is /usr/local
+RUN bun install -g opencode-ai
 
 # Install uv (Python package manager for CAO)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \

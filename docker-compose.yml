@@ -69,15 +69,7 @@ services:
       - ./agents/poco/skills:/workspace/.opencode/skills:ro
       - opencode_data:/root/.local/share/opencode              # Persistent Storage
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
-    entrypoint: /bin/sh
-    command: >
-      -c "
-      echo '⏳ Waiting for PocketCoder Shell...' &&
-      while [ ! -f /proxy/pocketcoder-shell ]; do sleep 1; done &&
-      echo '⏳ Waiting for Proxy Server...' &&
-      while ! curl -s http://proxy:3001/health > /dev/null; do sleep 1; done &&
-      echo '🚀 Starting OpenCode Serve...' &&
-      exec /bin/sh -c 'opencode serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG'"
+    command: serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 5s
