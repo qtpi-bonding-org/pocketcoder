@@ -16,6 +16,16 @@ fi
 export $(grep -v '^#' .env | xargs)
 PB_URL="http://127.0.0.1:8090"
 
+
+
+# Wait for PocketBase to be ready
+echo "⏳ Waiting for PocketBase to come online..."
+until curl -s "$PB_URL/api/health" > /dev/null; do
+    echo "   ...waiting for $PB_URL"
+    sleep 2
+done
+echo "✅ PocketBase is online!"
+
 # 1. Authenticate as Admin
 echo "🔑 Authenticating as Admin..."
 AUTH_RES=$(curl -s -X POST "$PB_URL/api/collections/users/auth-with-password" \

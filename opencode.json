@@ -33,9 +33,13 @@
   },
   "mcp": {
     "cao": {
-      "type": "remote",
-      "url": "http://proxy:3001/mcp/sse",
-      "enabled": true
+      "type": "local",
+      "command": [
+        "/proxy/pocketcoder",
+        "mcp"
+      ],
+      "enabled": true,
+      "timeout": 30000
     }
   },
   "tools": {},
