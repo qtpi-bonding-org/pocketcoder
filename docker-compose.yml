@@ -33,9 +33,6 @@ services:
       context: .
       dockerfile: Dockerfile.proxy
     container_name: pocketcoder-proxy
-    ports:
-      - "3001:3001"
-      - "9889:9889"
     volumes:
       - proxy_bin:/app/proxy_share
       - tmux_socket:/tmp/tmux
@@ -81,8 +78,6 @@ services:
       while ! curl -s http://proxy:3001/health > /dev/null; do sleep 1; done &&
       echo '🚀 Starting OpenCode Serve...' &&
       exec /bin/sh -c 'opencode serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG'"
-    ports:
-      - "3000:3000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 5s
@@ -114,8 +109,6 @@ services:
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
       - SSH_KEYS_FILE=/ssh_keys/authorized_keys
-    ports:
-      - "2222:2222"
     networks:
       - pocketcoder-execution
 
