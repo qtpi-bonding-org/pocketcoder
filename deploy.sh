@@ -1,0 +1,43 @@
+#!/bin/bash
+# deploy.sh - Convenience script to boot the PocketCoder bunker.
+
+set -e
+
+# Colors for better readability
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo -e "${BLUE}🦅 PocketCoder: Initializing Bunker...${NC}"
+
+# 1. Environment Check
+if [ ! -f .env ]; then
+    if [ -f .env.example ]; then
+        echo -e "${YELLOW}⚠️  .env not found. Creating from .env.example...${NC}"
+        cp .env.example .env
+        echo -e "${YELLOW}🛑 Please update your .env with valid credentials (e.g., GEMINI_API_KEY) and run ./deploy.sh again.${NC}"
+        exit 1
+    else
+        echo -e "${RED}❌ Error: .env or .env.example not found.${NC}"
+        exit 1
+    fi
+fi
+
+# 2. Boot Services
+echo -e "${BLUE}🚀 Starting Docker services...${NC}"
+docker compose up -d --build
+
+# 3. Wait for Healthy Status
+echo -e "${BLUE}⏳ Waiting for services to stabilize...${NC}"
+sleep 5
+
+# 4. Status Overview
+echo -e "\n${GREEN}✅ PocketCoder is LIVE.${NC}"
+echo -e "------------------------------------------------"
+echo -e "🏰 ${BLUE}PocketBase UI:${NC} http://localhost:8090/_/"
+echo -e "🧠 ${BLUE}OpenCode Logs:${NC} docker logs -f pocketcoder-opencode"
+echo -e "🛡️  ${BLUE}Proxy Logs:${NC}    docker logs -f pocketcoder-proxy"
+echo -e "------------------------------------------------"
+echo -e "${YELLOW}Hint:${NC} Use './test/run_all_tests.sh' to verify the installation."

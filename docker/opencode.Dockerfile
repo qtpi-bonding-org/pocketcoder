@@ -12,7 +12,7 @@ WORKDIR /app
 
 # 🛡️ HARD SHELL ENFORCEMENT
 # We use a custom entrypoint to harden the shell at runtime.
-COPY opencode_entrypoint.sh /usr/local/bin/
+COPY docker/opencode_entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/opencode_entrypoint.sh
 
 # Use our custom hardened entrypoint
