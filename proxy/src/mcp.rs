@@ -6,7 +6,6 @@ use futures_util::stream::Stream;
 use tokio_stream::StreamExt;
 use serde::Deserialize;
 use uuid::Uuid;
-// We'll keep sharing types if needed, or define locally
 
 #[derive(Deserialize)]
 pub struct SseQuery {
@@ -17,13 +16,11 @@ pub struct SseQuery {
 pub async fn mcp_sse_relay_handler(
     Query(query): Query<SseQuery>,
 ) -> Sse<impl Stream<Item = Result<Event, anyhow::Error>>> {
-    let session_id = query.session_id.unwrap_or_else(|| Uuid::new_v4().to_string());
-    println!("🔌 [MCP-Relay] Initializing SSE link for session: {}", session_id);
+    let session_id = query.session_id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+    let upstream_url = format!("http://sandbox:9888/sse?session_id={}", session_id);
+    println!("📡 [MCP-Relay] Initializing SSE link for session: {} -> Upstream: {}", session_id, upstream_url);
 
     let client = reqwest::Client::new();
-    let upstream_url = format!("http://sandbox:9888/sse?session_id={}", session_id);
-    println!("📡 [MCP-Relay] Upstream: {}", upstream_url);
-
     let stream = async_stream::try_stream! {
         let mut response = client.get(&upstream_url).send().await?
             .bytes_stream();
@@ -63,10 +60,12 @@ pub async fn mcp_message_proxy_handler(
     body: axum::body::Bytes,
 ) -> impl axum::response::IntoResponse {
     let session_id = query.session_id.unwrap_or_else(|| "unknown".to_string());
-    println!("🎯 [MCP-Relay] Forwarding JSON-RPC for session: {}", session_id);
+    let body_text = String::from_utf8_lossy(&body);
+    println!("🎯 [MCP-Relay] JSON-RPC for session: {}. Body: {}", session_id, body_text);
 
     let client = reqwest::Client::new();
     let upstream_url = format!("http://sandbox:9888/messages/?session_id={}", session_id);
+    println!("📡 [MCP-Relay] Proxying POST to: {}", upstream_url);
 
     let mut req_builder = client.post(&upstream_url).body(body);
     for (key, value) in headers.iter() {
@@ -83,6 +82,8 @@ pub async fn mcp_message_proxy_handler(
                 res_headers.insert(key.clone(), value.clone());
             }
             let bytes = res.bytes().await.unwrap_or_default();
+            let res_text = String::from_utf8_lossy(&bytes);
+            println!("✅ [MCP-Relay] Response from upstream ({}): {}", status, res_text);
             (status, res_headers, bytes).into_response()
         }
         Err(e) => {
