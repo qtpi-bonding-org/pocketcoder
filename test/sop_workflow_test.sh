@@ -20,8 +20,8 @@ SOP_NAME="test_sop_$RUN_ID"
 echo "🆔 Test Run ID: $RUN_ID"
 
 # 1. Create a proposal file in the provisioning directory
-mkdir -p proposals
-cat <<EOF > "proposals/${SOP_NAME}.md"
+mkdir -p agents/poco/proposals
+cat <<EOF > "agents/poco/proposals/${SOP_NAME}.md"
 ---
 name: ${SOP_NAME}
 description: Governed procedure for the Bunker OIC.
@@ -32,7 +32,7 @@ description: Governed procedure for the Bunker OIC.
 2. Verify all hashes.
 EOF
 
-echo "📝 Created proposal: proposals/${SOP_NAME}.md"
+echo "📝 Created proposal: agents/poco/proposals/${SOP_NAME}.md"
 
 # Restart to trigger ingestion
 echo "🔄 Restarting PocketBase to trigger provisioning..."

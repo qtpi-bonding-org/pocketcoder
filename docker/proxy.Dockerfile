@@ -22,7 +22,7 @@ COPY --from=builder /app/target/release/pocketcoder-proxy /app/proxy_share/pocke
 
 # Create the share directory for the binary proxy tools
 RUN mkdir -p /app/proxy_share && \
-    printf '#!/bin/bash\n/app/pocketcoder shell "$@"\n' > /app/proxy_share/pocketcoder-shell && \
+    printf '#!/bin/sh.original\n/proxy/pocketcoder shell "$@"\n' > /app/proxy_share/pocketcoder-shell && \
     chmod +x /app/proxy_share/pocketcoder-shell
 
 # Default entrypoint for the proxy container (Server Mode)

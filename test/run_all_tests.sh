@@ -14,6 +14,9 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}🚀 PocketCoder Master Test Suite${NC}"
 echo -e "${GREEN}========================================${NC}"
 
+# Override .env if running from host
+export POCKETBASE_URL="http://localhost:8090"
+
 # Ensure we are in the root directory
 if [ ! -f docker-compose.yml ]; then
     echo -e "${RED}Error: Must run from project root (where docker-compose.yml is)${NC}"
