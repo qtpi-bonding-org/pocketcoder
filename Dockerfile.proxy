@@ -3,18 +3,19 @@ RUN apk add --no-cache musl-dev gcc
 WORKDIR /app
 COPY proxy/Cargo.toml proxy/Cargo.lock* ./
 COPY proxy/src ./src
-RUN cargo build --release --bin pocketcoder-proxy
-RUN cargo build --release --bin shell_bridge
+RUN cargo build --release
 
-FROM alpine:latest
-RUN apk add --no-cache ca-certificates tmux bash
+# Pinned to 3.17 to ensure TMUX 3.3a protocol compatibility with the Sandbox
+FROM alpine:3.17
+RUN apk add --no-cache ca-certificates tmux bash curl
 WORKDIR /app
-COPY --from=builder /app/target/release/pocketcoder-proxy /app/pocketcoder-proxy
-COPY --from=builder /app/target/release/shell_bridge /app/shell_bridge
+COPY --from=builder /app/target/release/pocketcoder-proxy /app/pocketcoder
 
-# Create the share directory for the binary proxy
+# Create the share directory for the binary proxy tools
 RUN mkdir -p /app/proxy_share && \
-    cp /app/shell_bridge /app/proxy_share/pocketcoder-shell && \
+    printf '#!/bin/bash\n/app/pocketcoder shell "$@"\n' > /app/proxy_share/pocketcoder-shell && \
     chmod +x /app/proxy_share/pocketcoder-shell
 
-CMD ["/app/pocketcoder-proxy"]
+# Default entrypoint for the proxy container (Server Mode)
+ENTRYPOINT ["/app/pocketcoder"]
+CMD ["server", "--port", "3001"]

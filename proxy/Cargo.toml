@@ -21,5 +21,7 @@ sha2 = "0.10"
 hex = "0.4"
 urlencoding = "2"
 ureq = { version = "2", features = ["json"] }
+async-stream = "0.3"
+clap = { version = "4.0", features = ["derive"] }
 
 
