@@ -3,7 +3,7 @@ services:
   pocketbase:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/backend.Dockerfile
     container_name: pocketcoder-pocketbase
     ports:
       - "8090:8090" # PocketBase UI
@@ -11,8 +11,8 @@ services:
       - pb_data:/app/pb_data
       - pocketcoder-logs:/app/pb_public/logs
       - workspace_data:/workspace
-      - ./proposals:/workspace/.opencode/proposals
-      - ./skills:/workspace/.opencode/skills
+      - ./agents/poco/proposals:/workspace/.opencode/proposals
+      - ./agents/poco/skills:/workspace/.opencode/skills
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -31,7 +31,7 @@ services:
   proxy:
     build:
       context: .
-      dockerfile: Dockerfile.proxy
+      dockerfile: docker/proxy.Dockerfile
     container_name: pocketcoder-proxy
     volumes:
       - proxy_bin:/app/proxy_share
@@ -53,7 +53,7 @@ services:
   opencode:
     build:
       context: .
-      dockerfile: Dockerfile.opencode
+      dockerfile: docker/opencode.Dockerfile
     container_name: pocketcoder-opencode
     environment:
       - PORT=3000
@@ -65,8 +65,8 @@ services:
     volumes:
       - proxy_bin:/proxy:ro                                     # Read compiled proxy
       - workspace_data:/workspace                               # Shared Workspace
-      - ./proposals:/workspace/.opencode/proposals
-      - ./skills:/workspace/.opencode/skills:ro
+      - ./agents/poco/proposals:/workspace/.opencode/proposals
+      - ./agents/poco/skills:/workspace/.opencode/skills:ro
       - opencode_data:/root/.local/share/opencode              # Persistent Storage
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
     entrypoint: /bin/sh
@@ -96,11 +96,11 @@ services:
   sandbox:
     build:
       context: .
-      dockerfile: Dockerfile.sandbox
+      dockerfile: docker/sandbox.Dockerfile
     container_name: pocketcoder-sandbox
     volumes:
       - workspace_data:/workspace   # Shared Workspace
-      - ./proposals:/workspace/.opencode/proposals
+      - ./agents/poco/proposals:/workspace/.opencode/proposals
       - tmux_socket:/tmp/tmux
       - ./.ssh_keys:/ssh_keys:ro  # Read-only access to local SSH keys
       - ./sandbox/cao/src:/app/cao/src                          # Mount ONLY src for live-editing
