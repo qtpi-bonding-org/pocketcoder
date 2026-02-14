@@ -56,3 +56,4 @@ CODEBASE.md
 
 *.txt
 *.tmp
+.ssh_keys

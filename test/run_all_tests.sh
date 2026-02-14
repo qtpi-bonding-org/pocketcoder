@@ -49,20 +49,20 @@ run_test() {
 # 2. Key Integration Tests (Foundational)
 run_test "run_integration_tests.sh" "SSH Integration & Sandbox"
 
-# 3. Core Logic Flow
+# 3. Multi-Agent Coordination (Reflex Arc) - RUNNING FIRST AS REQUESTED
+run_test "cao_delegation_test.sh" "Sub-Agent Delegation & Reflex Arc"
+
+# 4. Core Logic Flow
 run_test "permission_flow_full.sh" "Permission & Reasoning Flow"
 run_test "feature_turn_batching.sh" "Turn-Based Message Batching"
 
-# 4. Feature Specific Tests
+# 5. Feature Specific Tests
 run_test "feature_artifacts.sh" "Artifact Serving API"
 run_test "feature_whitelist_integration.sh" "Sovereign Authority Evaluator"
 run_test "feature_whitelist.sh" "Whitelist Collection Management"
 
-# 5. SOP Governance
+# 6. SOP Governance (Restarts Service - Must be Last)
 run_test "sop_workflow_test.sh" "SOP Governance Master Signature"
-
-# 6. Multi-Agent Coordination (Reflex Arc)
-run_test "cao_delegation_test.sh" "Sub-Agent Delegation & Reflex Arc"
 
 echo -e "\n${GREEN}========================================${NC}"
 if [ "$RUN_FAILED" = true ]; then
