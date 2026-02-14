@@ -1,13 +1,10 @@
-FROM node:lts-slim
+FROM oven/bun:alpine
 
 # Install basic system dependencies (CURL is needed for health checks/scripts)
-# Note: Python, GCC, and UV have been removed. The Brain is now execution-less.
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl
 
 # Install OpenCode (The Reasoning Engine)
-RUN npm install -g opencode-ai@latest
+RUN bun install -g opencode-ai@latest
 
 # Set the working directory
 WORKDIR /app
