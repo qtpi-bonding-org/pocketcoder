@@ -56,7 +56,7 @@ echo "🤖 Starting CAO API Server on port 9889..."
 # 6. Start CAO MCP Server (SSE Mode) (Background)
 echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
 (
-  export CAO_MCP_TRANSPORT=http
+  export CAO_MCP_TRANSPORT=sse
   export CAO_MCP_PORT=9888
   export PYTHONUNBUFFERED=1
   export CAO_LOG_LEVEL=INFO
