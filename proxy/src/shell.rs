@@ -1,33 +1,16 @@
+use serde_json;
 use std::env;
 use std::io::{self, Write};
 use std::process;
-use serde::{Deserialize, Serialize};
+use anyhow::{Result};
+use crate::driver::{ExecRequest, ExecResponse};
 
-#[derive(Serialize)]
-struct ExecRequest {
-    cmd: String,
-    cwd: String,
-    usage_id: Option<String>,
-    session_id: Option<String>,
-}
-
-#[derive(Deserialize)]
-struct ExecResponse {
-    stdout: Option<String>,
-    exit_code: Option<i32>,
-    error: Option<String>,
-}
-
-fn main() {
-    let args: Vec<String> = env::args().collect();
-
+pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
     // 1. Determine the Command string
-    let cmd = if args.len() >= 3 && args[1] == "-c" {
-        // Standard shell call: pocketcoder-shell -c "command"
-        args[2].clone()
-    } else if args.len() >= 2 {
-        // Direct tool call: /usr/bin/glob arg1 arg2
-        // We use the basename of args[0] in case it's a path like /usr/bin/glob
+    let cmd = if let Some(c) = command {
+        c
+    } else if !args.is_empty() {
+        // Direct tool call logic (from old shell_bridge.rs)
         let binary = std::path::Path::new(&args[0])
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
@@ -56,15 +39,17 @@ fn main() {
         session_id,
     };
 
-    // 2. The Proxy (Rust Synchronous Request)
-    match ureq::post("http://proxy:3001/exec")
+    let proxy_url = env::var("PROXY_URL").unwrap_or_else(|_| "http://proxy:3001".to_string());
+
+    // 2. The Proxy Request (Synchronous)
+    match ureq::post(&format!("{}/exec", proxy_url))
         .send_json(serde_json::to_value(request).unwrap())
     {
         Ok(res) => {
             let response: ExecResponse = match res.into_json() {
                 Ok(j) => j,
                 Err(e) => {
-                    eprintln!("\x1b[31m�� [Bridge Error]: Invalid JSON from Gateway: {}\x1b[0m", e);
+                    eprintln!("\x1b[31m❌ [Bridge Error]: Invalid JSON from Proxy: {}\x1b[0m", e);
                     process::exit(1);
                 }
             };
@@ -82,7 +67,7 @@ fn main() {
             process::exit(response.exit_code.unwrap_or(0));
         }
         Err(e) => {
-            eprintln!("\x1b[31m🔥 [Bridge Error]: Connection to Gateway Failed: {}\x1b[0m", e);
+            eprintln!("\x1b[31m🔥 [Bridge Error]: Connection to Proxy failed ({}). Is the server running?\x1b[0m", e);
             process::exit(1);
         }
     }

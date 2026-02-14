@@ -45,6 +45,10 @@ echo "🤖 [PocketCoder] Starting CAO Server on port 9889..."
   cd /app/cao && CAO_SERVER_HOST=0.0.0.0 uv run cao-server
 ) &
 
-# Keep the container alive by tailing the tmux session output OR just sleeping
+# Start the core TMUX session that the Proxy will attach to
+echo "🧵 [PocketCoder] Initializing TMUX Session 'pocketcoder_session' on /tmp/tmux/pocketcoder..."
+tmux -S /tmp/tmux/pocketcoder new-session -d -s pocketcoder_session -n main "/bin/bash"
+chmod 777 /tmp/tmux/pocketcoder
+
 echo "✅ [PocketCoder] Sandbox is LIVE and waiting for direct commands."
 tail -f /dev/null
