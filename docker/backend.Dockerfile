@@ -39,17 +39,11 @@ COPY --from=pocketbase-builder /app/backend/pocketbase /app/pocketbase
 COPY backend/pb_migrations /app/pb_migrations
 COPY backend/pb_public /app/pb_public
 
-# Create a minimal entrypoint
-COPY <<EOF /app/entrypoint.sh
-#!/bin/bash
-
-echo "🚀 Starting PocketBase..."
-/app/pocketbase migrate up || true
-exec /app/pocketbase serve --http=0.0.0.0:8090
-EOF
-
+# Copy and set entrypoint
+COPY backend/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8090
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["/app/pocketbase", "serve", "--http=0.0.0.0:8090"]
 

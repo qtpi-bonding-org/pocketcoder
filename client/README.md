@@ -204,7 +204,9 @@ Edit `lib/design_system/primitives/app_palette.dart` to change colors. Dark mode
 
 ## License
 
-This template is provided as-is for use in your projects.
+This Flutter application (client) is licensed under the Mozilla Public License 2.0 (MPL-2.0).
+See the [LICENSE](LICENSE) file in this directory for the full license text.
+
 
 ## Credits
 

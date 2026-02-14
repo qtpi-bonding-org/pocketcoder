@@ -1,10 +1,10 @@
 #!/bin/sh
 # opencode_entrypoint.sh
-# Hardens the shell environment at runtime before launching OpenCode.
+# Standard entrypoint for the OpenCode container.
 
 set -e
 
-echo "🛡️  [PocketCoder] Initializing Hardened Environment..."
+echo "🛡️  [PocketCoder] Initializing Environment..."
 
 # 1. Wait for the proxy binary to be available (mounted via volume)
 echo "⏳ Waiting for PocketCoder Shell binary..."
@@ -12,8 +12,7 @@ while [ ! -f /proxy/pocketcoder-shell ]; do
     sleep 1
 done
 
-# 2. Verify Proxy Server Connection (Internal check)
-# We use 'curl' which doesn't depend on the shell symlink.
+# 2. Verify Proxy Server Connection
 echo "⏳ Waiting for Proxy Server..."
 count=0
 while ! curl -s http://proxy:3001/health > /dev/null; do

@@ -54,7 +54,7 @@ BRAIN_URL=http://opencode:3000
 # ------------------------------------------------------------------
 
 # 🌌 POCKETBASE DASHBOARD (Super Administrator)
-POCKETBASE_SUPERUSER_EMAIL=user@pocketcoder.app
+POCKETBASE_SUPERUSER_EMAIL=superuser@pocketcoder.app
 POCKETBASE_SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD}
 
 # 👤 APP IDENTITY (The Human / Authorizer)
@@ -95,7 +95,7 @@ echo "
    Pass:  ${ADMIN_PASSWORD}
 
 🔑 Superuser Password (Dashboard):
-   Email: user@pocketcoder.app
+   Email: superuser@pocketcoder.app
    Pass:  ${SUPERUSER_PASSWORD}
 
 🛑 These credentials are saved in your .env file and initialized in the database.

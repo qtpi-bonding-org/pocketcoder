@@ -1,13 +1,20 @@
 #!/bin/sh
+# backend/entrypoint.sh
+# Finalizing the OIC identity and database migrations.
 
-# Start helper to check for admins and create one if missing
-if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
-    echo "🔍 Checking for superuser..."
-    # Check if we need to create a superuser. 
-    # Attempt to create (upsert). This command updates if exists, creates if not.
-    /pb/pocketbase superuser upsert "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
+set -e
+
+# 1. Run Migrations
+echo "📦 Running database migrations..."
+/app/pocketbase migrate up || true
+
+# 2. Provision Superuser (Root)
+if [ -n "$POCKETBASE_SUPERUSER_EMAIL" ] && [ -n "$POCKETBASE_SUPERUSER_PASSWORD" ]; then
+    echo "🔍 Checking for superuser: $POCKETBASE_SUPERUSER_EMAIL..."
+    /app/pocketbase superuser upsert "$POCKETBASE_SUPERUSER_EMAIL" "$POCKETBASE_SUPERUSER_PASSWORD"
     echo "✅ Superuser configured."
 fi
 
-# Execute the main command
+# 3. Launch PocketBase
+echo "🚀 Starting PocketCoder Sovereign Backend..."
 exec "$@"
