@@ -26,7 +26,8 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 - [Detailed Architecture](docs/architecture/ARCHITECTURE.md)
 - [Security Architecture](docs/architecture/SECURITY.md)
 - [Project Roadmap](docs/roadmap/MVP_ROADMAP.md)
-- [License](LICENSE) (AGPLv3)
+- [Project License](LICENSE) (AGPLv3)
+- [Client App License](client/LICENSE) (MPL-2.0)
 - [Contributing](CONTRIBUTING.md)
 - [Development Guide](DEVELOPMENT.md)
 

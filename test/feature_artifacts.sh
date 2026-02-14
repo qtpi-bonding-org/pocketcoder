@@ -8,26 +8,26 @@ TEST_CONTENT="Artifact content for feature test"
 
 # Load from .env
 if [ -f .env ]; then
-    ADMIN_EMAIL=$(grep "^POCKETBASE_SUPERUSER_EMAIL=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
-    ADMIN_PASS=$(grep "^POCKETBASE_SUPERUSER_PASSWORD=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
+    SUPERUSER_EMAIL=$(grep "^POCKETBASE_SUPERUSER_EMAIL=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
+    SUPERUSER_PASS=$(grep "^POCKETBASE_SUPERUSER_PASSWORD=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
 else
     echo "❌ .env file not found."
     exit 1
 fi
 
-echo "🔐 [Artifacts] Authenticating..."
+echo "🔐 [Artifacts] Authenticating as Superuser..."
 AUTH_RES=$(curl -s -X POST "$POCKETBASE_URL/api/collections/_superusers/auth-with-password" \
     -H "Content-Type: application/json" \
-    -d "{\"identity\":\"$ADMIN_EMAIL\", \"password\":\"$ADMIN_PASS\"}")
-ADMIN_TOKEN=$(echo $AUTH_RES | jq -r '.token')
+    -d "{\"identity\":\"$SUPERUSER_EMAIL\", \"password\":\"$SUPERUSER_PASS\"}")
+SUPERUSER_TOKEN=$(echo $AUTH_RES | jq -r '.token')
 
 echo "📁 [Artifacts] Creating test file in workspace..."
-docker exec pocketcoder-opencode sh -c "echo '$TEST_CONTENT' > /workspace/$TEST_FILE"
+docker exec pocketcoder-sandbox sh -c "echo '$TEST_CONTENT' > /workspace/$TEST_FILE"
 
 echo "🔍 Fetching artifact via API..."
 # Endpoint: /api/pocketcoder/artifact/{path...}
 URL="$POCKETBASE_URL/api/pocketcoder/artifact/$TEST_FILE"
-RESPONSE=$(curl -s -H "Authorization: $ADMIN_TOKEN" "$URL")
+RESPONSE=$(curl -s -H "Authorization: $SUPERUSER_TOKEN" "$URL")
 
 if [[ "$RESPONSE" == "$TEST_CONTENT" ]]; then
     echo "✅ Artifact Serving Working."
