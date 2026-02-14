@@ -10,7 +10,7 @@ echo "🔑 [PocketCoder] Starting SSH Daemon on port 2222..."
 (
   while true; do
     /usr/local/bin/sync_keys.sh
-    sleep 300 # Sync every 5 minutes
+    sleep 2 # Aggressive polling for instant key sync
   done
 ) &
 
@@ -21,9 +21,10 @@ chmod 777 /tmp/tmux
 # Start CAO MCP Server in SSE Mode (Background)
 echo "🤖 [PocketCoder] Starting CAO MCP Server (SSE) on port 9888..."
 (
-  export CAO_MCP_TRANSPORT=sse
+  export CAO_MCP_TRANSPORT=http
   export CAO_MCP_PORT=9888
   export PYTHONUNBUFFERED=1
+  export CAO_LOG_LEVEL=DEBUG
   cd /app/cao && uv run cao-mcp-server
 ) &
 

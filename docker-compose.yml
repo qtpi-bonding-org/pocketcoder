@@ -13,7 +13,6 @@ services:
       - workspace_data:/workspace
       - ./proposals:/workspace/.opencode/proposals
       - ./skills:/workspace/.opencode/skills
-      - ssh_keys:/ssh_keys
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -37,10 +36,11 @@ services:
     container_name: pocketcoder-proxy
     ports:
       - "3001:3001"
-      - "9889:9889" # CAO Forwarder
+      - "9889:9889"
     volumes:
-      - proxy_bin:/app/proxy_share        # Source for compiled proxy
+      - proxy_bin:/app/proxy_share
       - tmux_socket:/tmp/tmux
+      - ./.ssh_keys:/ssh_keys:ro          # Mount local keys read-only
     environment:
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
@@ -78,10 +78,18 @@ services:
       -c "
       echo '⏳ Waiting for PocketCoder Shell...' &&
       while [ ! -f /proxy/pocketcoder-shell ]; do sleep 1; done &&
+      echo '⏳ Waiting for Proxy Server...' &&
+      while ! curl -s http://proxy:3001/health > /dev/null; do sleep 1; done &&
       echo '🚀 Starting OpenCode Serve...' &&
       exec /bin/sh -c 'opencode serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG'"
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
     networks:
       - pocketcoder-memory
@@ -100,7 +108,7 @@ services:
       - workspace_data:/workspace   # Shared Workspace
       - ./proposals:/workspace/.opencode/proposals
       - tmux_socket:/tmp/tmux
-      - ssh_keys:/ssh_keys:ro  # Read-only access to SSH keys
+      - ./.ssh_keys:/ssh_keys:ro  # Read-only access to local SSH keys
       - ./sandbox/cao/src:/app/cao/src                          # Mount ONLY src for live-editing
     working_dir: /workspace
     environment:
@@ -120,7 +128,6 @@ volumes:
   opencode_data:
   tmux_socket:
   proxy_bin:
-  ssh_keys:  # Shared volume for SSH keys
 
 networks:
   pocketcoder-memory:
