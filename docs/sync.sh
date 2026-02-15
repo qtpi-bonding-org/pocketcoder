@@ -12,7 +12,7 @@ mkdir -p ./src/content/docs/guides
 
 # Programmatically generate Codebase Audit
 echo "🦅 Generating Sovereign Audit..."
-(cd .. && ./scripts/generate_audit.sh)
+(cd .. && bash scripts/generate_audit.sh)
 
 # Function to extract body content (skip H1 if present)
 extract_body() {
@@ -55,44 +55,45 @@ done
 echo "🐹 Extracting Go docs..."
 echo -e "---\ntitle: Backend Reference\nhead: []\n---\n" > ./src/content/docs/reference/backend.md
 if command -v gomarkdoc &> /dev/null; then
-  gomarkdoc -u ../backend/internal/... >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
+  # gomarkdoc works best when run from the module root for all packages
+  # We use --include-unexported if we want maximum context for the "Sovereign Audit"
+  (cd ../backend && gomarkdoc --include-unexported ./...) >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
 else
-  echo "⚠️ gomarkdoc not found, skipping backend docs"
+  echo "❌ Error: gomarkdoc not found"
 fi
 
-LOC_RELAY=$(find ../backend/pkg/relay -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
-LOC_BACKEND=$(find ../backend/internal -name "*.go" | xargs wc -l | tail -n 1 | awk '{print $1}')
-LOC_BACKEND_MAIN=$(wc -l ../backend/main.go | awk '{print $1}')
-LOC_BACKEND=$((LOC_BACKEND + LOC_BACKEND_MAIN))
-
-echo -e "\n\n**Lines of Code (Core):** $LOC_BACKEND" >> ./src/content/docs/reference/backend.md
-echo -e "**Lines of Code (Relay):** $LOC_RELAY" >> ./src/content/docs/reference/backend.md
-
 # 3. Extract Proxy Docs (Rust)
-echo "🦀 Extracting Proxy docs (Rust)..."
+echo "🦀 Generating High-Fidelity Proxy docs (Rust)..."
+# We generate rustdoc JSON first (requires stable + bootstrap for unstable flags)
+(cd ../proxy && RUSTC_BOOTSTRAP=1 cargo rustdoc -- -Z unstable-options --output-format json) || echo "⚠️ RustDoc JSON generation failed"
+
 echo -e "---\ntitle: Proxy Reference\nhead: []\n---\n" > ./src/content/docs/reference/proxy.md
-echo -e "Detailed documentation for the Rust-based Sovereign Proxy.\n" >> ./src/content/docs/reference/proxy.md
 
-# Extract high-level module docs and public functions
-grep -E "^\s*///" ../proxy/src/main.rs | sed 's/^\s*\/\/\///' >> ./src/content/docs/reference/proxy.md
-echo -e "\n### Public Interface (Main)\n" >> ./src/content/docs/reference/proxy.md
-grep -E "^\s*pub (async )?fn" ../proxy/src/main.rs | sed 's/^\s*//' | sed 's/ {\s*$//' | sed 's/$/;/' | sed 's/^/- `/' | sed 's/$/`/' >> ./src/content/docs/reference/proxy.md
+if command -v cargo-docs-md &> /dev/null; then
+  echo "📦 Converting rustdoc JSON to Markdown..."
+  # Generate to a temporary location
+  mkdir -p /tmp/proxy_docs
+  (cd ../proxy && cargo docs-md --path target/doc/pocketcoder_proxy.json --output /tmp/proxy_docs)
+  
+  # Concatenate the results into our reference file
+  # Primary index first
+  cat /tmp/proxy_docs/index.md >> ./src/content/docs/reference/proxy.md
+  
+  # Then append submodules
+  for mod_dir in /tmp/proxy_docs/*/; do
+    if [ -d "$mod_dir" ]; then
+      mod_name=$(basename "$mod_dir")
+      echo -e "\n\n---\n# Module: $mod_name\n" >> ./src/content/docs/reference/proxy.md
+      cat "$mod_dir/index.md" >> ./src/content/docs/reference/proxy.md
+    fi
+  done
+else
+  echo "❌ Error: cargo-docs-md not found"
+fi
 
-LOC_PROXY=$(wc -l ../proxy/src/main.rs | awk '{print $1}')
-echo -e "\n\n**Lines of Code:** $LOC_PROXY" >> ./src/content/docs/reference/proxy.md
-
-# 4. Extract Sandbox Stats (Original Glue Only)
-echo "🏗️ Extracting Sandbox stats..."
-LOC_SH=$(wc -l ../sandbox/entrypoint.sh ../sandbox/sync_keys.sh | tail -n 1 | awk '{print $1}')
-LOC_PY=$(wc -l ../sandbox/cao/src/cli_agent_orchestrator/providers/opencode.py | awk '{print $1}')
-LOC_SANDBOX=$((LOC_SH + LOC_PY))
-
-# 5. Extract Client Stats (Flutter)
-echo "📱 Extracting Client stats..."
-LOC_CLIENT=$(find ../client/lib -name "*.dart" | xargs wc -l | tail -n 1 | awk '{print $1}')
-
-# 6. Update Landing Page with Total LOC
-TOTAL_CORE=$((LOC_BACKEND + LOC_RELAY + LOC_PROXY + LOC_SANDBOX))
+# 4. Extract Stats and Update Landing Page
+# Extract TOTAL_CORE from the generated CODEBASE.md
+TOTAL_CORE=$(grep "Total Original Footprint:" ../CODEBASE.md | awk '{print $4}')
 echo "📊 Total Core Lines of Code: $TOTAL_CORE"
 
 echo "📝 Updating index.mdx with real stats..."

@@ -12,7 +12,7 @@ services:
       - ./docs:/app/docs
       - /app/docs/node_modules
       - ./backend:/app/backend:ro
-      - ./proxy:/app/proxy:ro
+      - ./proxy:/app/proxy:rw
       - ./sandbox:/app/sandbox:ro
       - ./client:/app/client:ro
       - ./scripts:/app/scripts:ro

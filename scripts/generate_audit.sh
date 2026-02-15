@@ -37,6 +37,10 @@ If a file isn't on this list, it's a third-party dependency (like PocketBase or 
 | :--- | :--- | :--- |
 EOF
 
+LOGIC_LOC=0
+TEST_LOC=0
+FILE_COUNT=0
+
 # Collect files and process
 for DIR in "${CORE_DIRS[@]}"; do
     if [ -d "$DIR" ]; then
@@ -64,9 +68,25 @@ for DIR in "${CORE_DIRS[@]}"; do
                 # Add row to table
                 if ! grep -q "|\`$FILE_PATH\`|" $TARGET_FILE; then
                     echo "| \`$FILE_PATH\` | $TECH | $DESCRIPTION |" >> $TARGET_FILE
+                    
+                    # Update metrics
+                    LINES=$(wc -l < "$FILE_PATH" | awk '{print $1}')
+                    if [[ "$TECH" == "Bash" ]]; then
+                        TEST_LOC=$((TEST_LOC + LINES))
+                    else
+                        LOGIC_LOC=$((LOGIC_LOC + LINES))
+                    fi
+                    FILE_COUNT=$((FILE_COUNT + 1))
+                    
+                    # Pass variables out of the while loop subshell
+                    echo "$LOGIC_LOC:$TEST_LOC:$FILE_COUNT" > /tmp/audit_counts
                 fi
             fi
         done
+        # Read subshell counts
+        if [ -f /tmp/audit_counts ]; then
+            IFS=':' read -r LOGIC_LOC TEST_LOC FILE_COUNT < /tmp/audit_counts
+        fi
     fi
 done
 
@@ -77,10 +97,15 @@ for f in "${ROOT_FILES[@]}"; do
         if [[ -n "$TAG_LINE" ]]; then
             DESCRIPTION=$(echo "$TAG_LINE" | sed -n "s/.*$TAG: //p")
             echo "| \`$FILE_PATH\` | Bash | $DESCRIPTION |" >> $TARGET_FILE
+            
+            LINES=$(wc -l < "$FILE_PATH" | awk '{print $1}')
+            TEST_LOC=$((TEST_LOC + LINES))
+            FILE_COUNT=$((FILE_COUNT + 1))
         fi
     fi
 done
 
-echo -e "\n---\n*Total Original Footprint: $(grep "^| \`" $TARGET_FILE | wc -l | awk '{print $1}') tagged files.*" >> $TARGET_FILE
+echo -e "\n---\n*Total Original Footprint: $LOGIC_LOC lines of core logic, $TEST_LOC lines of testing/infra ($FILE_COUNT tagged files).*" >> $TARGET_FILE
 
 echo "✅ [Audit] Generated $TARGET_FILE from source tags (Strict Mode)."
+rm -f /tmp/audit_counts
