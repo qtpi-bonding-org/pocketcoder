@@ -67,22 +67,19 @@ run_test() {
     fi
 }
 
-# 2. Key Integration Tests (Foundational)
-run_test "run_integration_tests.sh" "SSH Integration & Sandbox"
+# 2. Key Integration Tests (Foundational: Health, SSH, Delegation)
+run_test "run_integration_tests.sh" "Core System Integration"
 
-# 3. Multi-Agent Coordination (Reflex Arc) - RUNNING FIRST AS REQUESTED
-run_test "cao_delegation_test.sh" "Sub-Agent Delegation & Reflex Arc"
-
-# 4. Core Logic Flow
-run_test "permission_flow_full.sh" "Permission & Reasoning Flow"
+# 3. Core Logic Flow
+run_test "permission_flow_full.sh" "Permission & Gatekeeper Flow"
 run_test "feature_turn_batching.sh" "Turn-Based Message Batching"
 
-# 5. Feature Specific Tests
+# 4. Feature Specific Tests
 run_test "feature_artifacts.sh" "Artifact Serving API"
-run_test "feature_whitelist_integration.sh" "Sovereign Authority Evaluator"
-run_test "feature_whitelist.sh" "Whitelist Collection Management"
+run_test "feature_whitelist_integration.sh" "Authority Evaluator (Integration)"
+run_test "feature_whitelist.sh" "Whitelist Rules Persistence"
 
-# 6. SOP Governance (Restarts Service - Must be Last)
+# 5. SOP Governance (Restarts Service - Must be Last)
 run_test "sop_workflow_test.sh" "SOP Governance Master Signature"
 
 echo -e "\n${GREEN}========================================${NC}"

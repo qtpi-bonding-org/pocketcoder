@@ -17,6 +17,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 // @pocketcoder-core: Execution Driver. Interface for Tmux session management.
+//! # Execution Driver
+//! This module manages the lifecycle of the sandbox execution environment
+//! via tmux socket interaction.
+
 use serde::{Deserialize, Serialize};
 use anyhow::{Result, anyhow};
 use tokio::time::{sleep, Duration};
@@ -27,17 +31,25 @@ use uuid::Uuid;
 // Core Models
 // --------------------------------------------------------------------------
 
+/// Result of a command execution in the sandbox.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CommandResult {
+    /// Combined stdout and stderr
     pub output: String,
+    /// Unix exit code
     pub exit_code: i32,
 }
 
+/// Request to execute a command.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExecRequest {
+    /// Bash command string
     pub cmd: String,
+    /// Working directory relative to workspace root
     pub cwd: String,
+    /// Internal audit ID
     pub usage_id: Option<String>,
+    /// Session identifier
     pub session_id: Option<String>,
 }
 

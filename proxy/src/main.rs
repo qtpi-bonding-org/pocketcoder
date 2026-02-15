@@ -21,9 +21,27 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 @pocketcoder-core: Sentinel Proxy. Rust-based bridge that hardens exec calls and provides MCP access.
 */
 
-mod driver;
-mod shell;
-mod mcp_proxy;
+//! # Sentinel Proxy
+//! Rust-based bridge that hardens execution calls and provides MCP access.
+//! 
+//! This sentinel acts as the "Muscle" of the PocketCoder architecture,
+//! ensuring that tools are executed within a secure sandbox environment.
+//!
+//! ## Core Components
+//!
+//! - **Execution Driver**: Manages tmux sessions and command execution in the sandbox.
+//! - **MCP Proxy**: Bridges WebSocket-based Model Context Protocol requests.
+//! - **Shell Bridge**: Implements the `pocketcoder shell` command-line interface.
+//!
+//! ## Architecture
+//!
+//! The proxy runs as a high-performance Rust service that exposes an SSE and WebSocket API.
+//! It translates high-level AI intents into low-level sandbox commands while maintaining
+//! isolation and security.
+
+pub mod driver;
+pub mod shell;
+pub mod mcp_proxy;
 
 use std::env;
 use std::sync::Arc;
