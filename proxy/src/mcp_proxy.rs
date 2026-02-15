@@ -17,6 +17,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 // @pocketcoder-core: MCP Proxy. Bridges Model Context Protocol requests.
+//! # MCP Proxy
+//! Provides a persistent WebSocket relay (Tunnel) for Model Context Protocol
+//! communication between the reasoning engine and the sandbox tools.
+
 use axum::{
     extract::{ws::{Message, WebSocket, WebSocketUpgrade}, State},
     response::Response,
@@ -30,8 +34,10 @@ use crate::AppState;
 
 use serde::Deserialize;
 
+/// Query parameters for established MCP WebSocket sessions.
 #[derive(Deserialize)]
 pub struct McpQuery {
+    /// Optional session ID to resume or identify the connection
     #[serde(alias = "sessionId")]
     pub session_id: Option<String>,
 }

@@ -18,6 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 /* @pocketcoder-core: Shell Bridge. The client-side logic that routes commands from the Brain to the Proxy. */
+//! # Shell Bridge
+//! This module provides the client-side logic for the `pocketcoder shell` command,
+//! which routes commands from the reasoning engine to the persistent proxy.
 use serde_json;
 use std::env;
 use std::io::{self, Write};
