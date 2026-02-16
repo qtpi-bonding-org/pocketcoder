@@ -95,8 +95,10 @@ services:
     volumes:
       - workspace_data:/workspace   # Shared Workspace
       - ./agents/poco/proposals:/workspace/.opencode/proposals
+      - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
       - tmux_socket:/tmp/tmux
       - ./.ssh_keys:/ssh_keys:ro  # Read-only access to local SSH keys
+      - proxy_bin:/usr/local/bin/proxy_share:ro
       - ./sandbox/cao/src:/app/cao/src                          # Mount ONLY src for live-editing
     working_dir: /workspace
     environment:

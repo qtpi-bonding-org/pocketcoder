@@ -17,12 +17,11 @@ RUN cargo build --release
 FROM alpine:3.17
 RUN apk add --no-cache ca-certificates tmux bash curl openssh-client
 WORKDIR /app
+# Create the share directory for the binary proxy tools
+RUN mkdir -p /app/proxy_share
 COPY --from=builder /app/target/release/pocketcoder-proxy /app/pocketcoder
 COPY --from=builder /app/target/release/pocketcoder-proxy /app/proxy_share/pocketcoder
-
-# Create the share directory for the binary proxy tools
-RUN mkdir -p /app/proxy_share && \
-    printf '#!/bin/ash\n/proxy/pocketcoder shell "$@"\n' > /app/proxy_share/pocketcoder-shell && \
+RUN printf '#!/bin/bash\n/app/pocketcoder shell "$@"\n' > /app/proxy_share/pocketcoder-shell && \
     chmod +x /app/proxy_share/pocketcoder-shell
 
 # Default entrypoint for the proxy container (Server Mode)
