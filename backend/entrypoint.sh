@@ -1,3 +1,4 @@
+#!/bin/sh
 # PocketCoder: An accessible, secure, and user-friendly open-source coding assistant platform.
 # Copyright (C) 2026 Qtpi Bonding LLC
 # 
@@ -15,7 +16,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # @pocketcoder-core: Backend Entrypoint. Bootstraps the Go environment and PocketBase.
-#!/bin/sh
 # backend/entrypoint.sh
 # Finalizing the OIC identity and database migrations.
 
