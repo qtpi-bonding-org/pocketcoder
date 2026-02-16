@@ -2,7 +2,7 @@ FROM oven/bun:alpine
 
 # Install basic system dependencies (CURL is needed for health checks/scripts)
 # (Alpine doesn't use bash by default, we keep it minimal)
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl ripgrep
 
 # Install OpenCode (The Reasoning Engine)
 RUN bun install -g opencode-ai@latest
