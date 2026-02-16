@@ -219,6 +219,9 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 		return
 	}
 
+	// 5. Check for subagent registration in tool results
+	go r.checkForSubagentRegistration(chatID, parts)
+
 	// Update parent chat record
 	chat, err := r.app.FindRecordById("chats", chatID)
 	if err != nil {
@@ -335,4 +338,59 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 	}
 
 	return "", fmt.Errorf("failed to extract session id from response")
+}
+
+func (r *RelayService) checkForSubagentRegistration(chatID string, parts []interface{}) {
+	for _, p := range parts {
+		part, ok := p.(map[string]interface{})
+		if !ok || part["type"] != "tool_result" {
+			continue
+		}
+
+		toolName, _ := part["name"].(string)
+		if toolName != "handoff" && toolName != "assign" {
+			continue
+		}
+
+		// Parse the result string from tool_result
+		content, _ := part["content"].(string)
+		if content == "" {
+			content, _ = part["text"].(string)
+		}
+
+		// Try to find terminal_id in the result
+		var resultData map[string]interface{}
+		if err := json.Unmarshal([]byte(content), &resultData); err == nil {
+			tID, _ := resultData["terminal_id"].(string)
+			if tID != "" {
+				log.Printf("🤖 [Relay] Detected Subagent Registration: %s for Chat %s", tID, chatID)
+				r.registerSubagentInDB(chatID, tID)
+			}
+		}
+	}
+}
+
+func (r *RelayService) registerSubagentInDB(chatID, subagentID string) {
+	// Look for existing record
+	existing, _ := r.app.FindFirstRecordByFilter("subagents", "subagent_id = {:id}", map[string]any{"id": subagentID})
+	if existing != nil {
+		return
+	}
+
+	collection, err := r.app.FindCollectionByNameOrId("subagents")
+	if err != nil {
+		log.Printf("❌ [Relay] Could not find subagents collection: %v", err)
+		return
+	}
+
+	record := core.NewRecord(collection)
+	record.Set("chat", chatID)
+	record.Set("subagent_id", subagentID)
+	// We don't know the tmux_window_id yet, but we'll use subagent_id (terminal_id) as primary key
+	
+	if err := r.app.Save(record); err != nil {
+		log.Printf("❌ [Relay] Failed to save subagent record: %v", err)
+	} else {
+		log.Printf("✅ [Relay] Persisted Subagent Lineage: %s -> Chat %s", subagentID, chatID)
+	}
 }

@@ -72,12 +72,6 @@ while [ $SECONDS -lt $END_TIME ]; do
                 -H "Authorization: $USER_TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "{ \"status\": \"authorized\" }" > /dev/null
-            
-            # B. DIRECT NOTIFY OpenCode (Manual Override)
-            # We must run this INSIDE the network (via pocketbase container)
-            docker exec pocketcoder-pocketbase curl -v -X POST "http://opencode:3000/permission/$OC_ID/reply" \
-                -H "Content-Type: application/json" \
-                -d '{"reply":"once"}'
         done
         # Reset timeout if we processed something
         END_TIME=$((SECONDS + 45))
