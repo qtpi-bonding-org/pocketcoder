@@ -19,16 +19,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // @pocketcoder-core: Relay Utilities. Common logic for the Spinal Cord.
 package relay
 
-// resolveChatID attempts to find a chat associated with an OpenCode session ID.
+// resolveChatID attempts to find a chat associated with an agent_id (OpenCode session ID)
+// or a subagent_id.
 func (r *RelayService) resolveChatID(sessionID string) string {
 	if sessionID == "" {
 		return ""
 	}
 
+	// 1. Check if it's the main agent (Poco)
 	record, err := r.app.FindFirstRecordByFilter("chats", "opencode_id = {:id}", map[string]any{"id": sessionID})
-	if err != nil {
-		return ""
+	if err == nil {
+		return record.Id
 	}
 
-	return record.Id
+	// 2. Check if it's a subagent
+	subagent, err := r.app.FindFirstRecordByFilter("subagents", "subagent_id = {:id}", map[string]any{"id": sessionID})
+	if err == nil {
+		return subagent.GetString("chat")
+	}
+
+	return ""
 }

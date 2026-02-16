@@ -84,22 +84,34 @@ impl PocketCoderDriver {
         }
     }
 
-    pub async fn exec(&self, cmd: &str, cwd: Option<&str>, session_override: Option<&str>) -> Result<CommandResult> {
-        let session = session_override.unwrap_or(&self.session_name);
+    pub fn session_exists(&self, session: &str) -> bool {
         let tmux_args = ["-S", &self.socket_path];
-        
-        // 1. Connectivity Check
         let status = Command::new("tmux")
             .args(&tmux_args)
             .args(["has-session", "-t", session])
             .status();
+        
+        status.is_ok() && status.unwrap().success()
+    }
 
-        if !status.is_ok() || !status.unwrap().success() {
-             println!("❌ [Driver] FATAL: Could not find TMUX session '{}' on socket {}.", session, self.socket_path);
-             println!("💡 [Driver] Ensure the Sandbox container is running and has initialized the session.");
-             return Err(anyhow!("Sandbox TMUX session not found. Execution aborted for safety."));
+    pub async fn exec(&self, cmd: &str, cwd: Option<&str>, session_override: Option<&str>) -> Result<CommandResult> {
+        let mut session = session_override.unwrap_or(&self.session_name).to_string();
+        
+        // 1. Resolve Session Identity (Lineage Support)
+        if !self.session_exists(&session) {
+            // If it's a raw chat_id, try pc-<chat_id>
+            let pc_session = format!("pc-{}", session);
+            if self.session_exists(&pc_session) {
+                println!("🔗 [Driver] Resolved session '{}' to '{}' via pc- prefix.", session, pc_session);
+                session = pc_session;
+            } else {
+                println!("❌ [Driver] FATAL: Could not find TMUX session '{}' on socket {}.", session, self.socket_path);
+                println!("💡 [Driver] Ensure the Sandbox container is running and has initialized the session.");
+                return Err(anyhow!("Sandbox TMUX session not found. Execution aborted for safety."));
+            }
         }
 
+        let tmux_args = ["-S", &self.socket_path];
         let pane = format!("{}:0.0", session);
         let sentinel_id = Uuid::new_v4().to_string();
         

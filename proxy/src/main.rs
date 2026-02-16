@@ -41,7 +41,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod driver;
 pub mod shell;
-pub mod mcp_proxy;
 
 use std::env;
 use std::sync::Arc;
@@ -62,7 +61,16 @@ use tokio_stream::StreamExt;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::driver::{PocketCoderDriver, ExecRequest, NotifyRequest};
-use crate::mcp_proxy::{mcp_ws_handler, McpQuery};
+
+use serde::Deserialize;
+
+/// Query parameters for established sessions.
+#[derive(Deserialize)]
+pub struct McpQuery {
+    /// Optional session ID to resume or identify the connection
+    #[serde(alias = "sessionId")]
+    pub session_id: Option<String>,
+}
 
 // --------------------------------------------------------------------------
 // CLI Definition
@@ -296,7 +304,6 @@ async fn main() -> Result<()> {
                 .route("/health", get(health_handler))
                 .route("/exec", post(exec_handler)) 
                 .route("/notify", post(notify_handler))
-                .route("/mcp/ws", get(mcp_ws_handler))
                 .route("/mcp/*path", any(mcp_sse_relay_handler))
                 .route("/messages/*path", any(mcp_sse_relay_handler))
                 .layer(tower_http::cors::CorsLayer::permissive())

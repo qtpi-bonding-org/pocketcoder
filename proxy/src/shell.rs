@@ -53,7 +53,9 @@ pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
 
     let cwd = env::current_dir().unwrap_or_default().to_string_lossy().to_string();
     let usage_id = env::var("POCKETCODER_USAGE_ID").ok();
-    let session_id = env::var("OPENCODE_SESSION_ID").ok();
+    let session_id = env::var("OPENCODE_SESSION_ID")
+        .or_else(|_| env::var("POCKETCODER_CHAT_ID"))
+        .ok();
 
     let request = ExecRequest {
         cmd,

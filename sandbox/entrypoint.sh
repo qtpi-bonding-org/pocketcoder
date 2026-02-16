@@ -1,3 +1,4 @@
+#!/bin/bash
 # PocketCoder: An accessible, secure, and user-friendly open-source coding assistant platform.
 # Copyright (C) 2026 Qtpi Bonding LLC
 # 
@@ -15,7 +16,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # @pocketcoder-core: Sandbox Entrypoint. Hardens the environment and sets up Tmux.
-#!/bin/bash
 # PocketCoder: An accessible, secure, and user-friendly open-source coding assistant platform.
 # Copyright (C) 2026 Qtpi Bonding LLC
 
@@ -36,6 +36,12 @@ if [ -d "$CAO_HOME_BASE" ]; then
     find "$CAO_HOME_BASE" -name "*.db-journal" -delete
     find "$CAO_HOME_BASE" -name "*.lock" -delete
     find "$CAO_HOME_BASE" -name "*.pid" -delete
+fi
+# 3. Mount shared binary
+if [ -f "/usr/local/bin/proxy_share/pocketcoder" ]; then
+    echo "🔗 Linking shared 'pocketcoder' binary..."
+    ln -sf /usr/local/bin/proxy_share/pocketcoder /usr/local/bin/pocketcoder
+    chmod +x /usr/local/bin/pocketcoder
 fi
 
 # --- 🚀 SERVICE STARTUP ---

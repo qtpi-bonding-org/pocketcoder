@@ -11,7 +11,16 @@ RUN apt-get update && apt-get install -y \
     openssh-server \
     sudo \
     unzip \
+    gnupg \
+    software-properties-common \
+    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Terraform
+RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com bookworm main" | tee /etc/apt/sources.list.d/hashicorp.list && \
+    apt-get update && apt-get install -y terraform && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV BUN_INSTALL=/usr/local
 ENV PATH=$BUN_INSTALL/bin:$PATH
@@ -53,7 +62,10 @@ ENV TMUX_SOCKET=/tmp/tmux/pocketcoder
 
 
 # --- SSH & Terminal Mirroring Setup ---
-RUN useradd -m -s /bin/bash worker && echo "worker:password" | chpasswd && adduser worker sudo
+RUN useradd -m -s /bin/bash worker && \
+    echo "worker:password" | chpasswd && \
+    adduser worker sudo && \
+    echo "worker ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN mkdir -p /var/run/sshd
 RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
