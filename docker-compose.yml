@@ -60,6 +60,7 @@ services:
       - PORT=3000
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
+      - PROXY_URL=http://proxy:3001
       - SHELL=/proxy/pocketcoder-shell                        # THE PROXY
     working_dir: /workspace
     user: root

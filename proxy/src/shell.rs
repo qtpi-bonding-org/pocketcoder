@@ -34,35 +34,17 @@ pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
         c
     } else if !args.is_empty() {
         // SHELL-AWARE LOGIC:
-        // OpenCode often calls: /bin/sh -c "command"
-        // We need to strip the interpreter and the -c flag to get the raw command.
-        let mut actual_args = args.as_slice();
-        
-        // Strip common interpreters
-        if !actual_args.is_empty() && (actual_args[0].ends_with("sh") || actual_args[0].ends_with("bash")) {
-            actual_args = &actual_args[1..];
-        }
-
-        // Strip -c flag
-        if !actual_args.is_empty() && actual_args[0] == "-c" {
-            if actual_args.len() > 1 {
-                actual_args[1].to_string()
-            } else {
-                return Err(anyhow::anyhow!("Received -c but no command following it."));
-            }
+        if args.len() >= 2 && args[0] == "-c" {
+            // PATH 1: The Sacred String. 
+            // If called as 'sh -c "cmd"', we trust the command string exactly as passed.
+            args[1].clone()
         } else {
-            // Reconstruct if it wasn't a simple -c call
-            let binary = std::path::Path::new(&args[0])
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .unwrap_or_else(|| args[0].clone());
-            
-            let mut full_cmd = binary;
-            for arg in args.iter().skip(1) {
-                full_cmd.push(' ');
-                full_cmd.push_str(&format!("'{}'", arg.replace("'", "'\\''")));
-            }
-            full_cmd
+            // PATH 2: Positional Arguments.
+            // Mimic shell behavior by escaping each arg and joining with spaces.
+            args.iter()
+                .map(|a| format!("'{}'", a.replace("'", "'\\''")))
+                .collect::<Vec<_>>()
+                .join(" ")
         }
     } else {
         eprintln!("\x1b[31m🔥 [Firewall Blocked]: Interactive or raw shell invocation is restricted for security. Always execute commands via 'bash -c \"command\"'.\x1b[0m");

@@ -26,16 +26,26 @@ done
 echo "✅ Proxy is UP."
 
 # 3. THE SWITCHEROO (Hard Shell Enforcement)
-# We do this LAST so the script can finish its own logic using the real shell.
-if [ ! -f /bin/sh.original ]; then
-    echo "🔒 Hardening Shell: Redirecting /bin/sh -> /proxy/pocketcoder-shell..."
-    mv /bin/sh /bin/sh.original
-    ln -s /proxy/pocketcoder-shell /bin/sh
+# In Alpine, /bin/sh is a symlink to Busybox.
+# We redirect /bin/sh to our proxy, while keeping /bin/ash as the "escape hatch" for system scripts.
+if [ -L /bin/sh ] && [ "$(readlink /bin/sh)" != "/proxy/pocketcoder-shell" ]; then
+    echo "🔒 Hardening Shell: /bin/sh -> /proxy/pocketcoder-shell..."
+    # We don't rename the binary (busybox), we just change the generic 'sh' entry point.
+    ln -sf /proxy/pocketcoder-shell /bin/sh
     echo "✅ Shell is now HARDENED."
 else
-    echo "🔒 Shell already hardened."
+    echo "🔒 Shell already hardened or custom state detected."
 fi
 
-# 4. Launch OpenCode
+# 4. Background Log Tailing (for visibility)
+(
+    while [ ! -d /root/.local/share/opencode/log ]; do sleep 2; done
+    # Wait for the first log file to appear
+    while [ -z "$(ls /root/.local/share/opencode/log/*.log 2>/dev/null)" ]; do sleep 1; done
+    echo "📊 [Relay] Log stream active."
+    tail -f /root/.local/share/opencode/log/*.log
+) &
+
+# 5. Launch OpenCode
 echo "🚀 Launching OpenCode Reasoning Engine..."
 exec opencode "$@"
