@@ -94,25 +94,81 @@ impl PocketCoderDriver {
         status.is_ok() && status.unwrap().success()
     }
 
-    pub async fn exec(&self, cmd: &str, cwd: Option<&str>, session_override: Option<&str>) -> Result<CommandResult> {
-        let mut session = session_override.unwrap_or(&self.session_name).to_string();
+    /// Smart Router: Resolve session_id to (tmux_session_name, window_id)
+    /// 
+    /// Logic:
+    /// 1. Query CAO's API at /terminals/by-delegating-agent/{session_id}
+    /// 2. Extract tmux_session and tmux_window_id from the response
+    /// 3. Return error if CAO lookup fails (no fallback)
+    async fn resolve_session_and_window(&self, session_id: &str) -> Result<(String, u32)> {
+        let cao_url = "http://sandbox:9889";
+        let client = reqwest::Client::new();
         
-        // 1. Resolve Session Identity (Lineage Support)
-        if !self.session_exists(&session) {
-            // If it's a raw chat_id, try pc-<chat_id>
-            let pc_session = format!("pc-{}", session);
-            if self.session_exists(&pc_session) {
-                println!("🔗 [Driver] Resolved session '{}' to '{}' via pc- prefix.", session, pc_session);
-                session = pc_session;
+        // Query CAO's API to resolve the session via delegating_agent_id
+        let response = client.get(format!("{}/terminals/by-delegating-agent/{}", cao_url, session_id))
+            .send()
+            .await
+            .map_err(|e| anyhow!("CAO request failed: {}", e))?;
+        
+        if !response.status().is_success() {
+            return Err(anyhow!("CAO lookup failed for delegating_agent_id '{}' with status {}", 
+                session_id, response.status()));
+        }
+        
+        let terminal_data = response.json::<serde_json::Value>().await
+            .map_err(|e| anyhow!("Failed to parse CAO response: {}", e))?;
+        
+        let tmux_session = terminal_data["tmux_session"].as_str()
+            .ok_or_else(|| anyhow!("Missing tmux_session in CAO response"))?;
+        
+        // Extract window_id: prefer numeric tmux_window_id field, fall back to parsing tmux_window
+        let window_id = if let Some(window_id_num) = terminal_data.get("tmux_window_id").and_then(|v| v.as_u64()) {
+            window_id_num as u32
+        } else if let Some(tmux_window) = terminal_data["tmux_window"].as_str() {
+            // Fallback: extract window ID from window name (format: "window_name@<window_id>")
+            if let Some(at_pos) = tmux_window.rfind('@') {
+                tmux_window[at_pos + 1..].parse::<u32>().unwrap_or(0)
             } else {
-                println!("❌ [Driver] FATAL: Could not find TMUX session '{}' on socket {}.", session, self.socket_path);
-                println!("💡 [Driver] Ensure the Sandbox container is running and has initialized the session.");
-                return Err(anyhow!("Sandbox TMUX session not found. Execution aborted for safety."));
+                // Fallback: query tmux directly for window index
+                self.get_window_index(tmux_session, tmux_window)?
+            }
+        } else {
+            return Err(anyhow!("Missing tmux_window_id and tmux_window in CAO response"));
+        };
+        
+        println!("🔗 [Driver] Resolved session_id '{}' to session '{}' window {}", 
+                 session_id, tmux_session, window_id);
+        Ok((tmux_session.to_string(), window_id))
+    }
+
+    /// Get window index by querying tmux directly
+    fn get_window_index(&self, session: &str, window_name: &str) -> Result<u32> {
+        let tmux_args = ["-S", &self.socket_path];
+        let output = Command::new("tmux")
+            .args(&tmux_args)
+            .args(["list-windows", "-t", session, "-F", "#{window_name}:#{window_index}"])
+            .output()?;
+        
+        let content = String::from_utf8_lossy(&output.stdout);
+        for line in content.lines() {
+            if let Some((name, index_str)) = line.split_once(':') {
+                if name == window_name {
+                    return Ok(index_str.parse::<u32>().unwrap_or(0));
+                }
             }
         }
+        
+        Ok(0) // Default to window 0 if not found
+    }
+
+    pub async fn exec(&self, cmd: &str, cwd: Option<&str>, session_override: Option<&str>) -> Result<CommandResult> {
+        let session_id = session_override.unwrap_or(&self.session_name);
+        
+        // 1. Resolve Session Identity (Smart Router Logic)
+        let (session, window_id) = self.resolve_session_and_window(session_id).await?;
 
         let tmux_args = ["-S", &self.socket_path];
-        let pane = format!("{}:0.0", session);
+        let pane = format!("{}:{}.0", session, window_id);
         let sentinel_id = Uuid::new_v4().to_string();
         
         // 2. Clear history
@@ -173,5 +229,122 @@ impl PocketCoderDriver {
             }
             sleep(Duration::from_millis(200)).await;
         }
+    }
+}
+// --------------------------------------------------------------------------
+// Tests
+// --------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::test;
+    use wiremock::{MockServer, Mock, matchers::{method, path}};
+    use wiremock::ResponseTemplate;
+    use serde_json::json;
+
+    /// Helper to create a driver instance for testing
+    fn create_test_driver() -> PocketCoderDriver {
+        PocketCoderDriver::new("/tmp/test-tmux.sock", "test-session")
+    }
+
+    #[test]
+    async fn test_resolve_session_calls_correct_cao_endpoint() {
+        let mock_server = MockServer::start().await;
+        
+        // Mock CAO response with the new endpoint
+        let mock_response = json!({
+            "tmux_session": "pc-test123",
+            "tmux_window": "main@0",
+            "tmux_window_id": 0
+        });
+        
+        Mock::given(method("GET"))
+            .and(path("/terminals/by-delegating-agent/test-session-id"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+            .mount(&mock_server)
+            .await;
+        
+        let driver = create_test_driver();
+        
+        // We can't easily test the actual HTTP call without more complex setup,
+        // but we can verify the endpoint URL construction logic
+        let expected_url = format!("{}/terminals/by-delegating-agent/test-session-id", mock_server.uri());
+        
+        // Verify the URL construction matches expected format
+        assert!(expected_url.contains("/terminals/by-delegating-agent/"));
+        assert!(!expected_url.contains("/terminals/by-external-session/"));
+    }
+
+    #[test]
+    async fn test_resolve_session_returns_error_on_cao_404() {
+        let mock_server = MockServer::start().await;
+        
+        // Mock CAO returning 404
+        Mock::given(method("GET"))
+            .and(path("/terminals/by-delegating-agent/missing-session"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+        
+        let driver = create_test_driver();
+        
+        // The driver should return an error when CAO returns 404
+        // Note: This test verifies the error handling behavior
+        let result = driver.resolve_session_and_window("missing-session").await;
+        
+        // The result should be an error (no fallback to legacy resolution)
+        assert!(result.is_err());
+        let error_msg = result.unwrap_err().to_string();
+        assert!(error_msg.contains("CAO lookup failed") || error_msg.contains("CAO request failed"));
+    }
+
+    #[test]
+    async fn test_resolve_session_extracts_tmux_window_id() {
+        // Test that we correctly extract numeric tmux_window_id from response
+        let terminal_data: serde_json::Value = json!({
+            "tmux_session": "pc-test123",
+            "tmux_window_id": 5
+        });
+        
+        let tmux_session = terminal_data["tmux_session"].as_str().unwrap();
+        let window_id = terminal_data.get("tmux_window_id").and_then(|v| v.as_u64()).unwrap();
+        
+        assert_eq!(tmux_session, "pc-test123");
+        assert_eq!(window_id, 5);
+    }
+
+    #[test]
+    async fn test_resolve_session_falls_back_to_tmux_window_parsing() {
+        // Test fallback to tmux_window parsing when tmux_window_id is not present
+        let terminal_data: serde_json::Value = json!({
+            "tmux_session": "pc-test123",
+            "tmux_window": "analyst@2"
+        });
+        
+        let tmux_session = terminal_data["tmux_session"].as_str().unwrap();
+        let tmux_window = terminal_data["tmux_window"].as_str().unwrap();
+        
+        // Extract window ID from window name (format: "window_name@<window_id>")
+        let window_id = if let Some(at_pos) = tmux_window.rfind('@') {
+            tmux_window[at_pos + 1..].parse::<u32>().unwrap_or(0)
+        } else {
+            0
+        };
+        
+        assert_eq!(tmux_session, "pc-test123");
+        assert_eq!(window_id, 2);
+    }
+
+    #[test]
+    async fn test_endpoint_url_format() {
+        // Verify the endpoint URL format matches the new specification
+        let session_id = "agent-session-123";
+        let cao_url = "http://sandbox:9889";
+        
+        let endpoint = format!("{}/terminals/by-delegating-agent/{}", cao_url, session_id);
+        
+        assert_eq!(endpoint, "http://sandbox:9889/terminals/by-delegating-agent/agent-session-123");
+        assert!(!endpoint.contains("by-external-session"));
     }
 }

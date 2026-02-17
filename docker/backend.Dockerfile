@@ -28,7 +28,9 @@ RUN apk add --no-cache \
     bash \
     curl \
     tzdata \
-    openssl
+    openssl \
+    sqlite \
+    sqlite-dev
 
 WORKDIR /app
 

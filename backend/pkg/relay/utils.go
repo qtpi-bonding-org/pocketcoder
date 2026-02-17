@@ -27,7 +27,7 @@ func (r *RelayService) resolveChatID(sessionID string) string {
 	}
 
 	// 1. Check if it's the main agent (Poco)
-	record, err := r.app.FindFirstRecordByFilter("chats", "opencode_id = {:id}", map[string]any{"id": sessionID})
+	record, err := r.app.FindFirstRecordByFilter("chats", "agent_id = {:id}", map[string]any{"id": sessionID})
 	if err == nil {
 		return record.Id
 	}
@@ -35,7 +35,15 @@ func (r *RelayService) resolveChatID(sessionID string) string {
 	// 2. Check if it's a subagent
 	subagent, err := r.app.FindFirstRecordByFilter("subagents", "subagent_id = {:id}", map[string]any{"id": sessionID})
 	if err == nil {
-		return subagent.GetString("chat")
+		// Resolve via delegating_agent_id -> chats.agent_id -> chats.id
+		delegatingAgentID := subagent.GetString("delegating_agent_id")
+		if delegatingAgentID == "" {
+			return ""
+		}
+		chatRecord, err := r.app.FindFirstRecordByFilter("chats", "agent_id = {:id}", map[string]any{"id": delegatingAgentID})
+		if err == nil {
+			return chatRecord.Id
+		}
 	}
 
 	return ""
