@@ -4,6 +4,7 @@ import 'package:pocketbase/pocketbase.dart';
 import '../../domain/chat/chat_message.dart';
 import '../../domain/chat/i_chat_repository.dart';
 import '../../domain/chat/chat.dart';
+import '../core/collections.dart';
 
 @LazySingleton(as: IChatRepository)
 class ChatRepository implements IChatRepository {
@@ -14,7 +15,7 @@ class ChatRepository implements IChatRepository {
   @override
   Stream<List<ChatMessage>> watchColdPipe(String chatId) async* {
     // 1. Initial Fetch
-    final records = await _pb.collection('messages').getList(
+    final records = await _pb.collection(Collections.messages).getList(
           filter: 'chat = "$chatId"',
           sort: 'created',
           expand: 'chat',
@@ -32,7 +33,7 @@ class ChatRepository implements IChatRepository {
     // Initial emission
     controller.add(messages);
 
-    final unsubscribe = await _pb.collection('messages').subscribe('*', (e) {
+    final unsubscribe = await _pb.collection(Collections.messages).subscribe('*', (e) {
       if (e.action == 'create') {
         final newMsg =
             ChatMessage.fromJson({...e.record!.toJson(), 'chatId': chatId});
@@ -96,7 +97,7 @@ class ChatRepository implements IChatRepository {
   Future<void> sendMessage(String chatId, String content) async {
     print('ChatRepo: Creating message in PB chat=$chatId content="$content"');
     try {
-      await _pb.collection('messages').create(body: {
+      await _pb.collection(Collections.messages).create(body: {
         'chat': chatId,
         'role': 'user',
         'parts': [
@@ -116,7 +117,7 @@ class ChatRepository implements IChatRepository {
     if (userId == null) throw Exception('User not authenticated');
 
     try {
-      final records = await _pb.collection('chats').getList(
+      final records = await _pb.collection(Collections.chats).getList(
             filter: 'title = "$title" && user = "$userId"',
             perPage: 1,
           );
@@ -125,11 +126,11 @@ class ChatRepository implements IChatRepository {
         return records.items.first.id;
       }
 
-      final agentRecord = await _pb.collection('ai_agents').getFirstListItem(
+      final agentRecord = await _pb.collection(Collections.aiAgents).getFirstListItem(
             'name = "poco"',
           );
 
-      final newChat = await _pb.collection('chats').create(body: {
+      final newChat = await _pb.collection(Collections.chats).create(body: {
         'title': title,
         'user': userId,
         'agent': agentRecord.id,
@@ -143,7 +144,7 @@ class ChatRepository implements IChatRepository {
   @override
   Future<String?> getOpencodeId(String chatId) async {
     try {
-      final chat = await _pb.collection('chats').getOne(chatId);
+      final chat = await _pb.collection(Collections.chats).getOne(chatId);
       return chat.getStringValue('opencode_id');
     } catch (e) {
       print('ChatRepo: Failed to get opencode_id for $chatId: $e');
@@ -155,7 +156,7 @@ class ChatRepository implements IChatRepository {
   Stream<RecordModel> watchChat(String chatId) async* {
     final controller = StreamController<RecordModel>();
 
-    final unsubscribe = await _pb.collection('chats').subscribe(chatId, (e) {
+    final unsubscribe = await _pb.collection(Collections.chats).subscribe(chatId, (e) {
       if (e.record != null) {
         controller.add(e.record!);
       }
@@ -172,7 +173,7 @@ class ChatRepository implements IChatRepository {
   @override
   Future<List<Chat>> fetchChatHistory() async {
     try {
-      final records = await _pb.collection('chats').getList(
+      final records = await _pb.collection(Collections.chats).getList(
             sort: '-last_active',
             // filter: 'user = "${_pb.authStore.record?.id}"', // Uncomment if chat history should be user-specific
           );

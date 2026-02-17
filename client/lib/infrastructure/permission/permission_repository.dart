@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../domain/permission/i_permission_repository.dart';
 import '../../domain/permission/permission_request.dart';
+import '../core/collections.dart';
 
 @LazySingleton(as: IPermissionRepository)
 class PermissionRepository implements IPermissionRepository {
@@ -20,7 +21,7 @@ class PermissionRepository implements IPermissionRepository {
 
     // Helper to fetch current state
     Future<List<PermissionRequest>> fetch() async {
-      final records = await _pb.collection('permissions').getList(
+      final records = await _pb.collection(Collections.permissions).getList(
             filter: filter,
             sort: 'created',
           );
@@ -37,7 +38,7 @@ class PermissionRepository implements IPermissionRepository {
     final controller = StreamController<List<PermissionRequest>>();
 
     final unsubscribe =
-        await _pb.collection('permissions').subscribe('*', (e) async {
+        await _pb.collection(Collections.permissions).subscribe('*', (e) async {
       // If ANY record in the permissions collection changes, we re-fetch our filtered list.
       // This is slightly more heavy but ensures we NEVER miss a status transition.
       try {
@@ -60,14 +61,14 @@ class PermissionRepository implements IPermissionRepository {
 
   @override
   Future<void> authorize(String permissionId) async {
-    await _pb.collection('permissions').update(permissionId, body: {
+    await _pb.collection(Collections.permissions).update(permissionId, body: {
       'status': 'authorized',
     });
   }
 
   @override
   Future<void> deny(String permissionId) async {
-    await _pb.collection('permissions').update(permissionId, body: {
+    await _pb.collection(Collections.permissions).update(permissionId, body: {
       'status': 'denied',
     });
   }

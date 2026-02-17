@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:test_app/domain/auth/i_auth_repository.dart';
+import '../core/collections.dart';
 
 @LazySingleton(as: IAuthRepository)
 class AuthRepository implements IAuthRepository {
@@ -19,7 +20,7 @@ class AuthRepository implements IAuthRepository {
   @override
   Future<bool> login(String email, String password) async {
     try {
-      await _pocketBase.collection('users').authWithPassword(email, password);
+      await _pocketBase.collection(Collections.users).authWithPassword(email, password);
       return true;
     } catch (e) {
       return false;
@@ -29,7 +30,7 @@ class AuthRepository implements IAuthRepository {
   @override
   Future<bool> approvePermission(String permissionId) async {
     try {
-      await _pocketBase.collection('permissions').update(permissionId, body: {
+      await _pocketBase.collection(Collections.permissions).update(permissionId, body: {
         'status': 'authorized',
       });
       return true;

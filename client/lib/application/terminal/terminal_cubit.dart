@@ -9,6 +9,7 @@ import 'package:cryptography/cryptography.dart' as crypto;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'terminal_state.dart';
+import '../../infrastructure/core/collections.dart';
 
 @injectable
 class SshTerminalCubit extends Cubit<SshTerminalState> {
@@ -141,14 +142,14 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
 
     try {
       // Check if this key already exists for this user
-      final existingKeys = await _pb.collection('ssh_keys').getFullList(
+      final existingKeys = await _pb.collection(Collections.sshKeys).getFullList(
             filter: 'user = "$userId" && fingerprint = "$fingerprint"',
           );
 
       if (existingKeys.isEmpty) {
         // Create new SSH key record
         print('🔄 [Terminal] Registering new SSH key to PocketBase...');
-        await _pb.collection('ssh_keys').create(body: {
+        await _pb.collection(Collections.sshKeys).create(body: {
           'user': userId,
           'public_key': publicKey,
           'device_name': deviceName,
@@ -158,7 +159,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
       } else {
         // Update last_used timestamp
         final keyRecord = existingKeys.first;
-        await _pb.collection('ssh_keys').update(keyRecord.id, body: {
+        await _pb.collection(Collections.sshKeys).update(keyRecord.id, body: {
           'last_used': DateTime.now().toIso8601String(),
         });
       }
