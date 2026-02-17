@@ -1,5 +1,4 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 
 /// Secure authentication store with persistent token storage.
@@ -40,6 +39,7 @@ class AuthStoreConfig {
 ///
 /// Extends $AuthStore to be compatible with pocketbase_drift's $PocketBase.database().
 class SecureAuthStore extends $AuthStore {
+  @override
   final bool clearOnLogout;
 
   SecureAuthStore({

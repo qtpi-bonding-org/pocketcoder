@@ -148,7 +148,7 @@ class AgentManagementView extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: state.prompts.any((p) => p.id == selectedPromptId)
+                initialValue: state.prompts.any((p) => p.id == selectedPromptId)
                     ? selectedPromptId
                     : null,
                 items: state.prompts
@@ -163,7 +163,7 @@ class AgentManagementView extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: state.models.any((m) => m.id == selectedModelId)
+                initialValue: state.models.any((m) => m.id == selectedModelId)
                     ? selectedModelId
                     : null,
                 items: state.models

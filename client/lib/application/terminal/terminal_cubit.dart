@@ -138,7 +138,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
     final fingerprint = await _calculateFingerprint(publicKey);
 
     // Get device name (you can enhance this with device_info_plus package)
-    final deviceName = 'Flutter Device'; // TODO: Get actual device name
+    const deviceName = 'Flutter Device'; // TODO: Get actual device name
 
     try {
       // Check if this key already exists for this user
