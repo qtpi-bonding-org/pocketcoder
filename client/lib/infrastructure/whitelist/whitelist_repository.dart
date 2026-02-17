@@ -3,6 +3,7 @@ import 'package:pocketbase/pocketbase.dart';
 import '../../domain/whitelist/i_whitelist_repository.dart';
 import '../../domain/whitelist/whitelist_action.dart';
 import '../../domain/whitelist/whitelist_target.dart';
+import '../core/collections.dart';
 
 @LazySingleton(as: IWhitelistRepository)
 class WhitelistRepository implements IWhitelistRepository {
@@ -12,7 +13,7 @@ class WhitelistRepository implements IWhitelistRepository {
 
   @override
   Future<List<WhitelistTarget>> getTargets() async {
-    final records = await _pb.collection('whitelist_targets').getFullList(
+    final records = await _pb.collection(Collections.whitelistTargets).getFullList(
           sort: '-created',
         );
     return records
@@ -27,7 +28,7 @@ class WhitelistRepository implements IWhitelistRepository {
 
   @override
   Future<List<WhitelistAction>> getActions() async {
-    final records = await _pb.collection('whitelist_actions').getFullList(
+    final records = await _pb.collection(Collections.whitelistActions).getFullList(
           sort: '-created',
           expand: 'target',
         );
@@ -45,7 +46,7 @@ class WhitelistRepository implements IWhitelistRepository {
   @override
   Future<WhitelistTarget> createTarget(
       String name, String pattern, String type) async {
-    final record = await _pb.collection('whitelist_targets').create(body: {
+    final record = await _pb.collection(Collections.whitelistTargets).create(body: {
       'name': name,
       'pattern': pattern,
       'type': type,
@@ -60,12 +61,12 @@ class WhitelistRepository implements IWhitelistRepository {
 
   @override
   Future<void> deleteTarget(String id) async {
-    await _pb.collection('whitelist_targets').delete(id);
+    await _pb.collection(Collections.whitelistTargets).delete(id);
   }
 
   @override
   Future<WhitelistAction> createAction(String command, String targetId) async {
-    final record = await _pb.collection('whitelist_actions').create(body: {
+    final record = await _pb.collection(Collections.whitelistActions).create(body: {
       'command': command,
       'target': targetId,
       'is_active': true,
@@ -84,12 +85,12 @@ class WhitelistRepository implements IWhitelistRepository {
 
   @override
   Future<void> deleteAction(String id) async {
-    await _pb.collection('whitelist_actions').delete(id);
+    await _pb.collection(Collections.whitelistActions).delete(id);
   }
 
   @override
   Future<void> toggleAction(String id, bool isActive) async {
-    await _pb.collection('whitelist_actions').update(id, body: {
+    await _pb.collection(Collections.whitelistActions).update(id, body: {
       'is_active': isActive,
     });
   }

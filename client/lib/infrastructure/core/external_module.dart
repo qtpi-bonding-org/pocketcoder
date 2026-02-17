@@ -10,6 +10,11 @@ abstract class ExternalModule {
   Future<PocketBase> get pocketBase async {
     debugPrint('PocketBaseInit: Starting...');
 
+    // Determine base URL based on environment
+    // Use 'pocketbase' for Docker environments, '127.0.0.1' for local development
+    final baseUrl = kDebugMode ? 'http://127.0.0.1:8090' : 'http://pocketbase:8090';
+    debugPrint('PocketBaseInit: Using URL: $baseUrl');
+
     // 2. Load Schema (for offline capabilities)
     String? schemaJson;
     try {
@@ -23,7 +28,7 @@ abstract class ExternalModule {
 
     // 3. Initialize PocketBase Drift Client
     final client = $PocketBase.database(
-      'http://127.0.0.1:8090',
+      baseUrl,
       requestPolicy: RequestPolicy.cacheAndNetwork,
     );
 
