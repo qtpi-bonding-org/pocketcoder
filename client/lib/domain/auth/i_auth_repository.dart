@@ -1,16 +1,18 @@
+import 'package:pocketbase/pocketbase.dart';
+
 abstract class IAuthRepository {
-  /// Stream of online/offline status
   Stream<bool> get connectionStatus;
 
-  /// Authenticates using email and password.
   Future<bool> login(String email, String password);
+  Future<void> logout();
+  Future<bool> refreshToken();
 
-  /// Approves a permission request by setting its status to authorized.
+  bool get isAuthenticated;
+  String? get currentUserId;
+  String? get currentUserEmail;
+  String? get currentUserRole;
+
   Future<bool> approvePermission(String permissionId);
-
-  /// Checks the server health.
   Future<bool> healthCheck();
-
-  /// Updates the server base URL.
   void updateBaseUrl(String url);
 }
