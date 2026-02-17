@@ -28,4 +28,7 @@ futures = "0.3.31"
 url = "2.5.8"
 tokio-util = { version = "0.7.18", features = ["io", "codec"] }
 
+[dev-dependencies]
+wiremock = "0.6"
+
 

@@ -151,7 +151,7 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	completed := timeInfo != nil && timeInfo["completed"] != nil
 
 	// 1. Check if message already exists (upsert)
-	existing, _ := r.app.FindFirstRecordByFilter("messages", "opencode_id = {:id}", map[string]any{"id": ocMsgID})
+	existing, _ := r.app.FindFirstRecordByFilter("messages", "agent_message_id = {:id}", map[string]any{"id": ocMsgID})
 
 	var record *core.Record
 	now := time.Now().Format("2006-01-02 15:04:05.000Z")
@@ -172,7 +172,7 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 		record = core.NewRecord(collection)
 		record.Set("chat", chatID)
 		record.Set("role", "assistant")
-		record.Set("opencode_id", ocMsgID)
+		record.Set("agent_message_id", ocMsgID)
 		record.Set("created", now)
 		record.Set("updated", now)
 	}
@@ -273,7 +273,7 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 		return "", err
 	}
 
-	existingSession := chat.GetString("opencode_id")
+	existingSession := chat.GetString("agent_id")
 	if existingSession != "" {
 		// Verification: Is this session still alive on OpenCode?
 		verifyURL := fmt.Sprintf("%s/session/%s", r.openCodeURL, existingSession)
@@ -290,7 +290,7 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 			log.Printf("⚠️ [Relay/Go] Existing session %s returned status %d.", existingSession, vResp.StatusCode)
 			if vResp.StatusCode == http.StatusNotFound {
 				log.Printf("⚠️ [Relay/Go] Session %s is gone (404), cleaning up...", existingSession)
-				chat.Set("opencode_id", "")
+				chat.Set("agent_id", "")
 				r.app.Save(chat)
 			}
 		} else {
@@ -299,7 +299,7 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 		}
 
 		// If we haven't cleared it, it means we're opting to try using it for stability
-		if chat.GetString("opencode_id") != "" {
+		if chat.GetString("agent_id") != "" {
 			return existingSession, nil
 		}
 	}
@@ -328,7 +328,7 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 
 	newID, _ := res["id"].(string)
 	if newID != "" {
-		chat.Set("opencode_id", newID)
+		chat.Set("agent_id", newID)
 		if err := r.app.Save(chat); err != nil {
 			log.Printf("❌ [Relay/Go] Failed to update chat %s with opencode_id: %v", chatID, err)
 		} else {
@@ -343,34 +343,79 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 func (r *RelayService) checkForSubagentRegistration(chatID string, parts []interface{}) {
 	for _, p := range parts {
 		part, ok := p.(map[string]interface{})
-		if !ok || part["type"] != "tool_result" {
+		if !ok {
 			continue
 		}
 
-		toolName, _ := part["name"].(string)
-		if toolName != "handoff" && toolName != "assign" {
-			continue
-		}
+		partType, _ := part["type"].(string)
 
-		// Parse the result string from tool_result
-		content, _ := part["content"].(string)
-		if content == "" {
-			content, _ = part["text"].(string)
-		}
+		// OpenCode uses type:"tool" with state.output for tool results,
+		// not type:"tool_result" with content.
+		var toolName string
+		var content string
 
-		// Try to find terminal_id in the result
-		var resultData map[string]interface{}
-		if err := json.Unmarshal([]byte(content), &resultData); err == nil {
-			tID, _ := resultData["terminal_id"].(string)
-			if tID != "" {
-				log.Printf("🤖 [Relay] Detected Subagent Registration: %s for Chat %s", tID, chatID)
-				r.registerSubagentInDB(chatID, tID)
+		if partType == "tool_result" {
+			// Legacy format
+			toolName, _ = part["name"].(string)
+			content, _ = part["content"].(string)
+			if content == "" {
+				content, _ = part["text"].(string)
 			}
+		} else if partType == "tool" {
+			// OpenCode format: type:"tool", tool:"cao_handoff", state.output:"..."
+			toolName, _ = part["tool"].(string)
+			if state, ok := part["state"].(map[string]interface{}); ok {
+				content, _ = state["output"].(string)
+			}
+		} else {
+			continue
 		}
+
+		if toolName != "handoff" && toolName != "assign" && toolName != "cao_handoff" && toolName != "cao_assign" {
+			continue
+		}
+
+		if content == "" {
+			continue
+		}
+
+		var resultData map[string]interface{}
+		if err := json.Unmarshal([]byte(content), &resultData); err != nil {
+			log.Printf("⚠️ [Relay] Failed to parse tool_result content as JSON: %v", err)
+			continue
+		}
+
+		// Check for _pocketcoder_sys_event discriminator at top level.
+		// This field is set by HandoffResult model to distinguish PocketCoder
+		// system events from normal tool output.
+		sysEvent, _ := resultData["_pocketcoder_sys_event"].(string)
+		if sysEvent != "handoff_complete" {
+			continue
+		}
+
+		subagentID, _ := resultData["subagent_id"].(string)
+		terminalID, _ := resultData["terminal_id"].(string)
+		agentProfile, _ := resultData["agent_profile"].(string)
+
+		// Handle tmux_window_id - it could be float64 from JSON
+		var tmuxWindowID int
+		if tmuxWindow, ok := resultData["tmux_window_id"].(float64); ok {
+			tmuxWindowID = int(tmuxWindow)
+		}
+
+		log.Printf("🤖 [Relay] Detected Subagent Registration: terminal=%s, subagent=%s, window=%d, profile=%s for Chat %s",
+			terminalID, subagentID, tmuxWindowID, agentProfile, chatID)
+
+		r.registerSubagentInDB(chatID, subagentID, terminalID, tmuxWindowID, agentProfile)
 	}
 }
 
-func (r *RelayService) registerSubagentInDB(chatID, subagentID string) {
+func (r *RelayService) registerSubagentInDB(chatID, subagentID, terminalID string, tmuxWindowID int, agentProfile string) {
+	if subagentID == "" {
+		log.Printf("⚠️ [Relay] Empty subagent_id for chat %s, terminal=%s, window=%d — skipping registration (will retry on next handoff)", chatID, terminalID, tmuxWindowID)
+		return
+	}
+
 	// Look for existing record
 	existing, _ := r.app.FindFirstRecordByFilter("subagents", "subagent_id = {:id}", map[string]any{"id": subagentID})
 	if existing != nil {
@@ -383,14 +428,23 @@ func (r *RelayService) registerSubagentInDB(chatID, subagentID string) {
 		return
 	}
 
+	// Resolve delegatingAgentID from chat's agent_id field
+	chat, err := r.app.FindRecordById("chats", chatID)
+	if err != nil {
+		log.Printf("❌ [Relay] Could not find chat %s: %v", chatID, err)
+		return
+	}
+	delegatingAgentID := chat.GetString("agent_id")
+
 	record := core.NewRecord(collection)
-	record.Set("chat", chatID)
 	record.Set("subagent_id", subagentID)
-	// We don't know the tmux_window_id yet, but we'll use subagent_id (terminal_id) as primary key
-	
+	record.Set("delegating_agent_id", delegatingAgentID)
+	record.Set("tmux_window_id", tmuxWindowID)
+
 	if err := r.app.Save(record); err != nil {
 		log.Printf("❌ [Relay] Failed to save subagent record: %v", err)
 	} else {
-		log.Printf("✅ [Relay] Persisted Subagent Lineage: %s -> Chat %s", subagentID, chatID)
+		log.Printf("✅ [Relay] Persisted Subagent Lineage: subagent=%s, delegating_agent=%s, window=%d, profile=%s",
+			subagentID, delegatingAgentID, tmuxWindowID, agentProfile)
 	}
 }
