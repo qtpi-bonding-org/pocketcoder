@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../domain/ai/ai_models.dart';
+import '../core/collections.dart';
 
 abstract class IAiRepository {
   Future<List<AiAgent>> getAgents();
@@ -27,7 +28,7 @@ class AiRepository implements IAiRepository {
 
   @override
   Future<List<AiAgent>> getAgents() async {
-    final records = await _pb.collection('ai_agents').getFullList(
+    final records = await _pb.collection(Collections.aiAgents).getFullList(
           expand: 'prompt,model',
         );
     return records
@@ -41,7 +42,7 @@ class AiRepository implements IAiRepository {
 
   @override
   Future<List<AiPrompt>> getPrompts() async {
-    final records = await _pb.collection('ai_prompts').getFullList();
+    final records = await _pb.collection(Collections.aiPrompts).getFullList();
     return records
         .map((e) => AiPrompt.fromJson({...e.data, 'id': e.id}))
         .toList();
@@ -49,7 +50,7 @@ class AiRepository implements IAiRepository {
 
   @override
   Future<List<AiModel>> getModels() async {
-    final records = await _pb.collection('ai_models').getFullList();
+    final records = await _pb.collection(Collections.aiModels).getFullList();
     return records
         .map((e) => AiModel.fromJson({...e.data, 'id': e.id}))
         .toList();
@@ -57,7 +58,7 @@ class AiRepository implements IAiRepository {
 
   @override
   Future<List<AiPermissionRule>> getRules(String agentId) async {
-    final records = await _pb.collection('ai_permission_rules').getFullList(
+    final records = await _pb.collection(Collections.aiPermissionRules).getFullList(
           filter: 'agent = "$agentId"',
         );
     return records
@@ -69,9 +70,9 @@ class AiRepository implements IAiRepository {
   Future<void> saveAgent(AiAgent agent) async {
     final data = agent.toJson()..remove('id');
     if (agent.id.isEmpty) {
-      await _pb.collection('ai_agents').create(body: data);
+      await _pb.collection(Collections.aiAgents).create(body: data);
     } else {
-      await _pb.collection('ai_agents').update(agent.id, body: data);
+      await _pb.collection(Collections.aiAgents).update(agent.id, body: data);
     }
   }
 
@@ -79,9 +80,9 @@ class AiRepository implements IAiRepository {
   Future<void> savePrompt(AiPrompt prompt) async {
     final data = prompt.toJson()..remove('id');
     if (prompt.id.isEmpty) {
-      await _pb.collection('ai_prompts').create(body: data);
+      await _pb.collection(Collections.aiPrompts).create(body: data);
     } else {
-      await _pb.collection('ai_prompts').update(prompt.id, body: data);
+      await _pb.collection(Collections.aiPrompts).update(prompt.id, body: data);
     }
   }
 
@@ -89,9 +90,9 @@ class AiRepository implements IAiRepository {
   Future<void> saveModel(AiModel model) async {
     final data = model.toJson()..remove('id');
     if (model.id.isEmpty) {
-      await _pb.collection('ai_models').create(body: data);
+      await _pb.collection(Collections.aiModels).create(body: data);
     } else {
-      await _pb.collection('ai_models').update(model.id, body: data);
+      await _pb.collection(Collections.aiModels).update(model.id, body: data);
     }
   }
 
@@ -99,23 +100,23 @@ class AiRepository implements IAiRepository {
   Future<void> saveRule(AiPermissionRule rule) async {
     final data = rule.toJson()..remove('id');
     if (rule.id.isEmpty) {
-      await _pb.collection('ai_permission_rules').create(body: data);
+      await _pb.collection(Collections.aiPermissionRules).create(body: data);
     } else {
-      await _pb.collection('ai_permission_rules').update(rule.id, body: data);
+      await _pb.collection(Collections.aiPermissionRules).update(rule.id, body: data);
     }
   }
 
   @override
-  Future<void> deleteAgent(String id) => _pb.collection('ai_agents').delete(id);
+  Future<void> deleteAgent(String id) => _pb.collection(Collections.aiAgents).delete(id);
 
   @override
   Future<void> deletePrompt(String id) =>
-      _pb.collection('ai_prompts').delete(id);
+      _pb.collection(Collections.aiPrompts).delete(id);
 
   @override
-  Future<void> deleteModel(String id) => _pb.collection('ai_models').delete(id);
+  Future<void> deleteModel(String id) => _pb.collection(Collections.aiModels).delete(id);
 
   @override
   Future<void> deleteRule(String id) =>
-      _pb.collection('ai_permission_rules').delete(id);
+      _pb.collection(Collections.aiPermissionRules).delete(id);
 }
