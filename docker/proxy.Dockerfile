@@ -24,6 +24,9 @@ COPY --from=builder /app/target/release/pocketcoder-proxy /app/proxy_share/pocke
 RUN printf '#!/bin/bash\n/app/pocketcoder shell "$@"\n' > /app/proxy_share/pocketcoder-shell && \
     chmod +x /app/proxy_share/pocketcoder-shell
 
+# Copy and set up the entrypoint script
+COPY docker/proxy_entrypoint.sh /usr/local/bin/proxy_entrypoint.sh
+RUN chmod +x /usr/local/bin/proxy_entrypoint.sh
+
 # Default entrypoint for the proxy container (Server Mode)
-ENTRYPOINT ["/app/pocketcoder"]
-CMD ["server", "--port", "3001"]
+ENTRYPOINT ["/usr/local/bin/proxy_entrypoint.sh"]
