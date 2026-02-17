@@ -187,10 +187,8 @@ async fn mcp_sse_relay_handler(
             let stream = res.bytes_stream().map(|result| {
                 result.map(|bytes| {
                     let s = String::from_utf8_lossy(&bytes);
-                    // 1. Rewrite relative paths to absolute proxy paths
-                    // 2. Prefix session_id with "ses_" for OpenCode validation
-                    let replaced = s.replace("data: /", "data: http://proxy:3001/mcp/")
-                                    .replace("session_id=", "session_id=ses_");
+                    // Prefix session_id with "ses_" for OpenCode validation
+                    let replaced = s.replace("session_id=", "session_id=ses_");
                     axum::body::Bytes::from(replaced.into_bytes())
                 })
             });
