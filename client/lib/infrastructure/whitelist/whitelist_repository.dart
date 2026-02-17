@@ -5,7 +5,6 @@ import '../../domain/whitelist/whitelist_action.dart';
 import '../../domain/whitelist/whitelist_target.dart';
 import '../../domain/exceptions.dart';
 import '../core/collections.dart';
-import '../core/logger.dart';
 import '../../core/try_operation.dart';
 
 @LazySingleton(as: IWhitelistRepository)
