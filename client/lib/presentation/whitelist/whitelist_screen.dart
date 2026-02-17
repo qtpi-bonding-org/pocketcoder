@@ -75,7 +75,7 @@ class ActionsTab extends StatelessWidget {
             error: (msg) => Center(child: Text('Error: $msg')),
             loaded: (targets, actions) {
               if (actions.isEmpty) {
-                return Center(
+                return const Center(
                   child: Text('No actions defined. Add one!'),
                 );
               }
@@ -126,7 +126,7 @@ class ActionsTab extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: selectedTargetId,
+                initialValue: selectedTargetId,
                 items: targets
                     .map((t) => DropdownMenuItem(
                           value: t.id,
@@ -179,7 +179,7 @@ class TargetsTab extends StatelessWidget {
             error: (msg) => Center(child: Text('Error: $msg')),
             loaded: (targets, actions) {
               if (targets.isEmpty) {
-                return Center(child: Text('No targets defined. Add one!'));
+                return const Center(child: Text('No targets defined. Add one!'));
               }
               return ListView.builder(
                 itemCount: targets.length,
@@ -226,7 +226,7 @@ class TargetsTab extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: type,
+                initialValue: type,
                 items: ['domain', 'repo', 'path']
                     .map((t) => DropdownMenuItem(
                           value: t,

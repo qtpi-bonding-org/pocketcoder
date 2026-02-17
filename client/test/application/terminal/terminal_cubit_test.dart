@@ -3,7 +3,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:test_app/application/terminal/terminal_cubit.dart';
 import 'package:test_app/application/terminal/terminal_state.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Mock classes
 class MockPocketBase extends Mock implements PocketBase {}
@@ -144,7 +143,7 @@ void main() {
     });
 
     test('state copyWith preserves unchanged fields', () {
-      final originalState = const SshTerminalState(
+      const originalState = SshTerminalState(
         status: TerminalStatus.connected,
         sessionId: 'session-123',
         error: null,
@@ -158,7 +157,7 @@ void main() {
     });
 
     test('state copyWith can update status', () {
-      final originalState = const SshTerminalState(
+      const originalState = SshTerminalState(
         status: TerminalStatus.initial,
       );
 
