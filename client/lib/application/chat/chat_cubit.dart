@@ -147,7 +147,7 @@ class ChatCubit extends Cubit<ChatState> {
       parts.add(MessagePart.tool(
         tool: delta.tool!,
         callID: delta.callId ?? 'unknown',
-        state: ToolState.running(input: {}),
+        state: const ToolState.running(input: {}),
       ));
     }
 
@@ -225,10 +225,10 @@ class ChatCubit extends Cubit<ChatState> {
       chatId: 'current',
       role: MessageRole.assistant,
       parts: [
-        MessagePart.text(
+        const MessagePart.text(
             text:
                 "Accessing internal proxy...\nResolving host 'pocketbase'...\nConnection established.\n"),
-        MessagePart.tool(
+        const MessagePart.tool(
           tool: "curl",
           callID: "call-1",
           state: ToolState.completed(

@@ -1,4 +1,3 @@
-import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
 // TODO: ChatMessageMapper is not currently used.
 // ChatState doesn't implement IUiFlowState, so this mapper needs to be redesigned

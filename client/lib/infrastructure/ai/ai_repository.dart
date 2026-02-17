@@ -3,7 +3,6 @@ import 'package:pocketbase/pocketbase.dart';
 import '../../domain/ai/ai_models.dart';
 import '../../domain/exceptions.dart';
 import '../core/collections.dart';
-import '../core/logger.dart';
 import '../../core/try_operation.dart';
 
 abstract class IAiRepository {
@@ -40,8 +39,8 @@ class AiRepository implements IAiRepository {
           return AiAgent.fromJson({
             ...e.data,
             'id': e.id,
-            'prompt': e.get<RecordModel>('expand.prompt')?.data,
-            'model': e.get<RecordModel>('expand.model')?.data,
+            'prompt': e.get<RecordModel>('expand.prompt').data,
+            'model': e.get<RecordModel>('expand.model').data,
           });
         }).toList();
       },

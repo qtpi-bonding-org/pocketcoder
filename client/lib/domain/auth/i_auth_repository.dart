@@ -1,4 +1,3 @@
-import 'package:pocketbase/pocketbase.dart';
 
 abstract class IAuthRepository {
   Stream<bool> get connectionStatus;
