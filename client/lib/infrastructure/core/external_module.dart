@@ -4,15 +4,6 @@ import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'auth_store.dart';
-import 'package:test_app/infrastructure/repositories/user_repository.dart';
-import 'package:test_app/infrastructure/repositories/ai_model_repository.dart';
-import 'package:test_app/infrastructure/repositories/ssh_key_repository.dart';
-import 'package:test_app/infrastructure/repositories/proposal_repository.dart';
-import 'package:test_app/infrastructure/repositories/subagent_repository.dart';
-import 'package:test_app/infrastructure/repositories/whitelist_repository.dart';
-import 'package:test_app/infrastructure/services/permission_service.dart';
-import 'package:test_app/infrastructure/services/session_service.dart';
-import 'package:test_app/infrastructure/services/artifact_service.dart';
 
 @module
 abstract class ExternalModule {
@@ -67,42 +58,4 @@ abstract class ExternalModule {
   AuthStoreConfig get authStoreConfig {
     return AuthStoreConfig(const FlutterSecureStorage());
   }
-
-  // Repositories
-  @singleton
-  IUserRepository userRepository(PocketBase pocketBase) =>
-      UserRepository(pocketBase);
-
-  @singleton
-  IAiModelRepository aiModelRepository(PocketBase pocketBase) =>
-      AiModelRepository(pocketBase);
-
-  @singleton
-  ISSHKeyRepository sshKeyRepository(PocketBase pocketBase) =>
-      SSHKeyRepository(pocketBase);
-
-  @singleton
-  IProposalRepository proposalRepository(PocketBase pocketBase) =>
-      ProposalRepository(pocketBase);
-
-  @singleton
-  ISubagentRepository subagentRepository(PocketBase pocketBase) =>
-      SubagentRepository(pocketBase);
-
-  @singleton
-  IWhitelistRepository whitelistRepository(PocketBase pocketBase) =>
-      WhitelistRepository(pocketBase);
-
-  // Services
-  @singleton
-  IPermissionService permissionService(PocketBase pocketBase) =>
-      PermissionService(pocketBase);
-
-  @singleton
-  ISessionService sessionService(PocketBase pocketBase) =>
-      SessionService(pocketBase);
-
-  @singleton
-  IArtifactService artifactService(PocketBase pocketBase) =>
-      ArtifactService(pocketBase);
 }

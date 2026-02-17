@@ -1,15 +1,15 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import '../../application/chat/chat_cubit.dart';
 
+// TODO: ChatMessageMapper is not currently used.
+// ChatState doesn't implement IUiFlowState, so this mapper needs to be redesigned
+// if message mapping is needed in the future.
+/*
 class ChatMessageMapper implements IStateMessageMapper<ChatState> {
   @override
   MessageKey? map(ChatState state) {
-    if (state.status.isSuccess && state.lastOperation != null) {
-      return switch (state.lastOperation!) {
-        ChatOperation.messageSent => const MessageKey.success('chat.messageSent'),
-        ChatOperation.chatCreated => const MessageKey.success('chat.created'),
-      };
-    }
+    // TODO: Implement message mapping based on ChatState
+    // Currently ChatState doesn't have status or lastOperation fields
     return null;
   }
 }
+*/
