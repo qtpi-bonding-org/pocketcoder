@@ -6,6 +6,30 @@ set -e
 
 echo "🛡️  [PocketCoder] Initializing Environment..."
 
+# 0. SSH Setup - Install authorized key and start sshd
+echo "🔐 Setting up SSH access..."
+
+# Create .ssh directory for poco user
+mkdir -p /home/poco/.ssh
+chmod 700 /home/poco/.ssh
+
+# Copy authorized public key from mounted volume
+if [ -f /ssh_keys/id_rsa.pub ]; then
+    cp /ssh_keys/id_rsa.pub /home/poco/.ssh/authorized_keys
+    chmod 600 /home/poco/.ssh/authorized_keys
+    echo "✅ SSH authorized key installed"
+else
+    echo "⚠️  SSH key not found at /ssh_keys/id_rsa.pub"
+fi
+
+# Set correct ownership
+chown -R poco:poco /home/poco/.ssh
+
+# Start sshd daemon on port 2222
+echo "🚀 Starting sshd on port 2222..."
+/usr/sbin/sshd -D -e 2>/tmp/sshd.log &
+echo "✅ sshd started"
+
 # 1. Wait for the proxy binary to be available (mounted via volume)
 echo "⏳ Waiting for PocketCoder Shell binary..."
 while [ ! -f /proxy/pocketcoder-shell ]; do

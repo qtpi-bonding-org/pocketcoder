@@ -60,7 +60,7 @@ use futures_util::stream::Stream;
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::ReceiverStream;
 
-use crate::driver::{PocketCoderDriver, ExecRequest, NotifyRequest};
+use crate::driver::{PocketCoderDriver, ExecRequest};
 
 use serde::Deserialize;
 
@@ -205,46 +205,6 @@ async fn mcp_sse_relay_handler(
     }
 }
 
-async fn notify_handler(
-    State(_state): State<Arc<AppState>>,
-    Json(payload): Json<NotifyRequest>,
-) -> Json<serde_json::Value> {
-    println!("🔔 [Server/Notify] Session: {}, Event: {}", payload.session_id, payload.event_type);
-    
-    let client = reqwest::Client::new();
-    let opencode_url = env::var("OPENCODE_URL").unwrap_or_else(|_| "http://opencode:3000".to_string());
-    
-    // Use nudge_text from payload if available, otherwise fall back to generic message
-    let nudge_message = payload.payload.get("nudge_text")
-        .and_then(|o| o.as_str())
-        .unwrap_or("[Subagent Update] A subagent has sent you a message. Use the check_inbox tool to read it.");
-
-    let body = serde_json::json!({
-        "role": "user",
-        "parts": [{"type": "text", "text": nudge_message}]
-    });
-
-    // OPENCODE REQUIRES session IDs to start with "ses_"
-    let display_session_id = if payload.session_id.starts_with("ses_") {
-        payload.session_id.clone()
-    } else {
-        format!("ses_{}", payload.session_id)
-    };
-
-    match client.post(format!("{}/session/{}/prompt_async", opencode_url, display_session_id))
-        .json(&body)
-        .send()
-        .await {
-            Ok(_) => {
-                println!("✅ [Server/Notify] Brain nudged");
-                Json(serde_json::json!({ "status": "ok" }))
-            },
-            Err(e) => {
-                println!("⚠️ [Server/Notify] Nudge failed: {}", e);
-                Json(serde_json::json!({ "error": e.to_string() }))
-            }
-        }
-}
 
 /// Legacy CAO Proxy (9889)
 async fn legacy_proxy_handler(
@@ -304,7 +264,6 @@ async fn main() -> Result<()> {
                 .route("/sse", get(sse_handler))
                 .route("/health", get(health_handler))
                 .route("/exec", post(exec_handler)) 
-                .route("/notify", post(notify_handler))
                 .route("/mcp/*path", any(mcp_sse_relay_handler))
                 .route("/messages/*path", any(mcp_sse_relay_handler))
                 .layer(tower_http::cors::CorsLayer::permissive())

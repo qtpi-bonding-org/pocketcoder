@@ -61,11 +61,6 @@ pub struct ExecResponse {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct NotifyRequest {
-    pub session_id: String,
-    pub event_type: String,
-    pub payload: serde_json::Value,
-}
 
 // --------------------------------------------------------------------------
 // PocketCoder Execution Driver (TMUX)
