@@ -8,5 +8,29 @@
   "errorTimeout": "Operation timed out",
   "errorAuthUnauthorized": "Unauthorized access",
   "errorAuthFailed": "Authentication failed",
-  "errorGeneric": "Something went wrong"
+  "errorGeneric": "Something went wrong",
+
+  "authLoginFailed": "Login failed",
+  "authNotAuthenticated": "Please log in",
+  "authTokenExpired": "Session expired, please log in again",
+  "authError": "Authentication error",
+
+  "chatFetchFailed": "Unable to load chats",
+  "chatSendFailed": "Failed to send message",
+  "chatNotFound": "Chat not found",
+  "chatError": "Chat error",
+  "chatMessageSent": "Message sent",
+  "chatCreated": "Chat created",
+
+  "permissionFetchFailed": "Unable to load permissions",
+  "permissionUpdateFailed": "Failed to update permission",
+  "permissionError": "Permission error",
+
+  "aiFetchFailed": "Unable to load AI resources",
+  "aiSaveFailed": "Failed to save AI configuration",
+  "aiError": "AI error",
+
+  "whitelistFetchFailed": "Unable to load whitelist",
+  "whitelistUpdateFailed": "Failed to update whitelist",
+  "whitelistError": "Whitelist error"
 }
