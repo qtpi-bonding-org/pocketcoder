@@ -65,8 +65,9 @@ services:
     working_dir: /workspace
     user: root
     volumes:
-      - proxy_bin:/proxy:ro                                     # Read compiled proxy
-      - workspace_data:/workspace                               # Shared Workspace
+      - ./.ssh_keys:/ssh_keys:ro                              # Mount local SSH public key
+      - proxy_bin:/proxy:ro                                   # Read compiled proxy
+      - workspace_data:/workspace                             # Shared Workspace
       - ./agents/poco/proposals:/workspace/.opencode/proposals
       - ./agents/poco/skills:/workspace/.opencode/skills:ro
       - opencode_data:/root/.local/share/opencode              # Persistent Storage

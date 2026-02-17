@@ -86,10 +86,25 @@ echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
   cd /app/cao && /usr/local/bin/uv run cao-mcp-server
 ) &
 
-# 7. Start the core TMUX session
-echo "🧵 Initializing TMUX Session 'pocketcoder_session'..."
-/usr/bin/tmux -S /tmp/tmux/pocketcoder new-session -d -s pocketcoder_session -n main "/bin/bash"
-chmod 777 /tmp/tmux/pocketcoder
+# 7. Wait for tmux socket from Proxy (Phase 1 change)
+echo "⏳ Waiting for tmux socket from Proxy..."
+while [ ! -S /tmp/tmux/pocketcoder ]; do
+    sleep 1
+done
+echo "✅ tmux socket found."
+
+# 8. Register Poco terminal with CAO (Requirement 6.1)
+echo "🔗 Registering Poco terminal with CAO..."
+while ! curl -s http://localhost:9889/health > /dev/null 2>&1; do
+    sleep 1
+done
+curl -s -X POST "http://localhost:9889/sessions" \
+    -G \
+    --data-urlencode "provider=opencode-attach" \
+    --data-urlencode "agent_profile=poco" \
+    --data-urlencode "session_name=pocketcoder_session" \
+    --data-urlencode "delegating_agent_id=poco"
+echo "✅ Poco registered with CAO."
 
 echo "✅ [PocketCoder] Sandbox is LIVE and HARDENED."
 tail -f /dev/null
