@@ -13,8 +13,8 @@ echo "🧪 [Health Check] Initializing Relay End-to-End Test..."
 
 # 1. Load Credentials
 if [ -f .env ]; then
-    USER_EMAIL=$(grep "^POCKETBASE_USER_EMAIL=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
-    USER_PASS=$(grep "^POCKETBASE_USER_PASSWORD=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
+    USER_EMAIL=$(grep "^POCKETBASE_ADMIN_EMAIL=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
+    USER_PASS=$(grep "^POCKETBASE_ADMIN_PASSWORD=" .env | cut -d'=' -f2 | tr -d '\r' | xargs)
 else
     echo -e "${C_RED}❌ .env file not found.${C_NC}"
     exit 1
@@ -73,7 +73,7 @@ sleep 5
 
 VERIFY_RES=$(curl -s "$POCKETBASE_URL/api/collections/messages/records/$MSG_ID" \
     -H "Authorization: Bearer $USER_TOKEN")
-DELIVERY=$(echo $VERIFY_RES | grep -o '"delivery":"sent"')
+DELIVERY=$(echo $VERIFY_RES | grep -o '"delivery":"delivered"')
 
 if [ -z "$DELIVERY" ]; then
     echo -e "${C_RED}❌ FAILED: Relay did not mark message as delivered.${C_NC}"

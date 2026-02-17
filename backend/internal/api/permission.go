@@ -59,7 +59,7 @@ func RegisterPermissionApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		permColl, _ := app.FindCollectionByNameOrId("permissions")
 		record := core.NewRecord(permColl)
 
-		record.Set("opencode_id", input.OpencodeID)
+		record.Set("agent_permission_id", input.OpencodeID)
 		record.Set("session_id", input.SessionID)
 		record.Set("chat", input.ChatID)
 		record.Set("permission", input.Permission)

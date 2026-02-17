@@ -88,7 +88,7 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 	}
 
 	record := core.NewRecord(collection)
-	record.Set("opencode_id", permID)
+	record.Set("agent_permission_id", permID)
 	record.Set("session_id", sessionID)
 	record.Set("chat", chatID)
 	record.Set("permission", permissionStr)
@@ -322,7 +322,7 @@ func (r *RelayService) updateHealthcheck(status string) {
 func (r *RelayService) registerPermissionHooks() {
 	r.app.OnRecordAfterUpdateSuccess("permissions").BindFunc(func(e *core.RecordEvent) error {
 		status := e.Record.GetString("status")
-		id := e.Record.GetString("opencode_id")
+		id := e.Record.GetString("agent_permission_id")
 
 		if status == "authorized" {
 			log.Printf("🔓 [Relay] Permission AUTHORIZED: %s. Replying to OpenCode...", id)
