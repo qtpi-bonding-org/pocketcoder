@@ -214,13 +214,14 @@ async fn notify_handler(
     let client = reqwest::Client::new();
     let opencode_url = env::var("OPENCODE_URL").unwrap_or_else(|_| "http://opencode:3000".to_string());
     
-    let nudge_message = payload.payload.get("output")
+    // Use nudge_text from payload if available, otherwise fall back to generic message
+    let nudge_message = payload.payload.get("nudge_text")
         .and_then(|o| o.as_str())
-        .unwrap_or("Task completed.");
+        .unwrap_or("[Subagent Update] A subagent has sent you a message. Use the check_inbox tool to read it.");
 
     let body = serde_json::json!({
         "role": "user",
-        "parts": [{"type": "text", "text": format!("**[Reflex Arc]** Worker task completed:\n\n{}", nudge_message)}]
+        "parts": [{"type": "text", "text": nudge_message}]
     });
 
     // OPENCODE REQUIRES session IDs to start with "ses_"

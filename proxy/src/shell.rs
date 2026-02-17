@@ -53,9 +53,10 @@ pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
 
     let cwd = env::current_dir().unwrap_or_default().to_string_lossy().to_string();
     let usage_id = env::var("POCKETCODER_USAGE_ID").ok();
-    let session_id = env::var("OPENCODE_SESSION_ID")
-        .or_else(|_| env::var("POCKETCODER_CHAT_ID"))
-        .ok();
+    let session_id = env::var("OPENCODE_SESSION_ID").ok();
+    if session_id.is_none() {
+        eprintln!("\x1b[31m🔥 [Bridge Error]: OPENCODE_SESSION_ID environment variable is not set\x1b[0m");
+    }
 
     let request = ExecRequest {
         cmd,
