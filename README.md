@@ -32,7 +32,7 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 - [Development Guide](DEVELOPMENT.md)
 
 ---
-*Built with heart by a solo dev in collaboration with **Gemini** (Google's agentic AI assistant). This project is as much an experiment in human-AI partnership as it is in software architecture.*
+*Built with heart by a solo dev in collaboration with **Gemini** (via Antigravity) and **Claude** (via Kiro). This project is as much an experiment in human-AI partnership as it is in software architecture.*
 
 ## Architecture: The Fractal Agent
 

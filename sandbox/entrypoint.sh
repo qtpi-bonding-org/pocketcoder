@@ -44,9 +44,29 @@ if [ -f "/usr/local/bin/proxy_share/pocketcoder" ]; then
     chmod +x /usr/local/bin/pocketcoder
 fi
 
+# --- 🔗 POPULATE SHARED SHELL BRIDGE VOLUME ---
+# Explicitly copy binaries into the shared volume so OpenCode can access them
+# regardless of container start order (Docker volume init is non-deterministic).
+echo "🔗 Populating shell_bridge shared volume..."
+cp -f /app/pocketcoder /app/shell_bridge/pocketcoder
+chmod +x /app/shell_bridge/pocketcoder
+# Recreate the wrapper script in case the volume was initialized empty
+printf '#!/bin/bash\n/app/shell_bridge/pocketcoder shell "$@"\n' > /app/shell_bridge/pocketcoder-shell
+chmod +x /app/shell_bridge/pocketcoder-shell
+echo "✅ Shell bridge binaries ready."
+
+# --- 🖥️ TMUX SETUP (Phase 2: Sandbox owns tmux) ---
+echo "🖥️ Creating tmux session..."
+tmux -S /tmp/tmux/pocketcoder new-session -d -s pocketcoder_session -n main
+chmod 777 /tmp/tmux/pocketcoder
+
+# Start the Rust axum server in the background
+echo "🚀 Starting PocketCoder axum server on port 3001..."
+/app/pocketcoder server --port 3001 &
+
 # --- 🚀 SERVICE STARTUP ---
 
-# 3. Start sshd
+# 4. Start sshd
 echo "🔑 Starting SSH Daemon on port 2222..."
 mkdir -p /var/run/sshd
 /usr/sbin/sshd
@@ -87,14 +107,41 @@ echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
   cd /app/cao && /usr/local/bin/uv run cao-mcp-server
 ) &
 
-# 7. Wait for tmux socket from Proxy (Phase 1 change)
-echo "⏳ Waiting for tmux socket from Proxy..."
-while [ ! -S /tmp/tmux/pocketcoder ]; do
-    sleep 1
+# 7. Wait for OpenCode sshd and create Poco window (Phase 2: SSH bridge)
+echo "⏳ Waiting for OpenCode sshd to be ready..."
+RETRY_COUNT=0
+while true; do
+    if timeout 2 bash -c 'exec 3<>/dev/tcp/opencode/2222 && exec 3>&- && exec 3<&-' 2>/dev/null; then
+        echo "✅ OpenCode sshd is ready!"
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo "⏳ OpenCode sshd not ready, retrying in 2 seconds... (attempt $RETRY_COUNT)"
+    sleep 2
 done
-echo "✅ tmux socket found."
 
-# 8. Register Poco terminal with CAO (Requirement 6.1)
+echo "🪟 Creating Poco window via SSH bridge..."
+tmux -S /tmp/tmux/pocketcoder new-window \
+    -t pocketcoder_session -n poco \
+    "ssh -t -o StrictHostKeyChecking=no -i /ssh_keys/id_rsa poco@opencode -p 2222"
+echo "✅ Poco window created."
+
+# 8. Pane health watchdog - ensure Poco window always exists
+echo "🔍 Starting pane health watchdog..."
+(
+    while true; do
+        if ! tmux -S /tmp/tmux/pocketcoder list-windows -t pocketcoder_session \
+             | grep -q "poco"; then
+            echo "⚠️ Poco window missing, recreating..."
+            tmux -S /tmp/tmux/pocketcoder new-window \
+                -t pocketcoder_session -n poco \
+                "ssh -t -o StrictHostKeyChecking=no -i /ssh_keys/id_rsa poco@opencode -p 2222"
+        fi
+        sleep 10
+    done
+) &
+
+# 9. Register Poco terminal with CAO (Requirement 6.1)
 echo "🔗 Registering Poco terminal with CAO..."
 while ! curl -s http://localhost:9889/health > /dev/null 2>&1; do
     sleep 1

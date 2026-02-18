@@ -9,7 +9,6 @@
 
 # Configuration - services are on internal Docker network
 SANDBOX_CONTAINER="pocketcoder-sandbox"
-PROXY_CONTAINER="pocketcoder-proxy"
 
 # CAO API configuration
 CAO_API_URL="http://localhost:9889"
@@ -96,14 +95,14 @@ send_message_to_terminal() {
 # Helper: Capture poco pane content before test
 # ========================================
 capture_poco_pane_before() {
-    docker exec "$PROXY_CONTAINER" tmux -S "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION:$POCO_WINDOW" -p 2>/dev/null
+    docker exec "$SANDBOX_CONTAINER" tmux -S "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION:$POCO_WINDOW" -p 2>/dev/null
 }
 
 # ========================================
 # Helper: Capture poco pane content after test
 # ========================================
 capture_poco_pane_after() {
-    docker exec "$PROXY_CONTAINER" tmux -S "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION:$POCO_WINDOW" -p 2>/dev/null
+    docker exec "$SANDBOX_CONTAINER" tmux -S "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION:$POCO_WINDOW" -p 2>/dev/null
 }
 
 # ========================================
@@ -111,7 +110,7 @@ capture_poco_pane_after() {
 # ========================================
 send_keys_to_poco_pane() {
     local KEYS="$1"
-    docker exec "$PROXY_CONTAINER" tmux -S "$TMUX_SOCKET" send-keys -t "$TMUX_SESSION:$POCO_WINDOW" "$KEYS" Enter 2>/dev/null
+    docker exec "$SANDBOX_CONTAINER" tmux -S "$TMUX_SOCKET" send-keys -t "$TMUX_SESSION:$POCO_WINDOW" "$KEYS" Enter 2>/dev/null
 }
 
 # ========================================

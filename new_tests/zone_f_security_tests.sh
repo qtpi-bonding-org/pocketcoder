@@ -352,7 +352,7 @@ test_permission_flow() {
         -H "Content-Type: application/json" \
         -d "{
             \"chat\": \"$CREATED_CHAT_ID\",
-            \"agent_permission_id\": \"perm_test_$TEST_ID\",
+            \"ai_engine_permission_id\": \"perm_test_$TEST_ID\",
             \"session_id\": \"session_test_$TEST_ID\",
             \"permission\": \"write\",
             \"status\": \"draft\",

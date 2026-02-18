@@ -65,7 +65,7 @@ pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
         session_id,
     };
 
-    let proxy_url = env::var("PROXY_URL").unwrap_or_else(|_| "http://proxy:3001".to_string());
+    let proxy_url = env::var("PROXY_URL").unwrap_or_else(|_| "http://localhost:3001".to_string());
 
     // 2. The Proxy Request (Synchronous)
     match ureq::post(&format!("{}/exec", proxy_url))

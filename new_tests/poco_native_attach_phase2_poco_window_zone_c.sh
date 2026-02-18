@@ -1,16 +1,15 @@
 #!/bin/sh
 # new_tests/poco_native_attach_phase2_poco_window_zone_c.sh
 # Phase 2: Poco window tests (Zone C)
-# Tests verify the Proxy creates and maintains the Poco SSH window
+# Tests verify the Sandbox creates and maintains the Poco SSH window
 # Validates: Requirements 4.1, 4.2
 # Usage: ./new_tests/poco_native_attach_phase2_poco_window_zone_c.sh
 
 # Note: This script uses busybox-compatible sh syntax
 
 # Configuration - services are on internal Docker network
-PROXY_CONTAINER="pocketcoder-proxy"
-OPENCODE_CONTAINER="pocketcoder-opencode"
 SANDBOX_CONTAINER="pocketcoder-sandbox"
+OPENCODE_CONTAINER="pocketcoder-opencode"
 
 # Tmux socket and session
 TMUX_SOCKET="/tmp/tmux/pocketcoder"
@@ -36,7 +35,7 @@ echo "========================================"
 # Helper: Check if tmux socket exists
 # ========================================
 check_socket_exists() {
-    docker exec "$PROXY_CONTAINER" test -S "$TMUX_SOCKET" 2>/dev/null
+    docker exec "$SANDBOX_CONTAINER" test -S "$TMUX_SOCKET" 2>/dev/null
     return $?
 }
 
@@ -44,7 +43,7 @@ check_socket_exists() {
 # Helper: List tmux windows in session
 # ========================================
 list_tmux_windows() {
-    docker exec "$PROXY_CONTAINER" tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" 2>/dev/null
+    docker exec "$SANDBOX_CONTAINER" tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" 2>/dev/null
 }
 
 # ========================================
@@ -52,14 +51,14 @@ list_tmux_windows() {
 # ========================================
 get_window_info() {
     local WINDOW_NAME="$1"
-    docker exec "$PROXY_CONTAINER" tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" | grep "$WINDOW_NAME" 2>/dev/null
+    docker exec "$SANDBOX_CONTAINER" tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" | grep "$WINDOW_NAME" 2>/dev/null
 }
 
 # ========================================
 # Helper: Check if SSH is reachable
 # ========================================
 check_ssh_reachable() {
-    docker exec "$PROXY_CONTAINER" sh -c "nc -z -w 2 $SSH_HOST $SSH_PORT 2>/dev/null" 2>/dev/null
+    docker exec "$SANDBOX_CONTAINER" sh -c "nc -z -w 2 $SSH_HOST $SSH_PORT 2>/dev/null" 2>/dev/null
     return $?
 }
 
@@ -68,7 +67,7 @@ check_ssh_reachable() {
 # ========================================
 check_poco_window_ssh_process() {
     # Get the pane process for the poco window
-    local PANE_PROCESS=$(docker exec "$PROXY_CONTAINER" tmux -S "$TMUX_SOCKET" list-panes -t "$TMUX_SESSION:$POCO_WINDOW" -F '#{pane_start_command}' 2>/dev/null)
+    local PANE_PROCESS=$(docker exec "$SANDBOX_CONTAINER" tmux -S "$TMUX_SOCKET" list-panes -t "$TMUX_SESSION:$POCO_WINDOW" -F '#{pane_start_command}' 2>/dev/null)
     
     # Check if the process contains SSH to opencode
     if echo "$PANE_PROCESS" | grep -q "ssh.*$SSH_HOST.*$SSH_PORT"; then
@@ -82,7 +81,7 @@ check_poco_window_ssh_process() {
 # Helper: Capture pane output to verify SSH session
 # ========================================
 capture_poco_pane() {
-    docker exec "$PROXY_CONTAINER" tmux -S "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION:$POCO_WINDOW" -p 2>/dev/null
+    docker exec "$SANDBOX_CONTAINER" tmux -S "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION:$POCO_WINDOW" -p 2>/dev/null
 }
 
 # ========================================
@@ -208,13 +207,13 @@ test_ssh_session_active() {
 }
 
 # ========================================
-# Test 6: OpenCode sshd is reachable from Proxy
+# Test 6: OpenCode sshd is reachable from Sandbox
 # Validates: Requirement 4.1 - sshd is reachable before window creation
 # ========================================
 test_openscode_sshd_reachable() {
     echo ""
-    echo "📋 Test 6: OpenCode sshd is reachable from Proxy"
-    echo "-------------------------------------------------"
+    echo "📋 Test 6: OpenCode sshd is reachable from Sandbox"
+    echo "--------------------------------------------------"
     
     # Wait for SSH to be ready
     echo "Waiting for OpenCode sshd to be reachable..."
@@ -223,7 +222,7 @@ test_openscode_sshd_reachable() {
     while [ $ELAPSED -lt $SSH_READINESS_TIMEOUT ]; do
         if check_ssh_reachable; then
             echo "✅ OpenCode sshd is reachable after ${ELAPSED}s"
-            echo "✅ PASSED: OpenCode sshd is reachable from Proxy"
+            echo "✅ PASSED: OpenCode sshd is reachable from Sandbox"
             return 0
         fi
         sleep $POLL_INTERVAL
