@@ -1,12 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import '../../infrastructure/ai/ai_repository.dart';
+import '../../domain/ai_config/i_ai_config_repository.dart';
 import 'ai_state.dart';
 import '../../domain/ai/ai_models.dart';
 
 @injectable
 class AiCubit extends Cubit<AiState> {
-  final IAiRepository _repository;
+  final IAiConfigRepository _repository;
 
   AiCubit(this._repository) : super(const AiState());
 

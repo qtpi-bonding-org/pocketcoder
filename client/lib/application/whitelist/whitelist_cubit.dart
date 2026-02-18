@@ -1,7 +1,7 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
-import '../../domain/whitelist/i_whitelist_repository.dart';
+import '../../domain/hitl/i_hitl_repository.dart';
 import '../../domain/whitelist/whitelist_action.dart';
 import '../../domain/whitelist/whitelist_target.dart';
 
@@ -10,7 +10,7 @@ part 'whitelist_cubit.freezed.dart';
 
 @injectable
 class WhitelistCubit extends Cubit<WhitelistState> {
-  final IWhitelistRepository _repository;
+  final IHitlRepository _repository;
 
   WhitelistCubit(this._repository) : super(const WhitelistState.initial());
 
