@@ -65,7 +65,7 @@ COMPOSE_PROJECT_NAME=pocketcoder
 # Container Ports
 PORT=3000
 POCKETBASE_URL=http://pocketbase:8090
-BRAIN_URL=http://opencode:3000
+OPENCODE_URL=http://opencode:3000
 
 # ------------------------------------------------------------------
 # 🛡️ SECURE CREDENTIALS (Idempotent)
