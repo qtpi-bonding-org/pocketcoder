@@ -34,7 +34,7 @@
   "mcp": {
     "cao": {
       "type": "remote",
-      "url": "http://proxy:3001/mcp/sse",
+      "url": "http://sandbox:9888/sse",
       "enabled": true,
       "timeout": 120000
     }

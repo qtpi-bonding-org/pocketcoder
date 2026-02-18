@@ -68,12 +68,12 @@ cleanup() {
 trap cleanup EXIT
 
 # ========================================
-# Test 1: Chat creation with agent_id
+# Test 1: Chat creation with ai_engine_session_id
 # Validates: Requirements 1.1
 # ========================================
 test_chat_agent_id() {
     echo ""
-    echo "📋 Test 1: Chat creation with agent_id"
+    echo "📋 Test 1: Chat creation with ai_engine_session_id"
     echo "--------------------------------------"
 
     CHAT_TITLE="Test Chat $TEST_ID"
@@ -112,42 +112,42 @@ test_chat_agent_id() {
     CHAT_GET=$(curl -s -X GET "$PB_URL/api/collections/chats/records/$CREATED_CHAT_ID" \
         -H "Authorization: $USER_TOKEN")
 
-    # Verify response contains "agent_id" field (not "opencode_id")
-    echo "Verifying agent_id field exists..."
+    # Verify response contains "ai_engine_session_id" field (renamed from agent_id)
+    echo "Verifying ai_engine_session_id field exists..."
 
-    # Check that agent_id exists
-    if echo "$CHAT_GET" | grep -q '"agent_id"'; then
-        AGENT_ID_VALUE=$(echo "$CHAT_GET" | jq -r '.agent_id // empty')
-        echo "✅ PASSED: Chat has 'agent_id' field (value: ${AGENT_ID_VALUE:-empty})"
+    # Check that ai_engine_session_id exists
+    if echo "$CHAT_GET" | grep -q '"ai_engine_session_id"'; then
+        SESSION_ID_VALUE=$(echo "$CHAT_GET" | jq -r '.ai_engine_session_id // empty')
+        echo "✅ PASSED: Chat has 'ai_engine_session_id' field (value: ${SESSION_ID_VALUE:-empty})"
     else
-        echo "❌ FAILED: Chat does not have 'agent_id' field"
-        echo "Expected field: agent_id"
+        echo "❌ FAILED: Chat does not have 'ai_engine_session_id' field"
+        echo "Expected field: ai_engine_session_id"
         echo "Actual fields: $(echo "$CHAT_GET" | jq -r 'keys | join(", ")')"
         echo "Response: $CHAT_GET"
         echo "See LINEAR_ARCHITECTURE_PLAN.md for naming conventions"
         return 1
     fi
 
-    # Check that opencode_id does NOT exist
-    if echo "$CHAT_GET" | grep -q '"opencode_id"'; then
-        echo "❌ FAILED: Chat still has 'opencode_id' field (should be renamed to agent_id)"
-        echo "Expected: No 'opencode_id' field"
-        echo "Actual: 'opencode_id' field found"
+    # Check that old field names do NOT exist
+    if echo "$CHAT_GET" | grep -q '"agent_id"'; then
+        echo "❌ FAILED: Chat still has 'agent_id' field (should be renamed to ai_engine_session_id)"
+        echo "Expected: No 'agent_id' field"
+        echo "Actual: 'agent_id' field found"
         echo "See LINEAR_ARCHITECTURE_PLAN.md for naming conventions"
         return 1
     else
-        echo "✅ PASSED: Chat does not have 'opencode_id' field"
+        echo "✅ PASSED: Chat does not have 'agent_id' field"
     fi
 
     # Use jq to parse and validate field name
     echo "Validating field with jq..."
-    if echo "$CHAT_GET" | jq -e '.agent_id' >/dev/null 2>&1; then
-        AGENT_ID_VALUE=$(echo "$CHAT_GET" | jq -r '.agent_id // empty')
-        if [ -n "$AGENT_ID_VALUE" ] && [ "$AGENT_ID_VALUE" != "null" ]; then
-            echo "✅ PASSED: agent_id field has value: $AGENT_ID_VALUE"
+    if echo "$CHAT_GET" | jq -e '.ai_engine_session_id' >/dev/null 2>&1; then
+        SESSION_ID_VALUE=$(echo "$CHAT_GET" | jq -r '.ai_engine_session_id // empty')
+        if [ -n "$SESSION_ID_VALUE" ] && [ "$SESSION_ID_VALUE" != "null" ]; then
+            echo "✅ PASSED: ai_engine_session_id field has value: $SESSION_ID_VALUE"
         else
-            echo "⚠️  agent_id field exists but is empty (will be populated by Relay during session creation)"
-            echo "✅ PASSED: agent_id field exists"
+            echo "⚠️  ai_engine_session_id field exists but is empty (will be populated by Relay during session creation)"
+            echo "✅ PASSED: ai_engine_session_id field exists"
         fi
     else
         echo "❌ FAILED: agent_id field does not exist"
@@ -158,12 +158,12 @@ test_chat_agent_id() {
 }
 
 # ========================================
-# Test 2: Message creation with agent_message_id
+# Test 2: Message creation with ai_engine_message_id
 # Validates: Requirements 1.2
 # ========================================
 test_message_agent_message_id() {
     echo ""
-    echo "📋 Test 2: Message creation with agent_message_id"
+    echo "📋 Test 2: Message creation with ai_engine_message_id"
     echo "------------------------------------------------"
 
     # First, create a chat to reference
@@ -223,57 +223,57 @@ test_message_agent_message_id() {
     MESSAGE_GET=$(curl -s -X GET "$PB_URL/api/collections/messages/records/$CREATED_MESSAGE_ID" \
         -H "Authorization: $USER_TOKEN")
 
-    # Verify response contains "agent_message_id" field (not "opencode_id")
-    echo "Verifying agent_message_id field exists..."
+    # Verify response contains "ai_engine_message_id" field (renamed from agent_message_id)
+    echo "Verifying ai_engine_message_id field exists..."
 
-    if echo "$MESSAGE_GET" | grep -q '"agent_message_id"'; then
-        AGENT_MESSAGE_ID_VALUE=$(echo "$MESSAGE_GET" | jq -r '.agent_message_id // empty')
-        echo "✅ PASSED: Message has 'agent_message_id' field (value: ${AGENT_MESSAGE_ID_VALUE:-empty})"
+    if echo "$MESSAGE_GET" | grep -q '"ai_engine_message_id"'; then
+        MESSAGE_ID_VALUE=$(echo "$MESSAGE_GET" | jq -r '.ai_engine_message_id // empty')
+        echo "✅ PASSED: Message has 'ai_engine_message_id' field (value: ${MESSAGE_ID_VALUE:-empty})"
     else
-        echo "❌ FAILED: Message does not have 'agent_message_id' field"
-        echo "Expected field: agent_message_id"
+        echo "❌ FAILED: Message does not have 'ai_engine_message_id' field"
+        echo "Expected field: ai_engine_message_id"
         echo "Actual fields: $(echo "$MESSAGE_GET" | jq -r 'keys | join(", ")')"
         echo "Response: $MESSAGE_GET"
         echo "See LINEAR_ARCHITECTURE_PLAN.md for naming conventions"
         return 1
     fi
 
-    # Check that opencode_id does NOT exist
-    if echo "$MESSAGE_GET" | grep -q '"opencode_id"'; then
-        echo "❌ FAILED: Message still has 'opencode_id' field (should be renamed to agent_message_id)"
-        echo "Expected: No 'opencode_id' field"
-        echo "Actual: 'opencode_id' field found"
+    # Check that old field names do NOT exist
+    if echo "$MESSAGE_GET" | grep -q '"agent_message_id"'; then
+        echo "❌ FAILED: Message still has 'agent_message_id' field (should be renamed to ai_engine_message_id)"
+        echo "Expected: No 'agent_message_id' field"
+        echo "Actual: 'agent_message_id' field found"
         echo "See LINEAR_ARCHITECTURE_PLAN.md for naming conventions"
         return 1
     else
-        echo "✅ PASSED: Message does not have 'opencode_id' field"
+        echo "✅ PASSED: Message does not have 'agent_message_id' field"
     fi
 
     # Validate field value
-    if echo "$MESSAGE_GET" | jq -e '.agent_message_id' >/dev/null 2>&1; then
-        AGENT_MESSAGE_ID_VALUE=$(echo "$MESSAGE_GET" | jq -r '.agent_message_id // empty')
-        if [ -n "$AGENT_MESSAGE_ID_VALUE" ] && [ "$AGENT_MESSAGE_ID_VALUE" != "null" ]; then
-            echo "✅ PASSED: agent_message_id field has value: $AGENT_MESSAGE_ID_VALUE"
+    if echo "$MESSAGE_GET" | jq -e '.ai_engine_message_id' >/dev/null 2>&1; then
+        MESSAGE_ID_VALUE=$(echo "$MESSAGE_GET" | jq -r '.ai_engine_message_id // empty')
+        if [ -n "$MESSAGE_ID_VALUE" ] && [ "$MESSAGE_ID_VALUE" != "null" ]; then
+            echo "✅ PASSED: ai_engine_message_id field has value: $MESSAGE_ID_VALUE"
         else
-            echo "⚠️  agent_message_id field exists but is empty (will be populated by Relay during message processing)"
-            echo "✅ PASSED: agent_message_id field exists"
+            echo "⚠️  ai_engine_message_id field exists but is empty (will be populated by Relay during message processing)"
+            echo "✅ PASSED: ai_engine_message_id field exists"
         fi
     else
-        echo "❌ FAILED: agent_message_id field does not exist"
+        echo "❌ FAILED: ai_engine_message_id field does not exist"
         return 1
     fi
 
-    echo "✅ Test 2 PASSED: Message creation with agent_message_id"
+    echo "✅ Test 2 PASSED: Message creation with ai_engine_message_id"
 }
 
 # ========================================
-# Test 3: Permission creation with agent_permission_id
+# Test 3: Permission creation with ai_engine_permission_id
 # Validates: Requirements 1.3
 # Note: Requires superuser access
 # ========================================
 test_permission_agent_permission_id() {
     echo ""
-    echo "📋 Test 3: Permission creation with agent_permission_id"
+    echo "📋 Test 3: Permission creation with ai_engine_permission_id"
     echo "------------------------------------------------------"
 
     # Store admin credentials before re-authenticating
@@ -318,7 +318,7 @@ test_permission_agent_permission_id() {
         -H "Content-Type: application/json" \
         -d "{
             \"chat\": \"$CHAT_ID\",
-            \"agent_permission_id\": \"perm_$TEST_ID\",
+            \"ai_engine_permission_id\": \"perm_$TEST_ID\",
             \"session_id\": \"session_$TEST_ID\",
             \"permission\": \"read\",
             \"status\": \"draft\"
@@ -342,12 +342,12 @@ test_permission_agent_permission_id() {
     PERMISSION_GET=$(curl -s -X GET "$PB_URL/api/collections/permissions/records/$CREATED_PERMISSION_ID" \
         -H "Authorization: $USER_TOKEN")
 
-    # Verify response contains "agent_permission_id" field (not "opencode_id")
-    echo "Verifying agent_permission_id field exists..."
+    # Verify response contains "ai_engine_permission_id" field (renamed from agent_permission_id)
+    echo "Verifying ai_engine_permission_id field exists..."
 
-    if echo "$PERMISSION_GET" | grep -q '"agent_permission_id"'; then
-        AGENT_PERMISSION_ID_VALUE=$(echo "$PERMISSION_GET" | jq -r '.agent_permission_id // empty')
-        echo "✅ PASSED: Permission has 'agent_permission_id' field (value: ${AGENT_PERMISSION_ID_VALUE:-empty})"
+    if echo "$PERMISSION_GET" | grep -q '"ai_engine_permission_id"'; then
+        PERMISSION_ID_VALUE=$(echo "$PERMISSION_GET" | jq -r '.ai_engine_permission_id // empty')
+        echo "✅ PASSED: Permission has 'ai_engine_permission_id' field (value: ${PERMISSION_ID_VALUE:-empty})"
     else
         echo "❌ FAILED: Permission does not have 'agent_permission_id' field"
         echo "Expected field: agent_permission_id"
@@ -357,32 +357,32 @@ test_permission_agent_permission_id() {
         return 1
     fi
 
-    # Check that opencode_id does NOT exist
-    if echo "$PERMISSION_GET" | grep -q '"opencode_id"'; then
-        echo "❌ FAILED: Permission still has 'opencode_id' field (should be renamed to agent_permission_id)"
-        echo "Expected: No 'opencode_id' field"
-        echo "Actual: 'opencode_id' field found"
+    # Check that old field names do NOT exist
+    if echo "$PERMISSION_GET" | grep -q '"agent_permission_id"'; then
+        echo "❌ FAILED: Permission still has 'agent_permission_id' field (should be renamed to ai_engine_permission_id)"
+        echo "Expected: No 'agent_permission_id' field"
+        echo "Actual: 'agent_permission_id' field found"
         echo "See LINEAR_ARCHITECTURE_PLAN.md for naming conventions"
         return 1
     else
-        echo "✅ PASSED: Permission does not have 'opencode_id' field"
+        echo "✅ PASSED: Permission does not have 'agent_permission_id' field"
     fi
 
     # Validate field value
-    if echo "$PERMISSION_GET" | jq -e '.agent_permission_id' >/dev/null 2>&1; then
-        AGENT_PERMISSION_ID_VALUE=$(echo "$PERMISSION_GET" | jq -r '.agent_permission_id // empty')
-        if [ -n "$AGENT_PERMISSION_ID_VALUE" ] && [ "$AGENT_PERMISSION_ID_VALUE" != "null" ]; then
-            echo "✅ PASSED: agent_permission_id field has value: $AGENT_PERMISSION_ID_VALUE"
+    if echo "$PERMISSION_GET" | jq -e '.ai_engine_permission_id' >/dev/null 2>&1; then
+        PERMISSION_ID_VALUE=$(echo "$PERMISSION_GET" | jq -r '.ai_engine_permission_id // empty')
+        if [ -n "$PERMISSION_ID_VALUE" ] && [ "$PERMISSION_ID_VALUE" != "null" ]; then
+            echo "✅ PASSED: ai_engine_permission_id field has value: $PERMISSION_ID_VALUE"
         else
-            echo "⚠️  agent_permission_id field exists but is empty (will be populated by Relay during permission processing)"
-            echo "✅ PASSED: agent_permission_id field exists"
+            echo "⚠️  ai_engine_permission_id field exists but is empty (will be populated by Relay during permission processing)"
+            echo "✅ PASSED: ai_engine_permission_id field exists"
         fi
     else
-        echo "❌ FAILED: agent_permission_id field does not exist"
+        echo "❌ FAILED: ai_engine_permission_id field does not exist"
         return 1
     fi
 
-    echo "✅ Test 3 PASSED: Permission creation with agent_permission_id"
+    echo "✅ Test 3 PASSED: Permission creation with ai_engine_permission_id"
 
     # Re-authenticate as admin for subsequent tests
     source "$SCRIPT_DIR/helpers/auth.sh"

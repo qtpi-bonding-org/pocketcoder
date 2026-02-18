@@ -1,14 +1,13 @@
 #!/bin/sh
 # new_tests/zone_c_tests.sh
-# Zone C tests for Proxy functionality
-# Tests verify Proxy routes commands through CAO (not PocketBase) and uses OPENCODE_SESSION_ID
+# Zone C tests for Sandbox functionality
+# Tests verify Sandbox routes commands through CAO (not PocketBase) and uses OPENCODE_SESSION_ID
 # Usage: ./new_tests/zone_c_tests.sh
 
 # Note: This script uses busybox-compatible sh syntax
 
 # Configuration - services are on internal Docker network
-# Tests run from within the proxy container for network access
-PROXY_CONTAINER="pocketcoder-proxy"
+# Tests run from within the sandbox container for network access
 SANDBOX_CONTAINER="pocketcoder-sandbox"
 OPENCODE_CONTAINER="pocketcoder-opencode"
 
@@ -178,10 +177,10 @@ test_command_routing_via_cao() {
         echo "✅ tmux_window: $TMUX_WINDOW"
     fi
     
-    # Send command execution request to Proxy POST /exec with session_id
-    # Note: Proxy expects 'cmd' and 'cwd' fields (not 'command')
-    echo "Sending command execution request to Proxy..."
-    EXEC_RES=$(docker exec "$PROXY_CONTAINER" curl -s -X POST "$PROXY_INTERNAL_URL/exec" \
+    # Send command execution request to Sandbox POST /exec with session_id
+    # Note: Sandbox expects 'cmd' and 'cwd' fields (not 'command')
+    echo "Sending command execution request to Sandbox..."
+    EXEC_RES=$(docker exec "$SANDBOX_CONTAINER" curl -s -X POST "$PROXY_INTERNAL_URL/exec" \
         -H "Content-Type: application/json" \
         -d "{
             \"cmd\": \"echo 'zone_c_test_$TEST_ID'\",
@@ -189,22 +188,22 @@ test_command_routing_via_cao() {
             \"session_id\": \"$DELEGATING_AGENT_ID\"
         }")
     
-    echo "Proxy exec response: $EXEC_RES"
+    echo "Sandbox exec response: $EXEC_RES"
     
-    # Verify Proxy returns success (indicating CAO lookup succeeded)
-    echo "Verifying Proxy response..."
+    # Verify Sandbox returns success (indicating CAO lookup succeeded)
+    echo "Verifying Sandbox response..."
     
     if echo "$EXEC_RES" | grep -q '"stdout"'; then
-        echo "✅ PASSED: Proxy returned stdout in response"
+        echo "✅ PASSED: Sandbox returned stdout in response"
     elif echo "$EXEC_RES" | grep -q '"exit_code"'; then
-        echo "✅ PASSED: Proxy returned exit_code in response"
+        echo "✅ PASSED: Sandbox returned exit_code in response"
     elif [ -n "$EXEC_RES" ] && ! echo "$EXEC_RES" | grep -q '"error"'; then
-        echo "✅ PASSED: Proxy returned non-error response"
+        echo "✅ PASSED: Sandbox returned non-error response"
     else
-        echo "❌ FAILED: Proxy did not return expected response"
+        echo "❌ FAILED: Sandbox did not return expected response"
         echo "Expected: Response with stdout, exit_code, or result"
         echo "Actual: $EXEC_RES"
-        echo "See LINEAR_ARCHITECTURE_PLAN.md for Proxy API design"
+        echo "See LINEAR_ARCHITECTURE_PLAN.md for Sandbox API design"
         return 1
     fi
     
@@ -216,7 +215,7 @@ test_command_routing_via_cao() {
         echo "✅ PASSED: Command executed (output format varies)"
     fi
     
-    # Verify Proxy queried CAO (check CAO logs or use network inspection)
+    # Verify Sandbox queried CAO (check CAO logs or use network inspection)
     echo "Verifying CAO was queried..."
     
     # Check if we can query the terminal by delegating_agent_id
@@ -266,10 +265,10 @@ test_session_resolution_through_cao() {
         return 1
     fi
     
-    # Send exec request to Proxy with that session_id
-    # Note: Proxy expects 'cmd' and 'cwd' fields
-    echo "Sending exec request to Proxy with session_id: $DELEGATING_AGENT_ID"
-    EXEC_RES=$(docker exec "$PROXY_CONTAINER" curl -s -X POST "$PROXY_INTERNAL_URL/exec" \
+    # Send exec request to Sandbox with that session_id
+    # Note: Sandbox expects 'cmd' and 'cwd' fields
+    echo "Sending exec request to Sandbox with session_id: $DELEGATING_AGENT_ID"
+    EXEC_RES=$(docker exec "$SANDBOX_CONTAINER" curl -s -X POST "$PROXY_INTERNAL_URL/exec" \
         -H "Content-Type: application/json" \
         -d "{
             \"cmd\": \"pwd\",
@@ -277,22 +276,22 @@ test_session_resolution_through_cao() {
             \"session_id\": \"$DELEGATING_AGENT_ID\"
         }")
     
-    echo "Proxy exec response: $EXEC_RES"
+    echo "Sandbox exec response: $EXEC_RES"
     
-    # Verify Proxy returns success (indicating CAO lookup succeeded)
+    # Verify Sandbox returns success (indicating CAO lookup succeeded)
     echo "Verifying CAO lookup succeeded..."
     
     if echo "$EXEC_RES" | grep -q '"stdout"'; then
-        echo "✅ PASSED: Proxy returned stdout in response"
+        echo "✅ PASSED: Sandbox returned stdout in response"
     elif echo "$EXEC_RES" | grep -q '"exit_code"'; then
-        echo "✅ PASSED: Proxy returned exit_code in response"
+        echo "✅ PASSED: Sandbox returned exit_code in response"
     elif [ -n "$EXEC_RES" ] && ! echo "$EXEC_RES" | grep -q '"error"'; then
-        echo "✅ PASSED: Proxy returned non-error response"
+        echo "✅ PASSED: Sandbox returned non-error response"
     else
-        echo "❌ FAILED: Proxy did not return expected response"
+        echo "❌ FAILED: Sandbox did not return expected response"
         echo "Expected: Response with stdout, exit_code, or result"
         echo "Actual: $EXEC_RES"
-        echo "See LINEAR_ARCHITECTURE_PLAN.md for Proxy API design"
+        echo "See LINEAR_ARCHITECTURE_PLAN.md for Sandbox API design"
         return 1
     fi
     
@@ -346,7 +345,7 @@ test_shell_bridge_with_session_id() {
     
     # Execute command via shell bridge
     echo "Executing command via shell bridge..."
-    SHELL_OUTPUT=$(docker exec -e OPENCODE_SESSION_ID="$SESSION_ID" "$OPENCODE_CONTAINER" /proxy/pocketcoder shell -c "echo 'shell_test_$TEST_ID'" 2>&1) || true
+    SHELL_OUTPUT=$(docker exec -e OPENCODE_SESSION_ID="$SESSION_ID" "$OPENCODE_CONTAINER" /shell_bridge/pocketcoder-shell shell -c "echo 'shell_test_$TEST_ID'" 2>&1) || true
     
     echo "Shell bridge output: $SHELL_OUTPUT"
     

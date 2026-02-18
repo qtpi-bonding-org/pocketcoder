@@ -10,7 +10,7 @@ services:
     volumes:
       - pb_data:/app/pb_data
       - pocketcoder-logs:/app/pb_public/logs
-      - workspace_data:/workspace
+      - opencode_workspace:/workspace
       - ./agents/poco/proposals:/workspace/.opencode/proposals
       - ./agents/poco/skills:/workspace/.opencode/skills
       - ./.ssh_keys:/ssh_keys
@@ -28,28 +28,6 @@ services:
     networks:
       - pocketcoder-memory
 
-  # 🏰 PROXY (Execution Relay)
-  proxy:
-    build:
-      context: .
-      dockerfile: docker/proxy.Dockerfile
-    container_name: pocketcoder-proxy
-    volumes:
-      - proxy_bin:/app/proxy_share
-      - tmux_socket:/tmp/tmux
-      - ./.ssh_keys:/ssh_keys:ro          # Mount local keys read-only
-    environment:
-      - TMUX_TMPDIR=/tmp/tmux
-      - TMUX_SOCKET=/tmp/tmux/pocketcoder
-    restart: unless-stopped
-    networks:
-      pocketcoder-control:
-        aliases:
-          - proxy
-      pocketcoder-execution:
-        aliases:
-          - proxy
-
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
     build:
@@ -60,32 +38,29 @@ services:
       - PORT=3000
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
-      - PROXY_URL=http://proxy:3001
-      - SHELL=/proxy/pocketcoder-shell                        # THE PROXY
+      - PROXY_URL=http://sandbox:3001
+      - SHELL=/shell_bridge/pocketcoder-shell
     working_dir: /workspace
     user: root
     volumes:
-      - ./.ssh_keys:/ssh_keys:ro                              # Mount local SSH public key
-      - proxy_bin:/proxy:ro                                   # Read compiled proxy
-      - workspace_data:/workspace                             # Shared Workspace
+      - ./.ssh_keys:/ssh_keys:ro
+      - shell_bridge:/shell_bridge:ro
+      - opencode_workspace:/workspace
       - ./agents/poco/proposals:/workspace/.opencode/proposals
       - ./agents/poco/skills:/workspace/.opencode/skills:ro
-      - opencode_data:/root/.local/share/opencode              # Persistent Storage
+      - opencode_data:/root/.local/share/opencode
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
     command: serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "/bin/ash", "-c", "curl -f http://localhost:3000/health && nc -z localhost 2222"]
       interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
     networks:
       - pocketcoder-memory
       - pocketcoder-control
-
-
-
 
   # 🔨 SANDBOX (Isolated Execution Environment)
   sandbox:
@@ -94,36 +69,30 @@ services:
       dockerfile: docker/sandbox.Dockerfile
     container_name: pocketcoder-sandbox
     volumes:
-      - workspace_data:/workspace   # Shared Workspace
+      - opencode_workspace:/workspace
       - ./agents/poco/proposals:/workspace/.opencode/proposals
       - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
-      - tmux_socket:/tmp/tmux
-      - ./.ssh_keys:/ssh_keys:ro  # Read-only access to local SSH keys
-      - proxy_bin:/usr/local/bin/proxy_share:ro
-      - ./sandbox/cao/src:/app/cao/src                          # Mount ONLY src for live-editing
+      - ./.ssh_keys:/ssh_keys:ro
+      - shell_bridge:/app/shell_bridge
+      - ./sandbox/cao/src:/app/cao/src
     working_dir: /workspace
     environment:
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
       - SSH_KEYS_FILE=/ssh_keys/authorized_keys
     networks:
-      - pocketcoder-execution
-
+      - pocketcoder-control
 
 volumes:
   pb_data:
   pocketcoder-logs:
-  workspace_data:
+  opencode_workspace:
+  sandbox_workspace:
   opencode_data:
-  tmux_socket:
-  proxy_bin:
+  shell_bridge:
 
 networks:
   pocketcoder-memory:
     driver: bridge
   pocketcoder-control:
     driver: bridge
-  pocketcoder-execution:
-    driver: bridge
-    # internal: true # Disabled to allow package installation (npm, pip)
-

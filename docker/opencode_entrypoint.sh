@@ -30,65 +30,76 @@ echo "🚀 Starting sshd on port 2222..."
 /usr/sbin/sshd -D -e 2>/tmp/sshd.log &
 echo "✅ sshd started"
 
-# 1. Wait for the proxy binary to be available (mounted via volume)
+# 1. Wait for the shell binary to be available (mounted via shared volume from Sandbox)
+# This resolves quickly once Sandbox starts and populates the shell_bridge volume.
 echo "⏳ Waiting for PocketCoder Shell binary..."
-while [ ! -f /proxy/pocketcoder-shell ]; do
-    sleep 1
-done
-
-# 2. Verify Proxy Server Connection
-echo "⏳ Waiting for Proxy Server..."
 count=0
-while ! curl -s http://proxy:3001/health > /dev/null; do
+while [ ! -f /shell_bridge/pocketcoder-shell ]; do
     sleep 1
     count=$((count+1))
-    if [ $count -gt 30 ]; then
-        echo "❌ Proxy not reachable on http://proxy:3001. Aborting."
+    if [ $count -gt 120 ]; then
+        echo "❌ Shell binary not found after 120s. Sandbox may not be running."
         exit 1
     fi
 done
-echo "✅ Proxy is UP."
+echo "✅ Shell binary available."
 
-# 2b. Wait for MCP server to be reachable through the proxy
-# OpenCode tries MCP once at startup and doesn't retry, so we must ensure it's ready
-echo "⏳ Waiting for MCP server (via proxy)..."
-mcp_count=0
-while true; do
-    # Check if the SSE endpoint returns 200 (it's a streaming endpoint so curl will timeout, that's OK)
-    mcp_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://proxy:3001/mcp/sse 2>/dev/null || true)
-    if [ "$mcp_status" = "200" ]; then
-        echo "✅ MCP server is reachable through proxy."
-        break
-    fi
-    mcp_count=$((mcp_count+1))
-    if [ $mcp_count -gt 60 ]; then
-        echo "⚠️  MCP server not reachable after 60 attempts, starting OpenCode anyway."
-        break
-    fi
-    sleep 2
-done
-
-# 3. THE SWITCHEROO (Hard Shell Enforcement)
+# 2. THE SWITCHEROO (Hard Shell Enforcement)
 # In Alpine, /bin/sh is a symlink to Busybox.
-# We redirect /bin/sh to our proxy, while keeping /bin/ash as the "escape hatch" for system scripts.
-if [ -L /bin/sh ] && [ "$(readlink /bin/sh)" != "/proxy/pocketcoder-shell" ]; then
-    echo "🔒 Hardening Shell: /bin/sh -> /proxy/pocketcoder-shell..."
-    # We don't rename the binary (busybox), we just change the generic 'sh' entry point.
-    ln -sf /proxy/pocketcoder-shell /bin/sh
+# We redirect /bin/sh to our shell bridge, while keeping /bin/ash as the "escape hatch" for system scripts.
+# This MUST happen before OpenCode starts since it uses /bin/sh for command execution.
+if [ -L /bin/sh ] && [ "$(readlink /bin/sh)" != "/shell_bridge/pocketcoder-shell" ]; then
+    echo "🔒 Hardening Shell: /bin/sh -> /shell_bridge/pocketcoder-shell..."
+    ln -sf /shell_bridge/pocketcoder-shell /bin/sh
     echo "✅ Shell is now HARDENED."
 else
     echo "🔒 Shell already hardened or custom state detected."
 fi
 
+# 3. Background: Wait for Sandbox health + MCP, then log readiness
+# These checks run in the background so they don't block OpenCode startup.
+# This breaks the circular dependency: Sandbox depends on OpenCode being healthy,
+# so OpenCode must start without waiting for Sandbox.
+(
+    echo "⏳ [Background] Waiting for Sandbox Server..."
+    sb_count=0
+    while ! curl -s http://sandbox:3001/health > /dev/null 2>&1; do
+        sleep 2
+        sb_count=$((sb_count+1))
+        if [ $sb_count -gt 60 ]; then
+            echo "⚠️  [Background] Sandbox not reachable after 120s, OpenCode running without it."
+            break
+        fi
+    done
+    if [ $sb_count -le 60 ]; then
+        echo "✅ [Background] Sandbox is UP."
+    fi
+
+    echo "⏳ [Background] Waiting for MCP server (via sandbox)..."
+    mcp_count=0
+    while true; do
+        mcp_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://sandbox:9888/sse 2>/dev/null || true)
+        if [ "$mcp_status" = "200" ]; then
+            echo "✅ [Background] MCP server is reachable through sandbox."
+            break
+        fi
+        mcp_count=$((mcp_count+1))
+        if [ $mcp_count -gt 60 ]; then
+            echo "⚠️  [Background] MCP server not reachable after 60 attempts."
+            break
+        fi
+        sleep 2
+    done
+) &
+
 # 4. Background Log Tailing (for visibility)
 (
     while [ ! -d /root/.local/share/opencode/log ]; do sleep 2; done
-    # Wait for the first log file to appear
     while [ -z "$(ls /root/.local/share/opencode/log/*.log 2>/dev/null)" ]; do sleep 1; done
     echo "📊 [Relay] Log stream active."
     tail -f /root/.local/share/opencode/log/*.log
 ) &
 
-# 5. Launch OpenCode
+# 5. Launch OpenCode immediately — don't block on Sandbox
 echo "🚀 Launching OpenCode Reasoning Engine..."
 exec opencode "$@"
