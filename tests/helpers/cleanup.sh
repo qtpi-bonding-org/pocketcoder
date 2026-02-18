@@ -5,7 +5,8 @@
 # Usage: source helpers/cleanup.sh
 
 # Configuration
-PB_URL="${POCKETBASE_URL:-http://127.0.0.1:8090}"
+# Use PB_URL if already set (from environment), otherwise fall back to POCKETBASE_URL or default
+PB_URL="${PB_URL:-${POCKETBASE_URL:-http://127.0.0.1:8090}}"
 TEST_ID_PREFIX="test_"
 
 # Load credentials from .env

@@ -37,8 +37,7 @@ teardown() {
 
 @test "PocketBase accepts user authentication" {
     # Validates: Requirement 2.1 - database accessibility
-    run authenticate_user
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PocketBase" "User authentication failed"
+    authenticate_user
     [ -n "$USER_TOKEN" ]
 }
 
@@ -114,6 +113,6 @@ teardown() {
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "PocketBase" "Failed to get health endpoint response"
 
     # Response should be valid JSON
-    run echo "$output" | jq -e .
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PocketBase" "Health response is not valid JSON"
+    echo "$output" | jq -e . > /dev/null
+    [ "$?" -eq 0 ] || run_diagnostic_on_failure "PocketBase" "Health response is not valid JSON"
 }
