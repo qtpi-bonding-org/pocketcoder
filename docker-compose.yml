@@ -14,6 +14,8 @@ services:
       - ./agents/poco/proposals:/workspace/.opencode/proposals
       - ./agents/poco/skills:/workspace/.opencode/skills
       - ./.ssh_keys:/ssh_keys
+      - /var/run/docker.sock:/var/run/docker.sock
+      - mcp_config:/mcp_config
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -27,6 +29,7 @@ services:
     restart: unless-stopped
     networks:
       - pocketcoder-memory
+      - pocketcoder-mcp
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -40,6 +43,9 @@ services:
       - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
       - PROXY_URL=http://sandbox:3001
       - SHELL=/shell_bridge/pocketcoder-shell
+      - AGENT_EMAIL=${AGENT_EMAIL}
+      - AGENT_PASSWORD=${AGENT_PASSWORD}
+      - POCKETBASE_URL=http://pocketbase:8090
     working_dir: /workspace
     user: root
     volumes:
@@ -50,6 +56,7 @@ services:
       - ./agents/poco/skills:/workspace/.opencode/skills:ro
       - opencode_data:/root/.local/share/opencode
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
+      - mcp_config:/mcp_config:ro
     command: serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG
     healthcheck:
       test: ["CMD", "/bin/ash", "-c", "curl -f http://localhost:3000/health && nc -z localhost 2222"]
@@ -82,6 +89,22 @@ services:
       - SSH_KEYS_FILE=/ssh_keys/authorized_keys
     networks:
       - pocketcoder-control
+      - pocketcoder-mcp
+
+  # 🔌 MCP GATEWAY (MCP Server Gateway)
+  mcp-gateway:
+    build:
+      context: .
+      dockerfile: docker/mcp-gateway.Dockerfile
+    container_name: pocketcoder-mcp-gateway
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - mcp_config:/root/.docker/mcp
+    environment:
+      - DOCKER_MCP_IN_CONTAINER=1
+    networks:
+      - pocketcoder-mcp
+    restart: unless-stopped
 
 volumes:
   pb_data:
@@ -90,9 +113,12 @@ volumes:
   sandbox_workspace:
   opencode_data:
   shell_bridge:
+  mcp_config:
 
 networks:
   pocketcoder-memory:
     driver: bridge
   pocketcoder-control:
+    driver: bridge
+  pocketcoder-mcp:
     driver: bridge

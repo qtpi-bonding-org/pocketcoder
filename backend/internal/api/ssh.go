@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -50,5 +51,5 @@ func RegisterSSHApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 
 		return re.String(200, strings.Join(keys, "\n"))
-	})
+	}).Bind(apis.RequireAuth())
 }

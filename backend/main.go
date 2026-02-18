@@ -68,6 +68,7 @@ func main() {
 		// B. Register Custom API Endpoints
 		api.RegisterPermissionApi(app, e)
 		api.RegisterSSHApi(app, e)
+		api.RegisterMcpApi(app, e)
 		filesystem.RegisterArtifactApi(app, e)
 
 		return e.Next()

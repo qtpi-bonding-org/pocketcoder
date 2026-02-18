@@ -2,7 +2,23 @@ FROM oven/bun:alpine
 
 # Install basic system dependencies (CURL is needed for health checks/scripts)
 # (Alpine doesn't use bash by default, we keep it minimal)
-RUN apk add --no-cache curl ripgrep openssh-server
+RUN apk add --no-cache curl ripgrep openssh-server docker-cli
+
+# Install docker-mcp plugin for MCP catalog browsing
+RUN ARCH=$(uname -m) && \
+    case $ARCH in \
+      x86_64)  M_ARCH="amd64" ;; \
+      aarch64) M_ARCH="arm64" ;; \
+    esac && \
+    VERSION="v0.39.3" && \
+    curl -L "https://github.com/docker/mcp-gateway/releases/download/${VERSION}/docker-mcp-linux-${M_ARCH}.tar.gz" -o /tmp/docker-mcp.tar.gz && \
+    tar -xzf /tmp/docker-mcp.tar.gz -C /tmp && \
+    mkdir -p /usr/local/lib/docker/cli-plugins/ && \
+    mv /tmp/docker-mcp /usr/local/lib/docker/cli-plugins/docker-mcp && \
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-mcp && \
+    rm /tmp/docker-mcp.tar.gz
+
+ENV DOCKER_MCP_IN_CONTAINER=1
 
 # Install OpenCode (The Reasoning Engine)
 RUN bun install -g opencode-ai@latest
