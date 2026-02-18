@@ -35,6 +35,22 @@ class ApiEndpoints {
   static String artifact(String path) => '/api/pocketcoder/artifact/$path';
 
   // ===========================================================================
+  // INFRASTRUCTURE ENDPOINTS
+  // ===========================================================================
+
+  /// GET /api/pocketcoder/health
+  /// Returns system health status.
+  static const String health = '/api/pocketcoder/health';
+
+  // ===========================================================================
+  // SUBAGENT ENDPOINTS
+  // ===========================================================================
+
+  /// POST /api/pocketcoder/subagent
+  /// Orchestrates subagent creation and task delegation.
+  static const String subagent = '/api/pocketcoder/subagent';
+
+  // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
 
@@ -42,6 +58,8 @@ class ApiEndpoints {
   static const List<String> all = [
     permission,
     sshKeys,
+    health,
+    subagent,
   ];
 
   /// Dynamic endpoints that require parameters
