@@ -4,22 +4,29 @@ import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/chat/chat_message.dart';
 import '../../domain/communication/i_communication_repository.dart';
-import 'chat_state.dart';
+import '../../domain/hitl/i_hitl_repository.dart';
+import 'communication_state.dart';
 
 @injectable
-class ChatCubit extends Cubit<ChatState> {
+class CommunicationCubit extends Cubit<CommunicationState> {
   final ICommunicationRepository _repository;
+  final IHitlRepository _hitlRepository;
+
   StreamSubscription? _coldSub;
   StreamSubscription? _hotSub;
+  StreamSubscription? _permSub;
+
   String? _currentChatId;
   final Uuid _uuid = const Uuid();
 
-  ChatCubit(this._repository) : super(const ChatState());
+  CommunicationCubit(this._repository, this._hitlRepository)
+      : super(const CommunicationState());
 
   @override
   Future<void> close() {
     _coldSub?.cancel();
     _hotSub?.cancel();
+    _permSub?.cancel();
     return super.close();
   }
 
@@ -35,6 +42,7 @@ class ChatCubit extends Cubit<ChatState> {
       ));
       _subscribeToColdPipe(_currentChatId!);
       _subscribeToHotPipe();
+      _subscribeToPermissions(_currentChatId!);
     } catch (e) {
       emit(state.copyWith(
         error: 'Failed to initialize chat: $e',
@@ -66,28 +74,47 @@ class ChatCubit extends Cubit<ChatState> {
     );
   }
 
-  // ... (rest of subscribeToHotPipe and handlers remains same)
+  void _subscribeToPermissions(String chatId) {
+    _permSub?.cancel();
+    _permSub = _hitlRepository.watchPending(chatId).listen(
+      (requests) {
+        // For the MVP, we just show the most recent pending request
+        final pending = requests.isNotEmpty ? requests.first : null;
+        emit(state.copyWith(pendingPermission: pending));
+      },
+      onError: (e) =>
+          emit(state.copyWith(error: 'Permission stream error: $e')),
+    );
+  }
 
-  // ...
+  Future<void> authorizeCurrentPermission() async {
+    if (state.pendingPermission == null) return;
+
+    final permId = state.pendingPermission!.id;
+    emit(state.copyWith(isLoading: true)); // Show some activity
+    try {
+      await _hitlRepository.authorize(permId);
+      // The stream subscription will clear the state.pendingPermission automatically
+      emit(state.copyWith(isLoading: false));
+    } catch (e) {
+      emit(state.copyWith(
+        error: 'Authorization failed: $e',
+        isLoading: false,
+      ));
+    }
+  }
 
   Future<void> sendMessage(String unusedChatId, String content) async {
-    print('ChatCubit: Sending message "$content"...'); // Log entry
     if (_currentChatId == null) {
-      print('ChatCubit: Error - Chat not initialized'); // Log error
       emit(state.copyWith(error: "Chat not initialized"));
       return;
     }
 
-    // Optimistic UI? Maybe later.
-    // Clear hot message on new send.
     emit(state.copyWith(hotMessage: null, isPocoThinking: true));
 
     try {
       await _repository.sendMessage(_currentChatId!, content);
-      print(
-          'ChatCubit: Message sent successfully to repository'); // Log success
     } catch (e) {
-      print('ChatCubit: Failed to send message: $e'); // Log exception
       emit(state.copyWith(error: "Failed to send: $e"));
     }
   }
@@ -116,9 +143,7 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
-  // ...
   void _onHotDelta(HotPipeDelta delta) {
-    // 1. Get or Create Hot Message
     final currentHot = state.hotMessage ??
         ChatMessage(
           id: _uuid.v4(),
@@ -131,7 +156,6 @@ class ChatCubit extends Cubit<ChatState> {
 
     List<MessagePart> parts = List.from(currentHot.parts ?? []);
 
-    // 2. Apply Delta
     if (delta.content.isNotEmpty) {
       if (parts.isNotEmpty && parts.last is MessagePartText) {
         final last = parts.last as MessagePartText;
@@ -142,7 +166,6 @@ class ChatCubit extends Cubit<ChatState> {
       }
     }
 
-    // Tools logic
     if (delta.tool != null) {
       parts.add(MessagePart.tool(
         tool: delta.tool!,
@@ -162,14 +185,13 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   Future<void> simulateInteraction() async {
-    // 1. Clear State
+    // Implementation kept for legacy testing/demo purposes
     emit(state.copyWith(
       hotMessage: null,
       isPocoThinking: true,
       messages: [],
     ));
 
-    // 2. User Message
     final userMsg = ChatMessage(
         id: 'sim-user-1',
         chatId: 'current',
@@ -178,10 +200,8 @@ class ChatCubit extends Cubit<ChatState> {
         created: DateTime.now());
 
     emit(state.copyWith(messages: [userMsg]));
-
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // 3. Hot Pipe: Thinking
     final thoughts = [
       "Accessing internal proxy...",
       "Resolving host 'pocketbase'...",
@@ -193,7 +213,6 @@ class ChatCubit extends Cubit<ChatState> {
       await Future.delayed(const Duration(milliseconds: 400));
     }
 
-    // 4. Hot Pipe: Tool Execution
     await Future.delayed(const Duration(milliseconds: 200));
     _onHotDelta(const HotPipeDelta(
       content: "",
@@ -202,8 +221,6 @@ class ChatCubit extends Cubit<ChatState> {
     ));
 
     await Future.delayed(const Duration(milliseconds: 1500));
-
-    // 5. Hot Pipe: Result & Final Answer
     _onHotDelta(
         const HotPipeDelta(content: "Status 200 OK. JSON payload valid.\n"));
 
@@ -219,7 +236,6 @@ class ChatCubit extends Cubit<ChatState> {
 
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // 6. Cold Pipe: Final Answer
     final assistantMsg = ChatMessage(
       id: 'sim-asst-1',
       chatId: 'current',

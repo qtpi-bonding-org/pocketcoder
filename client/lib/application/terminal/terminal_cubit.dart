@@ -132,7 +132,8 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
   }
 
   Future<void> _syncPublicKey(String publicKey) async {
-    final userId = _pb.authStore.model.id;
+    final userId = _pb.authStore.record?.id;
+    if (userId == null) return;
 
     // Calculate fingerprint (SHA256 of the public key)
     final fingerprint = await _calculateFingerprint(publicKey);
@@ -142,9 +143,10 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
 
     try {
       // Check if this key already exists for this user
-      final existingKeys = await _pb.collection(Collections.sshKeys).getFullList(
-            filter: 'user = "$userId" && fingerprint = "$fingerprint"',
-          );
+      final existingKeys =
+          await _pb.collection(Collections.sshKeys).getFullList(
+                filter: 'user = "$userId" && fingerprint = "$fingerprint"',
+              );
 
       if (existingKeys.isEmpty) {
         // Create new SSH key record

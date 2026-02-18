@@ -2,14 +2,14 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:test_app/domain/auth/i_auth_repository.dart';
-import 'system_status_state.dart';
+import 'status_state.dart';
 
 @injectable
-class SystemStatusCubit extends Cubit<SystemStatusState> {
+class StatusCubit extends Cubit<StatusState> {
   final IAuthRepository _authRepo;
   StreamSubscription<bool>? _connectionSubscription;
 
-  SystemStatusCubit(this._authRepo) : super(SystemStatusState.initial()) {
+  StatusCubit(this._authRepo) : super(StatusState.initial()) {
     _monitorConnection();
   }
 

@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:test_app/l10n/app_localizations.dart';
-import 'package:test_app/application/system/system_status_cubit.dart';
+import 'package:test_app/application/system/status_cubit.dart';
 import 'package:test_app/application/system/poco_cubit.dart';
 
 import '../app_router.dart';
@@ -28,7 +28,7 @@ class App extends StatelessWidget {
         return MultiBlocProvider(
           providers: [
             BlocProvider(
-              create: (context) => getIt<SystemStatusCubit>(),
+              create: (context) => getIt<StatusCubit>(),
             ),
             BlocProvider(
               create: (context) => getIt<PocoCubit>(),
