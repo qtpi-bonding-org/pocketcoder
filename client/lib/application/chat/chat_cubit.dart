@@ -3,12 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/chat/chat_message.dart';
-import '../../domain/chat/i_chat_repository.dart';
+import '../../domain/communication/i_communication_repository.dart';
 import 'chat_state.dart';
 
 @injectable
 class ChatCubit extends Cubit<ChatState> {
-  final IChatRepository _repository;
+  final ICommunicationRepository _repository;
   StreamSubscription? _coldSub;
   StreamSubscription? _hotSub;
   String? _currentChatId;
