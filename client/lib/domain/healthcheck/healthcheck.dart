@@ -8,11 +8,25 @@ class Healthcheck with _$Healthcheck {
   const factory Healthcheck({
     required String id,
     required String name,
-    String? status,
+    required HealthcheckStatus status,
     @JsonKey(name: 'last_ping') DateTime? lastPing,
     DateTime? created,
     DateTime? updated,
   }) = _Healthcheck;
 
-  factory Healthcheck.fromJson(Map<String, dynamic> json) => _$HealthcheckFromJson(json);
+  factory Healthcheck.fromJson(Map<String, dynamic> json) =>
+      _$HealthcheckFromJson(json);
+}
+
+enum HealthcheckStatus {
+  @JsonValue('starting')
+  starting,
+  @JsonValue('ready')
+  ready,
+  @JsonValue('degraded')
+  degraded,
+  @JsonValue('offline')
+  offline,
+  @JsonValue('error')
+  error,
 }

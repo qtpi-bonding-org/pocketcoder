@@ -14,50 +14,44 @@ class Collections {
   static const String users = 'users';
 
   // ===========================================================================
-  // APP COLLECTIONS (with pc_ prefix per backend spec)
+  // APP COLLECTIONS
   // ===========================================================================
 
   /// AI Models collection - available AI models
-  static const String aiModels = 'pc_ai_models';
+  static const String aiModels = 'ai_models';
 
   /// AI Prompts collection - system prompts for agents
-  static const String aiPrompts = 'pc_ai_prompts';
+  static const String aiPrompts = 'ai_prompts';
 
   /// AI Agents collection - agent configurations
-  static const String aiAgents = 'pc_ai_agents';
-
-  /// AI Permission Rules collection - permission rules for agents
-  static const String aiPermissionRules = 'ai_permission_rules';
+  static const String aiAgents = 'ai_agents';
 
   /// Chats collection - chat sessions
-  static const String chats = 'pc_chats';
+  static const String chats = 'chats';
 
   /// Messages collection - chat messages with roles and parts
-  static const String messages = 'pc_messages';
+  static const String messages = 'messages';
 
   /// Permissions collection - permission requests and authorizations
-  static const String permissions = 'pc_permissions';
-
-  /// Usages collection - tracks AI model usage and costs
-  static const String usages = 'pc_usages';
+  static const String permissions = 'permissions';
 
   /// SSH Keys collection - SSH public keys for user devices
-  static const String sshKeys = 'pc_ssh_keys';
+  static const String sshKeys = 'ssh_keys';
 
   /// Whitelist Targets collection - glob patterns for whitelisting
-  static const String whitelistTargets = 'pc_whitelist_targets';
+  static const String whitelistTargets = 'whitelist_targets';
 
   /// Whitelist Actions collection - actions for whitelist patterns
-  static const String whitelistActions = 'pc_whitelist_actions';
+  static const String whitelistActions = 'whitelist_actions';
 
   /// Proposals collection - feature proposals
-  static const String proposals = 'pc_proposals';
+  static const String proposals = 'proposals';
 
   /// SOPs collection - Standard Operating Procedures
-  static const String sops = 'pc_sops';
+  static const String sops = 'sops';
 
   /// Subagents collection - subagent configurations
-  static const String subagents = 'pc_subagents';
+  static const String subagents = 'subagents';
 
   /// Healthchecks collection - service health status
   static const String healthchecks = 'healthchecks';
@@ -71,11 +65,9 @@ class Collections {
     aiModels,
     aiPrompts,
     aiAgents,
-    aiPermissionRules,
     chats,
     messages,
     permissions,
-    usages,
     sshKeys,
     whitelistTargets,
     whitelistActions,
@@ -91,11 +83,9 @@ class Collections {
     aiModels,
     aiPrompts,
     aiAgents,
-    aiPermissionRules,
     chats,
     messages,
     permissions,
-    usages,
     sshKeys,
     whitelistTargets,
     whitelistActions,

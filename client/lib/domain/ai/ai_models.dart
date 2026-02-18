@@ -8,8 +8,7 @@ class AiAgent with _$AiAgent {
   const factory AiAgent({
     required String id,
     required String name,
-    String? description,
-    @Default(false) bool isInit,
+    @JsonKey(name: 'is_init') @Default(false) bool isInit,
     @JsonKey(name: 'prompt') String? promptId,
     @JsonKey(name: 'model') String? modelId,
     String? config,
@@ -47,19 +46,4 @@ class AiModel with _$AiModel {
 
   factory AiModel.fromJson(Map<String, dynamic> json) =>
       _$AiModelFromJson(json);
-}
-
-@freezed
-class AiPermissionRule with _$AiPermissionRule {
-  const factory AiPermissionRule({
-    required String id,
-    required String agent,
-    required String pattern,
-    required String action,
-    DateTime? created,
-    DateTime? updated,
-  }) = _AiPermissionRule;
-
-  factory AiPermissionRule.fromJson(Map<String, dynamic> json) =>
-      _$AiPermissionRuleFromJson(json);
 }

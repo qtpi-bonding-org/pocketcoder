@@ -1,36 +1,19 @@
-class WhitelistTarget {
-  final String id;
-  final String name;
-  final String pattern;
-  final String type; // domain, repo, path
-  final DateTime created;
-  final DateTime updated;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  WhitelistTarget({
-    required this.id,
-    required this.name,
-    required this.pattern,
-    required this.type,
-    required this.created,
-    required this.updated,
-  });
+part 'whitelist_target.freezed.dart';
+part 'whitelist_target.g.dart';
 
-  factory WhitelistTarget.fromJson(Map<String, dynamic> json) {
-    return WhitelistTarget(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      pattern: json['pattern'] as String,
-      type: json['type'] as String,
-      created: DateTime.parse(json['created'] as String),
-      updated: DateTime.parse(json['updated'] as String),
-    );
-  }
+@freezed
+class WhitelistTarget with _$WhitelistTarget {
+  const factory WhitelistTarget({
+    required String id,
+    required String name,
+    required String pattern,
+    @Default(true) bool active,
+    DateTime? created,
+    DateTime? updated,
+  }) = _WhitelistTarget;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'pattern': pattern,
-      'type': type,
-    };
-  }
+  factory WhitelistTarget.fromJson(Map<String, dynamic> json) =>
+      _$WhitelistTargetFromJson(json);
 }

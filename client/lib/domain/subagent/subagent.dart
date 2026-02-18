@@ -10,7 +10,12 @@ class Subagent with _$Subagent {
     @JsonKey(name: 'subagent_id') required String subagentId,
     @JsonKey(name: 'delegating_agent_id') required String delegatingAgentId,
     @JsonKey(name: 'tmux_window_id') int? tmuxWindowId,
+    @JsonKey(name: 'chat') String? chatId,
+    @JsonKey(name: 'delegating_agent') String? delegatingAgentRecordId,
+    DateTime? created,
+    DateTime? updated,
   }) = _Subagent;
 
-  factory Subagent.fromJson(Map<String, dynamic> json) => _$SubagentFromJson(json);
+  factory Subagent.fromJson(Map<String, dynamic> json) =>
+      _$SubagentFromJson(json);
 }

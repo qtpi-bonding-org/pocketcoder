@@ -10,16 +10,17 @@ class Proposal with _$Proposal {
     required String name,
     String? description,
     required String content,
-    @JsonKey(name: 'authored_by') AuthoredBy? authoredBy,
-    ProposalStatus? status,
+    @JsonKey(name: 'authored_by') required ProposalAuthor authoredBy,
+    required ProposalStatus status,
     DateTime? created,
     DateTime? updated,
   }) = _Proposal;
 
-  factory Proposal.fromJson(Map<String, dynamic> json) => _$ProposalFromJson(json);
+  factory Proposal.fromJson(Map<String, dynamic> json) =>
+      _$ProposalFromJson(json);
 }
 
-enum AuthoredBy {
+enum ProposalAuthor {
   @JsonValue('human')
   human,
   @JsonValue('poco')

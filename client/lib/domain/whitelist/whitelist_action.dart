@@ -1,43 +1,27 @@
-import 'whitelist_target.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class WhitelistAction {
-  final String id;
-  final String command;
-  final String? targetId;
-  final WhitelistTarget? target;
-  final bool isActive;
-  final DateTime created;
-  final DateTime updated;
+part 'whitelist_action.freezed.dart';
+part 'whitelist_action.g.dart';
 
-  WhitelistAction({
-    required this.id,
-    required this.command,
-    this.targetId,
-    this.target,
-    required this.isActive,
-    required this.created,
-    required this.updated,
-  });
+@freezed
+class WhitelistAction with _$WhitelistAction {
+  const factory WhitelistAction({
+    required String id,
+    required String permission,
+    required WhitelistActionKind kind,
+    String? value,
+    @Default(true) bool active,
+    DateTime? created,
+    DateTime? updated,
+  }) = _WhitelistAction;
 
-  factory WhitelistAction.fromJson(Map<String, dynamic> json) {
-    return WhitelistAction(
-      id: json['id'] as String,
-      command: json['command'] as String,
-      targetId: json['target'] as String?,
-      target: json['expand'] != null && json['expand']['target'] != null
-          ? WhitelistTarget.fromJson(json['expand']['target'])
-          : null,
-      isActive: json['is_active'] as bool? ?? true,
-      created: DateTime.parse(json['created'] as String),
-      updated: DateTime.parse(json['updated'] as String),
-    );
-  }
+  factory WhitelistAction.fromJson(Map<String, dynamic> json) =>
+      _$WhitelistActionFromJson(json);
+}
 
-  Map<String, dynamic> toJson() {
-    return {
-      'command': command,
-      'target': targetId,
-      'is_active': isActive,
-    };
-  }
+enum WhitelistActionKind {
+  @JsonValue('strict')
+  strict,
+  @JsonValue('pattern')
+  pattern,
 }
