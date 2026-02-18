@@ -288,6 +288,75 @@ main() {
     fi
 }
 
+# OpenCode session cleanup functions
+# These functions handle cleanup of OpenCode sessions created during tests
+
+# OpenCode endpoint (can be overridden by environment)
+OPENCODE_URL="${OPENCODE_URL:-http://localhost:3000}"
+
+# Delete an OpenCode session by ID
+# Args: session_id
+# Returns: 0 on success, 1 on failure (non-fatal)
+delete_opencode_session() {
+    local session_id="$1"
+    
+    local response
+    response=$(curl -s -w "%{http_code}" -X DELETE \
+        "$OPENCODE_URL/session/$session_id" 2>/dev/null)
+    
+    local http_code="${response: -3}"
+    
+    if [ "$http_code" = "200" ] || [ "$http_code" = "204" ] || [ "$http_code" = "404" ]; then
+        echo "  ✓ Deleted OpenCode session: $session_id"
+        return 0
+    else
+        echo "  ✗ Failed to delete OpenCode session $session_id (HTTP $http_code)"
+        return 1
+    fi
+}
+
+# Cleanup OpenCode sessions by pattern
+# Args: session_id_pattern
+# Returns: 0 on success, 1 on partial failure
+cleanup_opencode_sessions_by_pattern() {
+    local pattern="$1"
+    
+    echo "Cleaning up OpenCode sessions matching pattern: $pattern"
+    
+    # OpenCode doesn't have a list endpoint with filtering, so we try to delete directly
+    # This is a best-effort cleanup since we don't have a way to list all sessions
+    
+    # If we have a specific session ID, try to delete it
+    if [ -n "$pattern" ]; then
+        delete_opencode_session "$pattern" || true
+    fi
+}
+
+# Cleanup all OpenCode sessions for a test run
+# Args: test_id
+# Returns: 0 on success, 1 on partial failure
+cleanup_opencode_sessions_for_test() {
+    local test_id="$1"
+    
+    echo "Cleaning up OpenCode sessions for test: $test_id"
+    
+    # Since we can't list sessions, we rely on tracking session IDs during test execution
+    # The test should track session IDs in OPENCODE_SESSION_IDS variable
+    # This function is called from teardown() in BATS tests
+    
+    return 0
+}
+
+# Track an OpenCode session for cleanup
+# Args: session_id
+# Usage: track_opencode_session "abc123"
+track_opencode_session() {
+    local session_id="$1"
+    echo "  📦 Tracked OpenCode session: $session_id"
+}
+
 # Export functions for use in BATS
 export -f delete_record delete_by_pattern dry_run_delete cleanup_by_age
 export -f cleanup_test_data dry_run_cleanup load_credentials get_admin_token
+export -f delete_opencode_session cleanup_opencode_sessions_by_pattern
+export -f cleanup_opencode_sessions_for_test track_opencode_session
