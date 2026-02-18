@@ -7,23 +7,32 @@ part 'permission_request.g.dart';
 class PermissionRequest with _$PermissionRequest {
   const factory PermissionRequest({
     required String id,
-    // ignore: invalid_annotation_target
-    @JsonKey(name: 'session_id') required String sessionId,
-    // ignore: invalid_annotation_target
-    @JsonKey(name: 'opencode_id') required String opencodeId,
+    @JsonKey(name: 'agent_permission_id') String? agentPermissionId,
+    @JsonKey(name: 'session_id') String? sessionId,
+    @JsonKey(name: 'chat') String? chatId,
     required String permission,
-    required String status,
-    @Default([]) List<String> patterns,
-    @Default({}) Map<String, dynamic> metadata,
+    PermissionStatus? status,
+    List<String>? patterns,
+    Map<String, dynamic>? metadata,
     String? message,
-    // ignore: invalid_annotation_target
     @JsonKey(name: 'message_id') String? messageId,
-    // ignore: invalid_annotation_target
     @JsonKey(name: 'call_id') String? callId,
-    // ignore: invalid_annotation_target
-    @JsonKey(name: 'created') String? created,
+    String? challenge,
+    String? source,
+    @JsonKey(name: 'usage') String? usageId,
+    DateTime? created,
+    DateTime? updated,
   }) = _PermissionRequest;
 
   factory PermissionRequest.fromJson(Map<String, dynamic> json) =>
       _$PermissionRequestFromJson(json);
+}
+
+enum PermissionStatus {
+  @JsonValue('draft')
+  draft,
+  @JsonValue('authorized')
+  authorized,
+  @JsonValue('denied')
+  denied,
 }

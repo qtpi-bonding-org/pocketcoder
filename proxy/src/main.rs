@@ -163,7 +163,13 @@ async fn mcp_sse_relay_handler(
     println!("📡 [Proxy/MCP] Relaying to Sandbox: {}", sandbox_url);
 
     let req_method = reqwest::Method::from_bytes(method.as_str().as_bytes()).unwrap_or(reqwest::Method::GET);
-    let mut req_builder = client.request(req_method, sandbox_url).body(body);
+    let mut req_builder = client.request(req_method.clone(), sandbox_url);
+    
+    // Only add body for methods that support it
+    if req_method != reqwest::Method::GET && req_method != reqwest::Method::HEAD && !body.is_empty() {
+        req_builder = req_builder.body(body);
+    }
+    
     for (key, value) in headers.iter() {
         if key.as_str().to_lowercase() != "host" {
             // println!("   Header: {}: {:?}", key, value);
@@ -187,8 +193,11 @@ async fn mcp_sse_relay_handler(
             let stream = res.bytes_stream().map(|result| {
                 result.map(|bytes| {
                     let s = String::from_utf8_lossy(&bytes);
+                    // Rewrite endpoint URL: /messages/ -> /mcp/messages/
+                    // so OpenCode POSTs back through the /mcp/* route
+                    let replaced = s.replace("/messages/", "/mcp/messages/");
                     // Prefix session_id with "ses_" for OpenCode validation
-                    let replaced = s.replace("session_id=", "session_id=ses_");
+                    let replaced = replaced.replace("session_id=", "session_id=ses_");
                     axum::body::Bytes::from(replaced.into_bytes())
                 })
             });
@@ -263,7 +272,6 @@ async fn main() -> Result<()> {
                 .route("/health", get(health_handler))
                 .route("/exec", post(exec_handler)) 
                 .route("/mcp/*path", any(mcp_sse_relay_handler))
-                .route("/messages/*path", any(mcp_sse_relay_handler))
                 .layer(tower_http::cors::CorsLayer::permissive())
                 .with_state(state);
 

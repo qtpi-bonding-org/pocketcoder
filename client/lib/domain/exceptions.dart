@@ -62,3 +62,13 @@ class WhitelistException extends DomainException {
   factory WhitelistException.updateFailed([dynamic cause]) =>
       WhitelistException('Failed to update whitelist', cause);
 }
+
+/// Generic repository exceptions.
+class RepositoryException extends DomainException {
+  RepositoryException(super.message, [super.cause]);
+
+  factory RepositoryException.fetchFailed([dynamic cause]) =>
+      RepositoryException('Failed to fetch data', cause);
+  factory RepositoryException.updateFailed([dynamic cause]) =>
+      RepositoryException('Failed to update data', cause);
+}

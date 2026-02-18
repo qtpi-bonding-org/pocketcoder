@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // @pocketcoder-core: Relay Utilities. Common logic for the Spinal Cord.
 package relay
 
-// resolveChatID attempts to find a chat associated with an agent_id (OpenCode session ID)
+// resolveChatID attempts to find a chat associated with an ai_engine_session_id (OpenCode session ID)
 // or a subagent_id.
 func (r *RelayService) resolveChatID(sessionID string) string {
 	if sessionID == "" {
@@ -27,7 +27,7 @@ func (r *RelayService) resolveChatID(sessionID string) string {
 	}
 
 	// 1. Check if it's the main agent (Poco)
-	record, err := r.app.FindFirstRecordByFilter("chats", "agent_id = {:id}", map[string]any{"id": sessionID})
+	record, err := r.app.FindFirstRecordByFilter("chats", "ai_engine_session_id = {:id}", map[string]any{"id": sessionID})
 	if err == nil {
 		return record.Id
 	}
@@ -35,12 +35,12 @@ func (r *RelayService) resolveChatID(sessionID string) string {
 	// 2. Check if it's a subagent
 	subagent, err := r.app.FindFirstRecordByFilter("subagents", "subagent_id = {:id}", map[string]any{"id": sessionID})
 	if err == nil {
-		// Resolve via delegating_agent_id -> chats.agent_id -> chats.id
+		// Resolve via delegating_agent_id -> chats.ai_engine_session_id -> chats.id
 		delegatingAgentID := subagent.GetString("delegating_agent_id")
 		if delegatingAgentID == "" {
 			return ""
 		}
-		chatRecord, err := r.app.FindFirstRecordByFilter("chats", "agent_id = {:id}", map[string]any{"id": delegatingAgentID})
+		chatRecord, err := r.app.FindFirstRecordByFilter("chats", "ai_engine_session_id = {:id}", map[string]any{"id": delegatingAgentID})
 		if err == nil {
 			return chatRecord.Id
 		}

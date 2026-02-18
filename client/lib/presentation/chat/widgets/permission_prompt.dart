@@ -74,7 +74,7 @@ class PermissionPrompt extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              '${request.permission.toUpperCase()} ${request.metadata['command'] ?? ''}',
+              '${request.permission.toUpperCase()} ${request.metadata?['command'] ?? ''}',
               style: TextStyle(
                 color: AppPalette.primary.textPrimary,
                 fontFamily: AppFonts.bodyFamily,
@@ -83,7 +83,7 @@ class PermissionPrompt extends StatelessWidget {
               ),
             ),
           ),
-          if (request.patterns.isNotEmpty) ...[
+          if ((request.patterns ?? []).isNotEmpty) ...[
             VSpace.x2,
             Text(
               'Patterns:',
@@ -92,7 +92,7 @@ class PermissionPrompt extends StatelessWidget {
                 fontSize: 10,
               ),
             ),
-            ...request.patterns.map((p) => Text(
+            ...(request.patterns ?? []).map((p) => Text(
                   '• $p',
                   style: TextStyle(
                     color:

@@ -7,32 +7,24 @@ part 'chat_message.g.dart';
 class ChatMessage with _$ChatMessage {
   const factory ChatMessage({
     required String id,
-    // ignore: invalid_annotation_target
     @JsonKey(name: 'chat') required String chatId,
     required MessageRole role,
     List<MessagePart>? parts,
-
-    // PocketBase / OpenCode Alignment
-    // ignore: invalid_annotation_target
-    @JsonKey(readValue: _readNullable) MessageStatus? status,
-    // ignore: invalid_annotation_target
-    @JsonKey(name: 'opencode_id') String? opencodeId,
-    // ignore: invalid_annotation_target
+    MessageStatus? status,
+    MessageDelivery? delivery,
+    @JsonKey(name: 'agent_message_id') String? agentMessageId,
     @JsonKey(name: 'parent_id') String? parentId,
     String? agent,
-    // ignore: invalid_annotation_target
     @JsonKey(name: 'provider_id') String? providerId,
-    // ignore: invalid_annotation_target
     @JsonKey(name: 'model_id') String? modelId,
     double? cost,
     MessageTokens? tokens,
     Map<String, dynamic>? error,
-    // ignore: invalid_annotation_target
     @JsonKey(name: 'finish_reason') String? finishReason,
     Map<String, dynamic>? metadata,
     @Default(false) bool isLive,
-    // ignore: invalid_annotation_target
     @JsonKey(name: 'created') DateTime? createdAt,
+    DateTime? updated,
   }) = _ChatMessage;
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -57,6 +49,19 @@ enum MessageStatus {
   failed,
   @JsonValue('aborted')
   aborted,
+}
+
+enum MessageDelivery {
+  @JsonValue('draft')
+  draft,
+  @JsonValue('pending')
+  pending,
+  @JsonValue('sending')
+  sending,
+  @JsonValue('sent')
+  sent,
+  @JsonValue('failed')
+  failed,
 }
 
 @freezed
@@ -85,12 +90,6 @@ class MessageCacheTokens with _$MessageCacheTokens {
 
 Object? _readText(Map<dynamic, dynamic> json, String key) {
   return json['text'] ?? json['content'];
-}
-
-Object? _readNullable(Map<dynamic, dynamic> json, String key) {
-  final val = json[key];
-  if (val == null || (val is String && val.isEmpty)) return null;
-  return val;
 }
 
 @Freezed(unionKey: 'type')
