@@ -187,12 +187,61 @@ cleanup_test_data() {
     
     local failed=0
     
-    # Clean up each collection
-    for collection in chats messages permissions subagents; do
-        if ! delete_by_pattern "$collection" "$test_id" "$token"; then
-            failed=1
-        fi
-    done
+    # Clean up chats by title pattern (since TEST_ID is in the title)
+    echo "Searching for chats records matching pattern: $test_id"
+    local chats_response
+    # Use proper URL encoding for the filter
+    chats_response=$(curl -s -X GET \
+        "$PB_URL/api/collections/chats/records?filter=title~'$test_id'" \
+        -H "Authorization: $token" \
+        -H "Content-Type: application/json")
+    
+    local chat_count
+    chat_count=$(echo "$chats_response" | grep -o '"totalCount":[0-9]*' | cut -d':' -f2)
+    
+    if [ "$chat_count" -gt 0 ] 2>/dev/null; then
+        echo "  Found $chat_count chat(s)"
+        local chat_ids=()
+        while IFS= read -r chat_id; do
+            chat_ids+=("$chat_id")
+            if ! delete_record "chats" "$chat_id" "$token"; then
+                failed=1
+            fi
+        done < <(echo "$chats_response" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
+        
+        # Clean up permissions linked to these chats
+        for chat_id in "${chat_ids[@]}"; do
+            local perms_response
+            perms_response=$(curl -s -X GET \
+                "$PB_URL/api/collections/permissions/records?filter=chat='$chat_id'" \
+                -H "Authorization: $token" \
+                -H "Content-Type: application/json")
+            
+            local perm_count
+            perm_count=$(echo "$perms_response" | grep -o '"totalCount":[0-9]*' | cut -d':' -f2)
+            
+            if [ "$perm_count" -gt 0 ] 2>/dev/null; then
+                echo "  Found $perm_count permission(s) for chat $chat_id"
+                echo "$perms_response" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 | while read -r perm_id; do
+                    if ! delete_record "permissions" "$perm_id" "$token"; then
+                        failed=1
+                    fi
+                done
+            fi
+        done
+    else
+        echo "  No matching records found"
+    fi
+    
+    # Clean up messages by test_id pattern
+    if ! delete_by_pattern "messages" "$test_id" "$token"; then
+        failed=1
+    fi
+    
+    # Clean up subagents by test_id pattern
+    if ! delete_by_pattern "subagents" "$test_id" "$token"; then
+        failed=1
+    fi
     
     return $failed
 }
