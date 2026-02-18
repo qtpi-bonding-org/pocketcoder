@@ -1,0 +1,71 @@
+# Docker Compose configuration for running tests
+# 
+# This file extends docker-compose.yml to add a test runner service
+# that can access all application services via their networks.
+#
+# Usage with Earthly (recommended):
+#   earthly +test-all          # Full test suite with lifecycle management
+#   earthly +test-health       # Health tests only
+#
+# Usage standalone (for local development):
+#   docker-compose up -d                                              # Start services
+#   docker-compose -f docker-compose.test.yml run --rm test          # Run all tests
+#   docker-compose -f docker-compose.test.yml run --rm test bats /tests/health/*.bats  # Specific suite
+#   docker-compose down                                               # Cleanup
+
+services:
+  # Test runner service
+  test:
+    image: pocketcoder-test:latest
+    build:
+      context: .
+      dockerfile: docker/test.Dockerfile
+    container_name: pocketcoder-test
+    depends_on:
+      pocketbase:
+        condition: service_started
+      opencode:
+        condition: service_healthy
+      sandbox:
+        condition: service_started
+    volumes:
+      # Mount test files for live editing during development
+      - ./tests:/tests:ro
+      # Mount docker socket for container inspection (docker exec commands)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # Service endpoints (use service names for DNS resolution within compose network)
+      - PB_URL=http://pocketbase:8090
+      - OPENCODE_URL=http://opencode:3000
+      - SANDBOX_HOST=sandbox
+      - SANDBOX_RUST_PORT=3001
+      - SANDBOX_CAO_API_PORT=9889
+      - SANDBOX_CAO_MCP_PORT=9888
+      - OPENCODE_SSH_PORT=2222
+      # Test configuration
+      - TEST_TIMEOUT_HEALTH=30
+      - TEST_TIMEOUT_CONNECTION=60
+      - TEST_TIMEOUT_INTEGRATION=300
+      - TEST_RETRY_COUNT=3
+      - TEST_RETRY_DELAY=2
+      - TEST_CLEANUP_ON_FAILURE=true
+      - TEST_PARALLEL=false
+      # PocketBase credentials
+      - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
+      - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
+      - POCKETBASE_ADMIN_EMAIL=${POCKETBASE_ADMIN_EMAIL}
+      - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD}
+      - AGENT_EMAIL=${AGENT_EMAIL}
+      - AGENT_PASSWORD=${AGENT_PASSWORD}
+    networks:
+      - pocketcoder-memory
+      - pocketcoder-control
+    # Don't start automatically - use 'run' command instead
+    profiles:
+      - test
+
+networks:
+  pocketcoder-memory:
+    external: false
+  pocketcoder-control:
+    external: false
