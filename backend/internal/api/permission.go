@@ -25,6 +25,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/permission"
 )
@@ -82,5 +83,5 @@ func RegisterPermissionApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			"id":        record.Id,
 			"status":    status,
 		})
-	})
+	}).Bind(apis.RequireAuth())
 }
