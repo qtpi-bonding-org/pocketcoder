@@ -8,10 +8,14 @@ class Sop with _$Sop {
   const factory Sop({
     required String id,
     required String name,
-    String? description,
+    required String description,
     required String content,
-    String? signature,
+    required String signature,
     @JsonKey(name: 'approved_at') DateTime? approvedAt,
+    @JsonKey(name: 'proposal') String? proposalId,
+    @JsonKey(name: 'sealed_at') DateTime? sealedAt,
+    @JsonKey(name: 'sealed_by') String? sealedBy,
+    int? version,
     DateTime? created,
     DateTime? updated,
   }) = _Sop;

@@ -25,9 +25,9 @@ class WhitelistCubit extends Cubit<WhitelistState> {
     }
   }
 
-  Future<void> createTarget(String name, String pattern, String type) async {
+  Future<void> createTarget(String name, String pattern) async {
     try {
-      await _repository.createTarget(name, pattern, type);
+      await _repository.createTarget(name, pattern);
       load(); // Refresh
     } catch (e) {
       emit(WhitelistState.error(e.toString()));
@@ -43,9 +43,13 @@ class WhitelistCubit extends Cubit<WhitelistState> {
     }
   }
 
-  Future<void> createAction(String command, String targetId) async {
+  Future<void> createAction(
+    String permission, {
+    String kind = 'pattern',
+    String? value,
+  }) async {
     try {
-      await _repository.createAction(command, targetId);
+      await _repository.createAction(permission, kind: kind, value: value);
       load();
     } catch (e) {
       emit(WhitelistState.error(e.toString()));
@@ -61,10 +65,10 @@ class WhitelistCubit extends Cubit<WhitelistState> {
     }
   }
 
-  Future<void> toggleAction(String id, bool isActive) async {
+  Future<void> toggleAction(String id, bool active) async {
     try {
-      await _repository.toggleAction(id, isActive);
-      load(); // Ideally optimistic update, but simple reload is safer for now
+      await _repository.toggleAction(id, active);
+      load();
     } catch (e) {
       emit(WhitelistState.error(e.toString()));
     }
