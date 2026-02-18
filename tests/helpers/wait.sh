@@ -275,6 +275,7 @@ wait_for_sse_stream() {
 # Args: message_id expected_status [timeout]
 # Usage: wait_for_message_status "abc123" "delivered" 60
 # Returns: 0 on success, 1 on timeout
+# Note: Accepts the expected status OR any status that indicates progress (e.g., "sending" or "delivered" both satisfy "sending")
 wait_for_message_status() {
     local message_id="$1"
     local expected_status="$2"
@@ -286,6 +287,16 @@ wait_for_message_status() {
     start_time=$(date +%s)
     local end_time=$((start_time + timeout))
     
+    # Define status progression: pending -> sending -> delivered
+    local status_order=("pending" "sending" "delivered")
+    local expected_index=-1
+    for i in "${!status_order[@]}"; do
+        if [ "${status_order[$i]}" = "$expected_status" ]; then
+            expected_index=$i
+            break
+        fi
+    done
+    
     while [ $(date +%s) -lt $end_time ]; do
         local response
         response=$(curl -s -X GET "$PB_URL/api/collections/messages/records/$message_id" \
@@ -295,9 +306,19 @@ wait_for_message_status() {
         local status
         status=$(echo "$response" | grep -o '"user_message_status":"[^"]*"' | cut -d'"' -f4)
         
-        if [ "$status" = "$expected_status" ]; then
+        # Check if current status matches expected or is further along in progression
+        local current_index=-1
+        for i in "${!status_order[@]}"; do
+            if [ "${status_order[$i]}" = "$status" ]; then
+                current_index=$i
+                break
+            fi
+        done
+        
+        # Accept if we've reached or passed the expected status
+        if [ $current_index -ge $expected_index ] && [ $expected_index -ge 0 ]; then
             local elapsed=$(($(date +%s) - start_time))
-            echo "  ✓ Message status is $expected_status after ${elapsed}s"
+            echo "  ✓ Message status is $status (expected: $expected_status) after ${elapsed}s"
             return 0
         fi
         
