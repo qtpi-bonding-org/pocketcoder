@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import '../../domain/permission/i_permission_repository.dart';
+import '../../domain/hitl/i_hitl_repository.dart';
 import 'permission_state.dart';
 
 @injectable
 class PermissionCubit extends Cubit<PermissionState> {
-  final IPermissionRepository _repository;
+  final IHitlRepository _repository;
   StreamSubscription? _subscription;
 
   PermissionCubit(this._repository) : super(const PermissionState.initial());
