@@ -26,16 +26,6 @@ class ApiEndpoints {
   static const String sshKeys = '/api/pocketcoder/ssh_keys';
 
   // ===========================================================================
-  // SESSION ENDPOINTS
-  // ===========================================================================
-
-  /// GET /api/pocketcoder/resolve_session/{session_id}
-  /// Maps session IDs to tmux routing info for the proxy's smart router.
-  /// Returns chat_id, window_id, and agent/subagent info.
-  static String resolveSession(String sessionId) =>
-      '/api/pocketcoder/resolve_session/$sessionId';
-
-  // ===========================================================================
   // ARTIFACT/FILE ENDPOINTS
   // ===========================================================================
 
@@ -56,18 +46,12 @@ class ApiEndpoints {
 
   /// Dynamic endpoints that require parameters
   static const List<String> dynamicEndpoints = [
-    '/api/pocketcoder/resolve_session/{session_id}',
     '/api/pocketcoder/artifact/{path}',
   ];
 
   /// Checks if an endpoint is a custom PocketCoder endpoint
   static bool isCustomEndpoint(String path) {
     return path.startsWith('/api/pocketcoder/');
-  }
-
-  /// Validates if a session ID looks valid (basic check)
-  static bool isValidSessionId(String sessionId) {
-    return sessionId.isNotEmpty && sessionId.length >= 8;
   }
 
   /// Validates if a path is safe for artifact access

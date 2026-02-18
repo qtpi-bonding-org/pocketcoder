@@ -176,7 +176,7 @@ test_turn_batching() {
             \"chat\": \"$CHAT_ID\",
             \"role\": \"user\",
             \"parts\": [{\"type\": \"text\", \"text\": \"Write a ten line poem about the sea.\"}],
-            \"delivery\": \"pending\"
+            \"user_message_status\": \"pending\"
         }")
 
     MSG1_ID=$(echo "$MSG1_RES" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
@@ -201,7 +201,7 @@ test_turn_batching() {
             \"chat\": \"$CHAT_ID\",
             \"role\": \"user\",
             \"parts\": [{\"type\": \"text\", \"text\": \"Actually, forget the poem. Reply ONLY with the word: BATCH_SUCCESS\"}],
-            \"delivery\": \"pending\"
+            \"user_message_status\": \"pending\"
         }")
 
     MSG2_ID=$(echo "$MSG2_RES" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
@@ -287,9 +287,9 @@ test_delegation_workflow() {
             \"role\": \"user\",
             \"parts\": [{
                 \"type\": \"text\",
-                \"text\": \"Use the cao_handoff tool to delegate this task: Calculate the SHA256 hash of 'PocketCoder'\"
+                \"text\": \"Use the handoff tool to delegate this task to a 'developer' agent: Calculate the SHA256 hash of 'PocketCoder'\"
             }],
-            \"delivery\": \"pending\"
+            \"user_message_status\": \"pending\"
         }")
 
     MSG_ID=$(echo "$MSG_RES" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
@@ -351,9 +351,9 @@ test_delegation_workflow() {
             break
         fi
 
-        # Check for cao_handoff tool call
-        if echo "$MSGS_RES" | grep -q "cao_handoff"; then
-            echo "  Detected cao_handoff tool call"
+        # Check for handoff tool call
+        if echo "$MSGS_RES" | grep -q "handoff"; then
+            echo "  Detected handoff tool call"
         fi
 
         # Check for error state

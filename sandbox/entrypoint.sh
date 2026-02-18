@@ -83,6 +83,7 @@ echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
   export CAO_MCP_PORT=9888
   export PYTHONUNBUFFERED=1
   export CAO_LOG_LEVEL=INFO
+  export PUBLIC_URL=http://localhost:9889
   cd /app/cao && /usr/local/bin/uv run cao-mcp-server
 ) &
 

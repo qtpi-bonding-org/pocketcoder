@@ -93,4 +93,16 @@ class AuthRepository implements IAuthRepository {
   void updateBaseUrl(String url) {
     _pocketBase.baseURL = url;
   }
+
+  /// Get SSH keys for authorized_keys file
+  Future<String> getSshKeysForAuthorizedKeys() async {
+    return tryMethod(
+      () async {
+        final response = await _pocketBase.send('/api/pocketcoder/ssh_keys');
+        return response.body as String;
+      },
+      AuthException.new,
+      'getSshKeysForAuthorizedKeys',
+    );
+  }
 }

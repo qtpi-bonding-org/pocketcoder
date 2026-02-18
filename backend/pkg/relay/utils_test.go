@@ -51,7 +51,7 @@ type mockApp struct {
 func (m *mockApp) FindFirstRecordByFilter(collection any, filter string, params ...map[string]any) (*mockRecord, error) {
 	// Simple filter matching for testing
 	// Expected filters:
-	// - "agent_id = {:id}" for main agent lookup
+	// - "ai_engine_session_id = {:id}" for main agent lookup
 	// - "subagent_id = {:id}" for subagent lookup
 
 	// Extract args map from variadic parameters
@@ -67,7 +67,7 @@ func (m *mockApp) FindFirstRecordByFilter(collection any, filter string, params 
 			if record.collectionName != "chats" {
 				continue
 			}
-			if args["id"] == record.GetString("agent_id") {
+			if args["id"] == record.GetString("ai_engine_session_id") {
 				return record, nil
 			}
 		}
@@ -98,7 +98,7 @@ func (r *relayServiceWithFilterFinder) resolveChatID(sessionID string) string {
 	}
 
 	// 1. Check if it's the main agent (Poco)
-	record, err := r.app.FindFirstRecordByFilter("chats", "agent_id = {:id}", map[string]any{"id": sessionID})
+	record, err := r.app.FindFirstRecordByFilter("chats", "ai_engine_session_id = {:id}", map[string]any{"id": sessionID})
 	if err == nil && record != nil {
 		return record.id
 	}
@@ -106,12 +106,12 @@ func (r *relayServiceWithFilterFinder) resolveChatID(sessionID string) string {
 	// 2. Check if it's a subagent
 	subagent, err := r.app.FindFirstRecordByFilter("subagents", "subagent_id = {:id}", map[string]any{"id": sessionID})
 	if err == nil && subagent != nil {
-		// Resolve via delegating_agent_id -> chats.agent_id -> chats.id
+		// Resolve via delegating_agent_id -> chats.ai_engine_session_id -> chats.id
 		delegatingAgentID := subagent.GetString("delegating_agent_id")
 		if delegatingAgentID == "" {
 			return ""
 		}
-		chatRecord, err := r.app.FindFirstRecordByFilter("chats", "agent_id = {:id}", map[string]any{"id": delegatingAgentID})
+		chatRecord, err := r.app.FindFirstRecordByFilter("chats", "ai_engine_session_id = {:id}", map[string]any{"id": delegatingAgentID})
 		if err == nil && chatRecord != nil {
 			return chatRecord.id
 		}
@@ -121,7 +121,7 @@ func (r *relayServiceWithFilterFinder) resolveChatID(sessionID string) string {
 }
 
 // TestResolveChatID_MainAgent tests that resolveChatID correctly resolves
-// a main agent via the agent_id field.
+// a main agent via the ai_engine_session_id field.
 // Validates: Requirements 9.1
 func TestResolveChatID_MainAgent(t *testing.T) {
 	// Setup mock data
@@ -129,7 +129,7 @@ func TestResolveChatID_MainAgent(t *testing.T) {
 		id:             "chat-uuid-abc",
 		collectionName: "chats",
 		data: map[string]any{
-			"agent_id": "poco-session-123",
+			"ai_engine_session_id": "poco-session-123",
 		},
 	}
 
@@ -141,7 +141,7 @@ func TestResolveChatID_MainAgent(t *testing.T) {
 
 	relay := &relayServiceWithFilterFinder{app: mock}
 
-	// Test main agent resolution via agent_id
+	// Test main agent resolution via ai_engine_session_id
 	result := relay.resolveChatID("poco-session-123")
 
 	if result != "chat-uuid-abc" {
@@ -150,7 +150,7 @@ func TestResolveChatID_MainAgent(t *testing.T) {
 }
 
 // TestResolveChatID_Subagent tests that resolveChatID correctly resolves
-// a subagent via delegating_agent_id -> chats.agent_id -> chats.id
+// a subagent via delegating_agent_id -> chats.ai_engine_session_id -> chats.id
 // Validates: Requirements 9.2
 func TestResolveChatID_Subagent(t *testing.T) {
 	// Setup mock data
@@ -158,7 +158,7 @@ func TestResolveChatID_Subagent(t *testing.T) {
 		id:             "chat-uuid-abc",
 		collectionName: "chats",
 		data: map[string]any{
-			"agent_id": "poco-session-123",
+			"ai_engine_session_id": "poco-session-123",
 		},
 	}
 
@@ -180,7 +180,7 @@ func TestResolveChatID_Subagent(t *testing.T) {
 
 	relay := &relayServiceWithFilterFinder{app: mock}
 
-	// Test subagent resolution via delegating_agent_id -> chats.agent_id
+	// Test subagent resolution via delegating_agent_id -> chats.ai_engine_session_id
 	result := relay.resolveChatID("subagent-xyz")
 
 	if result != "chat-uuid-abc" {
@@ -211,7 +211,7 @@ func TestResolveChatID_NotFound(t *testing.T) {
 		id:             "chat-uuid-abc",
 		collectionName: "chats",
 		data: map[string]any{
-			"agent_id": "poco-session-123",
+			"ai_engine_session_id": "poco-session-123",
 		},
 	}
 

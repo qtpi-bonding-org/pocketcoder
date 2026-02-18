@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../domain/chat/chat_message.dart';
@@ -198,6 +199,18 @@ class ChatRepository implements IChatRepository {
       },
       ChatException.new,
       'fetchChatHistory',
+    );
+  }
+
+  /// Get an artifact (file) from the workspace
+  Future<Uint8List> getArtifact(String path) async {
+    return tryMethod(
+      () async {
+        final response = await _pb.send('/api/pocketcoder/artifact/$path');
+        return response.bodyBytes;
+      },
+      ChatException.new,
+      'getArtifact',
     );
   }
 }
