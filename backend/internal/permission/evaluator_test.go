@@ -1,13 +1,10 @@
 package permission_test
 
 import (
-	"log"
 	"os"
 	"testing"
 
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/permission"
 )
 
 // This test requires a running PocketBase or a mock. 
@@ -20,7 +17,7 @@ func TestEvaluate(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	app := pocketbase.NewWithConfig(pocketbase.Config{
+	_ = pocketbase.NewWithConfig(pocketbase.Config{
 		DefaultDataDir: tmpDir,
 	})
 
