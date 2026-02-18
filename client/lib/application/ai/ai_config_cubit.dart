@@ -1,14 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/ai_config/i_ai_config_repository.dart';
-import 'ai_state.dart';
+import 'ai_config_state.dart';
 import '../../domain/ai/ai_models.dart';
 
 @injectable
-class AiCubit extends Cubit<AiState> {
+class AiConfigCubit extends Cubit<AiConfigState> {
   final IAiConfigRepository _repository;
 
-  AiCubit(this._repository) : super(const AiState());
+  AiConfigCubit(this._repository) : super(const AiConfigState());
 
   Future<void> loadAll() async {
     emit(state.copyWith(isLoading: true, error: null));

@@ -5,7 +5,7 @@ import 'package:xterm/xterm.dart';
 import 'package:test_app/app/bootstrap.dart';
 import 'package:test_app/application/terminal/terminal_cubit.dart';
 import 'package:test_app/application/terminal/terminal_state.dart';
-import 'package:test_app/application/chat/chat_cubit.dart';
+import 'package:test_app/application/chat/communication_cubit.dart';
 import '../../app_router.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/poco_animator.dart';
@@ -15,8 +15,8 @@ import '../../design_system/primitives/app_palette.dart';
 import '../../design_system/primitives/app_sizes.dart';
 import '../../design_system/primitives/spacers.dart';
 import '../../design_system/theme/app_theme.dart';
-import 'package:test_app/application/system/system_status_cubit.dart';
-import 'package:test_app/application/system/system_status_state.dart';
+import 'package:test_app/application/system/status_cubit.dart';
+import 'package:test_app/application/system/status_state.dart';
 
 class TerminalScreen extends StatelessWidget {
   const TerminalScreen({super.key});
@@ -47,7 +47,7 @@ class _TerminalViewState extends State<_TerminalView> {
   }
 
   void _connect() {
-    final chatState = context.read<ChatCubit>().state;
+    final chatState = context.read<CommunicationCubit>().state;
     final opencodeId = chatState.opencodeId;
 
     context.read<SshTerminalCubit>().connect(
@@ -175,8 +175,7 @@ class _TerminalViewState extends State<_TerminalView> {
           ),
         ),
         VSpace.x2,
-        BlocBuilder<SystemStatusCubit, SystemStatusState>(
-            builder: (context, state) {
+        BlocBuilder<StatusCubit, StatusState>(builder: (context, state) {
           final isConnected = state.isConnected;
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

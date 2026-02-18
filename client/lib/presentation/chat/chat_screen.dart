@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:test_app/app/bootstrap.dart';
-import 'package:test_app/application/chat/chat_cubit.dart';
-import 'package:test_app/application/chat/chat_state.dart';
+import 'package:test_app/application/chat/communication_cubit.dart';
+import 'package:test_app/application/chat/communication_state.dart';
 import 'package:test_app/presentation/core/widgets/poco_animator.dart';
 import 'package:test_app/presentation/chat/widgets/thoughts_stream.dart';
 import 'package:test_app/presentation/chat/widgets/speech_bubble.dart';
@@ -28,7 +28,8 @@ class ChatScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => getIt<ChatCubit>()..initialize()),
+        BlocProvider(
+            create: (context) => getIt<CommunicationCubit>()..initialize()),
         BlocProvider(create: (context) => getIt<PermissionCubit>()),
       ],
       child: const _ChatView(),
@@ -50,7 +51,7 @@ class _ChatViewState extends State<_ChatView> {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
 
-    context.read<ChatCubit>().sendMessage('default', text);
+    context.read<CommunicationCubit>().sendMessage('default', text);
     _inputController.clear();
   }
 
@@ -62,7 +63,7 @@ class _ChatViewState extends State<_ChatView> {
         child: SafeArea(
           child: MultiBlocListener(
             listeners: [
-              BlocListener<ChatCubit, ChatState>(
+              BlocListener<CommunicationCubit, CommunicationState>(
                 listenWhen: (prev, curr) => prev.chatId != curr.chatId,
                 listener: (context, state) {
                   if (state.chatId != null) {
@@ -70,7 +71,7 @@ class _ChatViewState extends State<_ChatView> {
                   }
                 },
               ),
-              BlocListener<ChatCubit, ChatState>(
+              BlocListener<CommunicationCubit, CommunicationState>(
                 listenWhen: (prev, curr) =>
                     prev.error != curr.error && curr.error != null,
                 listener: (context, state) {
@@ -100,7 +101,7 @@ class _ChatViewState extends State<_ChatView> {
                         ),
                       ),
                     ),
-                    child: BlocBuilder<ChatCubit, ChatState>(
+                    child: BlocBuilder<CommunicationCubit, CommunicationState>(
                       builder: (context, state) {
                         // Collect ALL thoughts from history + current hot message
                         final allMessages = [
@@ -146,7 +147,7 @@ class _ChatViewState extends State<_ChatView> {
                 // 3. BOTTOM: The Dialogue (History)
                 Expanded(
                   flex: 4,
-                  child: BlocBuilder<ChatCubit, ChatState>(
+                  child: BlocBuilder<CommunicationCubit, CommunicationState>(
                     builder: (context, state) {
                       // We need to reverse the list to stick to bottom
                       final reversedMessages = state.messages.reversed.toList();
@@ -209,7 +210,7 @@ class _ChatViewState extends State<_ChatView> {
                 // 4. INPUT
                 Padding(
                   padding: EdgeInsets.all(AppSizes.space),
-                  child: BlocBuilder<ChatCubit, ChatState>(
+                  child: BlocBuilder<CommunicationCubit, CommunicationState>(
                     builder: (context, state) {
                       return TerminalInput(
                         controller: _inputController,
