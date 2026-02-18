@@ -110,6 +110,7 @@ abstract class BaseDao<T> {
       'id': record.id,
       'created': record.get<String>('created'),
       'updated': record.get<String>('updated'),
+      'expand': record.expand,
     };
     return _fromJson(json);
   }

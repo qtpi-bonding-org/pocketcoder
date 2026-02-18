@@ -13,6 +13,7 @@ import '../core/widgets/ascii_art.dart';
 import '../core/widgets/poco_widget.dart';
 import '../../application/system/poco_cubit.dart';
 import '../../domain/auth/i_auth_repository.dart';
+import '../../domain/status/i_status_repository.dart';
 import '../../app/bootstrap.dart';
 
 class BootScreen extends StatefulWidget {
@@ -126,7 +127,7 @@ class _BootScreenState extends State<BootScreen> {
       context.read<PocoCubit>().updateMessage("Checking secure connection...");
     }
 
-    final connected = await getIt<IAuthRepository>().healthCheck();
+    final connected = await getIt<IStatusRepository>().checkPocketBaseHealth();
 
     if (mounted) {
       if (connected) {
@@ -166,9 +167,9 @@ class _BootScreenState extends State<BootScreen> {
       });
     }
 
-    final repo = getIt<IAuthRepository>();
-    repo.updateBaseUrl(url);
-    final connected = await repo.healthCheck();
+    final statusRepo = getIt<IStatusRepository>();
+    getIt<IAuthRepository>().updateBaseUrl(url);
+    final connected = await statusRepo.checkPocketBaseHealth();
 
     if (mounted) {
       if (connected) {
