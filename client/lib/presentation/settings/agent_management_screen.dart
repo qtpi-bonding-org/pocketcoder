@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/bootstrap.dart';
-import '../../application/ai/ai_cubit.dart';
-import '../../application/ai/ai_state.dart';
+import '../../application/ai/ai_config_cubit.dart';
+import '../../application/ai/ai_config_state.dart';
 import '../../design_system/primitives/app_fonts.dart';
 import '../../design_system/primitives/app_palette.dart';
 import '../../design_system/primitives/app_sizes.dart';
@@ -18,7 +18,7 @@ class AgentManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<AiCubit>()..loadAll(),
+      create: (context) => getIt<AiConfigCubit>()..loadAll(),
       child: const AgentManagementView(),
     );
   }
@@ -33,7 +33,7 @@ class AgentManagementView extends StatelessWidget {
       backgroundColor: AppPalette.primary.backgroundPrimary,
       body: ScanlineWidget(
         child: SafeArea(
-          child: BlocBuilder<AiCubit, AiState>(
+          child: BlocBuilder<AiConfigCubit, AiConfigState>(
             builder: (context, state) {
               if (state.isLoading) {
                 return const Center(child: CircularProgressIndicator());
@@ -118,7 +118,7 @@ class AgentManagementView extends StatelessWidget {
   }
 
   void _showEditAgentDialog(
-      BuildContext context, dynamic agent, AiState state) {
+      BuildContext context, dynamic agent, AiConfigState state) {
     final nameController = TextEditingController(text: agent.name);
     final descController = TextEditingController(text: agent.description);
     String selectedPromptId = agent.prompt; // Assuming foreign key
@@ -194,7 +194,7 @@ class AgentManagementView extends StatelessWidget {
                   model: selectedModelId.isEmpty ? null : selectedModelId,
                   // Steps, config, etc preserved by copyWith
                 );
-                context.read<AiCubit>().saveAgent(updatedAgent);
+                context.read<AiConfigCubit>().saveAgent(updatedAgent);
                 Navigator.pop(dialogContext);
               }
             },
