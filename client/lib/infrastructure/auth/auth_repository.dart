@@ -1,17 +1,27 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
-import 'package:test_app/domain/auth/i_auth_repository.dart';
+import '../../domain/auth/i_auth_repository.dart';
+import '../../domain/auth/user.dart';
+import '../../domain/ssh/ssh_key.dart';
 import '../core/collections.dart';
 import '../core/auth_store.dart';
 import '../../domain/exceptions.dart';
 import '../../core/try_operation.dart';
+import 'auth_daos.dart';
 
 @LazySingleton(as: IAuthRepository)
 class AuthRepository implements IAuthRepository {
   final PocketBase _pocketBase;
   final AuthStoreConfig _authStoreConfig;
+  final UserDao _userDao;
+  final SshKeyDao _sshKeyDao;
 
-  AuthRepository(this._pocketBase, this._authStoreConfig);
+  AuthRepository(
+    this._pocketBase,
+    this._authStoreConfig,
+    this._userDao,
+    this._sshKeyDao,
+  );
 
   @override
   Stream<bool> get connectionStatus {
@@ -25,7 +35,9 @@ class AuthRepository implements IAuthRepository {
   Future<bool> login(String email, String password) async {
     return tryMethod(
       () async {
-        await _pocketBase.collection(Collections.users).authWithPassword(email, password);
+        await _pocketBase
+            .collection(Collections.users)
+            .authWithPassword(email, password);
         return true;
       },
       AuthException.new,
@@ -58,43 +70,47 @@ class AuthRepository implements IAuthRepository {
   String? get currentUserId => _pocketBase.authStore.record?.id;
 
   @override
-  String? get currentUserEmail => _pocketBase.authStore.record?.getStringValue('email');
+  String? get currentUserEmail =>
+      _pocketBase.authStore.record?.getStringValue('email');
 
   @override
-  String? get currentUserRole => _pocketBase.authStore.record?.getStringValue('role');
-
-  @override
-  Future<bool> approvePermission(String permissionId) async {
-    return tryMethod(
-      () async {
-        await _pocketBase.collection(Collections.permissions).update(permissionId, body: {
-          'status': 'authorized',
-        });
-        return true;
-      },
-      AuthException.new,
-      'approvePermission',
-    );
-  }
-
-  @override
-  Future<bool> healthCheck() async {
-    return tryMethod(
-      () async {
-        final health = await _pocketBase.health.check();
-        return health.code == 200;
-      },
-      AuthException.new,
-      'healthCheck',
-    );
-  }
+  String? get currentUserRole =>
+      _pocketBase.authStore.record?.getStringValue('role');
 
   @override
   void updateBaseUrl(String url) {
     _pocketBase.baseURL = url;
   }
 
-  /// Get SSH keys for authorized_keys file
+  // --- Users ---
+
+  @override
+  Future<List<User>> getUsers() async {
+    return _userDao.getFullList(sort: 'email');
+  }
+
+  // --- SSH Keys ---
+
+  @override
+  Future<List<SshKey>> getSshKeys() async {
+    return _sshKeyDao.getFullList(sort: '-created');
+  }
+
+  @override
+  Future<void> addSshKey(String title, String key) async {
+    await _sshKeyDao.save(null, {
+      'title': title,
+      'key': key,
+      'user': currentUserId,
+    });
+  }
+
+  @override
+  Future<void> deleteSshKey(String id) async {
+    await _sshKeyDao.delete(id);
+  }
+
+  @override
   Future<String> getSshKeysForAuthorizedKeys() async {
     return tryMethod(
       () async {
