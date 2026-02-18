@@ -8,8 +8,14 @@ class Chat with _$Chat {
   const factory Chat({
     required String id,
     required String title,
-    @JsonKey(name: 'last_active') required DateTime lastActive,
-    required String preview,
+    @JsonKey(name: 'user') String? userId,
+    @JsonKey(name: 'agent_id') String? agentId,
+    @JsonKey(name: 'agent') String? agent,
+    @JsonKey(name: 'last_active') DateTime? lastActive,
+    String? preview,
+    String? turn,
+    DateTime? created,
+    DateTime? updated,
   }) = _Chat;
 
   factory Chat.fromJson(Map<String, dynamic> json) => _$ChatFromJson(json);

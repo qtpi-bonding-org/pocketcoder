@@ -31,18 +31,12 @@ func Evaluate(app core.App, input EvaluationInput) (bool, string) {
 	for _, rule := range actions {
 		kind := rule.GetString("kind")
 		value := rule.GetString("value")
-		commandId := rule.GetString("command")
 
 		if input.Permission == "bash" {
 			cmdStr, _ := input.Metadata["command"].(string)
-			if kind == "strict" && commandId != "" {
-				// Check if this exact command hash exists in our known commands
-				cmdRec, _ := app.FindFirstRecordByFilter("commands", "id = {:id} && command = {:cmd}", map[string]any{"id": commandId, "cmd": cmdStr})
-				if cmdRec != nil {
-					isWhitelisted = true
-					break
-				}
-			} else if kind == "pattern" && value != "" {
+			// For bash commands, use pattern matching only
+			// Note: The "commands" collection was never created, so we removed that dead code path
+			if kind == "pattern" && value != "" {
 				// Check if the command matches a glob pattern
 				if utils.MatchWildcard(cmdStr, value) {
 					isWhitelisted = true

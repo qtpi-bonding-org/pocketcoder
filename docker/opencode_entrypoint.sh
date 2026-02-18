@@ -49,6 +49,25 @@ while ! curl -s http://proxy:3001/health > /dev/null; do
 done
 echo "✅ Proxy is UP."
 
+# 2b. Wait for MCP server to be reachable through the proxy
+# OpenCode tries MCP once at startup and doesn't retry, so we must ensure it's ready
+echo "⏳ Waiting for MCP server (via proxy)..."
+mcp_count=0
+while true; do
+    # Check if the SSE endpoint returns 200 (it's a streaming endpoint so curl will timeout, that's OK)
+    mcp_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://proxy:3001/mcp/sse 2>/dev/null || true)
+    if [ "$mcp_status" = "200" ]; then
+        echo "✅ MCP server is reachable through proxy."
+        break
+    fi
+    mcp_count=$((mcp_count+1))
+    if [ $mcp_count -gt 60 ]; then
+        echo "⚠️  MCP server not reachable after 60 attempts, starting OpenCode anyway."
+        break
+    fi
+    sleep 2
+done
+
 # 3. THE SWITCHEROO (Hard Shell Enforcement)
 # In Alpine, /bin/sh is a symlink to Busybox.
 # We redirect /bin/sh to our proxy, while keeping /bin/ash as the "escape hatch" for system scripts.

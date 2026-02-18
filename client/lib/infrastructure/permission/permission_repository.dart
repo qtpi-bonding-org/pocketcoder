@@ -84,4 +84,58 @@ class PermissionRepository implements IPermissionRepository {
       'deny',
     );
   }
+
+  /// Evaluate a permission request via the custom endpoint
+  Future<PermissionResponse> evaluatePermission({
+    required String permission,
+    required List<String> patterns,
+    required String chatId,
+    required String sessionId,
+    required String agentPermissionId,
+    Map<String, dynamic>? metadata,
+    String? message,
+    String? messageId,
+    String? callId,
+  }) async {
+    return tryMethod(
+      () async {
+        final response = await _pb.send('/api/pocketcoder/permission', method: 'POST', body: {
+          'permission': permission,
+          'patterns': patterns,
+          'chat_id': chatId,
+          'session_id': sessionId,
+          'opencode_id': agentPermissionId,
+          if (metadata != null) 'metadata': metadata,
+          if (message != null) 'message': message,
+          if (messageId != null) 'message_id': messageId,
+          if (callId != null) 'call_id': callId,
+        });
+
+        return PermissionResponse.fromJson(response);
+      },
+      PermissionException.new,
+      'evaluatePermission',
+    );
+  }
+}
+
+/// Response from the permission evaluation endpoint
+class PermissionResponse {
+  final bool permitted;
+  final String id;
+  final String status;
+
+  PermissionResponse({
+    required this.permitted,
+    required this.id,
+    required this.status,
+  });
+
+  factory PermissionResponse.fromJson(Map<String, dynamic> json) {
+    return PermissionResponse(
+      permitted: json['permitted'] as bool,
+      id: json['id'] as String,
+      status: json['status'] as String,
+    );
+  }
 }
