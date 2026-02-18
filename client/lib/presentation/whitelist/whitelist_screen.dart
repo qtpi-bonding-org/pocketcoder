@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:test_app/app/bootstrap.dart';
-import 'package:test_app/application/whitelist/whitelist_cubit.dart';
-import 'package:test_app/domain/whitelist/whitelist_target.dart';
+import '../../app/bootstrap.dart';
+import '../../application/whitelist/whitelist_cubit.dart';
+import '../../domain/whitelist/whitelist_target.dart';
 
 class WhitelistScreen extends StatelessWidget {
   const WhitelistScreen({super.key});
@@ -39,15 +39,6 @@ class WhitelistView extends StatelessWidget {
             TargetsTab(),
           ],
         ),
-        floatingActionButton: Builder(
-          builder: (ctx) {
-            // Context here is within TabBarView? No, need to check tab index.
-            // Actually FAB is global to Scaffold.
-            // Better to put FAB inside tabs or use a listener.
-            // For simplicity, let's put "Add" buttons inside the tabs themselves (as headers or FABs there).
-            return const SizedBox.shrink();
-          },
-        ),
       ),
     );
   }
@@ -64,7 +55,7 @@ class ActionsTab extends StatelessWidget {
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               state.maybeWhen(
-                loaded: (targets, _) => _showAddActionDialog(context, targets),
+                loaded: (_, actions) => _showAddActionDialog(context),
                 orElse: () {},
               );
             },
@@ -84,10 +75,10 @@ class ActionsTab extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final action = actions[index];
                   return ListTile(
-                    title: Text(action.command),
-                    subtitle: Text(action.target?.name ?? 'No Target'),
+                    title: Text(action.permission),
+                    subtitle: Text('${action.kind}: ${action.value}'),
                     trailing: Switch(
-                      value: action.isActive,
+                      value: action.active,
                       onChanged: (val) => context
                           .read<WhitelistCubit>()
                           .toggleAction(action.id, val),
@@ -105,11 +96,10 @@ class ActionsTab extends StatelessWidget {
     );
   }
 
-  void _showAddActionDialog(
-      BuildContext context, List<WhitelistTarget> targets) {
-    final commandController = TextEditingController();
-    String? selectedTargetId;
-    if (targets.isNotEmpty) selectedTargetId = targets.first.id;
+  void _showAddActionDialog(BuildContext context) {
+    final permissionController = TextEditingController();
+    final valueController = TextEditingController();
+    String kind = 'pattern';
 
     showDialog(
       context: context,
@@ -120,21 +110,26 @@ class ActionsTab extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: commandController,
+                controller: permissionController,
                 decoration: const InputDecoration(
-                    labelText: 'Command (e.g. git clone)'),
+                    labelText: 'Permission (e.g. bash.run)'),
+              ),
+              TextField(
+                controller: valueController,
+                decoration:
+                    const InputDecoration(labelText: 'Value (e.g. git *)'),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: selectedTargetId,
-                items: targets
-                    .map((t) => DropdownMenuItem(
-                          value: t.id,
-                          child: Text(t.name),
+                value: kind,
+                items: ['pattern', 'strict']
+                    .map((k) => DropdownMenuItem(
+                          value: k,
+                          child: Text(k.toUpperCase()),
                         ))
                     .toList(),
-                onChanged: (val) => setState(() => selectedTargetId = val),
-                decoration: const InputDecoration(labelText: 'Target'),
+                onChanged: (val) => setState(() => kind = val!),
+                decoration: const InputDecoration(labelText: 'Kind'),
               ),
             ],
           ),
@@ -145,11 +140,11 @@ class ActionsTab extends StatelessWidget {
               child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
-              if (commandController.text.isNotEmpty &&
-                  selectedTargetId != null) {
+              if (permissionController.text.isNotEmpty) {
                 context.read<WhitelistCubit>().createAction(
-                      commandController.text,
-                      selectedTargetId!,
+                      permissionController.text,
+                      kind: kind,
+                      value: valueController.text,
                     );
                 Navigator.pop(dialogContext);
               }
@@ -179,7 +174,8 @@ class TargetsTab extends StatelessWidget {
             error: (msg) => Center(child: Text('Error: $msg')),
             loaded: (targets, actions) {
               if (targets.isEmpty) {
-                return const Center(child: Text('No targets defined. Add one!'));
+                return const Center(
+                    child: Text('No targets defined. Add one!'));
               }
               return ListView.builder(
                 itemCount: targets.length,
@@ -187,7 +183,7 @@ class TargetsTab extends StatelessWidget {
                   final target = targets[index];
                   return ListTile(
                     title: Text(target.name),
-                    subtitle: Text('${target.type}: ${target.pattern}'),
+                    subtitle: Text(target.pattern),
                     onLongPress: () =>
                         context.read<WhitelistCubit>().deleteTarget(target.id),
                   );
@@ -204,7 +200,6 @@ class TargetsTab extends StatelessWidget {
   void _showAddTargetDialog(BuildContext context) {
     final nameController = TextEditingController();
     final patternController = TextEditingController();
-    String type = 'domain';
 
     showDialog(
       context: context,
@@ -224,18 +219,6 @@ class TargetsTab extends StatelessWidget {
                 decoration: const InputDecoration(
                     labelText: 'Pattern (e.g. github.com/*)'),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: type,
-                items: ['domain', 'repo', 'path']
-                    .map((t) => DropdownMenuItem(
-                          value: t,
-                          child: Text(t.toUpperCase()),
-                        ))
-                    .toList(),
-                onChanged: (val) => setState(() => type = val!),
-                decoration: const InputDecoration(labelText: 'Type'),
-              ),
             ],
           ),
         ),
@@ -250,7 +233,6 @@ class TargetsTab extends StatelessWidget {
                 context.read<WhitelistCubit>().createTarget(
                       nameController.text,
                       patternController.text,
-                      type,
                     );
                 Navigator.pop(dialogContext);
               }

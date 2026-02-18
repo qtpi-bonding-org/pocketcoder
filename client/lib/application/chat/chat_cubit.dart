@@ -126,7 +126,7 @@ class ChatCubit extends Cubit<ChatState> {
           role: MessageRole.assistant,
           parts: [],
           isLive: true,
-          createdAt: DateTime.now(),
+          created: DateTime.now(),
         );
 
     List<MessagePart> parts = List.from(currentHot.parts ?? []);
@@ -175,7 +175,7 @@ class ChatCubit extends Cubit<ChatState> {
         chatId: 'current',
         role: MessageRole.user,
         parts: [const MessagePart.text(text: "Check the server status.")],
-        createdAt: DateTime.now());
+        created: DateTime.now());
 
     emit(state.copyWith(messages: [userMsg]));
 
@@ -240,7 +240,7 @@ class ChatCubit extends Cubit<ChatState> {
         const MessagePart.text(
             text: "\nThe server is online and responding normally, Operator."),
       ],
-      createdAt: DateTime.now(),
+      created: DateTime.now(),
     );
 
     emit(state.copyWith(

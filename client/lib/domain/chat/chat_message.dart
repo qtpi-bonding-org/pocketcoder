@@ -9,21 +9,21 @@ class ChatMessage with _$ChatMessage {
     required String id,
     @JsonKey(name: 'chat') required String chatId,
     required MessageRole role,
-    List<MessagePart>? parts,
-    MessageStatus? status,
-    MessageDelivery? delivery,
-    @JsonKey(name: 'agent_message_id') String? agentMessageId,
+    @JsonKey(name: 'engine_message_status') MessageStatus? engineStatus,
+    @JsonKey(name: 'user_message_status') MessageDelivery? userStatus,
+    @JsonKey(name: 'ai_engine_message_id') String? aiEngineMessageId,
     @JsonKey(name: 'parent_id') String? parentId,
-    String? agent,
-    @JsonKey(name: 'provider_id') String? providerId,
-    @JsonKey(name: 'model_id') String? modelId,
+    @JsonKey(name: 'agent_name') String? agentName,
+    @JsonKey(name: 'provider_name') String? providerName,
+    @JsonKey(name: 'model_name') String? modelName,
     double? cost,
     MessageTokens? tokens,
     Map<String, dynamic>? error,
     @JsonKey(name: 'finish_reason') String? finishReason,
+    List<MessagePart>? parts,
     Map<String, dynamic>? metadata,
-    @Default(false) bool isLive,
-    @JsonKey(name: 'created') DateTime? createdAt,
+    @Default(false) bool isLive, // Frontend only state for streaming
+    DateTime? created,
     DateTime? updated,
   }) = _ChatMessage;
 
@@ -52,14 +52,12 @@ enum MessageStatus {
 }
 
 enum MessageDelivery {
-  @JsonValue('draft')
-  draft,
   @JsonValue('pending')
   pending,
   @JsonValue('sending')
   sending,
-  @JsonValue('sent')
-  sent,
+  @JsonValue('delivered')
+  delivered,
   @JsonValue('failed')
   failed,
 }

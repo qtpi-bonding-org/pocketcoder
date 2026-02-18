@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:json_annotation/json_annotation.dart';
 import '../../domain/whitelist/i_whitelist_repository.dart';
 import '../../domain/whitelist/whitelist_action.dart';
 import '../../domain/whitelist/whitelist_target.dart';
@@ -17,15 +18,14 @@ class WhitelistRepository implements IWhitelistRepository {
   Future<List<WhitelistTarget>> getTargets() async {
     return tryMethod(
       () async {
-        final records = await _pb.collection(Collections.whitelistTargets).getFullList(
-              sort: '-created',
-            );
+        final records =
+            await _pb.collection(Collections.whitelistTargets).getFullList(
+                  sort: '-created',
+                );
         return records.map((r) {
           return WhitelistTarget.fromJson({
             ...r.toJson(),
             'id': r.id,
-            'created': r.get<String>('created'),
-            'updated': r.get<String>('updated'),
           });
         }).toList();
       },
@@ -38,17 +38,14 @@ class WhitelistRepository implements IWhitelistRepository {
   Future<List<WhitelistAction>> getActions() async {
     return tryMethod(
       () async {
-        final records = await _pb.collection(Collections.whitelistActions).getFullList(
-              sort: '-created',
-              expand: 'target',
-            );
+        final records =
+            await _pb.collection(Collections.whitelistActions).getFullList(
+                  sort: '-created',
+                );
         return records.map((r) {
           return WhitelistAction.fromJson({
             ...r.toJson(),
             'id': r.id,
-            'created': r.get<String>('created'),
-            'updated': r.get<String>('updated'),
-            'expand': r.expand,
           });
         }).toList();
       },
@@ -58,20 +55,18 @@ class WhitelistRepository implements IWhitelistRepository {
   }
 
   @override
-  Future<WhitelistTarget> createTarget(
-      String name, String pattern, String type) async {
+  Future<WhitelistTarget> createTarget(String name, String pattern) async {
     return tryMethod(
       () async {
-        final record = await _pb.collection(Collections.whitelistTargets).create(body: {
+        final record =
+            await _pb.collection(Collections.whitelistTargets).create(body: {
           'name': name,
           'pattern': pattern,
-          'type': type,
+          'active': true,
         });
         return WhitelistTarget.fromJson({
           ...record.toJson(),
           'id': record.id,
-          'created': record.get<String>('created'),
-          'updated': record.get<String>('updated'),
         });
       },
       WhitelistException.new,
@@ -89,19 +84,23 @@ class WhitelistRepository implements IWhitelistRepository {
   }
 
   @override
-  Future<WhitelistAction> createAction(String command, String targetId) async {
+  Future<WhitelistAction> createAction(
+    String permission, {
+    String kind = 'pattern',
+    String? value,
+  }) async {
     return tryMethod(
       () async {
-        final record = await _pb.collection(Collections.whitelistActions).create(body: {
-          'command': command,
-          'target': targetId,
-          'is_active': true,
+        final record =
+            await _pb.collection(Collections.whitelistActions).create(body: {
+          'permission': permission,
+          'kind': kind,
+          'value': value,
+          'active': true,
         });
         return WhitelistAction.fromJson({
           ...record.toJson(),
           'id': record.id,
-          'created': record.get<String>('created'),
-          'updated': record.get<String>('updated'),
         });
       },
       WhitelistException.new,
@@ -119,11 +118,11 @@ class WhitelistRepository implements IWhitelistRepository {
   }
 
   @override
-  Future<void> toggleAction(String id, bool isActive) async {
+  Future<void> toggleAction(String id, bool active) async {
     return tryMethod(
       () async {
         await _pb.collection(Collections.whitelistActions).update(id, body: {
-          'is_active': isActive,
+          'active': active,
         });
       },
       WhitelistException.new,

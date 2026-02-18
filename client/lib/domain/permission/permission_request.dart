@@ -7,7 +7,7 @@ part 'permission_request.g.dart';
 class PermissionRequest with _$PermissionRequest {
   const factory PermissionRequest({
     required String id,
-    @JsonKey(name: 'agent_permission_id') String? agentPermissionId,
+    @JsonKey(name: 'ai_engine_permission_id') String? aiEnginePermissionId,
     @JsonKey(name: 'session_id') String? sessionId,
     @JsonKey(name: 'chat') String? chatId,
     required String permission,
@@ -19,7 +19,8 @@ class PermissionRequest with _$PermissionRequest {
     @JsonKey(name: 'call_id') String? callId,
     String? challenge,
     String? source,
-    @JsonKey(name: 'usage') String? usageId,
+    @JsonKey(name: 'approved_by') String? approvedBy,
+    @JsonKey(name: 'approved_at') DateTime? approvedAt,
     DateTime? created,
     DateTime? updated,
   }) = _PermissionRequest;
