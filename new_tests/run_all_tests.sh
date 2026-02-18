@@ -33,7 +33,7 @@ fi
 echo ""
 
 # Execute Zone C tests (run from host - needs docker access)
-echo "📂 Running Zone C tests (Proxy)..."
+echo "📂 Running Zone C tests (Sandbox)..."
 if ! "$SCRIPT_DIR/zone_c_tests.sh"; then
     echo "❌ Zone C tests failed"
     FAILED=1
