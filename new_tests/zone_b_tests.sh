@@ -7,7 +7,7 @@
 # Note: This script uses busybox-compatible sh syntax
 
 # Configuration
-OPENCODE_URL="${OPENCODE_URL:-http://opencode:4096}"
+OPENCODE_URL="${OPENCODE_URL:-http://opencode:3000}"
 
 # Timeout settings
 SSE_TIMEOUT=15

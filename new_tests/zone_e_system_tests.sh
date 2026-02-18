@@ -12,7 +12,7 @@ source "$SCRIPT_DIR/helpers/auth.sh"
 
 # Configuration
 PB_URL="http://127.0.0.1:8090"
-OPENCODE_URL="${OPENCODE_URL:-http://opencode:4096}"
+OPENCODE_URL="${OPENCODE_URL:-http://opencode:3000}"
 
 # Timeout settings
 HEALTH_TIMEOUT=30
