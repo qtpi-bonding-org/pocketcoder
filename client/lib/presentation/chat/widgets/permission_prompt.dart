@@ -57,10 +57,11 @@ class PermissionPrompt extends StatelessWidget {
           ),
           VSpace.x2,
           Text(
-            'POCO is requesting permission to:',
+            '${(request.source ?? "SYSTEM").toUpperCase()} IS REQUESTING PERMISSION:',
             style: TextStyle(
               color: AppPalette.primary.textPrimary.withValues(alpha: 0.7),
-              fontSize: 12,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
             ),
           ),
           VSpace.x1,

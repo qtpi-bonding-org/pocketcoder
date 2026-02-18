@@ -1,13 +1,13 @@
 
 // TODO: ChatMessageMapper is not currently used.
-// ChatState doesn't implement IUiFlowState, so this mapper needs to be redesigned
+// CommunicationState doesn't implement IUiFlowState, so this mapper needs to be redesigned
 // if message mapping is needed in the future.
 /*
-class ChatMessageMapper implements IStateMessageMapper<ChatState> {
+class ChatMessageMapper implements IStateMessageMapper<CommunicationState> {
   @override
-  MessageKey? map(ChatState state) {
-    // TODO: Implement message mapping based on ChatState
-    // Currently ChatState doesn't have status or lastOperation fields
+  MessageKey? map(CommunicationState state) {
+    // TODO: Implement message mapping based on CommunicationState
+    // Currently CommunicationState doesn't have status or lastOperation fields
     return null;
   }
 }
