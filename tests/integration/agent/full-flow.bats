@@ -40,37 +40,6 @@ teardown() {
     fi
 }
 
-# Helper: wait for assistant message in a chat
-wait_for_assistant_message() {
-    local chat_id="$1"
-    local timeout="${2:-90}"
-
-    local start_time
-    start_time=$(date +%s)
-    local end_time=$((start_time + timeout))
-
-    while [ $(date +%s) -lt $end_time ]; do
-        local response
-        response=$(curl -s -X GET \
-            "$PB_URL/api/collections/messages/records?filter=chat=\"$chat_id\"%20%26%26%20role=\"assistant\"&sort=-created" \
-            -H "Authorization: $USER_TOKEN" \
-            -H "Content-Type: application/json")
-
-        local assistant_id
-        assistant_id=$(echo "$response" | jq -r '.items[0].id // empty')
-
-        if [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ]; then
-            echo "$assistant_id"
-            return 0
-        fi
-
-        sleep 2
-    done
-
-    echo ""
-    return 1
-}
-
 # Helper: get the text content from an assistant message's parts
 get_assistant_text() {
     local message_id="$1"
@@ -91,16 +60,25 @@ get_assistant_text() {
     # This exercises the full pipeline: relay → session → prompt → OpenCode → 
     # shell bridge → sandbox tmux → output capture → SSE → assistant message.
 
+    echo "" >&2
+    echo "═══════════════════════════════════════════════════════════" >&2
+    echo "TEST: Poco executes a command and returns real output" >&2
+    echo "═══════════════════════════════════════════════════════════" >&2
+
     authenticate_user
+    echo "✓ Authenticated as user: $USER_ID" >&2
 
     # Create chat
     local chat_data
     chat_data=$(pb_create "chats" "{\"title\": \"Agent Echo Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
+    echo "✓ Created chat: $CHAT_ID" >&2
 
     # Send a concrete task — echo a unique string so we can verify it in the response
     local unique_string="pocketcoder_agent_test_${TEST_ID}"
+    echo "ℹ Unique test string: $unique_string" >&2
+    
     local msg_data
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
@@ -110,10 +88,14 @@ get_assistant_text() {
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
+    echo "✓ Created user message: $USER_MESSAGE_ID" >&2
+    echo "  Message text: 'Run this command and show me the output: echo $unique_string'" >&2
 
     # Wait for message delivery (relay → OpenCode)
+    echo "⏳ Waiting for message delivery..." >&2
     run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Message not delivered to OpenCode"
+    echo "✓ Message delivered" >&2
 
     # Verify session was created
     local chat_record
@@ -121,24 +103,78 @@ get_assistant_text() {
     SESSION_ID=$(echo "$chat_record" | jq -r '.ai_engine_session_id // empty')
     [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "null" ] || \
         run_diagnostic_on_failure "Agent Full Flow" "No session created"
+    echo "✓ OpenCode session created: $SESSION_ID" >&2
 
     # Wait for Poco to process and respond (this is the real work)
+    echo "⏳ Waiting for Poco to respond..." >&2
     ASSISTANT_MESSAGE_ID=$(wait_for_assistant_message "$CHAT_ID" 90)
     [ -n "$ASSISTANT_MESSAGE_ID" ] && [ "$ASSISTANT_MESSAGE_ID" != "null" ] || \
         run_diagnostic_on_failure "Agent Full Flow" "Poco did not produce an assistant response"
+    echo "✓ Assistant message created: $ASSISTANT_MESSAGE_ID" >&2
+
+    # Get all messages for debugging
+    echo "" >&2
+    echo "───────────────────────────────────────────────────────────" >&2
+    echo "ALL MESSAGES IN CHAT:" >&2
+    local all_msgs
+    all_msgs=$(curl -s -X GET \
+        "$PB_URL/api/collections/messages/records?filter=chat=\"$CHAT_ID\"&sort=created" \
+        -H "Authorization: $USER_TOKEN" \
+        -H "Content-Type: application/json")
+    echo "$all_msgs" | jq -r '.items[] | "  [\(.role)] \(.id) - status: \(.engine_message_status // .user_message_status // "none") - parts: \(.parts | length) items"' >&2
+    echo "───────────────────────────────────────────────────────────" >&2
+    echo "" >&2
 
     # Verify the response has actual content
     local response_text
     response_text=$(get_assistant_text "$ASSISTANT_MESSAGE_ID")
+    
+    # Debug: show ALL messages in the chat if empty
+    if [ -z "$response_text" ]; then
+        echo "" >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "ERROR: Empty response - full message dump" >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "$all_msgs" | jq '.' >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "" >&2
+    fi
+    
     [ -n "$response_text" ] || \
         run_diagnostic_on_failure "Agent Full Flow" "Assistant response has no text content"
+    
+    echo "✓ Response has text content (${#response_text} chars)" >&2
+    echo "" >&2
+    echo "───────────────────────────────────────────────────────────" >&2
+    echo "ASSISTANT RESPONSE:" >&2
+    echo "$response_text" >&2
+    echo "───────────────────────────────────────────────────────────" >&2
+    echo "" >&2
 
     # Verify the unique string appears in the response (Poco actually ran the command)
-    echo "$response_text" | grep -q "$unique_string" || \
+    if ! echo "$response_text" | grep -q "$unique_string"; then
+        echo "" >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "ERROR: Expected string not found in response" >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "Expected string: $unique_string" >&2
+        echo "" >&2
+        echo "Actual response text:" >&2
+        echo "$response_text" >&2
+        echo "" >&2
+        echo "Full message parts:" >&2
+        local msg_full
+        msg_full=$(pb_get "messages" "$ASSISTANT_MESSAGE_ID")
+        echo "$msg_full" | jq '.parts' >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "" >&2
         run_diagnostic_on_failure "Agent Full Flow" "Response does not contain expected output '$unique_string'"
+    fi
 
-    echo "✓ Poco executed command and returned real output"
-    echo "  Unique string found in response: $unique_string"
+    echo "✓ Poco executed command and returned real output" >&2
+    echo "  Unique string found in response: $unique_string" >&2
+    echo "═══════════════════════════════════════════════════════════" >&2
+    echo "" >&2
 }
 
 # =============================================================================
@@ -150,15 +186,24 @@ get_assistant_text() {
     # the file back. This proves Poco can do real write+read work without
     # us needing to inspect the sandbox filesystem directly.
 
+    echo "" >&2
+    echo "═══════════════════════════════════════════════════════════" >&2
+    echo "TEST: Poco creates a file in the sandbox" >&2
+    echo "═══════════════════════════════════════════════════════════" >&2
+
     authenticate_user
+    echo "✓ Authenticated as user: $USER_ID" >&2
 
     local chat_data
     chat_data=$(pb_create "chats" "{\"title\": \"Agent File Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
+    echo "✓ Created chat: $CHAT_ID" >&2
 
     local filename="/tmp/agent_test_${TEST_ID}.txt"
     local file_content="pocketcoder_file_test_${TEST_ID}"
+    echo "ℹ Test filename: $filename" >&2
+    echo "ℹ Test content: $file_content" >&2
 
     # Ask Poco to create the file AND read it back in one go
     local msg_data
@@ -170,29 +215,69 @@ get_assistant_text() {
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
+    echo "✓ Created user message: $USER_MESSAGE_ID" >&2
 
     # Wait for delivery
+    echo "⏳ Waiting for message delivery..." >&2
     run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Message not delivered"
+    echo "✓ Message delivered" >&2
 
     SESSION_ID=$(pb_get "chats" "$CHAT_ID" | jq -r '.ai_engine_session_id // empty')
+    echo "✓ OpenCode session: $SESSION_ID" >&2
 
     # Wait for Poco to finish
+    echo "⏳ Waiting for Poco to respond..." >&2
     ASSISTANT_MESSAGE_ID=$(wait_for_assistant_message "$CHAT_ID" 90)
     [ -n "$ASSISTANT_MESSAGE_ID" ] && [ "$ASSISTANT_MESSAGE_ID" != "null" ] || \
         run_diagnostic_on_failure "Agent Full Flow" "Poco did not respond"
+    echo "✓ Assistant message created: $ASSISTANT_MESSAGE_ID" >&2
+
+    # Get all messages for debugging
+    echo "" >&2
+    echo "───────────────────────────────────────────────────────────" >&2
+    echo "ALL MESSAGES IN CHAT:" >&2
+    local all_msgs
+    all_msgs=$(curl -s -X GET \
+        "$PB_URL/api/collections/messages/records?filter=chat=\"$CHAT_ID\"&sort=created" \
+        -H "Authorization: $USER_TOKEN" \
+        -H "Content-Type: application/json")
+    echo "$all_msgs" | jq -r '.items[] | "  [\(.role)] \(.id) - status: \(.engine_message_status // .user_message_status // "none") - parts: \(.parts | length) items"' >&2
+    echo "───────────────────────────────────────────────────────────" >&2
+    echo "" >&2
 
     # Verify the response contains the file content (Poco read it back)
     local response_text
     response_text=$(get_assistant_text "$ASSISTANT_MESSAGE_ID")
     [ -n "$response_text" ] || \
         run_diagnostic_on_failure "Agent Full Flow" "Empty response"
+    
+    echo "✓ Response has text content (${#response_text} chars)" >&2
+    echo "" >&2
+    echo "───────────────────────────────────────────────────────────" >&2
+    echo "ASSISTANT RESPONSE:" >&2
+    echo "$response_text" >&2
+    echo "───────────────────────────────────────────────────────────" >&2
+    echo "" >&2
 
-    echo "$response_text" | grep -q "$file_content" || \
+    if ! echo "$response_text" | grep -q "$file_content"; then
+        echo "" >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "ERROR: File content not found in response" >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "Expected content: $file_content" >&2
+        echo "" >&2
+        echo "Full messages dump:" >&2
+        echo "$all_msgs" | jq '.' >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "" >&2
         run_diagnostic_on_failure "Agent Full Flow" "Response does not contain file content '$file_content' — file write/read failed"
+    fi
 
-    echo "✓ Poco created and read back a file"
-    echo "  Content verified: $file_content"
+    echo "✓ Poco created and read back a file" >&2
+    echo "  Content verified: $file_content" >&2
+    echo "═══════════════════════════════════════════════════════════" >&2
+    echo "" >&2
 }
 
 # =============================================================================
@@ -319,16 +404,23 @@ get_assistant_text() {
     run wait_for_message_status "$msg2_id" "delivered" 30
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Second message not delivered"
 
-    # Wait for a NEW assistant message (not the first one)
-    sleep 5
+    # Wait for second assistant response
+    local assistant2_id
+    assistant2_id=$(wait_for_assistant_message "$CHAT_ID" 90)
+    [ -n "$assistant2_id" ] && [ "$assistant2_id" != "null" ] || \
+        run_diagnostic_on_failure "Agent Full Flow" "No response to second message"
+
+    # Now query for all assistant messages
     local all_assistant_msgs
-    all_assistant_msgs=$(curl -s -X GET \
-        "$PB_URL/api/collections/messages/records?filter=chat=\"$CHAT_ID\"%20%26%26%20role=\"assistant\"&sort=-created" \
+    all_assistant_msgs=$(curl -s -G \
+        "$PB_URL/api/collections/messages/records" \
+        --data-urlencode "filter=chat='$CHAT_ID' && role='assistant'" \
+        --data-urlencode "sort=-created" \
         -H "Authorization: $USER_TOKEN" \
         -H "Content-Type: application/json")
 
     local assistant_count
-    assistant_count=$(echo "$all_assistant_msgs" | jq -r '.totalCount // 0')
+    assistant_count=$(echo "$all_assistant_msgs" | jq -r '.totalItems // 0')
     [ "$assistant_count" -ge 2 ] || \
         run_diagnostic_on_failure "Agent Full Flow" "Expected at least 2 assistant messages, got $assistant_count"
 
@@ -344,10 +436,11 @@ get_assistant_text() {
 
     # Verify total message count (at least 4: 2 user + 2 assistant)
     local total_msgs
-    total_msgs=$(curl -s -X GET \
-        "$PB_URL/api/collections/messages/records?filter=chat=\"$CHAT_ID\"" \
+    total_msgs=$(curl -s -G \
+        "$PB_URL/api/collections/messages/records" \
+        --data-urlencode "filter=chat='$CHAT_ID'" \
         -H "Authorization: $USER_TOKEN" \
-        -H "Content-Type: application/json" | jq -r '.totalCount // 0')
+        -H "Content-Type: application/json" | jq -r '.totalItems // 0')
     [ "$total_msgs" -ge 4 ] || \
         run_diagnostic_on_failure "Agent Full Flow" "Expected at least 4 messages, got $total_msgs"
 

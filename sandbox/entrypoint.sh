@@ -49,14 +49,6 @@ if [ -f "/usr/local/bin/proxy_share/pocketcoder" ]; then
     chmod +x /usr/local/bin/pocketcoder
 fi
 
-# --- 🔗 POPULATE SHARED SHELL BRIDGE VOLUME ---
-echo "🔗 Populating shell_bridge shared volume..."
-cp -f /app/pocketcoder /app/shell_bridge/pocketcoder
-chmod +x /app/shell_bridge/pocketcoder
-printf '#!/bin/bash\n/app/shell_bridge/pocketcoder shell "$@"\n' > /app/shell_bridge/pocketcoder-shell
-chmod +x /app/shell_bridge/pocketcoder-shell
-echo "✅ Shell bridge binaries ready."
-
 # --- 🖥️ TMUX SETUP ---
 # Socket directory only. CAO creates the session + exec window during registration.
 # The proxy targets that window by NAME (not index) for resilience.
@@ -66,7 +58,7 @@ chmod 777 /tmp/tmux
 
 # Start the Rust axum server in the background
 echo "🚀 Starting PocketCoder axum server on port 3001..."
-/app/pocketcoder server --port 3001 &
+/usr/local/bin/pocketcoder server --port 3001 &
 
 # --- 🚀 SERVICE STARTUP ---
 
@@ -111,13 +103,23 @@ echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
 # 7. Wait for OpenCode sshd to be ready
 echo "⏳ Waiting for OpenCode sshd to be ready..."
 RETRY_COUNT=0
+MAX_RETRIES=60  # 120 seconds total
+
 while true; do
     if timeout 2 bash -c 'exec 3<>/dev/tcp/opencode/2222 && exec 3>&- && exec 3<&-' 2>/dev/null; then
         echo "✅ OpenCode sshd is ready!"
         break
     fi
     RETRY_COUNT=$((RETRY_COUNT + 1))
-    echo "⏳ OpenCode sshd not ready, retrying in 2 seconds... (attempt $RETRY_COUNT)"
+    
+    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+        echo "❌ OpenCode sshd not ready after 120s"
+        echo "   This usually means OpenCode container failed to start"
+        echo "   Check OpenCode logs: docker logs pocketcoder-opencode"
+        exit 1
+    fi
+    
+    echo "⏳ OpenCode sshd not ready, retrying in 2 seconds... (attempt $RETRY_COUNT/$MAX_RETRIES)"
     sleep 2
 done
 
@@ -125,22 +127,57 @@ done
 # CAO creates the tmux session + initial exec window + terminal DB record.
 # The proxy will resolve the window NAME from CAO and target it directly.
 echo "🔗 Registering Poco terminal with CAO..."
-while ! curl -s http://localhost:9889/health > /dev/null 2>&1; do
-    sleep 1
+
+# Wait for CAO API with timeout
+CAO_READY=false
+for i in {1..30}; do
+    if curl -s http://localhost:9889/health > /dev/null 2>&1; then
+        # Double-check with a small delay to ensure full initialization
+        sleep 1
+        CAO_READY=true
+        break
+    fi
+    echo "⏳ Waiting for CAO API (attempt $i/30)..."
+    sleep 2
 done
+
+if [ "$CAO_READY" = false ]; then
+    echo "❌ CAO API not ready after 60s"
+    echo "   Check CAO logs in sandbox container"
+    exit 1
+fi
+
+# Attempt registration with validation
 CAO_RESPONSE=$(curl -s -X POST "http://localhost:9889/sessions" \
     -G \
     --data-urlencode "provider=opencode-attach" \
     --data-urlencode "agent_profile=poco" \
     --data-urlencode "session_name=$TMUX_SESSION" \
     --data-urlencode "delegating_agent_id=poco")
+
 echo "CAO response: $CAO_RESPONSE"
+
+# Validate response contains expected fields
+if echo "$CAO_RESPONSE" | grep -q '"name"'; then
+    echo "✅ CAO registration successful"
+else
+    echo "❌ CAO registration failed!"
+    echo "   Response: $CAO_RESPONSE"
+    echo "   Check CAO API logs for details"
+    exit 1
+fi
 
 # Extract the window name CAO assigned (e.g. "poco-ab12") so the watchdog knows it
 EXEC_WINDOW=$(echo "$CAO_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('name',''))" 2>/dev/null || echo "")
 if [ -z "$EXEC_WINDOW" ]; then
     echo "⚠️ Could not extract exec window name from CAO response, falling back to tmux query"
     EXEC_WINDOW=$(tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" -F '#{window_name}' 2>/dev/null | head -1)
+    if [ -z "$EXEC_WINDOW" ]; then
+        echo "❌ No exec window found in tmux session!"
+        echo "   Tmux session may not have been created properly"
+        tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" 2>&1 || echo "   Session does not exist"
+        exit 1
+    fi
 fi
 echo "✅ Poco registered with CAO. Exec window: $EXEC_WINDOW"
 

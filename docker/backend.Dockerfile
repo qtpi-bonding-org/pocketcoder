@@ -41,6 +41,11 @@ COPY --from=pocketbase-builder /app/backend/pocketbase /app/pocketbase
 COPY backend/pb_migrations /app/pb_migrations
 COPY backend/pb_public /app/pb_public
 
+# Copy backup and restore scripts
+COPY backend/backup_db.sh /app/backup_db.sh
+COPY backend/restore_from_backup.sh /app/restore_from_backup.sh
+RUN chmod +x /app/backup_db.sh /app/restore_from_backup.sh
+
 # Copy and set entrypoint
 COPY backend/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh

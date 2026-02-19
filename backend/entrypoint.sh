@@ -21,6 +21,10 @@
 
 set -e
 
+# 0. Check for backup and archive if needed
+echo "🔍 Checking for database backup..."
+/app/restore_from_backup.sh
+
 # 1. Run Migrations
 echo "📦 Running database migrations..."
 /app/pocketbase migrate up || true
@@ -32,6 +36,18 @@ if [ -n "$POCKETBASE_SUPERUSER_EMAIL" ] && [ -n "$POCKETBASE_SUPERUSER_PASSWORD"
     echo "✅ Superuser configured."
 fi
 
-# 3. Launch PocketBase
+# 3. Start periodic backup in background (every 5 minutes)
+echo "📦 Starting automatic backup service..."
+(
+    # Wait for PocketBase to fully start
+    sleep 30
+    
+    while true; do
+        /app/backup_db.sh
+        sleep 300  # 5 minutes
+    done
+) &
+
+# 4. Launch PocketBase
 echo "🚀 Starting PocketCoder Sovereign Backend..."
 exec "$@"

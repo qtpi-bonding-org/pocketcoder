@@ -1,3 +1,15 @@
+# Use shared Rust builder
+FROM rust:1.83-alpine AS rust-builder
+RUN apk add --no-cache musl-dev gcc
+WORKDIR /build
+COPY proxy/Cargo.toml proxy/Cargo.lock* ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release
+RUN rm -rf src
+COPY proxy/src ./src
+RUN touch src/main.rs
+RUN cargo build --release
+
 FROM oven/bun:alpine
 
 # Install basic system dependencies (CURL is needed for health checks/scripts)
@@ -57,6 +69,12 @@ RUN mkdir -p /etc/ssh/sshd_config.d && \
     echo '    ForceCommand /usr/local/bin/opencode attach http://localhost:3000 --continue' >> /etc/ssh/sshd_config.d/poco.conf
 
 # 🛡️ HARD SHELL ENFORCEMENT
+# Copy the pocketcoder binary and create wrapper script at build time
+COPY --from=rust-builder /build/target/release/pocketcoder-proxy /usr/local/bin/pocketcoder
+RUN chmod +x /usr/local/bin/pocketcoder && \
+    printf '#!/bin/ash\n/usr/local/bin/pocketcoder shell "$@"\n' > /usr/local/bin/pocketcoder-shell && \
+    chmod +x /usr/local/bin/pocketcoder-shell
+
 # We use a custom entrypoint to harden the shell at runtime.
 COPY docker/opencode_entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/opencode_entrypoint.sh

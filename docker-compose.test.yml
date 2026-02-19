@@ -22,11 +22,11 @@ services:
       dockerfile: docker/test.Dockerfile
     container_name: pocketcoder-test
     depends_on:
-      pocketbase:
-        condition: service_started
+      sandbox:
+        condition: service_healthy
       opencode:
         condition: service_healthy
-      sandbox:
+      pocketbase:
         condition: service_started
     volumes:
       # Mount test files for live editing during development
