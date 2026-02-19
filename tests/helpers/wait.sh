@@ -449,25 +449,28 @@ wait_for_assistant_message() {
     local chat_id="$1"
     local timeout="${2:-60}"
     
-    echo "Waiting for assistant message in chat $chat_id (timeout: ${timeout}s)"
+    echo "Waiting for assistant message in chat $chat_id (timeout: ${timeout}s)" >&2
     
     local start_time
     start_time=$(date +%s)
     local end_time=$((start_time + timeout))
     
     while [ $(date +%s) -lt $end_time ]; do
-        # Query for assistant message in this chat
+        # Query for assistant message in this chat using proper URL encoding
         local response
-        response=$(curl -s -X GET "$PB_URL/api/collections/messages/records?filter=chat=\"$chat_id\"%20%26%26%20role=\"assistant\"&sort=created" \
+        response=$(curl -s -G \
+            "$PB_URL/api/collections/messages/records" \
+            --data-urlencode "filter=chat='$chat_id' && role='assistant'" \
+            --data-urlencode "sort=created" \
             -H "Authorization: $USER_TOKEN" \
             -H "Content-Type: application/json")
         
         local assistant_id
-        assistant_id=$(echo "$response" | jq -r '.items[0].id // empty')
+        assistant_id=$(echo "$response" | jq -r '.items[0].id // empty' 2>/dev/null)
         
         if [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ]; then
             local elapsed=$(($(date +%s) - start_time))
-            echo "  ✓ Assistant message found after ${elapsed}s: $assistant_id"
+            echo "  ✓ Assistant message found after ${elapsed}s: $assistant_id" >&2
             echo "$assistant_id"
             return 0
         fi
@@ -475,7 +478,7 @@ wait_for_assistant_message() {
         sleep 1
     done
     
-    echo "  ✗ Timeout waiting for assistant message"
+    echo "  ✗ Timeout waiting for assistant message" >&2
     echo ""
     return 1
 }
