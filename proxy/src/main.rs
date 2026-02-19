@@ -157,7 +157,7 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::Server { port } => {
             let socket_path = env::var("TMUX_SOCKET").unwrap_or_else(|_| "/tmp/tmux/pocketcoder".to_string());
-            let session_name = env::var("TMUX_SESSION").unwrap_or_else(|_| "pocketcoder_session".to_string());
+            let session_name = env::var("TMUX_SESSION").unwrap_or_else(|_| "pocketcoder".to_string());
 
             println!("🏰 [PocketCoder] Mode: SERVER (Port: {})", port);
             

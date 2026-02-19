@@ -33,7 +33,7 @@ export POLL_INTERVAL="${POLL_INTERVAL:-1}"
 
 # Tmux socket path
 export TMUX_SOCKET="${TMUX_SOCKET:-/tmp/tmux/pocketcoder}"
-export TMUX_SESSION="${TMUX_SESSION:-pocketcoder_session}"
+export TMUX_SESSION="${TMUX_SESSION:-pocketcoder}"
 
 # Shell bridge path
 export SHELL_BRIDGE_PATH="${SHELL_BRIDGE_PATH:-/shell_bridge/pocketcoder-shell}"

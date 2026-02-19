@@ -54,17 +54,17 @@ teardown() {
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "Sandbox" "Tmux session $TMUX_SESSION does not exist"
 }
 
-@test "Sandbox shell bridge binary is executable" {
+@test "Sandbox proxy binary is executable" {
     # Validates: Requirement 2.6
-    # Shell bridge is at /app/shell_bridge/pocketcoder-shell inside Sandbox
-    run docker exec pocketcoder-sandbox test -x /app/shell_bridge/pocketcoder-shell
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Sandbox" "Shell bridge binary is not executable"
+    # Proxy binary is at /usr/local/bin/pocketcoder inside Sandbox
+    run docker exec pocketcoder-sandbox test -x /usr/local/bin/pocketcoder
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Sandbox" "Proxy binary is not executable"
 }
 
-@test "Sandbox shell bridge binary exists" {
+@test "Sandbox proxy binary exists" {
     # Validates: Requirement 2.6
-    run docker exec pocketcoder-sandbox test -f /app/shell_bridge/pocketcoder-shell
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Sandbox" "Shell bridge binary does not exist"
+    run docker exec pocketcoder-sandbox test -f /usr/local/bin/pocketcoder
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Sandbox" "Proxy binary does not exist"
 }
 
 @test "Sandbox health check provides diagnostic information on failure" {

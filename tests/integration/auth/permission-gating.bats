@@ -55,7 +55,10 @@ teardown() {
     
     # Check if permission record was created
     local permissions
-    permissions=$(curl -s -X GET "$PB_URL/api/collections/permissions/records?filter=chat=\"$CHAT_ID\"&sort=-created" \
+    permissions=$(curl -s -G \
+        "$PB_URL/api/collections/permissions/records" \
+        --data-urlencode "filter=chat='$CHAT_ID'" \
+        --data-urlencode "sort=-created" \
         -H "Authorization: $USER_TOKEN" \
         -H "Content-Type: application/json")
     
@@ -94,7 +97,10 @@ teardown() {
     
     # Query for permission records
     local permissions
-    permissions=$(curl -s -X GET "$PB_URL/api/collections/permissions/records?filter=chat=\"$CHAT_ID\"&sort=-created" \
+    permissions=$(curl -s -G \
+        "$PB_URL/api/collections/permissions/records" \
+        --data-urlencode "filter=chat='$CHAT_ID'" \
+        --data-urlencode "sort=-created" \
         -H "Authorization: $USER_TOKEN" \
         -H "Content-Type: application/json")
     
@@ -146,7 +152,10 @@ teardown() {
     
     # Check for permission records
     local permissions
-    permissions=$(curl -s -X GET "$PB_URL/api/collections/permissions/records?filter=chat=\"$CHAT_ID\"&sort=-created" \
+    permissions=$(curl -s -G \
+        "$PB_URL/api/collections/permissions/records" \
+        --data-urlencode "filter=chat='$CHAT_ID'" \
+        --data-urlencode "sort=-created" \
         -H "Authorization: $USER_TOKEN" \
         -H "Content-Type: application/json")
     
@@ -209,7 +218,10 @@ teardown() {
     
     # Check for permission records
     local permissions
-    permissions=$(curl -s -X GET "$PB_URL/api/collections/permissions/records?filter=chat=\"$CHAT_ID\"&sort=-created" \
+    permissions=$(curl -s -G \
+        "$PB_URL/api/collections/permissions/records" \
+        --data-urlencode "filter=chat='$CHAT_ID'" \
+        --data-urlencode "sort=-created" \
         -H "Authorization: $USER_TOKEN" \
         -H "Content-Type: application/json")
     
@@ -260,7 +272,10 @@ teardown() {
     
     # Check for permission records
     local permissions
-    permissions=$(curl -s -X GET "$PB_URL/api/collections/permissions/records?filter=chat=\"$CHAT_ID\"&sort=-created" \
+    permissions=$(curl -s -G \
+        "$PB_URL/api/collections/permissions/records" \
+        --data-urlencode "filter=chat='$CHAT_ID'" \
+        --data-urlencode "sort=-created" \
         -H "Authorization: $USER_TOKEN" \
         -H "Content-Type: application/json")
     
