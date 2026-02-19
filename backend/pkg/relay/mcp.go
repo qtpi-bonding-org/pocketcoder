@@ -85,80 +85,40 @@ func (r *RelayService) registerMcpHooks() {
 	}
 }
 
-// renderMcpConfig queries approved MCP servers and renders the docker-mcp.yaml config file
+// renderMcpConfig queries approved MCP servers and writes docker-mcp.yaml to the
+// shared mcp_config volume. This file serves as a custom catalog for the gateway.
+//
+// The gateway starts with --catalog pointing to this file. Subagents connect to
+// the gateway SSE and use Dynamic MCP tools (mcp-find, mcp-add) to discover and
+// add servers from this catalog on-demand. The gateway spins up containers
+// automatically when a subagent calls mcp-add.
+//
+// Poco also reads this file (mounted read-only at /mcp_config) to know what
+// servers are currently approved before requesting new ones.
+//
+// Format matches docker/mcp-gateway catalog expectations:
+//
+//   registry:
+//     <name>:
+//       title: <Name>
+//       description: Approved by user for PocketCoder
+//       type: server
+//       image: mcp/<name>
 func (r *RelayService) renderMcpConfig() error {
 	// Query all approved MCP servers
 	records, err := r.app.FindRecordsByFilter(
 		"mcp_servers",
 		"status = 'approved'",
-		"-created",
+		"",
 		0, 0,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to query approved MCP servers: %w", err)
 	}
 
-	// Build the catalog structure
-	type MCPServer struct {
-		ID          string `json:"id"`
-		Image       string `json:"image"`
-		Description string `json:"description,omitempty"`
-	}
-
-	type MCPCatalog struct {
-		Name    string      `json:"name"`
-		Servers []MCPServer `json:"servers"`
-	}
-
-	catalog := MCPCatalog{
-		Name:    "pocketcoder-catalog",
-		Servers: make([]MCPServer, 0, len(records)),
-	}
-
+	serverNames := make([]string, 0, len(records))
 	for _, record := range records {
-		serverName := record.GetString("name")
-		// Default image to docker/mcp-<name>:latest
-		image := fmt.Sprintf("docker/mcp-%s:latest", serverName)
-
-		// Check for custom config that might override the image
-		configRaw := record.Get("config")
-		if configRaw != nil {
-			var config map[string]interface{}
-			if jsonBytes, ok := configRaw.([]byte); ok {
-				json.Unmarshal(jsonBytes, &config)
-			} else if configMap, ok := configRaw.(map[string]interface{}); ok {
-				config = configMap
-			}
-			if config != nil {
-				if customImage, ok := config["image"].(string); ok && customImage != "" {
-					image = customImage
-				}
-			}
-		}
-
-		server := MCPServer{
-			ID:    serverName,
-			Image: image,
-		}
-
-		// Add description if available from reason field
-		if reason := record.GetString("reason"); reason != "" {
-			server.Description = reason
-		}
-
-		catalog.Servers = append(catalog.Servers, server)
-	}
-
-	// Marshal to YAML-like structure (manual YAML for simplicity)
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("name: %s\n", catalog.Name))
-	sb.WriteString("servers:\n")
-	for _, server := range catalog.Servers {
-		sb.WriteString(fmt.Sprintf("  - id: %s\n", server.ID))
-		sb.WriteString(fmt.Sprintf("    image: %s\n", server.Image))
-		if server.Description != "" {
-			sb.WriteString(fmt.Sprintf("    description: %s\n", server.Description))
-		}
+		serverNames = append(serverNames, record.GetString("name"))
 	}
 
 	// Ensure directory exists
@@ -170,12 +130,33 @@ func (r *RelayService) renderMcpConfig() error {
 		}
 	}
 
-	// Write the config file
-	if err := os.WriteFile(mcpConfigPath, []byte(sb.String()), 0644); err != nil {
-		return fmt.Errorf("failed to write MCP config to %s: %w", mcpConfigPath, err)
+	// Build docker-mcp.yaml as a gateway catalog
+	// Format must match the flat registry schema verified in test-mcp-install sandbox.
+	// Key details:
+	//   - Top-level name/displayName required for catalog identity
+	//   - longLived: false (CamelCase) ensures ephemeral containers (die after each tool result)
+	//   - type: server is required for standard MCP server entries
+	var catalog strings.Builder
+	catalog.WriteString("# PocketCoder MCP Catalog (auto-generated)\n")
+	catalog.WriteString(fmt.Sprintf("# Last rendered: %s\n", time.Now().UTC().Format(time.RFC3339)))
+	catalog.WriteString(fmt.Sprintf("# Approved servers: %d\n", len(serverNames)))
+	catalog.WriteString("name: docker-mcp\n")
+	catalog.WriteString("displayName: PocketCoder Dynamic Catalog\n")
+	catalog.WriteString("registry:\n")
+	for _, name := range serverNames {
+		catalog.WriteString(fmt.Sprintf("  %s:\n", name))
+		catalog.WriteString(fmt.Sprintf("    title: %s\n", name))
+		catalog.WriteString("    description: Approved by user for PocketCoder\n")
+		catalog.WriteString("    type: server\n")
+		catalog.WriteString(fmt.Sprintf("    image: mcp/%s\n", name))
+		catalog.WriteString("    longLived: false\n")
 	}
 
-	log.Printf("✅ [Relay/MCP] Rendered MCP config with %d approved servers to %s", len(catalog.Servers), mcpConfigPath)
+	if err := os.WriteFile(mcpConfigPath, []byte(catalog.String()), 0644); err != nil {
+		return fmt.Errorf("failed to write catalog to %s: %w", mcpConfigPath, err)
+	}
+
+	log.Printf("✅ [Relay/MCP] Rendered MCP catalog with %d approved servers to %s", len(serverNames), mcpConfigPath)
 	return nil
 }
 

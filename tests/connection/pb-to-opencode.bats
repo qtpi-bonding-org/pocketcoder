@@ -77,12 +77,12 @@ teardown() {
     
     [ -n "$MESSAGE_ID" ] && [ "$MESSAGE_ID" != "null" ] || run_diagnostic_on_failure "PB→OpenCode" "Failed to create message record"
     
-    # Verify message was created with pending status
+    # Verify message was created with valid status (relay may process fast)
     local retrieved
     retrieved=$(pb_get "messages" "$MESSAGE_ID")
     local status
     status=$(echo "$retrieved" | jq -r '.user_message_status')
-    [ "$status" = "pending" ] || run_diagnostic_on_failure "PB→OpenCode" "Message created with unexpected status: $status"
+    [[ "$status" =~ ^(pending|sending|delivered)$ ]] || run_diagnostic_on_failure "PB→OpenCode" "Message created with unexpected status: $status"
 }
 
 @test "PB→OpenCode: Relay calls ensureSession() via POST /session" {
@@ -194,10 +194,15 @@ teardown() {
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
     
-    # Verify initial status is pending
-    local initial_status
-    initial_status=$(get_message_status "$MESSAGE_ID")
-    [ "$initial_status" = "pending" ] || run_diagnostic_on_failure "PB→OpenCode" "Initial status is not 'pending': $initial_status"
+    # Verify initial status (relay may process fast, so accept pending/sending/delivered)
+    # Use helper function to check if relay has already processed it
+    if message_has_relay_progress "$MESSAGE_ID"; then
+        echo "✓ Message already delivered (relay processed very fast)"
+    else
+        local initial_status
+        initial_status=$(get_message_status "$MESSAGE_ID")
+        [[ "$initial_status" =~ ^(pending|sending|delivered)$ ]] || run_diagnostic_on_failure "PB→OpenCode" "Initial status is unexpected: $initial_status"
+    fi
     
     # Wait for status to transition to sending (Relay processing)
     run wait_for_message_status "$MESSAGE_ID" "sending" 60
@@ -290,28 +295,4 @@ teardown() {
     local chat_gone
     chat_gone=$(echo "$chat_after" | jq -r '.id // empty')
     [ -z "$chat_gone" ] || run_diagnostic_on_failure "PB→OpenCode" "Chat still exists after cleanup"
-}
-
-# Helper function to get chat's session ID
-get_chat_session_id() {
-    local chat_id="$1"
-    local response
-    response=$(pb_get "chats" "$chat_id")
-    echo "$response" | jq -r '.ai_engine_session_id // empty'
-}
-
-# Helper function to get message status
-get_message_status() {
-    local message_id="$1"
-    local response
-    response=$(pb_get "messages" "$message_id")
-    echo "$response" | jq -r '.user_message_status // empty'
-}
-
-# Helper function to get chat turn
-get_chat_turn() {
-    local chat_id="$1"
-    local response
-    response=$(pb_get "chats" "$chat_id")
-    echo "$response" | jq -r '.turn // empty'
 }

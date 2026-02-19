@@ -104,31 +104,64 @@ get_container_logs() {
     local lines="${2:-50}"
     
     echo "Container logs (last $lines lines):"
-    if docker logs --tail "$lines" "$container" 2>&1 | tail -20; then
-        echo "  [No logs available or container not found]"
+    
+    # Try to get logs, but don't fail if container doesn't exist
+    if docker logs --tail "$lines" "$container" 2>&1; then
+        :  # Success, logs printed
+    else
+        # If docker logs fails, try to get any available info
+        echo "  [Could not retrieve logs from $container]"
+        echo "  Attempting to list all containers:"
+        docker ps -a --format "table {{.Names}}\t{{.Status}}" 2>/dev/null | head -10
     fi
 }
 
 # Get network state
 get_network_state() {
     echo "Network configuration:"
+    
+    # Check pocketcoder-memory network
     echo "  pocketcoder-memory network:"
-    docker network inspect pocketcoder-memory 2>/dev/null | grep -A5 "Containers" || echo "    [Network not found]"
+    if docker network inspect pocketcoder-memory 2>/dev/null | grep -A5 "Containers" > /dev/null; then
+        docker network inspect pocketcoder-memory 2>/dev/null | grep -A5 "Containers" | head -10
+    else
+        echo "    [Network not found or no containers connected]"
+        # Try to list all networks
+        echo "    Available networks:"
+        docker network ls --filter "name=pocketcoder" --format "table {{.Name}}\t{{.Driver}}" 2>/dev/null || echo "    [Could not list networks]"
+    fi
+    
     echo ""
     echo "  pocketcoder-control network:"
-    docker network inspect pocketcoder-control 2>/dev/null | grep -A5 "Containers" || echo "    [Network not found]"
+    if docker network inspect pocketcoder-control 2>/dev/null | grep -A5 "Containers" > /dev/null; then
+        docker network inspect pocketcoder-control 2>/dev/null | grep -A5 "Containers" | head -10
+    else
+        echo "    [Network not found or no containers connected]"
+    fi
 }
 
 # Get container status
 get_container_status() {
     local container="$1"
     echo "Container status for $container:"
-    docker inspect --format='  Status: {{.State.Status}}
+    
+    # First try docker inspect
+    if docker inspect "$container" > /dev/null 2>&1; then
+        docker inspect --format='  Status: {{.State.Status}}
   Running: {{.State.Running}}
   ExitCode: {{.State.ExitCode}}
   Health: {{.State.Health.Status}}
   StartedAt: {{.State.StartedAt}}
-  FinishedAt: {{.State.FinishedAt}}' "$container" 2>/dev/null || echo "  [Container not found]"
+  FinishedAt: {{.State.FinishedAt}}' "$container" 2>/dev/null
+    else
+        # Fallback to docker ps if inspect fails
+        echo "  [Container inspect failed, checking docker ps...]"
+        if docker ps -a --filter "name=$container" --format "table {{.Names}}\t{{.Status}}\t{{.State}}" 2>/dev/null | grep -q "$container"; then
+            docker ps -a --filter "name=$container" --format "  Name: {{.Names}}\n  Status: {{.Status}}\n  State: {{.State}}"
+        else
+            echo "  [Container not found in docker ps either]"
+        fi
+    fi
 }
 
 # Print service-specific error message
@@ -153,48 +186,29 @@ run_diagnostic() {
         return
     fi
     
-    diagnostic_header "$service"
-    
-    echo "Test: $test_name"
-    echo "Error: $error_msg"
+    # Minimal output - just test name and error
     echo ""
-    
-    # Get container status
-    local container_name=""
-    case "$service" in
-        "PocketBase") container_name="pocketcoder-pocketbase" ;;
-        "OpenCode") container_name="pocketcoder-opencode" ;;
-        "Sandbox") container_name="pocketcoder-sandbox" ;;
-    esac
-    
-    if [ -n "$container_name" ]; then
-        echo "Container Status:"
-        get_container_status "$container_name"
-        echo ""
-        
-        echo "Container Logs:"
-        get_container_logs "$container_name" 30
-        echo ""
-    fi
-    
-    echo "Network State:"
-    get_network_state
-    echo ""
-    
-    print_troubleshooting_hints "$service"
-    
-    diagnostic_footer
+    echo "❌ $test_name"
+    echo "   Error: $error_msg"
 }
 
 # BATS helper for diagnostic on failure
-# Usage: run_diagnostic_on_failure "PocketBase" "Health check failed"
+# Usage: [ "$x" = "y" ] || run_diagnostic_on_failure "PocketBase" "Health check failed"
+#
+# IMPORTANT: This function ALWAYS prints diagnostics and returns 1 (fails the test).
+# The old implementation checked $status (the BATS `run` variable), which meant
+# assertions like `[ "$x" = "y" ] || run_diagnostic_on_failure ...` would silently
+# pass because $status referred to the last `run` command, not the `[` test.
+#
+# Now: if you call this function, the test fails. Period.
 run_diagnostic_on_failure() {
     local service="$1"
     local error_msg="$2"
-    
-    if [ "$status" -ne 0 ]; then
-        run_diagnostic "$service" "$BATS_TEST_NAME" "$error_msg"
-    fi
+
+    run_diagnostic "$service" "${BATS_TEST_NAME:-unknown}" "$error_msg"
+
+    # Always fail — this function is only called from the || branch of a failed assertion
+    return 1
 }
 
 # Check endpoint with diagnostic

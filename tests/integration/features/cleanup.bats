@@ -9,12 +9,12 @@
 # 2. Verify cleanup functions work correctly
 # 3. Test cleanup on failure scenarios
 
-load '../helpers/auth.sh'
-load '../helpers/cleanup.sh'
-load '../helpers/wait.sh'
-load '../helpers/assertions.sh'
-load '../helpers/diagnostics.sh'
-load '../helpers/tracking.sh'
+load '../../helpers/auth.sh'
+load '../../helpers/cleanup.sh'
+load '../../helpers/wait.sh'
+load '../../helpers/assertions.sh'
+load '../../helpers/diagnostics.sh'
+load '../../helpers/tracking.sh'
 
 setup() {
     load_env

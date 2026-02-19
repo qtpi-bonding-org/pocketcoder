@@ -20,12 +20,12 @@
 # 13. syncAssistantMessage() creates assistant message record
 # 14. Chat updated with last_active, preview
 
-load '../helpers/auth.sh'
-load '../helpers/cleanup.sh'
-load '../helpers/wait.sh'
-load '../helpers/assertions.sh'
-load '../helpers/diagnostics.sh'
-load '../helpers/tracking.sh'
+load '../../helpers/auth.sh'
+load '../../helpers/cleanup.sh'
+load '../../helpers/wait.sh'
+load '../../helpers/assertions.sh'
+load '../../helpers/diagnostics.sh'
+load '../../helpers/tracking.sh'
 
 setup() {
     load_env
@@ -50,9 +50,9 @@ teardown() {
 @test "Full Flow: User authenticates with PocketBase" {
     # Validates: Requirement 8.1 - User authentication step
     
-    # Authenticate as regular user
-    run authenticate_user
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Full Flow" "User authentication failed"
+    # Authenticate as regular user (don't use 'run' - we need the exported vars)
+    authenticate_user
+    [ "$?" -eq 0 ] || run_diagnostic_on_failure "Full Flow" "User authentication failed"
     
     # Verify USER_TOKEN and USER_ID are set
     [ -n "$USER_TOKEN" ] || run_diagnostic_on_failure "Full Flow" "USER_TOKEN not set after authentication"
@@ -114,9 +114,9 @@ teardown() {
     
     local status
     status=$(echo "$msg_record" | jq -r '.user_message_status')
-    [ "$status" = "pending" ] || run_diagnostic_on_failure "Full Flow" "Message status is not 'pending': $status"
+    [[ "$status" =~ ^(pending|sending|delivered)$ ]] || run_diagnostic_on_failure "Full Flow" "Message status is unexpected: $status"
     
-    echo "✓ User message created: $USER_MESSAGE_ID (status: pending)"
+    echo "✓ User message created: $USER_MESSAGE_ID (status: $status)"
 }
 
 @test "Full Flow: Relay intercepts via OnRecordAfterCreateSuccess hook" {
@@ -126,7 +126,7 @@ teardown() {
     
     # Create chat and message
     local chat_data
-    chat_data=$(pb_create "chats" "{\"title\": \"Relay Hook Test $TEST_ID\", \"user\": \"USER_ID\"}")
+    chat_data=$(pb_create "chats" "{\"title\": \"Relay Hook Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
     
@@ -136,10 +136,15 @@ teardown() {
     track_artifact "messages:$USER_MESSAGE_ID"
     
     # Wait for message status to change from pending (indicates Relay hook fired)
-    run wait_for_message_status "$USER_MESSAGE_ID" "sending" 15
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Full Flow" "Relay hook did not fire (status still pending after 15s)"
-    
-    echo "✓ Relay hook intercepted message (status changed to sending)"
+    # If already sending/delivered, the relay was very fast
+    # Use helper function to check if relay has already processed it
+    if message_has_relay_progress "$USER_MESSAGE_ID"; then
+        echo "✓ Relay hook already processed message"
+    else
+        run wait_for_message_status "$USER_MESSAGE_ID" "sending" 15
+        [ "$status" -eq 0 ] || run_diagnostic_on_failure "Full Flow" "Relay hook did not fire (status still pending after 15s)"
+        echo "✓ Relay hook intercepted message (status changed to sending)"
+    fi
 }
 
 @test "Full Flow: Relay calls ensureSession() → POST /session" {
@@ -257,8 +262,8 @@ teardown() {
     
     [ -n "$ASSISTANT_MESSAGE_ID" ] && [ "$ASSISTANT_MESSAGE_ID" != "null" ] || run_diagnostic_on_failure "Full Flow" "Command execution failed (no assistant response)"
     
-    # Verify shell bridge binary exists and is executable
-    run docker exec pocketcoder-sandbox test -x /shell_bridge/pocketcoder-shell
+    # Verify shell bridge binary exists and is executable (correct path in sandbox)
+    run docker exec pocketcoder-sandbox test -x /app/shell_bridge/pocketcoder-shell
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "Full Flow" "Shell bridge binary not found or not executable"
     
     echo "✓ Command executed via shell bridge"

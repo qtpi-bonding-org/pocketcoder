@@ -57,3 +57,6 @@ CODEBASE.md
 *.txt
 *.tmp
 .ssh_keys
+
+# Test run logs
+tests/logs/

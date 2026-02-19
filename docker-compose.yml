@@ -87,6 +87,8 @@ services:
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
       - SSH_KEYS_FILE=/ssh_keys/authorized_keys
+      - MCP_HOST=http://mcp-gateway:8811/sse
+      - DOCKER_MCP_IN_CONTAINER=1
     networks:
       - pocketcoder-control
       - pocketcoder-mcp
@@ -102,6 +104,7 @@ services:
       - mcp_config:/root/.docker/mcp
     environment:
       - DOCKER_MCP_IN_CONTAINER=1
+    command: ["--port", "8811", "--transport", "sse", "--verbose", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--enable-all-servers"]
     networks:
       - pocketcoder-mcp
     restart: unless-stopped
