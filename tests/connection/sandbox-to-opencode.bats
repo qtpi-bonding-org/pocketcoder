@@ -17,15 +17,25 @@ load '../helpers/wait.sh'
 load '../helpers/assertions.sh'
 load '../helpers/diagnostics.sh'
 load '../helpers/tracking.sh'
+load '../helpers/cao.sh'
 
 setup() {
     load_env
     TEST_ID=$(generate_test_id)
     export CURRENT_TEST_ID="$TEST_ID"
+    
+    # Create a test session in CAO for exec tests
+    export TEST_SESSION_ID="test_session_${TEST_ID}"
+    export TEST_TERMINAL_ID=$(create_test_terminal "$TEST_SESSION_ID" "pocketcoder" "poco" "/workspace")
+    
+    if [ -z "$TEST_TERMINAL_ID" ]; then
+        skip "Failed to create test terminal in CAO"
+    fi
 }
 
 teardown() {
     cleanup_test_data "$TEST_ID" || true
+    delete_test_terminal "$TEST_TERMINAL_ID" || true
 }
 
 @test "Sandbox→OpenCode: /exec returns output synchronously" {
@@ -41,7 +51,7 @@ teardown() {
     local response
     response=$(timeout 30 curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "echo sync_response", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"echo sync_response\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     local end_time
     end_time=$(date +%s%N)
@@ -67,7 +77,7 @@ teardown() {
     local response
     response=$(timeout 30 curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "echo hello_world", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"echo hello_world\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify response is valid JSON
     echo "$response" | jq -e . > /dev/null
@@ -97,7 +107,7 @@ teardown() {
     local response
     response=$(timeout 30 curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "exit 1", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"exit 1\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify response is valid JSON
     echo "$response" | jq -e . > /dev/null
@@ -132,7 +142,7 @@ teardown() {
         local response
         response=$(timeout 30 curl -s -X POST "$exec_url" \
             -H "Content-Type: application/json" \
-            -d "{\"cmd\": \"echo round_trip_$i\", \"cwd\": \"/workspace\", \"session_id\": \"poco\"}" 2>/dev/null)
+            -d "{\"cmd\": \"echo round_trip_$i\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
         
         # Verify each response
         local exit_code
@@ -160,7 +170,7 @@ teardown() {
     local response
     response=$(timeout 30 curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "false", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"false\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     local exit_code
     exit_code=$(echo "$response" | jq -r '.exit_code // empty')
@@ -179,7 +189,7 @@ teardown() {
     local response
     response=$(timeout 30 curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "printf \"line1\\nline2\\nline3\\n\"", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"printf \\\"line1\\\\nline2\\\\nline3\\\\n\\\"\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify stdout contains all lines
     local stdout
@@ -202,7 +212,7 @@ teardown() {
     local response
     response=$(timeout 30 curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "true", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"true\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify response is valid
     local exit_code
@@ -225,7 +235,7 @@ teardown() {
     local response
     response=$(timeout 30 curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "sleep 1 && echo done", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"sleep 1 && echo done\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify command completed
     local exit_code

@@ -213,6 +213,9 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 		log.Printf("📥 [Relay/Go] Syncing parts for %s: %v", ocMsgID, normalizedParts)
 		record.Set("parts", normalizedParts)
 	}
+	
+	// Extract preview from normalized parts (before saving to avoid DB read race condition)
+	preview := extractPreviewFromParts(normalizedParts)
 
 	if err := r.app.Save(record); err != nil {
 		log.Printf("❌ [Relay/Go] Failed to sync message %s: %v", ocMsgID, err)
@@ -232,32 +235,6 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	now = time.Now().Format("2006-01-02 15:04:05.000Z")
 	chat.Set("last_active", now)
 	chat.Set("updated", now)
-
-	// Extract preview from message parts
-	var messageParts []interface{}
-	partsRaw := record.Get("parts")
-	if partsRaw != nil {
-		if jsonRaw, ok := partsRaw.(types.JSONRaw); ok {
-			err := json.Unmarshal(jsonRaw, &messageParts)
-			if err != nil {
-				log.Printf("⚠️ [Relay/Go] Failed to unmarshal message parts in syncAssistantMessage: %v", err)
-			}
-		} else if p, ok := partsRaw.([]interface{}); ok {
-			messageParts = p
-		}
-	}
-	preview := ""
-	for _, part := range messageParts {
-		if partMap, ok := part.(map[string]interface{}); ok {
-			if text, textOk := partMap["text"].(string); textOk {
-				preview = text
-				break
-			}
-		}
-	}
-	if len(preview) > 50 {
-		preview = preview[:50] + "..."
-	}
 	chat.Set("preview", preview)
 
 	if err := r.app.Save(chat); err != nil {
@@ -449,4 +426,22 @@ func (r *RelayService) registerSubagentInDB(chatID, subagentID, terminalID strin
 		log.Printf("✅ [Relay] Persisted Subagent Lineage: subagent=%s, delegating_agent=%s, window=%d, chat=%s, profile=%s",
 			subagentID, delegatingAgentID, tmuxWindowID, chatID, agentProfile)
 	}
+}
+
+// extractPreviewFromParts extracts a preview text from message parts.
+// It finds the first text part and truncates it to 50 characters if needed.
+func extractPreviewFromParts(parts []interface{}) string {
+	preview := ""
+	for _, part := range parts {
+		if partMap, ok := part.(map[string]interface{}); ok {
+			if text, textOk := partMap["text"].(string); textOk {
+				preview = text
+				break
+			}
+		}
+	}
+	if len(preview) > 50 {
+		preview = preview[:50] + "..."
+	}
+	return preview
 }

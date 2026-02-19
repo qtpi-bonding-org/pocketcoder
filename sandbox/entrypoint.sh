@@ -23,7 +23,7 @@ echo "🏗️  [PocketCoder] Initializing Hardened Sandbox..."
 
 # --- Constants ---
 TMUX_SOCKET="/tmp/tmux/pocketcoder"
-TMUX_SESSION="pocketcoder_session"
+TMUX_SESSION="pocketcoder"
 POCO_WINDOW="poco"    # The Poco TUI window (SSH bridge to OpenCode)
 
 # --- 🧹 CLEANUP RITUAL (Ensuring Statelessness) ---
@@ -153,7 +153,7 @@ CAO_RESPONSE=$(curl -s -X POST "http://localhost:9889/sessions" \
     --data-urlencode "provider=opencode-attach" \
     --data-urlencode "agent_profile=poco" \
     --data-urlencode "session_name=$TMUX_SESSION" \
-    --data-urlencode "delegating_agent_id=poco")
+    --data-urlencode "delegating_agent_id=pocketcoder")
 
 echo "CAO response: $CAO_RESPONSE"
 

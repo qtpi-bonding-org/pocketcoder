@@ -83,13 +83,13 @@ get_assistant_text() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Run this command and show me the output: echo $unique_string\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Execute this bash command and include the complete output in your response: echo $unique_string\n\nIMPORTANT: Show me the actual output text that the command produces, not just a summary.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
     echo "✓ Created user message: $USER_MESSAGE_ID" >&2
-    echo "  Message text: 'Run this command and show me the output: echo $unique_string'" >&2
+    echo "  Message text: 'Execute this bash command and include the complete output in your response: echo $unique_string'" >&2
 
     # Wait for message delivery (relay → OpenCode)
     echo "⏳ Waiting for message delivery..." >&2
@@ -210,7 +210,7 @@ get_assistant_text() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Run these two commands and show me the output of both: first run 'echo $file_content > $filename' then run 'cat $filename'\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Execute these two bash commands in sequence:\n\n1. echo $file_content > $filename\n2. cat $filename\n\nIMPORTANT: Show me the complete output from the 'cat' command. The output should contain the exact text: $file_content\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -302,7 +302,7 @@ get_assistant_text() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"What is 2 + 2?\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Calculate 2 + 2 and tell me the answer. Your response must include the number 4.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -330,11 +330,15 @@ get_assistant_text() {
     [ -n "$last_active" ] && [ "$last_active" != "null" ] || \
         run_diagnostic_on_failure "Agent Full Flow" "last_active not updated"
 
-    # preview is populated
+    # preview is populated (wait for it to handle race condition)
+    run wait_for_field_populated "chats" "$CHAT_ID" "preview" 5
+    [ "$status" -eq 0 ] || \
+        run_diagnostic_on_failure "Agent Full Flow" "preview not updated after waiting"
+    
+    # Fetch the preview value for display
+    chat_record=$(pb_get "chats" "$CHAT_ID")
     local preview
     preview=$(echo "$chat_record" | jq -r '.preview // empty')
-    [ -n "$preview" ] && [ "$preview" != "null" ] || \
-        run_diagnostic_on_failure "Agent Full Flow" "preview not updated"
 
     # Verify the response actually mentions "4" (Poco answered the question)
     local response_text
@@ -367,7 +371,7 @@ get_assistant_text() {
     msg1_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Remember this number: 42\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Please remember this specific number for our conversation: 42. Acknowledge that you will remember it.\"}],
         \"user_message_status\": \"pending\"
     }")
     local msg1_id
@@ -393,7 +397,7 @@ get_assistant_text() {
     msg2_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"What was the number I asked you to remember?\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"What was the specific number I asked you to remember in my previous message? Your response must include the number.\"}],
         \"user_message_status\": \"pending\"
     }")
     local msg2_id
@@ -452,16 +456,16 @@ get_assistant_text() {
 # Test: Poco delegates to subagent and returns result (git hash)
 # =============================================================================
 
-@test "Agent Full Flow: Poco delegates to subagent and returns git hash of PocketCoder" {
-    # Ask Poco to delegate to a subagent to get the git commit hash of the
-    # PocketCoder repo. This exercises the full CAO handoff pipeline:
+@test "Agent Full Flow: Poco delegates to subagent and returns SHA256 hash" {
+    # Ask Poco to delegate to a subagent to compute a SHA256 hash.
+    # This exercises the full CAO handoff pipeline:
     # 1. Poco receives the request
     # 2. Poco delegates to a subagent via CAO (cao_handoff)
     # 3. Subagent runs in sandbox tmux window
-    # 4. Subagent executes `git rev-parse HEAD` in the PocketCoder repo
+    # 4. Subagent executes `echo -n pocketcoder | sha256sum`
     # 5. HandoffResult returned to Poco
     # 6. Poco synthesizes and responds with the hash
-    # 7. We verify the response contains a valid 40-char hex git hash
+    # 7. We verify the response contains a valid 64-char hex SHA256 hash
 
     authenticate_user
 
@@ -470,12 +474,12 @@ get_assistant_text() {
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
 
-    # Ask Poco to delegate to a subagent for the git hash
+    # Ask Poco to delegate to a subagent for a simple hash
     local msg_data
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Delegate to a subagent to get the current git commit hash of the PocketCoder repository. Run 'git rev-parse HEAD' in the repo and return the full 40-character hash.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Use the cao_handoff tool to delegate this task to a subagent with agent_profile='developer':\n\nTask: Compute the SHA256 hash of the string 'pocketcoder' by running: echo -n pocketcoder | sha256sum\n\nAfter the subagent completes, include the full 64-character hash in your response.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -498,13 +502,13 @@ get_assistant_text() {
     [ -n "$response_text" ] || \
         run_diagnostic_on_failure "Agent Full Flow" "Empty response from Poco"
 
-    # Verify the response contains a valid 40-character hex git hash
-    echo "$response_text" | grep -qiE '[0-9a-f]{40}' || \
-        run_diagnostic_on_failure "Agent Full Flow" "Response does not contain a valid 40-char git hash"
+    # Verify the response contains a valid 64-character hex SHA256 hash
+    echo "$response_text" | grep -qiE '[0-9a-f]{64}' || \
+        run_diagnostic_on_failure "Agent Full Flow" "Response does not contain a valid 64-char SHA256 hash"
 
     # Extract the hash for display
-    local git_hash
-    git_hash=$(echo "$response_text" | grep -oE '[0-9a-f]{40}' | head -1)
+    local sha_hash
+    sha_hash=$(echo "$response_text" | grep -oE '[0-9a-f]{64}' | head -1)
 
     # Verify a subagent was spawned (CAO handoff happened)
     local subagent_records
@@ -514,7 +518,7 @@ get_assistant_text() {
         -H "Content-Type: application/json" 2>/dev/null)
 
     local subagent_count
-    subagent_count=$(echo "$subagent_records" | jq -r '.totalCount // 0' 2>/dev/null)
+    subagent_count=$(echo "$subagent_records" | jq -r '.totalItems // 0' 2>/dev/null)
 
     if [ "$subagent_count" -gt 0 ]; then
         local subagent_id
@@ -525,7 +529,7 @@ get_assistant_text() {
         echo "ℹ No subagent record found (Poco may have executed directly)"
     fi
 
-    echo "✓ Poco returned git hash via subagent delegation"
-    echo "  Git hash: $git_hash"
+    echo "✓ Poco returned SHA256 hash via subagent delegation"
+    echo "  SHA256 hash: $sha_hash"
 }
 

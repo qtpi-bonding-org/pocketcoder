@@ -214,7 +214,7 @@ wait_for_container_health() {
 
 # Wait for tmux session to exist
 # Args: session_name [timeout]
-# Usage: wait_for_tmux_session "pocketcoder_session" 10
+# Usage: wait_for_tmux_session "pocketcoder" 10
 # Returns: 0 on success, 1 on timeout
 wait_for_tmux_session() {
     local session="$1"
@@ -539,17 +539,21 @@ wait_for_assistant_message() {
                 last_turn_logged=true
             fi
             
-            if [ "$turn" = "user" ]; then
-                # Chat turn is back to user, assistant must be done
-                # Check if message has content
+            # If status is 'processing' but message has text content, consider it complete
+            # This handles race condition where parts are synced but status isn't updated yet
+            if [ "$status" = "processing" ]; then
                 local has_text
                 has_text=$(echo "$msg_response" | jq -r '.parts[]? | select(.type == "text") | .text // empty' 2>/dev/null)
-                if [ -n "$has_text" ]; then
+                if [ -n "$has_text" ] && [ "$turn" = "user" ]; then
                     local elapsed=$(($(date +%s) - start_time))
-                    echo "  ✓ Assistant message completed (turn=user, has content) after ${elapsed}s" >&2
+                    echo "  ✓ Assistant message completed (has content, turn=user) after ${elapsed}s" >&2
                     echo "$assistant_id"
                     return 0
-                else
+                elif [ -n "$has_text" ]; then
+                    # Has text but turn is still assistant - wait a bit more
+                    echo "  ℹ Message has text content but turn is still '$turn'" >&2
+                elif [ "$turn" = "user" ]; then
+                    # Turn is user but no text yet - race condition
                     echo "  ℹ Turn is 'user' but message has no text content yet" >&2
                 fi
             fi
