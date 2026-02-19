@@ -4,13 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../app/bootstrap.dart';
 import '../../application/ai/ai_config_cubit.dart';
 import '../../application/ai/ai_config_state.dart';
-import '../../design_system/primitives/app_fonts.dart';
-import '../../design_system/primitives/app_palette.dart';
-import '../../design_system/primitives/app_sizes.dart';
-import '../../design_system/primitives/spacers.dart';
+import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
-import 'settings_screen.dart'; // For BiosFrame
+import '../core/widgets/terminal_dialog.dart';
+import '../core/widgets/bios_frame.dart';
 
 class AgentManagementScreen extends StatelessWidget {
   const AgentManagementScreen({super.key});
@@ -29,52 +27,29 @@ class AgentManagementView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+
     return Scaffold(
-      backgroundColor: AppPalette.primary.backgroundPrimary,
+      backgroundColor: colors.surface,
       body: ScanlineWidget(
         child: SafeArea(
           child: BlocBuilder<AiConfigCubit, AiConfigState>(
             builder: (context, state) {
-              if (state.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              return Center(
-                child: BiosFrame(
-                  title: 'AI REGISTRY MANAGER',
-                  child: SizedBox(
-                    width: 600,
-                    height: 500,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'REGISTRY ACTIVE - Personas Found: ${state.agents.length}',
-                          style: TextStyle(
-                            fontFamily: AppFonts.bodyFamily,
-                            color: AppPalette.primary.textPrimary,
-                            fontSize: AppSizes.fontMini,
-                          ),
-                        ),
-                        VSpace.x2,
-                        Expanded(
-                          child: ListView.builder(
-                            itemCount: state.agents.length,
-                            itemBuilder: (context, index) {
-                              final agent = state.agents[index];
-                              return _AgentListTile(
-                                agent: agent,
-                                onTap: () =>
-                                    _showEditAgentDialog(context, agent, state),
-                              );
-                            },
-                          ),
-                        ),
-                        VSpace.x2,
-                        _buildFooterAction(context),
-                      ],
+              return Padding(
+                padding: EdgeInsets.all(AppSizes.space * 2),
+                child: Column(
+                  children: [
+                    _buildHeader(context),
+                    VSpace.x2,
+                    Expanded(
+                      child: BiosFrame(
+                        title: 'MODELS & PERSONAS',
+                        child: state.isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _buildAgentList(context, state),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               );
             },
@@ -84,36 +59,80 @@ class AgentManagementView extends StatelessWidget {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'ESC',
-            label: 'BACK',
-            onTap: () => context.pop(),
-          ),
-          TerminalAction(
             keyLabel: 'F2',
             label: 'ADD NEW',
             onTap: () {
-              // TODO: Implementation for adding agents
+              // TODO: Implement add
             },
+          ),
+          TerminalAction(
+            keyLabel: 'ESC',
+            label: 'BACK',
+            onTap: () => context.pop(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFooterAction(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(AppSizes.space),
-      color: AppPalette.primary.textPrimary.withValues(alpha: 0.1),
-      child: Text(
-        'TAP AGENT TO EDIT IDENTITY',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontFamily: AppFonts.bodyFamily,
-          color: AppPalette.primary.textPrimary,
-          fontSize: AppSizes.fontMini,
-          fontWeight: AppFonts.heavy,
+  Widget _buildHeader(BuildContext context) {
+    final colors = context.colorScheme;
+    return Column(
+      children: [
+        Text(
+          'AI REGISTRY MANAGER',
+          style: TextStyle(
+            fontFamily: AppFonts.headerFamily,
+            color: colors.onSurface,
+            fontSize: AppSizes.fontBig,
+            fontWeight: AppFonts.heavy,
+            letterSpacing: 2,
+          ),
         ),
-      ),
+        VSpace.x1,
+        Container(
+          height: AppSizes.borderWidth,
+          color: colors.onSurface.withValues(alpha: 0.3),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAgentList(BuildContext context, AiConfigState state) {
+    final colors = context.colorScheme;
+    if (state.agents.isEmpty) {
+      return Center(
+        child: Text(
+          'REGISTRY EMPTY.',
+          style: TextStyle(color: colors.onSurface.withValues(alpha: 0.5)),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemCount: state.agents.length,
+            itemBuilder: (context, index) {
+              final agent = state.agents[index];
+              return _AgentListTile(
+                agent: agent,
+                onTap: () => _showEditAgentDialog(context, agent, state),
+              );
+            },
+          ),
+        ),
+        VSpace.x2,
+        Text(
+          'TAP IDENTITY TO MODIFY PARAMS',
+          style: TextStyle(
+            fontFamily: AppFonts.bodyFamily,
+            color: colors.onSurface.withValues(alpha: 0.5),
+            fontSize: AppSizes.fontTiny,
+          ),
+        ),
+      ],
     );
   }
 
@@ -121,70 +140,68 @@ class AgentManagementView extends StatelessWidget {
       BuildContext context, dynamic agent, AiConfigState state) {
     final nameController = TextEditingController(text: agent.name);
     final descController = TextEditingController(text: agent.description);
-    String selectedPromptId = agent.prompt; // Assuming foreign key
+    String selectedPromptId = agent.prompt;
     String selectedModelId = agent.model ?? '';
-
-    // If expand was used, these might be objects, but we need IDs for save.
-    // The model currently stores String IDs for these fields as per Freezed definition.
-    // However, if we added expand(), the JSON parsing needs to handle it.
-    // Let's assume for now the ID is preserved in the base field or we can get it.
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('EDIT IDENTIY: ${agent.name}'),
+      builder: (dialogContext) => TerminalDialog(
+        title: 'IDENTITY: ${agent.name.toUpperCase()}',
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
+              _buildTerminalTextField(
+                context: dialogContext,
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Agent Name'),
+                label: 'AGENT NAME',
               ),
-              TextField(
+              VSpace.x2,
+              _buildTerminalTextField(
+                context: dialogContext,
                 controller: descController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 3,
+                label: 'DESCRIPTION',
+                maxLines: 2,
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: state.prompts.any((p) => p.id == selectedPromptId)
-                    ? selectedPromptId
-                    : null,
-                items: state.prompts
-                    .map((p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text(p.name, overflow: TextOverflow.ellipsis),
-                        ))
-                    .toList(),
-                onChanged: (val) => selectedPromptId = val!,
-                decoration: const InputDecoration(labelText: 'System Prompt'),
-                isExpanded: true,
+              VSpace.x2,
+              _buildSelection(
+                context: dialogContext,
+                label: 'SYSTEM PROMPT',
+                currentValue: state.prompts.any((p) => p.id == selectedPromptId)
+                    ? state.prompts
+                        .firstWhere((p) => p.id == selectedPromptId)
+                        .name
+                    : 'NONE',
+                onTap: () {
+                  // TODO: Implement a terminal-style list picker
+                },
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: state.models.any((m) => m.id == selectedModelId)
-                    ? selectedModelId
-                    : null,
-                items: state.models
-                    .map((m) => DropdownMenuItem(
-                          value: m.id,
-                          child: Text(m.name, overflow: TextOverflow.ellipsis),
-                        ))
-                    .toList(),
-                onChanged: (val) => selectedModelId = val!,
-                decoration: const InputDecoration(labelText: 'AI Model'),
-                isExpanded: true,
+              VSpace.x2,
+              _buildSelection(
+                context: dialogContext,
+                label: 'AI MODEL',
+                currentValue: state.models.any((m) => m.id == selectedModelId)
+                    ? state.models
+                        .firstWhere((m) => m.id == selectedModelId)
+                        .name
+                    : 'NONE SELECTED',
+                onTap: () {
+                  // TODO: Implement a terminal-style list picker
+                },
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
+          TerminalButton(
+            label: 'CANCEL',
+            isPrimary: false,
+            onTap: () => Navigator.pop(dialogContext),
+          ),
+          HSpace.x2,
+          TerminalButton(
+            label: 'SAVE',
+            onTap: () {
               if (nameController.text.isNotEmpty &&
                   selectedPromptId.isNotEmpty) {
                 final updatedAgent = agent.copyWith(
@@ -192,35 +209,86 @@ class AgentManagementView extends StatelessWidget {
                   description: descController.text,
                   prompt: selectedPromptId,
                   model: selectedModelId.isEmpty ? null : selectedModelId,
-                  // Steps, config, etc preserved by copyWith
                 );
                 context.read<AiConfigCubit>().saveAgent(updatedAgent);
                 Navigator.pop(dialogContext);
               }
             },
-            child: const Text('Save Identity'),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildSelection({
+    required BuildContext context,
+    required String label,
+    required String currentValue,
+    required VoidCallback onTap,
+  }) {
+    final colors = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.bodyFamily,
+            color: colors.onSurface,
+            fontSize: AppSizes.fontTiny,
+          ),
+        ),
+        VSpace.x1,
+        InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.all(AppSizes.space),
+            decoration: BoxDecoration(
+              border:
+                  Border.all(color: colors.onSurface.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    currentValue.toUpperCase(),
+                    style: TextStyle(
+                      fontFamily: AppFonts.bodyFamily,
+                      color: colors.onSurface,
+                      fontSize: AppSizes.fontSmall,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(Icons.arrow_drop_down, color: colors.onSurface),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _AgentListTile extends StatelessWidget {
-  final dynamic agent; // AiAgent
+  final dynamic agent;
   final VoidCallback? onTap;
 
   const _AgentListTile({required this.agent, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = AppPalette.primary.textPrimary;
+    final colors = context.colorScheme;
+    final borderColor = colors.onSurface;
     final isInit = agent.isInit ?? false;
 
     return Container(
-      margin: EdgeInsets.symmetric(vertical: AppSizes.space * 0.25),
+      margin: EdgeInsets.only(bottom: AppSizes.space),
       decoration: BoxDecoration(
         border: Border.all(color: borderColor.withValues(alpha: 0.3)),
+        color:
+            isInit ? borderColor.withValues(alpha: 0.05) : Colors.transparent,
       ),
       child: InkWell(
         onTap: onTap,
@@ -229,11 +297,11 @@ class _AgentListTile extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 12,
-                height: 12,
+                width: 4,
+                height: 40,
                 color: isInit
-                    ? Colors.blue
-                    : Colors.amber, // Init (Poco) vs Workspace (CAO)
+                    ? colors.primary
+                    : colors.onSurface.withValues(alpha: 0.4),
               ),
               HSpace.x2,
               Expanded(
@@ -244,17 +312,16 @@ class _AgentListTile extends StatelessWidget {
                       agent.name.toUpperCase(),
                       style: TextStyle(
                         fontFamily: AppFonts.bodyFamily,
-                        color: AppPalette.primary.textPrimary,
+                        color: colors.onSurface,
                         fontSize: AppSizes.fontStandard,
                         fontWeight: AppFonts.heavy,
                       ),
                     ),
                     Text(
-                      isInit ? '[INIT ORCHESTRATOR]' : '[WORKSPACE WORKER]',
+                      isInit ? '>> INIT ORCHESTRATOR' : '>> WORKSPACE WORKER',
                       style: TextStyle(
                         fontFamily: AppFonts.bodyFamily,
-                        color: AppPalette.primary.textPrimary
-                            .withValues(alpha: 0.6),
+                        color: colors.onSurface.withValues(alpha: 0.5),
                         fontSize: AppSizes.fontMini,
                       ),
                     ),
@@ -272,4 +339,38 @@ class _AgentListTile extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildTerminalTextField({
+  required BuildContext context,
+  required TextEditingController controller,
+  required String label,
+  int maxLines = 1,
+}) {
+  final colors = context.colorScheme;
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.bodyFamily,
+          color: colors.onSurface,
+          fontSize: AppSizes.fontTiny,
+        ),
+      ),
+      VSpace.x1,
+      TextField(
+        controller: controller,
+        maxLines: maxLines,
+        style: TextStyle(
+          fontFamily: AppFonts.bodyFamily,
+          color: colors.onSurface,
+          fontSize: AppSizes.fontSmall,
+        ),
+        cursorColor: colors.onSurface,
+        decoration: const InputDecoration(), // Uses theme decoration
+      ),
+    ],
+  );
 }

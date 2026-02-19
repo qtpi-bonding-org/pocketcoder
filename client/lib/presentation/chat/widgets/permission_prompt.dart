@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../design_system/primitives/app_fonts.dart';
-import '../../../../design_system/primitives/app_palette.dart';
-import '../../../../design_system/primitives/app_sizes.dart';
-import '../../../../design_system/primitives/spacers.dart';
+import '../../../../design_system/theme/app_theme.dart';
 import '../../../../domain/permission/permission_request.dart';
+import '../../core/widgets/terminal_dialog.dart'; // For TerminalButton
 
 class PermissionPrompt extends StatelessWidget {
   final PermissionRequest request;
@@ -19,16 +17,17 @@ class PermissionPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+
     return Container(
       margin: EdgeInsets.all(AppSizes.space),
       padding: EdgeInsets.all(AppSizes.space * 2),
       decoration: BoxDecoration(
-        color: AppPalette.primary.primaryColor.withValues(alpha: 0.05),
+        color: colors.primary.withValues(alpha: 0.05),
         border: Border.all(
-          color: AppPalette.primary.primaryColor.withValues(alpha: 0.3),
-          width: 2,
+          color: colors.primary.withValues(alpha: 0.3),
+          width: AppSizes.borderWidth,
         ),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -38,7 +37,7 @@ class PermissionPrompt extends StatelessWidget {
             children: [
               Icon(
                 Icons.security_outlined,
-                color: AppPalette.primary.primaryColor,
+                color: colors.primary,
                 size: 20,
               ),
               HSpace.x2,
@@ -46,9 +45,9 @@ class PermissionPrompt extends StatelessWidget {
                 child: Text(
                   'GATEKEEPER CHALLENGE',
                   style: TextStyle(
-                    color: AppPalette.primary.primaryColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    color: colors.primary,
+                    fontSize: AppSizes.fontTiny,
+                    fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
                   ),
                 ),
@@ -59,29 +58,33 @@ class PermissionPrompt extends StatelessWidget {
           Text(
             '${(request.source ?? "SYSTEM").toUpperCase()} IS REQUESTING PERMISSION:',
             style: TextStyle(
-              color: AppPalette.primary.textPrimary.withValues(alpha: 0.7),
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
+              color: colors.onSurface.withValues(alpha: 0.7),
+              fontSize: AppSizes.fontMini,
+              fontWeight: AppFonts.heavy,
             ),
           ),
           VSpace.x1,
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.space,
-              vertical: AppSizes.space / 2,
-            ),
+            padding: EdgeInsets.all(AppSizes.space),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(4),
+              color: colors.surface.withValues(alpha: 0.4),
+              border:
+                  Border.all(color: colors.onSurface.withValues(alpha: 0.2)),
             ),
-            child: Text(
-              '${request.permission.toUpperCase()} ${request.metadata?['command'] ?? ''}',
-              style: TextStyle(
-                color: AppPalette.primary.textPrimary,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${request.permission.toUpperCase()} ${request.metadata?['command'] ?? ''}',
+                    style: TextStyle(
+                      color: colors.onSurface,
+                      fontFamily: AppFonts.bodyFamily,
+                      fontSize: AppSizes.fontStandard,
+                      fontWeight: AppFonts.heavy,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           if ((request.patterns ?? []).isNotEmpty) ...[
@@ -89,16 +92,15 @@ class PermissionPrompt extends StatelessWidget {
             Text(
               'Patterns:',
               style: TextStyle(
-                color: AppPalette.primary.textPrimary.withValues(alpha: 0.5),
-                fontSize: 10,
+                color: colors.onSurface.withValues(alpha: 0.5),
+                fontSize: AppSizes.fontMini,
               ),
             ),
             ...(request.patterns ?? []).map((p) => Text(
                   '• $p',
                   style: TextStyle(
-                    color:
-                        AppPalette.primary.textPrimary.withValues(alpha: 0.8),
-                    fontSize: 11,
+                    color: colors.onSurface.withValues(alpha: 0.8),
+                    fontSize: AppSizes.fontTiny,
                     fontFamily: AppFonts.bodyFamily,
                   ),
                 )),
@@ -107,58 +109,22 @@ class PermissionPrompt extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _Button(
+                child: TerminalButton(
                   label: 'DENY',
-                  color: Colors.redAccent,
+                  isPrimary: false,
                   onTap: onDeny,
                 ),
               ),
               HSpace.x2,
               Expanded(
-                child: _Button(
+                child: TerminalButton(
                   label: 'AUTHORIZE',
-                  color: AppPalette.primary.primaryColor,
                   onTap: onAuthorize,
                 ),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Button extends StatelessWidget {
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _Button({
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          border: Border.all(color: color.withValues(alpha: 0.5)),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-          ),
-        ),
       ),
     );
   }

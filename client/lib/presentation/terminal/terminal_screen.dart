@@ -2,21 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:xterm/xterm.dart';
-import 'package:test_app/app/bootstrap.dart';
-import 'package:test_app/application/terminal/terminal_cubit.dart';
-import 'package:test_app/application/terminal/terminal_state.dart';
-import 'package:test_app/application/chat/communication_cubit.dart';
+import '../../app/bootstrap.dart';
+import '../../application/terminal/terminal_cubit.dart';
+import '../../application/terminal/terminal_state.dart';
+import '../../application/chat/communication_cubit.dart';
+import '../../application/system/status_cubit.dart';
+import '../../application/system/status_state.dart';
 import '../../app_router.dart';
+import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/poco_animator.dart';
 import '../core/widgets/terminal_footer.dart';
-import '../../design_system/primitives/app_fonts.dart';
-import '../../design_system/primitives/app_palette.dart';
-import '../../design_system/primitives/app_sizes.dart';
-import '../../design_system/primitives/spacers.dart';
-import '../../design_system/theme/app_theme.dart';
-import 'package:test_app/application/system/status_cubit.dart';
-import 'package:test_app/application/system/status_state.dart';
+import '../core/widgets/terminal_dialog.dart'; // For TerminalButton
 
 class TerminalScreen extends StatelessWidget {
   const TerminalScreen({super.key});
@@ -60,8 +57,9 @@ class _TerminalViewState extends State<_TerminalView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Scaffold(
-      backgroundColor: AppPalette.primary.backgroundPrimary,
+      backgroundColor: colors.surface,
       body: ScanlineWidget(
         child: SafeArea(
           child: Padding(
@@ -69,26 +67,27 @@ class _TerminalViewState extends State<_TerminalView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
+                _buildHeader(context),
                 VSpace.x3,
                 Expanded(
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: AppPalette.primary.textPrimary
-                            .withValues(alpha: 0.2),
+                        color: colors.onSurface.withValues(alpha: 0.2),
                       ),
-                      color: AppPalette.primary.backgroundPrimary
-                          .withValues(alpha: 0.3),
+                      color: colors.surface.withValues(alpha: 0.3),
                     ),
                     child: BlocBuilder<SshTerminalCubit, SshTerminalState>(
                       builder: (context, state) {
                         final cubit = context.read<SshTerminalCubit>();
 
                         if (state.isConnecting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: colors.primary,
+                            ),
+                          );
                         }
 
                         if (state.error != null) {
@@ -96,18 +95,26 @@ class _TerminalViewState extends State<_TerminalView> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('CONNECTION FAILED',
-                                    style: TextStyle(
-                                        color: AppPalette.primary.errorColor)),
+                                Text(
+                                  'CONNECTION FAILED',
+                                  style: TextStyle(
+                                    color: colors.error,
+                                    fontFamily: AppFonts.bodyFamily,
+                                    fontWeight: AppFonts.heavy,
+                                  ),
+                                ),
                                 VSpace.x1,
-                                Text(state.error!,
-                                    style: TextStyle(
-                                        color: AppPalette.primary.textPrimary,
-                                        fontSize: AppSizes.fontTiny)),
-                                VSpace.x2,
-                                ElevatedButton(
-                                    onPressed: _connect,
-                                    child: const Text('RETRY')),
+                                Text(
+                                  state.error!.toUpperCase(),
+                                  style: TextStyle(
+                                    color: colors.onSurface,
+                                    fontSize: AppSizes.fontTiny,
+                                    fontFamily: AppFonts.bodyFamily,
+                                  ),
+                                ),
+                                VSpace.x4,
+                                TerminalButton(
+                                    label: 'RETRY CONNECTION', onTap: _connect),
                               ],
                             ),
                           );
@@ -149,7 +156,8 @@ class _TerminalViewState extends State<_TerminalView> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final colors = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -163,8 +171,7 @@ class _TerminalViewState extends State<_TerminalView> {
                 Text(
                   'Terminal Mirror',
                   style: context.textTheme.labelSmall?.copyWith(
-                    color:
-                        AppPalette.primary.textPrimary.withValues(alpha: 0.8),
+                    color: colors.onSurface.withValues(alpha: 0.8),
                     fontFamily: AppFonts.bodyFamily,
                     fontSize: AppSizes.fontTiny,
                     letterSpacing: 1,
@@ -183,16 +190,14 @@ class _TerminalViewState extends State<_TerminalView> {
               Text(
                 'SSH SESSION: sandbox:2222',
                 style: context.textTheme.titleSmall?.copyWith(
-                  color: AppPalette.primary.textPrimary,
+                  color: colors.onSurface,
                   letterSpacing: 2,
                 ),
               ),
               Text(
                 '[ ${isConnected ? 'ONLINE' : 'OFFLINE'} ]',
                 style: TextStyle(
-                  color: isConnected
-                      ? AppPalette.primary.textPrimary
-                      : AppPalette.primary.errorColor,
+                  color: isConnected ? colors.onSurface : colors.error,
                   fontSize: AppSizes.fontMini,
                   letterSpacing: 1,
                 ),
@@ -204,7 +209,7 @@ class _TerminalViewState extends State<_TerminalView> {
         Container(
           height: 1,
           width: double.infinity,
-          color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
+          color: colors.onSurface.withValues(alpha: 0.3),
         ),
       ],
     );

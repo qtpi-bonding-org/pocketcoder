@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/primitives/app_fonts.dart';
-import '../../../design_system/primitives/app_palette.dart';
-import '../../../design_system/primitives/app_sizes.dart';
-import '../../../design_system/primitives/spacers.dart';
+import '../../../design_system/theme/app_theme.dart';
 import 'poco_animator.dart';
 import 'typewriter_text.dart';
 
@@ -24,6 +21,7 @@ class PocoBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -39,8 +37,8 @@ class PocoBubble extends StatelessWidget {
             vertical: AppSizes.space,
           ),
           decoration: BoxDecoration(
-            color: Colors.black,
-            border: Border.all(color: AppPalette.primary.primaryColor),
+            color: colors.surface,
+            border: Border.all(color: colors.primary),
           ),
           child: Column(
             crossAxisAlignment: crossAxisAlignment(textAlign),
@@ -51,8 +49,7 @@ class PocoBubble extends StatelessWidget {
                       msg,
                       style: TextStyle(
                         fontFamily: AppFonts.bodyFamily,
-                        color: AppPalette.primary.textPrimary
-                            .withValues(alpha: 0.5),
+                        color: colors.onSurface.withValues(alpha: 0.5),
                         fontSize: AppSizes.fontStandard,
                       ),
                       textAlign: textAlign,
@@ -63,7 +60,7 @@ class PocoBubble extends StatelessWidget {
                 text: message,
                 style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
-                  color: AppPalette.primary.textPrimary,
+                  color: colors.onSurface,
                   fontSize: AppSizes.fontStandard,
                 ),
                 speed: const Duration(milliseconds: 20),

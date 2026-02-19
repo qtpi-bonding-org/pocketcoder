@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../design_system/primitives/app_palette.dart';
-import '../../../design_system/primitives/app_sizes.dart';
+import '../../../design_system/theme/app_theme.dart';
 import 'ascii_art.dart';
 
 class PocoAnimator extends StatefulWidget {
@@ -72,7 +71,7 @@ class _PocoAnimatorState extends State<PocoAnimator> {
     return AsciiFace(
       expression: _currentFace,
       fontSize: widget.fontSize ?? AppSizes.fontStandard,
-      color: widget.color ?? AppPalette.primary.textPrimary,
+      color: widget.color ?? context.colorScheme.onSurface,
     );
   }
 }

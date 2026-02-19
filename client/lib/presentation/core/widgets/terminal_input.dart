@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/primitives/app_fonts.dart';
-import '../../../design_system/primitives/app_palette.dart';
-import '../../../design_system/primitives/app_sizes.dart';
+import '../../../design_system/theme/app_theme.dart';
 
 class TerminalInput extends StatelessWidget {
   final TextEditingController controller;
@@ -19,19 +17,19 @@ class TerminalInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Container(
-      // ... same container props ...
       padding: EdgeInsets.symmetric(
           horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
       decoration: BoxDecoration(
-        color: AppPalette.primary.backgroundPrimary,
+        color: colors.surface,
       ),
       child: Row(
         children: [
           Text(
             '$prompt ',
             style: TextStyle(
-              color: enabled ? AppPalette.primary.textPrimary : Colors.grey,
+              color: enabled ? colors.onSurface : Colors.grey,
               fontFamily: AppFonts.bodyFamily,
               fontSize: AppSizes.fontStandard,
               fontWeight: AppFonts.heavy,
@@ -43,16 +41,19 @@ class TerminalInput extends StatelessWidget {
               controller: controller,
               onSubmitted: (_) => onSubmitted(),
               style: TextStyle(
-                color: AppPalette.primary.textPrimary,
+                color: colors.onSurface,
                 fontFamily: AppFonts.bodyFamily,
                 fontSize: AppSizes.fontStandard,
               ),
-              cursorColor: AppPalette.primary.textPrimary,
+              cursorColor: colors.onSurface,
               cursorWidth: AppSizes.fontTiny, // Block style
               decoration: const InputDecoration(
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
+                filled: false,
               ),
             ),
           ),

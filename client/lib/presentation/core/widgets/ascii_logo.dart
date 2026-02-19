@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/primitives/app_fonts.dart';
-import '../../../design_system/primitives/app_palette.dart';
-import '../../../design_system/primitives/app_sizes.dart';
+import '../../../design_system/theme/app_theme.dart';
 
 class AsciiLogo extends StatelessWidget {
   final String text;
@@ -17,7 +15,8 @@ class AsciiLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? AppPalette.primary.textPrimary;
+    final colors = context.colorScheme;
+    final effectiveColor = color ?? colors.onSurface;
     final effectiveSize =
         fontSize ?? AppSizes.fontTiny; // Default to tiny for logo blocks
 
