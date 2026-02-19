@@ -262,3 +262,71 @@ export -f mcp_tools_call mcp_find_server mcp_add_server mcp_remove_server
 export -f mcp_list_tools mcp_server_enable mcp_server_disable
 export -f snapshot_containers count_containers diff_containers
 export -f wait_for_new_container assert_container_spun_up
+
+# ---------------------------------------------------------------------------
+# cleanup_mcp_servers — delete MCP server records matching a pattern
+#
+# Args:
+#   $1 — test_id or name pattern to match
+#   $2 — optional auth token (defaults to admin token)
+#
+# Returns: 0 on success
+# ---------------------------------------------------------------------------
+cleanup_mcp_servers() {
+    local test_id="$1"
+    local token="${2:-$(get_admin_token)}"
+
+    local response
+    response=$(curl -s -X GET \
+        "$PB_URL/api/collections/mcp_servers/records?filter=name~\"$test_id\"" \
+        -H "Authorization: $token" \
+        -H "Content-Type: application/json")
+
+    echo "$response" | jq -r '.items[].id // empty' 2>/dev/null | while read -r id; do
+        if [ -n "$id" ]; then
+            delete_record "mcp_servers" "$id" "$token" || true
+        fi
+    done
+}
+
+# ---------------------------------------------------------------------------
+# wait_for_mcp_request — wait for an MCP server request to be created
+#
+# Args:
+#   $1 — server name pattern to match
+#   $2 — timeout in seconds (default: 60)
+#
+# Returns: record ID on stdout, exit 0 if found, 1 on timeout
+# ---------------------------------------------------------------------------
+wait_for_mcp_request() {
+    local server_name_pattern="$1"
+    local timeout="${2:-60}"
+
+    local start_time
+    start_time=$(date +%s)
+    local end_time=$((start_time + timeout))
+
+    while [ $(date +%s) -lt $end_time ]; do
+        local response
+        response=$(curl -s -X GET \
+            "$PB_URL/api/collections/mcp_servers/records?filter=name~\"$server_name_pattern\"&sort=-created" \
+            -H "Authorization: $(get_admin_token)" \
+            -H "Content-Type: application/json")
+
+        local record_id
+        record_id=$(echo "$response" | jq -r '.items[0].id // empty')
+
+        if [ -n "$record_id" ] && [ "$record_id" != "null" ]; then
+            echo "$record_id"
+            return 0
+        fi
+
+        sleep 2
+    done
+
+    echo ""
+    return 1
+}
+
+# Export new functions
+export -f cleanup_mcp_servers wait_for_mcp_request

@@ -54,6 +54,37 @@ authenticate_user() {
     echo "✅ Authenticated as user: $USER_ID"
 }
 
+# Authenticate as agent user
+# Sets AGENT_TOKEN and AGENT_ID
+authenticate_agent() {
+    load_env
+
+    local email="${AGENT_EMAIL:-}"
+    local password="${AGENT_PASSWORD:-}"
+
+    if [ -z "$email" ] || [ -z "$password" ]; then
+        echo "❌ Error: AGENT_EMAIL or AGENT_PASSWORD not found" >&2
+        return 1
+    fi
+
+    local token_res
+    token_res=$(curl -s -X POST "$PB_URL/api/collections/users/auth-with-password" \
+        -H "Content-Type: application/json" \
+        -d "{\"identity\": \"$email\", \"password\": \"$password\"}")
+
+    AGENT_TOKEN=$(echo "$token_res" | jq -r '.token // empty')
+    AGENT_ID=$(echo "$token_res" | jq -r '.record.id // empty')
+
+    if [ -z "$AGENT_TOKEN" ]; then
+        echo "❌ Failed to authenticate as agent" >&2
+        echo "Response: $token_res" >&2
+        return 1
+    fi
+
+    export AGENT_TOKEN AGENT_ID
+    echo "✅ Authenticated as agent: $AGENT_ID"
+}
+
 # Authenticate as superuser
 # Sets USER_TOKEN and USER_ID
 authenticate_superuser() {
@@ -147,3 +178,8 @@ pb_list() {
     local filter="${2:-}"
     pb_request "GET" "/api/collections/$collection/records$filter"
 }
+
+
+# Export functions for use in BATS
+export -f load_env authenticate_user authenticate_agent authenticate_superuser
+export -f pb_request pb_create pb_update pb_delete pb_get pb_list
