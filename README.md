@@ -23,9 +23,9 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 4.  **Explore**: Access the PocketBase UI at `http://localhost:8090/_/`
 
 ## 🔗 Links
-- [Detailed Architecture](docs/architecture/ARCHITECTURE.md)
-- [Security Architecture](docs/architecture/SECURITY.md)
-- [Project Roadmap](docs/roadmap/MVP_ROADMAP.md)
+- [Detailed Architecture](ARCHITECTURE.md)
+- [Security Architecture](SECURITY.md)
+- [Project Roadmap](PLAN.txt)
 - [Project License](LICENSE) (AGPLv3)
 - [Client App License](client/LICENSE) (MPL-2.0)
 - [Contributing](CONTRIBUTING.md)
@@ -36,14 +36,15 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 
 ## Architecture: The Fractal Agent
 
-PocketCoder is designed as a **Fractal Agent** system. It separates high-level reasoning (The Brain) from isolated execution environments (The Body).
+PocketCoder is designed as a **Fractal Agent** system. It separates high-level reasoning from isolated execution environments.
 
 - **The Brain (Poco)**: A sovereign coordinator that plans and orchestrates work.
-- **The Body (Sandbox)**: A secure environment where Sub-Agents execute tasks.
-- **The Proxy (Immune System)**: A Rust gateway that relays thoughts to actions, enforcing protocol and user intent.
-- **The State (Memory)**: PocketBase acts as the ledger of record.
+- **The Conductor (CAO)**: A terminal-aware Python orchestrator that manages subagent delegation via the **SSH-TTY Bus**.
+- **The Body (Sandbox)**: A secure, hardened environment where Sub-Agents execute tasks in isolated Tmux panes.
+- **The Proxy (Muscle)**: A high-performance Rust execution bridge that translates validated intents into terminal actions and streaming responses.
+- **The State & Gatekeeper (Memory)**: PocketBase acts as the ledger of record and the primary authority, gating every sensitive intent for user approval before execution.
 
-See [BACKEND_STATUS.md](BACKEND_STATUS.md) for the current architectural state.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full technical deep-dive.
 
 ## Customize Your PocketCoder
 
@@ -52,25 +53,25 @@ PocketCoder is built to be extended. You "train" the system by modifying two dis
 ### 1. Teach the Brain (Skills) -> `Poco`
 **"Skills are just Markdown for Poco."**
 To give the main agent standardized procedural knowledge (e.g., "How to deploy to AWS" or "The team's Python style guide"), you add **Skills**.
-- **Format**: Simple Markdown files (`skills/MY_SKILL.md`).
-- **Use Case**: SOPs, best practices, and "memory" for the orchestrator.
-- **Location**: `./skills/`
+- **Format**: Simple Markdown files (`.agent/skills/`).
+- **Use Case**: SOPs, best practices, and procedural memory.
+- **Role**: Guides the *planning* phase of the reasoning engine.
 
-### 2. Equip the Body (Tools) -> `Subagents`
-**"MCPs are for Subagents."**
-To give the execution agents actual capabilities (e.g., `postgres-access`, `github-api`, `web-search`), you define **MCP Servers**.
-- **Format**: Added directly to the sub-agent's definition file in `./sandbox/cao/agent_store/`.
-- **Zero-Install**: No complex Docker builds required. Just specify the server (e.g., `uvx mcp-server-postgres`), and the sandbox spins it up ephemerally on demand.
-- **Function**: Gives the "hands" the specific tools they need for the task.
+### 2. Equip the Body (Governance) -> `Subagents`
+**"We gate Poco's Actions, but Subagent Capabilities."**
+While Poco's direct shell/file actions are gated by human approval, subagents are **trusted inside their sandbox**. Their power is governed by the **MCP Governance Flow**:
+- **Capability Approval**: Subagents request specific tools (e.g., `git-access`). The user approves the **Tool Server** itself in the database.
+- **Dynamic Reification**: Once approved, the Relay bakes the tool into the **MCP Gateway**, granting the subagent autonomous access to that tool's functions.
+- **Role**: Allows subagents to perform high-speed, parallel work without manual turn-by-turn gating.
 
-*Think of it this way: You give Poco the **Manual** (Skills), and you give the Subagents the **Power Tools** (MCPs).*
+*Think of it this way: You give Poco the **Manual** (Skills), and you grant the Subagents access to the **Tool Shed** (MCPs).*
 
 ## "Featherweight" High-Performance Stats
 *(Strictly original PocketCoder code as of Feb 2026)*
 
 | Component | Tech | Lines | Role |
 | :--- | :--- | :--- | :--- |
-| **backend** | Go | ~1,200 | Sovereign Authority, Asynchronous Relay, and API. |
-| **proxy** | Rust | ~450 | Sensory bridge with Brain-Nudge support. |
-| **sandbox** | Bash/Python| ~250 | The isolated environment glue. |
-| **CORE TOTAL**| | **~1,900** | **Leaner, Faster, Fully Sovereign.** |
+| **backend** | Go | ~1,500 | Sovereign Authority, Asynchronous Relay, and API. |
+| **proxy** | Rust | ~600 | Sensory bridge with high-performance TTY streaming. |
+| **sandbox/cao** | Python/Bash| ~800 | The terminal-aware orchestrator and TUI bus. |
+| **CORE TOTAL**| | **~2,900** | **Lean, Fast, Fully Sovereign.** |

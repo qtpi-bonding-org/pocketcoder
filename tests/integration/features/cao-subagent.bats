@@ -315,12 +315,14 @@ teardown() {
     
     # Verify subagent record was created in PocketBase
     local subagent_records
-    subagent_records=$(curl -s -X GET "$PB_URL/api/collections/subagents/records?filter=delegating_agent_id=\"$SESSION_ID\"" \
+    subagent_records=$(curl -s -G \
+        "$PB_URL/api/collections/subagents/records" \
+        --data-urlencode "filter=delegating_agent_id='$SESSION_ID'" \
         -H "Authorization: $USER_TOKEN" \
         -H "Content-Type: application/json")
     
     local subagent_count
-    subagent_count=$(echo "$subagent_records" | jq -r '.totalCount // 0')
+    subagent_count=$(echo "$subagent_records" | jq -r '.totalItems // 0')
     [ "$subagent_count" -gt 0 ] || run_diagnostic_on_failure "CAO Subagent" "Relay did not detect _pocketcoder_sys_event (no subagent record created)"
     
     SUBAGENT_ID=$(echo "$subagent_records" | jq -r '.items[0].id // empty')
@@ -578,37 +580,6 @@ teardown() {
     sleep 2
     
     echo "✓ Terminal cleanup initiated for window $tmux_window_id"
-}
-
-# Helper function to wait for assistant message
-wait_for_assistant_message() {
-    local chat_id="$1"
-    local timeout="${2:-60}"
-    
-    local start_time
-    start_time=$(date +%s)
-    local end_time=$((start_time + timeout))
-    
-    while [ $(date +%s) -lt $end_time ]; do
-        # Query for assistant message in this chat
-        local response
-        response=$(curl -s -X GET "$PB_URL/api/collections/messages/records?filter=chat=\"$chat_id\"%20%26%26%20role=\"assistant\"&sort=created" \
-            -H "Authorization: $USER_TOKEN" \
-            -H "Content-Type: application/json")
-        
-        local assistant_id
-        assistant_id=$(echo "$response" | jq -r '.items[0].id // empty')
-        
-        if [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ]; then
-            echo "$assistant_id"
-            return 0
-        fi
-        
-        sleep 1
-    done
-    
-    echo ""
-    return 1
 }
 
 # Helper function to cleanup tmux window

@@ -9,6 +9,7 @@ services:
       - "8090:8090" # PocketBase UI
     volumes:
       - pb_data:/app/pb_data
+      # - pb_backups:/app/pb_backups
       - pocketcoder-logs:/app/pb_public/logs
       - opencode_workspace:/workspace
       - ./agents/poco/proposals:/workspace/.opencode/proposals
@@ -37,12 +38,15 @@ services:
       context: .
       dockerfile: docker/opencode.Dockerfile
     container_name: pocketcoder-opencode
+    depends_on:
+      sandbox:
+        condition: service_healthy
     environment:
       - PORT=3000
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
       - PROXY_URL=http://sandbox:3001
-      - SHELL=/shell_bridge/pocketcoder-shell
+      - SHELL=/usr/local/bin/pocketcoder-shell
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
       - POCKETBASE_URL=http://pocketbase:8090
@@ -50,7 +54,6 @@ services:
     user: root
     volumes:
       - ./.ssh_keys:/ssh_keys:ro
-      - shell_bridge:/shell_bridge:ro
       - opencode_workspace:/workspace
       - ./agents/poco/proposals:/workspace/.opencode/proposals
       - ./agents/poco/skills:/workspace/.opencode/skills:ro
@@ -80,7 +83,6 @@ services:
       - ./agents/poco/proposals:/workspace/.opencode/proposals
       - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
       - ./.ssh_keys:/ssh_keys:ro
-      - shell_bridge:/app/shell_bridge
       - ./sandbox/cao/src:/app/cao/src
     working_dir: /workspace
     environment:
@@ -89,6 +91,12 @@ services:
       - SSH_KEYS_FILE=/ssh_keys/authorized_keys
       - MCP_HOST=http://mcp-gateway:8811/sse
       - DOCKER_MCP_IN_CONTAINER=1
+    healthcheck:
+      test: ["CMD", "/bin/bash", "-c", "curl -f http://localhost:3001/health && curl -f http://localhost:9889/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - pocketcoder-control
       - pocketcoder-mcp
@@ -111,11 +119,12 @@ services:
 
 volumes:
   pb_data:
+  # pb_backups:
+  #   external: true
+  #   name: pocketcoder_pb_backups
   pocketcoder-logs:
   opencode_workspace:
-  sandbox_workspace:
   opencode_data:
-  shell_bridge:
   mcp_config:
 
 networks:

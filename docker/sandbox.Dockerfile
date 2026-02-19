@@ -1,15 +1,12 @@
-FROM rust:1.83-alpine AS builder
+# Use shared Rust builder
+FROM rust:1.83-alpine AS rust-builder
 RUN apk add --no-cache musl-dev gcc
-WORKDIR /app
+WORKDIR /build
 COPY proxy/Cargo.toml proxy/Cargo.lock* ./
-# Create dummy src/main.rs to build dependencies
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
 RUN rm -rf src
-
-# Now copy actual source and build app
 COPY proxy/src ./src
-# Touch main.rs to ensure rebuild
 RUN touch src/main.rs
 RUN cargo build --release
 
@@ -116,12 +113,9 @@ RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Copy Rust binary from builder
-COPY --from=builder /app/target/release/pocketcoder-proxy /app/pocketcoder
-RUN mkdir -p /app/shell_bridge
-COPY --from=builder /app/target/release/pocketcoder-proxy /app/shell_bridge/pocketcoder
-RUN printf '#!/bin/ash\n/app/shell_bridge/pocketcoder shell "$@"\n' > /app/shell_bridge/pocketcoder-shell && \
-    chmod +x /app/shell_bridge/pocketcoder-shell
+# Copy Rust binary from builder - no volume needed!
+COPY --from=rust-builder /build/target/release/pocketcoder-proxy /usr/local/bin/pocketcoder
+RUN chmod +x /usr/local/bin/pocketcoder
 
 # Use the new entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

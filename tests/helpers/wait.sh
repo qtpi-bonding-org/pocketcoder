@@ -441,7 +441,7 @@ wait_for_chat_turn() {
     return 1
 }
 
-# Wait for assistant message to be created in a chat
+# Wait for assistant message to be created and completed in a chat
 # Args: chat_id [timeout]
 # Returns: assistant message ID or empty string
 # Usage: assistant_id=$(wait_for_assistant_message "abc123" 60)
@@ -454,6 +454,9 @@ wait_for_assistant_message() {
     local start_time
     start_time=$(date +%s)
     local end_time=$((start_time + timeout))
+    local assistant_id=""
+    local found_message=false
+    local last_status=""
     
     while [ $(date +%s) -lt $end_time ]; do
         # Query for assistant message in this chat using proper URL encoding
@@ -461,24 +464,105 @@ wait_for_assistant_message() {
         response=$(curl -s -G \
             "$PB_URL/api/collections/messages/records" \
             --data-urlencode "filter=chat='$chat_id' && role='assistant'" \
-            --data-urlencode "sort=created" \
+            --data-urlencode "sort=-created" \
             -H "Authorization: $USER_TOKEN" \
             -H "Content-Type: application/json")
         
-        local assistant_id
         assistant_id=$(echo "$response" | jq -r '.items[0].id // empty' 2>/dev/null)
         
         if [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ]; then
-            local elapsed=$(($(date +%s) - start_time))
-            echo "  ✓ Assistant message found after ${elapsed}s: $assistant_id" >&2
-            echo "$assistant_id"
-            return 0
+            if [ "$found_message" = false ]; then
+                local elapsed=$(($(date +%s) - start_time))
+                echo "  ✓ Assistant message found after ${elapsed}s: $assistant_id" >&2
+                found_message=true
+            fi
+            
+            # Now check if the message is completed
+            local msg_response
+            msg_response=$(curl -s -X GET "$PB_URL/api/collections/messages/records/$assistant_id" \
+                -H "Authorization: $USER_TOKEN" \
+                -H "Content-Type: application/json")
+            
+            local status
+            status=$(echo "$msg_response" | jq -r '.engine_message_status // empty' 2>/dev/null)
+            
+            # Log status changes for debugging
+            if [ "$status" != "$last_status" ]; then
+                echo "  ℹ Message status: '$status'" >&2
+                last_status="$status"
+            fi
+            
+            # Check if message is completed or failed
+            if [ "$status" = "completed" ] || [ "$status" = "failed" ]; then
+                local elapsed=$(($(date +%s) - start_time))
+                echo "  ✓ Assistant message completed (status: $status) after ${elapsed}s" >&2
+                echo "$assistant_id"
+                return 0
+            fi
+            
+            # Check for pending permissions and auto-approve them (test environment only)
+            local pending_perms
+            pending_perms=$(curl -s -G \
+                "$PB_URL/api/collections/permissions/records" \
+                --data-urlencode "filter=chat='$chat_id' && status='draft'" \
+                -H "Authorization: $USER_TOKEN" \
+                -H "Content-Type: application/json" 2>/dev/null)
+            
+            local perm_count
+            perm_count=$(echo "$pending_perms" | jq -r '.totalItems // 0' 2>/dev/null)
+            
+            if [ "$perm_count" -gt 0 ]; then
+                echo "  ℹ Found $perm_count pending permission(s), auto-approving for test..." >&2
+                local perm_ids
+                perm_ids=$(echo "$pending_perms" | jq -r '.items[].id' 2>/dev/null)
+                for perm_id in $perm_ids; do
+                    curl -s -X PATCH "$PB_URL/api/collections/permissions/records/$perm_id" \
+                        -H "Content-Type: application/json" \
+                        -H "Authorization: $USER_TOKEN" \
+                        -d '{"status": "authorized"}' > /dev/null 2>&1
+                    echo "  ✓ Auto-approved permission: $perm_id" >&2
+                done
+            fi
+            
+            # Alternative completion check: if chat turn is back to "user", the assistant is done
+            local chat_response
+            chat_response=$(curl -s -X GET "$PB_URL/api/collections/chats/records/$chat_id" \
+                -H "Authorization: $USER_TOKEN" \
+                -H "Content-Type: application/json")
+            
+            local turn
+            turn=$(echo "$chat_response" | jq -r '.turn // empty' 2>/dev/null)
+            
+            # Debug: log turn on first check
+            if [ "$found_message" = true ] && [ -z "$last_turn_logged" ]; then
+                echo "  ℹ Chat turn: '$turn'" >&2
+                last_turn_logged=true
+            fi
+            
+            if [ "$turn" = "user" ]; then
+                # Chat turn is back to user, assistant must be done
+                # Check if message has content
+                local has_text
+                has_text=$(echo "$msg_response" | jq -r '.parts[]? | select(.type == "text") | .text // empty' 2>/dev/null)
+                if [ -n "$has_text" ]; then
+                    local elapsed=$(($(date +%s) - start_time))
+                    echo "  ✓ Assistant message completed (turn=user, has content) after ${elapsed}s" >&2
+                    echo "$assistant_id"
+                    return 0
+                else
+                    echo "  ℹ Turn is 'user' but message has no text content yet" >&2
+                fi
+            fi
         fi
         
         sleep 1
     done
     
-    echo "  ✗ Timeout waiting for assistant message" >&2
+    if [ "$found_message" = true ]; then
+        echo "  ✗ Timeout waiting for assistant message to complete (message exists but not completed, last status: '$last_status')" >&2
+    else
+        echo "  ✗ Timeout waiting for assistant message" >&2
+    fi
     echo ""
     return 1
 }
@@ -581,3 +665,18 @@ export -f get_message_status message_has_relay_progress
 export -f wait_for_field_populated wait_for_chat_turn wait_for_assistant_message
 export -f get_chat_session_id get_chat_turn
 export -f create_test_conversation verify_assistant_message
+
+
+# Get assistant message text content
+# Args: message_id
+# Returns: text content from message parts
+# Usage: text=$(get_assistant_text "abc123")
+get_assistant_text() {
+    local message_id="$1"
+    local msg
+    msg=$(pb_get "messages" "$message_id")
+    echo "$msg" | jq -r '.parts[]? | select(.type == "text") | .text // empty' 2>/dev/null
+}
+
+# Export new function
+export -f get_assistant_text
