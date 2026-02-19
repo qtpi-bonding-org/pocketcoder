@@ -263,7 +263,7 @@ quick_status() {
     fi
     
     # Check tmux
-    if docker exec pocketcoder-sandbox tmux has-session -t pocketcoder_session 2>/dev/null; then
+    if docker exec pocketcoder-sandbox tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
         echo "✓ Tmux: OK"
     else
         echo "✗ Tmux: DOWN"

@@ -17,35 +17,45 @@ load '../helpers/wait.sh'
 load '../helpers/assertions.sh'
 load '../helpers/diagnostics.sh'
 load '../helpers/tracking.sh'
+load '../helpers/cao.sh'
 
 setup() {
     load_env
     TEST_ID=$(generate_test_id)
     export CURRENT_TEST_ID="$TEST_ID"
+    
+    # Create a test session in CAO for exec tests
+    export TEST_SESSION_ID="test_session_${TEST_ID}"
+    export TEST_TERMINAL_ID=$(create_test_terminal "$TEST_SESSION_ID" "pocketcoder" "poco" "/workspace")
+    
+    if [ -z "$TEST_TERMINAL_ID" ]; then
+        skip "Failed to create test terminal in CAO"
+    fi
 }
 
 teardown() {
     cleanup_test_data "$TEST_ID" || true
+    delete_test_terminal "$TEST_TERMINAL_ID" || true
 }
 
 @test "OpenCode→Sandbox: Shell bridge binary exists and is executable" {
     # Validates: Requirement 5.1
     # Test that shell bridge binary exists at expected path and has execute permissions
     
-    # The shell bridge path in sandbox container is /app/shell_bridge/pocketcoder-shell
-    local shell_bridge_path="/app/shell_bridge/pocketcoder-shell"
+    # The shell bridge is in the OpenCode container at /usr/local/bin/pocketcoder-shell
+    local shell_bridge_path="/usr/local/bin/pocketcoder-shell"
     
-    # Check if binary exists in sandbox container
-    run docker exec pocketcoder-sandbox test -f "$shell_bridge_path"
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode→Sandbox" "Shell bridge binary not found at $shell_bridge_path"
+    # Check if binary exists in OpenCode container (where it's used)
+    run docker exec pocketcoder-opencode test -f "$shell_bridge_path"
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode→Sandbox" "Shell bridge binary not found at $shell_bridge_path in OpenCode container"
     
     # Check if binary is executable
-    run docker exec pocketcoder-sandbox test -x "$shell_bridge_path"
+    run docker exec pocketcoder-opencode test -x "$shell_bridge_path"
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode→Sandbox" "Shell bridge binary is not executable"
     
     # Verify it's a valid executable (returns 0 or help output)
     local help_output
-    help_output=$(docker exec pocketcoder-sandbox "$shell_bridge_path" --help 2>&1 || echo "")
+    help_output=$(docker exec pocketcoder-opencode "$shell_bridge_path" --help 2>&1 || echo "")
     [ -n "$help_output" ] || echo "Shell bridge binary exists but may not support --help"
 }
 
@@ -59,7 +69,7 @@ teardown() {
     local response
     response=$(curl -s -w "\n%{http_code}" -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "echo hello", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"echo hello\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     local http_code
     http_code=$(echo "$response" | tail -n1)
@@ -81,7 +91,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "echo test_output", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"echo test_output\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify response is valid JSON
     echo "$response" | jq -e . > /dev/null
@@ -114,7 +124,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"echo $test_output\", \"cwd\": \"/workspace\", \"session_id\": \"poco\"}" 2>/dev/null)
+        -d "{\"cmd\": \"echo $test_output\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify output contains our test string
     local stdout
@@ -138,7 +148,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "false", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"false\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify exit code is non-zero
     local exit_code
@@ -170,7 +180,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "echo expected_output_content", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"echo expected_output_content\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify output contains expected content
     local stdout
@@ -189,7 +199,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "pwd", "cwd": "/tmp", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"pwd\", \"cwd\": \"/tmp\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify output shows /tmp
     local stdout
@@ -208,7 +218,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "nonexistent_command_12345", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
+        -d "{\"cmd\": \"nonexistent_command_12345\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
     
     # Verify response has error field or non-zero exit code
     local exit_code
