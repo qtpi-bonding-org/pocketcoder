@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/primitives/app_fonts.dart';
-import '../../../design_system/primitives/app_palette.dart';
-import '../../../design_system/primitives/app_sizes.dart';
-import '../../../design_system/primitives/spacers.dart';
+import '../../../design_system/theme/app_theme.dart';
 
 /// A configuration object for a single footer button
 class TerminalAction {
@@ -27,15 +24,14 @@ class TerminalFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     // A single green line to separate footer from content
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppPalette.primary.backgroundPrimary,
+        color: colors.surface,
         border: Border(
-          top: BorderSide(
-              color: AppPalette.primary.textPrimary,
-              width: AppSizes.borderWidth),
+          top: BorderSide(color: colors.onSurface, width: AppSizes.borderWidth),
         ),
       ),
       child: SingleChildScrollView(
@@ -53,13 +49,14 @@ class TerminalFooter extends StatelessWidget {
   }
 
   Widget _buildFKeyButton(BuildContext context, TerminalAction action) {
+    final colors = context.colorScheme;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: action.onTap,
-        // The "Inverted" hover effect color (using Cyberpunk Green)
-        splashColor: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
-        highlightColor: AppPalette.primary.textPrimary.withValues(alpha: 0.1),
+        // The "Inverted" hover effect color
+        splashColor: colors.onSurface.withValues(alpha: 0.3),
+        highlightColor: colors.onSurface.withValues(alpha: 0.1),
         child: Container(
           padding: EdgeInsets.symmetric(
               horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
@@ -67,7 +64,8 @@ class TerminalFooter extends StatelessWidget {
             // Adds a subtle divider line between buttons
             border: Border(
               right: BorderSide(
-                  color: AppPalette.primary.textSecondary,
+                  color: colors.secondary
+                      .withValues(alpha: 0.2), // Adjusted for theme
                   width: AppSizes.borderWidth),
             ),
           ),
@@ -78,13 +76,12 @@ class TerminalFooter extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.space * 0.5, vertical: 0),
-                color: AppPalette.primary.textPrimary, // Solid Green Block
+                color: colors.onSurface, // Solid Green Block
                 child: Text(
                   action.keyLabel,
                   style: TextStyle(
                     fontFamily: AppFonts.bodyFamily,
-                    color: AppPalette
-                        .primary.backgroundPrimary, // Black text on Green block
+                    color: colors.surface, // Black text on Green block
                     fontSize: AppSizes.fontBig,
                     fontWeight: AppFonts.heavy,
                   ),
@@ -96,7 +93,7 @@ class TerminalFooter extends StatelessWidget {
                 action.label,
                 style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
-                  color: AppPalette.primary.textPrimary, // Green text
+                  color: colors.onSurface, // Green text
                   fontSize: AppSizes.fontBig,
                 ),
               ),

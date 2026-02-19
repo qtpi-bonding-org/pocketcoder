@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/chat/chat_message.dart';
 import '../../domain/chat/chat.dart';
-import '../../domain/permission/permission_request.dart';
 
 part 'communication_state.freezed.dart';
 
@@ -12,9 +11,6 @@ class CommunicationState with _$CommunicationState {
     @Default([]) List<Chat> chats,
     @Default(false) bool isLoading,
     @Default(false) bool isPocoThinking,
-
-    // The "Gatekeeper" state
-    PermissionRequest? pendingPermission,
 
     // The "Hot Pipe" message that is currently being streamed.
     // This is ephemeral and constructed from deltas.

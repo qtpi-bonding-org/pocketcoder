@@ -2,19 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import '../../app/bootstrap.dart';
 import '../../app_router.dart';
-import '../../design_system/primitives/app_fonts.dart';
-import '../../design_system/primitives/app_palette.dart';
-import '../../design_system/primitives/app_sizes.dart';
-import '../../design_system/primitives/spacers.dart';
 import '../../application/system/auth_cubit.dart';
 import '../../application/system/poco_cubit.dart';
+import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/ascii_art.dart';
 import '../core/widgets/ascii_logo.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/poco_widget.dart';
-import '../../app/bootstrap.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -69,9 +66,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, authState) {
             final isLoading = authState.status == UiFlowStatus.loading;
+            final colors = context.colorScheme;
 
             return Scaffold(
-              backgroundColor: AppPalette.primary.backgroundPrimary,
+              backgroundColor: colors.surface,
               body: ScanlineWidget(
                 child: Center(
                   child: SingleChildScrollView(
@@ -89,12 +87,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           PocoWidget(pocoSize: AppSizes.fontLarge),
                           VSpace.x4,
                           _buildTextField(
+                            context: context,
                             controller: _emailController,
                             label: 'IDENTITY',
                             hint: 'ENTER EMAIL',
                           ),
                           VSpace.x2,
                           _buildTextField(
+                            context: context,
                             controller: _passwordController,
                             label: 'PASSPHRASE',
                             hint: 'ENTER PASSWORD',
@@ -112,7 +112,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               'AUTHENTICATING...',
                               style: TextStyle(
                                 fontFamily: AppFonts.bodyFamily,
-                                color: AppPalette.primary.textPrimary,
+                                color: colors.onSurface,
                                 fontSize: AppSizes.fontSmall,
                               ),
                             ),
@@ -144,12 +144,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required String hint,
     bool obscureText = false,
     ValueChanged<String>? onSubmitted,
   }) {
+    final colors = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -157,46 +159,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           label,
           style: TextStyle(
             fontFamily: AppFonts.headerFamily,
-            color: AppPalette.primary.textPrimary.withValues(alpha: 0.7),
+            color: colors.onSurface.withValues(alpha: 0.7),
             fontSize: AppSizes.fontTiny,
-            fontWeight: FontWeight.bold,
+            fontWeight: AppFonts.heavy,
           ),
         ),
-        const SizedBox(height: 8),
+        VSpace.x1,
         TextField(
           controller: controller,
           obscureText: obscureText,
           onSubmitted: onSubmitted,
           style: TextStyle(
             fontFamily: AppFonts.bodyFamily,
-            color: AppPalette.primary.textPrimary,
+            color: colors.onSurface,
             fontSize: AppSizes.fontStandard,
           ),
-          cursorColor: AppPalette.primary.primaryColor,
+          cursorColor: colors.onSurface,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
+              color: colors.onSurface.withValues(alpha: 0.3),
               fontFamily: AppFonts.bodyFamily,
+              fontSize: AppSizes.fontSmall,
             ),
-            fillColor: Colors.black,
+            fillColor: colors.surface,
             filled: true,
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: AppPalette.primary.primaryColor.withValues(alpha: 0.3),
+                color: colors.onSurface.withValues(alpha: 0.3),
               ),
               borderRadius: BorderRadius.zero,
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: AppPalette.primary.primaryColor,
+                color: colors.onSurface,
               ),
               borderRadius: BorderRadius.zero,
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
+            contentPadding: EdgeInsets.all(AppSizes.space * 2),
           ),
         ),
       ],

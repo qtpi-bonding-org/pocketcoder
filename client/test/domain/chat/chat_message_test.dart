@@ -22,8 +22,8 @@ void main() {
       expect(message.parts?.length, 1);
       expect(message.parts?.first, isA<MessagePartText>());
       expect((message.parts?.first as MessagePartText?)?.text, 'Hello World');
-      expect(message.createdAt, isA<DateTime>());
-      expect(message.createdAt?.year, 2026);
+      expect(message.created, isA<DateTime>());
+      expect(message.created?.year, 2026);
     });
 
     test(
@@ -50,7 +50,7 @@ void main() {
       };
 
       final message = ChatMessage.fromJson(json);
-      expect(message.status, isNull);
+      expect(message.engineStatus, isNull);
     });
 
     test('MessagePart.fromJson handles tool parts with nested ToolState', () {
