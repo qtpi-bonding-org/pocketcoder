@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/primitives/app_fonts.dart';
-import '../../../design_system/primitives/app_palette.dart';
-import '../../../design_system/primitives/app_sizes.dart';
+import '../../../design_system/theme/app_theme.dart';
 
 class PocoExpression {
   static const String sleepy = '-_-';
@@ -144,7 +142,7 @@ class AsciiFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Prefer passed color/size, fallback to design system
-    final effectiveColor = color ?? AppPalette.primary.textPrimary;
+    final effectiveColor = color ?? context.colorScheme.onSurface;
     final effectiveSize = fontSize ?? AppSizes.fontStandard;
 
     // Dynamically build the string based on Armor + Expression

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../design_system/primitives/app_fonts.dart';
-import '../../design_system/primitives/app_palette.dart';
-import '../../design_system/primitives/app_sizes.dart';
-import '../../design_system/primitives/spacers.dart';
+import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
+import '../core/widgets/bios_frame.dart';
 import '../../app_router.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -29,8 +27,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Scaffold(
-      backgroundColor: AppPalette.primary.backgroundPrimary, // BIOS Black
+      backgroundColor: colors.surface,
       body: ScanlineWidget(
         child: SafeArea(
           child: Center(
@@ -60,7 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AppFonts.bodyFamily,
-                      color: AppPalette.primary.textPrimary,
+                      color: colors.onSurface,
                       fontSize: AppSizes.fontMini,
                     ),
                   ),
@@ -93,11 +92,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    final textColor = isSelected
-        ? AppPalette.primary.backgroundPrimary
-        : AppPalette.primary.textPrimary;
-    final bgColor =
-        isSelected ? AppPalette.primary.textPrimary : Colors.transparent;
+    final colors = context.colorScheme;
+    final textColor = isSelected ? colors.surface : colors.onSurface;
+    final bgColor = isSelected ? colors.onSurface : Colors.transparent;
 
     return GestureDetector(
       onTap: onTap,
@@ -129,77 +126,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class BiosFrame extends StatelessWidget {
-  final Widget child;
-  final String? title;
-
-  const BiosFrame({
-    super.key,
-    required this.child,
-    this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = AppPalette.primary.textPrimary; // BIOS Green
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Container(
-          width: 500,
-          constraints: BoxConstraints(
-              maxWidth: constraints.maxWidth - AppSizes.space * 4),
-          child: Stack(
-            children: [
-              // Main Box
-              Container(
-                margin: EdgeInsets.only(
-                    top: AppSizes.space * 1.25), // Space for title
-                padding: EdgeInsets.all(AppSizes.space * 2),
-                decoration: BoxDecoration(
-                  color: AppPalette.primary.backgroundPrimary,
-                  border: Border.all(
-                      color: borderColor, width: AppSizes.borderWidthThick),
-                  boxShadow: [
-                    BoxShadow(
-                      color: borderColor.withValues(alpha: 0.2),
-                      blurRadius: AppSizes.radiusSmall + 2,
-                      spreadRadius: AppSizes.borderWidthThick,
-                    ),
-                  ],
-                ),
-                child: child,
-              ),
-              // Title Overlay
-              if (title != null)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      color: AppPalette.primary.backgroundPrimary,
-                      padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-                      child: Text(
-                        '[ $title ]',
-                        style: TextStyle(
-                          fontFamily: AppFonts.bodyFamily,
-                          color: borderColor,
-                          fontWeight: AppFonts.heavy,
-                          backgroundColor: AppPalette.primary.backgroundPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
