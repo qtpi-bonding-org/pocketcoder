@@ -156,33 +156,3 @@ teardown() {
 }
 
 
-
-# Helper function to wait for assistant message
-wait_for_assistant_message() {
-    local chat_id="$1"
-    local timeout="${2:-60}"
-    
-    local start_time
-    start_time=$(date +%s)
-    local end_time=$((start_time + timeout))
-    
-    while [ $(date +%s) -lt $end_time ]; do
-        local response
-        response=$(curl -s -X GET "$PB_URL/api/collections/messages/records?filter=chat=\"$chat_id\"%20%26%26%20role=\"assistant\"&sort=created" \
-            -H "Authorization: $USER_TOKEN" \
-            -H "Content-Type: application/json")
-        
-        local assistant_id
-        assistant_id=$(echo "$response" | jq -r '.items[0].id // empty')
-        
-        if [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ]; then
-            echo "$assistant_id"
-            return 0
-        fi
-        
-        sleep 1
-    done
-    
-    echo ""
-    return 1
-}

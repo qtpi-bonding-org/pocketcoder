@@ -112,9 +112,9 @@ start_services() {
 
 # Stop services
 stop_services() {
-    log_info "Stopping services..."
-    docker compose "${COMPOSE_FILES[@]}" down
-    log_info "Services stopped"
+    log_info "Stopping services and removing volumes..."
+    docker compose "${COMPOSE_FILES[@]}" down -v
+    log_info "Services stopped and volumes removed"
 }
 
 # Run tests

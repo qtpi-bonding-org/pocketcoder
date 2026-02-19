@@ -36,7 +36,8 @@ teardown() {
 
 @test "OpenCode sshd is listening on port 2222" {
     # Validates: Requirement 2.3
-    run nc -z localhost 2222
+    # Connect to OpenCode container on the Docker network
+    run nc -z opencode 2222
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode" "SSH daemon not listening on port 2222"
 }
 
