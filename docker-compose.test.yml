@@ -60,6 +60,7 @@ services:
     networks:
       - pocketcoder-memory
       - pocketcoder-control
+      - pocketcoder-mcp
     # Don't start automatically - use 'run' command instead
     profiles:
       - test
@@ -68,4 +69,6 @@ networks:
   pocketcoder-memory:
     external: false
   pocketcoder-control:
+    external: false
+  pocketcoder-mcp:
     external: false

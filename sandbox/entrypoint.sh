@@ -21,6 +21,11 @@
 
 echo "🏗️  [PocketCoder] Initializing Hardened Sandbox..."
 
+# --- Constants ---
+TMUX_SOCKET="/tmp/tmux/pocketcoder"
+TMUX_SESSION="pocketcoder_session"
+POCO_WINDOW="poco"    # The Poco TUI window (SSH bridge to OpenCode)
+
 # --- 🧹 CLEANUP RITUAL (Ensuring Statelessness) ---
 echo "🧹 Cleaning up stale sockets and locks..."
 
@@ -45,20 +50,19 @@ if [ -f "/usr/local/bin/proxy_share/pocketcoder" ]; then
 fi
 
 # --- 🔗 POPULATE SHARED SHELL BRIDGE VOLUME ---
-# Explicitly copy binaries into the shared volume so OpenCode can access them
-# regardless of container start order (Docker volume init is non-deterministic).
 echo "🔗 Populating shell_bridge shared volume..."
 cp -f /app/pocketcoder /app/shell_bridge/pocketcoder
 chmod +x /app/shell_bridge/pocketcoder
-# Recreate the wrapper script in case the volume was initialized empty
 printf '#!/bin/bash\n/app/shell_bridge/pocketcoder shell "$@"\n' > /app/shell_bridge/pocketcoder-shell
 chmod +x /app/shell_bridge/pocketcoder-shell
 echo "✅ Shell bridge binaries ready."
 
-# --- 🖥️ TMUX SETUP (Phase 2: Sandbox owns tmux) ---
-echo "🖥️ Creating tmux session..."
-tmux -S /tmp/tmux/pocketcoder new-session -d -s pocketcoder_session -n main
-chmod 777 /tmp/tmux/pocketcoder
+# --- 🖥️ TMUX SETUP ---
+# Socket directory only. CAO creates the session + exec window during registration.
+# The proxy targets that window by NAME (not index) for resilience.
+echo "🖥️ Preparing tmux socket directory..."
+mkdir -p /tmp/tmux
+chmod 777 /tmp/tmux
 
 # Start the Rust axum server in the background
 echo "🚀 Starting PocketCoder axum server on port 3001..."
@@ -72,11 +76,8 @@ mkdir -p /var/run/sshd
 /usr/sbin/sshd
 
 # 4. SSH Key Localization (Smart Retry)
-# We copy from the read-only host mount to the worker's home with correct perms.
-# We poll until the key is found, then we stop polling to save resources.
 echo "🔄 Localizing SSH keys for 'worker' user..."
 (
-  # Attempt 10 times with 1s sleep to handle mount race condition
   for i in {1..10}; do
     /usr/local/bin/sync_keys.sh > /dev/null 2>&1
     if [ -s "/home/worker/.ssh/authorized_keys" ]; then
@@ -107,7 +108,7 @@ echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
   cd /app/cao && /usr/local/bin/uv run cao-mcp-server
 ) &
 
-# 7. Wait for OpenCode sshd and create Poco window (Phase 2: SSH bridge)
+# 7. Wait for OpenCode sshd to be ready
 echo "⏳ Waiting for OpenCode sshd to be ready..."
 RETRY_COUNT=0
 while true; do
@@ -120,39 +121,66 @@ while true; do
     sleep 2
 done
 
-echo "🪟 Creating Poco window via SSH bridge..."
-tmux -S /tmp/tmux/pocketcoder new-window \
-    -t pocketcoder_session -n poco \
-    "ssh -t -o StrictHostKeyChecking=no -i /ssh_keys/id_rsa poco@opencode -p 2222"
-echo "✅ Poco window created."
+# 8. Register Poco terminal with CAO (Requirement 6.1)
+# CAO creates the tmux session + initial exec window + terminal DB record.
+# The proxy will resolve the window NAME from CAO and target it directly.
+echo "🔗 Registering Poco terminal with CAO..."
+while ! curl -s http://localhost:9889/health > /dev/null 2>&1; do
+    sleep 1
+done
+CAO_RESPONSE=$(curl -s -X POST "http://localhost:9889/sessions" \
+    -G \
+    --data-urlencode "provider=opencode-attach" \
+    --data-urlencode "agent_profile=poco" \
+    --data-urlencode "session_name=$TMUX_SESSION" \
+    --data-urlencode "delegating_agent_id=poco")
+echo "CAO response: $CAO_RESPONSE"
 
-# 8. Pane health watchdog - ensure Poco window always exists
-echo "🔍 Starting pane health watchdog..."
+# Extract the window name CAO assigned (e.g. "poco-ab12") so the watchdog knows it
+EXEC_WINDOW=$(echo "$CAO_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('name',''))" 2>/dev/null || echo "")
+if [ -z "$EXEC_WINDOW" ]; then
+    echo "⚠️ Could not extract exec window name from CAO response, falling back to tmux query"
+    EXEC_WINDOW=$(tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" -F '#{window_name}' 2>/dev/null | head -1)
+fi
+echo "✅ Poco registered with CAO. Exec window: $EXEC_WINDOW"
+
+# Make tmux socket world-accessible
+chmod 777 "$TMUX_SOCKET"
+
+# 9. Create Poco TUI window via SSH bridge into OpenCode
+# This is a SEPARATE window from the exec window. CAO's async messaging
+# (send_keys) targets the exec window by name. The Poco TUI is for the
+# interactive SSH bridge.
+echo "🪟 Creating Poco TUI window via SSH bridge..."
+tmux -S "$TMUX_SOCKET" new-window \
+    -t "$TMUX_SESSION" -n "$POCO_WINDOW" \
+    "ssh -t -o StrictHostKeyChecking=no -i /ssh_keys/id_rsa poco@opencode -p 2222"
+echo "✅ Poco TUI window created."
+
+# 10. Window health watchdog - ensure both windows always exist
+echo "🔍 Starting window health watchdog..."
 (
     while true; do
-        if ! tmux -S /tmp/tmux/pocketcoder list-windows -t pocketcoder_session \
-             | grep -q "poco"; then
-            echo "⚠️ Poco window missing, recreating..."
-            tmux -S /tmp/tmux/pocketcoder new-window \
-                -t pocketcoder_session -n poco \
+        # Check exec window (CAO's command pane, used by proxy)
+        if [ -n "$EXEC_WINDOW" ]; then
+            if ! tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" 2>/dev/null \
+                 | grep -q "$EXEC_WINDOW"; then
+                echo "⚠️ Exec window '$EXEC_WINDOW' missing, recreating..."
+                tmux -S "$TMUX_SOCKET" new-window -t "$TMUX_SESSION" -n "$EXEC_WINDOW"
+            fi
+        fi
+        # Check poco TUI window (SSH bridge)
+        if ! tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" 2>/dev/null \
+             | grep -q "$POCO_WINDOW"; then
+            echo "⚠️ Poco TUI window missing, recreating..."
+            tmux -S "$TMUX_SOCKET" new-window \
+                -t "$TMUX_SESSION" -n "$POCO_WINDOW" \
                 "ssh -t -o StrictHostKeyChecking=no -i /ssh_keys/id_rsa poco@opencode -p 2222"
         fi
         sleep 10
     done
 ) &
 
-# 9. Register Poco terminal with CAO (Requirement 6.1)
-echo "🔗 Registering Poco terminal with CAO..."
-while ! curl -s http://localhost:9889/health > /dev/null 2>&1; do
-    sleep 1
-done
-curl -s -X POST "http://localhost:9889/sessions" \
-    -G \
-    --data-urlencode "provider=opencode-attach" \
-    --data-urlencode "agent_profile=poco" \
-    --data-urlencode "session_name=pocketcoder_session" \
-    --data-urlencode "delegating_agent_id=poco"
-echo "✅ Poco registered with CAO."
-
+# 11. Final registration confirmation
 echo "✅ [PocketCoder] Sandbox is LIVE and HARDENED."
 tail -f /dev/null

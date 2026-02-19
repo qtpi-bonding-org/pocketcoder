@@ -33,16 +33,23 @@ Run BATS tests in Docker containers.
 Arguments:
   TEST_PATH    Path to test file or directory (optional)
                Examples:
-                 health                    - Run all health tests
-                 connection                - Run all connection tests
-                 integration               - Run all integration tests
-                 integration/full-flow.bats - Run specific test file
+                 health                         - Run all health tests
+                 connection                     - Run all connection tests
+                 integration                    - Run all integration tests
+                 integration/core               - Run core flow tests
+                 integration/auth               - Run auth & permission tests
+                 integration/mcp                - Run MCP gateway tests
+                 integration/features           - Run feature-specific tests
+                 integration/agent              - Run agent behavior tests
+                 integration/core/full-flow.bats - Run specific test file
                If omitted, runs all tests
 
 Examples:
-  $(basename "$0")                              # Run all tests
-  $(basename "$0") health                       # Run health tests
-  $(basename "$0") integration/full-flow.bats   # Run full flow test
+  $(basename "$0")                                     # Run all tests
+  $(basename "$0") health                              # Run health tests
+  $(basename "$0") integration/core                    # Run core flow tests
+  $(basename "$0") integration/agent                   # Run agent behavior tests
+  $(basename "$0") integration/core/full-flow.bats     # Run full flow test
 
 EOF
 }
@@ -72,10 +79,34 @@ check_docker() {
     fi
 }
 
+# Capture container logs before teardown
+capture_logs() {
+    local log_dir="tests/logs"
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
+    local log_file="$log_dir/test-run-${timestamp}.log"
+    
+    mkdir -p "$log_dir"
+    
+    log_info "Capturing container logs to $log_file"
+    
+    {
+        echo "=== Test Run: $timestamp ==="
+        echo ""
+        for svc in pocketbase opencode sandbox mcp-gateway; do
+            echo "=== pocketcoder-${svc} ==="
+            docker compose "${COMPOSE_FILES[@]}" logs --no-color "$svc" 2>/dev/null || echo "  [no logs available]"
+            echo ""
+        done
+    } > "$log_file" 2>&1
+    
+    log_info "Logs saved to $log_file"
+}
+
 # Start services
 start_services() {
-    log_info "Starting services..."
-    docker compose "${COMPOSE_FILES[@]}" up -d
+    log_info "Building and starting services..."
+    docker compose "${COMPOSE_FILES[@]}" up -d --build
     log_info "Services started"
 }
 
@@ -96,14 +127,14 @@ run_tests() {
         docker compose "${COMPOSE_FILES[@]}" run --rm \
             --entrypoint bash \
             "$TEST_SERVICE" \
-            -c "bats --tap $TEST_DIR/health $TEST_DIR/connection $TEST_DIR/integration"
+            -c "bats --tap --recursive $TEST_DIR/health $TEST_DIR/connection $TEST_DIR/integration"
     else
         # Run specific test path
         log_info "Running tests: $test_path"
         docker compose "${COMPOSE_FILES[@]}" run --rm \
             --entrypoint bash \
             "$TEST_SERVICE" \
-            -c "bats --tap $TEST_DIR/$test_path"
+            -c "bats --tap --recursive $TEST_DIR/$test_path"
     fi
 }
 
@@ -131,6 +162,9 @@ main() {
         log_error "Tests failed"
         exit_code=1
     fi
+    
+    # Capture logs before teardown
+    capture_logs
     
     # Cleanup
     stop_services

@@ -45,7 +45,15 @@ RUN curl -fsSL https://bun.sh/install | bash \
     && ln -s /usr/local/bin/bun /usr/local/bin/node \
     && rm -rf /var/lib/apt/lists/*
 
-# Install docker-mcp plugin for MCP gateway client
+# Install docker-cli (required for docker mcp plugin) and docker-mcp plugin
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
+    chmod a+r /etc/apt/keyrings/docker.asc && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" \
+      > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && apt-get install -y docker-ce-cli && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN ARCH=$(uname -m) && \
     case $ARCH in \
       x86_64)  M_ARCH="amd64" ;; \

@@ -11,12 +11,12 @@
 # 4. Relay replies to OpenCode
 # 5. OpenCode continues processing
 
-load '../helpers/auth.sh'
-load '../helpers/cleanup.sh'
-load '../helpers/wait.sh'
-load '../helpers/assertions.sh'
-load '../helpers/diagnostics.sh'
-load '../helpers/tracking.sh'
+load '../../helpers/auth.sh'
+load '../../helpers/cleanup.sh'
+load '../../helpers/wait.sh'
+load '../../helpers/assertions.sh'
+load '../../helpers/diagnostics.sh'
+load '../../helpers/tracking.sh'
 
 setup() {
     load_env
