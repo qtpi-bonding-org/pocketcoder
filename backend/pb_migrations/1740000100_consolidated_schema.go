@@ -97,7 +97,7 @@ func init() {
 
 		messages, _ := getOrCreateCollection("pc_messages", "messages", core.CollectionTypeBase)
 		addFields(messages, 
-			&core.RelationField{Name: "chat", Required: true, CollectionId: chats.Id, MaxSelect: 1},
+			&core.RelationField{Name: "chat", Required: true, CollectionId: chats.Id, MaxSelect: 1, CascadeDelete: true},
 			&core.SelectField{Name: "role", Required: true, MaxSelect: 1, Values: []string{"user", "assistant", "system"}},
 			&core.SelectField{Name: "engine_message_status", MaxSelect: 1, Values: []string{"processing", "completed", "failed", "aborted"}}, // RENAMED from status
 			&core.SelectField{Name: "user_message_status", MaxSelect: 1, Values: []string{"pending", "sending", "delivered", "failed"}}, // RENAMED from delivery
@@ -178,7 +178,7 @@ func init() {
 		// =========================================================================
 		sshKeys, _ := getOrCreateCollection("pc_ssh_keys", "ssh_keys", core.CollectionTypeBase)
 		addFields(sshKeys,
-			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1},
+			&core.RelationField{Name: "user", CollectionId: users.Id, MaxSelect: 1},
 			&core.TextField{Name: "public_key", Required: true},
 			&core.TextField{Name: "device_name"},
 			&core.TextField{Name: "fingerprint", Required: true},

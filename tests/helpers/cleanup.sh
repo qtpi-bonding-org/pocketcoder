@@ -18,8 +18,17 @@ load_credentials() {
     fi
 }
 
-# Get admin token for cleanup operations
+# Get auth token for cleanup operations
+# Prefers the already-authenticated USER_TOKEN (set by authenticate_user in tests)
+# to avoid redundant auth requests that can silently fail.
 get_admin_token() {
+    # If tests already authenticated, reuse that token
+    if [ -n "$USER_TOKEN" ]; then
+        echo "$USER_TOKEN"
+        return 0
+    fi
+
+    # Fallback: authenticate fresh (for standalone CLI usage)
     load_credentials
     
     local token_res
@@ -190,52 +199,78 @@ cleanup_test_data() {
     # Clean up chats by title pattern (since TEST_ID is in the title)
     echo "Searching for chats records matching pattern: $test_id"
     local chats_response
-    # Use proper URL encoding for the filter
-    chats_response=$(curl -s -X GET \
-        "$PB_URL/api/collections/chats/records?filter=title~'$test_id'" \
+    # Use curl -G with --data-urlencode for proper filter encoding
+    chats_response=$(curl -s -G \
+        "$PB_URL/api/collections/chats/records" \
+        --data-urlencode "filter=title~'$test_id'" \
+        --data-urlencode "perPage=500" \
         -H "Authorization: $token" \
         -H "Content-Type: application/json")
     
     local chat_count
-    chat_count=$(echo "$chats_response" | grep -o '"totalCount":[0-9]*' | cut -d':' -f2)
+    chat_count=$(echo "$chats_response" | jq -r '.totalItems // 0' 2>/dev/null || echo "0")
     
     if [ "$chat_count" -gt 0 ] 2>/dev/null; then
         echo "  Found $chat_count chat(s)"
         local chat_ids=()
         while IFS= read -r chat_id; do
             chat_ids+=("$chat_id")
-            if ! delete_record "chats" "$chat_id" "$token"; then
-                failed=1
+        done < <(echo "$chats_response" | jq -r '.items[].id' 2>/dev/null)
+        
+        # Clean up messages linked to these chats (by chat foreign key)
+        for chat_id in "${chat_ids[@]}"; do
+            local msgs_response
+            msgs_response=$(curl -s -G \
+                "$PB_URL/api/collections/messages/records" \
+                --data-urlencode "filter=chat='$chat_id'" \
+                --data-urlencode "perPage=500" \
+                -H "Authorization: $token" \
+                -H "Content-Type: application/json")
+            
+            local msg_count
+            msg_count=$(echo "$msgs_response" | jq -r '.totalItems // 0' 2>/dev/null || echo "0")
+            
+            if [ "$msg_count" -gt 0 ] 2>/dev/null; then
+                echo "  Found $msg_count message(s) for chat $chat_id"
+                echo "$msgs_response" | jq -r '.items[].id' 2>/dev/null | while read -r msg_id; do
+                    if ! delete_record "messages" "$msg_id" "$token"; then
+                        failed=1
+                    fi
+                done
             fi
-        done < <(echo "$chats_response" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
+        done
         
         # Clean up permissions linked to these chats
         for chat_id in "${chat_ids[@]}"; do
             local perms_response
-            perms_response=$(curl -s -X GET \
-                "$PB_URL/api/collections/permissions/records?filter=chat='$chat_id'" \
+            perms_response=$(curl -s -G \
+                "$PB_URL/api/collections/permissions/records" \
+                --data-urlencode "filter=chat='$chat_id'" \
+                --data-urlencode "perPage=500" \
                 -H "Authorization: $token" \
                 -H "Content-Type: application/json")
             
             local perm_count
-            perm_count=$(echo "$perms_response" | grep -o '"totalCount":[0-9]*' | cut -d':' -f2)
+            perm_count=$(echo "$perms_response" | jq -r '.totalItems // 0' 2>/dev/null || echo "0")
             
             if [ "$perm_count" -gt 0 ] 2>/dev/null; then
                 echo "  Found $perm_count permission(s) for chat $chat_id"
-                echo "$perms_response" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 | while read -r perm_id; do
+                echo "$perms_response" | jq -r '.items[].id' 2>/dev/null | while read -r perm_id; do
                     if ! delete_record "permissions" "$perm_id" "$token"; then
                         failed=1
                     fi
                 done
             fi
         done
+        
+        # Finally, delete the chats themselves
+        for chat_id in "${chat_ids[@]}"; do
+            if ! delete_record "chats" "$chat_id" "$token"; then
+                failed=1
+            fi
+        done
     else
         echo "  No matching records found"
-    fi
-    
-    # Clean up messages by test_id pattern
-    if ! delete_by_pattern "messages" "$test_id" "$token"; then
-        failed=1
     fi
     
     # Clean up subagents by test_id pattern

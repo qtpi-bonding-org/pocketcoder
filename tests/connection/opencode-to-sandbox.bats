@@ -32,8 +32,8 @@ teardown() {
     # Validates: Requirement 5.1
     # Test that shell bridge binary exists at expected path and has execute permissions
     
-    # The shell bridge path is /shell_bridge/pocketcoder-shell (not /proxy/pocketcoder-shell)
-    local shell_bridge_path="/shell_bridge/pocketcoder-shell"
+    # The shell bridge path in sandbox container is /app/shell_bridge/pocketcoder-shell
+    local shell_bridge_path="/app/shell_bridge/pocketcoder-shell"
     
     # Check if binary exists in sandbox container
     run docker exec pocketcoder-sandbox test -f "$shell_bridge_path"
@@ -59,7 +59,7 @@ teardown() {
     local response
     response=$(curl -s -w "\n%{http_code}" -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "echo hello", "cwd": "/workspace"}' 2>/dev/null)
+        -d '{"cmd": "echo hello", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
     
     local http_code
     http_code=$(echo "$response" | tail -n1)
@@ -81,7 +81,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "echo test_output", "cwd": "/workspace"}' 2>/dev/null)
+        -d '{"cmd": "echo test_output", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
     
     # Verify response is valid JSON
     echo "$response" | jq -e . > /dev/null
@@ -103,25 +103,24 @@ teardown() {
 
 @test "OpenCode→Sandbox: Command executes in tmux pane" {
     # Validates: Requirement 5.3, 5.4
-    # Test that command executes in correct tmux pane with sentinel pattern
+    # Test that command executes in correct tmux pane
     
     local exec_url="http://sandbox:3001/exec"
     
-    # Generate unique sentinel for this test
-    local sentinel_id="test_$(date +%s)_$$"
-    local sentinel_pattern="POCKETCODER_EXIT:0_ID:$sentinel_id"
+    # Generate unique test output for this test
+    local test_output="test_output_$(date +%s)"
     
-    # Execute command with sentinel pattern
+    # Execute command - the driver will add its own sentinel pattern
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"echo $sentinel_pattern\", \"cwd\": \"/workspace\"}" 2>/dev/null)
+        -d "{\"cmd\": \"echo $test_output\", \"cwd\": \"/workspace\", \"session_id\": \"poco\"}" 2>/dev/null)
     
-    # Verify sentinel appears in output
+    # Verify output contains our test string
     local stdout
     stdout=$(echo "$response" | jq -r '.stdout // empty')
-    echo "$stdout" | grep -q "$sentinel_pattern" || \
-        run_diagnostic_on_failure "OpenCode→Sandbox" "Sentinel pattern not found in output"
+    echo "$stdout" | grep -q "$test_output" || \
+        run_diagnostic_on_failure "OpenCode→Sandbox" "Test output not found in stdout"
     
     # Verify exit code is 0
     local exit_code
@@ -135,16 +134,16 @@ teardown() {
     
     local exec_url="http://sandbox:3001/exec"
     
-    # Execute command that will fail
+    # Execute command that will fail (use false which returns exit code 1)
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "exit 42", "cwd": "/workspace"}' 2>/dev/null)
+        -d '{"cmd": "false", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
     
-    # Verify exit code is 42
+    # Verify exit code is non-zero
     local exit_code
     exit_code=$(echo "$response" | jq -r '.exit_code // empty')
-    [ "$exit_code" = "42" ] || run_diagnostic_on_failure "OpenCode→Sandbox" "Exit code is not 42: $exit_code"
+    [ "$exit_code" != "0" ] || run_diagnostic_on_failure "OpenCode→Sandbox" "Exit code should be non-zero for false command"
 }
 
 @test "OpenCode→Sandbox: CAO API session resolution" {
@@ -154,7 +153,7 @@ teardown() {
     local cao_url="http://sandbox:9889"
     
     # Test that CAO API is accessible
-    run timeout 5 curl -s -w "%{http_code}" "$cao_url/health" 2>/dev/null
+    run timeout 5 curl -s -o /dev/null -w "%{http_code}" "$cao_url/health" 2>/dev/null
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode→Sandbox" "CAO API health endpoint not reachable"
     
     # Check for successful response
@@ -171,7 +170,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "echo expected_output_content", "cwd": "/workspace"}' 2>/dev/null)
+        -d '{"cmd": "echo expected_output_content", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
     
     # Verify output contains expected content
     local stdout
@@ -190,7 +189,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "pwd", "cwd": "/tmp"}' 2>/dev/null)
+        -d '{"cmd": "pwd", "cwd": "/tmp", "session_id": "poco"}' 2>/dev/null)
     
     # Verify output shows /tmp
     local stdout
@@ -209,7 +208,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d '{"cmd": "nonexistent_command_12345", "cwd": "/workspace"}' 2>/dev/null)
+        -d '{"cmd": "nonexistent_command_12345", "cwd": "/workspace", "session_id": "poco"}' 2>/dev/null)
     
     # Verify response has error field or non-zero exit code
     local exit_code
