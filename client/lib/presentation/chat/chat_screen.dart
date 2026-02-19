@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_app/app/bootstrap.dart';
-import 'package:test_app/application/chat/communication_cubit.dart';
-import 'package:test_app/application/chat/communication_state.dart';
-import 'package:test_app/presentation/core/widgets/poco_animator.dart';
-import 'package:test_app/presentation/chat/widgets/thoughts_stream.dart';
-import 'package:test_app/presentation/chat/widgets/speech_bubble.dart';
-import 'package:test_app/application/permission/permission_cubit.dart';
-import 'package:test_app/application/permission/permission_state.dart';
-import 'package:test_app/presentation/chat/widgets/permission_prompt.dart';
-
-import '../../app_router.dart';
-
-import '../../design_system/primitives/app_palette.dart';
-import '../../design_system/primitives/app_sizes.dart';
-
+import '../../app/bootstrap.dart';
+import '../../application/chat/communication_cubit.dart';
+import '../../application/chat/communication_state.dart';
+import '../../application/permission/permission_cubit.dart';
+import '../../application/permission/permission_state.dart';
+import '../../design_system/theme/app_theme.dart';
 import '../../domain/chat/chat_message.dart';
+import '../core/widgets/poco_animator.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_input.dart';
+import 'widgets/permission_prompt.dart';
+import 'widgets/speech_bubble.dart';
+import 'widgets/thoughts_stream.dart';
+import '../../app_router.dart';
 
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
@@ -57,8 +53,9 @@ class _ChatViewState extends State<_ChatView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Scaffold(
-      backgroundColor: AppPalette.primary.backgroundPrimary,
+      backgroundColor: colors.surface,
       body: ScanlineWidget(
         child: SafeArea(
           child: MultiBlocListener(
@@ -78,7 +75,7 @@ class _ChatViewState extends State<_ChatView> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(state.error!),
-                      backgroundColor: Colors.red,
+                      backgroundColor: colors.error,
                     ),
                   );
                 },
@@ -92,12 +89,11 @@ class _ChatViewState extends State<_ChatView> {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: colors.surface.withValues(alpha: 0.2),
                       border: Border(
                         bottom: BorderSide(
-                          color: AppPalette.primary.textPrimary
-                              .withValues(alpha: 0.1),
-                          width: 1,
+                          color: colors.onSurface.withValues(alpha: 0.1),
+                          width: AppSizes.borderWidth,
                         ),
                       ),
                     ),

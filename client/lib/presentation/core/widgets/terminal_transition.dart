@@ -7,6 +7,8 @@ class TerminalTransition {
     required GoRouterState state,
     required Widget child,
   }) {
+    final colors = Theme.of(context).colorScheme;
+
     return CustomTransitionPage<void>(
       key: state.pageKey,
       child: child,
@@ -19,7 +21,7 @@ class TerminalTransition {
         return Stack(
           children: [
             // 1. Instant Wipe: A solid background covers the previous page immediately.
-            Container(color: const Color(0xFF0D0D0D)),
+            Container(color: colors.surface),
 
             // 2. The Content Reveal
             AnimatedBuilder(
@@ -42,11 +44,10 @@ class TerminalTransition {
                         child: Container(
                           height: 2,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF39FF14),
+                            color: colors.primary,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF39FF14)
-                                    .withValues(alpha: 0.6),
+                                color: colors.primary.withValues(alpha: 0.6),
                                 blurRadius: 10,
                                 spreadRadius: 2,
                               ),

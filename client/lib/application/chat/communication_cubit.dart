@@ -4,29 +4,24 @@ import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/chat/chat_message.dart';
 import '../../domain/communication/i_communication_repository.dart';
-import '../../domain/hitl/i_hitl_repository.dart';
 import 'communication_state.dart';
 
 @injectable
 class CommunicationCubit extends Cubit<CommunicationState> {
   final ICommunicationRepository _repository;
-  final IHitlRepository _hitlRepository;
 
   StreamSubscription? _coldSub;
   StreamSubscription? _hotSub;
-  StreamSubscription? _permSub;
 
   String? _currentChatId;
   final Uuid _uuid = const Uuid();
 
-  CommunicationCubit(this._repository, this._hitlRepository)
-      : super(const CommunicationState());
+  CommunicationCubit(this._repository) : super(const CommunicationState());
 
   @override
   Future<void> close() {
     _coldSub?.cancel();
     _hotSub?.cancel();
-    _permSub?.cancel();
     return super.close();
   }
 
@@ -42,7 +37,6 @@ class CommunicationCubit extends Cubit<CommunicationState> {
       ));
       _subscribeToColdPipe(_currentChatId!);
       _subscribeToHotPipe();
-      _subscribeToPermissions(_currentChatId!);
     } catch (e) {
       emit(state.copyWith(
         error: 'Failed to initialize chat: $e',
@@ -72,36 +66,6 @@ class CommunicationCubit extends Cubit<CommunicationState> {
       },
       onError: (e) => emit(state.copyWith(error: e.toString())),
     );
-  }
-
-  void _subscribeToPermissions(String chatId) {
-    _permSub?.cancel();
-    _permSub = _hitlRepository.watchPending(chatId).listen(
-      (requests) {
-        // For the MVP, we just show the most recent pending request
-        final pending = requests.isNotEmpty ? requests.first : null;
-        emit(state.copyWith(pendingPermission: pending));
-      },
-      onError: (e) =>
-          emit(state.copyWith(error: 'Permission stream error: $e')),
-    );
-  }
-
-  Future<void> authorizeCurrentPermission() async {
-    if (state.pendingPermission == null) return;
-
-    final permId = state.pendingPermission!.id;
-    emit(state.copyWith(isLoading: true)); // Show some activity
-    try {
-      await _hitlRepository.authorize(permId);
-      // The stream subscription will clear the state.pendingPermission automatically
-      emit(state.copyWith(isLoading: false));
-    } catch (e) {
-      emit(state.copyWith(
-        error: 'Authorization failed: $e',
-        isLoading: false,
-      ));
-    }
   }
 
   Future<void> sendMessage(String unusedChatId, String content) async {

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../design_system/primitives/app_fonts.dart';
-import '../../../../design_system/primitives/app_palette.dart';
-import '../../../../design_system/primitives/app_sizes.dart';
+import '../../../../design_system/theme/app_theme.dart';
 import '../../../../domain/chat/chat_message.dart';
 
 class ThoughtsStream extends StatelessWidget {
@@ -11,12 +9,13 @@ class ThoughtsStream extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     if (parts.isEmpty) {
       return Center(
         child: Text(
           '[NEURAL LINK ACTIVE. WAITING FOR THOUGHTS...]',
           style: TextStyle(
-            color: AppPalette.primary.textPrimary.withValues(alpha: 0.3),
+            color: colors.onSurface.withValues(alpha: 0.3),
             fontFamily: AppFonts.bodyFamily,
             fontSize: AppSizes.fontTiny,
           ),
@@ -37,6 +36,7 @@ class ThoughtsStream extends StatelessWidget {
   }
 
   Widget _buildPart(BuildContext context, MessagePart part) {
+    final colors = context.colorScheme;
     return part.map(
       text: (textPart) {
         return Padding(
@@ -44,7 +44,7 @@ class ThoughtsStream extends StatelessWidget {
           child: Text(
             '> ${textPart.text ?? ""}',
             style: TextStyle(
-              color: AppPalette.primary.textPrimary.withValues(alpha: 0.6),
+              color: colors.onSurface.withValues(alpha: 0.6),
               fontFamily: AppFonts.headerFamily,
               fontSize: 10,
             ),
@@ -57,7 +57,7 @@ class ThoughtsStream extends StatelessWidget {
           child: Text(
             'THOUGHT: ${reasoningPart.text ?? ""}',
             style: TextStyle(
-              color: AppPalette.primary.textPrimary.withValues(alpha: 0.4),
+              color: colors.onSurface.withValues(alpha: 0.4),
               fontFamily: AppFonts.bodyFamily,
               fontSize: 10,
               fontStyle: FontStyle.italic,
@@ -71,9 +71,10 @@ class ThoughtsStream extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8.0, top: 4.0),
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.3),
-            border:
-                Border(left: BorderSide(color: _getToolColor(state), width: 2)),
+            color: colors.surface.withValues(alpha: 0.3),
+            border: Border(
+                left:
+                    BorderSide(color: _getToolColor(context, state), width: 2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,16 +84,16 @@ class ThoughtsStream extends StatelessWidget {
                   Text(
                     'EXEC: ${toolPart.tool.toUpperCase()}',
                     style: TextStyle(
-                      color: _getToolColor(state),
+                      color: _getToolColor(context, state),
                       fontWeight: FontWeight.bold,
                       fontSize: 10,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _buildToolStatus(state),
+                  _buildToolStatus(context, state),
                 ],
               ),
-              _buildToolPayload(state),
+              _buildToolPayload(context, state),
             ],
           ),
         );
@@ -101,21 +102,20 @@ class ThoughtsStream extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 4.0),
         child: Text(
           'FILE [${filePart.mime}]: ${filePart.filename ?? filePart.url}',
-          style: const TextStyle(color: Colors.blue, fontSize: 9),
+          style: TextStyle(color: colors.tertiary, fontSize: 9),
         ),
       ),
       stepStart: (startPart) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
-        child: Divider(
-            color: AppPalette.primary.textPrimary.withValues(alpha: 0.1),
-            height: 1),
+        child:
+            Divider(color: colors.onSurface.withValues(alpha: 0.1), height: 1),
       ),
       stepFinish: (finishPart) => Padding(
         padding: const EdgeInsets.only(bottom: 8.0),
         child: Text(
           'STEP COMPLETE (${finishPart.reason})',
           style: TextStyle(
-            color: AppPalette.primary.textPrimary.withValues(alpha: 0.4),
+            color: colors.onSurface.withValues(alpha: 0.4),
             fontSize: 9,
             fontStyle: FontStyle.italic,
           ),
@@ -124,16 +124,17 @@ class ThoughtsStream extends StatelessWidget {
     );
   }
 
-  Color _getToolColor(ToolState state) {
+  Color _getToolColor(BuildContext context, ToolState state) {
+    final colors = context.colorScheme;
     return state.map(
-      pending: (_) => Colors.grey,
-      running: (_) => AppPalette.primary.primaryColor,
-      completed: (_) => Colors.green,
-      error: (_) => Colors.red,
+      pending: (_) => colors.onSurface.withValues(alpha: 0.5),
+      running: (_) => colors.primary,
+      completed: (_) => Colors.green, // Keep green for success
+      error: (_) => colors.error,
     );
   }
 
-  Widget _buildToolStatus(ToolState state) {
+  Widget _buildToolStatus(BuildContext context, ToolState state) {
     String label = state.map(
       pending: (_) => '[PENDING]',
       running: (_) => '[RUNNING...]',
@@ -143,20 +144,21 @@ class ThoughtsStream extends StatelessWidget {
     return Text(
       label,
       style: TextStyle(
-        color: _getToolColor(state).withValues(alpha: 0.6),
+        color: _getToolColor(context, state).withValues(alpha: 0.6),
         fontSize: 8,
       ),
     );
   }
 
-  Widget _buildToolPayload(ToolState state) {
+  Widget _buildToolPayload(BuildContext context, ToolState state) {
+    final colors = context.colorScheme;
     return state.map(
-      pending: (s) => _jsonText(s.input),
-      running: (s) => _jsonText(s.input),
+      pending: (s) => _jsonText(context, s.input),
+      running: (s) => _jsonText(context, s.input),
       completed: (s) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _jsonText(s.input),
+          _jsonText(context, s.input),
           const Divider(height: 8, color: Colors.white12),
           Text(
             s.output,
@@ -169,22 +171,23 @@ class ThoughtsStream extends StatelessWidget {
       error: (s) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _jsonText(s.input),
+          _jsonText(context, s.input),
           const Divider(height: 8, color: Colors.white12),
           Text(
             s.error,
-            style: const TextStyle(color: Colors.red, fontSize: 9),
+            style: TextStyle(color: colors.error, fontSize: 9),
           ),
         ],
       ),
     );
   }
 
-  Widget _jsonText(Map<String, dynamic> json) {
+  Widget _jsonText(BuildContext context, Map<String, dynamic> json) {
+    final colors = context.colorScheme;
     return Text(
       json.toString(),
       style: TextStyle(
-        color: AppPalette.primary.textPrimary.withValues(alpha: 0.8),
+        color: colors.onSurface.withValues(alpha: 0.8),
         fontSize: 9,
       ),
       maxLines: 2,

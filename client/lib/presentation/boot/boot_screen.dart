@@ -3,18 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_app/design_system/primitives/app_fonts.dart';
-import 'package:test_app/design_system/primitives/app_palette.dart';
-import 'package:test_app/design_system/primitives/app_sizes.dart';
-import 'package:test_app/design_system/primitives/spacers.dart';
-import 'package:test_app/presentation/core/widgets/scanline_widget.dart';
-import 'package:test_app/presentation/core/widgets/terminal_input.dart';
-import '../core/widgets/ascii_art.dart';
-import '../core/widgets/poco_widget.dart';
+import '../../app/bootstrap.dart';
 import '../../application/system/poco_cubit.dart';
+import '../../design_system/theme/app_theme.dart';
 import '../../domain/auth/i_auth_repository.dart';
 import '../../domain/status/i_status_repository.dart';
-import '../../app/bootstrap.dart';
+import '../core/widgets/ascii_art.dart';
+import '../core/widgets/poco_widget.dart';
+import '../core/widgets/scanline_widget.dart';
+import '../core/widgets/terminal_input.dart';
 
 class BootScreen extends StatefulWidget {
   const BootScreen({super.key});
@@ -193,8 +190,9 @@ class _BootScreenState extends State<BootScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: colors.surface,
       body: ScanlineWidget(
         child: Stack(
           children: [
@@ -210,7 +208,7 @@ class _BootScreenState extends State<BootScreen> {
                     _logs[index],
                     style: TextStyle(
                       fontFamily: AppFonts.bodyFamily,
-                      color: AppPalette.primary.primaryColor,
+                      color: colors.primary,
                       fontSize: AppSizes.fontSmall,
                     ),
                   );
@@ -229,7 +227,7 @@ class _BootScreenState extends State<BootScreen> {
                         VSpace.x4,
                         Container(
                           padding: EdgeInsets.all(AppSizes.space * 2),
-                          color: Colors.black.withValues(alpha: 0.8),
+                          color: colors.surface.withValues(alpha: 0.8),
                           child: Column(
                             children: [
                               TerminalInput(
