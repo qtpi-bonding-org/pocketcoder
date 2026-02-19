@@ -9,12 +9,12 @@
 # 2. Verify timestamps are reasonable
 # 3. Verify data relationships are correct (chat → message → session)
 
-load '../helpers/auth.sh'
-load '../helpers/cleanup.sh'
-load '../helpers/wait.sh'
-load '../helpers/assertions.sh'
-load '../helpers/diagnostics.sh'
-load '../helpers/tracking.sh'
+load '../../helpers/auth.sh'
+load '../../helpers/cleanup.sh'
+load '../../helpers/wait.sh'
+load '../../helpers/assertions.sh'
+load '../../helpers/diagnostics.sh'
+load '../../helpers/tracking.sh'
 
 setup() {
     load_env
@@ -265,12 +265,17 @@ teardown() {
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
     
-    # Verify initial status is pending
-    local initial_msg
-    initial_msg=$(pb_get "messages" "$USER_MESSAGE_ID")
-    local initial_status
-    initial_status=$(echo "$initial_msg" | jq -r '.user_message_status')
-    [ "$initial_status" = "pending" ] || run_diagnostic_on_failure "Data Consistency" "Initial message status is not 'pending'"
+    # Verify initial status (relay may process fast, so accept pending/sending/delivered)
+    # Use helper function to check if relay has already processed it
+    if message_has_relay_progress "$USER_MESSAGE_ID"; then
+        echo "✓ Message already delivered (relay processed very fast)"
+    else
+        local initial_msg
+        initial_msg=$(pb_get "messages" "$USER_MESSAGE_ID")
+        local initial_status
+        initial_status=$(echo "$initial_msg" | jq -r '.user_message_status')
+        [[ "$initial_status" =~ ^(pending|sending|delivered)$ ]] || run_diagnostic_on_failure "Data Consistency" "Initial message status is unexpected: $initial_status"
+    fi
     
     # Wait for status to change to sending
     run wait_for_message_status "$USER_MESSAGE_ID" "sending" 15

@@ -89,17 +89,19 @@ impl PocketCoderDriver {
         status.is_ok() && status.unwrap().success()
     }
 
-    /// Smart Router: Resolve session_id to (tmux_session_name, window_id)
+    /// Smart Router: Resolve session_id to (tmux_session_name, tmux_window_name)
     /// 
+    /// Returns the window NAME (not numeric index) so tmux targets are resilient
+    /// to window reordering. Tmux accepts "session:window_name.pane" targets.
+    ///
     /// Logic:
     /// 1. Query CAO's API at /terminals/by-delegating-agent/{session_id}
-    /// 2. Extract tmux_session and tmux_window_id from the response
+    /// 2. Extract tmux_session and tmux_window from the response
     /// 3. Return error if CAO lookup fails (no fallback)
-    async fn resolve_session_and_window(&self, session_id: &str) -> Result<(String, u32)> {
+    async fn resolve_session_and_window(&self, session_id: &str) -> Result<(String, String)> {
         let cao_url = "http://sandbox:9889";
         let client = reqwest::Client::new();
         
-        // Query CAO's API to resolve the session via delegating_agent_id
         let response = client.get(format!("{}/terminals/by-delegating-agent/{}", cao_url, session_id))
             .send()
             .await
@@ -116,54 +118,23 @@ impl PocketCoderDriver {
         let tmux_session = terminal_data["tmux_session"].as_str()
             .ok_or_else(|| anyhow!("Missing tmux_session in CAO response"))?;
         
-        // Extract window_id: prefer numeric tmux_window_id field, fall back to parsing tmux_window
-        let window_id = if let Some(window_id_num) = terminal_data.get("tmux_window_id").and_then(|v| v.as_u64()) {
-            window_id_num as u32
-        } else if let Some(tmux_window) = terminal_data["tmux_window"].as_str() {
-            // Fallback: extract window ID from window name (format: "window_name@<window_id>")
-            if let Some(at_pos) = tmux_window.rfind('@') {
-                tmux_window[at_pos + 1..].parse::<u32>().unwrap_or(0)
-            } else {
-                // Fallback: query tmux directly for window index
-                self.get_window_index(tmux_session, tmux_window)?
-            }
-        } else {
-            return Err(anyhow!("Missing tmux_window_id and tmux_window in CAO response"));
-        };
+        let tmux_window = terminal_data["tmux_window"].as_str()
+            .ok_or_else(|| anyhow!("Missing tmux_window in CAO response"))?;
         
-        println!("🔗 [Driver] Resolved session_id '{}' to session '{}' window {}", 
-                 session_id, tmux_session, window_id);
-        Ok((tmux_session.to_string(), window_id))
-    }
-
-    /// Get window index by querying tmux directly
-    fn get_window_index(&self, session: &str, window_name: &str) -> Result<u32> {
-        let tmux_args = ["-S", &self.socket_path];
-        let output = Command::new("tmux")
-            .args(&tmux_args)
-            .args(["list-windows", "-t", session, "-F", "#{window_name}:#{window_index}"])
-            .output()?;
-        
-        let content = String::from_utf8_lossy(&output.stdout);
-        for line in content.lines() {
-            if let Some((name, index_str)) = line.split_once(':') {
-                if name == window_name {
-                    return Ok(index_str.parse::<u32>().unwrap_or(0));
-                }
-            }
-        }
-        
-        Ok(0) // Default to window 0 if not found
+        println!("🔗 [Driver] Resolved session_id '{}' to session '{}' window '{}'", 
+                 session_id, tmux_session, tmux_window);
+        Ok((tmux_session.to_string(), tmux_window.to_string()))
     }
 
     pub async fn exec(&self, cmd: &str, cwd: Option<&str>, session_override: Option<&str>) -> Result<CommandResult> {
         let session_id = session_override.unwrap_or(&self.session_name);
         
         // 1. Resolve Session Identity (Smart Router Logic)
-        let (session, window_id) = self.resolve_session_and_window(session_id).await?;
+        let (session, window_name) = self.resolve_session_and_window(session_id).await?;
 
         let tmux_args = ["-S", &self.socket_path];
-        let pane = format!("{}:{}.0", session, window_id);
+        // Target by window NAME (not index) so it's resilient to window reordering
+        let pane = format!("{}:{}.0", session, window_name);
         let sentinel_id = Uuid::new_v4().to_string();
         
         // 2. Clear history
@@ -173,11 +144,12 @@ impl PocketCoderDriver {
         
         sleep(Duration::from_millis(300)).await;
 
-        // 3. Inject Command (MATCHING OLD LOGIC)
+        // 3. Inject Command
+        // Wrap in a subshell so commands like `exit 1` don't kill the tmux pane's shell.
         let final_cmd = if let Some(dir) = cwd {
-            format!("cd \"{}\" && {}", dir, cmd)
+            format!("(cd \"{}\" && {})", dir, cmd)
         } else {
-             cmd.to_string()
+            format!("({})", cmd)
         };
 
         let wrapped_cmd = format!("{}; echo \"---POCKETCODER_EXIT:$?_ID:{{{}}}---\"", final_cmd, sentinel_id);
@@ -209,7 +181,6 @@ impl PocketCoderDriver {
                     let result_output = lines.iter()
                         .filter(|l| !l.contains("POCKETCODER_EXIT"))
                         .filter(|l| !l.contains(&sentinel_id))
-                        .filter(|l| !l.contains("cd \"/workspace\""))
                         .map(|s| *s)
                         .collect::<Vec<&str>>()
                         .join("\n")
@@ -249,7 +220,7 @@ mod tests {
         
         // Mock CAO response with the new endpoint
         let mock_response = json!({
-            "tmux_session": "pc-test123",
+            "tmux_session": "test123",
             "tmux_window": "main@0",
             "tmux_window_id": 0
         });
@@ -295,40 +266,30 @@ mod tests {
     }
 
     #[test]
-    async fn test_resolve_session_extracts_tmux_window_id() {
-        // Test that we correctly extract numeric tmux_window_id from response
+    async fn test_resolve_session_extracts_tmux_window_name() {
+        // Test that we correctly extract tmux_window name from response
         let terminal_data: serde_json::Value = json!({
-            "tmux_session": "pc-test123",
-            "tmux_window_id": 5
-        });
-        
-        let tmux_session = terminal_data["tmux_session"].as_str().unwrap();
-        let window_id = terminal_data.get("tmux_window_id").and_then(|v| v.as_u64()).unwrap();
-        
-        assert_eq!(tmux_session, "pc-test123");
-        assert_eq!(window_id, 5);
-    }
-
-    #[test]
-    async fn test_resolve_session_falls_back_to_tmux_window_parsing() {
-        // Test fallback to tmux_window parsing when tmux_window_id is not present
-        let terminal_data: serde_json::Value = json!({
-            "tmux_session": "pc-test123",
-            "tmux_window": "analyst@2"
+            "tmux_session": "test123",
+            "tmux_window": "poco-ab12"
         });
         
         let tmux_session = terminal_data["tmux_session"].as_str().unwrap();
         let tmux_window = terminal_data["tmux_window"].as_str().unwrap();
         
-        // Extract window ID from window name (format: "window_name@<window_id>")
-        let window_id = if let Some(at_pos) = tmux_window.rfind('@') {
-            tmux_window[at_pos + 1..].parse::<u32>().unwrap_or(0)
-        } else {
-            0
-        };
+        assert_eq!(tmux_session, "test123");
+        assert_eq!(tmux_window, "poco-ab12");
+    }
+
+    #[test]
+    async fn test_pane_target_uses_window_name() {
+        // Test that the pane target uses window name, not numeric index
+        let session = "pocketcoder_session";
+        let window_name = "poco-ab12";
+        let pane = format!("{}:{}.0", session, window_name);
         
-        assert_eq!(tmux_session, "pc-test123");
-        assert_eq!(window_id, 2);
+        assert_eq!(pane, "pocketcoder_session:poco-ab12.0");
+        // Should NOT contain numeric-only window reference
+        assert!(!pane.contains(":0.0"));
     }
 
     #[test]
