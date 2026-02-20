@@ -5,11 +5,13 @@ import '../../../../domain/chat/chat_message.dart';
 class SpeechBubble extends StatelessWidget {
   final List<MessagePartText> textParts;
   final bool isUser;
+  final String? agentName;
 
   const SpeechBubble({
     super.key,
     required this.textParts,
     this.isUser = false,
+    this.agentName,
   });
 
   @override
@@ -19,6 +21,14 @@ class SpeechBubble extends StatelessWidget {
     final colors = context.colorScheme;
     // Consolidate text for now
     final fullText = textParts.map((e) => e.text ?? '').join('\n');
+
+    // Dynamic Label
+    final String label;
+    if (isUser) {
+      label = 'USER';
+    } else {
+      label = (agentName ?? 'POCO').toUpperCase();
+    }
 
     return Container(
       width: double.infinity,
@@ -46,7 +56,7 @@ class SpeechBubble extends StatelessWidget {
               ),
               HSpace.x1,
               Text(
-                isUser ? 'OPERATOR' : 'POCO',
+                label,
                 style: TextStyle(
                   color: colors.onSurface.withValues(alpha: 0.5),
                   fontSize: 10,
