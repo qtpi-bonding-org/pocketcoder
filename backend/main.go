@@ -52,7 +52,7 @@ func main() {
 
 	// 3. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
-		log.Printf("🚀 Starting PocketCoder Sovereign Backend...")
+		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
 
 		// A. Provision SOPs from filesystem
 		provisioning.ProvisionSops(app)

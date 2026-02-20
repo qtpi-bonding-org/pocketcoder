@@ -110,10 +110,22 @@ Stay safe. Stay encrypted. Await input.`)
 		agentColl, _ := app.FindCollectionByNameOrId("ai_agents")
 		pocoAgent := core.NewRecord(agentColl)
 		pocoAgent.Set("name", "poco")
+		pocoAgent.Set("description", "Primary development agent for PocketCoder (Poco)")
+		pocoAgent.Set("mode", "primary")
+		pocoAgent.Set("temperature", 0.1)
 		pocoAgent.Set("is_init", true)
 		pocoAgent.Set("prompt", pocoPrompt.Id)
 		pocoAgent.Set("model", geminiModel.Id)
-		pocoAgent.Set("config", "{\"tools\": {\"write\": true, \"edit\": true, \"bash\": true}}")
+		pocoAgent.Set("tools", map[string]interface{}{
+			"write": true,
+			"edit": true,
+			"bash": true,
+		})
+		pocoAgent.Set("permissions", map[string]interface{}{
+			"bash": map[string]interface{}{
+				"*": "ask",
+			},
+		})
 		if err := app.Save(pocoAgent); err != nil { return err }
 
 		return nil

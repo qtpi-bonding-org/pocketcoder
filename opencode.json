@@ -1,4 +1,8 @@
 {
+  "default_agent": "poco",
+  "plugin": [
+    "./opencode/plugins/session_env.ts"
+  ],
   "agent": {
     "poco": {
       "description": "Primary development agent for PocketCoder (Poco)",
@@ -7,8 +11,7 @@
       "tools": {
         "write": true,
         "edit": true,
-        "bash": false,
-        "pocketcoder_bash": true,
+        "bash": true,
         "question": true,
         "lsp": false,
         "read": true,
@@ -19,8 +22,7 @@
         "cao_*": true
       },
       "permission": {
-        "bash": "deny",
-        "pocketcoder_bash": "ask",
+        "bash": "ask",
         "edit": "ask",
         "skill": "ask",
         "cao_*": "ask"
@@ -28,8 +30,7 @@
     }
   },
   "permission": {
-    "bash": "deny",
-    "pocketcoder_bash": "ask",
+    "bash": "ask",
     "edit": "ask",
     "skill": "ask",
     "mcp_catalog": "allow",

@@ -7,16 +7,16 @@ part 'ssh_key.g.dart';
 class SshKey with _$SshKey {
   const factory SshKey({
     required String id,
-    @JsonKey(name: 'user') required String userId,
-    @JsonKey(name: 'public_key') required String publicKey,
-    @JsonKey(name: 'device_name') String? deviceName,
+    required String user,
+    required String publicKey,
+    String? deviceName,
     required String fingerprint,
     String? algorithm,
-    @JsonKey(name: 'key_size') int? keySize,
+    int? keySize,
     String? comment,
-    @JsonKey(name: 'expires_at') DateTime? expiresAt,
-    @JsonKey(name: 'last_used') DateTime? lastUsed,
-    @JsonKey(name: 'is_active') @Default(true) bool isActive,
+    DateTime? expiresAt,
+    DateTime? lastUsed,
+    @Default(true) bool isActive,
     DateTime? created,
     DateTime? updated,
   }) = _SshKey;

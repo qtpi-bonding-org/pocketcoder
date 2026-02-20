@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 part 'chat.freezed.dart';
 part 'chat.g.dart';
@@ -8,11 +9,11 @@ class Chat with _$Chat {
   const factory Chat({
     required String id,
     required String title,
-    @JsonKey(name: 'ai_engine_session_id') String? aiEngineSessionId,
-    @JsonKey(name: 'engine_type') ChatEngineType? engineType,
-    @JsonKey(name: 'user') required String userId,
-    @JsonKey(name: 'agent') String? agentId,
-    @JsonKey(name: 'last_active') DateTime? lastActive,
+    String? aiEngineSessionId,
+    ChatEngineType? engineType,
+    required String user,
+    String? agent,
+    DateTime? lastActive,
     String? preview,
     ChatTurn? turn,
     String? description,
@@ -21,6 +22,8 @@ class Chat with _$Chat {
     DateTime? created,
     DateTime? updated,
   }) = _Chat;
+
+  factory Chat.fromRecord(RecordModel record) => Chat.fromJson(record.toJson());
 
   factory Chat.fromJson(Map<String, dynamic> json) => _$ChatFromJson(json);
 }
