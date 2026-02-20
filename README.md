@@ -23,8 +23,8 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 4.  **Explore**: Access the PocketBase UI at `http://localhost:8090/_/`
 
 ## 🔗 Links
-- [Detailed Architecture](ARCHITECTURE.md)
-- [Security Architecture](SECURITY.md)
+- [Detailed Architecture](docs/SYSTEM_ARCHITECTURE.md)
+- [Security Architecture](docs/SECURITY.md)
 - [Project Roadmap](PLAN.txt)
 - [Project License](LICENSE) (AGPLv3)
 - [Client App License](client/LICENSE) (MPL-2.0)
@@ -40,11 +40,11 @@ PocketCoder is designed as a **Fractal Agent** system. It separates high-level r
 
 - **The Brain (Poco)**: A sovereign coordinator that plans and orchestrates work.
 - **The Conductor (CAO)**: A terminal-aware Python orchestrator that manages subagent delegation via the **SSH-TTY Bus**.
-- **The Body (Sandbox)**: A secure, hardened environment where Sub-Agents execute tasks in isolated Tmux panes.
-- **The Proxy (Muscle)**: A high-performance Rust execution bridge that translates validated intents into terminal actions and streaming responses.
-- **The State & Gatekeeper (Memory)**: PocketBase acts as the ledger of record and the primary authority, gating every sensitive intent for user approval before execution.
+- **The Body (Sandbox)**: A secure, hardened environment where commands are executed in isolated Tmux panes.
+- **The Gatekeeper (PocketBase)**: The stateful nervous system and ledger of record, gating every sensitive intent for user approval.
+- **The Infrastructure (MCP Gateway & Proxy)**: A high-performance bridge that manages external tool servers and handles secure Docker interactions.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full technical deep-dive.
+See [docs/SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md) for the full technical deep-dive.
 
 ## Customize Your PocketCoder
 
@@ -71,7 +71,8 @@ While Poco's direct shell/file actions are gated by human approval, subagents ar
 
 | Component | Tech | Lines | Role |
 | :--- | :--- | :--- | :--- |
-| **backend** | Go | ~1,500 | Sovereign Authority, Asynchronous Relay, and API. |
-| **proxy** | Rust | ~600 | Sensory bridge with high-performance TTY streaming. |
-| **sandbox/cao** | Python/Bash| ~800 | The terminal-aware orchestrator and TUI bus. |
-| **CORE TOTAL**| | **~2,900** | **Lean, Fast, Fully Sovereign.** |
+| **backend** | Go | ~1,600 | Sovereign Authority, Asynchronous Relay, and API. |
+| **proxy** | Rust | ~700 | Sensory bridge with high-performance TTY streaming. |
+| **sandbox/cao** | Python/Bash| ~900 | The terminal-aware orchestrator and TUI bus. |
+| **mcp-gateway** | Docker/Node | ~200 | Aggregates and secures external Tool Servers. |
+| **CORE TOTAL**| | **~3,400** | **Lean, Fast, Fully Sovereign.** |
