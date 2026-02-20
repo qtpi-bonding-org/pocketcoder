@@ -137,10 +137,9 @@ async fn exec_handler(
     Json(payload): Json<ExecRequest>,
 ) -> Json<serde_json::Value> {
     let cwd = if payload.cwd.is_empty() { "/workspace" } else { &payload.cwd };
-    let session_name = payload.session_id.as_deref();
 
-    println!("⚡ [Server/Exec] Cmd: {}", payload.cmd);
-    match state.driver.exec(&payload.cmd, Some(cwd), session_name.as_deref()).await {
+    println!("⚡ [Server/Exec] Cmd: {} (Agent: {})", payload.cmd, payload.agent_name);
+    match state.driver.exec(&payload.cmd, Some(cwd), &payload.agent_name).await {
         Ok(res) => Json(serde_json::json!({ "stdout": res.output, "exit_code": res.exit_code })),
         Err(e) => Json(serde_json::json!({ "error": e.to_string(), "exit_code": 1 })),
     }

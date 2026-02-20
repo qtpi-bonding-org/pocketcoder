@@ -54,6 +54,7 @@ pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
     let cwd = env::current_dir().unwrap_or_default().to_string_lossy().to_string();
     let usage_id = env::var("POCKETCODER_USAGE_ID").ok();
     let session_id = env::var("OPENCODE_SESSION_ID").ok();
+    let agent_name = env::var("OPENCODE_AGENT").unwrap_or_else(|_| "poco".to_string());
     if session_id.is_none() {
         eprintln!("\x1b[31m🔥 [Bridge Error]: OPENCODE_SESSION_ID environment variable is not set\x1b[0m");
     }
@@ -63,6 +64,7 @@ pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
         cwd,
         usage_id,
         session_id,
+        agent_name,
     };
 
     let proxy_url = env::var("PROXY_URL").unwrap_or_else(|_| "http://localhost:3001".to_string());

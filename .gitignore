@@ -31,7 +31,6 @@ backend/pocketbase
 .independent_repos/
 !.independent_repos/openclaw_reference/
 !.independent_repos/openclaw_reference/README.md
-opencode/
 code/
 
 # Legacy/Misc

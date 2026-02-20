@@ -30,7 +30,6 @@ services:
     restart: unless-stopped
     networks:
       - pocketcoder-memory
-      - pocketcoder-mcp
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -55,8 +54,8 @@ services:
     volumes:
       - ./.ssh_keys:/ssh_keys:ro
       - opencode_workspace:/workspace
-      - ./agents/poco/proposals:/workspace/.opencode/proposals
-      - ./agents/poco/skills:/workspace/.opencode/skills:ro
+      - ./opencode/proposals:/workspace/opencode/proposals
+      - ./opencode/skills:/workspace/opencode/skills:ro
       - opencode_data:/root/.local/share/opencode
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
       - mcp_config:/mcp_config:ro
