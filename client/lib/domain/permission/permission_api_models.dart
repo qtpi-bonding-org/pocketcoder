@@ -8,13 +8,13 @@ class PermissionRequestPayload with _$PermissionRequestPayload {
   const factory PermissionRequestPayload({
     required String permission,
     List<String>? patterns,
-    @JsonKey(name: 'chat_id') String? chatId,
-    @JsonKey(name: 'session_id') String? sessionId,
-    @JsonKey(name: 'opencode_id') String? opencodeId,
+    String? chat,
+    String? sessionId,
+    String? opencodeId,
     Map<String, dynamic>? metadata,
     String? message,
-    @JsonKey(name: 'message_id') String? messageId,
-    @JsonKey(name: 'call_id') String? callId,
+    String? messageId,
+    String? callId,
   }) = _PermissionRequestPayload;
 
   factory PermissionRequestPayload.fromJson(Map<String, dynamic> json) =>
