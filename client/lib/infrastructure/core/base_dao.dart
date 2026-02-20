@@ -160,32 +160,21 @@ abstract class BaseDao<T> {
 
   T _mapRecord(RecordModel record) {
     try {
-      // PocketBase sometimes returns empty strings "" for uninitialized date fields.
-      // Dart's strict DateTime.parse("") crashes. We must sanitize any known
-      // date fields in record.data before freezing.
-      final sanitizedData = <String, dynamic>{};
-      record.data.forEach((key, value) {
+      // Official SDK Bridge: Leverage record.toJson() as the source of truth.
+      // This includes id, created, updated, and all data fields automatically.
+      final json = record.toJson();
+
+      // Sanitization: Fix empty date strings that would crash DateTime.parse.
+      json.forEach((key, value) {
         if (value == '' &&
             (key.endsWith('_at') ||
-                key == 'last_used' ||
-                key == 'last_seen' ||
-                key == 'last_ping' ||
-                key == 'last_active')) {
-          sanitizedData[key] = null;
-        } else {
-          sanitizedData[key] = value;
+                key == 'created' ||
+                key == 'updated' ||
+                key.startsWith('last_'))) {
+          json[key] = null;
         }
       });
 
-      // Merge the record ID into the data map so the domain model's fromJson
-      // can pick it up. Standard PocketBase records keep ID outside 'data'.
-      final json = {
-        ...sanitizedData,
-        'id': record.id,
-        'created': record.created.isEmpty ? null : record.created,
-        'updated': record.updated.isEmpty ? null : record.updated,
-        'expand': record.expand,
-      };
       return _fromJson(json);
     } catch (e, stack) {
       logError('DAO [$_collection]: Mapping record failed for ID: ${record.id}',
