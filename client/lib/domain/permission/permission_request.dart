@@ -36,4 +36,6 @@ enum PermissionStatus {
   authorized,
   @JsonValue('denied')
   denied,
+  @JsonValue('')
+  unknown,
 }

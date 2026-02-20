@@ -56,7 +56,7 @@ class PermissionPrompt extends StatelessWidget {
           ),
           VSpace.x2,
           Text(
-            '${(request.source ?? "SYSTEM").toUpperCase()} IS REQUESTING PERMISSION:',
+            '${(request.source == "relay-go" ? "POCO" : request.source ?? "SYSTEM").toUpperCase()} IS REQUESTING PERMISSION:',
             style: TextStyle(
               color: colors.onSurface.withValues(alpha: 0.7),
               fontSize: AppSizes.fontMini,

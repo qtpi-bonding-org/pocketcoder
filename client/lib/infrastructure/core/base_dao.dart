@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
+import 'logger.dart';
 
 /// A generic Data Access Object (DAO) for PocketBase collections.
 ///
@@ -41,13 +43,27 @@ abstract class BaseDao<T> {
     String? expand,
     RequestPolicy? requestPolicy,
   }) async {
-    final records = await service.getFullList(
-      filter: filter,
-      sort: sort,
-      expand: expand,
-      requestPolicy: requestPolicy,
-    );
-    return _mapRecords(records);
+    logDebug(
+        'DAO [$_collection]: getFullList(filter: $filter, policy: $requestPolicy)');
+    try {
+      final records = await service
+          .getFullList(
+        filter: filter,
+        sort: sort,
+        expand: expand,
+        requestPolicy: requestPolicy,
+      )
+          .timeout(const Duration(seconds: 10), onTimeout: () {
+        logWarning('DAO [$_collection]: getFullList TIMEOUT after 10s');
+        throw TimeoutException('PocketBase getFullList timed out');
+      });
+      logDebug(
+          'DAO [$_collection]: getFullList returned ${records.length} records');
+      return _mapRecords(records);
+    } catch (e, stack) {
+      logError('DAO [$_collection]: getFullList failed', e, stack);
+      rethrow;
+    }
   }
 
   /// Fetches a single record by ID.
@@ -56,12 +72,24 @@ abstract class BaseDao<T> {
     String? expand,
     RequestPolicy? requestPolicy,
   }) async {
-    final record = await service.getOne(
-      id,
-      expand: expand,
-      requestPolicy: requestPolicy,
-    );
-    return _mapRecord(record);
+    logDebug('DAO [$_collection]: getOne(id: $id, policy: $requestPolicy)');
+    try {
+      final record = await service
+          .getOne(
+        id,
+        expand: expand,
+        requestPolicy: requestPolicy,
+      )
+          .timeout(const Duration(seconds: 10), onTimeout: () {
+        logWarning('DAO [$_collection]: getOne($id) TIMEOUT after 10s');
+        throw TimeoutException('PocketBase getOne timed out');
+      });
+      logDebug('DAO [$_collection]: getOne($id) returned record');
+      return _mapRecord(record);
+    } catch (e, stack) {
+      logError('DAO [$_collection]: getOne($id) failed', e, stack);
+      rethrow;
+    }
   }
 
   /// Persists a record (creates if ID is missing or empty).
@@ -70,28 +98,56 @@ abstract class BaseDao<T> {
     Map<String, dynamic> data, {
     RequestPolicy? requestPolicy,
   }) async {
-    RecordModel record;
-    if (id == null || id.isEmpty) {
-      record = await service.create(
-        body: data,
-        requestPolicy: requestPolicy,
-      );
-    } else {
-      record = await service.update(
-        id,
-        body: data,
-        requestPolicy: requestPolicy,
-      );
+    logDebug('DAO [$_collection]: save(id: $id)');
+    try {
+      RecordModel record;
+      if (id == null || id.isEmpty) {
+        record = await service
+            .create(
+          body: data,
+          requestPolicy: requestPolicy,
+        )
+            .timeout(const Duration(seconds: 10), onTimeout: () {
+          logWarning('DAO [$_collection]: create TIMEOUT after 10s');
+          throw TimeoutException('PocketBase create timed out');
+        });
+      } else {
+        record = await service
+            .update(
+          id,
+          body: data,
+          requestPolicy: requestPolicy,
+        )
+            .timeout(const Duration(seconds: 10), onTimeout: () {
+          logWarning('DAO [$_collection]: update($id) TIMEOUT after 10s');
+          throw TimeoutException('PocketBase update timed out');
+        });
+      }
+      logDebug('DAO [$_collection]: save complete');
+      return _mapRecord(record);
+    } catch (e, stack) {
+      logError('DAO [$_collection]: save failed', e, stack);
+      rethrow;
     }
-    return _mapRecord(record);
   }
 
-  /// Deletes a record.
   Future<void> delete(String id, {RequestPolicy? requestPolicy}) async {
-    await service.delete(
-      id,
-      requestPolicy: requestPolicy,
-    );
+    logDebug('DAO [$_collection]: delete(id: $id)');
+    try {
+      await service
+          .delete(
+        id,
+        requestPolicy: requestPolicy,
+      )
+          .timeout(const Duration(seconds: 10), onTimeout: () {
+        logWarning('DAO [$_collection]: delete($id) TIMEOUT after 10s');
+        throw TimeoutException('PocketBase delete timed out');
+      });
+      logDebug('DAO [$_collection]: delete complete');
+    } catch (e, stack) {
+      logError('DAO [$_collection]: delete failed', e, stack);
+      rethrow;
+    }
   }
 
   // ===========================================================================
@@ -103,15 +159,38 @@ abstract class BaseDao<T> {
   }
 
   T _mapRecord(RecordModel record) {
-    // Merge the record ID into the data map so the domain model's fromJson
-    // can pick it up. Standard PocketBase records keep ID outside 'data'.
-    final json = {
-      ...record.data,
-      'id': record.id,
-      'created': record.get<String>('created'),
-      'updated': record.get<String>('updated'),
-      'expand': record.expand,
-    };
-    return _fromJson(json);
+    try {
+      // PocketBase sometimes returns empty strings "" for uninitialized date fields.
+      // Dart's strict DateTime.parse("") crashes. We must sanitize any known
+      // date fields in record.data before freezing.
+      final sanitizedData = <String, dynamic>{};
+      record.data.forEach((key, value) {
+        if (value == '' &&
+            (key.endsWith('_at') ||
+                key == 'last_used' ||
+                key == 'last_seen' ||
+                key == 'last_ping' ||
+                key == 'last_active')) {
+          sanitizedData[key] = null;
+        } else {
+          sanitizedData[key] = value;
+        }
+      });
+
+      // Merge the record ID into the data map so the domain model's fromJson
+      // can pick it up. Standard PocketBase records keep ID outside 'data'.
+      final json = {
+        ...sanitizedData,
+        'id': record.id,
+        'created': record.created.isEmpty ? null : record.created,
+        'updated': record.updated.isEmpty ? null : record.updated,
+        'expand': record.expand,
+      };
+      return _fromJson(json);
+    } catch (e, stack) {
+      logError('DAO [$_collection]: Mapping record failed for ID: ${record.id}',
+          e, stack);
+      rethrow;
+    }
   }
 }

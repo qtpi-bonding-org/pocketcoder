@@ -10,6 +10,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'terminal_state.dart';
 import '../../infrastructure/core/collections.dart';
+import '../../infrastructure/core/logger.dart';
 
 @injectable
 class SshTerminalCubit extends Cubit<SshTerminalState> {
@@ -41,7 +42,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
         await _syncPublicKey(keys.publicKeyStr);
       }
 
-      print(
+      logInfo(
           '🌐 [Terminal] Connecting to $host:$port as $username (via Key)...');
       final socket = await SSHSocket.connect(host, port);
 
@@ -52,7 +53,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
       );
 
       await _client!.authenticated;
-      print('🔓 [Terminal] SSH Authenticated.');
+      logInfo('🔓 [Terminal] SSH Authenticated.');
 
       _session = await _client!.shell(
         pty: SSHPtyConfig(
@@ -81,7 +82,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
         _session!.stdin.add(utf8.encode(data));
       };
     } catch (e) {
-      print('❌ [Terminal] Connection failed: $e');
+      logError('❌ [Terminal] Connection failed', e);
       emit(state.copyWith(status: TerminalStatus.error, error: e.toString()));
     }
   }
@@ -150,7 +151,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
 
       if (existingKeys.isEmpty) {
         // Create new SSH key record
-        print('🔄 [Terminal] Registering new SSH key to PocketBase...');
+        logInfo('🔄 [Terminal] Registering new SSH key to PocketBase...');
         await _pb.collection(Collections.sshKeys).create(body: {
           'user': userId,
           'public_key': publicKey,
@@ -166,7 +167,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
         });
       }
     } catch (e) {
-      print('⚠️ [Terminal] Failed to sync SSH key: $e');
+      logWarning('⚠️ [Terminal] Failed to sync SSH key', e);
       // Don't fail the connection if key sync fails
     }
   }

@@ -8,6 +8,10 @@ import 'package:test_app/presentation/settings/agent_management_screen.dart';
 import 'package:test_app/presentation/whitelist/whitelist_screen.dart';
 import 'package:test_app/presentation/boot/boot_screen.dart';
 import 'package:test_app/presentation/terminal/terminal_screen.dart';
+import 'package:test_app/presentation/observability/agent_observability_screen.dart';
+import 'package:test_app/presentation/mcp/mcp_management_screen.dart';
+import 'package:test_app/presentation/sop/sop_management_screen.dart';
+import 'package:test_app/presentation/system/system_checks_screen.dart';
 
 import 'package:test_app/presentation/core/widgets/terminal_transition.dart';
 
@@ -92,6 +96,42 @@ class AppRouter {
           child: const TerminalScreen(),
         ),
       ),
+      GoRoute(
+        path: AppRoutes.agentObservability,
+        name: RouteNames.agentObservability,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const AgentObservabilityScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.mcpManagement,
+        name: RouteNames.mcpManagement,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const McpManagementScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.sopManagement,
+        name: RouteNames.sopManagement,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const SopManagementScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.systemChecks,
+        name: RouteNames.systemChecks,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const SystemChecksScreen(),
+        ),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -111,6 +151,10 @@ class AppRoutes {
   static const String aiRegistry = '/settings/ai';
   static const String whitelist = '/settings/whitelist';
   static const String terminal = '/terminal';
+  static const String agentObservability = '/observability';
+  static const String mcpManagement = '/mcp';
+  static const String sopManagement = '/sop';
+  static const String systemChecks = '/system-checks';
 }
 
 class RouteNames {
@@ -123,6 +167,10 @@ class RouteNames {
   static const String aiRegistry = 'aiRegistry';
   static const String whitelist = 'whitelist';
   static const String terminal = 'terminal';
+  static const String agentObservability = 'agentObservability';
+  static const String mcpManagement = 'mcpManagement';
+  static const String sopManagement = 'sopManagement';
+  static const String systemChecks = 'systemChecks';
 }
 
 class AppNavigation {
