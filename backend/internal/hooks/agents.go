@@ -25,19 +25,9 @@ func RegisterAgentHooks(app *pocketbase.PocketBase) {
 		return e.Next()
 	})
 
-	// For rules, prompts, and models, we find the affected agents and re-assemble them (REQUIRES Save)
-	app.OnRecordAfterUpdateSuccess("ai_permission_rules", "ai_prompts", "ai_models").BindFunc(func(e *core.RecordEvent) error {
+	// For prompts and models, we find the affected agents and re-assemble them (REQUIRES Save)
+	app.OnRecordAfterUpdateSuccess("ai_prompts", "ai_models").BindFunc(func(e *core.RecordEvent) error {
 		collection := e.Record.Collection().Name
-
-		if collection == "ai_permission_rules" {
-			agentId := e.Record.GetString("agent")
-			if agentId != "" {
-				agent, _ := app.FindRecordById("ai_agents", agentId)
-				if agent != nil {
-					agents.UpdateAgentConfig(app, agent)
-				}
-			}
-		}
 
 		if collection == "ai_prompts" {
 			agentsList, _ := app.FindRecordsByFilter("ai_agents", "prompt = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})

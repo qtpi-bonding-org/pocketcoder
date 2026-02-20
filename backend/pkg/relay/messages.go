@@ -284,7 +284,7 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 	// Create new session
 	log.Printf("🆕 [Relay/Go] Creating new OpenCode session for chat %s", chatID)
 	reqURL := fmt.Sprintf("%s/session", r.openCodeURL)
-	payload := `{"directory": "/workspace", "agent": "build"}`
+	payload := `{"directory": "/workspace", "agent": "poco"}`
 	resp, err := http.Post(reqURL, "application/json", strings.NewReader(payload))
 	if err != nil {
 		log.Printf("❌ [Relay/Go] OpenCode session creation request failed: %v", err)

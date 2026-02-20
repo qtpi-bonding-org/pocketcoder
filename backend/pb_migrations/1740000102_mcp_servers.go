@@ -17,7 +17,7 @@ func init() {
 		mcpServers, err := app.FindCollectionByNameOrId("mcp_servers")
 		if err != nil {
 			// Collection doesn't exist, create it
-			mcpServers = core.NewCollection("mcp_servers", core.CollectionTypeBase)
+			mcpServers = core.NewCollection(core.CollectionTypeBase, "mcp_servers")
 			mcpServers.Id = "mcp_servers"
 		}
 
