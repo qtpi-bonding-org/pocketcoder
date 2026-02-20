@@ -10,7 +10,7 @@ class Proposal with _$Proposal {
     required String name,
     String? description,
     required String content,
-    @JsonKey(name: 'authored_by') required ProposalAuthor authoredBy,
+    required ProposalAuthor authoredBy,
     required ProposalStatus status,
     DateTime? created,
     DateTime? updated,
