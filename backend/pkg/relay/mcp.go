@@ -37,7 +37,7 @@ import (
 const (
 	mcpConfigPath     = "/mcp_config/docker-mcp.yaml"
 	gatewayContainer  = "pocketcoder-mcp-gateway"
-	dockerSocketPath  = "/var/run/docker.sock"
+	dockerHost        = "tcp://docker-socket-proxy:2375"
 )
 
 // registerMcpHooks registers hooks for MCP server lifecycle management
@@ -160,25 +160,38 @@ func (r *RelayService) renderMcpConfig() error {
 	return nil
 }
 
-// restartGateway sends a restart command to the Docker gateway container via Unix socket
+// restartGateway sends a restart command to the Docker gateway container via the Docker Socket Proxy
 func (r *RelayService) restartGateway() error {
 	log.Printf("🔄 [Relay/MCP] Restarting MCP gateway container '%s'...", gatewayContainer)
 
-	// Create HTTP client with Unix socket dialer
+	// Get Docker host from environment or use default proxy endpoint
+	host := os.Getenv("DOCKER_HOST")
+	if host == "" {
+		host = dockerHost
+	}
+
+	// Parse the host URL to extract the address
+	proxyAddr := host
+	if strings.HasPrefix(host, "tcp://") {
+		proxyAddr = strings.TrimPrefix(host, "tcp://")
+	}
+
+	// Create HTTP client for TCP connection to proxy
 	client := &http.Client{
 		Transport: &http.Transport{
-			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", dockerSocketPath)
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				// Always dial the proxy address, ignoring the addr parameter
+				return net.Dial("tcp", proxyAddr)
 			},
 		},
 		Timeout: 10 * time.Second,
 	}
 
 	// Docker API endpoint for container restart
-	apiPath := fmt.Sprintf("http://localhost/containers/%s/restart", gatewayContainer)
+	apiPath := fmt.Sprintf("http://%s/containers/%s/restart", proxyAddr, gatewayContainer)
 	resp, err := client.Post(apiPath, "application/json", nil)
 	if err != nil {
-		return fmt.Errorf("failed to call Docker API: %w", err)
+		return fmt.Errorf("failed to call Docker API via proxy: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -192,7 +205,7 @@ func (r *RelayService) restartGateway() error {
 		return fmt.Errorf("Docker API returned error %s: %s", resp.Status, string(body))
 	}
 
-	log.Printf("✅ [Relay/MCP] Gateway container '%s' restart command sent successfully", gatewayContainer)
+	log.Printf("✅ [Relay/MCP] Gateway container '%s' restart command sent successfully via proxy", gatewayContainer)
 	return nil
 }
 

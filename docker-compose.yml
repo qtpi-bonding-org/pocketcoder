@@ -12,10 +12,8 @@ services:
       # - pb_backups:/app/pb_backups
       - pocketcoder-logs:/app/pb_public/logs
       - opencode_workspace:/workspace
-      - ./agents/poco/proposals:/workspace/.opencode/proposals
-      - ./agents/poco/skills:/workspace/.opencode/skills
+      - ./opencode:/workspace/.opencode
       - ./.ssh_keys:/ssh_keys
-      - /var/run/docker.sock:/var/run/docker.sock
       - mcp_config:/mcp_config
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
@@ -25,11 +23,13 @@ services:
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
       - OPENCODE_URL=${OPENCODE_URL}
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
     command: >
       sh -c "echo '⏳ Waiting for OpenCode to be ready...' && while ! curl -I -s --connect-timeout 2 http://opencode:3000 > /dev/null; do echo 'OpenCode not yet ready, retrying in 1 second...' && sleep 1; done; echo '🚀 OpenCode is ready. Starting PocketBase...' && /app/pocketbase serve --http=0.0.0.0:8090"
     restart: unless-stopped
     networks:
       - pocketcoder-memory
+      - pocketcoder-mcp
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -54,8 +54,7 @@ services:
     volumes:
       - ./.ssh_keys:/ssh_keys:ro
       - opencode_workspace:/workspace
-      - ./opencode/proposals:/workspace/opencode/proposals
-      - ./opencode/skills:/workspace/opencode/skills:ro
+      - ./opencode:/workspace/.opencode
       - opencode_data:/root/.local/share/opencode
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
       - mcp_config:/mcp_config:ro
@@ -79,7 +78,7 @@ services:
     container_name: pocketcoder-sandbox
     volumes:
       - opencode_workspace:/workspace
-      - ./agents/poco/proposals:/workspace/.opencode/proposals
+      - ./opencode:/workspace/.opencode
       - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
       - ./.ssh_keys:/ssh_keys:ro
       - ./sandbox/cao/src:/app/cao/src
@@ -112,6 +111,37 @@ services:
     environment:
       - DOCKER_MCP_IN_CONTAINER=1
     command: ["--port", "8811", "--transport", "sse", "--verbose", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--enable-all-servers"]
+    networks:
+      - pocketcoder-mcp
+    restart: unless-stopped
+
+  # 🔒 DOCKER SOCKET PROXY (Security Layer for PocketBase)
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: pocketcoder-docker-proxy
+    environment:
+      # Enable ONLY container restart operations
+      - CONTAINERS=1          # Allow container operations (list, inspect, restart)
+      - POST=1                # Allow POST requests (for restart)
+      - INFO=0                # Disable info endpoint
+      - IMAGES=0              # Disable image operations
+      - NETWORKS=0            # Disable network operations
+      - VOLUMES=0             # Disable volume operations
+      - BUILD=0               # Disable build operations
+      - COMMIT=0              # Disable commit operations
+      - CONFIGS=0             # Disable config operations
+      - DISTRIBUTION=0        # Disable distribution operations
+      - EXEC=0                # Disable exec operations
+      - PLUGINS=0             # Disable plugin operations
+      - SECRETS=0             # Disable secrets operations
+      - SERVICES=0            # Disable services operations
+      - SESSION=0             # Disable session operations
+      - SWARM=0               # Disable swarm operations
+      - SYSTEM=0              # Disable system operations
+      - TASKS=0               # Disable tasks operations
+      - LOG_LEVEL=info        # Logging level
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - pocketcoder-mcp
     restart: unless-stopped

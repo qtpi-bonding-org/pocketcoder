@@ -58,12 +58,20 @@ func init() {
 		agents, _ := getOrCreateCollection("pc_ai_agents", "ai_agents", core.CollectionTypeBase)
 		addFields(agents, 
 			&core.TextField{Name: "name", Required: true}, 
+			&core.TextField{Name: "description"},
+			&core.SelectField{Name: "mode", Values: []string{"primary", "subagent"}},
+			&core.NumberField{Name: "temperature"},
 			&core.BoolField{Name: "is_init"},
 			&core.RelationField{Name: "prompt", CollectionId: prompts.Id, MaxSelect: 1},
 			&core.RelationField{Name: "model", CollectionId: models.Id, MaxSelect: 1},
-			&core.TextField{Name: "config"},
+			&core.JSONField{Name: "tools"},
+			&core.JSONField{Name: "permissions"},
 		)
 		agents.ListRule = ptr("@request.auth.id != ''")
+		agents.ViewRule = ptr("@request.auth.id != ''")
+		agents.Indexes = []string{
+			"CREATE UNIQUE INDEX idx_ai_agents_name ON ai_agents (name)",
+		}
 		if err := app.Save(agents); err != nil { return err }
 
 		// =========================================================================
@@ -247,7 +255,33 @@ func init() {
 		if err := app.Save(healthchecks); err != nil { return err }
 
 		// =========================================================================
-		// 8. PROPOSALS & SOPS (WITH SCHEMA IMPROVEMENTS)
+		// 8. MCP SERVERS
+		// =========================================================================
+		mcpServers, _ := getOrCreateCollection("pc_mcp_servers", "mcp_servers", core.CollectionTypeBase)
+		addFields(mcpServers,
+			&core.TextField{Name: "name", Required: true},
+			&core.SelectField{
+				Name:      "status",
+				Required:  true,
+				MaxSelect: 1,
+				Values:    []string{"pending", "approved", "denied", "revoked"},
+			},
+			&core.TextField{Name: "requested_by"},
+			&core.RelationField{Name: "approved_by", CollectionId: users.Id, MaxSelect: 1},
+			&core.DateField{Name: "approved_at"},
+			&core.JSONField{Name: "config"},
+			&core.TextField{Name: "catalog"},
+			&core.TextField{Name: "reason"},
+		)
+		mcpServers.ListRule = ptr("@request.auth.id != ''")
+		mcpServers.ViewRule = ptr("@request.auth.id != ''")
+		mcpServers.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		mcpServers.UpdateRule = ptr("@request.auth.role = 'admin'")
+		mcpServers.DeleteRule = ptr("@request.auth.role = 'admin'")
+		if err := app.Save(mcpServers); err != nil { return err }
+
+		// =========================================================================
+		// 9. PROPOSALS & SOPS (WITH SCHEMA IMPROVEMENTS)
 		// =========================================================================
 		proposals, _ := getOrCreateCollection("pc_proposals", "proposals", core.CollectionTypeBase)
 		addFields(proposals,

@@ -37,7 +37,7 @@ import (
 func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) {
 	permID, ok := properties["id"].(string)
 	if !ok {
-		log.Printf("⚠️ [Relay] Permission payload missing ID")
+		r.app.Logger().Warn("⚠️ [Relay] Permission payload missing ID")
 		return
 	}
 
@@ -59,7 +59,7 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 	// 1. Resolve Chat ID
 	chatID := r.resolveChatID(sessionID)
 	if chatID == "" {
-		log.Printf("⚠️ [Relay] No chat context for session %s, using fallback", sessionID)
+		r.app.Logger().Warn("⚠️ [Relay] No chat context for session, using fallback", "sessionId", sessionID)
 		// Try to find ANY chat with this session ID? Or abort.
 		// For now, let's create a draft permission anyway so it's visible.
 	}
@@ -83,7 +83,7 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 
 	collection, err := r.app.FindCollectionByNameOrId("permissions")
 	if err != nil {
-		log.Printf("❌ [Relay] Failed to find permissions collection: %v", err)
+		r.app.Logger().Error("❌ [Relay] Failed to find permissions collection", "error", err)
 		return
 	}
 
@@ -101,16 +101,16 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 	record.Set("message", message)
 	
 	if err := r.app.Save(record); err != nil {
-		log.Printf("❌ [Relay] Failed to save permission record: %v", err)
+		r.app.Logger().Error("❌ [Relay] Failed to save permission record", "id", permID, "error", err)
 		return
 	}
 
 	// C. Auto-Reply if Authorized
 	if isWhitelisted {
-		log.Printf("✅ [Relay] Auto-Authorized %s", permID)
+		r.app.Logger().Info("✅ [Relay] Auto-Authorized permission", "id", permID)
 		r.replyToOpenCode(permID, "once")
 	} else {
-		log.Printf("⏳ [Relay] Gated %s (Draft)", permID)
+		r.app.Logger().Info("⏳ [Relay] Gated permission (Draft)", "id", permID)
 		// Wait for update via hook
 	}
 }
@@ -118,12 +118,12 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 // listenForEvents connects to OpenCode SSE stream and handles all incoming events.
 func (r *RelayService) listenForEvents() {
 	url := fmt.Sprintf("%s/event", r.openCodeURL)
-	log.Printf("🛡️ [Relay] Connecting SSE Firehose to %s...", url)
+	r.app.Logger().Info("🛡️ [Relay] Connecting SSE Firehose", "url", url)
 
 	for {
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Printf("❌ [Relay] SSE Connection failed: %v", err)
+			r.app.Logger().Error("❌ [Relay] SSE Connection failed", "error", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -142,12 +142,12 @@ func (r *RelayService) listenForEvents() {
 
 			var event map[string]interface{}
 			if err := json.Unmarshal([]byte(jsonStr), &event); err != nil {
-				log.Printf("❌ [Relay/SSE] Failed to unmarshal event: %v | Data: %s", err, jsonStr)
+				r.app.Logger().Error("❌ [Relay/SSE] Failed to unmarshal event", "error", err, "data", jsonStr)
 				continue
 			}
 
 			eventType, _ := event["type"].(string)
-			log.Printf("📥 [Relay/SSE] Event: %s", eventType)
+			r.app.Logger().Debug("📥 [Relay/SSE] Event received", "type", eventType)
 			properties, _ := event["properties"].(map[string]interface{})
 			if properties == nil {
 				properties = event // Fallback
@@ -157,7 +157,7 @@ func (r *RelayService) listenForEvents() {
 			case "server.heartbeat":
 				r.lastHeartbeat = time.Now().Unix()
 				if !r.isReady {
-					log.Println("💓 [Relay/SSE] First heartbeat received. System ready.")
+					r.app.Logger().Info("💓 [Relay/SSE] First heartbeat received. System ready.")
 					r.isReady = true
 					r.updateHealthcheck("ready")
 				}
@@ -171,7 +171,7 @@ func (r *RelayService) listenForEvents() {
 					role, _ := info["role"].(string)
 					if role != "assistant" {
 						// Only sync assistant messages to prevent mirror echos
-						log.Printf("⏭️ [Relay/SSE] Skipping sync for role: %s", role)
+						r.app.Logger().Debug("⏭️ [Relay/SSE] Skipping sync for role", "role", role)
 						continue
 					}
 					sessionID, _ := info["sessionID"].(string)
@@ -179,10 +179,10 @@ func (r *RelayService) listenForEvents() {
 					if chatID != "" {
 						go r.syncAssistantMessage(chatID, properties)
 					} else {
-						log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session: %s", sessionID)
+						r.app.Logger().Warn("⚠️ [Relay/SSE] Could not resolve Chat ID for Session", "sessionId", sessionID)
 					}
 				} else {
-					log.Printf("⚠️ [Relay/SSE] message.updated missing 'info' block")
+					r.app.Logger().Warn("⚠️ [Relay/SSE] message.updated missing 'info' block")
 				}
 
 			case "message.part.updated":
@@ -199,7 +199,7 @@ func (r *RelayService) listenForEvents() {
 				}
 
 			case "session.idle":
-				log.Printf("😴 [Relay/SSE] session.idle properties: %v", properties)
+				r.app.Logger().Debug("😴 [Relay/SSE] session.idle", "properties", properties)
 				sID, _ := properties["id"].(string)
 				if sID == "" { sID, _ = properties["sessionID"].(string) }
 				if sID != "" {
@@ -207,7 +207,7 @@ func (r *RelayService) listenForEvents() {
 				}
 
 			case "session.updated":
-				log.Printf("🔄 [Relay/SSE] session.updated properties: %v", properties)
+				r.app.Logger().Debug("🔄 [Relay/SSE] session.updated", "properties", properties)
 				status, _ := properties["status"].(string)
 				sID, _ := properties["id"].(string)
 				if sID == "" { sID, _ = properties["sessionID"].(string) }
@@ -232,18 +232,18 @@ func (r *RelayService) handleSessionIdle(sessionID string) {
 
 	chat, err := r.app.FindRecordById("chats", chatID)
 	if err != nil {
-		log.Printf("⚠️ [Relay/SSE] Could not find chat %s: %v", chatID, err)
+		r.app.Logger().Warn("⚠️ [Relay/SSE] Could not find chat", "chatId", chatID, "error", err)
 		return
 	}
 
 	turn := chat.GetString("turn")
-	log.Printf("🔄 [Relay/SSE] Chat %s current turn: %s", chatID, turn)
+	r.app.Logger().Debug("🔄 [Relay/SSE] Checking turn state", "chatId", chatID, "turn", turn)
 
 	if turn == "assistant" {
-		log.Printf("😴 [Relay/SSE] Flipping turn for chat %s -> user", chatID)
+		r.app.Logger().Info("😴 [Relay/SSE] Flipping turn to user", "chatId", chatID)
 		chat.Set("turn", "user")
 		if err := r.app.Save(chat); err != nil {
-			log.Printf("❌ [Relay] Failed to flip turn: %v", err)
+			r.app.Logger().Error("❌ [Relay] Failed to flip turn", "chatId", chatID, "error", err)
 		} else {
 			// Trigger "The Pump" to catch any double-texting that was queued
 			go r.recoverMissedMessages()
@@ -281,22 +281,22 @@ func (r *RelayService) replyToOpenCode(requestID string, replyType string) {
 
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(body)))
 	if err != nil {
-		log.Printf("❌ [Relay] Reply failed: %v", err)
+		r.app.Logger().Error("❌ [Relay] Reply to OpenCode failed", "id", requestID, "error", err)
 		return
 	}
 	defer resp.Body.Close()
 	
 	if resp.StatusCode >= 400 {
-		log.Printf("❌ [Relay] Reply rejected: %s", resp.Status)
+		r.app.Logger().Error("❌ [Relay] Reply rejected by OpenCode", "id", requestID, "status", resp.Status)
 	} else {
-		log.Printf("✅ [Relay] Reply sent: %s -> %s", requestID, replyType)
+		r.app.Logger().Info("✅ [Relay] Reply sent to OpenCode", "id", requestID, "reply", replyType)
 	}
 }
 
 func (r *RelayService) updateHealthcheck(status string) {
 	collection, err := r.app.FindCollectionByNameOrId("healthchecks")
 	if err != nil {
-		log.Printf("⚠️ [Relay] healthchecks collection not found, skipping sync")
+		r.app.Logger().Warn("⚠️ [Relay] healthchecks collection not found, skipping sync")
 		return
 	}
 
@@ -325,10 +325,10 @@ func (r *RelayService) registerPermissionHooks() {
 		id := e.Record.GetString("ai_engine_permission_id")
 
 		if status == "authorized" {
-			log.Printf("🔓 [Relay] Permission AUTHORIZED: %s. Replying to OpenCode...", id)
+			r.app.Logger().Info("🔓 [Relay] Permission AUTHORIZED. Replying to OpenCode...", "id", id)
 			go r.replyToOpenCode(id, "once")
 		} else if status == "denied" {
-			log.Printf("🚫 [Relay] Permission DENIED: %s. Replying to OpenCode...", id)
+			r.app.Logger().Info("🚫 [Relay] Permission DENIED. Replying to OpenCode...", "id", id)
 			go r.replyToOpenCode(id, "reject")
 		}
 		return e.Next()
