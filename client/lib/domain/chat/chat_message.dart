@@ -120,7 +120,8 @@ class MessagePart with _$MessagePart {
   @FreezedUnionValue('tool')
   const factory MessagePart.tool({
     required String tool,
-    required String callID,
+    // ignore: invalid_annotation_target
+    @JsonKey(name: 'callID') required String callID,
     required ToolState state,
     Map<String, dynamic>? metadata,
   }) = MessagePartTool;
