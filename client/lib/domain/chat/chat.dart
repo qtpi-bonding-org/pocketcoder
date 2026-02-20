@@ -34,6 +34,8 @@ enum ChatEngineType {
   cursor,
   @JsonValue('custom')
   custom,
+  @JsonValue('')
+  unknown,
 }
 
 enum ChatTurn {
@@ -41,4 +43,6 @@ enum ChatTurn {
   user,
   @JsonValue('assistant')
   assistant,
+  @JsonValue('')
+  unknown,
 }

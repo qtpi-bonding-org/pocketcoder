@@ -38,6 +38,8 @@ enum MessageRole {
   assistant,
   @JsonValue('system')
   system,
+  @JsonValue('')
+  unknown,
 }
 
 enum MessageStatus {
@@ -49,6 +51,8 @@ enum MessageStatus {
   failed,
   @JsonValue('aborted')
   aborted,
+  @JsonValue('')
+  unknown,
 }
 
 enum MessageDelivery {
@@ -60,6 +64,8 @@ enum MessageDelivery {
   delivered,
   @JsonValue('failed')
   failed,
+  @JsonValue('')
+  unknown,
 }
 
 @freezed

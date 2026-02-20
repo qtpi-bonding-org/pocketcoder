@@ -38,6 +38,6 @@ class PocketCoderApi {
     if (!ApiEndpoints.isSafeArtifactPath(path)) {
       throw ArgumentError('Invalid or unsafe artifact path: $path');
     }
-    return '${_pb.baseUrl}${ApiEndpoints.artifact(path)}';
+    return '${_pb.baseURL}${ApiEndpoints.artifact(path)}';
   }
 }

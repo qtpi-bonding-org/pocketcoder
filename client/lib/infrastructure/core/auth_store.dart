@@ -40,6 +40,7 @@ class AuthStoreConfig {
 /// Extends $AuthStore to be compatible with pocketbase_drift's $PocketBase.database().
 class SecureAuthStore extends $AuthStore {
   @override
+  // ignore: overridden_fields
   final bool clearOnLogout;
 
   SecureAuthStore({
@@ -50,6 +51,7 @@ class SecureAuthStore extends $AuthStore {
   });
 
   @override
+  // ignore: overridden_fields
   DataBase? db;
 
   @override

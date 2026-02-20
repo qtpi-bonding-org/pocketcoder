@@ -31,15 +31,17 @@ class AppLogger {
   static void _print(String level, String message, [dynamic data]) {
     final timestamp = DateTime.now().toIso8601String();
     final dataStr = data != null ? ' | $data' : '';
-    print('[$timestamp] [$_tag] [$level] $message$dataStr');
+    debugPrint('[$timestamp] [$_tag] [$level] $message$dataStr');
   }
 }
 
 /// Extension methods for easy logging in classes.
 extension LoggerExtension on Object {
-  void logDebug(String message, [dynamic data]) => AppLogger.debug(message, data);
+  void logDebug(String message, [dynamic data]) =>
+      AppLogger.debug(message, data);
   void logInfo(String message, [dynamic data]) => AppLogger.info(message, data);
-  void logWarning(String message, [dynamic data]) => AppLogger.warning(message, data);
+  void logWarning(String message, [dynamic data]) =>
+      AppLogger.warning(message, data);
   void logError(String message, [dynamic error, StackTrace? stack]) =>
       AppLogger.error(message, error, stack);
 }

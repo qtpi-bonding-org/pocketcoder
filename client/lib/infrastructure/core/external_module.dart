@@ -1,29 +1,33 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'auth_store.dart';
+import 'logger.dart';
 
 @module
 abstract class ExternalModule {
   @preResolve
   @singleton
   Future<PocketBase> get pocketBase async {
-    debugPrint('PocketBaseInit: Starting...');
+    logInfo('PocketBaseInit: Starting...');
 
     // Determine base URL based on environment
-    const baseUrl = kDebugMode ? 'http://127.0.0.1:8090' : 'http://pocketbase:8090';
-    debugPrint('PocketBaseInit: Using URL: $baseUrl');
+    const baseUrl =
+        kDebugMode ? 'http://127.0.0.1:8090' : 'http://pocketbase:8090';
+    logDebug('PocketBaseInit: Using URL: $baseUrl');
 
     // Load Schema (for offline capabilities)
     String? schemaJson;
     try {
-      debugPrint('PocketBaseInit: Loading assets/pb_schema.json...');
+      logDebug('PocketBaseInit: Loading assets/pb_schema.json...');
       schemaJson = await rootBundle.loadString('assets/pb_schema.json');
-      debugPrint('PocketBaseInit: Schema loaded (${schemaJson.length} chars)');
+      logDebug('PocketBaseInit: Schema loaded (${schemaJson.length} chars)');
     } catch (e) {
-      debugPrint('PocketBaseInit: ⚠️ Warning - failed to load schema asset: $e');
+      logWarning(
+          'PocketBaseInit: ⚠️ Warning - failed to load schema asset: $e');
     }
 
     // Create secure auth store with flutter_secure_storage
@@ -40,17 +44,43 @@ abstract class ExternalModule {
 
     if (schemaJson != null && schemaJson.isNotEmpty && schemaJson != '[]') {
       try {
-        debugPrint('PocketBaseInit: Caching schema...');
-        await client.cacheSchema(schemaJson);
-        debugPrint('PocketBaseInit: Schema cached successfully');
-      } catch (e) {
-        debugPrint('PocketBaseInit: ❌ Error caching schema: $e');
+        logDebug('PocketBaseInit: Decoding raw JSON string...');
+        final decoded = jsonDecode(schemaJson);
+        logDebug('PocketBaseInit: Decoded root type is ${decoded.runtimeType}');
+
+        List<dynamic> schemaList;
+        if (decoded is Map && decoded.containsKey('items')) {
+          logDebug('PocketBaseInit: Found "items" array in root Map');
+          schemaList = decoded['items'] as List<dynamic>;
+        } else if (decoded is List) {
+          logDebug('PocketBaseInit: Root is already a List array');
+          schemaList = decoded;
+        } else {
+          throw FormatException(
+              'Unexpected schema root type: ${decoded.runtimeType}. Expected Map with "items" or List.');
+        }
+
+        logDebug(
+            'PocketBaseInit: Extracted ${schemaList.length} schema definitions');
+
+        final reEncoded = jsonEncode(schemaList);
+        logDebug(
+            'PocketBaseInit: Re-encoded pure list to length ${reEncoded.length}');
+
+        logDebug(
+            'PocketBaseInit: Caching schema synchronously via drift client...');
+        await client.cacheSchema(reEncoded);
+        logDebug(
+            'PocketBaseInit: Schema cached successfully inside pocketbase_drift!');
+      } catch (e, stack) {
+        logError('PocketBaseInit: ❌ CRITICAL - Error parsing or caching schema',
+            e, stack);
       }
     } else {
-      debugPrint('PocketBaseInit: ⚠️ No valid schema found to cache');
+      logWarning('PocketBaseInit: ⚠️ No valid schema found to cache');
     }
 
-    debugPrint('PocketBaseInit: Complete');
+    logInfo('PocketBaseInit: Complete');
     return client;
   }
 
