@@ -329,20 +329,20 @@ func (r *RelayService) checkForSubagentRegistration(chatID string, parts []inter
 		// OpenCode uses type:"tool" with state.output for tool results,
 		// not type:"tool_result" with content.
 		var toolName string
-		var content string
+		var content interface{}
 
 		if partType == "tool_result" {
 			// Legacy format
 			toolName, _ = part["name"].(string)
-			content, _ = part["content"].(string)
-			if content == "" {
-				content, _ = part["text"].(string)
+			content = part["content"]
+			if content == nil {
+				content = part["text"]
 			}
 		} else if partType == "tool" {
 			// OpenCode format: type:"tool", tool:"cao_handoff", state.output:"..."
 			toolName, _ = part["tool"].(string)
 			if state, ok := part["state"].(map[string]interface{}); ok {
-				content, _ = state["output"].(string)
+				content = state["output"]
 			}
 		} else {
 			continue
@@ -352,13 +352,24 @@ func (r *RelayService) checkForSubagentRegistration(chatID string, parts []inter
 			continue
 		}
 
-		if content == "" {
-			continue
+		var resultData map[string]interface{}
+		
+		// Handle both stringified JSON and pre-parsed map
+		if contentStr, ok := content.(string); ok && contentStr != "" {
+			if err := json.Unmarshal([]byte(contentStr), &resultData); err != nil {
+				r.app.Logger().Warn("⚠️ [Relay] Failed to parse tool_result content string as JSON", "error", err, "content", contentStr)
+				continue
+			}
+		} else if contentMap, ok := content.(map[string]interface{}); ok {
+			resultData = contentMap
+		} else if content != nil {
+			// Try to Marshal/Unmarshal if it's some other non-nil type (e.g. nested map)
+			if bs, err := json.Marshal(content); err == nil {
+				json.Unmarshal(bs, &resultData)
+			}
 		}
 
-		var resultData map[string]interface{}
-		if err := json.Unmarshal([]byte(content), &resultData); err != nil {
-			r.app.Logger().Warn("⚠️ [Relay] Failed to parse tool_result content as JSON", "error", err)
+		if resultData == nil {
 			continue
 		}
 
@@ -366,6 +377,11 @@ func (r *RelayService) checkForSubagentRegistration(chatID string, parts []inter
 		// This field is set by HandoffResult model to distinguish PocketCoder
 		// system events from normal tool output.
 		sysEvent, _ := resultData["_pocketcoder_sys_event"].(string)
+		if sysEvent == "" {
+			// Fallback to non-aliased name if pydantic didn't use the alias
+			sysEvent, _ = resultData["pocketcoder_sys_event"].(string)
+		}
+		
 		if sysEvent != "handoff_complete" {
 			continue
 		}

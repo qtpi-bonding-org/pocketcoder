@@ -46,3 +46,10 @@ Swabble/
 Core/
 Users/
 vendor/
+
+# opencode junk
+opencode/archive/
+opencode/skills/test*
+opencode/skills/master-sop*
+opencode/proposals/test*
+opencode/proposals/master-sop*
