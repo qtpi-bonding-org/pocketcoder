@@ -14,7 +14,7 @@ services:
       - opencode_workspace:/workspace
       - ./opencode:/workspace/.opencode
       - ./.ssh_keys:/ssh_keys
-      - mcp_config:/mcp_config
+      - ./mcp_config_dir:/mcp_config
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -57,7 +57,7 @@ services:
       - ./opencode:/workspace/.opencode
       - opencode_data:/root/.local/share/opencode
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
-      - mcp_config:/mcp_config:ro
+      - ./mcp_config_dir:/mcp_config:ro
     command: serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG
     healthcheck:
       test: ["CMD", "/bin/ash", "-c", "curl -f http://localhost:3000/health && nc -z localhost 2222"]
@@ -82,8 +82,11 @@ services:
       - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
       - ./.ssh_keys:/ssh_keys:ro
       - ./sandbox/cao/src:/app/cao/src
+      - ./sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
     working_dir: /workspace
     environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
       - SSH_KEYS_FILE=/ssh_keys/authorized_keys
@@ -107,10 +110,14 @@ services:
     container_name: pocketcoder-mcp-gateway
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - mcp_config:/root/.docker/mcp
+      - ./mcp_config_dir:/root/.docker/mcp
     environment:
       - DOCKER_MCP_IN_CONTAINER=1
-    command: ["--port", "8811", "--transport", "sse", "--verbose", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--enable-all-servers"]
+      - LINODE_TOKEN=${LINODE_TOKEN}
+      - ENABLE_TF_OPERATIONS=${ENABLE_TF_OPERATIONS}
+      - TFE_TOKEN=${TFE_TOKEN}
+      - DOCKER_MCP_TELEMETRY_DEBUG=1
+    command: ["--port", "8811", "--transport", "sse", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--enable-all-servers"]
     networks:
       - pocketcoder-mcp
     restart: unless-stopped
@@ -154,7 +161,6 @@ volumes:
   pocketcoder-logs:
   opencode_workspace:
   opencode_data:
-  mcp_config:
 
 networks:
   pocketcoder-memory:
