@@ -81,24 +81,30 @@ check_docker() {
 
 # Capture container logs before teardown
 capture_logs() {
-    local log_dir="tests/logs"
-    local timestamp
-    timestamp=$(date +%Y%m%d_%H%M%S)
-    local log_file="$log_dir/test-run-${timestamp}.log"
+    local log_file="$1"
     
-    mkdir -p "$log_dir"
+    if [ -z "$log_file" ]; then
+        local log_dir="tests/logs"
+        local timestamp
+        timestamp=$(date +%Y%m%d_%H%M%S)
+        log_file="$log_dir/test-run-${timestamp}.log"
+        mkdir -p "$log_dir"
+    fi
     
-    log_info "Capturing container logs to $log_file"
+    log_info "Appending container logs to $log_file"
     
     {
-        echo "=== Test Run: $timestamp ==="
+        echo ""
+        echo "=============================================================================="
+        echo "=== CONTAINER LOGS ==="
+        echo "=============================================================================="
         echo ""
         for svc in pocketbase opencode sandbox mcp-gateway; do
             echo "=== pocketcoder-${svc} ==="
             docker compose "${COMPOSE_FILES[@]}" logs --no-color "$svc" 2>/dev/null || echo "  [no logs available]"
             echo ""
         done
-    } > "$log_file" 2>&1
+    } >> "$log_file" 2>&1
     
     log_info "Logs saved to $log_file"
 }
@@ -151,11 +157,27 @@ main() {
     # Check prerequisites
     check_docker
     
+    # Setup log file
+    local log_dir="tests/logs"
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
+    local log_file="$log_dir/test-run-${timestamp}.log"
+    mkdir -p "$log_dir"
+    
+    log_info "Test summary will be saved to $log_file"
+    
     # Start services
     start_services
     
-    # Run tests
-    if run_tests "$test_path"; then
+    # Run tests and capture output
+    echo "=== Test Run: $timestamp ===" > "$log_file"
+    echo "=== Command: run-tests.sh $test_path ===" >> "$log_file"
+    echo "" >> "$log_file"
+    
+    # We use a temporary file to capture exit code while using tee
+    # Since set -e is on, we need to be careful
+    local exit_code=0
+    if run_tests "$test_path" 2>&1 | tee -a "$log_file"; then
         log_info "Tests passed"
         exit_code=0
     else
@@ -163,8 +185,8 @@ main() {
         exit_code=1
     fi
     
-    # Capture logs before teardown
-    capture_logs
+    # Capture container logs
+    capture_logs "$log_file"
     
     # Cleanup
     stop_services
