@@ -51,6 +51,13 @@ pub struct ExecRequest {
     pub usage_id: Option<String>,
     /// Session identifier
     pub session_id: Option<String>,
+    /// Agent identity executing the command (e.g., "poco")
+    #[serde(default = "default_agent_name")]
+    pub agent_name: String,
+}
+
+fn default_agent_name() -> String {
+    "poco".to_string()
 }
 
 #[derive(Debug, Deserialize)]
@@ -89,48 +96,11 @@ impl PocketCoderDriver {
         status.is_ok() && status.unwrap().success()
     }
 
-    /// Smart Router: Resolve session_id to (tmux_session_name, tmux_window_name)
-    /// 
-    /// Returns the window NAME (not numeric index) so tmux targets are resilient
-    /// to window reordering. Tmux accepts "session:window_name.pane" targets.
-    ///
-    /// Logic:
-    /// 1. Query CAO's API at /terminals/by-delegating-agent/{session_id}
-    /// 2. Extract tmux_session and tmux_window from the response
-    /// 3. Return error if CAO lookup fails (no fallback)
-    async fn resolve_session_and_window(&self, session_id: &str) -> Result<(String, String)> {
-        let cao_url = "http://sandbox:9889";
-        let client = reqwest::Client::new();
-        
-        let response = client.get(format!("{}/terminals/by-delegating-agent/{}", cao_url, session_id))
-            .send()
-            .await
-            .map_err(|e| anyhow!("CAO request failed: {}", e))?;
-        
-        if !response.status().is_success() {
-            return Err(anyhow!("CAO lookup failed for delegating_agent_id '{}' with status {}", 
-                session_id, response.status()));
-        }
-        
-        let terminal_data = response.json::<serde_json::Value>().await
-            .map_err(|e| anyhow!("Failed to parse CAO response: {}", e))?;
-        
-        let tmux_session = terminal_data["tmux_session"].as_str()
-            .ok_or_else(|| anyhow!("Missing tmux_session in CAO response"))?;
-        
-        let tmux_window = terminal_data["tmux_window"].as_str()
-            .ok_or_else(|| anyhow!("Missing tmux_window in CAO response"))?;
-        
-        println!("🔗 [Driver] Resolved session_id '{}' to session '{}' window '{}'", 
-                 session_id, tmux_session, tmux_window);
-        Ok((tmux_session.to_string(), tmux_window.to_string()))
-    }
-
-    pub async fn exec(&self, cmd: &str, cwd: Option<&str>, session_override: Option<&str>) -> Result<CommandResult> {
-        let session_id = session_override.unwrap_or(&self.session_name);
-        
-        // 1. Resolve Session Identity (Smart Router Logic)
-        let (session, window_name) = self.resolve_session_and_window(session_id).await?;
+    /// Execute a command in the target agent's isolated tmux workspace.
+    /// The proxy strictly targets `pocketcoder:[agent_name]:terminal`.
+    pub async fn exec(&self, cmd: &str, cwd: Option<&str>, agent_name: &str) -> Result<CommandResult> {
+        let session = &self.session_name;
+        let window_name = format!("{}:terminal", agent_name);
 
         let tmux_args = ["-S", &self.socket_path];
         // Target by window NAME (not index) so it's resilient to window reordering

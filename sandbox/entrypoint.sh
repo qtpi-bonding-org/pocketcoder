@@ -179,7 +179,13 @@ if [ -z "$EXEC_WINDOW" ]; then
         exit 1
     fi
 fi
-echo "✅ Poco registered with CAO. Exec window: $EXEC_WINDOW"
+echo "✅ Poco registered with CAO. Original Exec window: $EXEC_WINDOW"
+
+# Rename CAO window and update DB to enforce [agent_name]:terminal standard
+echo "🔀 Renaming execution window to poco:terminal..."
+tmux -S "$TMUX_SOCKET" rename-window -t "$TMUX_SESSION:$EXEC_WINDOW" "poco:terminal" || echo "⚠️ Failed to rename window in tmux, might already be named poco:terminal"
+sqlite3 "$CAO_HOME_BASE/orchestrator.db" "UPDATE terminals SET window_name = 'poco:terminal' WHERE window_name = '$EXEC_WINDOW';" || echo "⚠️ Failed to update orchestrator DB"
+EXEC_WINDOW="poco:terminal"
 
 # Make tmux socket world-accessible
 chmod 777 "$TMUX_SOCKET"
