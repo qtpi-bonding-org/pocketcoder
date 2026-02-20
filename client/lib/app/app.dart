@@ -5,6 +5,8 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:test_app/l10n/app_localizations.dart';
 import 'package:test_app/application/system/status_cubit.dart';
 import 'package:test_app/application/system/poco_cubit.dart';
+import 'package:test_app/application/chat/communication_cubit.dart';
+import 'package:test_app/application/permission/permission_cubit.dart';
 
 import '../app_router.dart';
 import '../design_system/theme/app_theme.dart';
@@ -32,6 +34,12 @@ class App extends StatelessWidget {
             ),
             BlocProvider(
               create: (context) => getIt<PocoCubit>(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<CommunicationCubit>()..initialize(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<PermissionCubit>(),
             ),
           ],
           child: MaterialApp.router(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/hitl/i_hitl_repository.dart';
+import '../../infrastructure/core/logger.dart';
 import 'permission_state.dart';
 
 @injectable
@@ -18,18 +19,32 @@ class PermissionCubit extends Cubit<PermissionState> {
   }
 
   void watchChat(String chatId) {
+    logInfo('🛡️ [PermissionCubit] Watching for requests on chat: $chatId');
     emit(const PermissionState.loading());
     _subscription?.cancel();
     _subscription = _repository.watchPending(chatId).listen(
-          (requests) => emit(PermissionState.loaded(requests)),
-          onError: (e) => emit(PermissionState.error(e.toString())),
-        );
+      (requests) {
+        if (requests.isNotEmpty) {
+          logInfo(
+              '🛡️ [PermissionCubit] Found ${requests.length} pending requests.');
+        }
+        emit(PermissionState.loaded(requests));
+      },
+      onError: (e) {
+        logError('🛡️ [PermissionCubit] Error watching requests: $e');
+        emit(PermissionState.error(e.toString()));
+      },
+    );
   }
 
   Future<void> authorize(String requestId) async {
+    logInfo('🛡️ [PermissionCubit] Authorizing request: $requestId');
     try {
       await _repository.authorize(requestId);
+      logInfo(
+          '🛡️ [PermissionCubit] Request $requestId authorized successfully.');
     } catch (e) {
+      logError('🛡️ [PermissionCubit] Failed to authorize $requestId: $e');
       // Errors will be handled by the stream update ideally,
       // but we could emit an error state here if needed.
     }

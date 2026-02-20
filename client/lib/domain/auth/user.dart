@@ -25,4 +25,6 @@ enum UserRole {
   agent,
   @JsonValue('user')
   user,
+  @JsonValue('')
+  unknown,
 }

@@ -29,4 +29,6 @@ enum HealthcheckStatus {
   offline,
   @JsonValue('error')
   error,
+  @JsonValue('')
+  unknown,
 }

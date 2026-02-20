@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../presentation/core/widgets/ascii_art.dart';
+import '../../infrastructure/core/logger.dart';
 
 part 'poco_cubit.freezed.dart';
 
@@ -28,6 +29,7 @@ class PocoCubit extends Cubit<PocoState> {
 
   void updateMessage(String newMessage,
       {List<(String, int)>? sequence, bool addToHistory = true}) {
+    logDebug('🤖 [PocoCubit] Message: $newMessage');
     final history =
         addToHistory ? [...state.history, state.message] : state.history;
     emit(state.copyWith(

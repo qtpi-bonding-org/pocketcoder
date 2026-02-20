@@ -1,8 +1,11 @@
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'bootstrap.config.dart';
+import '../infrastructure/core/connectivity_override.dart';
 
 /// Global service locator instance
 
@@ -20,6 +23,12 @@ Future<void> configureDependencies() async {
 /// Call this once from main() before runApp().
 Future<void> bootstrap() async {
   debugPrint('Bootstrap: Starting...');
+
+  // Fix for Chrome Incognito offline detection bug in connectivity_plus
+  if (kIsWeb) {
+    debugPrint('Bootstrap: Setting connectivity override for Web');
+    ConnectivityPlatform.instance = WebConnectivityOverride();
+  }
 
   try {
     // 1. Configure all injectable dependencies

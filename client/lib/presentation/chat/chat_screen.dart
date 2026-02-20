@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../app/bootstrap.dart';
 import '../../application/chat/communication_cubit.dart';
 import '../../application/chat/communication_state.dart';
 import '../../application/permission/permission_cubit.dart';
@@ -22,14 +21,7 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-            create: (context) => getIt<CommunicationCubit>()..initialize()),
-        BlocProvider(create: (context) => getIt<PermissionCubit>()),
-      ],
-      child: const _ChatView(),
-    );
+    return const _ChatView();
   }
 }
 
@@ -161,7 +153,9 @@ class _ChatViewState extends State<_ChatView> {
                                 .whereType<MessagePartText>()
                                 .toList();
                             return SpeechBubble(
-                                textParts: textParts, isUser: true);
+                                textParts: textParts,
+                                isUser: true,
+                                agentName: msg.agentName);
                           }
 
                           // For ASSISTANT: Show ONLY the LAST text part.
@@ -174,7 +168,9 @@ class _ChatViewState extends State<_ChatView> {
                               : <MessagePartText>[];
 
                           return SpeechBubble(
-                              textParts: finalAnswer, isUser: false);
+                              textParts: finalAnswer,
+                              isUser: false,
+                              agentName: msg.agentName);
                         },
                       );
                     },

@@ -25,6 +25,8 @@ enum ProposalAuthor {
   human,
   @JsonValue('poco')
   poco,
+  @JsonValue('')
+  unknown,
 }
 
 enum ProposalStatus {
@@ -32,4 +34,6 @@ enum ProposalStatus {
   draft,
   @JsonValue('approved')
   approved,
+  @JsonValue('')
+  unknown,
 }

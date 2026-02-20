@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:test_app/domain/auth/i_auth_repository.dart';
+import '../../infrastructure/core/logger.dart';
 import 'status_state.dart';
 
 @injectable
@@ -15,6 +16,8 @@ class StatusCubit extends Cubit<StatusState> {
 
   void _monitorConnection() {
     _connectionSubscription = _authRepo.connectionStatus.listen((isConnected) {
+      logInfo(
+          '🌐 [StatusCubit] Connectivity changed: ${isConnected ? "CONNECTED" : "DISCONNECTED"}');
       emit(state.copyWith(isConnected: isConnected));
     });
   }

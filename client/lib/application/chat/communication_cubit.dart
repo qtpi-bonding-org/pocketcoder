@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/chat/chat_message.dart';
 import '../../domain/communication/i_communication_repository.dart';
+import '../../infrastructure/core/logger.dart';
 import 'communication_state.dart';
 
 @injectable
@@ -26,10 +27,15 @@ class CommunicationCubit extends Cubit<CommunicationState> {
   }
 
   Future<void> initialize([String title = 'PocketCoder Main']) async {
+    logInfo('💬 [CommCubit] Initializing chat session: "$title"...');
     emit(state.copyWith(isLoading: true));
     try {
       _currentChatId = await _repository.ensureChat(title);
+      logInfo('💬 [CommCubit] Chat ID: $_currentChatId');
+
       final opencodeId = await _repository.getOpencodeId(_currentChatId!);
+      logInfo('💬 [CommCubit] OpenCode ID: $opencodeId');
+
       emit(state.copyWith(
         chatId: _currentChatId,
         opencodeId: opencodeId,
@@ -37,7 +43,9 @@ class CommunicationCubit extends Cubit<CommunicationState> {
       ));
       _subscribeToColdPipe(_currentChatId!);
       _subscribeToHotPipe();
+      logInfo('💬 [CommCubit] Initialization complete.');
     } catch (e) {
+      logError('💬 [CommCubit] Initialization failed: $e');
       emit(state.copyWith(
         error: 'Failed to initialize chat: $e',
         isLoading: false,
@@ -70,20 +78,26 @@ class CommunicationCubit extends Cubit<CommunicationState> {
 
   Future<void> sendMessage(String unusedChatId, String content) async {
     if (_currentChatId == null) {
+      logWarning(
+          '💬 [CommCubit] Attempted to send message but chat not initialized.');
       emit(state.copyWith(error: "Chat not initialized"));
       return;
     }
 
+    logInfo(
+        '💬 [CommCubit] User: ${content.length > 50 ? "${content.substring(0, 50)}..." : content}');
     emit(state.copyWith(hotMessage: null, isPocoThinking: true));
 
     try {
       await _repository.sendMessage(_currentChatId!, content);
     } catch (e) {
+      logError('💬 [CommCubit] Failed to send message: $e');
       emit(state.copyWith(error: "Failed to send: $e"));
     }
   }
 
   void _subscribeToHotPipe() {
+    logDebug('💬 [CommCubit] Subscribing to HotPipe (SSE)...');
     _hotSub?.cancel();
     _hotSub = _repository.watchHotPipe().listen((event) {
       event.map(
@@ -91,10 +105,13 @@ class CommunicationCubit extends Cubit<CommunicationState> {
         system: _onHotSystem,
         finish: (_) => _onHotFinish(),
       );
+    }, onError: (e) {
+      logError('💬 [CommCubit] HotPipe Error: $e');
     });
   }
 
   void _onHotFinish() {
+    logInfo('💬 [CommCubit] Stream finished.');
     if (state.hotMessage != null) {
       final finalizedMsg = state.hotMessage!.copyWith(isLive: false);
       emit(state.copyWith(

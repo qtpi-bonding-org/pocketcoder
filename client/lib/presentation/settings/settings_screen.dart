@@ -17,11 +17,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _selectedIndex = 0;
 
   final List<(String, String)> _options = [
-    ('BOOT SEQUENCE', '[INTERNAL]'),
-    ('SECURITY LEVEL', '[HIGH]'),
-    ('AI REGISTRY', '[MANAGE]'),
+    ('AGENT OBSERVABILITY', '[MANAGE]'),
+    ('MCP MANAGEMENT', '[EQUIP]'),
+    ('SOP MANAGEMENT', '[LIBRARY]'),
+    ('SYSTEM CHECKS', '[DIAGNOSE]'),
     ('WHITELIST RULES', '[SETUP]'),
-    ('AI MODEL', '[Gemini Flash]'),
+    ('AI REGISTRY', '[MODELS]'),
     ('THEME', '[CYBERPUNK]'),
   ];
 
@@ -46,10 +47,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       isSelected: i == _selectedIndex,
                       onTap: () {
                         setState(() => _selectedIndex = i);
-                        if (_options[i].$1 == 'AI REGISTRY') {
-                          context.pushNamed(RouteNames.aiRegistry);
-                        } else if (_options[i].$1 == 'WHITELIST RULES') {
+                        final option = _options[i].$1;
+                        if (option == 'AGENT OBSERVABILITY') {
+                          context.pushNamed(RouteNames.agentObservability);
+                        } else if (option == 'MCP MANAGEMENT') {
+                          context.pushNamed(RouteNames.mcpManagement);
+                        } else if (option == 'SOP MANAGEMENT') {
+                          context.pushNamed(RouteNames.sopManagement);
+                        } else if (option == 'SYSTEM CHECKS') {
+                          context.pushNamed(RouteNames.systemChecks);
+                        } else if (option == 'WHITELIST RULES') {
                           context.pushNamed(RouteNames.whitelist);
+                        } else if (option == 'AI REGISTRY') {
+                          context.pushNamed(RouteNames.aiRegistry);
                         }
                       },
                     ),

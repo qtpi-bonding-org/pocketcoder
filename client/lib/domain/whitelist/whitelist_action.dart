@@ -24,4 +24,6 @@ enum WhitelistActionKind {
   strict,
   @JsonValue('pattern')
   pattern,
+  @JsonValue('')
+  unknown,
 }
