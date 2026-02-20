@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     gnupg \
     software-properties-common \
-    sqlite3 \
     openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
@@ -75,7 +74,7 @@ RUN chmod +x /usr/local/bin/sync_keys.sh
 
 # Install Dependencies for Listener (Bun handles TS natively)
 # Bun globals go to /usr/local/bin if BUN_INSTALL is /usr/local
-RUN bun install -g opencode-ai
+RUN bun install -g opencode-ai@1.2.8
 
 # Install uv (Python package manager for CAO)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \

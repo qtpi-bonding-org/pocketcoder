@@ -1,0 +1,29 @@
+{
+    "default_agent": "developer",
+    "agent": {
+        "developer": {
+            "description": "Unrestricted developer agent executing within the secure Sandbox.",
+            "mode": "primary",
+            "prompt": "You are a developer agent working securely within an isolated Sandbox. You have unrestricted execution capability. Fulfill your assigned tasks completely and autonomously.",
+            "tools": {
+                "*": true
+            },
+            "permission": {
+                "*": "allow"
+            }
+        }
+    },
+    "permission": {
+        "*": "allow"
+    },
+    "mcp": {
+        "docker-mcp-remote": {
+            "type": "remote",
+            "url": "http://mcp-gateway:8811/sse",
+            "enabled": true,
+            "timeout": 300000
+        }
+    },
+    "tools": {},
+    "model": "google/gemini-2.0-flash"
+}
