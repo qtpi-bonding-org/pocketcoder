@@ -10,7 +10,7 @@ class PermissionRequest with _$PermissionRequest {
     required String id,
     String? aiEnginePermissionId,
     String? sessionId,
-    @JsonKey(name: 'chat') String? chatId,
+    String? chat,
     required String permission,
     PermissionStatus? status,
     List<String>? patterns,

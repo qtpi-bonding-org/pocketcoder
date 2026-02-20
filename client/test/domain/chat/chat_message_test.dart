@@ -17,7 +17,7 @@ void main() {
       final message = ChatMessage.fromJson(json);
 
       expect(message.id, 'msg-1');
-      expect(message.chatId, 'chat-1');
+      expect(message.chat, 'chat-1');
       expect(message.role, MessageRole.assistant);
       expect(message.parts?.length, 1);
       expect(message.parts?.first, isA<MessagePartText>());
@@ -50,7 +50,7 @@ void main() {
       };
 
       final message = ChatMessage.fromJson(json);
-      expect(message.engineStatus, isNull);
+      expect(message.engineMessageStatus, isNull);
     });
 
     test('MessagePart.fromJson handles tool parts with nested ToolState', () {

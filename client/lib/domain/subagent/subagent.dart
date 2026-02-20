@@ -7,11 +7,11 @@ part 'subagent.g.dart';
 class Subagent with _$Subagent {
   const factory Subagent({
     required String id,
-    @JsonKey(name: 'subagent_id') required String subagentId,
-    @JsonKey(name: 'delegating_agent_id') required String delegatingAgentId,
-    @JsonKey(name: 'tmux_window_id') int? tmuxWindowId,
-    @JsonKey(name: 'chat') String? chatId,
-    @JsonKey(name: 'delegating_agent') String? delegatingAgentRecordId,
+    required String subagentId,
+    required String delegatingAgentId,
+    int? tmuxWindowId,
+    String? chat,
+    String? delegatingAgent,
     DateTime? created,
     DateTime? updated,
   }) = _Subagent;
