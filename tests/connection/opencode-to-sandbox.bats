@@ -23,19 +23,10 @@ setup() {
     load_env
     TEST_ID=$(generate_test_id)
     export CURRENT_TEST_ID="$TEST_ID"
-    
-    # Create a test session in CAO for exec tests
-    export TEST_SESSION_ID="test_session_${TEST_ID}"
-    export TEST_TERMINAL_ID=$(create_test_terminal "$TEST_SESSION_ID" "pocketcoder" "poco" "/workspace")
-    
-    if [ -z "$TEST_TERMINAL_ID" ]; then
-        skip "Failed to create test terminal in CAO"
-    fi
 }
 
 teardown() {
     cleanup_test_data "$TEST_ID" || true
-    delete_test_terminal "$TEST_TERMINAL_ID" || true
 }
 
 @test "OpenCode→Sandbox: Shell bridge binary exists and is executable" {
@@ -69,7 +60,7 @@ teardown() {
     local response
     response=$(curl -s -w "\n%{http_code}" -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"echo hello\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
+        -d "{\"cmd\": \"echo hello\", \"cwd\": \"/workspace\", \"agent_name\": \"poco\"}" 2>/dev/null)
     
     local http_code
     http_code=$(echo "$response" | tail -n1)
@@ -91,7 +82,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"echo test_output\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
+        -d "{\"cmd\": \"echo test_output\", \"cwd\": \"/workspace\", \"agent_name\": \"poco\"}" 2>/dev/null)
     
     # Verify response is valid JSON
     echo "$response" | jq -e . > /dev/null
@@ -124,7 +115,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"echo $test_output\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
+        -d "{\"cmd\": \"echo $test_output\", \"cwd\": \"/workspace\", \"agent_name\": \"poco\"}" 2>/dev/null)
     
     # Verify output contains our test string
     local stdout
@@ -148,7 +139,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"false\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
+        -d "{\"cmd\": \"false\", \"cwd\": \"/workspace\", \"agent_name\": \"poco\"}" 2>/dev/null)
     
     # Verify exit code is non-zero
     local exit_code
@@ -156,19 +147,6 @@ teardown() {
     [ "$exit_code" != "0" ] || run_diagnostic_on_failure "OpenCode→Sandbox" "Exit code should be non-zero for false command"
 }
 
-@test "OpenCode→Sandbox: CAO API session resolution" {
-    # Validates: Requirement 5.3
-    # Test that driver can resolve session via CAO API
-    
-    local cao_url="http://sandbox:9889"
-    
-    # Test that CAO API is accessible
-    run timeout 5 curl -s -o /dev/null -w "%{http_code}" "$cao_url/health" 2>/dev/null
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode→Sandbox" "CAO API health endpoint not reachable"
-    
-    # Check for successful response
-    [[ "${lines[-1]}" == "200" ]] || run_diagnostic_on_failure "OpenCode→Sandbox" "CAO API health returned ${lines[-1]} instead of 200"
-}
 
 @test "OpenCode→Sandbox: Command output contains expected content" {
     # Validates: Requirement 5.2
@@ -180,7 +158,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"echo expected_output_content\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
+        -d "{\"cmd\": \"echo expected_output_content\", \"cwd\": \"/workspace\", \"agent_name\": \"poco\"}" 2>/dev/null)
     
     # Verify output contains expected content
     local stdout
@@ -199,7 +177,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"pwd\", \"cwd\": \"/tmp\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
+        -d "{\"cmd\": \"pwd\", \"cwd\": \"/tmp\", \"agent_name\": \"poco\"}" 2>/dev/null)
     
     # Verify output shows /tmp
     local stdout
@@ -218,7 +196,7 @@ teardown() {
     local response
     response=$(curl -s -X POST "$exec_url" \
         -H "Content-Type: application/json" \
-        -d "{\"cmd\": \"nonexistent_command_12345\", \"cwd\": \"/workspace\", \"session_id\": \"$TEST_SESSION_ID\"}" 2>/dev/null)
+        -d "{\"cmd\": \"nonexistent_command_12345\", \"cwd\": \"/workspace\", \"agent_name\": \"poco\"}" 2>/dev/null)
     
     # Verify response has error field or non-zero exit code
     local exit_code
