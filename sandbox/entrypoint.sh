@@ -89,16 +89,8 @@ echo "🤖 Starting CAO API Server on port 9889..."
   cd /app/cao && /usr/local/bin/uv run cao-server
 ) &
 
-# 6. Start CAO MCP Server (SSE Mode) (Background)
-echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
-(
-  export CAO_MCP_TRANSPORT=sse
-  export CAO_MCP_PORT=9888
-  export PYTHONUNBUFFERED=1
-  export CAO_LOG_LEVEL=INFO
-  export PUBLIC_URL=http://localhost:9889
-  cd /app/cao && /usr/local/bin/uv run cao-mcp-server
-) &
+# 6. (DEFERRED) Start CAO MCP Server (SSE Mode) (Background)
+# We wait until CAO API is ready before starting this to prevent DB race conditions.
 
 # 7. Wait for OpenCode sshd to be ready
 echo "⏳ Waiting for OpenCode sshd to be ready..."
@@ -147,13 +139,25 @@ if [ "$CAO_READY" = false ]; then
     exit 1
 fi
 
+# 6b. Start CAO MCP Server now that API/DB is healthy
+echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
+(
+  export CAO_MCP_TRANSPORT=sse
+  export CAO_MCP_PORT=9888
+  export PYTHONUNBUFFERED=1
+  export CAO_LOG_LEVEL=INFO
+  export PUBLIC_URL=http://localhost:9889
+  cd /app/cao && /usr/local/bin/uv run cao-mcp-server
+) &
+
 # Attempt registration with validation
 CAO_RESPONSE=$(curl -s -X POST "http://localhost:9889/sessions" \
     -G \
     --data-urlencode "provider=opencode-attach" \
     --data-urlencode "agent_profile=poco" \
     --data-urlencode "session_name=$TMUX_SESSION" \
-    --data-urlencode "delegating_agent_id=pocketcoder")
+    --data-urlencode "delegating_agent_id=pocketcoder" \
+    --data-urlencode "target_window_name=poco:terminal")
 
 echo "CAO response: $CAO_RESPONSE"
 
@@ -179,13 +183,7 @@ if [ -z "$EXEC_WINDOW" ]; then
         exit 1
     fi
 fi
-echo "✅ Poco registered with CAO. Original Exec window: $EXEC_WINDOW"
-
-# Rename CAO window and update DB to enforce [agent_name]:terminal standard
-echo "🔀 Renaming execution window to poco:terminal..."
-tmux -S "$TMUX_SOCKET" rename-window -t "$TMUX_SESSION:$EXEC_WINDOW" "poco:terminal" || echo "⚠️ Failed to rename window in tmux, might already be named poco:terminal"
-sqlite3 "$CAO_HOME_BASE/orchestrator.db" "UPDATE terminals SET window_name = 'poco:terminal' WHERE window_name = '$EXEC_WINDOW';" || echo "⚠️ Failed to update orchestrator DB"
-EXEC_WINDOW="poco:terminal"
+echo "✅ Poco registered with CAO. Exec window: $EXEC_WINDOW"
 
 # Make tmux socket world-accessible
 chmod 777 "$TMUX_SOCKET"
