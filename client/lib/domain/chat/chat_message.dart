@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 part 'chat_message.freezed.dart';
 part 'chat_message.g.dart';
@@ -7,25 +8,28 @@ part 'chat_message.g.dart';
 class ChatMessage with _$ChatMessage {
   const factory ChatMessage({
     required String id,
-    @JsonKey(name: 'chat') required String chatId,
+    required String chat,
     required MessageRole role,
-    @JsonKey(name: 'engine_message_status') MessageStatus? engineStatus,
-    @JsonKey(name: 'user_message_status') MessageDelivery? userStatus,
-    @JsonKey(name: 'ai_engine_message_id') String? aiEngineMessageId,
-    @JsonKey(name: 'parent_id') String? parentId,
-    @JsonKey(name: 'agent_name') String? agentName,
-    @JsonKey(name: 'provider_name') String? providerName,
-    @JsonKey(name: 'model_name') String? modelName,
+    MessageStatus? engineMessageStatus,
+    MessageDelivery? userMessageStatus,
+    String? aiEngineMessageId,
+    String? parentId,
+    String? agentName,
+    String? providerName,
+    String? modelName,
     double? cost,
     MessageTokens? tokens,
     Map<String, dynamic>? error,
-    @JsonKey(name: 'finish_reason') String? finishReason,
+    String? finishReason,
     List<MessagePart>? parts,
     Map<String, dynamic>? metadata,
     @Default(false) bool isLive, // Frontend only state for streaming
     DateTime? created,
     DateTime? updated,
   }) = _ChatMessage;
+
+  factory ChatMessage.fromRecord(RecordModel record) =>
+      ChatMessage.fromJson(record.toJson());
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
       _$ChatMessageFromJson(json);

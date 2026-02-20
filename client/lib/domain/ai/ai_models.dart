@@ -1,20 +1,37 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 part 'ai_models.freezed.dart';
 part 'ai_models.g.dart';
+
+enum AiAgentMode {
+  @JsonValue('primary')
+  primary,
+  @JsonValue('subagent')
+  subagent,
+  @JsonValue('')
+  unknown,
+}
 
 @freezed
 class AiAgent with _$AiAgent {
   const factory AiAgent({
     required String id,
     required String name,
-    @JsonKey(name: 'is_init') @Default(false) bool isInit,
+    required String description,
+    required AiAgentMode mode,
+    required double temperature,
+    required bool isInit,
     @JsonKey(name: 'prompt') String? promptId,
     @JsonKey(name: 'model') String? modelId,
-    String? config,
+    @Default({}) Map<String, dynamic> tools,
+    @Default({}) Map<String, dynamic> permissions,
     DateTime? created,
     DateTime? updated,
   }) = _AiAgent;
+
+  factory AiAgent.fromRecord(RecordModel record) =>
+      AiAgent.fromJson(record.toJson());
 
   factory AiAgent.fromJson(Map<String, dynamic> json) =>
       _$AiAgentFromJson(json);
@@ -30,6 +47,9 @@ class AiPrompt with _$AiPrompt {
     DateTime? updated,
   }) = _AiPrompt;
 
+  factory AiPrompt.fromRecord(RecordModel record) =>
+      AiPrompt.fromJson(record.toJson());
+
   factory AiPrompt.fromJson(Map<String, dynamic> json) =>
       _$AiPromptFromJson(json);
 }
@@ -43,6 +63,9 @@ class AiModel with _$AiModel {
     DateTime? created,
     DateTime? updated,
   }) = _AiModel;
+
+  factory AiModel.fromRecord(RecordModel record) =>
+      AiModel.fromJson(record.toJson());
 
   factory AiModel.fromJson(Map<String, dynamic> json) =>
       _$AiModelFromJson(json);

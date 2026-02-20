@@ -20,8 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package relay
 
 import (
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -49,7 +47,7 @@ func NewRelayService(app core.App, openCodeURL string) *RelayService {
 // 3. Agent Sync (Hooks)
 // 4. Health Monitor Watchdog
 func (r *RelayService) Start() {
-	fmt.Println("[Relay] Starting Go-based Relay Service...")
+	r.app.Logger().Info("[Relay] Starting Go-based Relay Service...")
 
 	// 1. Start SSE Listener (in background)
 	go r.listenForEvents()
@@ -78,14 +76,14 @@ func (r *RelayService) startHealthMonitor() {
 		// Watchdog: If we haven't seen ANYTHING from OpenCode in 45 seconds, it's offline.
 		if r.lastHeartbeat > 0 && now-r.lastHeartbeat > 45 {
 			if r.isReady {
-				log.Println("⚠️ [Relay/Health] OpenCode responsiveness lost (Watchdog triggered).")
+				r.app.Logger().Warn("⚠️ [Relay/Health] OpenCode responsiveness lost (Watchdog triggered).")
 				r.isReady = false
 				r.updateHealthcheck("offline")
 			}
 		} else if r.lastHeartbeat > 0 {
 			// If we see activity again, recover to ready
 			if !r.isReady {
-				log.Println("💓 [Relay/Health] OpenCode responsiveness recovered.")
+				r.app.Logger().Info("💓 [Relay/Health] OpenCode responsiveness recovered.")
 				r.isReady = true
 				r.updateHealthcheck("ready")
 			}
@@ -101,7 +99,7 @@ func (r *RelayService) registerMessageHooks() {
 
 		// If no user_message_status is set, default to pending for user messages
 		if role == "user" && (userMessageStatus == "pending" || userMessageStatus == "") {
-			fmt.Printf("[Relay] Intercepted user message: %s\n", e.Record.Id)
+			r.app.Logger().Info("[Relay] Intercepted user message", "id", e.Record.Id)
 			go r.processUserMessage(e.Record)
 		}
 		return e.Next()

@@ -128,7 +128,7 @@ class CommunicationCubit extends Cubit<CommunicationState> {
     final currentHot = state.hotMessage ??
         ChatMessage(
           id: _uuid.v4(),
-          chatId: _currentChatId ?? 'temp',
+          chat: _currentChatId ?? 'temp',
           role: MessageRole.assistant,
           parts: [],
           isLive: true,
@@ -175,7 +175,7 @@ class CommunicationCubit extends Cubit<CommunicationState> {
 
     final userMsg = ChatMessage(
         id: 'sim-user-1',
-        chatId: 'current',
+        chat: 'current',
         role: MessageRole.user,
         parts: [const MessagePart.text(text: "Check the server status.")],
         created: DateTime.now());
@@ -219,7 +219,7 @@ class CommunicationCubit extends Cubit<CommunicationState> {
 
     final assistantMsg = ChatMessage(
       id: 'sim-asst-1',
-      chatId: 'current',
+      chat: 'current',
       role: MessageRole.assistant,
       parts: [
         const MessagePart.text(

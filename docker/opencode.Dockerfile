@@ -33,7 +33,7 @@ RUN ARCH=$(uname -m) && \
 ENV DOCKER_MCP_IN_CONTAINER=1
 
 # Install OpenCode (The Reasoning Engine)
-RUN bun install -g opencode-ai@latest
+RUN bun install -g opencode-ai@1.2.8
 
 # Make OpenCode accessible to all users (needed for SSH ForceCommand)
 RUN chmod o+rx /root && chmod -R o+rX /root/.bun

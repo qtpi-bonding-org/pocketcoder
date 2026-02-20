@@ -29,7 +29,7 @@ void main() {
       when(() => mockPb.authStore).thenReturn(mockAuthStore);
       when(() => mockPb.collection('ssh_keys')).thenReturn(mockSshKeysService);
       when(() => mockAuthStore.isValid).thenReturn(true);
-      when(() => mockAuthStore.model).thenReturn(
+      when(() => mockAuthStore.record).thenReturn(
         MockRecordModel()..id = 'test-user-id',
       );
 

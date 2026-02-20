@@ -32,39 +32,39 @@ import (
 )
 
 func (r *RelayService) recoverMissedMessages() {
-	log.Println("🔄 [Relay/Go] Recovery Pump: Checking for unsent user messages...")
+	r.app.Logger().Info("🔄 [Relay/Go] Recovery Pump: Checking for unsent user messages...")
 	// We check for user messages that are pending or were stuck in 'sending'
 	records, err := r.app.FindRecordsByFilter("messages", "role = 'user' && (user_message_status = 'pending' || user_message_status = '')", "created", 100, 0)
 	if err != nil {
-		log.Printf("⚠️ [Relay/Go] Recovery check failed: %v", err)
+		r.app.Logger().Error("⚠️ [Relay/Go] Recovery check failed", "error", err)
 		return
 	}
 
 	if len(records) > 0 {
-		log.Printf("🔄 [Relay/Go] Pump found %d unsent messages. Processing...", len(records))
+		r.app.Logger().Info("🔄 [Relay/Go] Pump found unsent messages", "count", len(records))
 		for _, msg := range records {
 			go r.processUserMessage(msg)
 		}
 	} else {
-		log.Println("✅ [Relay/Go] Recovery Pump: All messages sent.")
+		r.app.Logger().Debug("✅ [Relay/Go] Recovery Pump: All messages sent.")
 	}
 }
 
 func (r *RelayService) processUserMessage(msg *core.Record) {
-	log.Printf("📨 [Relay/Go] Processing Message: %s", msg.Id)
+	r.app.Logger().Info("📨 [Relay/Go] Processing Message", "id", msg.Id)
 
 	chatID := msg.GetString("chat")
 	// 1. Get Chat Record
 	chat, err := r.app.FindRecordById("chats", chatID)
 	if err != nil {
-		log.Printf("⚠️ [Relay/Go] Could not find chat %s for message %s: %v", chatID, msg.Id, err)
+		r.app.Logger().Warn("⚠️ [Relay/Go] Could not find chat context", "chatId", chatID, "msgId", msg.Id, "error", err)
 		return
 	}
 
 	// 2. Mark as sending
 	msg.Set("user_message_status", "sending")
 	if err := r.app.Save(msg); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to claim message %s: %v", msg.Id, err)
+		r.app.Logger().Error("❌ [Relay/Go] Failed to claim message", "id", msg.Id, "error", err)
 		return
 	}
 
@@ -77,7 +77,7 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	// 4. Get OpenCode Session
 	sessionID, err := r.ensureSession(chatID)
 	if err != nil {
-		log.Printf("❌ [Relay/Go] Session failure: %v", err)
+		r.app.Logger().Error("❌ [Relay/Go] Session failure", "error", err)
 		msg.Set("user_message_status", "failed")
 		r.app.Save(msg)
 		return
@@ -100,13 +100,13 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 		"parts": parts,
 	}
 	body, _ := json.Marshal(payload)
-	log.Printf("📡 [Relay/Go] 📤 ASYNC PUSH (Msg: %s): %s", msg.Id, string(body))
+	r.app.Logger().Debug("📡 [Relay/Go] 📤 ASYNC PUSH", "id", msg.Id, "body", string(body))
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Post(url, "application/json", strings.NewReader(string(body)))
 
 	if err != nil {
-		log.Printf("❌ [Relay/Go] OpenCode prompt failed: %v", err)
+		r.app.Logger().Error("❌ [Relay/Go] OpenCode prompt failed", "error", err)
 		msg.Set("user_message_status", "failed")
 		r.app.Save(msg)
 		return
@@ -114,7 +114,7 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		log.Printf("❌ [Relay/Go] OpenCode prompt rejected: %s", resp.Status)
+		r.app.Logger().Error("❌ [Relay/Go] OpenCode prompt rejected", "status", resp.Status)
 		msg.Set("user_message_status", "failed")
 		r.app.Save(msg)
 		return
@@ -123,14 +123,13 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	// Success! Mark as delivered. We don't wait for the assistant response here.
 	msg.Set("user_message_status", "delivered")
 	if err := r.app.Save(msg); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to update message %s after delivery: %v", msg.Id, err)
+		r.app.Logger().Error("❌ [Relay/Go] Failed to update message metadata", "id", msg.Id, "error", err)
 	}
-	log.Printf("✅ [Relay/Go] Message %s delivered to OpenCode.", msg.Id)
+	r.app.Logger().Info("✅ [Relay/Go] Message delivered to OpenCode", "id", msg.Id)
 }
 
-
 func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]interface{}) {
-	log.Printf("🔄 [Relay/Go] Syncing Assistant Message for chat %s", chatID)
+	r.app.Logger().Debug("🔄 [Relay/Go] Syncing Assistant Message", "chatId", chatID)
 	info, _ := ocData["info"].(map[string]interface{})
 	if info == nil {
 		info = ocData
@@ -166,7 +165,7 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	} else {
 		collection, err := r.app.FindCollectionByNameOrId("messages")
 		if err != nil {
-			log.Printf("❌ [Relay/Go] Collection error: %v", err)
+			r.app.Logger().Error("❌ [Relay/Go] Collection error", "error", err)
 			return
 		}
 		record = core.NewRecord(collection)
@@ -210,7 +209,7 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	}
 
 	if len(normalizedParts) > 0 {
-		log.Printf("📥 [Relay/Go] Syncing parts for %s: %v", ocMsgID, normalizedParts)
+		r.app.Logger().Debug("📥 [Relay/Go] Message content update", "ocMsgID", ocMsgID, "partsCount", len(normalizedParts))
 		record.Set("parts", normalizedParts)
 	}
 	
@@ -218,7 +217,7 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	preview := extractPreviewFromParts(normalizedParts)
 
 	if err := r.app.Save(record); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to sync message %s: %v", ocMsgID, err)
+		r.app.Logger().Error("❌ [Relay/Go] Failed to sync assistant message", "ocMsgID", ocMsgID, "error", err)
 		return
 	}
 
@@ -228,7 +227,7 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	// Update parent chat record
 	chat, err := r.app.FindRecordById("chats", chatID)
 	if err != nil {
-		log.Printf("⚠️ [Relay/Go] Could not find chat %s for assistant message %s: %v", chatID, ocMsgID, err)
+		r.app.Logger().Warn("⚠️ [Relay/Go] Could not find chat", "chatId", chatID, "ocMsgID", ocMsgID, "error", err)
 		return
 	}
 
@@ -238,7 +237,7 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	chat.Set("preview", preview)
 
 	if err := r.app.Save(chat); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to update chat %s last_active and preview for assistant message: %v", chatID, err)
+		r.app.Logger().Error("❌ [Relay/Go] Failed to update chat metadata", "chatId", chatID, "error", err)
 	}
 }
 
@@ -246,7 +245,7 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 	// Look up chat record
 	chat, err := r.app.FindRecordById("chats", chatID)
 	if err != nil {
-		log.Printf("❌ [Relay/Go] Chat lookup failed for %s: %v", chatID, err)
+		r.app.Logger().Error("❌ [Relay/Go] Chat lookup failed", "chatId", chatID, "error", err)
 		return "", err
 	}
 
@@ -260,18 +259,18 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 		if vErr == nil {
 			defer vResp.Body.Close()
 			if vResp.StatusCode == 200 {
-				log.Printf("✅ [Relay/Go] Existing session %s is still alive.", existingSession)
+				r.app.Logger().Debug("✅ [Relay/Go] Existing session is still alive", "id", existingSession)
 				return existingSession, nil
 			}
 			
-			log.Printf("⚠️ [Relay/Go] Existing session %s returned status %d.", existingSession, vResp.StatusCode)
+			r.app.Logger().Warn("⚠️ [Relay/Go] Existing session check failed", "id", existingSession, "status", vResp.StatusCode)
 			if vResp.StatusCode == http.StatusNotFound {
-				log.Printf("⚠️ [Relay/Go] Session %s is gone (404), cleaning up...", existingSession)
+				r.app.Logger().Warn("⚠️ [Relay/Go] Session is gone (404), cleaning up", "id", existingSession)
 				chat.Set("ai_engine_session_id", "")
 				r.app.Save(chat)
 			}
 		} else {
-			log.Printf("⚠️ [Relay/Go] Error verifying session %s: %v", existingSession, vErr)
+			r.app.Logger().Warn("⚠️ [Relay/Go] Error verifying session", "id", existingSession, "error", vErr)
 			// On network error, we don't clear it immediately to allow for transient issues
 		}
 
@@ -282,35 +281,35 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 	}
 
 	// Create new session
-	log.Printf("🆕 [Relay/Go] Creating new OpenCode session for chat %s", chatID)
+	r.app.Logger().Info("🆕 [Relay/Go] Creating new OpenCode session", "chatId", chatID)
 	reqURL := fmt.Sprintf("%s/session", r.openCodeURL)
 	payload := `{"directory": "/workspace", "agent": "poco"}`
 	resp, err := http.Post(reqURL, "application/json", strings.NewReader(payload))
 	if err != nil {
-		log.Printf("❌ [Relay/Go] OpenCode session creation request failed: %v", err)
+		r.app.Logger().Error("❌ [Relay/Go] OpenCode session creation request failed", "error", err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		log.Printf("❌ [Relay/Go] OpenCode session creation rejected: %s", resp.Status)
+		r.app.Logger().Error("❌ [Relay/Go] OpenCode session creation rejected", "status", resp.Status)
 		return "", fmt.Errorf("opencode rejected session creation: %s", resp.Status)
 	}
 
 	var res map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to decode session response: %v", err)
+		r.app.Logger().Error("❌ [Relay/Go] Failed to decode session response", "error", err)
 	}
-	log.Printf("📥 [Relay/Go] OpenCode session creation response: %+v", res)
+	r.app.Logger().Debug("📥 [Relay/Go] OpenCode session creation response", "data", res)
 
 	newID, _ := res["id"].(string)
 	if newID != "" {
 		chat.Set("ai_engine_session_id", newID)
 		chat.Set("engine_type", "opencode")
 		if err := r.app.Save(chat); err != nil {
-			log.Printf("❌ [Relay/Go] Failed to update chat %s with ai_engine_session_id: %v", chatID, err)
+			r.app.Logger().Error("❌ [Relay/Go] Failed to update chat with session id", "chatId", chatID, "error", err)
 		} else {
-			log.Printf("✅ [Relay/Go] Linked Chat %s to OpenCode Session %s", chatID, newID)
+			r.app.Logger().Info("✅ [Relay/Go] Linked Chat to OpenCode Session", "chatId", chatID, "sessionId", newID)
 		}
 		return newID, nil
 	}
@@ -359,7 +358,7 @@ func (r *RelayService) checkForSubagentRegistration(chatID string, parts []inter
 
 		var resultData map[string]interface{}
 		if err := json.Unmarshal([]byte(content), &resultData); err != nil {
-			log.Printf("⚠️ [Relay] Failed to parse tool_result content as JSON: %v", err)
+			r.app.Logger().Warn("⚠️ [Relay] Failed to parse tool_result content as JSON", "error", err)
 			continue
 		}
 
@@ -381,8 +380,12 @@ func (r *RelayService) checkForSubagentRegistration(chatID string, parts []inter
 			tmuxWindowID = int(tmuxWindow)
 		}
 
-		log.Printf("🤖 [Relay] Detected Subagent Registration: terminal=%s, subagent=%s, window=%d, profile=%s for Chat %s",
-			terminalID, subagentID, tmuxWindowID, agentProfile, chatID)
+		r.app.Logger().Info("🤖 [Relay] Detected Subagent Registration",
+			"terminalID", terminalID,
+			"subagentID", subagentID,
+			"windowID", tmuxWindowID,
+			"profile", agentProfile,
+			"chatID", chatID)
 
 		r.registerSubagentInDB(chatID, subagentID, terminalID, tmuxWindowID, agentProfile)
 	}
@@ -390,7 +393,7 @@ func (r *RelayService) checkForSubagentRegistration(chatID string, parts []inter
 
 func (r *RelayService) registerSubagentInDB(chatID, subagentID, terminalID string, tmuxWindowID int, agentProfile string) {
 	if subagentID == "" {
-		log.Printf("⚠️ [Relay] Empty subagent_id for chat %s, terminal=%s, window=%d — skipping registration (will retry on next handoff)", chatID, terminalID, tmuxWindowID)
+		r.app.Logger().Warn("⚠️ [Relay] Empty subagent_id, skipping registration", "chatId", chatID, "terminalId", terminalID, "windowId", tmuxWindowID)
 		return
 	}
 
@@ -402,14 +405,14 @@ func (r *RelayService) registerSubagentInDB(chatID, subagentID, terminalID strin
 
 	collection, err := r.app.FindCollectionByNameOrId("subagents")
 	if err != nil {
-		log.Printf("❌ [Relay] Could not find subagents collection: %v", err)
+		r.app.Logger().Error("❌ [Relay] Could not find subagents collection", "error", err)
 		return
 	}
 
 	// Resolve delegatingAgentID from chat's ai_engine_session_id field
 	chat, err := r.app.FindRecordById("chats", chatID)
 	if err != nil {
-		log.Printf("❌ [Relay] Could not find chat %s: %v", chatID, err)
+		r.app.Logger().Error("❌ [Relay] Could not find chat context", "id", chatID, "error", err)
 		return
 	}
 	delegatingAgentID := chat.GetString("ai_engine_session_id")
@@ -421,10 +424,14 @@ func (r *RelayService) registerSubagentInDB(chatID, subagentID, terminalID strin
 	record.Set("chat", chatID)
 
 	if err := r.app.Save(record); err != nil {
-		log.Printf("❌ [Relay] Failed to save subagent record: %v", err)
+		r.app.Logger().Error("❌ [Relay] Failed to save subagent record", "error", err)
 	} else {
-		log.Printf("✅ [Relay] Persisted Subagent Lineage: subagent=%s, delegating_agent=%s, window=%d, chat=%s, profile=%s",
-			subagentID, delegatingAgentID, tmuxWindowID, chatID, agentProfile)
+		r.app.Logger().Info("✅ [Relay] Persisted Subagent Lineage",
+			"subagentID", subagentID,
+			"delegatingAgentID", delegatingAgentID,
+			"windowID", tmuxWindowID,
+			"chatID", chatID,
+			"profile", agentProfile)
 	}
 }
 
