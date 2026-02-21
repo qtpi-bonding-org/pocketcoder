@@ -22,9 +22,9 @@ package relay
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -71,7 +71,7 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	// 3. Set turn to assistant immediately to indicate thinking
 	chat.Set("turn", "assistant")
 	if err := r.app.Save(chat); err != nil {
-		log.Printf("❌ [Relay/Go] Failed to update chat turn: %v", err)
+		r.app.Logger().Error("❌ [Relay/Go] Failed to update chat turn", "error", err)
 	}
 
 	// 4. Get OpenCode Session
@@ -129,7 +129,17 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 }
 
 func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]interface{}) {
-	r.app.Logger().Debug("🔄 [Relay/Go] Syncing Assistant Message", "chatId", chatID)
+	if chatID == "" {
+		return
+	}
+
+	// Acquire per-chat mutex to prevent race conditions on chat record updates
+	val, _ := r.chatMutexes.LoadOrStore(chatID, &sync.Mutex{})
+	mu := val.(*sync.Mutex)
+	mu.Lock()
+	defer mu.Unlock()
+
+	r.app.Logger().Info("🔄 [Relay/Go] Syncing Assistant Message", "chatId", chatID)
 	info, _ := ocData["info"].(map[string]interface{})
 	if info == nil {
 		info = ocData
@@ -142,6 +152,7 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	role, _ := info["role"].(string)
 	if role != "" && role != "assistant" {
 		// Only sync assistant messages to prevent mirror echoes
+		r.app.Logger().Debug("⏭️ [Relay/Go] Skipping sync for non-assistant role", "role", role, "chatId", chatID)
 		return
 	}
 
@@ -187,13 +198,19 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 	record.Set("finish_reason", info["finish"])
 
 	// 3. Set Status
-	status := "processing"
+	newStatus := "processing"
 	if completed {
-		status = "completed"
+		newStatus = "completed"
 	} else if info["error"] != nil {
-		status = "failed"
+		newStatus = "failed"
 	}
-	record.Set("engine_message_status", status)
+
+	currentStatus := record.GetString("engine_message_status")
+	if currentStatus == "completed" || currentStatus == "failed" {
+		r.app.Logger().Debug("🛡️ [Relay/Go] Protecting finished status", "ocMsgID", ocMsgID, "current", currentStatus, "newAttempt", newStatus)
+	} else {
+		record.Set("engine_message_status", newStatus)
+	}
 
 	// 4. Normalize and Set Content
 	normalizedParts := make([]interface{}, 0, len(parts))
@@ -213,8 +230,12 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 		record.Set("parts", normalizedParts)
 	}
 	
-	// Extract preview from normalized parts (before saving to avoid DB read race condition)
+	// Extract preview from normalized parts
 	preview := extractPreviewFromParts(normalizedParts)
+	r.app.Logger().Debug("🔍 [Relay/Go] Extracted preview", "ocMsgID", ocMsgID, "preview", preview)
+	if preview == "" && len(normalizedParts) > 0 {
+		r.app.Logger().Debug("🧪 [Relay/Go] Empty preview with non-empty parts", "ocMsgID", ocMsgID)
+	}
 
 	if err := r.app.Save(record); err != nil {
 		r.app.Logger().Error("❌ [Relay/Go] Failed to sync assistant message", "ocMsgID", ocMsgID, "error", err)
@@ -231,13 +252,33 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 		return
 	}
 
+	currentPreview := chat.GetString("preview")
+	
+	// 'High Water Mark' Logic: Only update preview if it's getting better/longer.
+	// This protects against partial events that might have missing parts.
+	shouldUpdatePreview := false
+	if preview != "" {
+		if len(preview) > len(currentPreview) {
+			shouldUpdatePreview = true
+		} else if len(preview) == len(currentPreview) && preview != currentPreview {
+			// Case where both are truncated at 50 chars but content evolved
+			shouldUpdatePreview = true
+		}
+	}
+
+	if shouldUpdatePreview {
+		r.app.Logger().Info("✍️ [Relay/Go] Updating chat preview", "chatId", chatID, "preview", preview)
+		chat.Set("preview", preview)
+	}
+
 	now = time.Now().Format("2006-01-02 15:04:05.000Z")
 	chat.Set("last_active", now)
 	chat.Set("updated", now)
-	chat.Set("preview", preview)
 
 	if err := r.app.Save(chat); err != nil {
 		r.app.Logger().Error("❌ [Relay/Go] Failed to update chat metadata", "chatId", chatID, "error", err)
+	} else {
+		r.app.Logger().Info("✅ [Relay/Go] Assistant sync complete", "ocMsgID", ocMsgID, "chatID", chatID)
 	}
 }
 
