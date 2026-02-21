@@ -35,16 +35,22 @@ func (r *RelayService) resolveChatID(sessionID string) string {
 	// 2. Check if it's a subagent
 	subagent, err := r.app.FindFirstRecordByFilter("subagents", "subagent_id = {:id}", map[string]any{"id": sessionID})
 	if err == nil {
-		// Resolve via delegating_agent_id -> chats.ai_engine_session_id -> chats.id
-		delegatingAgentID := subagent.GetString("delegating_agent_id")
-		if delegatingAgentID == "" {
-			return ""
+		// Use the direct chat relation if available
+		chatID := subagent.GetString("chat")
+		if chatID != "" {
+			return chatID
 		}
-		chatRecord, err := r.app.FindFirstRecordByFilter("chats", "ai_engine_session_id = {:id}", map[string]any{"id": delegatingAgentID})
-		if err == nil {
-			return chatRecord.Id
+
+		// Fallback: Resolve via delegating_agent_id -> chats.ai_engine_session_id -> chats.id
+		delegatingAgentID := subagent.GetString("delegating_agent_id")
+		if delegatingAgentID != "" {
+			chatRecord, err := r.app.FindFirstRecordByFilter("chats", "ai_engine_session_id = {:id}", map[string]any{"id": delegatingAgentID})
+			if err == nil {
+				return chatRecord.Id
+			}
 		}
 	}
 
+	r.app.Logger().Debug("⚠️ [Relay/Go] resolveChatID failed", "sessionID", sessionID)
 	return ""
 }
