@@ -23,7 +23,7 @@ services:
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
       - OPENCODE_URL=${OPENCODE_URL}
-      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+      - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
     command: >
       sh -c "echo '⏳ Waiting for OpenCode to be ready...' && while ! curl -I -s --connect-timeout 2 http://opencode:3000 > /dev/null; do echo 'OpenCode not yet ready, retrying in 1 second...' && sleep 1; done; echo '🚀 OpenCode is ready. Starting PocketBase...' && /app/pocketbase serve --http=0.0.0.0:8090"
     restart: unless-stopped
@@ -122,14 +122,17 @@ services:
       - pocketcoder-mcp
     restart: unless-stopped
 
-  # 🔒 DOCKER SOCKET PROXY (Security Layer for PocketBase)
-  docker-socket-proxy:
+  # 🔒 DOCKER SOCKET PROXY - WRITE (Security Layer for PocketBase)
+  # Currently shared by both PocketBase (restart) and Dozzle (logs)
+  # For production: uncomment docker-socket-proxy-read below and update Dozzle config
+  docker-socket-proxy-write:
     image: tecnativa/docker-socket-proxy:latest
-    container_name: pocketcoder-docker-proxy
+    container_name: pocketcoder-docker-proxy-write
     environment:
-      # Enable ONLY container restart operations
+      # Enable container operations for PocketBase restart capability
       - CONTAINERS=1          # Allow container operations (list, inspect, restart)
       - POST=1                # Allow POST requests (for restart)
+      - EVENTS=1              # Allow streaming events (for Dozzle)
       - INFO=0                # Disable info endpoint
       - IMAGES=0              # Disable image operations
       - NETWORKS=0            # Disable network operations
@@ -152,6 +155,71 @@ services:
     networks:
       - pocketcoder-mcp
     restart: unless-stopped
+
+  # 🔒 DOCKER SOCKET PROXY - READ (Future: Read-only for Dozzle)
+  # Uncomment to separate read-only (Dozzle) from write (PocketBase) permissions
+  # docker-socket-proxy-read:
+  #   image: tecnativa/docker-socket-proxy:latest
+  #   container_name: pocketcoder-docker-proxy-read
+  #   environment:
+  #     # Read-only container operations for Dozzle log viewing
+  #     - CONTAINERS=1          # Allow container operations (list, inspect, logs)
+  #     - POST=0                # Disable POST requests (no restart/stop/start)
+  #     - EVENTS=1              # Allow streaming events (for Dozzle)
+  #     - INFO=0                # Disable info endpoint
+  #     - IMAGES=0              # Disable image operations
+  #     - NETWORKS=0            # Disable network operations
+  #     - VOLUMES=0             # Disable volume operations
+  #     - BUILD=0               # Disable build operations
+  #     - COMMIT=0              # Disable commit operations
+  #     - CONFIGS=0             # Disable config operations
+  #     - DISTRIBUTION=0        # Disable distribution operations
+  #     - EXEC=0                # Disable exec operations
+  #     - PLUGINS=0             # Disable plugin operations
+  #     - SECRETS=0             # Disable secrets operations
+  #     - SERVICES=0            # Disable services operations
+  #     - SESSION=0             # Disable session operations
+  #     - SWARM=0               # Disable swarm operations
+  #     - SYSTEM=0              # Disable system operations
+  #     - TASKS=0               # Disable tasks operations
+  #     - LOG_LEVEL=info        # Logging level
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   networks:
+  #     - pocketcoder-mcp
+  #   restart: unless-stopped
+  #   # When enabled, update Dozzle to use: DOCKER_HOST=tcp://docker-socket-proxy-read:2375
+
+  # 📊 DOZZLE (Docker Log Viewer)
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: pocketcoder-dozzle
+    environment:
+      - DOZZLE_LEVEL=info
+      - DOZZLE_TAILSIZE=300
+      - DOZZLE_FILTER=status=running
+      - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
+    networks:
+      - pocketcoder-memory    # For PocketBase reverse proxy access
+      - pocketcoder-mcp       # For docker-socket-proxy access
+    restart: unless-stopped
+    depends_on:
+      - docker-socket-proxy-write
+
+  # 📈 SQLPAGE (SQLite Dashboard)
+  sqlpage:
+    image: lovasoa/sqlpage:latest
+    container_name: pocketcoder-sqlpage
+    environment:
+      - DATABASE_URL=sqlite:///database/pb_data.db
+    volumes:
+      - pb_data:/database:ro  # Read-only access to PocketBase database
+      - ./sqlpage:/var/www/sqlpage.sql:ro  # SQLPage queries/dashboards
+    networks:
+      - pocketcoder-memory    # For PocketBase reverse proxy access
+    restart: unless-stopped
+    depends_on:
+      - pocketbase
 
 volumes:
   pb_data:
