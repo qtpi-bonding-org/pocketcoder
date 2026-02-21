@@ -80,6 +80,7 @@ services:
       - opencode_workspace:/workspace
       - ./opencode:/workspace/.opencode
       - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
+      - cao_db:/root/.aws/cli-agent-orchestrator/db  # CAO SQLite database
       - ./.ssh_keys:/ssh_keys:ro
       - ./sandbox/cao/src:/app/cao/src
       - ./sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
@@ -211,15 +212,19 @@ services:
     image: lovasoa/sqlpage:latest
     container_name: pocketcoder-sqlpage
     environment:
-      - DATABASE_URL=sqlite:///database/pb_data.db
+      - DATABASE_URL=sqlite:///database/pocketbase/data.db
     volumes:
-      - pb_data:/database:ro  # Read-only access to PocketBase database
-      - ./sqlpage:/var/www/sqlpage.sql:ro  # SQLPage queries/dashboards
+      - pb_data:/database/pocketbase:ro           # PocketBase DB (operational)
+      - opencode_data:/database/opencode:ro       # OpenCode DB (analytics)
+      - cao_db:/database/cao:ro                   # CAO DB (subagent tasks)
+      - ./sqlpage:/var/www/sqlpage.sql:ro         # SQLPage queries/dashboards
     networks:
       - pocketcoder-memory    # For PocketBase reverse proxy access
     restart: unless-stopped
     depends_on:
       - pocketbase
+      - opencode
+      - sandbox
 
 volumes:
   pb_data:
@@ -229,6 +234,7 @@ volumes:
   pocketcoder-logs:
   opencode_workspace:
   opencode_data:
+  cao_db:  # CAO SQLite database for subagent tasks
 
 networks:
   pocketcoder-memory:
