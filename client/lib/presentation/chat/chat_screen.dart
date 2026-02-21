@@ -153,9 +153,7 @@ class _ChatViewState extends State<_ChatView> {
                                 .whereType<MessagePartText>()
                                 .toList();
                             return SpeechBubble(
-                                textParts: textParts,
-                                isUser: true,
-                                agentName: msg.agentName);
+                                textParts: textParts, isUser: true);
                           }
 
                           // For ASSISTANT: Show ONLY the LAST text part.
@@ -168,9 +166,7 @@ class _ChatViewState extends State<_ChatView> {
                               : <MessagePartText>[];
 
                           return SpeechBubble(
-                              textParts: finalAnswer,
-                              isUser: false,
-                              agentName: msg.agentName);
+                              textParts: finalAnswer, isUser: false);
                         },
                       );
                     },
