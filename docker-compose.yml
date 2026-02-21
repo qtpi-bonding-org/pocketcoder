@@ -134,7 +134,7 @@ services:
       - CONTAINERS=1          # Allow container operations (list, inspect, restart)
       - POST=1                # Allow POST requests (for restart)
       - EVENTS=1              # Allow streaming events (for Dozzle)
-      - INFO=0                # Disable info endpoint
+      - INFO=1                # Required for Dozzle to detect Docker version
       - IMAGES=0              # Disable image operations
       - NETWORKS=0            # Disable network operations
       - VOLUMES=0             # Disable volume operations
@@ -195,10 +195,11 @@ services:
   dozzle:
     image: amir20/dozzle:latest
     container_name: pocketcoder-dozzle
+    ports:
+      - "8089:8080"
     environment:
       - DOZZLE_LEVEL=info
-      - DOZZLE_TAILSIZE=300
-      - DOZZLE_FILTER=status=running
+      - DOZZLE_FILTER=label=com.docker.compose.project=pocketcoder
       - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
     networks:
       - pocketcoder-memory    # For PocketBase reverse proxy access
