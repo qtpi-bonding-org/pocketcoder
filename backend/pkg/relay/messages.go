@@ -189,13 +189,6 @@ func (r *RelayService) syncAssistantMessage(chatID string, ocData map[string]int
 
 	// 2. Set Envelope Fields (1:1)
 	record.Set("parent_id", info["parentID"])
-	record.Set("agent_name", info["agent"])
-	record.Set("provider_name", info["providerID"])
-	record.Set("model_name", info["modelID"])
-	record.Set("cost", info["cost"])
-	record.Set("tokens", info["tokens"])
-	record.Set("error", info["error"])
-	record.Set("finish_reason", info["finish"])
 
 	// 3. Set Status
 	newStatus := "processing"

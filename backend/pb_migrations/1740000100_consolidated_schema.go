@@ -111,15 +111,7 @@ func init() {
 			&core.SelectField{Name: "user_message_status", MaxSelect: 1, Values: []string{"pending", "sending", "delivered", "failed"}}, // RENAMED from delivery
 			&core.TextField{Name: "ai_engine_message_id"}, // RENAMED from agent_message_id
 			&core.TextField{Name: "parent_id"},
-			&core.TextField{Name: "agent_name"}, // RENAMED from agent
-			&core.TextField{Name: "provider_name"}, // RENAMED from provider_id
-			&core.TextField{Name: "model_name"}, // RENAMED from model_id
-			&core.NumberField{Name: "cost"},
-			&core.JSONField{Name: "tokens"},
-			&core.JSONField{Name: "error"},
-			&core.TextField{Name: "finish_reason"},
 			&core.JSONField{Name: "parts"},
-			&core.JSONField{Name: "metadata"},
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
