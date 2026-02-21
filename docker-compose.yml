@@ -210,14 +210,18 @@ services:
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
     image: lovasoa/sqlpage:latest
+    user: root
     container_name: pocketcoder-sqlpage
+    ports:
+      - "8088:8080"
     environment:
-      - DATABASE_URL=sqlite:///database/pocketbase/data.db
+      - SQLPAGE_ENVIRONMENT=development
     volumes:
-      - pb_data:/database/pocketbase:ro           # PocketBase DB (operational)
-      - opencode_data:/database/opencode:ro       # OpenCode DB (analytics)
-      - cao_db:/database/cao:ro                   # CAO DB (subagent tasks)
-      - ./sqlpage:/var/www/sqlpage.sql:ro         # SQLPage queries/dashboards
+      - pb_data:/database/pocketbase           # PocketBase DB (operational)
+      - opencode_data:/database/opencode       # OpenCode DB (analytics)
+      - cao_db:/database/cao                   # CAO DB (subagent tasks)
+      - ./dashboard:/var/www:ro                  # SQLPage queries/dashboards
+      - ./dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
     networks:
       - pocketcoder-memory    # For PocketBase reverse proxy access
     restart: unless-stopped
