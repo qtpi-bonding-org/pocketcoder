@@ -37,7 +37,7 @@ import (
 const (
 	mcpConfigPath     = "/mcp_config/docker-mcp.yaml"
 	gatewayContainer  = "pocketcoder-mcp-gateway"
-	dockerHost        = "tcp://docker-socket-proxy:2375"
+	dockerHost        = "tcp://docker-socket-proxy-write:2375"
 )
 
 // registerMcpHooks registers hooks for MCP server lifecycle management

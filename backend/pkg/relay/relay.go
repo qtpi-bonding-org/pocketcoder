@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package relay
 
 import (
+	"sync"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -31,6 +32,7 @@ type RelayService struct {
 	openCodeURL   string
 	lastHeartbeat int64 // Unix timestamp
 	isReady       bool
+	chatMutexes   sync.Map // Map of chatID (string) -> *sync.Mutex for per-chat locking
 }
 
 // NewRelayService creates a new Relay instance
