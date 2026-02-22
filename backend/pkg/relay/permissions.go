@@ -167,34 +167,30 @@ func (r *RelayService) listenForEvents() {
 				go r.handlePermissionAsked(properties)
 
 			case "message.updated":
+				// properties = { info: { id, role, time.completed, cost, tokens, ... } }
 				if info, ok := properties["info"].(map[string]interface{}); ok {
-					role, _ := info["role"].(string)
-					if role != "assistant" {
-						// Only sync assistant messages to prevent mirror echos
-						r.app.Logger().Debug("⏭️ [Relay/SSE] Skipping sync for role", "role", role)
-						continue
-					}
 					sessionID, _ := info["sessionID"].(string)
 					chatID := r.resolveChatID(sessionID)
 					if chatID != "" {
-						go r.syncAssistantMessage(chatID, properties)
+						go r.handleMessageCompletion(chatID, info)
 					} else {
-						r.app.Logger().Warn("⚠️ [Relay/SSE] Could not resolve Chat ID for Session", "sessionId", sessionID)
+						r.app.Logger().Warn("⚠️ [Relay/SSE] Could not resolve Chat ID for session", "sessionId", sessionID)
 					}
 				} else {
 					r.app.Logger().Warn("⚠️ [Relay/SSE] message.updated missing 'info' block")
 				}
 
-			case "message.part.updated":
-				// properties.part is the part, properties.delta is optional
+				
+				case "message.part.updated":
+				// properties = { part: { id, type, text, messageID, sessionID, ... } }
+				// One complete part — upsert it directly, no HTTP round-trip needed.
 				if part, ok := properties["part"].(map[string]interface{}); ok {
 					sessionID, _ := part["sessionID"].(string)
-					msgID, _ := part["messageID"].(string)
 					chatID := r.resolveChatID(sessionID)
 					if chatID != "" {
-						go r.triggerMessageSync(chatID, sessionID, msgID)
+						go r.upsertMessagePart(chatID, part)
 					} else {
-						log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for Session (part): %s", sessionID)
+						log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for session (part): %s", sessionID)
 					}
 				}
 
@@ -240,9 +236,21 @@ func (r *RelayService) handleSessionIdle(sessionID string) {
 	r.app.Logger().Debug("🔄 [Relay/SSE] Checking turn state", "chatId", chatID, "turn", turn)
 
 	if turn == "assistant" {
+		// Safeguard: Do not flip the turn to user if there is a pending permission request.
+		// A pending permission means the assistant's turn is technically "paused" awaiting human input,
+		// but not yet finished. Holding the assistant turn ensures tests and UI wait for the post-approval response.
+		pending, _ := r.app.FindFirstRecordByFilter("permissions", "chat = {:chat} && status = 'pending'", map[string]any{"chat": chatID})
+		if pending != nil {
+			r.app.Logger().Info("⏳ [Relay/SSE] Session idle but pending permission exists, holding assistant turn", "chatId", chatID)
+			return
+		}
+
 		r.app.Logger().Info("😴 [Relay/SSE] Flipping turn to user", "chatId", chatID)
-		chat.Set("turn", "user")
-		if err := r.app.Save(chat); err != nil {
+		err := r.withChatLock(chatID, func(chat *core.Record) error {
+			chat.Set("turn", "user")
+			return nil
+		})
+		if err != nil {
 			r.app.Logger().Error("❌ [Relay] Failed to flip turn", "chatId", chatID, "error", err)
 		} else {
 			// Trigger "The Pump" to catch any double-texting that was queued
@@ -251,21 +259,6 @@ func (r *RelayService) handleSessionIdle(sessionID string) {
 	}
 }
 
-// triggerMessageSync fetches the latest state of a message and syncs it.
-func (r *RelayService) triggerMessageSync(chatID, sessionID, msgID string) {
-	url := fmt.Sprintf("%s/session/%s/message/%s", r.openCodeURL, sessionID, msgID)
-	resp, err := http.Get(url)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 200 {
-		var data map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&data)
-		r.syncAssistantMessage(chatID, data)
-	}
-}
 
 func (r *RelayService) replyToOpenCode(requestID string, replyType string) {
 	url := fmt.Sprintf("%s/permission/%s/reply", r.openCodeURL, requestID)
