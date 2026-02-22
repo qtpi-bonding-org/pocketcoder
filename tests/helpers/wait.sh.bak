@@ -510,16 +510,11 @@ wait_for_assistant_message() {
                         echo "$msg_id"
                         return 0
                     elif [ -n "$has_tool_output" ] && [ "$has_tool_output" != "null" ]; then
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         local elapsed=$(($(date +%s) - start_time))
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         echo "  ✓ Assistant message $msg_id completed with tool output after ${elapsed}s" >&2
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         echo "$msg_id"
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         return 0
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                     else
+                        local elapsed=$(($(date +%s) - start_time))
+                        echo "  ✓ Assistant message $msg_id completed with tool output after ${elapsed}s" >&2
+                        echo "$msg_id"
+                        return 0
+                    else
                         # It's completed but no text in the current event.
                         # Re-fetch the message directly from DB — the relay may have kept the
                         # text parts from an earlier partial-update event.
@@ -534,20 +529,13 @@ wait_for_assistant_message() {
                         if [ -n "$fresh_text" ] && [ "$fresh_text" != "null" ]; then
                             local elapsed=$(($(date +%s) - start_time))
                             echo "  ✓ Assistant message $msg_id completed (text found in DB) after ${elapsed}s" >&2
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             echo "$msg_id"
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             return 0
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         elif [ -n "$fresh_tool_output" ] && [ "$fresh_tool_output" != "null" ]; then
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             local elapsed=$(($(date +%s) - start_time))
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             echo "  ✓ Assistant message $msg_id completed (tool output found in DB) after ${elapsed}s" >&2
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             echo "$msg_id"
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             return 0
+                            echo "$msg_id"
+                            return 0
+                        elif [ -n "$fresh_tool_output" ] && [ "$fresh_tool_output" != "null" ]; then
+                            local elapsed=$(($(date +%s) - start_time))
+                            echo "  ✓ Assistant message $msg_id completed (tool output found in DB) after ${elapsed}s" >&2
+                            echo "$msg_id"
+                            return 0
                         fi
                         echo "  ℹ Message $msg_id is completed but has no text content, continuing to check other messages..." >&2
                     fi
@@ -612,17 +600,9 @@ wait_for_assistant_message() {
                     fi
                 done
                 
-                # No message with text found, but turn is user
-                # Check if newest message is same as excluded one to avoid infinite loop
+                # No message with text found, but turn is user - return the newest message for caller to handle
                 local msg_id
                 msg_id=$(echo "$response" | jq -r ".items[0].id" 2>/dev/null)
-                
-                if [ -n "$exclude_id" ] && [ "$msg_id" = "$exclude_id" ]; then
-                    echo "  ℹ Turn is user but newest message ($msg_id) is same as excluded. No new message available." >&2
-                    echo ""
-                    return 0
-                fi
-                
                 echo "  ℹ Turn is user but no message with text found. Returning newest message $msg_id for caller to handle." >&2
                 echo "$msg_id"
                 return 0

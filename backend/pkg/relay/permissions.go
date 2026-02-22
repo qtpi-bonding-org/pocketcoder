@@ -118,12 +118,12 @@ func (r *RelayService) handlePermissionAsked(properties map[string]interface{}) 
 // listenForEvents connects to OpenCode SSE stream and handles all incoming events.
 func (r *RelayService) listenForEvents() {
 	url := fmt.Sprintf("%s/event", r.openCodeURL)
-	r.app.Logger().Info("🛡️ [Relay] Connecting SSE Firehose", "url", url)
+	log.Printf("🛡️ [Relay] Connecting SSE Firehose: %s", url)
 
 	for {
 		resp, err := http.Get(url)
 		if err != nil {
-			r.app.Logger().Error("❌ [Relay] SSE Connection failed", "error", err)
+			log.Printf("❌ [Relay] SSE Connection failed: %v", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -147,7 +147,7 @@ func (r *RelayService) listenForEvents() {
 			}
 
 			eventType, _ := event["type"].(string)
-			r.app.Logger().Debug("📥 [Relay/SSE] Event received", "type", eventType)
+			log.Printf("📥 [Relay/SSE] Event received: %s", eventType)
 			properties, _ := event["properties"].(map[string]interface{})
 			if properties == nil {
 				properties = event // Fallback
@@ -167,25 +167,33 @@ func (r *RelayService) listenForEvents() {
 				go r.handlePermissionAsked(properties)
 
 			case "message.updated":
+				log.Printf("📨 [Relay/SSE] Received message.updated event")
 				// properties = { info: { id, role, time.completed, cost, tokens, ... } }
 				if info, ok := properties["info"].(map[string]interface{}); ok {
 					sessionID, _ := info["sessionID"].(string)
+					msgID, _ := info["id"].(string)
+					role, _ := info["role"].(string)
+					log.Printf("📨 [Relay/SSE] message.updated details - sessionID: %s, msgID: %s, role: %s", sessionID, msgID, role)
 					chatID := r.resolveChatID(sessionID)
 					if chatID != "" {
 						go r.handleMessageCompletion(chatID, info)
 					} else {
-						r.app.Logger().Warn("⚠️ [Relay/SSE] Could not resolve Chat ID for session", "sessionId", sessionID)
+						log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for session: %s", sessionID)
 					}
 				} else {
-					r.app.Logger().Warn("⚠️ [Relay/SSE] message.updated missing 'info' block")
+					log.Printf("⚠️ [Relay/SSE] message.updated missing 'info' block")
 				}
 
-				
-				case "message.part.updated":
+			case "message.part.updated":
+				r.app.Logger().Info("📦 [Relay/SSE] Received message.part.updated event")
 				// properties = { part: { id, type, text, messageID, sessionID, ... } }
 				// One complete part — upsert it directly, no HTTP round-trip needed.
 				if part, ok := properties["part"].(map[string]interface{}); ok {
 					sessionID, _ := part["sessionID"].(string)
+					partID, _ := part["id"].(string)
+					partType, _ := part["type"].(string)
+					msgID, _ := part["messageID"].(string)
+					r.app.Logger().Info("📦 [Relay/SSE] message.part.updated details", "sessionID", sessionID, "msgID", msgID, "partID", partID, "type", partType)
 					chatID := r.resolveChatID(sessionID)
 					if chatID != "" {
 						go r.upsertMessagePart(chatID, part)

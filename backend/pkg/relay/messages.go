@@ -95,6 +95,29 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 		return
 	}
 
+	// 3.5 Verify the session ID is persisted before calling prompt_async
+	// This prevents a race condition where SSE events arrive before the database commit
+	// Retry up to 5 times with exponential backoff
+	var chat *core.Record
+	for attempt := 0; attempt < 5; attempt++ {
+		chat, err = r.app.FindRecordById("chats", chatID)
+		if err == nil && chat.GetString("ai_engine_session_id") == sessionID {
+			break
+		}
+		if attempt < 4 {
+			delay := time.Duration(10*(1<<uint(attempt))) * time.Millisecond // 10ms, 20ms, 40ms, 80ms, 160ms
+			r.app.Logger().Warn("⚠️ [Relay/Go] Session ID not yet persisted, retrying...", "chatId", chatID, "sessionId", sessionID, "attempt", attempt+1, "delay_ms", delay.Milliseconds())
+			time.Sleep(delay)
+		}
+	}
+	if err != nil || chat.GetString("ai_engine_session_id") != sessionID {
+		r.app.Logger().Error("❌ [Relay/Go] Session ID persistence verification failed after retries", "chatId", chatID, "sessionId", sessionID)
+		msg.Set("user_message_status", "failed")
+		r.app.Save(msg)
+		return
+	}
+	r.app.Logger().Info("✅ [Relay/Go] Session ID verified in database", "chatId", chatID, "sessionId", sessionID)
+
 	// 4. Fire-and-forget prompt to OpenCode via prompt_async.
 	//    The SSE listener will handle syncing the assistant's response.
 	url := fmt.Sprintf("%s/session/%s/prompt_async", r.openCodeURL, sessionID)
@@ -142,8 +165,12 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 // OpenCode fires this once per part as it is created or updated during streaming.
 // The event carries one complete Part object: { id, type, text, messageID, sessionID, ... }
 //
-// We upsert (insert-or-replace by part.id) the incoming part into the existing
-// parts array stored on the PocketBase message record — no HTTP round-trip needed.
+// CRITICAL: This function NEVER touches the database. All parts are buffered in memory
+// until handleMessageCompletion flushes them atomically. This is the core of the
+// Strict Buffer architecture that eliminates race conditions.
+//
+// Strategy: Always cache the part. The role (user/assistant) is determined by
+// handleMessageCompletion when it receives the message.updated event.
 func (r *RelayService) upsertMessagePart(chatID string, part map[string]interface{}) {
 	ocMsgID, _ := part["messageID"].(string)
 	if ocMsgID == "" {
@@ -152,75 +179,60 @@ func (r *RelayService) upsertMessagePart(chatID string, part map[string]interfac
 	}
 	partID, _ := part["id"].(string)
 	partType, _ := part["type"].(string)
-	r.app.Logger().Debug("📦 [Relay/Go] Part received", "ocMsgID", ocMsgID, "partID", partID, "type", partType)
+	r.app.Logger().Info("📦 [Relay/Go] Part received", "ocMsgID", ocMsgID, "partID", partID, "type", partType, "chatID", chatID)
 
 	// Normalise: if this is a text part where text is under "content" instead of "text"
 	if partType == "text" {
 		if text, _ := part["text"].(string); text == "" {
 			if content, _ := part["content"].(string); content != "" {
 				part["text"] = content
+				r.app.Logger().Info("🔄 [Relay/Go] Normalized text part (content->text)", "ocMsgID", ocMsgID, "partID", partID)
 			}
+		} else {
+			r.app.Logger().Info("📝 [Relay/Go] Text part has content", "ocMsgID", ocMsgID, "partID", partID, "textLen", len(text))
 		}
 	}
 
-	// 1. Find-or-create the PocketBase message record.
-	// Guard: We must not create assistant records for "user echoes".
-	// User messages are mapped by handleMessageCompletion as soon as their metadata arrives.
-	// If a part arrives for an unknown message, we only create an assistant record if:
-	// - It is explicitly a "step-start" (Assistant marker)
-	// - OR it has a parentID (Assistant-only field in schema)
-	existing, _ := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
+	// CRITICAL: Never touch the database here. Always cache.
+	// The role is determined by handleMessageCompletion when it receives message.updated.
 
-	var record *core.Record
+	// 1. Lock the cache
+	r.partCacheMu.Lock()
+	defer r.partCacheMu.Unlock()
+
+	// 2. Initialize nested map if needed
+	if r.partCache[ocMsgID] == nil {
+		r.partCache[ocMsgID] = make(map[string]interface{})
+	}
+
+	// 3. Cache the part (overwrites if exists)
+	r.partCache[ocMsgID][partID] = part
+
+	cacheSize := len(r.partCache[ocMsgID])
+	r.app.Logger().Info("💾 [Relay/Go] Cached part", "ocMsgID", ocMsgID, "partID", partID, "type", partType, "cacheSize", cacheSize, "chatID", chatID)
+
+	// 4. Update chat preview if text part
+	if partType == "text" {
+		r.updateChatPreview(chatID, ocMsgID)
+	}
+
+	// 5. Check if this part signals a subagent handoff
+	go r.checkForSubagentRegistration(chatID, []interface{}{part})
+}
+
+// upsertPartToRecord adds or updates a part in an existing message record
+func (r *RelayService) upsertPartToRecord(record *core.Record, part map[string]interface{}, chatID string) {
+	partID, _ := part["id"].(string)
+	partType, _ := part["type"].(string)
+	ocMsgID := record.GetString("ai_engine_message_id")
 	now := time.Now().Format("2006-01-02 15:04:05.000Z")
 
-	if existing != nil {
-		if existing.GetString("role") == "user" {
-			// Echo of our own user message — skip
-			return
-		}
-		record = existing
-	} else {
-		// Unknown messageID. We need to decide if this is a new assistant turn
-		// starting, or just a user-message echo.
-		isAssistant := (partType == "step-start") || (part["parentID"] != nil)
-
-		// Fallback: check the chat's current turn state.
-		if !isAssistant {
-			chat, _ := r.app.FindRecordById("chats", chatID)
-			if chat != nil && chat.GetString("turn") == "assistant" {
-				isAssistant = true
-			}
-		}
-
-		if !isAssistant {
-			// If we still can't confirm it's an assistant message, skip it.
-			// handleMessageCompletion will definitively map/create it later.
-			r.app.Logger().Debug("⏭️ [Relay/Go] Part for unknown message skipped (possible user echo)", "ocMsgID", ocMsgID, "type", partType)
-			return
-		}
-
-		collection, err := r.app.FindCollectionByNameOrId("messages")
-		if err != nil {
-			r.app.Logger().Error("❌ [Relay/Go] Collection error", "error", err)
-			return
-		}
-		record = core.NewRecord(collection)
-		record.Set("chat", chatID)
-		record.Set("role", "assistant")
-		record.Set("ai_engine_message_id", ocMsgID)
-		record.Set("engine_message_status", "processing")
-		record.Set("created", now)
-		r.app.Logger().Info("🆕 [Relay/Go] Created assistant record from part stream", "ocMsgID", ocMsgID)
-	}
-	record.Set("updated", now)
-
-	// Also set parentID if we have it (handy for threading)
+	// Set parentID if available
 	if parentID, _ := part["parentID"].(string); parentID != "" {
 		record.Set("parent_id", parentID)
 	}
 
-	// 2. Load existing parts and upsert the incoming part by id
+	// Load existing parts and upsert
 	var existingParts []interface{}
 	rawParts := record.Get("parts")
 	if jsonRaw, ok := rawParts.(types.JSONRaw); ok {
@@ -244,21 +256,22 @@ func (r *RelayService) upsertMessagePart(chatID string, part map[string]interfac
 	}
 
 	record.Set("parts", existingParts)
+	record.Set("updated", now)
 
 	if err := r.app.Save(record); err != nil {
 		r.app.Logger().Error("❌ [Relay/Go] Failed to upsert message part", "ocMsgID", ocMsgID, "error", err)
 		return
 	}
-	r.app.Logger().Debug("✅ [Relay/Go] Part upserted", "ocMsgID", ocMsgID, "partID", partID, "type", partType)
+	r.app.Logger().Info("✅ [Relay/Go] Part upserted to record", "ocMsgID", ocMsgID, "partID", partID, "type", partType, "totalParts", len(existingParts), "recordID", record.Id)
 
-	// 3. If this is a text part, update the chat preview (high-water-mark)
+	// Update chat preview if this is a text part
 	if partType == "text" {
 		preview := extractPreviewFromParts(existingParts)
 		if preview != "" {
 			r.withChatLock(chatID, func(chat *core.Record) error {
 				current := chat.GetString("preview")
 				if len(preview) > len(current) || (len(preview) == len(current) && preview != current) {
-					r.app.Logger().Info("✍️ [Relay/Go] Updating chat preview", "chatId", chatID, "preview", preview)
+					r.app.Logger().Debug("✍️ [Relay/Go] Updating chat preview", "chatId", chatID, "preview", preview)
 					chat.Set("preview", preview)
 				}
 				chat.Set("last_active", time.Now().Format("2006-01-02 15:04:05.000Z"))
@@ -267,7 +280,7 @@ func (r *RelayService) upsertMessagePart(chatID string, part map[string]interfac
 		}
 	}
 
-	// 4. Check if this part signals a subagent handoff
+	// Check if this part signals a subagent handoff
 	go r.checkForSubagentRegistration(chatID, []interface{}{part})
 }
 
@@ -277,8 +290,8 @@ func (r *RelayService) upsertMessagePart(chatID string, part map[string]interfac
 // finishes and tokens/cost are tallied. The event contains ONLY the message info
 // (role, time.completed, cost, tokens, error). It never contains parts.
 //
-// We only update the engine_message_status and chat metadata here.
-// We never read or write the parts field.
+// This is the authoritative source of truth for message role and status.
+// It flushes any cached parts and creates the final database record.
 func (r *RelayService) handleMessageCompletion(chatID string, info map[string]interface{}) {
 	ocMsgID, _ := info["id"].(string)
 	if ocMsgID == "" {
@@ -296,86 +309,162 @@ func (r *RelayService) handleMessageCompletion(chatID string, info map[string]in
 		newStatus = "failed"
 	}
 
-	r.app.Logger().Info("📋 [Relay/Go] Message status update", "ocMsgID", ocMsgID, "status", newStatus, "chatId", chatID)
+	role, _ := info["role"].(string)
+	r.app.Logger().Info("📋 [Relay/Go] Message completion event", "ocMsgID", ocMsgID, "role", role, "status", newStatus, "chatID", chatID, "completed", completed, "hasError", hasError)
 
-	// 1. Find or map the record
+	// 1. Check for cached parts and flush them
+	r.partCacheMu.Lock()
+	var cachedParts []interface{}
+	if parts, ok := r.partCache[ocMsgID]; ok {
+		// Convert map values to slice
+		for _, p := range parts {
+			cachedParts = append(cachedParts, p)
+		}
+		delete(r.partCache, ocMsgID)
+		r.app.Logger().Info("🔓 [Relay/Go] Flushing cached parts", "ocMsgID", ocMsgID, "partCount", len(cachedParts))
+	}
+	r.partCacheMu.Unlock()
+
+	// 2. Find existing record
 	existing, _ := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
 
 	var record *core.Record
 	now := time.Now().Format("2006-01-02 15:04:05.000Z")
-	role, _ := info["role"].(string)
 
-	if existing != nil {
-		record = existing
-	} else if role == "user" {
-		// Mapping: Find the latest user message in this chat that doesn't have an ocID yet.
-		// We use -created to find the most recent one.
+	if role == "user" {
+		// User message handling: Map to our local user message
 		records, _ := r.app.FindRecordsByFilter("messages", "chat = {:chat} && role = 'user' && ai_engine_message_id = ''", "-created", 1, 0, map[string]any{"chat": chatID})
 		if len(records) > 0 {
-			record = records[0]
-			record.Set("ai_engine_message_id", ocMsgID)
-			r.app.Logger().Info("🔗 [Relay/Go] Mapped local user message to OpenCode ID", "chatId", chatID, "ocMsgID", ocMsgID)
+			localUserMsg := records[0]
+			localUserMsg.Set("ai_engine_message_id", ocMsgID)
+			localUserMsg.Set("user_message_status", "delivered")
+			if err := r.app.Save(localUserMsg); err != nil {
+				r.app.Logger().Error("❌ [Relay/Go] Failed to map user message", "error", err)
+			} else {
+				r.app.Logger().Info("🔗 [Relay/Go] Mapped local user message", "ocMsgID", ocMsgID, "localMessageID", localUserMsg.Id)
+			}
+		}
+
+		// Discard any cached parts for user echoes (we don't need them)
+		if len(cachedParts) > 0 {
+			r.app.Logger().Debug("🗑️ [Relay/Go] Discarded cached parts for user echo", "ocMsgID", ocMsgID, "count", len(cachedParts))
+		}
+
+		// User messages don't need further processing
+		return
+	}
+
+	// Assistant message handling
+	if role == "assistant" {
+		if existing != nil {
+			record = existing
+			r.app.Logger().Debug("📝 [Relay/Go] Updating existing assistant record", "ocMsgID", ocMsgID)
 		} else {
-			r.app.Logger().Debug("⏭️ [Relay/Go] User message.updated arrived but no pending local record found", "ocMsgID", ocMsgID)
-			return
+			// Create new assistant record
+			collection, err := r.app.FindCollectionByNameOrId("messages")
+			if err != nil {
+				r.app.Logger().Error("❌ [Relay/Go] Collection error", "error", err)
+				return
+			}
+			record = core.NewRecord(collection)
+			record.Set("chat", chatID)
+			record.Set("role", "assistant")
+			record.Set("ai_engine_message_id", ocMsgID)
+			record.Set("created", now)
+			r.app.Logger().Info("🆕 [Relay/Go] Created assistant record from completion event", "ocMsgID", ocMsgID)
 		}
-	} else if role == "assistant" {
-		// Create new assistant record
-		collection, err := r.app.FindCollectionByNameOrId("messages")
-		if err != nil {
-			r.app.Logger().Error("❌ [Relay/Go] Collection error creating message", "error", err)
-			return
-		}
-		record = core.NewRecord(collection)
-		record.Set("chat", chatID)
-		record.Set("role", "assistant")
-		record.Set("ai_engine_message_id", ocMsgID)
-		record.Set("created", now)
+
+		// Set parentID if available
 		if parentID, _ := info["parentID"].(string); parentID != "" {
 			record.Set("parent_id", parentID)
 		}
-		r.app.Logger().Info("🆕 [Relay/Go] Created assistant record from completion event", "ocMsgID", ocMsgID)
+
+		// Merge cached parts with existing parts (if any)
+		if len(cachedParts) > 0 {
+			var existingParts []interface{}
+			rawParts := record.Get("parts")
+			if jsonRaw, ok := rawParts.(types.JSONRaw); ok {
+				json.Unmarshal(jsonRaw, &existingParts)
+			} else if ep, ok := rawParts.([]interface{}); ok {
+				existingParts = ep
+			}
+
+			// Merge cached parts into existing parts (by part ID)
+			for _, cachedPart := range cachedParts {
+				if cp, ok := cachedPart.(map[string]interface{}); ok {
+					cachedPartID := cp["id"]
+					merged := false
+					for i, ep := range existingParts {
+						if epm, ok := ep.(map[string]interface{}); ok {
+							if epm["id"] == cachedPartID {
+								existingParts[i] = cachedPart
+								merged = true
+								break
+							}
+						}
+					}
+					if !merged {
+						existingParts = append(existingParts, cachedPart)
+					}
+				}
+			}
+
+			record.Set("parts", existingParts)
+			r.app.Logger().Info("✅ [Relay/Go] Merged cached parts into record", "ocMsgID", ocMsgID, "cached", len(cachedParts), "total", len(existingParts), "recordID", record.Id)
+		} else {
+			r.app.Logger().Debug("ℹ️ [Relay/Go] No cached parts to merge", "ocMsgID", ocMsgID)
+		}
 	} else {
-		return // Unknown role
+		r.app.Logger().Warn("⚠️ [Relay/Go] Unknown role in message.updated", "role", role, "ocMsgID", ocMsgID)
+		return
 	}
 
-	// 2. Only advance status — never demote a finished message
+	// 3. Update status (only advance, never demote)
 	currentStatus := record.GetString("engine_message_status")
 	if currentStatus == "completed" || currentStatus == "failed" {
 		r.app.Logger().Debug("🛡️ [Relay/Go] Protecting finished status", "ocMsgID", ocMsgID, "current", currentStatus)
 	} else {
 		record.Set("engine_message_status", newStatus)
-		record.Set("updated", now)
-		if err := r.app.Save(record); err != nil {
-			r.app.Logger().Error("❌ [Relay/Go] Failed to update message metadata", "ocMsgID", ocMsgID, "error", err)
-			return
-		}
 	}
 
-	// Update chat.last_active and re-read preview from the parts we already saved
-	var existingParts []interface{}
+	record.Set("updated", now)
+
+	if err := r.app.Save(record); err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Failed to save message", "ocMsgID", ocMsgID, "error", err)
+		return
+	}
+
+	// 4. Check if we need to generate synthetic text from tool outputs
+	var finalParts []interface{}
 	rawParts := record.Get("parts")
 	if jsonRaw, ok := rawParts.(types.JSONRaw); ok {
-		json.Unmarshal(jsonRaw, &existingParts)
+		json.Unmarshal(jsonRaw, &finalParts)
 	} else if ep, ok := rawParts.([]interface{}); ok {
-		existingParts = ep
+		finalParts = ep
 	}
-	preview := extractPreviewFromParts(existingParts)
+	
+	// Broadcast message_complete event to connected clients (after all parts are finalized)
+	r.broadcastToChat(chatID, "message_complete", map[string]interface{}{
+		"messageID": ocMsgID,
+		"parts":     finalParts,
+		"status":    newStatus,
+	})
+	
+	preview := extractPreviewFromParts(finalParts)
 
 	r.withChatLock(chatID, func(chat *core.Record) error {
 		if preview != "" {
 			current := chat.GetString("preview")
 			if len(preview) > len(current) || (len(preview) == len(current) && preview != current) {
-				r.app.Logger().Info("✍️ [Relay/Go] Updating chat preview on completion", "chatId", chatID, "preview", preview)
+				r.app.Logger().Debug("✍️ [Relay/Go] Updating chat preview", "chatId", chatID, "preview", preview)
 				chat.Set("preview", preview)
 			}
 		}
-
 		chat.Set("last_active", time.Now().Format("2006-01-02 15:04:05.000Z"))
 		return nil
 	})
 
-	r.app.Logger().Info("✅ [Relay/Go] Message completion handled", "ocMsgID", ocMsgID, "status", newStatus, "chatId", chatID)
+	r.app.Logger().Info("✅ [Relay/Go] Message completion handled", "ocMsgID", ocMsgID, "status", newStatus, "role", role, "parts", len(finalParts))
 }
 
 // ─── Session Management ───────────────────────────────────────────────────────
@@ -595,6 +684,7 @@ func (r *RelayService) registerSubagentInDB(chatID, subagentID, terminalID strin
 
 // extractPreviewFromParts returns the text of the first text part, truncated to 50 chars.
 func extractPreviewFromParts(parts []interface{}) string {
+	// First pass: look for non-empty text parts
 	for _, p := range parts {
 		if pm, ok := p.(map[string]interface{}); ok {
 			if pm["type"] != "text" {
@@ -612,5 +702,97 @@ func extractPreviewFromParts(parts []interface{}) string {
 			}
 		}
 	}
+
+	// Second pass: if no text found, extract from tool parts (tool-only responses)
+	for _, p := range parts {
+		if pm, ok := p.(map[string]interface{}); ok {
+			if pm["type"] != "tool" {
+				continue
+			}
+			
+			// Extract tool output from state.output or state.metadata.output
+			if state, ok := pm["state"].(map[string]interface{}); ok {
+				// Try state.output first
+				if output, ok := state["output"].(string); ok && output != "" {
+					if len(output) > 50 {
+						return output[:50] + "..."
+					}
+					return output
+				}
+				
+				// Try state.metadata.output
+				if metadata, ok := state["metadata"].(map[string]interface{}); ok {
+					if output, ok := metadata["output"].(string); ok && output != "" {
+						if len(output) > 50 {
+							return output[:50] + "..."
+						}
+						return output
+					}
+				}
+			}
+		}
+	}
+
 	return ""
+}
+
+// hasTextPart checks if any part in the parts array is a text part with non-empty text
+func hasTextPart(parts []interface{}) bool {
+	for _, p := range parts {
+		if pm, ok := p.(map[string]interface{}); ok {
+			if pm["type"] == "text" {
+				text, _ := pm["text"].(string)
+				if text == "" {
+					text, _ = pm["content"].(string)
+				}
+				// Only return true if we have actual non-empty text
+				if text != "" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// ─── Stub Helpers for Future Implementation ──────────────────────────────────
+
+// updateChatPreview updates the chat preview from cached text parts.
+// This is a stub that will be fully implemented in a later task.
+func (r *RelayService) updateChatPreview(chatID string, ocMsgID string) {
+	// Get cached parts for this message
+	parts, ok := r.partCache[ocMsgID]
+	if !ok || len(parts) == 0 {
+		return
+	}
+
+	// Extract text parts and build preview
+	var textParts []interface{}
+	for _, p := range parts {
+		if pm, ok := p.(map[string]interface{}); ok {
+			if pm["type"] == "text" {
+				textParts = append(textParts, pm)
+			}
+		}
+	}
+
+	if len(textParts) == 0 {
+		return
+	}
+
+	preview := extractPreviewFromParts(textParts)
+	if preview == "" {
+		return
+	}
+
+	// Update chat record
+	r.withChatLock(chatID, func(chat *core.Record) error {
+		current := chat.GetString("preview")
+		if len(preview) > len(current) || (len(preview) == len(current) && preview != current) {
+			r.app.Logger().Debug("✍️ [Relay/Go] Updating chat preview", "chatId", chatID, "preview", preview)
+			chat.Set("preview", preview)
+		}
+		chat.Set("last_active", time.Now().Format("2006-01-02 15:04:05.000Z"))
+		return nil
+	})
 }
