@@ -21,11 +21,22 @@ package relay
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 )
+
+// SSEConnection represents a client connection to the streaming endpoint
+type SSEConnection struct {
+	chatID    string
+	writer    http.ResponseWriter
+	flusher   http.Flusher
+	done      chan struct{}
+	createdAt time.Time
+}
 
 // RelayService orchestrates communication between PocketBase and OpenCode
 type RelayService struct {
@@ -33,7 +44,16 @@ type RelayService struct {
 	openCodeURL   string
 	lastHeartbeat int64 // Unix timestamp
 	isReady       bool
-	chatMutexes sync.Map // Map of chatID (string) -> *sync.Mutex for per-chat locking
+	chatMutexes   sync.Map // Map of chatID (string) -> *sync.Mutex for per-chat locking
+
+	// partCache stores parts for messages whose role hasn't been determined yet
+	// Key: ocMsgID (OpenCode message ID), Value: map of partID -> part data
+	partCache     map[string]map[string]interface{} // map[ocMsgID]map[partID]PartData
+	partCacheMu   sync.RWMutex
+
+	// connections stores SSE connections per chat for broadcasting
+	connections   map[string][]*SSEConnection // map[chatID][]connection
+	connectionsMu sync.RWMutex
 }
 
 // NewRelayService creates a new Relay instance
@@ -41,6 +61,8 @@ func NewRelayService(app core.App, openCodeURL string) *RelayService {
 	return &RelayService{
 		app:         app,
 		openCodeURL: openCodeURL,
+		partCache:   make(map[string]map[string]interface{}),
+		connections: make(map[string][]*SSEConnection),
 	}
 }
 
@@ -50,12 +72,14 @@ func NewRelayService(app core.App, openCodeURL string) *RelayService {
 // 3. Agent Sync (Hooks)
 // 4. Health Monitor Watchdog
 func (r *RelayService) Start() {
-	r.app.Logger().Info("[Relay] Starting Go-based Relay Service...")
+	log.Println("🚀 [Relay] Starting Go-based Relay Service...")
 
 	// 1. Start SSE Listener (in background)
+	log.Println("🔌 [Relay] Starting SSE listener...")
 	go r.listenForEvents()
 
 	// 2. Register Hooks
+	log.Println("🪝 [Relay] Registering hooks...")
 	r.registerMessageHooks()
 	r.registerAgentHooks()
 	r.registerSSHKeyHooks()
@@ -64,10 +88,14 @@ func (r *RelayService) Start() {
 	r.registerMcpHooks()
 
 	// 3. Catch up on missed messages
+	log.Println("🔄 [Relay] Starting message recovery...")
 	go r.recoverMissedMessages()
 
 	// 4. Start Health Monitor Watchdog
+	log.Println("💓 [Relay] Starting health monitor...")
 	go r.startHealthMonitor()
+	
+	log.Println("✅ [Relay] All services started successfully")
 }
 
 // withChatLock ensures that chat record updates are atomic and thread-safe.
