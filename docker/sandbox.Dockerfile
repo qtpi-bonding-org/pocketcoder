@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     gnupg \
     software-properties-common \
-    openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Terraform
