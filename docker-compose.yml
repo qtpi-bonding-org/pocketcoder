@@ -159,55 +159,6 @@ services:
       - pocketcoder-docker
     restart: unless-stopped
 
-  # 🔒 DOCKER SOCKET PROXY - READ (Future: Read-only for Dozzle)
-  # Uncomment to separate read-only (Dozzle) from write (PocketBase) permissions
-  # docker-socket-proxy-read:
-  #   image: tecnativa/docker-socket-proxy:latest
-  #   container_name: pocketcoder-docker-proxy-read
-  #   environment:
-  #     # Read-only container operations for Dozzle log viewing
-  #     - CONTAINERS=1          # Allow container operations (list, inspect, logs)
-  #     - POST=0                # Disable POST requests (no restart/stop/start)
-  #     - EVENTS=1              # Allow streaming events (for Dozzle)
-  #     - INFO=0                # Disable info endpoint
-  #     - IMAGES=0              # Disable image operations
-  #     - NETWORKS=0            # Disable network operations
-  #     - VOLUMES=0             # Disable volume operations
-  #     - BUILD=0               # Disable build operations
-  #     - COMMIT=0              # Disable commit operations
-  #     - CONFIGS=0             # Disable config operations
-  #     - DISTRIBUTION=0        # Disable distribution operations
-  #     - EXEC=0                # Disable exec operations
-  #     - PLUGINS=0             # Disable plugin operations
-  #     - SECRETS=0             # Disable secrets operations
-  #     - SERVICES=0            # Disable services operations
-  #     - SESSION=0             # Disable session operations
-  #     - SWARM=0               # Disable swarm operations
-  #     - SYSTEM=0              # Disable system operations
-  #     - TASKS=0               # Disable tasks operations
-  #     - LOG_LEVEL=info        # Logging level
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #   networks:
-  #     - pocketcoder-docker
-  #   restart: unless-stopped
-  #   # When enabled, update Dozzle to use: DOCKER_HOST=tcp://docker-socket-proxy-read:2375
-
-  # 📊 DOZZLE (Docker Log Viewer)
-  dozzle:
-    image: amir20/dozzle:latest
-    container_name: pocketcoder-dozzle
-    environment:
-      - DOZZLE_LEVEL=info
-      - DOZZLE_FILTER=label=com.docker.compose.project=pocketcoder
-      - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
-      - DOZZLE_BASE=/api/pocketcoder/proxy/logs
-    networks:
-      - pocketcoder-dashboard
-    restart: unless-stopped
-    depends_on:
-      - docker-socket-proxy-write
-
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
     image: lovasoa/sqlpage:latest
