@@ -31,9 +31,6 @@ import (
 
 // RegisterProxyApi registers the reverse proxy endpoints for logs and observability.
 func RegisterProxyApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	// 📊 Logs Proxy (Dozzle)
-	// Proxies to the Dozzle container which provides real-time Docker logs.
-	e.Router.Any("/api/pocketcoder/proxy/logs/{path...}", createProxyHandler("http://dozzle:8080", "/api/pocketcoder/proxy/logs")).Bind(apis.RequireAuth())
 
 	// 📈 Observability Proxy (SQLPage)
 	// Proxies to the SQLPage container which provides database dashboards.
