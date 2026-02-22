@@ -28,8 +28,9 @@ services:
       sh -c "echo '⏳ Waiting for OpenCode to be ready...' && while ! curl -I -s --connect-timeout 2 http://opencode:3000 > /dev/null; do echo 'OpenCode not yet ready, retrying in 1 second...' && sleep 1; done; echo '🚀 OpenCode is ready. Starting PocketBase...' && /app/pocketbase serve --http=0.0.0.0:8090"
     restart: unless-stopped
     networks:
-      - pocketcoder-memory
-      - pocketcoder-mcp
+      - pocketcoder-dashboard
+      - pocketcoder-docker
+      - pocketcoder-relay
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -67,7 +68,7 @@ services:
       start_period: 30s
     restart: unless-stopped
     networks:
-      - pocketcoder-memory
+      - pocketcoder-relay
       - pocketcoder-control
 
   # 🔨 SANDBOX (Isolated Execution Environment)
@@ -101,7 +102,7 @@ services:
       start_period: 30s
     networks:
       - pocketcoder-control
-      - pocketcoder-mcp
+      - pocketcoder-tools
 
   # 🔌 MCP GATEWAY (MCP Server Gateway)
   mcp-gateway:
@@ -120,7 +121,8 @@ services:
       - DOCKER_MCP_TELEMETRY_DEBUG=1
     command: ["--port", "8811", "--transport", "sse", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--enable-all-servers"]
     networks:
-      - pocketcoder-mcp
+      - pocketcoder-docker
+      - pocketcoder-tools
     restart: unless-stopped
 
   # 🔒 DOCKER SOCKET PROXY - WRITE (Security Layer for PocketBase)
@@ -154,7 +156,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - pocketcoder-mcp
+      - pocketcoder-docker
     restart: unless-stopped
 
   # 🔒 DOCKER SOCKET PROXY - READ (Future: Read-only for Dozzle)
@@ -187,7 +189,7 @@ services:
   #   volumes:
   #     - /var/run/docker.sock:/var/run/docker.sock:ro
   #   networks:
-  #     - pocketcoder-mcp
+  #     - pocketcoder-docker
   #   restart: unless-stopped
   #   # When enabled, update Dozzle to use: DOCKER_HOST=tcp://docker-socket-proxy-read:2375
 
@@ -195,15 +197,13 @@ services:
   dozzle:
     image: amir20/dozzle:latest
     container_name: pocketcoder-dozzle
-    ports:
-      - "8089:8080"
     environment:
       - DOZZLE_LEVEL=info
       - DOZZLE_FILTER=label=com.docker.compose.project=pocketcoder
       - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
+      - DOZZLE_BASE=/api/pocketcoder/proxy/logs
     networks:
-      - pocketcoder-memory    # For PocketBase reverse proxy access
-      - pocketcoder-mcp       # For docker-socket-proxy access
+      - pocketcoder-dashboard
     restart: unless-stopped
     depends_on:
       - docker-socket-proxy-write
@@ -213,10 +213,9 @@ services:
     image: lovasoa/sqlpage:latest
     user: root
     container_name: pocketcoder-sqlpage
-    ports:
-      - "8088:8080"
     environment:
       - SQLPAGE_ENVIRONMENT=development
+      - SQLPAGE_SITE_PREFIX=/api/pocketcoder/proxy/observability/
     volumes:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
       - opencode_data:/database/opencode       # OpenCode DB (analytics)
@@ -224,7 +223,7 @@ services:
       - ./dashboard:/var/www:ro                  # SQLPage queries/dashboards
       - ./dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
     networks:
-      - pocketcoder-memory    # For PocketBase reverse proxy access
+      - pocketcoder-dashboard
     restart: unless-stopped
     depends_on:
       - pocketbase
@@ -242,9 +241,13 @@ volumes:
   cao_db:  # CAO SQLite database for subagent tasks
 
 networks:
-  pocketcoder-memory:
+  pocketcoder-dashboard:
     driver: bridge
   pocketcoder-control:
     driver: bridge
-  pocketcoder-mcp:
+  pocketcoder-docker:
+    driver: bridge
+  pocketcoder-relay:
+    driver: bridge
+  pocketcoder-tools:
     driver: bridge
