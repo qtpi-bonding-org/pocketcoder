@@ -442,12 +442,13 @@ wait_for_chat_turn() {
 }
 
 # Wait for assistant message to be created and completed in a chat
-# Args: chat_id [timeout]
+# Args: chat_id [timeout] [exclude_id]
 # Returns: assistant message ID or empty string
-# Usage: assistant_id=$(wait_for_assistant_message "abc123" 60)
+# Usage: assistant_id=$(wait_for_assistant_message "abc123" 60 "old_msg_id")
 wait_for_assistant_message() {
     local chat_id="$1"
     local timeout="${2:-60}"
+    local exclude_id="$3"
     
     echo "Waiting for assistant message in chat $chat_id (timeout: ${timeout}s)" >&2
     
@@ -459,7 +460,7 @@ wait_for_assistant_message() {
     local last_status=""
     
     while [ $(date +%s) -lt $end_time ]; do
-        # Query for assistant message in this chat using proper URL encoding
+        # Query for ALL assistant messages in this chat, sorted by created descending
         local response
         response=$(curl -s -G \
             "$PB_URL/api/collections/messages/records" \
@@ -468,95 +469,106 @@ wait_for_assistant_message() {
             -H "Authorization: $USER_TOKEN" \
             -H "Content-Type: application/json")
         
-        assistant_id=$(echo "$response" | jq -r '.items[0].id // empty' 2>/dev/null)
+        local assistant_count
+        assistant_count=$(echo "$response" | jq -r '.totalItems // 0' 2>/dev/null)
         
-        if [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ]; then
-            if [ "$found_message" = false ]; then
-                local elapsed=$(($(date +%s) - start_time))
-                echo "  ✓ Assistant message found after ${elapsed}s: $assistant_id" >&2
-                found_message=true
-            fi
-            
-            # Now check if the message is completed
-            local msg_response
-            msg_response=$(curl -s -X GET "$PB_URL/api/collections/messages/records/$assistant_id" \
-                -H "Authorization: $USER_TOKEN" \
-                -H "Content-Type: application/json")
-            
-            local status
-            status=$(echo "$msg_response" | jq -r '.engine_message_status // empty' 2>/dev/null)
-            
-            # Log status changes for debugging
-            if [ "$status" != "$last_status" ]; then
-                echo "  ℹ Message status: '$status'" >&2
-                last_status="$status"
-            fi
-            
-            # Check if message is completed or failed
-            if [ "$status" = "completed" ] || [ "$status" = "failed" ]; then
-                local elapsed=$(($(date +%s) - start_time))
-                echo "  ✓ Assistant message completed (status: $status) after ${elapsed}s" >&2
-                echo "$assistant_id"
-                return 0
-            fi
-            
-            # Check for pending permissions and auto-approve them (test environment only)
-            local pending_perms
-            pending_perms=$(curl -s -G \
-                "$PB_URL/api/collections/permissions/records" \
-                --data-urlencode "filter=chat='$chat_id' && status='draft'" \
-                -H "Authorization: $USER_TOKEN" \
-                -H "Content-Type: application/json" 2>/dev/null)
-            
-            local perm_count
-            perm_count=$(echo "$pending_perms" | jq -r '.totalItems // 0' 2>/dev/null)
-            
-            if [ "$perm_count" -gt 0 ]; then
-                echo "  ℹ Found $perm_count pending permission(s), auto-approving for test..." >&2
-                local perm_ids
-                perm_ids=$(echo "$pending_perms" | jq -r '.items[].id' 2>/dev/null)
-                for perm_id in $perm_ids; do
-                    curl -s -X PATCH "$PB_URL/api/collections/permissions/records/$perm_id" \
-                        -H "Content-Type: application/json" \
-                        -H "Authorization: $USER_TOKEN" \
-                        -d '{"status": "authorized"}' > /dev/null 2>&1
-                    echo "  ✓ Auto-approved permission: $perm_id" >&2
-                done
-            fi
-            
-            # Alternative completion check: if chat turn is back to "user", the assistant is done
-            local chat_response
-            chat_response=$(curl -s -X GET "$PB_URL/api/collections/chats/records/$chat_id" \
-                -H "Authorization: $USER_TOKEN" \
-                -H "Content-Type: application/json")
-            
-            local turn
-            turn=$(echo "$chat_response" | jq -r '.turn // empty' 2>/dev/null)
-            
-            # Debug: log turn on first check
-            if [ "$found_message" = true ] && [ -z "$last_turn_logged" ]; then
-                echo "  ℹ Chat turn: '$turn'" >&2
-                last_turn_logged=true
-            fi
-            
-            # If status is 'processing' but message has text content, consider it complete
-            # This handles race condition where parts are synced but status isn't updated yet
-            if [ "$status" = "processing" ]; then
-                local has_text
-                has_text=$(echo "$msg_response" | jq -r '.parts[]? | select(.type == "text") | .text // empty' 2>/dev/null)
-                if [ -n "$has_text" ] && [ "$turn" = "user" ]; then
-                    local elapsed=$(($(date +%s) - start_time))
-                    echo "  ✓ Assistant message completed (has content, turn=user) after ${elapsed}s" >&2
-                    echo "$assistant_id"
-                    return 0
-                elif [ -n "$has_text" ]; then
-                    # Has text but turn is still assistant - wait a bit more
-                    echo "  ℹ Message has text content but turn is still '$turn'" >&2
-                elif [ "$turn" = "user" ]; then
-                    # Turn is user but no text yet - race condition
-                    echo "  ℹ Turn is 'user' but message has no text content yet" >&2
+        if [ "${assistant_count:-0}" -gt 0 ]; then
+            # We iterate through the assistant messages (from newest to oldest) 
+            # to see if ANY have completed or have text
+            for i in $(seq 0 $((assistant_count - 1))); do
+                local msg_id
+                msg_id=$(echo "$response" | jq -r ".items[$i].id" 2>/dev/null)
+                
+                if [ -n "$exclude_id" ] && [ "$msg_id" = "$exclude_id" ]; then
+                    continue
                 fi
-            fi
+
+                local status
+                status=$(echo "$response" | jq -r ".items[$i].engine_message_status" 2>/dev/null)
+                local has_text
+                has_text=$(echo "$response" | jq -r ".items[$i].parts[]? | select(.type == \"text\") | .text // empty" 2>/dev/null)
+                
+                if [ "$found_message" = false ]; then
+                    local elapsed=$(($(date +%s) - start_time))
+                    echo "  ✓ Assistant message(s) found after ${elapsed}s (total: $assistant_count)" >&2
+                    found_message=true
+                fi
+                
+                if [ "$status" != "$last_status" ]; then
+                    echo "  ℹ Message $msg_id status: '$status'" >&2
+                    last_status="$status"
+                fi
+
+                # Priority 1: Message is completed/failed AND has text
+                if [[ "$status" =~ ^(completed|failed)$ ]]; then
+                    if [ -n "$has_text" ] && [ "$has_text" != "null" ]; then
+                        local elapsed=$(($(date +%s) - start_time))
+                        echo "  ✓ Assistant message $msg_id completed with content after ${elapsed}s" >&2
+                        echo "$msg_id"
+                        return 0
+                    else
+                        # It's completed but no text in the current event.
+                        # Re-fetch the message directly from DB — the relay may have kept the
+                        # text parts from an earlier partial-update event.
+                        local fresh_msg
+                        fresh_msg=$(curl -s "$PB_URL/api/collections/messages/records/$msg_id" \
+                            -H "Authorization: $USER_TOKEN" 2>/dev/null)
+                        local fresh_text
+                        fresh_text=$(echo "$fresh_msg" | jq -r '.parts[]? | select(.type == "text") | .text // empty' 2>/dev/null)
+                        local turn
+                        turn=$(get_chat_turn "$chat_id")
+                        if [ -n "$fresh_text" ] && [ "$fresh_text" != "null" ]; then
+                            local elapsed=$(($(date +%s) - start_time))
+                            echo "  ✓ Assistant message $msg_id completed (text found in DB) after ${elapsed}s" >&2
+                            echo "$msg_id"
+                            return 0
+                        elif [ "$turn" = "user" ]; then
+                            # Turn is back to user but truly no text — likely a tool-call-only message
+                            # (e.g. a subagent acknowledgment). Return it so caller can decide.
+                            echo "  ℹ Message $msg_id is completed/no-text and turn=user. Returning for caller to handle." >&2
+                            echo "$msg_id"
+                            return 0
+                        fi
+                        echo "  ℹ Message $msg_id is completed but has no text content (tool call in progress), continuing wait..." >&2
+                    fi
+                fi
+                
+                # Priority 2: Message is processing but has text AND turn is back to user
+                # (Handles race condition where turn is flipped but status not updated)
+                local turn
+                turn=$(get_chat_turn "$chat_id")
+                if [ "$turn" = "user" ] && [ -n "$has_text" ] && [ "$has_text" != "null" ]; then
+                    local elapsed=$(($(date +%s) - start_time))
+                    echo "  ✓ Assistant message $msg_id has content and turn is user after ${elapsed}s" >&2
+                    echo "$msg_id"
+                    return 0
+                fi
+            done
+        fi
+        
+        # Check for pending permissions and auto-approve them (test environment only)
+        # This is outside the loop above to ensure we don't block
+        local pending_perms
+        pending_perms=$(curl -s -G \
+            "$PB_URL/api/collections/permissions/records" \
+            --data-urlencode "filter=chat='$chat_id' && status='draft'" \
+            -H "Authorization: $USER_TOKEN" \
+            -H "Content-Type: application/json" 2>/dev/null)
+        
+        local perm_count
+        perm_count=$(echo "$pending_perms" | jq -r '.totalItems // 0' 2>/dev/null)
+        
+        if [ "${perm_count:-0}" -gt 0 ]; then
+            echo "  ℹ Found $perm_count pending permission(s), auto-approving for test..." >&2
+            local perm_ids
+            perm_ids=$(echo "$pending_perms" | jq -r '.items[].id' 2>/dev/null)
+            for perm_id in $perm_ids; do
+                curl -s -X PATCH "$PB_URL/api/collections/permissions/records/$perm_id" \
+                    -H "Content-Type: application/json" \
+                    -H "Authorization: $USER_TOKEN" \
+                    -d '{"status": "authorized"}' > /dev/null 2>&1
+                echo "  ✓ Auto-approved permission: $perm_id" >&2
+            done
         fi
         
         sleep 1

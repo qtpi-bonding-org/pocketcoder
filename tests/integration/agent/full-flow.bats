@@ -331,7 +331,7 @@ get_assistant_text() {
         run_diagnostic_on_failure "Agent Full Flow" "last_active not updated"
 
     # preview is populated (wait for it to handle race condition)
-    run wait_for_field_populated "chats" "$CHAT_ID" "preview" 5
+    run wait_for_field_populated "chats" "$CHAT_ID" "preview" 15
     [ "$status" -eq 0 ] || \
         run_diagnostic_on_failure "Agent Full Flow" "preview not updated after waiting"
     
@@ -410,7 +410,7 @@ get_assistant_text() {
 
     # Wait for second assistant response
     local assistant2_id
-    assistant2_id=$(wait_for_assistant_message "$CHAT_ID" 90)
+    assistant2_id=$(wait_for_assistant_message "$CHAT_ID" 120 "$assistant1_id")
     [ -n "$assistant2_id" ] && [ "$assistant2_id" != "null" ] || \
         run_diagnostic_on_failure "Agent Full Flow" "No response to second message"
 
@@ -491,20 +491,54 @@ get_assistant_text() {
 
     SESSION_ID=$(pb_get "chats" "$CHAT_ID" | jq -r '.ai_engine_session_id // empty')
 
-    # Wait for Poco to process — subagent handoff takes longer
-    ASSISTANT_MESSAGE_ID=$(wait_for_assistant_message "$CHAT_ID" 120)
-    [ -n "$ASSISTANT_MESSAGE_ID" ] && [ "$ASSISTANT_MESSAGE_ID" != "null" ] || \
-        run_diagnostic_on_failure "Agent Full Flow" "Poco did not respond after subagent delegation"
+    # Wait for Poco to complete — subagent handoff creates multiple messages.
+    # We keep fetching the latest assistant message until one contains a SHA256 hash,
+    # or until we hit our overall timeout.
+    local response_text=""
+    local last_seen_id=""
+    local deadline=$(( $(date +%s) + 240 ))
 
-    # Verify the response has content
-    local response_text
-    response_text=$(get_assistant_text "$ASSISTANT_MESSAGE_ID")
-    [ -n "$response_text" ] || \
-        run_diagnostic_on_failure "Agent Full Flow" "Empty response from Poco"
+    ASSISTANT_MESSAGE_ID=$(wait_for_assistant_message "$CHAT_ID" 120)
+    [ -n "$ASSISTANT_MESSAGE_ID" ] || \
+        run_diagnostic_on_failure "Agent Full Flow" "Poco did not respond at all"
+
+    while true; do
+        response_text=$(get_assistant_text "$ASSISTANT_MESSAGE_ID")
+        if echo "$response_text" | grep -qiE '[0-9a-f]{64}'; then
+            echo "  ✓ Found SHA256 hash in message $ASSISTANT_MESSAGE_ID" >&2
+            break
+        fi
+
+        if [ $(date +%s) -ge $deadline ]; then
+            echo "═══════════════════════════════════════════════════════════" >&2
+            echo "DIAGNOSTIC: Timed out waiting for hash. Last response:" >&2
+            echo "$response_text" >&2
+            echo "═══════════════════════════════════════════════════════════" >&2
+            run_diagnostic_on_failure "Agent Full Flow" "Response does not contain a valid 64-char SHA256 hash"
+        fi
+
+        echo "  ℹ No hash yet in message $ASSISTANT_MESSAGE_ID, checking for newer message..." >&2
+        last_seen_id="$ASSISTANT_MESSAGE_ID"
+        # Wait for the chat turn to flip back to user (subagent processing) then look for next message
+        wait_for_chat_turn "$CHAT_ID" "user" 30 2>/dev/null || true
+        local next_id
+        next_id=$(wait_for_assistant_message "$CHAT_ID" 60 "$last_seen_id")
+        if [ -n "$next_id" ] && [ "$next_id" != "$last_seen_id" ]; then
+            ASSISTANT_MESSAGE_ID="$next_id"
+        else
+            # No new message appeared; the last one is our final answer
+            break
+        fi
+    done
 
     # Verify the response contains a valid 64-character hex SHA256 hash
-    echo "$response_text" | grep -qiE '[0-9a-f]{64}' || \
+    if ! echo "$response_text" | grep -qiE '[0-9a-f]{64}'; then
+        echo "═══════════════════════════════════════════════════════════" >&2
+        echo "DIAGNOSTIC: Response text does not contain hash:" >&2
+        echo "$response_text" >&2
+        echo "═══════════════════════════════════════════════════════════" >&2
         run_diagnostic_on_failure "Agent Full Flow" "Response does not contain a valid 64-char SHA256 hash"
+    fi
 
     # Extract the hash for display
     local sha_hash

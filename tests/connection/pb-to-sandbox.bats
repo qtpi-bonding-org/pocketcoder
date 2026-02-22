@@ -47,17 +47,17 @@ teardown() {
     echo "Both containers running - isolation verified by network configuration"
 }
 
-@test "PB→Sandbox: PocketBase on pocketcoder-memory network only" {
+@test "PB→Sandbox: PocketBase on pocketcoder-relay network" {
     # Validates: Requirement 7.2
-    # Test that PocketBase is connected to pocketcoder-memory network only
+    # Test that PocketBase is connected to pocketcoder-relay network
     
     # Get PocketBase network connections
     local pb_networks
     pb_networks=$(docker inspect pocketcoder-pocketbase --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' 2>/dev/null)
     
-    # Check for pocketcoder-memory network
-    echo "$pb_networks" | grep -q "pocketcoder-memory" || \
-        run_diagnostic_on_failure "PB→Sandbox" "PocketBase not connected to pocketcoder-memory network"
+    # Check for pocketcoder-relay network
+    echo "$pb_networks" | grep -q "pocketcoder-relay" || \
+        run_diagnostic_on_failure "PB→Sandbox" "PocketBase not connected to pocketcoder-relay network"
     
     # Verify NOT connected to pocketcoder-control
     echo "$pb_networks" | grep -q "pocketcoder-control" && \
@@ -79,9 +79,9 @@ teardown() {
     echo "$sandbox_networks" | grep -q "pocketcoder-control" || \
         run_diagnostic_on_failure "PB→Sandbox" "Sandbox not connected to pocketcoder-control network"
     
-    # Verify NOT connected to pocketcoder-memory
-    echo "$sandbox_networks" | grep -q "pocketcoder-memory" && \
-        run_diagnostic_on_failure "PB→Sandbox" "Sandbox should NOT be on pocketcoder-memory network"
+    # Verify NOT connected to pocketcoder-relay
+    echo "$sandbox_networks" | grep -q "pocketcoder-relay" && \
+        run_diagnostic_on_failure "PB→Sandbox" "Sandbox should NOT be on pocketcoder-relay network"
     
     echo "Sandbox networks: $sandbox_networks"
     echo "✓ Sandbox is on pocketcoder-control only (as expected)"
@@ -96,8 +96,8 @@ teardown() {
     opencode_networks=$(docker inspect pocketcoder-opencode --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' 2>/dev/null)
     
     # OpenCode should be on both networks
-    echo "$opencode_networks" | grep -q "pocketcoder-memory" || \
-        run_diagnostic_on_failure "PB→Sandbox" "OpenCode not connected to pocketcoder-memory network"
+    echo "$opencode_networks" | grep -q "pocketcoder-relay" || \
+        run_diagnostic_on_failure "PB→Sandbox" "OpenCode not connected to pocketcoder-relay network"
     
     echo "$opencode_networks" | grep -q "pocketcoder-control" || \
         run_diagnostic_on_failure "PB→Sandbox" "OpenCode not connected to pocketcoder-control network"
@@ -174,9 +174,9 @@ teardown() {
     echo "Sandbox networks:   $sb_nets"
     
     # Verify isolation
-    echo "$pb_nets" | grep -q "pocketcoder-memory" || fail "PB not on memory network"
+    echo "$pb_nets" | grep -q "pocketcoder-relay" || fail "PB not on relay network"
     echo "$sb_nets" | grep -q "pocketcoder-control" || fail "Sandbox not on control network"
-    echo "$oc_nets" | grep -q "pocketcoder-memory" || fail "OpenCode not on memory network"
+    echo "$oc_nets" | grep -q "pocketcoder-relay" || fail "OpenCode not on relay network"
     echo "$oc_nets" | grep -q "pocketcoder-control" || fail "OpenCode not on control network"
     
     echo "✓ Network isolation verified"
