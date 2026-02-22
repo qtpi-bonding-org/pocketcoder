@@ -13,7 +13,6 @@ services:
       - pocketcoder-logs:/app/pb_public/logs
       - opencode_workspace:/workspace
       - ./opencode:/workspace/.opencode
-      - ./.ssh_keys:/ssh_keys
       - ./mcp_config_dir:/mcp_config
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
@@ -53,15 +52,15 @@ services:
     working_dir: /workspace
     user: root
     volumes:
-      - ./.ssh_keys:/ssh_keys:ro
       - opencode_workspace:/workspace
       - ./opencode:/workspace/.opencode
       - opencode_data:/root/.local/share/opencode
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
       - ./mcp_config_dir:/mcp_config:ro
+      - shell_bridge:/shell_bridge
     command: serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG
     healthcheck:
-      test: ["CMD", "/bin/ash", "-c", "curl -f http://localhost:3000/health && nc -z localhost 2222"]
+      test: ["CMD", "/bin/ash", "-c", "curl -f http://localhost:3000/health"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -82,17 +81,17 @@ services:
       - ./opencode:/workspace/.opencode
       - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
       - cao_db:/root/.aws/cli-agent-orchestrator/db  # CAO SQLite database
-      - ./.ssh_keys:/ssh_keys:ro
       - ./sandbox/cao/src:/app/cao/src
       - ./sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
+      - shell_bridge:/app/shell_bridge
     working_dir: /workspace
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
-      - SSH_KEYS_FILE=/ssh_keys/authorized_keys
       - MCP_HOST=http://mcp-gateway:8811/sse
+      - OPENCODE_URL=http://opencode:3000
       - DOCKER_MCP_IN_CONTAINER=1
     healthcheck:
       test: ["CMD", "/bin/bash", "-c", "curl -f http://localhost:3001/health && curl -f http://localhost:9889/health"]
@@ -190,6 +189,7 @@ volumes:
   opencode_workspace:
   opencode_data:
   cao_db:  # CAO SQLite database for subagent tasks
+  shell_bridge:
 
 networks:
   pocketcoder-dashboard:
