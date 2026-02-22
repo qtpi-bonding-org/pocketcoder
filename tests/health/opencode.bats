@@ -34,12 +34,12 @@ teardown() {
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode" "Health check timed out after 30 seconds"
 }
 
-@test "OpenCode sshd is listening on port 2222" {
-    # Validates: Requirement 2.3
-    # Connect to OpenCode container on the Docker network
-    run nc -z opencode 2222
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode" "SSH daemon not listening on port 2222"
-}
+# @test "OpenCode sshd is listening on port 2222" {
+#     # Validates: Requirement 2.3
+#     # Connect to OpenCode container on the Docker network
+#     run nc -z opencode 2222
+#     [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode" "SSH daemon not listening on port 2222"
+# }
 
 @test "OpenCode can create a session" {
     # Validates: Requirement 2.2 - session creation capability

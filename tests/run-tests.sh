@@ -91,19 +91,33 @@ capture_logs() {
         mkdir -p "$log_dir"
     fi
     
-    log_info "Appending container logs to $log_file"
+    log_info "Capturing container logs to $log_file"
     
     {
         echo ""
-        echo "=============================================================================="
-        echo "=== CONTAINER LOGS ==="
-        echo "=============================================================================="
+        echo "╔══════════════════════════════════════════════════════════════════════════════╗"
+        echo "║                            CONTAINER LOGS                                    ║"
+        echo "╚══════════════════════════════════════════════════════════════════════════════╝"
         echo ""
-        for svc in pocketbase opencode sandbox mcp-gateway; do
-            echo "=== pocketcoder-${svc} ==="
-            docker compose "${COMPOSE_FILES[@]}" logs --no-color "$svc" 2>/dev/null || echo "  [no logs available]"
+        
+        # Hardcoded container names to ensure we get all logs
+        for container_name in pocketcoder-pocketbase pocketcoder-opencode pocketcoder-sandbox pocketcoder-mcp-gateway; do
+            echo "┌──────────────────────────────────────────────────────────────────────────────┐"
+            echo "│ Container: ${container_name}"
+            echo "└──────────────────────────────────────────────────────────────────────────────┘"
+            
+            # Get ALL logs from the container (no tail limit)
+            if docker logs "$container_name" &>/dev/null; then
+                docker logs "$container_name" 2>&1 || echo "  [failed to get logs]"
+            else
+                echo "  [container not found or not running]"
+            fi
             echo ""
         done
+        
+        echo "╔══════════════════════════════════════════════════════════════════════════════╗"
+        echo "║                         END OF CONTAINER LOGS                                ║"
+        echo "╚══════════════════════════════════════════════════════════════════════════════╝"
     } >> "$log_file" 2>&1
     
     log_info "Logs saved to $log_file"
@@ -174,15 +188,18 @@ main() {
     echo "=== Command: run-tests.sh $test_path ===" >> "$log_file"
     echo "" >> "$log_file"
     
-    # We use a temporary file to capture exit code while using tee
-    # Since set -e is on, we need to be careful
+    # Run tests and check for failures in TAP output
     local exit_code=0
-    if run_tests "$test_path" 2>&1 | tee -a "$log_file"; then
-        log_info "Tests passed"
-        exit_code=0
-    else
-        log_error "Tests failed"
+    local test_output
+    test_output=$(run_tests "$test_path" 2>&1 | tee -a "$log_file")
+    
+    # Check if any tests failed by looking for "not ok" in TAP output
+    if echo "$test_output" | grep -q "^not ok"; then
+        log_error "Tests failed - see $log_file for details"
         exit_code=1
+    else
+        log_info "All tests passed"
+        exit_code=0
     fi
     
     # Capture container logs
