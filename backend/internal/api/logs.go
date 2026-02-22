@@ -102,7 +102,9 @@ func RegisterLogsApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			}
 			
 			// Flush to ensure the client receives the data immediately.
-			re.Response.Flush()
+			if f, ok := re.Response.(http.Flusher); ok {
+				f.Flush()
+			}
 		}
 
 		return nil
