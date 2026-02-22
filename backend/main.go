@@ -69,6 +69,7 @@ func main() {
 		api.RegisterPermissionApi(app, e)
 		api.RegisterSSHApi(app, e)
 		api.RegisterMcpApi(app, e)
+		api.RegisterProxyApi(app, e)
 		filesystem.RegisterArtifactApi(app, e)
 
 		return e.Next()
