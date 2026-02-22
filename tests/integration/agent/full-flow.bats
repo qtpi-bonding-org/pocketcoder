@@ -51,6 +51,38 @@ get_assistant_text() {
     echo "$msg" | jq -r '.parts[]? | select(.type == "text") | .text // empty' 2>/dev/null
 }
 
+# Helper: get tool parts from an assistant message
+get_assistant_tool_parts() {
+    local message_id="$1"
+
+    local msg
+    msg=$(pb_get "messages" "$message_id")
+
+    # parts is a JSON array — extract all tool parts
+    echo "$msg" | jq -r '.parts[]? | select(.type == "tool") // empty' 2>/dev/null
+}
+
+# Helper: check if assistant message has tool parts with expected output
+verify_tool_output_in_message() {
+    local message_id="$1"
+    local expected_output="$2"
+
+    local msg
+    msg=$(pb_get "messages" "$message_id")
+
+    # Check that parts array contains tool parts
+    local tool_count
+    tool_count=$(echo "$msg" | jq -r '.parts[]? | select(.type == "tool") | .id' 2>/dev/null | wc -l)
+    [ "$tool_count" -gt 0 ] || return 1
+
+    # Check that tool parts have state.output field with expected content
+    local output_found
+    output_found=$(echo "$msg" | jq -r ".parts[]? | select(.type == \"tool\") | .state.output // empty" 2>/dev/null | grep -c "$expected_output" || true)
+    [ "$output_found" -gt 0 ] || return 1
+
+    return 0
+}
+
 # =============================================================================
 # Test: Poco executes a simple command and returns output
 # =============================================================================
@@ -171,6 +203,13 @@ get_assistant_text() {
         run_diagnostic_on_failure "Agent Full Flow" "Response does not contain expected output '$unique_string'"
     fi
 
+    # Verify tool parts are present in the message with state.output field (Requirement 10.1)
+    echo "⏳ Verifying tool parts in assistant message..." >&2
+    run verify_tool_output_in_message "$ASSISTANT_MESSAGE_ID" "$unique_string"
+    [ "$status" -eq 0 ] || \
+        run_diagnostic_on_failure "Agent Full Flow" "Tool parts not found or missing state.output field in message parts"
+    echo "✓ Tool parts verified with state.output field" >&2
+
     echo "✓ Poco executed command and returned real output" >&2
     echo "  Unique string found in response: $unique_string" >&2
     echo "═══════════════════════════════════════════════════════════" >&2
@@ -273,6 +312,13 @@ get_assistant_text() {
         echo "" >&2
         run_diagnostic_on_failure "Agent Full Flow" "Response does not contain file content '$file_content' — file write/read failed"
     fi
+
+    # Verify tool parts are present in the message with state.output field (Requirement 10.2)
+    echo "⏳ Verifying tool parts in assistant message..." >&2
+    run verify_tool_output_in_message "$ASSISTANT_MESSAGE_ID" "$file_content"
+    [ "$status" -eq 0 ] || \
+        run_diagnostic_on_failure "Agent Full Flow" "Tool parts not found or missing state.output field in message parts"
+    echo "✓ Tool parts verified with state.output field" >&2
 
     echo "✓ Poco created and read back a file" >&2
     echo "  Content verified: $file_content" >&2
