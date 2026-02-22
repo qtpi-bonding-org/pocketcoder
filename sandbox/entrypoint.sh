@@ -92,29 +92,6 @@ echo "🤖 Starting CAO API Server on port 9889..."
 # 6. (DEFERRED) Start CAO MCP Server (SSE Mode) (Background)
 # We wait until CAO API is ready before starting this to prevent DB race conditions.
 
-# 7. Wait for OpenCode sshd to be ready
-echo "⏳ Waiting for OpenCode sshd to be ready..."
-RETRY_COUNT=0
-MAX_RETRIES=60  # 120 seconds total
-
-while true; do
-    if timeout 2 bash -c 'exec 3<>/dev/tcp/opencode/2222 && exec 3>&- && exec 3<&-' 2>/dev/null; then
-        echo "✅ OpenCode sshd is ready!"
-        break
-    fi
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-    
-    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
-        echo "❌ OpenCode sshd not ready after 120s"
-        echo "   This usually means OpenCode container failed to start"
-        echo "   Check OpenCode logs: docker logs pocketcoder-opencode"
-        exit 1
-    fi
-    
-    echo "⏳ OpenCode sshd not ready, retrying in 2 seconds... (attempt $RETRY_COUNT/$MAX_RETRIES)"
-    sleep 2
-done
-
 # 8. Register Poco terminal with CAO (Requirement 6.1)
 # CAO creates the tmux session + initial exec window + terminal DB record.
 # The proxy will resolve the window NAME from CAO and target it directly.
@@ -151,9 +128,10 @@ echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
 ) &
 
 # Attempt registration with validation
+# Use provider=opencode-api for lightweight communication
 CAO_RESPONSE=$(curl -s -X POST "http://localhost:9889/sessions" \
     -G \
-    --data-urlencode "provider=opencode-attach" \
+    --data-urlencode "provider=opencode-api" \
     --data-urlencode "agent_profile=poco" \
     --data-urlencode "session_name=$TMUX_SESSION" \
     --data-urlencode "delegating_agent_id=pocketcoder" \
@@ -187,40 +165,6 @@ echo "✅ Poco registered with CAO. Exec window: $EXEC_WINDOW"
 
 # Make tmux socket world-accessible
 chmod 777 "$TMUX_SOCKET"
-
-# 9. Create Poco TUI window via SSH bridge into OpenCode
-# This is a SEPARATE window from the exec window. CAO's async messaging
-# (send_keys) targets the exec window by name. The Poco TUI is for the
-# interactive SSH bridge.
-echo "🪟 Creating Poco TUI window via SSH bridge..."
-tmux -S "$TMUX_SOCKET" new-window \
-    -t "$TMUX_SESSION" -n "$POCO_WINDOW" \
-    "ssh -t -o StrictHostKeyChecking=no -i /ssh_keys/id_rsa poco@opencode -p 2222"
-echo "✅ Poco TUI window created."
-
-# 10. Window health watchdog - ensure both windows always exist
-echo "🔍 Starting window health watchdog..."
-(
-    while true; do
-        # Check exec window (CAO's command pane, used by proxy)
-        if [ -n "$EXEC_WINDOW" ]; then
-            if ! tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" 2>/dev/null \
-                 | grep -q "$EXEC_WINDOW"; then
-                echo "⚠️ Exec window '$EXEC_WINDOW' missing, recreating..."
-                tmux -S "$TMUX_SOCKET" new-window -t "$TMUX_SESSION" -n "$EXEC_WINDOW"
-            fi
-        fi
-        # Check poco TUI window (SSH bridge)
-        if ! tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" 2>/dev/null \
-             | grep -q "$POCO_WINDOW"; then
-            echo "⚠️ Poco TUI window missing, recreating..."
-            tmux -S "$TMUX_SOCKET" new-window \
-                -t "$TMUX_SESSION" -n "$POCO_WINDOW" \
-                "ssh -t -o StrictHostKeyChecking=no -i /ssh_keys/id_rsa poco@opencode -p 2222"
-        fi
-        sleep 10
-    done
-) &
 
 # 11. Final registration confirmation
 echo "✅ [PocketCoder] Sandbox is LIVE and HARDENED."
