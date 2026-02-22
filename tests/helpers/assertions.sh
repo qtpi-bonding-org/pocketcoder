@@ -222,3 +222,13 @@ assert_output_matches() {
         return 1
     fi
 }
+
+# Fail a test with a message
+fail() {
+    local message="${1:-Test failed}"
+    echo "❌ $message" >&2
+    return 1
+}
+
+# Export new function
+export -f fail

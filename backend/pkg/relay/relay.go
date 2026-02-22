@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package relay
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -32,7 +33,7 @@ type RelayService struct {
 	openCodeURL   string
 	lastHeartbeat int64 // Unix timestamp
 	isReady       bool
-	chatMutexes   sync.Map // Map of chatID (string) -> *sync.Mutex for per-chat locking
+	chatMutexes sync.Map // Map of chatID (string) -> *sync.Mutex for per-chat locking
 }
 
 // NewRelayService creates a new Relay instance
@@ -68,6 +69,30 @@ func (r *RelayService) Start() {
 	// 4. Start Health Monitor Watchdog
 	go r.startHealthMonitor()
 }
+
+// withChatLock ensures that chat record updates are atomic and thread-safe.
+func (r *RelayService) withChatLock(chatID string, fn func(chat *core.Record) error) error {
+	if chatID == "" {
+		return fmt.Errorf("empty chatID")
+	}
+
+	val, _ := r.chatMutexes.LoadOrStore(chatID, &sync.Mutex{})
+	mu := val.(*sync.Mutex)
+	mu.Lock()
+	defer mu.Unlock()
+
+	chat, err := r.app.FindRecordById("chats", chatID)
+	if err != nil {
+		return err
+	}
+
+	if err := fn(chat); err != nil {
+		return err
+	}
+
+	return r.app.Save(chat)
+}
+
 
 func (r *RelayService) startHealthMonitor() {
 	ticker := time.NewTicker(20 * time.Second)

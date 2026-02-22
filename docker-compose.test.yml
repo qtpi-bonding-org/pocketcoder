@@ -58,17 +58,23 @@ services:
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
     networks:
-      - pocketcoder-memory
+      - pocketcoder-relay
       - pocketcoder-control
-      - pocketcoder-mcp
+      - pocketcoder-dashboard
+      - pocketcoder-docker
+      - pocketcoder-tools
     # Don't start automatically - use 'run' command instead
     profiles:
       - test
 
 networks:
-  pocketcoder-memory:
+  pocketcoder-relay:
     external: false
   pocketcoder-control:
     external: false
-  pocketcoder-mcp:
+  pocketcoder-dashboard:
+    external: false
+  pocketcoder-docker:
+    external: false
+  pocketcoder-tools:
     external: false
