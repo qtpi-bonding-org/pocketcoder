@@ -56,6 +56,9 @@ class Collections {
   /// Healthchecks collection - service health status
   static const String healthchecks = 'healthchecks';
 
+  /// MCP Servers collection - capability registry
+  static const String mcpServers = 'mcp_servers';
+
   // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
@@ -75,6 +78,7 @@ class Collections {
     sops,
     subagents,
     healthchecks,
+    mcpServers,
   ];
 
   /// Returns all collections that exist in the current schema
@@ -93,6 +97,7 @@ class Collections {
     sops,
     subagents,
     healthchecks,
+    mcpServers,
   ];
 
   /// Returns collections that are referenced in API docs but may not exist yet

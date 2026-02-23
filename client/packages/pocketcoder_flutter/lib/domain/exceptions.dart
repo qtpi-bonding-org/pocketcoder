@@ -72,3 +72,13 @@ class RepositoryException extends DomainException {
   factory RepositoryException.updateFailed([dynamic cause]) =>
       RepositoryException('Failed to update data', cause);
 }
+
+/// MCP-related exceptions.
+class McpException extends DomainException {
+  McpException(super.message, [super.cause]);
+}
+
+/// SOP-related exceptions.
+class SopException extends DomainException {
+  SopException(super.message, [super.cause]);
+}

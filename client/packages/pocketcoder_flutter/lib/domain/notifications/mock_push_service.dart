@@ -6,6 +6,7 @@ class MockPushService implements PushService {
 
   @override
   Future<void> initialize() async {
+    // ignore: avoid_print
     print("MockPushService initialized");
   }
 
