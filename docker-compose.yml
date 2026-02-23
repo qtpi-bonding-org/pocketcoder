@@ -3,7 +3,7 @@ services:
   pocketbase:
     build:
       context: .
-      dockerfile: docker/backend.Dockerfile
+      dockerfile: services/pocketbase/Dockerfile
     container_name: pocketcoder-pocketbase
     ports:
       - "8090:8090" # PocketBase UI
@@ -12,8 +12,8 @@ services:
       # - pb_backups:/app/pb_backups
       - pocketcoder-logs:/app/pb_public/logs
       - opencode_workspace:/workspace
-      - ./opencode:/workspace/.opencode
-      - ./mcp_config_dir:/mcp_config
+      - ./services/opencode:/workspace/.opencode
+      - ./services/mcp-gateway/config:/mcp_config
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -35,7 +35,7 @@ services:
   opencode:
     build:
       context: .
-      dockerfile: docker/opencode.Dockerfile
+      dockerfile: services/opencode/Dockerfile
     container_name: pocketcoder-opencode
     depends_on:
       sandbox:
@@ -53,10 +53,10 @@ services:
     user: root
     volumes:
       - opencode_workspace:/workspace
-      - ./opencode:/workspace/.opencode
+      - ./services/opencode:/workspace/.opencode
       - opencode_data:/root/.local/share/opencode
       - ./opencode.json:/root/.config/opencode/opencode.json:ro
-      - ./mcp_config_dir:/mcp_config:ro
+      - ./services/mcp-gateway/config:/mcp_config:ro
       - shell_bridge:/shell_bridge
     command: serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG
     healthcheck:
@@ -74,15 +74,15 @@ services:
   sandbox:
     build:
       context: .
-      dockerfile: docker/sandbox.Dockerfile
+      dockerfile: services/sandbox/Dockerfile
     container_name: pocketcoder-sandbox
     volumes:
       - opencode_workspace:/workspace
-      - ./opencode:/workspace/.opencode
+      - ./services/opencode:/workspace/.opencode
       - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
       - cao_db:/root/.aws/cli-agent-orchestrator/db  # CAO SQLite database
-      - ./sandbox/cao/src:/app/cao/src
-      - ./sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
+      - ./services/sandbox/cao/src:/app/cao/src
+      - ./services/sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
       - shell_bridge:/app/shell_bridge
     working_dir: /workspace
     environment:
@@ -107,11 +107,11 @@ services:
   mcp-gateway:
     build:
       context: .
-      dockerfile: docker/mcp-gateway.Dockerfile
+      dockerfile: services/mcp-gateway/Dockerfile
     container_name: pocketcoder-mcp-gateway
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./mcp_config_dir:/root/.docker/mcp
+      - ./services/mcp-gateway/config:/root/.docker/mcp
     environment:
       - DOCKER_MCP_IN_CONTAINER=1
       - LINODE_TOKEN=${LINODE_TOKEN}
@@ -170,8 +170,8 @@ services:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
       - opencode_data:/database/opencode       # OpenCode DB (analytics)
       - cao_db:/database/cao                   # CAO DB (subagent tasks)
-      - ./dashboard:/var/www:ro                  # SQLPage queries/dashboards
-      - ./dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
+      - ./services/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
+      - ./services/sqlpage/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
     networks:
       - pocketcoder-dashboard
     restart: unless-stopped
@@ -179,6 +179,30 @@ services:
       - pocketbase
       - opencode
       - sandbox
+
+  # 📚 DOCS (Documentation Site)
+  docs:
+    build:
+      context: .
+      dockerfile: services/docs/Dockerfile
+    container_name: pocketcoder-docs
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./services/docs:/app/docs
+      - /app/docs/node_modules  # Don't mount node_modules - use container's installed version
+      - ./services/pocketbase:/app/pocketbase
+      - ./proxy:/app/proxy
+      - ./DEVELOPMENT.md:/app/DEVELOPMENT.md:ro
+      - ./SECURITY.md:/app/SECURITY.md:ro
+      - ./scripts:/app/scripts:ro
+    working_dir: /app/docs
+    environment:
+      - NODE_ENV=development
+    command: /bin/bash -c "./sync.sh && npm run dev -- --host 0.0.0.0"
+    restart: unless-stopped
+    networks:
+      - pocketcoder-dashboard
 
 volumes:
   pb_data:

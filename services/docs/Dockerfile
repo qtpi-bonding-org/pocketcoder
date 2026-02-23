@@ -1,0 +1,32 @@
+# Dockerfile for PocketCoder Documentation Pipeline
+FROM node:20-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Go (for gomarkdoc)
+COPY --from=golang:1.22-bookworm /usr/local/go/ /usr/local/go/
+ENV PATH="/usr/local/go/bin:${PATH}"
+RUN go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest
+ENV PATH="/root/go/bin:${PATH}"
+
+# Install Rust (for cargo-rdme)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo install cargo-rdme cargo-docs-md
+
+WORKDIR /app/docs
+
+# Copy package files and install dependencies
+COPY services/docs/package.json ./
+RUN npm install --verbose
+
+# Exposure for Astro
+EXPOSE 4321
+
+# Default command: sync then dev
+CMD ["/bin/bash", "-c", "cd /app/docs && ./sync.sh && npm run dev -- --host 0.0.0.0"]
