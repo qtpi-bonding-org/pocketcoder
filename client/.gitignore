@@ -1,61 +1,36 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+**/*.freezed.dart
+**/*.g.dart
+packages/**/pubspec.lock
 
-# IntelliJ related
+# Melos
+.melos_plugins_config
+melos_*.iml
+
+# IDEs
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Generated code (build_runner, freezed, injectable, l10n)
-*.g.dart
-*.freezed.dart
-*.config.dart
-**/l10n/app_localizations*.dart
-**/l10n/l10n_key_resolver.g.dart
-
-# Environment files (may contain secrets)
-.env
-.env.*
-!.env.example
-
-# IDE-specific
 .vscode/
-*.code-workspace
+
+# Mobile specific
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/App.podspec
+ios/Flutter/App.framework
+android/key.properties
+android/local.properties
+android/app/src/main/res/raw/google_services.json
+ios/Runner/GoogleService-Info.plist
+
+# Symbol files
+**/*.pdb
+**/*.dll
+**/*.exe

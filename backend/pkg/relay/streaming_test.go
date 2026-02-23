@@ -378,7 +378,8 @@ func TestBroadcastError(t *testing.T) {
 
 	relay.registerConnection("chat1", conn)
 
-	relay.broadcastError("chat1", "Something went wrong")
+	envelope := NewInfrastructureError(ErrCodeConnectionFailed)
+	relay.broadcastError("chat1", "msg123", envelope)
 
 	body := writer.body.String()
 	if len(body) == 0 {
