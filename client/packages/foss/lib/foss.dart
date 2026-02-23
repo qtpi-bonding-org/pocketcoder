@@ -1,0 +1,27 @@
+import 'dart:async';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+
+class NtfyPushService implements PushService {
+  final _controller = StreamController<PushNotificationPayload>.broadcast();
+
+  @override
+  Future<void> initialize() async {
+    // Implement ntfy registration / deep link listener
+    print("NtfyPushService initialized");
+  }
+
+  @override
+  Future<String?> getToken() async {
+    // In ntfy, this might be the topic the user subscribed to
+    return "ntfy_topic_placeholder";
+  }
+
+  @override
+  Stream<PushNotificationPayload> get notificationStream => _controller.stream;
+
+  @override
+  Future<bool> requestPermissions() async {
+    // Usually handled by the OS, but for ntfy we might check if deep links are enabled
+    return true;
+  }
+}

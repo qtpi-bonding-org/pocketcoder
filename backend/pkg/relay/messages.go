@@ -37,7 +37,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package relay
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -139,8 +141,8 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 	resp, err := client.Post(url, "application/json", strings.NewReader(string(body)))
 	if err != nil {
 		r.app.Logger().Error("❌ [Relay/Go] OpenCode prompt failed", "error", err)
-		msg.Set("user_message_status", "failed")
-		r.app.Save(msg)
+		envelope := r.classifyConnectionError(err)
+		r.handleErrorCompletion(chatID, msg.Id, envelope)
 		return
 	}
 	defer resp.Body.Close()
@@ -975,4 +977,182 @@ func (r *RelayService) updateChatPreview(chatID string, ocMsgID string) {
 		chat.Set("last_active", time.Now().Format("2006-01-02 15:04:05.000Z"))
 		return nil
 	})
+}
+// classifyConnectionError classifies connection errors and generates appropriate error envelopes.
+// Requirements: 6.1, 6.2, 6.3
+func (r *RelayService) classifyConnectionError(err error) *InfrastructureError {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return NewInfrastructureError(ErrCodeNetworkTimeout)
+	}
+	if strings.Contains(err.Error(), "connection refused") {
+		return NewInfrastructureError(ErrCodeContainerUnreachable)
+	}
+	return NewInfrastructureError(ErrCodeConnectionFailed)
+}
+
+// handleErrorCompletion handles error completion by validating, persisting, and broadcasting the error envelope.
+// Requirements: 3.1, 3.2, 3.3, 5.6, 6.4
+func (r *RelayService) handleErrorCompletion(chatID, messageID string, envelope ErrorEnvelope) {
+	// Validate envelope
+	if err := envelope.Validate(); err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Invalid error envelope", "error", err)
+		envelope = NewFallbackError()
+	}
+
+	// Serialize envelope to JSON
+	envelopeJSON, err := envelope.ToJSON()
+	if err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Failed to serialize error envelope", "error", err)
+		return
+	}
+
+	// Determine error_domain based on envelope source
+	errorDomain := "infrastructure"
+	if envelope.GetSource() == "opencode" {
+		errorDomain = "provider"
+	}
+
+	// Update message record
+	msg, err := r.app.FindRecordById("messages", messageID)
+	if err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Failed to find message", "id", messageID, "error", err)
+		return
+	}
+
+	msg.Set("engine_message_status", "failed")
+	msg.Set("error_domain", errorDomain)
+	msg.Set("error_payload", string(envelopeJSON))
+
+	if err := r.app.Save(msg); err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Failed to save error", "error", err)
+		return
+	}
+
+	r.app.Logger().Info("✅ [Relay/Go] Error completion handled", "chatID", chatID, "messageID", messageID, "errorDomain", errorDomain)
+
+	// Broadcast error to connected clients
+	r.broadcastError(chatID, messageID, envelope)
+}
+// handleMessageError handles a "message.updated" event with error data from OpenCode.
+// It wraps the error in an Envelope_2 and calls handleErrorCompletion.
+// Requirements: 7.3
+func (r *RelayService) handleMessageError(info map[string]interface{}) {
+	sessionID, _ := info["sessionID"].(string)
+	messageID, _ := info["id"].(string)
+	chatID := r.resolveChatID(sessionID)
+	if chatID == "" {
+		r.app.Logger().Warn("⚠️ [Relay/Go] Could not resolve Chat ID for message error", "sessionID", sessionID)
+		return
+	}
+
+	// Extract error data from the info
+	errorData, _ := info["error"].(map[string]interface{})
+	envelope := NewProviderError(errorData)
+
+	r.app.Logger().Info("📨 [Relay/Go] Handling message error", "chatID", chatID, "messageID", messageID, "errorName", envelope.Error.Name)
+
+	r.handleErrorCompletion(chatID, messageID, envelope)
+}
+
+// handleSessionError handles a "session.error" event from OpenCode.
+// It wraps the error in an Envelope_2 and calls handleErrorCompletion.
+// Requirements: 2.1, 7.4, 7.5
+func (r *RelayService) handleSessionError(properties map[string]interface{}) {
+	// Extract sessionID from properties
+	sessionID, _ := properties["sessionID"].(string)
+	if sessionID == "" {
+		r.app.Logger().Warn("⚠️ [Relay/Go] handleSessionError: missing sessionID in properties")
+		return
+	}
+
+	// Resolve chatID from sessionID
+	chatID := r.resolveChatID(sessionID)
+	if chatID == "" {
+		r.app.Logger().Warn("⚠️ [Relay/Go] Could not resolve Chat ID for session error", "sessionID", sessionID)
+		return
+	}
+
+	// Extract error data from properties
+	errorData, _ := properties["error"].(map[string]interface{})
+
+	// Create ProviderError envelope
+	envelope := NewProviderError(errorData)
+
+	r.app.Logger().Info("📨 [Relay/Go] Handling session error", "chatID", chatID, "sessionID", sessionID, "errorName", envelope.Error.Name)
+
+	// Find active message for session
+	messageID := r.findActiveMessage(chatID)
+	if messageID != "" {
+		r.handleErrorCompletion(chatID, messageID, envelope)
+	}
+}
+
+// findActiveMessage finds the active message ID for a given chat session.
+// An active message is one with engine_message_status = "processing".
+// Requirements: 2.1, 7.4
+func (r *RelayService) findActiveMessage(chatID string) string {
+	record, err := r.app.FindFirstRecordByFilter(
+		"messages",
+		"chat = {:chat} && engine_message_status = 'processing'",
+		map[string]any{"chat": chatID},
+	)
+	if err != nil || record == nil {
+		return ""
+	}
+	return record.Id
+}
+
+// handleHeartbeatTimeout handles heartbeat timeout by waiting for a grace period
+// and then failing all active sessions if the connection is not restored.
+// Requirements: 1.2, 7.2
+func (r *RelayService) handleHeartbeatTimeout() {
+	// Give SSE Listener a brief window (10 seconds) to attempt reconnection
+	// using Last-Event-ID before failing all sessions. This respects OpenCode's
+	// native fault tolerance with exponential backoff retry (capped at 30s).
+	time.Sleep(10 * time.Second)
+
+	// Check if connection was restored during the grace period
+	if r.isConnectionHealthy() {
+		r.app.Logger().Info("✅ [Relay/Go] Connection restored during heartbeat timeout grace period")
+		return
+	}
+
+	r.app.Logger().Warn("⚠️ [Relay/Go] Heartbeat timeout: connection not restored, failing all active sessions")
+
+	// Create Envelope_1 with heartbeat timeout error code
+	envelope := NewInfrastructureError(ErrCodeHeartbeatTimeout)
+
+	// Fail all active sessions with the envelope
+	r.failAllActiveSessions(envelope)
+}
+
+// handleStreamClosed handles SSE stream closure by waiting for a grace period
+// and then failing all active sessions if the connection is not restored.
+// Requirements: 7.1
+func (r *RelayService) handleStreamClosed() {
+	// Give SSE Listener a brief window (10 seconds) to attempt reconnection
+	// using Last-Event-ID before failing all sessions. This respects OpenCode's
+	// native fault tolerance with exponential backoff retry (capped at 30s).
+	time.Sleep(10 * time.Second)
+
+	// Check if connection was restored during the grace period
+	if r.isConnectionHealthy() {
+		r.app.Logger().Info("✅ [Relay/Go] Connection restored during stream closure grace period")
+		return
+	}
+
+	r.app.Logger().Warn("⚠️ [Relay/Go] Stream closed: connection not restored, failing all active sessions")
+
+	// Create Envelope_1 with stream closed error code
+	envelope := NewInfrastructureError(ErrCodeStreamClosed)
+
+	// Fail all active sessions with the envelope
+	r.failAllActiveSessions(envelope)
+}
+
+// isConnectionHealthy checks if the connection to OpenCode is healthy based on recent heartbeat activity.
+// Returns true if we've received a heartbeat within the last 5 seconds.
+// Requirements: 7.1, 7.2
+func (r *RelayService) isConnectionHealthy() bool {
+	return time.Since(time.Unix(r.lastHeartbeat.Load(), 0)) < 5*time.Second
 }
