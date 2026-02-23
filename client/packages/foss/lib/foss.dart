@@ -1,5 +1,23 @@
 import 'dart:async';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+
+/// A BillingService for the FOSS version which assumes all features are available.
+class FossBillingService implements BillingService {
+  @override
+  Future<void> initialize() async {
+    // No-op for FOSS
+  }
+
+  @override
+  Future<bool> isPremium() async => true;
+
+  @override
+  Future<void> restorePurchases() async {}
+
+  @override
+  Future<bool> purchase(String identifier) async => true;
+}
 
 class NtfyPushService implements PushService {
   final _controller = StreamController<PushNotificationPayload>.broadcast();
@@ -7,6 +25,7 @@ class NtfyPushService implements PushService {
   @override
   Future<void> initialize() async {
     // Implement ntfy registration / deep link listener
+    // ignore: avoid_print
     print("NtfyPushService initialized");
   }
 
