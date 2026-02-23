@@ -4,40 +4,61 @@
 
 A ground-truth reference for how PocketCoder actually works right now. Every claim here is traced to a specific file in the codebase. If the code changes and this doc doesn't match, the code wins.
 
-## The Five Containers
+## The Core Infrastructure
 
-PocketCoder runs five Docker containers. This multi-container architecture ensures maximum isolation and security by separating the reasoning engine (OpenCode), the execution environment (Sandbox), the persistent state (PocketBase), and the external tool infrastructure (MCP Gateway).
+PocketCoder runs five primary service containers, coordinated via Docker Compose. This architecture separates user management, reasoning, execution, and tool infrastructure.
 
-```
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│   PocketBase     │       │    OpenCode      │       │    Sandbox       │
-│   port 8090      │◄─────►│    port 3000     │◄─────►│    port 3001     │
-│   (Relay)        │memory │    (Poco)        │control│    (CAO/Tmux)    │
-└────────┬────────┘network └─────────────────┘network └────────┬────────┘
-         │                                                     │
-         │ mcp network                                         │ mcp network
-         ▼                                                     ▼
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│ Docker Socket   │◄─────►│  MCP Gateway    │◄─────►│  (External)     │
-│ Proxy (Secure)  │       │  port 8811      │       │  MCP Servers    │
-└─────────────────┘       └─────────────────┘       └─────────────────┘
+```mermaid
+graph TD
+    User([User / Flutter Client])
+    
+    subgraph "Memory Zone"
+        PB[PocketBase]
+        SQLP[SQLPage]
+    end
+
+    subgraph "Reasoning Zone"
+        OC[OpenCode / Poco]
+    end
+
+    subgraph "Execution Zone"
+        SB[Sandbox / CAO]
+        GW[MCP Gateway]
+        DP[Docker Socket Proxy]
+    end
+
+    %% Network Connections
+    User <-->|User API| PB
+    PB <-->|Relay Network| OC
+    OC <-->|Control Network| SB
+    SB <-->|Tools Network| GW
+    GW <-->|Docker Network| DP
+    PB <-->|Docker Network| DP
+    
+    %% Observability
+    PB <-->|Dashboard Network| SQLP
+    SQLP -.->|Direct DB Access| PB
+    SQLP -.->|Direct DB Access| OC
+    SQLP -.->|Direct DB Access| SB
 ```
 
 **Networks** (defined in `docker-compose.yml`):
-- `pocketcoder-memory`: PocketBase ↔ OpenCode only (Sensitive state transition)
-- `pocketcoder-control`: OpenCode ↔ Sandbox only (Execution control)
-- `pocketcoder-mcp`: PocketBase ↔ Sandbox ↔ MCP Gateway ↔ Docker Proxy (Tool orchestration)
+- `pocketcoder-relay`: PocketBase ↔ OpenCode only (User communication & State sync)
+- `pocketcoder-control`: OpenCode ↔ Sandbox (Command execution / PTY bridge)
+- `pocketcoder-tools`: Sandbox ↔ MCP Gateway (External tool orchestration)
+- `pocketcoder-docker`: PocketBase / Gateway ↔ Docker Proxy (Host orchestration)
+- `pocketcoder-dashboard`: SQLPage ↔ Databases (Internal observability)
 
 **The Linear Isolation Rule**:
-Sandbox cannot reach OpenCode's API, and it cannot reach PocketBase directly. It can only communicate with the MCP Gateway for tools and receives command requests from the Proxy execution bridge. This ensures that the execution environment is truly "blind" to the reasoning engine's internals.
+The Sandbox cannot reach PocketBase directly. It only receives command requests from the Head (OpenCode) via a synchronous Rust bridge or the CAO API. This ensures the execution environment is isolated from the sensitive user data in the backend.
 
 ---
 
 ## Container 1: PocketBase
 
-**Image**: Built from `docker/backend.Dockerfile` (Go binary compiled from `backend/`)
+**Image**: Built from `docker/backend.Dockerfile`
 **Port**: 8090
-**Network**: `pocketcoder-memory`
+**Network**: `pocketcoder-relay`, `pocketcoder-docker`, `pocketcoder-dashboard`
 
 PocketBase is the database and the user-facing API. It stores chats, messages, permissions, subagents, SSH keys, agents, proposals, and SOPs. The Go binary embeds PocketBase and compiles in a custom Relay service.
 
@@ -80,31 +101,19 @@ The Relay is a Go module at `backend/pkg/relay/`. It's the nervous system — it
 
 ## Container 2: OpenCode (Poco)
 
-**Image**: Built from `docker/opencode.Dockerfile` (Alpine + Bun + opencode-ai)
-**Ports**: 3000 (API), 2222 (sshd)
-**Networks**: `pocketcoder-memory` + `pocketcoder-control`
+**Image**: Built from `docker/opencode.Dockerfile`
+**Ports**: 3000 (API)
+**Networks**: `pocketcoder-relay` + `pocketcoder-control`
 **Command**: `opencode serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG`
 
 OpenCode is the AI reasoning engine. It runs `opencode serve` which exposes an HTTP API and SSE event stream. It's called "Poco" (Private Operations Coding Officer).
 
-### Entrypoint Flow (`docker/opencode_entrypoint.sh`)
+1. **Dependencies**: Waits for `sandbox` to be healthy before starting.
+2. **Shell bridge wait**: Polls for `/shell_bridge/pocketcoder-shell` (up to 120s). This binary is pre-compiled and provided by the Sandbox container via the shared volume.
+3. **Shell hardening**: Multi-stage entrypoint replaces `/bin/sh` symlink → `/shell_bridge/pocketcoder-shell`. After this, every `sh -c` invocation is intercepted by the Rust bridge.
+4. **Launch**: `exec opencode serve --port 3000 ...`
 
-1. **SSH setup**: Copies public key from `/ssh_keys/id_rsa.pub` to `/home/poco/.ssh/authorized_keys`, starts sshd on port 2222
-2. **Shell bridge wait**: Polls for `/shell_bridge/pocketcoder-shell` (up to 120s). This binary is populated by Sandbox via the `shell_bridge` shared volume.
-3. **Shell hardening**: Replaces `/bin/sh` symlink → `/shell_bridge/pocketcoder-shell`. After this, every `sh -c "cmd"` invocation by OpenCode routes through the Rust shell bridge to Sandbox.
-4. **Background health checks** (non-blocking):
-   - Polls `http://sandbox:3001/health` (Rust axum)
-   - Polls `http://sandbox:9888/sse` (CAO MCP)
-5. **Launch**: `exec opencode serve --port 3000 ...`
-
-### sshd Configuration (`docker/opencode.Dockerfile`)
-
-The `poco` user has a `ForceCommand`:
-```
-ForceCommand /usr/local/bin/opencode attach http://localhost:3000 --continue
-```
-
-When Sandbox SSHes in as `poco@opencode:2222`, it gets an `opencode attach` TUI session — not a shell. This is how the Poco tmux window in Sandbox connects to the running OpenCode serve instance.
+*(Note: SSH bridging between containers has been removed in favor of direct local execution within the Sandbox container.)*
 
 ### Shell Hardening
 
@@ -142,7 +151,7 @@ OpenCode connects directly to CAO's MCP server in Sandbox. No relay or proxy in 
 | `shell_bridge` | `/shell_bridge` | ro | Compiled Rust binary + wrapper script |
 | `opencode_workspace` | `/workspace` | rw | Source code workspace |
 | `opencode_data` | `/root/.local/share/opencode` | rw | OpenCode's internal database |
-| `.ssh_keys` | `/ssh_keys` | ro | SSH keys for Sandbox to connect |
+| `.ssh_keys` | `/ssh_keys` | ro | SSH authorized_keys for developer access |
 | `opencode.json` | `/root/.config/opencode/opencode.json` | ro | OpenCode configuration |
 | proposals | `/workspace/.opencode/proposals` | rw | Agent proposals |
 | skills | `/workspace/.opencode/skills` | ro | Agent skills/SOPs |
@@ -151,11 +160,11 @@ OpenCode connects directly to CAO's MCP server in Sandbox. No relay or proxy in 
 
 ## Container 3: Sandbox
 
-**Image**: Built from `docker/sandbox.Dockerfile` (multi-stage: Rust builder + Python runtime)
-**Ports**: 3001 (Rust axum), 9889 (CAO API), 9888 (CAO MCP), 2222 (sshd for worker)
-**Network**: `pocketcoder-control`
+**Image**: Built from `docker/sandbox.Dockerfile` (Multi-process: Rust + Python/CAO)
+**Ports**: 3001 (Rust server), 9889 (CAO API), 9888 (CAO MCP)
+**Networks**: `pocketcoder-control`, `pocketcoder-tools`
 
-Sandbox is the execution environment. It owns tmux, runs the Rust exec server, runs CAO, and is where all bash commands actually execute.
+The Sandbox is the "Muscle" of the system. It consolidated the old "Proxy" and "Sandbox" containers into a single hardened environment. It owns the `tmux` server and manages the lifecycle of all execution panes.
 
 ### Build Stages (`docker/sandbox.Dockerfile`)
 
@@ -171,28 +180,11 @@ Sandbox is the execution environment. It owns tmux, runs the Rust exec server, r
 - Creates wrapper script `/app/shell_bridge/pocketcoder-shell`
 - Installs CAO from `/app/cao` (vendored Python package)
 
-### Entrypoint Flow (`sandbox/entrypoint.sh`)
-
-1. **Cleanup**: Wipes stale tmux sockets, CAO lock files
-2. **Shell bridge population**: Copies `/app/pocketcoder` → `/app/shell_bridge/pocketcoder`, creates wrapper script. This populates the `shell_bridge` shared volume so OpenCode can access the binary.
-3. **Tmux creation**: `tmux -S /tmp/tmux/pocketcoder new-session -d -s pocketcoder_session -n main`
-4. **Rust axum server**: `/app/pocketcoder server --port 3001 &` (background)
-5. **sshd**: Starts on port 2222 (for `worker` user access)
-6. **SSH key sync**: Polls for keys from shared volume
-7. **CAO API server**: `uv run cao-server` on port 9889 (background)
-8. **CAO MCP server**: `uv run cao-mcp-server` on port 9888 in SSE mode (background)
-9. **Poco window**: Waits for OpenCode sshd (port 2222), then creates tmux window:
-   ```
-   tmux new-window -t pocketcoder_session -n poco \
-       "ssh -t -o StrictHostKeyChecking=no -i /ssh_keys/id_rsa poco@opencode -p 2222"
-   ```
-   This SSH session triggers the ForceCommand on OpenCode, giving an `opencode attach` TUI.
-10. **Pane watchdog**: Every 10s, checks if the `poco` window exists. Recreates it if missing.
-11. **CAO registration**: Registers the Poco terminal with CAO:
-    ```
-    POST http://localhost:9889/sessions?provider=opencode-attach&agent_profile=poco&session_name=pocketcoder_session&delegating_agent_id=poco
-    ```
-12. **Tail**: `tail -f /dev/null` to keep container alive.
+1. **Cleanup**: Wipes stale tmux sockets and CAO journal files.
+2. **Binary Sharing**: Populates the `/shell_bridge` volume with the pre-compiled `pocketcoder` (Rust) binary.
+3. **Axum Startup**: Launches the Rust server on port 3001. This server handles synchronous shell command execution.
+4. **CAO Startup**: Launches the CAO API (9889) and MCP (9888) servers.
+5. **Poco Registration**: The sandbox **registers its own primary window** into CAO using the `opencode-api` provider. This creates the `{TMUX_SESSION}:poco:terminal` window that OpenCode will target for its commands.
 
 ### Rust Axum Server (`proxy/src/main.rs`)
 
@@ -228,10 +220,9 @@ Or on error:
 
 The driver is the core execution logic. When `/exec` is called:
 
-1. **Session resolution** (`resolve_session_and_window()`):
-   - Queries CAO: `GET http://sandbox:9889/terminals/by-delegating-agent/{session_id}`
-   - CAO returns `{"tmux_session": "pocketcoder_session", "tmux_window_id": 1, ...}`
-   - Extracts session name and window ID
+1. **Session resolution**:
+   - Matches the incoming `session_id` (e.g., `pocketcoder`) against the registered terminals.
+   - Currently targets the `poco:terminal` window in the `pocketcoder` tmux session (bootstrapped by the sandbox entrypoint).
 
 2. **Command injection**:
    - Clears tmux pane history (Ctrl-C, clear, clear-history)
@@ -299,7 +290,7 @@ Serializes to flat JSON with `_pocketcoder_sys_event` at the top level (not nest
 |-------|------|------|---------|
 | `opencode_workspace` | `/workspace` | rw | Shared workspace |
 | `shell_bridge` | `/app/shell_bridge` | rw | Rust binary shared to OpenCode |
-| `.ssh_keys` | `/ssh_keys` | ro | SSH keys |
+| `.ssh_keys` | `/app/ssh_keys` | ro | SSH authorized_keys for developer access |
 | CAO src | `/app/cao/src` | bind | Live-edit CAO source |
 | agent-store | `/root/.aws/cli-agent-orchestrator/agent-store` | bind | Subagent profiles |
 | proposals | `/workspace/.opencode/proposals` | bind | Agent proposals |
@@ -311,7 +302,7 @@ Serializes to flat JSON with `_pocketcoder_sys_event` at the top level (not nest
 
 **Image**: Built from `docker/mcp-gateway.Dockerfile`
 **Port**: 8811
-**Network**: `pocketcoder-mcp`
+**Network**: `pocketcoder-tools`, `pocketcoder-docker`
 
 The MCP Gateway is a specialized router for [Model Context Protocol](https://modelcontextprotocol.io) servers. It allows Sandbox to discover and invoke tools provided by external containers (like the Terraform or Git MCP servers).
 
@@ -323,7 +314,7 @@ The MCP Gateway is a specialized router for [Model Context Protocol](https://mod
 ## Container 5: Docker Socket Proxy (Secure)
 
 **Image**: `tecnativa/docker-socket-proxy`
-**Network**: `pocketcoder-mcp`
+**Network**: `pocketcoder-docker`
 
 This is the security gate for Docker interactions. Instead of mounting `/var/run/docker.sock` directly into the Sandbox (which would grant root access to the host), both the Gateway and PocketBase communicate through this proxy.
 
@@ -341,16 +332,25 @@ This is the security gate for Docker interactions. Instead of mounting `/var/run
 
 This is the primary flow. A user types a message in the PocketBase UI, and it flows through all three containers.
 
-```
-User → PocketBase API → Relay hook → OpenCode → Shell Bridge → Sandbox → tmux
-                                         ↑                                  │
-                                         │          (synchronous response)  │
-                                         ←──────────────────────────────────┘
-                                         │
-                                    SSE event
-                                         │
-                                         ↓
-                                   Relay listener → PocketBase (persist)
+```mermaid
+sequenceDiagram
+    participant U as User (Flutter)
+    participant PB as PocketBase
+    participant R as Relay (Go)
+    participant OC as OpenCode (Poco)
+    participant SB as Sandbox (Rust/Tmux)
+
+    U->>PB: POST /messages (user message)
+    PB->>R: OnRecordAfterCreate hook
+    R->>OC: POST /prompt_async
+    Note over OC: AI Reasoning...
+    OC->>SB: POST /exec (via Shell Bridge)
+    SB-->>OC: JSON {stdout, exit_code}
+    Note over OC: AI Generates Response...
+    OC->>R: SSE: message.updated
+    R->>PB: Persist assistant message
+    OC->>R: SSE: session.idle
+    R->>PB: Update chat turn -> user
 ```
 
 Step by step:
@@ -376,13 +376,20 @@ Step by step:
 6. **OpenCode processes**: The AI reasons about the message. When it needs to run a command, it invokes the bash tool.
 
 7. **Shell bridge** (`proxy/src/shell.rs`): OpenCode's bash tool calls `sh -c "command"` which is now `/shell_bridge/pocketcoder-shell -c "command"`. The Rust binary:
+```mermaid
+graph LR
+    ID[OPENCODE_SESSION_ID] --> Bridge[Shell Bridge]
+    Bridge --> Exec[/exec endpoint]
+    Exec --> Driver[Rust Driver]
+    Driver --> Tmux[Tmux Pane]
+```
    - Reads `OPENCODE_SESSION_ID` from env
    - POSTs to `http://sandbox:3001/exec` with `{"cmd": "command", "cwd": "/workspace", "session_id": "..."}`
 
 8. **Rust axum handler** (`proxy/src/main.rs:exec_handler()`): Passes to driver.
 
 9. **Driver** (`proxy/src/driver.rs:exec()`):
-   - Resolves session via CAO: `GET http://sandbox:9889/terminals/by-delegating-agent/{session_id}`
+   - Resolves session: Targets the `poco:terminal` window assigned to the `pocketcoder` session.
    - Injects command into tmux pane with sentinel
    - Polls `tmux capture-pane` every 200ms until sentinel appears
    - Returns `{"stdout": "...", "exit_code": N}`
@@ -462,23 +469,14 @@ When Poco needs a specialist, it uses the CAO MCP handoff tool.
 
 ---
 
-## Session Identity Resolution
+The system uses a **Registration-at-Bootstrap** model rather than a dynamic discovery model.
 
-This is how the system maps an OpenCode session to the right tmux pane.
+1. **At Startup**: The `sandbox/entrypoint.sh` registrations a terminal with `delegating_agent_id=pocketcoder` and `target_window_name=poco:terminal`.
+2. **At Runtime**: OpenCode sets `OPENCODE_SESSION_ID=pocketcoder`.
+3. **Shell Bridge**: The bridge POSTs this ID to the Rust server.
+4. **Execution**: The Rust driver (currently) uses a hardcoded fallback to target the `poco:terminal` window in the `pocketcoder` session.
 
-**The chain**: `OPENCODE_SESSION_ID` → shell bridge → `/exec` → driver → CAO lookup → tmux pane
-
-1. OpenCode sets `OPENCODE_SESSION_ID` env var for each session
-2. Shell bridge reads it and includes it in the `/exec` POST as `session_id`
-3. Driver calls `resolve_session_and_window(session_id)`:
-   - `GET http://sandbox:9889/terminals/by-delegating-agent/{session_id}`
-   - CAO looks up terminal by `delegating_agent_id` field
-   - Returns `tmux_session` and `tmux_window_id`
-4. Driver targets pane: `{tmux_session}:{window_id}.0`
-
-**For Poco**: The Poco terminal is registered at startup with `delegating_agent_id=poco`. When OpenCode's session ID resolves through CAO, it finds the Poco window.
-
-**For subagents**: Each subagent gets its own terminal registered with CAO. The `delegating_agent_id` is the subagent's OpenCode session ID.
+*Note: While the Rust driver code contains legacy tests for dynamic CAO lookups (`resolve_session_and_window`), the current ground truth is a direct registration in the sandbox entrypoint.*
 
 **resolveChatID()** (`utils.go`): The reverse lookup. Given a session ID, find the chat:
 1. Check `chats` collection for `ai_engine_session_id = session_id`
@@ -500,10 +498,35 @@ The `shell_bridge` volume is the key mechanism: Sandbox builds the Rust binary a
 
 ---
 
-## Startup Order
+## Observability (SQLPage)
 
-1. **OpenCode** starts first (no dependencies). Begins serving on port 3000. Starts sshd on 2222. Waits for shell bridge binary in background.
-2. **Sandbox** starts. Populates `shell_bridge` volume (unblocks OpenCode's shell). Creates tmux session. Starts Rust axum, CAO API, CAO MCP. Waits for OpenCode sshd, creates Poco window. Registers Poco with CAO.
-3. **PocketBase** starts last. Waits for OpenCode to be reachable (`curl http://opencode:3000`). Starts PocketBase, which starts the Relay. Relay connects SSE listener to OpenCode.
+**Port**: accessible via PocketBase at `/api/pocketcoder/proxy/observability/`
 
-The `docker-compose.yml` doesn't use `depends_on` — each container handles its own readiness polling.
+PocketCoder includes a dashboard built on **SQLPage** to provide visibility into its three SQLite databases:
+
+1. **PocketBase (`pb_data/data.db`)**: Real-time message logs, chat state, and AI agent configurations.
+2. **OpenCode (`opencode_data/kv.json`)**: (Indexed via specialized views) OpenCode's internal key-value store and reasoning state.
+3. **CAO (`cao_db/data.db`)**: Subagent task history, terminal status, and inbox/outbox delivery logs.
+
+## The Frontend (Flutter Client)
+
+The primary user interface is a Flutter application located in `/client`. It acts as a thin client that:
+- Connects to PocketBase over HTTP/SSE.
+- Implements a verbatim 1:1 mapping of the backend message models.
+- Provides a "Green Terminal" aesthetic for the coding experience.
+
+
+## Performance Metrics
+
+A snapshot of the system's resource footprint under moderate load.
+
+| Container | RAM Usage | Network I/O | Block I/O | PIDs |
+| :--- | :--- | :--- | :--- | :--- |
+| **pocketcoder-pocketbase** | 11.63 MiB | 216 kB / 168 kB | 0 B / 57.3 MB | 14 |
+| **pocketcoder-sqlpage** | 25.97 MiB | 862 B / 0 B | 21.5 MB / 733 kB | 16 |
+| **pocketcoder-opencode** | 365.5 MiB | 7.79 MB / 1.38 MB | 168 MB / 33.4 MB | 19 |
+| **pocketcoder-sandbox** | 375.0 MiB | 11.7 kB / 4.69 kB | 129 MB / 22.9 MB | 48 |
+| **pocketcoder-docker-proxy-write** | 26.78 MiB | 1.61 kB / 0 B | 12.9 MB / 12.3 kB | 13 |
+| **pocketcoder-mcp-gateway** | 83.64 MiB | 524 kB / 13.3 kB | 63.8 MB / 4.1 kB | 23 |
+
+*Metric Source: `docker stats --no-stream`*
