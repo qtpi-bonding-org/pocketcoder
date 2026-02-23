@@ -4,6 +4,7 @@ import 'billing_service.dart';
 class FossBillingService implements BillingService {
   @override
   Future<void> initialize() async {
+    // ignore: avoid_print
     print("FossBillingService initialized (No-op)");
   }
 

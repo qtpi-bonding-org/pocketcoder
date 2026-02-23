@@ -12,6 +12,7 @@ class FcmPushService implements PushService {
   @override
   Future<void> initialize() async {
     // Implement Firebase Messaging initialization
+    // ignore: avoid_print
     print("FcmPushService initialized");
   }
 
@@ -35,6 +36,7 @@ class RevenueCatBillingService implements BillingService {
   @override
   Future<void> initialize() async {
     // await Purchases.configure(PurchasesConfiguration("YOUR_API_KEY"));
+    // ignore: avoid_print
     print("RevenueCatBillingService configured");
   }
 
@@ -56,6 +58,7 @@ class RevenueCatBillingService implements BillingService {
   @override
   Future<bool> purchase(String identifier) async {
     try {
+      // ignore: deprecated_member_use
       await Purchases.purchaseProduct(identifier);
       return true;
     } catch (e) {
