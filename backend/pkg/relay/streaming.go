@@ -245,10 +245,23 @@ func (r *RelayService) broadcastMessageComplete(chatID string, messageID string,
 }
 
 // broadcastError sends an error event to connected clients.
-func (r *RelayService) broadcastError(chatID string, errorMessage string) {
+func (r *RelayService) broadcastError(chatID string, messageID string, envelope ErrorEnvelope) {
+	envelopeJSON, err := envelope.ToJSON()
+	if err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Failed to serialize error envelope", "error", err)
+		return
+	}
+
+	var envelopeData map[string]interface{}
+	if err := json.Unmarshal(envelopeJSON, &envelopeData); err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Failed to parse error envelope", "error", err)
+		return
+	}
+
 	eventData := map[string]interface{}{
-		"type":    "error",
-		"message": errorMessage,
+		"type":      "error",
+		"messageID": messageID,
+		"envelope":  envelopeData,
 	}
 	r.broadcastToChat(chatID, "error", eventData)
 }

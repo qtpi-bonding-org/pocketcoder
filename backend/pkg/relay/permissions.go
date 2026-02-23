@@ -26,6 +26,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/pocketbase/pocketbase"
@@ -120,6 +121,13 @@ func (r *RelayService) listenForEvents() {
 	url := fmt.Sprintf("%s/event", r.openCodeURL)
 	log.Printf("🛡️ [Relay] Connecting SSE Firehose: %s", url)
 
+	// Use atomic.Int64 to avoid data race on lastEventTime
+	var lastEventTime atomic.Int64
+	lastEventTime.Store(time.Now().Unix())
+
+	// Start heartbeat monitor goroutine
+	go r.monitorHeartbeat(&lastEventTime)
+
 	for {
 		resp, err := http.Get(url)
 		if err != nil {
@@ -131,6 +139,7 @@ func (r *RelayService) listenForEvents() {
 		scanner := bufio.NewScanner(resp.Body)
 		for scanner.Scan() {
 			line := scanner.Text()
+			lastEventTime.Store(time.Now().Unix()) // Update on any event (thread-safe)
 			if !strings.HasPrefix(line, "data: ") {
 				continue
 			}
@@ -155,7 +164,7 @@ func (r *RelayService) listenForEvents() {
 
 			switch eventType {
 			case "server.heartbeat":
-				r.lastHeartbeat = time.Now().Unix()
+				r.lastHeartbeat.Store(time.Now().Unix())
 				if !r.isReady {
 					r.app.Logger().Info("💓 [Relay/SSE] First heartbeat received. System ready.")
 					r.isReady = true
@@ -168,7 +177,7 @@ func (r *RelayService) listenForEvents() {
 
 			case "message.updated":
 				log.Printf("📨 [Relay/SSE] Received message.updated event")
-				// properties = { info: { id, role, time.completed, cost, tokens, ... } }
+				// properties = { info: { id, role, time.completed, cost, tokens, error, ... } }
 				if info, ok := properties["info"].(map[string]interface{}); ok {
 					sessionID, _ := info["sessionID"].(string)
 					msgID, _ := info["id"].(string)
@@ -176,7 +185,12 @@ func (r *RelayService) listenForEvents() {
 					log.Printf("📨 [Relay/SSE] message.updated details - sessionID: %s, msgID: %s, role: %s", sessionID, msgID, role)
 					chatID := r.resolveChatID(sessionID)
 					if chatID != "" {
-						go r.handleMessageCompletion(chatID, info)
+						// Check for error field in message.updated info
+						if errorData, hasError := info["error"]; hasError && errorData != nil {
+							go r.handleMessageError(info)
+						} else {
+							go r.handleMessageCompletion(chatID, info)
+						}
 					} else {
 						log.Printf("⚠️ [Relay/SSE] Could not resolve Chat ID for session: %s", sessionID)
 					}
@@ -218,10 +232,33 @@ func (r *RelayService) listenForEvents() {
 				if status == "idle" && sID != "" {
 					go r.handleSessionIdle(sID)
 				}
+
+			case "session.error":
+				r.app.Logger().Debug("❌ [Relay/SSE] session.error", "properties", properties)
+				go r.handleSessionError(properties)
 			}
 		}
 		resp.Body.Close()
+		// Stream closed - trigger graceful session failure after reconnection grace period
+		go r.handleStreamClosed()
 		time.Sleep(1 * time.Second)
+	}
+}
+
+// monitorHeartbeat monitors the time since the last event was received from OpenCode.
+// If no events are received for more than 45 seconds, it triggers handleHeartbeatTimeout
+// in a goroutine to avoid blocking the monitor.
+func (r *RelayService) monitorHeartbeat(lastEventTime *atomic.Int64) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		lastEvent := time.Unix(lastEventTime.Load(), 0)
+		if time.Since(lastEvent) > 45*time.Second {
+			// CRITICAL: Must be invoked in a goroutine to prevent blocking the monitor
+			// This allows the SSE client's reconnection logic to work during the 10-second grace period
+			go r.handleHeartbeatTimeout()
+		}
 	}
 }
 
@@ -266,6 +303,7 @@ func (r *RelayService) handleSessionIdle(sessionID string) {
 		}
 	}
 }
+
 
 
 func (r *RelayService) replyToOpenCode(requestID string, replyType string) {
