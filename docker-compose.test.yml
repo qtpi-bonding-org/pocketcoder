@@ -19,7 +19,7 @@ services:
     image: pocketcoder-test:latest
     build:
       context: .
-      dockerfile: docker/test.Dockerfile
+      dockerfile: services/test/Dockerfile
     container_name: pocketcoder-test
     depends_on:
       sandbox:
