@@ -574,10 +574,83 @@ wait_for_assistant_message() {
             
             # If we get here and turn is back to user, check if ANY message has text (even if not completed)
             # This handles the case where OpenCode creates multiple messages and we need to find the one with content
+            # PRIORITY: Text messages first, then tool-only messages
             local turn
             turn=$(get_chat_turn "$chat_id")
             if [ "$turn" = "user" ]; then
                 echo "  ℹ Turn is user, searching all messages for text content..." >&2
+                
+                # First pass: Look for messages with text content (with retry for late-arriving messages)
+                local text_search_attempts=0
+                local max_text_search_attempts=3
+                local found_text_message=false
+                
+                while [ $text_search_attempts -lt $max_text_search_attempts ] && [ "$found_text_message" = false ]; do
+                    text_search_attempts=$((text_search_attempts + 1))
+                    
+                    if [ $text_search_attempts -gt 1 ]; then
+                        echo "  ℹ Text search attempt $text_search_attempts of $max_text_search_attempts..." >&2
+                        sleep 1
+                        # Re-fetch messages in case new ones arrived
+                        response=$(curl -s -G \
+                            "$PB_URL/api/collections/messages/records" \
+                            --data-urlencode "filter=chat='$chat_id' && role='assistant'" \
+                            --data-urlencode "sort=-created" \
+                            -H "Authorization: $USER_TOKEN" \
+                            -H "Content-Type: application/json")
+                        assistant_count=$(echo "$response" | jq -r '.totalItems // 0' 2>/dev/null)
+                    fi
+                    
+                    for i in $(seq 0 $((assistant_count - 1))); do
+                        local msg_id
+                        msg_id=$(echo "$response" | jq -r ".items[$i].id" 2>/dev/null)
+                        
+                        if [ -n "$exclude_id" ] && [ "$msg_id" = "$exclude_id" ]; then
+                            continue
+                        fi
+                        
+                        # Debug: show all parts for this message
+                        local parts_json
+                        parts_json=$(echo "$response" | jq -c ".items[$i].parts" 2>/dev/null)
+                        echo "  🔍 Message $msg_id parts: $parts_json" >&2
+                        
+                        # Check if parts is null - if so, wait for it to be populated
+                        if [ "$parts_json" = "null" ] || [ -z "$parts_json" ]; then
+                            echo "  ⏳ Message $msg_id has null parts, waiting for parts to be saved..." >&2
+                            # Wait up to 5 seconds for parts to be populated
+                            local parts_wait_start=$(date +%s)
+                            local parts_wait_end=$((parts_wait_start + 5))
+                            while [ $(date +%s) -lt $parts_wait_end ]; do
+                                sleep 0.5
+                                local fresh_msg
+                                fresh_msg=$(curl -s "$PB_URL/api/collections/messages/records/$msg_id" \
+                                    -H "Authorization: $USER_TOKEN" 2>/dev/null)
+                                parts_json=$(echo "$fresh_msg" | jq -c '.parts' 2>/dev/null)
+                                if [ "$parts_json" != "null" ] && [ -n "$parts_json" ] && [ "$parts_json" != "[]" ]; then
+                                    echo "  ✓ Parts populated for message $msg_id" >&2
+                                    break
+                                fi
+                            done
+                        fi
+                        
+                        # Check for text content (re-fetch if parts were null)
+                        local has_text
+                        if [ "$parts_json" != "null" ] && [ -n "$parts_json" ] && [ "$parts_json" != "[]" ]; then
+                            has_text=$(echo "$parts_json" | jq -r '.[]? | select(.type == "text") | .text // empty' 2>/dev/null)
+                        else
+                            has_text=""
+                        fi
+                        
+                        if [ -n "$has_text" ] && [ "$has_text" != "null" ]; then
+                            local elapsed=$(($(date +%s) - start_time))
+                            echo "  ✓ Found message $msg_id with text content (turn=user) after ${elapsed}s" >&2
+                            echo "$msg_id"
+                            return 0
+                        fi
+                    done
+                done
+                
+                # Second pass: If no text found, look for tool output
                 for i in $(seq 0 $((assistant_count - 1))); do
                     local msg_id
                     msg_id=$(echo "$response" | jq -r ".items[$i].id" 2>/dev/null)
@@ -586,27 +659,48 @@ wait_for_assistant_message() {
                         continue
                     fi
                     
-                    # Debug: show all parts for this message
+                    # Get parts (may have been fetched in first pass)
                     local parts_json
                     parts_json=$(echo "$response" | jq -c ".items[$i].parts" 2>/dev/null)
-                    echo "  🔍 Message $msg_id parts: $parts_json" >&2
                     
-                    # Check for text content
+                    # Check if parts is null - if so, wait for it to be populated
+                    if [ "$parts_json" = "null" ] || [ -z "$parts_json" ]; then
+                        echo "  ⏳ Message $msg_id has null parts, waiting for parts to be saved..." >&2
+                        local parts_wait_start=$(date +%s)
+                        local parts_wait_end=$((parts_wait_start + 5))
+                        while [ $(date +%s) -lt $parts_wait_end ]; do
+                            sleep 0.5
+                            local fresh_msg
+                            fresh_msg=$(curl -s "$PB_URL/api/collections/messages/records/$msg_id" \
+                                -H "Authorization: $USER_TOKEN" 2>/dev/null)
+                            parts_json=$(echo "$fresh_msg" | jq -c '.parts' 2>/dev/null)
+                            if [ "$parts_json" != "null" ] && [ -n "$parts_json" ] && [ "$parts_json" != "[]" ]; then
+                                echo "  ✓ Parts populated for message $msg_id" >&2
+                                break
+                            fi
+                        done
+                    fi
+                    
+                    # Check for tool output (tool-only responses) - but ONLY if no text
                     local has_text
-                    has_text=$(echo "$response" | jq -r ".items[$i].parts[]? | select(.type == \"text\") | .text // empty" 2>/dev/null)
-                    
-                    # Check for tool output (tool-only responses)
                     local has_tool_output
-                    has_tool_output=$(echo "$response" | jq -r ".items[$i].parts[]? | select(.type == \"tool\") | .state.output // .state.metadata.output // empty" 2>/dev/null | head -1)
+                    if [ "$parts_json" != "null" ] && [ -n "$parts_json" ] && [ "$parts_json" != "[]" ]; then
+                        has_text=$(echo "$parts_json" | jq -r '.[]? | select(.type == "text") | .text // empty' 2>/dev/null)
+                        has_tool_output=$(echo "$parts_json" | jq -r '.[]? | select(.type == "tool") | .state.output // .state.metadata.output // empty' 2>/dev/null | head -1)
+                    else
+                        has_text=""
+                        has_tool_output=""
+                    fi
                     
+                    # Skip if this message has text (it should have been found in first pass)
                     if [ -n "$has_text" ] && [ "$has_text" != "null" ]; then
+                        continue
+                    fi
+                    
+                    # Only return tool-only messages if no text message was found
+                    if [ -n "$has_tool_output" ] && [ "$has_tool_output" != "null" ]; then
                         local elapsed=$(($(date +%s) - start_time))
-                        echo "  ✓ Found message $msg_id with text content (turn=user) after ${elapsed}s" >&2
-                        echo "$msg_id"
-                        return 0
-                    elif [ -n "$has_tool_output" ] && [ "$has_tool_output" != "null" ]; then
-                        local elapsed=$(($(date +%s) - start_time))
-                        echo "  ✓ Found message $msg_id with tool output (turn=user) after ${elapsed}s" >&2
+                        echo "  ✓ Found message $msg_id with tool output only (turn=user) after ${elapsed}s" >&2
                         echo "$msg_id"
                         return 0
                     fi
