@@ -24,6 +24,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -42,7 +43,7 @@ type SSEConnection struct {
 type RelayService struct {
 	app           core.App
 	openCodeURL   string
-	lastHeartbeat int64 // Unix timestamp
+	lastHeartbeat atomic.Int64 // Unix timestamp
 	isReady       bool
 	chatMutexes   sync.Map // Map of chatID (string) -> *sync.Mutex for per-chat locking
 	msgMutexes    sync.Map // Map of ocMsgID (string) -> *sync.Mutex for per-message locking
@@ -134,14 +135,15 @@ func (r *RelayService) startHealthMonitor() {
 
 	for range ticker.C {
 		now := time.Now().Unix()
+		lastHeartbeat := r.lastHeartbeat.Load()
 		// Watchdog: If we haven't seen ANYTHING from OpenCode in 45 seconds, it's offline.
-		if r.lastHeartbeat > 0 && now-r.lastHeartbeat > 45 {
+		if lastHeartbeat > 0 && now-lastHeartbeat > 45 {
 			if r.isReady {
 				r.app.Logger().Warn("⚠️ [Relay/Health] OpenCode responsiveness lost (Watchdog triggered).")
 				r.isReady = false
 				r.updateHealthcheck("offline")
 			}
-		} else if r.lastHeartbeat > 0 {
+		} else if lastHeartbeat > 0 {
 			// If we see activity again, recover to ready
 			if !r.isReady {
 				r.app.Logger().Info("💓 [Relay/Health] OpenCode responsiveness recovered.")
@@ -150,6 +152,42 @@ func (r *RelayService) startHealthMonitor() {
 			}
 		}
 	}
+}
+
+// failAllActiveSessions queries all messages with status="processing" and marks them as failed
+// with the provided error envelope. This is used by handleHeartbeatTimeout and handleStreamClosed
+// to fail all sessions when connection to OpenCode is lost.
+// Requirements: 1.2, 7.1
+func (r *RelayService) failAllActiveSessions(envelope ErrorEnvelope) {
+	// Query all messages with engine_message_status = "processing"
+	records, err := r.app.FindRecordsByFilter(
+		"messages",
+		"engine_message_status = 'processing'",
+		"", // no sort
+		0,  // no limit
+		0,  // no offset
+	)
+	if err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Failed to query active messages", "error", err)
+		return
+	}
+
+	failedCount := 0
+	for _, msg := range records {
+		chatID := msg.GetString("chat")
+		messageID := msg.Id
+
+		if chatID == "" {
+			r.app.Logger().Warn("⚠️ [Relay/Go] Skipping message without chatID", "messageID", messageID)
+			continue
+		}
+
+		// Call handleErrorCompletion for each active message
+		r.handleErrorCompletion(chatID, messageID, envelope)
+		failedCount++
+	}
+
+	r.app.Logger().Info("✅ [Relay/Go] Failed all active sessions", "count", failedCount, "errorCode", envelope.GetSource())
 }
 
 func (r *RelayService) registerMessageHooks() {

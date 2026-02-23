@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-OUTPUT_FILE="client/assets/pb_schema.json"
+OUTPUT_FILE="client/packages/pocketcoder_flutter/assets/pb_schema.json"
 PB_URL="http://127.0.0.1:8090"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AUTH_HELPER="$SCRIPT_DIR/pb_auth.sh"

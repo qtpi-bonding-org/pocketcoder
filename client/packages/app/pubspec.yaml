@@ -1,0 +1,19 @@
+name: app
+resolution: workspace
+description: "Proprietary implementations and third-party integrations for PocketCoder."
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  pocketcoder_flutter:
+    path: ../pocketcoder_flutter
+  equatable: ^2.0.5
+  
+  # Proprietary SDKs (Gated here)
+  firebase_messaging: ^15.0.0
+  purchases_flutter: ^7.0.0
