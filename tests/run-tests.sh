@@ -206,7 +206,7 @@ main() {
     capture_logs "$log_file"
     
     # Cleanup
-    stop_services
+    # stop_services
     
     exit $exit_code
 }
