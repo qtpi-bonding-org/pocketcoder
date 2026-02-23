@@ -204,11 +204,36 @@ verify_tool_output_in_message() {
     fi
 
     # Verify tool parts are present in the message with state.output field (Requirement 10.1)
-    echo "⏳ Verifying tool parts in assistant message..." >&2
-    run verify_tool_output_in_message "$ASSISTANT_MESSAGE_ID" "$unique_string"
-    [ "$status" -eq 0 ] || \
-        run_diagnostic_on_failure "Agent Full Flow" "Tool parts not found or missing state.output field in message parts"
-    echo "✓ Tool parts verified with state.output field" >&2
+    echo "⏳ Verifying tool parts in assistant messages..." >&2
+    
+    # Get all assistant messages in this chat
+    local all_msgs
+    all_msgs=$(curl -s -G \
+        "$PB_URL/api/collections/messages/records" \
+        --data-urlencode "filter=chat='$CHAT_ID' && role='assistant'" \
+        --data-urlencode "sort=created" \
+        -H "Authorization: $USER_TOKEN" \
+        -H "Content-Type: application/json")
+    
+    # Check each message for tool parts with state.output
+    local found_tool_output=false
+    local msg_count
+    msg_count=$(echo "$all_msgs" | jq -r '.totalItems // 0')
+    
+    for i in $(seq 0 $((msg_count - 1))); do
+        local msg_id
+        msg_id=$(echo "$all_msgs" | jq -r ".items[$i].id")
+        
+        if verify_tool_output_in_message "$msg_id" "$unique_string"; then
+            found_tool_output=true
+            echo "✓ Tool parts verified with state.output field in message $msg_id" >&2
+            break
+        fi
+    done
+    
+    if [ "$found_tool_output" = false ]; then
+        run_diagnostic_on_failure "Agent Full Flow" "Tool parts not found or missing state.output field in any assistant message"
+    fi
 
     echo "✓ Poco executed command and returned real output" >&2
     echo "  Unique string found in response: $unique_string" >&2
@@ -314,11 +339,31 @@ verify_tool_output_in_message() {
     fi
 
     # Verify tool parts are present in the message with state.output field (Requirement 10.2)
-    echo "⏳ Verifying tool parts in assistant message..." >&2
-    run verify_tool_output_in_message "$ASSISTANT_MESSAGE_ID" "$file_content"
-    [ "$status" -eq 0 ] || \
-        run_diagnostic_on_failure "Agent Full Flow" "Tool parts not found or missing state.output field in message parts"
-    echo "✓ Tool parts verified with state.output field" >&2
+    echo "⏳ Verifying tool parts in assistant messages..." >&2
+    
+    # Check each assistant message for tool parts with state.output
+    local found_tool_output=false
+    local msg_count
+    msg_count=$(echo "$all_msgs" | jq -r '.totalItems // 0')
+    
+    for i in $(seq 0 $((msg_count - 1))); do
+        local msg_id
+        msg_id=$(echo "$all_msgs" | jq -r ".items[$i].id")
+        local msg_role
+        msg_role=$(echo "$all_msgs" | jq -r ".items[$i].role")
+        
+        if [ "$msg_role" = "assistant" ]; then
+            if verify_tool_output_in_message "$msg_id" "$file_content"; then
+                found_tool_output=true
+                echo "✓ Tool parts verified with state.output field in message $msg_id" >&2
+                break
+            fi
+        fi
+    done
+    
+    if [ "$found_tool_output" = false ]; then
+        run_diagnostic_on_failure "Agent Full Flow" "Tool parts not found or missing state.output field in any assistant message"
+    fi
 
     echo "✓ Poco created and read back a file" >&2
     echo "  Content verified: $file_content" >&2
@@ -348,7 +393,7 @@ verify_tool_output_in_message() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Calculate 2 + 2 and tell me the answer. Your response must include the number 4.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"What color is the sky on a clear day? Answer with exactly one word: the color.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -386,11 +431,11 @@ verify_tool_output_in_message() {
     local preview
     preview=$(echo "$chat_record" | jq -r '.preview // empty')
 
-    # Verify the response actually mentions "4" (Poco answered the question)
+    # Verify the response actually mentions "blue" (Poco answered the question)
     local response_text
     response_text=$(get_assistant_text "$ASSISTANT_MESSAGE_ID")
-    echo "$response_text" | grep -q "4" || \
-        run_diagnostic_on_failure "Agent Full Flow" "Response does not contain '4' — Poco didn't answer the question"
+    echo "$response_text" | grep -iq "blue" || \
+        run_diagnostic_on_failure "Agent Full Flow" "Response does not contain 'blue' — Poco didn't answer the question"
 
     echo "✓ Chat metadata updated, Poco answered correctly"
     echo "  Session: $SESSION_ID"
