@@ -45,11 +45,16 @@ type RelayService struct {
 	lastHeartbeat int64 // Unix timestamp
 	isReady       bool
 	chatMutexes   sync.Map // Map of chatID (string) -> *sync.Mutex for per-chat locking
+	msgMutexes    sync.Map // Map of ocMsgID (string) -> *sync.Mutex for per-message locking
 
 	// partCache stores parts for messages whose role hasn't been determined yet
 	// Key: ocMsgID (OpenCode message ID), Value: map of partID -> part data
 	partCache     map[string]map[string]interface{} // map[ocMsgID]map[partID]PartData
 	partCacheMu   sync.RWMutex
+
+	// completedMessages tracks which messages have been flushed to prevent late arrivals
+	completedMessages   map[string]bool // map[ocMsgID]bool
+	completedMessagesMu sync.RWMutex
 
 	// connections stores SSE connections per chat for broadcasting
 	connections   map[string][]*SSEConnection // map[chatID][]connection
@@ -59,10 +64,11 @@ type RelayService struct {
 // NewRelayService creates a new Relay instance
 func NewRelayService(app core.App, openCodeURL string) *RelayService {
 	return &RelayService{
-		app:         app,
-		openCodeURL: openCodeURL,
-		partCache:   make(map[string]map[string]interface{}),
-		connections: make(map[string][]*SSEConnection),
+		app:               app,
+		openCodeURL:       openCodeURL,
+		partCache:         make(map[string]map[string]interface{}),
+		completedMessages: make(map[string]bool),
+		connections:       make(map[string][]*SSEConnection),
 	}
 }
 

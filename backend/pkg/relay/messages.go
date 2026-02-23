@@ -41,6 +41,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -165,12 +166,12 @@ func (r *RelayService) processUserMessage(msg *core.Record) {
 // OpenCode fires this once per part as it is created or updated during streaming.
 // The event carries one complete Part object: { id, type, text, messageID, sessionID, ... }
 //
-// CRITICAL: This function NEVER touches the database. All parts are buffered in memory
-// until handleMessageCompletion flushes them atomically. This is the core of the
-// Strict Buffer architecture that eliminates race conditions.
+// CRITICAL: This function uses per-message locking to ensure proper ordering with
+// handleMessageCompletion. Parts are buffered in memory until the completion event
+// flushes them atomically.
 //
-// Strategy: Always cache the part. The role (user/assistant) is determined by
-// handleMessageCompletion when it receives the message.updated event.
+// Strategy: Always cache the part under a per-message lock. If the message has already
+// been completed (race condition), apply the part directly to the database.
 func (r *RelayService) upsertMessagePart(chatID string, part map[string]interface{}) {
 	ocMsgID, _ := part["messageID"].(string)
 	if ocMsgID == "" {
@@ -193,22 +194,46 @@ func (r *RelayService) upsertMessagePart(chatID string, part map[string]interfac
 		}
 	}
 
-	// CRITICAL: Never touch the database here. Always cache.
-	// The role is determined by handleMessageCompletion when it receives message.updated.
+	// 1. Acquire per-message lock to enforce ordering with handleMessageCompletion
+	val, _ := r.msgMutexes.LoadOrStore(ocMsgID, &sync.Mutex{})
+	mu := val.(*sync.Mutex)
+	mu.Lock()
+	defer mu.Unlock()
 
-	// 1. Lock the cache
+	// 2. Check if message has already been completed (safety net for late arrivals)
+	r.completedMessagesMu.RLock()
+	isCompleted := r.completedMessages[ocMsgID]
+	r.completedMessagesMu.RUnlock()
+
+	if isCompleted {
+		// Late arrival detected - message was already flushed to DB
+		r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+		r.app.Logger().Info("🩹 [Relay/Go] LATE PART ARRIVAL DETECTED - PATCHING EXISTING MESSAGE")
+		r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+		r.app.Logger().Info("📦 Late Part Details", "ocMsgID", ocMsgID, "partID", partID, "type", partType)
+		
+		// Find the existing record and patch it
+		record, err := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
+		if err == nil && record != nil {
+			r.app.Logger().Info("✅ Found existing message in DB, applying patch", "pbID", record.Id)
+			r.upsertPartToRecord(record, part, chatID)
+			r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+		} else {
+			r.app.Logger().Warn("⚠️ [Relay/Go] Late part arrived but message not found in DB", "ocMsgID", ocMsgID, "partID", partID)
+			r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+		}
+		return
+	}
+
+	// 3. Normal path: Cache the part in memory
 	r.partCacheMu.Lock()
-	defer r.partCacheMu.Unlock()
-
-	// 2. Initialize nested map if needed
 	if r.partCache[ocMsgID] == nil {
 		r.partCache[ocMsgID] = make(map[string]interface{})
 	}
-
-	// 3. Cache the part (overwrites if exists)
 	r.partCache[ocMsgID][partID] = part
-
 	cacheSize := len(r.partCache[ocMsgID])
+	r.partCacheMu.Unlock()
+
 	r.app.Logger().Info("💾 [Relay/Go] Cached part", "ocMsgID", ocMsgID, "partID", partID, "type", partType, "cacheSize", cacheSize, "chatID", chatID)
 
 	// 4. Update chat preview if text part
@@ -292,6 +317,8 @@ func (r *RelayService) upsertPartToRecord(record *core.Record, part map[string]i
 //
 // This is the authoritative source of truth for message role and status.
 // It flushes any cached parts and creates the final database record.
+//
+// Uses per-message locking to ensure proper ordering with upsertMessagePart.
 func (r *RelayService) handleMessageCompletion(chatID string, info map[string]interface{}) {
 	ocMsgID, _ := info["id"].(string)
 	if ocMsgID == "" {
@@ -312,7 +339,12 @@ func (r *RelayService) handleMessageCompletion(chatID string, info map[string]in
 	role, _ := info["role"].(string)
 	r.app.Logger().Info("📋 [Relay/Go] Message completion event", "ocMsgID", ocMsgID, "role", role, "status", newStatus, "chatID", chatID, "completed", completed, "hasError", hasError)
 
-	// 1. Check for cached parts and flush them
+	// 1. Acquire per-message lock to enforce ordering with upsertMessagePart
+	val, _ := r.msgMutexes.LoadOrStore(ocMsgID, &sync.Mutex{})
+	mu := val.(*sync.Mutex)
+	mu.Lock()
+
+	// 2. Check for cached parts and flush them
 	r.partCacheMu.Lock()
 	var cachedParts []interface{}
 	if parts, ok := r.partCache[ocMsgID]; ok {
@@ -325,7 +357,7 @@ func (r *RelayService) handleMessageCompletion(chatID string, info map[string]in
 	}
 	r.partCacheMu.Unlock()
 
-	// 2. Find existing record
+	// 3. Find existing record
 	existing, _ := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
 
 	var record *core.Record
@@ -349,6 +381,10 @@ func (r *RelayService) handleMessageCompletion(chatID string, info map[string]in
 		if len(cachedParts) > 0 {
 			r.app.Logger().Debug("🗑️ [Relay/Go] Discarded cached parts for user echo", "ocMsgID", ocMsgID, "count", len(cachedParts))
 		}
+
+		// Mark as completed and release lock
+		mu.Unlock()
+		r.msgMutexes.Delete(ocMsgID)
 
 		// User messages don't need further processing
 		return
@@ -416,10 +452,12 @@ func (r *RelayService) handleMessageCompletion(chatID string, info map[string]in
 		}
 	} else {
 		r.app.Logger().Warn("⚠️ [Relay/Go] Unknown role in message.updated", "role", role, "ocMsgID", ocMsgID)
+		mu.Unlock()
+		r.msgMutexes.Delete(ocMsgID)
 		return
 	}
 
-	// 3. Update status (only advance, never demote)
+	// 4. Update status (only advance, never demote)
 	currentStatus := record.GetString("engine_message_status")
 	if currentStatus == "completed" || currentStatus == "failed" {
 		r.app.Logger().Debug("🛡️ [Relay/Go] Protecting finished status", "ocMsgID", ocMsgID, "current", currentStatus)
@@ -429,17 +467,159 @@ func (r *RelayService) handleMessageCompletion(chatID string, info map[string]in
 
 	record.Set("updated", now)
 
-	if err := r.app.Save(record); err != nil {
-		r.app.Logger().Error("❌ [Relay/Go] Failed to save message", "ocMsgID", ocMsgID, "error", err)
-		return
-	}
-
-	// 4. Check if we need to generate synthetic text from tool outputs
-	var finalParts []interface{}
+	// ═══════════════════════════════════════════════════════════════════════════
+	// DEBUG: Show fully formed message BEFORE database insert
+	// ═══════════════════════════════════════════════════════════════════════════
+	r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+	r.app.Logger().Info("🔍 [Relay/Go] FULLY FORMED MESSAGE - ABOUT TO INSERT TO DATABASE")
+	r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+	r.app.Logger().Info("📋 Message ID (OpenCode)", "ocMsgID", ocMsgID)
+	r.app.Logger().Info("📋 Message ID (PocketBase)", "pbID", record.Id)
+	r.app.Logger().Info("📋 Chat ID", "chatID", chatID)
+	r.app.Logger().Info("📋 Role", "role", role)
+	r.app.Logger().Info("📋 Status", "status", newStatus)
+	r.app.Logger().Info("📋 Parent ID", "parentID", record.GetString("parent_id"))
+	
+	// Show all parts in detail
+	var displayParts []interface{}
 	rawParts := record.Get("parts")
 	if jsonRaw, ok := rawParts.(types.JSONRaw); ok {
-		json.Unmarshal(jsonRaw, &finalParts)
+		json.Unmarshal(jsonRaw, &displayParts)
 	} else if ep, ok := rawParts.([]interface{}); ok {
+		displayParts = ep
+	}
+	
+	r.app.Logger().Info("📦 Total Parts Count", "count", len(displayParts))
+	for i, part := range displayParts {
+		if pm, ok := part.(map[string]interface{}); ok {
+			partType, _ := pm["type"].(string)
+			partID, _ := pm["id"].(string)
+			r.app.Logger().Info("───────────────────────────────────────────────────────────────────────────")
+			r.app.Logger().Info("📦 Part Details", "index", i+1, "type", partType, "id", partID)
+			
+			if partType == "text" {
+				text, _ := pm["text"].(string)
+				if text == "" {
+					text, _ = pm["content"].(string)
+				}
+				textPreview := text
+				if len(textPreview) > 100 {
+					textPreview = textPreview[:100] + "..."
+				}
+				r.app.Logger().Info("   📝 Text Content", "length", len(text), "preview", textPreview)
+			} else if partType == "tool" {
+				toolName, _ := pm["tool"].(string)
+				r.app.Logger().Info("   🔧 Tool Name", "tool", toolName)
+				
+				if state, ok := pm["state"].(map[string]interface{}); ok {
+					status, _ := state["status"].(string)
+					r.app.Logger().Info("   🔧 Tool Status", "status", status)
+					
+					// Show output
+					if output, ok := state["output"].(string); ok {
+						outputPreview := output
+						if len(outputPreview) > 100 {
+							outputPreview = outputPreview[:100] + "..."
+						}
+						r.app.Logger().Info("   🔧 Tool Output", "length", len(output), "preview", outputPreview)
+					}
+					
+					// Show metadata.output
+					if metadata, ok := state["metadata"].(map[string]interface{}); ok {
+						if metaOutput, ok := metadata["output"].(string); ok {
+							metaPreview := metaOutput
+							if len(metaPreview) > 100 {
+								metaPreview = metaPreview[:100] + "..."
+							}
+							r.app.Logger().Info("   🔧 Tool Metadata Output", "length", len(metaOutput), "preview", metaPreview)
+						}
+					}
+				}
+			} else if partType == "step-start" || partType == "step-finish" {
+				r.app.Logger().Info("   ⚙️ Step Marker", "type", partType)
+				if partType == "step-finish" {
+					if reason, ok := pm["reason"].(string); ok {
+						r.app.Logger().Info("   ⚙️ Finish Reason", "reason", reason)
+					}
+				}
+			}
+		}
+	}
+	r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+	r.app.Logger().Info("💾 [Relay/Go] NOW SAVING TO DATABASE...")
+	r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+
+	if err := r.app.Save(record); err != nil {
+		r.app.Logger().Error("❌ [Relay/Go] Failed to save message", "ocMsgID", ocMsgID, "error", err)
+		mu.Unlock()
+		r.msgMutexes.Delete(ocMsgID)
+		return
+	}
+	
+	r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+	r.app.Logger().Info("✅ [Relay/Go] DATABASE INSERT SUCCESSFUL")
+	r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+
+	// 5. Mark message as completed BEFORE releasing the lock
+	// This prevents late-arriving parts from being cached
+	if newStatus == "completed" || newStatus == "failed" {
+		r.completedMessagesMu.Lock()
+		r.completedMessages[ocMsgID] = true
+		r.completedMessagesMu.Unlock()
+	}
+
+	// 6. Release the per-message lock
+	mu.Unlock()
+
+	// 7. Clean up the mutex after a grace period (allow late arrivals to detect completion)
+	if newStatus == "completed" || newStatus == "failed" {
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			r.msgMutexes.Delete(ocMsgID)
+			
+			// Check for any late arrivals that came in during the grace period
+			r.partCacheMu.Lock()
+			if lateParts, ok := r.partCache[ocMsgID]; ok && len(lateParts) > 0 {
+				r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+				r.app.Logger().Warn("🩹 [Relay/Go] GRACE PERIOD SWEEP - LATE PARTS DETECTED")
+				r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+				r.app.Logger().Warn("📦 Late Parts Found", "ocMsgID", ocMsgID, "count", len(lateParts))
+				
+				// Find the record and patch it
+				if rec, err := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID}); err == nil && rec != nil {
+					r.app.Logger().Info("✅ Found message in DB, patching late parts", "pbID", rec.Id)
+					for partID, part := range lateParts {
+						if p, ok := part.(map[string]interface{}); ok {
+							partType, _ := p["type"].(string)
+							r.app.Logger().Info("   🩹 Patching late part", "partID", partID, "type", partType)
+							r.upsertPartToRecord(rec, p, chatID)
+						}
+					}
+					r.app.Logger().Info("✅ All late parts patched successfully")
+				} else {
+					r.app.Logger().Error("❌ Failed to find message for late part patching", "ocMsgID", ocMsgID)
+				}
+				
+				// Clean up the cache
+				delete(r.partCache, ocMsgID)
+				r.app.Logger().Info("═══════════════════════════════════════════════════════════════════════════")
+			}
+			r.partCacheMu.Unlock()
+			
+			// Clean up completed messages map after 5 minutes
+			time.Sleep(5 * time.Minute)
+			r.completedMessagesMu.Lock()
+			delete(r.completedMessages, ocMsgID)
+			r.completedMessagesMu.Unlock()
+		}()
+	}
+
+	// 8. Extract final parts for broadcasting
+	var finalParts []interface{}
+	finalRawParts := record.Get("parts")
+	if jsonRaw, ok := finalRawParts.(types.JSONRaw); ok {
+		json.Unmarshal(jsonRaw, &finalParts)
+	} else if ep, ok := finalRawParts.([]interface{}); ok {
 		finalParts = ep
 	}
 	

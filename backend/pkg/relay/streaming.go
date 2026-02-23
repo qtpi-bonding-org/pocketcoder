@@ -100,7 +100,9 @@ func (r *RelayService) registerConnection(chatID string, conn *SSEConnection) {
 	defer r.connectionsMu.Unlock()
 
 	r.connections[chatID] = append(r.connections[chatID], conn)
-	r.app.Logger().Debug("[Relay/Stream] Registered SSE connection", "chatID", chatID, "totalConnections", len(r.connections[chatID]))
+	if r.app != nil && r.app.Logger() != nil {
+		r.app.Logger().Debug("[Relay/Stream] Registered SSE connection", "chatID", chatID, "totalConnections", len(r.connections[chatID]))
+	}
 }
 
 // unregisterConnection removes a connection from the registry.
@@ -118,7 +120,9 @@ func (r *RelayService) unregisterConnection(chatID string, conn *SSEConnection) 
 		}
 	}
 
-	r.app.Logger().Debug("[Relay/Stream] Unregistered SSE connection", "chatID", chatID, "remainingConnections", len(r.connections[chatID]))
+	if r.app != nil && r.app.Logger() != nil {
+		r.app.Logger().Debug("[Relay/Stream] Unregistered SSE connection", "chatID", chatID, "remainingConnections", len(r.connections[chatID]))
+	}
 
 	// Clean up empty chat entries
 	if len(r.connections[chatID]) == 0 {
@@ -160,7 +164,9 @@ func (r *RelayService) broadcastToChat(chatID string, eventType string, data int
 	// 3. Format the SSE event
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		r.app.Logger().Error("[Relay/Stream] Failed to marshal broadcast data", "error", err)
+		if r.app != nil && r.app.Logger() != nil {
+			r.app.Logger().Error("[Relay/Stream] Failed to marshal broadcast data", "error", err)
+		}
 		return
 	}
 
@@ -176,7 +182,9 @@ func (r *RelayService) broadcastToChat(chatID string, eventType string, data int
 			_, err := fmt.Fprint(conn.writer, event)
 			if err != nil {
 				// 5. Handle write errors gracefully - remove dead connections
-				r.app.Logger().Warn("[Relay/Stream] SSE write error, removing dead connection", "chatID", chatID, "error", err)
+				if r.app != nil && r.app.Logger() != nil {
+					r.app.Logger().Warn("[Relay/Stream] SSE write error, removing dead connection", "chatID", chatID, "error", err)
+				}
 				go r.removeConnection(chatID, conn)
 				continue
 			}
@@ -197,7 +205,9 @@ func (r *RelayService) removeConnection(chatID string, conn *SSEConnection) {
 			// Remove this connection from the slice
 			r.connections[chatID] = append(conns[:i], conns[i+1:]...)
 			close(conn.done)
-			r.app.Logger().Info("[Relay/Stream] Removed dead SSE connection", "chatID", chatID, "remaining", len(r.connections[chatID]))
+			if r.app != nil && r.app.Logger() != nil {
+				r.app.Logger().Info("[Relay/Stream] Removed dead SSE connection", "chatID", chatID, "remaining", len(r.connections[chatID]))
+			}
 			return
 		}
 	}
