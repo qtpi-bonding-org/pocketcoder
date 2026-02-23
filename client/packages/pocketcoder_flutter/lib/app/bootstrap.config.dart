@@ -22,8 +22,12 @@ import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart'
     as _i955;
 import 'package:pocketcoder_flutter/application/sop/sop_cubit.dart' as _i252;
+import 'package:pocketcoder_flutter/application/subagent/subagent_cubit.dart'
+    as _i440;
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart'
     as _i464;
+import 'package:pocketcoder_flutter/application/system/health_cubit.dart'
+    as _i967;
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart'
     as _i992;
 import 'package:pocketcoder_flutter/application/system/status_cubit.dart'
@@ -48,6 +52,10 @@ import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
 import 'package:pocketcoder_flutter/domain/sop/i_sop_repository.dart' as _i860;
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
     as _i190;
+import 'package:pocketcoder_flutter/domain/subagent/i_subagent_repository.dart'
+    as _i322;
+import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart'
+    as _i800;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_daos.dart'
     as _i61;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_repository.dart'
@@ -94,6 +102,12 @@ import 'package:pocketcoder_flutter/infrastructure/status/status_daos.dart'
     as _i439;
 import 'package:pocketcoder_flutter/infrastructure/status/status_repository.dart'
     as _i907;
+import 'package:pocketcoder_flutter/infrastructure/subagent/subagent_repository.dart'
+    as _i186;
+import 'package:pocketcoder_flutter/infrastructure/system/health_daos.dart'
+    as _i1065;
+import 'package:pocketcoder_flutter/infrastructure/system/health_repository.dart'
+    as _i700;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -160,6 +174,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i394.ProposalDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i444.McpServerDao>(
         () => _i444.McpServerDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1065.HealthDao>(
+        () => _i1065.HealthDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i656.IEvolutionRepository>(
         () => _i379.EvolutionRepository(
               gh<_i197.ProposalDao>(),
@@ -167,10 +183,16 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i922.IMcpRepository>(
         () => _i662.McpRepository(gh<_i444.McpServerDao>()));
+    gh.lazySingleton<_i800.IHealthRepository>(
+        () => _i700.HealthRepository(gh<_i1065.HealthDao>()));
+    gh.factory<_i967.HealthCubit>(
+        () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     gh.lazySingleton<_i860.ISopRepository>(() => _i109.SopRepository(
           gh<_i394.SopDao>(),
           gh<_i394.ProposalDao>(),
         ));
+    gh.lazySingleton<_i322.ISubagentRepository>(
+        () => _i186.SubagentRepository(gh<_i464.SubagentDao>()));
     gh.factory<_i328.McpCubit>(
         () => _i328.McpCubit(gh<_i922.IMcpRepository>()));
     gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
@@ -210,6 +232,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i907.CommunicationCubit(gh<_i215.ICommunicationRepository>()));
     gh.factory<_i464.AuthCubit>(
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
+    gh.factory<_i440.SubagentCubit>(
+        () => _i440.SubagentCubit(gh<_i322.ISubagentRepository>()));
     gh.factory<_i252.SopCubit>(
         () => _i252.SopCubit(gh<_i860.ISopRepository>()));
     gh.factory<_i616.AiConfigCubit>(
