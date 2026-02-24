@@ -12,7 +12,7 @@ import 'package:pocketcoder_flutter/presentation/observability/agent_observabili
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
-import 'package:pocketcoder_flutter/presentation/billing/push_notifications_screen.dart';
+import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 
@@ -140,7 +140,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const PushNotificationsScreen(),
+          child: const PermissionRelayScreen(),
         ),
       ),
     ],
