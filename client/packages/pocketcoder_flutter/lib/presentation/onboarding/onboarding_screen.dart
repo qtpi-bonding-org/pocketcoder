@@ -12,6 +12,7 @@ import '../core/widgets/ascii_logo.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/poco_widget.dart';
+import '../core/widgets/ui_flow_listener.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -46,7 +47,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<AuthCubit>(),
-      child: BlocListener<AuthCubit, AuthState>(
+      child: UiFlowListener<AuthCubit, AuthState>(
+        autoDismissLoading: false, // We handle loading state manually with Poco
         listener: (context, state) {
           if (state.status == UiFlowStatus.loading) {
             context.read<PocoCubit>().setExpression(PocoExpressions.scanning);
@@ -125,7 +127,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               bottomNavigationBar: TerminalFooter(
                 actions: [
                   TerminalAction(
-                    keyLabel: 'F1',
                     label: isLoading ? 'PROCESSING...' : 'LOGIN',
                     onTap: isLoading
                         ? () {}

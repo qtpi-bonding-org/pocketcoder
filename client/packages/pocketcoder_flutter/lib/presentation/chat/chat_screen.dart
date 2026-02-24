@@ -11,6 +11,7 @@ import '../core/widgets/poco_animator.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_input.dart';
+import '../core/widgets/ui_flow_listener.dart';
 import 'widgets/permission_prompt.dart';
 import 'widgets/speech_bubble.dart';
 import 'widgets/thoughts_stream.dart';
@@ -50,29 +51,12 @@ class _ChatViewState extends State<_ChatView> {
       backgroundColor: colors.surface,
       body: ScanlineWidget(
         child: SafeArea(
-          child: MultiBlocListener(
-            listeners: [
-              BlocListener<CommunicationCubit, CommunicationState>(
-                listenWhen: (prev, curr) => prev.chatId != curr.chatId,
-                listener: (context, state) {
-                  if (state.chatId != null) {
-                    context.read<PermissionCubit>().watchChat(state.chatId!);
-                  }
-                },
-              ),
-              BlocListener<CommunicationCubit, CommunicationState>(
-                listenWhen: (prev, curr) =>
-                    prev.error != curr.error && curr.error != null,
-                listener: (context, state) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.error!),
-                      backgroundColor: colors.error,
-                    ),
-                  );
-                },
-              ),
-            ],
+          child: UiFlowListener<CommunicationCubit, CommunicationState>(
+            listener: (context, state) {
+              if (state.chatId != null) {
+                context.read<PermissionCubit>().watchChat(state.chatId!);
+              }
+            },
             child: Column(
               children: [
                 // 1. TOP: The Thoughts / Cloud (Flexible height)
@@ -217,22 +201,18 @@ class _ChatViewState extends State<_ChatView> {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'F1',
             label: 'ARTIFACTS',
             onTap: () => context.goNamed(RouteNames.artifact),
           ),
           TerminalAction(
-            keyLabel: 'F2',
             label: 'TERMINAL',
             onTap: () => context.goNamed(RouteNames.terminal),
           ),
           TerminalAction(
-            keyLabel: 'F3',
             label: 'SETTINGS',
             onTap: () => context.goNamed(RouteNames.settings),
           ),
           TerminalAction(
-            keyLabel: 'ESC',
             label: 'LOGOUT',
             onTap: () => context.goNamed(RouteNames.boot),
           ),

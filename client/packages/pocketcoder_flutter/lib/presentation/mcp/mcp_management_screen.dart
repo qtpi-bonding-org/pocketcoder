@@ -68,12 +68,10 @@ class McpManagementScreen extends StatelessWidget {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'ESC',
             label: 'BACK',
             onTap: () => context.pop(),
           ),
           TerminalAction(
-            keyLabel: 'F2',
             label: 'ADD NEW',
             onTap: () {},
           ),
