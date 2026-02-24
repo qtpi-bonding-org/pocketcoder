@@ -26,7 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ('WHITELIST RULES', '[SETUP]'),
     ('AGENT REGISTRY', '[MODELS]'),
     ('THEME', '[PHOSPHOR GREEN]'),
-    ('PUSH NOTIFICATIONS', '[STATUS]'),
+    ('PERMISSION RELAY', '[STATUS]'),
   ];
 
   @override
@@ -68,7 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context.pushNamed(RouteNames.whitelist);
                             } else if (option == 'AGENT REGISTRY') {
                               context.pushNamed(RouteNames.aiRegistry);
-                            } else if (option == 'PUSH NOTIFICATIONS') {
+                            } else if (option == 'PERMISSION RELAY') {
                               AppNavigation.toPaywall(context);
                             }
                           },
