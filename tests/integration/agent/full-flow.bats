@@ -393,7 +393,7 @@ verify_tool_output_in_message() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"What color is the sky on a clear day? Answer with exactly one word: the color.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Compute the result of 100 + 200. Respond with only the number.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -431,11 +431,11 @@ verify_tool_output_in_message() {
     local preview
     preview=$(echo "$chat_record" | jq -r '.preview // empty')
 
-    # Verify the response actually mentions "blue" (Poco answered the question)
+    # Verify the response actually mentions "300" (Poco answered the question)
     local response_text
     response_text=$(get_assistant_text "$ASSISTANT_MESSAGE_ID")
-    echo "$response_text" | grep -iq "blue" || \
-        run_diagnostic_on_failure "Agent Full Flow" "Response does not contain 'blue' — Poco didn't answer the question"
+    echo "$response_text" | grep -iq "300" || \
+        run_diagnostic_on_failure "Agent Full Flow" "Response does not contain '300' — Poco didn't answer the question correctly"
 
     echo "✓ Chat metadata updated, Poco answered correctly"
     echo "  Session: $SESSION_ID"
