@@ -56,12 +56,10 @@ class SystemChecksScreen extends StatelessWidget {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'ESC',
             label: 'BACK',
             onTap: () => context.pop(),
           ),
           TerminalAction(
-            keyLabel: 'F10',
             label: 'FULL REBOOT',
             onTap: () {},
           ),

@@ -20,6 +20,7 @@ class AppRouter {
   AppRouter._();
 
   static GoRouter get router => _router;
+  static final messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   static final GoRouter _router = GoRouter(
     initialLocation: AppRoutes.boot,

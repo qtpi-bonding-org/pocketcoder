@@ -42,20 +42,23 @@ class TerminalButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool isPrimary;
+  final Color? color;
 
   const TerminalButton({
     super.key,
     required this.label,
     required this.onTap,
     this.isPrimary = true,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final borderColor = colors.onSurface;
-    final textColor = isPrimary ? colors.surface : borderColor;
-    final bgColor = isPrimary ? borderColor : Colors.transparent;
+    final accentColor =
+        color ?? (isPrimary ? colors.primary : colors.onSurface);
+    final textColor = colors.surface; // True Black
+    final bgColor = accentColor;
 
     return InkWell(
       onTap: onTap,
@@ -66,7 +69,7 @@ class TerminalButton extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: bgColor,
-          border: Border.all(color: borderColor, width: AppSizes.borderWidth),
+          border: Border.all(color: accentColor, width: AppSizes.borderWidth),
         ),
         child: Text(
           label.toUpperCase(),

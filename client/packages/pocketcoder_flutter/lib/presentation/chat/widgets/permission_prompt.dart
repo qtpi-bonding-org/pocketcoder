@@ -19,6 +19,8 @@ class PermissionPrompt extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
 
+    final terminalColors = context.terminalColors;
+
     return Container(
       margin: EdgeInsets.all(AppSizes.space),
       padding: EdgeInsets.all(AppSizes.space * 2),
@@ -37,7 +39,7 @@ class PermissionPrompt extends StatelessWidget {
             children: [
               Icon(
                 Icons.security_outlined,
-                color: colors.primary,
+                color: terminalColors.warning,
                 size: 20,
               ),
               HSpace.x2,
@@ -45,7 +47,7 @@ class PermissionPrompt extends StatelessWidget {
                 child: Text(
                   'GATEKEEPER CHALLENGE',
                   style: TextStyle(
-                    color: colors.primary,
+                    color: terminalColors.warning,
                     fontSize: AppSizes.fontTiny,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
@@ -99,7 +101,7 @@ class PermissionPrompt extends StatelessWidget {
             ...(request.patterns ?? []).map((p) => Text(
                   '• $p',
                   style: TextStyle(
-                    color: colors.onSurface.withValues(alpha: 0.8),
+                    color: terminalColors.attention,
                     fontSize: AppSizes.fontTiny,
                     fontFamily: AppFonts.bodyFamily,
                   ),
@@ -112,6 +114,7 @@ class PermissionPrompt extends StatelessWidget {
                 child: TerminalButton(
                   label: 'DENY',
                   isPrimary: false,
+                  color: terminalColors.danger,
                   onTap: onDeny,
                 ),
               ),

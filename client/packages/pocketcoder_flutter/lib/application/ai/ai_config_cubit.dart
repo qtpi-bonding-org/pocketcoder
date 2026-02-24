@@ -1,65 +1,60 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import '../../domain/ai_config/i_ai_config_repository.dart';
+import '../../support/extensions/cubit_ui_flow_extension.dart';
 import 'ai_config_state.dart';
 import '../../domain/ai/ai_models.dart';
 
 @injectable
-class AiConfigCubit extends Cubit<AiConfigState> {
+class AiConfigCubit extends AppCubit<AiConfigState> {
   final IAiConfigRepository _repository;
 
-  AiConfigCubit(this._repository) : super(const AiConfigState());
+  AiConfigCubit(this._repository) : super(AiConfigState.initial());
 
   Future<void> loadAll() async {
-    emit(state.copyWith(isLoading: true, error: null));
-    try {
+    return tryOperation(() async {
       final agents = await _repository.getAgents();
       final prompts = await _repository.getPrompts();
       final models = await _repository.getModels();
-      emit(state.copyWith(
-        isLoading: false,
+      return state.copyWith(
+        status: UiFlowStatus.success,
         agents: agents,
         prompts: prompts,
         models: models,
-      ));
-    } catch (e) {
-      emit(state.copyWith(isLoading: false, error: e.toString()));
-    }
+        error: null,
+      );
+    });
   }
 
   Future<void> saveAgent(AiAgent agent) async {
-    try {
+    return tryOperation(() async {
       await _repository.saveAgent(agent);
       await loadAll();
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
+      return createSuccessState();
+    });
   }
 
   Future<void> deleteAgent(String id) async {
-    try {
+    return tryOperation(() async {
       await _repository.deleteAgent(id);
       await loadAll();
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
+      return createSuccessState();
+    });
   }
 
   Future<void> savePrompt(AiPrompt prompt) async {
-    try {
+    return tryOperation(() async {
       await _repository.savePrompt(prompt);
       await loadAll();
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
+      return createSuccessState();
+    });
   }
 
   Future<void> saveModel(AiModel model) async {
-    try {
+    return tryOperation(() async {
       await _repository.saveModel(model);
       await loadAll();
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
+      return createSuccessState();
+    });
   }
 }

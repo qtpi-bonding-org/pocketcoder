@@ -9,6 +9,7 @@ import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_dialog.dart';
 import '../core/widgets/bios_frame.dart';
+import '../core/widgets/ui_flow_listener.dart';
 
 class AgentManagementScreen extends StatelessWidget {
   const AgentManagementScreen({super.key});
@@ -17,7 +18,9 @@ class AgentManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<AiConfigCubit>()..loadAll(),
-      child: const AgentManagementView(),
+      child: UiFlowListener<AiConfigCubit, AiConfigState>(
+        child: const AgentManagementView(),
+      ),
     );
   }
 }
@@ -59,14 +62,12 @@ class AgentManagementView extends StatelessWidget {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'F2',
             label: 'ADD NEW',
             onTap: () {
               // TODO: Implement add
             },
           ),
           TerminalAction(
-            keyLabel: 'ESC',
             label: 'BACK',
             onTap: () => context.pop(),
           ),

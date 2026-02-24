@@ -82,12 +82,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'ESC',
             label: 'EXIT',
             onTap: () => context.goNamed(RouteNames.home),
           ),
           TerminalAction(
-            keyLabel: 'F10',
             label: 'SAVE & EXIT',
             onTap: () => context.goNamed(RouteNames.home),
           ),

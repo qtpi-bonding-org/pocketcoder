@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/terminal/terminal_cubit.dart';
 import 'package:pocketcoder_flutter/application/terminal/terminal_state.dart';
 
@@ -41,7 +42,7 @@ void main() {
     });
 
     test('initial state is correct', () {
-      expect(cubit.state.status, TerminalStatus.initial);
+      expect(cubit.state.status, UiFlowStatus.idle);
       expect(cubit.state.isConnected, false);
       expect(cubit.state.isConnecting, false);
       expect(cubit.state.isSyncingKeys, false);
@@ -50,12 +51,11 @@ void main() {
 
     test('state transitions to syncingKeys during key generation', () async {
       // This test verifies the state machine transitions
-      expect(cubit.state.status, TerminalStatus.initial);
+      expect(cubit.state.status, UiFlowStatus.idle);
 
       // Note: We can't easily test the full key generation flow without mocking
       // the cryptography package, but we can verify the state structure
-      final syncingState =
-          cubit.state.copyWith(status: TerminalStatus.syncingKeys);
+      final syncingState = cubit.state.copyWith(isSyncingKeys: true);
       expect(syncingState.isSyncingKeys, true);
       expect(syncingState.isConnecting, false);
       expect(syncingState.isConnected, false);
@@ -63,7 +63,7 @@ void main() {
 
     test('state transitions to connecting during SSH connection', () {
       final connectingState =
-          cubit.state.copyWith(status: TerminalStatus.connecting);
+          cubit.state.copyWith(status: UiFlowStatus.loading);
       expect(connectingState.isConnecting, true);
       expect(connectingState.isConnected, false);
       expect(connectingState.isSyncingKeys, false);
@@ -71,7 +71,7 @@ void main() {
 
     test('state transitions to connected after successful connection', () {
       final connectedState =
-          cubit.state.copyWith(status: TerminalStatus.connected);
+          cubit.state.copyWith(status: UiFlowStatus.success);
       expect(connectedState.isConnected, true);
       expect(connectedState.isConnecting, false);
       expect(connectedState.isSyncingKeys, false);
@@ -79,7 +79,7 @@ void main() {
 
     test('state transitions to error on connection failure', () {
       final errorState = cubit.state.copyWith(
-        status: TerminalStatus.error,
+        status: UiFlowStatus.failure,
         error: 'Connection failed',
       );
       expect(errorState.hasError, true);
@@ -90,7 +90,7 @@ void main() {
     test('disconnect resets state to initial', () {
       // Simulate connected state
       cubit.emit(cubit.state.copyWith(
-        status: TerminalStatus.connected,
+        status: UiFlowStatus.success,
         sessionId: 'test-session',
       ));
 
@@ -98,44 +98,43 @@ void main() {
       cubit.disconnect();
 
       // Verify state reset
-      expect(cubit.state.status, TerminalStatus.initial);
+      expect(cubit.state.status, UiFlowStatus.idle);
       expect(cubit.state.sessionId, null);
     });
 
-    test('TerminalStatus enum has all expected values', () {
-      expect(TerminalStatus.values, contains(TerminalStatus.initial));
-      expect(TerminalStatus.values, contains(TerminalStatus.syncingKeys));
-      expect(TerminalStatus.values, contains(TerminalStatus.connecting));
-      expect(TerminalStatus.values, contains(TerminalStatus.connected));
-      expect(TerminalStatus.values, contains(TerminalStatus.error));
+    test('UiFlowStatus enum has all expected values', () {
+      expect(UiFlowStatus.values, contains(UiFlowStatus.idle));
+      expect(UiFlowStatus.values, contains(UiFlowStatus.loading));
+      expect(UiFlowStatus.values, contains(UiFlowStatus.success));
+      expect(UiFlowStatus.values, contains(UiFlowStatus.failure));
     });
 
     test('state convenience getters work correctly', () {
       // Test initial state
-      var state = const SshTerminalState(status: TerminalStatus.initial);
+      var state = SshTerminalState(status: UiFlowStatus.idle);
       expect(state.isConnecting, false);
       expect(state.isConnected, false);
       expect(state.isSyncingKeys, false);
       expect(state.hasError, false);
 
       // Test syncingKeys state
-      state = const SshTerminalState(status: TerminalStatus.syncingKeys);
+      state = SshTerminalState(status: UiFlowStatus.idle, isSyncingKeys: true);
       expect(state.isSyncingKeys, true);
       expect(state.isConnecting, false);
 
       // Test connecting state
-      state = const SshTerminalState(status: TerminalStatus.connecting);
+      state = SshTerminalState(status: UiFlowStatus.loading);
       expect(state.isConnecting, true);
       expect(state.isConnected, false);
 
       // Test connected state
-      state = const SshTerminalState(status: TerminalStatus.connected);
+      state = SshTerminalState(status: UiFlowStatus.success);
       expect(state.isConnected, true);
       expect(state.isConnecting, false);
 
       // Test error state
-      state = const SshTerminalState(
-        status: TerminalStatus.error,
+      state = SshTerminalState(
+        status: UiFlowStatus.failure,
         error: 'Test error',
       );
       expect(state.hasError, true);
@@ -143,29 +142,29 @@ void main() {
     });
 
     test('state copyWith preserves unchanged fields', () {
-      const originalState = SshTerminalState(
-        status: TerminalStatus.connected,
+      final originalState = SshTerminalState(
+        status: UiFlowStatus.success,
         sessionId: 'session-123',
         error: null,
       );
 
       final newState = originalState.copyWith(error: 'New error');
 
-      expect(newState.status, TerminalStatus.connected);
+      expect(newState.status, UiFlowStatus.success);
       expect(newState.sessionId, 'session-123');
       expect(newState.error, 'New error');
     });
 
     test('state copyWith can update status', () {
-      const originalState = SshTerminalState(
-        status: TerminalStatus.initial,
+      final originalState = SshTerminalState(
+        status: UiFlowStatus.idle,
       );
 
       final newState = originalState.copyWith(
-        status: TerminalStatus.connecting,
+        status: UiFlowStatus.loading,
       );
 
-      expect(newState.status, TerminalStatus.connecting);
+      expect(newState.status, UiFlowStatus.loading);
       expect(newState.isConnecting, true);
     });
   });

@@ -5,23 +5,29 @@ import 'package:flutter_color_palette/flutter_color_palette.dart';
 class AppPalette {
   static final IColorPalette primary = AppColorPalette(
     colors: const {
-      // Core palette (Cyberpunk Terminal)
+      // Green Hierarchy
       'color1': Color(0xFF050505), // Background (Deep Black)
-      'color2': Color(0xFF00FF41), // Text (Neon Green)
-      'color3': Color(0xFF008F11), // Dimmer Green - Primary/Accent
-      'neutral1': Color(0xFF003B00), // Very dim green - Secondary text
+      'color2': Color(0xFF00FF41), // Vivid Green (High Intesity)
+      'color3': Color(0xFF00B82A), // Phosphor Green (Standard Reading)
+      'neutral1': Color(0xFF003B00), // Trace Green (Subtle UI)
+
+      // PocketCoder ANSI Accents
+      'userCyan': Color(0xFF00FFFF),
+      'dangerRed': Color(0xFFFF3333),
+      'infoWhite': Color(0xFFE4E4E4),
+      'warningAmber': Color(0xFFFFB100),
 
       // Interactable color
-      'interactable': Color(0xFF00FF41), // Neon Green
+      'interactable': Color(0xFF00FF41), // Vivid Green
 
       // Semantic colors
-      'info': Color(0xFF008F11), // Dim Green
-      'success': Color(0xFF00FF41), // Neon Green
-      'error': Color(0xFFFF0033), // Terminal Red
-      'warning': Color(0xFFFFFF00), // Terminal Yellow
+      'info': Color(0xFF00B82A), // Phosphor Green
+      'success': Color(0xFF00FF41), // Vivid Green
+      'error': Color(0xFFFF3333), // Danger Red
+      'warning': Color(0xFFFFB100), // Warning Amber
 
       // Destructive color
-      'destructive': Color(0xFFFF0033), // Red
+      'destructive': Color(0xFFFF3333), // Danger Red
     },
     name: 'PocketCoder Terminal',
   );
@@ -34,13 +40,23 @@ class AppPalette {
 extension AppColors on IColorPalette {
   // Background & Surface
   Color get backgroundPrimary => getColor('color1')!;
+  Color get black => getColor('color1')!;
 
-  // Text
-  Color get textPrimary => getColor('color2')!;
-  Color get textSecondary => getColor('neutral1')!;
+  // Green Hierarchy
+  Color get vividGreen => getColor('color2')!;
+  Color get phosphorGreen => getColor('color3')!;
+  Color get traceGreen => getColor('neutral1')!;
 
-  // Accent/Primary action color
-  Color get primaryColor => getColor('color3')!;
+  // Legacy mappings for stability
+  Color get textPrimary => vividGreen;
+  Color get textSecondary => traceGreen;
+  Color get primaryColor => phosphorGreen;
+
+  // ANSI Accents
+  Color get userCyan => getColor('userCyan')!;
+  Color get dangerRed => getColor('dangerRed')!;
+  Color get infoWhite => getColor('infoWhite')!;
+  Color get warningAmber => getColor('warningAmber')!;
 
   // Interactable
   Color get interactableColor => getColor('interactable')!;
