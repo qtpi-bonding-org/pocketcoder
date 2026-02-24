@@ -13,7 +13,7 @@ import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/poco_animator.dart';
 import '../core/widgets/terminal_footer.dart';
-import '../core/widgets/terminal_dialog.dart';
+import '../core/widgets/terminal_button.dart';
 import '../core/widgets/ui_flow_listener.dart';
 
 class TerminalScreen extends StatelessWidget {

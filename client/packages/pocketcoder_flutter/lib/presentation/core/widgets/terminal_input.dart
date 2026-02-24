@@ -32,6 +32,7 @@ class TerminalInput extends StatelessWidget {
             style: TextStyle(
               color: enabled ? terminalColors.attention : Colors.grey,
               fontFamily: AppFonts.bodyFamily,
+              package: 'pocketcoder_flutter',
               fontSize: AppSizes.fontStandard,
               fontWeight: AppFonts.heavy,
             ),
@@ -44,6 +45,7 @@ class TerminalInput extends StatelessWidget {
               style: TextStyle(
                 color: terminalColors.attention,
                 fontFamily: AppFonts.bodyFamily,
+                package: 'pocketcoder_flutter',
                 fontSize: AppSizes.fontStandard,
               ),
               cursorColor: terminalColors.attention,

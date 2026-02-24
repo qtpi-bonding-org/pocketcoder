@@ -12,9 +12,12 @@ import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_input.dart';
 import '../core/widgets/ui_flow_listener.dart';
-import 'widgets/permission_prompt.dart';
-import 'widgets/speech_bubble.dart';
-import 'widgets/thoughts_stream.dart';
+import '../core/widgets/terminal_header.dart';
+import '../core/widgets/terminal_loading_indicator.dart';
+import '../core/widgets/bios_section.dart';
+import '../core/widgets/permission_prompt.dart';
+import '../core/widgets/speech_bubble.dart';
+import '../core/widgets/thoughts_stream.dart';
 import '../../app_router.dart';
 
 class ChatScreen extends StatelessWidget {
@@ -59,6 +62,14 @@ class _ChatViewState extends State<_ChatView> {
             },
             child: Column(
               children: [
+                BlocBuilder<CommunicationCubit, CommunicationState>(
+                  builder: (context, state) {
+                    return TerminalHeader(
+                      title: state.chatId ?? 'POCKETCODER MAIN',
+                    );
+                  },
+                ),
+                VSpace.x1,
                 // 1. TOP: The Thoughts / Cloud (Flexible height)
                 Expanded(
                   flex: 3,
@@ -75,7 +86,6 @@ class _ChatViewState extends State<_ChatView> {
                     ),
                     child: BlocBuilder<CommunicationCubit, CommunicationState>(
                       builder: (context, state) {
-                        // Collect ALL thoughts from history + current hot message
                         final allMessages = [
                           ...state.messages,
                           if (state.hotMessage != null) state.hotMessage!
@@ -89,19 +99,15 @@ class _ChatViewState extends State<_ChatView> {
                         for (final msg in assistantMessages) {
                           final parts = msg.parts ?? [];
                           if (parts.isEmpty) continue;
-
-                          // If it's the HOT message (still thinking), show everything!
-                          if (msg.isLive) {
-                            brainParts.addAll(parts);
-                            continue;
-                          }
-
-                          // For finalized messages:
-                          // Show EVERYTHING in the brain log (redundancy is fine).
                           brainParts.addAll(parts);
                         }
 
-                        return ThoughtsStream(parts: brainParts);
+                        return BiosSection(
+                          title: 'REASONING_ENGINE',
+                          child: Expanded(
+                            child: ThoughtsStream(parts: brainParts),
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -184,11 +190,20 @@ class _ChatViewState extends State<_ChatView> {
                   padding: EdgeInsets.all(AppSizes.space),
                   child: BlocBuilder<CommunicationCubit, CommunicationState>(
                     builder: (context, state) {
-                      return TerminalInput(
-                        controller: _inputController,
-                        onSubmitted: () => _handleSubmit(context),
-                        prompt: 'SAY:',
-                        enabled: !state.isLoading && state.chatId != null,
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (state.isLoading) ...[
+                            const TerminalLoadingIndicator(label: 'THINKING'),
+                            VSpace.x1,
+                          ],
+                          TerminalInput(
+                            controller: _inputController,
+                            onSubmitted: () => _handleSubmit(context),
+                            prompt: 'SAY:',
+                            enabled: !state.isLoading && state.chatId != null,
+                          ),
+                        ],
                       );
                     },
                   ),
