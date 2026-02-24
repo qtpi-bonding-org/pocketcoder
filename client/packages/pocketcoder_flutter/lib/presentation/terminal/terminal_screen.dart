@@ -13,7 +13,8 @@ import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/poco_animator.dart';
 import '../core/widgets/terminal_footer.dart';
-import '../core/widgets/terminal_dialog.dart'; // For TerminalButton
+import '../core/widgets/terminal_dialog.dart';
+import '../core/widgets/ui_flow_listener.dart';
 
 class TerminalScreen extends StatelessWidget {
   const TerminalScreen({super.key});
@@ -22,7 +23,10 @@ class TerminalScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<SshTerminalCubit>(),
-      child: const _TerminalView(),
+      child: UiFlowListener<SshTerminalCubit, SshTerminalState>(
+        autoDismissLoading: false, // We show custom loading UI
+        child: const _TerminalView(),
+      ),
     );
   }
 }
@@ -90,7 +94,7 @@ class _TerminalViewState extends State<_TerminalView> {
                           );
                         }
 
-                        if (state.error != null) {
+                        if (state.hasError) {
                           return Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -105,7 +109,7 @@ class _TerminalViewState extends State<_TerminalView> {
                                 ),
                                 VSpace.x1,
                                 Text(
-                                  state.error!.toUpperCase(),
+                                  state.error!.toString().toUpperCase(),
                                   style: TextStyle(
                                     color: colors.onSurface,
                                     fontSize: AppSizes.fontTiny,
@@ -137,17 +141,14 @@ class _TerminalViewState extends State<_TerminalView> {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'F1',
             label: 'BACK TO CHAT',
             onTap: () => context.goNamed(RouteNames.home),
           ),
           TerminalAction(
-            keyLabel: 'F5',
             label: 'RECONNECT',
             onTap: _connect,
           ),
           TerminalAction(
-            keyLabel: 'ESC',
             label: 'LOGOUT',
             onTap: () => context.goNamed(RouteNames.boot),
           ),
@@ -197,7 +198,9 @@ class _TerminalViewState extends State<_TerminalView> {
               Text(
                 '[ ${isConnected ? 'ONLINE' : 'OFFLINE'} ]',
                 style: TextStyle(
-                  color: isConnected ? colors.onSurface : colors.error,
+                  color: isConnected
+                      ? context.terminalColors.warning
+                      : context.terminalColors.danger,
                   fontSize: AppSizes.fontMini,
                   letterSpacing: 1,
                 ),

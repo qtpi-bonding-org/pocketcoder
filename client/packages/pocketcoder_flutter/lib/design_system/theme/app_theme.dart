@@ -14,10 +14,20 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
   final Color scanline;
   final double scanlineOpacity;
 
+  // ANSI Accents
+  final Color user;
+  final Color danger;
+  final Color attention;
+  final Color warning;
+
   const TerminalColors({
     required this.glow,
     required this.scanline,
     required this.scanlineOpacity,
+    required this.user,
+    required this.danger,
+    required this.attention,
+    required this.warning,
   });
 
   @override
@@ -25,11 +35,19 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
     Color? glow,
     Color? scanline,
     double? scanlineOpacity,
+    Color? user,
+    Color? danger,
+    Color? attention,
+    Color? warning,
   }) {
     return TerminalColors(
       glow: glow ?? this.glow,
       scanline: scanline ?? this.scanline,
       scanlineOpacity: scanlineOpacity ?? this.scanlineOpacity,
+      user: user ?? this.user,
+      danger: danger ?? this.danger,
+      attention: attention ?? this.attention,
+      warning: warning ?? this.warning,
     );
   }
 
@@ -40,6 +58,10 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
       glow: Color.lerp(glow, other.glow, t)!,
       scanline: Color.lerp(scanline, other.scanline, t)!,
       scanlineOpacity: lerpDouble(scanlineOpacity, other.scanlineOpacity, t)!,
+      user: Color.lerp(user, other.user, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
+      attention: Color.lerp(attention, other.attention, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
     );
   }
 
@@ -67,38 +89,42 @@ class AppTheme {
       brightness: isDark ? Brightness.dark : Brightness.light,
       extensions: [
         TerminalColors(
-          glow: palette.textPrimary.withValues(alpha: 0.1),
-          scanline: palette.textPrimary.withValues(alpha: 0.05),
+          glow: palette.vividGreen.withValues(alpha: 0.1),
+          scanline: palette.vividGreen.withValues(alpha: 0.05),
           scanlineOpacity: 0.05,
+          user: palette.userCyan,
+          danger: palette.dangerRed,
+          attention: palette.infoWhite,
+          warning: palette.warningAmber,
         ),
       ],
       textTheme: AppFonts.textTheme.apply(
-        bodyColor: palette.textPrimary,
-        displayColor: palette.textPrimary,
+        bodyColor: palette.phosphorGreen, // Standard reading text
+        displayColor: palette.vividGreen, // Headers / Highlights
         fontFamily: AppFonts.bodyFamily,
       ),
       colorScheme: ColorScheme(
         brightness: isDark ? Brightness.dark : Brightness.light,
-        primary: palette.primaryColor,
+        primary: palette.vividGreen,
         onPrimary: palette.backgroundPrimary,
-        secondary: palette.textSecondary,
+        secondary: palette.phosphorGreen,
         onSecondary: palette.backgroundPrimary,
-        error: palette.destructiveColor,
+        error: palette.dangerRed,
         onError: palette.backgroundPrimary,
         surface: palette.backgroundPrimary,
-        onSurface: palette.textPrimary,
-        primaryContainer: palette.primaryColor.withValues(alpha: 0.1),
-        onPrimaryContainer: palette.textPrimary,
+        onSurface: palette.vividGreen,
+        primaryContainer: palette.vividGreen.withValues(alpha: 0.1),
+        onPrimaryContainer: palette.vividGreen,
       ),
       scaffoldBackgroundColor: palette.backgroundPrimary,
       dividerTheme: DividerThemeData(
-        color: palette.textPrimary.withValues(alpha: 0.2),
+        color: palette.vividGreen.withValues(alpha: 0.2),
         thickness: AppSizes.borderWidth,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: palette.primaryColor,
-          foregroundColor: palette.backgroundPrimary,
+          backgroundColor: palette.vividGreen,
+          foregroundColor: const Color(0xFF000000), // True Black
           minimumSize: Size.fromHeight(AppSizes.buttonHeight),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.zero,
@@ -117,27 +143,27 @@ class AppTheme {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.zero,
           borderSide:
-              BorderSide(color: palette.textPrimary.withValues(alpha: 0.3)),
+              BorderSide(color: palette.vividGreen.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.zero,
           borderSide:
-              BorderSide(color: palette.textPrimary.withValues(alpha: 0.3)),
+              BorderSide(color: palette.vividGreen.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.zero,
           borderSide: BorderSide(
-            color: palette.textPrimary,
+            color: palette.vividGreen,
             width: AppSizes.borderWidthThick,
           ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.zero,
-          borderSide: BorderSide(color: palette.destructiveColor),
+          borderSide: BorderSide(color: palette.dangerRed),
         ),
         contentPadding: EdgeInsets.all(AppSizes.space * 1.5),
         labelStyle: TextStyle(
-          color: palette.textPrimary.withValues(alpha: 0.7),
+          color: palette.vividGreen.withValues(alpha: 0.7),
           fontFamily: AppFonts.headerFamily,
           fontSize: AppSizes.fontTiny,
           fontWeight: AppFonts.heavy,

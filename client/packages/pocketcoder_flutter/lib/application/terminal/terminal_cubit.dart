@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:xterm/xterm.dart';
 import 'package:cryptography/cryptography.dart' as crypto;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketbase/pocketbase.dart';
+import '../../support/extensions/cubit_ui_flow_extension.dart';
 import 'terminal_state.dart';
 import '../../infrastructure/core/collections.dart';
 import '../../infrastructure/core/logger.dart';
 
 @injectable
-class SshTerminalCubit extends Cubit<SshTerminalState> {
+class SshTerminalCubit extends AppCubit<SshTerminalState> {
   SSHClient? _client;
   SSHSession? _session;
   final Terminal terminal = Terminal(maxLines: 10000);
@@ -21,7 +21,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
   final PocketBase _pb;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  SshTerminalCubit(this._pb) : super(const SshTerminalState());
+  SshTerminalCubit(this._pb) : super(SshTerminalState.initial());
 
   Future<void> connect({
     required String host,
@@ -31,10 +31,9 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
   }) async {
     if (state.isConnected) return;
 
-    emit(state.copyWith(
-        status: TerminalStatus.connecting, error: null, sessionId: sessionId));
+    return tryOperation(() async {
+      emit(state.copyWith(sessionId: sessionId));
 
-    try {
       final keys = await _getOrCreateKeyPair();
 
       // Auto-sync public key if logged in
@@ -60,8 +59,6 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
             width: terminal.viewWidth, height: terminal.viewHeight),
       );
 
-      emit(state.copyWith(status: TerminalStatus.connected));
-
       // Pipe SSH -> XTerm
       _session!.stdout.listen((data) {
         terminal.write(utf8.decode(data));
@@ -81,10 +78,9 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
       terminal.onOutput = (data) {
         _session!.stdin.add(utf8.encode(data));
       };
-    } catch (e) {
-      logError('❌ [Terminal] Connection failed', e);
-      emit(state.copyWith(status: TerminalStatus.error, error: e.toString()));
-    }
+
+      return createSuccessState();
+    });
   }
 
   Future<({SSHKeyPair privateKey, String publicKeyStr})>
@@ -103,7 +99,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
       }
     }
 
-    emit(state.copyWith(status: TerminalStatus.syncingKeys));
+    emit(state.copyWith(isSyncingKeys: true));
 
     // Generate new Ed25519 key pair using cryptography package
     final algorithm = crypto.Ed25519();
@@ -126,8 +122,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
     await _storage.write(key: 'ssh_private_key', value: privPem);
     await _storage.write(key: 'ssh_public_key', value: pubKeyStr);
 
-    emit(state.copyWith(
-        status: TerminalStatus.initial)); // Go back to initial after generation
+    emit(state.copyWith(isSyncingKeys: false));
 
     return (privateKey: sshKey, publicKeyStr: pubKeyStr);
   }
@@ -191,7 +186,7 @@ class SshTerminalCubit extends Cubit<SshTerminalState> {
   void disconnect() {
     _session?.close();
     _client?.close();
-    emit(state.copyWith(status: TerminalStatus.initial, sessionId: null));
+    emit(SshTerminalState.initial());
   }
 
   @override

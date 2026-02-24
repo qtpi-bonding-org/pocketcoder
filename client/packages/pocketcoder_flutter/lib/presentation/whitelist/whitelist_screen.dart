@@ -8,6 +8,7 @@ import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_dialog.dart';
 import '../core/widgets/bios_frame.dart';
+import '../core/widgets/ui_flow_listener.dart';
 
 class WhitelistScreen extends StatelessWidget {
   const WhitelistScreen({super.key});
@@ -16,7 +17,9 @@ class WhitelistScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<WhitelistCubit>()..load(),
-      child: const WhitelistView(),
+      child: UiFlowListener<WhitelistCubit, WhitelistState>(
+        child: const WhitelistView(),
+      ),
     );
   }
 }
@@ -60,17 +63,14 @@ class _WhitelistViewState extends State<WhitelistView> {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'F1',
             label: 'ACTIONS',
             onTap: () => setState(() => _activeTab = 0),
           ),
           TerminalAction(
-            keyLabel: 'F2',
             label: 'TARGETS',
             onTap: () => setState(() => _activeTab = 1),
           ),
           TerminalAction(
-            keyLabel: 'ESC',
             label: 'BACK',
             onTap: () => context.pop(),
           ),
@@ -114,29 +114,21 @@ class ActionsTab extends StatelessWidget {
         return Column(
           children: [
             Expanded(
-              child: state.maybeWhen(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (msg) => Center(
-                    child: Text('ERROR: $msg',
-                        style: TextStyle(color: colors.error))),
-                loaded: (targets, actions) {
-                  if (actions.isEmpty) {
-                    return Center(
-                        child: Text('NO RULES DEFINED.',
-                            style: TextStyle(
-                                color:
-                                    colors.onSurface.withValues(alpha: 0.5))));
-                  }
-                  return ListView.builder(
-                    itemCount: actions.length,
-                    itemBuilder: (context, index) {
-                      final action = actions[index];
-                      return _buildRuleTile(context, action);
-                    },
-                  );
-                },
-                orElse: () => const SizedBox.shrink(),
-              ),
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.actions.isEmpty
+                      ? Center(
+                          child: Text('NO RULES DEFINED.',
+                              style: TextStyle(
+                                  color: colors.onSurface
+                                      .withValues(alpha: 0.5))))
+                      : ListView.builder(
+                          itemCount: state.actions.length,
+                          itemBuilder: (context, index) {
+                            final action = state.actions[index];
+                            return _buildRuleTile(context, action);
+                          },
+                        ),
             ),
             VSpace.x2,
             TerminalButton(
@@ -303,29 +295,21 @@ class TargetsTab extends StatelessWidget {
         return Column(
           children: [
             Expanded(
-              child: state.maybeWhen(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (msg) => Center(
-                    child: Text('ERROR: $msg',
-                        style: TextStyle(color: colors.error))),
-                loaded: (targets, actions) {
-                  if (targets.isEmpty) {
-                    return Center(
-                        child: Text('NO TARGETS DEFINED.',
-                            style: TextStyle(
-                                color:
-                                    colors.onSurface.withValues(alpha: 0.5))));
-                  }
-                  return ListView.builder(
-                    itemCount: targets.length,
-                    itemBuilder: (context, index) {
-                      final target = targets[index];
-                      return _buildTargetTile(context, target);
-                    },
-                  );
-                },
-                orElse: () => const SizedBox.shrink(),
-              ),
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.targets.isEmpty
+                      ? Center(
+                          child: Text('NO TARGETS DEFINED.',
+                              style: TextStyle(
+                                  color: colors.onSurface
+                                      .withValues(alpha: 0.5))))
+                      : ListView.builder(
+                          itemCount: state.targets.length,
+                          itemBuilder: (context, index) {
+                            final target = state.targets[index];
+                            return _buildTargetTile(context, target);
+                          },
+                        ),
             ),
             VSpace.x2,
             TerminalButton(

@@ -1,46 +1,47 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import '../../domain/hitl/i_hitl_repository.dart';
 import '../../domain/whitelist/whitelist_action.dart';
 import '../../domain/whitelist/whitelist_target.dart';
+import '../../support/extensions/cubit_ui_flow_extension.dart';
 
 part 'whitelist_state.dart';
 part 'whitelist_cubit.freezed.dart';
 
 @injectable
-class WhitelistCubit extends Cubit<WhitelistState> {
+class WhitelistCubit extends AppCubit<WhitelistState> {
   final IHitlRepository _repository;
 
-  WhitelistCubit(this._repository) : super(const WhitelistState.initial());
+  WhitelistCubit(this._repository) : super(WhitelistState.initial());
 
   Future<void> load() async {
-    emit(const WhitelistState.loading());
-    try {
+    return tryOperation(() async {
       final targets = await _repository.getTargets();
       final actions = await _repository.getActions();
-      emit(WhitelistState.loaded(targets: targets, actions: actions));
-    } catch (e) {
-      emit(WhitelistState.error(e.toString()));
-    }
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        targets: targets,
+        actions: actions,
+        error: null,
+      );
+    });
   }
 
   Future<void> createTarget(String name, String pattern) async {
-    try {
+    return tryOperation(() async {
       await _repository.createTarget(name, pattern);
-      load(); // Refresh
-    } catch (e) {
-      emit(WhitelistState.error(e.toString()));
-    }
+      await load();
+      return createSuccessState();
+    });
   }
 
   Future<void> deleteTarget(String id) async {
-    try {
+    return tryOperation(() async {
       await _repository.deleteTarget(id);
-      load();
-    } catch (e) {
-      emit(WhitelistState.error(e.toString()));
-    }
+      await load();
+      return createSuccessState();
+    });
   }
 
   Future<void> createAction(
@@ -48,29 +49,26 @@ class WhitelistCubit extends Cubit<WhitelistState> {
     String kind = 'pattern',
     String? value,
   }) async {
-    try {
+    return tryOperation(() async {
       await _repository.createAction(permission, kind: kind, value: value);
-      load();
-    } catch (e) {
-      emit(WhitelistState.error(e.toString()));
-    }
+      await load();
+      return createSuccessState();
+    });
   }
 
   Future<void> deleteAction(String id) async {
-    try {
+    return tryOperation(() async {
       await _repository.deleteAction(id);
-      load();
-    } catch (e) {
-      emit(WhitelistState.error(e.toString()));
-    }
+      await load();
+      return createSuccessState();
+    });
   }
 
   Future<void> toggleAction(String id, bool active) async {
-    try {
+    return tryOperation(() async {
       await _repository.toggleAction(id, active);
-      load();
-    } catch (e) {
-      emit(WhitelistState.error(e.toString()));
-    }
+      await load();
+      return createSuccessState();
+    });
   }
 }
