@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../design_system/theme/app_theme.dart';
-import '../../../../domain/chat/chat_message.dart';
+import '../../../design_system/theme/app_theme.dart';
+import '../../../domain/chat/chat_message.dart';
 
 class ThoughtsStream extends StatelessWidget {
   final List<MessagePart> parts;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../design_system/theme/app_theme.dart';
-import '../../../../domain/permission/permission_request.dart';
-import '../../core/widgets/terminal_dialog.dart'; // For TerminalButton
+import '../../../design_system/theme/app_theme.dart';
+import '../../../domain/permission/permission_request.dart';
+import 'terminal_button.dart';
 
 class PermissionPrompt extends StatelessWidget {
   final PermissionRequest request;

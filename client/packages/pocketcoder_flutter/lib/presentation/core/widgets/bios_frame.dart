@@ -58,6 +58,7 @@ class BiosFrame extends StatelessWidget {
                         '[ $title ]',
                         style: TextStyle(
                           fontFamily: AppFonts.bodyFamily,
+                          package: 'pocketcoder_flutter',
                           color: borderColor,
                           fontWeight: AppFonts.heavy,
                           backgroundColor: colors.surface,

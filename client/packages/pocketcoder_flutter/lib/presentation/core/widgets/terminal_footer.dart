@@ -69,7 +69,7 @@ class TerminalFooter extends StatelessWidget {
             style: TextStyle(
               fontFamily: AppFonts.bodyFamily,
               color: colors.onSurface,
-              fontSize: AppSizes.fontTiny,
+              fontSize: AppSizes.fontMini,
               fontWeight: AppFonts.heavy,
               letterSpacing: 2,
             ),

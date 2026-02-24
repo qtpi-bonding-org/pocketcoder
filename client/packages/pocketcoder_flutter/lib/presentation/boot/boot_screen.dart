@@ -6,12 +6,12 @@ import 'package:go_router/go_router.dart';
 import '../../app/bootstrap.dart';
 import '../../application/system/poco_cubit.dart';
 import '../../design_system/theme/app_theme.dart';
-import '../../domain/auth/i_auth_repository.dart';
 import '../../domain/status/i_status_repository.dart';
 import '../core/widgets/ascii_art.dart';
 import '../core/widgets/poco_widget.dart';
 import '../core/widgets/scanline_widget.dart';
-import '../core/widgets/terminal_input.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../app_router.dart';
 
 class BootScreen extends StatefulWidget {
   const BootScreen({super.key});
@@ -24,13 +24,9 @@ class _BootScreenState extends State<BootScreen> {
   // State Machine
   bool _logsDimmed = false;
   bool _pocoVisible = false;
-  bool _showConfig = false;
-
   // Data
   final List<String> _logs = [];
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _urlController =
-      TextEditingController(text: 'http://127.0.0.1:8090');
 
   @override
   void initState() {
@@ -41,7 +37,6 @@ class _BootScreenState extends State<BootScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _urlController.dispose();
     super.dispose();
   }
 
@@ -50,7 +45,21 @@ class _BootScreenState extends State<BootScreen> {
       if (mounted) _wakeUpPoco();
     });
 
-    String fileContent = await rootBundle.loadString('assets/boot_log.txt');
+    String fileContent = '';
+    try {
+      // Try package path first (for monorepo/web consistency)
+      fileContent = await rootBundle
+          .loadString('packages/pocketcoder_flutter/assets/boot_log.txt');
+    } catch (e) {
+      try {
+        // Fallback to direct path
+        fileContent = await rootBundle.loadString('assets/boot_log.txt');
+      } catch (e2) {
+        fileContent =
+            'SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS\n[!] CHECK_ASSET_MANIFEST\n';
+      }
+    }
+
     final bootLogs = fileContent.split('\n');
 
     if (mounted) {
@@ -120,11 +129,26 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   Future<void> _checkConnection() async {
+    const skipAuthDefine =
+        String.fromEnvironment('SKIP_AUTH', defaultValue: 'false');
+    final skipAuthEnv = dotenv.get('SKIP_AUTH', fallback: 'false');
+
+    if (skipAuthDefine == 'true' || skipAuthEnv == 'true') {
+      debugPrint('[PocketCoder] SKIP_AUTH is enabled. Bypassing login...');
+      if (mounted) context.goNamed(RouteNames.home);
+      return;
+    }
+
     if (mounted) {
       context.read<PocoCubit>().updateMessage("Checking secure connection...");
     }
 
-    final connected = await getIt<IStatusRepository>().checkPocketBaseHealth();
+    bool connected = false;
+    try {
+      connected = await getIt<IStatusRepository>().checkPocketBaseHealth();
+    } catch (_) {
+      connected = false;
+    }
 
     if (mounted) {
       if (connected) {
@@ -136,54 +160,16 @@ class _BootScreenState extends State<BootScreen> {
         if (mounted) context.goNamed('onboarding');
       } else {
         context.read<PocoCubit>().updateMessage(
-          "I lost the signal... Where is home?",
+          "Connection failed. I'll take you back to the setup screen so we can check the server settings.",
           sequence: [
             (PocoExpression.nervous, 500),
-            (PocoExpression.panic, 2000),
-            (PocoExpression.nervous, 1000),
+            (PocoExpression.lookRight, 1000),
+            (PocoExpression.awake, 1000),
           ],
         );
-        setState(() {
-          _showConfig = true;
-        });
-      }
-    }
-  }
-
-  Future<void> _handleConfigRetry() async {
-    final url = _urlController.text.trim();
-    if (url.isEmpty) return;
-
-    if (mounted) {
-      context.read<PocoCubit>().updateMessage(
-            "Pinging... Hello?",
-            sequence: PocoExpressions.thinking,
-          );
-      setState(() {
-        _showConfig = false;
-      });
-    }
-
-    final statusRepo = getIt<IStatusRepository>();
-    getIt<IAuthRepository>().updateBaseUrl(url);
-    final connected = await statusRepo.checkPocketBaseHealth();
-
-    if (mounted) {
-      if (connected) {
-        context.read<PocoCubit>().updateMessage(
-              "Home Sweet Localhost! We are safe.",
-              sequence: PocoExpressions.happy,
-            );
-        await Future.delayed(const Duration(seconds: 2));
+        // Wait a bit longer to let the user read before moving
+        await Future.delayed(const Duration(seconds: 3));
         if (mounted) context.goNamed('onboarding');
-      } else {
-        context.read<PocoCubit>().updateMessage(
-              "Still no response... checking frequencies...",
-              sequence: PocoExpressions.nervous,
-            );
-        setState(() {
-          _showConfig = true;
-        });
       }
     }
   }
@@ -206,10 +192,8 @@ class _BootScreenState extends State<BootScreen> {
                 itemBuilder: (context, index) {
                   return Text(
                     _logs[index],
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
+                    style: context.textTheme.bodySmall?.copyWith(
                       color: colors.primary,
-                      fontSize: AppSizes.fontSmall,
                     ),
                   );
                 },
@@ -223,22 +207,6 @@ class _BootScreenState extends State<BootScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       PocoWidget(pocoSize: AppSizes.fontBig),
-                      if (_showConfig) ...[
-                        VSpace.x4,
-                        Container(
-                          padding: EdgeInsets.all(AppSizes.space * 2),
-                          color: colors.surface.withValues(alpha: 0.8),
-                          child: Column(
-                            children: [
-                              TerminalInput(
-                                controller: _urlController,
-                                prompt: '\$',
-                                onSubmitted: _handleConfigRetry,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ]
                     ],
                   ),
                 ),
