@@ -80,6 +80,7 @@ flutter:
   assets:
     - assets/pb_schema.json
     - assets/boot_log.txt
+    - .env
 
   fonts:
     - family: Share Tech Mono

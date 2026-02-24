@@ -13,7 +13,9 @@ dependencies:
   pocketcoder_flutter:
     path: ../pocketcoder_flutter
   equatable: ^2.0.5
+  flutter_dotenv: ^5.1.0
   
   # Proprietary SDKs (Gated here)
+  firebase_core: ^3.0.0
   firebase_messaging: ^15.0.0
   purchases_flutter: ^7.0.0

@@ -155,6 +155,7 @@ class AsciiFace extends StatelessWidget {
         fontSize: effectiveSize,
         height: 1.0,
         fontFamily: AppFonts.bodyFamily,
+        package: 'pocketcoder_flutter',
         leadingDistribution: TextLeadingDistribution.even,
         letterSpacing: 0,
         fontWeight: AppFonts.heavy,

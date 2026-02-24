@@ -17,6 +17,18 @@ class FossBillingService implements BillingService {
 
   @override
   Future<bool> purchase(String identifier) async => true;
+
+  @override
+  Future<List<BillingPackage>> getAvailablePackages() async {
+    return [
+      const BillingPackage(
+        identifier: 'foss_premium',
+        title: 'FOSS Premium',
+        description: 'Free as in speech and beer.',
+        priceString: r'$0.00',
+      ),
+    ];
+  }
 }
 
 class NtfyPushService implements PushService {

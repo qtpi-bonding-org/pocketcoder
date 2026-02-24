@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../design_system/theme/app_theme.dart';
-import '../../../../domain/chat/chat_message.dart';
+import '../../../design_system/theme/app_theme.dart';
+import '../../../domain/chat/chat_message.dart';
 
 class SpeechBubble extends StatelessWidget {
   final List<MessagePartText> textParts;

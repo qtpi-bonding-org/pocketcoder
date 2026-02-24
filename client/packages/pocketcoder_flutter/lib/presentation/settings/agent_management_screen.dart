@@ -8,8 +8,13 @@ import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_dialog.dart';
+import '../core/widgets/terminal_button.dart';
+import '../core/widgets/terminal_text_field.dart';
 import '../core/widgets/bios_frame.dart';
+import '../core/widgets/bios_list_tile.dart';
 import '../core/widgets/ui_flow_listener.dart';
+import '../core/widgets/terminal_header.dart';
+import '../core/widgets/terminal_loading_indicator.dart';
 
 class AgentManagementScreen extends StatelessWidget {
   const AgentManagementScreen({super.key});
@@ -42,13 +47,16 @@ class AgentManagementView extends StatelessWidget {
                 padding: EdgeInsets.all(AppSizes.space * 2),
                 child: Column(
                   children: [
-                    _buildHeader(context),
+                    TerminalHeader(title: 'AGENT REGISTRY'),
                     VSpace.x2,
                     Expanded(
                       child: BiosFrame(
                         title: 'MODELS & PERSONAS',
                         child: state.isLoading
-                            ? const Center(child: CircularProgressIndicator())
+                            ? const Center(
+                                child: TerminalLoadingIndicator(
+                                label: 'SEARCHING...',
+                              ))
                             : _buildAgentList(context, state),
                       ),
                     ),
@@ -76,36 +84,16 @@ class AgentManagementView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final colors = context.colorScheme;
-    return Column(
-      children: [
-        Text(
-          'AI REGISTRY MANAGER',
-          style: TextStyle(
-            fontFamily: AppFonts.headerFamily,
-            color: colors.onSurface,
-            fontSize: AppSizes.fontBig,
-            fontWeight: AppFonts.heavy,
-            letterSpacing: 2,
-          ),
-        ),
-        VSpace.x1,
-        Container(
-          height: AppSizes.borderWidth,
-          color: colors.onSurface.withValues(alpha: 0.3),
-        ),
-      ],
-    );
-  }
-
   Widget _buildAgentList(BuildContext context, AiConfigState state) {
     final colors = context.colorScheme;
     if (state.agents.isEmpty) {
       return Center(
         child: Text(
           'REGISTRY EMPTY.',
-          style: TextStyle(color: colors.onSurface.withValues(alpha: 0.5)),
+          style: TextStyle(
+            color: colors.onSurface.withValues(alpha: 0.5),
+            package: 'pocketcoder_flutter',
+          ),
         ),
       );
     }
@@ -117,8 +105,9 @@ class AgentManagementView extends StatelessWidget {
             itemCount: state.agents.length,
             itemBuilder: (context, index) {
               final agent = state.agents[index];
-              return _AgentListTile(
-                agent: agent,
+              return BiosListTile(
+                label: agent.name.toUpperCase(),
+                value: (agent.isInit as bool? ?? false) ? 'INIT' : 'WORKER',
                 onTap: () => _showEditAgentDialog(context, agent, state),
               );
             },
@@ -126,11 +115,12 @@ class AgentManagementView extends StatelessWidget {
         ),
         VSpace.x2,
         Text(
-          'TAP IDENTITY TO MODIFY PARAMS',
+          'SELECT AGENT TO CONFIGURE',
           style: TextStyle(
             fontFamily: AppFonts.bodyFamily,
             color: colors.onSurface.withValues(alpha: 0.5),
             fontSize: AppSizes.fontTiny,
+            package: 'pocketcoder_flutter',
           ),
         ),
       ],
@@ -147,19 +137,17 @@ class AgentManagementView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: 'IDENTITY: ${agent.name.toUpperCase()}',
+        title: 'AGENT: ${agent.name.toUpperCase()}',
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildTerminalTextField(
-                context: dialogContext,
+              TerminalTextField(
                 controller: nameController,
-                label: 'AGENT NAME',
+                label: 'NAME',
               ),
               VSpace.x2,
-              _buildTerminalTextField(
-                context: dialogContext,
+              TerminalTextField(
                 controller: descController,
                 label: 'DESCRIPTION',
                 maxLines: 2,
@@ -167,27 +155,36 @@ class AgentManagementView extends StatelessWidget {
               VSpace.x2,
               _buildSelection(
                 context: dialogContext,
-                label: 'SYSTEM PROMPT',
+                label: 'PROMPTS',
                 currentValue: state.prompts.any((p) => p.id == selectedPromptId)
                     ? state.prompts
                         .firstWhere((p) => p.id == selectedPromptId)
                         .name
                     : 'NONE',
                 onTap: () {
-                  // TODO: Implement a terminal-style list picker
+                  // TODO: Implement list picker
                 },
               ),
               VSpace.x2,
               _buildSelection(
                 context: dialogContext,
-                label: 'AI MODEL',
+                label: 'MODELS',
                 currentValue: state.models.any((m) => m.id == selectedModelId)
                     ? state.models
                         .firstWhere((m) => m.id == selectedModelId)
                         .name
                     : 'NONE SELECTED',
                 onTap: () {
-                  // TODO: Implement a terminal-style list picker
+                  // TODO: Implement list picker
+                },
+              ),
+              VSpace.x2,
+              _buildSelection(
+                context: dialogContext,
+                label: 'PARAMETERS',
+                currentValue: 'DEFAULT [TUNED]',
+                onTap: () {
+                  // TODO: Implement parameters tuning
                 },
               ),
             ],
@@ -237,6 +234,7 @@ class AgentManagementView extends StatelessWidget {
             fontFamily: AppFonts.bodyFamily,
             color: colors.onSurface,
             fontSize: AppSizes.fontTiny,
+            package: 'pocketcoder_flutter',
           ),
         ),
         VSpace.x1,
@@ -258,6 +256,7 @@ class AgentManagementView extends StatelessWidget {
                       fontFamily: AppFonts.bodyFamily,
                       color: colors.onSurface,
                       fontSize: AppSizes.fontSmall,
+                      package: 'pocketcoder_flutter',
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -270,108 +269,4 @@ class AgentManagementView extends StatelessWidget {
       ],
     );
   }
-}
-
-class _AgentListTile extends StatelessWidget {
-  final dynamic agent;
-  final VoidCallback? onTap;
-
-  const _AgentListTile({required this.agent, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final borderColor = colors.onSurface;
-    final isInit = agent.isInit ?? false;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: AppSizes.space),
-      decoration: BoxDecoration(
-        border: Border.all(color: borderColor.withValues(alpha: 0.3)),
-        color:
-            isInit ? borderColor.withValues(alpha: 0.05) : Colors.transparent,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.all(AppSizes.space),
-          child: Row(
-            children: [
-              Container(
-                width: 4,
-                height: 40,
-                color: isInit
-                    ? colors.primary
-                    : colors.onSurface.withValues(alpha: 0.4),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      agent.name.toUpperCase(),
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: colors.onSurface,
-                        fontSize: AppSizes.fontStandard,
-                        fontWeight: AppFonts.heavy,
-                      ),
-                    ),
-                    Text(
-                      isInit ? '>> INIT ORCHESTRATOR' : '>> WORKSPACE WORKER',
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: colors.onSurface.withValues(alpha: 0.5),
-                        fontSize: AppSizes.fontMini,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: borderColor,
-                size: 16,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-Widget _buildTerminalTextField({
-  required BuildContext context,
-  required TextEditingController controller,
-  required String label,
-  int maxLines = 1,
-}) {
-  final colors = context.colorScheme;
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.bodyFamily,
-          color: colors.onSurface,
-          fontSize: AppSizes.fontTiny,
-        ),
-      ),
-      VSpace.x1,
-      TextField(
-        controller: controller,
-        maxLines: maxLines,
-        style: TextStyle(
-          fontFamily: AppFonts.bodyFamily,
-          color: colors.onSurface,
-          fontSize: AppSizes.fontSmall,
-        ),
-        cursorColor: colors.onSurface,
-        decoration: const InputDecoration(), // Uses theme decoration
-      ),
-    ],
-  );
 }

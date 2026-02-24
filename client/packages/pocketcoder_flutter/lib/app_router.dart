@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/presentation/observability/agent_observabili
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
+import 'package:pocketcoder_flutter/presentation/billing/push_notifications_screen.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 
@@ -133,6 +134,15 @@ class AppRouter {
           child: const SystemChecksScreen(),
         ),
       ),
+      GoRoute(
+        path: AppRoutes.paywall,
+        name: RouteNames.paywall,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const PushNotificationsScreen(),
+        ),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -156,6 +166,7 @@ class AppRoutes {
   static const String mcpManagement = '/mcp';
   static const String sopManagement = '/sop';
   static const String systemChecks = '/system-checks';
+  static const String paywall = '/paywall';
 }
 
 class RouteNames {
@@ -172,6 +183,7 @@ class RouteNames {
   static const String mcpManagement = 'mcpManagement';
   static const String sopManagement = 'sopManagement';
   static const String systemChecks = 'systemChecks';
+  static const String paywall = 'paywall';
 }
 
 class AppNavigation {
@@ -182,6 +194,8 @@ class AppNavigation {
       context.pushNamed(RouteNames.settings);
   static void toWhitelist(BuildContext context) =>
       context.pushNamed(RouteNames.whitelist);
+  static void toPaywall(BuildContext context) =>
+      context.pushNamed(RouteNames.paywall);
 
   static void back(BuildContext context) {
     if (context.canPop()) {

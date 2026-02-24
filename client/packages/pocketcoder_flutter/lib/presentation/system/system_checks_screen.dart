@@ -3,6 +3,7 @@ import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/bios_frame.dart';
+import '../core/widgets/terminal_header.dart';
 import 'package:go_router/go_router.dart';
 
 class SystemChecksScreen extends StatelessWidget {
@@ -21,27 +22,22 @@ class SystemChecksScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildHeader(context),
+                TerminalHeader(title: 'SYSTEM CHECKS'),
                 VSpace.x2,
                 Expanded(
                   child: BiosFrame(
                     title: 'SYSTEM DIAGNOSTICS',
                     child: ListView(
                       children: [
-                        _buildCheckRow(
-                            context, 'CORE-RELAY (GO)', 'READY', true),
-                        _buildCheckRow(
-                            context, 'SENTINEL-PROXY (RUST)', 'READY', true),
+                        _buildCheckRow(context, 'POCKETBASE', 'READY', true),
+                        _buildCheckRow(context, 'OPENCODE', 'READY', true),
+                        _buildCheckRow(context, 'SANDBOX', 'READY', true),
                         _buildCheckRow(context, 'MCP-GATEWAY', 'READY', true),
-                        _buildCheckRow(
-                            context, 'CAO-ORCHESTRATOR', 'READY', true),
-                        _buildCheckRow(
-                            context, 'OPENCODE-ENGINE', 'THINKING', true),
+                        _buildCheckRow(context, 'DOCKER-SOCKET-PROXY-WRITE',
+                            'READY', true),
+                        _buildCheckRow(context, 'SQLPAGE', 'READY', true),
+                        _buildCheckRow(context, 'DOCS', 'READY', true),
                         VSpace.x2,
-                        _buildCheckRow(
-                            context, 'DOCKER-SOCKET', 'CONNECTED', true),
-                        _buildCheckRow(
-                            context, 'POCKETBASE-DB', 'SYNCED', true),
                         _buildCheckRow(
                             context, 'VOLUME-MOUNTS', 'HEALTHY', true),
                       ],
@@ -65,30 +61,6 @@ class SystemChecksScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final colors = context.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'SYSTEM CHECKS',
-          style: TextStyle(
-            fontFamily: AppFonts.headerFamily,
-            color: colors.onSurface,
-            fontSize: AppSizes.fontBig,
-            fontWeight: AppFonts.heavy,
-            letterSpacing: 2,
-          ),
-        ),
-        VSpace.x1,
-        Container(
-          height: AppSizes.borderWidth,
-          color: colors.onSurface.withValues(alpha: 0.3),
-        ),
-      ],
     );
   }
 

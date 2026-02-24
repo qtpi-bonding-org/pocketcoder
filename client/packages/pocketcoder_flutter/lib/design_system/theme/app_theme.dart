@@ -102,6 +102,7 @@ class AppTheme {
         bodyColor: palette.phosphorGreen, // Standard reading text
         displayColor: palette.vividGreen, // Headers / Highlights
         fontFamily: AppFonts.bodyFamily,
+        package: 'pocketcoder_flutter',
       ),
       colorScheme: ColorScheme(
         brightness: isDark ? Brightness.dark : Brightness.light,

@@ -30,6 +30,7 @@ class VimToast extends StatelessWidget {
             style: TextStyle(
               color: accentColor.withValues(alpha: 0.5),
               fontFamily: AppFonts.bodyFamily,
+              package: 'pocketcoder_flutter',
               fontSize: 10,
               height: 0.5,
             ),
@@ -42,6 +43,7 @@ class VimToast extends StatelessWidget {
               style: TextStyle(
                 color: accentColor,
                 fontFamily: AppFonts.bodyFamily,
+                package: 'pocketcoder_flutter',
                 fontSize: AppSizes.fontTiny,
                 fontWeight: AppFonts.heavy,
               ),
@@ -52,6 +54,7 @@ class VimToast extends StatelessWidget {
             style: TextStyle(
               color: accentColor.withValues(alpha: 0.5),
               fontFamily: AppFonts.bodyFamily,
+              package: 'pocketcoder_flutter',
               fontSize: 10,
               height: 0.5,
             ),

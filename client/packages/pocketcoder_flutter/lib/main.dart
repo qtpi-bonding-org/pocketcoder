@@ -26,6 +26,17 @@ class LocalBillingService implements BillingService {
   Future<void> restorePurchases() async {}
   @override
   Future<bool> purchase(String identifier) async => true;
+  @override
+  Future<List<BillingPackage>> getAvailablePackages() async {
+    return [
+      const BillingPackage(
+        identifier: 'local_premium',
+        title: 'Local Premium',
+        description: 'Mock premium package for local development.',
+        priceString: r'$13.37',
+      ),
+    ];
+  }
 }
 
 void main() async {

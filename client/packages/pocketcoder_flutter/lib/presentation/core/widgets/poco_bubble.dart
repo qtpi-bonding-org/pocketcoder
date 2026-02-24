@@ -49,6 +49,7 @@ class PocoBubble extends StatelessWidget {
                       msg,
                       style: TextStyle(
                         fontFamily: AppFonts.bodyFamily,
+                        package: 'pocketcoder_flutter',
                         color: colors.onSurface.withValues(alpha: 0.5),
                         fontSize: AppSizes.fontStandard,
                       ),
@@ -60,6 +61,7 @@ class PocoBubble extends StatelessWidget {
                 text: message,
                 style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
+                  package: 'pocketcoder_flutter',
                   color: colors.onSurface,
                   fontSize: AppSizes.fontStandard,
                 ),

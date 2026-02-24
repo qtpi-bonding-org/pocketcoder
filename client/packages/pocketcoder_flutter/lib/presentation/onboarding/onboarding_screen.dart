@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -11,8 +12,12 @@ import '../core/widgets/ascii_art.dart';
 import '../core/widgets/ascii_logo.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
+import '../core/widgets/terminal_text_field.dart';
 import '../core/widgets/poco_widget.dart';
 import '../core/widgets/ui_flow_listener.dart';
+import '../core/widgets/terminal_loading_indicator.dart';
+import '../../domain/status/i_status_repository.dart';
+import '../../domain/auth/i_auth_repository.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -24,6 +29,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _urlController = TextEditingController(text: 'http://127.0.0.1:8090');
 
   @override
   void initState() {
@@ -34,13 +40,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.');
       context.read<PocoCubit>().setExpression(PocoExpressions.scanning);
     });
+
+    _checkInitialStatus();
+  }
+
+  Future<void> _checkInitialStatus() async {
+    await getIt<IStatusRepository>().checkPocketBaseHealth();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _urlController.dispose();
     super.dispose();
+  }
+
+  void _handleLogin(AuthCubit cubit) {
+    final url = _urlController.text.trim();
+    if (url.isNotEmpty) {
+      getIt<IAuthRepository>().updateBaseUrl(url);
+    }
+    cubit.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
   }
 
   @override
@@ -88,36 +112,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           VSpace.x8,
                           PocoWidget(pocoSize: AppSizes.fontLarge),
                           VSpace.x4,
-                          _buildTextField(
-                            context: context,
+                          TerminalTextField(
+                            controller: _urlController,
+                            label: 'HOME SERVER',
+                            hint: 'http://127.0.0.1:8090',
+                          ),
+                          VSpace.x2,
+                          TerminalTextField(
                             controller: _emailController,
                             label: 'IDENTITY',
                             hint: 'ENTER EMAIL',
                           ),
                           VSpace.x2,
-                          _buildTextField(
-                            context: context,
+                          TerminalTextField(
                             controller: _passwordController,
                             label: 'PASSPHRASE',
                             hint: 'ENTER PASSWORD',
                             obscureText: true,
                             onSubmitted: (_) => isLoading
                                 ? null
-                                : context.read<AuthCubit>().login(
-                                      _emailController.text.trim(),
-                                      _passwordController.text,
-                                    ),
+                                : _handleLogin(context.read<AuthCubit>()),
                           ),
                           VSpace.x2,
                           if (isLoading)
-                            Text(
-                              'AUTHENTICATING...',
-                              style: TextStyle(
-                                fontFamily: AppFonts.bodyFamily,
-                                color: colors.onSurface,
-                                fontSize: AppSizes.fontSmall,
-                              ),
-                            ),
+                            const TerminalLoadingIndicator(
+                                label: 'AUTHENTICATING'),
                         ],
                       ),
                     ),
@@ -130,10 +149,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     label: isLoading ? 'PROCESSING...' : 'LOGIN',
                     onTap: isLoading
                         ? () {}
-                        : () => context.read<AuthCubit>().login(
-                              _emailController.text.trim(),
-                              _passwordController.text,
-                            ),
+                        : () => _handleLogin(context.read<AuthCubit>()),
                   ),
                 ],
               ),
@@ -141,66 +157,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required BuildContext context,
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    bool obscureText = false,
-    ValueChanged<String>? onSubmitted,
-  }) {
-    final colors = context.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.headerFamily,
-            color: colors.onSurface.withValues(alpha: 0.7),
-            fontSize: AppSizes.fontTiny,
-            fontWeight: AppFonts.heavy,
-          ),
-        ),
-        VSpace.x1,
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          onSubmitted: onSubmitted,
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: colors.onSurface,
-            fontSize: AppSizes.fontStandard,
-          ),
-          cursorColor: colors.onSurface,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: colors.onSurface.withValues(alpha: 0.3),
-              fontFamily: AppFonts.bodyFamily,
-              fontSize: AppSizes.fontSmall,
-            ),
-            fillColor: colors.surface,
-            filled: true,
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: colors.onSurface.withValues(alpha: 0.3),
-              ),
-              borderRadius: BorderRadius.zero,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: colors.onSurface,
-              ),
-              borderRadius: BorderRadius.zero,
-            ),
-            contentPadding: EdgeInsets.all(AppSizes.space * 2),
-          ),
-        ),
-      ],
     );
   }
 }

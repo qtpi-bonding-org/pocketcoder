@@ -39,6 +39,21 @@ melos:
         cd apps/app && flutter build apk --debug
       description: Build the App Store version (pocketcoder_app).
 
+    run_app:
+      run: |
+        cd apps/app && flutter run
+      description: Run the App Store (Pro) version.
+
+    run_foss:
+      run: |
+        cd apps/foss && flutter run
+      description: Run the FOSS version.
+
+    run_incognito:
+      run: |
+        cd apps/app && flutter run -d chrome --web-browser-flag="--incognito" --dart-define=SKIP_AUTH=true
+      description: Run the App Store version in Chrome Incognito mode (for onboarding/IAP testing).
+
     check_purity:
       run: ./scripts/purity_check.sh pocketcoder_foss
       description: Verify that the FOSS app has no proprietary dependencies.

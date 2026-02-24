@@ -7,6 +7,7 @@ import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_dialog.dart';
+import '../core/widgets/terminal_button.dart';
 import '../core/widgets/bios_frame.dart';
 import '../core/widgets/ui_flow_listener.dart';
 
@@ -120,8 +121,8 @@ class ActionsTab extends StatelessWidget {
                       ? Center(
                           child: Text('NO RULES DEFINED.',
                               style: TextStyle(
-                                  color: colors.onSurface
-                                      .withValues(alpha: 0.5))))
+                                  color:
+                                      colors.onSurface.withValues(alpha: 0.5))))
                       : ListView.builder(
                           itemCount: state.actions.length,
                           itemBuilder: (context, index) {
@@ -301,8 +302,8 @@ class TargetsTab extends StatelessWidget {
                       ? Center(
                           child: Text('NO TARGETS DEFINED.',
                               style: TextStyle(
-                                  color: colors.onSurface
-                                      .withValues(alpha: 0.5))))
+                                  color:
+                                      colors.onSurface.withValues(alpha: 0.5))))
                       : ListView.builder(
                           itemCount: state.targets.length,
                           itemBuilder: (context, index) {
