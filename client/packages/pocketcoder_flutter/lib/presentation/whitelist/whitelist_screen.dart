@@ -9,6 +9,8 @@ import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_dialog.dart';
 import '../core/widgets/terminal_button.dart';
 import '../core/widgets/bios_frame.dart';
+import '../core/widgets/terminal_header.dart';
+import '../core/widgets/terminal_loading_indicator.dart';
 import '../core/widgets/ui_flow_listener.dart';
 
 class WhitelistScreen extends StatelessWidget {
@@ -46,7 +48,7 @@ class _WhitelistViewState extends State<WhitelistView> {
             padding: EdgeInsets.all(AppSizes.space * 2),
             child: Column(
               children: [
-                _buildHeader(context),
+                const TerminalHeader(title: 'GATEKEEPER CONFIGURATION'),
                 VSpace.x2,
                 Expanded(
                   child: BiosFrame(
@@ -79,29 +81,6 @@ class _WhitelistViewState extends State<WhitelistView> {
       ),
     );
   }
-
-  Widget _buildHeader(BuildContext context) {
-    final colors = context.colorScheme;
-    return Column(
-      children: [
-        Text(
-          'GATEKEEPER CONFIGURATION',
-          style: TextStyle(
-            fontFamily: AppFonts.headerFamily,
-            color: colors.onSurface,
-            fontSize: AppSizes.fontBig,
-            fontWeight: AppFonts.heavy,
-            letterSpacing: 2,
-          ),
-        ),
-        VSpace.x1,
-        Container(
-          height: AppSizes.borderWidth,
-          color: colors.onSurface.withValues(alpha: 0.3),
-        ),
-      ],
-    );
-  }
 }
 
 class ActionsTab extends StatelessWidget {
@@ -116,7 +95,8 @@ class ActionsTab extends StatelessWidget {
           children: [
             Expanded(
               child: state.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: TerminalLoadingIndicator(label: 'LOADING RULES'))
                   : state.actions.isEmpty
                       ? Center(
                           child: Text('NO RULES DEFINED.',
@@ -297,7 +277,8 @@ class TargetsTab extends StatelessWidget {
           children: [
             Expanded(
               child: state.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: TerminalLoadingIndicator(label: 'LOADING TARGETS'))
                   : state.targets.isEmpty
                       ? Center(
                           child: Text('NO TARGETS DEFINED.',
