@@ -11,9 +11,11 @@ import '../../application/system/status_state.dart';
 import '../../app_router.dart';
 import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
-import '../core/widgets/poco_animator.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_button.dart';
+import '../core/widgets/terminal_header.dart';
+import '../core/widgets/bios_section.dart';
+import '../core/widgets/terminal_loading_indicator.dart';
 import '../core/widgets/ui_flow_listener.dart';
 
 class TerminalScreen extends StatelessWidget {
@@ -71,8 +73,10 @@ class _TerminalViewState extends State<_TerminalView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(context),
+                const TerminalHeader(title: 'TERMINAL MIRROR'),
                 VSpace.x3,
+                _buildStatus(context),
+                VSpace.x2,
                 Expanded(
                   child: Container(
                     width: double.infinity,
@@ -87,9 +91,9 @@ class _TerminalViewState extends State<_TerminalView> {
                         final cubit = context.read<SshTerminalCubit>();
 
                         if (state.isConnecting) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: colors.primary,
+                          return const Center(
+                            child: TerminalLoadingIndicator(
+                              label: 'ESTABLISHING SSH LINK',
                             ),
                           );
                         }
@@ -157,64 +161,39 @@ class _TerminalViewState extends State<_TerminalView> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final colors = context.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: AppSizes.space),
-            child: Column(
-              children: [
-                PocoAnimator(fontSize: AppSizes.fontBig),
-                VSpace.x0_5,
-                Text(
-                  'Terminal Mirror',
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: colors.onSurface.withValues(alpha: 0.8),
-                    fontFamily: AppFonts.bodyFamily,
-                    fontSize: AppSizes.fontTiny,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
+  Widget _buildStatus(BuildContext context) {
+    return BlocBuilder<StatusCubit, StatusState>(builder: (context, state) {
+      final colors = context.colorScheme;
+      final isConnected = state.isConnected;
+      return BiosSection(
+        title: 'CONNECTION_STATUS',
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'SSH LINK: SANDBOX:2222',
+              style: TextStyle(
+                fontFamily: AppFonts.bodyFamily,
+                color: colors.onSurface,
+                fontSize: AppSizes.fontMini,
+                package: 'pocketcoder_flutter',
+              ),
             ),
-          ),
-        ),
-        VSpace.x2,
-        BlocBuilder<StatusCubit, StatusState>(builder: (context, state) {
-          final isConnected = state.isConnected;
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'SSH SESSION: sandbox:2222',
-                style: context.textTheme.titleSmall?.copyWith(
-                  color: colors.onSurface,
-                  letterSpacing: 2,
-                ),
+            Text(
+              '[ ${isConnected ? 'ONLINE' : 'OFFLINE'} ]',
+              style: TextStyle(
+                fontFamily: AppFonts.bodyFamily,
+                color: isConnected
+                    ? context.terminalColors.warning
+                    : context.terminalColors.danger,
+                fontSize: AppSizes.fontMini,
+                fontWeight: AppFonts.heavy,
+                package: 'pocketcoder_flutter',
               ),
-              Text(
-                '[ ${isConnected ? 'ONLINE' : 'OFFLINE'} ]',
-                style: TextStyle(
-                  color: isConnected
-                      ? context.terminalColors.warning
-                      : context.terminalColors.danger,
-                  fontSize: AppSizes.fontMini,
-                  letterSpacing: 1,
-                ),
-              ),
-            ],
-          );
-        }),
-        VSpace.x1,
-        Container(
-          height: 1,
-          width: double.infinity,
-          color: colors.onSurface.withValues(alpha: 0.3),
+            ),
+          ],
         ),
-      ],
-    );
+      );
+    });
   }
 }

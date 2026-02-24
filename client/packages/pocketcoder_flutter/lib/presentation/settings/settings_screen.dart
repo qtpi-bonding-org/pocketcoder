@@ -5,6 +5,7 @@ import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/bios_frame.dart';
 import '../core/widgets/bios_list_tile.dart';
+import '../core/widgets/terminal_header.dart';
 import '../../app_router.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -35,54 +36,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: colors.surface,
       body: ScanlineWidget(
         child: SafeArea(
-          child: Center(
-            child: BiosFrame(
-              title: 'SYSTEM SETUP UTILITY',
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (int i = 0; i < _options.length; i++)
-                    BiosListTile(
-                      label: _options[i].$1,
-                      value: _options[i].$2,
-                      isSelected: i == _selectedIndex,
-                      onTap: () {
-                        setState(() => _selectedIndex = i);
-                        final option = _options[i].$1;
-                        if (option == 'AGENT OBSERVABILITY') {
-                          context.pushNamed(RouteNames.agentObservability);
-                        } else if (option == 'MCP MANAGEMENT') {
-                          context.pushNamed(RouteNames.mcpManagement);
-                        } else if (option == 'SOP MANAGEMENT') {
-                          context.pushNamed(RouteNames.sopManagement);
-                        } else if (option == 'SYSTEM CHECKS') {
-                          context.pushNamed(RouteNames.systemChecks);
-                        } else if (option == 'WHITELIST RULES') {
-                          context.pushNamed(RouteNames.whitelist);
-                        } else if (option == 'AGENT REGISTRY') {
-                          context.pushNamed(RouteNames.aiRegistry);
-                        } else if (option == 'PUSH NOTIFICATIONS') {
-                          AppNavigation.toPaywall(context);
-                        }
+          child: Padding(
+            padding: EdgeInsets.all(AppSizes.space * 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const TerminalHeader(title: 'SYSTEM SETUP UTILITY'),
+                VSpace.x3,
+                Expanded(
+                  child: BiosFrame(
+                    title: 'CONFIGURATION PARAMETERS',
+                    child: ListView.builder(
+                      itemCount: _options.length,
+                      itemBuilder: (context, i) {
+                        return BiosListTile(
+                          label: _options[i].$1,
+                          value: _options[i].$2,
+                          isSelected: i == _selectedIndex,
+                          onTap: () {
+                            setState(() => _selectedIndex = i);
+                            final option = _options[i].$1;
+                            if (option == 'AGENT OBSERVABILITY') {
+                              context.pushNamed(RouteNames.agentObservability);
+                            } else if (option == 'MCP MANAGEMENT') {
+                              context.pushNamed(RouteNames.mcpManagement);
+                            } else if (option == 'SOP MANAGEMENT') {
+                              context.pushNamed(RouteNames.sopManagement);
+                            } else if (option == 'SYSTEM CHECKS') {
+                              context.pushNamed(RouteNames.systemChecks);
+                            } else if (option == 'WHITELIST RULES') {
+                              context.pushNamed(RouteNames.whitelist);
+                            } else if (option == 'AGENT REGISTRY') {
+                              context.pushNamed(RouteNames.aiRegistry);
+                            } else if (option == 'PUSH NOTIFICATIONS') {
+                              AppNavigation.toPaywall(context);
+                            }
+                          },
+                        );
                       },
                     ),
-                  VSpace.x2,
-                  Padding(
-                    padding: EdgeInsets.all(AppSizes.space),
-                    child: Text(
-                      'Use ARROW KEYS to navigate.\nPress ENTER to change value.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: colors.onSurface,
-                        fontSize: AppSizes.fontMini,
-                        package: 'pocketcoder_flutter',
-                      ),
+                  ),
+                ),
+                VSpace.x2,
+                Padding(
+                  padding: EdgeInsets.all(AppSizes.space),
+                  child: Text(
+                    'Use ARROW KEYS to navigate.\nPress ENTER to change value.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: AppFonts.bodyFamily,
+                      color: colors.onSurface.withValues(alpha: 0.7),
+                      fontSize: AppSizes.fontTiny,
+                      package: 'pocketcoder_flutter',
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
