@@ -18,6 +18,7 @@ class TerminalDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
+      elevation: 0,
       insetPadding: EdgeInsets.all(AppSizes.space * 2),
       child: BiosFrame(
         title: title,
@@ -25,60 +26,19 @@ class TerminalDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            content,
+            Padding(
+              padding: EdgeInsets.all(AppSizes.space * 2),
+              child: content,
+            ),
             VSpace.x2,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: actions,
+            Padding(
+              padding: EdgeInsets.all(AppSizes.space * 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: actions,
+              ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class TerminalButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final bool isPrimary;
-  final Color? color;
-
-  const TerminalButton({
-    super.key,
-    required this.label,
-    required this.onTap,
-    this.isPrimary = true,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final accentColor =
-        color ?? (isPrimary ? colors.primary : colors.onSurface);
-    final textColor = colors.surface; // True Black
-    final bgColor = accentColor;
-
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.space * 2,
-          vertical: AppSizes.space,
-        ),
-        decoration: BoxDecoration(
-          color: bgColor,
-          border: Border.all(color: accentColor, width: AppSizes.borderWidth),
-        ),
-        child: Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: textColor,
-            fontSize: AppSizes.fontTiny,
-            fontWeight: AppFonts.heavy,
-          ),
         ),
       ),
     );

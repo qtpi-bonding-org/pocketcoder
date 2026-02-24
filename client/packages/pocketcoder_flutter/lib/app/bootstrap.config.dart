@@ -16,6 +16,8 @@ import 'package:pocketbase/pocketbase.dart' as _i169;
 import 'package:pocketbase_drift/pocketbase_drift.dart' as _i824;
 import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart'
     as _i616;
+import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart'
+    as _i304;
 import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart'
     as _i907;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
@@ -41,6 +43,8 @@ import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart'
 import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart'
     as _i536;
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart' as _i50;
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart'
+    as _i619;
 import 'package:pocketcoder_flutter/domain/communication/i_communication_repository.dart'
     as _i215;
 import 'package:pocketcoder_flutter/domain/evolution/i_evolution_repository.dart'
@@ -138,6 +142,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i976.AppExceptionKeyMapper());
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
     gh.lazySingleton<_i653.ILoadingService>(() => _i976.AppLoadingService());
+    gh.factory<_i304.BillingCubit>(
+        () => _i304.BillingCubit(gh<_i619.BillingService>()));
     gh.lazySingleton<_i653.ILocalizationService>(
         () => _i1000.AppLocalizationService());
     gh.lazySingleton<_i589.UserDao>(

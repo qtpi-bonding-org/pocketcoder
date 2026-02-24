@@ -7,6 +7,7 @@ import 'bootstrap.config.dart';
 import '../infrastructure/core/connectivity_override.dart';
 import '../domain/notifications/push_service.dart';
 import '../domain/billing/billing_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Global service locator instance
 
@@ -27,6 +28,14 @@ Future<void> bootstrap({
   required BillingService billingService,
 }) async {
   debugPrint('Bootstrap: Starting...');
+
+  // 0. Load environment variables
+  try {
+    await dotenv.load(fileName: ".env");
+    debugPrint('Bootstrap: .env loaded');
+  } catch (e) {
+    debugPrint('Bootstrap: Warning - No .env file found: $e');
+  }
 
   // Fix for Chrome Incognito offline detection bug in connectivity_plus
   if (kIsWeb) {
