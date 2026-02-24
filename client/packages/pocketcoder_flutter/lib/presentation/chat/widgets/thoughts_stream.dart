@@ -102,7 +102,7 @@ class ThoughtsStream extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 4.0),
         child: Text(
           'FILE [${filePart.mime}]: ${filePart.filename ?? filePart.url}',
-          style: TextStyle(color: colors.tertiary, fontSize: 9),
+          style: TextStyle(color: colors.secondary, fontSize: 10),
         ),
       ),
       stepStart: (startPart) => Padding(
@@ -126,11 +126,12 @@ class ThoughtsStream extends StatelessWidget {
 
   Color _getToolColor(BuildContext context, ToolState state) {
     final colors = context.colorScheme;
+    final terminalColors = context.terminalColors;
     return state.map(
-      pending: (_) => colors.onSurface.withValues(alpha: 0.5),
-      running: (_) => colors.primary,
-      completed: (_) => Colors.green, // Keep green for success
-      error: (_) => colors.error,
+      pending: (_) => colors.onSurface.withValues(alpha: 0.3),
+      running: (_) => colors.secondary, // Phosphor Green
+      completed: (_) => colors.primary, // Vivid Green
+      error: (_) => terminalColors.danger, // Danger Red
     );
   }
 
@@ -144,8 +145,9 @@ class ThoughtsStream extends StatelessWidget {
     return Text(
       label,
       style: TextStyle(
-        color: _getToolColor(context, state).withValues(alpha: 0.6),
+        color: _getToolColor(context, state),
         fontSize: 8,
+        fontWeight: FontWeight.bold,
       ),
     );
   }
@@ -159,11 +161,12 @@ class ThoughtsStream extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _jsonText(context, s.input),
-          const Divider(height: 8, color: Colors.white12),
+          Divider(height: 8, color: colors.onSurface.withValues(alpha: 0.1)),
           Text(
             s.output,
-            style: const TextStyle(color: Colors.green, fontSize: 9),
-            maxLines: 5,
+            style: TextStyle(
+                color: colors.secondary, fontSize: 10), // Phosphor Green
+            maxLines: 15,
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -172,10 +175,10 @@ class ThoughtsStream extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _jsonText(context, s.input),
-          const Divider(height: 8, color: Colors.white12),
+          Divider(height: 8, color: colors.onSurface.withValues(alpha: 0.1)),
           Text(
             s.error,
-            style: TextStyle(color: colors.error, fontSize: 9),
+            style: TextStyle(color: colors.error, fontSize: 10),
           ),
         ],
       ),

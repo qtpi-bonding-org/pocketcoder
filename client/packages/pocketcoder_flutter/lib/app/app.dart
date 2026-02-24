@@ -43,8 +43,9 @@ class App extends StatelessWidget {
             ),
           ],
           child: MaterialApp.router(
-            title: 'Test App',
+            title: 'PocketCoder',
             routerConfig: AppRouter.router,
+            scaffoldMessengerKey: AppRouter.messengerKey,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode:

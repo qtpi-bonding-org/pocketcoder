@@ -37,17 +37,14 @@ class ArtifactScreen extends StatelessWidget {
       bottomNavigationBar: TerminalFooter(
         actions: [
           TerminalAction(
-            keyLabel: 'F1',
             label: 'DASHBOARD',
             onTap: () => context.goNamed(RouteNames.home),
           ),
           TerminalAction(
-            keyLabel: 'F3',
             label: 'SETTINGS',
             onTap: () => context.goNamed(RouteNames.settings),
           ),
           TerminalAction(
-            keyLabel: 'ESC',
             label: 'BACK',
             onTap: () => context.pop(),
           ),

@@ -18,6 +18,7 @@ class TerminalInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final terminalColors = context.terminalColors;
     return Container(
       padding: EdgeInsets.symmetric(
           horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
@@ -29,7 +30,7 @@ class TerminalInput extends StatelessWidget {
           Text(
             '$prompt ',
             style: TextStyle(
-              color: enabled ? colors.onSurface : Colors.grey,
+              color: enabled ? terminalColors.attention : Colors.grey,
               fontFamily: AppFonts.bodyFamily,
               fontSize: AppSizes.fontStandard,
               fontWeight: AppFonts.heavy,
@@ -41,11 +42,11 @@ class TerminalInput extends StatelessWidget {
               controller: controller,
               onSubmitted: (_) => onSubmitted(),
               style: TextStyle(
-                color: colors.onSurface,
+                color: terminalColors.attention,
                 fontFamily: AppFonts.bodyFamily,
                 fontSize: AppSizes.fontStandard,
               ),
-              cursorColor: colors.onSurface,
+              cursorColor: terminalColors.attention,
               cursorWidth: AppSizes.fontTiny, // Block style
               decoration: const InputDecoration(
                 border: InputBorder.none,
