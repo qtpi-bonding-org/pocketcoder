@@ -5,7 +5,8 @@
 # Usage: source helpers/wait.sh
 
 # Configuration defaults
-DEFAULT_TIMEOUT="${TEST_TIMEOUT:-60}"
+TIMEOUT_MULTIPLIER="${TIMEOUT_MULTIPLIER:-1}"
+DEFAULT_TIMEOUT=$(((${TEST_TIMEOUT:-60}) * TIMEOUT_MULTIPLIER))
 DEFAULT_RETRY_COUNT="${TEST_RETRY_COUNT:-3}"
 DEFAULT_RETRY_DELAY="${TEST_RETRY_DELAY:-2}"
 POLL_INTERVAL="${POLL_INTERVAL:-1}"
@@ -218,7 +219,7 @@ wait_for_container_health() {
 # Returns: 0 on success, 1 on timeout
 wait_for_tmux_session() {
     local session="$1"
-    local timeout="${2:-30}"
+    local timeout=$(((${2:-30}) * TIMEOUT_MULTIPLIER))
     
     echo "Waiting for tmux session $session (timeout: ${timeout}s)"
     
@@ -279,7 +280,7 @@ wait_for_sse_stream() {
 wait_for_message_status() {
     local message_id="$1"
     local expected_status="$2"
-    local timeout="${3:-60}"
+    local timeout=$(((${3:-60}) * TIMEOUT_MULTIPLIER))
     
     echo "Waiting for message $message_id to have status: $expected_status (timeout: ${timeout}s)"
     
@@ -447,7 +448,7 @@ wait_for_chat_turn() {
 # Usage: assistant_id=$(wait_for_assistant_message "abc123" 60 "old_msg_id")
 wait_for_assistant_message() {
     local chat_id="$1"
-    local timeout="${2:-60}"
+    local timeout=$(((${2:-60}) * TIMEOUT_MULTIPLIER))
     local exclude_id="$3"
     
     echo "Waiting for assistant message in chat $chat_id (timeout: ${timeout}s)" >&2
@@ -502,68 +503,20 @@ wait_for_assistant_message() {
                     last_status="$status"
                 fi
 
-                # Priority 1: Message is completed/failed AND has text or tool output
-                if [[ "$status" =~ ^(completed|failed)$ ]]; then
-                    if [ -n "$has_text" ] && [ "$has_text" != "null" ]; then
-                        local elapsed=$(($(date +%s) - start_time))
-                        echo "  ✓ Assistant message $msg_id completed with content after ${elapsed}s" >&2
-                        echo "$msg_id"
-                        return 0
-                    elif [ -n "$has_tool_output" ] && [ "$has_tool_output" != "null" ]; then
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         local elapsed=$(($(date +%s) - start_time))
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         echo "  ✓ Assistant message $msg_id completed with tool output after ${elapsed}s" >&2
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         echo "$msg_id"
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         return 0
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                     else
-                        # It's completed but no text in the current event.
-                        # Re-fetch the message directly from DB — the relay may have kept the
-                        # text parts from an earlier partial-update event.
-                        local fresh_msg
-                        fresh_msg=$(curl -s "$PB_URL/api/collections/messages/records/$msg_id" \
-                            -H "Authorization: $USER_TOKEN" 2>/dev/null)
-                        local fresh_text
-                        fresh_text=$(echo "$fresh_msg" | jq -r '.parts[]? | select(.type == "text") | .text // empty' 2>/dev/null)
-                        local fresh_tool_output
-                        fresh_tool_output=$(echo "$fresh_msg" | jq -r '.parts[]? | select(.type == "tool") | .state.output // .state.metadata.output // empty' 2>/dev/null | head -1)
-                        
-                        if [ -n "$fresh_text" ] && [ "$fresh_text" != "null" ]; then
-                            local elapsed=$(($(date +%s) - start_time))
-                            echo "  ✓ Assistant message $msg_id completed (text found in DB) after ${elapsed}s" >&2
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             echo "$msg_id"
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             return 0
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                         elif [ -n "$fresh_tool_output" ] && [ "$fresh_tool_output" != "null" ]; then
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             local elapsed=$(($(date +%s) - start_time))
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             echo "  ✓ Assistant message $msg_id completed (tool output found in DB) after ${elapsed}s" >&2
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             echo "$msg_id"
-# COMMENTED OUT - Let logic fall through to comprehensive search below
-#                             return 0
-                        fi
-                        echo "  ℹ Message $msg_id is completed but has no text content, continuing to check other messages..." >&2
-                    fi
-                fi
-                
-                # Priority 2: Message is processing but has text/tool output AND turn is back to user
-                # (Handles race condition where turn is flipped but status not updated)
+                # check current turn
                 local turn
                 turn=$(get_chat_turn "$chat_id")
+
                 if [ "$turn" = "user" ]; then
+                    # Turn is back to user, we can pick this message if it has content
                     if [ -n "$has_text" ] && [ "$has_text" != "null" ]; then
                         local elapsed=$(($(date +%s) - start_time))
-                        echo "  ✓ Assistant message $msg_id has content and turn is user after ${elapsed}s" >&2
+                        echo "  ✓ Assistant message $msg_id has text content and turn is user after ${elapsed}s" >&2
                         echo "$msg_id"
                         return 0
-                    elif [ -n "$has_tool_output" ] && [ "$has_tool_output" != "null" ]; then
+                    fi
+                    
+                    if [ -n "$has_tool_output" ] && [ "$has_tool_output" != "null" ]; then
                         local elapsed=$(($(date +%s) - start_time))
                         echo "  ✓ Assistant message $msg_id has tool output and turn is user after ${elapsed}s" >&2
                         echo "$msg_id"
@@ -571,14 +524,16 @@ wait_for_assistant_message() {
                     fi
                 fi
             done
+        fi
+
             
-            # If we get here and turn is back to user, check if ANY message has text (even if not completed)
-            # This handles the case where OpenCode creates multiple messages and we need to find the one with content
-            # PRIORITY: Text messages first, then tool-only messages
+            # If we get here and turn is back to user, do a final comprehensive check for ANY message with text
             local turn
             turn=$(get_chat_turn "$chat_id")
             if [ "$turn" = "user" ]; then
-                echo "  ℹ Turn is user, searching all messages for text content..." >&2
+                echo "  ℹ Turn is user, performing exhaustive search for content..." >&2
+                
+                # ... (rest of the logic survives or is replaced)
                 
                 # First pass: Look for messages with text content (with retry for late-arriving messages)
                 local text_search_attempts=0
@@ -721,7 +676,6 @@ wait_for_assistant_message() {
                 echo "$msg_id"
                 return 0
             fi
-        fi
         
         # Check for pending permissions and auto-approve them (test environment only)
         # This is outside the loop above to ensure we don't block

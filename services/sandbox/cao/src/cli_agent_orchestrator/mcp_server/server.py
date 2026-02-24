@@ -580,6 +580,18 @@ def _assign_impl(
         # Send message immediately
         _send_direct_input(terminal_id, message)
 
+        # Wait a few seconds to capture subagent_id (OpenCode session ID)
+        # This is critical for the Relay to map the subagent back to the chat.
+        if tmux_session_name and tmux_window_name:
+            print(f"🔍 [CAO-MCP] Polling for subagent_id for {terminal_id}...")
+            poll_start = time.time()
+            while time.time() - poll_start < 5.0:
+                subagent_id = _extract_session_id_from_pane(tmux_session_name, tmux_window_name)
+                if subagent_id:
+                    print(f"✅ [CAO-MCP] Captured subagent_id: {subagent_id}")
+                    break
+                time.sleep(0.5)
+
         print(f"✅ [CAO-MCP] Assign success: terminal_id={terminal_id}")
         return HandoffResult(
             success=True,

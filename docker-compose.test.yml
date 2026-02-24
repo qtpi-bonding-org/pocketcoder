@@ -27,7 +27,7 @@ services:
       opencode:
         condition: service_healthy
       pocketbase:
-        condition: service_started
+        condition: service_healthy
     volumes:
       # Mount test files for live editing during development
       - ./tests:/tests:ro
