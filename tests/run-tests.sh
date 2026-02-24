@@ -140,21 +140,31 @@ stop_services() {
 # Run tests
 run_tests() {
     local test_path="$1"
+    shift || true
+    local extra_args="$*"
+
+    # Strip leading tests/ if present to handle both 'tests/integration/...' and 'integration/...'
+    test_path="${test_path#tests/}"
+    
+    # Build and start services
+    start_services
     
     if [ -z "$test_path" ]; then
         # Run all tests
         log_info "Running all tests..."
         docker compose "${COMPOSE_FILES[@]}" run --rm \
+            -e TIMEOUT_MULTIPLIER="${TIMEOUT_MULTIPLIER:-1}" \
             --entrypoint bash \
             "$TEST_SERVICE" \
-            -c "bats --tap --recursive $TEST_DIR/health $TEST_DIR/connection $TEST_DIR/integration"
+            -c "bats --tap --recursive $extra_args $TEST_DIR/health $TEST_DIR/connection $TEST_DIR/integration"
     else
         # Run specific test path
         log_info "Running tests: $test_path"
         docker compose "${COMPOSE_FILES[@]}" run --rm \
+            -e TIMEOUT_MULTIPLIER="${TIMEOUT_MULTIPLIER:-1}" \
             --entrypoint bash \
             "$TEST_SERVICE" \
-            -c "bats --tap --recursive $TEST_DIR/$test_path"
+            -c "bats --tap --recursive $extra_args $TEST_DIR/$test_path"
     fi
 }
 
@@ -179,14 +189,12 @@ main() {
     mkdir -p "$log_dir"
     
     log_info "Test summary will be saved to $log_file"
-    
-    # Start services
-    start_services
-    
-    # Run tests and capture output
     echo "=== Test Run: $timestamp ===" > "$log_file"
     echo "=== Command: run-tests.sh $test_path ===" >> "$log_file"
     echo "" >> "$log_file"
+
+    # Ensure a clean slate before starting
+    stop_services
     
     # Run tests and check for failures in TAP output
     local exit_code=0
@@ -206,7 +214,7 @@ main() {
     capture_logs "$log_file"
     
     # Cleanup
-    # stop_services
+    stop_services
     
     exit $exit_code
 }

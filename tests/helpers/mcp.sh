@@ -146,7 +146,7 @@ mcp_server_disable() {
 # Returns: newline-separated sorted container names on stdout
 # ---------------------------------------------------------------------------
 snapshot_containers() {
-    docker ps --format '{{.Names}}' | sort
+    docker ps --format '{{.Names}} ({{.Image}})' | sort
 }
 
 # ---------------------------------------------------------------------------
