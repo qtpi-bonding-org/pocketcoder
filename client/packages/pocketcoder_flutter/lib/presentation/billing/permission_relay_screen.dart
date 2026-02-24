@@ -10,26 +10,25 @@ import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/terminal_button.dart';
 import '../core/widgets/ui_flow_listener.dart';
-import '../core/widgets/typewriter_text.dart';
 import '../core/widgets/terminal_header.dart';
 import '../core/widgets/terminal_loading_indicator.dart';
 import '../core/widgets/bios_section.dart';
 import '../../design_system/theme/app_theme.dart';
 
-class PushNotificationsScreen extends StatelessWidget {
-  const PushNotificationsScreen({super.key});
+class PermissionRelayScreen extends StatelessWidget {
+  const PermissionRelayScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<BillingCubit>()..loadOfferings(),
-      child: const PushNotificationsView(),
+      child: const PermissionRelayView(),
     );
   }
 }
 
-class PushNotificationsView extends StatelessWidget {
-  const PushNotificationsView({super.key});
+class PermissionRelayView extends StatelessWidget {
+  const PermissionRelayView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +39,10 @@ class PushNotificationsView extends StatelessWidget {
         backgroundColor: Colors.black,
         body: ScanlineWidget(
           child: BiosFrame(
-            title: 'RELAY CONFIG',
+            title: 'PERMISSION RELAY',
             child: Column(
               children: [
-                TerminalHeader(title: 'PUSH NOTIFICATIONS'),
+                const TerminalHeader(title: 'PERMISSION RELAY'),
                 VSpace.x2,
                 Expanded(
                   child: SingleChildScrollView(
@@ -51,19 +50,12 @@ class PushNotificationsView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Center(
-                          child: TypewriterText(
-                            text: 'ESTABLISHING SECURE NOTIFICATION CHANNEL...',
-                            speed: Duration(milliseconds: 30),
-                          ),
-                        ),
-                        VSpace.x3,
                         BlocBuilder<BillingCubit, BillingState>(
                           builder: (context, state) {
                             if (state.isLoading) {
                               return const Center(
                                 child: TerminalLoadingIndicator(
-                                  label: 'SEARCHING FOR CONFIGURATION...',
+                                  label: 'CHECKING RELAY STATUS...',
                                 ),
                               );
                             }
@@ -77,7 +69,7 @@ class PushNotificationsView extends StatelessWidget {
                         ),
                         VSpace.x3,
                         Text(
-                          'AVAILABILITY NOTICE:',
+                          'FUNCTIONAL OVERVIEW:',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: colors.onSurface,
@@ -85,7 +77,7 @@ class PushNotificationsView extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Push Notifications keep you synchronized with your agent\'s background reasoning. Select a service provider below to activate the relay.',
+                          'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.',
                           style: TextStyle(
                             fontSize: AppSizes.fontMini,
                             color: colors.onSurface.withValues(alpha: 0.7),
@@ -99,7 +91,7 @@ class PushNotificationsView extends StatelessWidget {
                 TerminalFooter(
                   actions: [
                     TerminalAction(
-                      label: 'RESTORE LICENSE',
+                      label: 'RESTORE',
                       onTap: () =>
                           context.read<BillingCubit>().restorePurchases(),
                     ),
@@ -123,7 +115,7 @@ class PushNotificationsView extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            '>>> STATUS: ACTIVE <<<',
+            '>>> RELAY ACTIVE <<<',
             style: TextStyle(
               color: colors.primary,
               fontWeight: FontWeight.bold,
@@ -134,12 +126,12 @@ class PushNotificationsView extends StatelessWidget {
           AsciiFace.happy(fontSize: 24),
           VSpace.x2,
           const Text(
-            'PUSH RELAY SUBSYSTEMS NOMINAL',
+            'SUBSYSTEMS NOMINAL',
             style: TextStyle(package: 'pocketcoder_flutter'),
           ),
           VSpace.x1,
           Text(
-            '1,000 NOTIFICATIONS PER DAY ALLOCATED',
+            'REMOTE AUTHORIZATION CAPACITY: UNLIMITED',
             style: TextStyle(
               fontSize: AppSizes.fontMini,
               color: colors.onSurface.withValues(alpha: 0.7),
@@ -152,7 +144,6 @@ class PushNotificationsView extends StatelessWidget {
   }
 
   Widget _buildSetupOptions(BuildContext context, BillingState state) {
-    // Filter packages based on type to separate FOSS and App
     final paywallPackages =
         state.packages.where((p) => !p.identifier.contains('foss')).toList();
     final fossPackages =
@@ -162,7 +153,7 @@ class PushNotificationsView extends StatelessWidget {
       children: [
         if (paywallPackages.isNotEmpty) ...[
           BiosSection(
-            title: 'POCKETCODER PRO RELAY',
+            title: 'RELAY CONFIGURATION',
             child: Column(
               children:
                   paywallPackages.map((pkg) => _PackageCard(pkg: pkg)).toList(),
@@ -172,8 +163,8 @@ class PushNotificationsView extends StatelessWidget {
         ],
         if (fossPackages.isNotEmpty || paywallPackages.isEmpty) ...[
           BiosSection(
-            title: 'SOVEREIGN NTFY SETUP',
-            child: _NtfySetupCard(),
+            title: 'NTFY RELAY',
+            child: const _NtfySetupCard(),
           ),
         ],
       ],
@@ -204,7 +195,7 @@ class _PackageCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'PRO SUBSCRIPTION',
+                'PERMISSION RELAY',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   package: 'pocketcoder_flutter',
@@ -232,7 +223,7 @@ class _PackageCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: TerminalButton(
-              label: 'ACTIVATE PRO RELAY',
+              label: 'ACTIVATE RELAY',
               onTap: () =>
                   context.read<BillingCubit>().purchase(pkg.identifier),
             ),
@@ -260,7 +251,7 @@ class _NtfySetupCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'SELF-HOSTED / PRIVATE PUSH',
+            'NTFY RELAY',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               package: 'pocketcoder_flutter',
@@ -268,7 +259,7 @@ class _NtfySetupCard extends StatelessWidget {
             ),
           ),
           Text(
-            'Connect to your own NTFY server for free, unlimited notifications. No registration required.',
+            'Connect to your own NTFY server for free, unlimited relays without registration.',
             style: TextStyle(
               fontSize: AppSizes.fontMini,
               package: 'pocketcoder_flutter',
@@ -278,7 +269,7 @@ class _NtfySetupCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: TerminalButton(
-              label: 'CONFIGURE NTFY',
+              label: 'CONFIGURE',
               isPrimary: false,
               onTap: () {
                 // TODO: Open NTFY settings

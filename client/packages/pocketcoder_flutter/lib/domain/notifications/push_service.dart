@@ -4,10 +4,10 @@ abstract class PushService {
   /// Initialize the push service.
   Future<void> initialize();
 
-  /// Request notification permissions.
+  /// Request user authorization for permission relays.
   Future<bool> requestPermissions();
 
-  /// Stream of incoming push notifications.
+  /// Stream of incoming permission relay signals.
   Stream<PushNotificationPayload> get notificationStream;
 
   /// Get the push token for the device.
