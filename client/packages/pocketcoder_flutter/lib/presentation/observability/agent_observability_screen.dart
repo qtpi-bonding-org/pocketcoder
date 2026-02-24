@@ -3,6 +3,8 @@ import '../../design_system/theme/app_theme.dart';
 import '../core/widgets/scanline_widget.dart';
 import '../core/widgets/terminal_footer.dart';
 import '../core/widgets/bios_frame.dart';
+import '../core/widgets/terminal_header.dart';
+import '../core/widgets/bios_section.dart';
 import 'package:go_router/go_router.dart';
 
 class AgentObservabilityScreen extends StatelessWidget {
@@ -21,33 +23,36 @@ class AgentObservabilityScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildHeader(context),
+                const TerminalHeader(title: 'AGENT OBSERVABILITY'),
                 VSpace.x2,
                 Expanded(
                   child: BiosFrame(
                     title: 'ACTIVE SESSIONS',
-                    child: ListView(
-                      children: [
-                        _buildAgentRow(
-                          context,
-                          name: 'POCO-ORCHESTRATOR',
-                          status: 'IDLE',
-                          window: '0',
-                          isMain: true,
-                        ),
-                        _buildAgentRow(
-                          context,
-                          name: 'DEVELOPER-7FB2',
-                          status: 'RUNNING',
-                          window: '1',
-                        ),
-                        _buildAgentRow(
-                          context,
-                          name: 'RESEARCHER-A411',
-                          status: 'THINKING',
-                          window: '2',
-                        ),
-                      ],
+                    child: BiosSection(
+                      title: 'CONNECTED AGENTS',
+                      child: Column(
+                        children: [
+                          _buildAgentRow(
+                            context,
+                            name: 'POCO-ORCHESTRATOR',
+                            status: 'IDLE',
+                            window: '0',
+                            isMain: true,
+                          ),
+                          _buildAgentRow(
+                            context,
+                            name: 'DEVELOPER-7FB2',
+                            status: 'RUNNING',
+                            window: '1',
+                          ),
+                          _buildAgentRow(
+                            context,
+                            name: 'RESEARCHER-A411',
+                            status: 'THINKING',
+                            window: '2',
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -68,30 +73,6 @@ class AgentObservabilityScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final colors = context.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'AGENT OBSERVABILITY',
-          style: TextStyle(
-            fontFamily: AppFonts.headerFamily,
-            color: colors.onSurface,
-            fontSize: AppSizes.fontBig,
-            fontWeight: AppFonts.heavy,
-            letterSpacing: 2,
-          ),
-        ),
-        VSpace.x1,
-        Container(
-          height: AppSizes.borderWidth,
-          color: colors.onSurface.withValues(alpha: 0.3),
-        ),
-      ],
     );
   }
 
