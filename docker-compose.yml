@@ -26,6 +26,12 @@ services:
     command: >
       sh -c "echo '⏳ Waiting for OpenCode to be ready...' && while ! curl -I -s --connect-timeout 2 http://opencode:3000 > /dev/null; do echo 'OpenCode not yet ready, retrying in 1 second...' && sleep 1; done; echo '🚀 OpenCode is ready. Starting PocketBase...' && /app/pocketbase serve --http=0.0.0.0:8090"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     networks:
       - pocketcoder-dashboard
       - pocketcoder-docker
