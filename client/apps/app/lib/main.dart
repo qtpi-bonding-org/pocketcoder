@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app/app.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:app/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inject Pro-specific services
-  await bootstrap(
-    pushService: FcmPushService(),
-    billingService: RevenueCatBillingService(),
-  );
+  getIt.registerSingleton<PushService>(FcmPushService());
+  getIt.registerSingleton<BillingService>(RevenueCatBillingService());
+
+  await bootstrap();
 
   runApp(const App());
 }

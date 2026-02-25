@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart';
@@ -10,28 +11,51 @@ import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
 @injectable
 class AiConfigCubit extends AppCubit<AiConfigState> {
   final IAiConfigRepository _repository;
+  StreamSubscription? _agentsSub;
+  StreamSubscription? _promptsSub;
+  StreamSubscription? _modelsSub;
 
   AiConfigCubit(this._repository) : super(AiConfigState.initial());
 
-  Future<void> loadAll() async {
-    return tryOperation(() async {
-      final agents = await _repository.getAgents();
-      final prompts = await _repository.getPrompts();
-      final models = await _repository.getModels();
-      return state.copyWith(
-        status: UiFlowStatus.success,
-        agents: agents,
-        prompts: prompts,
-        models: models,
-        error: null,
-      );
-    });
+  @override
+  Future<void> close() {
+    _agentsSub?.cancel();
+    _promptsSub?.cancel();
+    _modelsSub?.cancel();
+    return super.close();
+  }
+
+  void watchAll() {
+    emit(state.copyWith(status: UiFlowStatus.loading));
+
+    _agentsSub?.cancel();
+    _agentsSub = _repository.watchAgents().listen(
+          (agents) => emit(
+              state.copyWith(agents: agents, status: UiFlowStatus.success)),
+          onError: (e) =>
+              emit(state.copyWith(error: e, status: UiFlowStatus.failure)),
+        );
+
+    _promptsSub?.cancel();
+    _promptsSub = _repository.watchPrompts().listen(
+          (prompts) => emit(
+              state.copyWith(prompts: prompts, status: UiFlowStatus.success)),
+          onError: (e) =>
+              emit(state.copyWith(error: e, status: UiFlowStatus.failure)),
+        );
+
+    _modelsSub?.cancel();
+    _modelsSub = _repository.watchModels().listen(
+          (models) => emit(
+              state.copyWith(models: models, status: UiFlowStatus.success)),
+          onError: (e) =>
+              emit(state.copyWith(error: e, status: UiFlowStatus.failure)),
+        );
   }
 
   Future<void> saveAgent(AiAgent agent) async {
     return tryOperation(() async {
       await _repository.saveAgent(agent);
-      await loadAll();
       return createSuccessState();
     });
   }
@@ -39,7 +63,6 @@ class AiConfigCubit extends AppCubit<AiConfigState> {
   Future<void> deleteAgent(String id) async {
     return tryOperation(() async {
       await _repository.deleteAgent(id);
-      await loadAll();
       return createSuccessState();
     });
   }
@@ -47,7 +70,6 @@ class AiConfigCubit extends AppCubit<AiConfigState> {
   Future<void> savePrompt(AiPrompt prompt) async {
     return tryOperation(() async {
       await _repository.savePrompt(prompt);
-      await loadAll();
       return createSuccessState();
     });
   }
@@ -55,7 +77,6 @@ class AiConfigCubit extends AppCubit<AiConfigState> {
   Future<void> saveModel(AiModel model) async {
     return tryOperation(() async {
       await _repository.saveModel(model);
-      await loadAll();
       return createSuccessState();
     });
   }

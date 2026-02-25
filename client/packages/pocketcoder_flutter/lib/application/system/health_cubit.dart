@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart';
+import '../../support/extensions/cubit_ui_flow_extension.dart';
 import 'health_state.dart';
 
 @injectable
-class HealthCubit extends Cubit<HealthState> {
+class HealthCubit extends AppCubit<HealthState> {
   final IHealthRepository _repository;
   StreamSubscription? _subscription;
 
@@ -17,21 +18,21 @@ class HealthCubit extends Cubit<HealthState> {
     return super.close();
   }
 
-  void initialize() {
-    emit(state.copyWith(isLoading: true));
+  void watchHealth() {
+    emit(state.copyWith(status: UiFlowStatus.loading));
     _subscription?.cancel();
     _subscription = _repository.watchHealth().listen(
-          (checks) => emit(state.copyWith(checks: checks, isLoading: false)),
+          (checks) => emit(
+              state.copyWith(checks: checks, status: UiFlowStatus.success)),
           onError: (e) =>
-              emit(state.copyWith(error: e.toString(), isLoading: false)),
+              emit(state.copyWith(error: e, status: UiFlowStatus.failure)),
         );
   }
 
   Future<void> refresh() async {
-    try {
+    return tryOperation(() async {
       await _repository.refreshHealth();
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
+      return state;
+    });
   }
 }

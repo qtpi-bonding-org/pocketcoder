@@ -23,10 +23,7 @@ Future<void> configureDependencies() async {
 /// Bootstraps the entire application.
 ///
 /// Call this once from main() before runApp().
-Future<void> bootstrap({
-  required PushService pushService,
-  required BillingService billingService,
-}) async {
+Future<void> bootstrap() async {
   debugPrint('Bootstrap: Starting...');
 
   // 0. Load environment variables
@@ -48,12 +45,12 @@ Future<void> bootstrap({
     await configureDependencies();
     debugPrint('Bootstrap: Dependencies configured');
 
-    // 1.5 Register the push service provided by the app shell
-    getIt.registerSingleton<PushService>(pushService);
+    // Initialize the push service
+    final pushService = getIt<PushService>();
     await pushService.initialize();
 
-    // 1.6 Register the billing service
-    getIt.registerSingleton<BillingService>(billingService);
+    // Initialize the billing service
+    final billingService = getIt<BillingService>();
     await billingService.initialize();
 
     // 2. Register UI flow service (depends on localization/feedback/loading)
