@@ -13,6 +13,7 @@ import '../design_system/theme/app_theme.dart';
 import '../design_system/theme/theme_service.dart';
 import '../design_system/primitives/ui_scaler.dart';
 import '../infrastructure/feedback/localization_service.dart';
+import '../presentation/core/widgets/notification_wrapper.dart';
 import 'bootstrap.dart';
 
 class App extends StatelessWidget {
@@ -42,36 +43,38 @@ class App extends StatelessWidget {
               create: (context) => getIt<PermissionCubit>(),
             ),
           ],
-          child: MaterialApp.router(
-            title: 'PocketCoder',
-            routerConfig: AppRouter.router,
-            scaffoldMessengerKey: AppRouter.messengerKey,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode:
-                themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: const [Locale('en')],
-            builder: (context, child) {
-              // Initialize UI Scaler
-              UiScaler.instance.init(context);
+          child: NotificationWrapper(
+            child: MaterialApp.router(
+              title: 'PocketCoder',
+              routerConfig: AppRouter.router,
+              scaffoldMessengerKey: AppRouter.messengerKey,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode:
+                  themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [Locale('en')],
+              builder: (context, child) {
+                // Initialize UI Scaler
+                UiScaler.instance.init(context);
 
-              // Update Localization Service
-              final l10n = AppLocalizations.of(context);
-              if (l10n != null) {
-                final service = getIt<cubit_ui_flow.ILocalizationService>();
-                if (service is AppLocalizationService) {
-                  service.update(l10n);
+                // Update Localization Service
+                final l10n = AppLocalizations.of(context);
+                if (l10n != null) {
+                  final service = getIt<cubit_ui_flow.ILocalizationService>();
+                  if (service is AppLocalizationService) {
+                    service.update(l10n);
+                  }
                 }
-              }
 
-              return child ?? const SizedBox.shrink();
-            },
+                return child ?? const SizedBox.shrink();
+              },
+            ),
           ),
         );
       },

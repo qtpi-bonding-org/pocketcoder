@@ -15,6 +15,9 @@ class LocalPushService implements PushService {
       const Stream.empty();
   @override
   Future<bool> requestPermissions() async => true;
+
+  @override
+  Future<void> configure() async {}
 }
 
 class LocalBillingService implements BillingService {

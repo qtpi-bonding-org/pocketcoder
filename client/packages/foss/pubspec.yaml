@@ -13,4 +13,11 @@ dependencies:
   pocketcoder_flutter:
     path: ../pocketcoder_flutter
   equatable: ^2.0.5
-  # Add other FOSS-friendly dependencies for ntfy here
+  unifiedpush: ^6.2.0
+  device_info_plus: ^11.3.0
+
+dependency_overrides:
+  webcrypto:
+    git:
+      url: https://codeberg.org/UnifiedPush/webcrypto.dart.git
+      ref: 0.6.0-up1
