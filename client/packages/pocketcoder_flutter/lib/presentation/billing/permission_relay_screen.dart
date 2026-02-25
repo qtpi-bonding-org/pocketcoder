@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import '../../domain/notifications/push_service.dart';
 import '../../app/bootstrap.dart';
 import '../../application/billing/billing_cubit.dart';
 import '../../application/billing/billing_state.dart';
@@ -272,7 +274,7 @@ class _NtfySetupCard extends StatelessWidget {
               label: 'CONFIGURE',
               isPrimary: false,
               onTap: () {
-                // TODO: Open NTFY settings
+                GetIt.I<PushService>().configure();
               },
             ),
           ),

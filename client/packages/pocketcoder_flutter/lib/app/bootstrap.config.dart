@@ -53,6 +53,7 @@ import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.
     as _i623;
 import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart' as _i20;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
+import 'package:pocketcoder_flutter/domain/notifications/device.dart' as _i1071;
 import 'package:pocketcoder_flutter/domain/sop/i_sop_repository.dart' as _i860;
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
     as _i190;
@@ -99,6 +100,10 @@ import 'package:pocketcoder_flutter/infrastructure/hitl/hitl_repository.dart'
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_daos.dart' as _i444;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_repository.dart'
     as _i662;
+import 'package:pocketcoder_flutter/infrastructure/notifications/device_daos.dart'
+    as _i849;
+import 'package:pocketcoder_flutter/infrastructure/notifications/device_repository.dart'
+    as _i301;
 import 'package:pocketcoder_flutter/infrastructure/sop/sop_daos.dart' as _i394;
 import 'package:pocketcoder_flutter/infrastructure/sop/sop_repository.dart'
     as _i109;
@@ -150,14 +155,21 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i589.UserDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i589.SshKeyDao>(
         () => _i589.SshKeyDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i394.SopDao>(() => _i394.SopDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i394.ProposalDao>(
+        () => _i394.ProposalDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i658.PermissionDao>(
         () => _i658.PermissionDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i658.WhitelistTargetDao>(
         () => _i658.WhitelistTargetDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i658.WhitelistActionDao>(
         () => _i658.WhitelistActionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i444.McpServerDao>(
+        () => _i444.McpServerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i439.HealthcheckDao>(
         () => _i439.HealthcheckDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1065.HealthDao>(
+        () => _i1065.HealthDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i197.ProposalDao>(
         () => _i197.ProposalDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i197.SopDao>(() => _i197.SopDao(gh<_i169.PocketBase>()));
@@ -175,13 +187,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i464.MessageDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i464.SubagentDao>(
         () => _i464.SubagentDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i394.SopDao>(() => _i394.SopDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i394.ProposalDao>(
-        () => _i394.ProposalDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i444.McpServerDao>(
-        () => _i444.McpServerDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i1065.HealthDao>(
-        () => _i1065.HealthDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i849.DeviceDao>(
+        () => _i849.DeviceDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1071.IDeviceRepository>(() => _i301.DeviceRepository(
+          gh<_i849.DeviceDao>(),
+          gh<_i169.PocketBase>(),
+        ));
     gh.lazySingleton<_i656.IEvolutionRepository>(
         () => _i379.EvolutionRepository(
               gh<_i197.ProposalDao>(),
