@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
+import 'package:flutter_client_sse/flutter_client_sse.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
@@ -35,10 +38,80 @@ class CommunicationRepository implements ICommunicationRepository {
   }
 
   @override
-  Stream<HotPipeEvent> watchHotPipe() {
-    // TODO: Connect this to the new parts-based streaming logic in Phase 2
-    // For now, returning an empty stream to maintain compilation
-    return const Stream.empty();
+  Stream<HotPipeEvent> watchHotPipe(String chatId) {
+    final controller = StreamController<HotPipeEvent>();
+    final url = "${_chatDao.pb.baseURL}/api/chats/$chatId/stream";
+
+    logInfo('💬 [HotPipe] Subscribing to $url');
+
+    final subscription = SSEClient.subscribeToSSE(
+      method: SSERequestType.GET,
+      url: url,
+      header: {
+        "Accept": "text/event-stream",
+        "Cache-Control": "no-cache",
+      },
+    ).listen((event) {
+      if (event.event == null || event.data == null) return;
+
+      try {
+        final data = jsonDecode(event.data!) as Map<String, dynamic>;
+        final messageId = data['messageID'] as String? ?? 'unknown';
+
+        switch (event.event) {
+          case 'text_delta':
+            controller.add(HotPipeEvent.textDelta(
+              messageId: messageId,
+              partId: data['partID'] as String? ?? '',
+              text: data['text'] as String? ?? '',
+            ));
+          case 'tool_status':
+            controller.add(HotPipeEvent.toolStatus(
+              messageId: messageId,
+              partId: data['partID'] as String? ?? '',
+              tool: data['tool'] as String? ?? '',
+              status: data['status'] as String? ?? '',
+            ));
+          case 'message_snapshot':
+            final parts = (data['parts'] as List? ?? [])
+                .cast<Map<String, dynamic>>()
+                .toList();
+            controller.add(HotPipeEvent.snapshot(
+              messageId: messageId,
+              parts: parts,
+            ));
+          case 'message_complete':
+            final parts = (data['parts'] as List? ?? [])
+                .cast<Map<String, dynamic>>()
+                .toList();
+            controller.add(HotPipeEvent.complete(
+              messageId: messageId,
+              parts: parts,
+              status: data['status'] as String?,
+            ));
+          case 'error':
+            controller.add(HotPipeEvent.error(
+              messageId: messageId,
+              error: data['envelope'] as Map<String, dynamic>? ?? {},
+            ));
+        }
+      } catch (e, stack) {
+        logError('💬 [HotPipe] Failed to parse SSE event', e, stack);
+      }
+    }, onError: (e, stack) {
+      logError('💬 [HotPipe] SSE Stream error', e, stack);
+      controller.addError(e, stack);
+    }, onDone: () {
+      logInfo('💬 [HotPipe] SSE Stream closed');
+      controller.close();
+    });
+
+    controller.onCancel = () {
+      logInfo('💬 [HotPipe] Unsubscribing from SSE');
+      subscription.cancel();
+    };
+
+    return controller.stream;
   }
 
   @override
