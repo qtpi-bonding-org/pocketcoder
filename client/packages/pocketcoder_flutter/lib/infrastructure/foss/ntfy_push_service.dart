@@ -1,43 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart';
-import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:get_it/get_it.dart';
-import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:unifiedpush/unifiedpush.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'dart:io';
-
-/// A BillingService for the FOSS version which assumes all features are available.
-class FossBillingService implements BillingService {
-  @override
-  Future<void> initialize() async {
-    // No-op for FOSS
-  }
-
-  @override
-  Future<bool> isPremium() async => true;
-
-  @override
-  Future<void> restorePurchases() async {}
-
-  @override
-  Future<bool> purchase(String identifier) async => true;
-
-  @override
-  Future<List<BillingPackage>> getAvailablePackages() async {
-    return [
-      const BillingPackage(
-        identifier: 'foss_premium',
-        title: 'FOSS Premium',
-        description: 'Free as in speech and beer.',
-        priceString: r'$0.00',
-      ),
-    ];
-  }
-}
 
 class NtfyPushService implements PushService {
   final _controller = StreamController<PushNotificationPayload>.broadcast();
@@ -59,8 +29,6 @@ class NtfyPushService implements PushService {
     if (success) {
       await UnifiedPush.register(instance: instance);
     } else {
-      // In a real app, we would show a distributor picker here.
-      // For now, we'll just log it.
       // ignore: avoid_print
       print(
           "No UnifiedPush distributor found. Please install a distributor like ntfy.");
@@ -69,12 +37,6 @@ class NtfyPushService implements PushService {
 
   void _onNewEndpoint(PushEndpoint endpoint, String instanceId) {
     if (instanceId != instance) return;
-    // ignore: avoid_print
-    print("New UnifiedPush Endpoint: ${endpoint.url}");
-    // ignore: avoid_print
-    print(
-        "TIP: When sending ntfy notifications, set 'click' to 'pocketcoder://' to open the app.");
-    // This endpoint should be sent to the backend relay so it knows where to POST.
     _registerDevice(endpoint.url);
   }
 
@@ -103,20 +65,11 @@ class NtfyPushService implements PushService {
     }
   }
 
-  void _onRegistrationFailed(FailedReason reason, String instanceId) {
-    // ignore: avoid_print
-    print("UnifiedPush Registration Failed for $instanceId: ${reason.name}");
-  }
+  void _onRegistrationFailed(FailedReason reason, String instanceId) {}
 
-  void _onUnregistered(String instanceId) {
-    // ignore: avoid_print
-    print("UnifiedPush Unregistered: $instanceId");
-  }
+  void _onUnregistered(String instanceId) {}
 
-  void _onTempUnavailable(String instanceId) {
-    // ignore: avoid_print
-    print("UnifiedPush Temporarily Unavailable: $instanceId");
-  }
+  void _onTempUnavailable(String instanceId) {}
 
   void _onMessage(PushMessage message, String instanceId) {
     if (instanceId != instance) return;
@@ -138,52 +91,31 @@ class NtfyPushService implements PushService {
   }
 
   @override
-  Future<String?> getToken() async {
-    // In UnifiedPush, the 'token' is actually the unique endpoint URL
-    // But we might want to return it here if needed for backend registration
-    return null;
-  }
+  Future<String?> getToken() async => null;
 
   @override
   Stream<PushNotificationPayload> get notificationStream => _controller.stream;
 
   @override
-  Future<bool> requestPermissions() async {
-    // UnifiedPush registration double-acts as permission request
-    // We already call tryUseCurrentOrDefaultDistributor in initialize
-    return true;
-  }
+  Future<bool> requestPermissions() async => true;
 
   @override
   Future<void> configure() async {
-    // 1. Check if we already have a distributor
     final success = await UnifiedPush.tryUseCurrentOrDefaultDistributor();
     if (success) {
-      // Re-register to be sure
       await UnifiedPush.register(instance: instance);
     } else {
-      // 2. Fetch available distributors
       final distributors = await UnifiedPush.getDistributors();
       if (distributors.isNotEmpty) {
-        // For simplicity in this FOSS implementation, we pick the first one.
-        // In a production app, we would show a dialog for selection.
         final distributor = distributors.first;
         await UnifiedPush.saveDistributor(distributor);
         await UnifiedPush.register(instance: instance);
 
         try {
-          final feedback = GetIt.I<IFeedbackService>();
-          feedback.show(FeedbackMessage(
+          final feedback = GetIt.I<cubit_ui_flow.IFeedbackService>();
+          feedback.show(cubit_ui_flow.FeedbackMessage(
             message: "Configured to use $distributor",
-            type: MessageType.success,
-          ));
-        } catch (_) {}
-      } else {
-        try {
-          final feedback = GetIt.I<IFeedbackService>();
-          feedback.show(FeedbackMessage(
-            message: "No UnifiedPush distributor found.",
-            type: MessageType.error,
+            type: cubit_ui_flow.MessageType.success,
           ));
         } catch (_) {}
       }

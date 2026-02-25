@@ -61,6 +61,13 @@ dependencies:
   connectivity_plus: ^7.0.0
   connectivity_plus_platform_interface: ^2.0.1
   device_info_plus: ^11.3.0
+  unifiedpush: ^6.2.0
+
+dependency_overrides:
+  webcrypto:
+    git:
+      url: https://codeberg.org/UnifiedPush/webcrypto.dart.git
+      ref: 0.6.0-up1
 
 dev_dependencies:
   flutter_test:
