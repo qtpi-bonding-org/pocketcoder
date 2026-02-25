@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:uuid/uuid.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/domain/communication/i_communication_repository.dart';
@@ -16,7 +15,6 @@ class CommunicationCubit extends Cubit<CommunicationState> {
   StreamSubscription? _hotSub;
 
   String? _currentChatId;
-  final Uuid _uuid = const Uuid();
 
   CommunicationCubit(this._repository) : super(const CommunicationState());
 
@@ -123,13 +121,18 @@ class CommunicationCubit extends Cubit<CommunicationState> {
   }
 
   void _subscribeToHotPipe() {
-    logDebug('💬 [CommCubit] Subscribing to HotPipe (SSE)...');
+    if (_currentChatId == null) return;
+
+    logDebug(
+        '💬 [CommCubit] Subscribing to HotPipe (SSE) for $_currentChatId...');
     _hotSub?.cancel();
-    _hotSub = _repository.watchHotPipe().listen((event) {
+    _hotSub = _repository.watchHotPipe(_currentChatId!).listen((event) {
       event.map(
-        delta: _onHotDelta,
-        system: _onHotSystem,
-        finish: (_) => _onHotFinish(),
+        textDelta: _onHotTextDelta,
+        toolStatus: _onHotToolStatus,
+        snapshot: _onHotSnapshot,
+        complete: _onHotComplete,
+        error: _onHotError,
       );
     }, onError: (e) {
       logError('💬 [CommCubit] HotPipe Error: $e');
@@ -137,153 +140,54 @@ class CommunicationCubit extends Cubit<CommunicationState> {
     });
   }
 
-  void _onHotFinish() {
-    logInfo('💬 [CommCubit] Stream finished.');
-    if (state.hotMessage != null) {
-      final finalizedMsg = state.hotMessage!;
-      emit(state.copyWith(
-        hotMessage: null,
-        isPocoThinking: false,
-        messages: [...state.messages, finalizedMsg],
-      ));
-    } else {
-      emit(state.copyWith(isPocoThinking: false));
-    }
-  }
-
-  void _onHotDelta(HotPipeDelta delta) {
-    final currentHot = state.hotMessage ??
-        Message(
-          id: _uuid.v4(),
-          chat: _currentChatId ?? 'temp',
-          role: MessageRole.assistant,
-          parts: [],
-          created: DateTime.now(),
-        );
-
-    final List<dynamic> parts = List.from(currentHot.parts ?? []);
-
-    if (delta.content.isNotEmpty) {
-      if (parts.isNotEmpty &&
-          parts.last is Map &&
-          parts.last['type'] == 'text') {
-        final Map<String, dynamic> last = Map.from(parts.last);
-        last['text'] = (last['text'] ?? '') + delta.content;
-        parts[parts.length - 1] = last;
-      } else {
-        parts.add({'type': 'text', 'text': delta.content});
-      }
-    }
-
-    if (delta.tool != null) {
-      parts.add({
-        'type': 'tool',
-        'tool': delta.tool!,
-        'callID': delta.callId ?? 'unknown',
-        'state': {
-          'status': 'running',
-          'input': {},
-        },
-      });
-    }
-
-    emit(state.copyWith(
-      hotMessage: currentHot.copyWith(parts: parts),
-      isPocoThinking: true,
-    ));
-  }
-
-  void _onHotSystem(HotPipeSystem system) {
+  void _onHotTextDelta(HotPipeTextDelta delta) {
+    // For now, we rely on Snapshots for structural updates,
+    // but deltas could be used for even lower-latency character streaming.
+    logDebug('💬 [CommCubit] HotDelta: ${delta.text}');
     emit(state.copyWith(isPocoThinking: true));
   }
 
-  Future<void> simulateInteraction() async {
-    // Implementation kept for legacy testing/demo purposes
+  void _onHotToolStatus(HotPipeToolStatus status) {
+    logDebug('💬 [CommCubit] HotTool: ${status.tool} (${status.status})');
+    emit(state.copyWith(isPocoThinking: true));
+  }
+
+  void _onHotSnapshot(HotPipeSnapshot snapshot) {
+    final currentHot = state.hotMessage ??
+        Message(
+          id: snapshot.messageId,
+          chat: _currentChatId ?? 'temp',
+          role: MessageRole.assistant,
+          parts: snapshot.parts,
+          created: DateTime.now(),
+        );
+
     emit(state.copyWith(
-      hotMessage: null,
+      hotMessage: currentHot.copyWith(
+        id: snapshot.messageId,
+        parts: snapshot.parts,
+      ),
       isPocoThinking: true,
-      messages: [],
     ));
+  }
 
-    final userMsg = Message(
-        id: 'sim-user-1',
-        chat: 'current',
-        role: MessageRole.user,
-        parts: [
-          {'type': 'text', 'text': "Check the server status."}
-        ],
-        created: DateTime.now());
+  void _onHotComplete(HotPipeComplete complete) {
+    logInfo('💬 [CommCubit] HotPipe Complete: ${complete.messageId}');
 
-    emit(state.copyWith(messages: [userMsg]));
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final thoughts = [
-      "Accessing internal proxy...",
-      "Resolving host 'pocketbase'...",
-      "Connection established.",
-    ];
-
-    for (final thought in thoughts) {
-      _onHotDelta(HotPipeDelta(content: "$thought\n"));
-      await Future.delayed(const Duration(milliseconds: 400));
-    }
-
-    await Future.delayed(const Duration(milliseconds: 200));
-    _onHotDelta(const HotPipeDelta(
-      content: "",
-      tool: "curl",
-      callId: "call-1",
-    ));
-
-    await Future.delayed(const Duration(milliseconds: 1500));
-    _onHotDelta(
-        const HotPipeDelta(content: "Status 200 OK. JSON payload valid.\n"));
-
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    const finalAnswer =
-        "The server is online and responding normally, Operator.";
-    for (int i = 0; i < finalAnswer.length; i += 5) {
-      final end = (i + 5 < finalAnswer.length) ? i + 5 : finalAnswer.length;
-      _onHotDelta(HotPipeDelta(content: finalAnswer.substring(i, end)));
-      await Future.delayed(const Duration(milliseconds: 30));
-    }
-
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    final assistantMsg = Message(
-      id: 'sim-asst-1',
-      chat: 'current',
-      role: MessageRole.assistant,
-      parts: [
-        {
-          'type': 'text',
-          'text':
-              "Accessing internal proxy...\nResolving host 'pocketbase'...\nConnection established.\n"
-        },
-        {
-          'type': 'tool',
-          'tool': "curl",
-          'callID': "call-1",
-          'state': {
-            'status': 'completed',
-            'input': {'url': '/api/health'},
-            'output': 'Status 200 OK. JSON payload valid.',
-            'title': 'Health Check',
-          },
-        },
-        {
-          'type': 'text',
-          'text': "\nThe server is online and responding normally, Operator."
-        },
-      ],
-      created: DateTime.now(),
-    );
-
+    // If we have a hot message, we clear it because the Cold Pipe (DB)
+    // will now take over since the record is marked 'completed' in PB.
     emit(state.copyWith(
       hotMessage: null,
       isPocoThinking: false,
-      messages: [userMsg, assistantMsg],
+    ));
+  }
+
+  void _onHotError(HotPipeError error) {
+    logError('💬 [CommCubit] HotPipe Error Event: ${error.error}');
+    emit(state.copyWith(
+      isPocoThinking: false,
+      error: error.error['message'] ?? 'Unknown agent error',
+      status: UiFlowStatus.failure,
     ));
   }
 }

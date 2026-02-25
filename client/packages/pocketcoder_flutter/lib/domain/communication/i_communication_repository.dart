@@ -9,7 +9,7 @@ abstract class ICommunicationRepository {
   Stream<List<Message>> watchColdPipe(String chatId);
 
   /// Stream of ephemeral terminal events (Hot Pipe)
-  Stream<HotPipeEvent> watchHotPipe();
+  Stream<HotPipeEvent> watchHotPipe(String chatId);
 
   /// Sends a new user message to the chat
   Future<void> sendMessage(String chatId, String content);
@@ -29,15 +29,32 @@ abstract class ICommunicationRepository {
 
 @freezed
 class HotPipeEvent with _$HotPipeEvent {
-  const factory HotPipeEvent.delta({
-    required String content,
-    String? callId,
-    String? tool,
-  }) = HotPipeDelta;
-
-  const factory HotPipeEvent.system({
+  const factory HotPipeEvent.textDelta({
+    required String messageId,
+    required String partId,
     required String text,
-  }) = HotPipeSystem;
+  }) = HotPipeTextDelta;
 
-  const factory HotPipeEvent.finish() = HotPipeFinish;
+  const factory HotPipeEvent.toolStatus({
+    required String messageId,
+    required String partId,
+    required String tool,
+    required String status,
+  }) = HotPipeToolStatus;
+
+  const factory HotPipeEvent.snapshot({
+    required String messageId,
+    required List<Map<String, dynamic>> parts,
+  }) = HotPipeSnapshot;
+
+  const factory HotPipeEvent.complete({
+    required String messageId,
+    required List<Map<String, dynamic>> parts,
+    String? status,
+  }) = HotPipeComplete;
+
+  const factory HotPipeEvent.error({
+    required String messageId,
+    required Map<String, dynamic> error,
+  }) = HotPipeError;
 }

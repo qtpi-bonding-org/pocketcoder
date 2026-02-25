@@ -62,6 +62,7 @@ dependencies:
   connectivity_plus_platform_interface: ^2.0.1
   device_info_plus: ^11.3.0
   unifiedpush: ^6.2.0
+  flutter_client_sse: ^2.0.3
 
 dependency_overrides:
   webcrypto:
