@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import '../../domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'billing_state.dart';
 
 @injectable

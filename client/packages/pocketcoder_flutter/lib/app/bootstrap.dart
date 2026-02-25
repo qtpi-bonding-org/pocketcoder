@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'bootstrap.config.dart';
-import '../infrastructure/core/connectivity_override.dart';
-import '../domain/notifications/push_service.dart';
-import '../domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/connectivity_override.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Global service locator instance

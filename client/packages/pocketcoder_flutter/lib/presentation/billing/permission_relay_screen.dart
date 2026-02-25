@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-import '../../domain/notifications/push_service.dart';
-import '../../app/bootstrap.dart';
-import '../../application/billing/billing_cubit.dart';
-import '../../application/billing/billing_state.dart';
-import '../../domain/billing/billing_service.dart';
-import '../core/widgets/ascii_art.dart';
-import '../core/widgets/bios_frame.dart';
-import '../core/widgets/scanline_widget.dart';
-import '../core/widgets/terminal_footer.dart';
-import '../core/widgets/terminal_button.dart';
-import '../core/widgets/ui_flow_listener.dart';
-import '../core/widgets/terminal_header.dart';
-import '../core/widgets/terminal_loading_indicator.dart';
-import '../core/widgets/bios_section.dart';
-import '../../design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart';
+import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 class PermissionRelayScreen extends StatelessWidget {
   const PermissionRelayScreen({super.key});

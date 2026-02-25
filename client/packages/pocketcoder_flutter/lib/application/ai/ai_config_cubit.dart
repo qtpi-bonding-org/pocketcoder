@@ -1,9 +1,11 @@
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import '../../domain/ai_config/i_ai_config_repository.dart';
+import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart';
 import '../../support/extensions/cubit_ui_flow_extension.dart';
 import 'ai_config_state.dart';
-import '../../domain/ai/ai_models.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_agent.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_prompt.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
 
 @injectable
 class AiConfigCubit extends AppCubit<AiConfigState> {

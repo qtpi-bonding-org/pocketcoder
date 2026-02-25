@@ -1,4 +1,4 @@
-import 'subagent.dart';
+import 'package:pocketcoder_flutter/domain/models/subagent.dart';
 
 abstract class ISubagentRepository {
   Stream<List<Subagent>> watchSubagents(String chatId);

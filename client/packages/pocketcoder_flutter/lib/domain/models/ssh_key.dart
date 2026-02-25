@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 part 'ssh_key.freezed.dart';
 part 'ssh_key.g.dart';
@@ -7,19 +8,23 @@ part 'ssh_key.g.dart';
 class SshKey with _$SshKey {
   const factory SshKey({
     required String id,
-    required String user,
+    String? user,
     required String publicKey,
     String? deviceName,
     required String fingerprint,
     String? algorithm,
-    int? keySize,
+    double? keySize,
     String? comment,
     DateTime? expiresAt,
     DateTime? lastUsed,
-    @Default(true) bool isActive,
+    bool? isActive,
     DateTime? created,
     DateTime? updated,
   }) = _SshKey;
 
-  factory SshKey.fromJson(Map<String, dynamic> json) => _$SshKeyFromJson(json);
+  factory SshKey.fromRecord(RecordModel record) =>
+      SshKey.fromJson(record.toJson());
+
+  factory SshKey.fromJson(Map<String, dynamic> json) =>
+      _$SshKeyFromJson(json);
 }

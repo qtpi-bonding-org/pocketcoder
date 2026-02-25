@@ -1,8 +1,8 @@
 import 'package:injectable/injectable.dart';
-import '../../domain/system/i_health_repository.dart';
-import '../../domain/system/system_health.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart';
+import 'package:pocketcoder_flutter/domain/system/system_health.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'health_daos.dart';
 
 @LazySingleton(as: IHealthRepository)

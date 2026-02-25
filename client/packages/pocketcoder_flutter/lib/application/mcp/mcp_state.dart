@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../domain/mcp/mcp_server.dart';
+import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 
 part 'mcp_state.freezed.dart';
 

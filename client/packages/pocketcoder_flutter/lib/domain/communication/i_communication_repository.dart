@@ -1,12 +1,12 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../chat/chat.dart';
-import '../chat/chat_message.dart';
+import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/domain/models/message.dart';
 
 part 'i_communication_repository.freezed.dart';
 
 abstract class ICommunicationRepository {
   /// Stream of finalized messages from the history (Cold Pipe)
-  Stream<List<ChatMessage>> watchColdPipe(String chatId);
+  Stream<List<Message>> watchColdPipe(String chatId);
 
   /// Stream of ephemeral terminal events (Hot Pipe)
   Stream<HotPipeEvent> watchHotPipe();

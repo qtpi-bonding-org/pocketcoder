@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import '../../domain/chat/chat_message.dart';
-import '../../domain/communication/i_communication_repository.dart';
-import '../../infrastructure/core/logger.dart';
+import 'package:pocketcoder_flutter/domain/models/message.dart';
+import 'package:pocketcoder_flutter/domain/communication/i_communication_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'communication_state.dart';
 
 @injectable
@@ -140,7 +140,7 @@ class CommunicationCubit extends Cubit<CommunicationState> {
   void _onHotFinish() {
     logInfo('💬 [CommCubit] Stream finished.');
     if (state.hotMessage != null) {
-      final finalizedMsg = state.hotMessage!.copyWith(isLive: false);
+      final finalizedMsg = state.hotMessage!;
       emit(state.copyWith(
         hotMessage: null,
         isPocoThinking: false,
@@ -153,33 +153,38 @@ class CommunicationCubit extends Cubit<CommunicationState> {
 
   void _onHotDelta(HotPipeDelta delta) {
     final currentHot = state.hotMessage ??
-        ChatMessage(
+        Message(
           id: _uuid.v4(),
           chat: _currentChatId ?? 'temp',
           role: MessageRole.assistant,
           parts: [],
-          isLive: true,
           created: DateTime.now(),
         );
 
-    List<MessagePart> parts = List.from(currentHot.parts ?? []);
+    final List<dynamic> parts = List.from(currentHot.parts ?? []);
 
     if (delta.content.isNotEmpty) {
-      if (parts.isNotEmpty && parts.last is MessagePartText) {
-        final last = parts.last as MessagePartText;
-        parts[parts.length - 1] =
-            last.copyWith(text: (last.text ?? '') + delta.content);
+      if (parts.isNotEmpty &&
+          parts.last is Map &&
+          parts.last['type'] == 'text') {
+        final Map<String, dynamic> last = Map.from(parts.last);
+        last['text'] = (last['text'] ?? '') + delta.content;
+        parts[parts.length - 1] = last;
       } else {
-        parts.add(MessagePart.text(text: delta.content));
+        parts.add({'type': 'text', 'text': delta.content});
       }
     }
 
     if (delta.tool != null) {
-      parts.add(MessagePart.tool(
-        tool: delta.tool!,
-        callID: delta.callId ?? 'unknown',
-        state: const ToolState.running(input: {}),
-      ));
+      parts.add({
+        'type': 'tool',
+        'tool': delta.tool!,
+        'callID': delta.callId ?? 'unknown',
+        'state': {
+          'status': 'running',
+          'input': {},
+        },
+      });
     }
 
     emit(state.copyWith(
@@ -200,11 +205,13 @@ class CommunicationCubit extends Cubit<CommunicationState> {
       messages: [],
     ));
 
-    final userMsg = ChatMessage(
+    final userMsg = Message(
         id: 'sim-user-1',
         chat: 'current',
         role: MessageRole.user,
-        parts: [const MessagePart.text(text: "Check the server status.")],
+        parts: [
+          {'type': 'text', 'text': "Check the server status."}
+        ],
         created: DateTime.now());
 
     emit(state.copyWith(messages: [userMsg]));
@@ -244,25 +251,31 @@ class CommunicationCubit extends Cubit<CommunicationState> {
 
     await Future.delayed(const Duration(milliseconds: 800));
 
-    final assistantMsg = ChatMessage(
+    final assistantMsg = Message(
       id: 'sim-asst-1',
       chat: 'current',
       role: MessageRole.assistant,
       parts: [
-        const MessagePart.text(
-            text:
-                "Accessing internal proxy...\nResolving host 'pocketbase'...\nConnection established.\n"),
-        const MessagePart.tool(
-          tool: "curl",
-          callID: "call-1",
-          state: ToolState.completed(
-            input: {'url': '/api/health'},
-            output: 'Status 200 OK. JSON payload valid.',
-            title: 'Health Check',
-          ),
-        ),
-        const MessagePart.text(
-            text: "\nThe server is online and responding normally, Operator."),
+        {
+          'type': 'text',
+          'text':
+              "Accessing internal proxy...\nResolving host 'pocketbase'...\nConnection established.\n"
+        },
+        {
+          'type': 'tool',
+          'tool': "curl",
+          'callID': "call-1",
+          'state': {
+            'status': 'completed',
+            'input': {'url': '/api/health'},
+            'output': 'Status 200 OK. JSON payload valid.',
+            'title': 'Health Check',
+          },
+        },
+        {
+          'type': 'text',
+          'text': "\nThe server is online and responding normally, Operator."
+        },
       ],
       created: DateTime.now(),
     );

@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../domain/subagent/subagent.dart';
+import 'package:pocketcoder_flutter/domain/models/subagent.dart';
 
 part 'subagent_state.freezed.dart';
 

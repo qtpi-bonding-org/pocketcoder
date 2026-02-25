@@ -1,11 +1,11 @@
-import '../permission/permission_request.dart';
-import '../whitelist/whitelist_target.dart';
-import '../whitelist/whitelist_action.dart';
+import 'package:pocketcoder_flutter/domain/models/permission.dart';
+import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
+import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
 import '../permission/permission_api_models.dart';
 
 abstract class IHitlRepository {
   // --- Permissions ---
-  Stream<List<PermissionRequest>> watchPending(String chatId);
+  Stream<List<Permission>> watchPending(String chatId);
   Future<void> authorize(String permissionId);
   Future<void> deny(String permissionId);
 

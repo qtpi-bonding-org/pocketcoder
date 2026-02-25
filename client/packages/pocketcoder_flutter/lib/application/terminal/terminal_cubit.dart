@@ -9,8 +9,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../support/extensions/cubit_ui_flow_extension.dart';
 import 'terminal_state.dart';
-import '../../infrastructure/core/collections.dart';
-import '../../infrastructure/core/logger.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 
 @injectable
 class SshTerminalCubit extends AppCubit<SshTerminalState> {

@@ -1,5 +1,7 @@
-import '../ai/ai_models.dart';
-import '../subagent/subagent.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_agent.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_prompt.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
+import 'package:pocketcoder_flutter/domain/models/subagent.dart';
 
 abstract class IAiConfigRepository {
   // --- Agents ---

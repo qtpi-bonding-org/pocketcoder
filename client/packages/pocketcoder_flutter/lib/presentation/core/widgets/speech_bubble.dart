@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/theme/app_theme.dart';
-import '../../../domain/chat/chat_message.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 class SpeechBubble extends StatelessWidget {
-  final List<MessagePartText> textParts;
+  final List<dynamic> textParts;
   final bool isUser;
   const SpeechBubble({
     super.key,
@@ -17,8 +16,16 @@ class SpeechBubble extends StatelessWidget {
 
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
-    // Consolidate text for now
-    final fullText = textParts.map((e) => e.text ?? '').join('\n');
+
+    // Consolidate text from parts
+    final fullText = textParts.map((e) {
+      if (e is Map<String, dynamic>) {
+        return e['text'] ?? '';
+      }
+      return '';
+    }).join('\n');
+
+    if (fullText.trim().isEmpty) return const SizedBox.shrink();
 
     // Dynamic Label
     final String label = isUser ? 'USER' : 'POCO';

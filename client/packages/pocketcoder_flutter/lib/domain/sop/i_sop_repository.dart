@@ -1,5 +1,5 @@
-import 'sop.dart';
-import '../proposal/proposal.dart';
+import 'package:pocketcoder_flutter/domain/models/sop.dart';
+import 'package:pocketcoder_flutter/domain/models/proposal.dart';
 
 abstract class ISopRepository {
   Stream<List<Sop>> watchSops();

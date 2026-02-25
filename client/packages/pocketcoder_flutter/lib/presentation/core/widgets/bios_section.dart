@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 class BiosSection extends StatelessWidget {
   final String title;
