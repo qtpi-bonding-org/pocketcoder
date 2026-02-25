@@ -24,9 +24,10 @@ writes it from the database. Only user-approved servers appear in the catalog.
 
 ## Requesting
 
-3. If the needed server isn't approved, use `mcp_request` with the server name and reason.
+3. If the needed server isn't approved, use `mcp_request` with the server name and reason. 
+   - **Note**: This tool automatically researches the required image and secrets before submitting.
 4. Tell the user you've submitted the request and are waiting for approval.
-5. When PocketBase notifies you the server is approved, the catalog updates and the gateway restarts.
+5. When the user approves the record in PocketBase (and provides any required secrets), the catalog updates and the gateway restarts.
 
 ## Delegation (Dynamic MCP)
 

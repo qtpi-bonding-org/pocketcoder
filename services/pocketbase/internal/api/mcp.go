@@ -44,9 +44,11 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 		// 3. Parse request body
 		var input struct {
-			ServerName string `json:"server_name"`
-			Reason     string `json:"reason"`
-			SessionID  string `json:"session_id"`
+			ServerName   string         `json:"server_name"`
+			Reason       string         `json:"reason"`
+			SessionID    string         `json:"session_id"`
+			Image        string         `json:"image"`
+			ConfigSchema map[string]any `json:"config_schema"`
 		}
 
 		if err := re.BindBody(&input); err != nil {
@@ -95,6 +97,8 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		record.Set("reason", input.Reason)
 		record.Set("requested_by", input.SessionID)
 		record.Set("catalog", "docker-mcp") // Default catalog
+		record.Set("image", input.Image)
+		record.Set("config_schema", input.ConfigSchema)
 
 		if err := app.Save(record); err != nil {
 			log.Printf("❌ Failed to create MCP server record: %v", err)

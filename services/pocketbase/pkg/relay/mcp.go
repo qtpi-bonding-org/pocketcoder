@@ -36,6 +36,7 @@ import (
 
 const (
 	mcpConfigPath     = "/mcp_config/docker-mcp.yaml"
+	mcpSecretsPath    = "/mcp_config/config.yaml"
 	gatewayContainer  = "pocketcoder-mcp-gateway"
 	dockerHost        = "tcp://docker-socket-proxy-write:2375"
 )
@@ -116,11 +117,6 @@ func (r *RelayService) renderMcpConfig() error {
 		return fmt.Errorf("failed to query approved MCP servers: %w", err)
 	}
 
-	serverNames := make([]string, 0, len(records))
-	for _, record := range records {
-		serverNames = append(serverNames, record.GetString("name"))
-	}
-
 	// Ensure directory exists
 	dir := "/mcp_config"
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -130,33 +126,64 @@ func (r *RelayService) renderMcpConfig() error {
 		}
 	}
 
-	// Build docker-mcp.yaml as a gateway catalog
-	// Format must match the flat registry schema verified in test-mcp-install sandbox.
-	// Key details:
-	//   - Top-level name/displayName required for catalog identity
-	//   - longLived: false (CamelCase) ensures ephemeral containers (die after each tool result)
-	//   - type: server is required for standard MCP server entries
+	// Build catalog (docker-mcp.yaml) and secrets (config.yaml)
 	var catalog strings.Builder
 	catalog.WriteString("# PocketCoder MCP Catalog (auto-generated)\n")
 	catalog.WriteString(fmt.Sprintf("# Last rendered: %s\n", time.Now().UTC().Format(time.RFC3339)))
-	catalog.WriteString(fmt.Sprintf("# Approved servers: %d\n", len(serverNames)))
+	catalog.WriteString(fmt.Sprintf("# Approved servers: %d\n", len(records)))
 	catalog.WriteString("name: docker-mcp\n")
 	catalog.WriteString("displayName: PocketCoder Dynamic Catalog\n")
 	catalog.WriteString("registry:\n")
-	for _, name := range serverNames {
+
+	// Secrets map for gateway config.yaml
+	secretsMap := make(map[string]any)
+	mcpServersMap := make(map[string]any)
+
+	for _, record := range records {
+		name := record.GetString("name")
+		image := record.GetString("image")
+		
+		// Logic: Image defaulting
+		if image == "" {
+			image = fmt.Sprintf("mcp/%s", name)
+		}
+		if !strings.Contains(image, ":") && !strings.Contains(image, "@") {
+			image = image + ":latest"
+		}
+
+		// Update catalog
 		catalog.WriteString(fmt.Sprintf("  %s:\n", name))
 		catalog.WriteString(fmt.Sprintf("    title: %s\n", name))
 		catalog.WriteString("    description: Approved by user for PocketCoder\n")
 		catalog.WriteString("    type: server\n")
-		catalog.WriteString(fmt.Sprintf("    image: mcp/%s\n", name))
+		catalog.WriteString(fmt.Sprintf("    image: %s\n", image))
 		catalog.WriteString("    longLived: false\n")
+
+		// Update secrets
+		config := record.Get("config")
+		if config != nil {
+			mcpServersMap[name] = map[string]any{
+				"env": config,
+			}
+		}
 	}
 
+	// 1. Write catalog
 	if err := os.WriteFile(mcpConfigPath, []byte(catalog.String()), 0644); err != nil {
 		return fmt.Errorf("failed to write catalog to %s: %w", mcpConfigPath, err)
 	}
 
-	log.Printf("✅ [Relay/MCP] Rendered MCP catalog with %d approved servers to %s", len(serverNames), mcpConfigPath)
+	// 2. Write secrets if any
+	secretsMap["mcpServers"] = mcpServersMap
+	secretsData, err := json.MarshalIndent(secretsMap, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal secrets to JSON: %w", err)
+	}
+	if err := os.WriteFile(mcpSecretsPath, secretsData, 0644); err != nil {
+		return fmt.Errorf("failed to write secrets to %s: %w", mcpSecretsPath, err)
+	}
+
+	log.Printf("✅ [Relay/MCP] Rendered MCP catalog and secrets for %d approved servers", len(records))
 	return nil
 }
 
