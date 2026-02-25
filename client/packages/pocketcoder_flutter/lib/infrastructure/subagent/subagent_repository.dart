@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import '../../domain/subagent/i_subagent_repository.dart';
-import '../../domain/chat/subagent.dart';
+import '../../domain/subagent/subagent.dart';
 import '../../domain/exceptions.dart';
 import '../../core/try_operation.dart';
 import '../communication/communication_daos.dart';
