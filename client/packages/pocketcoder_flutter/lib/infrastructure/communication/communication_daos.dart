@@ -2,7 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../domain/chat/chat.dart';
 import '../../domain/chat/chat_message.dart';
-import '../../domain/chat/subagent.dart';
+import '../../domain/subagent/subagent.dart';
 import '../core/base_dao.dart';
 import '../core/collections.dart';
 

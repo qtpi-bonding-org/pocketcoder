@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
-import 'package:pocketcoder_flutter/domain/notifications/device.dart';
+import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';

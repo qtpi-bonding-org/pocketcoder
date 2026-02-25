@@ -3,7 +3,10 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -64,6 +67,42 @@ class FcmPushService implements PushService {
           wasTapped: true,
         ));
       });
+
+      // 3. Register Token with Backend
+      final token = await _fcm!.getToken();
+      if (token != null) {
+        await _registerDevice(token);
+      }
+
+      // 4. Handle Token Refresh
+      _fcm!.onTokenRefresh.listen(_registerDevice);
+    }
+  }
+
+  Future<void> _registerDevice(String token) async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      String deviceName = "PocketCoder Device";
+
+      if (kIsWeb) {
+        deviceName = "PocketCoder Web";
+      } else if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceName = "${androidInfo.manufacturer} ${androidInfo.model}";
+      } else if (Platform.isIOS || Platform.isMacOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceName = iosInfo.name;
+      }
+
+      final repo = GetIt.I<IDeviceRepository>();
+      await repo.registerDevice(
+        name: deviceName,
+        pushToken: token,
+        pushService: "fcm",
+      );
+    } catch (e) {
+      // ignore: avoid_print
+      print("🔔 [Notifications] FCM Registration failed: $e");
     }
   }
 

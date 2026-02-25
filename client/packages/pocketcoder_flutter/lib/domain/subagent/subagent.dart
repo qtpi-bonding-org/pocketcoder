@@ -8,7 +8,7 @@ class Subagent with _$Subagent {
   const factory Subagent({
     required String id,
     required String subagentId,
-    required String delegatingAgentId,
+    String? delegatingAgentId,
     int? tmuxWindowId,
     String? chat,
     String? delegatingAgent,

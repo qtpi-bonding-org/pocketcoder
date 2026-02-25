@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../../domain/notifications/device.dart';
+import '../../domain/notifications/i_device_repository.dart';
 import '../../domain/exceptions.dart';
 import '../../core/try_operation.dart';
 import 'device_daos.dart';
@@ -67,6 +68,25 @@ class DeviceRepository implements IDeviceRepository {
       },
       RepositoryException.new,
       'unregisterDevice',
+    );
+  }
+
+  @override
+  Future<List<Device>> getDevices() async {
+    return tryMethod(
+      () async {
+        final userId = _pb.authStore.record?.id;
+        if (userId == null) return [];
+
+        final result = await _deviceDao.getFullList(
+          filter: 'user = "$userId" && is_active = true',
+          sort: '-created',
+        );
+
+        return result.map((r) => Device.fromJson(r.toJson())).toList();
+      },
+      RepositoryException.new,
+      'getDevices',
     );
   }
 }
