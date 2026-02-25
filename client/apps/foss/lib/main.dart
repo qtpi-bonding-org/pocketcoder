@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app/app.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:foss/foss.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inject FOSS-specific services
-  await bootstrap(
-    pushService: NtfyPushService(),
-    billingService: FossBillingService(),
-  );
+  getIt.registerSingleton<PushService>(NtfyPushService());
+  getIt.registerSingleton<BillingService>(FossBillingService());
+
+  await bootstrap();
 
   runApp(const App());
 }

@@ -1,14 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
+import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 
 class McpManagementScreen extends StatelessWidget {
   const McpManagementScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => getIt<McpCubit>()..watchServers(),
+      child: UiFlowListener<McpCubit, McpState>(
+        child: const _McpManagementView(),
+      ),
+    );
+  }
+}
+
+class _McpManagementView extends StatelessWidget {
+  const _McpManagementView();
 
   @override
   Widget build(BuildContext context) {
@@ -28,44 +48,69 @@ class McpManagementScreen extends StatelessWidget {
                 Expanded(
                   child: BiosFrame(
                     title: 'CAPABILITIES REGISTRY',
-                    child: ListView(
-                      children: [
-                        BiosSection(
-                          title: 'PENDING APPROVAL',
-                          child: _buildMcpItem(
-                            context,
-                            name: 'GOOGLE-SEARCH-MCP',
-                            source: 'SUBAGENT ANALYSIS-1',
-                            status: 'PENDING',
-                            isPending: true,
+                    child: BlocBuilder<McpCubit, McpState>(
+                      builder: (context, state) {
+                        return state.maybeWhen(
+                          loaded: (servers) {
+                            final pending = servers
+                                .where(
+                                    (s) => s.status == McpServerStatus.pending)
+                                .toList();
+                            final active = servers
+                                .where(
+                                    (s) => s.status != McpServerStatus.pending)
+                                .toList();
+
+                            return ListView(
+                              children: [
+                                if (pending.isNotEmpty)
+                                  BiosSection(
+                                    title: 'PENDING APPROVAL',
+                                    child: Column(
+                                      children: pending
+                                          .map((s) => _buildMcpItem(context, s))
+                                          .toList(),
+                                    ),
+                                  ),
+                                if (active.isNotEmpty)
+                                  BiosSection(
+                                    title: 'ACTIVE CAPABILITIES',
+                                    child: Column(
+                                      children: active
+                                          .map((s) => _buildMcpItem(context, s))
+                                          .toList(),
+                                    ),
+                                  ),
+                                if (servers.isEmpty)
+                                  Center(
+                                    child: Padding(
+                                      padding:
+                                          EdgeInsets.all(AppSizes.space * 4),
+                                      child: Text(
+                                        'NO CAPABILITIES REGISTERED',
+                                        style: TextStyle(
+                                          color: colors.onSurface
+                                              .withValues(alpha: 0.5),
+                                          fontFamily: AppFonts.bodyFamily,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                          loading: () => const Center(
+                            child: CircularProgressIndicator(),
                           ),
-                        ),
-                        BiosSection(
-                          title: 'ACTIVE CAPABILITIES',
-                          child: Column(
-                            children: [
-                              _buildMcpItem(
-                                context,
-                                name: 'FILE-SYSTEM-MCP',
-                                source: 'SYSTEM-DEFAULT',
-                                status: 'AUTHORIZED',
-                              ),
-                              _buildMcpItem(
-                                context,
-                                name: 'BASH-EXEC-MCP',
-                                source: 'SYSTEM-DEFAULT',
-                                status: 'AUTHORIZED',
-                              ),
-                              _buildMcpItem(
-                                context,
-                                name: 'GIT-TOOL-MCP',
-                                source: 'USER-APPROVED',
-                                status: 'AUTHORIZED',
-                              ),
-                            ],
+                          error: (msg) => Center(
+                            child: Text(
+                              'ERROR: $msg',
+                              style: TextStyle(color: colors.error),
+                            ),
                           ),
-                        ),
-                      ],
+                          orElse: () => const SizedBox.shrink(),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -82,21 +127,17 @@ class McpManagementScreen extends StatelessWidget {
           ),
           TerminalAction(
             label: 'ADD NEW',
-            onTap: () {},
+            onTap: () {}, // TODO: Implement add new MCP
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMcpItem(
-    BuildContext context, {
-    required String name,
-    required String source,
-    required String status,
-    bool isPending = false,
-  }) {
+  Widget _buildMcpItem(BuildContext context, McpServer server) {
     final colors = context.colorScheme;
+    final isPending = server.status == McpServerStatus.pending;
+
     return Container(
       margin: EdgeInsets.only(bottom: AppSizes.space),
       padding: EdgeInsets.all(AppSizes.space),
@@ -115,7 +156,7 @@ class McpManagementScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                name,
+                server.name.toUpperCase(),
                 style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
                   color: colors.onSurface,
@@ -123,7 +164,7 @@ class McpManagementScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                status,
+                server.status.name.toUpperCase(),
                 style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
                   color: isPending
@@ -135,22 +176,25 @@ class McpManagementScreen extends StatelessWidget {
               ),
             ],
           ),
-          VSpace.x1,
-          Text(
-            'REQUESTED BY: $source',
-            style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
-              color: colors.onSurface.withValues(alpha: 0.5),
-              fontSize: AppSizes.fontMini,
+          if (server.reason != null && server.reason!.isNotEmpty) ...[
+            VSpace.x1,
+            Text(
+              'PURPOSE: ${server.reason}',
+              style: TextStyle(
+                fontFamily: AppFonts.bodyFamily,
+                color: colors.onSurface.withValues(alpha: 0.5),
+                fontSize: AppSizes.fontMini,
+              ),
             ),
-          ),
+          ],
           if (isPending) ...[
             VSpace.x1,
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () =>
+                        context.read<McpCubit>().authorize(server.id),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.primary,
                       side: BorderSide(color: colors.primary),
@@ -162,7 +206,7 @@ class McpManagementScreen extends StatelessWidget {
                 ),
                 HSpace.x2,
                 OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () => context.read<McpCubit>().deny(server.id),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.error,
                     side: BorderSide(color: colors.error),

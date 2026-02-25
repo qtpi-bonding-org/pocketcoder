@@ -1,18 +1,18 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart';
-import 'package:pocketcoder_flutter/domain/system/system_health.dart';
+import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'health_daos.dart';
 
 @LazySingleton(as: IHealthRepository)
 class HealthRepository implements IHealthRepository {
-  final HealthDao _healthDao;
+  final HealthcheckDao _healthDao;
 
   HealthRepository(this._healthDao);
 
   @override
-  Stream<List<SystemHealth>> watchHealth() {
+  Stream<List<Healthcheck>> watchHealth() {
     return _healthDao.watch();
   }
 

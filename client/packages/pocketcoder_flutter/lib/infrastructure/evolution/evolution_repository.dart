@@ -57,6 +57,18 @@ class EvolutionRepository implements IEvolutionRepository {
     );
   }
 
+  @override
+  Future<void> approveProposal(String id) async {
+    await tryMethod(
+      () => _proposalDao.save(id, {
+        'status': 'approved',
+        'approved_at': DateTime.now().toIso8601String(),
+      }),
+      RepositoryException.new,
+      'approveProposal',
+    );
+  }
+
   // --- SOPs ---
 
   @override

@@ -6,6 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'auth_store.dart';
 import 'logger.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 
 @module
 abstract class ExternalModule {
@@ -97,4 +100,10 @@ abstract class ExternalModule {
   AuthStoreConfig get authStoreConfig {
     return AuthStoreConfig(const FlutterSecureStorage());
   }
+
+  @singleton
+  PushService get pushService => getIt<PushService>();
+
+  @singleton
+  BillingService get billingService => getIt<BillingService>();
 }
