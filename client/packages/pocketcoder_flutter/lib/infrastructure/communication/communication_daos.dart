@@ -1,10 +1,10 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
-import '../../domain/chat/chat.dart';
-import '../../domain/chat/chat_message.dart';
-import '../../domain/subagent/subagent.dart';
-import '../core/base_dao.dart';
-import '../core/collections.dart';
+import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/domain/models/message.dart';
+import 'package:pocketcoder_flutter/domain/models/subagent.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
 
 @lazySingleton
 class ChatDao extends BaseDao<Chat> {
@@ -12,9 +12,9 @@ class ChatDao extends BaseDao<Chat> {
 }
 
 @lazySingleton
-class MessageDao extends BaseDao<ChatMessage> {
+class MessageDao extends BaseDao<Message> {
   MessageDao(PocketBase pb)
-      : super(pb, Collections.messages, ChatMessage.fromJson);
+      : super(pb, Collections.messages, Message.fromJson);
 }
 
 @lazySingleton

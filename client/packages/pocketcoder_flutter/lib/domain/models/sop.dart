@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 part 'sop.freezed.dart';
 part 'sop.g.dart';
@@ -15,10 +16,12 @@ class Sop with _$Sop {
     String? proposal,
     DateTime? sealedAt,
     String? sealedBy,
-    int? version,
-    DateTime? created,
-    DateTime? updated,
+    double? version,
   }) = _Sop;
 
-  factory Sop.fromJson(Map<String, dynamic> json) => _$SopFromJson(json);
+  factory Sop.fromRecord(RecordModel record) =>
+      Sop.fromJson(record.toJson());
+
+  factory Sop.fromJson(Map<String, dynamic> json) =>
+      _$SopFromJson(json);
 }

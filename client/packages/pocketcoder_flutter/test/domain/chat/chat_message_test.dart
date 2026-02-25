@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_flutter/domain/chat/chat_message.dart';
+import 'package:pocketcoder_flutter/domain/models/message.dart';
 
 void main() {
-  group('ChatMessage & MessagePart Alignment', () {
-    test('ChatMessage.fromJson handles minimal PocketBase json', () {
+  group('Message Verbatim Alignment', () {
+    test('Message.fromJson handles minimal PocketBase json', () {
       final json = {
         'id': 'msg-1',
         'chat': 'chat-1',
@@ -14,21 +14,20 @@ void main() {
         'created': '2026-02-10T04:46:28.000Z',
       };
 
-      final message = ChatMessage.fromJson(json);
+      final message = Message.fromJson(json);
 
       expect(message.id, 'msg-1');
       expect(message.chat, 'chat-1');
       expect(message.role, MessageRole.assistant);
-      expect(message.parts?.length, 1);
-      expect(message.parts?.first, isA<MessagePartText>());
-      expect((message.parts?.first as MessagePartText?)?.text, 'Hello World');
+      expect(message.parts, isA<List>());
+      expect(message.parts.length, 1);
+      expect(message.parts.first['type'], 'text');
+      expect(message.parts.first['text'], 'Hello World');
       expect(message.created, isA<DateTime>());
       expect(message.created?.year, 2026);
     });
 
-    test(
-        'ChatMessage.fromJson handles missing parts by defaulting to empty list',
-        () {
+    test('Message.fromJson handles missing parts as null (per verbatim)', () {
       final json = {
         'id': 'msg-2',
         'chat': 'chat-1',
@@ -36,68 +35,71 @@ void main() {
         // 'parts' is missing
       };
 
-      final message = ChatMessage.fromJson(json);
+      final message = Message.fromJson(json);
 
       expect(message.parts, isNull);
     });
 
-    test('ChatMessage.fromJson handles empty string status as null', () {
+    test(
+        'Message.fromJson handles empty string status as unknown (PB behavior)',
+        () {
       final json = {
         'id': 'msg-empty-status',
         'chat': 'chat-1',
         'role': 'assistant',
-        'status': '',
+        'engine_message_status': '',
       };
 
-      final message = ChatMessage.fromJson(json);
-      expect(message.engineMessageStatus, isNull);
+      final message = Message.fromJson(json);
+      // Since it's a non-required enum, if the value is not in the set, it usually defaults to unknown or null depending on json_serializable
+      expect(message.engineMessageStatus, MessageEngineMessageStatus.unknown);
     });
 
-    test('MessagePart.fromJson handles tool parts with nested ToolState', () {
+    test('Message.fromJson handles tool parts', () {
       final json = {
-        'type': 'tool',
-        'tool': 'bash',
-        'callID': 'call-123',
-        'state': {
-          'status': 'completed',
-          'input': {'command': 'ls'},
-          'output': 'file1.txt\nfile2.txt',
-        }
+        'id': 'msg-tool',
+        'chat': 'chat-1',
+        'role': 'assistant',
+        'parts': [
+          {
+            'type': 'tool',
+            'tool': 'bash',
+            'callID': 'call-123',
+            'state': {
+              'status': 'completed',
+              'input': {'command': 'ls'},
+              'output': 'file1.txt\nfile2.txt',
+            }
+          }
+        ]
       };
 
-      final part = MessagePart.fromJson(json);
+      final message = Message.fromJson(json);
 
-      expect(part, isA<MessagePartTool>());
-      final toolPart = part as MessagePartTool;
-      expect(toolPart.tool, 'bash');
-      expect(toolPart.state, isA<ToolStateCompleted>());
-      final state = toolPart.state as ToolStateCompleted;
-      expect(state.input['command'], 'ls');
-      expect(state.output, contains('file1.txt'));
+      expect(message.parts.first['type'], 'tool');
+      final toolPart = message.parts.first as Map<String, dynamic>;
+      expect(toolPart['tool'], 'bash');
+      expect(toolPart['state']['status'], 'completed');
+      expect(toolPart['state']['input']['command'], 'ls');
     });
 
-    test('MessagePartText handles "content" key as fallback for "text"', () {
+    test('Message.fromJson handles reasoning parts', () {
       final json = {
-        'type': 'text',
-        'content': 'Fallback content', // Old schema or OpenCode variety
+        'id': 'msg-reasoning',
+        'chat': 'chat-1',
+        'role': 'assistant',
+        'parts': [
+          {
+            'type': 'reasoning',
+            'text': 'I am thinking about...',
+          }
+        ]
       };
 
-      final part = MessagePart.fromJson(json);
+      final message = Message.fromJson(json);
 
-      expect(part, isA<MessagePartText>());
-      expect((part as MessagePartText).text, 'Fallback content');
-    });
-
-    test('MessagePart.fromJson handles reasoning parts', () {
-      final json = {
-        'type': 'reasoning',
-        'text': 'I am thinking about...',
-      };
-
-      final part = MessagePart.fromJson(json);
-
-      expect(part, isA<MessagePartReasoning>());
-      expect((part as MessagePartReasoning).text, 'I am thinking about...');
+      expect(message.parts.first['type'], 'reasoning');
+      expect(message.parts.first['text'], 'I am thinking about...');
     });
   });
 }

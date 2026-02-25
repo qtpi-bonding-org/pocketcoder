@@ -1,8 +1,8 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
-import '../../domain/healthcheck/healthcheck.dart';
-import '../core/base_dao.dart';
-import '../core/collections.dart';
+import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
 
 @lazySingleton
 class HealthcheckDao extends BaseDao<Healthcheck> {

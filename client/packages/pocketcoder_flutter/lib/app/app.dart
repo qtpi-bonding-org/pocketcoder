@@ -9,11 +9,11 @@ import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart';
 
 import '../app_router.dart';
-import '../design_system/theme/app_theme.dart';
-import '../design_system/theme/theme_service.dart';
-import '../design_system/primitives/ui_scaler.dart';
-import '../infrastructure/feedback/localization_service.dart';
-import '../presentation/core/widgets/notification_wrapper.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/ui_scaler.dart';
+import 'package:pocketcoder_flutter/infrastructure/feedback/localization_service.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/notification_wrapper.dart';
 import 'bootstrap.dart';
 
 class App extends StatelessWidget {

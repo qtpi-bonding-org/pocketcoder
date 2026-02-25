@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 part 'mcp_server.freezed.dart';
 part 'mcp_server.g.dart';
@@ -9,15 +10,16 @@ class McpServer with _$McpServer {
     required String id,
     required String name,
     required McpServerStatus status,
-    @JsonKey(name: 'requested_by') String? requestedBy,
-    @JsonKey(name: 'approved_by') String? approvedBy,
-    @JsonKey(name: 'approved_at') DateTime? approvedAt,
-    Map<String, dynamic>? config,
+    String? requestedBy,
+    String? approvedBy,
+    DateTime? approvedAt,
+    dynamic config,
     String? catalog,
     String? reason,
-    DateTime? created,
-    DateTime? updated,
   }) = _McpServer;
+
+  factory McpServer.fromRecord(RecordModel record) =>
+      McpServer.fromJson(record.toJson());
 
   factory McpServer.fromJson(Map<String, dynamic> json) =>
       _$McpServerFromJson(json);
@@ -32,6 +34,6 @@ enum McpServerStatus {
   denied,
   @JsonValue('revoked')
   revoked,
-  @JsonValue('')
+  @JsonValue('__unknown__')
   unknown,
 }

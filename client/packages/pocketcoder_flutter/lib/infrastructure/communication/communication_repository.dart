@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
-import '../../domain/chat/chat_message.dart';
-import '../../domain/chat/chat.dart';
-import '../../domain/communication/i_communication_repository.dart';
-import '../../domain/exceptions.dart';
-import '../core/logger.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/models/message.dart';
+import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/domain/communication/i_communication_repository.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'communication_daos.dart';
 import '../ai_config/ai_config_daos.dart';
-import '../../domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 
 @LazySingleton(as: ICommunicationRepository)
 class CommunicationRepository implements ICommunicationRepository {
@@ -26,7 +26,7 @@ class CommunicationRepository implements ICommunicationRepository {
   );
 
   @override
-  Stream<List<ChatMessage>> watchColdPipe(String chatId) {
+  Stream<List<Message>> watchColdPipe(String chatId) {
     // We use the reactive watch from BaseDao
     return _messageDao.watch(
       filter: 'chat = "$chatId"',

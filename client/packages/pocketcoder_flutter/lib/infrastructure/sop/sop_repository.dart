@@ -1,9 +1,9 @@
 import 'package:injectable/injectable.dart';
-import '../../domain/sop/i_sop_repository.dart';
-import '../../domain/sop/sop.dart';
-import '../../domain/proposal/proposal.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/sop/i_sop_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/sop.dart';
+import 'package:pocketcoder_flutter/domain/models/proposal.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'sop_daos.dart';
 
 @LazySingleton(as: ISopRepository)

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../design_system/theme/app_theme.dart';
-import '../core/widgets/scanline_widget.dart';
-import '../core/widgets/terminal_footer.dart';
-import '../core/widgets/bios_frame.dart';
-import '../core/widgets/terminal_header.dart';
-import '../core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:go_router/go_router.dart';
 
 class SopManagementScreen extends StatelessWidget {
