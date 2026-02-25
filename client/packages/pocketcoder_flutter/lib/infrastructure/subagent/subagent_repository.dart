@@ -1,8 +1,8 @@
 import 'package:injectable/injectable.dart';
-import '../../domain/subagent/i_subagent_repository.dart';
-import '../../domain/subagent/subagent.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/subagent/i_subagent_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/subagent.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import '../communication/communication_daos.dart';
 
 @LazySingleton(as: ISubagentRepository)

@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import '../../support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 

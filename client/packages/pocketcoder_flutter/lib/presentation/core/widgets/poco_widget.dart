@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../application/system/poco_cubit.dart';
+import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'poco_bubble.dart';
 
 /// The "Smart" mascot widget.

@@ -1,4 +1,4 @@
-import 'mcp_server.dart';
+import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 
 abstract class IMcpRepository {
   Stream<List<McpServer>> watchServers();

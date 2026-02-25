@@ -1,12 +1,12 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
-import '../../domain/auth/i_auth_repository.dart';
-import '../../domain/auth/user.dart';
-import '../../domain/ssh/ssh_key.dart';
-import '../core/collections.dart';
-import '../core/auth_store.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/auth/user.dart';
+import 'package:pocketcoder_flutter/domain/models/ssh_key.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'auth_daos.dart';
 
 @LazySingleton(as: IAuthRepository)

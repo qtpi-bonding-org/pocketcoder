@@ -2,7 +2,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
 import '../../app_router.dart';
-import '../../presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 @LazySingleton(as: cubit_ui_flow.IFeedbackService)
 class AppFeedbackService implements cubit_ui_flow.IFeedbackService {

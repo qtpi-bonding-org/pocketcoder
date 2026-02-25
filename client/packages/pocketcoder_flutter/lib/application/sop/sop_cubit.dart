@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import '../../domain/sop/i_sop_repository.dart';
-import '../../infrastructure/core/logger.dart';
+import 'package:pocketcoder_flutter/domain/sop/i_sop_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'sop_state.dart';
 
 @injectable

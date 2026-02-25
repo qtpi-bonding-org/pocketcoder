@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import 'package:pocketbase/pocketbase.dart';
-import '../../domain/hitl/i_hitl_repository.dart';
-import '../../domain/permission/permission_request.dart';
-import '../../domain/whitelist/whitelist_action.dart';
-import '../../domain/whitelist/whitelist_target.dart';
-import '../../domain/permission/permission_api_models.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+
+import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/permission.dart';
+import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
+import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
+import 'package:pocketcoder_flutter/domain/permission/permission_api_models.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/api_client.dart';
 import 'hitl_daos.dart';
 
 @LazySingleton(as: IHitlRepository)
@@ -15,17 +16,17 @@ class HitlRepository implements IHitlRepository {
   final PermissionDao _permissionDao;
   final WhitelistTargetDao _targetDao;
   final WhitelistActionDao _actionDao;
-  final PocketBase _pb;
+  final PocketCoderApi _api;
 
   HitlRepository(
     this._permissionDao,
     this._targetDao,
     this._actionDao,
-    this._pb,
+    this._api,
   );
 
   @override
-  Stream<List<PermissionRequest>> watchPending(String chatId) {
+  Stream<List<Permission>> watchPending(String chatId) {
     return _permissionDao.watch(
       filter: 'chat = "$chatId" && status = "draft"',
       sort: 'created',
@@ -67,22 +68,17 @@ class HitlRepository implements IHitlRepository {
     String? callId,
   }) async {
     return tryMethod(
-      () async {
-        final response = await _pb
-            .send('/api/pocketcoder/permission', method: 'POST', body: {
-          'permission': permission,
-          'patterns': patterns,
-          'chat_id': chatId,
-          'session_id': sessionId,
-          'opencode_id': agentPermissionId,
-          if (metadata != null) 'metadata': metadata,
-          if (message != null) 'message': message,
-          if (messageId != null) 'message_id': messageId,
-          if (callId != null) 'call_id': callId,
-        });
-
-        return PermissionResponse.fromJson(response as Map<String, dynamic>);
-      },
+      () => _api.evaluatePermission(
+        permission: permission,
+        patterns: patterns,
+        chatId: chatId,
+        sessionId: sessionId,
+        opencodeId: agentPermissionId,
+        metadata: metadata,
+        message: message,
+        messageId: messageId,
+        callId: callId,
+      ),
       PermissionException.new,
       'evaluatePermission',
     );

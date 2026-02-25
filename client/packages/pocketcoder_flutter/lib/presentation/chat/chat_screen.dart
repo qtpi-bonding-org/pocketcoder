@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../application/chat/communication_cubit.dart';
-import '../../application/chat/communication_state.dart';
-import '../../application/permission/permission_cubit.dart';
-import '../../application/permission/permission_state.dart';
-import '../../design_system/theme/app_theme.dart';
-import '../../domain/chat/chat_message.dart';
-import '../core/widgets/poco_animator.dart';
-import '../core/widgets/scanline_widget.dart';
-import '../core/widgets/terminal_footer.dart';
-import '../core/widgets/terminal_input.dart';
-import '../core/widgets/ui_flow_listener.dart';
-import '../core/widgets/terminal_header.dart';
-import '../core/widgets/terminal_loading_indicator.dart';
-import '../core/widgets/bios_section.dart';
-import '../core/widgets/permission_prompt.dart';
-import '../core/widgets/speech_bubble.dart';
-import '../core/widgets/thoughts_stream.dart';
+import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/communication_state.dart';
+import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart';
+import 'package:pocketcoder_flutter/application/permission/permission_state.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/models/message.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_animator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_input.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/permission_prompt.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/speech_bubble.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/thoughts_stream.dart';
 import '../../app_router.dart';
 
 class ChatScreen extends StatelessWidget {
@@ -94,7 +94,7 @@ class _ChatViewState extends State<_ChatView> {
                         final assistantMessages = allMessages
                             .where((m) => m.role == MessageRole.assistant);
 
-                        final List<MessagePart> brainParts = [];
+                        final List<dynamic> brainParts = [];
 
                         for (final msg in assistantMessages) {
                           final parts = msg.parts ?? [];
@@ -137,23 +137,22 @@ class _ChatViewState extends State<_ChatView> {
                         itemBuilder: (context, index) {
                           final msg = reversedMessages[index];
 
+                          // Filter text parts manually
+                          final textParts = (msg.parts ?? []).where((p) {
+                            return p is Map && p['type'] == 'text';
+                          }).toList();
+
                           // For USER: Show all text.
                           if (msg.role == MessageRole.user) {
-                            final textParts = (msg.parts ?? [])
-                                .whereType<MessagePartText>()
-                                .toList();
                             return SpeechBubble(
                                 textParts: textParts, isUser: true);
                           }
 
                           // For ASSISTANT: Show ONLY the LAST text part.
                           // (Hide reasoning/tools from speech bubble)
-                          final textParts = (msg.parts ?? [])
-                              .whereType<MessagePartText>()
-                              .toList();
                           final finalAnswer = textParts.isNotEmpty
                               ? [textParts.last]
-                              : <MessagePartText>[];
+                              : <dynamic>[];
 
                           return SpeechBubble(
                               textParts: finalAnswer, isUser: false);

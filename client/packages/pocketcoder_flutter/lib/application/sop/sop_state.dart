@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../domain/sop/sop.dart';
-import '../../domain/proposal/proposal.dart';
+import 'package:pocketcoder_flutter/domain/models/sop.dart';
+import 'package:pocketcoder_flutter/domain/models/proposal.dart';
 
 part 'sop_state.freezed.dart';
 

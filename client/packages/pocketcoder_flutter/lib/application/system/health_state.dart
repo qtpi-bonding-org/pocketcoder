@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../domain/system/system_health.dart';
+import 'package:pocketcoder_flutter/domain/system/system_health.dart';
 
 part 'health_state.freezed.dart';
 

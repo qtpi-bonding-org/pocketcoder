@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/theme/app_theme.dart';
-import '../../../domain/chat/chat_message.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 class ThoughtsStream extends StatelessWidget {
-  final List<MessagePart> parts;
+  final List<dynamic> parts;
 
   const ThoughtsStream({super.key, required this.parts});
 
@@ -30,19 +29,22 @@ class ThoughtsStream extends StatelessWidget {
       itemBuilder: (context, index) {
         // Reverse index for 'reverse: true'
         final part = parts[parts.length - 1 - index];
+        if (part is! Map<String, dynamic>) return const SizedBox.shrink();
         return _buildPart(context, part);
       },
     );
   }
 
-  Widget _buildPart(BuildContext context, MessagePart part) {
+  Widget _buildPart(BuildContext context, Map<String, dynamic> part) {
     final colors = context.colorScheme;
-    return part.map(
-      text: (textPart) {
+    final type = part['type'] as String?;
+
+    switch (type) {
+      case 'text':
         return Padding(
           padding: const EdgeInsets.only(bottom: 4.0),
           child: Text(
-            '> ${textPart.text ?? ""}',
+            '> ${part['text'] ?? ""}',
             style: TextStyle(
               color: colors.onSurface.withValues(alpha: 0.6),
               fontFamily: AppFonts.headerFamily,
@@ -50,12 +52,11 @@ class ThoughtsStream extends StatelessWidget {
             ),
           ),
         );
-      },
-      reasoning: (reasoningPart) {
+      case 'reasoning':
         return Padding(
           padding: const EdgeInsets.only(bottom: 4.0),
           child: Text(
-            'THOUGHT: ${reasoningPart.text ?? ""}',
+            'THOUGHT: ${part['text'] ?? ""}',
             style: TextStyle(
               color: colors.onSurface.withValues(alpha: 0.4),
               fontFamily: AppFonts.bodyFamily,
@@ -64,17 +65,19 @@ class ThoughtsStream extends StatelessWidget {
             ),
           ),
         );
-      },
-      tool: (toolPart) {
-        final state = toolPart.state;
+      case 'tool':
+        final toolName = (part['tool'] as String?) ?? 'unknown';
+        final state = (part['state'] as Map<String, dynamic>?) ?? {};
+        final status = (state['status'] as String?) ?? 'pending';
+
         return Container(
           margin: const EdgeInsets.only(bottom: 8.0, top: 4.0),
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
             color: colors.surface.withValues(alpha: 0.3),
             border: Border(
-                left:
-                    BorderSide(color: _getToolColor(context, state), width: 2)),
+                left: BorderSide(
+                    color: _getStatusColor(context, status), width: 2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,106 +85,120 @@ class ThoughtsStream extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'EXEC: ${toolPart.tool.toUpperCase()}',
+                    'EXEC: ${toolName.toUpperCase()}',
                     style: TextStyle(
-                      color: _getToolColor(context, state),
+                      color: _getStatusColor(context, status),
                       fontWeight: FontWeight.bold,
                       fontSize: 10,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _buildToolStatus(context, state),
+                  _buildToolStatus(context, status),
                 ],
               ),
               _buildToolPayload(context, state),
             ],
           ),
         );
-      },
-      file: (filePart) => Padding(
-        padding: const EdgeInsets.only(bottom: 4.0),
-        child: Text(
-          'FILE [${filePart.mime}]: ${filePart.filename ?? filePart.url}',
-          style: TextStyle(color: colors.secondary, fontSize: 10),
-        ),
-      ),
-      stepStart: (startPart) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0),
-        child:
-            Divider(color: colors.onSurface.withValues(alpha: 0.1), height: 1),
-      ),
-      stepFinish: (finishPart) => Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Text(
-          'STEP COMPLETE (${finishPart.reason})',
-          style: TextStyle(
-            color: colors.onSurface.withValues(alpha: 0.4),
-            fontSize: 9,
-            fontStyle: FontStyle.italic,
+      case 'file':
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4.0),
+          child: Text(
+            'FILE [${part['mime']}]: ${part['filename'] ?? part['url']}',
+            style: TextStyle(color: colors.secondary, fontSize: 10),
           ),
-        ),
-      ),
-    );
+        );
+      case 'step-start':
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Divider(
+              color: colors.onSurface.withValues(alpha: 0.1), height: 1),
+        );
+      case 'step-finish':
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Text(
+            'STEP COMPLETE (${part['reason']})',
+            style: TextStyle(
+              color: colors.onSurface.withValues(alpha: 0.4),
+              fontSize: 9,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        );
+      default:
+        // Handle unrecognized types by showing raw JSON summary
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4.0),
+          child: Text(
+            'PROTOCOL: ${part.keys.take(3).join(', ')}...',
+            style: TextStyle(
+              color: colors.onSurface.withValues(alpha: 0.2),
+              fontSize: 8,
+            ),
+          ),
+        );
+    }
   }
 
-  Color _getToolColor(BuildContext context, ToolState state) {
+  Color _getStatusColor(BuildContext context, String status) {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
-    return state.map(
-      pending: (_) => colors.onSurface.withValues(alpha: 0.3),
-      running: (_) => colors.secondary, // Phosphor Green
-      completed: (_) => colors.primary, // Vivid Green
-      error: (_) => terminalColors.danger, // Danger Red
-    );
+    switch (status) {
+      case 'pending':
+        return colors.onSurface.withValues(alpha: 0.3);
+      case 'running':
+        return colors.secondary; // Phosphor Green
+      case 'completed':
+        return colors.primary; // Vivid Green
+      case 'error':
+        return terminalColors.danger; // Danger Red
+      default:
+        return colors.onSurface.withValues(alpha: 0.3);
+    }
   }
 
-  Widget _buildToolStatus(BuildContext context, ToolState state) {
-    String label = state.map(
-      pending: (_) => '[PENDING]',
-      running: (_) => '[RUNNING...]',
-      completed: (_) => '[FINISHED]',
-      error: (_) => '[FAILED]',
-    );
+  Widget _buildToolStatus(BuildContext context, String status) {
+    String label = '[$status]'.toUpperCase();
+    if (status == 'running') label = '[RUNNING...]';
+
     return Text(
       label,
       style: TextStyle(
-        color: _getToolColor(context, state),
+        color: _getStatusColor(context, status),
         fontSize: 8,
         fontWeight: FontWeight.bold,
       ),
     );
   }
 
-  Widget _buildToolPayload(BuildContext context, ToolState state) {
+  Widget _buildToolPayload(BuildContext context, Map<String, dynamic> state) {
     final colors = context.colorScheme;
-    return state.map(
-      pending: (s) => _jsonText(context, s.input),
-      running: (s) => _jsonText(context, s.input),
-      completed: (s) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _jsonText(context, s.input),
+    final status = state['status'] as String?;
+    final input = (state['input'] as Map<String, dynamic>?) ?? {};
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _jsonText(context, input),
+        if (status == 'completed' && state.containsKey('output')) ...[
           Divider(height: 8, color: colors.onSurface.withValues(alpha: 0.1)),
           Text(
-            s.output,
+            state['output'].toString(),
             style: TextStyle(
                 color: colors.secondary, fontSize: 10), // Phosphor Green
             maxLines: 15,
             overflow: TextOverflow.ellipsis,
           ),
         ],
-      ),
-      error: (s) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _jsonText(context, s.input),
+        if (status == 'error' && state.containsKey('error')) ...[
           Divider(height: 8, color: colors.onSurface.withValues(alpha: 0.1)),
           Text(
-            s.error,
+            state['error'].toString(),
             style: TextStyle(color: colors.error, fontSize: 10),
           ),
         ],
-      ),
+      ],
     );
   }
 

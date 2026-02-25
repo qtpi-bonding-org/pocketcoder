@@ -1,5 +1,5 @@
-import '../proposal/proposal.dart';
-import '../sop/sop.dart';
+import 'package:pocketcoder_flutter/domain/models/proposal.dart';
+import 'package:pocketcoder_flutter/domain/models/sop.dart';
 
 abstract class IEvolutionRepository {
   // --- Proposals ---

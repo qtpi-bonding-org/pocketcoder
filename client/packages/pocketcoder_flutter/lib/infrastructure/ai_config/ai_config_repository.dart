@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import '../../domain/ai_config/i_ai_config_repository.dart';
-import '../../domain/ai/ai_models.dart';
-import '../../domain/subagent/subagent.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_agent.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_prompt.dart';
+import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
+import 'package:pocketcoder_flutter/domain/models/subagent.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'ai_config_daos.dart';
 
 @LazySingleton(as: IAiConfigRepository)

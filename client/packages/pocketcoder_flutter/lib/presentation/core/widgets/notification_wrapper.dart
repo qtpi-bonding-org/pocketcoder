@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import '../../../domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import '../../../app_router.dart';
 
 class NotificationWrapper extends StatefulWidget {

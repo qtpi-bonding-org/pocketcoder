@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import '../../domain/evolution/i_evolution_repository.dart';
-import '../../domain/proposal/proposal.dart';
-import '../../domain/sop/sop.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/evolution/i_evolution_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/proposal.dart';
+import 'package:pocketcoder_flutter/domain/models/sop.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'evolution_daos.dart';
 
 @LazySingleton(as: IEvolutionRepository)
