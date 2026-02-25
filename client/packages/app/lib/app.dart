@@ -50,6 +50,7 @@ class FcmPushService implements PushService {
             title: message.notification?.title ?? 'PocketCoder',
             body: message.notification?.body ?? '',
             data: message.data,
+            wasTapped: false,
           ));
         }
       });
@@ -60,6 +61,7 @@ class FcmPushService implements PushService {
           title: message.notification?.title ?? 'PocketCoder',
           body: message.notification?.body ?? '',
           data: message.data,
+          wasTapped: true,
         ));
       });
     }
@@ -82,6 +84,11 @@ class FcmPushService implements PushService {
     if (_fcm == null) return false;
     final settings = await _fcm!.requestPermission();
     return settings.authorizationStatus == AuthorizationStatus.authorized;
+  }
+
+  @override
+  Future<void> configure() async {
+    // For FCM, configuration usually means system settings or just no-op
   }
 }
 

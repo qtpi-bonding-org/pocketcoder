@@ -59,6 +59,9 @@ class Collections {
   /// MCP Servers collection - capability registry
   static const String mcpServers = 'mcp_servers';
 
+  /// Devices collection - for push notifications
+  static const String devices = 'devices';
+
   // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
@@ -79,6 +82,7 @@ class Collections {
     subagents,
     healthchecks,
     mcpServers,
+    devices,
   ];
 
   /// Returns all collections that exist in the current schema
@@ -98,6 +102,7 @@ class Collections {
     subagents,
     healthchecks,
     mcpServers,
+    devices,
   ];
 
   /// Returns collections that are referenced in API docs but may not exist yet

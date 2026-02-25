@@ -23,8 +23,10 @@ target/
 **/target/
 dist/
 build/
-pocketbase
-backend/pocketbase
+# Only ignore binaries, not directories
+**/pocketbase
+!services/pocketbase/
+pocketcoder
 *.bun-build
 
 # Local/Independent Repos (Opencode)
