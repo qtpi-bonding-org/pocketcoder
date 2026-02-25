@@ -6,7 +6,6 @@ environment:
 
 workspace:
   - packages/pocketcoder_flutter
-  - packages/foss
   - packages/app
   - apps/foss
   - apps/app
