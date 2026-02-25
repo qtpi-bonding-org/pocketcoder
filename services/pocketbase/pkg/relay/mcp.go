@@ -36,7 +36,7 @@ import (
 
 const (
 	mcpConfigPath     = "/mcp_config/docker-mcp.yaml"
-	mcpSecretsPath    = "/mcp_config/config.yaml"
+	mcpSecretsPath    = "/mcp_config/mcp.env"
 	gatewayContainer  = "pocketcoder-mcp-gateway"
 	dockerHost        = "tcp://docker-socket-proxy-write:2375"
 )
@@ -135,9 +135,11 @@ func (r *RelayService) renderMcpConfig() error {
 	catalog.WriteString("displayName: PocketCoder Dynamic Catalog\n")
 	catalog.WriteString("registry:\n")
 
-	// Secrets map for gateway config.yaml
-	secretsMap := make(map[string]any)
-	mcpServersMap := make(map[string]any)
+	// Secrets for gateway mcp.env
+	var secrets strings.Builder
+	secrets.WriteString("# PocketCoder MCP Secrets (auto-generated)\n")
+	secrets.WriteString(fmt.Sprintf("# Last rendered: %s\n", time.Now().UTC().Format(time.RFC3339)))
+	secrets.WriteString(fmt.Sprintf("# Approved servers: %d\n", len(records)))
 
 	for _, record := range records {
 		name := record.GetString("name")
@@ -159,11 +161,11 @@ func (r *RelayService) renderMcpConfig() error {
 		catalog.WriteString(fmt.Sprintf("    image: %s\n", image))
 		catalog.WriteString("    longLived: false\n")
 
-		// Update secrets
-		config := record.Get("config")
-		if config != nil {
-			mcpServersMap[name] = map[string]any{
-				"env": config,
+		// Update secrets (.env format)
+		configMap := make(map[string]any)
+		if err := record.UnmarshalJSONField("config", &configMap); err == nil {
+			for k, v := range configMap {
+				secrets.WriteString(fmt.Sprintf("%s=%v\n", k, v))
 			}
 		}
 	}
@@ -173,13 +175,8 @@ func (r *RelayService) renderMcpConfig() error {
 		return fmt.Errorf("failed to write catalog to %s: %w", mcpConfigPath, err)
 	}
 
-	// 2. Write secrets if any
-	secretsMap["mcpServers"] = mcpServersMap
-	secretsData, err := json.MarshalIndent(secretsMap, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal secrets to JSON: %w", err)
-	}
-	if err := os.WriteFile(mcpSecretsPath, secretsData, 0644); err != nil {
+	// 2. Write secrets (.env format)
+	if err := os.WriteFile(mcpSecretsPath, []byte(secrets.String()), 0644); err != nil {
 		return fmt.Errorf("failed to write secrets to %s: %w", mcpSecretsPath, err)
 	}
 
