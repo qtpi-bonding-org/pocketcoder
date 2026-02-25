@@ -172,7 +172,7 @@ func DispatchNotifications(app core.App, userID string, permission *core.Record)
 	devices, err := app.FindRecordsByFilter(
 		"devices",
 		"user = {:userID} && is_active = true",
-		"-created",
+		"",
 		0, 0,
 		map[string]any{"userID": userID},
 	)
