@@ -22,6 +22,9 @@ services:
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
       - OPENCODE_URL=${OPENCODE_URL}
+      - PN_PROVIDER=${PN_PROVIDER}
+      - PN_URL=${PN_URL}
+      - PN_RELAY_SECRET=${PN_RELAY_SECRET}
       - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
     command: >
       sh -c "echo '⏳ Waiting for OpenCode to be ready...' && while ! curl -I -s --connect-timeout 2 http://opencode:3000 > /dev/null; do echo 'OpenCode not yet ready, retrying in 1 second...' && sleep 1; done; echo '🚀 OpenCode is ready. Starting PocketBase...' && /app/pocketbase serve --http=0.0.0.0:8090"
@@ -210,6 +213,29 @@ services:
     networks:
       - pocketcoder-dashboard
 
+  # 🔔 NTFY (Optional Sovereign Notification Server)
+  # To enable: docker compose --profile foss up
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    container_name: pocketcoder-ntfy
+    profiles:
+      - foss
+    command: serve
+    environment:
+      - TZ=UTC
+      - NTFY_BASE_URL=${PN_URL} # Should be your domain or local IP
+      - NTFY_CACHE_FILE=/var/cache/ntfy/cache.db
+      - NTFY_AUTH_FILE=/var/lib/ntfy/user.db
+      - NTFY_AUTH_DEFAULT_ACCESS=deny-all # Sovereign Privacy: Default to private
+    volumes:
+      - ntfy-cache:/var/cache/ntfy
+      - ntfy-auth:/var/lib/ntfy
+    ports:
+      - "2586:80"
+    networks:
+      - pocketcoder-relay
+    restart: unless-stopped
+
 volumes:
   pb_data:
   # pb_backups:
@@ -220,6 +246,8 @@ volumes:
   opencode_data:
   cao_db:  # CAO SQLite database for subagent tasks
   shell_bridge:
+  ntfy-cache:
+  ntfy-auth:
 
 networks:
   pocketcoder-dashboard:
