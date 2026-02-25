@@ -127,7 +127,7 @@ services:
       - ENABLE_TF_OPERATIONS=${ENABLE_TF_OPERATIONS}
       - TFE_TOKEN=${TFE_TOKEN}
       - DOCKER_MCP_TELEMETRY_DEBUG=1
-    command: ["--port", "8811", "--transport", "sse", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--config", "/root/.docker/mcp/config.yaml", "--enable-all-servers"]
+    command: ["--port", "8811", "--transport", "sse", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--secrets", "/root/.docker/mcp/mcp.env", "--enable-all-servers"]
     networks:
       - pocketcoder-docker
       - pocketcoder-tools
