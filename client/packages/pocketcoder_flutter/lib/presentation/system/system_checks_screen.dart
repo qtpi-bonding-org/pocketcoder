@@ -1,13 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/application/system/health_cubit.dart';
+import 'package:pocketcoder_flutter/application/system/health_state.dart';
+import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 
 class SystemChecksScreen extends StatelessWidget {
   const SystemChecksScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => getIt<HealthCubit>()..watchHealth(),
+      child: UiFlowListener<HealthCubit, HealthState>(
+        child: const _SystemChecksView(),
+      ),
+    );
+  }
+}
+
+class _SystemChecksView extends StatelessWidget {
+  const _SystemChecksView();
 
   @override
   Widget build(BuildContext context) {
@@ -22,25 +42,38 @@ class SystemChecksScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TerminalHeader(title: 'SYSTEM CHECKS'),
+                const TerminalHeader(title: 'SYSTEM CHECKS'),
                 VSpace.x2,
                 Expanded(
                   child: BiosFrame(
                     title: 'SYSTEM DIAGNOSTICS',
-                    child: ListView(
-                      children: [
-                        _buildCheckRow(context, 'POCKETBASE', 'READY', true),
-                        _buildCheckRow(context, 'OPENCODE', 'READY', true),
-                        _buildCheckRow(context, 'SANDBOX', 'READY', true),
-                        _buildCheckRow(context, 'MCP-GATEWAY', 'READY', true),
-                        _buildCheckRow(context, 'DOCKER-SOCKET-PROXY-WRITE',
-                            'READY', true),
-                        _buildCheckRow(context, 'SQLPAGE', 'READY', true),
-                        _buildCheckRow(context, 'DOCS', 'READY', true),
-                        VSpace.x2,
-                        _buildCheckRow(
-                            context, 'VOLUME-MOUNTS', 'HEALTHY', true),
-                      ],
+                    child: BlocBuilder<HealthCubit, HealthState>(
+                      builder: (context, state) {
+                        if (state.checks.isEmpty && !state.isLoading) {
+                          return Center(
+                            child: Text(
+                              'NO DIAGNOSTICS AVAILABLE',
+                              style: TextStyle(
+                                color: colors.onSurface.withValues(alpha: 0.5),
+                                fontFamily: AppFonts.bodyFamily,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          itemCount: state.checks.length,
+                          itemBuilder: (context, index) {
+                            final check = state.checks[index];
+                            return _buildCheckRow(
+                              context,
+                              check.name.toUpperCase(),
+                              check.status.name.toUpperCase(),
+                              check.status == HealthcheckStatus.ready,
+                            );
+                          },
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -56,8 +89,8 @@ class SystemChecksScreen extends StatelessWidget {
             onTap: () => context.pop(),
           ),
           TerminalAction(
-            label: 'FULL REBOOT',
-            onTap: () {},
+            label: 'REFRESH',
+            onTap: () => context.read<HealthCubit>().refresh(),
           ),
         ],
       ),

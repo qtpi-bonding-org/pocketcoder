@@ -1,6 +1,6 @@
-import 'system_health.dart';
+import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
 
 abstract class IHealthRepository {
-  Stream<List<SystemHealth>> watchHealth();
+  Stream<List<Healthcheck>> watchHealth();
   Future<void> refreshHealth();
 }

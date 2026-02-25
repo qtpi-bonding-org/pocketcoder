@@ -45,10 +45,11 @@ class LocalBillingService implements BillingService {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await bootstrap(
-    pushService: LocalPushService(),
-    billingService: LocalBillingService(),
-  );
+  // Pre-register services so Injection can pick them up
+  getIt.registerSingleton<PushService>(LocalPushService());
+  getIt.registerSingleton<BillingService>(LocalBillingService());
+
+  await bootstrap();
 
   runApp(const App());
 }
