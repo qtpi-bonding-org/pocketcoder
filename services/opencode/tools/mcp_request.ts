@@ -39,10 +39,15 @@ export default tool({
     // 1. Auto-Research: Query the official catalog for technical metadata
     try {
       // We use the JSON format for deterministic parsing of secrets and env vars
-      const { stdout } = await execAsync(`docker mcp catalog show docker-mcp --format json`)
+      // We force /bin/ash to bypass the pocketcoder shell proxy which may mangle large output
+      const { stdout } = await execAsync(`docker mcp catalog show docker-mcp --format json`, {
+        maxBuffer: 10 * 1024 * 1024,
+        shell: "/bin/ash"
+      })
       const catalog = JSON.parse(stdout)
 
-      const serverEntry = catalog[args.server_name]
+      // The Docker MCP catalog JSON structure has servers under the 'registry' key
+      const serverEntry = catalog.registry ? catalog.registry[args.server_name] : catalog[args.server_name]
       if (serverEntry) {
         image = serverEntry.image || ""
 

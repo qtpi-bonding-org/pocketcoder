@@ -73,7 +73,7 @@ teardown() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"I need you to use the fetch MCP server to retrieve the contents of https://example.com. Use the MCP gateway to get this done.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"I need to fetch the content of https://example.com. Browse the MCP catalog, find the 'fetch' server, and use the 'mcp_request' tool to request its installation. Note: You only need to request the server to set up the environment, do not attempt to fetch the URL yourself in this turn.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -160,7 +160,7 @@ teardown() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"The fetch MCP server is already approved and available on the gateway. Use it via a subagent to fetch the contents of https://example.com and tell me the page title.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Objective: Use a subagent to fetch https://example.com. The 'fetch' server is already approved. Use 'cao_assign' to spawn a subagent and instruct it to use the 'fetch' tool from the 'fetch' server to retrieve the content of https://example.com. You as Poco are the coordinator; set up the environment and delegate to the subagent.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -237,7 +237,7 @@ teardown() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"What MCP servers are currently enabled on the gateway? Check the status.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"List the currently enabled MCP servers on the gateway by using the 'mcp_status' tool.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
