@@ -1,12 +1,6 @@
 # PocketCoder MCP Catalog (auto-generated)
-# Last rendered: 2026-02-25T13:26:46Z
-# Approved servers: 1
+# Last rendered: 2026-02-25T23:31:37Z
+# Approved servers: 0
 name: docker-mcp
 displayName: PocketCoder Dynamic Catalog
 registry:
-  fetch:
-    title: fetch
-    description: Approved by user for PocketCoder
-    type: server
-    image: mcp/fetch:latest
-    longLived: false
