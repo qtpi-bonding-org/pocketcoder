@@ -18,11 +18,11 @@ We are moving towards a **Sovereign Data Architecture** (3-Tier):
 | Category | Status | Details |
 | :--- | :--- | :--- |
 | **Auth & Profile** | ✅ DONE | Basic PocketBase login/logout and session management. |
-| **Model Alignment** | 🟡 PROGRESS | `Chat`, `Device`, `Subagent` are aligned. `Message`, `Permission` need work. |
-| **Notifications** | 🟡 PROGRESS | Registration logic fixed. Receiving/Display logic needs verification. |
-| **UI Feedback** | 🟡 PROGRESS | `cubit_ui_flow` pattern established. `VimToast` integration pending. |
-| **DAOs & Persistence** | 🔴 PENDING | `BaseDao` created, but 14 specific DAOs need implementation. |
-| **Custom Endpoints** | 🔴 PENDING | SSH keys, Artifacts, and Permission Evaluation calls not yet implemented. |
+| **Model Alignment** | ✅ DONE | All core models (Chat, Message, Agent, Proposal, SOP, Health) aligned. |
+| **Notifications** | 🟡 PROGRESS | Ntfy/UnifiedPush integrated into Core. Receiving/Display logic verified. |
+| **UI Feedback** | ✅ DONE | `cubit_ui_flow` + `VimToast` + `UiFlowListener` standardized across screens. |
+| **DAOs & Persistence** | ✅ DONE | Concrete DAOs implemented for major collections; Repositories are now reactive. |
+| **Custom Endpoints** | � PROGRESS | SSH keys and Permission Evaluation implemented. Artifacts pending. |
 
 ---
 
@@ -30,21 +30,21 @@ We are moving towards a **Sovereign Data Architecture** (3-Tier):
 
 Before we build complex UI, the data must be 100% reliable.
 
-- [ ] **Data Model Audit**:
+- [x] **Data Model Audit**:
     - [x] `Chat`: Aligned with schema.
     - [x] `Device`: Aligned with schema.
     - [x] `Subagent`: Aligned with schema.
-    - [ ] `ChatMessage`: Add `delivery` field, verify `tokens` structure, ensure `agent_message_id` mapping.
-    - [ ] `PermissionRequest`: Fix date parsing, add `challenge`, `source`, and `usage` fields.
-    - [ ] `AiAgent`: Remove `mode`, verify relations (`prompt`, `model`) are handled correctly.
-- [ ] **Implement Missing Models**:
-    - [ ] `SshKey`: Required for device authentication.
-    - [ ] `Usage`: For tracking AI costs/tokens.
-    - [ ] `Proposal` & `Sop`: For the Evolution system.
-    - [ ] `Healthcheck`: For system monitoring.
-- [ ] **Core DAO Layer**:
-    - [ ] Implement concrete DAOs for all collections (following `BaseDao` pattern).
-    - [ ] Update repositories to use DAOs instead of direct `PocketBase` calls where possible.
+    - [x] `ChatMessage`: Aligned with schema.
+    - [x] `PermissionRequest`: Aligned with schema.
+    - [x] `AiAgent`: Aligned with schema.
+- [x] **Implement Missing Models**:
+    - [x] `SshKey`: Required for device authentication.
+    - [x] `Usage`: For tracking AI costs/tokens.
+    - [x] `Proposal` & `Sop`: Aligned with Evolution system.
+    - [x] `Healthcheck`: Unified model implemented.
+- [x] **Core DAO Layer**:
+    - [x] Implement concrete DAOs for all major collections.
+    - [x] Update repositories to use reactive `baseDao` pipes.
 
 ---
 
@@ -60,7 +60,8 @@ Connecting the client to the "Brain" (OpenCode) and the Sandbox.
     - [ ] **Hot Pipe**: Verify Tool execution state tracking (pending → running → completed).
     - [ ] **SSE Connection**: Implement direct SSE client to OpenCode for instant agent events (Permission asked, turn changed).
 - [ ] **Push Notifications**:
-    - [ ] Verify background handlers for FCM (Android) and UnifiedPush (FOSS).
+    - [x] Folded FOSS/UnifiedPush logic into Core.
+    - [ ] Implement "Sovereign Mode" toggle in settings to switch between FCM and UnifiedPush at runtime.
     - [ ] Ensure local notifications are displayed consistently across platforms.
 
 ---
@@ -69,17 +70,17 @@ Connecting the client to the "Brain" (OpenCode) and the Sandbox.
 
 Making it feel like a "Retro Terminal" coding assistant.
 
-- [ ] **Standardize Feedback**:
-    - [ ] Integrate `VimToast` into `AppFeedbackService`.
-    - [ ] Ensure all cubits use `UiFlowListener` for consistent error/loading overlays.
-- [ ] **Aesthetic Consistency**:
-    - [ ] Audit all screens for "Green Terminal" design token usage.
-    - [ ] Replace remaining hardcoded colors with `context.terminalColors`.
+- [x] **Standardize Feedback**:
+    - [x] Integrate `VimToast` into `AppFeedbackService`.
+    - [x] Ensure all cubits use `UiFlowListener` for consistent error/loading overlays.
+- [x] **Aesthetic Consistency**:
+    - [x] Audit all screens for "Green Terminal" design token usage.
+    - [x] Replace remaining hardcoded colors with `context.terminalColors`.
 
 ---
 
 ## 📝 Next Steps for Antigravity
 
-1.  **Complete Model Alignment**: Audit `ChatMessage` and `PermissionRequest` against the latest PB schema.
-2.  **Infrastructure Expansion**: Implement the missing domain models (SshKey, Usage, etc.).
-3.  **The "Big Switch"**: Refactor the main repositories to use the DAO pattern for reactive, offline-first data.
+1.  **The "Hot Pipe"**: Implement the running state tracking for background tools and turn-based permission gating.
+2.  **SSE Connection**: Implement a robust SSE consumer in the `ChatRepository` for instant agent status updates.
+3.  **Sovereign Mode Toggle**: Add the UI and logic in Settings to swap between Cloud (Proprietary) and Local (FOSS) services.

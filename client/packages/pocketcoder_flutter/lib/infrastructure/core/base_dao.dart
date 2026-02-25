@@ -17,6 +17,8 @@ abstract class BaseDao<T> {
     this._fromJson,
   );
 
+  PocketBase get pb => _pb;
+
   /// Access to the underlying PocketBase collection service.
   /// We cast to $RecordService to access drift-enabled features like watchRecords.
   $RecordService get service => _pb.collection(_collection) as $RecordService;
