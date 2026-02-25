@@ -472,7 +472,7 @@ teardown() {
     echo "  Checking gateway logs for container creation..."
     local found_log=0
     for i in $(seq 1 10); do
-        if docker logs pocketcoder-mcp-gateway 2>&1 | grep -q "Running mcp/$server_name with \[run --rm"; then
+        if docker logs pocketcoder-mcp-gateway 2>&1 | grep -q "Running mcp/$server_name.* with \[run --rm"; then
             found_log=1
             break
         fi
