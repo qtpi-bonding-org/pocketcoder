@@ -61,3 +61,8 @@ CODEBASE.md
 
 # Test run logs
 tests/logs/
+
+# MCP Gateway
+services/mcp-gateway/config/catalogs/
+services/mcp-gateway/config/registry.yaml
+services/mcp-gateway/config/tools.yaml
