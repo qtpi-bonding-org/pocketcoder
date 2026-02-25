@@ -22,7 +22,7 @@ class AgentManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<AiConfigCubit>()..loadAll(),
+      create: (context) => getIt<AiConfigCubit>()..watchAll(),
       child: UiFlowListener<AiConfigCubit, AiConfigState>(
         child: const AgentManagementView(),
       ),
