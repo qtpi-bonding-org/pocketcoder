@@ -1,6 +1,5 @@
+import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
 import 'package:pocketbase/pocketbase.dart';
-
-import 'healthcheck.dart';
 
 abstract class IHealthcheckRepository {
   Future<List<Healthcheck>> getHealthchecks();

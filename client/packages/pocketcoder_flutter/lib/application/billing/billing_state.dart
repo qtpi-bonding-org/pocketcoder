@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import '../../domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 
 part 'billing_state.freezed.dart';
 

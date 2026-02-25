@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
-import '../../domain/status/i_status_repository.dart';
-import '../../domain/healthcheck/healthcheck.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'status_daos.dart';
 
 @LazySingleton(as: IStatusRepository)

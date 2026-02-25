@@ -1,4 +1,4 @@
-import 'device.dart';
+import 'package:pocketcoder_flutter/domain/models/device.dart';
 
 abstract class IDeviceRepository {
   /// Register or update a device for push notifications.

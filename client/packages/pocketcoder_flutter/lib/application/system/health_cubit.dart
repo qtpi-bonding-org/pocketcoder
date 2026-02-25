@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import '../../domain/system/i_health_repository.dart';
+import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart';
 import 'health_state.dart';
 
 @injectable

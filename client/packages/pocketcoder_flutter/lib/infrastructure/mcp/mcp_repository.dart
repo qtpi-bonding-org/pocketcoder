@@ -1,8 +1,8 @@
 import 'package:injectable/injectable.dart';
-import '../../domain/mcp/i_mcp_repository.dart';
-import '../../domain/mcp/mcp_server.dart';
-import '../../domain/exceptions.dart';
-import '../../core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'mcp_daos.dart';
 
 @LazySingleton(as: IMcpRepository)

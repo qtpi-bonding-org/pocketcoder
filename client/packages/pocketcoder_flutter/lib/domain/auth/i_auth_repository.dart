@@ -1,4 +1,4 @@
-import '../ssh/ssh_key.dart';
+import 'package:pocketcoder_flutter/domain/models/ssh_key.dart';
 import '../auth/user.dart';
 
 abstract class IAuthRepository {

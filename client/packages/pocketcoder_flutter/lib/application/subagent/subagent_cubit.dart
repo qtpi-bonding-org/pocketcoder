@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import '../../domain/subagent/i_subagent_repository.dart';
+import 'package:pocketcoder_flutter/domain/subagent/i_subagent_repository.dart';
 import 'subagent_state.dart';
 
 @injectable

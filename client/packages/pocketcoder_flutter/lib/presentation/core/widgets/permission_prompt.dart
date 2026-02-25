@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/theme/app_theme.dart';
-import '../../../domain/permission/permission_request.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/models/permission.dart';
 import 'terminal_button.dart';
 
 class PermissionPrompt extends StatelessWidget {
-  final PermissionRequest request;
+  final Permission request;
   final VoidCallback onAuthorize;
   final VoidCallback onDeny;
 
