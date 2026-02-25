@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 part 'chat.freezed.dart';
 part 'chat.g.dart';
@@ -22,8 +21,6 @@ class Chat with _$Chat {
     DateTime? created,
     DateTime? updated,
   }) = _Chat;
-
-  factory Chat.fromRecord(RecordModel record) => Chat.fromJson(record.toJson());
 
   factory Chat.fromJson(Map<String, dynamic> json) => _$ChatFromJson(json);
 }
