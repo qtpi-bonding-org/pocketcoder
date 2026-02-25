@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../domain/chat/subagent.dart';
+import '../../domain/subagent/subagent.dart';
 
 part 'subagent_state.freezed.dart';
 
