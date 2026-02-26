@@ -44,4 +44,20 @@ class CommunicationState with _$CommunicationState implements IUiFlowState {
 
   @override
   bool get hasError => error != null;
+
+  /// Returns a merged list of messages where the [hotMessage] (SSE)
+  /// takes priority over the [messages] (DB) if the IDs match.
+  List<Message> get displayMessages {
+    if (hotMessage == null) return messages;
+
+    final hasHotInCold = messages.any((m) => m.id == hotMessage!.id);
+
+    if (hasHotInCold) {
+      return messages
+          .map((m) => m.id == hotMessage!.id ? hotMessage! : m)
+          .toList();
+    } else {
+      return [...messages, hotMessage!];
+    }
+  }
 }

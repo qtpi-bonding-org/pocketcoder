@@ -121,10 +121,7 @@ class _ChatViewState extends State<_ChatView> {
                     ),
                     child: BlocBuilder<CommunicationCubit, CommunicationState>(
                       builder: (context, state) {
-                        final allMessages = [
-                          ...state.messages,
-                          if (state.hotMessage != null) state.hotMessage!
-                        ];
+                        final allMessages = state.displayMessages;
 
                         final assistantMessages = allMessages
                             .where((m) => m.role == MessageRole.assistant);
@@ -163,7 +160,8 @@ class _ChatViewState extends State<_ChatView> {
                   child: BlocBuilder<CommunicationCubit, CommunicationState>(
                     builder: (context, state) {
                       // We need to reverse the list to stick to bottom
-                      final reversedMessages = state.messages.reversed.toList();
+                      final reversedMessages =
+                          state.displayMessages.reversed.toList();
 
                       return ListView.builder(
                         reverse: true,
