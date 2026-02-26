@@ -55,11 +55,12 @@ Tests cover:
 
 ## 📁 Repository Structure
 
-- `backend/`: Go source for the PocketBase instance and custom hooks.
-- `proxy/`: Rust implementation of the secure shell proxy.
-- `sandbox/`: Docker configuration and entrypoint for the isolated environment.
-- `client/`: (Optional) Flutter application source.
-- `docs/`: Starlight-based documentation site.
+- `services/pocketbase/`: Go source for the PocketBase instance and custom hooks.
+- `services/proxy/`: Rust implementation of the secure shell proxy.
+- `services/sandbox/`: Docker configuration and execution environment logic.
+- `services/opencode/`: The reasoning engine configuration and plugins.
+- `client/`: Flutter application source for the mobile/web interface.
+- `services/docs/`: Starlight-based documentation site.
 
 ## 🛡 Security Notes
 

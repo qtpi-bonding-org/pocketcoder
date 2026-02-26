@@ -1,27 +1,28 @@
-
 services:
-  # 📚 DOCUMENTATION (Astro + Starlight)
+  # 📚 DOCS (Documentation Site)
   docs:
     build:
       context: .
-      dockerfile: Dockerfile.docs
+      dockerfile: services/docs/Dockerfile
     container_name: pocketcoder-docs
     ports:
       - "4321:4321"
     volumes:
-      - ./docs:/app/docs
-      - /app/docs/node_modules
-      - ./backend:/app/backend:ro
-      - ./proxy:/app/proxy:rw
-      - ./sandbox:/app/sandbox:ro
-      - ./client:/app/client:ro
-      - ./scripts:/app/scripts:ro
-      - ./ARCHITECTURE.md:/app/ARCHITECTURE.md:ro
+      - ./services/docs:/app/docs
+      - /app/docs/node_modules  # Don't mount node_modules - use container's installed version
+      - ./services/pocketbase:/app/pocketbase
+      - ./services/proxy:/app/proxy
       - ./DEVELOPMENT.md:/app/DEVELOPMENT.md:ro
       - ./SECURITY.md:/app/SECURITY.md:ro
-      - ./CODEBASE.md:/app/CODEBASE.md:rw
+      - ./scripts:/app/scripts:ro
+    working_dir: /app/docs
     environment:
       - NODE_ENV=development
+    command: /bin/bash -c "./sync.sh && npm run dev -- --host 0.0.0.0"
     restart: unless-stopped
-    # Use host network binding by default for standalone usage, 
-    # or rely on default bridge.
+    networks:
+      - pocketcoder-dashboard
+
+networks:
+  pocketcoder-dashboard:
+    external: true

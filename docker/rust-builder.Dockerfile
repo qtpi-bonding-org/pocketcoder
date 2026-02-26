@@ -7,7 +7,7 @@ RUN apk add --no-cache musl-dev gcc
 WORKDIR /build
 
 # Copy dependency manifests
-COPY proxy/Cargo.toml proxy/Cargo.lock* ./
+COPY services/proxy/Cargo.toml services/proxy/Cargo.lock* ./
 
 # Create dummy src to cache dependencies
 RUN mkdir src && echo "fn main() {}" > src/main.rs
@@ -15,7 +15,7 @@ RUN cargo build --release
 RUN rm -rf src
 
 # Copy actual source and build
-COPY proxy/src ./src
+COPY services/proxy/src ./src
 RUN touch src/main.rs
 RUN cargo build --release
 

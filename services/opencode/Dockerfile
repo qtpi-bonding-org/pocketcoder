@@ -2,11 +2,11 @@
 FROM rust:1.83-alpine AS rust-builder
 RUN apk add --no-cache musl-dev gcc
 WORKDIR /build
-COPY proxy/Cargo.toml proxy/Cargo.lock* ./
+COPY services/proxy/Cargo.toml services/proxy/Cargo.lock* ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
 RUN rm -rf src
-COPY proxy/src ./src
+COPY services/proxy/src ./src
 RUN touch src/main.rs
 RUN cargo build --release
 
