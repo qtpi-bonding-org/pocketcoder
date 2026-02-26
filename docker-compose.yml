@@ -64,7 +64,7 @@ services:
       - opencode_workspace:/workspace
       - ./services/opencode:/workspace/.opencode
       - opencode_data:/root/.local/share/opencode
-      - ./opencode.json:/root/.config/opencode/opencode.json:ro
+      - ./services/opencode/opencode.json:/root/.config/opencode/opencode.json:ro
       - ./services/mcp-gateway/config:/mcp_config:ro
       - shell_bridge:/shell_bridge
     command: serve --port 3000 --hostname 0.0.0.0 --log-level DEBUG

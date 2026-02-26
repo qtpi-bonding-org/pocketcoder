@@ -5,7 +5,7 @@ bun.lockb
 # EnvironmentVariables
 .env
 .env.*
-!.env.example
+!.env.template
 
 # System
 .DS_Store
@@ -67,6 +67,8 @@ services/mcp-gateway/config/catalogs/
 services/mcp-gateway/config/registry.yaml
 services/mcp-gateway/config/tools.yaml
 services/mcp-gateway/config/config.yaml
+services/mcp-gateway/config/docker-mcp.yaml
+services/mcp-gateway/config/mcp.env
 
 # Local Scratchpad/Misc
 .misc/

@@ -34,41 +34,58 @@ export default tool({
 
     // 1. Auto-Research: Query the official catalog for technical metadata
     try {
-      const process = Bun.spawn(["sh", "-c", "docker mcp catalog show docker-mcp --format json"])
-      const stdout = await new Response(process.stdout).text()
-      const catalog = JSON.parse(stdout)
+      const process = Bun.spawn(["docker", "mcp", "catalog", "show", "docker-mcp", "--format", "json"])
+      const stdout = (await new Response(process.stdout).text()).trim()
 
-      // The Docker MCP catalog JSON structure has servers under the 'registry' key
-      const serverEntry = catalog.registry ? catalog.registry[args.server_name] : catalog[args.server_name]
-      if (serverEntry) {
-        image = serverEntry.image || ""
+      if (stdout.trim()) {
+        const catalog = JSON.parse(stdout)
+        const registry = catalog.registry || catalog
+        const requestedName = args.server_name.toLowerCase()
 
-        // Extract required secrets
-        if (Array.isArray(serverEntry.secrets)) {
-          serverEntry.secrets.forEach((s: any) => {
-            if (s.env) configSchema[s.env] = `Secret: ${s.name || s.env}`
-          })
+        // Case-insensitive matching
+        const entryKey = Object.keys(registry).find(key => key.toLowerCase() === requestedName)
+        const serverEntry = entryKey ? registry[entryKey] : null
+
+        if (serverEntry) {
+          image = serverEntry.image || ""
+
+          // Extract required secrets
+          if (Array.isArray(serverEntry.secrets)) {
+            serverEntry.secrets.forEach((s: any) => {
+              if (s.env) configSchema[s.env] = `Secret: ${s.name || s.env}`
+            })
+          }
+
+          // Extract environment variables, identifying placeholders
+          if (Array.isArray(serverEntry.env)) {
+            serverEntry.env.forEach((e: any) => {
+              if (e.name) {
+                const description = e.value && e.value.includes("{{")
+                  ? `User configuration required: ${e.value}`
+                  : `Environment variable: ${e.name}`
+
+                configSchema[e.name] = description
+              }
+            })
+          }
+
+          // Support for V3 'config' parameter schema
+          if (Array.isArray(serverEntry.config)) {
+            serverEntry.config.forEach((c: any) => {
+              if (c.properties && typeof c.properties === 'object') {
+                Object.entries(c.properties).forEach(([prop, details]: [string, any]) => {
+                  configSchema[prop] = details.description || `Configuration: ${prop}`
+                })
+              }
+            })
+          }
+        } else {
+          console.warn(`⚠️ [mcp_request] Server '${args.server_name}' not found in catalog.`)
         }
-
-        // Extract environment variables, especially those needing user configuration (placeholders)
-        if (Array.isArray(serverEntry.env)) {
-          serverEntry.env.forEach((e: any) => {
-            if (e.name) {
-              // If it's a template placeholder like {{n8n.api_url}}, we definitely need it from the user
-              const description = e.value && e.value.includes("{{")
-                ? `Configuration required: ${e.value}`
-                : `Environment variable: ${e.name}`
-
-              configSchema[e.name] = description
-            }
-          })
-        }
-      } else {
-        console.warn(`⚠️ [mcp_request] Server '${args.server_name}' not found in catalog.`)
       }
     } catch (e) {
       console.warn(`⚠️ [mcp_request] Auto-research via catalog failed for ${args.server_name}:`, e)
-      // Fallback: we'll still proceed with just the name
+      // Fallback: proceed with just the basic name provided by user
     }
 
     // 2. Submit the enriched request to PocketBase
@@ -93,7 +110,8 @@ export default tool({
     }
 
     const data = await resp.json()
-    let result = `MCP server '${args.server_name}' request submitted (ID: ${data.id}, status: ${data.status}).`
+    const action = data.synced ? "synced with existing record" : "submitted"
+    let result = `MCP server '${args.server_name}' request ${action} (ID: ${data.id}, status: ${data.status}).`
     if (image) {
       const shortImage = image.length > 50 ? `${image.substring(0, 47)}...` : image
       result += ` Detected image: ${shortImage}.`
