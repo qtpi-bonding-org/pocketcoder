@@ -1,3 +1,4 @@
-[submodule "sandbox/cao"]
-	path = sandbox/cao
-	url = ../cli-agent-orchestrator.git
+[submodule "services/sandbox/cao"]
+	path = services/sandbox/cao
+	url = github.com-cao:qtpi-bonding-org/cli-agent-orchestrator.git
+	branch = id-schema
