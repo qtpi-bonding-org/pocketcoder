@@ -11,8 +11,8 @@ class Proposal with _$Proposal {
     required String name,
     String? description,
     required String content,
-    required ProposalAuthoredBy authoredBy,
-    required ProposalStatus status,
+    @JsonKey(unknownEnumValue: ProposalAuthoredBy.unknown) required ProposalAuthoredBy authoredBy,
+    @JsonKey(unknownEnumValue: ProposalStatus.unknown) required ProposalStatus status,
   }) = _Proposal;
 
   factory Proposal.fromRecord(RecordModel record) =>

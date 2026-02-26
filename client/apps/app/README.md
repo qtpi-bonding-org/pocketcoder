@@ -1,16 +1,20 @@
-# pocketcoder_app
+# PocketCoder Mobile Shell
 
-A new Flutter project.
+This is the primary application shell for the PocketCoder Mobile app.
 
-## Getting Started
+## 🏗️ Role
+This package serves as the entry point for the mobile application across all platforms (Android, iOS, macOS, Web). It is responsible for:
+1.  **Platform Configuration**: Native setup for each target platform.
+2.  **Service Injection**: Wiring up core services from `pocketcoder_flutter` with implementation details (including proprietary ones from `package:app`).
+3.  **Bootstrapping**: Initializing the application lifecycle.
 
-This project is a starting point for a Flutter application.
+## 🛠️ Development
+While most feature work happens in `packages/pocketcoder_flutter`, you run and debug the app from this directory.
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter run
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛡️ Structure
+- `lib/main.dart`: The main entry point. Initializes `get_it` and calls `bootstrap()`.
+- `android/`, `ios/`, etc.: Platform-specific projects and configurations.

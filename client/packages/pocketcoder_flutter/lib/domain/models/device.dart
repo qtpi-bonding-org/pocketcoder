@@ -11,7 +11,7 @@ class Device with _$Device {
     required String user,
     required String name,
     required String pushToken,
-    required DevicePushService pushService,
+    @JsonKey(unknownEnumValue: DevicePushService.unknown) required DevicePushService pushService,
     bool? isActive,
   }) = _Device;
 

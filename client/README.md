@@ -1,217 +1,67 @@
-# Flutter Starter Template
+# PocketCoder Mobile (Flutter)
 
-A robust, production-ready Flutter project template based on the Quanitya architecture. This template provides a solid foundation with best practices for state management, dependency injection, theming, localization, and error handling.
+The official mobile client for PocketCoder—your local-first, privacy-focused AI coding assistant.
 
-## Features
+## 🚀 Overview
 
-### 🏗️ **Architecture**
-- **State Management**: Cubit-based architecture with `cubit_ui_flow` for automatic UI feedback
-- **Dependency Injection**: `injectable` + `get_it` for clean, testable code
-- **Privacy-First Error Handling**: `flutter_error_privserver` for secure error reporting
-- **Type-Safe Navigation**: `go_router` with centralized route management
+PocketCoder Mobile is a thin client designed to connect to your personal PocketCoder backend. It provides a terminal-grade interface for interacting with your AI agent, managing sessions, and overseeing automated tasks from your phone or tablet.
 
-### 🎨 **Design System**
-- **Automatic Dark Mode**: `flutter_color_palette` with symmetric palette generation
-- **Responsive Sizing**: `UiScaler` for consistent UI across devices
-- **Design Tokens**: Centralized spacing, typography, and color primitives
+### Core Philosophy
+- **Local-First**: Your data stays on your infrastructure.
+- **Privacy-Centric**: Anonymous error reporting and secure credential storage.
+- **FOSS Core**: The base application logic is fully open-source (MPL-2.0).
+- **Pro Features**: Optional proprietary enhancements (Firebase Push, RevenueCat) for the App Store version.
 
-### 🌍 **Localization**
-- **Dot-Notation Keys**: `l10n_key_resolver` for clean, maintainable translations
-- **Type-Safe**: Generated localization with compile-time safety
+## ✨ Features
 
-### 📋 **Code Generation**
-- **Freezed**: Immutable models with copyWith and unions
-- **Injectable**: Automatic dependency injection setup
-- **Build Runner**: Integrated code generation workflow
+- **Retro-Terminal UI**: A stunning green-on-black aesthetic inspired by classic computing.
+- **Agent Orchestration**: Real-time streaming of agent thoughts and tool executions.
+- **Sandboxed Execution**: Inspect and control the remote sandbox from your device.
+- **Permission Gating**: Approve or deny sensitive AI actions (file writes, command execution) with a single tap.
+- **Offline Resilience**: Robust state management via Drift/SQLite for browsing history without a connection.
 
-## Getting Started
+## 🏗️ Technical Stack
 
-### Prerequisites
-- Flutter SDK 3.0.0 or higher
-- Dart SDK 3.0.0 or higher
+- **Framework**: [Flutter](https://flutter.dev)
+- **State Management**: [Bloc/Cubit](https://pub.dev/packages/flutter_bloc) with `cubit_ui_flow`
+- **Database**: [Drift](https://drift.simonbinder.eu/) (High-performance reactive SQLite)
+- **Networking**: PocketBase Client + DartSSH2
+- **Terminal Emulator**: [xterm.dart](https://pub.dev/packages/xterm)
 
-### Installation
+## 🛠️ Development
 
-1. **Clone or use this template**
-   ```bash
-   # If using as a GitHub template
-   # Click "Use this template" button on GitHub
-   
-   # Or clone directly
-   git clone <your-repo-url>
-   cd flutter_starter_template
-   ```
+This project is a monorepo managed by [Melos](https://melos.invertase.dev).
 
-2. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
+### Architecture
+1. **`packages/pocketcoder_flutter`**: The core FOSS-pure logic and UI components.
+2. **`packages/app`**: Proprietary integrations (Optional).
+3. **`apps/app`**: The mobile application shell that assembles the pieces.
 
-3. **Generate code**
-   ```bash
-   dart run build_runner build --delete-conflicting-outputs
-   ```
-
-4. **Run the app**
-   ```bash
-   flutter run
-   ```
-
-### Renaming the App
-
-Use the included rename script to customize the app name and package identifier:
-
+### Quick Start
 ```bash
-# Make the script executable (first time only)
-chmod +x rename_app.sh
+# 1. Install Melos
+dart pub global activate melos
 
-# Rename with just an app name (package ID auto-generated)
-./rename_app.sh "My Cool App"
+# 2. Bootstrap workspace
+melos bootstrap
 
-# Rename with custom package identifier
-./rename_app.sh "My Cool App" "com.mycompany.mycoolapp"
+# 3. Generate code
+melos run build_gen
+
+# 4. Run the app
+cd apps/app && flutter run
 ```
 
-The script updates:
-- ✅ `pubspec.yaml` package name
-- ✅ All Dart import statements
-- ✅ Android package ID, app label, and Kotlin path
-- ✅ iOS bundle identifier and display name
-- ✅ macOS bundle identifier and display name
-- ✅ Linux binary name and application ID
-- ✅ Windows binary name
-- ✅ Web title and manifest
-
-After renaming, run:
+### Purity Check
+To ensure the core package remains FOSS-pure (no proprietary SDK leaks):
 ```bash
-flutter pub get
-dart run build_runner build --delete-conflicting-outputs
-flutter analyze
+melos run check:purity
 ```
 
-## Project Structure
+## 🛡️ License
 
-```
-lib/
-├── app/
-│   ├── app.dart              # Root MaterialApp widget
-│   └── bootstrap.dart        # Centralized initialization
-├── app_router.dart           # GoRouter configuration
-├── core/
-│   └── try_operation.dart    # Exception handling utilities
-├── design_system/
-│   ├── primitives/           # Colors, fonts, sizes
-│   └── theme/                # Theme configuration
-├── infrastructure/
-│   └── feedback/             # Localization & exception mapping
-├── l10n/                     # Localization files
-├── support/
-│   └── extensions/           # Base Cubit class
-└── main.dart                 # Entry point
+The PocketCoder core application (`pocketcoder_flutter`) is licensed under **MPL-2.0**.
+See the [LICENSE](LICENSE) file for details.
 
-.agent/
-└── steering/                 # Development standards & patterns
-```
-
-## Development
-
-### Code Generation
-
-Run code generation in watch mode during development:
-```bash
-dart run build_runner watch --delete-conflicting-outputs
-```
-
-### Adding Localization Keys
-
-1. Add keys to `lib/l10n/app_en.arb` in camelCase:
-   ```json
-   {
-     "errorNetwork": "Network error occurred"
-   }
-   ```
-
-2. Use dot-notation in code:
-   ```dart
-   MessageKey.error('error.network')
-   ```
-
-3. Run code generation to update the resolver
-
-### Creating a New Feature
-
-1. **Create State** (using Freezed):
-   ```dart
-   @freezed
-   class MyFeatureState with _$MyFeatureState implements IUiFlowState {
-     const factory MyFeatureState({
-       @Default(UiFlowStatus.idle) UiFlowStatus status,
-       Object? error,
-       // ... your data
-     }) = _MyFeatureState;
-   }
-   ```
-
-2. **Create Cubit** (extending AppCubit):
-   ```dart
-   @injectable
-   class MyFeatureCubit extends AppCubit<MyFeatureState> {
-     MyFeatureCubit() : super(const MyFeatureState());
-     
-     Future<void> loadData() async {
-       await tryOperation(() async {
-         // Your logic here
-         return state.copyWith(status: UiFlowStatus.success);
-       });
-     }
-   }
-   ```
-
-3. **Register in DI**: The `@injectable` annotation handles this automatically
-
-## Architecture Patterns
-
-This template follows several key patterns documented in `.agent/steering/`:
-
-- **Cubit UI Flow Pattern**: Automatic state-to-UI feedback
-- **Service/Repository Pattern**: Privacy-safe exception handling
-- **Development Standards**: Code generation, DI, and localization guidelines
-
-## Testing
-
-Run tests:
-```bash
-flutter test
-```
-
-## Customization
-
-### Changing App Name
-
-1. Update `name` in `pubspec.yaml`
-2. Update `CFBundleName` in iOS `Info.plist`
-3. Update `android:label` in Android `AndroidManifest.xml`
-
-### Changing Package Name
-
-Use the `change_app_package_name` package or manually update:
-- iOS: `ios/Runner.xcodeproj/project.pbxproj`
-- Android: `android/app/build.gradle`
-
-### Customizing Theme
-
-Edit `lib/design_system/primitives/app_palette.dart` to change colors. Dark mode is generated automatically.
-
-## License
-
-This Flutter application (client) is licensed under the Mozilla Public License 2.0 (MPL-2.0).
-See the [LICENSE](LICENSE) file in this directory for the full license text.
-
-
-## Credits
-
-Based on the Quanitya architecture and custom libraries:
-- `cubit_ui_flow`
-- `flutter_error_privserver`
-- `flutter_color_palette`
-- `l10n_key_resolver`
+---
+Built with 💚 by the [QtPi Bonding Org](https://github.com/qtpi-bonding-org).

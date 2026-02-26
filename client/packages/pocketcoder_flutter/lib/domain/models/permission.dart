@@ -13,7 +13,7 @@ class Permission with _$Permission {
     required String permission,
     dynamic patterns,
     dynamic metadata,
-    required PermissionStatus status,
+    @JsonKey(unknownEnumValue: PermissionStatus.unknown) required PermissionStatus status,
     String? message,
     String? source,
     String? messageId,
