@@ -10,7 +10,8 @@ class Chat with _$Chat {
     required String id,
     required String title,
     String? aiEngineSessionId,
-    @JsonKey(unknownEnumValue: ChatEngineType.unknown) ChatEngineType? engineType,
+    @JsonKey(unknownEnumValue: ChatEngineType.unknown)
+    ChatEngineType? engineType,
     required String user,
     String? agent,
     DateTime? lastActive,
@@ -23,18 +24,16 @@ class Chat with _$Chat {
     DateTime? updated,
   }) = _Chat;
 
-  factory Chat.fromRecord(RecordModel record) =>
-      Chat.fromJson(record.toJson());
+  factory Chat.fromRecord(RecordModel record) => Chat.fromJson(record.toJson());
 
-  factory Chat.fromJson(Map<String, dynamic> json) =>
-      _$ChatFromJson(json);
+  factory Chat.fromJson(Map<String, dynamic> json) => _$ChatFromJson(json);
 }
 
 enum ChatEngineType {
   @JsonValue('opencode')
   opencode,
   @JsonValue('claude-code')
-  claude_code,
+  claudeCode,
   @JsonValue('cursor')
   cursor,
   @JsonValue('custom')

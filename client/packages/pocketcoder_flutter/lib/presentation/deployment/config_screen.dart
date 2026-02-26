@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketcoder_flutter/application/config/config_cubit.dart';
-import 'package:pocketcoder_flutter/application/config/config_state.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_cubit.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_state.dart';
+import 'package:flutter_aeroform/application/config/config_cubit.dart';
+import 'package:flutter_aeroform/application/config/config_state.dart';
+import 'package:flutter_aeroform/application/deployment/deployment_cubit.dart';
+import 'package:flutter_aeroform/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/models/cloud_provider.dart';
-import 'package:pocketcoder_flutter/domain/models/deployment_config.dart';
-import 'package:pocketcoder_flutter/domain/models/deployment_result.dart';
+import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
+import 'package:flutter_aeroform/domain/models/deployment_config.dart';
+import 'package:flutter_aeroform/domain/models/deployment_result.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
@@ -287,7 +287,7 @@ class _ConfigViewState extends State<_ConfigView> {
     void Function(String) onSelected,
   ) {
     return DropdownButtonFormField<String>(
-      value: selectedPlanId,
+      initialValue: selectedPlanId,
       decoration: InputDecoration(
         labelText: 'Select Plan',
         border: const OutlineInputBorder(),
@@ -348,7 +348,7 @@ class _ConfigViewState extends State<_ConfigView> {
     void Function(String) onSelected,
   ) {
     return DropdownButtonFormField<String>(
-      value: selectedRegionId,
+      initialValue: selectedRegionId,
       decoration: InputDecoration(
         labelText: 'Select Region',
         border: const OutlineInputBorder(),

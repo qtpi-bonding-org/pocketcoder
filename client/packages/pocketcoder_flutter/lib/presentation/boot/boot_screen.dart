@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
+import 'package:flutter_aeroform/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';

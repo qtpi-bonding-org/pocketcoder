@@ -16,7 +16,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_fiel
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
+import 'package:flutter_aeroform/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 
 class OnboardingScreen extends StatefulWidget {

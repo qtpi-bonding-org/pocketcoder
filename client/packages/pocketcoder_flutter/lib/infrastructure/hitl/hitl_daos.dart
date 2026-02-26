@@ -4,7 +4,7 @@ import 'package:pocketcoder_flutter/domain/models/permission.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
+import "package:flutter_aeroform/infrastructure/core/collections.dart";
 
 @lazySingleton
 class PermissionDao extends BaseDao<Permission> {

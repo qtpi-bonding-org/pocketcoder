@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketcoder_flutter/application/auth/auth_cubit.dart';
-import 'package:pocketcoder_flutter/application/auth/auth_message_mapper.dart';
-import 'package:pocketcoder_flutter/application/auth/auth_state.dart';
+import 'package:flutter_aeroform/application/auth/auth_cubit.dart';
+import 'package:flutter_aeroform/application/auth/auth_message_mapper.dart';
+import 'package:flutter_aeroform/application/auth/auth_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';

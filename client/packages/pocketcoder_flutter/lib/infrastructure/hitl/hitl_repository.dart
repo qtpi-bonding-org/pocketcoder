@@ -6,8 +6,8 @@ import 'package:pocketcoder_flutter/domain/models/permission.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/domain/permission/permission_api_models.dart';
-import 'package:pocketcoder_flutter/domain/exceptions.dart';
-import 'package:pocketcoder_flutter/core/try_operation.dart';
+import 'package:flutter_aeroform/domain/exceptions.dart';
+import 'package:flutter_aeroform/core/try_operation.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/api_client.dart';
 import 'hitl_daos.dart';
 

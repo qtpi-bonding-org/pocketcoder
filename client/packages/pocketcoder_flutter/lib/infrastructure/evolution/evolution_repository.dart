@@ -3,8 +3,8 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/evolution/i_evolution_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/proposal.dart';
 import 'package:pocketcoder_flutter/domain/models/sop.dart';
-import 'package:pocketcoder_flutter/domain/exceptions.dart';
-import 'package:pocketcoder_flutter/core/try_operation.dart';
+import 'package:flutter_aeroform/domain/exceptions.dart';
+import 'package:flutter_aeroform/core/try_operation.dart';
 import 'evolution_daos.dart';
 
 @LazySingleton(as: IEvolutionRepository)

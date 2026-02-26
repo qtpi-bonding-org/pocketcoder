@@ -3,7 +3,7 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/auth/user.dart';
 import 'package:pocketcoder_flutter/domain/models/ssh_key.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
+import "package:flutter_aeroform/infrastructure/core/collections.dart";
 
 @lazySingleton
 class UserDao extends BaseDao<User> {
