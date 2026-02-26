@@ -10,8 +10,6 @@ import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../../app_router.dart';
 
 class BootScreen extends StatefulWidget {
   const BootScreen({super.key});
@@ -129,16 +127,6 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   Future<void> _checkConnection() async {
-    const skipAuthDefine =
-        String.fromEnvironment('SKIP_AUTH', defaultValue: 'false');
-    final skipAuthEnv = dotenv.get('SKIP_AUTH', fallback: 'false');
-
-    if (skipAuthDefine == 'true' || skipAuthEnv == 'true') {
-      debugPrint('[PocketCoder] SKIP_AUTH is enabled. Bypassing login...');
-      if (mounted) context.goNamed(RouteNames.home);
-      return;
-    }
-
     if (mounted) {
       context.read<PocoCubit>().updateMessage("Checking secure connection...");
     }

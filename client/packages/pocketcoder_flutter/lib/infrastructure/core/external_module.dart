@@ -4,11 +4,10 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'auth_store.dart';
 import 'logger.dart';
-import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
-import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
-import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/domain/models/app_config.dart';
 
 @module
 abstract class ExternalModule {
@@ -102,8 +101,28 @@ abstract class ExternalModule {
   }
 
   @singleton
-  PushService get pushService => getIt<PushService>();
+  FlutterSecureStorage get flutterSecureStorage {
+    return const FlutterSecureStorage();
+  }
 
+  /// App configuration for mobile deployment feature
   @singleton
-  BillingService get billingService => getIt<BillingService>();
+  AppConfig get appConfig {
+    return AppConfig(
+      linodeClientId: AppConfig.kLinodeClientId,
+      linodeRedirectUri: AppConfig.kLinodeRedirectUri,
+      cloudInitTemplateUrl: AppConfig.kCloudInitTemplateUrl,
+      maxPollingAttempts: AppConfig.kMaxPollingAttempts,
+      initialPollingIntervalSeconds: AppConfig.kInitialPollingIntervalSeconds,
+    );
+  }
+
+  /// Linode OAuth client ID for API clients
+  @Named('linodeClientId')
+  @singleton
+  String get linodeClientId => AppConfig.kLinodeClientId;
+
+  /// HTTP client for API requests
+  @lazySingleton
+  http.Client get httpClient => http.Client();
 }

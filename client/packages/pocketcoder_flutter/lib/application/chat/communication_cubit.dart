@@ -190,4 +190,35 @@ class CommunicationCubit extends Cubit<CommunicationState> {
       status: UiFlowStatus.failure,
     ));
   }
+
+  Future<void> fetchArtifactContent(String path) async {
+    logInfo('💬 [CommCubit] Fetching artifact: $path');
+    emit(state.copyWith(
+      status: UiFlowStatus.loading,
+      lastOperation: ChatOperation.fetchArtifact,
+      currentArtifactPath: path,
+      currentArtifactContent: null,
+    ));
+
+    try {
+      final content = await _repository.fetchArtifact(path);
+      emit(state.copyWith(
+        currentArtifactContent: content,
+        status: UiFlowStatus.success,
+      ));
+    } catch (e) {
+      logError('💬 [CommCubit] Failed to fetch artifact: $e');
+      emit(state.copyWith(
+        error: e,
+        status: UiFlowStatus.failure,
+      ));
+    }
+  }
+
+  void clearArtifact() {
+    emit(state.copyWith(
+      currentArtifactPath: null,
+      currentArtifactContent: null,
+    ));
+  }
 }

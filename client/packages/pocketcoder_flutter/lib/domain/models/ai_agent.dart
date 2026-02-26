@@ -10,7 +10,7 @@ class AiAgent with _$AiAgent {
     required String id,
     required String name,
     String? description,
-    AiAgentMode? mode,
+    @JsonKey(unknownEnumValue: AiAgentMode.unknown) AiAgentMode? mode,
     double? temperature,
     bool? isInit,
     String? prompt,

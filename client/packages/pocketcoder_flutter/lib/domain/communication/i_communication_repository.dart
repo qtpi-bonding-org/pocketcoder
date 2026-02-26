@@ -25,6 +25,12 @@ abstract class ICommunicationRepository {
 
   /// Fetches a list of all chat records, sorted by last_active descending.
   Future<List<Chat>> fetchChatHistory();
+
+  /// Returns the full URL for a workspace artifact.
+  String getArtifactUrl(String path);
+
+  /// Fetches the raw content of an artifact.
+  Future<String> fetchArtifact(String path);
 }
 
 @freezed

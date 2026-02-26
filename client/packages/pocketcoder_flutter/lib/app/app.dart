@@ -7,6 +7,9 @@ import 'package:pocketcoder_flutter/application/system/status_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
+import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
+// import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart'; // Unused here
 
 import '../app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -41,6 +44,12 @@ class App extends StatelessWidget {
             ),
             BlocProvider(
               create: (context) => getIt<PermissionCubit>(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<McpCubit>()..watchServers(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<ObservabilityCubit>()..refreshStats(),
             ),
           ],
           child: NotificationWrapper(

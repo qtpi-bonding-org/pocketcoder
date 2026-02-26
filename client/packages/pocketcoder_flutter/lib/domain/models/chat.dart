@@ -10,12 +10,12 @@ class Chat with _$Chat {
     required String id,
     required String title,
     String? aiEngineSessionId,
-    ChatEngineType? engineType,
+    @JsonKey(unknownEnumValue: ChatEngineType.unknown) ChatEngineType? engineType,
     required String user,
     String? agent,
     DateTime? lastActive,
     String? preview,
-    ChatTurn? turn,
+    @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
     String? description,
     bool? archived,
     String? tags,
@@ -33,9 +33,13 @@ class Chat with _$Chat {
 enum ChatEngineType {
   @JsonValue('opencode')
   opencode,
+  @JsonValue('claude-code')
+  claude_code,
+  @JsonValue('cursor')
+  cursor,
   @JsonValue('custom')
   custom,
-  @JsonValue('unknown')
+  @JsonValue('__unknown__')
   unknown,
 }
 
