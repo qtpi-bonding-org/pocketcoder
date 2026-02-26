@@ -122,7 +122,7 @@ impl PocketCoderDriver {
             format!("({})", cmd)
         };
 
-        let wrapped_cmd = format!("{}; echo \"---POCKETCODER_EXIT:$?_ID:{{{}}}---\"", final_cmd, sentinel_id);
+        let wrapped_cmd = format!("{} > /tmp/pocketcoder_out.txt 2>&1; echo \"---POCKETCODER_EXIT:$?_ID:{{{}}}---\" >> /tmp/pocketcoder_out.txt", final_cmd, sentinel_id);
         let _ = Command::new("tmux").args(&tmux_args).args(["send-keys", "-t", &pane, &wrapped_cmd, "Enter"]).status();
 
         // 4. Poll Loop
@@ -136,26 +136,18 @@ impl PocketCoderDriver {
 
             let output = Command::new("tmux")
                 .args(&tmux_args)
-                .args(["capture-pane", "-p", "-t", &pane])
+                .args(["capture-pane", "-p", "-t", &pane, "-S", "-"])
                 .output()?;
             
-            let content = String::from_utf8_lossy(&output.stdout);
-            
+            let content = std::fs::read_to_string("/tmp/pocketcoder_out.txt")?;
+
             if let Some(pos) = content.find("POCKETCODER_EXIT") {
                 if content.contains(&sentinel_id) {
                     let sub = &content[pos..];
                     let exit_code_part = sub.split(':').nth(1).unwrap_or("0").split('_').next().unwrap_or("0");
                     let exit_code = exit_code_part.parse::<i32>().unwrap_or(0);
 
-                    let lines: Vec<&str> = content.lines().collect();
-                    let result_output = lines.iter()
-                        .filter(|l| !l.contains("POCKETCODER_EXIT"))
-                        .filter(|l| !l.contains(&sentinel_id))
-                        .map(|s| *s)
-                        .collect::<Vec<&str>>()
-                        .join("\n")
-                        .trim()
-                        .to_string();
+                    let result_output = content[..pos].trim().to_string();
 
                     return Ok(CommandResult {
                         output: result_output,
