@@ -43,6 +43,19 @@ class ApiEndpoints {
   static const String health = '/api/pocketcoder/health';
 
   // ===========================================================================
+  // OBSERVABILITY ENDPOINTS
+  // ===========================================================================
+
+  /// GET /api/pocketcoder/logs/{containerName}
+  /// SSE stream of Docker container logs.
+  static String logs(String containerName) =>
+      '/api/pocketcoder/logs/$containerName';
+
+  /// ANY /api/pocketcoder/proxy/observability/*
+  /// Proxy to SQLPage dashboard.
+  static const String observability = '/api/pocketcoder/proxy/observability/';
+
+  // ===========================================================================
   // SUBAGENT ENDPOINTS
   // ===========================================================================
 
@@ -60,11 +73,13 @@ class ApiEndpoints {
     sshKeys,
     health,
     subagent,
+    observability,
   ];
 
   /// Dynamic endpoints that require parameters
   static const List<String> dynamicEndpoints = [
     '/api/pocketcoder/artifact/{path}',
+    '/api/pocketcoder/logs/{containerName}',
   ];
 
   /// Checks if an endpoint is a custom PocketCoder endpoint

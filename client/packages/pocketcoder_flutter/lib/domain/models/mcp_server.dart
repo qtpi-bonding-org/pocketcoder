@@ -9,13 +9,15 @@ class McpServer with _$McpServer {
   const factory McpServer({
     required String id,
     required String name,
-    required McpServerStatus status,
+    @JsonKey(unknownEnumValue: McpServerStatus.unknown) required McpServerStatus status,
     String? requestedBy,
     String? approvedBy,
     DateTime? approvedAt,
     dynamic config,
     String? catalog,
     String? reason,
+    String? image,
+    dynamic configSchema,
   }) = _McpServer;
 
   factory McpServer.fromRecord(RecordModel record) =>

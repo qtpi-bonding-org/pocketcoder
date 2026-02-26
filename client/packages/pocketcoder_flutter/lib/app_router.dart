@@ -13,6 +13,10 @@ import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart'
 import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
+import 'package:pocketcoder_flutter/presentation/auth/auth_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/config_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/progress_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/details_screen.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 
@@ -56,11 +60,14 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.artifact,
         name: RouteNames.artifact,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const ArtifactScreen(),
-        ),
+        pageBuilder: (context, state) {
+          final path = state.uri.queryParameters['path'];
+          return TerminalTransition.buildPage(
+            context: context,
+            state: state,
+            child: ArtifactScreen(initialPath: path),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.settings,
@@ -143,6 +150,46 @@ class AppRouter {
           child: const PermissionRelayScreen(),
         ),
       ),
+      // Deployment routes
+      GoRoute(
+        path: AppRoutes.auth,
+        name: RouteNames.auth,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const AuthScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.config,
+        name: RouteNames.config,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const ConfigScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.deploymentProgress,
+        name: RouteNames.deploymentProgress,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const ProgressScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.deploymentDetails}?instanceId',
+        name: RouteNames.deploymentDetails,
+        pageBuilder: (context, state) {
+          final instanceId = state.uri.queryParameters['instanceId'] ?? '';
+          return TerminalTransition.buildPage(
+            context: context,
+            state: state,
+            child: DetailsScreen(instanceId: instanceId),
+          );
+        },
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -167,6 +214,11 @@ class AppRoutes {
   static const String sopManagement = '/sop';
   static const String systemChecks = '/system-checks';
   static const String paywall = '/paywall';
+  // Deployment routes
+  static const String auth = '/auth';
+  static const String config = '/config';
+  static const String deploymentProgress = '/deployment/progress';
+  static const String deploymentDetails = '/deployment/details';
 }
 
 class RouteNames {
@@ -184,6 +236,11 @@ class RouteNames {
   static const String sopManagement = 'sopManagement';
   static const String systemChecks = 'systemChecks';
   static const String paywall = 'paywall';
+  // Deployment route names
+  static const String auth = 'auth';
+  static const String config = 'config';
+  static const String deploymentProgress = 'deploymentProgress';
+  static const String deploymentDetails = 'deploymentDetails';
 }
 
 class AppNavigation {
@@ -196,6 +253,19 @@ class AppNavigation {
       context.pushNamed(RouteNames.whitelist);
   static void toPaywall(BuildContext context) =>
       context.pushNamed(RouteNames.paywall);
+
+  // Deployment navigation
+  static void toAuth(BuildContext context) =>
+      context.pushNamed(RouteNames.auth);
+  static void toConfig(BuildContext context) =>
+      context.pushNamed(RouteNames.config);
+  static void toDeploymentProgress(BuildContext context) =>
+      context.pushNamed(RouteNames.deploymentProgress);
+  static void toDeploymentDetails(BuildContext context, String instanceId) =>
+      context.pushNamed(
+        RouteNames.deploymentDetails,
+        queryParameters: {'instanceId': instanceId},
+      );
 
   static void back(BuildContext context) {
     if (context.canPop()) {

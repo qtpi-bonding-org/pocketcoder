@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'communication_daos.dart';
 import '../ai_config/ai_config_daos.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/api_client.dart';
 
 @LazySingleton(as: ICommunicationRepository)
 class CommunicationRepository implements ICommunicationRepository {
@@ -20,12 +21,14 @@ class CommunicationRepository implements ICommunicationRepository {
   final MessageDao _messageDao;
   final AiAgentDao _agentDao;
   final IAuthRepository _authRepository;
+  final PocketCoderApi _api;
 
   CommunicationRepository(
     this._chatDao,
     this._messageDao,
     this._agentDao,
     this._authRepository,
+    this._api,
   );
 
   @override
@@ -52,7 +55,7 @@ class CommunicationRepository implements ICommunicationRepository {
         "Cache-Control": "no-cache",
       },
     ).listen((event) {
-      if (event.event == null || event.data == null) return;
+      if (event.event == null || event.data == null || event.data!.isEmpty) return;
 
       try {
         final data = jsonDecode(event.data!) as Map<String, dynamic>;
@@ -212,6 +215,20 @@ class CommunicationRepository implements ICommunicationRepository {
       },
       ChatException.new,
       'fetchChatHistory',
+    );
+  }
+
+  @override
+  String getArtifactUrl(String path) {
+    return _api.getArtifactUrl(path);
+  }
+
+  @override
+  Future<String> fetchArtifact(String path) async {
+    return tryMethod(
+      () => _api.fetchArtifact(path),
+      ChatException.new,
+      'fetchArtifact',
     );
   }
 }

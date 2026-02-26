@@ -1,14 +1,12 @@
 # PocketCoder Flutter Workspace
 
-This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It is designed to support two distinct app versions—**FOSS (F-Droid)** and **App Store (Pro)**—using a single core logic package.
+This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It uses a core logic package shared between a base FOSS foundation and proprietary additions.
 
 ## 🏗️ Structure
 
 - **`packages/pocketcoder_flutter`**: Core logic, UI, and state management. **Must remain FOSS-pure.**
-- **`packages/pn_ntfy`**: FOSS-friendly push notification implementation (ntfy).
-- **`packages/pn_fcm`**: Proprietary SDK container (Firebase, RevenueCat). Only used in the App Store version.
-- **`apps/foss`**: App shell for F-Droid.
-- **`apps/app`**: App shell for App Store/Play Store.
+- **`packages/app`**: Proprietary SDK container (Firebase, RevenueCat, etc.).
+- **`apps/app`**: The primary PocketCoder application shell. Injects services from both packages.
 
 ## 🚀 Getting Started
 
@@ -31,14 +29,13 @@ This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It
 
 | Command | Description |
 | --- | --- |
-| `melos run check:purity` | **Critical**: Verifies the FOSS app has no proprietary leaks. |
-| `melos run build:foss` | Build the FOSS Android APK. |
-| `melos run build:app` | Build the App Store/Pro Android APK. |
+| `melos run check:purity` | **Critical**: Verifies the core package has no proprietary leaks. |
+| `melos run build:app` | Build the Mobile Android APK. |
 | `melos run test` | Run tests across all packages. |
 | `melos run fix` | Apply `dart fix` to all packages in the workspace. |
 
 ## 🛡️ FOSS Purity Rules
 
 1.  Never add proprietary SDKs (Firebase, RevenueCat, etc.) to `pocketcoder_flutter`.
-2.  Keep all proprietary logic gated inside `packages/pn_fcm`.
-3.  Always run `melos run check:purity` before committing changes to the FOSS app.
+2.  Keep all proprietary logic gated inside `packages/app`.
+3.  Always run `melos run check:purity` before committing core changes.

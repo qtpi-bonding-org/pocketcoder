@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
+import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -46,31 +50,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Expanded(
                   child: BiosFrame(
                     title: 'CONFIGURATION PARAMETERS',
-                    child: ListView.builder(
-                      itemCount: _options.length,
-                      itemBuilder: (context, i) {
-                        return BiosListTile(
-                          label: _options[i].$1,
-                          value: _options[i].$2,
-                          isSelected: i == _selectedIndex,
-                          onTap: () {
-                            setState(() => _selectedIndex = i);
+                    child: BlocBuilder<McpCubit, McpState>(
+                      builder: (context, state) {
+                        final hasPendingMcp = state.maybeWhen(
+                          loaded: (servers) => servers
+                              .any((s) => s.status == McpServerStatus.pending),
+                          orElse: () => false,
+                        );
+
+                        return ListView.builder(
+                          itemCount: _options.length,
+                          itemBuilder: (context, i) {
                             final option = _options[i].$1;
-                            if (option == 'AGENT OBSERVABILITY') {
-                              context.pushNamed(RouteNames.agentObservability);
-                            } else if (option == 'MCP MANAGEMENT') {
-                              context.pushNamed(RouteNames.mcpManagement);
-                            } else if (option == 'SOP MANAGEMENT') {
-                              context.pushNamed(RouteNames.sopManagement);
-                            } else if (option == 'SYSTEM CHECKS') {
-                              context.pushNamed(RouteNames.systemChecks);
-                            } else if (option == 'WHITELIST RULES') {
-                              context.pushNamed(RouteNames.whitelist);
-                            } else if (option == 'AGENT REGISTRY') {
-                              context.pushNamed(RouteNames.aiRegistry);
-                            } else if (option == 'PERMISSION RELAY') {
-                              AppNavigation.toPaywall(context);
-                            }
+                            final isMcpOption = option == 'MCP MANAGEMENT';
+
+                            return BiosListTile(
+                              label: option,
+                              value: _options[i].$2,
+                              isSelected: i == _selectedIndex,
+                              hasBadge: isMcpOption && hasPendingMcp,
+                              onTap: () {
+                                setState(() => _selectedIndex = i);
+                                if (option == 'AGENT OBSERVABILITY') {
+                                  context
+                                      .pushNamed(RouteNames.agentObservability);
+                                } else if (option == 'MCP MANAGEMENT') {
+                                  context.pushNamed(RouteNames.mcpManagement);
+                                } else if (option == 'SOP MANAGEMENT') {
+                                  context.pushNamed(RouteNames.sopManagement);
+                                } else if (option == 'SYSTEM CHECKS') {
+                                  context.pushNamed(RouteNames.systemChecks);
+                                } else if (option == 'WHITELIST RULES') {
+                                  context.pushNamed(RouteNames.whitelist);
+                                } else if (option == 'AGENT REGISTRY') {
+                                  context.pushNamed(RouteNames.aiRegistry);
+                                } else if (option == 'PERMISSION RELAY') {
+                                  AppNavigation.toPaywall(context);
+                                }
+                              },
+                            );
                           },
                         );
                       },
