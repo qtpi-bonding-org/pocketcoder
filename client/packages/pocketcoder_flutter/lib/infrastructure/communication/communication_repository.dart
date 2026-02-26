@@ -55,7 +55,8 @@ class CommunicationRepository implements ICommunicationRepository {
         "Cache-Control": "no-cache",
       },
     ).listen((event) {
-      if (event.event == null || event.data == null || event.data!.isEmpty) return;
+      if (event.event == null || event.data == null || event.data!.isEmpty)
+        return;
 
       try {
         final data = jsonDecode(event.data!) as Map<String, dynamic>;
@@ -82,6 +83,7 @@ class CommunicationRepository implements ICommunicationRepository {
             controller.add(HotPipeEvent.snapshot(
               messageId: messageId,
               parts: parts,
+              role: data['role'] as String?,
             ));
           case 'message_complete':
             final parts = (data['parts'] as List? ?? [])
@@ -91,6 +93,7 @@ class CommunicationRepository implements ICommunicationRepository {
               messageId: messageId,
               parts: parts,
               status: data['status'] as String?,
+              role: data['role'] as String?,
             ));
           case 'error':
             controller.add(HotPipeEvent.error(
