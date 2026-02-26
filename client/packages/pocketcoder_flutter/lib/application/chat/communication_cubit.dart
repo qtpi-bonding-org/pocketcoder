@@ -79,7 +79,26 @@ class CommunicationCubit extends Cubit<CommunicationState> {
     _coldSub?.cancel();
     _coldSub = _repository.watchColdPipe(chatId).listen(
       (messages) {
-        emit(state.copyWith(messages: messages));
+        // If we have a hot message, check if its "Cold" counterpart
+        // has arrived in a finished state. If so, we clear it to avoid
+        // the hot message shadowing the DB record forever.
+        Message? nextHot = state.hotMessage;
+        if (nextHot != null) {
+          final dbEquivalent =
+              messages.where((m) => m.id == nextHot!.id).firstOrNull;
+          if (dbEquivalent != null &&
+              dbEquivalent.engineMessageStatus ==
+                  MessageEngineMessageStatus.completed) {
+            logInfo(
+                '💬 [CommCubit] Handoff complete for ${nextHot.id}. Clearing HotMessage.');
+            nextHot = null;
+          }
+        }
+
+        emit(state.copyWith(
+          messages: messages,
+          hotMessage: nextHot,
+        ));
       },
       onError: (e) => emit(state.copyWith(
         error: e,
@@ -174,12 +193,18 @@ class CommunicationCubit extends Cubit<CommunicationState> {
   void _onHotComplete(HotPipeComplete complete) {
     logInfo('💬 [CommCubit] HotPipe Complete: ${complete.messageId}');
 
-    // If we have a hot message, we clear it because the Cold Pipe (DB)
-    // will now take over since the record is marked 'completed' in PB.
-    emit(state.copyWith(
-      hotMessage: null,
-      isPocoThinking: false,
-    ));
+    // Update with final parts, but don't clear yet!
+    // We wait for the Cold Pipe (DB) to confirm status='completed'
+    // to ensure a flicker-free handoff.
+    final currentHot = state.hotMessage;
+    if (currentHot != null && currentHot.id == complete.messageId) {
+      emit(state.copyWith(
+        hotMessage: currentHot.copyWith(parts: complete.parts),
+        isPocoThinking: false,
+      ));
+    } else {
+      emit(state.copyWith(isPocoThinking: false));
+    }
   }
 
   void _onHotError(HotPipeError error) {
