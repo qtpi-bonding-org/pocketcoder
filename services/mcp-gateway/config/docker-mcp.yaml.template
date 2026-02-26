@@ -1,6 +1,6 @@
 # PocketCoder MCP Catalog (auto-generated)
-# Last rendered: 2026-02-26T08:30:18Z
-# Approved servers: 1
+# Last rendered: 2026-02-26T12:57:01Z
+# Approved servers: 2
 name: docker-mcp
 displayName: PocketCoder Dynamic Catalog
 registry:
@@ -9,4 +9,10 @@ registry:
     description: Approved by user for PocketCoder
     type: server
     image: mcp/hello-world:latest
+    longLived: false
+  n8n:
+    title: n8n
+    description: Approved by user for PocketCoder
+    type: server
+    image: mcp/n8n@sha256:061cdb8fbaa78f5a09787338715b180a0759057759f402c473b5f6ee13a8709e
     longLived: false

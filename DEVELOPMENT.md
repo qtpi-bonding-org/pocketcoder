@@ -24,16 +24,18 @@ I chose these tools for their **leverage**:
 - A Gemini API Key ([Get one here](https://aistudio.google.com/app/apikey))
 
 ### Steps
-1.  **Prep**:
+1.  **Deploy**:
     ```bash
     git clone https://github.com/qtpi-bonding-org/pocketcoder.git
     cd pocketcoder
-    cp .env.example .env
-    # Add your GEMINI_API_KEY to .env
+    ./deploy.sh
     ```
-2.  **Run**:
+    *Note: The script will auto-generate secure passwords in your `.env` and initialize the environment.*
+
+2.  **Add Brain**:
+    Update your `.env` with your `GEMINI_API_KEY`.
     ```bash
-    docker-compose up -d --build
+    ./deploy.sh
     ```
 3.  **Bootstrap PocketBase**:
     Access `http://localhost:8090/_/` and follow the auto-migration logs to ensure the schema is ready.
