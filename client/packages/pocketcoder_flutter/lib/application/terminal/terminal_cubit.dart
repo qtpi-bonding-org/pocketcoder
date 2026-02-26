@@ -7,10 +7,10 @@ import 'package:xterm/xterm.dart';
 import 'package:cryptography/cryptography.dart' as crypto;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketbase/pocketbase.dart';
-import '../../support/extensions/cubit_ui_flow_extension.dart';
+import "package:flutter_aeroform/support/extensions/cubit_ui_flow_extension.dart";
 import 'terminal_state.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
+import "package:flutter_aeroform/infrastructure/core/collections.dart";
+import "package:flutter_aeroform/infrastructure/core/logger.dart";
 
 @injectable
 class SshTerminalCubit extends AppCubit<SshTerminalState> {

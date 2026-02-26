@@ -4,7 +4,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
-import '../../support/extensions/cubit_ui_flow_extension.dart';
+import "package:flutter_aeroform/support/extensions/cubit_ui_flow_extension.dart";
 
 part 'whitelist_state.dart';
 part 'whitelist_cubit.freezed.dart';

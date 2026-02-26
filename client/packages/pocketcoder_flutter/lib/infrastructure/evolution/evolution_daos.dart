@@ -3,7 +3,7 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/proposal.dart';
 import 'package:pocketcoder_flutter/domain/models/sop.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
+import "package:flutter_aeroform/infrastructure/core/collections.dart";
 
 @lazySingleton
 class ProposalDao extends BaseDao<Proposal> {

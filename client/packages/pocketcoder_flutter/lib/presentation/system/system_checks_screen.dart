@@ -8,7 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/application/system/health_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/health_state.dart';
-import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
+import "package:flutter_aeroform/domain/models/healthcheck.dart";
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 

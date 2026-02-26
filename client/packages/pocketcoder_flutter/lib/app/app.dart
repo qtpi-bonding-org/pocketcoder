@@ -8,7 +8,7 @@ import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
-import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
+import 'package:flutter_aeroform/application/observability/observability_cubit.dart';
 // import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart'; // Unused here
 
 import '../app_router.dart';

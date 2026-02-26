@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart';
-import '../../support/extensions/cubit_ui_flow_extension.dart';
+import "package:flutter_aeroform/support/extensions/cubit_ui_flow_extension.dart";
 import 'health_state.dart';
 
 @injectable

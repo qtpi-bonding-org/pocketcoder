@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_cubit.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_message_mapper.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_state.dart';
+import 'package:flutter_aeroform/application/deployment/deployment_cubit.dart';
+import 'package:flutter_aeroform/application/deployment/deployment_message_mapper.dart';
+import 'package:flutter_aeroform/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/models/instance.dart';
+import 'package:flutter_aeroform/domain/models/instance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:get_it/get_it.dart';
 

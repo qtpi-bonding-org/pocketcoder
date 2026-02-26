@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
+import "package:flutter_aeroform/infrastructure/core/logger.dart";
 import 'mcp_state.dart';
 
 @injectable

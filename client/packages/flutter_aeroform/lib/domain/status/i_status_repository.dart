@@ -1,0 +1,10 @@
+import 'package:flutter_aeroform/domain/models/healthcheck.dart';
+
+abstract class IStatusRepository {
+  /// Check if the PocketBase backend is reachable and healthy
+  Future<bool> checkPocketBaseHealth();
+
+  // --- External Healthchecks (Execution Environment, etc.) ---
+  Future<List<Healthcheck>> getHealthchecks();
+  Stream<List<Healthcheck>> watchHealthchecks();
+}

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app/app.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
-import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
-import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:app/app.dart';
 
 void main() async {

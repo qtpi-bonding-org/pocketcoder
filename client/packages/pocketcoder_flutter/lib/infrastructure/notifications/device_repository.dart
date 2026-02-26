@@ -2,8 +2,8 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/device.dart';
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart';
-import 'package:pocketcoder_flutter/domain/exceptions.dart';
-import 'package:pocketcoder_flutter/core/try_operation.dart';
+import 'package:flutter_aeroform/domain/exceptions.dart';
+import 'package:flutter_aeroform/core/try_operation.dart';
 import 'device_daos.dart';
 
 @LazySingleton(as: IDeviceRepository)
