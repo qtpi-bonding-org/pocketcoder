@@ -11,6 +11,11 @@ import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
 import 'package:flutter_aeroform/domain/models/deployment_config.dart';
 import 'package:flutter_aeroform/domain/models/deployment_result.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
@@ -65,308 +70,291 @@ class _ConfigViewState extends State<_ConfigView> {
     final configCubit = context.read<ConfigCubit>();
     final deploymentCubit = context.read<DeploymentCubit>();
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: const Text('Configure Deployment'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: BlocConsumer<ConfigCubit, ConfigState>(
-        listener: (context, state) {
-          // Update controllers when config changes
-          if (state.config != null) {
-            final config = state.config!;
-            if (_emailController.text != config.adminEmail) {
-              _emailController.text = config.adminEmail;
-            }
-            if (_apiKeyController.text != config.geminiApiKey) {
-              _apiKeyController.text = config.geminiApiKey;
-            }
-            if (_linodeTokenController.text != (config.linodeToken ?? '')) {
-              _linodeTokenController.text = config.linodeToken ?? '';
-            }
+    return BlocConsumer<ConfigCubit, ConfigState>(
+      listener: (context, state) {
+        // Update controllers when config changes
+        if (state.config != null) {
+          final config = state.config!;
+          if (_emailController.text != config.adminEmail) {
+            _emailController.text = config.adminEmail;
           }
-        },
-        builder: (context, configState) {
-          return BlocListener<DeploymentCubit, DeploymentState>(
-            listener: (context, deploymentState) {
-              // Navigate to ProgressScreen on deployment start
-              if (deploymentState.status == UiFlowStatus.loading &&
-                  deploymentState.deploymentStatus == DeploymentStatus.creating) {
-                context.pushNamed(RouteNames.deploymentProgress);
-              }
-              // Navigate to DetailsScreen on deployment completion
-              if (deploymentState.status == UiFlowStatus.success &&
-                  deploymentState.deploymentStatus == DeploymentStatus.ready &&
-                  deploymentState.instance != null) {
-                context.pushNamed(
-                  RouteNames.deploymentDetails,
-                  queryParameters: {'instanceId': deploymentState.instance!.id},
-                );
-              }
-            },
-            child: Stack(
-              children: [
-                SingleChildScrollView(
-                  padding: EdgeInsets.all(AppSizes.space * 2),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          if (_apiKeyController.text != config.geminiApiKey) {
+            _apiKeyController.text = config.geminiApiKey;
+          }
+          if (_linodeTokenController.text != (config.linodeToken ?? '')) {
+            _linodeTokenController.text = config.linodeToken ?? '';
+          }
+        }
+      },
+      builder: (context, configState) {
+        return BlocListener<DeploymentCubit, DeploymentState>(
+          listener: (context, deploymentState) {
+            // Navigate to ProgressScreen on deployment start
+            if (deploymentState.status == UiFlowStatus.loading &&
+                deploymentState.deploymentStatus == DeploymentStatus.creating) {
+              context.pushNamed(RouteNames.deploymentProgress);
+            }
+            // Navigate to DetailsScreen on deployment completion
+            if (deploymentState.status == UiFlowStatus.success &&
+                deploymentState.deploymentStatus == DeploymentStatus.ready &&
+                deploymentState.instance != null) {
+              context.pushNamed(
+                RouteNames.deploymentDetails,
+                queryParameters: {'instanceId': deploymentState.instance!.id},
+              );
+            }
+          },
+          child: TerminalScaffold(
+            title: 'MANIFEST CONFIGURATION',
+            actions: [
+              TerminalAction(
+                label: 'BACK',
+                onTap: () => context.pop(),
+              ),
+              TerminalAction(
+                label: 'DEPLOY INSTANCE',
+                onTap: configState.isValid == true
+                    ? () => _deploy(configCubit, deploymentCubit)
+                    : () {},
+              ),
+            ],
+            body: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(vertical: AppSizes.space),
+              child: Column(
+                children: [
+                  BiosFrame(
+                    title: 'SYSTEM PARAMETERS',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        BiosSection(
+                          title: 'ADMIN CREDENTIALS',
+                          child: Column(
+                            children: [
+                              TerminalTextField(
+                                controller: _emailController,
+                                label: 'ADMIN EMAIL',
+                                hint: 'YOU@DOMAIN.COM',
+                                errorText:
+                                    configState.validationErrors?['adminEmail'],
+                                onChanged: (value) =>
+                                    _updateConfig(configCubit),
+                              ),
+                              VSpace.x2,
+                              TerminalTextField(
+                                controller: _apiKeyController,
+                                label: 'GEMINI API KEY',
+                                hint: 'ENTER KEY',
+                                obscureText: true,
+                                errorText: configState
+                                    .validationErrors?['geminiApiKey'],
+                                onChanged: (value) =>
+                                    _updateConfig(configCubit),
+                              ),
+                            ],
+                          ),
+                        ),
+                        VSpace.x2,
+                        BiosSection(
+                          title: 'NOTIFICATIONS (OPTIONAL)',
+                          child: Column(
+                            children: [
+                              TerminalTextField(
+                                controller: _linodeTokenController,
+                                label: 'LINODE TOKEN',
+                                hint: 'FOR NTFY RELAY',
+                                obscureText: true,
+                                onChanged: (value) =>
+                                    _updateConfig(configCubit),
+                              ),
+                              VSpace.x1,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'ENABLE NTFY RELAY',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.bodyFamily,
+                                        color: colors.onSurface,
+                                        fontSize: AppSizes.fontMini,
+                                      ),
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: configState.config?.ntfyEnabled ??
+                                        false,
+                                    onChanged: (value) {
+                                      final current = configState.config;
+                                      if (current != null) {
+                                        configCubit.updateConfig(
+                                          current.copyWith(ntfyEnabled: value),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        VSpace.x2,
+                        BiosSection(
+                          title: 'HARDWARE & GEOGRAPHY',
+                          child: Column(
+                            children: [
+                              if (configState.plans != null)
+                                _buildPlanSelector(
+                                  context,
+                                  configState.plans!,
+                                  configState.config?.planType,
+                                  (plan) => _updateConfig(configCubit,
+                                      planType: plan),
+                                )
+                              else
+                                const Text('INITIALIZING HW REGISTRY...'),
+                              VSpace.x2,
+                              if (configState.regions != null)
+                                _buildRegionSelector(
+                                  context,
+                                  configState.regions!,
+                                  configState.config?.region,
+                                  (region) => _updateConfig(configCubit,
+                                      region: region),
+                                )
+                              else
+                                const Text('SCANNING GLOBAL REGIONS...'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPlanSelector(
+    BuildContext context,
+    List<InstancePlan> plans,
+    String? selectedPlanId,
+    void Function(String) onSelected,
+  ) {
+    final colors = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'INSTANCE PLAN',
+          style: TextStyle(
+            fontFamily: AppFonts.bodyFamily,
+            color: colors.onSurface,
+            fontSize: AppSizes.fontTiny,
+          ),
+        ),
+        VSpace.x1,
+        Container(
+          height: 150,
+          decoration: BoxDecoration(
+            border: Border.all(color: colors.onSurface.withValues(alpha: 0.2)),
+          ),
+          child: ListView.builder(
+            itemCount: plans.length,
+            itemBuilder: (context, index) {
+              final plan = plans[index];
+              final isSelected = plan.id == selectedPlanId;
+              return InkWell(
+                onTap: () => onSelected(plan.id),
+                child: Container(
+                  padding: EdgeInsets.all(AppSizes.space),
+                  color:
+                      isSelected ? colors.primary.withValues(alpha: 0.1) : null,
+                  child: Row(
                     children: [
-                      // Admin Email
-                      _buildSectionTitle('Admin Credentials'),
-                      _buildTextField(
-                        controller: _emailController,
-                        label: 'Admin Email',
-                        hint: 'your@email.com',
-                        keyboardType: TextInputType.emailAddress,
-                        error: configState.validationErrors?['adminEmail'],
-                        onChanged: (value) => _updateConfig(configCubit),
-                      ),
-                      SizedBox(height: AppSizes.space * 2),
-                      // Gemini API Key
-                      _buildTextField(
-                        controller: _apiKeyController,
-                        label: 'Gemini API Key',
-                        hint: 'AIza...',
-                        obscureText: true,
-                        error: configState.validationErrors?['geminiApiKey'],
-                        onChanged: (value) => _updateConfig(configCubit),
-                      ),
-                      SizedBox(height: AppSizes.space * 2),
-                      // Optional Linode Token
-                      _buildTextField(
-                        controller: _linodeTokenController,
-                        label: 'Linode Token (Optional)',
-                        hint: 'For ntfy notifications',
-                        obscureText: true,
-                        onChanged: (value) => _updateConfig(configCubit),
-                      ),
-                      SizedBox(height: AppSizes.space * 2),
-                      // NTFY Toggle
-                      _buildSwitchTile(
-                        title: 'Enable NTFY Notifications',
-                        subtitle: 'Requires Linode token',
-                        value: configState.config?.ntfyEnabled ?? false,
-                        onChanged: (value) {
-                          final current = configState.config;
-                          if (current != null) {
-                            configCubit.updateConfig(
-                              current.copyWith(ntfyEnabled: value),
-                            );
-                          }
-                        },
-                      ),
-                      SizedBox(height: AppSizes.space * 3),
-                      // Plan Selection
-                      _buildSectionTitle('Instance Plan'),
-                      if (configState.status == UiFlowStatus.loading)
-                        const Center(child: CircularProgressIndicator())
-                      else if (configState.plans != null)
-                        _buildPlanDropdown(
-                          configState.plans!,
-                          configState.config?.planType,
-                          configState.validationErrors?['planType'],
-                          (plan) => _updateConfig(configCubit, planType: plan),
-                        )
-                      else
-                        Text(
-                          'Failed to load plans',
-                          style: TextStyle(color: colors.error),
+                      Expanded(
+                        child: Text(
+                          '${plan.name} (${plan.memoryMB}MB RAM)',
+                          style: TextStyle(
+                            fontFamily: AppFonts.bodyFamily,
+                            color:
+                                isSelected ? colors.primary : colors.onSurface,
+                            fontSize: AppSizes.fontMini,
+                          ),
                         ),
-                      SizedBox(height: AppSizes.space * 3),
-                      // Region Selection
-                      _buildSectionTitle('Region'),
-                      if (configState.status == UiFlowStatus.loading)
-                        const Center(child: CircularProgressIndicator())
-                      else if (configState.regions != null)
-                        _buildRegionDropdown(
-                          configState.regions!,
-                          configState.config?.region,
-                          configState.validationErrors?['region'],
-                          (region) => _updateConfig(configCubit, region: region),
-                        )
-                      else
-                        Text(
-                          'Failed to load regions',
-                          style: TextStyle(color: colors.error),
-                        ),
-                      SizedBox(height: AppSizes.space * 4),
-                      // Deploy Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: configState.isValid == true
-                              ? () => _deploy(configCubit, deploymentCubit)
-                              : null,
-                          child: const Text('Deploy Instance'),
+                      ),
+                      Text(
+                        '\$${plan.monthlyPriceUSD.toStringAsFixed(2)}/MO',
+                        style: TextStyle(
+                          fontFamily: AppFonts.bodyFamily,
+                          color: colors.primary,
+                          fontSize: AppSizes.fontMini,
+                          fontWeight: AppFonts.heavy,
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Loading overlay
-                if (configState.status == UiFlowStatus.loading) ...[
-                  Container(
-                    color: colors.surface.withValues(alpha: 0.9),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: AppSizes.space),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    String? error,
-    TextInputType? keyboardType,
-    bool obscureText = false,
-    void Function(String)? onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: label,
-            hintText: hint,
-            border: const OutlineInputBorder(),
-            errorText: error,
+              );
+            },
           ),
-          keyboardType: keyboardType,
-          obscureText: obscureText,
-          onChanged: onChanged,
         ),
       ],
     );
   }
 
-  Widget _buildSwitchTile({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required void Function(bool) onChanged,
-  }) {
-    return SwitchListTile(
-      title: Text(title),
-      subtitle: Text(subtitle),
-      value: value,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildPlanDropdown(
-    List<InstancePlan> plans,
-    String? selectedPlanId,
-    String? error,
+  Widget _buildRegionSelector(
+    BuildContext context,
+    List<Region> regions,
+    String? selectedRegionId,
     void Function(String) onSelected,
   ) {
-    return DropdownButtonFormField<String>(
-      initialValue: selectedPlanId,
-      decoration: InputDecoration(
-        labelText: 'Select Plan',
-        border: const OutlineInputBorder(),
-        errorText: error,
-      ),
-      items: plans.map((plan) {
-        return DropdownMenuItem<String>(
-          value: plan.id,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${plan.name} (${plan.memoryMB}MB RAM)',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-              Text(
-                '\$${plan.monthlyPriceUSD.toStringAsFixed(2)}/mo',
-                style: TextStyle(
-                  color: context.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (plan.recommended) ...[
-                SizedBox(width: AppSizes.space),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSizes.space,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-                  ),
+    final colors = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'DEPLOYMENT REGION',
+          style: TextStyle(
+            fontFamily: AppFonts.bodyFamily,
+            color: colors.onSurface,
+            fontSize: AppSizes.fontTiny,
+          ),
+        ),
+        VSpace.x1,
+        Container(
+          height: 150,
+          decoration: BoxDecoration(
+            border: Border.all(color: colors.onSurface.withValues(alpha: 0.2)),
+          ),
+          child: ListView.builder(
+            itemCount: regions.length,
+            itemBuilder: (context, index) {
+              final region = regions[index];
+              final isSelected = region.id == selectedRegionId;
+              return InkWell(
+                onTap: () => onSelected(region.id),
+                child: Container(
+                  padding: EdgeInsets.all(AppSizes.space),
+                  color:
+                      isSelected ? colors.primary.withValues(alpha: 0.1) : null,
                   child: Text(
-                    'Recommended',
+                    '${region.city.toUpperCase()} (${region.country.toUpperCase()})',
                     style: TextStyle(
-                      fontSize: 10,
-                      color: context.colorScheme.onPrimary,
+                      fontFamily: AppFonts.bodyFamily,
+                      color: isSelected ? colors.primary : colors.onSurface,
+                      fontSize: AppSizes.fontMini,
                     ),
                   ),
                 ),
-              ],
-            ],
+              );
+            },
           ),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) onSelected(value);
-      },
-    );
-  }
-
-  Widget _buildRegionDropdown(
-    List<Region> regions,
-    String? selectedRegionId,
-    String? error,
-    void Function(String) onSelected,
-  ) {
-    return DropdownButtonFormField<String>(
-      initialValue: selectedRegionId,
-      decoration: InputDecoration(
-        labelText: 'Select Region',
-        border: const OutlineInputBorder(),
-        errorText: error,
-      ),
-      items: regions.map((region) {
-        return DropdownMenuItem<String>(
-          value: region.id,
-          child: Row(
-            children: [
-              Text('${region.city} (${region.country.toUpperCase()})'),
-            ],
-          ),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) onSelected(value);
-      },
+        ),
+      ],
     );
   }
 
@@ -395,8 +383,9 @@ class _ConfigViewState extends State<_ConfigView> {
           region: region ?? '',
           adminEmail: _emailController.text,
           geminiApiKey: _apiKeyController.text,
-          linodeToken:
-              _linodeTokenController.text.isEmpty ? null : _linodeTokenController.text,
+          linodeToken: _linodeTokenController.text.isEmpty
+              ? null
+              : _linodeTokenController.text,
           ntfyEnabled: cubit.state.config?.ntfyEnabled ?? false,
           cloudInitTemplateUrl: '',
         ),
