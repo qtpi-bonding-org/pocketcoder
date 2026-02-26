@@ -9,7 +9,9 @@ export default tool({
     const cmd = args.search
       ? `docker mcp catalog show docker-mcp 2>&1 | grep -i "${args.search}"`
       : `docker mcp catalog show docker-mcp 2>&1`
-    const result = await Bun.shell([`${cmd}`]).text()
+    
+    const process = Bun.spawn(["sh", "-c", cmd])
+    const result = await new Response(process.stdout).text()
     return result.trim()
   },
 })
