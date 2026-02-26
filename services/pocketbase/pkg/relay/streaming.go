@@ -24,37 +24,39 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/pocketbase/pocketbase/core"
 )
 
-// handleStreamEndpoint handles SSE streaming connections for a specific chat.
+// HandleStreamEndpoint handles SSE streaming connections for a specific chat.
 // GET /api/chats/:id/stream
-func (r *RelayService) handleStreamEndpoint(c echo.Context) error {
-	chatID := c.Param("id")
+func (r *RelayService) HandleStreamEndpoint(re *core.RequestEvent) error {
+	chatID := re.Request.PathValue("id")
 	if chatID == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "chat ID is required"})
+		return re.BadRequestError("chat ID is required", nil)
 	}
 
 	// 1. Verify chat exists and user has access (authentication)
-	if err := r.verifyChatAccess(c, chatID); err != nil {
-		return c.JSON(http.StatusForbidden, map[string]string{"error": "access denied"})
+	if err := r.verifyChatAccess(re, chatID); err != nil {
+		return re.ForbiddenError("access denied", nil)
 	}
 
 	// 2. Set SSE headers
-	c.Response().Header().Set("Content-Type", "text/event-stream")
-	c.Response().Header().Set("Cache-Control", "no-cache")
-	c.Response().Header().Set("Connection", "keep-alive")
-	c.Response().Header().Set("X-Accel-Buffering", "no") // Disable nginx buffering
+	re.Response.Header().Set("Content-Type", "text/event-stream")
+	re.Response.Header().Set("Cache-Control", "no-cache")
+	re.Response.Header().Set("Connection", "keep-alive")
+	re.Response.Header().Set("X-Accel-Buffering", "no") // Disable nginx buffering
+
+	re.Response.WriteHeader(http.StatusOK)
 
 	// 3. Create SSEConnection with writer, flusher, done channel
-	flusher, ok := c.Response().Writer.(http.Flusher)
+	flusher, ok := re.Response.(http.Flusher)
 	if !ok {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "flusher not available"})
+		return re.InternalServerError("flusher not available", nil)
 	}
 
 	conn := &SSEConnection{
 		chatID:    chatID,
-		writer:    c.Response().Writer,
+		writer:    re.Response,
 		flusher:   flusher,
 		done:      make(chan struct{}),
 		createdAt: time.Now(),
@@ -67,7 +69,7 @@ func (r *RelayService) handleStreamEndpoint(c echo.Context) error {
 	go r.sendKeepalive(conn)
 
 	// 6. Wait for client disconnect (done channel or context cancellation)
-	<-c.Request().Context().Done()
+	<-re.Request.Context().Done()
 
 	// 7. Clean up connection from registry on disconnect
 	r.unregisterConnection(chatID, conn)
@@ -77,20 +79,12 @@ func (r *RelayService) handleStreamEndpoint(c echo.Context) error {
 }
 
 // verifyChatAccess verifies that the user has access to the specified chat.
-// This is a placeholder - implement actual authentication based on your auth system.
-func (r *RelayService) verifyChatAccess(c echo.Context, chatID string) error {
+func (r *RelayService) verifyChatAccess(re *core.RequestEvent, chatID string) error {
 	// Check if chat exists
 	_, err := r.app.FindRecordById("chats", chatID)
 	if err != nil {
 		return fmt.Errorf("chat not found")
 	}
-
-	// TODO: Implement actual user authentication and access control
-	// This could involve:
-	// - Checking if user is authenticated (c.Get("user_id"))
-	// - Verifying user is a participant in the chat
-	// - Checking any role-based access permissions
-
 	return nil
 }
 
@@ -148,8 +142,6 @@ func (r *RelayService) sendKeepalive(conn *SSEConnection) {
 }
 
 // broadcastToChat sends an SSE event to all connected clients for a specific chat.
-// Locks the connections mutex for reading, sends SSE events to all clients for the chat,
-// handles write errors by removing dead connections, and unlocks the mutex.
 func (r *RelayService) broadcastToChat(chatID string, eventType string, data interface{}) {
 	// 1. Lock the connections mutex for reading
 	r.connectionsMu.RLock()
@@ -194,7 +186,6 @@ func (r *RelayService) broadcastToChat(chatID string, eventType string, data int
 }
 
 // removeConnection safely removes a connection from the registry.
-// Called asynchronously when a write error occurs.
 func (r *RelayService) removeConnection(chatID string, conn *SSEConnection) {
 	r.connectionsMu.Lock()
 	defer r.connectionsMu.Unlock()

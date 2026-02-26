@@ -1,8 +1,4 @@
 import { tool } from "@opencode-ai/plugin"
-import { exec } from "child_process"
-import { promisify } from "util"
-
-const execAsync = promisify(exec)
 
 let cachedToken: string | null = null
 
@@ -38,12 +34,8 @@ export default tool({
 
     // 1. Auto-Research: Query the official catalog for technical metadata
     try {
-      // We use the JSON format for deterministic parsing of secrets and env vars
-      // We force /bin/ash to bypass the pocketcoder shell proxy which may mangle large output
-      const { stdout } = await execAsync(`docker mcp catalog show docker-mcp --format json`, {
-        maxBuffer: 10 * 1024 * 1024,
-        shell: "/bin/ash"
-      })
+      const process = Bun.spawn(["sh", "-c", "docker mcp catalog show docker-mcp --format json"])
+      const stdout = await new Response(process.stdout).text()
       const catalog = JSON.parse(stdout)
 
       // The Docker MCP catalog JSON structure has servers under the 'registry' key
