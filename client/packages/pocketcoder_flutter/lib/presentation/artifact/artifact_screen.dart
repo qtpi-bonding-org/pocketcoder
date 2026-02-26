@@ -4,11 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import '../../app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/communication_state.dart';
 
@@ -36,51 +35,31 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-
     return UiFlowListener<CommunicationCubit, CommunicationState>(
-      child: Scaffold(
-        backgroundColor: colors.surface,
-        body: ScanlineWidget(
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.all(AppSizes.space * 2),
-              child: Column(
-                children: [
-                  const TerminalHeader(title: 'SOURCE OUTPUT MANIFEST'),
-                  VSpace.x2,
-                  Expanded(
-                    child: BlocBuilder<CommunicationCubit, CommunicationState>(
-                      builder: (context, state) {
-                        return BiosFrame(
-                          title: state.currentArtifactPath ??
-                              'DELIVERABLES & ARTIFACTS',
-                          child: _buildArtifactContent(context, state),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+      child: BlocBuilder<CommunicationCubit, CommunicationState>(
+        builder: (context, state) {
+          return TerminalScaffold(
+            title: 'SOURCE OUTPUT MANIFEST',
+            actions: [
+              TerminalAction(
+                label: 'DASHBOARD',
+                onTap: () => context.goNamed(RouteNames.home),
               ),
+              TerminalAction(
+                label: 'CLEAR',
+                onTap: () => context.read<CommunicationCubit>().clearArtifact(),
+              ),
+              TerminalAction(
+                label: 'BACK',
+                onTap: () => context.pop(),
+              ),
+            ],
+            body: BiosFrame(
+              title: state.currentArtifactPath ?? 'DELIVERABLES & ARTIFACTS',
+              child: _buildArtifactContent(context, state),
             ),
-          ),
-        ),
-        bottomNavigationBar: TerminalFooter(
-          actions: [
-            TerminalAction(
-              label: 'DASHBOARD',
-              onTap: () => context.goNamed(RouteNames.home),
-            ),
-            TerminalAction(
-              label: 'CLEAR',
-              onTap: () => context.read<CommunicationCubit>().clearArtifact(),
-            ),
-            TerminalAction(
-              label: 'BACK',
-              onTap: () => context.pop(),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
