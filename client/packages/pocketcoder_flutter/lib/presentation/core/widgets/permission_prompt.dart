@@ -25,9 +25,9 @@ class PermissionPrompt extends StatelessWidget {
       margin: EdgeInsets.all(AppSizes.space),
       padding: EdgeInsets.all(AppSizes.space * 2),
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.05),
+        color: terminalColors.warning.withValues(alpha: 0.05),
         border: Border.all(
-          color: colors.primary.withValues(alpha: 0.3),
+          color: terminalColors.warning.withValues(alpha: 0.3),
           width: AppSizes.borderWidth,
         ),
       ),
@@ -45,7 +45,7 @@ class PermissionPrompt extends StatelessWidget {
               HSpace.x2,
               Expanded(
                 child: Text(
-                  'GATEKEEPER CHALLENGE',
+                  "COMMANDER'S SIGNOFF",
                   style: TextStyle(
                     color: terminalColors.warning,
                     fontSize: AppSizes.fontTiny,
@@ -60,7 +60,7 @@ class PermissionPrompt extends StatelessWidget {
           Text(
             '${(request.source == "relay-go" ? "POCO" : request.source ?? "SYSTEM").toUpperCase()} IS REQUESTING PERMISSION:',
             style: TextStyle(
-              color: colors.onSurface.withValues(alpha: 0.7),
+              color: terminalColors.warning.withValues(alpha: 0.8),
               fontSize: AppSizes.fontMini,
               fontWeight: AppFonts.heavy,
             ),
@@ -70,8 +70,8 @@ class PermissionPrompt extends StatelessWidget {
             padding: EdgeInsets.all(AppSizes.space),
             decoration: BoxDecoration(
               color: colors.surface.withValues(alpha: 0.4),
-              border:
-                  Border.all(color: colors.onSurface.withValues(alpha: 0.2)),
+              border: Border.all(
+                  color: terminalColors.warning.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
@@ -79,7 +79,7 @@ class PermissionPrompt extends StatelessWidget {
                   child: Text(
                     '${request.permission.toUpperCase()} ${request.metadata?['command'] ?? ''}',
                     style: TextStyle(
-                      color: colors.onSurface,
+                      color: terminalColors.warning,
                       fontFamily: AppFonts.bodyFamily,
                       fontSize: AppSizes.fontStandard,
                       fontWeight: AppFonts.heavy,
@@ -94,12 +94,12 @@ class PermissionPrompt extends StatelessWidget {
             Text(
               'Patterns:',
               style: TextStyle(
-                color: colors.onSurface.withValues(alpha: 0.5),
+                color: terminalColors.warning.withValues(alpha: 0.5),
                 fontSize: AppSizes.fontMini,
               ),
             ),
             ...(request.patterns ?? []).map((p) => Text(
-                  '• $p',
+                  '> $p',
                   style: TextStyle(
                     color: terminalColors.attention,
                     fontSize: AppSizes.fontTiny,
