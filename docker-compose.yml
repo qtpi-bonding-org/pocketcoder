@@ -132,6 +132,12 @@ services:
       - pocketcoder-docker
       - pocketcoder-tools
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8811/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 10s
 
   # 🔒 DOCKER SOCKET PROXY - WRITE (Security Layer for PocketBase)
   # Currently shared by both PocketBase (restart) and Dozzle (logs)

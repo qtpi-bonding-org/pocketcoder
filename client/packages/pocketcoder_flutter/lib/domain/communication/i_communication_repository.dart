@@ -51,12 +51,14 @@ class HotPipeEvent with _$HotPipeEvent {
   const factory HotPipeEvent.snapshot({
     required String messageId,
     required List<Map<String, dynamic>> parts,
+    String? role,
   }) = HotPipeSnapshot;
 
   const factory HotPipeEvent.complete({
     required String messageId,
     required List<Map<String, dynamic>> parts,
     String? status,
+    String? role,
   }) = HotPipeComplete;
 
   const factory HotPipeEvent.error({
