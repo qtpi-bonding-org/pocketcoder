@@ -67,10 +67,11 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			return re.JSON(500, map[string]string{"error": "Internal error"})
 		}
 
-		// Query for existing approved record with the same name
+		// Query for existing record with the same name that is active or pending
+		// We avoid duplicates of both approved and pending servers.
 		existingRecords, err := app.FindRecordsByFilter(
 			"mcp_servers",
-			"name = {:name} && status = 'approved'",
+			"name = {:name} && status != 'denied' && status != 'revoked'",
 			"",
 			1,
 			0,
@@ -81,12 +82,25 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			return re.JSON(500, map[string]string{"error": "Internal error"})
 		}
 
-		// If an approved record exists, return it
+		// If a record exists (either approved or pending), sync the latest researched metadata
 		if len(existingRecords) > 0 {
 			existing := existingRecords[0]
+
+			// Always update these fields to ensure we have the latest research data
+			// (Reason, Image, ConfigSchema, etc.)
+			existing.Set("reason", input.Reason)
+			existing.Set("image", input.Image)
+			existing.Set("config_schema", input.ConfigSchema)
+			existing.Set("requested_by", input.SessionID)
+
+			if err := app.Save(existing); err != nil {
+				log.Printf("❌ Failed to update existing MCP server record: %v", err)
+			}
+
 			return re.JSON(200, map[string]any{
 				"id":     existing.Id,
 				"status": existing.GetString("status"),
+				"synced": true,
 			})
 		}
 

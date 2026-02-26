@@ -28,7 +28,7 @@ This roadmap outlines the path from initial setup to a lean, professional AI cod
 
 ## Phase 4: Polish & Release 🏗️
 - [x] **Master Test Suite**: A comprehensive `run_all_tests.sh` that validates the entire Sovereign Loop.
-- [ ] **One-Click Genesis**: Finalize the `genesis.sh` script for zero-config onboarding.
+- [x] **One-Click Deployment**: Finalize the `deploy.sh` script for zero-config onboarding.
 - [ ] **Documentation Audit**: Final pass on `README.md` and `DEVELOPMENT.md`.
 - [ ] **Community Readiness**: AGPLv3 compliance headers across the codebase.
 
