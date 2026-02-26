@@ -152,7 +152,8 @@ func (r *RelayService) ensureMessageRecord(chatID, ocMsgID string, role string, 
 	}
 
 	// 2. Echo check for pending user messages
-	if role == "user" {
+	// We check for any pending user message if the role is "user" OR if the role is ambiguous ("")
+	if role == "user" || role == "" {
 		records, _ := r.app.FindRecordsByFilter("messages", "chat = {:chat} && role = 'user' && ai_engine_message_id = ''", "-created", 1, 0, map[string]any{"chat": chatID})
 		if len(records) > 0 {
 			localUserMsg := records[0]
@@ -163,8 +164,11 @@ func (r *RelayService) ensureMessageRecord(chatID, ocMsgID string, role string, 
 				return localUserMsg, nil
 			}
 		}
-		// If we expected user but found nothing, skip it – handleMessageCompletion will definitively handle it
-		return nil, fmt.Errorf("pending user message not found for echo")
+		
+		if role == "user" {
+			// If we definitely expected a user echo but found nothing, skip it – handleMessageCompletion will definitively handle it
+			return nil, fmt.Errorf("pending user message not found for echo")
+		}
 	}
 
 	// 3. Assistant detection (Heuristics from git history)
@@ -174,7 +178,7 @@ func (r *RelayService) ensureMessageRecord(chatID, ocMsgID string, role string, 
 	}
 
 	isAssistant := (role == "assistant") || (partType == "step-start")
-	if part != nil {
+	if !isAssistant && part != nil {
 		if part["parentID"] != nil {
 			isAssistant = true
 		}
@@ -192,7 +196,8 @@ func (r *RelayService) ensureMessageRecord(chatID, ocMsgID string, role string, 
 	}
 
 	if !isAssistant {
-		// Not sure if assistant – skip for now to avoid hijacking user echoes
+		// Not sure if assistant – skip for now to avoid hijacking user echoes.
+		// We'll try again when more parts arrive or when completion hits.
 		return nil, fmt.Errorf("message role ambiguous, skipping initial create")
 	}
 
@@ -421,16 +426,24 @@ func (r *RelayService) broadcastMessageSnapshot(chatID, ocMsgID string) {
 		return parts[i]["id"].(string) < parts[j]["id"].(string)
 	})
 
+	// 1. Authoritative Record & Role retrieval
+	role := "assistant" // Default for safety
+	record, err := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
+	if err == nil && record != nil {
+		role = record.GetString("role")
+	}
+
 	// 2. Broadcast the snapshot to SSE clients
 	r.broadcastToChat(chatID, "message_snapshot", map[string]interface{}{
 		"messageID": ocMsgID,
+		"role":      role,
 		"parts":     parts,
 	})
 
 	// 3. Authoritative Sync to DB for live visibility (essential for tests)
 	// We do this SYNCHRONOUSLY within the msgMutex to avoid race conditions with handleMessageCompletion.
 	// Since we are inside a per-message mutex and debounced by 20ms, this is performant.
-	record, err := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
+	record, err = r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
 	if err == nil && record != nil {
 		status := record.GetString("engine_message_status")
 		// CRITICAL: Only update if not already final to avoid overwriting completion status or final parts snapshot.

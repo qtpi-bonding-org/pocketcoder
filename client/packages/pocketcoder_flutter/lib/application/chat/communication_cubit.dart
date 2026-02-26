@@ -177,12 +177,14 @@ class CommunicationCubit extends Cubit<CommunicationState> {
   }
 
   void _onHotSnapshot(HotPipeSnapshot snapshot) {
+    final role =
+        snapshot.role == 'user' ? MessageRole.user : MessageRole.assistant;
     final currentHot = state.hotMessage ??
         Message(
           id: snapshot.messageId,
           aiEngineMessageId: snapshot.messageId,
           chat: _currentChatId ?? 'temp',
-          role: MessageRole.assistant,
+          role: role,
           parts: snapshot.parts,
           created: DateTime.now(),
         );
@@ -192,6 +194,7 @@ class CommunicationCubit extends Cubit<CommunicationState> {
         id: snapshot.messageId,
         aiEngineMessageId: snapshot.messageId,
         parts: snapshot.parts,
+        role: role,
       ),
       isPocoThinking: true,
     ));
@@ -204,11 +207,14 @@ class CommunicationCubit extends Cubit<CommunicationState> {
     // We wait for the Cold Pipe (DB) to confirm status='completed'
     // to ensure a flicker-free handoff.
     final currentHot = state.hotMessage;
+    final role =
+        complete.role == 'user' ? MessageRole.user : MessageRole.assistant;
     if (currentHot != null && currentHot.id == complete.messageId) {
       emit(state.copyWith(
         hotMessage: currentHot.copyWith(
           parts: complete.parts,
           aiEngineMessageId: complete.messageId,
+          role: role,
         ),
         isPocoThinking: false,
       ));

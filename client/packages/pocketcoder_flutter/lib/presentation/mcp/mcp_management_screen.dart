@@ -288,11 +288,17 @@ class _McpManagementView extends StatelessWidget {
     final Map<String, TextEditingController> controllers = {};
     final Map<String, dynamic> schema = {};
 
+    Map<String, dynamic>? existingConfig;
+    if (server.config != null && server.config is Map) {
+      existingConfig = Map<String, dynamic>.from(server.config);
+    }
+
     if (server.configSchema != null && server.configSchema is Map) {
       final Map<String, dynamic> configSchema =
           Map<String, dynamic>.from(server.configSchema);
       configSchema.forEach((key, value) {
-        controllers[key] = TextEditingController();
+        controllers[key] =
+            TextEditingController(text: existingConfig?[key]?.toString() ?? '');
         schema[key] = value;
       });
     }
@@ -343,7 +349,7 @@ class _McpManagementView extends StatelessWidget {
                   child: TerminalTextField(
                     controller: entry.value,
                     label: entry.key.toUpperCase(),
-                    obscureText: true,
+                    obscureText: false,
                   ),
                 );
               }),
