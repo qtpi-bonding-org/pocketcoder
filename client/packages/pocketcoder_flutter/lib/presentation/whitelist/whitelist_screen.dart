@@ -4,14 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/whitelist/whitelist_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
 class WhitelistScreen extends StatelessWidget {
   const WhitelistScreen({super.key});
@@ -39,45 +38,25 @@ class _WhitelistViewState extends State<WhitelistView> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: ScanlineWidget(
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.all(AppSizes.space * 2),
-            child: Column(
-              children: [
-                const TerminalHeader(title: 'GATEKEEPER CONFIGURATION'),
-                VSpace.x2,
-                Expanded(
-                  child: BiosFrame(
-                    title: _activeTab == 0 ? 'ACTION RULES' : 'TARGETS',
-                    child: _activeTab == 0
-                        ? const ActionsTab()
-                        : const TargetsTab(),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return TerminalScaffold(
+      title: 'GATEKEEPER CONFIGURATION',
+      actions: [
+        TerminalAction(
+          label: 'ACTIONS',
+          onTap: () => setState(() => _activeTab = 0),
         ),
-      ),
-      bottomNavigationBar: TerminalFooter(
-        actions: [
-          TerminalAction(
-            label: 'ACTIONS',
-            onTap: () => setState(() => _activeTab = 0),
-          ),
-          TerminalAction(
-            label: 'TARGETS',
-            onTap: () => setState(() => _activeTab = 1),
-          ),
-          TerminalAction(
-            label: 'BACK',
-            onTap: () => context.pop(),
-          ),
-        ],
+        TerminalAction(
+          label: 'TARGETS',
+          onTap: () => setState(() => _activeTab = 1),
+        ),
+        TerminalAction(
+          label: 'BACK',
+          onTap: () => context.pop(),
+        ),
+      ],
+      body: BiosFrame(
+        title: _activeTab == 0 ? 'ACTION RULES' : 'TARGETS',
+        child: _activeTab == 0 ? const ActionsTab() : const TargetsTab(),
       ),
     );
   }

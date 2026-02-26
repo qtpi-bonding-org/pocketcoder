@@ -7,8 +7,10 @@ class TerminalTextField extends StatelessWidget {
   final String? hint;
   final bool obscureText;
   final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onChanged;
   final bool enabled;
   final int maxLines;
+  final String? errorText;
 
   const TerminalTextField({
     super.key,
@@ -17,8 +19,10 @@ class TerminalTextField extends StatelessWidget {
     this.hint,
     this.obscureText = false,
     this.onSubmitted,
+    this.onChanged,
     this.enabled = true,
     this.maxLines = 1,
+    this.errorText,
   });
 
   @override
@@ -42,6 +46,7 @@ class TerminalTextField extends StatelessWidget {
           controller: controller,
           obscureText: obscureText,
           onSubmitted: onSubmitted,
+          onChanged: onChanged,
           enabled: enabled,
           maxLines: maxLines,
           style: TextStyle(
@@ -69,9 +74,16 @@ class TerminalTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: colors.onSurface,
+                color: errorText != null ? colors.error : colors.onSurface,
               ),
               borderRadius: BorderRadius.zero,
+            ),
+            errorText: errorText,
+            errorStyle: TextStyle(
+              color: colors.error,
+              fontFamily: AppFonts.bodyFamily,
+              package: 'pocketcoder_flutter',
+              fontSize: AppSizes.fontMini,
             ),
             contentPadding: EdgeInsets.all(AppSizes.space * 2),
             isDense: true,

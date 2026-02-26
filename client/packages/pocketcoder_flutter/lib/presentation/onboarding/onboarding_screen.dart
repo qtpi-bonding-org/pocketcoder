@@ -4,13 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
-import '../../app_router.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
@@ -18,6 +16,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.d
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:flutter_aeroform/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import '../../app_router.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -92,66 +92,62 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, authState) {
             final isLoading = authState.status == UiFlowStatus.loading;
-            final colors = context.colorScheme;
 
-            return Scaffold(
-              backgroundColor: colors.surface,
-              body: ScanlineWidget(
-                child: Center(
-                  child: SingleChildScrollView(
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 600),
-                      padding: EdgeInsets.all(AppSizes.space * 4),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          AsciiLogo(
-                            text: AppAscii.pocketCoderLogo,
-                            fontSize: AppSizes.fontTiny,
-                          ),
-                          VSpace.x8,
-                          PocoWidget(pocoSize: AppSizes.fontLarge),
-                          VSpace.x4,
-                          TerminalTextField(
-                            controller: _urlController,
-                            label: 'HOME SERVER',
-                            hint: 'http://127.0.0.1:8090',
-                          ),
-                          VSpace.x2,
-                          TerminalTextField(
-                            controller: _emailController,
-                            label: 'IDENTITY',
-                            hint: 'ENTER EMAIL',
-                          ),
-                          VSpace.x2,
-                          TerminalTextField(
-                            controller: _passwordController,
-                            label: 'PASSPHRASE',
-                            hint: 'ENTER PASSWORD',
-                            obscureText: true,
-                            onSubmitted: (_) => isLoading
-                                ? null
-                                : _handleLogin(context.read<AuthCubit>()),
-                          ),
-                          VSpace.x2,
-                          if (isLoading)
-                            const TerminalLoadingIndicator(
-                                label: 'AUTHENTICATING'),
-                        ],
-                      ),
+            return TerminalScaffold(
+              title: 'IDENTIFICATION UNLOCK',
+              showHeader: false, // Onboarding has its own layout
+              actions: [
+                TerminalAction(
+                  label: isLoading ? 'PROCESSING...' : 'LOGIN',
+                  onTap: isLoading
+                      ? () {}
+                      : () => _handleLogin(context.read<AuthCubit>()),
+                ),
+              ],
+              body: Center(
+                child: SingleChildScrollView(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    padding: EdgeInsets.symmetric(vertical: AppSizes.space * 4),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AsciiLogo(
+                          text: AppAscii.pocketCoderLogo,
+                          fontSize: AppSizes.fontTiny,
+                        ),
+                        VSpace.x8,
+                        PocoWidget(pocoSize: AppSizes.fontLarge),
+                        VSpace.x4,
+                        TerminalTextField(
+                          controller: _urlController,
+                          label: 'HOME SERVER',
+                          hint: 'http://127.0.0.1:8090',
+                        ),
+                        VSpace.x2,
+                        TerminalTextField(
+                          controller: _emailController,
+                          label: 'IDENTITY',
+                          hint: 'ENTER EMAIL',
+                        ),
+                        VSpace.x2,
+                        TerminalTextField(
+                          controller: _passwordController,
+                          label: 'PASSPHRASE',
+                          hint: 'ENTER PASSWORD',
+                          obscureText: true,
+                          onSubmitted: (_) => isLoading
+                              ? null
+                              : _handleLogin(context.read<AuthCubit>()),
+                        ),
+                        VSpace.x2,
+                        if (isLoading)
+                          const TerminalLoadingIndicator(
+                              label: 'AUTHENTICATING'),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              bottomNavigationBar: TerminalFooter(
-                actions: [
-                  TerminalAction(
-                    label: isLoading ? 'PROCESSING...' : 'LOGIN',
-                    onTap: isLoading
-                        ? () {}
-                        : () => _handleLogin(context.read<AuthCubit>()),
-                  ),
-                ],
               ),
             );
           },

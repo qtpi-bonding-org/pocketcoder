@@ -84,8 +84,13 @@ class CommunicationCubit extends Cubit<CommunicationState> {
         // the hot message shadowing the DB record forever.
         Message? nextHot = state.hotMessage;
         if (nextHot != null) {
-          final dbEquivalent =
-              messages.where((m) => m.id == nextHot!.id).firstOrNull;
+          final dbEquivalent = messages.where((m) {
+            if (m.id == nextHot!.id) return true;
+            if (nextHot.aiEngineMessageId != null &&
+                m.aiEngineMessageId == nextHot.aiEngineMessageId) return true;
+            return false;
+          }).firstOrNull;
+
           if (dbEquivalent != null &&
               dbEquivalent.engineMessageStatus ==
                   MessageEngineMessageStatus.completed) {
@@ -175,6 +180,7 @@ class CommunicationCubit extends Cubit<CommunicationState> {
     final currentHot = state.hotMessage ??
         Message(
           id: snapshot.messageId,
+          aiEngineMessageId: snapshot.messageId,
           chat: _currentChatId ?? 'temp',
           role: MessageRole.assistant,
           parts: snapshot.parts,
@@ -184,6 +190,7 @@ class CommunicationCubit extends Cubit<CommunicationState> {
     emit(state.copyWith(
       hotMessage: currentHot.copyWith(
         id: snapshot.messageId,
+        aiEngineMessageId: snapshot.messageId,
         parts: snapshot.parts,
       ),
       isPocoThinking: true,
@@ -199,7 +206,10 @@ class CommunicationCubit extends Cubit<CommunicationState> {
     final currentHot = state.hotMessage;
     if (currentHot != null && currentHot.id == complete.messageId) {
       emit(state.copyWith(
-        hotMessage: currentHot.copyWith(parts: complete.parts),
+        hotMessage: currentHot.copyWith(
+          parts: complete.parts,
+          aiEngineMessageId: complete.messageId,
+        ),
         isPocoThinking: false,
       ));
     } else {

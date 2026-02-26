@@ -17,11 +17,13 @@ class McpRepository implements IMcpRepository {
   }
 
   @override
-  Future<void> authorizeServer(String id) async {
+  Future<void> authorizeServer(String id,
+      {Map<String, dynamic>? config}) async {
     return tryMethod(
       () async {
         await _mcpServerDao.save(id, {
           'status': 'approved',
+          if (config != null) 'config': config,
         });
       },
       McpException.new,

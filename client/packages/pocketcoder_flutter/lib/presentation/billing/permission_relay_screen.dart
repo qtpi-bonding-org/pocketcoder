@@ -8,14 +8,13 @@ import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
 class PermissionRelayScreen extends StatelessWidget {
   const PermissionRelayScreen({super.key});
@@ -34,79 +33,62 @@ class PermissionRelayView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-
     return UiFlowListener<BillingCubit, BillingState>(
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: ScanlineWidget(
-          child: BiosFrame(
+      child: BlocBuilder<BillingCubit, BillingState>(
+        builder: (context, state) {
+          final colors = context.colorScheme;
+          return TerminalScaffold(
             title: 'PERMISSION RELAY',
-            child: Column(
-              children: [
-                const TerminalHeader(title: 'PERMISSION RELAY'),
-                VSpace.x2,
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(AppSizes.space * 2),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        BlocBuilder<BillingCubit, BillingState>(
-                          builder: (context, state) {
-                            if (state.isLoading) {
-                              return const Center(
-                                child: TerminalLoadingIndicator(
-                                  label: 'CHECKING RELAY STATUS...',
-                                ),
-                              );
-                            }
-
-                            if (state.isPremium) {
-                              return _buildActiveStatus(context, state);
-                            }
-
-                            return _buildSetupOptions(context, state);
-                          },
+            actions: [
+              TerminalAction(
+                label: 'RESTORE',
+                onTap: () => context.read<BillingCubit>().restorePurchases(),
+              ),
+              TerminalAction(
+                label: 'BACK',
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ],
+            body: BiosFrame(
+              title: 'RELAY SUBSYSTEM',
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(AppSizes.space),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (state.isLoading)
+                      const Center(
+                        child: TerminalLoadingIndicator(
+                          label: 'CHECKING RELAY STATUS...',
                         ),
-                        VSpace.x3,
-                        Text(
-                          'FUNCTIONAL OVERVIEW:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: colors.onSurface,
-                            package: 'pocketcoder_flutter',
-                          ),
-                        ),
-                        Text(
-                          'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.',
-                          style: TextStyle(
-                            fontSize: AppSizes.fontMini,
-                            color: colors.onSurface.withValues(alpha: 0.7),
-                            package: 'pocketcoder_flutter',
-                          ),
-                        ),
-                      ],
+                      )
+                    else if (state.isPremium)
+                      _buildActiveStatus(context, state)
+                    else
+                      _buildSetupOptions(context, state),
+                    VSpace.x3,
+                    Text(
+                      'FUNCTIONAL OVERVIEW:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colors.onSurface,
+                        package: 'pocketcoder_flutter',
+                      ),
                     ),
-                  ),
-                ),
-                TerminalFooter(
-                  actions: [
-                    TerminalAction(
-                      label: 'RESTORE',
-                      onTap: () =>
-                          context.read<BillingCubit>().restorePurchases(),
-                    ),
-                    TerminalAction(
-                      label: 'BACK',
-                      onTap: () => Navigator.of(context).pop(),
+                    Text(
+                      'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.',
+                      style: TextStyle(
+                        fontSize: AppSizes.fontMini,
+                        color: colors.onSurface.withValues(alpha: 0.7),
+                        package: 'pocketcoder_flutter',
+                      ),
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
