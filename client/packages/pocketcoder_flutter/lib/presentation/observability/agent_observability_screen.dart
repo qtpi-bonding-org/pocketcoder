@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import '../../app_router.dart';
 import 'package:flutter_aeroform/application/observability/observability_cubit.dart';
 import 'package:flutter_aeroform/application/observability/observability_state.dart';
@@ -16,106 +15,93 @@ class AgentObservabilityScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-
     return UiFlowListener<ObservabilityCubit, ObservabilityState>(
-      child: Scaffold(
-        backgroundColor: colors.surface,
-        body: ScanlineWidget(
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.all(AppSizes.space * 2),
-              child: BlocBuilder<ObservabilityCubit, ObservabilityState>(
-                builder: (context, state) {
-                  return Column(
+      child: BlocBuilder<ObservabilityCubit, ObservabilityState>(
+        builder: (context, state) {
+          return TerminalScaffold(
+            title: 'PLATFORM OBSERVABILITY',
+            actions: [
+              TerminalAction(
+                label: 'DASHBOARD',
+                onTap: () => context.goNamed(RouteNames.home),
+              ),
+              TerminalAction(
+                label: 'REFRESH',
+                onTap: () => context.read<ObservabilityCubit>().refreshStats(),
+              ),
+              TerminalAction(
+                label: 'BACK',
+                onTap: () => context.pop(),
+              ),
+            ],
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildMetricsRow(context, state),
+                VSpace.x2,
+                Expanded(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const TerminalHeader(title: 'PLATFORM OBSERVABILITY'),
-                      VSpace.x2,
-                      _buildMetricsRow(context, state),
-                      VSpace.x2,
+                      // 📂 Container Registry
+                      SizedBox(
+                        width: 250,
+                        child: BiosFrame(
+                          title: 'REGISTRY',
+                          child: ListView(
+                            padding: EdgeInsets.all(AppSizes.space),
+                            children: [
+                              _buildContainerTile(
+                                context,
+                                'pocketbase',
+                                'pocketcoder-pocketbase',
+                                state.currentContainer,
+                              ),
+                              _buildContainerTile(
+                                context,
+                                'opencode',
+                                'pocketcoder-opencode',
+                                state.currentContainer,
+                              ),
+                              _buildContainerTile(
+                                context,
+                                'sandbox (cao)',
+                                'pocketcoder-sandbox',
+                                state.currentContainer,
+                              ),
+                              _buildContainerTile(
+                                context,
+                                'mcp-gateway',
+                                'pocketcoder-mcp-gateway',
+                                state.currentContainer,
+                              ),
+                              _buildContainerTile(
+                                context,
+                                'sqlpage',
+                                'pocketcoder-sqlpage',
+                                state.currentContainer,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      HSpace.x2,
+                      // 📜 Live Logs
                       Expanded(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // 📂 Container Registry
-                            SizedBox(
-                              width: 250,
-                              child: BiosFrame(
-                                title: 'REGISTRY',
-                                child: ListView(
-                                  padding: EdgeInsets.all(AppSizes.space),
-                                  children: [
-                                    _buildContainerTile(
-                                      context,
-                                      'pocketbase',
-                                      'pocketcoder-pocketbase',
-                                      state.currentContainer,
-                                    ),
-                                    _buildContainerTile(
-                                      context,
-                                      'opencode',
-                                      'pocketcoder-opencode',
-                                      state.currentContainer,
-                                    ),
-                                    _buildContainerTile(
-                                      context,
-                                      'sandbox (cao)',
-                                      'pocketcoder-sandbox',
-                                      state.currentContainer,
-                                    ),
-                                    _buildContainerTile(
-                                      context,
-                                      'mcp-gateway',
-                                      'pocketcoder-mcp-gateway',
-                                      state.currentContainer,
-                                    ),
-                                    _buildContainerTile(
-                                      context,
-                                      'sqlpage',
-                                      'pocketcoder-sqlpage',
-                                      state.currentContainer,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            HSpace.x2,
-                            // 📜 Live Logs
-                            Expanded(
-                              child: BiosFrame(
-                                title: state.currentContainer != null
-                                    ? 'LOGS: ${state.currentContainer}'
-                                    : 'SYSTEM LOG TERMINAL',
-                                child: _buildLogTerminal(context, state),
-                              ),
-                            ),
-                          ],
+                        child: BiosFrame(
+                          title: state.currentContainer != null
+                              ? 'LOGS: ${state.currentContainer}'
+                              : 'SYSTEM LOG TERMINAL',
+                          child: _buildLogTerminal(context, state),
                         ),
                       ),
                     ],
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-        bottomNavigationBar: TerminalFooter(
-          actions: [
-            TerminalAction(
-              label: 'DASHBOARD',
-              onTap: () => context.goNamed(RouteNames.home),
-            ),
-            TerminalAction(
-              label: 'REFRESH',
-              onTap: () => context.read<ObservabilityCubit>().refreshStats(),
-            ),
-            TerminalAction(
-              label: 'BACK',
-              onTap: () => context.pop(),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

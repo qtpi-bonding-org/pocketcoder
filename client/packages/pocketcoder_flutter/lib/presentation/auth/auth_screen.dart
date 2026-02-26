@@ -7,6 +7,9 @@ import 'package:flutter_aeroform/application/auth/auth_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:get_it/get_it.dart';
 
 /// Authentication screen for Linode OAuth login
@@ -30,123 +33,132 @@ class _AuthView extends StatelessWidget {
     final colors = context.colorScheme;
     final authCubit = context.read<AuthCubit>();
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: SafeArea(
-        child: BlocListener<AuthCubit, AuthState>(
-          listener: (context, state) {
-            // Navigate to ConfigScreen on successful authentication
-            if (state.isSuccess && state.isAuthenticated == true) {
-              context.pushNamed(RouteNames.config);
-            }
-          },
-          child: BlocBuilder<AuthCubit, AuthState>(
-            builder: (context, state) {
-              return Stack(
-                children: [
-                  // Main content
-                  Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppSizes.space * 2),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Logo/Icon
-                          Icon(
-                            Icons.cloud_outlined,
-                            size: 80,
-                            color: colors.primary,
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        // Navigate to ConfigScreen on successful authentication
+        if (state.isSuccess && state.isAuthenticated == true) {
+          context.pushNamed(RouteNames.config);
+        }
+      },
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
+          return TerminalScaffold(
+            title: 'CLOUD PROVISIONING AUTH',
+            actions: [
+              TerminalAction(
+                label: state.isLoading ? 'CONNECTING...' : 'LOGIN VIA LINODE',
+                onTap: state.isLoading ? () {} : () => authCubit.authenticate(),
+              ),
+              TerminalAction(
+                label: 'BACK',
+                onTap: () => context.pop(),
+              ),
+            ],
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: BiosFrame(
+                  title: 'OAUTH GATEWAY',
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSizes.space * 2),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.cloud_outlined,
+                          size: 64,
+                          color: colors.primary,
+                        ),
+                        VSpace.x2,
+                        Text(
+                          'DEPLOY POCKETCODER',
+                          style: TextStyle(
+                            fontFamily: AppFonts.headerFamily,
+                            fontSize: AppSizes.fontBig,
+                            color: colors.onSurface,
+                            fontWeight: AppFonts.heavy,
                           ),
-                          SizedBox(height: AppSizes.space),
-                          Text(
-                            'Deploy PocketCoder',
-                            style: context.textTheme.headlineMedium,
+                        ),
+                        VSpace.x2,
+                        Text(
+                          'SIGN IN WITH YOUR LINODE ACCOUNT TO PROVISION AN ISOLATED INSTANCE. DATA RETAINMENT REMAINS UNDER YOUR EXCLUSIVE CONTROL.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: AppFonts.bodyFamily,
+                            color: colors.onSurface.withValues(alpha: 0.7),
+                            fontSize: AppSizes.fontSmall,
                           ),
-                          SizedBox(height: AppSizes.space),
-                          Text(
-                            'Sign in with your Linode account to deploy your own PocketCoder instance',
-                            style: context.textTheme.bodyMedium?.copyWith(
-                              color: colors.onSurface.withValues(alpha: 0.7),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: AppSizes.space * 4),
-                          // Sign in button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton.icon(
-                              onPressed: state.isLoading
-                                  ? null
-                                  : () => authCubit.authenticate(),
-                              icon: const Icon(Icons.login),
-                              label: const Text('Sign in with Linode'),
-                            ),
-                          ),
-                          SizedBox(height: AppSizes.space * 2),
-                          // Error message
-                          if (state.hasError) ...[
-                            Container(
-                              padding: EdgeInsets.all(AppSizes.space),
-                              decoration: BoxDecoration(
-                                color: colors.error.withValues(alpha: 0.1),
-                                border: Border.all(color: colors.error),
-                                borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                        ),
+                        if (state.isLoading) ...[
+                          VSpace.x4,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      colors.primary),
+                                ),
                               ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: colors.error,
-                                  ),
-                                  SizedBox(width: AppSizes.space),
-                                  Expanded(
-                                    child: Text(
-                                      _getErrorMessage(state.error),
-                                      style: TextStyle(color: colors.error),
+                              HSpace.x2,
+                              Text(
+                                'WAITING FOR BROWSER AUTH...',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.bodyFamily,
+                                  color: colors.primary,
+                                  fontSize: AppSizes.fontTiny,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (state.hasError) ...[
+                          VSpace.x4,
+                          Container(
+                            padding: EdgeInsets.all(AppSizes.space),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: colors.error),
+                              color: colors.error.withValues(alpha: 0.1),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline,
+                                    color: colors.error, size: 16),
+                                HSpace.x2,
+                                Expanded(
+                                  child: Text(
+                                    _getErrorMessage(state.error).toUpperCase(),
+                                    style: TextStyle(
+                                      color: colors.error,
+                                      fontFamily: AppFonts.bodyFamily,
+                                      fontSize: AppSizes.fontTiny,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
-                  // Loading overlay
-                  if (state.isLoading) ...[
-                    Container(
-                      color: colors.surface.withValues(alpha: 0.9),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const CircularProgressIndicator(),
-                            SizedBox(height: AppSizes.space * 2),
-                            Text(
-                              'Authenticating with Linode...',
-                              style: context.textTheme.bodyLarge,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              );
-            },
-          ),
-        ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   String _getErrorMessage(Object? error) {
-    if (error == null) return 'An error occurred';
+    if (error == null) return 'AN ERROR OCCURRED';
     final errorStr = error.toString();
     if (errorStr.contains('cancelled') || errorStr.contains('CANCELED')) {
-      return 'Authentication was cancelled';
+      return 'AUTHENTICATION CANCELLED';
     }
     return errorStr;
   }

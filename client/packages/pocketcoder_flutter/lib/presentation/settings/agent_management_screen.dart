@@ -5,7 +5,6 @@ import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart';
 import 'package:pocketcoder_flutter/application/ai/ai_config_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -13,8 +12,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_fiel
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
 class AgentManagementScreen extends StatelessWidget {
   const AgentManagementScreen({super.key});
@@ -35,52 +34,33 @@ class AgentManagementView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: ScanlineWidget(
-        child: SafeArea(
-          child: BlocBuilder<AiConfigCubit, AiConfigState>(
-            builder: (context, state) {
-              return Padding(
-                padding: EdgeInsets.all(AppSizes.space * 2),
-                child: Column(
-                  children: [
-                    TerminalHeader(title: 'AGENT REGISTRY'),
-                    VSpace.x2,
-                    Expanded(
-                      child: BiosFrame(
-                        title: 'MODELS & PERSONAS',
-                        child: state.isLoading
-                            ? const Center(
-                                child: TerminalLoadingIndicator(
-                                label: 'SEARCHING...',
-                              ))
-                            : _buildAgentList(context, state),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+    return BlocBuilder<AiConfigCubit, AiConfigState>(
+      builder: (context, state) {
+        return TerminalScaffold(
+          title: 'AGENT REGISTRY',
+          actions: [
+            TerminalAction(
+              label: 'ADD NEW',
+              onTap: () {
+                // TODO: Implement add
+              },
+            ),
+            TerminalAction(
+              label: 'BACK',
+              onTap: () => context.pop(),
+            ),
+          ],
+          body: BiosFrame(
+            title: 'MODELS & PERSONAS',
+            child: state.isLoading
+                ? const Center(
+                    child: TerminalLoadingIndicator(
+                    label: 'SEARCHING...',
+                  ))
+                : _buildAgentList(context, state),
           ),
-        ),
-      ),
-      bottomNavigationBar: TerminalFooter(
-        actions: [
-          TerminalAction(
-            label: 'ADD NEW',
-            onTap: () {
-              // TODO: Implement add
-            },
-          ),
-          TerminalAction(
-            label: 'BACK',
-            onTap: () => context.pop(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

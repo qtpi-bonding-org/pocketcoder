@@ -50,13 +50,23 @@ class CommunicationState with _$CommunicationState implements IUiFlowState {
   List<Message> get displayMessages {
     if (hotMessage == null) return messages;
 
-    final hasHotInCold = messages.any((m) => m.id == hotMessage!.id);
+    // Try to find the cold equivalent by ID or by AI Engine Message ID
+    final hotId = hotMessage!.id;
+    final hotAiId = hotMessage!.aiEngineMessageId;
 
-    if (hasHotInCold) {
-      return messages
-          .map((m) => m.id == hotMessage!.id ? hotMessage! : m)
-          .toList();
+    final index = messages.indexWhere((m) {
+      if (m.id == hotId) return true;
+      if (hotAiId != null && m.aiEngineMessageId == hotAiId) return true;
+      return false;
+    });
+
+    if (index != -1) {
+      // Hot shadows cold
+      final newList = List<Message>.from(messages);
+      newList[index] = hotMessage!;
+      return newList;
     } else {
+      // Truly new
       return [...messages, hotMessage!];
     }
   }

@@ -34,14 +34,17 @@ class TerminalFooter extends StatelessWidget {
           top: BorderSide(color: colors.onSurface, width: AppSizes.borderWidth),
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: actions.map((action) {
-              return _buildActionButton(context, action);
-            }).toList(),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: actions.map((action) {
+                return _buildActionButton(context, action);
+              }).toList(),
+            ),
           ),
         ),
       ),

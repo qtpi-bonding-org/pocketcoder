@@ -32,9 +32,9 @@ class McpCubit extends Cubit<McpState> {
     );
   }
 
-  Future<void> authorize(String id) async {
+  Future<void> authorize(String id, {Map<String, dynamic>? config}) async {
     try {
-      await _repository.authorizeServer(id);
+      await _repository.authorizeServer(id, config: config);
     } catch (e) {
       logError('MCP: Failed to authorize server', e);
       emit(McpState.error(e.toString()));

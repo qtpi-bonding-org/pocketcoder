@@ -8,6 +8,10 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:flutter_aeroform/domain/models/deployment_result.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
@@ -44,303 +48,213 @@ class _ProgressViewState extends State<_ProgressView> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
     final cubit = context.read<DeploymentCubit>();
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: const Text('Deploying Instance'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () {
-            cubit.cancelDeployment();
-            context.pop();
-          },
-        ),
-      ),
-      body: BlocListener<DeploymentCubit, DeploymentState>(
-        listener: (context, state) {
-          // Navigate to DetailsScreen on deployment completion
-          if (state.status == UiFlowStatus.success &&
-              state.deploymentStatus == DeploymentStatus.ready &&
-              state.instance != null) {
-            context.pushNamed(
-              RouteNames.deploymentDetails,
-              queryParameters: {'instanceId': state.instance!.id},
-            );
-          }
-        },
-        child: BlocBuilder<DeploymentCubit, DeploymentState>(
-          builder: (context, state) {
-            return Stack(
-              children: [
-                // Main content
-                Center(
+    return BlocListener<DeploymentCubit, DeploymentState>(
+      listener: (context, state) {
+        // Navigate to DetailsScreen on deployment completion
+        if (state.status == UiFlowStatus.success &&
+            state.deploymentStatus == DeploymentStatus.ready &&
+            state.instance != null) {
+          context.pushNamed(
+            RouteNames.deploymentDetails,
+            queryParameters: {'instanceId': state.instance!.id},
+          );
+        }
+      },
+      child: BlocBuilder<DeploymentCubit, DeploymentState>(
+        builder: (context, state) {
+          return TerminalScaffold(
+            title: 'DEPLOYMENT IN PROGRESS',
+            actions: [
+              TerminalAction(
+                label: 'ABORT',
+                onTap: () {
+                  cubit.cancelDeployment();
+                  context.pop();
+                },
+              ),
+              if (state.status == UiFlowStatus.failure)
+                TerminalAction(
+                  label: 'RETRY SCAN',
+                  onTap: () {
+                    if (state.instanceId != null) {
+                      context
+                          .read<DeploymentCubit>()
+                          .monitorDeployment(state.instanceId!);
+                    }
+                  },
+                ),
+            ],
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: BiosFrame(
+                  title: 'TELEMETRY STREAM',
                   child: Padding(
                     padding: EdgeInsets.all(AppSizes.space * 2),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Status icon
-                        _buildStatusIcon(state.deploymentStatus),
-                        SizedBox(height: AppSizes.space * 3),
-                        // Status text
-                        _buildStatusText(state.deploymentStatus),
-                        SizedBox(height: AppSizes.space * 2),
-                        // Polling attempt counter
-                        if (state.pollingAttempts > 0)
+                        _buildStatusIndicator(state.deploymentStatus),
+                        VSpace.x3,
+                        Text(
+                          _getStatusTitle(state.deploymentStatus),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: AppFonts.headerFamily,
+                            color:
+                                _getStatusColor(state.deploymentStatus, colors),
+                            fontSize: AppSizes.fontBig,
+                            fontWeight: AppFonts.heavy,
+                          ),
+                        ),
+                        VSpace.x2,
+                        Text(
+                          _getStatusDescription(state.deploymentStatus),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: AppFonts.bodyFamily,
+                            color: colors.onSurface.withValues(alpha: 0.7),
+                            fontSize: AppSizes.fontSmall,
+                          ),
+                        ),
+                        VSpace.x4,
+                        if (state.pollingAttempts > 0) ...[
                           Text(
-                            'Attempt ${state.pollingAttempts} of 20',
-                            style: context.textTheme.bodyMedium?.copyWith(
-                              color: colors.onSurface.withValues(alpha: 0.6),
+                            'SYNC ATTEMPT: ${state.pollingAttempts} / 20',
+                            style: TextStyle(
+                              fontFamily: AppFonts.bodyFamily,
+                              color: colors.primary,
+                              fontSize: AppSizes.fontTiny,
                             ),
                           ),
-                        SizedBox(height: AppSizes.space * 3),
-                        // Progress indicator
+                          VSpace.x1,
+                        ],
                         if (state.status == UiFlowStatus.loading)
-                          LinearProgressIndicator(
-                            minHeight: 4,
-                            value: _getProgressValue(state.pollingAttempts),
-                          ),
-                        SizedBox(height: AppSizes.space * 4),
-                        // Instance info
+                          _buildProgressBar(state.pollingAttempts, colors),
+                        VSpace.x4,
                         if (state.instance != null) ...[
                           _buildInfoRow(
-                            'IP Address',
-                            state.instance!.ipAddress,
-                          ),
-                          SizedBox(height: AppSizes.space),
+                              'NETWORK IP', state.instance!.ipAddress, colors),
+                          VSpace.x1,
                           _buildInfoRow(
-                            'Region',
-                            state.instance!.region,
+                              'GEO GRID', state.instance!.region, colors),
+                        ],
+                        if (state.status == UiFlowStatus.failure) ...[
+                          VSpace.x4,
+                          Container(
+                            padding: EdgeInsets.all(AppSizes.space),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: colors.error),
+                              color: colors.error.withValues(alpha: 0.1),
+                            ),
+                            child: Text(
+                              'FAULT DETECTED: ${state.error.toString().toUpperCase()}',
+                              style: TextStyle(
+                                color: colors.error,
+                                fontFamily: AppFonts.bodyFamily,
+                                fontSize: AppSizes.fontTiny,
+                              ),
+                            ),
                           ),
                         ],
                       ],
                     ),
                   ),
                 ),
-                // Loading overlay
-                if (state.status == UiFlowStatus.loading) ...[
-                  Container(
-                    color: colors.surface.withValues(alpha: 0.9),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const CircularProgressIndicator(),
-                          SizedBox(height: AppSizes.space * 2),
-                          Text(
-                            _getLoadingMessage(state.deploymentStatus),
-                            style: context.textTheme.bodyLarge,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-                // Error and retry
-                if (state.status == UiFlowStatus.failure) ...[
-                  _buildErrorOverlay(state.error.toString()),
-                ],
-              ],
-            );
-          },
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildStatusIcon(DeploymentStatus? status) {
-    IconData icon;
-    Color color;
-
-    switch (status) {
-      case DeploymentStatus.creating:
-        icon = Icons.cloud_queue;
-        color = context.colorScheme.primary;
-        break;
-      case DeploymentStatus.provisioning:
-        icon = Icons.settings;
-        color = Colors.amber;
-        break;
-      case DeploymentStatus.ready:
-        icon = Icons.check_circle;
-        color = Colors.green;
-        break;
-      case DeploymentStatus.failed:
-        icon = Icons.error;
-        color = context.colorScheme.error;
-        break;
-      case null:
-        icon = Icons.hourglass_empty;
-        color = context.colorScheme.onSurface.withValues(alpha: 0.5);
-        break;
+  Widget _buildStatusIndicator(DeploymentStatus? status) {
+    if (status == DeploymentStatus.ready) {
+      return const Icon(Icons.check_circle_outline,
+          color: Colors.green, size: 48);
     }
+    return const TerminalLoadingIndicator(label: '');
+  }
 
-    return Icon(
-      icon,
-      size: 80,
-      color: color,
+  Widget _buildProgressBar(int attempts, ColorScheme colors) {
+    final progress = (attempts / 20).clamp(0.0, 1.0);
+    return Container(
+      height: 4,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.1),
+      ),
+      child: FractionallySizedBox(
+        alignment: Alignment.centerLeft,
+        widthFactor: progress == 0 ? 0.05 : progress,
+        child: Container(color: colors.primary),
+      ),
     );
   }
 
-  Widget _buildStatusText(DeploymentStatus? status) {
-    String text;
-    TextStyle style;
-
+  String _getStatusTitle(DeploymentStatus? status) {
     switch (status) {
       case DeploymentStatus.creating:
-        text = 'Creating your instance...';
-        style = context.textTheme.headlineSmall!;
-        break;
+        return 'CONSTRUCTING INSTANCE';
       case DeploymentStatus.provisioning:
-        text = 'Provisioning your instance...\nThis may take a few minutes';
-        style = context.textTheme.headlineSmall!;
-        break;
+        return 'PROVISIONING SUBSYSTEMS';
       case DeploymentStatus.ready:
-        text = 'Instance ready!';
-        style = context.textTheme.headlineSmall!.copyWith(
-          color: Colors.green,
-        );
-        break;
+        return 'HANDSHAKE SUCCESSFUL';
       case DeploymentStatus.failed:
-        text = 'Deployment failed';
-        style = context.textTheme.headlineSmall!.copyWith(
-          color: context.colorScheme.error,
-        );
-        break;
+        return 'DEPLOYMENT ABORTED';
       case null:
-        text = 'Preparing deployment...';
-        style = context.textTheme.headlineSmall!;
-        break;
+        return 'INITIALIZING STACK';
     }
-
-    return Text(
-      text,
-      textAlign: TextAlign.center,
-      style: style,
-    );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  String _getStatusDescription(DeploymentStatus? status) {
+    switch (status) {
+      case DeploymentStatus.creating:
+        return 'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.';
+      case DeploymentStatus.provisioning:
+        return 'RUNNING CLOUD-INIT SCRIPTS. BOOTSTRAPPING POCKETBASE AND SANDBOX ENVIRONMENTS.';
+      case DeploymentStatus.ready:
+        return 'POCKETCODER INSTANCE IS FULLY OPERATIONAL AND RESPONDING TO PING.';
+      case DeploymentStatus.failed:
+        return 'CRITICAL FAILURE DURING RESOURCE ALLOCATION.';
+      case null:
+        return 'PREPARING DEPLOYMENT MANIFEST.';
+    }
+  }
+
+  Color _getStatusColor(DeploymentStatus? status, ColorScheme colors) {
+    if (status == DeploymentStatus.ready) return Colors.green;
+    if (status == DeploymentStatus.failed) return colors.error;
+    return colors.primary;
+  }
+
+  Widget _buildInfoRow(String label, String value, ColorScheme colors) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: context.textTheme.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+          style: TextStyle(
+            fontFamily: AppFonts.bodyFamily,
+            color: colors.onSurface.withValues(alpha: 0.5),
+            fontSize: AppSizes.fontTiny,
           ),
         ),
         Text(
-          value,
-          style: context.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+          value.toUpperCase(),
+          style: TextStyle(
+            fontFamily: AppFonts.bodyFamily,
+            color: colors.onSurface,
+            fontSize: AppSizes.fontTiny,
+            fontWeight: AppFonts.heavy,
           ),
         ),
       ],
     );
-  }
-
-  Widget _buildErrorOverlay(String error) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: EdgeInsets.all(AppSizes.space * 2),
-        decoration: BoxDecoration(
-          color: context.colorScheme.errorContainer,
-          border: Border(
-            top: BorderSide(
-              color: context.colorScheme.error,
-              width: 2,
-            ),
-          ),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  color: context.colorScheme.error,
-                ),
-                SizedBox(width: AppSizes.space),
-                Expanded(
-                  child: Text(
-                    'Deployment failed',
-                    style: TextStyle(
-                      color: context.colorScheme.error,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: AppSizes.space),
-            Text(
-              error,
-              style: TextStyle(
-                color: context.colorScheme.onErrorContainer,
-              ),
-            ),
-            SizedBox(height: AppSizes.space * 2),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => context.pop(),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                SizedBox(width: AppSizes.space),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final state = context.read<DeploymentCubit>().state;
-                      if (state.instanceId != null) {
-                        context
-                            .read<DeploymentCubit>()
-                            .monitorDeployment(state.instanceId!);
-                      }
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  double _getProgressValue(int attempts) {
-    // Exponential progress: 0.05, 0.1, 0.2, 0.4, 0.8, 1.0
-    if (attempts >= 5) return 1.0;
-    return (1 << (attempts - 1)) / 32;
-  }
-
-  String _getLoadingMessage(DeploymentStatus? status) {
-    switch (status) {
-      case DeploymentStatus.creating:
-        return 'Creating your Linode instance...';
-      case DeploymentStatus.provisioning:
-        return 'Running cloud-init configuration...';
-      case DeploymentStatus.ready:
-        return 'Instance is ready!';
-      case DeploymentStatus.failed:
-        return 'Deployment failed';
-      case null:
-        return 'Preparing deployment...';
-    }
   }
 }
