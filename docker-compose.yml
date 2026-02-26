@@ -88,7 +88,7 @@ services:
     volumes:
       - opencode_workspace:/workspace
       - ./services/opencode:/workspace/.opencode
-      - ./agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
+      - ./services/sandbox/agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
       - cao_db:/root/.aws/cli-agent-orchestrator/db  # CAO SQLite database
       - ./services/sandbox/cao/src:/app/cao/src
       - ./services/sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
@@ -189,29 +189,6 @@ services:
       - opencode
       - sandbox
 
-  # 📚 DOCS (Documentation Site)
-  docs:
-    build:
-      context: .
-      dockerfile: services/docs/Dockerfile
-    container_name: pocketcoder-docs
-    ports:
-      - "4321:4321"
-    volumes:
-      - ./services/docs:/app/docs
-      - /app/docs/node_modules  # Don't mount node_modules - use container's installed version
-      - ./services/pocketbase:/app/pocketbase
-      - ./proxy:/app/proxy
-      - ./DEVELOPMENT.md:/app/DEVELOPMENT.md:ro
-      - ./SECURITY.md:/app/SECURITY.md:ro
-      - ./scripts:/app/scripts:ro
-    working_dir: /app/docs
-    environment:
-      - NODE_ENV=development
-    command: /bin/bash -c "./sync.sh && npm run dev -- --host 0.0.0.0"
-    restart: unless-stopped
-    networks:
-      - pocketcoder-dashboard
 
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
