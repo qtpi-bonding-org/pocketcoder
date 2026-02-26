@@ -4,7 +4,7 @@ import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/domain/models/subagent.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
+import "package:flutter_aeroform/infrastructure/core/collections.dart";
 
 @lazySingleton
 class ChatDao extends BaseDao<Chat> {

@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/domain/models/ai_prompt.dart';
 import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
 import 'package:pocketcoder_flutter/domain/models/subagent.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
+import "package:flutter_aeroform/infrastructure/core/collections.dart";
 
 @lazySingleton
 class AiAgentDao extends BaseDao<AiAgent> {

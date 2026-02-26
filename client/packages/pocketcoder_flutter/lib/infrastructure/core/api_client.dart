@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/permission/permission_api_models.dart';
-import 'api_endpoints.dart';
+import "package:flutter_aeroform/infrastructure/core/api_endpoints.dart";
 
 @lazySingleton
 class PocketCoderApi {

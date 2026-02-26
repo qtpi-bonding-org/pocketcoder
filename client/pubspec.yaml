@@ -7,6 +7,7 @@ environment:
 workspace:
   - packages/pocketcoder_flutter
   - packages/app
+  - packages/flutter_aeroform
   - apps/app
 
 dev_dependencies:

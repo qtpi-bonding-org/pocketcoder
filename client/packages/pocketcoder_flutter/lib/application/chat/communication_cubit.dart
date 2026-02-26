@@ -4,7 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/domain/communication/i_communication_repository.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
+import "package:flutter_aeroform/infrastructure/core/logger.dart";
 import 'communication_state.dart';
 
 @injectable

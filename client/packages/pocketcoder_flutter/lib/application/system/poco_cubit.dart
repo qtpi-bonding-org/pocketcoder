@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
+import "package:flutter_aeroform/infrastructure/core/logger.dart";
 
 part 'poco_cubit.freezed.dart';
 
