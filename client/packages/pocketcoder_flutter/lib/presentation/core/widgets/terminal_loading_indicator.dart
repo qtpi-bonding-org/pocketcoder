@@ -60,7 +60,7 @@ class _TerminalLoadingIndicatorState extends State<TerminalLoadingIndicator> {
             '[ ${widget.label!.toUpperCase()} ]',
             style: TextStyle(
               fontFamily: AppFonts.bodyFamily,
-              color: colors.onSurface.withValues(alpha: 0.7),
+              color: colors.secondary,
               fontSize: AppSizes.fontTiny,
               package: 'pocketcoder_flutter',
             ),
