@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:flutter_aeroform/domain/exceptions.dart';
 
 /// Global exception mapper for the application.
 ///

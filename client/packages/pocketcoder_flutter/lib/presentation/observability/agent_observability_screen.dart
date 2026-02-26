@@ -7,8 +7,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import '../../app_router.dart';
-import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
-import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
+import 'package:flutter_aeroform/application/observability/observability_cubit.dart';
+import 'package:flutter_aeroform/application/observability/observability_state.dart';
 import 'package:go_router/go_router.dart';
 
 class AgentObservabilityScreen extends StatelessWidget {
@@ -264,8 +264,9 @@ class AgentObservabilityScreen extends StatelessWidget {
 
   Color _getLogColor(String log, ColorScheme colors) {
     final upper = log.toUpperCase();
-    if (upper.contains('ERR') || upper.contains('FAIL'))
+    if (upper.contains('ERR') || upper.contains('FAIL')) {
       return Colors.redAccent;
+    }
     if (upper.contains('WARN')) return Colors.orangeAccent;
     if (upper.contains('INFO')) return colors.primary;
     if (upper.contains('DEBUG')) return colors.secondary;

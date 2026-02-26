@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart';
-import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
-import 'package:pocketcoder_flutter/domain/exceptions.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/collections.dart';
-import 'package:pocketcoder_flutter/core/try_operation.dart';
+import "package:flutter_aeroform/domain/models/healthcheck.dart";
+import 'package:flutter_aeroform/domain/exceptions.dart';
+import "package:flutter_aeroform/infrastructure/core/collections.dart";
+import 'package:flutter_aeroform/core/try_operation.dart';
 
 @LazySingleton(as: IHealthcheckRepository)
 class HealthcheckRepository implements IHealthcheckRepository {

@@ -67,3 +67,6 @@ services/mcp-gateway/config/catalogs/
 services/mcp-gateway/config/registry.yaml
 services/mcp-gateway/config/tools.yaml
 services/mcp-gateway/config/config.yaml
+
+# Local Scratchpad/Misc
+.misc/
