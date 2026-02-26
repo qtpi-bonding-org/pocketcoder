@@ -9,7 +9,7 @@ class WhitelistAction with _$WhitelistAction {
   const factory WhitelistAction({
     required String id,
     required String permission,
-    WhitelistActionKind? kind,
+    @JsonKey(unknownEnumValue: WhitelistActionKind.unknown) WhitelistActionKind? kind,
     String? value,
     bool? active,
   }) = _WhitelistAction;

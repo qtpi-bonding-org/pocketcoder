@@ -85,13 +85,23 @@ def generate_model(collection):
                 'name': enum_name,
                 'values': enum_values
             })
-
-        fields.append({
-            'pb_name': f_name,
-            'dart_name': dart_name,
-            'dart_type': dart_type,
-            'is_required': is_required
-        })
+            # Add JsonKey for enums to handle unknown values gracefully
+            fields.append({
+                'pb_name': f_name,
+                'dart_name': dart_name,
+                'dart_type': dart_type,
+                'is_required': is_required,
+                'is_enum': True,
+                'enum_name': enum_name
+            })
+        else:
+            fields.append({
+                'pb_name': f_name,
+                'dart_name': dart_name,
+                'dart_type': dart_type,
+                'is_required': is_required,
+                'is_enum': False
+            })
 
     # Generate Dart Code
     lines = [
@@ -108,6 +118,9 @@ def generate_model(collection):
 
     for f in fields:
         line = "    "
+        if f['is_enum']:
+            line += f"@JsonKey(unknownEnumValue: {f['enum_name']}.unknown) "
+            
         if f['is_required']:
             line += "required "
 
@@ -138,7 +151,10 @@ def generate_model(collection):
             # Handle empty values and sanitization
             safe_val = val.replace('-', '_').replace(' ', '_').lower()
             if not safe_val: safe_val = "none"
-            if safe_val in ['enum', 'class', 'in', 'out', 'default', 'new', 'switch', 'case']: 
+            # Handle starting with numbers
+            if safe_val and safe_val[0].isdigit():
+                safe_val = f"v_{safe_val}"
+            if safe_val in ['enum', 'class', 'in', 'out', 'default', 'new', 'switch', 'case', 'false', 'true']: 
                 safe_val = f"v_{safe_val}"
             
             orig_safe_val = safe_val

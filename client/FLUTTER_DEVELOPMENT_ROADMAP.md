@@ -20,9 +20,9 @@ We are moving towards a **Sovereign Data Architecture** (3-Tier):
 | **Auth & Profile** | ✅ DONE | Basic PocketBase login/logout and session management. |
 | **Model Alignment** | ✅ DONE | All core models (Chat, Message, Agent, Proposal, SOP, Health) aligned. |
 | **Notifications** | 🟡 PROGRESS | Ntfy/UnifiedPush integrated into Core. Receiving/Display logic verified. |
-| **UI Feedback** | ✅ DONE | `cubit_ui_flow` + `VimToast` + `UiFlowListener` standardized across screens. |
+| **UI Feedback** | ✅ DONE | `cubit_ui_flow` + `VimToast` + `UiFlowListener` standardized. MCP Notification strategy implemented. |
 | **DAOs & Persistence** | ✅ DONE | Concrete DAOs implemented for major collections; Repositories are now reactive. |
-| **Custom Endpoints** | � PROGRESS | SSH keys and Permission Evaluation implemented. Artifacts pending. |
+| **Custom Endpoints** | ✅ DONE | SSH, Permission, Hot Pipe, MCP notification, and Artifact bridge implemented. |
 
 ---
 
@@ -53,16 +53,38 @@ Before we build complex UI, the data must be 100% reliable.
 Connecting the client to the "Brain" (OpenCode) and the Sandbox.
 
 - [ ] **Custom API Endpoints** (via `Relay`):
-    - [ ] `PermissionRepository.evaluatePermission()`: POST to `/api/pocketcoder/permission`.
-    - [ ] `AuthRepository.getSshKeys()`: GET from `/api/pocketcoder/ssh_keys`.
-    - [ ] `ChatRepository.getArtifact()`: GET from `/api/pocketcoder/artifact/{path}`.
+    - [x] `PermissionRepository.evaluatePermission()`: POST to `/api/pocketcoder/permission`.
+    - [x] `AuthRepository.getSshKeys()`: GET from `/api/pocketcoder/ssh_keys`.
+    - [x] `ChatRepository.getArtifact()`: GET from `/api/pocketcoder/artifact/{path}`.
 - [ ] **Real-Time Synergy**:
-    - [ ] **Hot Pipe**: Verify Tool execution state tracking (pending → running → completed).
-    - [ ] **SSE Connection**: Implement direct SSE client to OpenCode for instant agent events (Permission asked, turn changed).
+    - [x] **Hot Pipe**: SSE streaming implemented for message snapshots.
+    - [ ] **Tool State**: Verify detailed tool execution state tracking (pending → running → completed).
 - [ ] **Push Notifications**:
-    - [x] Folded FOSS/UnifiedPush logic into Core.
-    - [ ] Implement "Sovereign Mode" toggle in settings to switch between FCM and UnifiedPush at runtime.
+    - [x] Integrate Ntfy/UnifiedPush as core FOSS-default.
+    - [ ] Implement "Sovereign Mode" toggle in settings to prefer FOSS services (UnifiedPush) over proprietary ones (FCM).
     - [ ] Ensure local notifications are displayed consistently across platforms.
+
+---
+
+## 🔗 Backend Synchronization Matrix
+
+This matrix maps native PocketBase custom endpoints and collections to their corresponding Flutter implementations.
+
+| Endpoint / Collection | HTTP Method | Flutter Integration | Status |
+| :--- | :--- | :--- | :--- |
+| **`/api/chats/:id/stream`** | GET (SSE) | `CommunicationRepository.watchHotPipe` | ✅ DONE |
+| **`/api/pocketcoder/permission`** | POST | `HitlRepository.evaluatePermission` | ✅ DONE |
+| **`/api/pocketcoder/ssh_keys`** | GET | `AuthRepository.getAuthorizedKeys` | ✅ DONE |
+| **`/api/pocketcoder/mcp_request`** | POST | `McpRepository.requestMcp` | 🔴 PENDING |
+| **`/api/pocketcoder/artifact/{path}`** | GET | `ChatRepository.getArtifact` | ✅ DONE |
+| **`/api/pocketcoder/logs/{container}`** | GET (SSE) | `ObservabilityRepository.watchLogs` | ✅ DONE |
+| **`/api/pocketcoder/proxy/obs/*`** | ANY | `ObservabilityRepository.fetchSystemStats` | ✅ DONE |
+| **`ai_agents` / `ai_models`** | CRUD | `AiConfigRepository` | ✅ DONE |
+| **`chats` / `messages`** | CRUD | `CommunicationRepository` | ✅ DONE |
+| **`mcp_servers`** | CRUD / Watch | `McpRepository` / `McpCubit` | ✅ DONE |
+| **`permissions`** | CRUD | `HitlRepository` | ✅ DONE |
+| **`healthchecks`** | CRUD | `HealthRepository` | ✅ DONE |
+| **`sops` / `proposals`** | CRUD | `EvolutionRepository` | ✅ DONE |
 
 ---
 
@@ -81,6 +103,5 @@ Making it feel like a "Retro Terminal" coding assistant.
 
 ## 📝 Next Steps for Antigravity
 
-1.  **The "Hot Pipe"**: Implement the running state tracking for background tools and turn-based permission gating.
-2.  **SSE Connection**: Implement a robust SSE consumer in the `ChatRepository` for instant agent status updates.
-3.  **Sovereign Mode Toggle**: Add the UI and logic in Settings to swap between Cloud (Proprietary) and Local (FOSS) services.
+1.  **Agent Management Pickers**: Implement the actual selection logic for Models and Prompts in `AgentManagementScreen`.
+2.  **Sovereign Mode Toggle**: Add the UI and logic in Settings to toggle between proprietary cloud services and FOSS local alternatives at runtime.

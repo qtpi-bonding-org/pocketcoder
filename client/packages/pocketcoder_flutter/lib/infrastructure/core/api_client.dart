@@ -51,6 +51,18 @@ class PocketCoderApi {
     return [];
   }
 
+  /// Fetches the raw content of an artifact.
+  Future<String> fetchArtifact(String path) async {
+    if (!ApiEndpoints.isSafeArtifactPath(path)) {
+      throw ArgumentError('Invalid or unsafe artifact path: $path');
+    }
+    final response = await _pb.send(
+      ApiEndpoints.artifact(path),
+      method: 'GET',
+    );
+    return response.toString();
+  }
+
   /// Returns the full URL for a workspace artifact.
   String getArtifactUrl(String path) {
     if (!ApiEndpoints.isSafeArtifactPath(path)) {

@@ -5,10 +5,12 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 class TerminalAction {
   final String label; // e.g. "HELP"
   final VoidCallback onTap;
+  final bool hasBadge;
 
   TerminalAction({
     required this.label,
     required this.onTap,
+    this.hasBadge = false,
   });
 }
 
@@ -48,6 +50,8 @@ class TerminalFooter extends StatelessWidget {
 
   Widget _buildActionButton(BuildContext context, TerminalAction action) {
     final colors = context.colorScheme;
+    final terminalColors = context.terminalColors;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -64,15 +68,32 @@ class TerminalFooter extends StatelessWidget {
                   width: AppSizes.borderWidth),
             ),
           ),
-          child: Text(
-            action.label.toUpperCase(),
-            style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
-              color: colors.onSurface,
-              fontSize: AppSizes.fontMini,
-              fontWeight: AppFonts.heavy,
-              letterSpacing: 2,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                action.label.toUpperCase(),
+                style: TextStyle(
+                  fontFamily: AppFonts.bodyFamily,
+                  color: colors.onSurface,
+                  fontSize: AppSizes.fontMini,
+                  fontWeight: AppFonts.heavy,
+                  letterSpacing: 2,
+                ),
+              ),
+              if (action.hasBadge) ...[
+                HSpace.x1,
+                Text(
+                  '[!]',
+                  style: TextStyle(
+                    fontFamily: AppFonts.bodyFamily,
+                    color: terminalColors.warning,
+                    fontSize: AppSizes.fontMini,
+                    fontWeight: AppFonts.heavy,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),

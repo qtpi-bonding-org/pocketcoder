@@ -9,6 +9,7 @@ enum ChatOperation {
   initialize,
   sendMessage,
   loadHistory,
+  fetchArtifact,
 }
 
 @freezed
@@ -23,6 +24,8 @@ class CommunicationState with _$CommunicationState implements IUiFlowState {
     Message? hotMessage,
     String? chatId,
     String? opencodeId,
+    String? currentArtifactPath,
+    String? currentArtifactContent,
     Object? error,
     ChatOperation? lastOperation,
   }) = _CommunicationState;

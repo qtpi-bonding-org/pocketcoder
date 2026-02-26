@@ -7,7 +7,6 @@ environment:
 workspace:
   - packages/pocketcoder_flutter
   - packages/app
-  - apps/foss
   - apps/app
 
 dev_dependencies:
@@ -28,34 +27,24 @@ melos:
       packageFilters:
         dependsOn: build_runner
 
-    build_foss:
-      run: |
-        cd apps/foss && flutter build apk --debug
-      description: Build the FOSS version (pocketcoder_foss).
-
     build_app:
       run: |
         cd apps/app && flutter build apk --debug
-      description: Build the App Store version (pocketcoder_app).
+      description: Build the PocketCoder Mobile app.
 
     run_app:
       run: |
         cd apps/app && flutter run
-      description: Run the App Store (Pro) version.
-
-    run_foss:
-      run: |
-        cd apps/foss && flutter run
-      description: Run the FOSS version.
+      description: Run the PocketCoder Mobile app.
 
     run_incognito:
       run: |
-        cd apps/app && flutter run -d chrome --web-browser-flag="--incognito" --dart-define=SKIP_AUTH=true
-      description: Run the App Store version in Chrome Incognito mode (for onboarding/IAP testing).
+        cd apps/app && flutter run -d chrome --web-browser-flag="--incognito"
+      description: Run the app in Chrome Incognito mode.
 
-    check_purity:
-      run: ./scripts/purity_check.sh pocketcoder_foss
-      description: Verify that the FOSS app has no proprietary dependencies.
+    check:purity:
+      run: ./scripts/purity_check.sh pocketcoder_flutter
+      description: Verify that the core package has no proprietary dependencies.
     
     test:
       run: melos exec -- "flutter test"

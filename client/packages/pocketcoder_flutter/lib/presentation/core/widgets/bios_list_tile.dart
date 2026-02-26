@@ -7,6 +7,7 @@ class BiosListTile extends StatelessWidget {
   final VoidCallback onTap;
   final bool isSelected;
   final bool isDestructive;
+  final bool hasBadge;
 
   const BiosListTile({
     super.key,
@@ -15,6 +16,7 @@ class BiosListTile extends StatelessWidget {
     required this.onTap,
     this.isSelected = false,
     this.isDestructive = false,
+    this.hasBadge = false,
   });
 
   @override
@@ -39,15 +41,33 @@ class BiosListTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(
-                label.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: textColor,
-                  fontSize: AppSizes.fontStandard,
-                  fontWeight: AppFonts.heavy,
-                  package: 'pocketcoder_flutter',
-                ),
+              child: Row(
+                children: [
+                  Text(
+                    label.toUpperCase(),
+                    style: TextStyle(
+                      fontFamily: AppFonts.bodyFamily,
+                      color: textColor,
+                      fontSize: AppSizes.fontStandard,
+                      fontWeight: AppFonts.heavy,
+                      package: 'pocketcoder_flutter',
+                    ),
+                  ),
+                  if (hasBadge) ...[
+                    HSpace.x1,
+                    Text(
+                      '[!]',
+                      style: TextStyle(
+                        fontFamily: AppFonts.bodyFamily,
+                        color: isSelected
+                            ? colors.surface
+                            : terminalColors.warning,
+                        fontSize: AppSizes.fontStandard,
+                        fontWeight: AppFonts.heavy,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             if (value != null) ...[

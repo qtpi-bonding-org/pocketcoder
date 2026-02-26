@@ -11,13 +11,17 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/poco_animator.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_input.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/permission_prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/speech_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/thoughts_stream.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
+import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import '../../app_router.dart';
 
 class ChatScreen extends StatelessWidget {
@@ -54,12 +58,43 @@ class _ChatViewState extends State<_ChatView> {
       backgroundColor: colors.surface,
       body: ScanlineWidget(
         child: SafeArea(
-          child: UiFlowListener<CommunicationCubit, CommunicationState>(
-            listener: (context, state) {
-              if (state.chatId != null) {
-                context.read<PermissionCubit>().watchChat(state.chatId!);
-              }
-            },
+          child: MultiBlocListener(
+            listeners: [
+              BlocListener<CommunicationCubit, CommunicationState>(
+                listenWhen: (previous, current) =>
+                    previous.status != current.status ||
+                    previous.error != current.error,
+                listener: (context, state) {
+                  if (state.chatId != null) {
+                    context.read<PermissionCubit>().watchChat(state.chatId!);
+                  }
+                },
+              ),
+              BlocListener<McpCubit, McpState>(
+                listenWhen: (prev, curr) {
+                  final prevPending = prev.maybeWhen(
+                    loaded: (servers) => servers
+                        .where((s) => s.status == McpServerStatus.pending)
+                        .length,
+                    orElse: () => 0,
+                  );
+                  final currPending = curr.maybeWhen(
+                    loaded: (servers) => servers
+                        .where((s) => s.status == McpServerStatus.pending)
+                        .length,
+                    orElse: () => 0,
+                  );
+                  // Only notify if new ones arrived
+                  return currPending > prevPending;
+                },
+                listener: (context, state) {
+                  getIt<IFeedbackService>().show(const FeedbackMessage(
+                    message: '[!] NEW CAPABILITY REQUEST RECEIVED',
+                    type: MessageType.warning,
+                  ));
+                },
+              ),
+            ],
             child: Column(
               children: [
                 BlocBuilder<CommunicationCubit, CommunicationState>(
@@ -212,25 +247,36 @@ class _ChatViewState extends State<_ChatView> {
           ),
         ),
       ),
-      bottomNavigationBar: TerminalFooter(
-        actions: [
-          TerminalAction(
-            label: 'ARTIFACTS',
-            onTap: () => context.goNamed(RouteNames.artifact),
-          ),
-          TerminalAction(
-            label: 'TERMINAL',
-            onTap: () => context.goNamed(RouteNames.terminal),
-          ),
-          TerminalAction(
-            label: 'SETTINGS',
-            onTap: () => context.goNamed(RouteNames.settings),
-          ),
-          TerminalAction(
-            label: 'LOGOUT',
-            onTap: () => context.goNamed(RouteNames.boot),
-          ),
-        ],
+      bottomNavigationBar: BlocBuilder<McpCubit, McpState>(
+        builder: (context, mcpState) {
+          final hasPendingMcp = mcpState.maybeWhen(
+            loaded: (servers) =>
+                servers.any((s) => s.status == McpServerStatus.pending),
+            orElse: () => false,
+          );
+
+          return TerminalFooter(
+            actions: [
+              TerminalAction(
+                label: 'ARTIFACTS',
+                onTap: () => context.goNamed(RouteNames.artifact),
+              ),
+              TerminalAction(
+                label: 'TERMINAL',
+                onTap: () => context.goNamed(RouteNames.terminal),
+              ),
+              TerminalAction(
+                label: 'SETTINGS',
+                hasBadge: hasPendingMcp,
+                onTap: () => context.goNamed(RouteNames.settings),
+              ),
+              TerminalAction(
+                label: 'LOGOUT',
+                onTap: () => context.goNamed(RouteNames.boot),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
