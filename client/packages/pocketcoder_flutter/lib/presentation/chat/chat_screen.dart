@@ -13,10 +13,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_input.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/permission_prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/speech_bubble.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/thoughts_stream.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
@@ -105,58 +103,17 @@ class _ChatViewState extends State<_ChatView> {
                   },
                 ),
                 VSpace.x1,
-                // 1. TOP: The Thoughts / Cloud (Flexible height)
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: colors.surface.withValues(alpha: 0.2),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: colors.onSurface.withValues(alpha: 0.1),
-                          width: AppSizes.borderWidth,
-                        ),
-                      ),
-                    ),
-                    child: BlocBuilder<CommunicationCubit, CommunicationState>(
-                      builder: (context, state) {
-                        final allMessages = state.displayMessages;
-
-                        final assistantMessages = allMessages
-                            .where((m) => m.role == MessageRole.assistant);
-
-                        final List<dynamic> brainParts = [];
-
-                        for (final msg in assistantMessages) {
-                          final parts = msg.parts ?? [];
-                          if (parts.isEmpty) continue;
-                          brainParts.addAll(parts);
-                        }
-
-                        return BiosSection(
-                          title: 'REASONING_ENGINE',
-                          child: Expanded(
-                            child: ThoughtsStream(parts: brainParts),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
                 // 2. MIDDLE: Poco (The Entity)
                 Container(
-                  height: 120,
+                  height: 100,
                   width: double.infinity,
                   alignment: Alignment.center,
                   child: const PocoAnimator(
-                      fontSize: 14), // Smaller, integrated face
+                      fontSize: 12), // Smaller, integrated face
                 ),
 
                 // 3. BOTTOM: The Dialogue (History)
                 Expanded(
-                  flex: 4,
                   child: BlocBuilder<CommunicationCubit, CommunicationState>(
                     builder: (context, state) {
                       // We need to reverse the list to stick to bottom
@@ -170,25 +127,9 @@ class _ChatViewState extends State<_ChatView> {
                         itemBuilder: (context, index) {
                           final msg = reversedMessages[index];
 
-                          // Filter text parts manually
-                          final textParts = (msg.parts ?? []).where((p) {
-                            return p is Map && p['type'] == 'text';
-                          }).toList();
-
-                          // For USER: Show all text.
-                          if (msg.role == MessageRole.user) {
-                            return SpeechBubble(
-                                textParts: textParts, isUser: true);
-                          }
-
-                          // For ASSISTANT: Show ONLY the LAST text part.
-                          // (Hide reasoning/tools from speech bubble)
-                          final finalAnswer = textParts.isNotEmpty
-                              ? [textParts.last]
-                              : <dynamic>[];
-
                           return SpeechBubble(
-                              textParts: finalAnswer, isUser: false);
+                              message: msg,
+                              isUser: msg.role == MessageRole.user);
                         },
                       );
                     },
@@ -232,7 +173,7 @@ class _ChatViewState extends State<_ChatView> {
                           TerminalInput(
                             controller: _inputController,
                             onSubmitted: () => _handleSubmit(context),
-                            prompt: 'SAY:',
+                            prompt: '\$',
                             enabled: !state.isLoading && state.chatId != null,
                           ),
                         ],

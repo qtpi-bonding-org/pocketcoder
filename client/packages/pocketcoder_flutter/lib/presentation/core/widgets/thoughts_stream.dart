@@ -46,7 +46,7 @@ class ThoughtsStream extends StatelessWidget {
           child: Text(
             '> ${part['text'] ?? ""}',
             style: TextStyle(
-              color: colors.onSurface.withValues(alpha: 0.6),
+              color: colors.secondary,
               fontFamily: AppFonts.headerFamily,
               fontSize: 10,
             ),
@@ -58,7 +58,7 @@ class ThoughtsStream extends StatelessWidget {
           child: Text(
             'THOUGHT: ${part['text'] ?? ""}',
             style: TextStyle(
-              color: colors.onSurface.withValues(alpha: 0.4),
+              color: colors.secondary.withValues(alpha: 0.7),
               fontFamily: AppFonts.bodyFamily,
               fontSize: 10,
               fontStyle: FontStyle.italic,
@@ -120,7 +120,7 @@ class ThoughtsStream extends StatelessWidget {
           child: Text(
             'STEP COMPLETE (${part['reason']})',
             style: TextStyle(
-              color: colors.onSurface.withValues(alpha: 0.4),
+              color: colors.secondary.withValues(alpha: 0.5),
               fontSize: 9,
               fontStyle: FontStyle.italic,
             ),
@@ -146,7 +146,7 @@ class ThoughtsStream extends StatelessWidget {
     final terminalColors = context.terminalColors;
     switch (status) {
       case 'pending':
-        return colors.onSurface.withValues(alpha: 0.3);
+        return colors.secondary.withValues(alpha: 0.5);
       case 'running':
         return colors.secondary; // Phosphor Green
       case 'completed':
