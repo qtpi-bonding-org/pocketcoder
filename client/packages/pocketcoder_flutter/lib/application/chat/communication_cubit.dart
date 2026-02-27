@@ -177,6 +177,8 @@ class CommunicationCubit extends Cubit<CommunicationState> {
   }
 
   void _onHotSnapshot(HotPipeSnapshot snapshot) {
+    if (snapshot.role == 'user') return;
+
     final role =
         snapshot.role == 'user' ? MessageRole.user : MessageRole.assistant;
     final currentHot = state.hotMessage ??
@@ -201,6 +203,8 @@ class CommunicationCubit extends Cubit<CommunicationState> {
   }
 
   void _onHotComplete(HotPipeComplete complete) {
+    if (complete.role == 'user') return;
+
     logInfo('💬 [CommCubit] HotPipe Complete: ${complete.messageId}');
 
     // Update with final parts, but don't clear yet!
