@@ -74,8 +74,6 @@ func main() {
 		api.RegisterLogsApi(app, e)
 		filesystem.RegisterArtifactApi(app, e)
 
-		// C. Register SSE Stream Endpoint for Flutter real-time updates
-		e.Router.GET("/api/chats/{id}/stream", relaySvc.HandleStreamEndpoint)
 
 		return e.Next()
 	})
