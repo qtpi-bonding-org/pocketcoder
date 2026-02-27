@@ -643,8 +643,15 @@ func (r *RelayService) ensureSession(chatID string) (string, error) {
 				return existingSession, nil
 			}
 			if vResp.StatusCode == http.StatusNotFound {
-				chat.Set("ai_engine_session_id", "")
-				r.app.Save(chat)
+				// Safety: Only clear if it's not a known subagent session ID.
+				// This prevents Poco from thinking its own session is gone while it's actually
+				// just relaying for a subagent that might have just completed.
+				isSubagent, _ := r.app.FindFirstRecordByFilter("subagents", "subagent_id = {:id}", map[string]any{"id": existingSession})
+				if isSubagent == nil {
+					r.app.Logger().Warn("🗑️ [Relay/Go] Clearing vanished session from chat", "chatID", chatID, "sessionID", existingSession)
+					chat.Set("ai_engine_session_id", "")
+					r.app.Save(chat)
+				}
 			}
 		} else {
 			return existingSession, nil // Opt-in stability
