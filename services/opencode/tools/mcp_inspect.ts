@@ -36,6 +36,21 @@ export default tool({
             }
 
             if (args.mode === "all" || args.mode === "tools") {
+                try {
+                    // Try to get live/rich tool descriptions directly from the server binary
+                    const inspectProc = Bun.spawn(["docker", "mcp", "server", "inspect", entryKey])
+                    const inspectStdout = (await new Response(inspectProc.stdout).text()).trim()
+                    if (inspectStdout) {
+                        const inspectData = JSON.parse(inspectStdout)
+                        if (Array.isArray(inspectData.tools) && inspectData.tools.length > 0) {
+                            data.tools = inspectData.tools
+                        }
+                    }
+                } catch (e) {
+                    // Fallback to static catalog data if inspection fails
+                    console.error(`Warning: Could not run 'server inspect' for ${entryKey}:`, e)
+                }
+
                 if (Array.isArray(data.tools)) {
                     output += `#### Tools (${data.tools.length})\n`
                     data.tools.forEach((t: any) => {

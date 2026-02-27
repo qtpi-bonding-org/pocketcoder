@@ -22,7 +22,6 @@ package relay
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -30,14 +29,6 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-// SSEConnection represents a client connection to the streaming endpoint
-type SSEConnection struct {
-	chatID    string
-	writer    http.ResponseWriter
-	flusher   http.Flusher
-	done      chan struct{}
-	createdAt time.Time
-}
 
 // RelayService orchestrates communication between PocketBase and OpenCode
 type RelayService struct {
@@ -61,13 +52,13 @@ type RelayService struct {
 	sessionChatCache   map[string]string
 	sessionChatCacheMu sync.RWMutex
 
-	// broadcastTimers manages the debouncing/batching of message snapshots
-	broadcastTimers   map[string]*time.Timer // map[ocMsgID]*time.Timer
-	broadcastTimersMu sync.Mutex
+	// brokerTimers manages the debouncing/batching of message snapshots for the realtime broker (50ms)
+	brokerTimers   map[string]*time.Timer // map[ocMsgID]*time.Timer
+	brokerTimersMu sync.Mutex
 
-	// connections stores SSE connections per chat for broadcasting
-	connections   map[string][]*SSEConnection // map[chatID][]connection
-	connectionsMu sync.RWMutex
+	// dbTimers manages the debouncing of message snapshots to the database (1000ms)
+	dbTimers   map[string]*time.Timer // map[ocMsgID]*time.Timer
+	dbTimersMu sync.Mutex
 }
 
 // NewRelayService creates a new Relay instance
@@ -78,8 +69,8 @@ func NewRelayService(app core.App, openCodeURL string) *RelayService {
 		completedMessages: make(map[string]bool),
 		partCache:         make(map[string]map[string]interface{}),
 		sessionChatCache:  make(map[string]string),
-		broadcastTimers:   make(map[string]*time.Timer),
-		connections:       make(map[string][]*SSEConnection),
+		brokerTimers:      make(map[string]*time.Timer),
+		dbTimers:          make(map[string]*time.Timer),
 	}
 }
 

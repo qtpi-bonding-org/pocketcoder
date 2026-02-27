@@ -255,7 +255,7 @@ func (r *RelayService) upsertMessagePart(chatID string, part map[string]interfac
 		// Run a snapshot sync for this latecomer
 		go func() {
 			log.Printf("🩹 [Relay/Go] Late-arriving part for %s, syncing to DB", ocMsgID)
-			r.broadcastMessageSnapshot(chatID, ocMsgID)
+			r.syncMessageSnapshot(chatID, ocMsgID)
 			
 			// Optional: cleanup after a short delay since completion already happened
 			time.Sleep(2 * time.Second)
@@ -311,12 +311,9 @@ func (r *RelayService) upsertMessagePart(chatID string, part map[string]interfac
 		// This ensures polling tests and UI see the processing state instantly.
 		role, _ := part["role"].(string)
 		
-		// If role is missing, we must infer it safely.
-		// Echoes (user messages) should already exist in DB.
-		// If we create a record here, it's almost certainly an assistant message.
-		if role == "" {
-			role = "assistant"
-		}
+		// We deliberately do not default role to "assistant" here. 
+		// ensureMessageRecord handles role="" by first checking if there's a pending user message,
+		// and only falling back to assistant if the part looks like an assistant part.
 
 		// Synchronous call within the per-message mutex is safe because 
 		// upsertMessagePart is called in a goroutine per-event.
@@ -381,72 +378,112 @@ func (r *RelayService) applyMessagePartDelta(chatID, ocMsgID, partID, delta stri
 	r.scheduleSnapshotBroadcast(chatID, ocMsgID)
 }
 
-// scheduleSnapshotBroadcast debounces snapshots to provide a smooth, ordered 50fps UI experience.
+// scheduleSnapshotBroadcast debounces snapshots to provide a smooth, ordered UI experience (Broker)
+// and handles reliable, lower-frequency disk syncs.
 func (r *RelayService) scheduleSnapshotBroadcast(chatID, ocMsgID string) {
-	r.broadcastTimersMu.Lock()
-	defer r.broadcastTimersMu.Unlock()
-
-	if timer, ok := r.broadcastTimers[ocMsgID]; ok {
+	// 1. Broker Snapshot (50ms debounce)
+	r.brokerTimersMu.Lock()
+	if timer, ok := r.brokerTimers[ocMsgID]; ok {
 		timer.Stop()
 	}
-
-	r.broadcastTimers[ocMsgID] = time.AfterFunc(20*time.Millisecond, func() {
-		r.broadcastMessageSnapshot(chatID, ocMsgID)
-		r.broadcastTimersMu.Lock()
-		delete(r.broadcastTimers, ocMsgID)
-		r.broadcastTimersMu.Unlock()
+	r.brokerTimers[ocMsgID] = time.AfterFunc(50*time.Millisecond, func() {
+		r.publishMessageSnapshot(chatID, ocMsgID)
+		r.brokerTimersMu.Lock()
+		delete(r.brokerTimers, ocMsgID)
+		r.brokerTimersMu.Unlock()
 	})
+	r.brokerTimersMu.Unlock()
+
+	// 2. Database Sync (1000ms debounce)
+	r.dbTimersMu.Lock()
+	if _, ok := r.dbTimers[ocMsgID]; !ok {
+		// Only schedule if one isn't already running
+		r.dbTimers[ocMsgID] = time.AfterFunc(1000*time.Millisecond, func() {
+			r.syncMessageSnapshot(chatID, ocMsgID)
+			r.dbTimersMu.Lock()
+			delete(r.dbTimers, ocMsgID)
+			r.dbTimersMu.Unlock()
+		})
+	}
+	r.dbTimersMu.Unlock()
 }
 
-// broadcastMessageSnapshot pulls all parts, sorts them by ID, sends a full snapshot,
-// AND syncs the parts to the database record for UI/Test visibility.
-func (r *RelayService) broadcastMessageSnapshot(chatID, ocMsgID string) {
-	val, ok := r.msgMutexes.Load(ocMsgID)
-	if !ok { return }
-	mu := val.(*sync.Mutex)
-	mu.Lock()
-	defer mu.Unlock()
-
+// getSortedParts safely extracts and sorts parts from the in-memory cache
+func (r *RelayService) getSortedParts(ocMsgID string) []map[string]interface{} {
 	r.partCacheMu.RLock()
 	partsMap, ok := r.partCache[ocMsgID]
 	if !ok || len(partsMap) == 0 {
 		r.partCacheMu.RUnlock()
-		return
+		return nil
 	}
 	
-	// Copy parts for sorting
 	parts := make([]map[string]interface{}, 0, len(partsMap))
 	for _, p := range partsMap {
 		parts = append(parts, p.(map[string]interface{}))
 	}
 	r.partCacheMu.RUnlock()
 
-	// 1. Rigorous Lexicographical Sort by part.id
 	sort.Slice(parts, func(i, j int) bool {
 		return parts[i]["id"].(string) < parts[j]["id"].(string)
 	})
+	return parts
+}
 
-	// 1. Authoritative Record & Role retrieval
-	role := "assistant" // Default for safety
-	record, err := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
-	if err == nil && record != nil {
-		role = record.GetString("role")
+// publishMessageSnapshot sends a full snapshot via SubscriptionsBroker (Memory Speed)
+func (r *RelayService) publishMessageSnapshot(chatID, ocMsgID string) {
+	val, ok := r.msgMutexes.Load(ocMsgID)
+	if !ok { return }
+	mu := val.(*sync.Mutex)
+	mu.Lock()
+	defer mu.Unlock()
+
+	parts := r.getSortedParts(ocMsgID)
+	if parts == nil {
+		return
 	}
 
-	// 2. Broadcast the snapshot to SSE clients
+	role := ""
+	for _, p := range parts {
+		if r, ok := p["role"].(string); ok && r != "" {
+			role = r
+			break
+		}
+	}
+
+	record, err := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
+	if err == nil && record != nil {
+		if dbRole := record.GetString("role"); dbRole != "" {
+			role = dbRole
+		}
+	}
+
+	if role == "" {
+		role = "assistant"
+	}
+
 	r.broadcastToChat(chatID, "message_snapshot", map[string]interface{}{
 		"messageID": ocMsgID,
 		"role":      role,
 		"parts":     parts,
 	})
+}
 
-	// 3. Authoritative Sync to DB for live visibility (essential for tests)
-	// We do this SYNCHRONOUSLY within the msgMutex to avoid race conditions with handleMessageCompletion.
-	// Since we are inside a per-message mutex and debounced by 20ms, this is performant.
-	record, err = r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
+// syncMessageSnapshot performs authoritative DB persistence (Disk Speed)
+func (r *RelayService) syncMessageSnapshot(chatID, ocMsgID string) {
+	val, ok := r.msgMutexes.Load(ocMsgID)
+	if !ok { return }
+	mu := val.(*sync.Mutex)
+	mu.Lock()
+	defer mu.Unlock()
+
+	parts := r.getSortedParts(ocMsgID)
+	if parts == nil {
+		return
+	}
+
+	record, err := r.app.FindFirstRecordByFilter("messages", "ai_engine_message_id = {:id}", map[string]any{"id": ocMsgID})
 	if err == nil && record != nil {
 		status := record.GetString("engine_message_status")
-		// CRITICAL: Only update if not already final to avoid overwriting completion status or final parts snapshot.
 		if status != "completed" && status != "failed" {
 			record.Set("parts", parts)
 			if status == "" {
@@ -499,13 +536,20 @@ func (r *RelayService) handleMessageCompletion(chatID string, info map[string]in
 	mu.Lock()
 	defer mu.Unlock()
 
-	// 1b. Cancel any pending broadcast timers - this is the final sync
-	r.broadcastTimersMu.Lock()
-	if timer, ok := r.broadcastTimers[ocMsgID]; ok {
+	// 1b. Cancel any pending timers - this is the final sync
+	r.brokerTimersMu.Lock()
+	if timer, ok := r.brokerTimers[ocMsgID]; ok {
 		timer.Stop()
-		delete(r.broadcastTimers, ocMsgID)
+		delete(r.brokerTimers, ocMsgID)
 	}
-	r.broadcastTimersMu.Unlock()
+	r.brokerTimersMu.Unlock()
+
+	r.dbTimersMu.Lock()
+	if timer, ok := r.dbTimers[ocMsgID]; ok {
+		timer.Stop()
+		delete(r.dbTimers, ocMsgID)
+	}
+	r.dbTimersMu.Unlock()
 
 	// 2. Flush parts from cache
 	r.partCacheMu.Lock()
@@ -816,8 +860,11 @@ func (r *RelayService) handleErrorCompletion(chatID string, pbMsgID string, enve
 
 	r.saveWithRetry(record)
 
-	// Broadcast failure
-	r.broadcastError(chatID, pbMsgID, envelope)
+	// Broadcast failure directly
+	r.broadcastToChat(chatID, "message_error", map[string]interface{}{
+		"messageID": pbMsgID,
+		"error":     envelope,
+	})
 
 	// Update chat turn to user so they can try again
 	r.withChatLock(chatID, func(chat *core.Record) error {
