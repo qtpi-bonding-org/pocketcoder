@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:injectable/injectable.dart';
-import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
-import 'package:flutter_client_sse/flutter_client_sse.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
@@ -43,78 +41,78 @@ class CommunicationRepository implements ICommunicationRepository {
   @override
   Stream<HotPipeEvent> watchHotPipe(String chatId) {
     final controller = StreamController<HotPipeEvent>();
-    final url = "${_chatDao.pb.baseURL}/api/chats/$chatId/stream";
+    final topic = 'chats:$chatId';
 
-    logInfo('💬 [HotPipe] Subscribing to $url');
+    logInfo('💬 [HotPipe] Subscribing via Broker to $topic');
 
-    final subscription = SSEClient.subscribeToSSE(
-      method: SSERequestType.GET,
-      url: url,
-      header: {
-        "Accept": "text/event-stream",
-        "Cache-Control": "no-cache",
-      },
-    ).listen((event) {
-      if (event.event == null || event.data == null || event.data!.isEmpty)
-        return;
+    try {
+      _chatDao.pb.realtime.subscribe(topic, (e) {
+        if (e.event != topic || e.data.isEmpty) return;
 
-      try {
-        final data = jsonDecode(event.data!) as Map<String, dynamic>;
-        final messageId = data['messageID'] as String? ?? 'unknown';
+        try {
+          final dataMap = jsonDecode(e.data) as Map<String, dynamic>;
+          // PB Dart puts the custom message payload in the `e.record` object as a raw map sometimes,
+          // but we actually structured the payload as {"event": "...", "data": {...}} in go.
+          final eventType = dataMap['event'] as String?;
+          final payload = dataMap['data'] as Map<String, dynamic>? ?? {};
 
-        switch (event.event) {
-          case 'text_delta':
-            controller.add(HotPipeEvent.textDelta(
-              messageId: messageId,
-              partId: data['partID'] as String? ?? '',
-              text: data['text'] as String? ?? '',
-            ));
-          case 'tool_status':
-            controller.add(HotPipeEvent.toolStatus(
-              messageId: messageId,
-              partId: data['partID'] as String? ?? '',
-              tool: data['tool'] as String? ?? '',
-              status: data['status'] as String? ?? '',
-            ));
-          case 'message_snapshot':
-            final parts = (data['parts'] as List? ?? [])
-                .cast<Map<String, dynamic>>()
-                .toList();
-            controller.add(HotPipeEvent.snapshot(
-              messageId: messageId,
-              parts: parts,
-              role: data['role'] as String?,
-            ));
-          case 'message_complete':
-            final parts = (data['parts'] as List? ?? [])
-                .cast<Map<String, dynamic>>()
-                .toList();
-            controller.add(HotPipeEvent.complete(
-              messageId: messageId,
-              parts: parts,
-              status: data['status'] as String?,
-              role: data['role'] as String?,
-            ));
-          case 'error':
-            controller.add(HotPipeEvent.error(
-              messageId: messageId,
-              error: data['envelope'] as Map<String, dynamic>? ?? {},
-            ));
+          final messageId = payload['messageID'] as String? ?? 'unknown';
+
+          switch (eventType) {
+            case 'text_delta':
+              controller.add(HotPipeEvent.textDelta(
+                messageId: messageId,
+                partId: payload['partID'] as String? ?? '',
+                text: payload['text'] as String? ?? '',
+              ));
+            case 'tool_status':
+              controller.add(HotPipeEvent.toolStatus(
+                messageId: messageId,
+                partId: payload['partID'] as String? ?? '',
+                tool: payload['tool'] as String? ?? '',
+                status: payload['status'] as String? ?? '',
+              ));
+            case 'message_snapshot':
+              final parts = (payload['parts'] as List? ?? [])
+                  .cast<Map<String, dynamic>>()
+                  .toList();
+              controller.add(HotPipeEvent.snapshot(
+                messageId: messageId,
+                parts: parts,
+                role: payload['role'] as String?,
+              ));
+            case 'message_complete':
+              final parts = (payload['parts'] as List? ?? [])
+                  .cast<Map<String, dynamic>>()
+                  .toList();
+              controller.add(HotPipeEvent.complete(
+                messageId: messageId,
+                parts: parts,
+                status: payload['status'] as String?,
+                role: payload['role'] as String?,
+              ));
+            case 'message_error':
+              controller.add(HotPipeEvent.error(
+                messageId: messageId,
+                error: payload['error'] as Map<String, dynamic>? ?? {},
+              ));
+          }
+        } catch (e, stack) {
+          logError('💬 [HotPipe] Failed to parse Broker event', e, stack);
         }
-      } catch (e, stack) {
-        logError('💬 [HotPipe] Failed to parse SSE event', e, stack);
-      }
-    }, onError: (e, stack) {
-      logError('💬 [HotPipe] SSE Stream error', e, stack);
+      }).catchError((e, stack) {
+        logError('💬 [HotPipe] Broker subscription failed', e, stack);
+        controller.addError(e, stack);
+        return () async {};
+      });
+    } catch (e, stack) {
+      logError('💬 [HotPipe] Failed to initiate Broker subscription', e, stack);
       controller.addError(e, stack);
-    }, onDone: () {
-      logInfo('💬 [HotPipe] SSE Stream closed');
-      controller.close();
-    });
+    }
 
-    controller.onCancel = () {
-      logInfo('💬 [HotPipe] Unsubscribing from SSE');
-      subscription.cancel();
+    controller.onCancel = () async {
+      logInfo('💬 [HotPipe] Unsubscribing from Broker');
+      await _chatDao.pb.realtime.unsubscribe(topic);
     };
 
     return controller.stream;
