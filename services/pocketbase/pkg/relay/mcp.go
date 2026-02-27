@@ -141,7 +141,16 @@ func (r *RelayService) renderMcpConfig() error {
 	secrets.WriteString(fmt.Sprintf("# Last rendered: %s\n", time.Now().UTC().Format(time.RFC3339)))
 	secrets.WriteString(fmt.Sprintf("# Approved servers: %d\n", len(records)))
 
+	// Build unique server list (deduplicate by name, keep latest)
+	uniqueServers := make(map[string]*core.Record)
 	for _, record := range records {
+		name := record.GetString("name")
+		if existing, ok := uniqueServers[name]; !ok || record.GetDateTime("updated").Time().After(existing.GetDateTime("updated").Time()) {
+			uniqueServers[name] = record
+		}
+	}
+
+	for _, record := range uniqueServers {
 		name := record.GetString("name")
 		image := record.GetString("image")
 		
