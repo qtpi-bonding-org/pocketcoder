@@ -96,125 +96,139 @@ teardown() {
 }
 
 # =============================================================================
-# Test: Full MCP lifecycle — request, approve, subagent uses tool
+# Test: Full MCP lifecycle — Sync Handoff
 # =============================================================================
 
-@test "Agent MCP Flow: Full lifecycle — request, approve, subagent executes" {
-    # The complete MCP flow:
-    # 1. User sends message requiring MCP tool
-    # 2. Poco requests the server
-    # 3. We approve it (simulating Flutter app)
-    # 4. Gateway restarts with new config
-    # 5. Poco spawns subagent
-    # 6. Subagent connects to gateway, uses tool
-    # 7. Results come back to user
+@test "Agent MCP Flow: Full lifecycle — Sync Handoff" {
+    # This test verifies that Poco can delegate to a subagent synchronously
+    # using cao_handoff and receive the result directly in the tool response.
 
     authenticate_user
     authenticate_agent
 
-    # Pre-approve an MCP server so Poco can use it immediately
+    # Pre-approve 'fetch' for this test
     local server_name="fetch"
 
-    # Check if already approved
-    local existing
-    existing=$(curl -s -X GET \
-        "$PB_URL/api/collections/mcp_servers/records?filter=name=\"$server_name\"%20%26%26%20status=\"approved\"" \
-        -H "Authorization: $(get_admin_token)" \
-        -H "Content-Type: application/json")
+    # Create and approve the server
+    local create_response
+    create_response=$(pb_create "mcp_servers" "{
+        \"docker_image\": \"mcp/fetch\",
+        \"name\": \"$server_name\",
+        \"status\": \"approved\",
+        \"reason\": \"Sync Test\",
+        \"catalog\": \"docker-mcp\"
+    }")
 
-    local existing_count
-    existing_count=$(echo "$existing" | jq -r '.totalItems // 0')
-
-    if [ "$existing_count" -eq 0 ]; then
-        # Create and approve the server
-        local create_response
-        create_response=$(curl -s -X POST "$PB_URL/api/collections/mcp_servers/records" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: $(get_admin_token)" \
-            -d "{
-                \"name\": \"$server_name\",
-                \"status\": \"approved\",
-                \"reason\": \"Pre-approved for agent MCP flow test\",
-                \"catalog\": \"docker-mcp\"
-            }")
-
-        MCP_SERVER_ID=$(echo "$create_response" | jq -r '.id // empty')
-        [ -n "$MCP_SERVER_ID" ] && [ "$MCP_SERVER_ID" != "null" ] || {
-            echo "❌ Failed to pre-approve MCP server" >&2
-            return 1
-        }
-        track_artifact "mcp_servers:$MCP_SERVER_ID"
-
-        # Wait for config render and gateway restart
-        sleep 5
-    fi
+    MCP_SERVER_ID=$(echo "$create_response" | jq -r '.id // empty')
+    track_artifact "mcp_servers:$MCP_SERVER_ID"
+    sleep 5
 
     # Create chat
     local chat_data
-    chat_data=$(pb_create "chats" "{\"title\": \"Agent MCP Lifecycle Test $TEST_ID\", \"user\": \"$USER_ID\"}")
+    chat_data=$(pb_create "chats" "{\"title\": \"Sync MCP Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
 
-    # Ask Poco to use the approved MCP server
+    # Ask Poco to use cao_handoff
     local msg_data
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Objective: Use a subagent to fetch https://example.com. The 'fetch' server is already approved. Use 'cao_assign' to spawn a subagent and instruct it to use the 'fetch' tool from the 'fetch' server to retrieve the content of https://example.com. You as Poco are the coordinator; set up the environment and delegate to the subagent.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Objective: Use a subagent via 'cao_handoff' (blocking) to fetch https://example.com using the '$server_name' server. Tell me the title of the page.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
 
-    # Wait for delivery
     run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
     [ "$status" -eq 0 ] || { echo "❌ Message not delivered" >&2; return 1; }
 
-    SESSION_ID=$(pb_get "chats" "$CHAT_ID" | jq -r '.ai_engine_session_id // empty')
-
-    # Wait for Poco to process — this may take longer as it involves subagent spawning
+    # Wait for assistant response (blocks until subagent finishes)
     ASSISTANT_MESSAGE_ID=$(wait_for_assistant_message "$CHAT_ID" 120)
-    [ -n "$ASSISTANT_MESSAGE_ID" ] && [ "$ASSISTANT_MESSAGE_ID" != "null" ] || {
-        echo "❌ Poco did not respond after MCP server approval" >&2
-        return 1
-    }
+    [ -n "$ASSISTANT_MESSAGE_ID" ] || { echo "❌ Poco did not respond" >&2; return 1; }
 
-    # Verify the response has content
     local response_text
     response_text=$(get_assistant_text "$ASSISTANT_MESSAGE_ID")
-    [ -n "$response_text" ] || {
-        echo "❌ Empty response from Poco" >&2
+    echo "  ✓ Sync Response: ${response_text:0:100}..."
+
+    echo "$response_text" | grep -qi "example\|domain\|title" || {
+        echo "❌ Sync response content mismatch" >&2
         return 1
     }
 
-    # Check if a subagent was spawned
-    local subagent_records
-    subagent_records=$(curl -s -X GET \
-        "$PB_URL/api/collections/subagents/records?filter=delegating_agent_id=\"$SESSION_ID\"" \
-        -H "Authorization: $USER_TOKEN" \
-        -H "Content-Type: application/json" 2>/dev/null)
+    echo "✓ Sync handoff lifecycle completed"
+}
 
-    local subagent_count
-    subagent_count=$(echo "$subagent_records" | jq -r '.totalItems // 0' 2>/dev/null)
+# =============================================================================
+# Test: Full MCP lifecycle — Async Assign
+# =============================================================================
 
-    if [ "$subagent_count" -gt 0 ]; then
-        echo "✓ Poco spawned subagent for MCP tool execution"
-        local subagent_id
-        subagent_id=$(echo "$subagent_records" | jq -r '.items[0].id // empty')
-        track_artifact "subagents:$subagent_id"
-    else
-        echo "ℹ No subagent record found (Poco may have used a different approach)"
-    fi
+@test "Agent MCP Flow: Full lifecycle — Async Assign" {
+    # This test verifies asynchronous delegation via cao_assign.
+    # Poco assigns the task, turn flips to user while subagent works, 
+    # and then Poco sends a second message when the worker is done.
 
-    # The response should contain something about the fetched content
-    echo "$response_text" | grep -qi "example\|domain\|fetch\|content\|page\|title\|html" || {
-        echo "❌ Response doesn't reference fetched content" >&2
-        echo "  Response: ${response_text:0:300}" >&2
+    authenticate_user
+    authenticate_agent
+
+    # Pre-approve 'duckduckgo' for this test
+    local server_name="duckduckgo"
+
+    # Create and approve the server
+    local create_response
+    create_response=$(pb_create "mcp_servers" "{
+        \"docker_image\": \"mcp/duckduckgo\",
+        \"name\": \"$server_name\",
+        \"status\": \"approved\",
+        \"reason\": \"Async Test\",
+        \"catalog\": \"docker-mcp\"
+    }")
+
+    MCP_SERVER_ID=$(echo "$create_response" | jq -r '.id // empty')
+    track_artifact "mcp_servers:$MCP_SERVER_ID"
+    sleep 5
+
+    # Create chat
+    local chat_data
+    chat_data=$(pb_create "chats" "{\"title\": \"Async MCP Test $TEST_ID\", \"user\": \"$USER_ID\"}")
+    CHAT_ID=$(echo "$chat_data" | jq -r '.id')
+    track_artifact "chats:$CHAT_ID"
+
+    # Ask Poco to use cao_assign
+    local msg_data
+    msg_data=$(pb_create "messages" "{
+        \"chat\": \"$CHAT_ID\",
+        \"role\": \"user\",
+        \"parts\": [{\"type\": \"text\", \"text\": \"Objective: Assign a subagent via 'cao_assign' to search for 'PocketCoder' using the '$server_name' server. I will wait for you to relay the results.\"}],
+        \"user_message_status\": \"pending\"
+    }")
+    USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
+    track_artifact "messages:$USER_MESSAGE_ID"
+
+    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
+    [ "$status" -eq 0 ] || { echo "❌ Message not delivered" >&2; return 1; }
+
+    # 1. Wait for Assignment confirmation (Immediate)
+    ASSIGN_MSG_ID=$(wait_for_assistant_message "$CHAT_ID" 45)
+    [ -n "$ASSIGN_MSG_ID" ] || { echo "❌ Poco did not assign the task" >&2; return 1; }
+    echo "  ✓ Task assigned (Message: $ASSIGN_MSG_ID)"
+
+    # Verify double-texting: Wait for the ACTUAL result message
+    # This message should arrive AFTER the turn has flipped to user and back to assistant
+    echo "  ⏳ Waiting for subagent result (Synthesis)..."
+    RESULT_MSG_ID=$(wait_for_assistant_message "$CHAT_ID" 120 "$ASSIGN_MSG_ID")
+    [ -n "$RESULT_MSG_ID" ] || { echo "❌ Subagent result never relayed" >&2; return 1; }
+
+    local result_text
+    result_text=$(get_assistant_text "$RESULT_MSG_ID")
+    echo "  ✓ Async Result relayed: ${result_text:0:100}..."
+
+    echo "$result_text" | grep -qi "pocketcoder\|search\|result" || {
+        echo "❌ Async result content mismatch" >&2
         return 1
     }
 
-    echo "✓ Full MCP lifecycle completed"
-    echo "  Response (first 200 chars): ${response_text:0:200}"
+    echo "✓ Async assign lifecycle completed"
 }
 
 # =============================================================================
