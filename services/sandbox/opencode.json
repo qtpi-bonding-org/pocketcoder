@@ -18,7 +18,7 @@
         "*": "allow"
     },
     "mcp": {
-        "docker-mcp-remote": {
+        "mcp-gateway": {
             "type": "remote",
             "url": "http://mcp-gateway:8811/sse",
             "enabled": true,
