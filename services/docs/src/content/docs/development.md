@@ -11,10 +11,10 @@ Welcome to the PocketCoder workbench. This document explains how I've pieced the
 
 PocketCoder doesn't try to reinvent the wheel. It uses a **Physical Separation of Concerns** to keep things simple and secure:
 
-1.  **Reasoning (OpenCode)**: The "Brain." It runs in an isolated container.
-2.  **Relay (Go/PocketBase)**: The "Spinal Cord." It uses PocketBase's event system to orchestrate the flow.
-3.  **Proxy (Rust)**: The "Muscle." A tiny, secure bridge that translates intents into `tmux` instructions.
-4.  **Sandbox (Tmux/Docker)**: The "Reality." A standard Linux environment where the actual work happens.
+1.  **Reasoning (OpenCode)**: It runs in an isolated container.
+2.  **Relay (Go/PocketBase)**: It uses PocketBase's event system to orchestrate the flow.
+3.  **Proxy (Rust)**: A tiny, secure bridge that translates intents into `tmux` instructions.
+4.  **Sandbox (Tmux/Docker)**: A standard Linux environment where the actual execution happens.
 
 ### Why this stack?
 I chose these tools for their **leverage**:
@@ -29,16 +29,18 @@ I chose these tools for their **leverage**:
 - A Gemini API Key ([Get one here](https://aistudio.google.com/app/apikey))
 
 ### Steps
-1.  **Prep**:
+1.  **Deploy**:
     ```bash
     git clone https://github.com/qtpi-bonding-org/pocketcoder.git
     cd pocketcoder
-    cp .env.example .env
-    # Add your GEMINI_API_KEY to .env
+    ./deploy.sh
     ```
-2.  **Run**:
+    *Note: The script will auto-generate secure passwords in your `.env` and initialize the environment.*
+
+2.  **Configure API Keys**:
+    Update your `.env` with your `GEMINI_API_KEY`.
     ```bash
-    docker-compose up -d --build
+    ./deploy.sh
     ```
 3.  **Bootstrap PocketBase**:
     Access `http://localhost:8090/_/` and follow the auto-migration logs to ensure the schema is ready.

@@ -47,8 +47,8 @@ else
 fi
 
 if [ -f "$ROOT_DIR/SECURITY.md" ]; then
-  echo -e "---\ntitle: Security Architecture\ndescription: How PocketCoder enforces sovereign isolation.\nhead: []\n---\n" > ./src/content/docs/security.md
-  extract_body "$ROOT_DIR/SECURITY.md" >> ./src/content/docs/security.md
+  echo -e "---\ntitle: Security Architecture\ndescription: How PocketCoder enforces sovereign isolation.\nhead: []\n---\n" > ./src/content/docs/architecture.md
+  extract_body "$ROOT_DIR/SECURITY.md" >> ./src/content/docs/architecture.md
 else
   echo "⚠️ SECURITY.md not found at $ROOT_DIR"
 fi
@@ -71,7 +71,7 @@ if command -v gomarkdoc &> /dev/null; then
   # gomarkdoc works best when run from the module root for all packages
   # We use --include-unexported if we want maximum context for the "Sovereign Audit"
   if [ -d "$ROOT_DIR/services/pocketbase" ]; then
-    (cd "$ROOT_DIR/services/pocketbase" && gomarkdoc --include-unexported ./...) >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
+    (cd "$ROOT_DIR/services/pocketbase" && gomarkdoc --include-unexported . ./internal/... ./pkg/...) >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
   else
     echo "⚠️ services/pocketbase not found"
   fi
@@ -82,10 +82,10 @@ fi
 # 3. Extract Proxy Docs (Rust)
 echo "🦀 Generating High-Fidelity Proxy docs (Rust)..."
 # We generate rustdoc JSON first (requires stable + bootstrap for unstable flags)
-if [ -d "$ROOT_DIR/proxy" ]; then
-  (cd "$ROOT_DIR/proxy" && RUSTC_BOOTSTRAP=1 cargo rustdoc -- -Z unstable-options --output-format json) || echo "⚠️ RustDoc JSON generation failed"
+if [ -d "$ROOT_DIR/services/proxy" ]; then
+  (cd "$ROOT_DIR/services/proxy" && RUSTC_BOOTSTRAP=1 cargo rustdoc -- -Z unstable-options --output-format json) || echo "⚠️ RustDoc JSON generation failed"
 else
-  echo "⚠️ proxy directory not found"
+  echo "⚠️ services/proxy directory not found"
 fi
 
 echo -e "---\ntitle: Proxy Reference\nhead: []\n---\n" > ./src/content/docs/reference/proxy.md
@@ -94,8 +94,8 @@ if command -v cargo-docs-md &> /dev/null; then
   echo "📦 Converting rustdoc JSON to Markdown..."
   # Generate to a temporary location
   mkdir -p /tmp/proxy_docs
-  if [ -d "$ROOT_DIR/proxy" ]; then
-    (cd "$ROOT_DIR/proxy" && cargo docs-md --path target/doc/pocketcoder_proxy.json --output /tmp/proxy_docs)
+  if [ -d "$ROOT_DIR/services/proxy" ]; then
+    (cd "$ROOT_DIR/services/proxy" && cargo docs-md --path target/doc/pocketcoder_proxy.json --output /tmp/proxy_docs)
     
     # Concatenate the results into our reference file
     # Primary index first
@@ -121,9 +121,10 @@ fi
 # 4. Extract Stats and Update Landing Page
 # Extract TOTAL_CORE from the generated CODEBASE.md
 if [ -f "$ROOT_DIR/CODEBASE.md" ]; then
-  TOTAL_CORE=$(grep "Total Original Footprint:" "$ROOT_DIR/CODEBASE.md" | awk '{print $4}')
+  # Extract from the language table: | **Core total** | **41,143** | ... |
+  TOTAL_CORE=$(grep '\*\*Core total\*\*' "$ROOT_DIR/CODEBASE.md" | awk -F'|' '{print $3}' | tr -d ' *')
 else
-  TOTAL_CORE="~3,400"
+  TOTAL_CORE="~41,000"
 fi
 echo "📊 Total Core Lines of Code: $TOTAL_CORE"
 

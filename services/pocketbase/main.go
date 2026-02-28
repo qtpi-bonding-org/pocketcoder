@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 // @pocketcoder-core: Main Orchestrator. Registers hooks, starts the relay, and boots PocketBase.
-// @pocketcoder-core: Sovereign Relay. The "Spinal Cord" that syncs Reasoning with Reality.
+// @pocketcoder-core: Sovereign Relay. The orchestration layer that syncs OpenCode with the Sandbox.
 package main
 
 import (

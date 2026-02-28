@@ -1,3 +1,4 @@
+// @pocketcoder-core: MCP Catalog Browser. Lets Poco discover available Docker MCP servers.
 import { tool } from "@opencode-ai/plugin"
 
 export default tool({

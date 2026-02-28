@@ -64,7 +64,7 @@ PocketBase is the database and the user-facing API. It stores chats, messages, p
 
 ### The Relay
 
-The Relay is a Go module at `backend/pkg/relay/`. It's the nervous system — it bridges PocketBase and OpenCode. It starts when PocketBase boots (`relay.go` → `Start()`).
+The Relay is a Go module at `backend/pkg/relay/`. It's the orchestration layer — it bridges PocketBase and OpenCode. It starts when PocketBase boots (`relay.go` → `Start()`).
 
 **What it does on startup** (`relay.go:Start()`):
 1. Launches SSE listener in background goroutine (`listenForEvents()`)
