@@ -112,22 +112,6 @@ services:
       - pocketcoder-control
       - pocketcoder-tools
 
-  # 🤖 N8N (Workflow Automation)
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: pocketcoder-n8n-demo
-    ports:
-      - "5678:5678"
-    environment:
-      - N8N_HOST=n8n
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=${PN_URL}/api/pocketcoder/proxy/n8n/
-    volumes:
-      - n8n_data:/home/node/.n8n
-    networks:
-      - pocketcoder-tools
-    restart: unless-stopped
 
   # 🔌 MCP GATEWAY (MCP Server Gateway)
   mcp-gateway:
@@ -248,7 +232,6 @@ volumes:
   shell_bridge:
   ntfy-cache:
   ntfy-auth:
-  n8n_data:
 
 networks:
   pocketcoder-dashboard:
