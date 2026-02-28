@@ -43,14 +43,17 @@ class BiosListTile extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  Text(
-                    label.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: textColor,
-                      fontSize: AppSizes.fontStandard,
-                      fontWeight: AppFonts.heavy,
-                      package: 'pocketcoder_flutter',
+                  Flexible(
+                    child: Text(
+                      label.toUpperCase(),
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: AppFonts.bodyFamily,
+                        color: textColor,
+                        fontSize: AppSizes.fontStandard,
+                        fontWeight: AppFonts.heavy,
+                        package: 'pocketcoder_flutter',
+                      ),
                     ),
                   ),
                   if (hasBadge) ...[
@@ -72,14 +75,18 @@ class BiosListTile extends StatelessWidget {
             ),
             if (value != null) ...[
               HSpace.x2,
-              Text(
-                value!.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: textColor,
-                  fontSize: AppSizes.fontStandard,
-                  fontWeight: AppFonts.heavy,
-                  package: 'pocketcoder_flutter',
+              Flexible(
+                child: Text(
+                  value!.toUpperCase(),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontFamily: AppFonts.bodyFamily,
+                    color: textColor,
+                    fontSize: AppSizes.fontStandard,
+                    fontWeight: AppFonts.heavy,
+                    package: 'pocketcoder_flutter',
+                  ),
                 ),
               ),
             ] else
