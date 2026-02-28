@@ -35,9 +35,21 @@ PocketCoder is an active research project. As a solo developer, I’m building t
 | Language | LoC | Component |
 | :--- | ---: | :--- |
 | Go | 5,384 | PocketBase backend & relay |
-| Rust | 558 | Sentinel Proxy |
+| Rust | 558 | Proxy |
 | TypeScript | 322 | OpenCode MCP tools & plugins |
 | Python | +1,781 vs upstream | CAO fork (vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator)) |
 | Dart | 33,098 | Flutter client (non-generated) |
 | Bash | 919 | Shell scripts (infra — separate tally) |
 | **CORE TOTAL** | **~41,143** | **Lean, Fast, Fully Sovereign.** |
+
+## Idle Performance Profile
+*(Recorded via `docker stats --no-stream` on idle state)*
+
+| CONTAINER ID | NAME | CPU % | MEM USAGE / LIMIT | MEM % | NET I/O | BLOCK I/O | PIDS |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| a33b2ffa7b60 | pocketcoder-sqlpage | 0.30% | 25.27MiB / 7.655GiB | 0.32% | 746B / 0B | 21.1MB / 0B | 16 |
+| 9d3b7d5a495a | pocketcoder-opencode | 0.96% | 364.7MiB / 7.655GiB | 4.65% | 147kB / 11kB | 168MB / 5.77MB | 21 |
+| 9c35328e41ce | pocketcoder-sandbox | 2.75% | 270.9MiB / 7.655GiB | 3.46% | 4.53kB / 1.44kB | 112MB / 45.1kB | 36 |
+| c29d30169217 | pocketcoder-mcp-gateway | 0.89% | 88.08MiB / 7.655GiB | 1.12% | 526kB / 15kB | 68.9MB / 16.4kB | 21 |
+| 4a7607b82cc0 | pocketcoder-docker-proxy-write | 0.00% | 30.29MiB / 7.655GiB | 0.39% | 1.61kB / 0B | 13.2MB / 12.3kB | 13 |
+| 5bd3d4979c42 | pocketcoder-pocketbase | 0.00% | 39.13MiB / 7.655GiB | 0.50% | 7.24kB / 2.35kB | 30.5MB / 651kB | 14 |
