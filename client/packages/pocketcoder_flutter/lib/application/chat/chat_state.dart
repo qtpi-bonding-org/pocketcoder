@@ -3,7 +3,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 
-part 'communication_state.freezed.dart';
+part 'chat_state.freezed.dart';
 
 enum ChatOperation {
   initialize,
@@ -13,10 +13,10 @@ enum ChatOperation {
 }
 
 @freezed
-class CommunicationState with _$CommunicationState implements IUiFlowState {
-  const CommunicationState._();
+class ChatState with _$ChatState implements IUiFlowState {
+  const ChatState._();
 
-  const factory CommunicationState({
+  const factory ChatState({
     @Default([]) List<Message> messages,
     @Default([]) List<Chat> chats,
     @Default(UiFlowStatus.idle) UiFlowStatus status,
@@ -28,7 +28,7 @@ class CommunicationState with _$CommunicationState implements IUiFlowState {
     String? currentArtifactContent,
     Object? error,
     ChatOperation? lastOperation,
-  }) = _CommunicationState;
+  }) = _ChatState;
 
   @override
   bool get isLoading => status == UiFlowStatus.loading;

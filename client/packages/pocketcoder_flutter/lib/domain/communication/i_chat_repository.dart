@@ -2,9 +2,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 
-part 'i_communication_repository.freezed.dart';
+part 'i_chat_repository.freezed.dart';
 
-abstract class ICommunicationRepository {
+abstract class IChatRepository {
   /// Stream of finalized messages from the history (Cold Pipe)
   Stream<List<Message>> watchColdPipe(String chatId);
 

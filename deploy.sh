@@ -48,11 +48,17 @@ echo -e "${BLUE}🦅 PocketCoder: Initializing Bunker Deployment...${NC}"
 
 # .env generation with random secrets
 DOTENV=.env
-if [ ! -f "$DOTENV" ]; then
+if [ ! -f "$DOTENV" ] || ! grep -q "AGENT_PASSWORD" "$DOTENV"; then
     echo -e "${YELLOW}� Generating first-time secure credentials from template...${NC}"
     if [ ! -f .env.template ]; then
         echo -e "${RED}❌ Error: .env.template not found.${NC}"
         exit 1
+    fi
+
+    # Extract existing API keys if .env exists
+    EXISTING_API_KEYS=""
+    if [ -f "$DOTENV" ]; then
+        EXISTING_API_KEYS=$(grep "API" "$DOTENV" || true)
     fi
 
     # Generate random passwords for first boot
@@ -62,11 +68,25 @@ if [ ! -f "$DOTENV" ]; then
 
     # Construct .env from template but inject the random passwords
     # We use sed to replace placeholders if they exist, or just append/prep
-    sed -e "s/AGENT_PASSWORD=.*/AGENT_PASSWORD=${AGENT_PASSWORD}/" \
-        -e "s/POCKETBASE_ADMIN_PASSWORD=.*/POCKETBASE_ADMIN_PASSWORD=${ADMIN_PASSWORD}/" \
-        -e "s/POCKETBASE_SUPERUSER_PASSWORD=.*/POCKETBASE_SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD}/" \
+    sed -e "s|AGENT_PASSWORD=.*|AGENT_PASSWORD=${AGENT_PASSWORD}|" \
+        -e "s|POCKETBASE_ADMIN_PASSWORD=.*|POCKETBASE_ADMIN_PASSWORD=${ADMIN_PASSWORD}|" \
+        -e "s|POCKETBASE_SUPERUSER_PASSWORD=.*|POCKETBASE_SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD}|" \
         .env.template > "$DOTENV"
     
+    # Re-inject preserved API keys
+    if [ -n "$EXISTING_API_KEYS" ]; then
+        echo "$EXISTING_API_KEYS" | while IFS= read -r line; do
+            key=$(echo "$line" | cut -d '=' -f 1)
+            # If the key exists in .env, replace it. Otherwise append it.
+            if grep -q "^${key}=" "$DOTENV"; then
+                sed "s|^${key}=.*|${line}|" "$DOTENV" > "${DOTENV}.tmp" && mv "${DOTENV}.tmp" "$DOTENV"
+            else
+                echo "$line" >> "$DOTENV"
+            fi
+        done
+        echo -e "${GREEN}✅ Preserved API keys re-injected.${NC}"
+    fi
+
     echo -e "${GREEN}✅ Secure .env initialized.${NC}"
 fi
 

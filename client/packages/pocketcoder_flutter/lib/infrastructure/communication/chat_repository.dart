@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
-import 'package:pocketcoder_flutter/domain/communication/i_communication_repository.dart';
+import 'package:pocketcoder_flutter/domain/communication/i_chat_repository.dart';
 import 'package:flutter_aeroform/domain/exceptions.dart';
 import "package:flutter_aeroform/infrastructure/core/logger.dart";
 import 'package:flutter_aeroform/core/try_operation.dart';
@@ -13,15 +14,15 @@ import '../ai_config/ai_config_daos.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/api_client.dart';
 
-@LazySingleton(as: ICommunicationRepository)
-class CommunicationRepository implements ICommunicationRepository {
+@LazySingleton(as: IChatRepository)
+class ChatRepository implements IChatRepository {
   final ChatDao _chatDao;
   final MessageDao _messageDao;
   final AiAgentDao _agentDao;
   final IAuthRepository _authRepository;
   final PocketCoderApi _api;
 
-  CommunicationRepository(
+  ChatRepository(
     this._chatDao,
     this._messageDao,
     this._agentDao,
@@ -160,11 +161,12 @@ class CommunicationRepository implements ICommunicationRepository {
             'CommunicationRepo: Chat not found, identifying "poco" agent...');
 
         // We assume 'poco' agent exists.
-        // Use networkOnly to bypass pocketbase_drift's local IndexedDB caching,
-        // which hangs on Chrome web after receiving the response for this collection.
+        // On web (Chrome), use networkOnly to bypass pocketbase_drift's local
+        // IndexedDB caching, which hangs when writing this collection.
+        // On native (iOS, macOS, Android), the default cacheAndNetwork is safe.
         final agents = await _agentDao.getFullList(
           filter: 'name = "poco"',
-          requestPolicy: RequestPolicy.networkOnly,
+          requestPolicy: kIsWeb ? RequestPolicy.networkOnly : null,
         );
         final agentId = agents.isNotEmpty ? agents.first.id : '';
         logInfo('CommunicationRepo: Using agentId: $agentId');
