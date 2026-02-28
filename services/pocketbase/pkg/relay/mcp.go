@@ -170,11 +170,13 @@ func (r *RelayService) renderMcpConfig() error {
 		catalog.WriteString(fmt.Sprintf("    image: %s\n", image))
 		catalog.WriteString("    longLived: false\n")
 
-		// Update secrets (.env format)
+		// Update secrets (.env format) and catalog env mappings
 		configMap := make(map[string]any)
-		if err := record.UnmarshalJSONField("config", &configMap); err == nil {
+		if err := record.UnmarshalJSONField("config", &configMap); err == nil && len(configMap) > 0 {
+			catalog.WriteString("    secrets:\n")
 			for k, v := range configMap {
 				secrets.WriteString(fmt.Sprintf("%s=%v\n", k, v))
+				catalog.WriteString(fmt.Sprintf("      - name: %s\n        env: %s\n", k, k))
 			}
 		}
 	}
