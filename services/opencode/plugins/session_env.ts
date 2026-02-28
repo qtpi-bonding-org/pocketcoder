@@ -1,3 +1,4 @@
+// @pocketcoder-core: Session Env Plugin. Injects session and agent identity into OpenCode shell environments.
 import type { Plugin } from "@opencode-ai/plugin";
 
 export const SessionEnvPlugin: Plugin = async () => {

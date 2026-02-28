@@ -6,10 +6,10 @@ Welcome to the PocketCoder workbench. This document explains how I've pieced the
 
 PocketCoder doesn't try to reinvent the wheel. It uses a **Physical Separation of Concerns** to keep things simple and secure:
 
-1.  **Reasoning (OpenCode)**: The "Brain." It runs in an isolated container.
-2.  **Relay (Go/PocketBase)**: The "Spinal Cord." It uses PocketBase's event system to orchestrate the flow.
-3.  **Proxy (Rust)**: The "Muscle." A tiny, secure bridge that translates intents into `tmux` instructions.
-4.  **Sandbox (Tmux/Docker)**: The "Reality." A standard Linux environment where the actual work happens.
+1.  **Reasoning (OpenCode)**: It runs in an isolated container.
+2.  **Relay (Go/PocketBase)**: It uses PocketBase's event system to orchestrate the flow.
+3.  **Proxy (Rust)**: A tiny, secure bridge that translates intents into `tmux` instructions.
+4.  **Sandbox (Tmux/Docker)**: A standard Linux environment where the actual execution happens.
 
 ### Why this stack?
 I chose these tools for their **leverage**:
@@ -32,7 +32,7 @@ I chose these tools for their **leverage**:
     ```
     *Note: The script will auto-generate secure passwords in your `.env` and initialize the environment.*
 
-2.  **Add Brain**:
+2.  **Configure API Keys**:
     Update your `.env` with your `GEMINI_API_KEY`.
     ```bash
     ./deploy.sh

@@ -1,3 +1,4 @@
+// @pocketcoder-core: MCP Inspector. Deep-inspects server tools, config schema, and README from the catalog.
 import { tool } from "@opencode-ai/plugin"
 
 export default tool({
