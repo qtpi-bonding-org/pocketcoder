@@ -93,6 +93,7 @@ services:
       - ./services/sandbox/cao/src:/app/cao/src
       - ./services/sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
       - shell_bridge:/app/shell_bridge
+      - ./scripts/debug:/workspace/debug
     working_dir: /workspace
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
