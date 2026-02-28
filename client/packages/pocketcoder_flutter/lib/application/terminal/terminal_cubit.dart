@@ -118,9 +118,13 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
     final privPem = sshKey.toPem();
     // Use the built-in serialization from dartssh2
     final pubKeyStr = sshKey.toPublicKey().toString();
+    final fingerprint = await _calculateFingerprint(pubKeyStr);
 
     await _storage.write(key: 'ssh_private_key', value: privPem);
     await _storage.write(key: 'ssh_public_key', value: pubKeyStr);
+    await _storage.write(
+        key: 'ssh_private_seed', value: base64.encode(privateKeyData));
+    await _storage.write(key: 'ssh_fingerprint', value: fingerprint);
 
     emit(state.copyWith(isSyncingKeys: false));
 

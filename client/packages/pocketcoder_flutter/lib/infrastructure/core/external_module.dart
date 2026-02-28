@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'auth_store.dart';
 import "package:flutter_aeroform/infrastructure/core/logger.dart";
 import 'package:flutter_aeroform/domain/models/app_config.dart';
+import 'auth_interceptor_client.dart';
 
 @module
 abstract class ExternalModule {
@@ -51,6 +52,7 @@ abstract class ExternalModule {
       baseUrl,
       requestPolicy: RequestPolicy.cacheAndNetwork,
       authStore: authStore,
+      httpClientFactory: () => AuthInterceptorClient(http.Client(), storage),
     );
 
     if (schemaJson != null && schemaJson.isNotEmpty && schemaJson != '[]') {
