@@ -1,22 +1,22 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
-import 'package:pocketcoder_flutter/domain/communication/i_communication_repository.dart';
+import 'package:pocketcoder_flutter/domain/communication/i_chat_repository.dart';
 import "package:flutter_aeroform/infrastructure/core/logger.dart";
-import 'communication_state.dart';
+import 'package:flutter_aeroform/support/extensions/cubit_ui_flow_extension.dart';
+import 'chat_state.dart';
 
 @injectable
-class CommunicationCubit extends Cubit<CommunicationState> {
-  final ICommunicationRepository _repository;
+class ChatCubit extends AppCubit<ChatState> {
+  final IChatRepository _repository;
 
   StreamSubscription? _coldSub;
   StreamSubscription? _hotSub;
 
   String? _currentChatId;
 
-  CommunicationCubit(this._repository) : super(const CommunicationState());
+  ChatCubit(this._repository) : super(const ChatState());
 
   @override
   Future<void> close() {
@@ -56,6 +56,31 @@ class CommunicationCubit extends Cubit<CommunicationState> {
     }
   }
 
+  Future<void> loadChat(String chatId) async {
+    // If we're loading 'new', we just initialize a default chat
+    if (chatId == 'new') {
+      await initialize();
+      return;
+    }
+
+    logInfo('💬 [ChatCubit] Loading existing chat: $chatId');
+    await tryOperation(() async {
+      _currentChatId = chatId;
+
+      final opencodeId = await _repository.getOpencodeId(chatId);
+      logInfo('💬 [ChatCubit] OpenCode ID: $opencodeId');
+
+      _subscribeToColdPipe(chatId);
+      _subscribeToHotPipe();
+
+      return state.copyWith(
+        chatId: chatId,
+        opencodeId: opencodeId,
+        status: UiFlowStatus.success,
+      );
+    }, emitLoading: true);
+  }
+
   Future<void> loadChatHistory() async {
     emit(state.copyWith(
       status: UiFlowStatus.loading,
@@ -85,9 +110,13 @@ class CommunicationCubit extends Cubit<CommunicationState> {
         Message? nextHot = state.hotMessage;
         if (nextHot != null) {
           final dbEquivalent = messages.where((m) {
-            if (m.id == nextHot!.id) return true;
+            if (m.id == nextHot!.id) {
+              return true;
+            }
             if (nextHot.aiEngineMessageId != null &&
-                m.aiEngineMessageId == nextHot.aiEngineMessageId) return true;
+                m.aiEngineMessageId == nextHot.aiEngineMessageId) {
+              return true;
+            }
             return false;
           }).firstOrNull;
 

@@ -5,7 +5,7 @@ import 'package:xterm/xterm.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/terminal/terminal_cubit.dart';
 import 'package:pocketcoder_flutter/application/terminal/terminal_state.dart';
-import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/status_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/status_state.dart';
 import '../../app_router.dart';
@@ -49,7 +49,7 @@ class _TerminalViewState extends State<_TerminalView> {
   }
 
   void _connect() {
-    final chatState = context.read<CommunicationCubit>().state;
+    final chatState = context.read<ChatCubit>().state;
     final opencodeId = chatState.opencodeId;
 
     context.read<SshTerminalCubit>().connect(

@@ -13,7 +13,7 @@
         "write": true,
         "edit": true,
         "bash": true,
-        "question": true,
+        "question": false,
         "lsp": false,
         "read": true,
         "grep": true,

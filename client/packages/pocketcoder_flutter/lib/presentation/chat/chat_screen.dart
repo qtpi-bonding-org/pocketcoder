@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
-import 'package:pocketcoder_flutter/application/chat/communication_state.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_state.dart';
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart';
 import 'package:pocketcoder_flutter/application/permission/permission_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -19,19 +19,24 @@ import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+// import 'package:pocketbase_drift/pocketbase_drift.dart'; // DEMO: unused while DEBUG_DUMP is disabled
 import '../../app_router.dart';
 
 class ChatScreen extends StatelessWidget {
-  const ChatScreen({super.key});
+  final String? chatId;
+
+  const ChatScreen({super.key, this.chatId});
 
   @override
   Widget build(BuildContext context) {
-    return const _ChatView();
+    return _ChatView(chatId: chatId);
   }
 }
 
 class _ChatView extends StatefulWidget {
-  const _ChatView();
+  final String? chatId;
+
+  const _ChatView({this.chatId});
 
   @override
   State<_ChatView> createState() => _ChatViewState();
@@ -40,17 +45,26 @@ class _ChatView extends StatefulWidget {
 class _ChatViewState extends State<_ChatView> {
   final TextEditingController _inputController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final id = widget.chatId ?? 'new';
+      context.read<ChatCubit>().loadChat(id);
+    });
+  }
+
   void _handleSubmit(BuildContext context) {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
 
-    context.read<CommunicationCubit>().sendMessage('default', text);
+    context.read<ChatCubit>().sendMessage('default', text);
     _inputController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CommunicationCubit, CommunicationState>(
+    return BlocBuilder<ChatCubit, ChatState>(
       builder: (context, commState) {
         return BlocBuilder<McpCubit, McpState>(
           builder: (context, mcpState) {
@@ -64,30 +78,34 @@ class _ChatViewState extends State<_ChatView> {
               title: commState.chatId ?? 'POCKETCODER MAIN',
               padding: EdgeInsets.zero,
               actions: [
-                TerminalAction(
-                  label: 'ARTIFACTS',
-                  onTap: () => context.goNamed(RouteNames.artifact),
-                ),
-                TerminalAction(
-                  label: 'TERMINAL',
-                  onTap: () => context.goNamed(RouteNames.terminal),
-                ),
+                // DEMO: only show Settings to keep the UI clean
+                // TerminalAction(
+                //   label: 'DEBUG_DUMP',
+                //   onTap: () async { ... },
+                // ),
+                // TerminalAction(
+                //   label: 'ARTIFACTS',
+                //   onTap: () => context.goNamed(RouteNames.artifact),
+                // ),
+                // TerminalAction(
+                //   label: 'TERMINAL',
+                //   onTap: () => context.goNamed(RouteNames.terminal),
+                // ),
                 TerminalAction(
                   label: 'SETTINGS',
                   hasBadge: hasPendingMcp,
                   onTap: () => context.goNamed(RouteNames.settings),
                 ),
-                TerminalAction(
-                  label: 'LOGOUT',
-                  onTap: () => context.goNamed(RouteNames.boot),
-                ),
+                // TerminalAction(
+                //   label: 'LOGOUT',
+                //   onTap: () => context.goNamed(RouteNames.boot),
+                // ),
               ],
               body: MultiBlocListener(
                 listeners: [
-                  BlocListener<CommunicationCubit, CommunicationState>(
+                  BlocListener<ChatCubit, ChatState>(
                     listenWhen: (previous, current) =>
-                        previous.status != current.status ||
-                        previous.error != current.error,
+                        previous.chatId != current.chatId,
                     listener: (context, state) {
                       if (state.chatId != null) {
                         context
@@ -153,8 +171,9 @@ class _ChatViewState extends State<_ChatView> {
                       builder: (context, state) {
                         return state.maybeWhen(
                           loaded: (requests) {
-                            if (requests.isEmpty)
+                            if (requests.isEmpty) {
                               return const SizedBox.shrink();
+                            }
                             final request = requests.first;
                             return PermissionPrompt(
                               request: request,

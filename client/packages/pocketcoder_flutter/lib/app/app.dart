@@ -5,7 +5,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/application/system/status_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
-import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:flutter_aeroform/application/observability/observability_cubit.dart';
@@ -40,7 +40,7 @@ class App extends StatelessWidget {
               create: (context) => getIt<PocoCubit>(),
             ),
             BlocProvider(
-              create: (context) => getIt<CommunicationCubit>()..initialize(),
+              create: (context) => getIt<ChatCubit>()..initialize(),
             ),
             BlocProvider(
               create: (context) => getIt<PermissionCubit>(),

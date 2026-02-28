@@ -22,8 +22,9 @@ import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart'
     as _i616;
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart'
     as _i304;
-import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart'
-    as _i907;
+import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart' as _i278;
+import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart'
+    as _i606;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart'
     as _i955;
@@ -49,8 +50,8 @@ import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart' as _i50;
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart'
     as _i619;
-import 'package:pocketcoder_flutter/domain/communication/i_communication_repository.dart'
-    as _i215;
+import 'package:pocketcoder_flutter/domain/communication/i_chat_repository.dart'
+    as _i405;
 import 'package:pocketcoder_flutter/domain/evolution/i_evolution_repository.dart'
     as _i656;
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart'
@@ -71,10 +72,10 @@ import 'package:pocketcoder_flutter/infrastructure/auth/auth_daos.dart'
     as _i589;
 import 'package:pocketcoder_flutter/infrastructure/auth/auth_repository.dart'
     as _i617;
+import 'package:pocketcoder_flutter/infrastructure/communication/chat_repository.dart'
+    as _i543;
 import 'package:pocketcoder_flutter/infrastructure/communication/communication_daos.dart'
     as _i464;
-import 'package:pocketcoder_flutter/infrastructure/communication/communication_repository.dart'
-    as _i728;
 import 'package:pocketcoder_flutter/infrastructure/core/api_client.dart'
     as _i589;
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart'
@@ -233,22 +234,23 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.factory<_i440.SubagentCubit>(
         () => _i440.SubagentCubit(gh<_i322.ISubagentRepository>()));
+    gh.lazySingleton<_i405.IChatRepository>(() => _i543.ChatRepository(
+          gh<_i464.ChatDao>(),
+          gh<_i464.MessageDao>(),
+          gh<_i61.AiAgentDao>(),
+          gh<_i50.IAuthRepository>(),
+          gh<_i589.PocketCoderApi>(),
+        ));
     gh.factory<_i616.AiConfigCubit>(
         () => _i616.AiConfigCubit(gh<_i536.IAiConfigRepository>()));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     gh.factory<_i506.StatusCubit>(
         () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
-    gh.lazySingleton<_i215.ICommunicationRepository>(
-        () => _i728.CommunicationRepository(
-              gh<_i464.ChatDao>(),
-              gh<_i464.MessageDao>(),
-              gh<_i61.AiAgentDao>(),
-              gh<_i50.IAuthRepository>(),
-              gh<_i589.PocketCoderApi>(),
-            ));
-    gh.factory<_i907.CommunicationCubit>(
-        () => _i907.CommunicationCubit(gh<_i215.ICommunicationRepository>()));
+    gh.factory<_i278.ChatCubit>(
+        () => _i278.ChatCubit(gh<_i405.IChatRepository>()));
+    gh.factory<_i606.ChatListCubit>(
+        () => _i606.ChatListCubit(gh<_i405.IChatRepository>()));
     return this;
   }
 }
