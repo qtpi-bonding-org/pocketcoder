@@ -1,3 +1,4 @@
+// @pocketcoder-core: MCP Status. Reports which MCP servers are currently live in the gateway.
 import { tool } from "@opencode-ai/plugin"
 
 export default tool({

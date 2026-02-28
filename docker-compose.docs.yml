@@ -8,13 +8,10 @@ services:
     ports:
       - "4321:4321"
     volumes:
-      - ./services/docs:/app/docs
-      - /app/docs/node_modules  # Don't mount node_modules - use container's installed version
-      - ./services/pocketbase:/app/pocketbase
-      - ./services/proxy:/app/proxy
-      - ./DEVELOPMENT.md:/app/DEVELOPMENT.md:ro
-      - ./SECURITY.md:/app/SECURITY.md:ro
-      - ./scripts:/app/scripts:ro
+      - .:/app                                 # full project root (must be rw for CODEBASE.md and cargo target/)
+      - ./services/docs:/app/docs              # docs source (writable for build output)
+      - /app/docs/node_modules                 # keep container's node_modules
+      - /app/docs/.astro                       # ditto for astro cache
     working_dir: /app/docs
     environment:
       - NODE_ENV=development
