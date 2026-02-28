@@ -37,7 +37,6 @@
     "mcp_catalog": "allow",
     "mcp_status": "allow",
     "mcp_request": "ask",
-    "mcp-gateway_*": "allow",
     "*": "ask"
   },
   "mcp": {
