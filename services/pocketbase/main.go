@@ -50,6 +50,7 @@ func main() {
 	hooks.RegisterAgentHooks(app)
 	hooks.RegisterSopHooks(app)
 	hooks.RegisterNotificationHooks(app)
+	hooks.RegisterAuthHooks(app)
 
 	// 3. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
