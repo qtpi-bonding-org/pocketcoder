@@ -1,3 +1,4 @@
+// @pocketcoder-core: MCP Request Tool. Submits enriched MCP server requests to PocketBase for user approval.
 import { tool } from "@opencode-ai/plugin"
 
 let cachedToken: string | null = null

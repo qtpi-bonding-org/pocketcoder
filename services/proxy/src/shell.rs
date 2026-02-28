@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 
-/* @pocketcoder-core: Shell Bridge. The client-side logic that routes commands from the Brain to the Proxy. */
+/* @pocketcoder-core: Shell Bridge. The client-side logic that routes commands from OpenCode to the Proxy. */
 //! # Shell Bridge
 //! This module provides the client-side logic for the `pocketcoder shell` command,
 //! which routes commands from the reasoning engine to the persistent proxy.

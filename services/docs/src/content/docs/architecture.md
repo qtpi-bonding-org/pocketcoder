@@ -1,4 +1,9 @@
-# Security Architecture: The Sovereign Fortress
+---
+title: Security Architecture
+description: How PocketCoder enforces sovereign isolation.
+head: []
+---
+
 
 PocketCoder is designed with a "Paranoid by Default" security model. We assume that AI models can hallucinate, make mistakes, or be manipulated, so we enforce strict isolation at the infrastructure level.
 

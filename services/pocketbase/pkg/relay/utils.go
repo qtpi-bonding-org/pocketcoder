@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// @pocketcoder-core: Relay Utilities. Common logic for the Spinal Cord.
+// @pocketcoder-core: Relay Utilities. Common logic for the Relay.
 package relay
 
 import (
