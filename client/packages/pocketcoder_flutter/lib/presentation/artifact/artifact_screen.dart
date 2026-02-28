@@ -8,8 +8,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
-import 'package:pocketcoder_flutter/application/chat/communication_cubit.dart';
-import 'package:pocketcoder_flutter/application/chat/communication_state.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_state.dart';
 
 class ArtifactScreen extends StatefulWidget {
   final String? initialPath;
@@ -27,7 +27,7 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
     if (widget.initialPath != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         context
-            .read<CommunicationCubit>()
+            .read<ChatCubit>()
             .fetchArtifactContent(widget.initialPath!);
       });
     }
@@ -35,8 +35,8 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return UiFlowListener<CommunicationCubit, CommunicationState>(
-      child: BlocBuilder<CommunicationCubit, CommunicationState>(
+    return UiFlowListener<ChatCubit, ChatState>(
+      child: BlocBuilder<ChatCubit, ChatState>(
         builder: (context, state) {
           return TerminalScaffold(
             title: 'SOURCE OUTPUT MANIFEST',
@@ -47,7 +47,7 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
               ),
               TerminalAction(
                 label: 'CLEAR',
-                onTap: () => context.read<CommunicationCubit>().clearArtifact(),
+                onTap: () => context.read<ChatCubit>().clearArtifact(),
               ),
               TerminalAction(
                 label: 'BACK',
@@ -64,7 +64,7 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
     );
   }
 
-  Widget _buildArtifactContent(BuildContext context, CommunicationState state) {
+  Widget _buildArtifactContent(BuildContext context, ChatState state) {
     final colors = context.colorScheme;
 
     if (state.currentArtifactPath == null) {

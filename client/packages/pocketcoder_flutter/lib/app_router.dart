@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
+import 'package:pocketcoder_flutter/presentation/home/home_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
 import 'package:pocketcoder_flutter/presentation/artifact/artifact_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
@@ -54,8 +55,20 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const ChatScreen(),
+          child: const HomeScreen(),
         ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.chat}/:chatId',
+        name: RouteNames.chat,
+        pageBuilder: (context, state) {
+          final chatId = state.pathParameters['chatId'];
+          return TerminalTransition.buildPage(
+            context: context,
+            state: state,
+            child: ChatScreen(chatId: chatId),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.artifact,
@@ -202,6 +215,7 @@ class AppRouter {
 class AppRoutes {
   AppRoutes._();
   static const String home = '/';
+  static const String chat = '/chat';
   static const String settings = '/settings';
   static const String onboarding = '/onboarding';
   static const String boot = '/boot';
@@ -224,6 +238,7 @@ class AppRoutes {
 class RouteNames {
   RouteNames._();
   static const String home = 'home';
+  static const String chat = 'chat';
   static const String settings = 'settings';
   static const String onboarding = 'onboarding';
   static const String boot = 'boot';
@@ -247,6 +262,10 @@ class AppNavigation {
   AppNavigation._();
 
   static void toHome(BuildContext context) => context.goNamed(RouteNames.home);
+  static void toChat(BuildContext context, String chatId) =>
+      context.goNamed(RouteNames.chat, pathParameters: {'chatId': chatId});
+  static void toNewChat(BuildContext context) =>
+      context.goNamed(RouteNames.chat, pathParameters: {'chatId': 'new'});
   static void toSettings(BuildContext context) =>
       context.pushNamed(RouteNames.settings);
   static void toWhitelist(BuildContext context) =>

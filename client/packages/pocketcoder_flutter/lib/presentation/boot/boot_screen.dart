@@ -10,6 +10,8 @@ import 'package:flutter_aeroform/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import '../../app_router.dart';
 
 class BootScreen extends StatefulWidget {
   const BootScreen({super.key});
@@ -131,21 +133,41 @@ class _BootScreenState extends State<BootScreen> {
       context.read<PocoCubit>().updateMessage("Checking secure connection...");
     }
 
-    bool connected = false;
+    bool pocketbaseAlive = false;
     try {
-      connected = await getIt<IStatusRepository>().checkPocketBaseHealth();
+      pocketbaseAlive =
+          await getIt<IStatusRepository>().checkPocketBaseHealth();
     } catch (_) {
-      connected = false;
+      pocketbaseAlive = false;
     }
 
     if (mounted) {
-      if (connected) {
+      if (pocketbaseAlive) {
+        // Now check if we're already logged in
+        final authRepo = getIt<IAuthRepository>();
+        bool alreadyLoggedIn = authRepo.isAuthenticated;
+
+        if (alreadyLoggedIn) {
+          try {
+            // Try to refresh token silently
+            alreadyLoggedIn = await authRepo.refreshToken();
+          } catch (_) {
+            alreadyLoggedIn = false;
+          }
+        }
+
         context.read<PocoCubit>().updateMessage(
-              "Systems nominal. I'm ready.",
+              alreadyLoggedIn ? "Welcome back." : "Systems nominal. I'm ready.",
               sequence: PocoExpressions.happy,
             );
         await Future.delayed(const Duration(seconds: 2));
-        if (mounted) context.goNamed('onboarding');
+        if (mounted) {
+          if (alreadyLoggedIn) {
+            context.goNamed(RouteNames.home);
+          } else {
+            context.goNamed(RouteNames.onboarding);
+          }
+        }
       } else {
         context.read<PocoCubit>().updateMessage(
           "Connection failed. I'll take you back to the setup screen so we can check the server settings.",
@@ -157,7 +179,7 @@ class _BootScreenState extends State<BootScreen> {
         );
         // Wait a bit longer to let the user read before moving
         await Future.delayed(const Duration(seconds: 3));
-        if (mounted) context.goNamed('onboarding');
+        if (mounted) context.goNamed(RouteNames.onboarding);
       }
     }
   }
@@ -178,10 +200,23 @@ class _BootScreenState extends State<BootScreen> {
                 padding: EdgeInsets.all(AppSizes.space * 2),
                 itemCount: _logs.length,
                 itemBuilder: (context, index) {
+                  final logEntry = _logs[index];
+                  Color? textColor = colors.primary;
+
+                  // Simple log level coloring
+                  if (logEntry.startsWith('[!]') ||
+                      logEntry.contains('ERROR')) {
+                    textColor = colors.error;
+                  } else if (logEntry.startsWith('[sys]')) {
+                    textColor = colors.tertiary;
+                  } else if (logEntry.startsWith('[net]')) {
+                    textColor = colors.secondary;
+                  }
+
                   return Text(
-                    _logs[index],
+                    logEntry,
                     style: context.textTheme.bodySmall?.copyWith(
-                      color: colors.primary,
+                      color: textColor,
                     ),
                   );
                 },
