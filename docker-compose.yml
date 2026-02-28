@@ -87,7 +87,6 @@ services:
     container_name: pocketcoder-sandbox
     volumes:
       - opencode_workspace:/workspace
-      - ./services/opencode:/workspace/.opencode
       - ./services/sandbox/agents/subagents:/root/.aws/cli-agent-orchestrator/agent-store
       - cao_db:/root/.aws/cli-agent-orchestrator/db  # CAO SQLite database
       - ./services/sandbox/cao/src:/app/cao/src
