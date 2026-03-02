@@ -18,6 +18,15 @@ else
     echo "🔒 Shell already hardened or custom state detected."
 fi
 
+# SOURCE LLM PROVIDER KEYS (from PocketBase Go hook)
+if [ -f /workspace/.opencode/llm.env ]; then
+    echo "🔑 Loading LLM provider keys from llm.env..."
+    export $(grep -v '^#' /workspace/.opencode/llm.env | xargs)
+    echo "✅ LLM provider keys loaded."
+else
+    echo "⚠️  No llm.env found, using default environment variables."
+fi
+
 # 2. Background: Wait for Sandbox health + MCP, then log readiness
 # These checks run in the background so they don't block OpenCode startup.
 # This breaks the circular dependency: Sandbox depends on OpenCode being healthy,

@@ -47,6 +47,5 @@
       "timeout": 120000
     }
   },
-  "tools": {},
-  "model": "google/gemini-2.0-flash"
+  "tools": {}
 }

@@ -14,5 +14,6 @@ COPY . .
 # Environment defaults
 ENV POCKETBASE_URL=http://pocketbase:8090
 ENV OPENCODE_URL=http://opencode:3000
+ENV HEALTH_PORT=8080
 
 CMD ["bun", "run", "start"]

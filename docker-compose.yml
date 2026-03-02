@@ -14,6 +14,7 @@ services:
       - opencode_workspace:/workspace
       - ./services/opencode:/workspace/.opencode
       - ./services/mcp-gateway/config:/mcp_config
+      - llm_keys:/llm_keys
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -25,6 +26,7 @@ services:
       - PN_URL=${PN_URL}
       - PN_RELAY_SECRET=${PN_RELAY_SECRET}
       - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
+      - OPENCODE_URL=http://opencode:3000
     command: ["/app/pocketbase", "serve", "--http=0.0.0.0:8090"]
     restart: unless-stopped
     healthcheck:
@@ -37,6 +39,7 @@ services:
       - pocketcoder-dashboard
       - pocketcoder-docker
       - pocketcoder-pocketbase-sdk
+      - pocketcoder-opencode-sdk
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -49,8 +52,6 @@ services:
         condition: service_healthy
     environment:
       - PORT=3000
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
       - PROXY_URL=http://sandbox:3001
       - SHELL=/usr/local/bin/pocketcoder-shell
       - AGENT_EMAIL=${AGENT_EMAIL}
@@ -90,10 +91,9 @@ services:
       - ./services/sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
       - shell_bridge:/app/shell_bridge
       - ./scripts/debug:/workspace/debug
+      - llm_keys:/llm_keys:ro
     working_dir: /workspace
     environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GOOGLE_GENERATIVE_AI_API_KEY=${GEMINI_API_KEY}
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
       - MCP_HOST=http://mcp-gateway:8811/sse
@@ -187,6 +187,12 @@ services:
       - OPENCODE_URL=http://opencode:3000
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - pocketcoder-opencode-sdk
       - pocketcoder-pocketbase-sdk
@@ -247,6 +253,7 @@ volumes:
   opencode_workspace:
   opencode_data:
   cao_db:  # CAO SQLite database for subagent tasks
+  llm_keys:  # Shared LLM API keys (env file written by PocketBase, read by sandbox)
   shell_bridge:
   ntfy-cache:
   ntfy-auth:
