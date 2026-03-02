@@ -12,10 +12,13 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_input.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/permission_prompt.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/question_prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/speech_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
+import 'package:pocketcoder_flutter/application/question/question_cubit.dart';
+import 'package:pocketcoder_flutter/application/question/question_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
@@ -111,6 +114,7 @@ class _ChatViewState extends State<_ChatView> {
                         context
                             .read<PermissionCubit>()
                             .watchChat(state.chatId!);
+                        context.read<QuestionCubit>().watchChat(state.chatId!);
                       }
                     },
                   ),
@@ -183,6 +187,30 @@ class _ChatViewState extends State<_ChatView> {
                               onDeny: () => context
                                   .read<PermissionCubit>()
                                   .deny(request.id),
+                            );
+                          },
+                          orElse: () => const SizedBox.shrink(),
+                        );
+                      },
+                    ),
+
+                    // 3.6 QUESTION PROMPT (Conditional)
+                    BlocBuilder<QuestionCubit, QuestionState>(
+                      builder: (context, state) {
+                        return state.maybeWhen(
+                          loaded: (questions) {
+                            if (questions.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            final question = questions.first;
+                            return QuestionPrompt(
+                              question: question,
+                              onAnswer: (reply) => context
+                                  .read<QuestionCubit>()
+                                  .answer(question.id, reply),
+                              onReject: () => context
+                                  .read<QuestionCubit>()
+                                  .reject(question.id),
                             );
                           },
                           orElse: () => const SizedBox.shrink(),

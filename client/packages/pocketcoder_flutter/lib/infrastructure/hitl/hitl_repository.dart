@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/permission.dart';
+import 'package:pocketcoder_flutter/domain/models/question.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/domain/permission/permission_api_models.dart';
@@ -14,12 +15,14 @@ import 'hitl_daos.dart';
 @LazySingleton(as: IHitlRepository)
 class HitlRepository implements IHitlRepository {
   final PermissionDao _permissionDao;
+  final QuestionDao _questionDao;
   final WhitelistTargetDao _targetDao;
   final WhitelistActionDao _actionDao;
   final PocketCoderApi _api;
 
   HitlRepository(
     this._permissionDao,
+    this._questionDao,
     this._targetDao,
     this._actionDao,
     this._api,
@@ -30,6 +33,41 @@ class HitlRepository implements IHitlRepository {
     return _permissionDao.watch(
       filter: 'chat = "$chatId" && status = "draft"',
       sort: 'created',
+    );
+  }
+
+  @override
+  Stream<List<Question>> watchQuestions(String chatId) {
+    return _questionDao.watch(
+      filter: 'chat = "$chatId" && status = "asked"',
+      sort: 'created',
+    );
+  }
+
+  @override
+  Future<void> answerQuestion(String questionId, String reply) async {
+    return tryMethod(
+      () async {
+        await _questionDao.save(questionId, {
+          'reply': reply,
+          'status': 'replied',
+        });
+      },
+      PermissionException.new,
+      'answerQuestion',
+    );
+  }
+
+  @override
+  Future<void> rejectQuestion(String questionId) async {
+    return tryMethod(
+      () async {
+        await _questionDao.save(questionId, {
+          'status': 'rejected',
+        });
+      },
+      PermissionException.new,
+      'rejectQuestion',
     );
   }
 

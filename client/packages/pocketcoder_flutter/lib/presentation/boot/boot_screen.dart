@@ -156,6 +156,8 @@ class _BootScreenState extends State<BootScreen> {
           }
         }
 
+        if (!mounted) return;
+
         context.read<PocoCubit>().updateMessage(
               alreadyLoggedIn ? "Welcome back." : "Systems nominal. I'm ready.",
               sequence: PocoExpressions.happy,
