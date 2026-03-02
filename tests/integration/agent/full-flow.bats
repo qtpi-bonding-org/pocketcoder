@@ -8,10 +8,10 @@
 # Flow:
 # 1. User authenticates and creates a chat
 # 2. User sends a message asking Poco to do something concrete
-# 3. Relay intercepts → creates OpenCode session → delivers prompt
+# 3. Interface picks up message → creates OpenCode session → delivers prompt via SDK
 # 4. Poco (OpenCode) processes the message, reasons about it, executes commands
 # 5. Shell bridge delivers command to sandbox → tmux executes → output captured
-# 6. Relay SSE listener picks up message.updated → creates assistant message
+# 6. Interface event pump picks up message.updated → creates assistant message in PB
 # 7. Assistant message contains actual meaningful content (not empty/error)
 # 8. Chat metadata updated (last_active, preview, turn)
 # 9. Verify the response actually addresses what was asked
@@ -125,9 +125,9 @@ verify_tool_output_in_message() {
 
     # Wait for message delivery (relay → OpenCode)
     echo "⏳ Waiting for message delivery..." >&2
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Message not delivered to OpenCode"
-    echo "✓ Message delivered" >&2
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Message not processed by interface"
+    echo "✓ Message processed" >&2
 
     # Verify session was created
     local chat_record
@@ -283,9 +283,9 @@ verify_tool_output_in_message() {
 
     # Wait for delivery
     echo "⏳ Waiting for message delivery..." >&2
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Message not delivered"
-    echo "✓ Message delivered" >&2
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Message not processed by interface"
+    echo "✓ Message processed" >&2
 
     SESSION_ID=$(pb_get "chats" "$CHAT_ID" | jq -r '.ai_engine_session_id // empty')
     echo "✓ OpenCode session: $SESSION_ID" >&2
@@ -399,7 +399,7 @@ verify_tool_output_in_message() {
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
 
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
+    run wait_for_message_processed "$CHAT_ID" 30
     [ "$status" -eq 0 ]
 
     ASSISTANT_MESSAGE_ID=$(wait_for_assistant_message "$CHAT_ID" 90)
@@ -469,9 +469,9 @@ verify_tool_output_in_message() {
     msg1_id=$(echo "$msg1_data" | jq -r '.id')
     track_artifact "messages:$msg1_id"
 
-    # Wait for first response
-    run wait_for_message_status "$msg1_id" "delivered" 30
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "First message not delivered"
+    # Wait for first message to be processed
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "First message not processed"
 
     local assistant1_id
     assistant1_id=$(wait_for_assistant_message "$CHAT_ID" 90)
@@ -495,9 +495,9 @@ verify_tool_output_in_message() {
     msg2_id=$(echo "$msg2_data" | jq -r '.id')
     track_artifact "messages:$msg2_id"
 
-    # Wait for second response
-    run wait_for_message_status "$msg2_id" "delivered" 30
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Second message not delivered"
+    # Wait for second message to be processed (session already exists)
+    sleep 2  # brief pause for interface to pick up new message
+    # Session already exists so we just wait for the assistant to respond
 
     # Wait for second assistant response
     local assistant2_id
@@ -577,7 +577,7 @@ verify_tool_output_in_message() {
     track_artifact "messages:$USER_MESSAGE_ID"
 
     # Wait for delivery
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
+    run wait_for_message_processed "$CHAT_ID" 30
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "Agent Full Flow" "Message not delivered"
 
     SESSION_ID=$(pb_get "chats" "$CHAT_ID" | jq -r '.ai_engine_session_id // empty')

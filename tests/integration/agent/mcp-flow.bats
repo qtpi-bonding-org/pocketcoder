@@ -80,8 +80,8 @@ teardown() {
     track_artifact "messages:$USER_MESSAGE_ID"
 
     # Wait for delivery
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
-    [ "$status" -eq 0 ] || { echo "❌ Message not delivered" >&2; return 1; }
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || { echo "❌ Message not processed by interface" >&2; return 1; }
 
     SESSION_ID=$(pb_get "chats" "$CHAT_ID" | jq -r '.ai_engine_session_id // empty')
 
@@ -140,8 +140,8 @@ teardown() {
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
 
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
-    [ "$status" -eq 0 ] || { echo "❌ Message not delivered" >&2; return 1; }
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || { echo "❌ Message not processed by interface" >&2; return 1; }
 
     # Wait for assistant response (blocks until subagent finishes)
     ASSISTANT_MESSAGE_ID=$(wait_for_assistant_message "$CHAT_ID" 120)
@@ -205,8 +205,8 @@ teardown() {
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
 
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
-    [ "$status" -eq 0 ] || { echo "❌ Message not delivered" >&2; return 1; }
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || { echo "❌ Message not processed by interface" >&2; return 1; }
 
     # 1. Wait for Assignment confirmation (Immediate)
     ASSIGN_MSG_ID=$(wait_for_assistant_message "$CHAT_ID" 45)
@@ -257,8 +257,8 @@ teardown() {
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
 
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
-    [ "$status" -eq 0 ] || { echo "❌ Message not delivered" >&2; return 1; }
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || { echo "❌ Message not processed by interface" >&2; return 1; }
 
     SESSION_ID=$(pb_get "chats" "$CHAT_ID" | jq -r '.ai_engine_session_id // empty')
 
@@ -309,8 +309,8 @@ teardown() {
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$USER_MESSAGE_ID"
 
-    run wait_for_message_status "$USER_MESSAGE_ID" "delivered" 30
-    [ "$status" -eq 0 ] || { echo "❌ Message not delivered" >&2; return 1; }
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || { echo "❌ Message not processed by interface" >&2; return 1; }
 
     SESSION_ID=$(pb_get "chats" "$CHAT_ID" | jq -r '.ai_engine_session_id // empty')
 
