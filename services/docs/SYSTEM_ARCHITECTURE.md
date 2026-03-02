@@ -408,6 +408,23 @@ graph LR
 
 When OpenCode wants to run a bash command or edit a file, it asks for permission.
 
+```mermaid
+sequenceDiagram
+    participant OC as OpenCode (Poco)
+    participant R as Relay (Go)
+    participant DB as PocketBase DB
+    participant U as User (Flutter)
+
+    OC->>R: SSE: permission.asked
+    R->>DB: Evaluate & Insert Permission (draft)
+    DB-->>U: Real-time subscription matches
+    Note over U: User reviews the command
+    U->>DB: PATCH /permissions/{id} (status: "authorized")
+    DB->>R: OnRecordAfterUpdate hook
+    R->>OC: POST /permission/{id}/reply {"reply": "once"}
+    Note over OC: Execution proceeds...
+```
+
 1. **OpenCode emits** `permission.asked` SSE event with `id`, `permission` type, `patterns`, `metadata`, `sessionID`
 
 2. **Relay receives** via `listenForEvents()` → `handlePermissionAsked()` (`permissions.go`)
@@ -428,6 +445,28 @@ When OpenCode wants to run a bash command or edit a file, it asks for permission
 ### Flow 3: Subagent Delegation (Handoff)
 
 When Poco needs a specialist, it uses the CAO MCP handoff tool.
+
+```mermaid
+sequenceDiagram
+    participant OC as OpenCode (Poco)
+    participant MCP as CAO MCP Server (9888)
+    participant API as CAO API (9889)
+    participant Tmux as Tmux (Sandbox)
+    participant Sub as Subagent
+    participant R as Relay (PocketBase)
+
+    OC->>MCP: Call tool (cao_handoff)
+    MCP->>API: Create Terminal
+    API->>Tmux: Launch new window (pocketcoder_session)
+    API->>Sub: Initialize Agent Process
+    Note over Sub: Subagent completes task
+    Sub-->>API: Task Results
+    API-->>MCP: return HandoffResult
+    MCP-->>OC: Return tool result to Poco
+    OC->>R: SSE: message.updated (contains tool result)
+    Note over R: Extract handoff_complete sys_event
+    R->>R: registerSubagentInDB()
+```
 
 1. **Poco calls** `cao_handoff` MCP tool via `http://sandbox:9888/sse`
 
@@ -466,6 +505,42 @@ When Poco needs a specialist, it uses the CAO MCP handoff tool.
 1. User creates/updates agent in `ai_agents` collection → Relay `deployAgent()` writes `.md` file to filesystem
 2. User creates/updates proposal in `proposals` collection → Relay `deployProposal()` writes to `/workspace/.opencode/proposals/`
 3. User creates/updates SOP in `sops` collection → Relay `deploySealedSop()` writes to `/workspace/.opencode/skills/{name}/SKILL.md`
+
+### Flow 6: MCP Server Configuration and Injection
+
+When OpenCode identifies the need for a Model Context Protocol (MCP) server that isn't currently available, it triggers a request flow.
+
+```mermaid
+sequenceDiagram
+    participant OC as OpenCode (Poco)
+    participant PB as PocketBase API
+    participant DB as PocketBase DB
+    participant U as User (Flutter)
+    participant R as Relay (Go)
+    participant DSP as Docker Socket Proxy
+
+    OC->>PB: POST /api/pocketcoder/mcp_request
+    PB->>DB: Insert mcp_servers (status: "pending")
+    DB-->>U: Real-time subscription (new server request)
+    Note over U: User configures & approves
+    U->>DB: PATCH /mcp_servers/{id} (status: "approved", +config)
+    DB->>R: OnRecordAfterUpdate hook ('approved')
+    R->>R: renderMcpConfig() (writes docker-mcp.yaml & mcp.env)
+    R->>DSP: POST /containers/pocketcoder-mcp-gateway/restart
+    DSP->>DSP: Restart MCP Gateway Container
+    R->>OC: POST /prompt_async (notify server available)
+    Note over OC: Subagents can now use the new MCP server
+```
+
+1. **OpenCode requests MCP server**: Utilizing a built-in tool, Poco hits the PocketBase custom API `POST /api/pocketcoder/mcp_request` with the server name, image, and required configuration schema.
+2. **Database entry created**: The API creates a record in the `mcp_servers` collection with `status: "pending"`.
+3. **User configures and approves**: The Flutter client, subscribed to `mcp_servers`, prompts the user to fill out the specified configuration (e.g., API keys). Upon approval, Flutter PATCHes the record with `status: "approved"` and the JSON `config`.
+4. **Relay hook triggers**: The PocketBase `OnRecordAfterUpdateSuccess` hook fires in the Relay (`relay/mcp.go`).
+5. **Config rendered**: `renderMcpConfig()` extracts all `approved` servers from the DB and generates two files in the shared `/mcp_config` volume:
+    - `docker-mcp.yaml` (the server catalog)
+    - `mcp.env` (the secrets/environment variables)
+6. **Gateway restarted**: `restartGateway()` securely invokes the Docker Socket Proxy (`http://docker-socket-proxy-write:2375/.../restart`) to restart the MCP Gateway container so it adopts the new catalog in the shared volume.
+7. **Poco notified**: Finally, `notifyPoco()` pushes a system message via OpenCode's `/prompt_async` endpoint informing the reasoning engine that the server is ready, allowing its subagents to discover and utilize the new MCP tools.
 
 ---
 

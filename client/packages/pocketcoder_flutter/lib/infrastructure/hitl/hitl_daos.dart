@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/permission.dart';
+import 'package:pocketcoder_flutter/domain/models/question.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
@@ -10,6 +11,12 @@ import "package:flutter_aeroform/infrastructure/core/collections.dart";
 class PermissionDao extends BaseDao<Permission> {
   PermissionDao(PocketBase pb)
       : super(pb, Collections.permissions, Permission.fromJson);
+}
+
+@lazySingleton
+class QuestionDao extends BaseDao<Question> {
+  QuestionDao(PocketBase pb)
+      : super(pb, Collections.questions, Question.fromJson);
 }
 
 @lazySingleton

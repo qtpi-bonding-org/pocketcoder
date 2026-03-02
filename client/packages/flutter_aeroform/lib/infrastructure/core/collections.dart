@@ -62,6 +62,9 @@ class Collections {
   /// Devices collection - for push notifications
   static const String devices = 'devices';
 
+  /// Questions collection - user-facing questions from agents
+  static const String questions = 'questions';
+
   // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
@@ -83,6 +86,7 @@ class Collections {
     healthchecks,
     mcpServers,
     devices,
+    questions,
   ];
 
   /// Returns all collections that exist in the current schema
@@ -103,6 +107,7 @@ class Collections {
     healthchecks,
     mcpServers,
     devices,
+    questions,
   ];
 
   /// Returns collections that are referenced in API docs but may not exist yet
