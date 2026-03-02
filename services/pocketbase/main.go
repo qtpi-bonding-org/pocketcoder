@@ -22,7 +22,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -32,7 +31,6 @@ import (
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/provisioning"
-	"github.com/qtpi-automaton/pocketcoder/backend/pkg/relay"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
 
@@ -57,14 +55,6 @@ func main() {
 
 		// A. Provision SOPs from filesystem
 		provisioning.ProvisionSops(app)
-
-		// B. Initialize & Start Relay Service
-		openCodeURL := os.Getenv("OPENCODE_URL")
-		if openCodeURL == "" {
-			openCodeURL = "http://opencode:3000"
-		}
-		relaySvc := relay.NewRelayService(app, openCodeURL)
-		relaySvc.Start()
 
 		// B. Register Custom API Endpoints
 		api.RegisterPermissionApi(app, e)

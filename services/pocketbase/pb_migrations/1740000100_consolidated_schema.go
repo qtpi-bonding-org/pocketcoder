@@ -149,6 +149,7 @@ func init() {
 		)
 		permissions.ListRule = ptr("@request.auth.id != ''")
 		permissions.ViewRule = ptr("@request.auth.id != ''")
+		permissions.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
 		permissions.UpdateRule = ptr("((@request.auth.role = 'user' || @request.auth.role = 'admin') && status = 'draft')")
 		permissions.DeleteRule = ptr("@request.auth.id != ''")
 		if err := app.Save(permissions); err != nil { return err }
@@ -320,6 +321,26 @@ func init() {
 			"CREATE UNIQUE INDEX idx_sops_name ON sops (name)",
 		}
 		if err := app.Save(sops); err != nil { return err }
+		
+		// =========================================================================
+		// 10. QUESTIONS (HITL)
+		// =========================================================================
+		questions, _ := getOrCreateCollection("pc_questions", "questions", core.CollectionTypeBase)
+		addFields(questions, 
+			&core.RelationField{Name: "chat", Required: true, CollectionId: chats.Id, MaxSelect: 1, CascadeDelete: true},
+			&core.TextField{Name: "question", Required: true},
+			&core.JSONField{Name: "choices"},
+			&core.TextField{Name: "reply"},
+			&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"asked", "replied", "rejected"}},
+			&core.DateField{Name: "created"},
+			&core.DateField{Name: "updated"},
+		)
+		questions.ListRule = ptr("@request.auth.id != ''")
+		questions.ViewRule = ptr("@request.auth.id != ''")
+		questions.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		questions.UpdateRule = ptr("@request.auth.id != ''") // Users can reply, Agents can update
+		questions.DeleteRule = ptr("@request.auth.role = 'admin'")
+		if err := app.Save(questions); err != nil { return err }
 
 		// Fix turn state
 		_, err = app.DB().NewQuery("UPDATE chats SET turn = 'user' WHERE turn = '' OR turn IS NULL").Execute()

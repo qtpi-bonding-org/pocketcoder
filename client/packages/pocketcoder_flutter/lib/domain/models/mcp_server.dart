@@ -18,6 +18,8 @@ class McpServer with _$McpServer {
     String? reason,
     String? image,
     dynamic configSchema,
+    DateTime? created,
+    DateTime? updated,
   }) = _McpServer;
 
   factory McpServer.fromRecord(RecordModel record) =>
