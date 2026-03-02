@@ -60,7 +60,8 @@ services:
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
     networks:
-      - pocketcoder-relay
+      - pocketcoder-pocketbase-sdk
+      - pocketcoder-opencode-sdk
       - pocketcoder-control
       - pocketcoder-dashboard
       - pocketcoder-docker
@@ -70,7 +71,9 @@ services:
       - test
 
 networks:
-  pocketcoder-relay:
+  pocketcoder-pocketbase-sdk:
+    external: false
+  pocketcoder-opencode-sdk:
     external: false
   pocketcoder-control:
     external: false

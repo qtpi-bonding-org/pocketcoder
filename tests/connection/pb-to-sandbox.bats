@@ -6,9 +6,9 @@
 #
 # Test flow:
 # 1. Document that no direct connection exists by design
-# 2. Verify PocketBase is on pocketcoder-memory network only
+# 2. Verify PocketBase is on pocketcoder-pocketbase-sdk network
 # 3. Verify Sandbox is on pocketcoder-control network only
-# 4. Verify communication flows through OpenCode as intermediary
+# 4. Verify communication flows through Interface + OpenCode as intermediary
 
 load '../helpers/auth.sh'
 load '../helpers/cleanup.sh'
@@ -47,24 +47,25 @@ teardown() {
     echo "Both containers running - isolation verified by network configuration"
 }
 
-@test "PB→Sandbox: PocketBase on pocketcoder-relay network" {
+@test "PB→Sandbox: PocketBase on pocketcoder-pocketbase-sdk network" {
     # Validates: Requirement 7.2
-    # Test that PocketBase is connected to pocketcoder-relay network
-    
+    # Test that PocketBase is connected to pocketcoder-pocketbase-sdk network
+    # (Interface service bridges pocketbase-sdk ↔ opencode-sdk)
+
     # Get PocketBase network connections
     local pb_networks
     pb_networks=$(docker inspect pocketcoder-pocketbase --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' 2>/dev/null)
-    
-    # Check for pocketcoder-relay network
-    echo "$pb_networks" | grep -q "pocketcoder-relay" || \
-        run_diagnostic_on_failure "PB→Sandbox" "PocketBase not connected to pocketcoder-relay network"
-    
+
+    # Check for pocketcoder-pocketbase-sdk network
+    echo "$pb_networks" | grep -q "pocketcoder-pocketbase-sdk" || \
+        run_diagnostic_on_failure "PB→Sandbox" "PocketBase not connected to pocketcoder-pocketbase-sdk network"
+
     # Verify NOT connected to pocketcoder-control
     echo "$pb_networks" | grep -q "pocketcoder-control" && \
         run_diagnostic_on_failure "PB→Sandbox" "PocketBase should NOT be on pocketcoder-control network"
-    
+
     echo "PocketBase networks: $pb_networks"
-    echo "✓ PocketBase is on pocketcoder-memory only (as expected)"
+    echo "✓ PocketBase is on pocketcoder-pocketbase-sdk (as expected)"
 }
 
 @test "PB→Sandbox: Sandbox on pocketcoder-control network only" {
@@ -79,31 +80,32 @@ teardown() {
     echo "$sandbox_networks" | grep -q "pocketcoder-control" || \
         run_diagnostic_on_failure "PB→Sandbox" "Sandbox not connected to pocketcoder-control network"
     
-    # Verify NOT connected to pocketcoder-relay
-    echo "$sandbox_networks" | grep -q "pocketcoder-relay" && \
-        run_diagnostic_on_failure "PB→Sandbox" "Sandbox should NOT be on pocketcoder-relay network"
+    # Verify NOT connected to pocketcoder-pocketbase-sdk (sandbox is isolated from PB)
+    echo "$sandbox_networks" | grep -q "pocketcoder-pocketbase-sdk" && \
+        run_diagnostic_on_failure "PB→Sandbox" "Sandbox should NOT be on pocketcoder-pocketbase-sdk network"
     
     echo "Sandbox networks: $sandbox_networks"
     echo "✓ Sandbox is on pocketcoder-control only (as expected)"
 }
 
-@test "PB→Sandbox: OpenCode bridges both networks" {
+@test "PB→Sandbox: OpenCode bridges opencode-sdk and control networks" {
     # Validates: Requirement 7.3
-    # Test that OpenCode is connected to both networks (acts as intermediary)
-    
+    # Test that OpenCode is connected to both opencode-sdk and control networks
+    # (Interface bridges pocketbase-sdk ↔ opencode-sdk, OpenCode bridges opencode-sdk ↔ control)
+
     # Get OpenCode network connections
     local opencode_networks
     opencode_networks=$(docker inspect pocketcoder-opencode --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' 2>/dev/null)
-    
-    # OpenCode should be on both networks
-    echo "$opencode_networks" | grep -q "pocketcoder-relay" || \
-        run_diagnostic_on_failure "PB→Sandbox" "OpenCode not connected to pocketcoder-relay network"
-    
+
+    # OpenCode should be on opencode-sdk (reachable by interface) and control (reaches sandbox)
+    echo "$opencode_networks" | grep -q "pocketcoder-opencode-sdk" || \
+        run_diagnostic_on_failure "PB→Sandbox" "OpenCode not connected to pocketcoder-opencode-sdk network"
+
     echo "$opencode_networks" | grep -q "pocketcoder-control" || \
         run_diagnostic_on_failure "PB→Sandbox" "OpenCode not connected to pocketcoder-control network"
-    
+
     echo "OpenCode networks: $opencode_networks"
-    echo "✓ OpenCode bridges both networks (acts as intermediary)"
+    echo "✓ OpenCode bridges opencode-sdk and control networks"
 }
 
 @test "PB→Sandbox: Direct connection attempt fails" {
@@ -174,9 +176,9 @@ teardown() {
     echo "Sandbox networks:   $sb_nets"
     
     # Verify isolation
-    echo "$pb_nets" | grep -q "pocketcoder-relay" || fail "PB not on relay network"
+    echo "$pb_nets" | grep -q "pocketcoder-pocketbase-sdk" || fail "PB not on pocketbase-sdk network"
     echo "$sb_nets" | grep -q "pocketcoder-control" || fail "Sandbox not on control network"
-    echo "$oc_nets" | grep -q "pocketcoder-relay" || fail "OpenCode not on relay network"
+    echo "$oc_nets" | grep -q "pocketcoder-opencode-sdk" || fail "OpenCode not on opencode-sdk network"
     echo "$oc_nets" | grep -q "pocketcoder-control" || fail "OpenCode not on control network"
     
     echo "✓ Network isolation verified"

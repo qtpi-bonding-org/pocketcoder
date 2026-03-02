@@ -803,6 +803,39 @@ verify_assistant_message() {
     return 0
 }
 
+# Wait for a user message to be processed by the interface service
+# Instead of checking user_message_status (which the interface service doesn't update),
+# this checks that the chat has an ai_engine_session_id, meaning the interface service
+# picked up the message, created/ensured a session, and sent the prompt.
+# Args: chat_id [timeout]
+# Returns: 0 on success, 1 on timeout
+wait_for_message_processed() {
+    local chat_id="$1"
+    local timeout=$(((${2:-60}) * TIMEOUT_MULTIPLIER))
+
+    echo "Waiting for message to be processed (session on chat $chat_id, timeout: ${timeout}s)"
+
+    local start_time
+    start_time=$(date +%s)
+    local end_time=$((start_time + timeout))
+
+    while [ $(date +%s) -lt $end_time ]; do
+        local session_id
+        session_id=$(get_chat_session_id "$chat_id")
+
+        if [ -n "$session_id" ] && [ "$session_id" != "null" ]; then
+            local elapsed=$(($(date +%s) - start_time))
+            echo "  ✓ Message processed (session: $session_id) after ${elapsed}s"
+            return 0
+        fi
+
+        sleep "$POLL_INTERVAL"
+    done
+
+    echo "  ✗ Timeout waiting for message to be processed"
+    return 1
+}
+
 # Export functions for use in BATS
 export -f wait_for_condition wait_for_endpoint wait_for_port
 export -f retry retry_fixed poll_until
@@ -812,6 +845,7 @@ export -f get_message_status message_has_relay_progress
 export -f wait_for_field_populated wait_for_chat_turn wait_for_assistant_message
 export -f get_chat_session_id get_chat_turn
 export -f create_test_conversation verify_assistant_message
+export -f wait_for_message_processed
 
 
 # Get assistant message text content
