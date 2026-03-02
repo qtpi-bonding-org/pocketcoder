@@ -1,16 +1,16 @@
 #!/usr/bin/env bats
 # Feature: test-suite-reorganization, Property 3: Connection Tests - PB to OpenCode
 #
-# Connection tests for PocketBase to OpenCode communication via HTTP POST
+# Connection tests for PocketBase to OpenCode communication via the Interface service
 # Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 11.2
 #
 # Test flow:
 # 1. Create chat record in PocketBase
-# 2. Create user message (triggers Relay hook)
-# 3. Relay calls ensureSession() → POST {OPENCODE_URL}/session
+# 2. Create user message (interface subscription picks it up)
+# 3. Interface calls ensureSession() via OpenCode SDK
 # 4. Chat gets ai_engine_session_id populated
-# 5. Relay sends message via POST {OPENCODE_URL}/session/{id}/prompt_async
-# 6. Message status transitions: pending → sending → delivered
+# 5. Interface sends message via OpenCode SDK session.prompt()
+# 6. OpenCode processes, interface syncs assistant response to PocketBase
 # 7. Chat turn field updates to assistant
 
 load '../helpers/auth.sh'
@@ -56,9 +56,9 @@ teardown() {
     [ "$title" = "Connection Test Chat $TEST_ID" ]
 }
 
-@test "PB→OpenCode: Create user message triggers Relay hook" {
+@test "PB→OpenCode: Create user message triggers interface subscription" {
     # Validates: Requirement 3.1
-    # Test that creating a user message triggers the OnRecordAfterCreateSuccess hook
+    # Test that creating a user message is picked up by the interface command pump
     
     authenticate_user
     
@@ -68,26 +68,26 @@ teardown() {
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
     
-    # Create a user message - this should trigger the Relay hook
+    # Create a user message - interface subscription should pick this up
     local msg_data
-    msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Hello, test message for Relay hook\"}], \"user_message_status\": \"pending\"}")
+    msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Hello, test message for interface\"}], \"user_message_status\": \"pending\"}")
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     
     track_artifact "messages:$MESSAGE_ID"
     
     [ -n "$MESSAGE_ID" ] && [ "$MESSAGE_ID" != "null" ] || run_diagnostic_on_failure "PB→OpenCode" "Failed to create message record"
     
-    # Verify message was created with valid status (relay may process fast)
+    # Verify message was created with pending status
     local retrieved
     retrieved=$(pb_get "messages" "$MESSAGE_ID")
     local status
     status=$(echo "$retrieved" | jq -r '.user_message_status')
-    [[ "$status" =~ ^(pending|sending|delivered)$ ]] || run_diagnostic_on_failure "PB→OpenCode" "Message created with unexpected status: $status"
+    [ "$status" = "pending" ] || run_diagnostic_on_failure "PB→OpenCode" "Message created with unexpected status: $status"
 }
 
-@test "PB→OpenCode: Relay calls ensureSession() via POST /session" {
+@test "PB→OpenCode: Interface creates session via OpenCode SDK" {
     # Validates: Requirement 3.2
-    # Test that Relay calls OpenCode's session endpoint to create a session
+    # Test that interface calls OpenCode's SDK to create a session
     
     authenticate_user
     
@@ -97,13 +97,13 @@ teardown() {
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
     
-    # Create message to trigger Relay
+    # Create message to trigger interface
     local msg_data
     msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test session creation\"}], \"user_message_status\": \"pending\"}")
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
-    
-    # Wait for session to be created (Relay should call POST {OPENCODE_URL}/session)
+
+    # Wait for session to be created (interface creates session via OpenCode SDK)
     # The chat record should get ai_engine_session_id populated
     run wait_for_condition 30 "test -n \"\$(get_chat_session_id '$CHAT_ID')\""
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Session not created within 30 seconds"
@@ -115,7 +115,7 @@ teardown() {
 
 @test "PB→OpenCode: Chat record gets ai_engine_session_id populated" {
     # Validates: Requirement 3.3
-    # Test that after Relay processes the message, the chat has session ID
+    # Test that after the interface processes the message, the chat has session ID
     
     authenticate_user
     
@@ -132,12 +132,12 @@ teardown() {
     initial_session=$(echo "$initial" | jq -r '.ai_engine_session_id // empty')
     [ -z "$initial_session" ] || run_diagnostic_on_failure "PB→OpenCode" "Chat already has session ID before message creation"
     
-    # Create message to trigger Relay
+    # Create message to trigger interface
     local msg_data
     msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test session ID population\"}], \"user_message_status\": \"pending\"}")
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
-    
+
     # Wait for session ID to be populated
     run wait_for_condition 30 "test -n \"\$(get_chat_session_id '$CHAT_ID')\""
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "ai_engine_session_id not populated within 30 seconds"
@@ -147,75 +147,68 @@ teardown() {
     [[ "$SESSION_ID" =~ ^[a-zA-Z0-9_-]+$ ]] || run_diagnostic_on_failure "PB→OpenCode" "Session ID has invalid format: $SESSION_ID"
 }
 
-@test "PB→OpenCode: Relay sends message via POST /session/{id}/prompt_async" {
+@test "PB→OpenCode: Interface sends message via OpenCode SDK" {
     # Validates: Requirement 3.4
-    # Test that Relay delivers the message to OpenCode via prompt_async endpoint
-    
+    # Test that the interface service delivers the message to OpenCode via SDK
+
     authenticate_user
-    
+
     # Create chat and message
     local chat_data
     chat_data=$(pb_create "chats" "{\"title\": \"Prompt Async Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
-    
+
     local msg_data
-    msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test prompt async delivery\"}], \"user_message_status\": \"pending\"}")
+    msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test prompt delivery\"}], \"user_message_status\": \"pending\"}")
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
-    
-    # Wait for session to be created
-    run wait_for_condition 30 "test -n \"\$(get_chat_session_id '$CHAT_ID')\""
-    [ "$status" -eq 0 ]
-    
+
+    # Wait for session to be created (interface picked up the message and sent it)
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Message not processed by interface within 30 seconds"
+
     SESSION_ID=$(get_chat_session_id "$CHAT_ID")
-    
-    # Wait for message status to transition from pending (Relay sends to OpenCode)
-    # Status should go: pending → sending → delivered
-    run wait_for_message_status "$MESSAGE_ID" "sending" 30
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Message status did not transition to 'sending' within 30 seconds"
+    echo "✓ Interface delivered message via OpenCode SDK (session: $SESSION_ID)"
 }
 
-@test "PB→OpenCode: Message status transitions pending → sending → delivered" {
+@test "PB→OpenCode: Message lifecycle — create → session → assistant response" {
     # Validates: Requirement 3.5
-    # Test the complete status transition lifecycle
-    
+    # Test the complete message lifecycle via the interface service:
+    # 1. User creates message in PocketBase
+    # 2. Interface picks it up, creates/ensures OpenCode session
+    # 3. Interface sends prompt via SDK
+    # 4. OpenCode processes and returns assistant response
+    # 5. Interface syncs assistant message back to PocketBase
+
     authenticate_user
-    
+
     # Create chat
     local chat_data
-    chat_data=$(pb_create "chats" "{\"title\": \"Status Transition Test $TEST_ID\", \"user\": \"$USER_ID\"}")
+    chat_data=$(pb_create "chats" "{\"title\": \"Lifecycle Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
-    
-    # Create message with pending status
+
+    # Create message
     local msg_data
-    msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test status transition\"}], \"user_message_status\": \"pending\"}")
+    msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test message lifecycle\"}], \"user_message_status\": \"pending\"}")
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
-    
-    # Verify initial status (relay may process fast, so accept pending/sending/delivered)
-    # Use helper function to check if relay has already processed it
-    if message_has_relay_progress "$MESSAGE_ID"; then
-        echo "✓ Message already delivered (relay processed very fast)"
-    else
-        local initial_status
-        initial_status=$(get_message_status "$MESSAGE_ID")
-        [[ "$initial_status" =~ ^(pending|sending|delivered)$ ]] || run_diagnostic_on_failure "PB→OpenCode" "Initial status is unexpected: $initial_status"
-    fi
-    
-    # Wait for status to transition to sending (Relay processing)
-    run wait_for_message_status "$MESSAGE_ID" "sending" 60
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Status did not transition to 'sending' within 60 seconds"
-    
-    # Wait for status to transition to delivered (OpenCode received and processed)
-    run wait_for_message_status "$MESSAGE_ID" "delivered" 120
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Status did not transition to 'delivered' within 120 seconds"
-    
-    # Final verification
-    local final_status
-    final_status=$(get_message_status "$MESSAGE_ID")
-    [ "$final_status" = "delivered" ] || run_diagnostic_on_failure "PB→OpenCode" "Final status is not 'delivered': $final_status"
+
+    # Step 1: Wait for interface to create session
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Session not created within 30 seconds"
+
+    SESSION_ID=$(get_chat_session_id "$CHAT_ID")
+    echo "✓ Session created: $SESSION_ID"
+
+    # Step 2: Wait for assistant response (proves full round-trip)
+    local assistant_id
+    assistant_id=$(wait_for_assistant_message "$CHAT_ID" 90)
+    [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ] || \
+        run_diagnostic_on_failure "PB→OpenCode" "No assistant response within 90 seconds"
+
+    echo "✓ Full message lifecycle verified: create → session → assistant response"
 }
 
 @test "PB→OpenCode: Chat turn field updates to assistant" {
@@ -242,13 +235,15 @@ teardown() {
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
     
-    # Wait for message to be delivered (OpenCode processes it)
-    run wait_for_message_status "$MESSAGE_ID" "delivered" 120
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Message not delivered within 120 seconds"
-    
-    # Wait for chat turn to update to assistant (OpenCode responds)
-    run wait_for_condition 30 "test \"\$(get_chat_turn '$CHAT_ID')\" = \"assistant\""
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Chat turn did not update to 'assistant' within 30 seconds"
+    # Wait for interface to process the message
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "PB→OpenCode" "Message not processed within 30 seconds"
+
+    # Wait for assistant message (which also sets the turn)
+    local assistant_id
+    assistant_id=$(wait_for_assistant_message "$CHAT_ID" 90)
+    [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ] || \
+        run_diagnostic_on_failure "PB→OpenCode" "No assistant response within 90 seconds"
     
     # Verify turn is now assistant
     local turn
