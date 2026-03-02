@@ -1,0 +1,21 @@
+{
+    "name": "pocketcoder-interface",
+    "version": "1.0.0",
+    "description": "The Sovereign Interface bridging OpenCode and PocketBase",
+    "main": "src/index.ts",
+    "type": "module",
+    "scripts": {
+        "start": "bun src/index.ts",
+        "dev": "bun --watch src/index.ts"
+    },
+    "dependencies": {
+        "@opencode-ai/sdk": "latest",
+        "@types/eventsource": "^3.0.0",
+        "eventsource": "^4.1.0",
+        "pocketbase": "^0.26.8"
+    },
+    "devDependencies": {
+        "bun-types": "latest",
+        "@types/node": "latest"
+    }
+}

@@ -28,6 +28,8 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart'
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart'
     as _i955;
+import 'package:pocketcoder_flutter/application/question/question_cubit.dart'
+    as _i925;
 import 'package:pocketcoder_flutter/application/sop/sop_cubit.dart' as _i252;
 import 'package:pocketcoder_flutter/application/subagent/subagent_cubit.dart'
     as _i440;
@@ -158,6 +160,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i589.SshKeyDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i658.PermissionDao>(
         () => _i658.PermissionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i658.QuestionDao>(
+        () => _i658.QuestionDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i658.WhitelistTargetDao>(
         () => _i658.WhitelistTargetDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i658.WhitelistActionDao>(
@@ -189,12 +193,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.linodeClientId,
       instanceName: 'linodeClientId',
     );
-    gh.lazySingleton<_i20.IHitlRepository>(() => _i441.HitlRepository(
-          gh<_i658.PermissionDao>(),
-          gh<_i658.WhitelistTargetDao>(),
-          gh<_i658.WhitelistActionDao>(),
-          gh<_i589.PocketCoderApi>(),
-        ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
@@ -220,6 +218,13 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i800.IHealthRepository>(
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
+    gh.lazySingleton<_i20.IHitlRepository>(() => _i441.HitlRepository(
+          gh<_i658.PermissionDao>(),
+          gh<_i658.QuestionDao>(),
+          gh<_i658.WhitelistTargetDao>(),
+          gh<_i658.WhitelistActionDao>(),
+          gh<_i589.PocketCoderApi>(),
+        ));
     gh.lazySingleton<_i536.IAiConfigRepository>(() => _i846.AiConfigRepository(
           gh<_i61.AiAgentDao>(),
           gh<_i61.AiPromptDao>(),
@@ -230,6 +235,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i528.WhitelistCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i955.PermissionCubit>(
         () => _i955.PermissionCubit(gh<_i20.IHitlRepository>()));
+    gh.factory<_i925.QuestionCubit>(
+        () => _i925.QuestionCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i464.AuthCubit>(
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.factory<_i440.SubagentCubit>(

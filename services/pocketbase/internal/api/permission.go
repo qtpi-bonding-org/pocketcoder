@@ -69,7 +69,7 @@ func RegisterPermissionApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		record.Set("message_id", input.MessageID)
 		record.Set("call_id", input.CallID)
 		record.Set("status", status)
-		record.Set("source", "relay-api") // Clarify source
+		record.Set("source", "interface") // Clarify source
 		record.Set("message", input.Message)
 		record.Set("challenge", uuid.NewString())
 

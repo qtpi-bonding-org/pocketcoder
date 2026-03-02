@@ -1,4 +1,5 @@
 import 'package:pocketcoder_flutter/domain/models/permission.dart';
+import 'package:pocketcoder_flutter/domain/models/question.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
 import '../permission/permission_api_models.dart';
@@ -8,6 +9,11 @@ abstract class IHitlRepository {
   Stream<List<Permission>> watchPending(String chatId);
   Future<void> authorize(String permissionId);
   Future<void> deny(String permissionId);
+
+  // --- Questions ---
+  Stream<List<Question>> watchQuestions(String chatId);
+  Future<void> answerQuestion(String questionId, String reply);
+  Future<void> rejectQuestion(String questionId);
 
   /// Evaluate a permission request via the custom endpoint
   Future<PermissionResponse> evaluatePermission({
