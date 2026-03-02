@@ -22,6 +22,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -49,7 +50,17 @@ func main() {
 	hooks.RegisterSopHooks(app)
 	hooks.RegisterNotificationHooks(app)
 
-	// 3. Main Application Boot & API Registration
+	// 3. Register MCP Hooks (config rendering + gateway restart)
+	openCodeURL := os.Getenv("OPENCODE_URL")
+	if openCodeURL == "" {
+		openCodeURL = "http://opencode:3000"
+	}
+	hooks.RegisterMcpHooks(app, openCodeURL)
+
+	// 3b. Register LLM Hooks (env file rendering + OpenCode restart)
+	hooks.RegisterLlmHooks(app)
+
+	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
 
@@ -68,7 +79,7 @@ func main() {
 		return e.Next()
 	})
 
-	// 4. Launch PocketBase
+	// 5. Launch PocketBase
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}
