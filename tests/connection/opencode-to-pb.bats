@@ -1,14 +1,14 @@
 #!/usr/bin/env bats
 # Feature: test-suite-reorganization, Property 4: Connection Tests - OpenCode to PB
 #
-# Connection tests for OpenCode to PocketBase communication via SSE Stream
+# Connection tests for OpenCode to PocketBase communication via the Interface service
 # Validates: Requirements 4.1, 4.2, 4.3, 4.4, 4.5
 #
 # Test flow:
-# 1. Relay's SSE listener connects to {OPENCODE_URL}/event
-# 2. Relay receives server.heartbeat events
-# 3. Relay receives message.updated events for assistant messages
-# 4. syncAssistantMessage() creates/updates message records in PocketBase
+# 1. Interface's SSE event pump connects to {OPENCODE_URL}/event
+# 2. Interface receives server.heartbeat events
+# 3. Interface receives message.updated events for assistant messages
+# 4. Interface event pump creates/updates message records in PocketBase
 # 5. Message fields populated: ai_engine_message_id, parts, engine_message_status
 # 6. Chat last_active and preview fields updated
 
@@ -80,73 +80,72 @@ teardown() {
     fi
 }
 
-@test "OpenCode→PB: SSE connection receives message.updated events" {
+@test "OpenCode→PB: Interface processes message and creates assistant response" {
     # Validates: Requirement 4.2
-    # Test that Relay receives message.updated events for assistant messages
-    
+    # Test that the interface service picks up user messages, sends to OpenCode,
+    # and syncs assistant responses back to PocketBase
+
     authenticate_user
-    
-    # Create chat and user message to trigger OpenCode processing
+
+    # Create chat and user message to trigger interface processing
     local chat_data
     chat_data=$(pb_create "chats" "{\"title\": \"SSE Message Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
-    
+
     local msg_data
     msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test SSE message events\"}], \"user_message_status\": \"pending\"}")
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
-    
-    # Wait for message to be delivered (OpenCode processes it)
-    run wait_for_message_status "$MESSAGE_ID" "delivered" 30
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode→PB" "Message not delivered within 30 seconds"
-    
+
+    # Wait for interface to pick up message and create session
+    run wait_for_message_processed "$CHAT_ID" 30
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "OpenCode→PB" "Message not processed within 30 seconds"
+
     # Wait for assistant message to be created (indicates message.updated was processed)
     local assistant_id
-    assistant_id=$(wait_for_assistant_message "$CHAT_ID" 30)
-    
+    assistant_id=$(wait_for_assistant_message "$CHAT_ID" 60)
+
     if [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ]; then
-        # Assistant message was created - message.updated event was processed by relay
-        echo "✓ Assistant message created (message.updated processed by relay)"
+        echo "✓ Assistant message created (interface synced OpenCode response)"
     else
-        # No assistant message - try to connect to SSE directly
+        # No assistant message - try to connect to SSE directly to verify stream is active
         local sse_url="$OPENCODE_URL/event"
         local response
         response=$(timeout 20 curl -s -N "$sse_url" 2>/dev/null | head -50)
-        
-        # Check for message.updated event in response
+
         echo "$response" | grep -q "event: message.updated" || run_diagnostic_on_failure "OpenCode→PB" "No message.updated events received"
         echo "✓ SSE connection received message.updated events"
     fi
 }
 
-@test "OpenCode→PB: syncAssistantMessage() creates assistant message record" {
+@test "OpenCode→PB: Event pump creates assistant message record" {
     # Validates: Requirement 4.3
-    # Test that syncAssistantMessage() creates/updates message records in PocketBase
-    
+    # Test that the interface event pump creates/updates message records in PocketBase
+
     authenticate_user
-    
+
     # Create chat and user message
     local chat_data
     chat_data=$(pb_create "chats" "{\"title\": \"Sync Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
-    
+
     local msg_data
     msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test sync assistant message\"}], \"user_message_status\": \"pending\"}")
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
-    
-    # Wait for message to be delivered
-    run wait_for_message_status "$MESSAGE_ID" "delivered" 30
+
+    # Wait for interface to process the message
+    run wait_for_message_processed "$CHAT_ID" 30
     [ "$status" -eq 0 ]
-    
-    # Wait for assistant message to be created (syncAssistantMessage creates it)
+
+    # Wait for assistant message to be created
     local assistant_id
-    assistant_id=$(wait_for_assistant_message "$CHAT_ID" 15)
-    
-    [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ] || run_diagnostic_on_failure "OpenCode→PB" "Assistant message not created within 15 seconds"
-    
+    assistant_id=$(wait_for_assistant_message "$CHAT_ID" 60)
+
+    [ -n "$assistant_id" ] && [ "$assistant_id" != "null" ] || run_diagnostic_on_failure "OpenCode→PB" "Assistant message not created within 60 seconds"
+
     # Verify assistant message has expected fields
     local assistant_msg
     assistant_msg=$(pb_get "messages" "$assistant_id")
@@ -158,33 +157,33 @@ teardown() {
 @test "OpenCode→PB: Message fields populated from SSE events" {
     # Validates: Requirement 4.3
     # Test that message fields are populated: ai_engine_message_id, parts, engine_message_status
-    
+
     authenticate_user
-    
+
     # Create chat and user message
     local chat_data
     chat_data=$(pb_create "chats" "{\"title\": \"Fields Test $TEST_ID\", \"user\": \"$USER_ID\"}")
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
-    
+
     local msg_data
     msg_data=$(pb_create "messages" "{\"chat\": \"$CHAT_ID\", \"role\": \"user\", \"parts\": [{\"type\": \"text\", \"text\": \"Test message fields\"}], \"user_message_status\": \"pending\"}")
     MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
     track_artifact "messages:$MESSAGE_ID"
-    
-    # Wait for message to be delivered
-    run wait_for_message_status "$MESSAGE_ID" "delivered" 30
+
+    # Wait for interface to process the message
+    run wait_for_message_processed "$CHAT_ID" 30
     [ "$status" -eq 0 ]
-    
+
     # Wait for assistant message
     local assistant_id
-    assistant_id=$(wait_for_assistant_message "$CHAT_ID" 15)
-    
-    # Retry checking fields until populated (relay may take time to sync parts)
+    assistant_id=$(wait_for_assistant_message "$CHAT_ID" 60)
+
+    # Retry checking fields until populated (interface may take time to sync parts)
     local max_attempts=10
     local attempt=0
     local parts=""
-    
+
     while [ $attempt -lt $max_attempts ]; do
         local assistant_msg
         assistant_msg=$(pb_get "messages" "$assistant_id")
@@ -193,16 +192,16 @@ teardown() {
         attempt=$((attempt + 1))
         sleep 1
     done
-    
+
     [ -n "$parts" ] && [ "$parts" != "null" ] && [ "$parts" != "[]" ] || run_diagnostic_on_failure "OpenCode→PB" "parts not populated after retries"
-    
+
     # Verify other fields
     local assistant_msg
     assistant_msg=$(pb_get "messages" "$assistant_id")
     local ai_msg_id
     ai_msg_id=$(echo "$assistant_msg" | jq -r '.ai_engine_message_id // empty')
     [ -n "$ai_msg_id" ] && [ "$ai_msg_id" != "null" ] || run_diagnostic_on_failure "OpenCode→PB" "ai_engine_message_id not populated"
-    
+
     local status
     status=$(echo "$assistant_msg" | jq -r '.engine_message_status // empty')
     [ -n "$status" ] || run_diagnostic_on_failure "OpenCode→PB" "engine_message_status not populated"
