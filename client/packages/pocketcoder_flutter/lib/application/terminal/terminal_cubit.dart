@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:injectable/injectable.dart';
 import 'package:dartssh2/dartssh2.dart';
@@ -9,7 +10,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketbase/pocketbase.dart';
 import "package:flutter_aeroform/support/extensions/cubit_ui_flow_extension.dart";
 import 'terminal_state.dart';
-import "package:flutter_aeroform/infrastructure/core/collections.dart";
+import "package:pocketcoder_flutter/domain/models/collections.dart";
 import "package:flutter_aeroform/infrastructure/core/logger.dart";
 
 @injectable
@@ -181,6 +182,59 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
 
     // Format as SHA256:base64
     return 'SHA256:${base64.encode(hash.bytes)}';
+  }
+
+  Future<void> uploadFile({
+    required String localPath,
+    required String remotePath,
+    required String fileName,
+  }) async {
+    if (!state.isConnected || _client == null) return;
+    if (state.isUploading) return;
+
+    emit(state.copyWith(isUploading: true, uploadFileName: fileName));
+    terminal.write('\r\n*** SFTP: INITIATING TRANSFER ***\r\n');
+    terminal.write('  FILE: $fileName\r\n');
+    terminal.write('  DEST: $remotePath\r\n');
+
+    try {
+      final sftp = await _client!.sftp();
+      final localFile = File(localPath);
+      final fileSize = await localFile.length();
+      terminal.write('  SIZE: ${_formatBytes(fileSize)}\r\n');
+
+      final remoteFile = await sftp.open(
+        remotePath,
+        mode: SftpFileOpenMode.create |
+            SftpFileOpenMode.truncate |
+            SftpFileOpenMode.write,
+      );
+
+      final stream = localFile.openRead();
+      var offset = 0;
+      await for (final chunk in stream) {
+        await remoteFile.write(Stream.value(Uint8List.fromList(chunk)), offset: offset);
+        offset += chunk.length;
+      }
+
+      await remoteFile.close();
+      sftp.close();
+
+      terminal.write('*** SFTP: TRANSFER COMPLETE ($offset bytes) ***\r\n');
+      logInfo('[Terminal] SFTP upload complete: $remotePath ($offset bytes)');
+    } catch (e) {
+      terminal.write('*** SFTP: TRANSFER FAILED ***\r\n');
+      terminal.write('  ERROR: ${e.toString()}\r\n');
+      logWarning('[Terminal] SFTP upload failed', e);
+    } finally {
+      emit(state.copyWith(isUploading: false, uploadFileName: null));
+    }
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
   void disconnect() {

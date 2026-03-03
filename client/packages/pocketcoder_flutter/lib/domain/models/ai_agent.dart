@@ -29,8 +29,8 @@ class AiAgent with _$AiAgent {
 enum AiAgentMode {
   @JsonValue('primary')
   primary,
-  @JsonValue('subagent')
-  subagent,
+  @JsonValue('sandbox_agent')
+  sandbox_agent,
   @JsonValue('__unknown__')
   unknown,
 }

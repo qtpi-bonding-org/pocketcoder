@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:pocketcoder_flutter/domain/subagent/i_subagent_repository.dart';
-import 'subagent_state.dart';
+import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_repository.dart';
+import 'sandbox_agent_state.dart';
 
 @injectable
-class SubagentCubit extends Cubit<SubagentState> {
-  final ISubagentRepository _repository;
+class SandboxAgentCubit extends Cubit<SandboxAgentState> {
+  final ISandboxAgentRepository _repository;
   StreamSubscription? _subscription;
 
-  SubagentCubit(this._repository) : super(const SubagentState());
+  SandboxAgentCubit(this._repository) : super(const SandboxAgentState());
 
   @override
   Future<void> close() {
@@ -20,9 +20,9 @@ class SubagentCubit extends Cubit<SubagentState> {
   void watchChat(String chatId) {
     emit(state.copyWith(isLoading: true));
     _subscription?.cancel();
-    _subscription = _repository.watchSubagents(chatId).listen(
-          (subagents) =>
-              emit(state.copyWith(subagents: subagents, isLoading: false)),
+    _subscription = _repository.watchSandboxAgents(chatId).listen(
+          (sandboxAgents) =>
+              emit(state.copyWith(sandboxAgents: sandboxAgents, isLoading: false)),
           onError: (e) =>
               emit(state.copyWith(error: e.toString(), isLoading: false)),
         );
@@ -30,7 +30,7 @@ class SubagentCubit extends Cubit<SubagentState> {
 
   Future<void> terminate(String id) async {
     try {
-      await _repository.terminateSubagent(id);
+      await _repository.terminateSandboxAgent(id);
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }

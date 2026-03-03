@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:xterm/xterm.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/terminal/terminal_cubit.dart';
 import 'package:pocketcoder_flutter/application/terminal/terminal_state.dart';
@@ -12,6 +13,8 @@ import '../../app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
@@ -69,6 +72,10 @@ class _TerminalViewState extends State<_TerminalView> {
         TerminalAction(
           label: 'BACK TO CHAT',
           onTap: () => context.goNamed(RouteNames.home),
+        ),
+        TerminalAction(
+          label: 'TRANSFER',
+          onTap: () => _pickAndUploadFile(context),
         ),
         TerminalAction(
           label: 'RECONNECT',
@@ -146,6 +153,75 @@ class _TerminalViewState extends State<_TerminalView> {
           VSpace.x1_5,
         ],
       ),
+    );
+  }
+
+  Future<void> _pickAndUploadFile(BuildContext context) async {
+    final cubit = context.read<SshTerminalCubit>();
+    if (!cubit.state.isConnected || cubit.state.isUploading) return;
+
+    final result = await FilePicker.platform.pickFiles();
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    if (file.path == null) return;
+
+    if (!context.mounted) return;
+    _showUploadDialog(context, file.name, file.path!);
+  }
+
+  void _showUploadDialog(
+      BuildContext context, String fileName, String localPath) {
+    final destinationController =
+        TextEditingController(text: '/home/worker/$fileName');
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        final colors = dialogContext.colorScheme;
+        return TerminalDialog(
+          title: 'SFTP TRANSFER',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'FILE: $fileName',
+                style: TextStyle(
+                  fontFamily: AppFonts.bodyFamily,
+                  color: colors.onSurface,
+                  fontSize: AppSizes.fontSmall,
+                  package: 'pocketcoder_flutter',
+                ),
+              ),
+              VSpace.x2,
+              TerminalTextField(
+                controller: destinationController,
+                label: 'DESTINATION PATH',
+                hint: '/home/worker/$fileName',
+              ),
+            ],
+          ),
+          actions: [
+            TerminalButton(
+              label: 'CANCEL',
+              onTap: () => Navigator.of(dialogContext).pop(),
+            ),
+            HSpace.x2,
+            TerminalButton(
+              label: 'UPLOAD',
+              onTap: () {
+                Navigator.of(dialogContext).pop();
+                context.read<SshTerminalCubit>().uploadFile(
+                      localPath: localPath,
+                      remotePath: destinationController.text,
+                      fileName: fileName,
+                    );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

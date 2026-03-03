@@ -12,6 +12,8 @@ class SshTerminalState with _$SshTerminalState implements IUiFlowState {
     Object? error,
     String? sessionId,
     @Default(false) bool isSyncingKeys,
+    @Default(false) bool isUploading,
+    String? uploadFileName,
   }) = _SshTerminalState;
 
   factory SshTerminalState.initial() => const SshTerminalState();
