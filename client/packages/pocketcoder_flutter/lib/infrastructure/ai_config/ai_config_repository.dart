@@ -4,7 +4,7 @@ import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart
 import 'package:pocketcoder_flutter/domain/models/ai_agent.dart';
 import 'package:pocketcoder_flutter/domain/models/ai_prompt.dart';
 import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
-import 'package:pocketcoder_flutter/domain/models/subagent.dart';
+import 'package:pocketcoder_flutter/domain/models/sandbox_agent.dart';
 import 'package:flutter_aeroform/domain/exceptions.dart';
 import 'package:flutter_aeroform/core/try_operation.dart';
 import 'ai_config_daos.dart';
@@ -14,13 +14,13 @@ class AiConfigRepository implements IAiConfigRepository {
   final AiAgentDao _agentDao;
   final AiPromptDao _promptDao;
   final AiModelDao _modelDao;
-  final SubagentDao _subagentDao;
+  final SandboxAgentDao _sandboxAgentDao;
 
   AiConfigRepository(
     this._agentDao,
     this._promptDao,
     this._modelDao,
-    this._subagentDao,
+    this._sandboxAgentDao,
   );
 
   // --- Agents ---
@@ -119,35 +119,35 @@ class AiConfigRepository implements IAiConfigRepository {
     return _modelDao.delete(id);
   }
 
-  // --- Subagents ---
+  // --- Sandbox Agents ---
 
   @override
-  Future<List<Subagent>> getSubagents() async {
-    return _subagentDao.getFullList(sort: '-created');
+  Future<List<SandboxAgent>> getSandboxAgents() async {
+    return _sandboxAgentDao.getFullList(sort: '-created');
   }
 
   @override
-  Stream<List<Subagent>> watchSubagents() {
-    return _subagentDao.watch(sort: '-created');
+  Stream<List<SandboxAgent>> watchSandboxAgents() {
+    return _sandboxAgentDao.watch(sort: '-created');
   }
 
   @override
-  Future<void> saveSubagent(Subagent subagent) async {
+  Future<void> saveSandboxAgent(SandboxAgent sandboxAgent) async {
     return tryMethod(
       () async {
-        final data = subagent.toJson()
+        final data = sandboxAgent.toJson()
           ..remove('id')
           ..remove('created')
           ..remove('updated');
-        await _subagentDao.save(subagent.id.isEmpty ? null : subagent.id, data);
+        await _sandboxAgentDao.save(sandboxAgent.id.isEmpty ? null : sandboxAgent.id, data);
       },
       RepositoryException.new,
-      'saveSubagent',
+      'saveSandboxAgent',
     );
   }
 
   @override
-  Future<void> deleteSubagent(String id) async {
-    return _subagentDao.delete(id);
+  Future<void> deleteSandboxAgent(String id) async {
+    return _sandboxAgentDao.delete(id);
   }
 }
