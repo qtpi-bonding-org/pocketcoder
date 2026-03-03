@@ -252,7 +252,7 @@ async function startCommandPump() {
     });
 
     // 3. LLM Config Changes (model switching)
-    pb.collection('llm_config').subscribe('*', async (e: any) => {
+    pb.collection('model_selection').subscribe('*', async (e: any) => {
         if (e.action === 'create' || e.action === 'update') {
             await handleModelSwitch(e.record);
         }
@@ -441,7 +441,7 @@ function setupGracefulShutdown() {
         try {
             pb.collection('messages').unsubscribe('*');
             pb.collection('permissions').unsubscribe('*');
-            pb.collection('llm_config').unsubscribe('*');
+            pb.collection('model_selection').unsubscribe('*');
             if (providerSyncInterval) clearInterval(providerSyncInterval);
         } catch (err) {
             console.error('[Interface] Error during unsubscribe:', err);
