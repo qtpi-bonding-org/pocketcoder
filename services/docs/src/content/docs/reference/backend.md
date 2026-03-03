@@ -33,6 +33,8 @@ func main()
 import "github.com/qtpi-automaton/pocketcoder/backend/internal/agents"
 ```
 
+@pocketcoder\-core: Agent Bundler. Expands agent records into frontmatter\-laden bundles.
+
 ## Index
 
 - [func GetAgentBundle\(app \*pocketbase.PocketBase, agent \*core.Record\) \(string, error\)](<#GetAgentBundle>)
@@ -143,6 +145,8 @@ createProxyHandler creates a standard reverse proxy handler that strips a prefix
 import "github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
 ```
 
+@pocketcoder\-core: Artifact API. Secure endpoint for accessing workspace artifacts.
+
 ## Index
 
 - [func RegisterArtifactApi\(app \*pocketbase.PocketBase, e \*core.ServeEvent\)](<#RegisterArtifactApi>)
@@ -163,35 +167,84 @@ RegisterArtifactApi provides a secure window into the /workspace using the PB Fi
 import "github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
 ```
 
+@pocketcoder\-core: Agent Hooks. Triggers re\-bundling when agent records change.
+
+@pocketcoder\-core: LLM Hooks. Handles API key persistence and OpenCode container restart.
+
+@pocketcoder\-core: MCP Hooks. Handles MCP server lifecycle, config rendering, and gateway restart.
+
 @pocketcoder\-core: Notification Dispatcher. Sends push notifications based on record events and user presence.
 
 @pocketcoder\-core: Permission Engine. Registers hooks for auditing and gating record creation.
 
+@pocketcoder\-core: SOP Hooks. Seals approved proposals into the governance ledger.
+
+@pocketcoder\-core: Timestamp Hooks. Manages created/updated/last\_active fields globally.
+
+@pocketcoder\-core: Tool Permission Hooks. Renders opencode.json permission \+ agent blocks and restarts OpenCode.
+
 ## Index
 
-- [func DispatchNotifications\(app core.App, userID string, permission \*core.Record\)](<#DispatchNotifications>)
+- [Constants](<#constants>)
 - [func IsUserOnline\(app core.App, userID string\) bool](<#IsUserOnline>)
 - [func RegisterAgentHooks\(app \*pocketbase.PocketBase\)](<#RegisterAgentHooks>)
 - [func RegisterGlobalTimestamps\(app \*pocketbase.PocketBase\)](<#RegisterGlobalTimestamps>)
+- [func RegisterLlmHooks\(app core.App\)](<#RegisterLlmHooks>)
+- [func RegisterMcpHooks\(app core.App, openCodeURL string\)](<#RegisterMcpHooks>)
 - [func RegisterNotificationHooks\(app \*pocketbase.PocketBase\)](<#RegisterNotificationHooks>)
 - [func RegisterPermissionHooks\(app \*pocketbase.PocketBase\)](<#RegisterPermissionHooks>)
+- [func RegisterPushApi\(app \*pocketbase.PocketBase, e \*core.ServeEvent\)](<#RegisterPushApi>)
 - [func RegisterSopHooks\(app \*pocketbase.PocketBase\)](<#RegisterSopHooks>)
+- [func RegisterToolPermissionHooks\(app core.App\)](<#RegisterToolPermissionHooks>)
 - [func SealProposal\(app \*pocketbase.PocketBase, proposal \*core.Record\) error](<#SealProposal>)
+- [func SendPushNotification\(app core.App, userID, title, message, notifType, chatID string\)](<#SendPushNotification>)
+- [func buildPermissionBlock\(perms \[\]permEntry\) map\[string\]interface\{\}](<#buildPermissionBlock>)
+- [func dispatchToDevices\(app core.App, userID, title, message, notifType, chatID string\)](<#dispatchToDevices>)
+- [func isNotificationTypeEnabled\(app core.App, userID, notifType string\) bool](<#isNotificationTypeEnabled>)
+- [func notifyPoco\(app core.App, openCodeURL string, serverName string, status string\)](<#notifyPoco>)
+- [func renderLlmEnv\(app core.App\) error](<#renderLlmEnv>)
+- [func renderMcpConfig\(app core.App\) error](<#renderMcpConfig>)
+- [func renderOpenCodeConfig\(app core.App\) error](<#renderOpenCodeConfig>)
+- [func restartGateway\(\) error](<#restartGateway>)
+- [func restartOpenCode\(\) error](<#restartOpenCode>)
 - [type FcmRelayProvider](<#FcmRelayProvider>)
   - [func \(p \*FcmRelayProvider\) Send\(token, title, body string\) error](<#FcmRelayProvider.Send>)
 - [type NtfyDirectProvider](<#NtfyDirectProvider>)
   - [func \(p \*NtfyDirectProvider\) Send\(endpoint, title, body string\) error](<#NtfyDirectProvider.Send>)
 - [type PushProvider](<#PushProvider>)
+- [type permEntry](<#permEntry>)
 
 
-<a name="DispatchNotifications"></a>
-## func DispatchNotifications
+## Constants
+
+<a name="llmEnvPath"></a>
 
 ```go
-func DispatchNotifications(app core.App, userID string, permission *core.Record)
+const (
+    llmEnvPath        = "/workspace/.opencode/llm.env"
+    llmEnvPathShared  = "/llm_keys/llm.env"
+    openCodeContainer = "pocketcoder-opencode"
+)
 ```
 
-DispatchNotifications sends notifications to every active device registered to the user.
+<a name="mcpConfigPath"></a>
+
+```go
+const (
+    mcpConfigPath     = "/mcp_config/docker-mcp.yaml"
+    mcpSecretsPath    = "/mcp_config/mcp.env"
+    gatewayContainer  = "pocketcoder-mcp-gateway"
+    defaultDockerHost = "tcp://docker-socket-proxy-write:2375"
+)
+```
+
+<a name="openCodeConfigPath"></a>
+
+```go
+const (
+    openCodeConfigPath = "/workspace/.opencode/opencode.json"
+)
+```
 
 <a name="IsUserOnline"></a>
 ## func IsUserOnline
@@ -220,6 +273,24 @@ func RegisterGlobalTimestamps(app *pocketbase.PocketBase)
 
 RegisterGlobalTimestamps registers hooks for created, updated, and last\_active timestamps.
 
+<a name="RegisterLlmHooks"></a>
+## func RegisterLlmHooks
+
+```go
+func RegisterLlmHooks(app core.App)
+```
+
+RegisterLlmHooks registers hooks on the llm\_keys collection. When a user saves, updates, or deletes an API key, this hook re\-renders the llm.env file and restarts the OpenCode container.
+
+<a name="RegisterMcpHooks"></a>
+## func RegisterMcpHooks
+
+```go
+func RegisterMcpHooks(app core.App, openCodeURL string)
+```
+
+RegisterMcpHooks registers hooks for MCP server lifecycle management. When a user approves or revokes an MCP server in the Flutter UI, this hook re\-renders the gateway config and restarts the MCP gateway container.
+
 <a name="RegisterNotificationHooks"></a>
 ## func RegisterNotificationHooks
 
@@ -227,7 +298,7 @@ RegisterGlobalTimestamps registers hooks for created, updated, and last\_active 
 func RegisterNotificationHooks(app *pocketbase.PocketBase)
 ```
 
-RegisterNotificationHooks registers hooks for triggering push notifications.
+RegisterNotificationHooks registers hooks for triggering push notifications and the /api/push custom endpoint.
 
 <a name="RegisterPermissionHooks"></a>
 ## func RegisterPermissionHooks
@@ -238,6 +309,15 @@ func RegisterPermissionHooks(app *pocketbase.PocketBase)
 
 RegisterPermissionHooks registers hooks for the permissions collection.
 
+<a name="RegisterPushApi"></a>
+## func RegisterPushApi
+
+```go
+func RegisterPushApi(app *pocketbase.PocketBase, e *core.ServeEvent)
+```
+
+RegisterPushApi registers the POST /api/push endpoint. Called by the interface service to send push notifications for task\_complete, task\_error, and other notification types.
+
 <a name="RegisterSopHooks"></a>
 ## func RegisterSopHooks
 
@@ -246,6 +326,15 @@ func RegisterSopHooks(app *pocketbase.PocketBase)
 ```
 
 RegisterSopHooks manages the transition from proposal to sealed SOP
+
+<a name="RegisterToolPermissionHooks"></a>
+## func RegisterToolPermissionHooks
+
+```go
+func RegisterToolPermissionHooks(app core.App)
+```
+
+RegisterToolPermissionHooks registers hooks that re\-render the OpenCode config whenever tool\_permissions or ai\_agents change.
 
 <a name="SealProposal"></a>
 ## func SealProposal
@@ -256,14 +345,107 @@ func SealProposal(app *pocketbase.PocketBase, proposal *core.Record) error
 
 SealProposal takes a proposal record, hashes it, and promotes it to the sops ledger. This is the "Master of Signature" implementation where the backend handles integrity.
 
+<a name="SendPushNotification"></a>
+## func SendPushNotification
+
+```go
+func SendPushNotification(app core.App, userID, title, message, notifType, chatID string)
+```
+
+SendPushNotification is the unified dispatch function. Flow: rules check \-\> presence check \-\> device dispatch
+
+<a name="buildPermissionBlock"></a>
+## func buildPermissionBlock
+
+```go
+func buildPermissionBlock(perms []permEntry) map[string]interface{}
+```
+
+buildPermissionBlock converts a list of permission entries into the OpenCode permission format. Tools with only pattern="\*" get flat format \("tool": "action"\). Tools with multiple patterns get nested format \("tool": \{"pattern": "action", ...\}\).
+
+<a name="dispatchToDevices"></a>
+## func dispatchToDevices
+
+```go
+func dispatchToDevices(app core.App, userID, title, message, notifType, chatID string)
+```
+
+dispatchToDevices sends notifications to every active device registered to the user.
+
+<a name="isNotificationTypeEnabled"></a>
+## func isNotificationTypeEnabled
+
+```go
+func isNotificationTypeEnabled(app core.App, userID, notifType string) bool
+```
+
+isNotificationTypeEnabled checks the user's notification\_rules record. Returns true if the type is enabled or if no rules exist \(opt\-out model\).
+
+<a name="notifyPoco"></a>
+## func notifyPoco
+
+```go
+func notifyPoco(app core.App, openCodeURL string, serverName string, status string)
+```
+
+notifyPoco sends a system message to Poco about MCP server status changes.
+
+<a name="renderLlmEnv"></a>
+## func renderLlmEnv
+
+```go
+func renderLlmEnv(app core.App) error
+```
+
+renderLlmEnv queries ALL llm\_keys records and writes a flat env file.
+
+<a name="renderMcpConfig"></a>
+## func renderMcpConfig
+
+```go
+func renderMcpConfig(app core.App) error
+```
+
+renderMcpConfig queries approved MCP servers and writes docker\-mcp.yaml and mcp.env to the shared /mcp\_config volume. The gateway reads these on startup.
+
+<a name="renderOpenCodeConfig"></a>
+## func renderOpenCodeConfig
+
+```go
+func renderOpenCodeConfig(app core.App) error
+```
+
+renderOpenCodeConfig reads the existing opencode.json, patches the permission and agent blocks from PocketBase data, and writes it back.
+
+<a name="restartGateway"></a>
+## func restartGateway
+
+```go
+func restartGateway() error
+```
+
+restartGateway sends a restart command to the MCP gateway container via the Docker Socket Proxy.
+
+<a name="restartOpenCode"></a>
+## func restartOpenCode
+
+```go
+func restartOpenCode() error
+```
+
+restartOpenCode sends a restart command to the OpenCode container via the Docker Socket Proxy.
+
 <a name="FcmRelayProvider"></a>
 ## type FcmRelayProvider
 
-FcmRelayProvider routes notifications through a Cloudflare Worker relay.
+FcmRelayProvider routes notifications through a Cloudflare Worker relay. The Worker handles subscription verification \(RevenueCat\), rate limiting \(Supabase\), and FCM v1 delivery — PocketBase just fires and forgets.
 
 ```go
 type FcmRelayProvider struct {
     RelayURL string
+    UserID   string
+    ChatID   string
+    Type     string
 }
 ```
 
@@ -282,7 +464,10 @@ func (p *FcmRelayProvider) Send(token, title, body string) error
 NtfyDirectProvider sends notifications directly to a UnifiedPush \(ntfy\) endpoint. This preserves the "Zero\-Trust" sovereign architecture.
 
 ```go
-type NtfyDirectProvider struct{}
+type NtfyDirectProvider struct {
+    ChatID string
+    Type   string
+}
 ```
 
 <a name="NtfyDirectProvider.Send"></a>
@@ -305,11 +490,26 @@ type PushProvider interface {
 }
 ```
 
+<a name="permEntry"></a>
+## type permEntry
+
+
+
+```go
+type permEntry struct {
+    tool    string
+    pattern string
+    action  string
+}
+```
+
 # permission
 
 ```go
 import "github.com/qtpi-automaton/pocketcoder/backend/internal/permission"
 ```
+
+@pocketcoder\-core: Permission Evaluator. Checks requests against whitelisted action patterns.
 
 ## Index
 
@@ -324,7 +524,7 @@ import "github.com/qtpi-automaton/pocketcoder/backend/internal/permission"
 func Evaluate(app core.App, input EvaluationInput) (bool, string)
 ```
 
-Evaluate checks if a permission request is whitelisted based on actions and targets.
+Evaluate checks if a permission request is whitelisted based on actions.
 
 <a name="EvaluationInput"></a>
 ## type EvaluationInput
@@ -385,6 +585,8 @@ func processSopProposal(app *pocketbase.PocketBase, path string)
 import "github.com/qtpi-automaton/pocketcoder/backend/internal/utils"
 ```
 
+@pocketcoder\-core: Wildcard Matcher. Glob\-to\-regex pattern matching for permission paths.
+
 ## Index
 
 - [func MatchWildcard\(str string, pattern string\) bool](<#MatchWildcard>)
@@ -398,897 +600,5 @@ func MatchWildcard(str string, pattern string) bool
 ```
 
 MatchWildcard implements a simple glob\-like pattern matching \(e.g. /workspace/\*\*\). It converts internal wildcards \(\*, ?\) into regex patterns.
-
-# relay
-
-```go
-import "github.com/qtpi-automaton/pocketcoder/backend/pkg/relay"
-```
-
-@pocketcoder\-core: Agent Relayer. Syncs agent state between OpenCode and PocketBase.
-
-@pocketcoder\-core: MCP Relayer. Handles MCP server lifecycle, config rendering, and gateway management.
-
-@pocketcoder\-core: Message Relayer. Streams conversation events to the database.
-
-@pocketcoder\-core: Permission Relayer. Handles real\-time authorization requests.
-
-@pocketcoder\-core: Sovereign Relay. The orchestration layer that syncs OpenCode with the Sandbox.
-
-@pocketcoder\-core: SOP Relayer. Syncs Standard Operating Procedures with the engine.
-
-@pocketcoder\-core: SSH Relayer. Coordinates public key distribution for the sandbox.
-
-@pocketcoder\-core: Relay Utilities. Common logic for the Relay.
-
-## Index
-
-- [Constants](<#constants>)
-- [Variables](<#variables>)
-- [func GetErrorCode\(env \*InfrastructureError\) string](<#GetErrorCode>)
-- [func GetErrorMessage\(env ErrorEnvelope\) string](<#GetErrorMessage>)
-- [func GetErrorName\(env \*ProviderError\) string](<#GetErrorName>)
-- [func GetResponseBody\(env \*ProviderError\) string](<#GetResponseBody>)
-- [func IsInfrastructureError\(env ErrorEnvelope\) bool](<#IsInfrastructureError>)
-- [func IsProviderError\(env ErrorEnvelope\) bool](<#IsProviderError>)
-- [func IsRetryableError\(env ErrorEnvelope\) bool](<#IsRetryableError>)
-- [func SerializeEnvelope\(env ErrorEnvelope\) \(\[\]byte, error\)](<#SerializeEnvelope>)
-- [func ValidateEnvelope1\(env \*InfrastructureError\) error](<#ValidateEnvelope1>)
-- [func ValidateEnvelope2\(env \*ProviderError\) error](<#ValidateEnvelope2>)
-- [func extractPreviewFromParts\(parts \[\]interface\{\}\) string](<#extractPreviewFromParts>)
-- [type ErrorEnvelope](<#ErrorEnvelope>)
-  - [func DeserializeEnvelope\(data \[\]byte\) \(ErrorEnvelope, error\)](<#DeserializeEnvelope>)
-- [type InfrastructureError](<#InfrastructureError>)
-  - [func CreateInfrastructureErrorFromConnectionError\(err error\) \*InfrastructureError](<#CreateInfrastructureErrorFromConnectionError>)
-  - [func NewFallbackError\(\) \*InfrastructureError](<#NewFallbackError>)
-  - [func NewInfrastructureError\(code string\) \*InfrastructureError](<#NewInfrastructureError>)
-  - [func \(e \*InfrastructureError\) GetSource\(\) string](<#InfrastructureError.GetSource>)
-  - [func \(e \*InfrastructureError\) ToJSON\(\) \(\[\]byte, error\)](<#InfrastructureError.ToJSON>)
-  - [func \(e \*InfrastructureError\) Validate\(\) error](<#InfrastructureError.Validate>)
-- [type ProviderError](<#ProviderError>)
-  - [func NewProviderError\(openCodeError map\[string\]interface\{\}\) \*ProviderError](<#NewProviderError>)
-  - [func ParseOpenCodeError\(eventData map\[string\]interface\{\}\) \*ProviderError](<#ParseOpenCodeError>)
-  - [func \(e \*ProviderError\) GetSource\(\) string](<#ProviderError.GetSource>)
-  - [func \(e \*ProviderError\) ToJSON\(\) \(\[\]byte, error\)](<#ProviderError.ToJSON>)
-  - [func \(e \*ProviderError\) Validate\(\) error](<#ProviderError.Validate>)
-- [type RelayService](<#RelayService>)
-  - [func NewRelayService\(app core.App, openCodeURL string\) \*RelayService](<#NewRelayService>)
-  - [func \(r \*RelayService\) Start\(\)](<#RelayService.Start>)
-  - [func \(r \*RelayService\) applyMessagePartDelta\(chatID, ocMsgID, partID, delta string\)](<#RelayService.applyMessagePartDelta>)
-  - [func \(r \*RelayService\) broadcastTextDelta\(chatID, partID, delta string\)](<#RelayService.broadcastTextDelta>)
-  - [func \(r \*RelayService\) broadcastToChat\(chatID string, eventName string, data interface\{\}\)](<#RelayService.broadcastToChat>)
-  - [func \(r \*RelayService\) checkForSubagentRegistration\(chatID string, parts \[\]interface\{\}\)](<#RelayService.checkForSubagentRegistration>)
-  - [func \(r \*RelayService\) deployAgent\(agent \*core.Record\)](<#RelayService.deployAgent>)
-  - [func \(r \*RelayService\) deployProposal\(proposal \*core.Record\)](<#RelayService.deployProposal>)
-  - [func \(r \*RelayService\) deploySealedSop\(sop \*core.Record\)](<#RelayService.deploySealedSop>)
-  - [func \(r \*RelayService\) ensureMessageRecord\(chatID, ocMsgID string, role string, part map\[string\]interface\{\}\) \(\*core.Record, error\)](<#RelayService.ensureMessageRecord>)
-  - [func \(r \*RelayService\) ensureSession\(chatID string\) \(string, error\)](<#RelayService.ensureSession>)
-  - [func \(r \*RelayService\) failAllActiveSessions\(envelope ErrorEnvelope\)](<#RelayService.failAllActiveSessions>)
-  - [func \(r \*RelayService\) getSortedParts\(ocMsgID string\) \[\]map\[string\]interface\{\}](<#RelayService.getSortedParts>)
-  - [func \(r \*RelayService\) handleErrorCompletion\(chatID string, pbMsgID string, envelope ErrorEnvelope\)](<#RelayService.handleErrorCompletion>)
-  - [func \(r \*RelayService\) handleHeartbeatTimeout\(\)](<#RelayService.handleHeartbeatTimeout>)
-  - [func \(r \*RelayService\) handleMessageCompletion\(chatID string, info map\[string\]interface\{\}\)](<#RelayService.handleMessageCompletion>)
-  - [func \(r \*RelayService\) handleMessageError\(infoData map\[string\]interface\{\}\)](<#RelayService.handleMessageError>)
-  - [func \(r \*RelayService\) handlePermissionAsked\(properties map\[string\]interface\{\}\)](<#RelayService.handlePermissionAsked>)
-  - [func \(r \*RelayService\) handleSessionError\(properties map\[string\]interface\{\}\)](<#RelayService.handleSessionError>)
-  - [func \(r \*RelayService\) handleSessionIdle\(sessionID string\)](<#RelayService.handleSessionIdle>)
-  - [func \(r \*RelayService\) handleStreamClosed\(\)](<#RelayService.handleStreamClosed>)
-  - [func \(r \*RelayService\) listenForEvents\(\)](<#RelayService.listenForEvents>)
-  - [func \(r \*RelayService\) monitorHeartbeat\(lastEventTime \*atomic.Int64\)](<#RelayService.monitorHeartbeat>)
-  - [func \(r \*RelayService\) notifyPoco\(serverName string, status string\)](<#RelayService.notifyPoco>)
-  - [func \(r \*RelayService\) processUserMessage\(msg \*core.Record\)](<#RelayService.processUserMessage>)
-  - [func \(r \*RelayService\) publishMessageSnapshot\(chatID, ocMsgID string\)](<#RelayService.publishMessageSnapshot>)
-  - [func \(r \*RelayService\) recoverMissedMessages\(\)](<#RelayService.recoverMissedMessages>)
-  - [func \(r \*RelayService\) registerAgentHooks\(\)](<#RelayService.registerAgentHooks>)
-  - [func \(r \*RelayService\) registerMcpHooks\(\)](<#RelayService.registerMcpHooks>)
-  - [func \(r \*RelayService\) registerMessageHooks\(\)](<#RelayService.registerMessageHooks>)
-  - [func \(r \*RelayService\) registerPermissionHooks\(\)](<#RelayService.registerPermissionHooks>)
-  - [func \(r \*RelayService\) registerSSHKeyHooks\(\)](<#RelayService.registerSSHKeyHooks>)
-  - [func \(r \*RelayService\) registerSopHooks\(\)](<#RelayService.registerSopHooks>)
-  - [func \(r \*RelayService\) registerSubagentInDB\(chatID, subagentID, terminalID string, tmuxWindowID int, agentProfile string\)](<#RelayService.registerSubagentInDB>)
-  - [func \(r \*RelayService\) renderMcpConfig\(\) error](<#RelayService.renderMcpConfig>)
-  - [func \(r \*RelayService\) replyToOpenCode\(requestID string, replyType string\)](<#RelayService.replyToOpenCode>)
-  - [func \(r \*RelayService\) resolveChatID\(sessionID string\) string](<#RelayService.resolveChatID>)
-  - [func \(r \*RelayService\) restartGateway\(\) error](<#RelayService.restartGateway>)
-  - [func \(r \*RelayService\) saveWithRetry\(record \*core.Record\) error](<#RelayService.saveWithRetry>)
-  - [func \(r \*RelayService\) scheduleSnapshotBroadcast\(chatID, ocMsgID string\)](<#RelayService.scheduleSnapshotBroadcast>)
-  - [func \(r \*RelayService\) startHealthMonitor\(\)](<#RelayService.startHealthMonitor>)
-  - [func \(r \*RelayService\) syncAllAgents\(\)](<#RelayService.syncAllAgents>)
-  - [func \(r \*RelayService\) syncAllProposals\(\)](<#RelayService.syncAllProposals>)
-  - [func \(r \*RelayService\) syncAllSops\(\)](<#RelayService.syncAllSops>)
-  - [func \(r \*RelayService\) syncMessageSnapshot\(chatID, ocMsgID string\)](<#RelayService.syncMessageSnapshot>)
-  - [func \(r \*RelayService\) syncSSHKeys\(\) error](<#RelayService.syncSSHKeys>)
-  - [func \(r \*RelayService\) updateHealthcheck\(status string\)](<#RelayService.updateHealthcheck>)
-  - [func \(r \*RelayService\) upsertMessagePart\(chatID string, part map\[string\]interface\{\}\)](<#RelayService.upsertMessagePart>)
-  - [func \(r \*RelayService\) withChatLock\(chatID string, fn func\(chat \*core.Record\) error\) error](<#RelayService.withChatLock>)
-
-
-## Constants
-
-<a name="ErrCodeConnectionFailed"></a>Error code constants for infrastructure errors.
-
-```go
-const (
-    ErrCodeConnectionFailed     = "connection_failed"
-    ErrCodeNetworkTimeout       = "network_timeout"
-    ErrCodeContainerUnreachable = "container_unreachable"
-    ErrCodeHeartbeatTimeout     = "heartbeat_timeout"
-    ErrCodeDockerNetworkTimeout = "docker_network_timeout"
-    ErrCodeStreamClosed         = "stream_closed"
-    ErrCodeInternalError        = "internal_error"
-)
-```
-
-<a name="mcpConfigPath"></a>
-
-```go
-const (
-    mcpConfigPath    = "/mcp_config/docker-mcp.yaml"
-    mcpSecretsPath   = "/mcp_config/mcp.env"
-    gatewayContainer = "pocketcoder-mcp-gateway"
-    dockerHost       = "tcp://docker-socket-proxy-write:2375"
-)
-```
-
-## Variables
-
-<a name="errorMessages"></a>Error code to human\-readable message mapping.
-
-```go
-var errorMessages = map[string]string{
-    ErrCodeConnectionFailed:     "Failed to connect to OpenCode container",
-    ErrCodeNetworkTimeout:       "Network request to OpenCode timed out",
-    ErrCodeContainerUnreachable: "OpenCode container is unreachable",
-    ErrCodeHeartbeatTimeout:     "No heartbeat received from OpenCode for 45+ seconds",
-    ErrCodeDockerNetworkTimeout: "Docker network connection failed",
-    ErrCodeStreamClosed:         "SSE stream from OpenCode closed unexpectedly",
-    ErrCodeInternalError:        "Internal relay error occurred",
-}
-```
-
-<a name="GetErrorCode"></a>
-## func GetErrorCode
-
-```go
-func GetErrorCode(env *InfrastructureError) string
-```
-
-GetErrorCode returns the error code from an InfrastructureError.
-
-<a name="GetErrorMessage"></a>
-## func GetErrorMessage
-
-```go
-func GetErrorMessage(env ErrorEnvelope) string
-```
-
-GetErrorMessage returns the error message from an error envelope.
-
-<a name="GetErrorName"></a>
-## func GetErrorName
-
-```go
-func GetErrorName(env *ProviderError) string
-```
-
-GetErrorName returns the error name from a ProviderError.
-
-<a name="GetResponseBody"></a>
-## func GetResponseBody
-
-```go
-func GetResponseBody(env *ProviderError) string
-```
-
-GetResponseBody returns the response body from a ProviderError.
-
-<a name="IsInfrastructureError"></a>
-## func IsInfrastructureError
-
-```go
-func IsInfrastructureError(env ErrorEnvelope) bool
-```
-
-IsInfrastructureError checks if the envelope is an infrastructure error.
-
-<a name="IsProviderError"></a>
-## func IsProviderError
-
-```go
-func IsProviderError(env ErrorEnvelope) bool
-```
-
-IsProviderError checks if the envelope is a provider error.
-
-<a name="IsRetryableError"></a>
-## func IsRetryableError
-
-```go
-func IsRetryableError(env ErrorEnvelope) bool
-```
-
-IsRetryableError checks if an error envelope indicates a retryable error.
-
-<a name="SerializeEnvelope"></a>
-## func SerializeEnvelope
-
-```go
-func SerializeEnvelope(env ErrorEnvelope) ([]byte, error)
-```
-
-SerializeEnvelope converts an error envelope to JSON.
-
-<a name="ValidateEnvelope1"></a>
-## func ValidateEnvelope1
-
-```go
-func ValidateEnvelope1(env *InfrastructureError) error
-```
-
-ValidateEnvelope1 validates an Envelope\_1 structure.
-
-<a name="ValidateEnvelope2"></a>
-## func ValidateEnvelope2
-
-```go
-func ValidateEnvelope2(env *ProviderError) error
-```
-
-ValidateEnvelope2 validates an Envelope\_2 structure.
-
-<a name="extractPreviewFromParts"></a>
-## func extractPreviewFromParts
-
-```go
-func extractPreviewFromParts(parts []interface{}) string
-```
-
-
-
-<a name="ErrorEnvelope"></a>
-## type ErrorEnvelope
-
-ErrorEnvelope is a union interface for both envelope types.
-
-```go
-type ErrorEnvelope interface {
-    GetSource() string
-    Validate() error
-    ToJSON() ([]byte, error)
-}
-```
-
-<a name="DeserializeEnvelope"></a>
-### func DeserializeEnvelope
-
-```go
-func DeserializeEnvelope(data []byte) (ErrorEnvelope, error)
-```
-
-DeserializeEnvelope parses JSON into an error envelope.
-
-<a name="InfrastructureError"></a>
-## type InfrastructureError
-
-InfrastructureError represents an Envelope\_1 error from the relay for infrastructure\-level failures \(Docker/network failures\).
-
-```go
-type InfrastructureError struct {
-    Source string `json:"source"` // Always "relay"
-    Error  struct {
-        Code    string `json:"code"`
-        Message string `json:"message"`
-    }   `json:"error"`
-}
-```
-
-<a name="CreateInfrastructureErrorFromConnectionError"></a>
-### func CreateInfrastructureErrorFromConnectionError
-
-```go
-func CreateInfrastructureErrorFromConnectionError(err error) *InfrastructureError
-```
-
-CreateInfrastructureErrorFromConnectionError creates an infrastructure error based on the type of connection error encountered.
-
-<a name="NewFallbackError"></a>
-### func NewFallbackError
-
-```go
-func NewFallbackError() *InfrastructureError
-```
-
-NewFallbackError creates a fallback Envelope\_1 with code "internal\_error".
-
-<a name="NewInfrastructureError"></a>
-### func NewInfrastructureError
-
-```go
-func NewInfrastructureError(code string) *InfrastructureError
-```
-
-NewInfrastructureError creates a new Envelope\_1 error with the given code.
-
-<a name="InfrastructureError.GetSource"></a>
-### func \(\*InfrastructureError\) GetSource
-
-```go
-func (e *InfrastructureError) GetSource() string
-```
-
-GetSource returns the source field of the envelope.
-
-<a name="InfrastructureError.ToJSON"></a>
-### func \(\*InfrastructureError\) ToJSON
-
-```go
-func (e *InfrastructureError) ToJSON() ([]byte, error)
-```
-
-ToJSON serializes the InfrastructureError to JSON.
-
-<a name="InfrastructureError.Validate"></a>
-### func \(\*InfrastructureError\) Validate
-
-```go
-func (e *InfrastructureError) Validate() error
-```
-
-Validate checks that the InfrastructureError has all required fields.
-
-<a name="ProviderError"></a>
-## type ProviderError
-
-ProviderError represents an Envelope\_2 error from OpenCode for provider\-level failures \(LLM/API failures\).
-
-```go
-type ProviderError struct {
-    Source string `json:"source"` // Always "opencode"
-    Error  struct {
-        Name         string `json:"name"`
-        Message      string `json:"message"`
-        ResponseBody string `json:"responseBody,omitempty"` // Stringified JSON to match OpenCode's Zod schema
-        IsRetryable  bool   `json:"isRetryable,omitempty"`  // Maps to OpenCode's APIError.isRetryable field
-    }   `json:"error"`
-}
-```
-
-<a name="NewProviderError"></a>
-### func NewProviderError
-
-```go
-func NewProviderError(openCodeError map[string]interface{}) *ProviderError
-```
-
-NewProviderError creates a new Envelope\_2 error by wrapping OpenCode error data. The responseBody is preserved as a string to match OpenCode's Zod schema.
-
-<a name="ParseOpenCodeError"></a>
-### func ParseOpenCodeError
-
-```go
-func ParseOpenCodeError(eventData map[string]interface{}) *ProviderError
-```
-
-ParseOpenCodeError parses an error from OpenCode's event data.
-
-<a name="ProviderError.GetSource"></a>
-### func \(\*ProviderError\) GetSource
-
-```go
-func (e *ProviderError) GetSource() string
-```
-
-GetSource returns the source field of the envelope.
-
-<a name="ProviderError.ToJSON"></a>
-### func \(\*ProviderError\) ToJSON
-
-```go
-func (e *ProviderError) ToJSON() ([]byte, error)
-```
-
-ToJSON serializes the ProviderError to JSON.
-
-<a name="ProviderError.Validate"></a>
-### func \(\*ProviderError\) Validate
-
-```go
-func (e *ProviderError) Validate() error
-```
-
-Validate checks that the ProviderError has all required fields.
-
-<a name="RelayService"></a>
-## type RelayService
-
-RelayService orchestrates communication between PocketBase and OpenCode
-
-```go
-type RelayService struct {
-    app           core.App
-    openCodeURL   string
-    lastHeartbeat atomic.Int64 // Unix timestamp
-    isReady       bool
-    chatMutexes   sync.Map // Map of chatID (string) -> *sync.Mutex for per-chat locking
-    msgMutexes    sync.Map // Map of ocMsgID (string) -> *sync.Mutex for per-message locking
-
-    // partCache stores parts for messages whose role hasn't been determined yet
-    // Key: ocMsgID (OpenCode message ID), Value: map of partID -> part data
-    partCache   map[string]map[string]interface{} // map[ocMsgID]map[partID]PartData
-    partCacheMu sync.RWMutex
-
-    // completedMessages tracks which messages have been flushed to prevent late arrivals
-    completedMessages   map[string]bool // map[ocMsgID]bool
-    completedMessagesMu sync.RWMutex
-
-    // sessionChatCache maps OpenCode session IDs (including subagents) to Chat IDs
-    sessionChatCache   map[string]string
-    sessionChatCacheMu sync.RWMutex
-
-    // brokerTimers manages the debouncing/batching of message snapshots for the realtime broker (50ms)
-    brokerTimers   map[string]*time.Timer // map[ocMsgID]*time.Timer
-    brokerTimersMu sync.Mutex
-
-    // dbTimers manages the debouncing of message snapshots to the database (1000ms)
-    dbTimers   map[string]*time.Timer // map[ocMsgID]*time.Timer
-    dbTimersMu sync.Mutex
-}
-```
-
-<a name="NewRelayService"></a>
-### func NewRelayService
-
-```go
-func NewRelayService(app core.App, openCodeURL string) *RelayService
-```
-
-NewRelayService creates a new Relay instance
-
-<a name="RelayService.Start"></a>
-### func \(\*RelayService\) Start
-
-```go
-func (r *RelayService) Start()
-```
-
-Start begins the relay's background processes: 1. Permission Listener \(SSE\) 2. Message Pump \(Hooks\) 3. Agent Sync \(Hooks\) 4. Health Monitor Watchdog
-
-<a name="RelayService.applyMessagePartDelta"></a>
-### func \(\*RelayService\) applyMessagePartDelta
-
-```go
-func (r *RelayService) applyMessagePartDelta(chatID, ocMsgID, partID, delta string)
-```
-
-applyMessagePartDelta handles a "message.part.delta" SSE event for real\-time text streaming.
-
-<a name="RelayService.broadcastTextDelta"></a>
-### func \(\*RelayService\) broadcastTextDelta
-
-```go
-func (r *RelayService) broadcastTextDelta(chatID, partID, delta string)
-```
-
-broadcastTextDelta defines a shortcut for the text\_delta event stream
-
-<a name="RelayService.broadcastToChat"></a>
-### func \(\*RelayService\) broadcastToChat
-
-```go
-func (r *RelayService) broadcastToChat(chatID string, eventName string, data interface{})
-```
-
-broadcastToChat pushes JSON events to connected realtime clients subscribed to "chats:\{chatID\}".
-
-<a name="RelayService.checkForSubagentRegistration"></a>
-### func \(\*RelayService\) checkForSubagentRegistration
-
-```go
-func (r *RelayService) checkForSubagentRegistration(chatID string, parts []interface{})
-```
-
-
-
-<a name="RelayService.deployAgent"></a>
-### func \(\*RelayService\) deployAgent
-
-```go
-func (r *RelayService) deployAgent(agent *core.Record)
-```
-
-deployAgent writes the agent configuration to the filesystem for OpenCode to consume.
-
-<a name="RelayService.deployProposal"></a>
-### func \(\*RelayService\) deployProposal
-
-```go
-func (r *RelayService) deployProposal(proposal *core.Record)
-```
-
-deployProposal writes drafts to the .opencode/proposals directory
-
-<a name="RelayService.deploySealedSop"></a>
-### func \(\*RelayService\) deploySealedSop
-
-```go
-func (r *RelayService) deploySealedSop(sop *core.Record)
-```
-
-deploySealedSop writes final SOPs to the native .opencode/skills mount
-
-<a name="RelayService.ensureMessageRecord"></a>
-### func \(\*RelayService\) ensureMessageRecord
-
-```go
-func (r *RelayService) ensureMessageRecord(chatID, ocMsgID string, role string, part map[string]interface{}) (*core.Record, error)
-```
-
-ensureMessageRecord finds or creates a message record safely.
-
-<a name="RelayService.ensureSession"></a>
-### func \(\*RelayService\) ensureSession
-
-```go
-func (r *RelayService) ensureSession(chatID string) (string, error)
-```
-
-
-
-<a name="RelayService.failAllActiveSessions"></a>
-### func \(\*RelayService\) failAllActiveSessions
-
-```go
-func (r *RelayService) failAllActiveSessions(envelope ErrorEnvelope)
-```
-
-failAllActiveSessions queries all messages with status="processing" and marks them as failed with the provided error envelope. This is used by handleHeartbeatTimeout and handleStreamClosed to fail all sessions when connection to OpenCode is lost. Requirements: 1.2, 7.1
-
-<a name="RelayService.getSortedParts"></a>
-### func \(\*RelayService\) getSortedParts
-
-```go
-func (r *RelayService) getSortedParts(ocMsgID string) []map[string]interface{}
-```
-
-getSortedParts safely extracts and sorts parts from the in\-memory cache
-
-<a name="RelayService.handleErrorCompletion"></a>
-### func \(\*RelayService\) handleErrorCompletion
-
-```go
-func (r *RelayService) handleErrorCompletion(chatID string, pbMsgID string, envelope ErrorEnvelope)
-```
-
-
-
-<a name="RelayService.handleHeartbeatTimeout"></a>
-### func \(\*RelayService\) handleHeartbeatTimeout
-
-```go
-func (r *RelayService) handleHeartbeatTimeout()
-```
-
-
-
-<a name="RelayService.handleMessageCompletion"></a>
-### func \(\*RelayService\) handleMessageCompletion
-
-```go
-func (r *RelayService) handleMessageCompletion(chatID string, info map[string]interface{})
-```
-
-handleMessageCompletion handles a "message.updated" SSE event. It performs a final authoritative sync from the partCache to the database.
-
-<a name="RelayService.handleMessageError"></a>
-### func \(\*RelayService\) handleMessageError
-
-```go
-func (r *RelayService) handleMessageError(infoData map[string]interface{})
-```
-
-
-
-<a name="RelayService.handlePermissionAsked"></a>
-### func \(\*RelayService\) handlePermissionAsked
-
-```go
-func (r *RelayService) handlePermissionAsked(properties map[string]interface{})
-```
-
-handlePermissionAsked is triggered when OpenCode sends a 'permission.asked' event via SSE
-
-<a name="RelayService.handleSessionError"></a>
-### func \(\*RelayService\) handleSessionError
-
-```go
-func (r *RelayService) handleSessionError(properties map[string]interface{})
-```
-
-
-
-<a name="RelayService.handleSessionIdle"></a>
-### func \(\*RelayService\) handleSessionIdle
-
-```go
-func (r *RelayService) handleSessionIdle(sessionID string)
-```
-
-handleSessionIdle flips the turn back to the user and triggers the pump
-
-<a name="RelayService.handleStreamClosed"></a>
-### func \(\*RelayService\) handleStreamClosed
-
-```go
-func (r *RelayService) handleStreamClosed()
-```
-
-
-
-<a name="RelayService.listenForEvents"></a>
-### func \(\*RelayService\) listenForEvents
-
-```go
-func (r *RelayService) listenForEvents()
-```
-
-listenForEvents connects to OpenCode SSE stream and handles all incoming events.
-
-<a name="RelayService.monitorHeartbeat"></a>
-### func \(\*RelayService\) monitorHeartbeat
-
-```go
-func (r *RelayService) monitorHeartbeat(lastEventTime *atomic.Int64)
-```
-
-monitorHeartbeat monitors the time since the last event was received from OpenCode. If no events are received for more than 45 seconds, it triggers handleHeartbeatTimeout in a goroutine to avoid blocking the monitor.
-
-<a name="RelayService.notifyPoco"></a>
-### func \(\*RelayService\) notifyPoco
-
-```go
-func (r *RelayService) notifyPoco(serverName string, status string)
-```
-
-notifyPoco sends a system message to Poco via the relay about MCP server status changes
-
-<a name="RelayService.processUserMessage"></a>
-### func \(\*RelayService\) processUserMessage
-
-```go
-func (r *RelayService) processUserMessage(msg *core.Record)
-```
-
-processUserMessage sends a user message to OpenCode.
-
-<a name="RelayService.publishMessageSnapshot"></a>
-### func \(\*RelayService\) publishMessageSnapshot
-
-```go
-func (r *RelayService) publishMessageSnapshot(chatID, ocMsgID string)
-```
-
-publishMessageSnapshot sends a full snapshot via SubscriptionsBroker \(Memory Speed\)
-
-<a name="RelayService.recoverMissedMessages"></a>
-### func \(\*RelayService\) recoverMissedMessages
-
-```go
-func (r *RelayService) recoverMissedMessages()
-```
-
-recoverMissedMessages checks for user messages that were not processed.
-
-<a name="RelayService.registerAgentHooks"></a>
-### func \(\*RelayService\) registerAgentHooks
-
-```go
-func (r *RelayService) registerAgentHooks()
-```
-
-
-
-<a name="RelayService.registerMcpHooks"></a>
-### func \(\*RelayService\) registerMcpHooks
-
-```go
-func (r *RelayService) registerMcpHooks()
-```
-
-registerMcpHooks registers hooks for MCP server lifecycle management
-
-<a name="RelayService.registerMessageHooks"></a>
-### func \(\*RelayService\) registerMessageHooks
-
-```go
-func (r *RelayService) registerMessageHooks()
-```
-
-
-
-<a name="RelayService.registerPermissionHooks"></a>
-### func \(\*RelayService\) registerPermissionHooks
-
-```go
-func (r *RelayService) registerPermissionHooks()
-```
-
-
-
-<a name="RelayService.registerSSHKeyHooks"></a>
-### func \(\*RelayService\) registerSSHKeyHooks
-
-```go
-func (r *RelayService) registerSSHKeyHooks()
-```
-
-
-
-<a name="RelayService.registerSopHooks"></a>
-### func \(\*RelayService\) registerSopHooks
-
-```go
-func (r *RelayService) registerSopHooks()
-```
-
-
-
-<a name="RelayService.registerSubagentInDB"></a>
-### func \(\*RelayService\) registerSubagentInDB
-
-```go
-func (r *RelayService) registerSubagentInDB(chatID, subagentID, terminalID string, tmuxWindowID int, agentProfile string)
-```
-
-
-
-<a name="RelayService.renderMcpConfig"></a>
-### func \(\*RelayService\) renderMcpConfig
-
-```go
-func (r *RelayService) renderMcpConfig() error
-```
-
-renderMcpConfig queries approved MCP servers and writes docker\-mcp.yaml to the shared mcp\_config volume. This file serves as a custom catalog for the gateway.
-
-The gateway starts with \-\-catalog pointing to this file. Subagents connect to the gateway SSE and use Dynamic MCP tools \(mcp\-find, mcp\-add\) to discover and add servers from this catalog on\-demand. The gateway spins up containers automatically when a subagent calls mcp\-add.
-
-Poco also reads this file \(mounted read\-only at /mcp\_config\) to know what servers are currently approved before requesting new ones.
-
-Format matches docker/mcp\-gateway catalog expectations:
-
-```
-registry:
-  <name>:
-    title: <Name>
-    description: Approved by user for PocketCoder
-    type: server
-    image: mcp/<name>
-```
-
-<a name="RelayService.replyToOpenCode"></a>
-### func \(\*RelayService\) replyToOpenCode
-
-```go
-func (r *RelayService) replyToOpenCode(requestID string, replyType string)
-```
-
-
-
-<a name="RelayService.resolveChatID"></a>
-### func \(\*RelayService\) resolveChatID
-
-```go
-func (r *RelayService) resolveChatID(sessionID string) string
-```
-
-resolveChatID attempts to find a chat associated with an ai\_engine\_session\_id \(OpenCode session ID\) or a subagent\_id. Retries with exponential backoff to handle race conditions.
-
-<a name="RelayService.restartGateway"></a>
-### func \(\*RelayService\) restartGateway
-
-```go
-func (r *RelayService) restartGateway() error
-```
-
-restartGateway sends a restart command to the Docker gateway container via the Docker Socket Proxy
-
-<a name="RelayService.saveWithRetry"></a>
-### func \(\*RelayService\) saveWithRetry
-
-```go
-func (r *RelayService) saveWithRetry(record *core.Record) error
-```
-
-saveWithRetry handles database save operations with an exponential backoff retry for referential integrity errors \(race conditions during chat/message creation\).
-
-<a name="RelayService.scheduleSnapshotBroadcast"></a>
-### func \(\*RelayService\) scheduleSnapshotBroadcast
-
-```go
-func (r *RelayService) scheduleSnapshotBroadcast(chatID, ocMsgID string)
-```
-
-scheduleSnapshotBroadcast debounces snapshots to provide a smooth, ordered UI experience \(Broker\) and handles reliable, lower\-frequency disk syncs.
-
-<a name="RelayService.startHealthMonitor"></a>
-### func \(\*RelayService\) startHealthMonitor
-
-```go
-func (r *RelayService) startHealthMonitor()
-```
-
-
-
-<a name="RelayService.syncAllAgents"></a>
-### func \(\*RelayService\) syncAllAgents
-
-```go
-func (r *RelayService) syncAllAgents()
-```
-
-syncAllAgents performs an initial deployment of all agents in the registry.
-
-<a name="RelayService.syncAllProposals"></a>
-### func \(\*RelayService\) syncAllProposals
-
-```go
-func (r *RelayService) syncAllProposals()
-```
-
-
-
-<a name="RelayService.syncAllSops"></a>
-### func \(\*RelayService\) syncAllSops
-
-```go
-func (r *RelayService) syncAllSops()
-```
-
-
-
-<a name="RelayService.syncMessageSnapshot"></a>
-### func \(\*RelayService\) syncMessageSnapshot
-
-```go
-func (r *RelayService) syncMessageSnapshot(chatID, ocMsgID string)
-```
-
-syncMessageSnapshot performs authoritative DB persistence \(Disk Speed\)
-
-<a name="RelayService.syncSSHKeys"></a>
-### func \(\*RelayService\) syncSSHKeys
-
-```go
-func (r *RelayService) syncSSHKeys() error
-```
-
-
-
-<a name="RelayService.updateHealthcheck"></a>
-### func \(\*RelayService\) updateHealthcheck
-
-```go
-func (r *RelayService) updateHealthcheck(status string)
-```
-
-
-
-<a name="RelayService.upsertMessagePart"></a>
-### func \(\*RelayService\) upsertMessagePart
-
-```go
-func (r *RelayService) upsertMessagePart(chatID string, part map[string]interface{})
-```
-
-upsertMessagePart handles a "message.part.updated" SSE event. It buffers parts in memory \(partCache\) and broadcasts them without blocking for DB writes.
-
-<a name="RelayService.withChatLock"></a>
-### func \(\*RelayService\) withChatLock
-
-```go
-func (r *RelayService) withChatLock(chatID string, fn func(chat *core.Record) error) error
-```
-
-withChatLock ensures that chat record updates are atomic and thread\-safe.
 
 Generated by [gomarkdoc](<https://github.com/princjef/gomarkdoc>)

@@ -1,0 +1,15 @@
+/* PocketCoder terminal green accent — matches Flutter app palette */
+:root {
+  --sl-color-accent-low: #003b00;      /* Trace Green */
+  --sl-color-accent: #00b82a;          /* Phosphor Green */
+  --sl-color-accent-high: #b3ffb3;     /* Light green for dark-on-light text */
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #003b00;
+  --sl-color-accent: #00ff41;          /* Vivid Green — full intensity in dark mode */
+  --sl-color-accent-high: #b3ffb3;
+  --sl-color-bg-nav: #0a0a0a;
+  --sl-color-bg-sidebar: #0a0a0a;
+  --sl-color-black: #050505;
+}

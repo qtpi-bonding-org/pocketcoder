@@ -1,7 +1,7 @@
 #!/bin/bash
 # scripts/legal_seal.sh
 # @pocketcoder-core: Legal Seal. Ensures all tagged files have the AGPLv3 license header.
-# This script is strictly surgical: ONLY Bash, Go, and Rust in core directories.
+# This script is strictly surgical: ONLY Bash, Go, Rust, and TypeScript in core directories.
 
 set -e
 
@@ -28,14 +28,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>."
 
 # Configuration
 TAG="@pocketcoder-core"
-CORE_DIRS=("backend" "proxy" "sandbox" "scripts" "test")
+CORE_DIRS=("backend" "proxy" "sandbox" "scripts" "test" "services/pocketbase" "services/proxy" "services/sandbox" "services/opencode" "services/interface" "services/mcp-gateway")
 ROOT_FILES=("genesis.sh" "deploy.sh")
 
 if [ "$CHECK_MODE" = true ]; then
-    echo "🔍 Verifying Legal Seals (Strict Mode: Bash, Go, Rust)..."
+    echo "🔍 Verifying Legal Seals (Strict Mode: Bash, Go, Rust, TypeScript)..."
     MISSING_COUNT=0
 else
-    echo "🛡️  Applying Legal Seals (Strict Mode: Bash, Go, Rust)..."
+    echo "🛡️  Applying Legal Seals (Strict Mode: Bash, Go, Rust, TypeScript)..."
 fi
 
 seal_file() {
@@ -68,7 +68,7 @@ seal_file() {
             echo "$LICENSE_TEXT" | sed 's/^/# /' > "$HEADER_FILE"
             echo "" >> "$HEADER_FILE"
             ;;
-        go|rs)
+        go|rs|ts)
             echo "/*" > "$HEADER_FILE"
             echo "$LICENSE_TEXT" >> "$HEADER_FILE"
             echo "*/" >> "$HEADER_FILE"
@@ -103,9 +103,9 @@ seal_file() {
 # Collect and process candidates with path-level exclusions
 for DIR in "${CORE_DIRS[@]}"; do
     if [ -d "$DIR" ]; then
-        # Find ONLY .sh, .go, .rs files
-        # Skip 'sandbox/cao' and other noise directories at the find level
-        find "$DIR" -path "*/sandbox/cao" -prune -o -type f \( -name "*.go" -o -name "*.rs" -o -name "*.sh" \) -print | while read -r f; do
+        # Find ONLY .sh, .go, .rs, .ts files
+        # Skip 'sandbox/cao', node_modules, and other noise directories at the find level
+        find "$DIR" -path "*/sandbox/cao" -prune -o -path "*/node_modules" -prune -o -type f \( -name "*.go" -o -name "*.rs" -o -name "*.sh" -o -name "*.ts" \) -print | while read -r f; do
             seal_file "$f"
         done
     fi
