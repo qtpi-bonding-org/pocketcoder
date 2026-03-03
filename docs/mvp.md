@@ -58,12 +58,12 @@ Full notification pipeline is implemented end-to-end: trigger → presence check
 
 | Item | Status | What's needed |
 |------|--------|---------------|
-| API key management (save/delete per provider) | Done (Backend + Flutter plumbing) | **Flutter UI screen needed** |
-| Browse available providers and models | Done (Backend + Flutter plumbing) | **Flutter UI screen needed** |
-| Model switching (global default) | Done (Backend + Flutter plumbing) | **Flutter UI screen needed** |
-| Model switching (per-chat) | Done (Backend + Flutter plumbing) | **Flutter UI screen needed** |
+| API key management (save/delete per provider) | Done | - |
+| Browse available providers and models | Done | - |
+| Model switching (global default) | Done | - |
+| Model switching (per-chat) | Done | - |
 
-Backend is fully tested (23 BATS tests). Flutter data layer is wired (LlmKeyDao, LlmProviderDao, LlmConfigDao, LlmRepository, LlmCubit). Only UI screens remain.
+Backend is fully tested (23 BATS tests). Full stack: LlmKeyDao, LlmProviderDao, ModelSelectionDao, LlmRepository, LlmCubit → LlmManagementScreen (key CRUD, provider browser, global model picker) + per-chat model selector in ChatScreen.
 
 ### 6. MCP Server Management
 
@@ -123,20 +123,17 @@ DONE (plumbing complete):
   [x] MCP: approve/deny/view servers
   [x] System health: container status
   [x] Observability: container metrics
-  [x] Whitelist: action rules + targets
+  [x] Whitelist: tool permissions + targets
   [x] SSH terminal
   [x] ntfy device registration
   [x] Notification deep linking (type + chat routing)
   [x] Notification rules (opt-out per type)
   [x] Push API for interface service
   [x] LLM data layer (DAOs, repository, cubit)
+  [x] LLM management screen (key CRUD, provider browser, model picker)
+  [x] Per-chat model selector in chat screen
   [x] PB schema → Dart model generation pipeline
   [x] Collections constants generated from schema
-
-NEEDS UI SCREENS (plumbing done, just presentation):
-  [ ] LLM keys: Flutter screen for managing API keys
-  [ ] LLM providers: Flutter screen for browsing providers/models
-  [ ] LLM config: Flutter UI for model switching (global + per-chat)
 
 VERIFY (e2e testing):
   [ ] Notifications: permission → ntfy push → phone → tap deep link → app opens to right screen
@@ -151,6 +148,5 @@ VERIFY (e2e testing):
 
 **Backend: Done.** All Go hooks, interface service features, PocketBase collections, notification dispatch, and Docker infrastructure are built and tested.
 
-**Remaining work is Flutter UI only:**
-1. **Three LLM management screens** — key CRUD, provider/model browser, model switcher. The data layer (DAOs, repository, cubit) is wired. Just need presentation widgets bound to `LlmCubit`.
-2. **E2e verification** — deploy → connect → chat → permission → notification → tap deep link → app opens to right chat → approve → agent continues.
+**Remaining work is e2e verification only:**
+1. **E2e verification** — deploy → connect → chat → permission → notification → tap deep link → app opens to right chat → approve → agent continues.
