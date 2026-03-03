@@ -7,14 +7,13 @@ import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart';
 import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
 class PermissionRelayScreen extends StatelessWidget {
   const PermissionRelayScreen({super.key});
@@ -36,19 +35,10 @@ class PermissionRelayView extends StatelessWidget {
     return UiFlowListener<BillingCubit, BillingState>(
       child: BlocBuilder<BillingCubit, BillingState>(
         builder: (context, state) {
-          final colors = context.colorScheme;
-          return TerminalScaffold(
+          return PocketCoderShell(
             title: 'PERMISSION RELAY',
-            actions: [
-              TerminalAction(
-                label: 'RESTORE',
-                onTap: () => context.read<BillingCubit>().restorePurchases(),
-              ),
-              TerminalAction(
-                label: 'BACK',
-                onTap: () => Navigator.of(context).pop(),
-              ),
-            ],
+            activePillar: NavPillar.configure,
+            showBack: true,
             body: BiosFrame(
               title: 'RELAY SUBSYSTEM',
               child: SingleChildScrollView(
@@ -56,6 +46,16 @@ class PermissionRelayView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Inline RESTORE button
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TerminalButton(
+                        label: 'RESTORE',
+                        onTap: () =>
+                            context.read<BillingCubit>().restorePurchases(),
+                      ),
+                    ),
+                    VSpace.x2,
                     if (state.isLoading)
                       const Center(
                         child: TerminalLoadingIndicator(
@@ -71,7 +71,7 @@ class PermissionRelayView extends StatelessWidget {
                       'FUNCTIONAL OVERVIEW:',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: colors.onSurface,
+                        color: context.colorScheme.onSurface,
                         package: 'pocketcoder_flutter',
                       ),
                     ),
@@ -79,7 +79,8 @@ class PermissionRelayView extends StatelessWidget {
                       'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.',
                       style: TextStyle(
                         fontSize: AppSizes.fontMini,
-                        color: colors.onSurface.withValues(alpha: 0.7),
+                        color: context.colorScheme.onSurface
+                            .withValues(alpha: 0.7),
                         package: 'pocketcoder_flutter',
                       ),
                     ),

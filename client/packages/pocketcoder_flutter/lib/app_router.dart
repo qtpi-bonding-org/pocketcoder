@@ -14,6 +14,7 @@ import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart'
 import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
+import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/auth/auth_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/config_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/progress_screen.dart';
@@ -30,6 +31,21 @@ class AppRouter {
 
   static final GoRouter _router = GoRouter(
     initialLocation: AppRoutes.boot,
+    redirect: (context, state) {
+      final loc = state.matchedLocation;
+      // Redirect / → /chats
+      if (loc == '/') return AppRoutes.chats;
+      // Legacy redirects
+      if (loc == '/settings') return AppRoutes.configure;
+      if (loc == '/settings/ai') return AppRoutes.configureAi;
+      if (loc == '/settings/whitelist') return AppRoutes.configureWhitelist;
+      if (loc == '/mcp') return AppRoutes.configureMcp;
+      if (loc == '/sop') return AppRoutes.configureSop;
+      if (loc == '/system-checks') return AppRoutes.configureSystemChecks;
+      if (loc == '/paywall') return AppRoutes.configurePaywall;
+      if (loc == '/observability') return AppRoutes.configureObservability;
+      return null;
+    },
     routes: [
       GoRoute(
         path: AppRoutes.boot,
@@ -49,9 +65,10 @@ class AppRouter {
           child: const OnboardingScreen(),
         ),
       ),
+      // ── CHATS pillar ──
       GoRoute(
-        path: AppRoutes.home,
-        name: RouteNames.home,
+        path: AppRoutes.chats,
+        name: RouteNames.chats,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -71,6 +88,15 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: AppRoutes.terminal,
+        name: RouteNames.terminal,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const TerminalScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.artifact,
         name: RouteNames.artifact,
         pageBuilder: (context, state) {
@@ -82,9 +108,20 @@ class AppRouter {
           );
         },
       ),
+      // ── MONITOR pillar ──
       GoRoute(
-        path: AppRoutes.settings,
-        name: RouteNames.settings,
+        path: AppRoutes.monitor,
+        name: RouteNames.monitor,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const MonitorScreen(),
+        ),
+      ),
+      // ── CONFIGURE pillar ──
+      GoRoute(
+        path: AppRoutes.configure,
+        name: RouteNames.configure,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -92,8 +129,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.aiRegistry,
-        name: RouteNames.aiRegistry,
+        path: AppRoutes.configureAi,
+        name: RouteNames.configureAi,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -101,8 +138,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.whitelist,
-        name: RouteNames.whitelist,
+        path: AppRoutes.configureWhitelist,
+        name: RouteNames.configureWhitelist,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -110,26 +147,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.terminal,
-        name: RouteNames.terminal,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const TerminalScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.agentObservability,
-        name: RouteNames.agentObservability,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const AgentObservabilityScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.mcpManagement,
-        name: RouteNames.mcpManagement,
+        path: AppRoutes.configureMcp,
+        name: RouteNames.configureMcp,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -137,8 +156,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.sopManagement,
-        name: RouteNames.sopManagement,
+        path: AppRoutes.configureSop,
+        name: RouteNames.configureSop,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -146,8 +165,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.systemChecks,
-        name: RouteNames.systemChecks,
+        path: AppRoutes.configureSystemChecks,
+        name: RouteNames.configureSystemChecks,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -155,12 +174,21 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.paywall,
-        name: RouteNames.paywall,
+        path: AppRoutes.configurePaywall,
+        name: RouteNames.configurePaywall,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
           child: const PermissionRelayScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.configureObservability,
+        name: RouteNames.configureObservability,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const AgentObservabilityScreen(),
         ),
       ),
       // Deployment routes
@@ -214,15 +242,29 @@ class AppRouter {
 
 class AppRoutes {
   AppRoutes._();
+  // Pillar routes
+  static const String chats = '/chats';
+  static const String monitor = '/monitor';
+  static const String configure = '/configure';
+  // Legacy alias — redirects to /chats
   static const String home = '/';
   static const String chat = '/chat';
-  static const String settings = '/settings';
   static const String onboarding = '/onboarding';
   static const String boot = '/boot';
   static const String artifact = '/artifacts';
+  static const String terminal = '/terminal';
+  // Configure sub-routes
+  static const String configureAi = '/configure/ai';
+  static const String configureWhitelist = '/configure/whitelist';
+  static const String configureMcp = '/configure/mcp';
+  static const String configureSop = '/configure/sop';
+  static const String configureSystemChecks = '/configure/system-checks';
+  static const String configurePaywall = '/configure/paywall';
+  static const String configureObservability = '/configure/observability';
+  // Legacy aliases (redirected)
+  static const String settings = '/settings';
   static const String aiRegistry = '/settings/ai';
   static const String whitelist = '/settings/whitelist';
-  static const String terminal = '/terminal';
   static const String agentObservability = '/observability';
   static const String mcpManagement = '/mcp';
   static const String sopManagement = '/sop';
@@ -237,20 +279,33 @@ class AppRoutes {
 
 class RouteNames {
   RouteNames._();
-  static const String home = 'home';
+  static const String chats = 'chats';
+  static const String monitor = 'monitor';
+  static const String configure = 'configure';
+  // Legacy alias
+  static const String home = 'chats';
   static const String chat = 'chat';
-  static const String settings = 'settings';
+  static const String settings = 'configure';
   static const String onboarding = 'onboarding';
   static const String boot = 'boot';
   static const String artifact = 'artifact';
-  static const String aiRegistry = 'aiRegistry';
-  static const String whitelist = 'whitelist';
   static const String terminal = 'terminal';
-  static const String agentObservability = 'agentObservability';
-  static const String mcpManagement = 'mcpManagement';
-  static const String sopManagement = 'sopManagement';
-  static const String systemChecks = 'systemChecks';
-  static const String paywall = 'paywall';
+  // Configure sub-routes
+  static const String configureAi = 'configureAi';
+  static const String configureWhitelist = 'configureWhitelist';
+  static const String configureMcp = 'configureMcp';
+  static const String configureSop = 'configureSop';
+  static const String configureSystemChecks = 'configureSystemChecks';
+  static const String configurePaywall = 'configurePaywall';
+  static const String configureObservability = 'configureObservability';
+  // Legacy aliases
+  static const String aiRegistry = 'configureAi';
+  static const String whitelist = 'configureWhitelist';
+  static const String agentObservability = 'configureObservability';
+  static const String mcpManagement = 'configureMcp';
+  static const String sopManagement = 'configureSop';
+  static const String systemChecks = 'configureSystemChecks';
+  static const String paywall = 'configurePaywall';
   // Deployment route names
   static const String auth = 'auth';
   static const String config = 'config';
@@ -261,17 +316,19 @@ class RouteNames {
 class AppNavigation {
   AppNavigation._();
 
-  static void toHome(BuildContext context) => context.goNamed(RouteNames.home);
+  static void toHome(BuildContext context) => context.go(AppRoutes.chats);
   static void toChat(BuildContext context, String chatId) =>
-      context.goNamed(RouteNames.chat, pathParameters: {'chatId': chatId});
+      context.go('${AppRoutes.chat}/$chatId');
   static void toNewChat(BuildContext context) =>
-      context.goNamed(RouteNames.chat, pathParameters: {'chatId': 'new'});
+      context.go('${AppRoutes.chat}/new');
   static void toSettings(BuildContext context) =>
-      context.pushNamed(RouteNames.settings);
+      context.go(AppRoutes.configure);
   static void toWhitelist(BuildContext context) =>
-      context.pushNamed(RouteNames.whitelist);
+      context.push(AppRoutes.configureWhitelist);
   static void toPaywall(BuildContext context) =>
-      context.pushNamed(RouteNames.paywall);
+      context.push(AppRoutes.configurePaywall);
+  static void toMonitor(BuildContext context) =>
+      context.go(AppRoutes.monitor);
 
   // Deployment navigation
   static void toAuth(BuildContext context) =>

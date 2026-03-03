@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 
 class McpManagementScreen extends StatelessWidget {
@@ -34,18 +32,10 @@ class _McpManagementView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TerminalScaffold(
+    return PocketCoderShell(
       title: 'MCP MANAGEMENT',
-      actions: [
-        TerminalAction(
-          label: 'BACK',
-          onTap: () => context.pop(),
-        ),
-        TerminalAction(
-          label: 'ADD NEW',
-          onTap: () {}, // TODO: Implement add new MCP
-        ),
-      ],
+      activePillar: NavPillar.configure,
+      showBack: true,
       body: BiosFrame(
         title: 'CAPABILITIES REGISTRY',
         child: BlocBuilder<McpCubit, McpState>(
@@ -62,6 +52,14 @@ class _McpManagementView extends StatelessWidget {
 
                 return ListView(
                   children: [
+                    // Inline ADD NEW button
+                    Padding(
+                      padding: EdgeInsets.all(AppSizes.space),
+                      child: TerminalButton(
+                        label: 'ADD NEW',
+                        onTap: () {}, // TODO: Implement add new MCP
+                      ),
+                    ),
                     if (pending.isNotEmpty)
                       BiosSection(
                         title: 'PENDING APPROVAL',

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import '../../app_router.dart';
@@ -30,19 +28,10 @@ class _HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ChatListCubit, ChatListState>(
       builder: (context, state) {
-        return TerminalScaffold(
-          title: 'POCKETCODER HOME',
-          actions: [
-            TerminalAction(
-              label: 'SETTINGS',
-              onTap: () => AppNavigation.toSettings(context),
-            ),
-            TerminalAction(
-              label: 'LOGOUT',
-              onTap: () => context
-                  .goNamed(RouteNames.boot), // Or auth route depending on flow
-            ),
-          ],
+        return PocketCoderShell(
+          title: 'CHATS',
+          activePillar: NavPillar.chats,
+          showBack: false,
           body: _buildBody(context, state),
         );
       },

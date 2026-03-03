@@ -1,33 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
-import 'package:go_router/go_router.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 class SopManagementScreen extends StatelessWidget {
   const SopManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return TerminalScaffold(
+    return PocketCoderShell(
       title: 'SOP MANAGEMENT',
-      actions: [
-        TerminalAction(
-          label: 'BACK',
-          onTap: () => context.pop(),
-        ),
-        TerminalAction(
-          label: 'NEW PROPOSAL',
-          onTap: () {},
-        ),
-      ],
+      activePillar: NavPillar.configure,
+      showBack: true,
       body: BiosFrame(
         title: 'PROJECT PROCEDURES',
         child: ListView(
           padding: EdgeInsets.all(AppSizes.space),
           children: [
+            // Inline NEW PROPOSAL button
+            TerminalButton(
+              label: 'NEW PROPOSAL',
+              onTap: () {},
+            ),
+            VSpace.x2,
             BiosSection(
               title: 'ACTIVE PROCEDURES',
               child: Column(

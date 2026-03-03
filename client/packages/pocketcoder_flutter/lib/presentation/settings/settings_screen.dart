@@ -5,10 +5,9 @@ import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import '../../app_router.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -21,98 +20,106 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   int _selectedIndex = 0;
 
-  final List<(String, String)> _options = [
-    ('AGENT OBSERVABILITY', '[MANAGE]'),
-    ('MCP MANAGEMENT', '[CONFIGURE]'),
-    ('SOP MANAGEMENT', '[LIBRARY]'),
-    ('SYSTEM CHECKS', '[DIAGNOSE]'),
-    ('WHITELIST RULES', '[SETUP]'),
-    ('AGENT REGISTRY', '[MODELS]'),
-    ('THEME', '[PHOSPHOR GREEN]'),
-    ('PERMISSION RELAY', '[STATUS]'),
+  // Grouped configuration sections
+  static const _sections = <(String, List<(String, String, String)>)>[
+    ('AI & AGENTS', [
+      ('AGENT REGISTRY', '[MODELS]', 'configureAi'),
+    ]),
+    ('SECURITY', [
+      ('TOOL PERMISSIONS', '[SETUP]', 'configureWhitelist'),
+      ('MCP MANAGEMENT', '[CONFIGURE]', 'configureMcp'),
+    ]),
+    ('GOVERNANCE', [
+      ('SOP MANAGEMENT', '[LIBRARY]', 'configureSop'),
+    ]),
+    ('SYSTEM', [
+      ('SYSTEM CHECKS', '[DIAGNOSE]', 'configureSystemChecks'),
+      ('PERMISSION RELAY', '[STATUS]', 'configurePaywall'),
+    ]),
+    ('OBSERVABILITY', [
+      ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
+    ]),
   ];
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    return TerminalScaffold(
-      title: 'SYSTEM SETUP UTILITY',
-      actions: [
-        TerminalAction(
-          label: 'EXIT',
-          onTap: () => context.goNamed(RouteNames.home),
-        ),
-        TerminalAction(
-          label: 'SAVE & EXIT',
-          onTap: () => context.goNamed(RouteNames.home),
-        ),
-      ],
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: BiosFrame(
-              title: 'CONFIGURATION PARAMETERS',
-              child: BlocBuilder<McpCubit, McpState>(
-                builder: (context, state) {
-                  final hasPendingMcp = state.maybeWhen(
-                    loaded: (servers) =>
-                        servers.any((s) => s.status == McpServerStatus.pending),
-                    orElse: () => false,
-                  );
+    return PocketCoderShell(
+      title: 'CONFIGURE',
+      activePillar: NavPillar.configure,
+      showBack: false,
+      body: BlocBuilder<McpCubit, McpState>(
+        builder: (context, state) {
+          final hasPendingMcp = state.maybeWhen(
+            loaded: (servers) =>
+                servers.any((s) => s.status == McpServerStatus.pending),
+            orElse: () => false,
+          );
 
-                  return ListView.builder(
-                    itemCount: _options.length,
-                    itemBuilder: (context, i) {
-                      final option = _options[i].$1;
-                      final isMcpOption = option == 'MCP MANAGEMENT';
-
-                      return BiosListTile(
-                        label: option,
-                        value: _options[i].$2,
-                        isSelected: i == _selectedIndex,
-                        hasBadge: isMcpOption && hasPendingMcp,
-                        onTap: () {
-                          setState(() => _selectedIndex = i);
-                          if (option == 'AGENT OBSERVABILITY') {
-                            context.pushNamed(RouteNames.agentObservability);
-                          } else if (option == 'MCP MANAGEMENT') {
-                            context.pushNamed(RouteNames.mcpManagement);
-                          } else if (option == 'SOP MANAGEMENT') {
-                            context.pushNamed(RouteNames.sopManagement);
-                          } else if (option == 'SYSTEM CHECKS') {
-                            context.pushNamed(RouteNames.systemChecks);
-                          } else if (option == 'WHITELIST RULES') {
-                            context.pushNamed(RouteNames.whitelist);
-                          } else if (option == 'AGENT REGISTRY') {
-                            context.pushNamed(RouteNames.aiRegistry);
-                          } else if (option == 'PERMISSION RELAY') {
-                            AppNavigation.toPaywall(context);
-                          }
-                        },
-                      );
-                    },
-                  );
-                },
+          int flatIndex = 0;
+          return ListView(
+            children: [
+              for (final section in _sections) ...[
+                BiosSection(
+                  title: section.$1,
+                  child: Column(
+                    children: [
+                      for (final item in section.$2)
+                        Builder(builder: (context) {
+                          final myIndex = flatIndex++;
+                          final isMcp = item.$3 == 'configureMcp';
+                          return BiosListTile(
+                            label: item.$1,
+                            value: item.$2,
+                            isSelected: myIndex == _selectedIndex,
+                            hasBadge: isMcp && hasPendingMcp,
+                            onTap: () {
+                              setState(() => _selectedIndex = myIndex);
+                              _navigateTo(context, item.$3);
+                            },
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              ],
+              VSpace.x2,
+              Padding(
+                padding: EdgeInsets.all(AppSizes.space),
+                child: Text(
+                  'Use ARROW KEYS to navigate.\nPress ENTER to change value.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: AppFonts.bodyFamily,
+                    color: colors.onSurface.withValues(alpha: 0.7),
+                    fontSize: AppSizes.fontTiny,
+                    package: 'pocketcoder_flutter',
+                  ),
+                ),
               ),
-            ),
-          ),
-          VSpace.x2,
-          Padding(
-            padding: EdgeInsets.all(AppSizes.space),
-            child: Text(
-              'Use ARROW KEYS to navigate.\nPress ENTER to change value.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface.withValues(alpha: 0.7),
-                fontSize: AppSizes.fontTiny,
-                package: 'pocketcoder_flutter',
-              ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
+  }
+
+  void _navigateTo(BuildContext context, String routeKey) {
+    switch (routeKey) {
+      case 'configureAi':
+        context.push(AppRoutes.configureAi);
+      case 'configureWhitelist':
+        context.push(AppRoutes.configureWhitelist);
+      case 'configureMcp':
+        context.push(AppRoutes.configureMcp);
+      case 'configureSop':
+        context.push(AppRoutes.configureSop);
+      case 'configureSystemChecks':
+        context.push(AppRoutes.configureSystemChecks);
+      case 'configurePaywall':
+        context.push(AppRoutes.configurePaywall);
+      case 'configureObservability':
+        context.push(AppRoutes.configureObservability);
+    }
   }
 }
