@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart';
-import "package:flutter_aeroform/domain/models/healthcheck.dart";
+import "package:pocketcoder_flutter/domain/models/healthcheck.dart";
 import 'package:flutter_aeroform/domain/exceptions.dart';
 import 'package:flutter_aeroform/core/try_operation.dart';
 import 'health_daos.dart';

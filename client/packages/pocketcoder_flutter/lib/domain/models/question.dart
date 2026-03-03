@@ -13,6 +13,8 @@ class Question with _$Question {
     dynamic choices,
     String? reply,
     @JsonKey(unknownEnumValue: QuestionStatus.unknown) required QuestionStatus status,
+    DateTime? created,
+    DateTime? updated,
   }) = _Question;
 
   factory Question.fromRecord(RecordModel record) =>

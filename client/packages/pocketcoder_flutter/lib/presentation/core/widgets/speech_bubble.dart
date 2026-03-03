@@ -60,7 +60,7 @@ class _SpeechBubbleState extends State<SpeechBubble> {
     }
 
     // Dynamic Label
-    final String label = widget.isUser ? 'USER' : 'POCO';
+    final String label = widget.isUser ? 'COMMANDER' : 'POCO';
     final Color accentColor =
         widget.isUser ? terminalColors.user : colors.onSurface;
 
