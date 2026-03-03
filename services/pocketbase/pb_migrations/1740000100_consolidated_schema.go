@@ -17,7 +17,7 @@ func init() {
 			c.Id = id
 			return c, nil
 		}
-		
+
 		addFields := func(c *core.Collection, fields ...core.Field) {
 			for _, f := range fields {
 				if existing := c.Fields.GetByName(f.GetName()); existing == nil {
@@ -40,26 +40,26 @@ func init() {
 		// 2. AI REGISTRY
 		// =========================================================================
 		prompts, _ := getOrCreateCollection("pc_ai_prompts", "ai_prompts", core.CollectionTypeBase)
-		addFields(prompts, 
-			&core.TextField{Name: "name", Required: true}, 
+		addFields(prompts,
+			&core.TextField{Name: "name", Required: true},
 			&core.TextField{Name: "body", Required: true},
 		)
 		prompts.ListRule = ptr("@request.auth.id != ''")
 		if err := app.Save(prompts); err != nil { return err }
 
 		models, _ := getOrCreateCollection("pc_ai_models", "ai_models", core.CollectionTypeBase)
-		addFields(models, 
-			&core.TextField{Name: "name", Required: true}, 
+		addFields(models,
+			&core.TextField{Name: "name", Required: true},
 			&core.TextField{Name: "identifier", Required: true},
 		)
 		models.ListRule = ptr("@request.auth.id != ''")
 		if err := app.Save(models); err != nil { return err }
 
 		agents, _ := getOrCreateCollection("pc_ai_agents", "ai_agents", core.CollectionTypeBase)
-		addFields(agents, 
-			&core.TextField{Name: "name", Required: true}, 
+		addFields(agents,
+			&core.TextField{Name: "name", Required: true},
 			&core.TextField{Name: "description"},
-			&core.SelectField{Name: "mode", Values: []string{"primary", "subagent"}},
+			&core.SelectField{Name: "mode", Values: []string{"primary", "sandbox_agent"}},
 			&core.NumberField{Name: "temperature"},
 			&core.BoolField{Name: "is_init"},
 			&core.RelationField{Name: "prompt", CollectionId: prompts.Id, MaxSelect: 1},
@@ -75,21 +75,21 @@ func init() {
 		if err := app.Save(agents); err != nil { return err }
 
 		// =========================================================================
-		// 3. CHATS & MESSAGES (WITH SCHEMA IMPROVEMENTS)
+		// 3. CHATS & MESSAGES
 		// =========================================================================
 		chats, _ := getOrCreateCollection("pc_chats", "chats", core.CollectionTypeBase)
 		addFields(chats,
 			&core.TextField{Name: "title", Required: true},
-			&core.TextField{Name: "ai_engine_session_id"}, // RENAMED from agent_id
-			&core.SelectField{Name: "engine_type", MaxSelect: 1, Values: []string{"opencode", "claude-code", "cursor", "custom"}}, // NEW
+			&core.TextField{Name: "ai_engine_session_id"},
+			&core.SelectField{Name: "engine_type", MaxSelect: 1, Values: []string{"opencode", "claude-code", "cursor", "custom"}},
 			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1},
 			&core.RelationField{Name: "agent", CollectionId: agents.Id, MaxSelect: 1},
 			&core.DateField{Name: "last_active"},
 			&core.TextField{Name: "preview"},
 			&core.SelectField{Name: "turn", MaxSelect: 1, Values: []string{"user", "assistant"}},
-			&core.TextField{Name: "description"}, // NEW - for organization
-			&core.BoolField{Name: "archived"}, // NEW - for soft delete
-			&core.TextField{Name: "tags"}, // NEW - JSON array for organization
+			&core.TextField{Name: "description"},
+			&core.BoolField{Name: "archived"},
+			&core.TextField{Name: "tags"},
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
@@ -104,14 +104,16 @@ func init() {
 		if err := app.Save(chats); err != nil { return err }
 
 		messages, _ := getOrCreateCollection("pc_messages", "messages", core.CollectionTypeBase)
-		addFields(messages, 
+		addFields(messages,
 			&core.RelationField{Name: "chat", Required: true, CollectionId: chats.Id, MaxSelect: 1, CascadeDelete: true},
 			&core.SelectField{Name: "role", Required: true, MaxSelect: 1, Values: []string{"user", "assistant", "system"}},
-			&core.SelectField{Name: "engine_message_status", MaxSelect: 1, Values: []string{"processing", "completed", "failed", "aborted"}}, // RENAMED from status
-			&core.SelectField{Name: "user_message_status", MaxSelect: 1, Values: []string{"pending", "sending", "delivered", "failed"}}, // RENAMED from delivery
-			&core.TextField{Name: "ai_engine_message_id"}, // RENAMED from agent_message_id
+			&core.SelectField{Name: "engine_message_status", MaxSelect: 1, Values: []string{"processing", "completed", "failed", "aborted"}},
+			&core.SelectField{Name: "user_message_status", MaxSelect: 1, Values: []string{"pending", "sending", "delivered", "failed"}},
+			&core.TextField{Name: "ai_engine_message_id"},
 			&core.TextField{Name: "parent_id"},
 			&core.JSONField{Name: "parts"},
+			&core.SelectField{Name: "error_domain", MaxSelect: 1, Values: []string{"infrastructure", "provider"}},
+			&core.JSONField{Name: "error_payload", MaxSize: 1048576},
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
@@ -126,11 +128,11 @@ func init() {
 		if err := app.Save(messages); err != nil { return err }
 
 		// =========================================================================
-		// 4. PERMISSIONS (WITH SCHEMA IMPROVEMENTS)
+		// 4. PERMISSIONS
 		// =========================================================================
 		permissions, _ := getOrCreateCollection("pc_permissions", "permissions", core.CollectionTypeBase)
 		addFields(permissions,
-			&core.TextField{Name: "ai_engine_permission_id", Required: true}, // RENAMED from agent_permission_id
+			&core.TextField{Name: "ai_engine_permission_id", Required: true},
 			&core.TextField{Name: "session_id", Required: true},
 			&core.TextField{Name: "permission", Required: true},
 			&core.JSONField{Name: "patterns"},
@@ -142,8 +144,8 @@ func init() {
 			&core.TextField{Name: "call_id"},
 			&core.TextField{Name: "challenge"},
 			&core.RelationField{Name: "chat", CollectionId: chats.Id, MaxSelect: 1},
-			&core.RelationField{Name: "approved_by", CollectionId: users.Id, MaxSelect: 1}, // NEW - audit field
-			&core.DateField{Name: "approved_at"}, // NEW - audit field
+			&core.RelationField{Name: "approved_by", CollectionId: users.Id, MaxSelect: 1},
+			&core.DateField{Name: "approved_at"},
 			&core.DateField{Name: "created"},
 			&core.DateField{Name: "updated"},
 		)
@@ -155,25 +157,25 @@ func init() {
 		if err := app.Save(permissions); err != nil { return err }
 
 		// =========================================================================
-		// 5. SUBAGENTS (WITH SCHEMA IMPROVEMENTS)
+		// 5. SANDBOX AGENTS
 		// =========================================================================
-		subagents, _ := getOrCreateCollection("pc_subagents", "subagents", core.CollectionTypeBase)
-		addFields(subagents,
-			&core.TextField{Name: "subagent_id", Required: true},
-			&core.TextField{Name: "delegating_agent_id", Required: true}, // Keep as string for OpenCode compatibility
+		sandboxAgents, _ := getOrCreateCollection("pc_sandbox_agents", "sandbox_agents", core.CollectionTypeBase)
+		addFields(sandboxAgents,
+			&core.TextField{Name: "sandbox_agent_id", Required: true},
+			&core.TextField{Name: "delegating_agent_id", Required: true},
 			&core.NumberField{Name: "tmux_window_id"},
-			&core.RelationField{Name: "chat", CollectionId: chats.Id, MaxSelect: 1}, // RESTORED - referential integrity
-			&core.RelationField{Name: "delegating_agent", CollectionId: agents.Id, MaxSelect: 1}, // NEW - proper relation
+			&core.RelationField{Name: "chat", CollectionId: chats.Id, MaxSelect: 1},
+			&core.RelationField{Name: "delegating_agent", CollectionId: agents.Id, MaxSelect: 1},
 		)
-		subagents.ListRule = ptr("@request.auth.id != ''")
-		subagents.ViewRule = ptr("@request.auth.id != ''")
-		subagents.CreateRule = ptr("@request.auth.id != ''")
-		subagents.UpdateRule = ptr("@request.auth.id != ''")
-		subagents.DeleteRule = ptr("@request.auth.id != ''")
-		subagents.Indexes = []string{
-			"CREATE UNIQUE INDEX idx_subagent_id_unique ON subagents (subagent_id)",
+		sandboxAgents.ListRule = ptr("@request.auth.id != ''")
+		sandboxAgents.ViewRule = ptr("@request.auth.id != ''")
+		sandboxAgents.CreateRule = ptr("@request.auth.id != ''")
+		sandboxAgents.UpdateRule = ptr("@request.auth.id != ''")
+		sandboxAgents.DeleteRule = ptr("@request.auth.id != ''")
+		sandboxAgents.Indexes = []string{
+			"CREATE UNIQUE INDEX idx_sandbox_agent_id_unique ON sandbox_agents (sandbox_agent_id)",
 		}
-		if err := app.Save(subagents); err != nil { return err }
+		if err := app.Save(sandboxAgents); err != nil { return err }
 
 		// =========================================================================
 		// 6. INFRASTRUCTURE (SSH, Whitelists)
@@ -184,10 +186,10 @@ func init() {
 			&core.TextField{Name: "public_key", Required: true},
 			&core.TextField{Name: "device_name"},
 			&core.TextField{Name: "fingerprint", Required: true},
-			&core.TextField{Name: "algorithm"}, // NEW - RSA, ED25519, ECDSA
-			&core.NumberField{Name: "key_size"}, // NEW - 2048, 4096, 256
-			&core.TextField{Name: "comment"}, // NEW - from public key
-			&core.DateField{Name: "expires_at"}, // NEW - expiration date
+			&core.TextField{Name: "algorithm"},
+			&core.NumberField{Name: "key_size"},
+			&core.TextField{Name: "comment"},
+			&core.DateField{Name: "expires_at"},
 			&core.DateField{Name: "last_used"},
 			&core.BoolField{Name: "is_active"},
 			&core.DateField{Name: "created"},
@@ -200,29 +202,19 @@ func init() {
 		sshKeys.DeleteRule = ptr("@request.auth.id != '' && user = @request.auth.id")
 		if err := app.Save(sshKeys); err != nil { return err }
 
-		// Whitelist Targets: Defines allowed file/directory patterns
-		// pattern field: Glob pattern format (e.g., '/workspace/src/**', '/workspace/tests/*')
-		// Supports: *, ** (recursive), ?, [abc], {a,b,c}
 		wlTargets, _ := getOrCreateCollection("pc_whitelist_targets", "whitelist_targets", core.CollectionTypeBase)
-		addFields(wlTargets, 
-			&core.TextField{Name: "name", Required: true}, 
-			&core.TextField{Name: "pattern", Required: true}, // Glob pattern format (e.g., '/workspace/src/**')
+		addFields(wlTargets,
+			&core.TextField{Name: "name", Required: true},
+			&core.TextField{Name: "pattern", Required: true},
 			&core.BoolField{Name: "active"},
 		)
 		if err := app.Save(wlTargets); err != nil { return err }
 
-		// Whitelist Actions: Defines allowed operations (verbs)
-		// kind field semantics:
-		//   - "strict": Exact match only (e.g., specific command ID) - DEPRECATED, use pattern matching
-		//   - "pattern": Glob pattern matching (e.g., '/workspace/src/**' for bash commands)
-		// value field:
-		//   - For kind="pattern": Glob pattern to match (e.g., "git *", "npm *", "*" for all)
-		//   - For kind="strict": Command ID or exact value - NOT USED
 		wlActions, _ := getOrCreateCollection("pc_whitelist_actions", "whitelist_actions", core.CollectionTypeBase)
-		addFields(wlActions, 
-			&core.TextField{Name: "permission", Required: true}, 
-			&core.SelectField{Name: "kind", Values: []string{"strict", "pattern"}, MaxSelect: 1}, // strict=exact match (deprecated), pattern=glob
-			&core.TextField{Name: "value"}, 
+		addFields(wlActions,
+			&core.TextField{Name: "permission", Required: true},
+			&core.SelectField{Name: "kind", Values: []string{"strict", "pattern"}, MaxSelect: 1},
+			&core.TextField{Name: "value"},
 			&core.BoolField{Name: "active"},
 		)
 		if err := app.Save(wlActions); err != nil { return err }
@@ -237,7 +229,7 @@ func init() {
 				Name:      "status",
 				Required:  true,
 				MaxSelect: 1,
-				Values:    []string{"starting", "ready", "degraded", "offline", "error"}, // COMPLETED enum
+				Values:    []string{"starting", "ready", "degraded", "offline", "error"},
 			},
 			&core.DateField{Name: "last_ping"},
 		)
@@ -266,6 +258,10 @@ func init() {
 			&core.JSONField{Name: "config"},
 			&core.TextField{Name: "catalog"},
 			&core.TextField{Name: "reason"},
+			&core.TextField{Name: "image"},
+			&core.JSONField{Name: "config_schema"},
+			&core.AutodateField{Name: "created", OnCreate: true},
+			&core.AutodateField{Name: "updated", OnCreate: true, OnUpdate: true},
 		)
 		mcpServers.ListRule = ptr("@request.auth.id != ''")
 		mcpServers.ViewRule = ptr("@request.auth.id != ''")
@@ -275,7 +271,7 @@ func init() {
 		if err := app.Save(mcpServers); err != nil { return err }
 
 		// =========================================================================
-		// 9. PROPOSALS & SOPS (WITH SCHEMA IMPROVEMENTS)
+		// 9. PROPOSALS & SOPS
 		// =========================================================================
 		proposals, _ := getOrCreateCollection("pc_proposals", "proposals", core.CollectionTypeBase)
 		addFields(proposals,
@@ -307,10 +303,10 @@ func init() {
 			&core.TextField{Name: "content", Required: true},
 			&core.TextField{Name: "signature", Required: true},
 			&core.DateField{Name: "approved_at"},
-			&core.RelationField{Name: "proposal", CollectionId: proposals.Id, MaxSelect: 1}, // NEW - lineage
-			&core.DateField{Name: "sealed_at"}, // NEW - when SOP was sealed
-			&core.TextField{Name: "sealed_by"}, // NEW - who sealed it
-			&core.NumberField{Name: "version"}, // NEW - version tracking
+			&core.RelationField{Name: "proposal", CollectionId: proposals.Id, MaxSelect: 1},
+			&core.DateField{Name: "sealed_at"},
+			&core.TextField{Name: "sealed_by"},
+			&core.NumberField{Name: "version"},
 		)
 		sops.ListRule = ptr("@request.auth.id != ''")
 		sops.ViewRule = ptr("@request.auth.id != ''")
@@ -321,12 +317,12 @@ func init() {
 			"CREATE UNIQUE INDEX idx_sops_name ON sops (name)",
 		}
 		if err := app.Save(sops); err != nil { return err }
-		
+
 		// =========================================================================
 		// 10. QUESTIONS (HITL)
 		// =========================================================================
 		questions, _ := getOrCreateCollection("pc_questions", "questions", core.CollectionTypeBase)
-		addFields(questions, 
+		addFields(questions,
 			&core.RelationField{Name: "chat", Required: true, CollectionId: chats.Id, MaxSelect: 1, CascadeDelete: true},
 			&core.TextField{Name: "question", Required: true},
 			&core.JSONField{Name: "choices"},
@@ -338,9 +334,96 @@ func init() {
 		questions.ListRule = ptr("@request.auth.id != ''")
 		questions.ViewRule = ptr("@request.auth.id != ''")
 		questions.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
-		questions.UpdateRule = ptr("@request.auth.id != ''") // Users can reply, Agents can update
+		questions.UpdateRule = ptr("@request.auth.id != ''")
 		questions.DeleteRule = ptr("@request.auth.role = 'admin'")
 		if err := app.Save(questions); err != nil { return err }
+
+		// =========================================================================
+		// 11. DEVICES (Push Notifications)
+		// =========================================================================
+		devices, _ := getOrCreateCollection("pc_devices", "devices", core.CollectionTypeBase)
+		addFields(devices,
+			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1, CascadeDelete: true},
+			&core.TextField{Name: "name", Required: true},
+			&core.TextField{Name: "push_token", Required: true},
+			&core.SelectField{Name: "push_service", Required: true, MaxSelect: 1, Values: []string{"fcm", "unifiedpush"}},
+			&core.BoolField{Name: "is_active"},
+		)
+		devices.ListRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		devices.ViewRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		devices.CreateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		devices.UpdateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		devices.DeleteRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		if err := app.Save(devices); err != nil { return err }
+
+		// =========================================================================
+		// 12. LLM MANAGEMENT
+		// =========================================================================
+		llmKeys, _ := getOrCreateCollection("pc_llm_keys", "llm_keys", core.CollectionTypeBase)
+		addFields(llmKeys,
+			&core.TextField{Name: "provider_id", Required: true},
+			&core.JSONField{Name: "env_vars"},
+			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1},
+		)
+		llmKeys.ListRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		llmKeys.ViewRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		llmKeys.CreateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		llmKeys.UpdateRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		llmKeys.DeleteRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		llmKeys.Indexes = []string{
+			"CREATE UNIQUE INDEX idx_llm_keys_provider_user ON llm_keys (provider_id, user)",
+		}
+		if err := app.Save(llmKeys); err != nil { return err }
+
+		llmConfig, _ := getOrCreateCollection("pc_llm_config", "llm_config", core.CollectionTypeBase)
+		addFields(llmConfig,
+			&core.TextField{Name: "model", Required: true},
+			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1},
+			&core.RelationField{Name: "chat", CollectionId: chats.Id, MaxSelect: 1},
+		)
+		llmConfig.ListRule = ptr("user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		llmConfig.ViewRule = ptr("user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		llmConfig.CreateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		llmConfig.UpdateRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		llmConfig.DeleteRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		llmConfig.Indexes = []string{
+			"CREATE UNIQUE INDEX idx_llm_config_user_chat ON llm_config (user, chat)",
+		}
+		if err := app.Save(llmConfig); err != nil { return err }
+
+		llmProviders, _ := getOrCreateCollection("pc_llm_providers", "llm_providers", core.CollectionTypeBase)
+		addFields(llmProviders,
+			&core.TextField{Name: "provider_id", Required: true},
+			&core.TextField{Name: "name", Required: true},
+			&core.JSONField{Name: "env_vars"},
+			&core.JSONField{Name: "models"},
+			&core.BoolField{Name: "is_connected"},
+		)
+		llmProviders.ListRule = ptr("@request.auth.id != ''")
+		llmProviders.ViewRule = ptr("@request.auth.id != ''")
+		llmProviders.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		llmProviders.UpdateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		llmProviders.DeleteRule = ptr("@request.auth.role = 'admin'")
+		llmProviders.Indexes = []string{
+			"CREATE UNIQUE INDEX idx_llm_providers_provider_id ON llm_providers (provider_id)",
+		}
+		if err := app.Save(llmProviders); err != nil { return err }
+
+		// =========================================================================
+		// 13. NOTIFICATION RULES
+		// =========================================================================
+		notifRules, _ := getOrCreateCollection("pc_notification_rules", "notification_rules", core.CollectionTypeBase)
+		addFields(notifRules,
+			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1, CascadeDelete: true},
+			&core.JSONField{Name: "rules"},
+		)
+		notifRules.ListRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		notifRules.ViewRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		notifRules.CreateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		notifRules.UpdateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		notifRules.DeleteRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		notifRules.AddIndex("idx_notification_rules_user", true, "user", "")
+		if err := app.Save(notifRules); err != nil { return err }
 
 		// Fix turn state
 		_, err = app.DB().NewQuery("UPDATE chats SET turn = 'user' WHERE turn = '' OR turn IS NULL").Execute()
