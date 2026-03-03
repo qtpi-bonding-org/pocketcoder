@@ -1,0 +1,79 @@
+# PocketCoder Documentation — Build & Deploy
+# Currently manual-only (workflow_dispatch). Wire up 'push' trigger when ready.
+
+name: Deploy Docs
+
+on:
+  workflow_dispatch:
+  # Uncomment to auto-deploy on push to main:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'services/docs/**'
+  #     - 'services/pocketbase/**/*.go'
+  #     - 'services/opencode/**/*.ts'
+  #     - 'services/interface/**/*.ts'
+  #     - 'services/proxy/src/**/*.rs'
+  #     - 'scripts/generate_audit.sh'
+  #     - 'CODEBASE.md'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: docs
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install gomarkdoc
+        run: go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-docs-md
+        run: cargo install cargo-docs-md
+
+      - name: Install docs dependencies
+        working-directory: services/docs
+        run: npm ci
+
+      - name: Run sync & build
+        working-directory: services/docs
+        run: |
+          bash ./sync.sh
+          npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: services/docs/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

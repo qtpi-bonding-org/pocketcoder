@@ -6,6 +6,7 @@ export default defineConfig({
         starlight({
             title: 'PocketCoder',
             description: 'PocketCoder Documentation',
+            customCss: ['./src/custom.css'],
             head: [],
             sidebar: [
                 {
@@ -13,6 +14,7 @@ export default defineConfig({
                     items: [
                         { label: 'Architecture', link: '/architecture' },
                         { label: 'Development', link: '/development' },
+                        { label: 'Adding Tools', link: '/guides/adding_tools' },
                     ],
                 },
                 {
@@ -20,14 +22,15 @@ export default defineConfig({
                     items: [
                         { label: 'Backend (Go)', link: '/reference/backend' },
                         { label: 'Proxy (Rust)', link: '/reference/proxy' },
+                        { label: 'Tools & Interface (TS)', link: '/reference/tools' },
                     ],
                 },
             ],
             social: [
                 {
-                    label: 'GitHub',
-                    href: 'https://github.com/qtpi-bonding-org/pocketcoder',
-                    icon: 'github',
+                    label: 'Codeberg',
+                    href: 'https://codeberg.org/qtpi-bonding-org/pocketcoder',
+                    icon: 'codeberg',
                 },
             ],
         }),
