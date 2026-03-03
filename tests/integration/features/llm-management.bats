@@ -9,9 +9,9 @@
 # 3. Go hook renders llm.env on key save/delete
 # 4. Go hook restarts OpenCode container on key change
 # 5. Provider sync populates llm_providers from OpenCode
-# 6. Model switch via llm_config triggers interface handling
+# 6. Model switch via model_selection triggers interface handling
 # 7. Unique constraint on (provider_id, user) in llm_keys
-# 8. Unique constraint on (user, chat) in llm_config
+# 8. Unique constraint on (user, chat) in model_selection
 # 9. OpenCode entrypoint sources llm.env on startup
 
 load '../../helpers/auth.sh'
@@ -34,7 +34,7 @@ teardown() {
     if [ -n "$USER_TOKEN" ] && [ -n "$USER_ID" ]; then
         cleanup_llm_keys || true
     fi
-    cleanup_llm_config || true
+    cleanup_model_selection || true
 }
 
 # =============================================================================
@@ -55,19 +55,19 @@ cleanup_llm_keys() {
     done
 }
 
-# Clean up llm_config records
-cleanup_llm_config() {
+# Clean up model_selection records
+cleanup_model_selection() {
     local token
     token=$(get_admin_token 2>/dev/null) || return 0
 
     local response
     response=$(curl -s -X GET \
-        "$PB_URL/api/collections/llm_config/records?filter=model~\"$TEST_ID\"" \
+        "$PB_URL/api/collections/model_selection/records?filter=model~\"$TEST_ID\"" \
         -H "Authorization: $token")
 
     echo "$response" | jq -r '.items[]?.id // empty' 2>/dev/null | while read -r id; do
         [ -n "$id" ] && curl -s -X DELETE \
-            "$PB_URL/api/collections/llm_config/records/$id" \
+            "$PB_URL/api/collections/model_selection/records/$id" \
             -H "Authorization: $token" > /dev/null 2>&1 || true
     done
 }
@@ -117,17 +117,17 @@ create_llm_key() {
     echo "✓ llm_keys collection exists with fields: $fields"
 }
 
-@test "LLM Collections: llm_config exists with correct fields" {
+@test "LLM Collections: model_selection exists with correct fields" {
     authenticate_superuser
 
     local response
-    response=$(curl -s "$PB_URL/api/collections/llm_config" \
+    response=$(curl -s "$PB_URL/api/collections/model_selection" \
         -H "Authorization: $USER_TOKEN")
 
     local name
     name=$(echo "$response" | jq -r '.name // empty')
-    [ "$name" = "llm_config" ] || {
-        echo "❌ llm_config collection not found" >&2
+    [ "$name" = "model_selection" ] || {
+        echo "❌ model_selection collection not found" >&2
         return 1
     }
 
@@ -137,7 +137,7 @@ create_llm_key() {
     echo "$fields" | grep -q "user" || { echo "❌ Missing field: user" >&2; return 1; }
     echo "$fields" | grep -q "chat" || { echo "❌ Missing field: chat" >&2; return 1; }
 
-    echo "✓ llm_config collection exists with fields: $fields"
+    echo "✓ model_selection collection exists with fields: $fields"
 }
 
 @test "LLM Collections: llm_providers exists with correct fields" {
@@ -459,7 +459,7 @@ create_llm_key() {
     authenticate_user
 
     local response
-    response=$(curl -s -X POST "$PB_URL/api/collections/llm_config/records" \
+    response=$(curl -s -X POST "$PB_URL/api/collections/model_selection/records" \
         -H "Content-Type: application/json" \
         -H "Authorization: $USER_TOKEN" \
         -d "{
@@ -470,7 +470,7 @@ create_llm_key() {
     local record_id
     record_id=$(echo "$response" | jq -r '.id // empty')
     [ -n "$record_id" ] && [ "$record_id" != "null" ] || {
-        echo "❌ Failed to create llm_config record. Response: $response" >&2
+        echo "❌ Failed to create model_selection record. Response: $response" >&2
         return 1
     }
 
@@ -497,7 +497,7 @@ create_llm_key() {
 
     # Create a global model config — interface should pick it up via subscription
     local response
-    response=$(curl -s -X POST "$PB_URL/api/collections/llm_config/records" \
+    response=$(curl -s -X POST "$PB_URL/api/collections/model_selection/records" \
         -H "Content-Type: application/json" \
         -H "Authorization: $USER_TOKEN" \
         -d "{
