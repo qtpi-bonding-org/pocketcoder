@@ -33,7 +33,7 @@ func init() {
 		}
 
 		// Also update the "subagent" mode value in agents collection to "sandbox_agent"
-		agents, err := app.FindCollectionByNameOrId("agents")
+		agents, err := app.FindCollectionByNameOrId("ai_agents")
 		if err != nil {
 			return nil
 		}
