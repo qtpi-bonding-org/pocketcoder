@@ -23,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Grouped configuration sections
   static const _sections = <(String, List<(String, String, String)>)>[
     ('AI & AGENTS', [
+      ('LLM MANAGEMENT', '[KEYS]', 'configureLlm'),
       ('AGENT REGISTRY', '[MODELS]', 'configureAi'),
     ]),
     ('SECURITY', [
@@ -120,6 +121,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         context.push(AppRoutes.configurePaywall);
       case 'configureObservability':
         context.push(AppRoutes.configureObservability);
+      case 'configureLlm':
+        context.push(AppRoutes.configureLlm);
     }
   }
 }
