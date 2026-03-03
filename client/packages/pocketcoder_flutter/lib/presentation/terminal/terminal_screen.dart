@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:xterm/xterm.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
@@ -9,16 +8,14 @@ import 'package:pocketcoder_flutter/application/terminal/terminal_state.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/status_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/status_state.dart';
-import '../../app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
 class TerminalScreen extends StatelessWidget {
   const TerminalScreen({super.key});
@@ -28,7 +25,7 @@ class TerminalScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => getIt<SshTerminalCubit>(),
       child: UiFlowListener<SshTerminalCubit, SshTerminalState>(
-        autoDismissLoading: false, // We show custom loading UI
+        autoDismissLoading: false,
         child: const _TerminalView(),
       ),
     );
@@ -56,7 +53,7 @@ class _TerminalViewState extends State<_TerminalView> {
     final opencodeId = chatState.opencodeId;
 
     context.read<SshTerminalCubit>().connect(
-          host: 'localhost', // Sandbox is exposed on localhost for the client
+          host: 'localhost',
           port: 2222,
           username: 'worker',
           sessionId: opencodeId,
@@ -66,29 +63,33 @@ class _TerminalViewState extends State<_TerminalView> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    return TerminalScaffold(
+    return PocketCoderShell(
       title: 'TERMINAL MIRROR',
-      actions: [
-        TerminalAction(
-          label: 'BACK TO CHAT',
-          onTap: () => context.goNamed(RouteNames.home),
-        ),
-        TerminalAction(
-          label: 'TRANSFER',
-          onTap: () => _pickAndUploadFile(context),
-        ),
-        TerminalAction(
-          label: 'RECONNECT',
-          onTap: _connect,
-        ),
-        TerminalAction(
-          label: 'LOGOUT',
-          onTap: () => context.goNamed(RouteNames.boot),
-        ),
-      ],
+      activePillar: NavPillar.chats,
+      showBack: true,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Inline operational buttons
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSizes.space,
+              vertical: AppSizes.space * 0.5,
+            ),
+            child: Row(
+              children: [
+                TerminalButton(
+                  label: 'TRANSFER',
+                  onTap: () => _pickAndUploadFile(context),
+                ),
+                HSpace.x2,
+                TerminalButton(
+                  label: 'RECONNECT',
+                  onTap: _connect,
+                ),
+              ],
+            ),
+          ),
           _buildStatus(context),
           VSpace.x2,
           Expanded(

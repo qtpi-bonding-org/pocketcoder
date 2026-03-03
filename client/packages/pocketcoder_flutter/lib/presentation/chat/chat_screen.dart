@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_state.dart';
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart';
@@ -8,13 +7,12 @@ import 'package:pocketcoder_flutter/application/permission/permission_state.dart
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_animator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_input.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/permission_prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/question_prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/speech_bubble.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/question/question_cubit.dart';
@@ -22,8 +20,6 @@ import 'package:pocketcoder_flutter/application/question/question_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
-// import 'package:pocketbase_drift/pocketbase_drift.dart'; // DEMO: unused while DEBUG_DUMP is disabled
-import '../../app_router.dart';
 
 class ChatScreen extends StatelessWidget {
   final String? chatId;
@@ -77,33 +73,12 @@ class _ChatViewState extends State<_ChatView> {
               orElse: () => false,
             );
 
-            return TerminalScaffold(
+            return PocketCoderShell(
               title: commState.chatId ?? 'POCKETCODER MAIN',
+              activePillar: NavPillar.chats,
+              showBack: true,
+              configureBadge: hasPendingMcp,
               padding: EdgeInsets.zero,
-              actions: [
-                // DEMO: only show Settings to keep the UI clean
-                // TerminalAction(
-                //   label: 'DEBUG_DUMP',
-                //   onTap: () async { ... },
-                // ),
-                // TerminalAction(
-                //   label: 'ARTIFACTS',
-                //   onTap: () => context.goNamed(RouteNames.artifact),
-                // ),
-                // TerminalAction(
-                //   label: 'TERMINAL',
-                //   onTap: () => context.goNamed(RouteNames.terminal),
-                // ),
-                TerminalAction(
-                  label: 'SETTINGS',
-                  hasBadge: hasPendingMcp,
-                  onTap: () => context.goNamed(RouteNames.settings),
-                ),
-                // TerminalAction(
-                //   label: 'LOGOUT',
-                //   onTap: () => context.goNamed(RouteNames.boot),
-                // ),
-              ],
               body: MultiBlocListener(
                 listeners: [
                   BlocListener<ChatCubit, ChatState>(

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart';
 import 'package:pocketcoder_flutter/application/ai/ai_config_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
@@ -13,7 +12,6 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
 class AgentManagementScreen extends StatelessWidget {
   const AgentManagementScreen({super.key});
@@ -36,20 +34,10 @@ class AgentManagementView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AiConfigCubit, AiConfigState>(
       builder: (context, state) {
-        return TerminalScaffold(
+        return PocketCoderShell(
           title: 'AGENT REGISTRY',
-          actions: [
-            TerminalAction(
-              label: 'ADD NEW',
-              onTap: () {
-                // TODO: Implement add
-              },
-            ),
-            TerminalAction(
-              label: 'BACK',
-              onTap: () => context.pop(),
-            ),
-          ],
+          activePillar: NavPillar.configure,
+          showBack: true,
           body: BiosFrame(
             title: 'MODELS & PERSONAS',
             child: state.isLoading
@@ -80,6 +68,16 @@ class AgentManagementView extends StatelessWidget {
 
     return Column(
       children: [
+        // Inline ADD NEW button
+        Padding(
+          padding: EdgeInsets.all(AppSizes.space),
+          child: TerminalButton(
+            label: 'ADD NEW',
+            onTap: () {
+              // TODO: Implement add
+            },
+          ),
+        ),
         Expanded(
           child: ListView.builder(
             itemCount: state.agents.length,

@@ -6,11 +6,13 @@ class TerminalAction {
   final String label; // e.g. "HELP"
   final VoidCallback onTap;
   final bool hasBadge;
+  final bool isActive;
 
   TerminalAction({
     required this.label,
     required this.onTap,
     this.hasBadge = false,
+    this.isActive = false,
   });
 }
 
@@ -55,6 +57,9 @@ class TerminalFooter extends StatelessWidget {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
 
+    final bgColor = action.isActive ? colors.onSurface : Colors.transparent;
+    final fgColor = action.isActive ? colors.surface : colors.onSurface;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -65,6 +70,7 @@ class TerminalFooter extends StatelessWidget {
           padding: EdgeInsets.symmetric(
               horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
           decoration: BoxDecoration(
+            color: bgColor,
             border: Border(
               right: BorderSide(
                   color: colors.onSurface.withValues(alpha: 0.1),
@@ -78,7 +84,7 @@ class TerminalFooter extends StatelessWidget {
                 action.label.toUpperCase(),
                 style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface,
+                  color: fgColor,
                   fontSize: AppSizes.fontMini,
                   fontWeight: AppFonts.heavy,
                   letterSpacing: 2,
@@ -90,7 +96,7 @@ class TerminalFooter extends StatelessWidget {
                   '[!]',
                   style: TextStyle(
                     fontFamily: AppFonts.bodyFamily,
-                    color: terminalColors.warning,
+                    color: action.isActive ? colors.surface : terminalColors.warning,
                     fontSize: AppSizes.fontMini,
                     fontWeight: AppFonts.heavy,
                   ),
