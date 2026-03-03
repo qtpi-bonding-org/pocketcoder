@@ -14,7 +14,7 @@ type EvaluationInput struct {
 	Metadata   map[string]any
 }
 
-// Evaluate checks if a permission request is whitelisted based on actions and targets.
+// Evaluate checks if a permission request is whitelisted based on actions.
 func Evaluate(app core.App, input EvaluationInput) (bool, string) {
 	log.Printf("🛡️ [Authority] Evaluating Verb: %s, Nouns: %v", input.Permission, input.Patterns)
 
@@ -50,30 +50,6 @@ func Evaluate(app core.App, input EvaluationInput) (bool, string) {
 					isWhitelisted = true
 					break
 				}
-			}
-		}
-	}
-
-	// --- B. EVALUATE NOUN (whitelist_targets) ---
-	// If the verb is whitelisted, we must ensure ALL noun patterns (files/dirs) are also whitelisted.
-	if isWhitelisted && len(input.Patterns) > 0 {
-		targets, _ := app.FindRecordsByFilter("whitelist_targets", "active = true", "-created", 300, 0, nil)
-
-		for _, p := range input.Patterns {
-			patternMatch := false
-			if p == "" {
-				continue
-			}
-			for _, target := range targets {
-				if utils.MatchWildcard(p, target.GetString("pattern")) {
-					patternMatch = true
-					break
-				}
-			}
-			if !patternMatch {
-				isWhitelisted = false
-				log.Printf("🛑 [Noun Rejected] Path not in whitelist: %s", p)
-				break
 			}
 		}
 	}

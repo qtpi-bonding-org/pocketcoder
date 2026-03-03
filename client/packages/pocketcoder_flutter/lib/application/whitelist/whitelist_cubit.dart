@@ -3,7 +3,6 @@ import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
-import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import "package:flutter_aeroform/support/extensions/cubit_ui_flow_extension.dart";
 
 part 'whitelist_state.dart';
@@ -17,30 +16,12 @@ class WhitelistCubit extends AppCubit<WhitelistState> {
 
   Future<void> load() async {
     return tryOperation(() async {
-      final targets = await _repository.getTargets();
       final toolPermissions = await _repository.getToolPermissions();
       return state.copyWith(
         status: UiFlowStatus.success,
-        targets: targets,
         toolPermissions: toolPermissions,
         error: null,
       );
-    });
-  }
-
-  Future<void> createTarget(String name, String pattern) async {
-    return tryOperation(() async {
-      await _repository.createTarget(name, pattern);
-      await load();
-      return createSuccessState();
-    });
-  }
-
-  Future<void> deleteTarget(String id) async {
-    return tryOperation(() async {
-      await _repository.deleteTarget(id);
-      await load();
-      return createSuccessState();
     });
   }
 

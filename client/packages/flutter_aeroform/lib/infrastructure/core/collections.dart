@@ -38,9 +38,6 @@ class Collections {
   /// SSH Keys collection - SSH public keys for user devices
   static const String sshKeys = 'ssh_keys';
 
-  /// Whitelist Targets collection - glob patterns for whitelisting
-  static const String whitelistTargets = 'whitelist_targets';
-
   /// Tool Permissions collection - tool-level permission rules
   static const String toolPermissions = 'tool_permissions';
 
@@ -78,7 +75,6 @@ class Collections {
     messages,
     permissions,
     sshKeys,
-    whitelistTargets,
     toolPermissions,
     proposals,
     sops,
@@ -99,7 +95,6 @@ class Collections {
     messages,
     permissions,
     sshKeys,
-    whitelistTargets,
     toolPermissions,
     proposals,
     sops,
