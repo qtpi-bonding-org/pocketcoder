@@ -70,5 +70,11 @@ services/mcp-gateway/config/config.yaml
 services/mcp-gateway/config/docker-mcp.yaml
 services/mcp-gateway/config/mcp.env
 
+# LLM Keys (auto-generated, contains secrets)
+services/opencode/llm.env
+
+# TypeScript build info
+**/tsconfig.tsbuildinfo
+
 # Local Scratchpad/Misc
 .misc/
