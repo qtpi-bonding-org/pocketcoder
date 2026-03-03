@@ -15,6 +15,7 @@ import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart'
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
+import 'package:pocketcoder_flutter/presentation/llm/llm_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/auth/auth_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/config_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/progress_screen.dart';
@@ -183,6 +184,15 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.configureLlm,
+        name: RouteNames.configureLlm,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const LlmManagementScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.configureObservability,
         name: RouteNames.configureObservability,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -261,6 +271,7 @@ class AppRoutes {
   static const String configureSystemChecks = '/configure/system-checks';
   static const String configurePaywall = '/configure/paywall';
   static const String configureObservability = '/configure/observability';
+  static const String configureLlm = '/configure/llm';
   // Legacy aliases (redirected)
   static const String settings = '/settings';
   static const String aiRegistry = '/settings/ai';
@@ -298,6 +309,7 @@ class RouteNames {
   static const String configureSystemChecks = 'configureSystemChecks';
   static const String configurePaywall = 'configurePaywall';
   static const String configureObservability = 'configureObservability';
+  static const String configureLlm = 'configureLlm';
   // Legacy aliases
   static const String aiRegistry = 'configureAi';
   static const String whitelist = 'configureWhitelist';
