@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -38,7 +39,10 @@ type PushProvider interface {
 
 // NtfyDirectProvider sends notifications directly to a UnifiedPush (ntfy) endpoint.
 // This preserves the "Zero-Trust" sovereign architecture.
-type NtfyDirectProvider struct{}
+type NtfyDirectProvider struct {
+	ChatID string
+	Type   string
+}
 
 func (p *NtfyDirectProvider) Send(endpoint, title, body string) error {
 	req, err := http.NewRequest("POST", endpoint, strings.NewReader(body))
@@ -46,10 +50,19 @@ func (p *NtfyDirectProvider) Send(endpoint, title, body string) error {
 		return err
 	}
 
+	// Deep link: pocketcoder://chat/{id} if we have a chat, else root
+	clickURL := "pocketcoder://"
+	if p.ChatID != "" {
+		clickURL = "pocketcoder://chat/" + p.ChatID
+	}
+
 	// ntfy specific headers
 	req.Header.Set("Title", title)
-	req.Header.Set("Click", "pocketcoder://") // Deep link into the app
+	req.Header.Set("Click", clickURL)
 	req.Header.Set("Priority", "high")
+	if p.Type != "" {
+		req.Header.Set("Tags", p.Type)
+	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -65,8 +78,13 @@ func (p *NtfyDirectProvider) Send(endpoint, title, body string) error {
 }
 
 // FcmRelayProvider routes notifications through a Cloudflare Worker relay.
+// The Worker handles subscription verification (RevenueCat), rate limiting
+// (Supabase), and FCM v1 delivery — PocketBase just fires and forgets.
 type FcmRelayProvider struct {
 	RelayURL string
+	UserID   string
+	ChatID   string
+	Type     string
 }
 
 func (p *FcmRelayProvider) Send(token, title, body string) error {
@@ -76,11 +94,13 @@ func (p *FcmRelayProvider) Send(token, title, body string) error {
 	}
 
 	payload := map[string]string{
-		"token":     token,
-		"title":     title,
-		"body":      body,
-		"click_url": "pocketcoder://",
-		"service":   "fcm",
+		"token":   token,
+		"user_id": p.UserID,
+		"service": "fcm",
+		"title":   title,
+		"message": body,
+		"type":    p.Type,
+		"chat":    p.ChatID,
 	}
 
 	bodyBytes, err := json.Marshal(payload)
@@ -94,7 +114,6 @@ func (p *FcmRelayProvider) Send(token, title, body string) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	// Optional: add a secret token for the Cloudflare Relay
 	if secret := os.Getenv("PN_RELAY_SECRET"); secret != "" {
 		req.Header.Set("X-Relay-Secret", secret)
 	}
@@ -114,19 +133,19 @@ func (p *FcmRelayProvider) Send(token, title, body string) error {
 	return nil
 }
 
-// RegisterNotificationHooks registers hooks for triggering push notifications.
+// RegisterNotificationHooks registers hooks for triggering push notifications
+// and the /api/push custom endpoint.
 func RegisterNotificationHooks(app *pocketbase.PocketBase) {
+	// Hook: permission created -> push notification
 	app.OnRecordAfterCreateSuccess("permissions").BindFunc(func(e *core.RecordEvent) error {
-		// 1. Gating: Only notify for waiting authorizations
 		if e.Record.GetString("status") != "draft" {
 			return e.Next()
 		}
 
-		// 2. Resolve User
 		userID := ""
-		chatId := e.Record.GetString("chat")
-		if chatId != "" {
-			chat, err := e.App.FindRecordById("chats", chatId)
+		chatID := e.Record.GetString("chat")
+		if chatID != "" {
+			chat, err := e.App.FindRecordById("chats", chatID)
 			if err == nil {
 				userID = chat.GetString("user")
 			}
@@ -136,17 +155,105 @@ func RegisterNotificationHooks(app *pocketbase.PocketBase) {
 			return e.Next()
 		}
 
-		// 3. Presence Check: If ANY device is online, suppress PNs
-		if IsUserOnline(e.App, userID) {
-			log.Printf("🔔 [Notifications] User %s is online. Suppressing push notifications.", userID)
-			return e.Next()
-		}
-
-		// 4. Dispatch to ALL active devices
-		go DispatchNotifications(e.App, userID, e.Record)
+		go SendPushNotification(e.App, userID,
+			"SIGNATURE REQUIRED",
+			"Action: "+e.Record.GetString("permission"),
+			"permission",
+			chatID,
+		)
 
 		return e.Next()
 	})
+}
+
+// RegisterPushApi registers the POST /api/push endpoint.
+// Called by the interface service to send push notifications for
+// task_complete, task_error, and other notification types.
+func RegisterPushApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+	e.Router.POST("/api/pocketcoder/push", func(re *core.RequestEvent) error {
+		var input struct {
+			UserID  string `json:"user_id"`
+			Title   string `json:"title"`
+			Message string `json:"message"`
+			Type    string `json:"type"`
+			ChatID  string `json:"chat"`
+		}
+
+		if err := re.BindBody(&input); err != nil {
+			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+		}
+
+		if input.UserID == "" || input.Type == "" {
+			return re.JSON(400, map[string]string{"error": "user_id and type are required"})
+		}
+
+		go SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID)
+
+		return re.JSON(200, map[string]any{"ok": true})
+	}).Bind(apis.RequireAuth())
+}
+
+// SendPushNotification is the unified dispatch function.
+// Flow: rules check -> presence check -> device dispatch
+func SendPushNotification(app core.App, userID, title, message, notifType, chatID string) {
+	// 1. Notification Rules: check if this type is enabled for the user
+	if !isNotificationTypeEnabled(app, userID, notifType) {
+		log.Printf("🔕 [Push] User %s has disabled '%s' notifications. Skipping.", userID, notifType)
+		return
+	}
+
+	// 2. Presence Check: suppress if user is online
+	if IsUserOnline(app, userID) {
+		log.Printf("🔔 [Push] User %s is online. Suppressing '%s' notification.", userID, notifType)
+		return
+	}
+
+	// 3. Dispatch to all active devices
+	dispatchToDevices(app, userID, title, message, notifType, chatID)
+}
+
+// isNotificationTypeEnabled checks the user's notification_rules record.
+// Returns true if the type is enabled or if no rules exist (opt-out model).
+func isNotificationTypeEnabled(app core.App, userID, notifType string) bool {
+	record, err := app.FindFirstRecordByFilter(
+		"notification_rules",
+		"user = {:userID}",
+		map[string]any{"userID": userID},
+	)
+	if err != nil {
+		// No rules record = all types enabled (default)
+		return true
+	}
+
+	rulesRaw := record.Get("rules")
+	if rulesRaw == nil {
+		return true
+	}
+
+	// Parse the JSON rules map
+	var rules map[string]bool
+	switch v := rulesRaw.(type) {
+	case string:
+		if err := json.Unmarshal([]byte(v), &rules); err != nil {
+			return true
+		}
+	case map[string]any:
+		rules = make(map[string]bool)
+		for k, val := range v {
+			if b, ok := val.(bool); ok {
+				rules[k] = b
+			}
+		}
+	default:
+		return true
+	}
+
+	// If the type is not in the map, default to enabled
+	enabled, exists := rules[notifType]
+	if !exists {
+		return true
+	}
+	return enabled
 }
 
 // IsUserOnline checks if the user has an active Realtime (SSE) connection.
@@ -155,7 +262,7 @@ func IsUserOnline(app core.App, userID string) bool {
 	if broker == nil {
 		return false
 	}
-	
+
 	clients := broker.Clients()
 	for _, c := range clients {
 		if val := c.Get("authRecord"); val != nil {
@@ -167,8 +274,8 @@ func IsUserOnline(app core.App, userID string) bool {
 	return false
 }
 
-// DispatchNotifications sends notifications to every active device registered to the user.
-func DispatchNotifications(app core.App, userID string, permission *core.Record) {
+// dispatchToDevices sends notifications to every active device registered to the user.
+func dispatchToDevices(app core.App, userID, title, message, notifType, chatID string) {
 	devices, err := app.FindRecordsByFilter(
 		"devices",
 		"user = {:userID} && is_active = true",
@@ -185,27 +292,22 @@ func DispatchNotifications(app core.App, userID string, permission *core.Record)
 		return
 	}
 
-	// Provider Configuration
-	providerMode := os.Getenv("PN_PROVIDER") // "FCM" or "NTFY" (or empty for FOSS-direct only)
+	providerMode := os.Getenv("PN_PROVIDER")
 	relayURL := os.Getenv("PN_URL")
 
-	ntfyDirect := &NtfyDirectProvider{}
-	fcmRelay := &FcmRelayProvider{RelayURL: relayURL}
+	ntfyDirect := &NtfyDirectProvider{ChatID: chatID, Type: notifType}
+	fcmRelay := &FcmRelayProvider{RelayURL: relayURL, UserID: userID, ChatID: chatID, Type: notifType}
 
 	for _, device := range devices {
 		serviceType := device.GetString("push_service")
 		token := device.GetString("push_token")
-		title := "SIGNATURE REQUIRED"
-		body := "Action: " + permission.GetString("permission")
 
 		var provider PushProvider
 
 		switch serviceType {
 		case "unifiedpush":
-			// Sovereign Direct: UnifiedPush endpoints are always POSTed to directly
 			provider = ntfyDirect
 		case "fcm":
-			// Cloudflare Relay: Only dispatch if PN_PROVIDER is set to FCM (Pro/App Mode)
 			if strings.ToUpper(providerMode) == "FCM" {
 				provider = fcmRelay
 			} else {
@@ -216,10 +318,10 @@ func DispatchNotifications(app core.App, userID string, permission *core.Record)
 		}
 
 		if provider != nil {
-			if err := provider.Send(token, title, body); err != nil {
+			if err := provider.Send(token, title, message); err != nil {
 				log.Printf("❌ [Push] %s dispatch error: %v", serviceType, err)
 			} else {
-				log.Printf("✅ [Push] Notification dispatched via %s", serviceType)
+				log.Printf("✅ [Push] '%s' notification dispatched via %s", notifType, serviceType)
 			}
 		}
 	}
