@@ -229,9 +229,9 @@ func notifyPoco(app core.App, openCodeURL string, serverName string, status stri
 	var message string
 	switch status {
 	case "approved":
-		message = fmt.Sprintf("[SYSTEM] MCP server '%s' is now available. Subagents can connect to the gateway at http://mcp-gateway:8811/sse.", serverName)
+		message = fmt.Sprintf("[SYSTEM] MCP server '%s' is now available. Sandbox agents can connect to the gateway at http://mcp-gateway:8811/sse.", serverName)
 	case "revoked":
-		message = fmt.Sprintf("[SYSTEM] MCP server '%s' has been revoked and is no longer available to subagents.", serverName)
+		message = fmt.Sprintf("[SYSTEM] MCP server '%s' has been revoked and is no longer available to sandbox agents.", serverName)
 	case "denied":
 		message = fmt.Sprintf("[SYSTEM] MCP server '%s' request was denied by the user.", serverName)
 	default:

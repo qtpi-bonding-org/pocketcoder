@@ -273,8 +273,8 @@ cleanup_test_data() {
         echo "  No matching records found"
     fi
     
-    # Clean up subagents by test_id pattern
-    if ! delete_by_pattern "subagents" "$test_id" "$token"; then
+    # Clean up sandbox_agents by test_id pattern
+    if ! delete_by_pattern "sandbox_agents" "$test_id" "$token"; then
         failed=1
     fi
     
@@ -288,7 +288,7 @@ dry_run_cleanup() {
     
     echo "[DRY RUN] Cleanup preview for: $test_id"
     
-    for collection in chats messages permissions subagents; do
+    for collection in chats messages permissions sandbox_agents; do
         dry_run_delete "$collection" "$test_id" "$token"
     done
 }
@@ -364,7 +364,7 @@ main() {
         cleanup_by_age "chats" "$age_hours"
         cleanup_by_age "messages" "$age_hours"
         cleanup_by_age "permissions" "$age_hours"
-        cleanup_by_age "subagents" "$age_hours"
+        cleanup_by_age "sandbox_agents" "$age_hours"
     else
         echo "Error: Either --test-id or --age required"
         echo "Use --help for usage information"
