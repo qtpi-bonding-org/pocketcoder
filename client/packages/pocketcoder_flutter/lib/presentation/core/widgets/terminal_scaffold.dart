@@ -8,6 +8,7 @@ class TerminalScaffold extends StatelessWidget {
   final String title;
   final Widget body;
   final List<TerminalAction>? actions;
+  final TerminalAction? headerAction;
   final Widget? floatingActionButton;
   final bool showHeader;
   final bool showFooter;
@@ -18,6 +19,7 @@ class TerminalScaffold extends StatelessWidget {
     required this.title,
     required this.body,
     this.actions,
+    this.headerAction,
     this.floatingActionButton,
     this.showHeader = true,
     this.showFooter = true,
@@ -34,6 +36,29 @@ class TerminalScaffold extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
+              if (headerAction != null)
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: AppSizes.space,
+                    top: AppSizes.space * 0.5,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: headerAction!.onTap,
+                      child: Text(
+                        '[ ${headerAction!.label.toUpperCase()} ]',
+                        style: TextStyle(
+                          fontFamily: AppFonts.bodyFamily,
+                          color: colors.onSurface,
+                          fontSize: AppSizes.fontMini,
+                          fontWeight: AppFonts.heavy,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               if (showHeader) ...[
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSizes.space * 2),

@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/whitelist/whitelist_cubit.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
 class WhitelistScreen extends StatelessWidget {
   const WhitelistScreen({super.key});
@@ -32,14 +30,10 @@ class WhitelistView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TerminalScaffold(
+    return PocketCoderShell(
       title: 'GATEKEEPER CONFIGURATION',
-      actions: [
-        TerminalAction(
-          label: 'BACK',
-          onTap: () => context.pop(),
-        ),
-      ],
+      activePillar: NavPillar.configure,
+      showBack: true,
       body: const BiosFrame(
         title: 'TOOL PERMISSIONS',
         child: PermissionsTab(),
