@@ -5,7 +5,6 @@ import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/permission.dart';
 import 'package:pocketcoder_flutter/domain/models/question.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
-import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/domain/permission/permission_api_models.dart';
 import 'package:flutter_aeroform/domain/exceptions.dart';
 import 'package:flutter_aeroform/core/try_operation.dart';
@@ -16,14 +15,12 @@ import 'hitl_daos.dart';
 class HitlRepository implements IHitlRepository {
   final PermissionDao _permissionDao;
   final QuestionDao _questionDao;
-  final WhitelistTargetDao _targetDao;
   final ToolPermissionDao _toolPermDao;
   final PocketCoderApi _api;
 
   HitlRepository(
     this._permissionDao,
     this._questionDao,
-    this._targetDao,
     this._toolPermDao,
     this._api,
   );
@@ -123,27 +120,8 @@ class HitlRepository implements IHitlRepository {
   }
 
   @override
-  Future<List<WhitelistTarget>> getTargets() async {
-    return _targetDao.getFullList(sort: '-created');
-  }
-
-  @override
   Future<List<ToolPermission>> getToolPermissions() async {
     return _toolPermDao.getFullList(sort: '-created');
-  }
-
-  @override
-  Future<WhitelistTarget> createTarget(String name, String pattern) async {
-    return _targetDao.save(null, {
-      'name': name,
-      'pattern': pattern,
-      'active': true,
-    });
-  }
-
-  @override
-  Future<void> deleteTarget(String id) async {
-    return _targetDao.delete(id);
   }
 
   @override

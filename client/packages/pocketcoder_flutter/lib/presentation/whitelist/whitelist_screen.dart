@@ -27,15 +27,8 @@ class WhitelistScreen extends StatelessWidget {
   }
 }
 
-class WhitelistView extends StatefulWidget {
+class WhitelistView extends StatelessWidget {
   const WhitelistView({super.key});
-
-  @override
-  State<WhitelistView> createState() => _WhitelistViewState();
-}
-
-class _WhitelistViewState extends State<WhitelistView> {
-  int _activeTab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -43,21 +36,13 @@ class _WhitelistViewState extends State<WhitelistView> {
       title: 'GATEKEEPER CONFIGURATION',
       actions: [
         TerminalAction(
-          label: 'PERMISSIONS',
-          onTap: () => setState(() => _activeTab = 0),
-        ),
-        TerminalAction(
-          label: 'TARGETS',
-          onTap: () => setState(() => _activeTab = 1),
-        ),
-        TerminalAction(
           label: 'BACK',
           onTap: () => context.pop(),
         ),
       ],
-      body: BiosFrame(
-        title: _activeTab == 0 ? 'TOOL PERMISSIONS' : 'TARGETS',
-        child: _activeTab == 0 ? const PermissionsTab() : const TargetsTab(),
+      body: const BiosFrame(
+        title: 'TOOL PERMISSIONS',
+        child: PermissionsTab(),
       ),
     );
   }
@@ -251,138 +236,6 @@ class PermissionsTab extends StatelessWidget {
           fontSize: AppSizes.fontTiny,
           fontWeight: isSelected ? AppFonts.heavy : AppFonts.medium,
         ),
-      ),
-    );
-  }
-}
-
-class TargetsTab extends StatelessWidget {
-  const TargetsTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<WhitelistCubit, WhitelistState>(
-      builder: (context, state) {
-        final colors = context.colorScheme;
-        return Column(
-          children: [
-            Expanded(
-              child: state.isLoading
-                  ? const Center(
-                      child: TerminalLoadingIndicator(label: 'LOADING TARGETS'))
-                  : state.targets.isEmpty
-                      ? Center(
-                          child: Text('NO TARGETS DEFINED.',
-                              style: TextStyle(
-                                  color:
-                                      colors.onSurface.withValues(alpha: 0.5))))
-                      : ListView.builder(
-                          itemCount: state.targets.length,
-                          itemBuilder: (context, index) {
-                            final target = state.targets[index];
-                            return _buildTargetTile(context, target);
-                          },
-                        ),
-            ),
-            VSpace.x2,
-            TerminalButton(
-              label: 'ADD NEW TARGET',
-              onTap: () => _showAddTargetDialog(context),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildTargetTile(BuildContext context, dynamic target) {
-    final colors = context.colorScheme;
-    final textColor = colors.onSurface;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space),
-      decoration: BoxDecoration(
-        border: Border.all(color: textColor.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  target.name.toUpperCase(),
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: textColor,
-                    fontWeight: AppFonts.heavy,
-                  ),
-                ),
-                Text(
-                  target.pattern,
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: textColor.withValues(alpha: 0.7),
-                    fontSize: AppSizes.fontTiny,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, size: 16, color: colors.error),
-            onPressed: () =>
-                context.read<WhitelistCubit>().deleteTarget(target.id),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAddTargetDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final patternController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => TerminalDialog(
-        title: 'ADD TARGET',
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildTerminalTextField(
-                context: dialogContext,
-                controller: nameController,
-                label: 'NAME (e.g. GitHub)'),
-            VSpace.x2,
-            _buildTerminalTextField(
-                context: dialogContext,
-                controller: patternController,
-                label: 'PATTERN (e.g. github.com/*)'),
-          ],
-        ),
-        actions: [
-          TerminalButton(
-            label: 'CANCEL',
-            isPrimary: false,
-            onTap: () => Navigator.pop(dialogContext),
-          ),
-          HSpace.x2,
-          TerminalButton(
-            label: 'CREATE',
-            onTap: () {
-              if (nameController.text.isNotEmpty &&
-                  patternController.text.isNotEmpty) {
-                context.read<WhitelistCubit>().createTarget(
-                      nameController.text,
-                      patternController.text,
-                    );
-                Navigator.pop(dialogContext);
-              }
-            },
-          ),
-        ],
       ),
     );
   }

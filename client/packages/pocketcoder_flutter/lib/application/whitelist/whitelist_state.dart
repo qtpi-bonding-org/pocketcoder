@@ -6,7 +6,6 @@ class WhitelistState with _$WhitelistState implements IUiFlowState {
 
   const factory WhitelistState({
     @Default(UiFlowStatus.idle) UiFlowStatus status,
-    @Default([]) List<WhitelistTarget> targets,
     @Default([]) List<ToolPermission> toolPermissions,
     Object? error,
   }) = _WhitelistState;

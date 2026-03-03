@@ -9,7 +9,6 @@ class Collections {
   static const String permissions = 'permissions';
   static const String sandboxAgents = 'sandbox_agents';
   static const String sshKeys = 'ssh_keys';
-  static const String whitelistTargets = 'whitelist_targets';
   static const String toolPermissions = 'tool_permissions';
   static const String healthchecks = 'healthchecks';
   static const String mcpServers = 'mcp_servers';
@@ -32,7 +31,6 @@ class Collections {
     permissions,
     sandboxAgents,
     sshKeys,
-    whitelistTargets,
     toolPermissions,
     healthchecks,
     mcpServers,
