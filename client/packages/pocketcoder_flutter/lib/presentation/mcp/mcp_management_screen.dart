@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
@@ -195,27 +196,16 @@ class _McpManagementView extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _showAuthorizeDialog(context, server),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colors.primary,
-                      side: BorderSide(color: colors.primary),
-                      shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero),
-                    ),
-                    child: const Text('AUTHORIZE CAPABILITY'),
+                  child: TerminalButton(
+                    label: 'AUTHORIZE CAPABILITY',
+                    onTap: () => _showAuthorizeDialog(context, server),
                   ),
                 ),
                 HSpace.x2,
-                OutlinedButton(
-                  onPressed: () => context.read<McpCubit>().deny(server.id),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.error,
-                    side: BorderSide(color: colors.error),
-                    shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero),
-                  ),
-                  child: const Text('DENY'),
+                TerminalButton(
+                  label: 'DENY',
+                  onTap: () => context.read<McpCubit>().deny(server.id),
+                  color: colors.error,
                 ),
               ],
             ),
@@ -224,29 +214,17 @@ class _McpManagementView extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _showAuthorizeDialog(context, server),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colors.onSurface.withValues(alpha: 0.7),
-                      side: BorderSide(
-                          color: colors.onSurface.withValues(alpha: 0.3)),
-                      shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero),
-                    ),
-                    child: const Text('EDIT CONFIGURATION'),
+                  child: TerminalButton(
+                    label: 'EDIT CONFIGURATION',
+                    isPrimary: false,
+                    onTap: () => _showAuthorizeDialog(context, server),
                   ),
                 ),
                 HSpace.x2,
-                OutlinedButton(
-                  onPressed: () => context.read<McpCubit>().deny(server.id),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.error.withValues(alpha: 0.7),
-                    side:
-                        BorderSide(color: colors.error.withValues(alpha: 0.3)),
-                    shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero),
-                  ),
-                  child: const Text('REVOKE'),
+                TerminalButton(
+                  label: 'REVOKE',
+                  onTap: () => context.read<McpCubit>().deny(server.id),
+                  color: colors.error,
                 ),
               ],
             ),
