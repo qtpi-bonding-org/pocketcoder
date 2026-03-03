@@ -60,6 +60,9 @@ func main() {
 	// 3b. Register LLM Hooks (env file rendering + OpenCode restart)
 	hooks.RegisterLlmHooks(app)
 
+	// 3c. Register Tool Permission Hooks (opencode.json rendering + OpenCode restart)
+	hooks.RegisterToolPermissionHooks(app)
+
 	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")

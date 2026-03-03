@@ -116,17 +116,38 @@ Stay safe. Stay encrypted. Await input.`)
 		pocoAgent.Set("is_init", true)
 		pocoAgent.Set("prompt", pocoPrompt.Id)
 		pocoAgent.Set("model", geminiModel.Id)
-		pocoAgent.Set("tools", map[string]interface{}{
-			"write": true,
-			"edit": true,
-			"bash": true,
-		})
-		pocoAgent.Set("permissions", map[string]interface{}{
-			"bash": map[string]interface{}{
-				"*": "ask",
-			},
-		})
 		if err := app.Save(pocoAgent); err != nil { return err }
+
+		// =========================================================================
+		// 3. SEED TOOL PERMISSIONS
+		// =========================================================================
+		tpColl, _ := app.FindCollectionByNameOrId("tool_permissions")
+
+		seedToolPerm := func(agentId, tool, pattern, action string) error {
+			rec := core.NewRecord(tpColl)
+			if agentId != "" {
+				rec.Set("agent", agentId)
+			}
+			rec.Set("tool", tool)
+			rec.Set("pattern", pattern)
+			rec.Set("action", action)
+			rec.Set("active", true)
+			return app.Save(rec)
+		}
+
+		// Global defaults (agent=NULL)
+		seedToolPerm("", "*", "*", "ask")
+		seedToolPerm("", "bash", "ls *", "allow")
+		seedToolPerm("", "check_pc_updates", "*", "allow")
+		seedToolPerm("", "mcp_catalog", "*", "allow")
+		seedToolPerm("", "mcp_status", "*", "allow")
+		seedToolPerm("", "mcp_request", "*", "ask")
+
+		// Per-agent overrides for poco
+		seedToolPerm(pocoAgent.Id, "bash", "*", "ask")
+		seedToolPerm(pocoAgent.Id, "edit", "*", "ask")
+		seedToolPerm(pocoAgent.Id, "skill", "*", "ask")
+		seedToolPerm(pocoAgent.Id, "cao_*", "*", "ask")
 
 		return nil
 	}, func(app core.App) error {

@@ -161,8 +161,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1000.AppLocalizationService());
     gh.lazySingleton<_i1055.LlmKeyDao>(
         () => _i1055.LlmKeyDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i1055.LlmConfigDao>(
-        () => _i1055.LlmConfigDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1055.ModelSelectionDao>(
+        () => _i1055.ModelSelectionDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i1055.LlmProviderDao>(
         () => _i1055.LlmProviderDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i589.UserDao>(
@@ -175,8 +175,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i658.QuestionDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i658.WhitelistTargetDao>(
         () => _i658.WhitelistTargetDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i658.WhitelistActionDao>(
-        () => _i658.WhitelistActionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i658.ToolPermissionDao>(
+        () => _i658.ToolPermissionDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i444.McpServerDao>(
         () => _i444.McpServerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i1065.HealthcheckDao>(
@@ -223,8 +223,20 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i662.McpRepository(gh<_i444.McpServerDao>()));
     gh.factory<_i616.AiConfigCubit>(
         () => _i616.AiConfigCubit(gh<_i536.IAiConfigRepository>()));
+    gh.lazySingleton<_i20.IHitlRepository>(() => _i441.HitlRepository(
+          gh<_i658.PermissionDao>(),
+          gh<_i658.QuestionDao>(),
+          gh<_i658.WhitelistTargetDao>(),
+          gh<_i658.ToolPermissionDao>(),
+          gh<_i589.PocketCoderApi>(),
+        ));
     gh.factory<_i252.SopCubit>(
         () => _i252.SopCubit(gh<_i656.IEvolutionRepository>()));
+    gh.lazySingleton<_i615.ILlmRepository>(() => _i935.LlmRepository(
+          gh<_i1055.LlmKeyDao>(),
+          gh<_i1055.ModelSelectionDao>(),
+          gh<_i1055.LlmProviderDao>(),
+        ));
     gh.factory<_i328.McpCubit>(
         () => _i328.McpCubit(gh<_i922.IMcpRepository>()));
     gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
@@ -235,18 +247,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i800.IHealthRepository>(
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
-    gh.lazySingleton<_i20.IHitlRepository>(() => _i441.HitlRepository(
-          gh<_i658.PermissionDao>(),
-          gh<_i658.QuestionDao>(),
-          gh<_i658.WhitelistTargetDao>(),
-          gh<_i658.WhitelistActionDao>(),
-          gh<_i589.PocketCoderApi>(),
-        ));
-    gh.lazySingleton<_i615.ILlmRepository>(() => _i935.LlmRepository(
-          gh<_i1055.LlmKeyDao>(),
-          gh<_i1055.LlmConfigDao>(),
-          gh<_i1055.LlmProviderDao>(),
-        ));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
     gh.factory<_i528.WhitelistCubit>(

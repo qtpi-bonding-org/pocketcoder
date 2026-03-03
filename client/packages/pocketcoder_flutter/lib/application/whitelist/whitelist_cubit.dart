@@ -2,7 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart';
-import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
+import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import "package:flutter_aeroform/support/extensions/cubit_ui_flow_extension.dart";
 
@@ -18,11 +18,11 @@ class WhitelistCubit extends AppCubit<WhitelistState> {
   Future<void> load() async {
     return tryOperation(() async {
       final targets = await _repository.getTargets();
-      final actions = await _repository.getActions();
+      final toolPermissions = await _repository.getToolPermissions();
       return state.copyWith(
         status: UiFlowStatus.success,
         targets: targets,
-        actions: actions,
+        toolPermissions: toolPermissions,
         error: null,
       );
     });
@@ -44,29 +44,35 @@ class WhitelistCubit extends AppCubit<WhitelistState> {
     });
   }
 
-  Future<void> createAction(
-    String permission, {
-    String kind = 'pattern',
-    String? value,
+  Future<void> createToolPermission({
+    String? agent,
+    required String tool,
+    required String pattern,
+    required String action,
   }) async {
     return tryOperation(() async {
-      await _repository.createAction(permission, kind: kind, value: value);
+      await _repository.createToolPermission(
+        agent: agent,
+        tool: tool,
+        pattern: pattern,
+        action: action,
+      );
       await load();
       return createSuccessState();
     });
   }
 
-  Future<void> deleteAction(String id) async {
+  Future<void> deleteToolPermission(String id) async {
     return tryOperation(() async {
-      await _repository.deleteAction(id);
+      await _repository.deleteToolPermission(id);
       await load();
       return createSuccessState();
     });
   }
 
-  Future<void> toggleAction(String id, bool active) async {
+  Future<void> toggleToolPermission(String id, bool active) async {
     return tryOperation(() async {
-      await _repository.toggleAction(id, active);
+      await _repository.toggleToolPermission(id, active);
       await load();
       return createSuccessState();
     });
