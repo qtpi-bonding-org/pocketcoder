@@ -15,10 +15,10 @@ class Message with _$Message {
     String? aiEngineMessageId,
     String? parentId,
     dynamic parts,
-    DateTime? created,
-    DateTime? updated,
     @JsonKey(unknownEnumValue: MessageErrorDomain.unknown) MessageErrorDomain? errorDomain,
     dynamic errorPayload,
+    DateTime? created,
+    DateTime? updated,
   }) = _Message;
 
   factory Message.fromRecord(RecordModel record) =>

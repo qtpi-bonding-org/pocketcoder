@@ -78,6 +78,11 @@ class McpException extends DomainException {
   McpException(super.message, [super.cause]);
 }
 
+/// LLM-related exceptions.
+class LlmException extends DomainException {
+  LlmException(super.message, [super.cause]);
+}
+
 /// SOP-related exceptions.
 class SopException extends DomainException {
   SopException(super.message, [super.cause]);

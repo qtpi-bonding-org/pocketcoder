@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import '../../app_router.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -71,9 +72,9 @@ class _HomeView extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.all(AppSizes.space),
-          child: ElevatedButton(
-            onPressed: () => _handleNewChat(context),
-            child: const Text('NEW CHAT'),
+          child: TerminalButton(
+            label: 'NEW CHAT',
+            onTap: () => _handleNewChat(context),
           ),
         ),
         Expanded(
