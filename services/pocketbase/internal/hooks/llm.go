@@ -114,7 +114,7 @@ func renderLlmEnv(app core.App) error {
 		return fmt.Errorf("failed to write llm.env to %s: %w", llmEnvPath, err)
 	}
 
-	// Write to shared volume (read by sandbox/CAO subagents)
+	// Write to shared volume (read by sandbox/CAO sandbox agents)
 	if err := os.WriteFile(llmEnvPathShared, envContent, 0644); err != nil {
 		log.Printf("⚠️ [LLM] Failed to write shared llm.env to %s: %v", llmEnvPathShared, err)
 		// Non-fatal: OpenCode still gets its keys even if sandbox copy fails

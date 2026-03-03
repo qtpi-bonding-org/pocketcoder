@@ -28,7 +28,7 @@ echo -e "\n🛡️  PENDING/AUTHORIZING INTENTS (PERMISSIONS):"
 curl -s -X GET "$PB_URL/api/collections/permissions/records?filter=(status!='completed')&sort=-created&limit=5" \
     -H "Authorization: $TOKEN" | jq -r '.items[] | "[\(.status)] ID: \(.id) | Label: \(.label // "N/A")"'
 
-# 4. Agents & Subagents
+# 4. Agents & Sandbox Agents
 echo -e "\n🤖 REGISTERED AGENTS:"
 curl -s -X GET "$PB_URL/api/collections/ai_agents/records" \
     -H "Authorization: $TOKEN" | jq -r '.items[] | "[\(.name)] ID: \(.id) | Provider: \(.provider // "standard")"'
