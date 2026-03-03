@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/application/system/health_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/health_state.dart';
 import "package:pocketcoder_flutter/domain/models/healthcheck.dart";
-import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
 class SystemChecksScreen extends StatelessWidget {
   const SystemChecksScreen({super.key});
@@ -30,46 +29,54 @@ class _SystemChecksView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TerminalScaffold(
+    return PocketCoderShell(
       title: 'SYSTEM CHECKS',
-      actions: [
-        TerminalAction(
-          label: 'BACK',
-          onTap: () => context.pop(),
-        ),
-        TerminalAction(
-          label: 'REFRESH',
-          onTap: () => context.read<HealthCubit>().refresh(),
-        ),
-      ],
+      activePillar: NavPillar.configure,
+      showBack: true,
       body: BiosFrame(
         title: 'SYSTEM DIAGNOSTICS',
         child: BlocBuilder<HealthCubit, HealthState>(
           builder: (context, state) {
             final colors = context.colorScheme;
-            if (state.checks.isEmpty && !state.isLoading) {
-              return Center(
-                child: Text(
-                  'NO DIAGNOSTICS AVAILABLE',
-                  style: TextStyle(
-                    color: colors.onSurface.withValues(alpha: 0.5),
-                    fontFamily: AppFonts.bodyFamily,
+            return Column(
+              children: [
+                // Inline REFRESH button
+                Padding(
+                  padding: EdgeInsets.all(AppSizes.space),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TerminalButton(
+                      label: 'REFRESH',
+                      onTap: () => context.read<HealthCubit>().refresh(),
+                    ),
                   ),
                 ),
-              );
-            }
-
-            return ListView.builder(
-              itemCount: state.checks.length,
-              itemBuilder: (context, index) {
-                final check = state.checks[index];
-                return _buildCheckRow(
-                  context,
-                  check.name.toUpperCase(),
-                  check.status.name.toUpperCase(),
-                  check.status == HealthcheckStatus.ready,
-                );
-              },
+                Expanded(
+                  child: state.checks.isEmpty && !state.isLoading
+                      ? Center(
+                          child: Text(
+                            'NO DIAGNOSTICS AVAILABLE',
+                            style: TextStyle(
+                              color:
+                                  colors.onSurface.withValues(alpha: 0.5),
+                              fontFamily: AppFonts.bodyFamily,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: state.checks.length,
+                          itemBuilder: (context, index) {
+                            final check = state.checks[index];
+                            return _buildCheckRow(
+                              context,
+                              check.name.toUpperCase(),
+                              check.status.name.toUpperCase(),
+                              check.status == HealthcheckStatus.ready,
+                            );
+                          },
+                        ),
+                ),
+              ],
             );
           },
         ),

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
-import '../../app_router.dart';
 import 'package:flutter_aeroform/application/observability/observability_cubit.dart';
 import 'package:flutter_aeroform/application/observability/observability_state.dart';
-import 'package:go_router/go_router.dart';
 
 class AgentObservabilityScreen extends StatelessWidget {
   const AgentObservabilityScreen({super.key});
@@ -18,32 +16,35 @@ class AgentObservabilityScreen extends StatelessWidget {
     return UiFlowListener<ObservabilityCubit, ObservabilityState>(
       child: BlocBuilder<ObservabilityCubit, ObservabilityState>(
         builder: (context, state) {
-          return TerminalScaffold(
+          return PocketCoderShell(
             title: 'PLATFORM OBSERVABILITY',
-            actions: [
-              TerminalAction(
-                label: 'DASHBOARD',
-                onTap: () => context.goNamed(RouteNames.home),
-              ),
-              TerminalAction(
-                label: 'REFRESH',
-                onTap: () => context.read<ObservabilityCubit>().refreshStats(),
-              ),
-              TerminalAction(
-                label: 'BACK',
-                onTap: () => context.pop(),
-              ),
-            ],
+            activePillar: NavPillar.configure,
+            showBack: true,
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Inline REFRESH button
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.space,
+                    vertical: AppSizes.space * 0.5,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TerminalButton(
+                      label: 'REFRESH',
+                      onTap: () =>
+                          context.read<ObservabilityCubit>().refreshStats(),
+                    ),
+                  ),
+                ),
                 _buildMetricsRow(context, state),
                 VSpace.x2,
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 📂 Container Registry
+                      // Container Registry
                       SizedBox(
                         width: 250,
                         child: BiosFrame(
@@ -86,7 +87,7 @@ class AgentObservabilityScreen extends StatelessWidget {
                         ),
                       ),
                       HSpace.x2,
-                      // 📜 Live Logs
+                      // Live Logs
                       Expanded(
                         child: BiosFrame(
                           title: state.currentContainer != null
@@ -231,7 +232,7 @@ class AgentObservabilityScreen extends StatelessWidget {
     }
 
     return ListView.builder(
-      reverse: true, // Show latest logs at bottom
+      reverse: true,
       padding: EdgeInsets.all(AppSizes.space),
       itemCount: state.logs.length,
       itemBuilder: (context, index) {
