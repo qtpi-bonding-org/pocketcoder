@@ -10,15 +10,15 @@ class Collections {
   static const String sandboxAgents = 'sandbox_agents';
   static const String sshKeys = 'ssh_keys';
   static const String whitelistTargets = 'whitelist_targets';
-  static const String whitelistActions = 'whitelist_actions';
+  static const String toolPermissions = 'tool_permissions';
   static const String healthchecks = 'healthchecks';
   static const String mcpServers = 'mcp_servers';
   static const String proposals = 'proposals';
   static const String sops = 'sops';
-  static const String devices = 'devices';
   static const String questions = 'questions';
+  static const String devices = 'devices';
   static const String llmKeys = 'llm_keys';
-  static const String llmConfig = 'llm_config';
+  static const String modelSelection = 'model_selection';
   static const String llmProviders = 'llm_providers';
   static const String notificationRules = 'notification_rules';
 
@@ -33,15 +33,15 @@ class Collections {
     sandboxAgents,
     sshKeys,
     whitelistTargets,
-    whitelistActions,
+    toolPermissions,
     healthchecks,
     mcpServers,
     proposals,
     sops,
-    devices,
     questions,
+    devices,
     llmKeys,
-    llmConfig,
+    modelSelection,
     llmProviders,
     notificationRules,
   ];

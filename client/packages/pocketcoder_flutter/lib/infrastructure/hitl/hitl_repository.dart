@@ -4,7 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/permission.dart';
 import 'package:pocketcoder_flutter/domain/models/question.dart';
-import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
+import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/domain/permission/permission_api_models.dart';
 import 'package:flutter_aeroform/domain/exceptions.dart';
@@ -17,14 +17,14 @@ class HitlRepository implements IHitlRepository {
   final PermissionDao _permissionDao;
   final QuestionDao _questionDao;
   final WhitelistTargetDao _targetDao;
-  final WhitelistActionDao _actionDao;
+  final ToolPermissionDao _toolPermDao;
   final PocketCoderApi _api;
 
   HitlRepository(
     this._permissionDao,
     this._questionDao,
     this._targetDao,
-    this._actionDao,
+    this._toolPermDao,
     this._api,
   );
 
@@ -128,8 +128,8 @@ class HitlRepository implements IHitlRepository {
   }
 
   @override
-  Future<List<WhitelistAction>> getActions() async {
-    return _actionDao.getFullList(sort: '-created');
+  Future<List<ToolPermission>> getToolPermissions() async {
+    return _toolPermDao.getFullList(sort: '-created');
   }
 
   @override
@@ -147,32 +147,34 @@ class HitlRepository implements IHitlRepository {
   }
 
   @override
-  Future<WhitelistAction> createAction(
-    String permission, {
-    String kind = 'pattern',
-    String? value,
+  Future<ToolPermission> createToolPermission({
+    String? agent,
+    required String tool,
+    required String pattern,
+    required String action,
   }) async {
-    return _actionDao.save(null, {
-      'permission': permission,
-      'kind': kind,
-      'value': value,
+    return _toolPermDao.save(null, {
+      if (agent != null) 'agent': agent,
+      'tool': tool,
+      'pattern': pattern,
+      'action': action,
       'active': true,
     });
   }
 
   @override
-  Future<void> deleteAction(String id) async {
-    return _actionDao.delete(id);
+  Future<void> deleteToolPermission(String id) async {
+    return _toolPermDao.delete(id);
   }
 
   @override
-  Future<void> toggleAction(String id, bool active) async {
+  Future<void> toggleToolPermission(String id, bool active) async {
     return tryMethod(
       () async {
-        await _actionDao.save(id, {'active': active});
+        await _toolPermDao.save(id, {'active': active});
       },
       WhitelistException.new,
-      'toggleAction',
+      'toggleToolPermission',
     );
   }
 }

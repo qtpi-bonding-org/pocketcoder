@@ -15,8 +15,6 @@ class AiAgent with _$AiAgent {
     bool? isInit,
     String? prompt,
     String? model,
-    dynamic tools,
-    dynamic permissions,
   }) = _AiAgent;
 
   factory AiAgent.fromRecord(RecordModel record) =>

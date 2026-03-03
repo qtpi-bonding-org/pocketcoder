@@ -2,10 +2,10 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/permission.dart';
 import 'package:pocketcoder_flutter/domain/models/question.dart';
-import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
+import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
-import "package:flutter_aeroform/infrastructure/core/collections.dart";
+import "package:pocketcoder_flutter/domain/models/collections.dart";
 
 @lazySingleton
 class PermissionDao extends BaseDao<Permission> {
@@ -26,7 +26,7 @@ class WhitelistTargetDao extends BaseDao<WhitelistTarget> {
 }
 
 @lazySingleton
-class WhitelistActionDao extends BaseDao<WhitelistAction> {
-  WhitelistActionDao(PocketBase pb)
-      : super(pb, Collections.whitelistActions, WhitelistAction.fromJson);
+class ToolPermissionDao extends BaseDao<ToolPermission> {
+  ToolPermissionDao(PocketBase pb)
+      : super(pb, Collections.toolPermissions, ToolPermission.fromJson);
 }
