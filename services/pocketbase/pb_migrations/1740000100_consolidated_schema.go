@@ -176,7 +176,7 @@ func init() {
 		if err := app.Save(sandboxAgents); err != nil { return err }
 
 		// =========================================================================
-		// 6. INFRASTRUCTURE (SSH, Whitelists)
+		// 6. INFRASTRUCTURE (SSH)
 		// =========================================================================
 		sshKeys, _ := getOrCreateCollection("pc_ssh_keys", "ssh_keys", core.CollectionTypeBase)
 		addFields(sshKeys,
@@ -199,14 +199,6 @@ func init() {
 		sshKeys.UpdateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
 		sshKeys.DeleteRule = ptr("@request.auth.id != '' && user = @request.auth.id")
 		if err := app.Save(sshKeys); err != nil { return err }
-
-		wlTargets, _ := getOrCreateCollection("pc_whitelist_targets", "whitelist_targets", core.CollectionTypeBase)
-		addFields(wlTargets,
-			&core.TextField{Name: "name", Required: true},
-			&core.TextField{Name: "pattern", Required: true},
-			&core.BoolField{Name: "active"},
-		)
-		if err := app.Save(wlTargets); err != nil { return err }
 
 		toolPerms, _ := getOrCreateCollection("pc_tool_permissions", "tool_permissions", core.CollectionTypeBase)
 		addFields(toolPerms,

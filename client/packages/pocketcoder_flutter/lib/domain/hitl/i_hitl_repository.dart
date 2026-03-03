@@ -1,6 +1,5 @@
 import 'package:pocketcoder_flutter/domain/models/permission.dart';
 import 'package:pocketcoder_flutter/domain/models/question.dart';
-import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import '../permission/permission_api_models.dart';
 
@@ -27,11 +26,6 @@ abstract class IHitlRepository {
     String? messageId,
     String? callId,
   });
-
-  // --- Whitelist Targets ---
-  Future<List<WhitelistTarget>> getTargets();
-  Future<WhitelistTarget> createTarget(String name, String pattern);
-  Future<void> deleteTarget(String id);
 
   // --- Tool Permissions ---
   Future<List<ToolPermission>> getToolPermissions();
