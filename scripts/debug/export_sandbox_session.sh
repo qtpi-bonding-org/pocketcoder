@@ -1,6 +1,6 @@
 #!/bin/bash
 # export_sandbox_session.sh - Export an OpenCode session from INSIDE the sandbox container.
-# Useful when a developer subagent fails — its session lives in the sandbox, not in the opencode container.
+# Useful when a developer sandbox agent fails — its session lives in the sandbox, not in the opencode container.
 # Usage: ./export_sandbox_session.sh [session_id]
 # If no session_id given, lists available sessions.
 

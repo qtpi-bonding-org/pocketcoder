@@ -60,11 +60,11 @@ track_permission() {
     track_artifact "permissions:$permission_id"
 }
 
-# Track a subagent record
-# Args: subagent_id
-track_subagent() {
-    local subagent_id="$1"
-    track_artifact "subagents:$subagent_id"
+# Track a sandbox agent record
+# Args: sandbox_agent_id
+track_sandbox_agent() {
+    local sandbox_agent_id="$1"
+    track_artifact "sandbox_agents:$sandbox_agent_id"
 }
 
 # Get all tracked artifacts
@@ -223,7 +223,7 @@ create_test_message() {
 
 # Export functions for use in BATS
 export -f generate_test_id track_artifact track_artifacts
-export -f track_chat track_message track_permission track_subagent
+export -f track_chat track_message track_permission track_sandbox_agent
 export -f get_tracked_artifacts get_artifact_count clear_artifacts
 export -f cleanup_tracked_artifacts delete_artifact
 export -f cleanup_test_artifacts create_and_track

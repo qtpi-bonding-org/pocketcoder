@@ -1,6 +1,6 @@
 #!/bin/bash
 # sandbox_status.sh - What's running inside the sandbox that docker ps won't tell you:
-# tmux sessions (subagent windows) and active CAO terminals.
+# tmux sessions (sandbox agent windows) and active CAO terminals.
 # Usage: bash scripts/debug/sandbox_status.sh
 
 CONTAINER="pocketcoder-sandbox"
@@ -11,7 +11,7 @@ echo "======================================================"
 echo ""
 
 # 1. Tmux sessions — each window = one assigned agent
-echo "─── TMUX SESSIONS / SUBAGENT WINDOWS ───────────────"
+echo "─── TMUX SESSIONS / SANDBOX AGENT WINDOWS ──────────"
 docker exec "$CONTAINER" tmux -S/tmp/tmux/pocketcoder list-windows -a 2>/dev/null \
   || echo "  (no tmux sessions found)"
 echo ""
