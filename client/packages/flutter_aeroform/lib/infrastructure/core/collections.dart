@@ -41,8 +41,8 @@ class Collections {
   /// Whitelist Targets collection - glob patterns for whitelisting
   static const String whitelistTargets = 'whitelist_targets';
 
-  /// Whitelist Actions collection - actions for whitelist patterns
-  static const String whitelistActions = 'whitelist_actions';
+  /// Tool Permissions collection - tool-level permission rules
+  static const String toolPermissions = 'tool_permissions';
 
   /// Proposals collection - feature proposals
   static const String proposals = 'proposals';
@@ -79,7 +79,7 @@ class Collections {
     permissions,
     sshKeys,
     whitelistTargets,
-    whitelistActions,
+    toolPermissions,
     proposals,
     sops,
     subagents,
@@ -100,7 +100,7 @@ class Collections {
     permissions,
     sshKeys,
     whitelistTargets,
-    whitelistActions,
+    toolPermissions,
     proposals,
     sops,
     subagents,
