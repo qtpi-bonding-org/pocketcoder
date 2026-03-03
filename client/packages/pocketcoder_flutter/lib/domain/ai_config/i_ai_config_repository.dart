@@ -1,7 +1,7 @@
 import 'package:pocketcoder_flutter/domain/models/ai_agent.dart';
 import 'package:pocketcoder_flutter/domain/models/ai_prompt.dart';
 import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
-import 'package:pocketcoder_flutter/domain/models/subagent.dart';
+import 'package:pocketcoder_flutter/domain/models/sandbox_agent.dart';
 
 abstract class IAiConfigRepository {
   // --- Agents ---
@@ -22,9 +22,9 @@ abstract class IAiConfigRepository {
   Future<void> saveModel(AiModel model);
   Future<void> deleteModel(String id);
 
-  // --- Subagents ---
-  Future<List<Subagent>> getSubagents();
-  Stream<List<Subagent>> watchSubagents();
-  Future<void> saveSubagent(Subagent subagent);
-  Future<void> deleteSubagent(String id);
+  // --- Sandbox Agents ---
+  Future<List<SandboxAgent>> getSandboxAgents();
+  Stream<List<SandboxAgent>> watchSandboxAgents();
+  Future<void> saveSandboxAgent(SandboxAgent sandboxAgent);
+  Future<void> deleteSandboxAgent(String id);
 }

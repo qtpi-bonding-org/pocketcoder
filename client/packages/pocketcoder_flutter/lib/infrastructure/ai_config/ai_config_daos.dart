@@ -3,9 +3,9 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/ai_agent.dart';
 import 'package:pocketcoder_flutter/domain/models/ai_prompt.dart';
 import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
-import 'package:pocketcoder_flutter/domain/models/subagent.dart';
+import 'package:pocketcoder_flutter/domain/models/sandbox_agent.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
-import "package:flutter_aeroform/infrastructure/core/collections.dart";
+import "package:pocketcoder_flutter/domain/models/collections.dart";
 
 @lazySingleton
 class AiAgentDao extends BaseDao<AiAgent> {
@@ -24,7 +24,7 @@ class AiModelDao extends BaseDao<AiModel> {
 }
 
 @lazySingleton
-class SubagentDao extends BaseDao<Subagent> {
-  SubagentDao(PocketBase pb)
-      : super(pb, Collections.subagents, Subagent.fromJson);
+class SandboxAgentDao extends BaseDao<SandboxAgent> {
+  SandboxAgentDao(PocketBase pb)
+      : super(pb, Collections.sandboxAgents, SandboxAgent.fromJson);
 }
