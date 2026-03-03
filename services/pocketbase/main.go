@@ -74,6 +74,7 @@ func main() {
 		api.RegisterProxyApi(app, e)
 		api.RegisterLogsApi(app, e)
 		filesystem.RegisterArtifactApi(app, e)
+		hooks.RegisterPushApi(app, e)
 
 
 		return e.Next()

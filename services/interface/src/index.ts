@@ -175,6 +175,37 @@ async function handleMessageCompletion(properties: any) {
     await pb.collection('messages').update(msgRecord.id, {
         engine_message_status: status
     });
+
+    // Send push notification for terminal states (task_complete / task_error)
+    if (status === 'completed' || status === 'failed') {
+        await sendTaskNotification(message.sessionID, status);
+    }
+}
+
+async function sendTaskNotification(sessionID: string, status: string) {
+    try {
+        const chatID = await resolveChatID(sessionID);
+        if (!chatID) return;
+
+        const chat = await pb.collection('chats').getOne(chatID);
+        const userID = chat.user;
+        if (!userID) return;
+
+        const notifType = status === 'completed' ? 'task_complete' : 'task_error';
+        const title = status === 'completed' ? 'Task Complete' : 'Task Error';
+        const message = status === 'completed'
+            ? 'Your coding task has finished'
+            : 'Your coding task encountered an error';
+
+        await pb.send('/api/pocketcoder/push', {
+            method: 'POST',
+            body: { user_id: userID, title, message, type: notifType, chat: chatID }
+        });
+        console.log(`[Interface] Push notification sent: ${notifType} for chat ${chatID}`);
+    } catch (err) {
+        // Non-fatal — don't crash the event pump over a notification failure
+        console.error('[Interface] Push notification failed:', err);
+    }
 }
 
 async function handlePermissionUpdated(permission: any) {
