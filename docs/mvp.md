@@ -42,25 +42,28 @@ Every feature below must work as a complete flow — Flutter UI through PocketBa
 | Item | Status | What's needed |
 |------|--------|---------------|
 | ntfy integration (UnifiedPush) | Done (Flutter) | - |
-| FCM relay provider | Done (Go) | Cloudflare Worker not yet deployed |
+| FCM relay provider | Done (Go + Flutter) | Cloudflare Worker not yet deployed |
 | Device registration with PocketBase | Done (Flutter) | - |
 | Permission request fires push notification | Done (Go hook) | `notifications.go` triggers on `permissions` create, checks user presence, dispatches to all devices |
 | Presence suppression (don't push if user is in app) | Done (Go) | Checks PocketBase SSE broker for active connections |
-| Deep link header (`pocketcoder://`) | Done (Go) | Set in ntfy `Click` header |
-| Tap notification → opens app to relevant screen | Needs verification | Deep link URL is set; need to verify Flutter handles `pocketcoder://` scheme |
+| Deep link with chat routing | Done (Go + Flutter) | `pocketcoder://chat/{chatId}` set in ntfy Click header and FCM payload |
+| Tap notification → opens app to relevant screen | Done (Flutter) | `NotificationWrapper` parses `type` + `chat` from payload, routes to correct screen |
+| Notification types | Done (Go + Flutter) | `permission`, `question`, `task_complete`, `task_error`, `mcp_request` |
+| Notification rules (opt-out) | Done (Go) | Per-user rules via `notification_rules` collection |
+| Push API for interface service | Done (Go) | `POST /api/pocketcoder/push` for task_complete/error notifications |
 
-The entire notification backend is implemented — trigger, presence check, multi-device dispatch, both ntfy and FCM providers. The only question is whether the Flutter deep link handler works end-to-end.
+Full notification pipeline is implemented end-to-end: trigger → presence check → multi-device dispatch → deep link → Flutter navigation.
 
 ### 5. LLM Configuration
 
 | Item | Status | What's needed |
 |------|--------|---------------|
-| API key management (save/delete per provider) | Backend done | **Flutter UI needed** — no dedicated screen for managing `llm_keys` |
-| Browse available providers and models | Backend done (provider sync) | **Flutter UI needed** — read `llm_providers` collection, show in a list |
-| Model switching (global default) | Backend done | **Flutter UI needed** — write to `llm_config` collection |
-| Model switching (per-chat) | Backend done | **Flutter UI needed** — model selector in chat screen |
+| API key management (save/delete per provider) | Done (Backend + Flutter plumbing) | **Flutter UI screen needed** |
+| Browse available providers and models | Done (Backend + Flutter plumbing) | **Flutter UI screen needed** |
+| Model switching (global default) | Done (Backend + Flutter plumbing) | **Flutter UI screen needed** |
+| Model switching (per-chat) | Done (Backend + Flutter plumbing) | **Flutter UI screen needed** |
 
-This is the feature we just built on the backend. The interface service and Go hooks are tested. Flutter needs screens to expose it.
+Backend is fully tested (23 BATS tests). Flutter data layer is wired (LlmKeyDao, LlmProviderDao, LlmConfigDao, LlmRepository, LlmCubit). Only UI screens remain.
 
 ### 6. MCP Server Management
 
@@ -111,7 +114,7 @@ These are explicitly deferred past MVP:
 ## MVP Checklist Summary
 
 ```
-DONE:
+DONE (plumbing complete):
   [x] Boot screen + health check
   [x] Login with custom PocketBase URL
   [x] Chat: create, list, resume, stream
@@ -123,13 +126,19 @@ DONE:
   [x] Whitelist: action rules + targets
   [x] SSH terminal
   [x] ntfy device registration
+  [x] Notification deep linking (type + chat routing)
+  [x] Notification rules (opt-out per type)
+  [x] Push API for interface service
+  [x] LLM data layer (DAOs, repository, cubit)
+  [x] PB schema → Dart model generation pipeline
+  [x] Collections constants generated from schema
 
-NEEDS WORK (Flutter only):
+NEEDS UI SCREENS (plumbing done, just presentation):
   [ ] LLM keys: Flutter screen for managing API keys
   [ ] LLM providers: Flutter screen for browsing providers/models
   [ ] LLM config: Flutter UI for model switching (global + per-chat)
 
-VERIFY (backend done, need e2e test):
+VERIFY (e2e testing):
   [ ] Notifications: permission → ntfy push → phone → tap deep link → app opens to right screen
   [ ] Full e2e flow: deploy.sh → connect Flutter → chat → permission → approve → agent continues
   [ ] Restart resilience: container restart → reconnect → state preserved
@@ -142,7 +151,6 @@ VERIFY (backend done, need e2e test):
 
 **Backend: Done.** All Go hooks, interface service features, PocketBase collections, notification dispatch, and Docker infrastructure are built and tested.
 
-**Remaining work is Flutter only:**
-1. **Three LLM management screens** — key CRUD, provider/model browser, model switcher. Standard PocketBase CRUD screens following the existing MCP management screen pattern. Backend is fully tested with 23 BATS integration tests.
-2. **Verify notification deep linking** — the `pocketcoder://` scheme is set in the ntfy push. Need to confirm Flutter handles it and navigates to the right screen.
-3. **Verify e2e flows** — deploy → connect → chat → permission → notification → approve on phone → agent continues.
+**Remaining work is Flutter UI only:**
+1. **Three LLM management screens** — key CRUD, provider/model browser, model switcher. The data layer (DAOs, repository, cubit) is wired. Just need presentation widgets bound to `LlmCubit`.
+2. **E2e verification** — deploy → connect → chat → permission → notification → tap deep link → app opens to right chat → approve → agent continues.

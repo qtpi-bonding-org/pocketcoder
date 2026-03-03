@@ -22,13 +22,37 @@ class _NotificationWrapperState extends State<NotificationWrapper> {
     super.initState();
     _subscription = GetIt.I<PushService>().notificationStream.listen((payload) {
       if (payload.wasTapped) {
-        // Only navigate if the user explicitly tapped the notification
-        AppRouter.router.goNamed(RouteNames.home);
+        _navigateFromPayload(payload);
       } else {
-        // If the app is in foreground, show a subtle terminal toast
         _showInAppNotification(payload);
       }
     });
+  }
+
+  void _navigateFromPayload(PushNotificationPayload payload) {
+    final data = payload.data;
+    final type = data['type'] as String?;
+    final chatId = data['chat'] as String?;
+
+    switch (type) {
+      case 'permission':
+      case 'question':
+      case 'task_complete':
+      case 'task_error':
+        if (chatId != null && chatId.isNotEmpty) {
+          AppRouter.router.goNamed(
+            RouteNames.chat,
+            pathParameters: {'chatId': chatId},
+          );
+          return;
+        }
+      case 'mcp_request':
+        AppRouter.router.goNamed(RouteNames.mcpManagement);
+        return;
+    }
+
+    // Fallback: no type or no chatId — go home
+    AppRouter.router.goNamed(RouteNames.home);
   }
 
   void _showInAppNotification(PushNotificationPayload payload) {

@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/application/system/health_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/health_state.dart';
-import "package:flutter_aeroform/domain/models/healthcheck.dart";
+import "package:pocketcoder_flutter/domain/models/healthcheck.dart";
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
