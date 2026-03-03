@@ -37,6 +37,7 @@ CORE_DIRS=(
   "services/proxy"
   "services/sandbox"   # entrypoint.sh, sync_keys.sh (not cao submodule python — handled below)
   "services/opencode"
+  "services/interface"
   "services/mcp-gateway"
   "scripts"
   "client"
@@ -223,7 +224,7 @@ done < <(find "$REPO_ROOT/client" \
 # ---------------------------------------------------------------------------
 GO_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*.go' ! -path '*/tests/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
 RUST_LOC=$(find "$REPO_ROOT/services/proxy/src" -name '*.rs' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
-TS_LOC=$(find "$REPO_ROOT/services/opencode/tools" "$REPO_ROOT/services/opencode/plugins" -name '*.ts' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+TS_LOC=$(find "$REPO_ROOT/services/opencode/tools" "$REPO_ROOT/services/opencode/plugins" "$REPO_ROOT/services/interface/src" -name '*.ts' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
 
 # Bash: all project shell scripts excluding cao submodule, node_modules, tests
 BASH_LOC=$(find "$REPO_ROOT" \
@@ -248,7 +249,7 @@ echo "| Language | LoC | Notes |"
 echo "| :--- | ---: | :--- |"
 echo "| Go | ${GO_LOC} | PocketBase backend & relay |"
 echo "| Rust | ${RUST_LOC} | Sentinel Proxy |"
-echo "| TypeScript | ${TS_LOC} | OpenCode MCP tools |"
+echo "| TypeScript | ${TS_LOC} | OpenCode tools, plugins & Interface bridge |"
 echo "| Python | ${CAO_ADDED} added / -${CAO_DELETED} removed | CAO fork delta vs [awslabs upstream](https://github.com/awslabs/cli-agent-orchestrator) |"
 echo "| Dart | ${DART_LOC} | Flutter client (non-generated, non-test) |"
 echo "| Bash | ${BASH_LOC} | Shell scripts (infra / helpers, not counted in core) |"
@@ -263,4 +264,42 @@ echo "   Shell infra : $SCRIPT_LOC LoC (separate)"
 echo "   Flutter     : $DART_LOC LoC (Dart, non-generated)"
 if [[ -n "$CAO_NOTE" ]]; then
   echo "   CAO fork    : $CAO_NOTE"
+fi
+
+# ---------------------------------------------------------------------------
+# Sync README.md stats table
+# ---------------------------------------------------------------------------
+README_FILE="$REPO_ROOT/README.md"
+if [[ -f "$README_FILE" ]]; then
+  # Format numbers with commas (portable printf)
+  fmt() { printf "%'d" "$1" 2>/dev/null || echo "$1"; }
+
+  # Write replacement table to temp file
+  README_TABLE_FILE=$(mktemp)
+  cat > "$README_TABLE_FILE" <<READMEEOF
+| Language | LoC | Component |
+| :--- | ---: | :--- |
+| Go | $(fmt $GO_LOC) | PocketBase backend & relay |
+| Rust | $(fmt $RUST_LOC) | Proxy |
+| TypeScript | $(fmt $TS_LOC) | OpenCode tools, plugins & Interface bridge |
+| Python | +$(fmt $CAO_ADDED) vs upstream | CAO fork (vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator)) |
+| Dart | $(fmt $DART_LOC) | Flutter client (non-generated) |
+| Bash | $(fmt $BASH_LOC) | Shell scripts (infra — separate tally) |
+| **CORE TOTAL** | **~$(fmt $CORE_TOTAL)** | **Lean, Fast, Fully Sovereign.** |
+READMEEOF
+
+  # Replace the table: find header row, insert replacement, skip old rows until blank line
+  awk '
+    /^\| Language \| LoC \| Component \|/ {
+      replacing=1
+      while ((getline line < "'"$README_TABLE_FILE"'") > 0) print line
+      next
+    }
+    replacing && /^$/ { replacing=0 }
+    replacing { next }
+    { print }
+  ' "$README_FILE" > "${README_FILE}.tmp" && mv "${README_FILE}.tmp" "$README_FILE"
+
+  rm -f "$README_TABLE_FILE"
+  echo "✅ [Audit] Synced README.md stats table"
 fi
