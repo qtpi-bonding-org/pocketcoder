@@ -64,8 +64,6 @@ func init() {
 			&core.BoolField{Name: "is_init"},
 			&core.RelationField{Name: "prompt", CollectionId: prompts.Id, MaxSelect: 1},
 			&core.RelationField{Name: "model", CollectionId: models.Id, MaxSelect: 1},
-			&core.JSONField{Name: "tools"},
-			&core.JSONField{Name: "permissions"},
 		)
 		agents.ListRule = ptr("@request.auth.id != ''")
 		agents.ViewRule = ptr("@request.auth.id != ''")
@@ -210,14 +208,23 @@ func init() {
 		)
 		if err := app.Save(wlTargets); err != nil { return err }
 
-		wlActions, _ := getOrCreateCollection("pc_whitelist_actions", "whitelist_actions", core.CollectionTypeBase)
-		addFields(wlActions,
-			&core.TextField{Name: "permission", Required: true},
-			&core.SelectField{Name: "kind", Values: []string{"strict", "pattern"}, MaxSelect: 1},
-			&core.TextField{Name: "value"},
+		toolPerms, _ := getOrCreateCollection("pc_tool_permissions", "tool_permissions", core.CollectionTypeBase)
+		addFields(toolPerms,
+			&core.RelationField{Name: "agent", CollectionId: agents.Id, MaxSelect: 1},
+			&core.TextField{Name: "tool", Required: true},
+			&core.TextField{Name: "pattern", Required: true},
+			&core.SelectField{Name: "action", Required: true, MaxSelect: 1, Values: []string{"allow", "ask", "deny"}},
 			&core.BoolField{Name: "active"},
 		)
-		if err := app.Save(wlActions); err != nil { return err }
+		toolPerms.ListRule = ptr("@request.auth.id != ''")
+		toolPerms.ViewRule = ptr("@request.auth.id != ''")
+		toolPerms.CreateRule = ptr("@request.auth.role = 'admin'")
+		toolPerms.UpdateRule = ptr("@request.auth.role = 'admin'")
+		toolPerms.DeleteRule = ptr("@request.auth.role = 'admin'")
+		toolPerms.Indexes = []string{
+			"CREATE UNIQUE INDEX idx_tool_perms_agent_tool_pattern ON tool_permissions (agent, tool, pattern)",
+		}
+		if err := app.Save(toolPerms); err != nil { return err }
 
 		// =========================================================================
 		// 7. HEALTHCHECKS
@@ -375,21 +382,21 @@ func init() {
 		}
 		if err := app.Save(llmKeys); err != nil { return err }
 
-		llmConfig, _ := getOrCreateCollection("pc_llm_config", "llm_config", core.CollectionTypeBase)
-		addFields(llmConfig,
+		modelSelection, _ := getOrCreateCollection("pc_model_selection", "model_selection", core.CollectionTypeBase)
+		addFields(modelSelection,
 			&core.TextField{Name: "model", Required: true},
 			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1},
 			&core.RelationField{Name: "chat", CollectionId: chats.Id, MaxSelect: 1},
 		)
-		llmConfig.ListRule = ptr("user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
-		llmConfig.ViewRule = ptr("user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
-		llmConfig.CreateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
-		llmConfig.UpdateRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
-		llmConfig.DeleteRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
-		llmConfig.Indexes = []string{
-			"CREATE UNIQUE INDEX idx_llm_config_user_chat ON llm_config (user, chat)",
+		modelSelection.ListRule = ptr("user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		modelSelection.ViewRule = ptr("user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		modelSelection.CreateRule = ptr("@request.auth.id != '' && user = @request.auth.id")
+		modelSelection.UpdateRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		modelSelection.DeleteRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		modelSelection.Indexes = []string{
+			"CREATE UNIQUE INDEX idx_model_selection_user_chat ON model_selection (user, chat)",
 		}
-		if err := app.Save(llmConfig); err != nil { return err }
+		if err := app.Save(modelSelection); err != nil { return err }
 
 		llmProviders, _ := getOrCreateCollection("pc_llm_providers", "llm_providers", core.CollectionTypeBase)
 		addFields(llmProviders,

@@ -1,7 +1,7 @@
 import 'package:pocketcoder_flutter/domain/models/permission.dart';
 import 'package:pocketcoder_flutter/domain/models/question.dart';
 import 'package:pocketcoder_flutter/domain/models/whitelist_target.dart';
-import 'package:pocketcoder_flutter/domain/models/whitelist_action.dart';
+import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import '../permission/permission_api_models.dart';
 
 abstract class IHitlRepository {
@@ -28,18 +28,19 @@ abstract class IHitlRepository {
     String? callId,
   });
 
-  // --- Whitelist ---
+  // --- Whitelist Targets ---
   Future<List<WhitelistTarget>> getTargets();
-  Future<List<WhitelistAction>> getActions();
-
   Future<WhitelistTarget> createTarget(String name, String pattern);
   Future<void> deleteTarget(String id);
 
-  Future<WhitelistAction> createAction(
-    String permission, {
-    String kind = 'pattern',
-    String? value,
+  // --- Tool Permissions ---
+  Future<List<ToolPermission>> getToolPermissions();
+  Future<ToolPermission> createToolPermission({
+    String? agent,
+    required String tool,
+    required String pattern,
+    required String action,
   });
-  Future<void> deleteAction(String id);
-  Future<void> toggleAction(String id, bool active);
+  Future<void> deleteToolPermission(String id);
+  Future<void> toggleToolPermission(String id, bool active);
 }
