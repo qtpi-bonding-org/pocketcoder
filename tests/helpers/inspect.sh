@@ -87,16 +87,16 @@ inspect_messages() {
     echo "--------------------------------------------------------------------------------"
 }
 
-# Inspect subagents collection
-# Usage: inspect_subagents
-inspect_subagents() {
+# Inspect sandbox_agents collection
+# Usage: inspect_sandbox_agents
+inspect_sandbox_agents() {
     local token="${1:-$(get_admin_token)}"
-    echo "🔍 PocketBase Subagents"
+    echo "🔍 PocketBase Sandbox Agents"
     echo "--------------------------------------------------------------------------------"
-    curl -s -X GET "$PB_URL/api/collections/subagents/records" \
+    curl -s -X GET "$PB_URL/api/collections/sandbox_agents/records" \
         -H "Authorization: $token" \
         -H "Content-Type: application/json" \
-        | jq '.items[] | {id, subagent_id, delegating_agent_id, tmux_window_id}'
+        | jq '.items[] | {id, sandbox_agent_id, delegating_agent_id, tmux_window_id}'
     echo "--------------------------------------------------------------------------------"
 }
 
@@ -271,7 +271,7 @@ quick_status() {
 }
 
 # Export functions for use in BATS
-export -f pb_inspect inspect_chats inspect_messages inspect_subagents inspect_permissions
+export -f pb_inspect inspect_chats inspect_messages inspect_sandbox_agents inspect_permissions
 export -f inspect_opencode_session inspect_opencode_health
 export -f inspect_cao_terminals inspect_tmux
 export -f inspect_all quick_status
