@@ -6,6 +6,10 @@ export default defineConfig({
         starlight({
             title: 'PocketCoder',
             description: 'PocketCoder Documentation',
+            logo: {
+                src: './src/assets/logo.svg',
+                alt: 'PocketCoder',
+            },
             customCss: ['./src/custom.css'],
             head: [],
             sidebar: [
