@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/whitelist/whitelist_cubit.dart';
+import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -42,7 +43,7 @@ class _WhitelistViewState extends State<WhitelistView> {
       title: 'GATEKEEPER CONFIGURATION',
       actions: [
         TerminalAction(
-          label: 'ACTIONS',
+          label: 'PERMISSIONS',
           onTap: () => setState(() => _activeTab = 0),
         ),
         TerminalAction(
@@ -55,15 +56,15 @@ class _WhitelistViewState extends State<WhitelistView> {
         ),
       ],
       body: BiosFrame(
-        title: _activeTab == 0 ? 'ACTION RULES' : 'TARGETS',
-        child: _activeTab == 0 ? const ActionsTab() : const TargetsTab(),
+        title: _activeTab == 0 ? 'TOOL PERMISSIONS' : 'TARGETS',
+        child: _activeTab == 0 ? const PermissionsTab() : const TargetsTab(),
       ),
     );
   }
 }
 
-class ActionsTab extends StatelessWidget {
-  const ActionsTab({super.key});
+class PermissionsTab extends StatelessWidget {
+  const PermissionsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -75,25 +76,25 @@ class ActionsTab extends StatelessWidget {
             Expanded(
               child: state.isLoading
                   ? const Center(
-                      child: TerminalLoadingIndicator(label: 'LOADING RULES'))
-                  : state.actions.isEmpty
+                      child: TerminalLoadingIndicator(label: 'LOADING PERMISSIONS'))
+                  : state.toolPermissions.isEmpty
                       ? Center(
-                          child: Text('NO RULES DEFINED.',
+                          child: Text('NO PERMISSIONS DEFINED.',
                               style: TextStyle(
                                   color:
                                       colors.onSurface.withValues(alpha: 0.5))))
                       : ListView.builder(
-                          itemCount: state.actions.length,
+                          itemCount: state.toolPermissions.length,
                           itemBuilder: (context, index) {
-                            final action = state.actions[index];
-                            return _buildRuleTile(context, action);
+                            final perm = state.toolPermissions[index];
+                            return _buildPermTile(context, perm);
                           },
                         ),
             ),
             VSpace.x2,
             TerminalButton(
-              label: 'ADD NEW RULE',
-              onTap: () => _showAddActionDialog(context),
+              label: 'ADD PERMISSION',
+              onTap: () => _showAddPermissionDialog(context),
             ),
           ],
         );
@@ -101,11 +102,16 @@ class ActionsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildRuleTile(BuildContext context, dynamic action) {
+  Widget _buildPermTile(BuildContext context, ToolPermission perm) {
     final colors = context.colorScheme;
-    final textColor = action.active
+    final isActive = perm.active ?? true;
+    final textColor = isActive
         ? colors.onSurface
         : colors.onSurface.withValues(alpha: 0.5);
+
+    final scope = perm.agent != null && perm.agent!.isNotEmpty
+        ? 'AGENT'
+        : 'GLOBAL';
 
     return Container(
       margin: EdgeInsets.only(bottom: AppSizes.space),
@@ -120,7 +126,7 @@ class ActionsTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  action.permission.toUpperCase(),
+                  perm.tool.toUpperCase(),
                   style: TextStyle(
                     fontFamily: AppFonts.bodyFamily,
                     color: textColor,
@@ -128,7 +134,7 @@ class ActionsTab extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${action.kind}: ${action.value}',
+                  '$scope | pattern: ${perm.pattern} | ${perm.action.name}',
                   style: TextStyle(
                     fontFamily: AppFonts.bodyFamily,
                     color: textColor.withValues(alpha: 0.7),
@@ -139,59 +145,63 @@ class ActionsTab extends StatelessWidget {
             ),
           ),
           Switch(
-            value: action.active,
+            value: isActive,
             activeThumbColor: colors.onSurface,
             activeTrackColor: colors.onSurface.withValues(alpha: 0.2),
             onChanged: (val) =>
-                context.read<WhitelistCubit>().toggleAction(action.id, val),
+                context.read<WhitelistCubit>().toggleToolPermission(perm.id, val),
           ),
           IconButton(
             icon: Icon(Icons.delete_outline, size: 16, color: colors.error),
             onPressed: () =>
-                context.read<WhitelistCubit>().deleteAction(action.id),
+                context.read<WhitelistCubit>().deleteToolPermission(perm.id),
           ),
         ],
       ),
     );
   }
 
-  void _showAddActionDialog(BuildContext context) {
-    final permissionController = TextEditingController();
-    final valueController = TextEditingController();
-    String kind = 'pattern';
+  void _showAddPermissionDialog(BuildContext context) {
+    final toolController = TextEditingController();
+    final patternController = TextEditingController(text: '*');
+    String action = 'ask';
 
     showDialog(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: 'ADD ACTION RULE',
+        title: 'ADD TOOL PERMISSION',
         content: StatefulBuilder(builder: (context, setState) {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildTerminalTextField(
                   context: context,
-                  controller: permissionController,
-                  label: 'PERMISSION (e.g. bash.run)'),
+                  controller: toolController,
+                  label: 'TOOL (e.g. bash, edit, cao_*)'),
               VSpace.x2,
               _buildTerminalTextField(
                   context: context,
-                  controller: valueController,
-                  label: 'VALUE (e.g. git *)'),
+                  controller: patternController,
+                  label: 'PATTERN (e.g. *, git *, rm *)'),
               VSpace.x2,
               Row(
                 children: [
-                  Text('KIND:',
+                  Text('ACTION:',
                       style: TextStyle(
                           fontFamily: AppFonts.bodyFamily,
                           color: context.colorScheme.onSurface,
                           fontSize: AppSizes.fontTiny)),
                   HSpace.x2,
-                  _buildKindOption(context, 'pattern', kind, (val) {
-                    setState(() => kind = val);
+                  _buildActionOption(context, 'allow', action, (val) {
+                    setState(() => action = val);
                   }),
                   HSpace.x2,
-                  _buildKindOption(context, 'strict', kind, (val) {
-                    setState(() => kind = val);
+                  _buildActionOption(context, 'ask', action, (val) {
+                    setState(() => action = val);
+                  }),
+                  HSpace.x2,
+                  _buildActionOption(context, 'deny', action, (val) {
+                    setState(() => action = val);
                   }),
                 ],
               ),
@@ -208,11 +218,13 @@ class ActionsTab extends StatelessWidget {
           TerminalButton(
             label: 'CREATE',
             onTap: () {
-              if (permissionController.text.isNotEmpty) {
-                context.read<WhitelistCubit>().createAction(
-                      permissionController.text,
-                      kind: kind,
-                      value: valueController.text,
+              if (toolController.text.isNotEmpty) {
+                context.read<WhitelistCubit>().createToolPermission(
+                      tool: toolController.text,
+                      pattern: patternController.text.isEmpty
+                          ? '*'
+                          : patternController.text,
+                      action: action,
                     );
                 Navigator.pop(dialogContext);
               }
@@ -223,7 +235,7 @@ class ActionsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildKindOption(BuildContext context, String value, String selected,
+  Widget _buildActionOption(BuildContext context, String value, String selected,
       Function(String) onChanged) {
     final colors = context.colorScheme;
     final isSelected = value == selected;
