@@ -34,6 +34,12 @@
       "timeout": 120000,
       "type": "remote",
       "url": "http://sandbox:9888/sse"
+    },
+    "opennotebook": {
+      "enabled": true,
+      "timeout": 120000,
+      "type": "remote",
+      "url": "http://open-notebook-mcp:8000/mcp"
     }
   },
   "permission": {
@@ -44,10 +50,7 @@
     "check_pc_updates": "allow",
     "mcp_catalog": "allow",
     "mcp_request": "ask",
-    "mcp_status": "allow",
-    "schedule_task": "ask",
-    "list_scheduled_tasks": "allow",
-    "cancel_scheduled_task": "ask"
+    "mcp_status": "allow"
   },
   "plugin": [
     "./.opencode/plugins/session_env.ts"
