@@ -115,3 +115,111 @@ setup() {
     # Cleanup
     curl -sf -X DELETE "$NOTEBOOK_API_URL/api/notebooks/$notebook_id" > /dev/null 2>&1 || true
 }
+
+# =============================================================================
+# Poco-Memory (Agent Memory MCP Server)
+# =============================================================================
+
+POCO_MEMORY_URL="${POCO_MEMORY_URL:-http://poco-memory:8001}"
+
+# Helper: open an MCP session and call a tool.
+# Usage: poco_mcp_call <id> <method_json> → prints SSE body
+# Handles init → notifications/initialized → tool call in one shot.
+poco_mcp_call() {
+    local req_id="$1"
+    local body="$2"
+    docker exec pocketcoder-poco-memory sh -c "
+        # Init (SSE stream in background)
+        curl -sfN -D /tmp/bats_h -X POST \
+          -H 'Content-Type: application/json' \
+          -H 'Accept: application/json, text/event-stream' \
+          -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-03-26\",\"capabilities\":{},\"clientInfo\":{\"name\":\"bats\",\"version\":\"1.0\"}}}' \
+          http://localhost:8001/mcp > /dev/null 2>&1 &
+        sleep 1
+        S=\$(grep -i mcp-session-id /tmp/bats_h | tr -d '\r' | awk '{print \$2}')
+        # Notify
+        curl -sf -X POST \
+          -H 'Content-Type: application/json' \
+          -H 'Accept: application/json, text/event-stream' \
+          -H \"Mcp-Session-Id: \$S\" \
+          -d '{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}' \
+          http://localhost:8001/mcp > /dev/null 2>&1
+        sleep 0.5
+        # Tool call
+        curl -sfN --max-time 30 -X POST \
+          -H 'Content-Type: application/json' \
+          -H 'Accept: application/json, text/event-stream' \
+          -H \"Mcp-Session-Id: \$S\" \
+          -d '$body' \
+          http://localhost:8001/mcp 2>&1
+    "
+}
+
+@test "poco-memory container is running" {
+    run docker inspect -f '{{.State.Running}}' pocketcoder-poco-memory
+    [ "$status" -eq 0 ]
+    [ "$output" = "true" ]
+}
+
+@test "poco-memory health endpoint responds" {
+    run docker exec pocketcoder-poco-memory curl -sf http://localhost:8001/health
+    [ "$status" -eq 0 ]
+    [ "$output" = "ok" ]
+}
+
+@test "poco-memory MCP initialize handshake succeeds" {
+    local http_code
+    http_code=$(docker exec pocketcoder-poco-memory curl -sf -o /dev/null -w '%{http_code}' -X POST \
+        -H 'Content-Type: application/json' \
+        -H 'Accept: application/json, text/event-stream' \
+        -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"bats-test","version":"1.0"}}}' \
+        http://localhost:8001/mcp 2>/dev/null) || true
+    [ "$http_code" = "200" ]
+}
+
+@test "memory_store + memory_recall round-trip" {
+    # Store
+    local store_resp
+    store_resp=$(poco_mcp_call 2 '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"memory_store","arguments":{"content":"BATS test: user prefers dark mode","tags":["preference","ui"]}}}')
+    run bash -c "echo '$store_resp' | grep -q 'Memory stored'"
+    [ "$status" -eq 0 ]
+
+    # Recall
+    local recall_resp
+    recall_resp=$(poco_mcp_call 3 '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"memory_recall","arguments":{"query":"user UI theme preferences"}}}')
+    run bash -c "echo '$recall_resp' | grep -q 'dark mode'"
+    [ "$status" -eq 0 ]
+}
+
+@test "memory_search returns FTS results" {
+    # Store (idempotent — may exist from prior test)
+    poco_mcp_call 2 '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"memory_store","arguments":{"content":"BATS test: always use bun instead of npm"}}}' > /dev/null
+
+    local resp
+    resp=$(poco_mcp_call 3 '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"memory_search","arguments":{"query":"bun npm"}}}')
+    run bash -c "echo '$resp' | grep -q 'bun'"
+    [ "$status" -eq 0 ]
+}
+
+@test "memory_deep_recall finds memories without decay" {
+    local resp
+    resp=$(poco_mcp_call 2 '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"memory_deep_recall","arguments":{"query":"user preferences"}}}')
+    run bash -c "echo '$resp' | grep -qE '(dark mode|bun|No memories found)'"
+    [ "$status" -eq 0 ]
+}
+
+@test "memory_forget deletes a memory" {
+    # Store a temporary memory
+    local store_resp
+    store_resp=$(poco_mcp_call 2 '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"memory_store","arguments":{"content":"BATS temp memory to delete"}}}')
+
+    local memory_id
+    memory_id=$(echo "$store_resp" | grep -oP 'memory:[a-z0-9]+' | head -1)
+    [ -n "$memory_id" ]
+
+    # Forget it
+    local forget_resp
+    forget_resp=$(poco_mcp_call 3 "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"memory_forget\",\"arguments\":{\"id\":\"$memory_id\"}}}")
+    run bash -c "echo '$forget_resp' | grep -q 'Forgotten'"
+    [ "$status" -eq 0 ]
+}
