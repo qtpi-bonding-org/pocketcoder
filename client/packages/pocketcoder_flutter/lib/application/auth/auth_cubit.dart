@@ -2,7 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart';
 import 'package:flutter_aeroform/domain/models/oauth_token.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
-import '../../support/extensions/cubit_ui_flow_extension.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
 import 'auth_state.dart';

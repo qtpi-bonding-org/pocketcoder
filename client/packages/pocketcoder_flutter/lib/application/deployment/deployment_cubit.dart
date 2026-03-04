@@ -5,7 +5,7 @@ import 'package:flutter_aeroform/domain/deployment/i_deployment_service.dart';
 import 'package:flutter_aeroform/domain/models/deployment_config.dart';
 import 'package:flutter_aeroform/domain/models/deployment_result.dart';
 import 'package:flutter_aeroform/domain/models/instance.dart';
-import '../../support/extensions/cubit_ui_flow_extension.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
 import 'deployment_state.dart';
