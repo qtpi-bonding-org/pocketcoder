@@ -66,6 +66,7 @@ services:
       - pocketcoder-dashboard
       - pocketcoder-docker
       - pocketcoder-tools
+      - pocketcoder-knowledge
     # Don't start automatically - use 'run' command instead
     profiles:
       - test
@@ -82,4 +83,6 @@ networks:
   pocketcoder-docker:
     external: false
   pocketcoder-tools:
+    external: false
+  pocketcoder-knowledge:
     external: false
