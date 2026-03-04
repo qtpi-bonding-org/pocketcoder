@@ -6,14 +6,6 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i687;
 
-import 'package:flutter_aeroform/application/auth/auth_cubit.dart' as _i743;
-import 'package:flutter_aeroform/application/auth/auth_message_mapper.dart'
-    as _i293;
-import 'package:flutter_aeroform/application/config/config_cubit.dart' as _i546;
-import 'package:flutter_aeroform/application/deployment/deployment_cubit.dart'
-    as _i46;
-import 'package:flutter_aeroform/application/deployment/deployment_message_mapper.dart'
-    as _i817;
 import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart' as _i172;
 import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart'
     as _i432;
@@ -48,9 +40,6 @@ class FlutterAeroformPackageModule extends _i526.MicroPackageModule {
 // initializes the registration of main-scope dependencies inside of GetIt
   @override
   _i687.FutureOr<void> init(_i526.GetItHelper gh) {
-    gh.factory<_i293.AuthMessageMapper>(() => _i293.AuthMessageMapper());
-    gh.factory<_i817.DeploymentMessageMapper>(
-        () => _i817.DeploymentMessageMapper());
     gh.lazySingleton<_i432.ICloudProviderAPIClient>(() => _i732.LinodeAPIClient(
           gh<_i519.Client>(),
           gh<String>(instanceName: 'linodeClientId'),
@@ -73,16 +62,5 @@ class FlutterAeroformPackageModule extends _i526.MicroPackageModule {
           secureStorage: gh<_i571.ISecureStorage>(),
           validationService: gh<_i280.IValidationService>(),
         ));
-    gh.factory<_i546.ConfigCubit>(() => _i546.ConfigCubit(
-          gh<_i280.IValidationService>(),
-          gh<_i432.ICloudProviderAPIClient>(),
-          gh<_i571.ISecureStorage>(),
-        ));
-    gh.factory<_i743.AuthCubit>(() => _i743.AuthCubit(
-          gh<_i172.IOAuthService>(),
-          gh<_i571.ISecureStorage>(),
-        ));
-    gh.factory<_i46.DeploymentCubit>(
-        () => _i46.DeploymentCubit(gh<_i440.IDeploymentService>()));
   }
 }

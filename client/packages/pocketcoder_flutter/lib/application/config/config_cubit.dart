@@ -5,7 +5,7 @@ import 'package:flutter_aeroform/domain/models/deployment_config.dart';
 import 'package:flutter_aeroform/domain/models/validation_result.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
-import '../../support/extensions/cubit_ui_flow_extension.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
 import 'config_state.dart';

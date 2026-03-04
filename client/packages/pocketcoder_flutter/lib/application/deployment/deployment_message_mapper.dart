@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:flutter_aeroform/application/deployment/deployment_cubit.dart';
-import 'package:flutter_aeroform/application/deployment/deployment_state.dart';
+import 'package:pocketcoder_flutter/application/deployment/deployment_cubit.dart';
+import 'package:pocketcoder_flutter/application/deployment/deployment_state.dart';
 import 'package:flutter_aeroform/domain/models/deployment_result.dart';
 
 /// Message mapper for deployment state to user-friendly messages

@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:flutter_aeroform/application/auth/auth_state.dart';
+import 'package:pocketcoder_flutter/application/auth/auth_state.dart';
 
 /// Message mapper for authentication state to user-friendly messages
 @injectable
