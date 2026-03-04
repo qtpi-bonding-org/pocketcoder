@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
 import 'package:flutter_client_sse/flutter_client_sse.dart';
-import 'package:flutter_aeroform/domain/observability/i_observability_repository.dart';
-import 'package:flutter_aeroform/domain/exceptions.dart';
-import 'package:flutter_aeroform/infrastructure/core/logger.dart';
-import 'package:flutter_aeroform/core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../core/api_endpoints.dart';
 
@@ -84,8 +84,4 @@ class ObservabilityRepository implements IObservabilityRepository {
       'fetchSystemStats',
     );
   }
-}
-
-class ObservabilityException extends DomainException {
-  ObservabilityException(super.message, [super.error]);
 }

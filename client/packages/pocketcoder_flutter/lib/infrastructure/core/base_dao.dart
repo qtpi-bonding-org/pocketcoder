@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
-import "package:flutter_aeroform/infrastructure/core/logger.dart";
+import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 
 /// A generic Data Access Object (DAO) for PocketBase collections.
 ///
