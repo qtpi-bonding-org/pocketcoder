@@ -5,8 +5,8 @@ import 'package:pocketcoder_flutter/domain/auth/user.dart';
 import 'package:pocketcoder_flutter/domain/models/ssh_key.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
-import 'package:flutter_aeroform/domain/exceptions.dart';
-import 'package:flutter_aeroform/core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'auth_daos.dart';
 
 @LazySingleton(as: IAuthRepository)

@@ -6,9 +6,9 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:flutter_aeroform/application/observability/observability_cubit.dart';
-import 'package:flutter_aeroform/application/observability/observability_state.dart';
-import 'package:flutter_aeroform/domain/observability/i_observability_repository.dart';
+import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
+import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
+import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 
 class MonitorScreen extends StatefulWidget {
   const MonitorScreen({super.key});

@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'auth_store.dart';
-import "package:flutter_aeroform/infrastructure/core/logger.dart";
+import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:flutter_aeroform/domain/models/app_config.dart';
 
 @module
