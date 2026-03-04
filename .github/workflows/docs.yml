@@ -1,21 +1,19 @@
 # PocketCoder Documentation — Build & Deploy
-# Currently manual-only (workflow_dispatch). Wire up 'push' trigger when ready.
 
 name: Deploy Docs
 
 on:
   workflow_dispatch:
-  # Uncomment to auto-deploy on push to main:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - 'services/docs/**'
-  #     - 'services/pocketbase/**/*.go'
-  #     - 'services/opencode/**/*.ts'
-  #     - 'services/interface/**/*.ts'
-  #     - 'services/proxy/src/**/*.rs'
-  #     - 'scripts/generate_audit.sh'
-  #     - 'CODEBASE.md'
+  push:
+    branches: [main]
+    paths:
+      - 'services/docs/**'
+      - 'services/pocketbase/**/*.go'
+      - 'services/opencode/**/*.ts'
+      - 'services/interface/**/*.ts'
+      - 'services/proxy/src/**/*.rs'
+      - 'scripts/generate_audit.sh'
+      - 'CODEBASE.md'
 
 permissions:
   contents: read
