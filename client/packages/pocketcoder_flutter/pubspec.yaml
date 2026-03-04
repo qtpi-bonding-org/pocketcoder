@@ -15,7 +15,9 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   flutter_aeroform:
-    path: ../flutter_aeroform
+    git:
+      url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
+      ref: 48b98b8
 
   # Architecture & State Management
   flutter_bloc: ^8.1.3
