@@ -6,10 +6,23 @@
 }
 
 :root[data-theme='dark'] {
-  --sl-color-accent-low: #003b00;
-  --sl-color-accent: #00ff41;          /* Vivid Green — full intensity in dark mode */
-  --sl-color-accent-high: #b3ffb3;
+  /* Accent scale — Green hierarchy from AppPalette */
+  --sl-color-accent-low: #003b00;      /* Trace Green (neutral1) */
+  --sl-color-accent: #00ff41;          /* Vivid Green (color2) — full intensity */
+  --sl-color-accent-high: #e4e4e4;     /* infoWhite — readable on accent-low */
+
+  /* Gray scale — terminal palette */
+  --sl-color-gray-1: #e4e4e4;          /* infoWhite — headings */
+  --sl-color-gray-2: #bfbfbf;          /* body text */
+  --sl-color-gray-3: #7a7a7a;          /* secondary text */
+  --sl-color-gray-4: #003b00;          /* Trace Green — borders */
+  --sl-color-gray-5: #0d1a0d;          /* deep green-black — subtle dividers */
+  --sl-color-gray-6: #0a0a0a;          /* near-black surface */
+  --sl-color-gray-7: #e4e4e4;          /* infoWhite */
+  --sl-color-white: #e4e4e4;           /* infoWhite */
+
+  /* Backgrounds — Deep Black (color1) */
+  --sl-color-black: #050505;
   --sl-color-bg-nav: #0a0a0a;
   --sl-color-bg-sidebar: #0a0a0a;
-  --sl-color-black: #050505;
 }
