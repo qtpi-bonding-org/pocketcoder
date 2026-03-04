@@ -76,6 +76,7 @@ services:
     networks:
       - pocketcoder-opencode-sdk
       - pocketcoder-control
+      - pocketcoder-knowledge
 
   # 🔨 SANDBOX (Isolated Execution Environment)
   sandbox:
@@ -223,6 +224,66 @@ services:
       - sandbox
 
 
+  # 📚 SURREALDB (Knowledge + Memory Database)
+  # To enable: docker compose --profile knowledge up
+  surrealdb:
+    image: surrealdb/surrealdb:v2
+    container_name: pocketcoder-surrealdb
+    user: root
+    profiles:
+      - knowledge
+    command: start --log info --user root --pass root rocksdb:/mydata/mydatabase.db
+    volumes:
+      - surrealdb_data:/mydata
+    networks:
+      - pocketcoder-knowledge
+    restart: unless-stopped
+
+  # 📓 OPEN NOTEBOOK (Knowledge Base — NotebookLM Alternative)
+  # To enable: docker compose --profile knowledge up
+  open-notebook:
+    image: lfnovo/open_notebook:v1-latest
+    container_name: pocketcoder-open-notebook
+    profiles:
+      - knowledge
+    depends_on:
+      - surrealdb
+    environment:
+      - SURREAL_URL=ws://surrealdb:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASSWORD=root
+      - SURREAL_NAMESPACE=open_notebook
+      - SURREAL_DATABASE=open_notebook
+      - OPEN_NOTEBOOK_ENCRYPTION_KEY=${OPEN_NOTEBOOK_ENCRYPTION_KEY}
+    volumes:
+      - notebook_data:/app/data
+    ports:
+      - "8502:8502"  # OpenNotebook UI
+      - "5055:5055"  # OpenNotebook REST API
+    networks:
+      - pocketcoder-knowledge
+    restart: unless-stopped
+
+  # 🔗 OPEN NOTEBOOK MCP (MCP Bridge for OpenCode)
+  # To enable: docker compose --profile knowledge up
+  open-notebook-mcp:
+    build:
+      context: services/open-notebook-mcp
+      dockerfile: Dockerfile
+    container_name: pocketcoder-open-notebook-mcp
+    profiles:
+      - knowledge
+    depends_on:
+      - open-notebook
+    environment:
+      - OPEN_NOTEBOOK_URL=http://open-notebook:5055
+      - MCP_TRANSPORT=streamable-http
+      - HOST=0.0.0.0
+      - PORT=8000
+    networks:
+      - pocketcoder-knowledge
+    restart: unless-stopped
+
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
   ntfy:
@@ -259,6 +320,8 @@ volumes:
   shell_bridge:
   ntfy-cache:
   ntfy-auth:
+  surrealdb_data:
+  notebook_data:
 
 networks:
   pocketcoder-dashboard:
@@ -272,4 +335,6 @@ networks:
   pocketcoder-opencode-sdk:
     driver: bridge
   pocketcoder-pocketbase-sdk:
+    driver: bridge
+  pocketcoder-knowledge:
     driver: bridge
