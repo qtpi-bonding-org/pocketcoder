@@ -424,6 +424,34 @@ func init() {
 		notifRules.AddIndex("idx_notification_rules_user", true, "user", "")
 		if err := app.Save(notifRules); err != nil { return err }
 
+		// =========================================================================
+		// 14. CRON JOBS (Scheduled Agent Tasks)
+		// =========================================================================
+		cronJobs, _ := getOrCreateCollection("pc_cron_jobs", "cron_jobs", core.CollectionTypeBase)
+		addFields(cronJobs,
+			&core.TextField{Name: "name", Required: true},
+			&core.TextField{Name: "description"},
+			&core.TextField{Name: "cron_expression", Required: true},
+			&core.TextField{Name: "prompt", Required: true},
+			&core.SelectField{Name: "session_mode", Required: true, MaxSelect: 1,
+				Values: []string{"existing", "new"}},
+			&core.RelationField{Name: "chat", CollectionId: chats.Id, MaxSelect: 1},
+			&core.RelationField{Name: "agent", CollectionId: agents.Id, MaxSelect: 1},
+			&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, MaxSelect: 1},
+			&core.BoolField{Name: "enabled"},
+			&core.DateField{Name: "last_executed"},
+			&core.TextField{Name: "last_status"},
+			&core.TextField{Name: "last_error"},
+			&core.AutodateField{Name: "created", OnCreate: true},
+			&core.AutodateField{Name: "updated", OnCreate: true, OnUpdate: true},
+		)
+		cronJobs.ListRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin')")
+		cronJobs.ViewRule = ptr("@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin')")
+		cronJobs.CreateRule = ptr("@request.auth.id != ''")
+		cronJobs.UpdateRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		cronJobs.DeleteRule = ptr("user = @request.auth.id || @request.auth.role = 'admin'")
+		if err := app.Save(cronJobs); err != nil { return err }
+
 		// Fix turn state
 		_, err = app.DB().NewQuery("UPDATE chats SET turn = 'user' WHERE turn = '' OR turn IS NULL").Execute()
 		return err

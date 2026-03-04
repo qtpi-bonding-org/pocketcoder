@@ -20,6 +20,7 @@ class Collections {
   static const String modelSelection = 'model_selection';
   static const String llmProviders = 'llm_providers';
   static const String notificationRules = 'notification_rules';
+  static const String cronJobs = 'cron_jobs';
 
   static const List<String> all = [
     users,
@@ -42,5 +43,6 @@ class Collections {
     modelSelection,
     llmProviders,
     notificationRules,
+    cronJobs,
   ];
 }
