@@ -14,21 +14,15 @@ import 'package:flutter_aeroform/application/deployment/deployment_cubit.dart'
     as _i46;
 import 'package:flutter_aeroform/application/deployment/deployment_message_mapper.dart'
     as _i817;
-import 'package:flutter_aeroform/application/observability/observability_cubit.dart'
-    as _i664;
 import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart' as _i172;
 import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart'
     as _i432;
 import 'package:flutter_aeroform/domain/deployment/i_deployment_service.dart'
     as _i440;
-import 'package:flutter_aeroform/domain/observability/i_observability_repository.dart'
-    as _i306;
 import 'package:flutter_aeroform/domain/security/i_certificate_manager.dart'
     as _i698;
 import 'package:flutter_aeroform/domain/security/i_password_generator.dart'
     as _i395;
-import 'package:flutter_aeroform/domain/status/i_status_repository.dart'
-    as _i762;
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart' as _i571;
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart'
     as _i280;
@@ -38,14 +32,10 @@ import 'package:flutter_aeroform/infrastructure/cloud_provider/linode_api_client
     as _i732;
 import 'package:flutter_aeroform/infrastructure/deployment/deployment_service.dart'
     as _i877;
-import 'package:flutter_aeroform/infrastructure/observability/observability_repository.dart'
-    as _i40;
 import 'package:flutter_aeroform/infrastructure/security/certificate_manager.dart'
     as _i653;
 import 'package:flutter_aeroform/infrastructure/security/password_generator.dart'
     as _i888;
-import 'package:flutter_aeroform/infrastructure/status/status_repository.dart'
-    as _i396;
 import 'package:flutter_aeroform/infrastructure/storage/secure_storage.dart'
     as _i436;
 import 'package:flutter_aeroform/infrastructure/validation/validation_service.dart'
@@ -53,7 +43,6 @@ import 'package:flutter_aeroform/infrastructure/validation/validation_service.da
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:http/http.dart' as _i519;
 import 'package:injectable/injectable.dart' as _i526;
-import 'package:pocketbase/pocketbase.dart' as _i169;
 
 class FlutterAeroformPackageModule extends _i526.MicroPackageModule {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -67,15 +56,9 @@ class FlutterAeroformPackageModule extends _i526.MicroPackageModule {
           gh<String>(instanceName: 'linodeClientId'),
         ));
     gh.lazySingleton<_i280.IValidationService>(() => _i489.ValidationService());
-    gh.lazySingleton<_i306.IObservabilityRepository>(
-        () => _i40.ObservabilityRepository(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i762.IStatusRepository>(
-        () => _i396.StatusRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i395.IPasswordGenerator>(() => _i888.PasswordGenerator());
     gh.lazySingleton<_i571.ISecureStorage>(
         () => _i436.SecureStorage(storage: gh<_i558.FlutterSecureStorage>()));
-    gh.factory<_i664.ObservabilityCubit>(
-        () => _i664.ObservabilityCubit(gh<_i306.IObservabilityRepository>()));
     gh.lazySingleton<_i172.IOAuthService>(() => _i764.LinodeOAuthService(
           gh<_i571.ISecureStorage>(),
           gh<_i432.ICloudProviderAPIClient>(),

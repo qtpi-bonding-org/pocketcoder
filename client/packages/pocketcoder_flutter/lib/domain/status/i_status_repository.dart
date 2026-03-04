@@ -1,4 +1,4 @@
-import 'package:flutter_aeroform/domain/models/healthcheck.dart';
+import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
 
 abstract class IStatusRepository {
   /// Check if the PocketBase backend is reachable and healthy

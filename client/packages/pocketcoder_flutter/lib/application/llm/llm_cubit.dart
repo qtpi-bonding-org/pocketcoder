@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/llm/i_llm_repository.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:flutter_aeroform/infrastructure/core/logger.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'llm_state.dart';
 
 @injectable

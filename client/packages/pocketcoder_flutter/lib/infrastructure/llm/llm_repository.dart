@@ -3,8 +3,8 @@ import 'package:pocketcoder_flutter/domain/llm/i_llm_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/llm_key.dart';
 import 'package:pocketcoder_flutter/domain/models/model_selection.dart';
 import 'package:pocketcoder_flutter/domain/models/llm_provider.dart';
-import 'package:flutter_aeroform/domain/exceptions.dart';
-import 'package:flutter_aeroform/core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'llm_daos.dart';
 
 @LazySingleton(as: ILlmRepository)

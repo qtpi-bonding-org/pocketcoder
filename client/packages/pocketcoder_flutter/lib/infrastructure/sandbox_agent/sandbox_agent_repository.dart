@@ -1,8 +1,8 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/sandbox_agent.dart';
-import 'package:flutter_aeroform/domain/exceptions.dart';
-import 'package:flutter_aeroform/core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import '../communication/communication_daos.dart';
 
 @LazySingleton(as: ISandboxAgentRepository)

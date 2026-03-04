@@ -5,8 +5,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:flutter_aeroform/application/observability/observability_cubit.dart';
-import 'package:flutter_aeroform/application/observability/observability_state.dart';
+import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
+import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 
 class AgentObservabilityScreen extends StatelessWidget {
   const AgentObservabilityScreen({super.key});

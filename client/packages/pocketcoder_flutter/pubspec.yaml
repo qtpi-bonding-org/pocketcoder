@@ -64,6 +64,7 @@ dependencies:
   cryptography: ^2.7.0
   openssh_ed25519: ^1.1.0
   file_picker: ^8.0.0
+  flutter_client_sse: ^2.0.3
   connectivity_plus: ^7.0.0
   connectivity_plus_platform_interface: ^2.0.1
   device_info_plus: ^11.3.0
