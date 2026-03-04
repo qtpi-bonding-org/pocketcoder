@@ -11,6 +11,7 @@ export default defineConfig({
                 src: './src/assets/logo.svg',
                 alt: 'PocketCoder',
             },
+            favicon: '/favicon.svg',
             customCss: ['./src/custom.css'],
             head: [],
             sidebar: [
