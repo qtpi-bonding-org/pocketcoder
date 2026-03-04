@@ -284,6 +284,37 @@ services:
       - pocketcoder-knowledge
     restart: unless-stopped
 
+  # 🧠 POCO-MEMORY (Agent Memory MCP Server)
+  # To enable: docker compose --profile knowledge up
+  poco-memory:
+    build:
+      context: services/poco-memory
+      dockerfile: Dockerfile
+    container_name: pocketcoder-poco-memory
+    profiles:
+      - knowledge
+    depends_on:
+      - surrealdb
+    environment:
+      - SURREAL_URL=ws://surrealdb:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASSWORD=root
+      - SURREAL_NAMESPACE=poco_memory
+      - SURREAL_DATABASE=poco_memory
+      - HOST=0.0.0.0
+      - PORT=8001
+    volumes:
+      - fastembed_cache:/root/.cache/fastembed
+    networks:
+      - pocketcoder-knowledge
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
   ntfy:
@@ -322,6 +353,7 @@ volumes:
   ntfy-auth:
   surrealdb_data:
   notebook_data:
+  fastembed_cache:  # ONNX model cache for poco-memory embeddings
 
 networks:
   pocketcoder-dashboard:
