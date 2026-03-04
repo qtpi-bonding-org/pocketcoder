@@ -63,6 +63,9 @@ func main() {
 	// 3c. Register Tool Permission Hooks (opencode.json rendering + OpenCode restart)
 	hooks.RegisterToolPermissionHooks(app)
 
+	// 3d. Register Cron Hooks (scheduled agent tasks)
+	hooks.RegisterCronHooks(app)
+
 	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
@@ -76,6 +79,7 @@ func main() {
 		api.RegisterMcpApi(app, e)
 		api.RegisterProxyApi(app, e)
 		api.RegisterLogsApi(app, e)
+		api.RegisterCronApi(app, e)
 		filesystem.RegisterArtifactApi(app, e)
 		hooks.RegisterPushApi(app, e)
 

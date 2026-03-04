@@ -44,7 +44,10 @@
     "check_pc_updates": "allow",
     "mcp_catalog": "allow",
     "mcp_request": "ask",
-    "mcp_status": "allow"
+    "mcp_status": "allow",
+    "schedule_task": "ask",
+    "list_scheduled_tasks": "allow",
+    "cancel_scheduled_task": "ask"
   },
   "plugin": [
     "./.opencode/plugins/session_env.ts"
