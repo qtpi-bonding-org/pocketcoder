@@ -40,6 +40,12 @@
       "timeout": 120000,
       "type": "remote",
       "url": "http://open-notebook-mcp:8000/mcp"
+    },
+    "pocomemory": {
+      "enabled": true,
+      "timeout": 120000,
+      "type": "remote",
+      "url": "http://poco-memory:8001/mcp"
     }
   },
   "permission": {
