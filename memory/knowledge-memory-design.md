@@ -85,8 +85,8 @@ Stack: Rust + Axum + surrealdb (Rust client SDK) + fastembed-rs (local embedding
 
 ## Implementation Order
 
-1. **Phase 1: OpenNotebook** [IN PROGRESS] — Upstream image + MCP wrapper added to Compose with `--profile knowledge`, SurrealDB wired, BATS tests written
-2. **Phase 2: poco-memory** — Rust MCP server, SurrealDB schema, fastembed integration, 5 MCP tools, add to Compose
+1. **Phase 1: OpenNotebook** [DONE] — Upstream image + MCP wrapper added to Compose with `--profile knowledge`, SurrealDB wired, BATS tests written
+2. **Phase 2: poco-memory** [IN PROGRESS] — Rust MCP server, SurrealDB schema, fastembed integration, 6 MCP tools (store/recall/search/deep_recall/relate/forget), add to Compose
 3. **Phase 3: Interface wiring** — Auto-index chat summaries into poco-memory after conversations
 
 ## References
