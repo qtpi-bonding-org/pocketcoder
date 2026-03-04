@@ -27,6 +27,8 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart'
     as _i606;
 import 'package:pocketcoder_flutter/application/llm/llm_cubit.dart' as _i85;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
+import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
+    as _i273;
 import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart'
     as _i955;
 import 'package:pocketcoder_flutter/application/question/question_cubit.dart'
@@ -64,8 +66,12 @@ import 'package:pocketcoder_flutter/domain/llm/i_llm_repository.dart' as _i615;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart'
     as _i148;
+import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart'
+    as _i611;
 import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_repository.dart'
     as _i184;
+import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
+    as _i190;
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart'
     as _i800;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_daos.dart'
@@ -114,8 +120,12 @@ import 'package:pocketcoder_flutter/infrastructure/notifications/device_daos.dar
     as _i849;
 import 'package:pocketcoder_flutter/infrastructure/notifications/device_repository.dart'
     as _i301;
+import 'package:pocketcoder_flutter/infrastructure/observability/observability_repository.dart'
+    as _i310;
 import 'package:pocketcoder_flutter/infrastructure/sandbox_agent/sandbox_agent_repository.dart'
     as _i853;
+import 'package:pocketcoder_flutter/infrastructure/status/status_repository.dart'
+    as _i907;
 import 'package:pocketcoder_flutter/infrastructure/system/health_daos.dart'
     as _i1065;
 import 'package:pocketcoder_flutter/infrastructure/system/health_repository.dart'
@@ -149,6 +159,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1000.SshTerminalCubit(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i589.PocketCoderApi>(
         () => _i589.PocketCoderApi(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i611.IObservabilityRepository>(
+        () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i190.IStatusRepository>(
+        () => _i907.StatusRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i623.IHealthcheckRepository>(
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
@@ -198,6 +212,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i464.SandboxAgentDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i849.DeviceDao>(
         () => _i849.DeviceDao(gh<_i169.PocketBase>()));
+    gh.factory<_i273.ObservabilityCubit>(
+        () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
     gh.singleton<String>(
       () => externalModule.linodeClientId,
       instanceName: 'linodeClientId',

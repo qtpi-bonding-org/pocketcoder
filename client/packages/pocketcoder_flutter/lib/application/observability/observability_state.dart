@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:flutter_aeroform/domain/observability/i_observability_repository.dart';
+import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 
 part 'observability_state.freezed.dart';
 

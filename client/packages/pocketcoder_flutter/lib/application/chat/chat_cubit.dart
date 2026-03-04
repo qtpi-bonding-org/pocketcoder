@@ -3,8 +3,8 @@ import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
 import 'package:pocketcoder_flutter/domain/communication/i_chat_repository.dart';
-import "package:flutter_aeroform/infrastructure/core/logger.dart";
-import 'package:flutter_aeroform/support/extensions/cubit_ui_flow_extension.dart';
+import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'chat_state.dart';
 
 @injectable
