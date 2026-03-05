@@ -40,7 +40,13 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
         );
       }
 
-      // Perform deployment
+      // Emit uploading image phase before deployment starts
+      emit(state.copyWith(
+        status: UiFlowStatus.success,
+        deploymentStatus: DeploymentStatus.uploadingImage,
+      ));
+
+      // Perform deployment (includes image check/upload + instance creation)
       final result = await _deploymentService.deploy(config);
 
       if (result.status == DeploymentStatus.failed) {

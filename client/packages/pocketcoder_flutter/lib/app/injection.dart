@@ -18,7 +18,8 @@ Future<void> configureTestDependencies() async {
     const AppConfig(
       linodeClientId: 'test-client-id',
       linodeRedirectUri: 'pocketcoder://oauth-callback',
-      cloudInitTemplateUrl: 'https://example.com/cloud-init',
+      imageRelayUrl: 'https://pocketcoder-image-relay.workers.dev',
+      nixosImageLabel: 'pocketcoder-nixos-v1',
       maxPollingAttempts: 20,
       initialPollingIntervalSeconds: 15,
     ),

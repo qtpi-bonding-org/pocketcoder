@@ -17,7 +17,7 @@ dependencies:
   flutter_aeroform:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
-      ref: 7fe7c86
+      ref: 4ec5786
 
   # Architecture & State Management
   flutter_bloc: ^8.1.3

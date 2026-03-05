@@ -1,0 +1,65 @@
+# PocketCoder NixOS Image — Build & Publish
+
+name: Build NixOS Image
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*-nixos'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nixos-image
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v30
+        with:
+          nix_path: nixpkgs=channel:nixos-25.05
+
+      - name: Build Linode image
+        working-directory: deploy/nixos
+        run: nix build .#linode-image --print-build-logs
+
+      - name: Compress image
+        run: |
+          cp deploy/nixos/result/nixos.img pocketcoder-nixos.img
+          gzip pocketcoder-nixos.img
+
+      - name: Upload to R2
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: r2 object put pocketcoder-images/pocketcoder-nixos-latest.img.gz --file=pocketcoder-nixos.img.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nixos-image
+          path: pocketcoder-nixos.img.gz
+          retention-days: 30
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nixos-image
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pocketcoder-nixos.img.gz
+          generate_release_notes: true
