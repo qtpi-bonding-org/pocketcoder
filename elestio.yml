@@ -1,0 +1,54 @@
+config:
+  runTime: "dockerCompose"
+  version: ""
+  framework: ""
+  installCommand: ""
+  buildCommand: "docker compose build"
+  buildDir: "/"
+  runCommand: "docker compose up -d"
+  isMonoRepoPackageInRoot: false
+
+environments:
+  - key: "POCKETBASE_SUPERUSER_EMAIL"
+    value: "[EMAIL]"
+  - key: "POCKETBASE_SUPERUSER_PASSWORD"
+    value: "random_password"
+  - key: "POCKETBASE_ADMIN_EMAIL"
+    value: "[EMAIL]"
+  - key: "POCKETBASE_ADMIN_PASSWORD"
+    value: "random_password"
+  - key: "AGENT_EMAIL"
+    value: "poco@pocketcoder.local"
+  - key: "AGENT_PASSWORD"
+    value: "random_password"
+  - key: "OPEN_NOTEBOOK_ENCRYPTION_KEY"
+    value: "random_password"
+  - key: "PN_PROVIDER"
+    value: ""
+  - key: "PN_URL"
+    value: ""
+  - key: "PN_RELAY_SECRET"
+    value: ""
+
+ports:
+  - protocol: "HTTPS"
+    targetProtocol: "HTTP"
+    listeningPort: "443"
+    targetPort: "8090"
+    targetIP: "172.17.0.1"
+    public: true
+    path: "/"
+    isAuth: false
+
+lifeCycleConfig:
+  postInstallCommand: "./scripts/elestio/postInstall.sh"
+  preBackupCommand: "./scripts/elestio/preBackup.sh"
+  postBackupCommand: "./scripts/elestio/postBackup.sh"
+  preRestoreCommand: "./scripts/elestio/preRestore.sh"
+  postRestoreCommand: "./scripts/elestio/postRestore.sh"
+
+webUI:
+  - url: "https://[CI_CD_DOMAIN]"
+    label: "PocketCoder"
+    login: "[ADMIN_EMAIL]"
+    password: "[ADMIN_PASSWORD]"

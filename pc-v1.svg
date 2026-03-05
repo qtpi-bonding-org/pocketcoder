@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="216"
+   height="216"
+   viewBox="0 0 57.150001 57.150001"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <g
+     id="layer1"
+     style="display:inline"
+     transform="translate(-5.291665,-5.291665)">
+    <rect
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:#00b82a;stroke-width:2.11667;stroke-dasharray:none;stroke-opacity:1"
+       id="rect2"
+       width="33.866665"
+       height="33.866665"
+       x="6.3499999"
+       y="6.3499999" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:#00b82a;stroke-width:2.11667;stroke-dasharray:none;stroke-opacity:1"
+       id="rect2-5"
+       width="33.866665"
+       height="33.866665"
+       x="27.516666"
+       y="27.516666" />
+    <rect
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:2.11639;stroke-dasharray:none;stroke-opacity:1"
+       id="rect3"
+       width="13"
+       height="12.78745"
+       x="26.16"
+       y="26.379999"
+       ry="0" />
+    <path
+       style="font-size:32px;line-height:0;font-family:'Share Tech Mono';-inkscape-font-specification:'Share Tech Mono';text-align:center;text-anchor:middle;white-space:pre;fill:#00b800;stroke-width:8"
+       d="m 95.43261,53.192879 c 0,1.728 -0.458667,3.008 -1.376,3.84 -0.917333,0.810667 -2.272,1.216 -4.064,1.216 h -3.328 v 8.704 h -2.784 v -22.4 h 6.048 c 1.813333,0 3.178667,0.405333 4.096,1.216 0.938667,0.789333 1.408,2.048 1.408,3.776 z m -2.784,-3.936 c 0,-0.810667 -0.192,-1.397333 -0.576,-1.76 -0.362667,-0.362667 -0.949333,-0.544 -1.76,-0.544 h -3.648 v 8.896 h 3.648 c 0.810667,0 1.397333,-0.181333 1.76,-0.544 0.384,-0.384 0.576,-0.981333 0.576,-1.792 z"
+       id="text1"
+       transform="matrix(1.0714286,0,0,1.0714286,-72.872085,-36.735229)"
+       aria-label="P" />
+    <path
+       d="m 72.878859,66.952879 q -2.784,0 -4.288,-1.344 -1.472,-1.376 -1.472,-4.096 v -11.52 q 0,-2.72 1.472,-4.064 1.504,-1.376 4.288,-1.376 h 4.544 v 2.432 h -4.864 q -1.184,0 -1.92,0.704 -0.736,0.704 -0.736,1.696 v 12.736 q 0,0.992 0.736,1.696 0.736,0.704 1.92,0.704 h 4.864 v 2.432 z"
+       id="text1-2"
+       style="font-size:32px;line-height:0;font-family:'Share Tech Mono';-inkscape-font-specification:'Share Tech Mono';white-space:pre;fill:#00b800;stroke-width:8"
+       transform="matrix(1.0714286,0,0,1.0714286,-32.913066,-15.235229)"
+       aria-label="C" />
+  </g>
+</svg>

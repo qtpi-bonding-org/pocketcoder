@@ -78,3 +78,5 @@ services/opencode/llm.env
 
 # Local Scratchpad/Misc
 .misc/
+tobedeleted/
+out.json
