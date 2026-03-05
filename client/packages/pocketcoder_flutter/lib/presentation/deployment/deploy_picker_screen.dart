@@ -153,12 +153,10 @@ class _ProviderCard extends StatelessWidget {
   Future<void> _onTap(BuildContext context) async {
     if (option.requiresPurchase) {
       final billing = GetIt.I<BillingService>();
-      final premium = await billing.isPremium();
-      if (!premium) {
-        if (context.mounted) {
-          AppNavigation.toPaywall(context);
-        }
-        return;
+      final hasAccess = await billing.hasDeployAccess();
+      if (!hasAccess) {
+        final purchased = await billing.purchase('pocketcoder_deploy_24h');
+        if (!purchased) return;
       }
     }
 

@@ -1,11 +1,11 @@
 {
-    "name": "pocketcoder_app",
-    "short_name": "pocketcoder_app",
+    "name": "PocketCoder",
+    "short_name": "PocketCoder",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#00b82a",
-    "description": "A new Flutter project.",
+    "description": "Sovereign AI coding assistant",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -13,6 +13,9 @@ abstract class BillingService {
   /// Purchase a package or subscription.
   Future<bool> purchase(String identifier);
 
+  /// Check if the user has deploy button access.
+  Future<bool> hasDeployAccess();
+
   /// Fetch available offerings.
   Future<List<BillingPackage>> getAvailablePackages();
 }
