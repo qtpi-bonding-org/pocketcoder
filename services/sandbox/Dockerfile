@@ -10,6 +10,18 @@ COPY services/proxy/src ./src
 RUN touch src/main.rs
 RUN cargo build --release
 
+# poco-agents builder (Alpine musl — no ONNX needed)
+FROM rust:1.83-alpine AS agents-builder
+RUN apk add --no-cache musl-dev gcc
+WORKDIR /build
+COPY services/poco-agents/Cargo.toml services/poco-agents/Cargo.lock* ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release
+RUN rm -rf src
+COPY services/poco-agents/src ./src
+RUN touch src/main.rs
+RUN cargo build --release
+
 FROM python:3.11-slim-bookworm
 
 # Install base tools + Node.js
@@ -75,25 +87,8 @@ RUN chmod +x /usr/local/bin/sync_keys.sh
 # Bun globals go to /usr/local/bin if BUN_INSTALL is /usr/local
 RUN bun install -g opencode-ai@1.2.8
 
-# Install uv (Python package manager for CAO)
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    mv /root/.local/bin/uv /usr/local/bin/uv && \
-    mv /root/.local/bin/uvx /usr/local/bin/uvx
-
-# --- CAO Setup (PocketCoder Integration) ---
-# Copy CAO Source (Vendored)
-COPY services/sandbox/cao /app/cao
-
-# Install Python dependencies and CAO in editable mode
-# We do this in one step to ensure all files (README etc) are present
-RUN pip install --no-cache-dir -e /app/cao
-
-# Pre-sync uv dependencies so MCP server starts instantly
-RUN cd /app/cao && uv sync
-
-# Set Shared Tmux Socket by default for CAO
+# Set Shared Tmux Socket
 ENV TMUX_SOCKET=/tmp/tmux/pocketcoder
-# -------------------------------------------
 
 
 # --- SSH & Terminal Mirroring Setup ---
@@ -116,6 +111,10 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 # Copy Rust binary from builder - no volume needed!
 COPY --from=rust-builder /build/target/release/pocketcoder-proxy /usr/local/bin/pocketcoder
 RUN chmod +x /usr/local/bin/pocketcoder
+
+# Copy poco-agents binary
+COPY --from=agents-builder /build/target/release/poco-agents /usr/local/bin/poco-agents
+RUN chmod +x /usr/local/bin/poco-agents
 
 # Use the new entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

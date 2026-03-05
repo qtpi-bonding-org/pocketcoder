@@ -88,9 +88,6 @@ services:
       - "2222:2222"  # SSH + SFTP (key-auth only)
     volumes:
       - opencode_workspace:/workspace
-      - ./services/sandbox/agents/sandbox_agents:/root/.aws/cli-agent-orchestrator/agent-store
-      - cao_db:/root/.aws/cli-agent-orchestrator/db  # CAO SQLite database
-      - ./services/sandbox/cao/src:/app/cao/src
       - ./services/sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
       - shell_bridge:/app/shell_bridge
       - ./scripts/debug:/workspace/debug
@@ -103,7 +100,7 @@ services:
       - OPENCODE_URL=http://opencode:3000
       - DOCKER_MCP_IN_CONTAINER=1
     healthcheck:
-      test: ["CMD", "/bin/bash", "-c", "curl -f http://localhost:3001/health && curl -f http://localhost:9889/health"]
+      test: ["CMD", "/bin/bash", "-c", "curl -f http://localhost:3001/health && curl -f http://localhost:9888/health"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -212,7 +209,6 @@ services:
     volumes:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
       - opencode_data:/database/opencode       # OpenCode DB (analytics)
-      - cao_db:/database/cao                   # CAO DB (sandbox agent tasks)
       - ./services/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
       - ./services/sqlpage/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
     networks:
@@ -346,7 +342,6 @@ volumes:
   pocketcoder-logs:
   opencode_workspace:
   opencode_data:
-  cao_db:  # CAO SQLite database for sandbox agent tasks
   llm_keys:  # Shared LLM API keys (env file written by PocketBase, read by sandbox)
   shell_bridge:
   ntfy-cache:
