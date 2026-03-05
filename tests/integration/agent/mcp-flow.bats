@@ -10,7 +10,7 @@
 # 3. Poco requests the server via POST /api/pocketcoder/mcp_request
 # 4. PocketBase creates pending record, user approves
 # 5. PocketBase renders config, restarts gateway
-# 6. Poco spawns a subagent via CAO with MCP gateway connection
+# 6. Poco spawns a subagent via poco-agents with MCP gateway connection
 # 7. Subagent connects to gateway SSE, uses MCP tools
 # 8. Subagent returns results to Poco
 # 9. Poco synthesizes and responds to the user
@@ -101,7 +101,7 @@ teardown() {
 
 @test "Agent MCP Flow: Full lifecycle — Sync Handoff" {
     # This test verifies that Poco can delegate to a subagent synchronously
-    # using cao_handoff and receive the result directly in the tool response.
+    # using poco-agents spawn (sync=true) and receive the result directly.
 
     authenticate_user
     authenticate_agent
@@ -129,12 +129,12 @@ teardown() {
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
 
-    # Ask Poco to use cao_handoff
+    # Ask Poco to spawn a sync subagent
     local msg_data
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Objective: Use a subagent via 'cao_handoff' (blocking) to fetch https://example.com using the '$server_name' server. Tell me the title of the page.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Objective: Use the poco-agents 'spawn' tool (sync=true) to delegate to a subagent that will fetch https://example.com using the '$server_name' MCP server. Tell me the title of the page.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -164,9 +164,9 @@ teardown() {
 # =============================================================================
 
 @test "Agent MCP Flow: Full lifecycle — Async Assign" {
-    # This test verifies asynchronous delegation via cao_assign.
-    # Poco assigns the task, turn flips to user while subagent works, 
-    # and then Poco sends a second message when the worker is done.
+    # This test verifies asynchronous delegation via poco-agents spawn (sync=false).
+    # Poco spawns the task, turn flips to user while subagent works,
+    # and then Poco polls via check_agent/result when the worker is done.
 
     authenticate_user
     authenticate_agent
@@ -194,12 +194,12 @@ teardown() {
     CHAT_ID=$(echo "$chat_data" | jq -r '.id')
     track_artifact "chats:$CHAT_ID"
 
-    # Ask Poco to use cao_assign
+    # Ask Poco to spawn an async subagent
     local msg_data
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Objective: Assign a subagent via 'cao_assign' to search for 'PocketCoder' using the '$server_name' server. I will wait for you to relay the results.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Objective: Use the poco-agents 'spawn' tool (sync=false) to delegate a subagent that will search for 'PocketCoder' using the '$server_name' MCP server. Then use check_agent and result to get the output. Relay the results to me.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
