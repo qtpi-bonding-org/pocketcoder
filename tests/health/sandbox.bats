@@ -34,11 +34,11 @@ teardown() {
     [ "$status" -eq 0 ] || run_diagnostic_on_failure "Sandbox" "Health check timed out after 30 seconds"
 }
 
-@test "Sandbox CAO API health endpoint returns ok" {
+@test "Sandbox poco-agents health endpoint returns ok" {
     # Validates: Requirement 2.5
-    run curl -s "$CAO_API_URL/health"
-    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Sandbox" "Failed to connect to CAO API health endpoint"
-    [[ "$output" == *"ok"* ]] || run_diagnostic_on_failure "Sandbox" "CAO API health response does not contain 'ok': $output"
+    run curl -s "$POCO_AGENTS_URL/health"
+    [ "$status" -eq 0 ] || run_diagnostic_on_failure "Sandbox" "Failed to connect to poco-agents health endpoint"
+    [[ "$output" == *"ok"* ]] || run_diagnostic_on_failure "Sandbox" "poco-agents health response does not contain 'ok': $output"
 }
 
 @test "Sandbox tmux socket exists" {

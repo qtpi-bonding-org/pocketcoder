@@ -7,7 +7,7 @@
 # Test flow:
 # 1. Shell bridge binary exists and is executable
 # 2. POST to sandbox:3001/exec with command execution request
-# 3. Driver resolves session via CAO API
+# 3. Driver resolves session via tmux
 # 4. Command executes in tmux pane with sentinel pattern
 # 5. Output captured and returned in HTTP response
 
