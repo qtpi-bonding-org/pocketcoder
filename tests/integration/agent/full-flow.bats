@@ -549,12 +549,12 @@ verify_tool_output_in_message() {
 
 @test "Agent Full Flow: Poco delegates to subagent and returns SHA256 hash" {
     # Ask Poco to delegate to a subagent to compute a SHA256 hash.
-    # This exercises the full CAO handoff pipeline:
+    # This exercises the full poco-agents spawn pipeline:
     # 1. Poco receives the request
-    # 2. Poco delegates to a subagent via CAO (cao_handoff)
-    # 3. Subagent runs in sandbox tmux window
+    # 2. Poco delegates to a subagent via poco-agents (spawn tool)
+    # 3. Subagent runs in sandbox tmux window via `opencode run`
     # 4. Subagent executes `echo -n pocketcoder | sha256sum`
-    # 5. HandoffResult returned to Poco
+    # 5. Result returned to Poco via result tool
     # 6. Poco synthesizes and responds with the hash
     # 7. We verify the response contains a valid 64-char hex SHA256 hash
 
@@ -570,7 +570,7 @@ verify_tool_output_in_message() {
     msg_data=$(pb_create "messages" "{
         \"chat\": \"$CHAT_ID\",
         \"role\": \"user\",
-        \"parts\": [{\"type\": \"text\", \"text\": \"Use the cao_handoff tool to delegate this task to a subagent with agent_profile='developer':\n\nTask: Compute the SHA256 hash of the string 'pocketcoder' by running: echo -n pocketcoder | sha256sum\n\nAfter the subagent completes, include the full 64-character hash in your response.\"}],
+        \"parts\": [{\"type\": \"text\", \"text\": \"Use the spawn tool from poco-agents to delegate this task to a subagent with profile='developer':\n\nTask: Compute the SHA256 hash of the string 'pocketcoder' by running: echo -n pocketcoder | sha256sum\n\nAfter the subagent completes, use the result tool to get the output and include the full 64-character hash in your response.\"}],
         \"user_message_status\": \"pending\"
     }")
     USER_MESSAGE_ID=$(echo "$msg_data" | jq -r '.id')
@@ -635,7 +635,7 @@ verify_tool_output_in_message() {
     local sha_hash
     sha_hash=$(echo "$response_text" | grep -oE '[0-9a-f]{64}' | head -1)
 
-    # Verify a subagent was spawned (CAO handoff happened)
+    # Verify a subagent was spawned (poco-agents spawn happened)
     local subagent_records
     subagent_records=$(curl -s -X GET \
         "$PB_URL/api/collections/subagents/records?filter=delegating_agent_id=\"$SESSION_ID\"" \

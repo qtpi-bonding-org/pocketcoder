@@ -10,14 +10,12 @@ export SANDBOX_HOST="${SANDBOX_HOST:-localhost}"
 
 # Sandbox ports
 export SANDBOX_RUST_PORT="${SANDBOX_RUST_PORT:-3001}"
-export SANDBOX_CAO_API_PORT="${SANDBOX_CAO_API_PORT:-9889}"
-export SANDBOX_CAO_MCP_PORT="${SANDBOX_CAO_MCP_PORT:-9888}"
+export SANDBOX_AGENTS_PORT="${SANDBOX_AGENTS_PORT:-9888}"
 export OPENCODE_SSH_PORT="${OPENCODE_SSH_PORT:-2222}"
 
 # Sandbox service URLs (constructed from host and ports)
 export SANDBOX_URL="${SANDBOX_URL:-http://${SANDBOX_HOST}:${SANDBOX_RUST_PORT}}"
-export CAO_API_URL="${CAO_API_URL:-http://${SANDBOX_HOST}:${SANDBOX_CAO_API_PORT}}"
-export CAO_MCP_URL="${CAO_MCP_URL:-http://${SANDBOX_HOST}:${SANDBOX_CAO_MCP_PORT}}"
+export POCO_AGENTS_URL="${POCO_AGENTS_URL:-http://${SANDBOX_HOST}:${SANDBOX_AGENTS_PORT}}"
 
 # Test configuration
 export TEST_TIMEOUT_HEALTH="${TEST_TIMEOUT_HEALTH:-30}"
@@ -38,8 +36,8 @@ export TMUX_SESSION="${TMUX_SESSION:-pocketcoder}"
 # Shell bridge path
 export SHELL_BRIDGE_PATH="${SHELL_BRIDGE_PATH:-/shell_bridge/pocketcoder-shell}"
 
-# CAO database path
-export CAO_DB_PATH="${CAO_DB_PATH:-/root/.aws/cli-agent-orchestrator/db/cli-agent-orchestrator.db}"
+# Agents state directory
+export AGENTS_DIR="${AGENTS_DIR:-/workspace/.agents}"
 
 # Test data prefix
 export TEST_ID_PREFIX="${TEST_ID_PREFIX:-test_}"
@@ -54,8 +52,8 @@ export OPENCODE_PROMPT_ENDPOINT="${OPENCODE_PROMPT_ENDPOINT:-/prompt_async}"
 # Exec endpoint
 export SANDBOX_EXEC_ENDPOINT="${SANDBOX_EXEC_ENDPOINT:-/exec}"
 
-# Terminal resolution endpoint
-export CAO_TERMINAL_ENDPOINT="${CAO_TERMINAL_ENDPOINT:-/terminals/by-delegating-agent}"
+# poco-agents MCP endpoint
+export POCO_AGENTS_MCP_ENDPOINT="${POCO_AGENTS_MCP_ENDPOINT:-/mcp}"
 
 # Sentinel pattern for command execution
 export SENTINEL_PATTERN="${SENTINEL_PATTERN:-POCKETCODER_EXIT:}"

@@ -165,27 +165,23 @@ inspect_opencode_health() {
 }
 
 # ============================================================
-# CAO/Sandbox Inspection Functions
+# poco-agents / Sandbox Inspection Functions
 # ============================================================
 
-# Inspect CAO terminals from SQLite database
-# Usage: inspect_cao_terminals
-inspect_cao_terminals() {
-    echo "🗄️  CAO Database - Terminals"
+# Inspect poco-agents state via health endpoint
+# Usage: inspect_poco_agents
+inspect_poco_agents() {
+    echo "🤖 poco-agents Status"
     echo "--------------------------------------------------------------------------------"
-    echo "Fields: delegating_agent_id, tmux_session, tmux_window_id"
-    echo "--------------------------------------------------------------------------------"
-    
-    docker exec pocketcoder-sandbox python3 -c "
-import sqlite3, json, sys
-conn = sqlite3.connect('/root/.aws/cli-agent-orchestrator/db/cli-agent-orchestrator.db')
-conn.row_factory = sqlite3.Row
-cursor = conn.cursor()
-cursor.execute('SELECT id, tmux_session, tmux_window, tmux_window_id, agent_profile, provider, external_session_id as delegating_agent_id FROM terminals')
-rows = [dict(row) for row in cursor.fetchall()]
-print(json.dumps(rows, indent=2))
-" 2>/dev/null || echo "  (Could not connect to CAO database)"
-    
+
+    local health
+    health=$(docker exec pocketcoder-sandbox curl -s http://localhost:9888/health 2>/dev/null)
+    echo "  Health: ${health:-unreachable}"
+
+    echo ""
+    echo "  Agent state files:"
+    docker exec pocketcoder-sandbox ls -la /workspace/.agents/ 2>/dev/null || echo "  (no agent state files)"
+
     echo "--------------------------------------------------------------------------------"
 }
 
@@ -225,8 +221,8 @@ inspect_all() {
     inspect_opencode_health
     echo ""
     
-    echo "--- CAO Terminals ---"
-    inspect_cao_terminals
+    echo "--- poco-agents ---"
+    inspect_poco_agents
     echo ""
     
     echo "--- Tmux ---"
@@ -273,5 +269,5 @@ quick_status() {
 # Export functions for use in BATS
 export -f pb_inspect inspect_chats inspect_messages inspect_sandbox_agents inspect_permissions
 export -f inspect_opencode_session inspect_opencode_health
-export -f inspect_cao_terminals inspect_tmux
+export -f inspect_poco_agents inspect_tmux
 export -f inspect_all quick_status
