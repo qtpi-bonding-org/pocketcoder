@@ -76,6 +76,9 @@ services/opencode/llm.env
 # TypeScript build info
 **/tsconfig.tsbuildinfo
 
+# CAO (removed submodule, files kept locally)
+services/sandbox/cao/
+
 # Local Scratchpad/Misc
 .misc/
 tobedeleted/

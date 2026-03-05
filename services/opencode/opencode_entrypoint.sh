@@ -49,7 +49,7 @@ fi
     echo "⏳ [Background] Waiting for MCP server (via sandbox)..."
     mcp_count=0
     while true; do
-        mcp_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://sandbox:9888/sse 2>/dev/null || true)
+        mcp_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://sandbox:9888/health 2>/dev/null || true)
         if [ "$mcp_status" = "200" ]; then
             echo "✅ [Background] MCP server is reachable through sandbox."
             break
