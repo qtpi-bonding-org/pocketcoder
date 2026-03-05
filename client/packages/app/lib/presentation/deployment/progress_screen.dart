@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_cubit.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_message_mapper.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_state.dart';
+import 'package:app/application/deployment/deployment_cubit.dart';
+import 'package:app/application/deployment/deployment_message_mapper.dart';
+import 'package:app/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:flutter_aeroform/domain/models/deployment_result.dart';
@@ -199,6 +199,8 @@ class _ProgressViewState extends State<_ProgressView> {
 
   String _getStatusTitle(DeploymentStatus? status) {
     switch (status) {
+      case DeploymentStatus.uploadingImage:
+        return 'UPLOADING IMAGE';
       case DeploymentStatus.creating:
         return 'CONSTRUCTING INSTANCE';
       case DeploymentStatus.provisioning:
@@ -214,6 +216,8 @@ class _ProgressViewState extends State<_ProgressView> {
 
   String _getStatusDescription(DeploymentStatus? status) {
     switch (status) {
+      case DeploymentStatus.uploadingImage:
+        return 'TRANSFERRING NIXOS IMAGE TO CLOUD PROVIDER.';
       case DeploymentStatus.creating:
         return 'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.';
       case DeploymentStatus.provisioning:

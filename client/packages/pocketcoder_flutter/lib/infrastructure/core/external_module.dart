@@ -7,7 +7,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'auth_store.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
-import 'package:flutter_aeroform/domain/models/app_config.dart';
 
 @module
 abstract class ExternalModule {
@@ -104,24 +103,6 @@ abstract class ExternalModule {
   FlutterSecureStorage get flutterSecureStorage {
     return const FlutterSecureStorage();
   }
-
-  /// App configuration for mobile deployment feature
-  @singleton
-  AppConfig get appConfig {
-    return AppConfig(
-      linodeClientId: AppConfig.kLinodeClientId,
-      linodeRedirectUri: AppConfig.kLinodeRedirectUri,
-      imageRelayUrl: AppConfig.kImageRelayUrl,
-      nixosImageLabel: AppConfig.kNixosImageLabel,
-      maxPollingAttempts: AppConfig.kMaxPollingAttempts,
-      initialPollingIntervalSeconds: AppConfig.kInitialPollingIntervalSeconds,
-    );
-  }
-
-  /// Linode OAuth client ID for API clients
-  @Named('linodeClientId')
-  @singleton
-  String get linodeClientId => AppConfig.kLinodeClientId;
 
   /// HTTP client for API requests
   @lazySingleton

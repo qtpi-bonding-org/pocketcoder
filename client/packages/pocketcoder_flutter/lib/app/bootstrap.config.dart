@@ -10,16 +10,6 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as _i653;
-import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart' as _i172;
-import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart'
-    as _i432;
-import 'package:flutter_aeroform/domain/deployment/i_deployment_service.dart'
-    as _i440;
-import 'package:flutter_aeroform/domain/models/app_config.dart' as _i1071;
-import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart' as _i571;
-import 'package:flutter_aeroform/domain/validation/i_validation_service.dart'
-    as _i280;
-import 'package:flutter_aeroform/flutter_aeroform.module.dart' as _i29;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:http/http.dart' as _i519;
@@ -28,20 +18,11 @@ import 'package:pocketbase/pocketbase.dart' as _i169;
 import 'package:pocketbase_drift/pocketbase_drift.dart' as _i824;
 import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart'
     as _i616;
-import 'package:pocketcoder_flutter/application/auth/auth_cubit.dart' as _i938;
-import 'package:pocketcoder_flutter/application/auth/auth_message_mapper.dart'
-    as _i677;
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart'
     as _i304;
 import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart' as _i278;
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart'
     as _i606;
-import 'package:pocketcoder_flutter/application/config/config_cubit.dart'
-    as _i816;
-import 'package:pocketcoder_flutter/application/deployment/deployment_cubit.dart'
-    as _i332;
-import 'package:pocketcoder_flutter/application/deployment/deployment_message_mapper.dart'
-    as _i883;
 import 'package:pocketcoder_flutter/application/llm/llm_cubit.dart' as _i85;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
@@ -159,11 +140,7 @@ extension GetItInjectableX on _i174.GetIt {
       environment,
       environmentFilter,
     );
-    await _i29.FlutterAeroformPackageModule().init(gh);
     final externalModule = _$ExternalModule();
-    gh.factory<_i677.AuthMessageMapper>(() => _i677.AuthMessageMapper());
-    gh.factory<_i883.DeploymentMessageMapper>(
-        () => _i883.DeploymentMessageMapper());
     gh.singleton<_i704.ThemeService>(() => _i704.ThemeService());
     await gh.singletonAsync<_i824.PocketBase>(
       () => externalModule.pocketBase,
@@ -172,18 +149,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i520.AuthStoreConfig>(() => externalModule.authStoreConfig);
     gh.singleton<_i558.FlutterSecureStorage>(
         () => externalModule.flutterSecureStorage);
-    gh.singleton<_i1071.AppConfig>(() => externalModule.appConfig);
     gh.lazySingleton<_i992.PocoCubit>(() => _i992.PocoCubit());
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
     gh.factory<_i1000.SshTerminalCubit>(
         () => _i1000.SshTerminalCubit(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i589.PocketCoderApi>(
         () => _i589.PocketCoderApi(gh<_i169.PocketBase>()));
-    gh.factory<_i816.ConfigCubit>(() => _i816.ConfigCubit(
-          gh<_i280.IValidationService>(),
-          gh<_i432.ICloudProviderAPIClient>(),
-          gh<_i571.ISecureStorage>(),
-        ));
     gh.lazySingleton<_i611.IObservabilityRepository>(
         () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i190.IStatusRepository>(
@@ -239,19 +210,11 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i849.DeviceDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
-    gh.singleton<String>(
-      () => externalModule.linodeClientId,
-      instanceName: 'linodeClientId',
-    );
     gh.lazySingleton<_i536.IAiConfigRepository>(() => _i846.AiConfigRepository(
           gh<_i61.AiAgentDao>(),
           gh<_i61.AiPromptDao>(),
           gh<_i61.AiModelDao>(),
           gh<_i61.SandboxAgentDao>(),
-        ));
-    gh.factory<_i938.AuthCubit>(() => _i938.AuthCubit(
-          gh<_i172.IOAuthService>(),
-          gh<_i571.ISecureStorage>(),
         ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
@@ -264,8 +227,6 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i922.IMcpRepository>(
         () => _i662.McpRepository(gh<_i444.McpServerDao>()));
-    gh.factory<_i332.DeploymentCubit>(
-        () => _i332.DeploymentCubit(gh<_i440.IDeploymentService>()));
     gh.factory<_i616.AiConfigCubit>(
         () => _i616.AiConfigCubit(gh<_i536.IAiConfigRepository>()));
     gh.factory<_i252.SopCubit>(

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pocketcoder_flutter/application/config/config_cubit.dart';
-import 'package:pocketcoder_flutter/application/config/config_state.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_cubit.dart';
-import 'package:pocketcoder_flutter/application/deployment/deployment_state.dart';
+import 'package:app/application/config/config_cubit.dart';
+import 'package:app/application/config/config_state.dart';
+import 'package:app/application/deployment/deployment_cubit.dart';
+import 'package:app/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';

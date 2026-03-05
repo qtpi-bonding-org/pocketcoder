@@ -4,6 +4,8 @@ import 'app/app.dart';
 import 'app/bootstrap.dart';
 import 'domain/notifications/push_service.dart';
 import 'domain/billing/billing_service.dart';
+import 'domain/deployment/i_deploy_option_service.dart';
+import 'infrastructure/foss/foss_deploy_option_service.dart';
 
 class LocalPushService implements PushService {
   @override
@@ -48,6 +50,7 @@ void main() async {
   // Pre-register services so Injection can pick them up
   getIt.registerSingleton<PushService>(LocalPushService());
   getIt.registerSingleton<BillingService>(LocalBillingService());
+  getIt.registerSingleton<IDeployOptionService>(FossDeployOptionService());
 
   await bootstrap();
 
