@@ -1,4 +1,4 @@
-package com.example.pocketcoder_app
+package org.pocketcoder.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -200,6 +200,17 @@ class RevenueCatBillingService implements BillingService {
   }
 
   @override
+  Future<bool> hasDeployAccess() async {
+    try {
+      if (!await Purchases.isConfigured) return false;
+      final customerInfo = await Purchases.getCustomerInfo();
+      return customerInfo.entitlements.active.containsKey('deploy');
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
   Future<void> restorePurchases() async {
     try {
       if (!await Purchases.isConfigured) return;
