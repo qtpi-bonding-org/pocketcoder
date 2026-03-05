@@ -10,6 +10,40 @@ Last updated: 2026-03-05
 | **Linode** | ~90% | Code complete, needs infra setup + e2e test |
 | **Hetzner** | Not started | Lowest priority, same NixOS image works |
 
+## Platform Naming & IDs — done
+
+- [x] Android: namespace + applicationId → `org.pocketcoder.app`, label → `PocketCoder`
+- [x] Android: MainActivity moved to `org/pocketcoder/app/`
+- [x] iOS: bundle ID → `org.pocketcoder.app` (all 6 occurrences in pbxproj)
+- [x] iOS: CFBundleDisplayName + CFBundleName → `PocketCoder`
+- [x] macOS: bundle ID → `org.pocketcoder.app`, name → `PocketCoder`, copyright → `Qtpi Bonding LLC`
+- [x] macOS: RunnerTests bundle ID → `org.pocketcoder.app.RunnerTests` (3 occurrences)
+- [x] Web: title, description, apple-mobile-web-app-title, manifest.json all updated
+- [x] pubspec.yaml description updated
+- [x] Zero `com.example` and `A new Flutter project` references remain
+
+## Deploy Button IAP ($4.99 / 24h) — done
+
+- [x] `BillingService.hasDeployAccess()` — abstract method added
+- [x] `RevenueCatBillingService.hasDeployAccess()` — checks `deploy` entitlement
+- [x] `FossBillingService.hasDeployAccess()` — stub returns `true`
+- [x] `LocalBillingService.hasDeployAccess()` — stub returns `true`
+- [x] `DeployPickerScreen` — replaced `isPremium()` + paywall with `hasDeployAccess()` + inline `purchase('pocketcoder_deploy_24h')`
+- [ ] Configure RevenueCat: product `pocketcoder_deploy_24h`, entitlement `deploy`
+- [ ] App Store / Play Store: create IAP product ($4.99, non-renewing)
+
+## FOSS / Proprietary Split — done
+
+- [x] `IDeployOptionService` interface in `pocketcoder_flutter/lib/domain/deployment/`
+- [x] `FossDeployOptionService` — returns Hetzner only (referral link)
+- [x] `ProDeployOptionService` in `app` — returns Linode + Elestio + Hetzner
+- [x] Data-driven `DeployPickerScreen` in `pocketcoder_flutter`
+- [x] Moved 11 Linode deploy files (cubits + screens) from `pocketcoder_flutter` → `app`
+- [x] Moved `flutter_aeroform` dependency from `pocketcoder_flutter` → `app`
+- [x] Aeroform DI split: `preRegisterAeroformConfig()` (before bootstrap) + `initializeAeroformDI()` (after)
+- [x] `AppRouter.setAdditionalRoutes()` for proprietary Linode routes
+- [x] `flutter analyze` passes on all packages (pocketcoder_flutter, app, apps/app)
+
 ---
 
 ## Elestio (fully managed)
@@ -95,7 +129,7 @@ Last updated: 2026-03-05
 
 ## Open Questions
 
-1. **IAP pricing** — $2.99? $4.99? Research comparable deploy-button IAPs
+1. ~~**IAP pricing** — $2.99? $4.99?~~ Resolved: **$4.99** one-time, unlocks deploy button for 24h
 2. **Let's Encrypt rate limits** — monitor sslip.io shared limit (50 certs/week/domain)
 3. **NixOS auto-updates** — enable unattended upgrades with rollback? (post-launch)
 4. ~~**CF Worker hosting** — where to deploy the image relay?~~ Resolved: `deploy/image-relay-worker/`, same CF account
