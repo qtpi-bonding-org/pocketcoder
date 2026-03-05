@@ -100,12 +100,55 @@ Last updated: 2026-03-05
 
 ### End-to-end verification — not started
 
-- [ ] Build NixOS image in CI (trigger workflow_dispatch)
-- [ ] CF Worker `POST /upload-image` streams image to Linode (curl test with real token)
-- [ ] CF Worker `GET /image-status` returns existing image
-- [ ] Flutter deploy flow creates instance with `private/xxxxx` image
-- [ ] NixOS boots, bootstrap reads user-data, starts PocketCoder stack
-- [ ] Caddy auto-provisions sslip.io TLS cert
+#### Phase 1: Infra Setup (one-time)
+
+- [ ] Create R2 bucket `pocketcoder-images` (CF dashboard or `wrangler r2 bucket create pocketcoder-images`)
+- [ ] Deploy CF Worker: `cd deploy/image-relay-worker && wrangler deploy`
+- [ ] Verify R2 binding works: `wrangler tail` + `curl POST /upload-image` with dummy data
+- [ ] Trigger NixOS image build: GitHub Actions → `nixos-image.yml` → Run workflow
+- [ ] Confirm `.img.gz` appears in R2 bucket and GitHub Releases
+
+#### Phase 2: IAP Setup (one-time per store)
+
+- [ ] **RevenueCat dashboard**: Create product `pocketcoder_deploy_24h`, entitlement `deploy`
+- [ ] **App Store Connect**: Create non-consumable IAP `pocketcoder_deploy_24h` ($4.99)
+- [ ] **Google Play Console**: Create one-time product `pocketcoder_deploy_24h` ($4.99)
+- [ ] Link store products to RevenueCat product
+- [ ] Set `.env` keys: `REVENUE_CAT_APPLE_KEY`, `REVENUE_CAT_GOOGLE_KEY`
+
+#### Phase 3: Linode Deploy Flow (happy path)
+
+- [ ] Open app → Deploy → tap Linode card
+- [ ] Verify IAP prompt appears (or access granted if already purchased)
+- [ ] Complete purchase → verify `deploy` entitlement active in RevenueCat dashboard
+- [ ] OAuth screen loads → sign into Linode → redirected back to app
+- [ ] Config screen: pick region + plan → tap Deploy
+- [ ] Progress screen: image upload status shown (if first deploy to this Linode account)
+- [ ] Progress screen: instance creation + polling until `running`
+- [ ] Details screen: shows IP, password, and open-in-browser link
+- [ ] Visit `https://<IP>.sslip.io` → PocketBase login page loads with valid TLS
+
+#### Phase 4: NixOS Server Verification
+
+- [ ] SSH into instance: `ssh root@<IP>` with generated password
+- [ ] `docker ps` shows pocketbase, opencode, interface containers running
+- [ ] `docker compose logs caddy` shows TLS cert provisioned
+- [ ] `.env` file contains correct user-data values (from Flutter config)
+- [ ] PocketBase admin UI accessible at `https://<IP>.sslip.io/_/`
+
+#### Phase 5: Edge Cases
+
+- [ ] Deploy with IAP denied/cancelled → returns to picker, no crash
+- [ ] Deploy with Linode OAuth cancelled → returns to picker gracefully
+- [ ] Deploy with invalid region/plan → validation error shown
+- [ ] Second deploy to same Linode account → skips image upload (already exists)
+- [ ] FOSS build → Linode card hidden, Hetzner opens referral link directly
+- [ ] Kill app mid-deploy → reopen → no orphaned state
+
+#### Phase 6: Other Providers
+
+- [ ] Elestio card → opens `https://elest.io/open-source/pocketcoder` in browser
+- [ ] Hetzner card → opens referral link in browser
 
 ### Docs
 
