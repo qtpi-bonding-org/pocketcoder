@@ -1,4 +1,3 @@
-import 'package:injectable/injectable.dart';
 import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
 import 'package:flutter_aeroform/domain/models/deployment_config.dart';
@@ -11,7 +10,6 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'config_state.dart';
 
 /// Cubit for managing deployment configuration state
-@injectable
 class ConfigCubit extends AppCubit<ConfigState> {
   final IValidationService _validationService;
   final ICloudProviderAPIClient _apiClient;
