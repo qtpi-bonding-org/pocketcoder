@@ -50,11 +50,13 @@ See [architecture-rules.md](./architecture-rules.md) for the full technical refe
 | LLM API key management (any provider) | Done | Go Hook + Restart |
 | Model switching (per-chat and global default) | Done | SDK via Interface |
 | Provider catalog sync (browse available models) | Done | Sync (read-only) |
-| Sandbox subagent key sharing (CAO gets API keys) | Done | Shared volume |
+| Sandbox subagent key sharing | Done | Shared volume |
 | Network isolation (zero-trust Docker networks) | Done | Infrastructure |
 | Shell proxy (command validation layer) | Done | Infrastructure |
-| Multi-agent orchestration (CAO supervisor/workers) | Done | Infrastructure |
+| Multi-agent orchestration (poco-agents) | Done | Infrastructure |
 | Observability dashboard (SQLPage over SQLite) | Done | Infrastructure |
+| Push notifications (FCM + ntfy/UnifiedPush) | Done | Go Hook + Cloudflare Worker |
+| Deploy button (Linode OAuth + NixOS provisioning) | Done | Flutter IAP + Cloudflare Worker |
 
 ## What's Next — Feature Catalog
 
@@ -77,7 +79,7 @@ These are handled by the SQLPage observability dashboard and don't need Flutter 
 
 - **Cost & token tracking** — SQLPage queries OpenCode's SQLite DB directly
 - **Container logs & health** — SQLPage + existing `/healthz` endpoints
-- **Subagent task dashboard** — SQLPage queries CAO's SQLite DB
+- **Subagent monitoring** — poco-agents exposes status via MCP tools (list_agents, check_agent, snapshot)
 - **Resource monitoring** — VPS providers have their own dashboards; SQLPage can surface Docker stats
 
 SQLPage is accessible from a mobile browser. If any of these become high-traffic enough to warrant a native Flutter experience, they can be promoted later.
@@ -93,14 +95,6 @@ PocketCoder is the OS/framework around the AI CLI. These are things the agent do
 
 These are genuinely new features that require Flutter + backend work:
 
-#### Notifications (Critical)
-
-Push notifications for permission requests, task completions, and errors. This is the critical link that makes "block and wait" permissions viable — without notifications, the agent is stuck until the user happens to open the app.
-
-- Self-hosted ntfy (free, already in compose as optional profile)
-- FCM relay ($0.49/month, for users who don't want to run ntfy)
-- Notification types: permission request (urgent), task complete, task error, agent idle, container health alert
-
 #### Diff Summary
 
 OpenCode exposes a structured diff API: `GET /session/{sessionID}/diff?messageID=...` returns `FileDiff[]` with before/after content, addition/deletion counts, and file status. The interface service can sync this into PocketBase via Pattern 1 (SDK via Interface).
@@ -109,12 +103,12 @@ The mobile UX is a **summary view**: "Modified 3 files (+47, -12)" with filename
 
 #### Agent Profile Management
 
-Browse and configure CAO subagent personas from Flutter.
+Browse and configure subagent profiles from Flutter.
 
-- Profiles already exist as markdown files in the sandbox (`/root/.aws/cli-agent-orchestrator/agent-store/`)
-- View available profiles (supervisor, developer, reviewer)
-- Edit system prompts and agent configurations
-- Could sync profiles into a PocketBase collection or edit them via a Go hook that writes to the volume
+- Profiles are defined in the sandbox's `opencode.json` (agent section)
+- poco-agents exposes a `profiles` MCP tool that reads them
+- View available profiles and their models/descriptions
+- Could sync profiles into a PocketBase collection or edit them via a Go hook
 
 #### System Prompt / Instructions
 
@@ -124,41 +118,22 @@ Edit OpenCode's system instructions from mobile.
 - Could allow users to edit custom instructions that get appended to OpenCode's context
 - Pattern 2 (Go Hook + Restart) if the instructions are in a config file, or Pattern 1 (SDK) if OpenCode supports runtime instruction updates
 
-### Mid-Term: Zero-Terminal Deploy
+### Completed: Zero-Terminal Deploy
 
-The highest-leverage feature on the roadmap. A new user:
+Fully implemented. A new user:
 
 1. Downloads PocketCoder from the App Store
-2. Taps "Deploy"
-3. Authenticates with their cloud provider via OAuth
-4. PocketCoder provisions a VPS, installs Docker, deploys the stack, configures DNS/TLS
+2. Taps "Deploy" (one-time IAP)
+3. Authenticates with Linode via OAuth
+4. PocketCoder provisions a VPS with a NixOS image, deploys the stack, configures DNS/TLS
 5. Flutter auto-connects to the new PocketBase instance
 
 **No terminal. No SSH. No config files.**
 
-This requires:
-- A Cloudflare Worker handling OAuth relay (3-legged OIDC — cloud providers don't support PKCE) and FCM push relay
-- A provisioning flow that handles: VPS creation, Docker install, compose deploy, PocketBase bootstrap, certificate setup
-- A connection flow that stores the PocketBase URL in the Flutter app and authenticates
-
-#### Cloud Provider Options
-
-| Provider | OAuth | Deploy Model | Tradeoff |
-|----------|-------|-------------|----------|
-| **Linode** | Yes (3-legged OIDC) | Direct VPS — full control over host OS and stack | More engineering: must build provisioning, updates, recovery. Referral revenue. |
-| **Elestio** | No (API key copy-paste) | Managed Docker hosting — they handle updates, SSL, backups | Less engineering, revenue share model, but API key friction for non-technical users. |
-| **DigitalOcean** | Yes (OAuth) | Direct VPS — similar to Linode | Alternative option. Larger market share. |
-
-Both direct VPS and managed paths can coexist. Linode (or similar with OAuth) is the primary zero-terminal path. Elestio is a managed alternative with lighter integration.
-
-#### Host OS Options (for direct VPS path)
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **Ubuntu + cloud-init** | Fastest to build. Linode supports cloud-init with `metadata.user_data`. Huge community. Standard VPS playbook. | Less reproducible if host drifts. Updates require SSH or a sidecar. |
-| **NixOS + Cachix** | Declarative, reproducible. Rebuild from a flake. Robust long-term. User never touches Nix since Flutter handles deploy. | Not a native Linode image — requires uploading a custom `.img.gz` via API. No cloud-init support (config baked into image). More upfront work. |
-
-Decision deferred. The user never sees the host OS either way — only the provisioning script does.
+Infrastructure:
+- Cloudflare Worker handles OAuth relay (3-legged OIDC) and FCM push relay
+- NixOS custom image uploaded to Linode via API — declarative, reproducible
+- Provisioning flow: VPS creation → Docker install → compose deploy → PocketBase bootstrap → certificate setup
 
 ### Long-Term: Full Server Lifecycle from Mobile
 
@@ -219,7 +194,7 @@ Two recent developments validate PocketCoder's thesis:
 | Multi-user | Yes (family/team) | One session at a time | Single user |
 | Auth & permissions | PocketBase zero-trust | Anthropic account | Chat app login (no permission system) |
 | Data sovereignty | Fully self-hosted | Traffic routes through Anthropic | Self-hosted, but commands via chat bridges |
-| Setup | `deploy.sh` (deploy button coming) | One terminal command | Docker + chat app config |
+| Setup | One-tap deploy button or `deploy.sh` | One terminal command | Docker + chat app config |
 
 PocketCoder occupies the gap: the sovereignty and cost of self-hosting, the mobile UX that OpenClaw proved people want, and the security that neither OpenClaw nor chat bridges provide.
 
