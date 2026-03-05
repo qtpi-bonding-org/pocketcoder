@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/application/deployment/deployment_state.dart
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
+import 'package:flutter_aeroform/domain/models/app_config.dart';
 import 'package:flutter_aeroform/domain/models/deployment_config.dart';
 import 'package:flutter_aeroform/domain/models/deployment_result.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
@@ -387,7 +388,8 @@ class _ConfigViewState extends State<_ConfigView> {
               ? null
               : _linodeTokenController.text,
           ntfyEnabled: cubit.state.config?.ntfyEnabled ?? false,
-          cloudInitTemplateUrl: '',
+          imageRelayUrl: AppConfig.kImageRelayUrl,
+          nixosImageLabel: AppConfig.kNixosImageLabel,
         ),
       );
     }

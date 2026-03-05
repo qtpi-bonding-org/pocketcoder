@@ -111,7 +111,8 @@ abstract class ExternalModule {
     return AppConfig(
       linodeClientId: AppConfig.kLinodeClientId,
       linodeRedirectUri: AppConfig.kLinodeRedirectUri,
-      cloudInitTemplateUrl: AppConfig.kCloudInitTemplateUrl,
+      imageRelayUrl: AppConfig.kImageRelayUrl,
+      nixosImageLabel: AppConfig.kNixosImageLabel,
       maxPollingAttempts: AppConfig.kMaxPollingAttempts,
       initialPollingIntervalSeconds: AppConfig.kInitialPollingIntervalSeconds,
     );

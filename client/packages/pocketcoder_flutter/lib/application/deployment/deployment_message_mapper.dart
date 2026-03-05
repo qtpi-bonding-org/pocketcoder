@@ -12,6 +12,10 @@ class DeploymentMessageMapper implements IStateMessageMapper<DeploymentState> {
     // Handle success states with specific messages
     if (state.status.isSuccess && state.deploymentStatus != null) {
       return switch (state.deploymentStatus!) {
+        DeploymentStatus.uploadingImage => MessageKey.info(
+          'deployment.uploadingImage',
+          {},
+        ),
         DeploymentStatus.creating => MessageKey.info(
           'deployment.creating',
           {'instanceId': state.instanceId ?? ''},
