@@ -34,15 +34,7 @@ rm -rf /tmp/tmux/*
 mkdir -p /tmp/tmux
 chmod 777 /tmp/tmux
 
-# 2. Clear CAO internal lock/journal files
-CAO_HOME_BASE="/root/.aws/cli-agent-orchestrator"
-if [ -d "$CAO_HOME_BASE" ]; then
-    echo "🔍 Clearing stale CAO state from $CAO_HOME_BASE..."
-    find "$CAO_HOME_BASE" -name "*.db-journal" -delete
-    find "$CAO_HOME_BASE" -name "*.lock" -delete
-    find "$CAO_HOME_BASE" -name "*.pid" -delete
-fi
-# 3. Mount shared binary
+# 2. Mount shared binary
 if [ -f "/usr/local/bin/proxy_share/pocketcoder" ]; then
     echo "🔗 Linking shared 'pocketcoder' binary..."
     ln -sf /usr/local/bin/proxy_share/pocketcoder /usr/local/bin/pocketcoder
@@ -50,8 +42,6 @@ if [ -f "/usr/local/bin/proxy_share/pocketcoder" ]; then
 fi
 
 # --- 🖥️ TMUX SETUP ---
-# Socket directory only. CAO creates the session + exec window during registration.
-# The proxy targets that window by NAME (not index) for resilience.
 echo "🖥️ Preparing tmux socket directory..."
 mkdir -p /tmp/tmux
 chmod 777 /tmp/tmux
@@ -81,91 +71,23 @@ echo "🔄 Localizing SSH keys for 'worker' user..."
   done
 ) &
 
-# 5. Start CAO API Server (The Conductor)
-echo "🤖 Starting CAO API Server on port 9889..."
-(
-  export CAO_SERVER_HOST=0.0.0.0
-  export PYTHONUNBUFFERED=1
-  cd /app/cao && /usr/local/bin/uv run cao-server
-) &
-
-# 6. (DEFERRED) Start CAO MCP Server (SSE Mode) (Background)
-# We wait until CAO API is ready before starting this to prevent DB race conditions.
-
-# 8. Register Poco terminal with CAO (Requirement 6.1)
-# CAO creates the tmux session + initial exec window + terminal DB record.
-# The proxy will resolve the window NAME from CAO and target it directly.
-echo "🔗 Registering Poco terminal with CAO..."
-
-# Wait for CAO API with timeout
-CAO_READY=false
-for i in {1..30}; do
-    if curl -s http://localhost:9889/health > /dev/null 2>&1; then
-        # Double-check with a small delay to ensure full initialization
-        sleep 1
-        CAO_READY=true
-        break
-    fi
-    echo "⏳ Waiting for CAO API (attempt $i/30)..."
-    sleep 2
-done
-
-if [ "$CAO_READY" = false ]; then
-    echo "❌ CAO API not ready after 60s"
-    echo "   Check CAO logs in sandbox container"
-    exit 1
-fi
-
-# 6b. Start CAO MCP Server now that API/DB is healthy
-echo "🤖 Starting CAO MCP Server (SSE) on port 9888..."
-(
-  export CAO_MCP_TRANSPORT=sse
-  export CAO_MCP_PORT=9888
-  export PYTHONUNBUFFERED=1
-  export CAO_LOG_LEVEL=INFO
-  export PUBLIC_URL=http://localhost:9889
-  cd /app/cao && /usr/local/bin/uv run cao-mcp-server
-) &
-
-# Attempt registration with validation
-# Use provider=opencode-api for lightweight communication
-CAO_RESPONSE=$(curl -s -X POST "http://localhost:9889/sessions" \
-    -G \
-    --data-urlencode "provider=opencode-api" \
-    --data-urlencode "agent_profile=poco" \
-    --data-urlencode "session_name=$TMUX_SESSION" \
-    --data-urlencode "delegating_agent_id=pocketcoder" \
-    --data-urlencode "target_window_name=poco:terminal")
-
-echo "CAO response: $CAO_RESPONSE"
-
-# Validate response contains expected fields
-if echo "$CAO_RESPONSE" | grep -q '"name"'; then
-    echo "✅ CAO registration successful"
-else
-    echo "❌ CAO registration failed!"
-    echo "   Response: $CAO_RESPONSE"
-    echo "   Check CAO API logs for details"
-    exit 1
-fi
-
-# Extract the window name CAO assigned (e.g. "poco-ab12") so the watchdog knows it
-EXEC_WINDOW=$(echo "$CAO_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('name',''))" 2>/dev/null || echo "")
-if [ -z "$EXEC_WINDOW" ]; then
-    echo "⚠️ Could not extract exec window name from CAO response, falling back to tmux query"
-    EXEC_WINDOW=$(tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" -F '#{window_name}' 2>/dev/null | head -1)
-    if [ -z "$EXEC_WINDOW" ]; then
-        echo "❌ No exec window found in tmux session!"
-        echo "   Tmux session may not have been created properly"
-        tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" 2>&1 || echo "   Session does not exist"
-        exit 1
-    fi
-fi
-echo "✅ Poco registered with CAO. Exec window: $EXEC_WINDOW"
-
-# Make tmux socket world-accessible
+# --- TMUX SESSION ---
+echo "🖥️ Creating tmux session..."
+tmux -S "$TMUX_SOCKET" new-session -d -s "$TMUX_SESSION" -n "system"
 chmod 777 "$TMUX_SOCKET"
 
-# 11. Final registration confirmation
+# --- POCO-AGENTS ---
+echo "🤖 Starting poco-agents MCP server on port 9888..."
+mkdir -p /workspace/.agents
+/usr/local/bin/poco-agents &
+
+for i in {1..15}; do
+    if curl -s http://localhost:9888/health > /dev/null 2>&1; then
+        echo "✅ poco-agents is ready."
+        break
+    fi
+    sleep 1
+done
+
 echo "✅ [PocketCoder] Sandbox is LIVE and HARDENED."
 tail -f /dev/null
