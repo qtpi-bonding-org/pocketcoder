@@ -16,10 +16,7 @@ import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dar
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/llm/llm_management_screen.dart';
-import 'package:pocketcoder_flutter/presentation/auth/auth_screen.dart';
-import 'package:pocketcoder_flutter/presentation/deployment/config_screen.dart';
-import 'package:pocketcoder_flutter/presentation/deployment/progress_screen.dart';
-import 'package:pocketcoder_flutter/presentation/deployment/details_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 
@@ -29,6 +26,14 @@ class AppRouter {
 
   static GoRouter get router => _router;
   static final messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  /// Additional routes injected by the proprietary package (e.g. Linode flow).
+  static List<RouteBase> _additionalRoutes = const [];
+
+  /// Call before accessing [router] to inject proprietary routes.
+  static void setAdditionalRoutes(List<RouteBase> routes) {
+    _additionalRoutes = routes;
+  }
 
   static final GoRouter _router = GoRouter(
     initialLocation: AppRoutes.boot,
@@ -201,46 +206,18 @@ class AppRouter {
           child: const AgentObservabilityScreen(),
         ),
       ),
-      // Deployment routes
+      // ── DEPLOY pillar ──
       GoRoute(
-        path: AppRoutes.auth,
-        name: RouteNames.auth,
+        path: AppRoutes.deploy,
+        name: RouteNames.deploy,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const AuthScreen(),
+          child: const DeployPickerScreen(),
         ),
       ),
-      GoRoute(
-        path: AppRoutes.config,
-        name: RouteNames.config,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const ConfigScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.deploymentProgress,
-        name: RouteNames.deploymentProgress,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const ProgressScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '${AppRoutes.deploymentDetails}?instanceId',
-        name: RouteNames.deploymentDetails,
-        pageBuilder: (context, state) {
-          final instanceId = state.uri.queryParameters['instanceId'] ?? '';
-          return TerminalTransition.buildPage(
-            context: context,
-            state: state,
-            child: DetailsScreen(instanceId: instanceId),
-          );
-        },
-      ),
+      // Additional routes injected by proprietary package
+      ..._additionalRoutes,
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -281,7 +258,9 @@ class AppRoutes {
   static const String sopManagement = '/sop';
   static const String systemChecks = '/system-checks';
   static const String paywall = '/paywall';
-  // Deployment routes
+  // Deploy picker
+  static const String deploy = '/deploy';
+  // Deployment routes (registered by proprietary package)
   static const String auth = '/auth';
   static const String config = '/config';
   static const String deploymentProgress = '/deployment/progress';
@@ -318,7 +297,9 @@ class RouteNames {
   static const String sopManagement = 'configureSop';
   static const String systemChecks = 'configureSystemChecks';
   static const String paywall = 'configurePaywall';
-  // Deployment route names
+  // Deploy picker
+  static const String deploy = 'deploy';
+  // Deployment route names (registered by proprietary package)
   static const String auth = 'auth';
   static const String config = 'config';
   static const String deploymentProgress = 'deploymentProgress';
@@ -341,8 +322,10 @@ class AppNavigation {
       context.push(AppRoutes.configurePaywall);
   static void toMonitor(BuildContext context) =>
       context.go(AppRoutes.monitor);
+  static void toDeploy(BuildContext context) =>
+      context.push(AppRoutes.deploy);
 
-  // Deployment navigation
+  // Deployment navigation (Linode flow — only works when proprietary routes registered)
   static void toAuth(BuildContext context) =>
       context.pushNamed(RouteNames.auth);
   static void toConfig(BuildContext context) =>
