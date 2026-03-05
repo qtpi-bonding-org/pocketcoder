@@ -1,9 +1,7 @@
-import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:pocketcoder_flutter/application/auth/auth_state.dart';
+import 'package:app/application/auth/auth_state.dart';
 
 /// Message mapper for authentication state to user-friendly messages
-@injectable
 class AuthMessageMapper implements IStateMessageMapper<AuthState> {
   @override
   MessageKey? map(AuthState state) {

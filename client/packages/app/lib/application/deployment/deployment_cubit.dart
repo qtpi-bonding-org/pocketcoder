@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:injectable/injectable.dart';
 import 'package:flutter_aeroform/domain/deployment/i_deployment_service.dart';
 import 'package:flutter_aeroform/domain/models/deployment_config.dart';
 import 'package:flutter_aeroform/domain/models/deployment_result.dart';
@@ -11,7 +10,6 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'deployment_state.dart';
 
 /// Cubit for managing deployment operations and instance lifecycle
-@injectable
 class DeploymentCubit extends AppCubit<DeploymentState> {
   static const int _maxPollingAttempts = 20;
   static const Duration _statusRefreshInterval = Duration(seconds: 30);

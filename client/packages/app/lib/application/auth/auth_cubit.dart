@@ -1,4 +1,3 @@
-import 'package:injectable/injectable.dart';
 import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart';
 import 'package:flutter_aeroform/domain/models/oauth_token.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
@@ -8,7 +7,6 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'auth_state.dart';
 
 /// Cubit for managing authentication state and operations
-@injectable
 class AuthCubit extends AppCubit<AuthState> {
   final IOAuthService _authService;
   final ISecureStorage _secureStorage;

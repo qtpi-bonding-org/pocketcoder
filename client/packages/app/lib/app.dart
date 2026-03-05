@@ -5,14 +5,37 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
+import 'package:injectable/injectable.dart' show GetItHelper;
+import 'package:flutter_aeroform/flutter_aeroform.module.dart';
+import 'package:flutter_aeroform/domain/models/app_config.dart';
+import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart';
+import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart';
+import 'package:flutter_aeroform/domain/deployment/i_deployment_service.dart';
+import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
+import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'package:app/application/auth/auth_cubit.dart';
+import 'package:app/application/auth/auth_message_mapper.dart';
+import 'package:app/application/config/config_cubit.dart';
+import 'package:app/application/deployment/deployment_cubit.dart';
+import 'package:app/application/deployment/deployment_message_mapper.dart';
+import 'package:app/presentation/auth/auth_screen.dart' as deploy_auth;
+import 'package:app/presentation/deployment/config_screen.dart' as deploy_config;
+import 'package:app/presentation/deployment/progress_screen.dart' as deploy_progress;
+import 'package:app/presentation/deployment/details_screen.dart' as deploy_details;
+
 export 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 export 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+export 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
 
 class FcmPushService implements PushService {
   final _controller = StreamController<PushNotificationPayload>.broadcast();
@@ -234,3 +257,132 @@ class RevenueCatBillingService implements BillingService {
     }
   }
 }
+
+/// Proprietary deploy option service — adds Linode + Elestio to the picker.
+class ProDeployOptionService implements IDeployOptionService {
+  @override
+  List<DeployOption> getAvailableProviders() => const [
+        DeployOption(
+          id: 'linode',
+          name: 'Linode (Akamai)',
+          description: 'One-tap deploy via OAuth. 24h access included.',
+          routePath: '/auth',
+          requiresPurchase: true,
+        ),
+        DeployOption(
+          id: 'elestio',
+          name: 'Elestio',
+          description: 'Managed hosting. Deploy with one click.',
+          url: 'https://elest.io/open-source/pocketcoder',
+        ),
+        DeployOption(
+          id: 'hetzner',
+          name: 'Hetzner Cloud',
+          description: 'Self-host on your own VPS. Affordable, EU-based.',
+          url: 'https://hetzner.cloud/?ref=yourReferralCode',
+        ),
+      ];
+}
+
+/// Pre-registers AppConfig and linodeClientId before bootstrap().
+///
+/// Call this from the proprietary main.dart BEFORE bootstrap().
+void preRegisterAeroformConfig() {
+  final getIt = GetIt.instance;
+
+  getIt.registerSingleton<AppConfig>(
+    AppConfig(
+      linodeClientId: AppConfig.kLinodeClientId,
+      linodeRedirectUri: AppConfig.kLinodeRedirectUri,
+      imageRelayUrl: AppConfig.kImageRelayUrl,
+      nixosImageLabel: AppConfig.kNixosImageLabel,
+      maxPollingAttempts: AppConfig.kMaxPollingAttempts,
+      initialPollingIntervalSeconds: AppConfig.kInitialPollingIntervalSeconds,
+    ),
+  );
+
+  getIt.registerSingleton<String>(
+    AppConfig.kLinodeClientId,
+    instanceName: 'linodeClientId',
+  );
+}
+
+/// Initializes flutter_aeroform DI and deploy cubits in GetIt.
+///
+/// Call this from the proprietary main.dart AFTER bootstrap()
+/// (so that FlutterSecureStorage and http.Client are available).
+void initializeAeroformDI() {
+  final getIt = GetIt.instance;
+
+  // Initialize aeroform module (registers IOAuthService, IDeploymentService, etc.)
+  final aeroformModule = FlutterAeroformPackageModule();
+  final gh = GetItHelper(getIt);
+  aeroformModule.init(gh);
+
+  // Register deploy cubits as factories
+  getIt.registerFactory<AuthCubit>(
+    () => AuthCubit(
+      getIt<IOAuthService>(),
+      getIt<ISecureStorage>(),
+    ),
+  );
+  getIt.registerFactory<AuthMessageMapper>(() => AuthMessageMapper());
+
+  getIt.registerFactory<ConfigCubit>(
+    () => ConfigCubit(
+      getIt<IValidationService>(),
+      getIt<ICloudProviderAPIClient>(),
+      getIt<ISecureStorage>(),
+    ),
+  );
+
+  getIt.registerFactory<DeploymentCubit>(
+    () => DeploymentCubit(getIt<IDeploymentService>()),
+  );
+  getIt.registerFactory<DeploymentMessageMapper>(
+    () => DeploymentMessageMapper(),
+  );
+}
+
+/// Linode deployment routes to inject via [AppRouter.setAdditionalRoutes].
+List<RouteBase> get linodeRoutes => [
+      GoRoute(
+        path: AppRoutes.auth,
+        name: RouteNames.auth,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const deploy_auth.AuthScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.config,
+        name: RouteNames.config,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const deploy_config.ConfigScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.deploymentProgress,
+        name: RouteNames.deploymentProgress,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const deploy_progress.ProgressScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.deploymentDetails}?instanceId',
+        name: RouteNames.deploymentDetails,
+        pageBuilder: (context, state) {
+          final instanceId = state.uri.queryParameters['instanceId'] ?? '';
+          return TerminalTransition.buildPage(
+            context: context,
+            state: state,
+            child: deploy_details.DetailsScreen(instanceId: instanceId),
+          );
+        },
+      ),
+    ];
