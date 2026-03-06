@@ -76,6 +76,9 @@ echo "🖥️ Creating tmux session..."
 tmux -S "$TMUX_SOCKET" new-session -d -s "$TMUX_SESSION" -n "system"
 chmod 777 "$TMUX_SOCKET"
 
+# Create default terminal window for Poco (used by /exec endpoint)
+tmux -S "$TMUX_SOCKET" new-window -t "$TMUX_SESSION" -n "poco-terminal" -c /workspace
+
 # --- POCO-AGENTS ---
 echo "🤖 Starting poco-agents MCP server on port 9888..."
 mkdir -p /workspace/.agents
