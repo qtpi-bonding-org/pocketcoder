@@ -21,8 +21,16 @@ load '../../helpers/tracking.sh'
 # --- URLs (Docker service names — test container is on knowledge network) ---
 NOTEBOOK_API_URL="${NOTEBOOK_API_URL:-http://open-notebook:5055}"
 
+# Check if knowledge stack is running by probing surrealdb health
+knowledge_stack_available() {
+    curl -sf --max-time 2 http://surrealdb:8000/health &>/dev/null
+}
+
 setup() {
     load_env
+    if ! knowledge_stack_available; then
+        skip "Knowledge stack not running (use --profile knowledge)"
+    fi
 }
 
 # =============================================================================
