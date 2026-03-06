@@ -41,8 +41,7 @@ services:
       - OPENCODE_URL=http://opencode:3000
       - SANDBOX_HOST=sandbox
       - SANDBOX_RUST_PORT=3001
-      - SANDBOX_CAO_API_PORT=9889
-      - SANDBOX_CAO_MCP_PORT=9888
+      - SANDBOX_AGENTS_PORT=9888
       - OPENCODE_SSH_PORT=2222
       # Test configuration
       - TEST_TIMEOUT_HEALTH=30
