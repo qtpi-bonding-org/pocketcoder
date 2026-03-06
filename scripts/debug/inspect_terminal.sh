@@ -1,40 +1,27 @@
 #!/bin/bash
-# inspect_terminal.sh - Fetch terminal output from the CAO REST API inside the sandbox.
-# Usage: ./inspect_terminal.sh [terminal_id] [tail_lines]
-# Example: ./inspect_terminal.sh 35347081 100
+# inspect_terminal.sh - Capture tmux window output from the sandbox.
+# Usage: ./inspect_terminal.sh [window_name] [tail_lines]
+# Example: ./inspect_terminal.sh poco-terminal 100
 
 CONTAINER="pocketcoder-sandbox"
-TERMINAL_ID="${1}"
+TMUX_SOCKET="/tmp/tmux/pocketcoder"
+TMUX_SESSION="pocketcoder"
+WINDOW="${1}"
 LINES="${2:-100}"
 
-if [ -z "$TERMINAL_ID" ]; then
-  echo "Usage: $0 <terminal_id> [tail_lines]"
+if [ -z "$WINDOW" ]; then
+  echo "Usage: $0 <window_name> [tail_lines]"
   echo ""
-  echo "To find terminal IDs, run: bash scripts/debug/sandbox_status.sh"
+  echo "Available windows:"
+  docker exec "$CONTAINER" tmux -S "$TMUX_SOCKET" list-windows -t "$TMUX_SESSION" -F '  #{window_index}: #{window_name}' 2>/dev/null || echo "  (sandbox not running)"
   exit 0
 fi
 
 echo "======================================================"
-echo "  📋 TERMINAL OUTPUT: $TERMINAL_ID (tail $LINES lines)"
+echo "  📋 WINDOW OUTPUT: $WINDOW (last $LINES lines)"
 echo "  Time: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 echo "======================================================"
 echo ""
 
-# Try the CAO HTTP API first
-RESULT=$(docker exec "$CONTAINER" curl -s "http://localhost:3001/terminals/${TERMINAL_ID}/output?mode=tail&tail_lines=${LINES}" 2>/dev/null)
-if [ -n "$RESULT" ] && [ "$RESULT" != "Not Found" ]; then
-  echo "$RESULT" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    output = d.get('output', d)
-    print(output)
-except:
-    print(sys.stdin.read())
-" 2>/dev/null || echo "$RESULT"
-else
-  # Fall back: try to find it in tmux
-  echo "(CAO API returned nothing — checking tmux fallback)"
-  echo ""
-  docker exec "$CONTAINER" tmux -S/tmp/tmux/pocketcoder list-windows -a 2>/dev/null || echo "(no tmux sessions)"
-fi
+docker exec "$CONTAINER" tmux -S "$TMUX_SOCKET" capture-pane -p -t "${TMUX_SESSION}:${WINDOW}" -S -"${LINES}" 2>/dev/null \
+  || echo "(window '$WINDOW' not found — run without args to list available windows)"

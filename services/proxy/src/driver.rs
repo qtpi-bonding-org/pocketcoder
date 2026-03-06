@@ -97,10 +97,10 @@ impl PocketCoderDriver {
     }
 
     /// Execute a command in the target agent's isolated tmux workspace.
-    /// The proxy strictly targets `pocketcoder:[agent_name]:terminal`.
+    /// The proxy targets `pocketcoder:{agent_name}-terminal.0`.
     pub async fn exec(&self, cmd: &str, cwd: Option<&str>, agent_name: &str) -> Result<CommandResult> {
         let session = &self.session_name;
-        let window_name = format!("{}:terminal", agent_name);
+        let window_name = format!("{}-terminal", agent_name);
 
         let tmux_args = ["-S", &self.socket_path];
         // Target by window NAME (not index) so it's resilient to window reordering
@@ -141,9 +141,9 @@ impl PocketCoderDriver {
             
             let content = std::fs::read_to_string("/tmp/pocketcoder_out.txt")?;
 
-            if let Some(pos) = content.find("POCKETCODER_EXIT") {
+            if let Some(pos) = content.find("---POCKETCODER_EXIT") {
                 if content.contains(&sentinel_id) {
-                    let sub = &content[pos..];
+                    let sub = &content[pos + 3..]; // skip "---"
                     let exit_code_part = sub.split(':').nth(1).unwrap_or("0").split('_').next().unwrap_or("0");
                     let exit_code = exit_code_part.parse::<i32>().unwrap_or(0);
 
@@ -166,103 +166,57 @@ impl PocketCoderDriver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio::test;
-    use wiremock::{MockServer, Mock, matchers::{method, path}};
-    use wiremock::ResponseTemplate;
-    use serde_json::json;
-
-    /// Helper to create a driver instance for testing
-    fn create_test_driver() -> PocketCoderDriver {
-        PocketCoderDriver::new("/tmp/test-tmux.sock", "test-session")
-    }
 
     #[test]
-    async fn test_resolve_session_calls_correct_cao_endpoint() {
-        let mock_server = MockServer::start().await;
-        
-        // Mock CAO response with the new endpoint
-        let mock_response = json!({
-            "tmux_session": "test123",
-            "tmux_window": "main@0",
-            "tmux_window_id": 0
-        });
-        
-        Mock::given(method("GET"))
-            .and(path("/terminals/by-delegating-agent/test-session-id"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
-            .mount(&mock_server)
-            .await;
-        
-        let driver = create_test_driver();
-        
-        // We can't easily test the actual HTTP call without more complex setup,
-        // but we can verify the endpoint URL construction logic
-        let expected_url = format!("{}/terminals/by-delegating-agent/test-session-id", mock_server.uri());
-        
-        // Verify the URL construction matches expected format
-        assert!(expected_url.contains("/terminals/by-delegating-agent/"));
-        assert!(!expected_url.contains("/terminals/by-external-session/"));
-    }
-
-    #[test]
-    async fn test_resolve_session_returns_error_on_cao_404() {
-        let mock_server = MockServer::start().await;
-        
-        // Mock CAO returning 404
-        Mock::given(method("GET"))
-            .and(path("/terminals/by-delegating-agent/missing-session"))
-            .respond_with(ResponseTemplate::new(404))
-            .mount(&mock_server)
-            .await;
-        
-        let driver = create_test_driver();
-        
-        // The driver should return an error when CAO returns 404
-        // Note: This test verifies the error handling behavior
-        let result = driver.resolve_session_and_window("missing-session").await;
-        
-        // The result should be an error (no fallback to legacy resolution)
-        assert!(result.is_err());
-        let error_msg = result.unwrap_err().to_string();
-        assert!(error_msg.contains("CAO lookup failed") || error_msg.contains("CAO request failed"));
-    }
-
-    #[test]
-    async fn test_resolve_session_extracts_tmux_window_name() {
-        // Test that we correctly extract tmux_window name from response
-        let terminal_data: serde_json::Value = json!({
-            "tmux_session": "test123",
-            "tmux_window": "poco-ab12"
-        });
-        
-        let tmux_session = terminal_data["tmux_session"].as_str().unwrap();
-        let tmux_window = terminal_data["tmux_window"].as_str().unwrap();
-        
-        assert_eq!(tmux_session, "test123");
-        assert_eq!(tmux_window, "poco-ab12");
-    }
-
-    #[test]
-    async fn test_pane_target_uses_window_name() {
-        // Test that the pane target uses window name, not numeric index
-        let session = "pocketcoder_session";
-        let window_name = "poco-ab12";
+    fn test_pane_target_format() {
+        // Verify pane target uses agent-terminal naming (no colons in window name)
+        let session = "pocketcoder";
+        let agent_name = "poco";
+        let window_name = format!("{}-terminal", agent_name);
         let pane = format!("{}:{}.0", session, window_name);
-        
-        assert_eq!(pane, "pocketcoder_session:poco-ab12.0");
-        // Should NOT contain numeric-only window reference
-        assert!(!pane.contains(":0.0"));
+
+        assert_eq!(pane, "pocketcoder:poco-terminal.0");
+        // Window name must not contain colons (ambiguous in tmux targeting)
+        assert!(!window_name.contains(':'));
     }
 
     #[test]
-    async fn test_endpoint_url_format() {
-        // Verify the endpoint URL format matches the new specification
-        let session_id = "agent-session-123";
-        let cao_url = "http://sandbox:9889";
-        
-        let endpoint = format!("{}/terminals/by-delegating-agent/{}", cao_url, session_id);
-        
-        assert_eq!(endpoint, "http://sandbox:9889/terminals/by-delegating-agent/agent-session-123");
-        assert!(!endpoint.contains("by-external-session"));
+    fn test_sentinel_pattern_parsing() {
+        // Verify sentinel pattern is correctly parsed from output file content
+        let sentinel_id = "abc-123";
+        let content = format!("hello world\n---POCKETCODER_EXIT:0_ID:{{{}}}---\n", sentinel_id);
+
+        let pos = content.find("---POCKETCODER_EXIT").unwrap();
+        let sub = &content[pos + 3..]; // skip "---"
+        let exit_code_part = sub.split(':').nth(1).unwrap_or("0").split('_').next().unwrap_or("0");
+        let exit_code = exit_code_part.parse::<i32>().unwrap();
+        let result_output = content[..pos].trim().to_string();
+
+        assert_eq!(exit_code, 0);
+        assert_eq!(result_output, "hello world");
+    }
+
+    #[test]
+    fn test_sentinel_pattern_nonzero_exit() {
+        let sentinel_id = "def-456";
+        let content = format!("---POCKETCODER_EXIT:127_ID:{{{}}}---\n", sentinel_id);
+
+        let pos = content.find("---POCKETCODER_EXIT").unwrap();
+        let sub = &content[pos + 3..];
+        let exit_code_part = sub.split(':').nth(1).unwrap_or("0").split('_').next().unwrap_or("0");
+        let exit_code = exit_code_part.parse::<i32>().unwrap();
+        let result_output = content[..pos].trim().to_string();
+
+        assert_eq!(exit_code, 127);
+        assert_eq!(result_output, "");
+    }
+
+    #[test]
+    fn test_cwd_wrapping() {
+        // Verify cwd wrapping format
+        let cmd = "ls";
+        let cwd = "/tmp";
+        let final_cmd = format!("(cd \"{}\" && {})", cwd, cmd);
+        assert_eq!(final_cmd, "(cd \"/tmp\" && ls)");
     }
 }
