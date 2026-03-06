@@ -1,5 +1,5 @@
 # Use shared Rust builder
-FROM rust:1.83-alpine AS rust-builder
+FROM rust:alpine AS rust-builder
 RUN apk add --no-cache musl-dev gcc
 WORKDIR /build
 COPY services/proxy/Cargo.toml services/proxy/Cargo.lock* ./
@@ -11,7 +11,7 @@ RUN touch src/main.rs
 RUN cargo build --release
 
 # poco-agents builder (Alpine musl — no ONNX needed)
-FROM rust:1.83-alpine AS agents-builder
+FROM rust:alpine AS agents-builder
 RUN apk add --no-cache musl-dev gcc
 WORKDIR /build
 COPY services/poco-agents/Cargo.toml services/poco-agents/Cargo.lock* ./
