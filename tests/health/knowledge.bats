@@ -7,8 +7,16 @@ load '../helpers/auth.sh'
 load '../helpers/wait.sh'
 load '../helpers/tracking.sh'
 
+# Check if knowledge stack is running by probing surrealdb health
+knowledge_stack_available() {
+    curl -sf --max-time 2 http://surrealdb:8000/health &>/dev/null
+}
+
 setup() {
     load_env
+    if ! knowledge_stack_available; then
+        skip "Knowledge stack not running (use --profile knowledge)"
+    fi
 }
 
 # =============================================================================

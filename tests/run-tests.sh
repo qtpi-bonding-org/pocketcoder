@@ -19,6 +19,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 COMPOSE_FILES=("-f" "docker-compose.yml" "-f" "docker-compose.test.yml")
+COMPOSE_PROFILES=()
 TEST_SERVICE="test"
 TEST_DIR="/tests"
 TIMEOUT=300000
@@ -29,6 +30,10 @@ print_usage() {
 Usage: $(basename "$0") [TEST_PATH]
 
 Run BATS tests in Docker containers.
+
+Options:
+  --profile PROFILE   Enable a Docker Compose profile (e.g., knowledge, foss)
+                      Can be specified multiple times
 
 Arguments:
   TEST_PATH    Path to test file or directory (optional)
@@ -47,6 +52,7 @@ Arguments:
 Examples:
   $(basename "$0")                                     # Run all tests
   $(basename "$0") health                              # Run health tests
+  $(basename "$0") --profile knowledge health          # Run health tests with knowledge stack
   $(basename "$0") integration/core                    # Run core flow tests
   $(basename "$0") integration/agent                   # Run agent behavior tests
   $(basename "$0") integration/core/full-flow.bats     # Run full flow test
@@ -123,17 +129,30 @@ capture_logs() {
     log_info "Logs saved to $log_file"
 }
 
+# Build compose base args array (files + profiles)
+build_compose_args() {
+    COMPOSE_ARGS=("${COMPOSE_FILES[@]}")
+    for profile in "${COMPOSE_PROFILES[@]}"; do
+        COMPOSE_ARGS+=("--profile" "$profile")
+    done
+    # Always enable the test profile
+    COMPOSE_ARGS+=("--profile" "test")
+}
+
 # Start services
 start_services() {
     log_info "Building and starting services..."
-    docker compose "${COMPOSE_FILES[@]}" up -d --build
+    if [ ${#COMPOSE_PROFILES[@]} -gt 0 ]; then
+        log_info "Profiles: ${COMPOSE_PROFILES[*]}"
+    fi
+    docker compose "${COMPOSE_ARGS[@]}" up -d --build
     log_info "Services started"
 }
 
 # Stop services
 stop_services() {
     log_info "Stopping services and removing volumes..."
-    docker compose "${COMPOSE_FILES[@]}" down -v
+    docker compose "${COMPOSE_ARGS[@]}" down -v
     log_info "Services stopped and volumes removed"
 }
 
@@ -148,11 +167,11 @@ run_tests() {
     
     # Build and start services
     start_services
-    
+
     if [ -z "$test_path" ]; then
         # Run all tests
         log_info "Running all tests..."
-        docker compose "${COMPOSE_FILES[@]}" run --rm \
+        docker compose "${COMPOSE_ARGS[@]}" run --rm \
             -e TIMEOUT_MULTIPLIER="${TIMEOUT_MULTIPLIER:-1}" \
             --entrypoint bash \
             "$TEST_SERVICE" \
@@ -160,7 +179,7 @@ run_tests() {
     else
         # Run specific test path
         log_info "Running tests: $test_path"
-        docker compose "${COMPOSE_FILES[@]}" run --rm \
+        docker compose "${COMPOSE_ARGS[@]}" run --rm \
             -e TIMEOUT_MULTIPLIER="${TIMEOUT_MULTIPLIER:-1}" \
             --entrypoint bash \
             "$TEST_SERVICE" \
@@ -170,14 +189,28 @@ run_tests() {
 
 # Main
 main() {
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+                print_usage
+                exit 0
+                ;;
+            --profile)
+                COMPOSE_PROFILES+=("$2")
+                shift 2
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
     local test_path="${1:-}"
-    
-    # Show help if requested
-    if [ "$test_path" = "-h" ] || [ "$test_path" = "--help" ]; then
-        print_usage
-        exit 0
-    fi
-    
+
+    # Build compose args (must be after --profile parsing)
+    build_compose_args
+
     # Check prerequisites
     check_docker
     
