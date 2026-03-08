@@ -56,6 +56,8 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use std::pin::Pin;
+use std::task::{Context, Poll};
 use futures_util::stream::Stream;
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::ReceiverStream;
@@ -111,6 +113,28 @@ pub struct AppState {
     pub driver: Arc<PocketCoderDriver>,
 }
 
+/// A stream wrapper that removes the session from the map when dropped (client disconnects).
+struct CleanupStream<S> {
+    inner: S,
+    sessions: SessionMap,
+    session_id: String,
+}
+
+impl<S: Stream + Unpin> Stream for CleanupStream<S> {
+    type Item = S::Item;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        Pin::new(&mut self.inner).poll_next(cx)
+    }
+}
+
+impl<S> Drop for CleanupStream<S> {
+    fn drop(&mut self) {
+        tracing::info!("[Server/SSE] Session disconnected, cleaning up: {}", self.session_id);
+        self.sessions.write().remove(&self.session_id);
+    }
+}
+
 async fn health_handler() -> &'static str {
     "ok"
 }
@@ -128,6 +152,12 @@ async fn sse_handler(
     let stream = ReceiverStream::new(rx).map(|msg| {
         Ok(Event::default().data(msg.to_string()).event("message"))
     });
+
+    let stream = CleanupStream {
+        inner: stream,
+        sessions: Arc::clone(&state.sessions),
+        session_id,
+    };
 
     Sse::new(stream)
 }
@@ -181,7 +211,9 @@ async fn main() -> Result<()> {
             tracing::info!("[PocketCoder] Main Gateway: {}", addr);
 
             let listener = tokio::net::TcpListener::bind(addr).await?;
-            axum::serve(listener, app).await?;
+            axum::serve(listener, app)
+                .with_graceful_shutdown(shutdown_signal())
+                .await?;
         },
         Commands::Shell { command, args } => {
             shell::run(command, args)?;
@@ -189,4 +221,21 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c().await.expect("failed to install Ctrl+C handler");
+    };
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }

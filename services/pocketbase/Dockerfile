@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 go build -o pocketbase main.go
 # ------------------------------------------------------------------------------
 # STAGE 2: Final Stage (PocketBase Only)
 # ------------------------------------------------------------------------------
-FROM alpine:latest
+FROM alpine:3.21
 
 RUN apk add --no-cache \
     ca-certificates \

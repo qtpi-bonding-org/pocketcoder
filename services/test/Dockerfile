@@ -1,5 +1,5 @@
 # Test container with BATS and all testing dependencies
-FROM bats/bats:latest
+FROM bats/bats:1.11.1
 
 # Install testing dependencies
 RUN apk add --no-cache \
