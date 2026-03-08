@@ -164,6 +164,14 @@ impl PocoAgents {
         &self,
         Parameters(params): Parameters<SpawnParams>,
     ) -> Result<CallToolResult, McpError> {
+        const MAX_CONCURRENT_AGENTS: usize = 20;
+        let count = self.store.len().await;
+        if count >= MAX_CONCURRENT_AGENTS {
+            return Err(mcp_err(
+                "Maximum concurrent agents reached (20). Clean up existing agents first.",
+            ));
+        }
+
         let id = uuid::Uuid::new_v4().to_string()[..8].to_string();
         let window_name = format!("agent-{id}");
         let timeout_secs = params.timeout_secs.unwrap_or(600);

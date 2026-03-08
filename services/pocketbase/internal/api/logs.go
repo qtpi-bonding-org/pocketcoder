@@ -60,7 +60,7 @@ func RegisterLogsApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return re.NotFoundError(fmt.Sprintf("Container %s not found or logs unavailable", containerName), nil)
+			return re.NotFoundError("Logs unavailable", nil)
 		}
 
 		// Set HTTP headers for Server-Sent Events (SSE).
