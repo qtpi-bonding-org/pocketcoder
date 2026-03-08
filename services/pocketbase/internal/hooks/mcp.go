@@ -20,12 +20,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package hooks
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -38,7 +35,6 @@ const (
 	mcpConfigPath    = "/mcp_config/docker-mcp.yaml"
 	mcpSecretsPath   = "/mcp_config/mcp.env"
 	gatewayContainer = "pocketcoder-mcp-gateway"
-	defaultDockerHost = "tcp://docker-socket-proxy-write:2375"
 )
 
 // RegisterMcpHooks registers hooks for MCP server lifecycle management.
@@ -61,7 +57,7 @@ func RegisterMcpHooks(app core.App, openCodeURL string) {
 				log.Printf("❌ [MCP] Failed to render config: %v", err)
 				return e.Next()
 			}
-			if err := restartGateway(); err != nil {
+			if err := restartContainer(gatewayContainer, 30*time.Second); err != nil {
 				log.Printf("❌ [MCP] Failed to restart gateway: %v", err)
 			}
 			notifyPoco(app, openCodeURL, serverName, newStatus)
@@ -164,50 +160,6 @@ func renderMcpConfig(app core.App) error {
 	}
 
 	log.Printf("✅ [MCP] Rendered catalog and secrets for %d approved servers", len(uniqueServers))
-	return nil
-}
-
-// restartGateway sends a restart command to the MCP gateway container via the Docker Socket Proxy.
-func restartGateway() error {
-	log.Printf("🔄 [MCP] Restarting gateway container '%s'...", gatewayContainer)
-
-	host := os.Getenv("DOCKER_HOST")
-	if host == "" {
-		host = defaultDockerHost
-	}
-
-	proxyAddr := host
-	if strings.HasPrefix(host, "tcp://") {
-		proxyAddr = strings.TrimPrefix(host, "tcp://")
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return net.Dial("tcp", proxyAddr)
-			},
-		},
-		Timeout: 10 * time.Second,
-	}
-
-	apiPath := fmt.Sprintf("http://%s/containers/%s/restart", proxyAddr, gatewayContainer)
-	resp, err := client.Post(apiPath, "application/json", nil)
-	if err != nil {
-		return fmt.Errorf("failed to call Docker API via proxy: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		log.Printf("⚠️ [MCP] Gateway container '%s' not found, skipping restart", gatewayContainer)
-		return nil
-	}
-
-	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("Docker API returned error %s: %s", resp.Status, string(body))
-	}
-
-	log.Printf("✅ [MCP] Gateway container '%s' restart sent successfully", gatewayContainer)
 	return nil
 }
 
