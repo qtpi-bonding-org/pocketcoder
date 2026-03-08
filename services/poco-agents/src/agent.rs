@@ -44,7 +44,7 @@ impl OpenCodeAgent {
     pub fn new(config_path: std::path::PathBuf) -> Self {
         Self {
             config_path,
-            session_re: Regex::new(r#""sessionID"\s*:\s*"(ses_[A-Za-z0-9_]+)""#).unwrap(),
+            session_re: Regex::new(r#""sessionID"\s*:\s*"(ses_[A-Za-z0-9_]+)""#).expect("invalid session_id regex pattern"),
         }
     }
 }
