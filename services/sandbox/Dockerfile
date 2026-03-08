@@ -93,14 +93,14 @@ ENV TMUX_SOCKET=/tmp/tmux/pocketcoder
 
 # --- SSH & Terminal Mirroring Setup ---
 RUN useradd -m -s /bin/bash worker && \
-    echo "worker:password" | chpasswd && \
+    echo "worker:$(head -c 32 /dev/urandom | base64)" | chpasswd && \
     adduser worker sudo && \
     echo "worker ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN mkdir -p /var/run/sshd
 RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
-RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 # Allow root for debugging if needed, but worker is preferred
-RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+RUN echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 # Enable SFTP subsystem for file transfer from Flutter
 RUN echo "Subsystem sftp /usr/lib/ssh/sftp-server" >> /etc/ssh/sshd_config
 

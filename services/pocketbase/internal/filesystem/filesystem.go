@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
@@ -74,5 +75,5 @@ func RegisterArtifactApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 		_, err = io.Copy(re.Response, r)
 		return err
-	})
+	}).Bind(apis.RequireAuth())
 }
