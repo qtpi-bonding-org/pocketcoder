@@ -170,6 +170,12 @@ func RegisterNotificationHooks(app core.App) {
 // task_complete, task_error, and other notification types.
 func RegisterPushApi(app core.App, e *core.ServeEvent) {
 	e.Router.POST("/api/pocketcoder/push", func(re *core.RequestEvent) error {
+		// Only agent or admin can send push notifications
+		role := re.Auth.GetString("role")
+		if role != "agent" && role != "admin" {
+			return re.JSON(403, map[string]string{"error": "Insufficient permissions"})
+		}
+
 		var input struct {
 			UserID  string `json:"user_id"`
 			Title   string `json:"title"`

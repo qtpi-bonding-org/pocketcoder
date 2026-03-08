@@ -618,16 +618,18 @@ function setupGracefulShutdown() {
         console.log('[Interface] Agent authenticated!');
 
         // Auth token refresh hook — re-authenticates when token expires
-        let refreshingAuth = false;
+        let refreshPromise: Promise<void> | null = null;
         pb.beforeSend = async function (url, options) {
-            if (!pb.authStore.isValid && !refreshingAuth) {
-                refreshingAuth = true;
-                try {
-                    console.log('[Interface] Auth token expired, refreshing...');
-                    await pb.collection(Collections.USERS).authWithPassword(agentEmail, agentPass);
-                } finally {
-                    refreshingAuth = false;
+            if (!pb.authStore.isValid) {
+                if (!refreshPromise) {
+                    refreshPromise = pb.collection(Collections.USERS).authWithPassword(agentEmail, agentPass)
+                        .then(() => { refreshPromise = null; })
+                        .catch((err) => {
+                            refreshPromise = null;
+                            console.error('[Interface] Auth refresh failed:', err);
+                        });
                 }
+                await refreshPromise;
             }
             return { url, options };
         };

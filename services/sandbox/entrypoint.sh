@@ -69,6 +69,9 @@ echo "🔄 Localizing SSH keys for 'worker' user..."
     echo "⏳ Waiting for SSH key volume mount... (Attempt $i/10)"
     sleep 1
   done
+  if [ ! -s "/home/worker/.ssh/authorized_keys" ]; then
+    echo "⚠️ [Sandbox] SSH key sync failed after all retries"
+  fi
 ) &
 
 # --- TMUX SESSION ---
