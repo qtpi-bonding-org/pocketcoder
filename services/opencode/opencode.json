@@ -7,7 +7,7 @@
       "model": "google/gemini-2.0-flash",
       "permission": {
         "bash": "ask",
-        "cao_*": "ask",
+        "poco-agents_*": "ask",
         "edit": "ask",
         "skill": "ask"
       },
