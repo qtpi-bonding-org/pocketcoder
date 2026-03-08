@@ -22,12 +22,11 @@ package hooks
 import (
 	"time"
 
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 // RegisterGlobalTimestamps registers hooks for created, updated, and last_active timestamps.
-func RegisterGlobalTimestamps(app *pocketbase.PocketBase) {
+func RegisterGlobalTimestamps(app core.App) {
 	handler := func(e *core.RecordEvent) error {
 		now := time.Now().Format("2006-01-02 15:04:05.000Z")
 		collection := e.Record.Collection()

@@ -20,13 +20,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package hooks
 
 import (
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agents"
 )
 
 // RegisterAgentHooks registers hooks that trigger agent re-bundling.
-func RegisterAgentHooks(app *pocketbase.PocketBase) {
+func RegisterAgentHooks(app core.App) {
 	// Trigger assembly on Agents change (Modify record BEFORE save to avoid extra writes/recursion)
 	app.OnRecordCreateRequest("ai_agents").BindFunc(func(e *core.RecordRequestEvent) error {
 		bundle, err := agents.GetAgentBundle(app, e.Record)

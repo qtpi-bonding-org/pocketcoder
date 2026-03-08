@@ -24,12 +24,11 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 // RegisterPermissionHooks registers hooks for the permissions collection.
-func RegisterPermissionHooks(app *pocketbase.PocketBase) {
+func RegisterPermissionHooks(app core.App) {
 	// 1. CREATION: Generate Challenge, Default to Draft
 	app.OnRecordCreate("permissions").BindFunc(func(e *core.RecordEvent) error {
 		permission := e.Record.GetString("permission")

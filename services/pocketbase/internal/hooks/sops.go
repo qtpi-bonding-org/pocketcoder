@@ -25,12 +25,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 // RegisterSopHooks manages the transition from proposal to sealed SOP
-func RegisterSopHooks(app *pocketbase.PocketBase) {
+func RegisterSopHooks(app core.App) {
 	app.OnRecordAfterUpdateSuccess("proposals").BindFunc(func(e *core.RecordEvent) error {
 		status := e.Record.GetString("status")
 		
@@ -49,7 +48,7 @@ func RegisterSopHooks(app *pocketbase.PocketBase) {
 
 // SealProposal takes a proposal record, hashes it, and promotes it to the sops ledger.
 // This is the "Master of Signature" implementation where the backend handles integrity.
-func SealProposal(app *pocketbase.PocketBase, proposal *core.Record) error {
+func SealProposal(app core.App, proposal *core.Record) error {
 	name := proposal.GetString("name")
 	content := proposal.GetString("content")
 	description := proposal.GetString("description")

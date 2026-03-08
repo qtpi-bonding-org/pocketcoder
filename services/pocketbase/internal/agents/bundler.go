@@ -20,13 +20,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package agents
 
 import (
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"gopkg.in/yaml.v3"
 )
 
 // GetAgentBundle converts an Agent record into a frontmatter-laden bundle.
-func GetAgentBundle(app *pocketbase.PocketBase, agent *core.Record) (string, error) {
+func GetAgentBundle(app core.App, agent *core.Record) (string, error) {
 	// 1. Expand dependencies
 	app.ExpandRecord(agent, []string{"prompt", "model"}, nil)
 
@@ -70,7 +69,7 @@ func GetAgentBundle(app *pocketbase.PocketBase, agent *core.Record) (string, err
 }
 
 // UpdateAgentConfig re-assembles the bundle and saves it to the 'config' field if changed.
-func UpdateAgentConfig(app *pocketbase.PocketBase, agent *core.Record) error {
+func UpdateAgentConfig(app core.App, agent *core.Record) error {
 	bundle, err := GetAgentBundle(app, agent)
 	if err != nil {
 		return err

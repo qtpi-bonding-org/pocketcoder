@@ -20,12 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package hooks
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -34,9 +30,9 @@ import (
 )
 
 const (
-	llmEnvPath         = "/workspace/.opencode/llm.env"
-	llmEnvPathShared   = "/llm_keys/llm.env"
-	openCodeContainer  = "pocketcoder-opencode"
+	llmEnvPath       = "/workspace/.opencode/llm.env"
+	llmEnvPathShared = "/llm_keys/llm.env"
+	openCodeContainer = "pocketcoder-opencode"
 )
 
 // RegisterLlmHooks registers hooks on the llm_keys collection.
@@ -51,7 +47,7 @@ func RegisterLlmHooks(app core.App) {
 			log.Printf("❌ [LLM] Failed to render llm.env: %v", err)
 			return e.Next()
 		}
-		if err := restartOpenCode(); err != nil {
+		if err := restartContainer(openCodeContainer, 30*time.Second); err != nil {
 			log.Printf("❌ [LLM] Failed to restart OpenCode: %v", err)
 		}
 		return e.Next()
@@ -124,46 +120,3 @@ func renderLlmEnv(app core.App) error {
 	return nil
 }
 
-// restartOpenCode sends a restart command to the OpenCode container via the Docker Socket Proxy.
-func restartOpenCode() error {
-	log.Printf("🔄 [LLM] Restarting OpenCode container '%s'...", openCodeContainer)
-
-	host := os.Getenv("DOCKER_HOST")
-	if host == "" {
-		host = defaultDockerHost
-	}
-
-	proxyAddr := host
-	if strings.HasPrefix(host, "tcp://") {
-		proxyAddr = strings.TrimPrefix(host, "tcp://")
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return net.Dial("tcp", proxyAddr)
-			},
-		},
-		Timeout: 30 * time.Second,
-	}
-
-	apiPath := fmt.Sprintf("http://%s/containers/%s/restart", proxyAddr, openCodeContainer)
-	resp, err := client.Post(apiPath, "application/json", nil)
-	if err != nil {
-		return fmt.Errorf("failed to call Docker API via proxy: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		log.Printf("⚠️ [LLM] OpenCode container '%s' not found, skipping restart", openCodeContainer)
-		return nil
-	}
-
-	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("Docker API returned error %s: %s", resp.Status, string(body))
-	}
-
-	log.Printf("✅ [LLM] OpenCode container '%s' restart sent successfully", openCodeContainer)
-	return nil
-}
