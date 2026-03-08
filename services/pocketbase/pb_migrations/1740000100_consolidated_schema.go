@@ -234,9 +234,9 @@ func init() {
 		)
 		healthchecks.ListRule = ptr("@request.auth.id != ''")
 		healthchecks.ViewRule = ptr("@request.auth.id != ''")
-		healthchecks.UpdateRule = ptr("")
-		healthchecks.CreateRule = ptr("")
-		healthchecks.DeleteRule = ptr("")
+		healthchecks.UpdateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		healthchecks.CreateRule = ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		healthchecks.DeleteRule = ptr("@request.auth.role = 'admin'")
 		if err := app.Save(healthchecks); err != nil { return err }
 
 		// =========================================================================
@@ -309,8 +309,8 @@ func init() {
 		)
 		sops.ListRule = ptr("@request.auth.id != ''")
 		sops.ViewRule = ptr("@request.auth.id != ''")
-		sops.CreateRule = ptr("")
-		sops.UpdateRule = ptr("")
+		sops.CreateRule = ptr("@request.auth.role = 'admin'")
+		sops.UpdateRule = ptr("@request.auth.role = 'admin'")
 		sops.DeleteRule = ptr("@request.auth.id != ''")
 		sops.Indexes = []string{
 			"CREATE UNIQUE INDEX idx_sops_name ON sops (name)",

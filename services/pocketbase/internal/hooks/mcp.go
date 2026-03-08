@@ -151,11 +151,11 @@ func renderMcpConfig(app core.App) error {
 		}
 	}
 
-	if err := os.WriteFile(mcpConfigPath, []byte(catalog.String()), 0644); err != nil {
+	if err := os.WriteFile(mcpConfigPath, []byte(catalog.String()), 0600); err != nil {
 		return fmt.Errorf("failed to write catalog to %s: %w", mcpConfigPath, err)
 	}
 
-	if err := os.WriteFile(mcpSecretsPath, []byte(secrets.String()), 0644); err != nil {
+	if err := os.WriteFile(mcpSecretsPath, []byte(secrets.String()), 0600); err != nil {
 		return fmt.Errorf("failed to write secrets to %s: %w", mcpSecretsPath, err)
 	}
 
