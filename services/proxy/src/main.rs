@@ -120,7 +120,7 @@ async fn sse_handler(
     Query(query): Query<McpQuery>,
 ) -> Sse<impl Stream<Item = Result<Event, std::convert::Infallible>>> {
     let session_id = query.session_id.unwrap_or_else(|| Uuid::new_v4().to_string());
-    println!("📡 [Server/SSE] New session: {}", session_id);
+    tracing::info!("[Server/SSE] New session: {}", session_id);
     let (tx, rx) = mpsc::channel(100);
 
     state.sessions.write().insert(session_id.clone(), tx);
@@ -138,7 +138,7 @@ async fn exec_handler(
 ) -> Json<serde_json::Value> {
     let cwd = if payload.cwd.is_empty() { "/workspace" } else { &payload.cwd };
 
-    println!("⚡ [Server/Exec] Cmd: {} (Agent: {})", payload.cmd, payload.agent_name);
+    tracing::info!("[Server/Exec] Cmd: {} (Agent: {})", payload.cmd, payload.agent_name);
     match state.driver.exec(&payload.cmd, Some(cwd), &payload.agent_name).await {
         Ok(res) => Json(serde_json::json!({ "stdout": res.output, "exit_code": res.exit_code })),
         Err(e) => Json(serde_json::json!({ "error": e.to_string(), "exit_code": 1 })),
@@ -151,6 +151,8 @@ async fn exec_handler(
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -158,7 +160,7 @@ async fn main() -> Result<()> {
             let socket_path = env::var("TMUX_SOCKET").unwrap_or_else(|_| "/tmp/tmux/pocketcoder".to_string());
             let session_name = env::var("TMUX_SESSION").unwrap_or_else(|_| "pocketcoder".to_string());
 
-            println!("🏰 [PocketCoder] Mode: SERVER (Port: {})", port);
+            tracing::info!("[PocketCoder] Mode: SERVER (Port: {})", port);
             
             let driver = Arc::new(PocketCoderDriver::new(&socket_path, &session_name));
             let state = Arc::new(AppState {
@@ -173,10 +175,10 @@ async fn main() -> Result<()> {
                 .layer(tower_http::cors::CorsLayer::permissive())
                 .with_state(state);
 
-            println!("🚀 [PocketCoder] Server components ready");
+            tracing::info!("[PocketCoder] Server components ready");
             
             let addr = format!("0.0.0.0:{}", port);
-            println!("✅ [PocketCoder] Main Gateway: {}", addr);
+            tracing::info!("[PocketCoder] Main Gateway: {}", addr);
 
             let listener = tokio::net::TcpListener::bind(addr).await?;
             axum::serve(listener, app).await?;
