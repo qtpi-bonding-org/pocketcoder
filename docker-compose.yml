@@ -90,7 +90,6 @@ services:
       - opencode_workspace:/workspace
       - ./services/sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
       - shell_bridge:/app/shell_bridge
-      - ./scripts/debug:/workspace/debug
       - llm_keys:/llm_keys:ro
     working_dir: /workspace
     environment:
