@@ -50,7 +50,7 @@ func RegisterToolPermissionHooks(app core.App) {
 			log.Printf("[ToolPerms] Failed to render opencode.json: %v", err)
 			return e.Next()
 		}
-		if err := restartOpenCode(); err != nil {
+		if err := restartContainer(openCodeContainer, 30*time.Second); err != nil {
 			log.Printf("[ToolPerms] Failed to restart OpenCode: %v", err)
 		}
 		return e.Next()
@@ -67,7 +67,7 @@ func RegisterToolPermissionHooks(app core.App) {
 			log.Printf("[ToolPerms] Failed to render opencode.json: %v", err)
 			return e.Next()
 		}
-		if err := restartOpenCode(); err != nil {
+		if err := restartContainer(openCodeContainer, 30*time.Second); err != nil {
 			log.Printf("[ToolPerms] Failed to restart OpenCode: %v", err)
 		}
 		return e.Next()

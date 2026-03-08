@@ -27,7 +27,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -135,7 +134,7 @@ func (p *FcmRelayProvider) Send(token, title, body string) error {
 
 // RegisterNotificationHooks registers hooks for triggering push notifications
 // and the /api/push custom endpoint.
-func RegisterNotificationHooks(app *pocketbase.PocketBase) {
+func RegisterNotificationHooks(app core.App) {
 	// Hook: permission created -> push notification
 	app.OnRecordAfterCreateSuccess("permissions").BindFunc(func(e *core.RecordEvent) error {
 		if e.Record.GetString("status") != "draft" {
@@ -169,7 +168,7 @@ func RegisterNotificationHooks(app *pocketbase.PocketBase) {
 // RegisterPushApi registers the POST /api/push endpoint.
 // Called by the interface service to send push notifications for
 // task_complete, task_error, and other notification types.
-func RegisterPushApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+func RegisterPushApi(app core.App, e *core.ServeEvent) {
 	e.Router.POST("/api/pocketcoder/push", func(re *core.RequestEvent) error {
 		var input struct {
 			UserID  string `json:"user_id"`
