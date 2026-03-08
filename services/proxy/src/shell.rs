@@ -89,7 +89,7 @@ pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
 
             if let Some(stdout) = response.stdout {
                 print!("{}", stdout);
-                io::stdout().flush().unwrap();
+                io::stdout().flush().ok();
             }
 
             process::exit(response.exit_code.unwrap_or(0));

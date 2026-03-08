@@ -104,3 +104,7 @@ Idle memory footprint is ~750 MiB across all containers. Active agent workloads 
 | 3243ca2d6495 | pocketcoder-sqlpage | 0.42% | 25.26MiB / 7.655GiB | 0.32% | 1.25kB / 0B | 21MB / 0B | 16 |
 | 5a6c4b15e336 | pocketcoder-docker-proxy-write | 0.00% | 30.27MiB / 7.655GiB | 0.39% | 48.8kB / 42.4kB | 13MB / 12.3kB | 13 |
 | b21a1246046b | pocketcoder-mcp-gateway | 0.00% | 26.06MiB / 7.655GiB | 0.33% | 524kB / 14.8kB | 111kB / 0B | 24 |
+
+## Third-Party Licenses
+
+PocketCoder's optional knowledge/memory stack uses SurrealDB, which is licensed under BSL 1.1 (not OSI-approved open source). SurrealDB is used as an unmodified runtime dependency. All PocketCoder code remains AGPLv3. If SurrealDB's licensing is a concern, the knowledge and memory features can be disabled via Docker Compose profiles.

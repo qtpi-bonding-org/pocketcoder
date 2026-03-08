@@ -35,6 +35,12 @@ func RegisterSSHApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 	// 🔑 SSH PUBLIC KEYS SYNC ENDPOINT
 	// Returns all authorized public keys as a newline-separated list
 	e.Router.GET("/api/pocketcoder/ssh_keys", func(re *core.RequestEvent) error {
+		// Only agent or admin can fetch SSH keys (used by sandbox key sync)
+		role := re.Auth.GetString("role")
+		if role != "agent" && role != "admin" {
+			return re.JSON(403, map[string]string{"error": "Insufficient permissions"})
+		}
+
 		// Fetch all active SSH keys from the ssh_keys collection
 		sshKeys, err := app.FindRecordsByFilter("ssh_keys", "is_active = TRUE", "", 1000, 0, nil)
 		if err != nil {

@@ -8,7 +8,7 @@ use crate::state::AgentStore;
 use crate::tools::PocoAgents;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, warn};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -73,10 +73,22 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     info!("poco-agents listening on http://{addr}/mcp");
 
+    let shutdown_notify = Arc::new(tokio::sync::Notify::new());
+    let shutdown_notify_clone = Arc::clone(&shutdown_notify);
+
+    // Force-exit task: once shutdown signal fires, allow 10s for drain then exit
+    tokio::spawn(async move {
+        shutdown_notify_clone.notified().await;
+        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+        warn!("graceful shutdown timed out after 10s, forcing exit");
+        std::process::exit(1);
+    });
+
     axum::serve(listener, app)
-        .with_graceful_shutdown(async {
+        .with_graceful_shutdown(async move {
             tokio::signal::ctrl_c().await.ok();
             info!("shutting down");
+            shutdown_notify.notify_one();
         })
         .await?;
 
