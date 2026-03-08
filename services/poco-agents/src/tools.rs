@@ -220,7 +220,9 @@ impl PocoAgents {
             loop {
                 if exit_path.exists() {
                     self.refresh_agent(&id).await;
-                    let state = self.store.get(&id).await.expect("agent disappeared from store mid-poll");
+                    let state = self.store.get(&id).await.ok_or_else(|| {
+                        mcp_err(format!("agent {id} disappeared from store mid-poll"))
+                    })?;
 
                     // Read log
                     let log_path = Path::new(&self.agents_dir).join(format!("{id}.log"));

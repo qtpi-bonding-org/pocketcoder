@@ -1,5 +1,5 @@
 # MCP Gateway container - runs docker-mcp gateway process
-FROM alpine:latest
+FROM alpine:3.21
 
 # Install required packages
 RUN apk add --no-cache \

@@ -141,7 +141,7 @@ services:
   # Currently shared by both PocketBase (restart) and Dozzle (logs)
   # For production: uncomment docker-socket-proxy-read below and update Dozzle config
   docker-socket-proxy-write:
-    image: tecnativa/docker-socket-proxy:latest
+    image: tecnativa/docker-socket-proxy:0.3
     container_name: pocketcoder-docker-proxy-write
     environment:
       # Enable container operations for PocketBase restart capability
@@ -200,7 +200,7 @@ services:
 
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
-    image: lovasoa/sqlpage:latest
+    image: lovasoa/sqlpage:0.32
     user: root
     container_name: pocketcoder-sqlpage
     environment:
@@ -314,7 +314,7 @@ services:
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
   ntfy:
-    image: binwiederhier/ntfy:latest
+    image: binwiederhier/ntfy:v2.11
     container_name: pocketcoder-ntfy
     profiles:
       - foss
