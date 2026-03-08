@@ -31,6 +31,100 @@ const HEALTH_PORT = parseInt(process.env.HEALTH_PORT || '8080', 10);
 const pb = new PocketBase(POCKETBASE_URL);
 const oc = createOpencodeClient({ baseUrl: OPENCODE_URL });
 
+// Collection names
+const Collections = {
+    MESSAGES: 'messages',
+    CHATS: 'chats',
+    PERMISSIONS: 'permissions',
+    MODEL_SELECTION: 'model_selection',
+    LLM_PROVIDERS: 'llm_providers',
+    USERS: 'users',
+} as const;
+
+// Status values
+const Status = {
+    DRAFT: 'draft',
+    PROCESSING: 'processing',
+    COMPLETED: 'completed',
+    FAILED: 'failed',
+    AUTHORIZED: 'authorized',
+    DENIED: 'denied',
+    PENDING: 'pending',
+} as const;
+
+// OpenCode event types
+const EventType = {
+    MESSAGE_PART_UPDATED: 'message.part.updated',
+    MESSAGE_UPDATED: 'message.updated',
+    PERMISSION_UPDATED: 'permission.updated',
+} as const;
+
+// PocketBase record types (minimal shape for interface needs)
+interface PbRecord {
+    id: string;
+    [key: string]: any;
+}
+
+interface ChatRecord extends PbRecord {
+    ai_engine_session_id: string;
+    user: string;
+    agent?: string;
+}
+
+interface MessageRecord extends PbRecord {
+    chat: string;
+    role: string;
+    parts: MessagePart[];
+    ai_engine_message_id?: string;
+    engine_message_status?: string;
+    user_message_status?: string;
+}
+
+interface MessagePart {
+    id?: string;
+    type: string;
+    text?: string;
+    metadata?: Record<string, any>;
+    [key: string]: any;
+}
+
+interface PermissionRecord extends PbRecord {
+    ai_engine_permission_id: string;
+    session_id: string;
+    chat: string;
+    status: string;
+    permission: string;
+}
+
+interface ModelSelectionRecord extends PbRecord {
+    model: string;
+    chat?: string;
+}
+
+interface UserMessageInput {
+    id: string;
+    chat: string;
+    text: string;
+}
+
+// OpenCode event types
+interface OcEventProperties {
+    part?: any;
+    delta?: string;
+    info?: any;
+}
+
+interface OcPermission {
+    id: string;
+    sessionID: string;
+    type: string;
+    title: string;
+    pattern: string;
+    metadata: any;
+    messageID: string;
+    callID: string;
+}
+
 // Bounded cache for Session ID -> Chat Record ID
 const SESSION_CACHE_MAX = 1000;
 const sessionToChat = new Map<string, string>();
@@ -61,7 +155,7 @@ const SCRUB_FIELDS = [
     'provider_internal_id'
 ];
 
-function scrubPart(part: any) {
+function scrubPart(part: MessagePart): MessagePart {
     if (!part.metadata) return part;
     const scrubbedMetadata = { ...part.metadata };
     for (const field of SCRUB_FIELDS) {
@@ -111,11 +205,11 @@ async function startEventPump() {
         for await (const event of (subscription as any).stream) {
             const { type, properties } = event;
 
-            if (type === 'message.part.updated') {
+            if (type === EventType.MESSAGE_PART_UPDATED) {
                 await handleMessagePartUpdated(properties);
-            } else if (type === 'message.updated') {
+            } else if (type === EventType.MESSAGE_UPDATED) {
                 await handleMessageCompletion(properties);
-            } else if (type === 'permission.updated') {
+            } else if (type === EventType.PERMISSION_UPDATED) {
                 await handlePermissionUpdated(properties);
             }
             // NOTE: OpenCode questions arrive as regular assistant messages via message.updated events
@@ -131,7 +225,7 @@ async function startEventPump() {
     }
 }
 
-async function handleMessagePartUpdated(properties: any) {
+async function handleMessagePartUpdated(properties: OcEventProperties) {
     const { part, delta } = properties;
     const messageID = part.messageID;
     const sessionID = part.sessionID;
@@ -142,11 +236,11 @@ async function handleMessagePartUpdated(properties: any) {
 
     if (!msgRecord) {
         try {
-            msgRecord = await pb.collection('messages').create({
+            msgRecord = await pb.collection(Collections.MESSAGES).create({
                 chat: chatID,
                 role: 'assistant',
                 ai_engine_message_id: messageID,
-                engine_message_status: 'processing',
+                engine_message_status: Status.PROCESSING,
                 parts: []
             });
         } catch (err) {
@@ -157,12 +251,12 @@ async function handleMessagePartUpdated(properties: any) {
     }
 
     await withMessageLock(messageID, async () => {
-        const fresh = await pb.collection('messages').getOne(msgRecord.id);
-        let parts = Array.isArray(fresh.parts) ? [...fresh.parts] : [];
+        const fresh = await pb.collection(Collections.MESSAGES).getOne(msgRecord.id);
+        let parts: MessagePart[] = Array.isArray(fresh.parts) ? [...fresh.parts] : [];
 
         if (delta) {
             // Streaming text delta — append to existing part or create new one
-            let target = parts.find((p: any) => p.id === part.id);
+            let target = parts.find((p: MessagePart) => p.id === part.id);
             if (!target) {
                 target = { id: part.id, type: 'text', text: '' };
                 parts.push(target);
@@ -171,32 +265,32 @@ async function handleMessagePartUpdated(properties: any) {
         } else if (NARRATIVE_PART_TYPES.has(part.type)) {
             // Full part upsert
             const processed = scrubPart(part);
-            const idx = parts.findIndex((p: any) => p.id === part.id);
+            const idx = parts.findIndex((p: MessagePart) => p.id === part.id);
             if (idx !== -1) parts[idx] = processed;
             else parts.push(processed);
         }
 
-        await pb.collection('messages').update(msgRecord.id, { parts });
+        await pb.collection(Collections.MESSAGES).update(msgRecord.id, { parts });
     });
 }
 
-async function handleMessageCompletion(properties: any) {
+async function handleMessageCompletion(properties: OcEventProperties) {
     const message = properties.info;
     if (message.role !== 'assistant') return;
 
     const msgRecord = await findMessageByEngineId(message.id);
     if (!msgRecord) return;
 
-    let status = 'processing';
-    if (message.error) status = 'failed';
-    else if (message.time?.completed) status = 'completed';
+    let status: string = Status.PROCESSING;
+    if (message.error) status = Status.FAILED;
+    else if (message.time?.completed) status = Status.COMPLETED;
 
-    await pb.collection('messages').update(msgRecord.id, {
+    await pb.collection(Collections.MESSAGES).update(msgRecord.id, {
         engine_message_status: status
     });
 
     // Send push notification for terminal states (task_complete / task_error)
-    if (status === 'completed' || status === 'failed') {
+    if (status === Status.COMPLETED || status === Status.FAILED) {
         await sendTaskNotification(message.sessionID, status);
     }
 }
@@ -206,13 +300,13 @@ async function sendTaskNotification(sessionID: string, status: string) {
         const chatID = await resolveChatID(sessionID);
         if (!chatID) return;
 
-        const chat = await pb.collection('chats').getOne(chatID);
+        const chat = await pb.collection(Collections.CHATS).getOne(chatID);
         const userID = chat.user;
         if (!userID) return;
 
-        const notifType = status === 'completed' ? 'task_complete' : 'task_error';
-        const title = status === 'completed' ? 'Task Complete' : 'Task Error';
-        const message = status === 'completed'
+        const notifType = status === Status.COMPLETED ? 'task_complete' : 'task_error';
+        const title = status === Status.COMPLETED ? 'Task Complete' : 'Task Error';
+        const message = status === Status.COMPLETED
             ? 'Your coding task has finished'
             : 'Your coding task encountered an error';
 
@@ -227,12 +321,12 @@ async function sendTaskNotification(sessionID: string, status: string) {
     }
 }
 
-async function handlePermissionUpdated(permission: any) {
+async function handlePermissionUpdated(permission: OcPermission) {
     const chatID = await resolveChatID(permission.sessionID);
     if (!chatID) return;
 
     try {
-        await pb.collection('permissions').create({
+        await pb.collection(Collections.PERMISSIONS).create({
             ai_engine_permission_id: permission.id,
             session_id: permission.sessionID,
             chat: chatID,
@@ -242,7 +336,7 @@ async function handlePermissionUpdated(permission: any) {
             metadata: permission.metadata,
             message_id: permission.messageID,
             call_id: permission.callID,
-            status: 'draft'
+            status: Status.DRAFT
         });
         console.log(`[Interface] Permission requested: ${permission.id}`);
     } catch (err) {
@@ -261,13 +355,13 @@ async function startCommandPump() {
     try {
         // Unsubscribe first to avoid duplicate subscriptions on reconnect
         try {
-            pb.collection('messages').unsubscribe('*');
-            pb.collection('permissions').unsubscribe('*');
-            pb.collection('model_selection').unsubscribe('*');
+            pb.collection(Collections.MESSAGES).unsubscribe('*');
+            pb.collection(Collections.PERMISSIONS).unsubscribe('*');
+            pb.collection(Collections.MODEL_SELECTION).unsubscribe('*');
         } catch (_) { /* ignore if not yet subscribed */ }
 
         // 1. New Messages
-        await pb.collection('messages').subscribe('*', async (e: any) => {
+        await pb.collection(Collections.MESSAGES).subscribe('*', async (e: { action: string; record: MessageRecord }) => {
             try {
                 if (e.action === 'create' && e.record.role === 'user' && !e.record.ai_engine_message_id) {
                     await handleUserMessage(recordToInput(e.record));
@@ -278,9 +372,9 @@ async function startCommandPump() {
         });
 
         // 2. Permission Responses
-        await pb.collection('permissions').subscribe('*', async (e: any) => {
+        await pb.collection(Collections.PERMISSIONS).subscribe('*', async (e: { action: string; record: PermissionRecord }) => {
             try {
-                if (e.action === 'update' && (e.record.status === 'authorized' || e.record.status === 'denied')) {
+                if (e.action === 'update' && (e.record.status === Status.AUTHORIZED || e.record.status === Status.DENIED)) {
                     await handlePermissionReply(e.record);
                 }
             } catch (err) {
@@ -289,7 +383,7 @@ async function startCommandPump() {
         });
 
         // 3. LLM Config Changes (model switching)
-        await pb.collection('model_selection').subscribe('*', async (e: any) => {
+        await pb.collection(Collections.MODEL_SELECTION).subscribe('*', async (e: { action: string; record: ModelSelectionRecord }) => {
             try {
                 if (e.action === 'create' || e.action === 'update') {
                     await handleModelSwitch(e.record);
@@ -313,24 +407,24 @@ async function startCommandPump() {
     }
 }
 
-function recordToInput(record: any) {
-    const parts = Array.isArray(record.parts) ? record.parts : [];
+function recordToInput(record: MessageRecord): UserMessageInput {
+    const parts: MessagePart[] = Array.isArray(record.parts) ? record.parts : [];
     const text = parts
-        .filter((p: any) => p.type === 'text')
-        .map((p: any) => p.text || '')
+        .filter((p: MessagePart) => p.type === 'text')
+        .map((p: MessagePart) => p.text || '')
         .join('\n');
     return { id: record.id, chat: record.chat, text };
 }
 
-async function handleUserMessage(input: any) {
+async function handleUserMessage(input: UserMessageInput) {
     try {
-        const chat = await pb.collection('chats').getOne(input.chat);
+        const chat = await pb.collection(Collections.CHATS).getOne(input.chat);
         let sessionID = chat.ai_engine_session_id;
 
         if (!sessionID) {
             const result = await oc.session.create({ query: { directory: '/workspace' } });
             sessionID = (result.data as any).id;
-            await pb.collection('chats').update(chat.id, { ai_engine_session_id: sessionID });
+            await pb.collection(Collections.CHATS).update(chat.id, { ai_engine_session_id: sessionID });
         }
 
         await oc.session.prompt({
@@ -342,9 +436,9 @@ async function handleUserMessage(input: any) {
     }
 }
 
-async function handlePermissionReply(record: any) {
+async function handlePermissionReply(record: PermissionRecord) {
     console.log(`[Interface] Replying to permission: ${record.ai_engine_permission_id} -> ${record.status}`);
-    const response: 'always' | 'reject' = record.status === 'authorized' ? 'always' : 'reject';
+    const response: 'always' | 'reject' = record.status === Status.AUTHORIZED ? 'always' : 'reject';
 
     try {
         await oc.postSessionIdPermissionsPermissionId({
@@ -382,13 +476,13 @@ async function syncProviders() {
                 is_connected: connectedSet.has(pid),
             };
             try {
-                const existing = await pb.collection('llm_providers').getFirstListItem(
+                const existing = await pb.collection(Collections.LLM_PROVIDERS).getFirstListItem(
                     pb.filter('provider_id = {:pid}', { pid })
                 );
-                await pb.collection('llm_providers').update(existing.id, record);
+                await pb.collection(Collections.LLM_PROVIDERS).update(existing.id, record);
             } catch (err) {
                 if (err instanceof ClientResponseError && err.status === 404) {
-                    await pb.collection('llm_providers').create(record);
+                    await pb.collection(Collections.LLM_PROVIDERS).create(record);
                 } else {
                     console.error(`[Interface] Failed to sync provider '${pid}':`, err);
                 }
@@ -403,14 +497,14 @@ async function syncProviders() {
 /**
  * LLM MODEL SWITCH (PocketBase -> OpenCode)
  */
-async function handleModelSwitch(record: any) {
+async function handleModelSwitch(record: ModelSelectionRecord) {
     const model = record.model;
     const chatId = record.chat;
 
     if (chatId) {
         // Per-chat model switch: find the session and send command
         try {
-            const chat = await pb.collection('chats').getOne(chatId);
+            const chat = await pb.collection(Collections.CHATS).getOne(chatId);
             const sessionID = chat.ai_engine_session_id;
             if (!sessionID) {
                 console.log(`[Interface] Chat ${chatId} has no session, skipping model switch`);
@@ -440,7 +534,7 @@ async function handleModelSwitch(record: any) {
 async function resolveChatID(sessionID: string): Promise<string | null> {
     if (sessionToChat.has(sessionID)) return sessionToChat.get(sessionID)!;
     try {
-        const chat = await pb.collection('chats').getFirstListItem(
+        const chat = await pb.collection(Collections.CHATS).getFirstListItem(
             pb.filter('ai_engine_session_id = {:id}', { id: sessionID })
         );
         cacheSession(sessionID, chat.id);
@@ -452,9 +546,9 @@ async function resolveChatID(sessionID: string): Promise<string | null> {
     }
 }
 
-async function findMessageByEngineId(engineID: string): Promise<any> {
+async function findMessageByEngineId(engineID: string): Promise<MessageRecord | null> {
     try {
-        return await pb.collection('messages').getFirstListItem(
+        return await pb.collection(Collections.MESSAGES).getFirstListItem(
             pb.filter('ai_engine_message_id = {:id}', { id: engineID })
         );
     } catch (err) {
@@ -495,9 +589,9 @@ function setupGracefulShutdown() {
     const shutdown = async () => {
         console.log('[Interface] Shutting down gracefully...');
         try {
-            pb.collection('messages').unsubscribe('*');
-            pb.collection('permissions').unsubscribe('*');
-            pb.collection('model_selection').unsubscribe('*');
+            pb.collection(Collections.MESSAGES).unsubscribe('*');
+            pb.collection(Collections.PERMISSIONS).unsubscribe('*');
+            pb.collection(Collections.MODEL_SELECTION).unsubscribe('*');
             if (providerSyncInterval) clearInterval(providerSyncInterval);
         } catch (err) {
             console.error('[Interface] Error during unsubscribe:', err);
@@ -520,7 +614,7 @@ function setupGracefulShutdown() {
 
     try {
         console.log(`[Interface] Authenticating as Agent (${agentEmail})...`);
-        await pb.collection('users').authWithPassword(agentEmail, agentPass);
+        await pb.collection(Collections.USERS).authWithPassword(agentEmail, agentPass);
         console.log('[Interface] Agent authenticated!');
 
         // Auth token refresh hook — re-authenticates when token expires
@@ -530,7 +624,7 @@ function setupGracefulShutdown() {
                 refreshingAuth = true;
                 try {
                     console.log('[Interface] Auth token expired, refreshing...');
-                    await pb.collection('users').authWithPassword(agentEmail, agentPass);
+                    await pb.collection(Collections.USERS).authWithPassword(agentEmail, agentPass);
                 } finally {
                     refreshingAuth = false;
                 }
@@ -539,7 +633,7 @@ function setupGracefulShutdown() {
         };
 
         // Pre-cache active sessions
-        const chats = await pb.collection('chats').getFullList({ filter: 'ai_engine_session_id != ""' });
+        const chats = await pb.collection(Collections.CHATS).getFullList({ filter: 'ai_engine_session_id != ""' });
         for (const chat of chats) {
             cacheSession(chat.ai_engine_session_id, chat.id);
         }
