@@ -42,16 +42,16 @@ type permEntry struct {
 // RegisterToolPermissionHooks registers hooks that re-render the OpenCode config
 // whenever tool_permissions or ai_agents change.
 func RegisterToolPermissionHooks(app core.App) {
-	log.Println("[ToolPerms] Registering tool permission hooks...")
+	log.Println("⚙️ [ToolPerms] Registering tool permission hooks...")
 
 	handleToolPermsChange := func(e *core.RecordEvent) error {
-		log.Println("[ToolPerms] Tool permissions changed, re-rendering opencode.json...")
+		log.Println("⚙️ [ToolPerms] Tool permissions changed, re-rendering opencode.json...")
 		if err := renderOpenCodeConfig(app); err != nil {
-			log.Printf("[ToolPerms] Failed to render opencode.json: %v", err)
+			log.Printf("⚙️ [ToolPerms] Failed to render opencode.json: %v", err)
 			return e.Next()
 		}
 		if err := restartContainer(openCodeContainer, 30*time.Second); err != nil {
-			log.Printf("[ToolPerms] Failed to restart OpenCode: %v", err)
+			log.Printf("⚙️ [ToolPerms] Failed to restart OpenCode: %v", err)
 		}
 		return e.Next()
 	}
@@ -62,24 +62,24 @@ func RegisterToolPermissionHooks(app core.App) {
 
 	// Also re-render when agent model or prompt changes
 	app.OnRecordAfterUpdateSuccess("ai_agents").BindFunc(func(e *core.RecordEvent) error {
-		log.Println("[ToolPerms] Agent updated, re-rendering opencode.json...")
+		log.Println("⚙️ [ToolPerms] Agent updated, re-rendering opencode.json...")
 		if err := renderOpenCodeConfig(app); err != nil {
-			log.Printf("[ToolPerms] Failed to render opencode.json: %v", err)
+			log.Printf("⚙️ [ToolPerms] Failed to render opencode.json: %v", err)
 			return e.Next()
 		}
 		if err := restartContainer(openCodeContainer, 30*time.Second); err != nil {
-			log.Printf("[ToolPerms] Failed to restart OpenCode: %v", err)
+			log.Printf("⚙️ [ToolPerms] Failed to restart OpenCode: %v", err)
 		}
 		return e.Next()
 	})
 
 	// Initial render on startup
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
-		log.Println("[ToolPerms] Performing initial opencode.json render...")
+		log.Println("⚙️ [ToolPerms] Performing initial opencode.json render...")
 		if err := renderOpenCodeConfig(app); err != nil {
-			log.Printf("[ToolPerms] Initial opencode.json render failed: %v", err)
+			log.Printf("⚙️ [ToolPerms] Initial opencode.json render failed: %v", err)
 		} else {
-			log.Println("[ToolPerms] Initial opencode.json rendered successfully")
+			log.Println("⚙️ [ToolPerms] Initial opencode.json rendered successfully")
 		}
 		return e.Next()
 	})
@@ -203,7 +203,7 @@ func renderOpenCodeConfig(app core.App) error {
 		return fmt.Errorf("failed to write opencode.json: %w", err)
 	}
 
-	log.Printf("[ToolPerms] Rendered opencode.json at %s", time.Now().UTC().Format(time.RFC3339))
+	log.Printf("⚙️ [ToolPerms] Rendered opencode.json at %s", time.Now().UTC().Format(time.RFC3339))
 	return nil
 }
 

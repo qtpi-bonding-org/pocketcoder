@@ -63,7 +63,7 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		// 4. Check for existing approved record with the same name
 		mcpServers, err := app.FindCollectionByNameOrId("mcp_servers")
 		if err != nil {
-			log.Printf("❌ Failed to find mcp_servers collection: %v", err)
+			log.Printf("❌ [MCP] Failed to find mcp_servers collection: %v", err)
 			return re.JSON(500, map[string]string{"error": "Internal error"})
 		}
 
@@ -78,7 +78,7 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			map[string]any{"name": input.ServerName},
 		)
 		if err != nil {
-			log.Printf("❌ Failed to query existing MCP servers: %v", err)
+			log.Printf("❌ [MCP] Failed to query existing MCP servers: %v", err)
 			return re.JSON(500, map[string]string{"error": "Internal error"})
 		}
 
@@ -94,7 +94,7 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			existing.Set("requested_by", input.SessionID)
 
 			if err := app.Save(existing); err != nil {
-				log.Printf("❌ Failed to update existing MCP server record: %v", err)
+				log.Printf("❌ [MCP] Failed to update existing MCP server record: %v", err)
 			}
 
 			return re.JSON(200, map[string]any{
@@ -115,7 +115,7 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		record.Set("config_schema", input.ConfigSchema)
 
 		if err := app.Save(record); err != nil {
-			log.Printf("❌ Failed to create MCP server record: %v", err)
+			log.Printf("❌ [MCP] Failed to create MCP server record: %v", err)
 			return re.JSON(500, map[string]string{"error": "Failed to create record"})
 		}
 
