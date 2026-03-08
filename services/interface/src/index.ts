@@ -253,31 +253,64 @@ async function handlePermissionUpdated(permission: any) {
 /**
  * POCKETBASE -> OPENCODE (Command Pump)
  */
+let commandPumpReconnectDelay = 1000;
+
 async function startCommandPump() {
     console.log('[Interface] Starting PocketBase Command Pump...');
 
-    // 1. New Messages
-    pb.collection('messages').subscribe('*', async (e: any) => {
-        if (e.action === 'create' && e.record.role === 'user' && !e.record.ai_engine_message_id) {
-            await handleUserMessage(recordToInput(e.record));
-        }
-    });
+    try {
+        // Unsubscribe first to avoid duplicate subscriptions on reconnect
+        try {
+            pb.collection('messages').unsubscribe('*');
+            pb.collection('permissions').unsubscribe('*');
+            pb.collection('model_selection').unsubscribe('*');
+        } catch (_) { /* ignore if not yet subscribed */ }
 
-    // 2. Permission Responses
-    pb.collection('permissions').subscribe('*', async (e: any) => {
-        if (e.action === 'update' && (e.record.status === 'authorized' || e.record.status === 'denied')) {
-            await handlePermissionReply(e.record);
-        }
-    });
+        // 1. New Messages
+        await pb.collection('messages').subscribe('*', async (e: any) => {
+            try {
+                if (e.action === 'create' && e.record.role === 'user' && !e.record.ai_engine_message_id) {
+                    await handleUserMessage(recordToInput(e.record));
+                }
+            } catch (err) {
+                console.error('[Interface] Error handling message subscription event:', err);
+            }
+        });
 
-    // 3. LLM Config Changes (model switching)
-    pb.collection('model_selection').subscribe('*', async (e: any) => {
-        if (e.action === 'create' || e.action === 'update') {
-            await handleModelSwitch(e.record);
-        }
-    });
+        // 2. Permission Responses
+        await pb.collection('permissions').subscribe('*', async (e: any) => {
+            try {
+                if (e.action === 'update' && (e.record.status === 'authorized' || e.record.status === 'denied')) {
+                    await handlePermissionReply(e.record);
+                }
+            } catch (err) {
+                console.error('[Interface] Error handling permission subscription event:', err);
+            }
+        });
 
-    commandPumpHealthy = true;
+        // 3. LLM Config Changes (model switching)
+        await pb.collection('model_selection').subscribe('*', async (e: any) => {
+            try {
+                if (e.action === 'create' || e.action === 'update') {
+                    await handleModelSwitch(e.record);
+                }
+            } catch (err) {
+                console.error('[Interface] Error handling model selection subscription event:', err);
+            }
+        });
+
+        commandPumpHealthy = true;
+        commandPumpReconnectDelay = 1000; // Reset on success
+        console.log('[Interface] Command Pump subscriptions established');
+    } catch (err) {
+        console.error('[Interface] Command Pump subscription failed:', err);
+        commandPumpHealthy = false;
+        const jitter = Math.random() * 1000;
+        const delay = Math.min(commandPumpReconnectDelay + jitter, MAX_RECONNECT_DELAY);
+        console.log(`[Interface] Reconnecting command pump in ${Math.round(delay)}ms...`);
+        setTimeout(startCommandPump, delay);
+        commandPumpReconnectDelay = Math.min(commandPumpReconnectDelay * 2, MAX_RECONNECT_DELAY);
+    }
 }
 
 function recordToInput(record: any) {
@@ -290,19 +323,23 @@ function recordToInput(record: any) {
 }
 
 async function handleUserMessage(input: any) {
-    const chat = await pb.collection('chats').getOne(input.chat);
-    let sessionID = chat.ai_engine_session_id;
+    try {
+        const chat = await pb.collection('chats').getOne(input.chat);
+        let sessionID = chat.ai_engine_session_id;
 
-    if (!sessionID) {
-        const result = await oc.session.create({ query: { directory: '/workspace' } });
-        sessionID = (result.data as any).id;
-        await pb.collection('chats').update(chat.id, { ai_engine_session_id: sessionID });
+        if (!sessionID) {
+            const result = await oc.session.create({ query: { directory: '/workspace' } });
+            sessionID = (result.data as any).id;
+            await pb.collection('chats').update(chat.id, { ai_engine_session_id: sessionID });
+        }
+
+        await oc.session.prompt({
+            path: { id: sessionID },
+            body: { parts: [{ type: 'text', text: input.text }] }
+        });
+    } catch (err) {
+        console.error(`[Interface] Failed to handle user message (chat: ${input.chat}):`, err);
     }
-
-    await oc.session.prompt({
-        path: { id: sessionID },
-        body: { parts: [{ type: 'text', text: input.text }] }
-    });
 }
 
 async function handlePermissionReply(record: any) {

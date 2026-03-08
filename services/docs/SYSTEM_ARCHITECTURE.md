@@ -22,7 +22,7 @@ graph TD
     end
 
     subgraph "Execution Zone"
-        SB[Sandbox / CAO]
+        SB[Sandbox / poco-agents]
         GW[MCP Gateway]
         DP[Docker Socket Proxy]
     end
@@ -50,7 +50,7 @@ graph TD
 - `pocketcoder-dashboard`: SQLPage ↔ Databases (Internal observability)
 
 **The Linear Isolation Rule**:
-The Sandbox cannot reach PocketBase directly. It only receives command requests from the Head (OpenCode) via a synchronous Rust bridge or the CAO API. This ensures the execution environment is isolated from the sensitive user data in the backend.
+The Sandbox cannot reach PocketBase directly. It only receives command requests from the Head (OpenCode) via a synchronous Rust bridge or the poco-agents API. This ensures the execution environment is isolated from the sensitive user data in the backend.
 
 ---
 
@@ -133,7 +133,7 @@ Which the Rust binary (`proxy/src/shell.rs`) handles by:
 
 ```json
 "mcp": {
-  "cao": {
+  "poco-agents": {
     "type": "remote",
     "url": "http://sandbox:9888/sse",
     "enabled": true,
@@ -142,7 +142,7 @@ Which the Rust binary (`proxy/src/shell.rs`) handles by:
 }
 ```
 
-OpenCode connects directly to CAO's MCP server in Sandbox. No relay or proxy in between. Tools available: `cao_handoff`, `cao_assign`, `cao_send_message`, `cao_check_inbox`.
+OpenCode connects directly to poco-agents' MCP server in Sandbox. No relay or proxy in between. Tools available: `handoff`, `assign`, `send_message`, `check_inbox`.
 
 ### Volumes
 
@@ -160,8 +160,8 @@ OpenCode connects directly to CAO's MCP server in Sandbox. No relay or proxy in 
 
 ## Container 3: Sandbox
 
-**Image**: Built from `docker/sandbox.Dockerfile` (Multi-process: Rust + Python/CAO)
-**Ports**: 3001 (Rust server), 9889 (CAO API), 9888 (CAO MCP)
+**Image**: Built from `docker/sandbox.Dockerfile` (Multi-process: Rust + Python/poco-agents)
+**Ports**: 3001 (Rust server), 9889 (poco-agents API), 9888 (poco-agents MCP)
 **Networks**: `pocketcoder-control`, `pocketcoder-tools`
 
 The Sandbox is the "Muscle" of the system. It consolidated the old "Proxy" and "Sandbox" containers into a single hardened environment. It owns the `tmux` server and manages the lifecycle of all execution panes.
@@ -178,13 +178,13 @@ The Sandbox is the "Muscle" of the system. It consolidated the old "Proxy" and "
 - Installs: tmux, openssh-server, openssh-client, sqlite3, terraform, bun, opencode-ai, uv
 - Copies Rust binary to `/app/pocketcoder` and `/app/shell_bridge/pocketcoder`
 - Creates wrapper script `/app/shell_bridge/pocketcoder-shell`
-- Installs CAO from `/app/cao` (vendored Python package)
+- Installs poco-agents from `/app/poco-agents` (vendored Python package)
 
-1. **Cleanup**: Wipes stale tmux sockets and CAO journal files.
+1. **Cleanup**: Wipes stale tmux sockets and poco-agents journal files.
 2. **Binary Sharing**: Populates the `/shell_bridge` volume with the pre-compiled `pocketcoder` (Rust) binary.
 3. **Axum Startup**: Launches the Rust server on port 3001. This server handles synchronous shell command execution.
-4. **CAO Startup**: Launches the CAO API (9889) and MCP (9888) servers.
-5. **Poco Registration**: The sandbox **registers its own primary window** into CAO using the `opencode-api` provider. This creates the `{TMUX_SESSION}:poco:terminal` window that OpenCode will target for its commands.
+4. **poco-agents Startup**: Launches the poco-agents API (9889) and MCP (9888) servers.
+5. **Poco Registration**: The sandbox **registers its own primary window** into poco-agents using the `opencode-api` provider. This creates the `{TMUX_SESSION}:poco:terminal` window that OpenCode will target for its commands.
 
 ### Rust Axum Server (`proxy/src/main.rs`)
 
@@ -236,11 +236,11 @@ The driver is the core execution logic. When `/exec` is called:
    - Filters out sentinel lines and cd commands from output
    - Timeout: 300 seconds
 
-### CAO (CLI Agent Orchestrator)
+### poco-agents (Agent Orchestrator)
 
-CAO is a Python application at `sandbox/cao/`. It runs two servers:
+poco-agents is a Python application at `sandbox/poco-agents/`. It runs two servers:
 
-**API Server** (port 9889, `sandbox/cao/src/cli_agent_orchestrator/api/main.py`):
+**API Server** (port 9889, `sandbox/poco-agents/src/poco_agents/api/main.py`):
 - `GET /health` — health check
 - `POST /sessions` — create session
 - `GET /sessions` — list sessions
@@ -257,7 +257,7 @@ CAO is a Python application at `sandbox/cao/`. It runs two servers:
 - `POST /inbox` — create inbox message
 - `GET /inbox` — get inbox messages
 
-**MCP Server** (port 9888, `sandbox/cao/src/cli_agent_orchestrator/mcp_server/server.py`):
+**MCP Server** (port 9888, `sandbox/poco-agents/src/poco_agents/mcp_server/server.py`):
 - Transport: SSE (OpenCode connects to `http://sandbox:9888/sse`)
 - Tools exposed:
   - `handoff` — create terminal, wait for completion, return HandoffResult (synchronous)
@@ -265,7 +265,7 @@ CAO is a Python application at `sandbox/cao/`. It runs two servers:
   - `send_message` — send message to another agent's inbox
   - `check_inbox` — check current agent's inbox
 
-### HandoffResult Model (`sandbox/cao/src/cli_agent_orchestrator/mcp_server/models.py`)
+### HandoffResult Model (`sandbox/poco-agents/src/poco_agents/mcp_server/models.py`)
 
 ```python
 class HandoffResult(BaseModel):
@@ -291,7 +291,7 @@ Serializes to flat JSON with `_pocketcoder_sys_event` at the top level (not nest
 | `opencode_workspace` | `/workspace` | rw | Shared workspace |
 | `shell_bridge` | `/app/shell_bridge` | rw | Rust binary shared to OpenCode |
 | `.ssh_keys` | `/app/ssh_keys` | ro | SSH authorized_keys for developer access |
-| CAO src | `/app/cao/src` | bind | Live-edit CAO source |
+| poco-agents src | `/app/poco-agents/src` | bind | Live-edit poco-agents source |
 | agent-store | `/root/.aws/cli-agent-orchestrator/agent-store` | bind | Subagent profiles |
 | proposals | `/workspace/.opencode/proposals` | bind | Agent proposals |
 | skills | `/workspace/.opencode/skills` | bind | Agent skills/SOPs |
@@ -444,18 +444,18 @@ sequenceDiagram
 
 ### Flow 3: Subagent Delegation (Handoff)
 
-When Poco needs a specialist, it uses the CAO MCP handoff tool.
+When Poco needs a specialist, it uses the poco-agents MCP handoff tool.
 
 ```mermaid
 sequenceDiagram
     participant OC as OpenCode (Poco)
-    participant MCP as CAO MCP Server (9888)
-    participant API as CAO API (9889)
+    participant MCP as poco-agents MCP Server (9888)
+    participant API as poco-agents API (9889)
     participant Tmux as Tmux (Sandbox)
     participant Sub as Subagent
     participant R as Relay (PocketBase)
 
-    OC->>MCP: Call tool (cao_handoff)
+    OC->>MCP: Call tool (handoff)
     MCP->>API: Create Terminal
     API->>Tmux: Launch new window (pocketcoder_session)
     API->>Sub: Initialize Agent Process
@@ -468,10 +468,10 @@ sequenceDiagram
     R->>R: registerSubagentInDB()
 ```
 
-1. **Poco calls** `cao_handoff` MCP tool via `http://sandbox:9888/sse`
+1. **Poco calls** `handoff` MCP tool via `http://sandbox:9888/sse`
 
-2. **CAO MCP server** (`server.py:_handoff_impl()`):
-   - Creates terminal via CAO API
+2. **poco-agents MCP server** (`server.py:_handoff_impl()`):
+   - Creates terminal via poco-agents API
    - Creates tmux window in `pocketcoder_session`
    - Initializes agent provider (opencode, kiro, etc.)
    - Waits for completion
@@ -485,7 +485,7 @@ sequenceDiagram
 6. **Relay receives** → `syncAssistantMessage()` → `checkForSubagentRegistration()` (`messages.go`):
    - Scans message parts for tool results
    - Handles both `type: "tool_result"` (legacy) and `type: "tool"` (OpenCode format with `state.output`)
-   - Checks tool name: `handoff`, `assign`, `cao_handoff`, `cao_assign`
+   - Checks tool name: `handoff`, `assign`
    - Parses JSON content, looks for `_pocketcoder_sys_event: "handoff_complete"` at top level
    - Extracts `subagent_id`, `terminal_id`, `tmux_window_id`, `agent_profile`
 
@@ -551,7 +551,7 @@ The system uses a **Registration-at-Bootstrap** model rather than a dynamic disc
 3. **Shell Bridge**: The bridge POSTs this ID to the Rust server.
 4. **Execution**: The Rust driver (currently) uses a hardcoded fallback to target the `poco:terminal` window in the `pocketcoder` session.
 
-*Note: While the Rust driver code contains legacy tests for dynamic CAO lookups (`resolve_session_and_window`), the current ground truth is a direct registration in the sandbox entrypoint.*
+*Note: While the Rust driver code contains legacy tests for dynamic poco-agents lookups (`resolve_session_and_window`), the current ground truth is a direct registration in the sandbox entrypoint.*
 
 **resolveChatID()** (`utils.go`): The reverse lookup. Given a session ID, find the chat:
 1. Check `chats` collection for `ai_engine_session_id = session_id`
@@ -581,7 +581,7 @@ PocketCoder includes a dashboard built on **SQLPage** to provide visibility into
 
 1. **PocketBase (`pb_data/data.db`)**: Real-time message logs, chat state, and AI agent configurations.
 2. **OpenCode (`opencode_data/kv.json`)**: (Indexed via specialized views) OpenCode's internal key-value store and reasoning state.
-3. **CAO (`cao_db/data.db`)**: Subagent task history, terminal status, and inbox/outbox delivery logs.
+3. **poco-agents (`poco_agents_db/data.db`)**: Subagent task history, terminal status, and inbox/outbox delivery logs.
 
 ## The Frontend (Flutter Client)
 
