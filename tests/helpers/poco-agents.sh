@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/helpers/cao.sh
+# tests/helpers/poco-agents.sh
 # poco-agents helper functions for tests
 # Provides utilities for verifying poco-agents MCP server availability
 
@@ -19,11 +19,5 @@ verify_poco_agents_accessible() {
     return 0
 }
 
-# Legacy alias for backward compatibility
-verify_cao_accessible() {
-    verify_poco_agents_accessible "$@"
-}
-
 # Export functions for use in BATS
 export -f verify_poco_agents_accessible
-export -f verify_cao_accessible

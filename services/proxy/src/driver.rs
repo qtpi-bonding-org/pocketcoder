@@ -67,8 +67,6 @@ pub struct ExecResponse {
     pub error: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-
 // --------------------------------------------------------------------------
 // PocketCoder Execution Driver (TMUX)
 // --------------------------------------------------------------------------
@@ -122,7 +120,8 @@ impl PocketCoderDriver {
             format!("({})", cmd)
         };
 
-        let wrapped_cmd = format!("{} > /tmp/pocketcoder_out.txt 2>&1; echo \"---POCKETCODER_EXIT:$?_ID:{{{}}}---\" >> /tmp/pocketcoder_out.txt", final_cmd, sentinel_id);
+        let out_file = format!("/tmp/pocketcoder_out_{}.txt", sentinel_id);
+        let wrapped_cmd = format!("{} > {} 2>&1; echo \"---POCKETCODER_EXIT:$?_ID:{{{}}}---\" >> {}", final_cmd, out_file, sentinel_id, out_file);
         let _ = Command::new("tmux").args(&tmux_args).args(["send-keys", "-t", &pane, &wrapped_cmd, "Enter"]).status();
 
         // 4. Poll Loop
@@ -131,6 +130,7 @@ impl PocketCoderDriver {
 
         loop {
             if start_time.elapsed() > timeout {
+                let _ = std::fs::remove_file(&out_file);
                 return Err(anyhow!("Command execution timed out (Sandbox)."));
             }
 
@@ -138,8 +138,11 @@ impl PocketCoderDriver {
                 .args(&tmux_args)
                 .args(["capture-pane", "-p", "-t", &pane, "-S", "-"])
                 .output()?;
-            
-            let content = std::fs::read_to_string("/tmp/pocketcoder_out.txt")?;
+
+            let content = match std::fs::read_to_string(&out_file) {
+                Ok(c) => c,
+                Err(_) => { sleep(Duration::from_millis(200)).await; continue; }
+            };
 
             if let Some(pos) = content.find("---POCKETCODER_EXIT") {
                 if content.contains(&sentinel_id) {
@@ -149,6 +152,7 @@ impl PocketCoderDriver {
 
                     let result_output = content[..pos].trim().to_string();
 
+                    let _ = std::fs::remove_file(&out_file);
                     return Ok(CommandResult {
                         output: result_output,
                         exit_code,

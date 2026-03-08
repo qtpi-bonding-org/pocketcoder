@@ -17,7 +17,7 @@ load '../helpers/wait.sh'
 load '../helpers/assertions.sh'
 load '../helpers/diagnostics.sh'
 load '../helpers/tracking.sh'
-load '../helpers/cao.sh'
+load '../helpers/poco-agents.sh'
 
 setup() {
     load_env

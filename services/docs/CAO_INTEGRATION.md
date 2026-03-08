@@ -1,3 +1,5 @@
+> **DEPRECATED**: CAO has been replaced by poco-agents. This document is kept for historical reference only.
+
 # CAO MCP Integration Architecture
 
 ## Overview

@@ -147,7 +147,7 @@ Stay safe. Stay encrypted. Await input.`)
 		seedToolPerm(pocoAgent.Id, "bash", "*", "ask")
 		seedToolPerm(pocoAgent.Id, "edit", "*", "ask")
 		seedToolPerm(pocoAgent.Id, "skill", "*", "ask")
-		seedToolPerm(pocoAgent.Id, "cao_*", "*", "ask")
+		seedToolPerm(pocoAgent.Id, "poco-agents_*", "*", "ask")
 
 		return nil
 	}, func(app core.App) error {

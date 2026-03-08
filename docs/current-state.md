@@ -12,7 +12,7 @@ All containers run, pass health checks, and communicate correctly.
 |-----------|---------|--------|-------------|
 | `pocketcoder-pocketbase` | State hub, auth, API, Go hooks | Healthy | `curl /api/health` |
 | `pocketcoder-opencode` | Reasoning engine (OpenCode) | Healthy | `curl /health` |
-| `pocketcoder-sandbox` | Isolated execution (tmux + CAO) | Healthy | `curl /health` (shell proxy + CAO) |
+| `pocketcoder-sandbox` | Isolated execution (tmux + poco-agents) | Healthy | `curl /health` (shell proxy + poco-agents) |
 | `pocketcoder-mcp-gateway` | MCP server gateway | Healthy | `curl /health` |
 | `pocketcoder-interface` | PB <-> OpenCode bridge | Healthy | `wget /healthz` |
 | `pocketcoder-docker-proxy-write` | Docker socket proxy (restart ops) | Running | - |
@@ -21,7 +21,7 @@ All containers run, pass health checks, and communicate correctly.
 
 **Networks**: 6 isolated Docker networks enforce trust boundaries. OpenCode has no Docker socket. Sandbox has no PocketBase access. MCP gateway has read-only Docker.
 
-**Volumes**: `pb_data`, `opencode_workspace`, `opencode_data`, `cao_db`, `llm_keys` (shared), `shell_bridge`
+**Volumes**: `pb_data`, `opencode_workspace`, `opencode_data`, `llm_keys` (shared), `shell_bridge`
 
 ---
 
@@ -37,7 +37,7 @@ All containers run, pass health checks, and communicate correctly.
 | `llm_keys` | API keys per provider per user | Yes (19 BATS tests) |
 | `llm_config` | Active model selection (global + per-chat) | Yes (19 BATS tests) |
 | `llm_providers` | Provider catalog (synced from OpenCode) | Yes (19 BATS tests) |
-| `subagents` | CAO subagent registry | Yes |
+| `subagents` | poco-agents subagent registry | Yes |
 | `whitelist_targets` | Allowed file/directory patterns | Yes |
 | `whitelist_actions` | Allowed action patterns | Yes |
 | `healthchecks` | System component health records | Yes |
