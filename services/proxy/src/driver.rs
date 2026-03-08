@@ -91,7 +91,7 @@ impl PocketCoderDriver {
             .args(["has-session", "-t", session])
             .status();
         
-        status.is_ok() && status.unwrap().success()
+        matches!(status, Ok(s) if s.success())
     }
 
     /// Execute a command in the target agent's isolated tmux workspace.
