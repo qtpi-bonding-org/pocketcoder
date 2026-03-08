@@ -115,6 +115,10 @@ impl PocketCoderDriver {
         // 3. Inject Command
         // Wrap in a subshell so commands like `exit 1` don't kill the tmux pane's shell.
         let final_cmd = if let Some(dir) = cwd {
+            // Validate cwd contains only safe path characters
+            if !dir.chars().all(|c| c.is_alphanumeric() || "/_.-+ ".contains(c)) {
+                return Err(anyhow!("Invalid working directory path"));
+            }
             format!("(cd \"{}\" && {})", dir, cmd)
         } else {
             format!("({})", cmd)
@@ -222,5 +226,30 @@ mod tests {
         let cwd = "/tmp";
         let final_cmd = format!("(cd \"{}\" && {})", cwd, cmd);
         assert_eq!(final_cmd, "(cd \"/tmp\" && ls)");
+    }
+
+    #[test]
+    fn test_cwd_validation_safe_paths() {
+        let safe_paths = vec!["/tmp", "/home/user/project", "/opt/my-app_v2", "/a/b.c"];
+        for path in safe_paths {
+            assert!(path.chars().all(|c| c.is_alphanumeric() || "/_.-+ ".contains(c)),
+                "Path should be valid: {}", path);
+        }
+    }
+
+    #[test]
+    fn test_cwd_validation_rejects_metacharacters() {
+        let bad_paths = vec![
+            "/tmp/$(whoami)",
+            "/tmp\"; rm -rf /; echo \"",
+            "/tmp`id`",
+            "/tmp;ls",
+            "/tmp&&echo",
+            "/tmp|cat",
+        ];
+        for path in bad_paths {
+            assert!(!path.chars().all(|c| c.is_alphanumeric() || "/_.-+ ".contains(c)),
+                "Path should be rejected: {}", path);
+        }
     }
 }

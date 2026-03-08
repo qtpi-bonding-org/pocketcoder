@@ -199,7 +199,7 @@ func renderOpenCodeConfig(app core.App) error {
 		return fmt.Errorf("failed to marshal opencode.json: %w", err)
 	}
 
-	if err := os.WriteFile(openCodeConfigPath, rendered, 0644); err != nil {
+	if err := os.WriteFile(openCodeConfigPath, rendered, 0600); err != nil {
 		return fmt.Errorf("failed to write opencode.json: %w", err)
 	}
 
