@@ -227,7 +227,7 @@ services:
     user: root
     profiles:
       - knowledge
-    command: start --log info --user ${SURREAL_USER:-root} --pass ${SURREAL_PASSWORD:-changeme} rocksdb:/mydata/mydatabase.db
+    command: start --log info --user ${SURREAL_USER:-root} --pass ${SURREAL_PASSWORD:-root} rocksdb:/mydata/mydatabase.db
     volumes:
       - surrealdb_data:/mydata
     networks:
@@ -313,7 +313,7 @@ services:
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
   ntfy:
-    image: binwiederhier/ntfy:v2.11
+    image: binwiederhier/ntfy:v2.11.0
     container_name: pocketcoder-ntfy
     profiles:
       - foss

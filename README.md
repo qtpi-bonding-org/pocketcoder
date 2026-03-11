@@ -73,37 +73,71 @@ The only system prerequisite is **Docker**. Everything else is completely contai
 
 | Language | LoC | Component |
 | :--- | ---: | :--- |
-| Go | 2818 | PocketBase backend & relay |
-| Rust | 558 | Proxy |
-| TypeScript | 1005 | OpenCode tools, plugins & Interface bridge |
-| Python | +1783 vs upstream | CAO fork (vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator)) |
-| Dart | 36467 | Flutter client (non-generated) |
-| Bash | 10626 | Shell scripts (infra — separate tally) |
-| **CORE TOTAL** | **~42631** | **Lean, Fast, Fully Sovereign.** |
+| Go | ~2,800 | PocketBase backend & relay |
+| Rust | ~1,500 | Sandbox proxy + poco-agents + poco-memory |
+| TypeScript | ~1,000 | OpenCode tools, plugins & Interface bridge |
+| Dart | ~36,500 | Flutter client (non-generated) |
+| Bash | ~10,600 | Shell scripts (infra — separate tally) |
+| **CORE TOTAL** | **~52,400** | **Lean, Fast, Fully Sovereign.** |
 
 ## System Requirements
 
-| | Minimum | Recommended |
-| :--- | :--- | :--- |
-| **RAM** | 2 GB | 4 GB |
-| **CPU** | 1 vCPU | 2 vCPU |
-| **Disk** | 20 GB | 40 GB |
-| **OS** | Any Linux with Docker | Ubuntu 22.04+ |
+PocketCoder runs in three configurations. Pick the one that fits your VPS budget:
 
-Idle memory footprint is ~750 MiB across all containers. Active agent workloads will spike higher.
+| | **Core Only** | **+ Knowledge** | **Full Stack** |
+| :--- | :--- | :--- | :--- |
+| **Containers** | 7 | 11 | 12 |
+| **Idle RAM** | ~400 MB | ~1.2 GB | ~1.2 GB |
+| **Min RAM** | 2 GB | 4 GB | 4 GB |
+| **Rec. RAM** | 4 GB | 4 GB | 8 GB |
+| **CPU** | 1 vCPU | 2 vCPU | 2 vCPU |
+| **Disk** | 20 GB | 30 GB | 30 GB |
+| **Command** | `docker compose up -d` | `--profile knowledge` | `--profile knowledge --profile foss` |
+
+Active agent workloads (OpenCode running tasks, subagent spawns) will spike CPU and memory above idle.
+
+**OS:** Any Linux with Docker (Ubuntu 22.04+ recommended). Also runs on macOS via Docker Desktop for local development.
 
 ## Idle Performance Profile
-*(Recorded via `docker stats --no-stream` on idle state)*
 
-| CONTAINER ID | NAME | CPU % | MEM USAGE / LIMIT | MEM % | NET I/O | BLOCK I/O | PIDS |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 83b9557a8244 | pocketcoder-sandbox | 0.38% | 334.3MiB / 7.655GiB | 4.26% | 145kB / 395kB | 80.6MB / 23MB | 48 |
-| 386cb090d97f | pocketcoder-pocketbase | 0.11% | 20.8MiB / 7.655GiB | 0.27% | 3.01MB / 3.2MB | 184kB / 227MB | 20 |
-| 5490325ebae6 | pocketcoder-opencode | 1.13% | 287.1MiB / 7.655GiB | 3.66% | 2.22MB / 1.91MB | 766kB / 5.76MB | 17 |
-| 311ee7332b16 | pocketcoder-interface | 0.88% | 26.3MiB / 7.655GiB | 0.34% | 1.33MB / 664kB | 426kB / 0B | 16 |
-| 3243ca2d6495 | pocketcoder-sqlpage | 0.42% | 25.26MiB / 7.655GiB | 0.32% | 1.25kB / 0B | 21MB / 0B | 16 |
-| 5a6c4b15e336 | pocketcoder-docker-proxy-write | 0.00% | 30.27MiB / 7.655GiB | 0.39% | 48.8kB / 42.4kB | 13MB / 12.3kB | 13 |
-| b21a1246046b | pocketcoder-mcp-gateway | 0.00% | 26.06MiB / 7.655GiB | 0.33% | 524kB / 14.8kB | 111kB / 0B | 24 |
+*(Recorded via `docker stats --no-stream` — full stack, all profiles enabled)*
+
+### Core Services (always running)
+
+| Service | Role | CPU % | Memory | PIDs |
+| :--- | :--- | ---: | ---: | ---: |
+| pocketcoder-opencode | AI engine (OpenCode) | 0.95% | 289 MB | 17 |
+| pocketcoder-interface | PB ↔ OpenCode bridge | 0.79% | 34 MB | 17 |
+| pocketcoder-pocketbase | Backend + auth | 0.00% | 24 MB | 16 |
+| pocketcoder-mcp-gateway | MCP server router | 0.00% | 21 MB | 21 |
+| pocketcoder-sandbox | Isolated execution env | 0.00% | 6 MB | 31 |
+| pocketcoder-sqlpage | Observability dashboard | 0.25% | 5 MB | 15 |
+| pocketcoder-docker-proxy-write | Scoped Docker API proxy | 0.08% | 4 MB | 13 |
+| | **Core subtotal** | **~2%** | **~383 MB** | |
+
+### Knowledge Stack (`--profile knowledge`)
+
+| Service | Role | CPU % | Memory | PIDs |
+| :--- | :--- | ---: | ---: | ---: |
+| pocketcoder-open-notebook | Knowledge base UI + API | 0.41% | 336 MB | 43 |
+| pocketcoder-surrealdb | Vector + graph database | 0.00% | 208 MB | 64 |
+| pocketcoder-poco-memory | Agent memory MCP server | 0.01% | 162 MB | 24 |
+| pocketcoder-open-notebook-mcp | Notebook MCP bridge | 0.19% | 55 MB | 1 |
+| | **Knowledge subtotal** | **~1%** | **~761 MB** | |
+
+### Notifications (`--profile foss`)
+
+| Service | Role | CPU % | Memory | PIDs |
+| :--- | :--- | ---: | ---: | ---: |
+| pocketcoder-ntfy | Self-hosted push notifications | 0.00% | 12 MB | 9 |
+
+### Totals
+
+| Configuration | Containers | Idle RAM | Idle CPU |
+| :--- | ---: | ---: | ---: |
+| Core only | 7 | ~383 MB | ~2% |
+| Core + Knowledge | 11 | ~1,144 MB | ~3% |
+| Full stack (all profiles) | 12 | ~1,156 MB | ~3% |
 
 ## Third-Party Licenses
 
