@@ -181,6 +181,7 @@ services:
         condition: service_healthy
       opencode:
         condition: service_healthy
+        restart: true  # Retry if opencode restarts during startup resource crunch
     environment:
       - POCKETBASE_URL=http://pocketbase:8090
       - OPENCODE_URL=http://opencode:3000
