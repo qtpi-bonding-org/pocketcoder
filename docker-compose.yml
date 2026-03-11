@@ -199,7 +199,7 @@ services:
 
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
-    image: lovasoa/sqlpage:0.32
+    image: lovasoa/sqlpage:v0.32.0
     user: root
     container_name: pocketcoder-sqlpage
     environment:

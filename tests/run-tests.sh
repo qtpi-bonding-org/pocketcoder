@@ -20,6 +20,7 @@ NC='\033[0m' # No Color
 # Configuration
 COMPOSE_FILES=("-f" "docker-compose.yml" "-f" "docker-compose.test.yml")
 COMPOSE_PROFILES=()
+SKIP_LLM_TESTS="false"
 TEST_SERVICE="test"
 TEST_DIR="/tests"
 TIMEOUT=300000
@@ -34,6 +35,7 @@ Run BATS tests in Docker containers.
 Options:
   --profile PROFILE   Enable a Docker Compose profile (e.g., knowledge, foss)
                       Can be specified multiple times
+  --no-llm            Exclude tests that require a configured LLM API key
 
 Arguments:
   TEST_PATH    Path to test file or directory (optional)
@@ -56,6 +58,7 @@ Examples:
   $(basename "$0") integration/core                    # Run core flow tests
   $(basename "$0") integration/agent                   # Run agent behavior tests
   $(basename "$0") integration/core/full-flow.bats     # Run full flow test
+  $(basename "$0") --no-llm                              # Run without LLM-dependent tests
 
 EOF
 }
@@ -173,6 +176,7 @@ run_tests() {
         log_info "Running all tests..."
         docker compose "${COMPOSE_ARGS[@]}" run --rm \
             -e TIMEOUT_MULTIPLIER="${TIMEOUT_MULTIPLIER:-1}" \
+            -e SKIP_LLM_TESTS="${SKIP_LLM_TESTS:-false}" \
             --entrypoint bash \
             "$TEST_SERVICE" \
             -c "bats --tap --recursive $extra_args $TEST_DIR/health $TEST_DIR/connection $TEST_DIR/integration"
@@ -181,6 +185,7 @@ run_tests() {
         log_info "Running tests: $test_path"
         docker compose "${COMPOSE_ARGS[@]}" run --rm \
             -e TIMEOUT_MULTIPLIER="${TIMEOUT_MULTIPLIER:-1}" \
+            -e SKIP_LLM_TESTS="${SKIP_LLM_TESTS:-false}" \
             --entrypoint bash \
             "$TEST_SERVICE" \
             -c "bats --tap --recursive $extra_args $TEST_DIR/$test_path"
@@ -199,6 +204,13 @@ main() {
             --profile)
                 COMPOSE_PROFILES+=("$2")
                 shift 2
+                ;;
+            --no-llm)
+                # Skip tests that require a configured LLM API key
+                # Tests call skip_if_no_llm() which checks this env var
+                SKIP_LLM_TESTS=true
+                log_info "Excluding LLM-dependent tests (SKIP_LLM_TESTS=true)"
+                shift
                 ;;
             *)
                 break

@@ -230,5 +230,13 @@ fail() {
     return 1
 }
 
-# Export new function
-export -f fail
+# Skip test if LLM is not available (SKIP_LLM_TESTS=true)
+# Usage: add as first line in any test that requires a configured LLM API key
+skip_if_no_llm() {
+    if [ "${SKIP_LLM_TESTS:-false}" = "true" ]; then
+        skip "LLM API key not configured (SKIP_LLM_TESTS=true)"
+    fi
+}
+
+# Export new functions
+export -f fail skip_if_no_llm
