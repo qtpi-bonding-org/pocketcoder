@@ -222,7 +222,7 @@ poco_mcp_call() {
     store_resp=$(poco_mcp_call 2 '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"memory_store","arguments":{"content":"BATS temp memory to delete"}}}')
 
     local memory_id
-    memory_id=$(echo "$store_resp" | grep -oP 'memory:[a-z0-9]+' | head -1)
+    memory_id=$(echo "$store_resp" | grep -oE 'memory:[a-z0-9]+' | head -1)
     [ -n "$memory_id" ]
 
     # Forget it

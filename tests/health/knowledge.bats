@@ -29,8 +29,9 @@ setup() {
     [ "$output" = "true" ]
 }
 
-@test "surrealdb health responds inside container" {
-    run docker exec pocketcoder-surrealdb curl -sf http://localhost:8000/health
+@test "surrealdb health responds on knowledge network" {
+    # SurrealDB v2 uses a minimal container with no shell/curl, so we check via the network
+    run curl -sf http://surrealdb:8000/health
     [ "$status" -eq 0 ]
 }
 
