@@ -1,6 +1,7 @@
 # Codebase Cleanup Backlog
 
 Generated: 2026-03-07
+Updated: 2026-03-08
 
 ## Critical / High Priority
 
@@ -37,29 +38,31 @@ Generated: 2026-03-07
 ### 7. ~~Inconsistent hook registration signatures (PocketBase)~~ ✅
 - [x] All hooks standardized to `core.App` interface
 
-### 8. Interface uses `"latest"` version pins
-- [ ] `services/interface/package.json` — `@opencode-ai/sdk`, `@types/node`, `bun-types` all `"latest"`
+### 8. ~~Interface uses `"latest"` version pins~~ ✅
+- [x] `services/interface/package.json` — Pinned `@opencode-ai/sdk: "^1.2.15"`, `bun-types: "^1.3.10"`, `@types/node: "^25.3.3"`
 
-### 9. `println!` in production Rust code
-- [ ] `services/proxy/src/main.rs:123,141,161,176,179` — Should use `tracing` crate
+### 9. ~~`println!` in production Rust code~~ ✅
+- [x] `services/proxy/src/main.rs` — Replaced with `tracing` crate (`tracing-subscriber` init + `tracing::info!`)
 
-### 10. Multiple `unwrap()` calls in Rust services
-- [ ] `services/poco-agents/src/tools.rs` and `services/proxy/src/driver.rs` — Should use `.expect("reason")` or proper error handling
+### 10. ~~Multiple `unwrap()` calls in Rust services~~ ✅
+- [x] `services/poco-agents/src/tools.rs` — `expect()` replaced with `.ok_or_else()` returning MCP error
+- [x] `services/poco-agents/src/agent.rs` — `Regex::new().unwrap()` → `.expect("reason")`
+- [x] `services/proxy/src/driver.rs` — `unwrap()` replaced with `matches!()` pattern
+- [x] `services/proxy/src/shell.rs` — `stdout().flush().unwrap()` → `.ok()`
 
 ## Low Priority
 
-### 11. Interface type safety
-- [ ] 19 uses of `any` in `services/interface/src/index.ts`
-- [ ] 21 hardcoded collection name strings (should be constants)
-- [ ] Magic status strings throughout
+### 11. ~~Interface type safety~~ ✅
+- [x] Added TypeScript interfaces (`ChatRecord`, `MessageRecord`, etc.)
+- [x] Added `Collections`, `Status`, `EventType` constants
+- [x] Replaced 19 `any` types with proper types
 
 ### 12. Dead files/directories
-- [ ] `services/sandbox/test_tmux_head.py` — Orphaned test script (local only, not in repo)
 - [ ] `.misc/todelete/` — Stale architectural docs still in repo
 
-### 13. Inconsistent logging prefixes (PocketBase)
-- [ ] `tool_permissions.go` uses `[ToolPerms]` (no emoji) while others use emoji prefixes
-- [ ] `api/mcp.go` uses plain `❌` without bracketed tags
+### 13. ~~Inconsistent logging prefixes (PocketBase)~~ ✅
+- [x] `tool_permissions.go` — Added `⚙️` emoji prefix
+- [x] `api/mcp.go` — Added `[MCP]` bracketed tags
 
 ### 14. Commented-out `pb_backups` volume
 - [ ] `docker-compose.yml:12,339-341` — Volume defined but commented out despite backup scripts existing

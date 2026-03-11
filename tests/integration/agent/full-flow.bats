@@ -87,7 +87,9 @@ verify_tool_output_in_message() {
 # Test: Poco executes a simple command and returns output
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent Full Flow: Poco executes a command and returns real output" {
+    skip_if_no_llm
     # Send a message that asks Poco to run a simple echo command.
     # This exercises the full pipeline: relay → session → prompt → OpenCode → 
     # shell bridge → sandbox tmux → output capture → SSE → assistant message.
@@ -245,7 +247,9 @@ verify_tool_output_in_message() {
 # Test: Poco creates a file and verifies it exists
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent Full Flow: Poco creates a file in the sandbox" {
+    skip_if_no_llm
     # Ask Poco to create a file with specific content, then ask it to read
     # the file back. This proves Poco can do real write+read work without
     # us needing to inspect the sandbox filesystem directly.
@@ -375,7 +379,9 @@ verify_tool_output_in_message() {
 # Test: Chat metadata reflects real agent activity
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent Full Flow: Chat metadata updated after Poco responds" {
+    skip_if_no_llm
     # After Poco processes a message and responds, the chat record should have:
     # - ai_engine_session_id populated
     # - last_active updated to recent timestamp
@@ -446,7 +452,9 @@ verify_tool_output_in_message() {
 # Test: Multi-turn conversation
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent Full Flow: Poco handles a multi-turn conversation" {
+    skip_if_no_llm
     # Send two messages in sequence and verify Poco responds to both.
     # The second message should be in the context of the first.
 
@@ -547,7 +555,9 @@ verify_tool_output_in_message() {
 # Test: Poco delegates to subagent and returns result (git hash)
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent Full Flow: Poco delegates to subagent and returns SHA256 hash" {
+    skip_if_no_llm
     # Ask Poco to delegate to a subagent to compute a SHA256 hash.
     # This exercises the full poco-agents spawn pipeline:
     # 1. Poco receives the request

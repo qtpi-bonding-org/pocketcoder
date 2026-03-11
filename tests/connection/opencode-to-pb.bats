@@ -80,7 +80,9 @@ teardown() {
     fi
 }
 
+# bats test_tags=llm:required
 @test "OpenCode→PB: Interface processes message and creates assistant response" {
+    skip_if_no_llm
     # Validates: Requirement 4.2
     # Test that the interface service picks up user messages, sends to OpenCode,
     # and syncs assistant responses back to PocketBase
@@ -119,7 +121,9 @@ teardown() {
     fi
 }
 
+# bats test_tags=llm:required
 @test "OpenCode→PB: Event pump creates assistant message record" {
+    skip_if_no_llm
     # Validates: Requirement 4.3
     # Test that the interface event pump creates/updates message records in PocketBase
 
@@ -154,7 +158,9 @@ teardown() {
     [ "$role" = "assistant" ] || run_diagnostic_on_failure "OpenCode→PB" "Assistant message role is not 'assistant': $role"
 }
 
+# bats test_tags=llm:required
 @test "OpenCode→PB: Message fields populated from SSE events" {
+    skip_if_no_llm
     # Validates: Requirement 4.3
     # Test that message fields are populated: ai_engine_message_id, parts, engine_message_status
 
@@ -207,7 +213,9 @@ teardown() {
     [ -n "$status" ] || run_diagnostic_on_failure "OpenCode→PB" "engine_message_status not populated"
 }
 
+# bats test_tags=llm:required
 @test "OpenCode→PB: Chat last_active and preview fields updated" {
+    skip_if_no_llm
     # Validates: Requirement 4.3
     # Test that chat fields are updated: last_active, preview
     

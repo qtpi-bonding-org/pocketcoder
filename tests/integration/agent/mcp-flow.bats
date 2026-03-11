@@ -51,7 +51,9 @@ teardown() {
 # Test: Poco requests an MCP server when it needs one
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent MCP Flow: Poco requests MCP server when task requires external tool" {
+    skip_if_no_llm
     # Send a message that requires an external tool (e.g., "search the web for X").
     # Poco should:
     # 1. Recognize it needs an MCP server
@@ -99,7 +101,9 @@ teardown() {
 # Test: Full MCP lifecycle — Sync Handoff
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent MCP Flow: Full lifecycle — Sync Handoff" {
+    skip_if_no_llm
     # This test verifies that Poco can delegate to a subagent synchronously
     # using poco-agents spawn (sync=true) and receive the result directly.
 
@@ -163,7 +167,9 @@ teardown() {
 # Test: Full MCP lifecycle — Async Assign
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent MCP Flow: Full lifecycle — Async Assign" {
+    skip_if_no_llm
     # This test verifies asynchronous delegation via poco-agents spawn (sync=false).
     # Poco spawns the task, turn flips to user while subagent works,
     # and then Poco polls via check_agent/result when the worker is done.
@@ -235,7 +241,9 @@ teardown() {
 # Test: Poco checks mcp_status before requesting
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent MCP Flow: Poco checks what's installed before requesting" {
+    skip_if_no_llm
     # Verify that Poco uses mcp_status to check what's already available
     # before requesting a new server.
 
@@ -286,7 +294,9 @@ teardown() {
 # Test: Denied MCP request — Poco handles gracefully
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent MCP Flow: Poco handles denied MCP request gracefully" {
+    skip_if_no_llm
     # If a user denies an MCP server request, Poco should acknowledge it
     # and not keep retrying.
 
@@ -370,7 +380,9 @@ teardown() {
 # Test: Approving MCP server spins up a new Docker container
 # =============================================================================
 
+# bats test_tags=llm:required
 @test "Agent MCP Flow: Approved MCP server spins up a new Docker container" {
+    skip_if_no_llm
     # After approving an MCP server, the catalog is updated and the gateway restarts.
     # With Dynamic MCP, the gateway doesn't pre-start servers — it starts them when
     # a client calls mcp-add via the MCP protocol.

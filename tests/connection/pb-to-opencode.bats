@@ -172,7 +172,9 @@ teardown() {
     echo "✓ Interface delivered message via OpenCode SDK (session: $SESSION_ID)"
 }
 
+# bats test_tags=llm:required
 @test "PB→OpenCode: Message lifecycle — create → session → assistant response" {
+    skip_if_no_llm
     # Validates: Requirement 3.5
     # Test the complete message lifecycle via the interface service:
     # 1. User creates message in PocketBase
@@ -211,7 +213,9 @@ teardown() {
     echo "✓ Full message lifecycle verified: create → session → assistant response"
 }
 
+# bats test_tags=llm:required
 @test "PB→OpenCode: Chat turn field updates to assistant" {
+    skip_if_no_llm
     # Validates: Requirement 3.5
     # Test that after OpenCode processes the message, chat turn updates
     
