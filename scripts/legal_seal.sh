@@ -28,7 +28,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>."
 
 # Configuration
 TAG="@pocketcoder-core"
-CORE_DIRS=("backend" "proxy" "sandbox" "scripts" "test" "services/pocketbase" "services/proxy" "services/sandbox" "services/opencode" "services/interface" "services/mcp-gateway")
+CORE_DIRS=("backend" "proxy" "sandbox" "scripts" "test" "services/pocketbase" "services/proxy" "services/sandbox" "services/opencode" "services/interface" "services/mcp-gateway" "services/poco-agents" "services/poco-memory")
 ROOT_FILES=("genesis.sh" "deploy.sh")
 
 if [ "$CHECK_MODE" = true ]; then
