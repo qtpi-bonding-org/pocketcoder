@@ -243,7 +243,7 @@ impl PocoAgents {
                             "exit_code": state.exit_code,
                             "output": log,
                         }))
-                        .expect("failed to serialize spawn result"),
+                        .map_err(mcp_err)?,
                     )]));
                 }
 
@@ -255,7 +255,7 @@ impl PocoAgents {
                             "status": "running",
                             "message": format!("Agent still running after {timeout_secs}s. Use check_agent or result to poll.")
                         }))
-                        .expect("failed to serialize timeout response"),
+                        .map_err(mcp_err)?,
                     )]));
                 }
 
@@ -269,7 +269,7 @@ impl PocoAgents {
                 "status": "running",
                 "message": "Agent spawned. Use check_agent to poll status."
             }))
-            .expect("failed to serialize spawn response"),
+            .map_err(mcp_err)?,
         )]))
     }
 
@@ -336,7 +336,9 @@ impl PocoAgents {
 
         // Update meta on disk
         if let Some(updated) = self.store.get(&params.id).await {
-            let _ = AgentStore::write_meta(&self.agents_dir, &updated.meta);
+            if let Err(e) = AgentStore::write_meta(&self.agents_dir, &updated.meta) {
+                warn!("failed to write meta for agent {}: {e}", params.id);
+            }
         }
 
         info!("continued agent {} (turn {turn})", params.id);
@@ -348,7 +350,7 @@ impl PocoAgents {
                 "turn": turn,
                 "status": "running"
             }))
-            .expect("failed to serialize continue response"),
+            .map_err(mcp_err)?,
         )]))
     }
 
@@ -378,7 +380,7 @@ impl PocoAgents {
             .collect();
 
         Ok(CallToolResult::success(vec![Content::text(
-            serde_json::to_string_pretty(&list).expect("failed to serialize agent list"),
+            serde_json::to_string_pretty(&list).map_err(mcp_err)?,
         )]))
     }
 
@@ -403,7 +405,7 @@ impl PocoAgents {
                 "created": state.meta.created,
                 "continue_count": state.meta.continue_count,
             }))
-            .expect("failed to serialize agent status"),
+            .map_err(mcp_err)?,
         )]))
     }
 
@@ -471,7 +473,7 @@ impl PocoAgents {
             .map_err(mcp_err)?;
 
         Ok(CallToolResult::success(vec![Content::text(
-            serde_json::to_string_pretty(&profiles).expect("failed to serialize profiles"),
+            serde_json::to_string_pretty(&profiles).map_err(mcp_err)?,
         )]))
     }
 
@@ -512,7 +514,7 @@ impl PocoAgents {
                 "cleaned": cleaned,
                 "errors": errors,
             }))
-            .expect("failed to serialize cleanup result"),
+            .map_err(mcp_err)?,
         )]))
     }
 }

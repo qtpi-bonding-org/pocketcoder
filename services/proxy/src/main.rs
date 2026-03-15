@@ -52,7 +52,7 @@ use uuid::Uuid;
 use clap::{Parser, Subcommand};
 use axum::{
     extract::{State, Query},
-    response::{sse::{Event, Sse}, IntoResponse},
+    response::sse::{Event, Sse},
     routing::{get, post},
     Json, Router,
 };

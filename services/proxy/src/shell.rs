@@ -71,7 +71,7 @@ pub fn run(command: Option<String>, args: Vec<String>) -> Result<()> {
 
     // 2. The Proxy Request (Synchronous)
     match ureq::post(&format!("{}/exec", proxy_url))
-        .send_json(serde_json::to_value(request).unwrap())
+        .send_json(serde_json::to_value(request).map_err(|e| anyhow::anyhow!("failed to serialize request: {e}"))?)
     {
         Ok(res) => {
             let response: ExecResponse = match res.into_json() {

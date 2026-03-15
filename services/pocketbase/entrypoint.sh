@@ -19,7 +19,7 @@
 # backend/entrypoint.sh
 # Finalizing the OIC identity and database migrations.
 
-set -e
+set -euo pipefail
 
 # 0. Check for backup and archive if needed
 echo "🔍 Checking for database backup..."

@@ -28,16 +28,25 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+// requireAgentOrAdmin checks that the request is authenticated with an agent or admin role.
+// Returns a JSON error response if the check fails, or nil if authorized.
+func requireAgentOrAdmin(re *core.RequestEvent) error {
+	if re.Auth == nil {
+		return re.JSON(401, map[string]string{"error": "Authentication required"})
+	}
+	role := re.Auth.GetString("role")
+	if role != "agent" && role != "admin" {
+		return re.JSON(403, map[string]string{"error": "Insufficient permissions"})
+	}
+	return nil
+}
+
 // RegisterCronApi registers the cron task management endpoints.
 func RegisterCronApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 	// POST /api/pocketcoder/schedule_task
 	e.Router.POST("/api/pocketcoder/schedule_task", func(re *core.RequestEvent) error {
-		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
-		}
-		role := re.Auth.GetString("role")
-		if role != "agent" && role != "admin" {
-			return re.JSON(403, map[string]string{"error": "Insufficient permissions"})
+		if err := requireAgentOrAdmin(re); err != nil {
+			return err
 		}
 
 		var input struct {
@@ -108,12 +117,8 @@ func RegisterCronApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 	// GET /api/pocketcoder/scheduled_tasks
 	e.Router.GET("/api/pocketcoder/scheduled_tasks", func(re *core.RequestEvent) error {
-		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
-		}
-		role := re.Auth.GetString("role")
-		if role != "agent" && role != "admin" {
-			return re.JSON(403, map[string]string{"error": "Insufficient permissions"})
+		if err := requireAgentOrAdmin(re); err != nil {
+			return err
 		}
 
 		sessionID := re.Request.URL.Query().Get("session_id")
@@ -158,12 +163,8 @@ func RegisterCronApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 	// POST /api/pocketcoder/cancel_scheduled_task
 	e.Router.POST("/api/pocketcoder/cancel_scheduled_task", func(re *core.RequestEvent) error {
-		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
-		}
-		role := re.Auth.GetString("role")
-		if role != "agent" && role != "admin" {
-			return re.JSON(403, map[string]string{"error": "Insufficient permissions"})
+		if err := requireAgentOrAdmin(re); err != nil {
+			return err
 		}
 
 		var input struct {
