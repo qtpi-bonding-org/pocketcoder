@@ -4,10 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
-import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 
 /// Data-driven deploy picker screen.
@@ -22,14 +20,10 @@ class DeployPickerScreen extends StatelessWidget {
     final options = GetIt.I<IDeployOptionService>().getAvailableProviders();
     final colors = context.colorScheme;
 
-    return TerminalScaffold(
+    return PocketCoderShell(
       title: 'DEPLOY POCKETCODER',
-      actions: [
-        TerminalAction(
-          label: 'BACK',
-          onTap: () => AppNavigation.back(context),
-        ),
-      ],
+      activePillar: NavPillar.configure,
+      showBack: true,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
