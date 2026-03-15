@@ -1,5 +1,5 @@
 # Stage 1: Build (Debian — ONNX Runtime has no musl binaries)
-FROM rust:1.89-bookworm AS builder
+FROM rust:1.83-bookworm AS builder
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 

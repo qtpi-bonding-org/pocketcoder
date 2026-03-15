@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package api
 
 import (
+	"fmt"
 	"net/http/httputil"
 	"net/url"
 	"strings"
@@ -39,7 +40,13 @@ func RegisterProxyApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 // createProxyHandler creates a standard reverse proxy handler that strips a prefix and forwards to a target.
 func createProxyHandler(target string, prefix string) func(re *core.RequestEvent) error {
-	targetUrl, _ := url.Parse(target)
+	targetUrl, err := url.Parse(target)
+	if err != nil {
+		// Return a handler that always reports the misconfiguration.
+		return func(re *core.RequestEvent) error {
+			return re.BadRequestError(fmt.Sprintf("Proxy target URL is malformed: %v", err), nil)
+		}
+	}
 	proxy := httputil.NewSingleHostReverseProxy(targetUrl)
 
 	return func(re *core.RequestEvent) error {

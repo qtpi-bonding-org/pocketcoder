@@ -35,13 +35,6 @@ rm -rf /tmp/tmux/*
 mkdir -p /tmp/tmux
 chmod 777 /tmp/tmux
 
-# 2. Mount shared binary
-if [ -f "/usr/local/bin/proxy_share/pocketcoder" ]; then
-    echo "🔗 Linking shared 'pocketcoder' binary..."
-    ln -sf /usr/local/bin/proxy_share/pocketcoder /usr/local/bin/pocketcoder
-    chmod +x /usr/local/bin/pocketcoder
-fi
-
 # --- 🖥️ TMUX SETUP ---
 echo "🖥️ Preparing tmux socket directory..."
 mkdir -p /tmp/tmux
@@ -95,6 +88,9 @@ for i in {1..15}; do
     fi
     sleep 1
 done
+if ! curl -s http://localhost:9888/health > /dev/null 2>&1; then
+    echo "⚠️ [Sandbox] poco-agents health check failed after all retries"
+fi
 
 echo "✅ [PocketCoder] Sandbox is LIVE and HARDENED."
 tail -f /dev/null

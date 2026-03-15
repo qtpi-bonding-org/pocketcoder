@@ -2,7 +2,7 @@
 # opencode_entrypoint.sh
 # Standard entrypoint for the OpenCode container.
 
-set -e
+set -euo pipefail
 
 echo "🛡️  [PocketCoder] Initializing Environment..."
 

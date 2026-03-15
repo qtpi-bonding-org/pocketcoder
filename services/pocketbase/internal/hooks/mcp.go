@@ -219,7 +219,11 @@ func notifyPoco(app core.App, openCodeURL string, serverName string, status stri
 				},
 			},
 		}
-		body, _ := json.Marshal(payload)
+		body, err := json.Marshal(payload)
+		if err != nil {
+			log.Printf("⚠️ [MCP] Failed to marshal notification payload for chat %s: %v", chatID, err)
+			continue
+		}
 
 		client := &http.Client{Timeout: 10 * time.Second}
 		resp, err := client.Post(url, "application/json", strings.NewReader(string(body)))

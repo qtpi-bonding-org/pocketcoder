@@ -116,27 +116,3 @@ pub fn kill_window(socket: &str, session: &str, window: &str) -> bool {
         .map(|s| s.success())
         .unwrap_or(false)
 }
-
-pub fn list_windows(socket: &str, session: &str) -> Vec<String> {
-    let output = tmux_cmd(socket)
-        .args([
-            "list-windows",
-            "-t",
-            session,
-            "-F",
-            "#{window_name}",
-        ])
-        .output();
-
-    match output {
-        Ok(o) => {
-            let stdout = String::from_utf8_lossy(&o.stdout);
-            stdout
-                .lines()
-                .map(|l| l.trim().to_string())
-                .filter(|l| !l.is_empty())
-                .collect()
-        }
-        Err(_) => vec![],
-    }
-}

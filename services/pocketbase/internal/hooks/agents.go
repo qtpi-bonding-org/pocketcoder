@@ -20,6 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package hooks
 
 import (
+	"log"
+
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agents"
 )
@@ -48,14 +50,20 @@ func RegisterAgentHooks(app core.App) {
 		collection := e.Record.Collection().Name
 
 		if collection == "ai_prompts" {
-			agentsList, _ := app.FindRecordsByFilter("ai_agents", "prompt = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
+			agentsList, err := app.FindRecordsByFilter("ai_agents", "prompt = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
+			if err != nil {
+				log.Printf("⚠️ [Agents] Failed to query agents by prompt %s: %v", e.Record.Id, err)
+			}
 			for _, a := range agentsList {
 				agents.UpdateAgentConfig(app, a)
 			}
 		}
 
 		if collection == "ai_models" {
-			agentsList, _ := app.FindRecordsByFilter("ai_agents", "model = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
+			agentsList, err := app.FindRecordsByFilter("ai_agents", "model = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
+			if err != nil {
+				log.Printf("⚠️ [Agents] Failed to query agents by model %s: %v", e.Record.Id, err)
+			}
 			for _, a := range agentsList {
 				agents.UpdateAgentConfig(app, a)
 			}
