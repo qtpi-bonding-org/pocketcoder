@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// @pocketcoder-core: Artifact API. Secure endpoint for accessing workspace artifacts.
+// @pocketcoder-core: Files API. Secure endpoint for accessing workspace files.
 package filesystem
 
 import (
@@ -30,9 +30,9 @@ import (
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
 
-// RegisterArtifactApi provides a secure window into the /workspace using the PB Filesystem abstraction.
-func RegisterArtifactApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.GET("/api/pocketcoder/artifact/{path...}", func(re *core.RequestEvent) error {
+// RegisterFilesApi provides a secure window into the /workspace using the PB Filesystem abstraction.
+func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+	e.Router.GET("/api/pocketcoder/files/{path...}", func(re *core.RequestEvent) error {
 		// 1. Auth Gate
 		if re.Auth == nil {
 			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
@@ -61,7 +61,7 @@ func RegisterArtifactApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		// 4. Stream File
 		r, err := fsys.GetReader(cleanPath)
 		if err != nil {
-			return re.NotFoundError("Artifact not found in this dimension.", err)
+			return re.NotFoundError("File not found.", err)
 		}
 		defer r.Close()
 

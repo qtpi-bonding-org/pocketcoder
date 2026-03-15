@@ -80,7 +80,7 @@ func main() {
 		api.RegisterProxyApi(app, e)
 		api.RegisterLogsApi(app, e)
 		api.RegisterCronApi(app, e)
-		filesystem.RegisterArtifactApi(app, e)
+		filesystem.RegisterFilesApi(app, e)
 		hooks.RegisterPushApi(app, e)
 
 

@@ -26,13 +26,13 @@ class ApiEndpoints {
   static const String sshKeys = '/api/pocketcoder/ssh_keys';
 
   // ===========================================================================
-  // ARTIFACT/FILE ENDPOINTS
+  // FILE ENDPOINTS
   // ===========================================================================
 
-  /// GET /api/pocketcoder/artifact/{path}
+  /// GET /api/pocketcoder/files/{path}
   /// Secure read-only access to workspace files.
   /// Prevents path traversal and unauthorized access.
-  static String artifact(String path) => '/api/pocketcoder/artifact/$path';
+  static String files(String path) => '/api/pocketcoder/files/$path';
 
   // ===========================================================================
   // INFRASTRUCTURE ENDPOINTS
@@ -78,7 +78,7 @@ class ApiEndpoints {
 
   /// Dynamic endpoints that require parameters
   static const List<String> dynamicEndpoints = [
-    '/api/pocketcoder/artifact/{path}',
+    '/api/pocketcoder/files/{path}',
     '/api/pocketcoder/logs/{containerName}',
   ];
 
@@ -87,9 +87,9 @@ class ApiEndpoints {
     return path.startsWith('/api/pocketcoder/');
   }
 
-  /// Validates if a path is safe for artifact access
+  /// Validates if a path is safe for file access
   /// (prevents path traversal attacks)
-  static bool isSafeArtifactPath(String path) {
+  static bool isSafeFilePath(String path) {
     if (path.isEmpty) return false;
     if (path.startsWith('/')) return false; // Absolute paths not allowed
     if (path.contains('..')) return false; // Path traversal

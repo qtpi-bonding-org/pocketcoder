@@ -69,7 +69,7 @@ These exist in some form today:
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Chat / session management | Working | Home screen lists chats, tap to resume, new chat button. Chats and OpenCode sessions are 1:1. `archived` field exists in schema but not yet wired in UI. |
-| File viewing | Built, hidden | Artifact viewer reads individual files via `GET /api/pocketcoder/artifact/{path}`. Nav button currently commented out. No directory listing yet. |
+| File viewing | Built, hidden | File viewer reads individual files via `GET /api/pocketcoder/files/{path}`. Nav button currently commented out. No directory listing yet. |
 | Permission approval | Working | Real-time via PocketBase subscriptions. |
 | Message streaming | Working | Event pump syncs OpenCode streaming parts into PB messages. |
 
@@ -99,7 +99,7 @@ These are genuinely new features that require Flutter + backend work:
 
 OpenCode exposes a structured diff API: `GET /session/{sessionID}/diff?messageID=...` returns `FileDiff[]` with before/after content, addition/deletion counts, and file status. The interface service can sync this into PocketBase via Pattern 1 (SDK via Interface).
 
-The mobile UX is a **summary view**: "Modified 3 files (+47, -12)" with filename list and status badges. Low engineering cost — just sync `FileDiff` metadata into PB and render a list in Flutter. If the user wants to see the full file, the artifact viewer already exists. No need for a full diff renderer or GitHub link-outs — the agent handles git, not the UI.
+The mobile UX is a **summary view**: "Modified 3 files (+47, -12)" with filename list and status badges. Low engineering cost — just sync `FileDiff` metadata into PB and render a list in Flutter. If the user wants to see the full file, the file viewer already exists. No need for a full diff renderer or GitHub link-outs — the agent handles git, not the UI.
 
 #### Agent Profile Management
 

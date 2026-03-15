@@ -550,9 +550,9 @@ ssh-rsa AAAAB3NzaC1yc2E... user@device2
 
 
 
-### Artifact/File Access
+### File Access
 ```
-GET /api/pocketcoder/artifact/{path}
+GET /api/pocketcoder/files/{path}
 Authorization: Bearer {token}
 
 Response: File content (binary or text)
@@ -560,7 +560,7 @@ Response: File content (binary or text)
 Errors:
 - 400: Empty path
 - 403: Path escape attempt or unauthorized
-- 404: Artifact not found
+- 404: File not found
 - 500: Storage failure
 ```
 
@@ -696,7 +696,7 @@ proposals (1) ──── (1) sops (via approval)
 | Delete Record | `/api/collections/{collection}/records/{id}` | DELETE | Yes |
 | Evaluate Permission | `/api/pocketcoder/permission` | POST | Yes |
 | Get SSH Keys | `/api/pocketcoder/ssh_keys` | GET | Yes |
-| Get Artifact | `/api/pocketcoder/artifact/{path}` | GET | Yes |
+| Get File | `/api/pocketcoder/files/{path}` | GET | Yes |
 
 ---
 
@@ -756,7 +756,7 @@ final result = await pb.collection('messages').getList(
 
 4. **SSH Keys:** The `/api/pocketcoder/ssh_keys` endpoint returns raw SSH keys, not JSON
 
-5. **Artifacts:** Only supports read operations, no write endpoint
+5. **Files:** Only supports read operations, no write endpoint
 
 6. **Real-Time:** PocketBase realtime works for DB changes, but OpenCode SSE events require separate connection
 

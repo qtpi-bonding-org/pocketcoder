@@ -26,11 +26,11 @@ abstract class IChatRepository {
   /// Fetches a list of all chat records, sorted by last_active descending.
   Future<List<Chat>> fetchChatHistory();
 
-  /// Returns the full URL for a workspace artifact.
-  String getArtifactUrl(String path);
+  /// Returns the full URL for a workspace file.
+  String getFileUrl(String path);
 
-  /// Fetches the raw content of an artifact.
-  Future<String> fetchArtifact(String path);
+  /// Fetches the raw content of a file.
+  Future<String> fetchFile(String path);
 }
 
 @freezed

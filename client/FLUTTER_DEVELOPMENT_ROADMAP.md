@@ -22,7 +22,7 @@ We are moving towards a **Sovereign Data Architecture** (3-Tier):
 | **Notifications** | 🟡 PROGRESS | Ntfy/UnifiedPush integrated into Core. Receiving/Display logic verified. |
 | **UI Feedback** | ✅ DONE | `cubit_ui_flow` + `VimToast` + `UiFlowListener` standardized. MCP Notification strategy implemented. |
 | **DAOs & Persistence** | ✅ DONE | Concrete DAOs implemented for major collections; Repositories are now reactive. |
-| **Custom Endpoints** | ✅ DONE | SSH, Permission, Hot Pipe, MCP notification, and Artifact bridge implemented. |
+| **Custom Endpoints** | ✅ DONE | SSH, Permission, Hot Pipe, MCP notification, and File bridge implemented. |
 
 ---
 
@@ -55,7 +55,7 @@ Connecting the client to the "Brain" (OpenCode) and the Sandbox.
 - [ ] **Custom API Endpoints** (via `Relay`):
     - [x] `PermissionRepository.evaluatePermission()`: POST to `/api/pocketcoder/permission`.
     - [x] `AuthRepository.getSshKeys()`: GET from `/api/pocketcoder/ssh_keys`.
-    - [x] `ChatRepository.getArtifact()`: GET from `/api/pocketcoder/artifact/{path}`.
+    - [x] `ChatRepository.getFile()`: GET from `/api/pocketcoder/files/{path}`.
 - [ ] **Real-Time Synergy**:
     - [x] **Hot Pipe**: SSE streaming implemented for message snapshots.
     - [ ] **Tool State**: Verify detailed tool execution state tracking (pending → running → completed).
@@ -76,7 +76,7 @@ This matrix maps native PocketBase custom endpoints and collections to their cor
 | **`/api/pocketcoder/permission`** | POST | `HitlRepository.evaluatePermission` | ✅ DONE |
 | **`/api/pocketcoder/ssh_keys`** | GET | `AuthRepository.getAuthorizedKeys` | ✅ DONE |
 | **`/api/pocketcoder/mcp_request`** | POST | `McpRepository.requestMcp` | 🔴 PENDING |
-| **`/api/pocketcoder/artifact/{path}`** | GET | `ChatRepository.getArtifact` | ✅ DONE |
+| **`/api/pocketcoder/files/{path}`** | GET | `ChatRepository.getFile` | ✅ DONE |
 | **`/api/pocketcoder/logs/{container}`** | GET (SSE) | `ObservabilityRepository.watchLogs` | ✅ DONE |
 | **`/api/pocketcoder/proxy/obs/*`** | ANY | `ObservabilityRepository.fetchSystemStats` | ✅ DONE |
 | **`ai_agents` / `ai_models`** | CRUD | `AiConfigRepository` | ✅ DONE |

@@ -58,12 +58,12 @@ Check the box when it works. Note issues inline.
 - [ ] Clear screen button works
 - [ ] Disconnect button works
 
-## 5. Artifacts
+## 5. File Viewer
 
 - [ ] Ask agent to create a file
-- [ ] Navigate to artifacts → file appears in list
+- [ ] Navigate to file viewer → file appears in list
 - [ ] Tap file → contents displayed
-- [ ] Clear artifact button removes it
+- [ ] Clear file button removes it
 
 ## 6. Monitor Dashboard
 

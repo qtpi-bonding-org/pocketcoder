@@ -53,7 +53,7 @@ Tests cover:
 - **SSH Key Sync**: Ensures keys added to DB reach the sandbox.
 - **Permission Flow**: Validates the "Always Ask" Gatekeeper.
 - **Batching**: Tests turn-based conversation handling.
-- **FS Serving**: Verifies the artifact serving API.
+- **FS Serving**: Verifies the file serving API.
 
 ## 📁 Repository Structure
 

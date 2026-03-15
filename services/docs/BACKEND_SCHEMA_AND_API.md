@@ -191,7 +191,7 @@ Used by the Relay or external integrations to evaluate a tool permission request
 ### 2. `GET /api/pocketcoder/ssh_keys`
 Returns all active public keys as a newline-separated list for use by the `sshd` AuthorizedKeysCommand.
 
-### 3. `GET /api/pocketcoder/artifact/{path...}`
+### 3. `GET /api/pocketcoder/files/{path...}`
 Secure proxy for serving files from the sandbox `/workspace` volume.
 
 ---
@@ -208,7 +208,7 @@ The Flutter application (`client/`) is built on a Clean Architecture (Domain/Inf
 | **Collection Names** | `chats`, `messages`, etc. | `pc_chats`, `pc_messages` | 🟠 Mismatch (Config) |
 | **Message Parts** | OpenCode Rich JSON | Freezed `MessagePart` Union | ✅ Matched |
 | **Realtime** | SSE -> PB Collections | `pb.realtime.subscribe('logs')` | ❌ Outdated |
-| **Custom APIs** | `/api/pocketcoder/artifact` | `ChatRepository.getArtifact` | ✅ Matched |
+| **Custom APIs** | `/api/pocketcoder/files` | `ChatRepository.getFile` | ✅ Matched |
 
 ### 🛠️ Required Alignment Tasks (Integration Phase)
 
