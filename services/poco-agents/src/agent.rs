@@ -14,7 +14,6 @@ pub struct AgentProfile {
 }
 
 pub trait CliAgent: Send + Sync {
-    fn name(&self) -> &str;
     fn build_run_cmd(
         &self,
         profile: Option<&str>,
@@ -50,10 +49,6 @@ impl OpenCodeAgent {
 }
 
 impl CliAgent for OpenCodeAgent {
-    fn name(&self) -> &str {
-        "opencode"
-    }
-
     fn build_run_cmd(
         &self,
         profile: Option<&str>,
