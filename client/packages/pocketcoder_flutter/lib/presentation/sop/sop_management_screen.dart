@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class SopManagementScreen extends StatelessWidget {
   const SopManagementScreen({super.key});
@@ -85,21 +86,13 @@ class SopManagementScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  TerminalText(
                     title,
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: colors.onSurface,
-                      fontWeight: AppFonts.heavy,
-                    ),
+                    weight: TerminalTextWeight.heavy,
                   ),
-                  Text(
+                  TerminalText.mini(
                     'VER: $version | UPDATED: $lastUpdated',
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: colors.onSurface.withValues(alpha: 0.5),
-                      fontSize: AppSizes.fontMini,
-                    ),
+                    alpha: 0.5,
                   ),
                 ],
               ),

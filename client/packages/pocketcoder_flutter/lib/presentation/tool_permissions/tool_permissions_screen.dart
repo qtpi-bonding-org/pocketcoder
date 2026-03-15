@@ -10,6 +10,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
 class ToolPermissionsScreen extends StatelessWidget {
@@ -100,21 +101,15 @@ class PermissionsTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                TerminalText(
                   perm.tool.toUpperCase(),
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: textColor,
-                    fontWeight: AppFonts.heavy,
-                  ),
+                  color: textColor,
+                  weight: TerminalTextWeight.heavy,
                 ),
-                Text(
+                TerminalText.tiny(
                   '$scope | pattern: ${perm.pattern} | ${perm.action.name}',
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: textColor.withValues(alpha: 0.7),
-                    fontSize: AppSizes.fontTiny,
-                  ),
+                  color: textColor,
+                  alpha: 0.7,
                 ),
               ],
             ),
@@ -161,11 +156,8 @@ class PermissionsTab extends StatelessWidget {
               VSpace.x2,
               Row(
                 children: [
-                  Text('ACTION:',
-                      style: TextStyle(
-                          fontFamily: AppFonts.bodyFamily,
-                          color: context.colorScheme.onSurface,
-                          fontSize: AppSizes.fontTiny)),
+                  TerminalText.tiny('ACTION:',
+                      color: context.colorScheme.onSurface),
                   HSpace.x2,
                   _buildActionOption(context, 'allow', action, (val) {
                     setState(() => action = val);
@@ -216,16 +208,13 @@ class PermissionsTab extends StatelessWidget {
     final isSelected = value == selected;
     return GestureDetector(
       onTap: () => onChanged(value),
-      child: Text(
+      child: TerminalText(
         '[ ${value.toUpperCase()} ]',
-        style: TextStyle(
-          fontFamily: AppFonts.bodyFamily,
-          color: isSelected
-              ? colors.onSurface
-              : colors.onSurface.withValues(alpha: 0.5),
-          fontSize: AppSizes.fontTiny,
-          fontWeight: isSelected ? AppFonts.heavy : AppFonts.medium,
-        ),
+        size: TerminalTextSize.tiny,
+        color: isSelected
+            ? colors.onSurface
+            : colors.onSurface.withValues(alpha: 0.5),
+        weight: isSelected ? TerminalTextWeight.heavy : TerminalTextWeight.medium,
       ),
     );
   }
@@ -240,13 +229,9 @@ Widget _buildTerminalTextField({
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
+      TerminalText.tiny(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.bodyFamily,
-          color: colors.onSurface,
-          fontSize: AppSizes.fontTiny,
-        ),
+        color: colors.onSurface,
       ),
       VSpace.x1,
       TextField(

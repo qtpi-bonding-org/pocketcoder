@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
@@ -160,21 +161,13 @@ class AgentObservabilityScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            TerminalText.label(
               label.toUpperCase(),
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: isSelected ? colors.primary : colors.onSurface,
-                fontWeight: AppFonts.heavy,
-              ),
+              color: isSelected ? colors.primary : null,
             ),
-            Text(
+            TerminalText.mini(
               containerId,
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface.withValues(alpha: 0.5),
-                fontSize: AppSizes.fontMini,
-              ),
+              alpha: 0.5,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -188,14 +181,10 @@ class AgentObservabilityScreen extends StatelessWidget {
 
     if (state.currentContainer == null) {
       return Center(
-        child: Text(
+        child: TerminalText(
           '>> SELECT CONTAINER FOR LOG STREAM\n>> AUTHENTICATED AS POCKETCODER ADMIN',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: colors.onSurface.withValues(alpha: 0.3),
-            fontSize: AppSizes.fontSmall,
-          ),
+          alpha: 0.3,
         ),
       );
     }
@@ -206,13 +195,9 @@ class AgentObservabilityScreen extends StatelessWidget {
       itemCount: state.logs.length,
       itemBuilder: (context, index) {
         final logLine = state.logs[state.logs.length - 1 - index];
-        return Text(
+        return TerminalText.mini(
           logLine,
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: _getLogColor(context, logLine, colors),
-            fontSize: AppSizes.fontMini,
-          ),
+          color: _getLogColor(context, logLine, colors),
         );
       },
     );

@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 /// Data-driven deploy picker screen.
 ///
@@ -18,7 +19,6 @@ class DeployPickerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final options = GetIt.I<IDeployOptionService>().getAvailableProviders();
-    final colors = context.colorScheme;
 
     return PocketCoderShell(
       title: 'DEPLOY POCKETCODER',
@@ -38,13 +38,9 @@ class DeployPickerScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        TerminalText(
                           'CHOOSE WHERE TO DEPLOY YOUR INSTANCE',
-                          style: TextStyle(
-                            fontFamily: AppFonts.bodyFamily,
-                            color: colors.onSurface.withValues(alpha: 0.7),
-                            fontSize: AppSizes.fontSmall,
-                          ),
+                          alpha: 0.7,
                         ),
                         VSpace.x3,
                         ...options.map(
@@ -108,13 +104,9 @@ class _ProviderCard extends StatelessWidget {
                     ),
                   ),
                   VSpace.x1,
-                  Text(
+                  TerminalText.tiny(
                     option.description.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: colors.onSurface.withValues(alpha: 0.6),
-                      fontSize: AppSizes.fontTiny,
-                    ),
+                    alpha: 0.6,
                   ),
                 ],
               ),
@@ -128,14 +120,11 @@ class _ProviderCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: Border.all(color: colors.primary),
                 ),
-                child: Text(
+                child: TerminalText(
                   'PRO',
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: colors.primary,
-                    fontSize: AppSizes.fontTiny,
-                    fontWeight: AppFonts.heavy,
-                  ),
+                  size: TerminalTextSize.tiny,
+                  weight: TerminalTextWeight.heavy,
+                  color: colors.primary,
                 ),
               ),
           ],

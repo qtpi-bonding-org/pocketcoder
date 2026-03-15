@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class ThoughtsStream extends StatelessWidget {
   final List<dynamic> parts;
@@ -8,16 +9,11 @@ class ThoughtsStream extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
     if (parts.isEmpty) {
       return Center(
-        child: Text(
+        child: TerminalText.tiny(
           '[NEURAL LINK ACTIVE. WAITING FOR THOUGHTS...]',
-          style: TextStyle(
-            color: colors.onSurface.withValues(alpha: 0.3),
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontTiny,
-          ),
+          alpha: 0.3,
         ),
       );
     }
@@ -115,27 +111,19 @@ class ThoughtsStreamContent extends StatelessWidget {
       case 'text':
         return Padding(
           padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
-          child: Text(
+          child: TerminalText(
             part['text'] ?? "",
-            style: TextStyle(
-              color: colors.onSurface,
-              fontFamily: AppFonts.bodyFamily,
-              fontSize: AppSizes.fontStandard,
-              height: 1.4,
-            ),
+            size: TerminalTextSize.base,
           ),
         );
       case 'reasoning':
         return Padding(
           padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
-          child: Text(
+          child: TerminalText.tiny(
             'THOUGHT: ${part['text'] ?? ""}',
-            style: TextStyle(
-              color: colors.secondary.withValues(alpha: 0.7),
-              fontFamily: AppFonts.bodyFamily,
-              fontSize: AppSizes.fontTiny,
-              fontStyle: FontStyle.italic,
-            ),
+            color: colors.secondary,
+            alpha: 0.7,
+            fontStyle: FontStyle.italic,
           ),
         );
       case 'tool':
