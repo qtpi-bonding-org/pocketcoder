@@ -151,7 +151,7 @@ class HitlRepository implements IHitlRepository {
       () async {
         await _toolPermDao.save(id, {'active': active});
       },
-      WhitelistException.new,
+      ToolPermissionsException.new,
       'toggleToolPermission',
     );
   }

@@ -75,11 +75,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiError => 'AI error';
 
   @override
-  String get whitelistFetchFailed => 'Unable to load whitelist';
+  String get toolPermissionsFetchFailed => 'Unable to load tool permissions';
 
   @override
-  String get whitelistUpdateFailed => 'Failed to update whitelist';
+  String get toolPermissionsUpdateFailed => 'Failed to update tool permissions';
 
   @override
-  String get whitelistError => 'Whitelist error';
+  String get toolPermissionsError => 'Tool permissions error';
 }

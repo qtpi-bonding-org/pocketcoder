@@ -27,7 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ('AGENT REGISTRY', '[MODELS]', 'configureAi'),
     ]),
     ('SECURITY', [
-      ('TOOL PERMISSIONS', '[SETUP]', 'configureWhitelist'),
+      ('TOOL PERMISSIONS', '[SETUP]', 'configureToolPermissions'),
       ('MCP MANAGEMENT', '[CONFIGURE]', 'configureMcp'),
     ]),
     ('GOVERNANCE', [
@@ -109,8 +109,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     switch (routeKey) {
       case 'configureAi':
         context.push(AppRoutes.configureAi);
-      case 'configureWhitelist':
-        context.push(AppRoutes.configureWhitelist);
+      case 'configureToolPermissions':
+        context.push(AppRoutes.configureToolPermissions);
       case 'configureMcp':
         context.push(AppRoutes.configureMcp);
       case 'configureSop':

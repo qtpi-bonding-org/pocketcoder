@@ -5,14 +5,14 @@ import 'package:pocketcoder_flutter/domain/hitl/i_hitl_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import "package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart";
 
-part 'whitelist_state.dart';
-part 'whitelist_cubit.freezed.dart';
+part 'tool_permissions_state.dart';
+part 'tool_permissions_cubit.freezed.dart';
 
 @injectable
-class WhitelistCubit extends AppCubit<WhitelistState> {
+class ToolPermissionsCubit extends AppCubit<ToolPermissionsState> {
   final IHitlRepository _repository;
 
-  WhitelistCubit(this._repository) : super(WhitelistState.initial());
+  ToolPermissionsCubit(this._repository) : super(ToolPermissionsState.initial());
 
   Future<void> load() async {
     return tryOperation(() async {
