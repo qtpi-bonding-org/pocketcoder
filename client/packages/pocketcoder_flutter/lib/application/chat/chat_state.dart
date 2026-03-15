@@ -9,7 +9,7 @@ enum ChatOperation {
   initialize,
   sendMessage,
   loadHistory,
-  fetchArtifact,
+  fetchFile,
 }
 
 @freezed
@@ -24,8 +24,8 @@ class ChatState with _$ChatState implements IUiFlowState {
     Message? hotMessage,
     String? chatId,
     String? opencodeId,
-    String? currentArtifactPath,
-    String? currentArtifactContent,
+    String? currentFilePath,
+    String? currentFileContent,
     Object? error,
     ChatOperation? lastOperation,
   }) = _ChatState;
@@ -48,11 +48,12 @@ class ChatState with _$ChatState implements IUiFlowState {
   /// Returns a merged list of messages where the [hotMessage] (SSE)
   /// takes priority over the [messages] (DB) if the IDs match.
   List<Message> get displayMessages {
-    if (hotMessage == null) return messages;
+    final hot = hotMessage;
+    if (hot == null) return messages;
 
     // Try to find the cold equivalent by ID or by AI Engine Message ID
-    final hotId = hotMessage!.id;
-    final hotAiId = hotMessage!.aiEngineMessageId;
+    final hotId = hot.id;
+    final hotAiId = hot.aiEngineMessageId;
 
     final index = messages.indexWhere((m) {
       if (m.id == hotId) return true;
@@ -63,11 +64,11 @@ class ChatState with _$ChatState implements IUiFlowState {
     if (index != -1) {
       // Hot shadows cold
       final newList = List<Message>.from(messages);
-      newList[index] = hotMessage!;
+      newList[index] = hot;
       return newList;
     } else {
       // Truly new
-      return [...messages, hotMessage!];
+      return [...messages, hot];
     }
   }
 }

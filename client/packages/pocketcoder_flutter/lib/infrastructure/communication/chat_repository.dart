@@ -222,16 +222,16 @@ class ChatRepository implements IChatRepository {
   }
 
   @override
-  String getArtifactUrl(String path) {
-    return _api.getArtifactUrl(path);
+  String getFileUrl(String path) {
+    return _api.getFileUrl(path);
   }
 
   @override
-  Future<String> fetchArtifact(String path) async {
+  Future<String> fetchFile(String path) async {
     return tryMethod(
-      () => _api.fetchArtifact(path),
+      () => _api.fetchFile(path),
       ChatException.new,
-      'fetchArtifact',
+      'fetchFile',
     );
   }
 }

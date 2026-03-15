@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
 import 'package:pocketcoder_flutter/presentation/home/home_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
-import 'package:pocketcoder_flutter/presentation/artifact/artifact_screen.dart';
+import 'package:pocketcoder_flutter/presentation/files/file_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/agent_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/whitelist/whitelist_screen.dart';
@@ -103,14 +103,14 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.artifact,
-        name: RouteNames.artifact,
+        path: AppRoutes.files,
+        name: RouteNames.files,
         pageBuilder: (context, state) {
           final path = state.uri.queryParameters['path'];
           return TerminalTransition.buildPage(
             context: context,
             state: state,
-            child: ArtifactScreen(initialPath: path),
+            child: FileScreen(initialPath: path),
           );
         },
       ),
@@ -238,7 +238,7 @@ class AppRoutes {
   static const String chat = '/chat';
   static const String onboarding = '/onboarding';
   static const String boot = '/boot';
-  static const String artifact = '/artifacts';
+  static const String files = '/files';
   static const String terminal = '/terminal';
   // Configure sub-routes
   static const String configureAi = '/configure/ai';
@@ -278,7 +278,7 @@ class RouteNames {
   static const String settings = 'configure';
   static const String onboarding = 'onboarding';
   static const String boot = 'boot';
-  static const String artifact = 'artifact';
+  static const String files = 'files';
   static const String terminal = 'terminal';
   // Configure sub-routes
   static const String configureAi = 'configureAi';
