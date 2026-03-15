@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/thoughts_stream.dart';
 
 class SpeechBubble extends StatefulWidget {
   final Message message;
@@ -93,9 +94,9 @@ class _SpeechBubbleState extends State<SpeechBubble> {
                 label,
                 style: TextStyle(
                   color: accentColor,
-                  fontSize: 10,
+                  fontSize: AppSizes.fontTiny,
                   letterSpacing: 2,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: AppFonts.heavy,
                 ),
               ),
               const Spacer(),
@@ -106,9 +107,9 @@ class _SpeechBubbleState extends State<SpeechBubble> {
                     _isExpanded ? '[-] TRACE' : '[+] TRACE',
                     style: TextStyle(
                       color: colors.secondary.withValues(alpha: 0.6),
-                      fontSize: 9,
+                      fontSize: AppSizes.fontTiny,
                       fontFamily: AppFonts.bodyFamily,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: AppFonts.heavy,
                     ),
                   ),
                 ),
@@ -118,8 +119,8 @@ class _SpeechBubbleState extends State<SpeechBubble> {
           if (_isExpanded && !widget.isUser) ...[
             // The "Details" view
             Container(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              padding: const EdgeInsets.all(8.0),
+              margin: EdgeInsets.symmetric(vertical: AppSizes.space),
+              padding: EdgeInsets.all(AppSizes.space),
               decoration: BoxDecoration(
                 color: colors.onSurface.withValues(alpha: 0.02),
                 border:
@@ -155,7 +156,7 @@ class _SpeechBubbleState extends State<SpeechBubble> {
           '[ POCO IS THINKING... CLICK TO EXPAND ]',
           style: TextStyle(
             color: colors.secondary.withValues(alpha: 0.5),
-            fontSize: 10,
+            fontSize: AppSizes.fontTiny,
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -175,139 +176,6 @@ class _SpeechBubbleState extends State<SpeechBubble> {
         // Note: For 'text' parts in Expanded view, we might want to show them too.
         return ThoughtsStreamContent(part: part);
       }).toList(),
-    );
-  }
-}
-
-/// A version of _buildPart from ThoughtsStream exposed for reuse
-class ThoughtsStreamContent extends StatelessWidget {
-  final Map<String, dynamic> part;
-
-  const ThoughtsStreamContent({super.key, required this.part});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final type = part['type'] as String?;
-
-    switch (type) {
-      case 'text':
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
-          child: Text(
-            part['text'] ?? "",
-            style: TextStyle(
-              color: colors.onSurface,
-              fontFamily: AppFonts.bodyFamily,
-              fontSize: AppSizes.fontStandard,
-              height: 1.4,
-            ),
-          ),
-        );
-      case 'reasoning':
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
-          child: Text(
-            'THOUGHT: ${part['text'] ?? ""}',
-            style: TextStyle(
-              color: colors.secondary.withValues(alpha: 0.7),
-              fontFamily: AppFonts.bodyFamily,
-              fontSize: 10,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        );
-      case 'tool':
-        final toolName = (part['tool'] as String?) ?? 'unknown';
-        final state = (part['state'] as Map<String, dynamic>?) ?? {};
-        final status = (state['status'] as String?) ?? 'pending';
-        final statusColor = _getStatusColor(context, status);
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8.0, top: 4.0),
-          padding: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: 0.3),
-            border: Border(left: BorderSide(color: statusColor, width: 2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'EXEC: ${toolName.toUpperCase()}',
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    status.toUpperCase(),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              _buildToolPayload(context, state),
-            ],
-          ),
-        );
-      // Add other types as needed
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
-  Color _getStatusColor(BuildContext context, String status) {
-    final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-    switch (status) {
-      case 'pending':
-        return colors.secondary.withValues(alpha: 0.5);
-      case 'running':
-        return colors.secondary;
-      case 'completed':
-        return colors.primary;
-      case 'error':
-        return terminalColors.danger;
-      default:
-        return colors.onSurface.withValues(alpha: 0.3);
-    }
-  }
-
-  Widget _buildToolPayload(BuildContext context, Map<String, dynamic> state) {
-    final colors = context.colorScheme;
-    final status = state['status'] as String?;
-    final input = (state['input'] as Map<String, dynamic>?) ?? {};
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          input.toString(),
-          style: TextStyle(
-            color: colors.onSurface.withValues(alpha: 0.8),
-            fontSize: 9,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (status == 'completed' && state.containsKey('output')) ...[
-          Divider(height: 8, color: colors.onSurface.withValues(alpha: 0.1)),
-          Text(
-            state['output'].toString(),
-            style: TextStyle(color: colors.secondary, fontSize: 10),
-            maxLines: 15,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ],
     );
   }
 }

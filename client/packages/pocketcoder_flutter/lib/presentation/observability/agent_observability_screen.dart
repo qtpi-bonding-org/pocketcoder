@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
@@ -114,49 +115,17 @@ class AgentObservabilityScreen extends StatelessWidget {
     }
     return Row(
       children: [
-        _buildMetricBox(context, 'COST', stats.cumulativeCost),
+        TerminalMetricBox(label: 'COST', value: stats.cumulativeCost),
         HSpace.x2,
-        _buildMetricBox(context, 'TOKENS', stats.cumulativeTokens.toString()),
+        TerminalMetricBox(
+            label: 'TOKENS', value: stats.cumulativeTokens.toString()),
         HSpace.x2,
-        _buildMetricBox(context, 'MSGS', stats.totalMessages.toString()),
+        TerminalMetricBox(
+            label: 'MSGS', value: stats.totalMessages.toString()),
         HSpace.x2,
-        _buildMetricBox(context, 'BACKEND', stats.backendStatus.toUpperCase()),
+        TerminalMetricBox(
+            label: 'BACKEND', value: stats.backendStatus.toUpperCase()),
       ],
-    );
-  }
-
-  Widget _buildMetricBox(BuildContext context, String label, String value) {
-    final colors = context.colorScheme;
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.all(AppSizes.space),
-        decoration: BoxDecoration(
-          border: Border.all(color: colors.primary.withValues(alpha: 0.5)),
-          color: colors.primary.withValues(alpha: 0.05),
-        ),
-        child: Column(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.primary,
-                fontSize: AppSizes.fontMini,
-                fontWeight: AppFonts.heavy,
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface,
-                fontSize: AppSizes.fontStandard,
-                fontWeight: AppFonts.heavy,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -241,7 +210,7 @@ class AgentObservabilityScreen extends StatelessWidget {
           logLine,
           style: TextStyle(
             fontFamily: AppFonts.bodyFamily,
-            color: _getLogColor(logLine, colors),
+            color: _getLogColor(context, logLine, colors),
             fontSize: AppSizes.fontMini,
           ),
         );
@@ -249,12 +218,14 @@ class AgentObservabilityScreen extends StatelessWidget {
     );
   }
 
-  Color _getLogColor(String log, ColorScheme colors) {
+  Color _getLogColor(
+      BuildContext context, String log, ColorScheme colors) {
+    final terminal = context.terminalColors;
     final upper = log.toUpperCase();
     if (upper.contains('ERR') || upper.contains('FAIL')) {
-      return Colors.redAccent;
+      return terminal.danger;
     }
-    if (upper.contains('WARN')) return Colors.orangeAccent;
+    if (upper.contains('WARN')) return terminal.warning;
     if (upper.contains('INFO')) return colors.primary;
     if (upper.contains('DEBUG')) return colors.secondary;
     return colors.onSurface.withValues(alpha: 0.7);

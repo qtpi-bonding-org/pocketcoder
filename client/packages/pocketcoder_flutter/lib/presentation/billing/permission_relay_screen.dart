@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 class PermissionRelayScreen extends StatelessWidget {
@@ -166,12 +167,8 @@ class _PackageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: AppSizes.space),
-      decoration: BoxDecoration(
-        border: Border.all(color: colors.primary.withValues(alpha: 0.5)),
-        color: colors.primary.withValues(alpha: 0.05),
-      ),
+    return TerminalCard(
+      isActive: true,
       padding: EdgeInsets.all(AppSizes.space * 1.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

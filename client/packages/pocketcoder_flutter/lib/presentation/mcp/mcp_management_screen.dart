@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart'
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
@@ -115,17 +116,8 @@ class _McpManagementView extends StatelessWidget {
     final colors = context.colorScheme;
     final isPending = server.status == McpServerStatus.pending;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: isPending
-              ? colors.primary
-              : colors.onSurface.withValues(alpha: 0.3),
-        ),
-        color: isPending ? colors.primary.withValues(alpha: 0.05) : null,
-      ),
+    return TerminalCard(
+      isActive: isPending,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

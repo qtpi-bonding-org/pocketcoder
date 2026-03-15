@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
@@ -92,12 +93,7 @@ class PermissionsTab extends StatelessWidget {
         ? 'AGENT'
         : 'GLOBAL';
 
-    return Container(
-      margin: EdgeInsets.only(bottom: AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space),
-      decoration: BoxDecoration(
-        border: Border.all(color: textColor.withValues(alpha: 0.3)),
-      ),
+    return TerminalCard(
       child: Row(
         children: [
           Expanded(
