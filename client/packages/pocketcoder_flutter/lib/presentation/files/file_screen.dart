@@ -7,7 +7,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_state.dart';
 
@@ -37,9 +37,11 @@ class _FileScreenState extends State<FileScreen> {
     return UiFlowListener<ChatCubit, ChatState>(
       child: BlocBuilder<ChatCubit, ChatState>(
         builder: (context, state) {
-          return TerminalScaffold(
+          return PocketCoderShell(
             title: 'SOURCE OUTPUT MANIFEST',
-            actions: [
+            activePillar: NavPillar.chats,
+            showBack: true,
+            extraHeaderActions: [
               TerminalAction(
                 label: 'DASHBOARD',
                 onTap: () => context.goNamed(RouteNames.home),
@@ -47,10 +49,6 @@ class _FileScreenState extends State<FileScreen> {
               TerminalAction(
                 label: 'CLEAR',
                 onTap: () => context.read<ChatCubit>().clearFile(),
-              ),
-              TerminalAction(
-                label: 'BACK',
-                onTap: () => context.pop(),
               ),
             ],
             body: BiosFrame(

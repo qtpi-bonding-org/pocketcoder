@@ -80,7 +80,12 @@ class _ChatViewState extends State<_ChatView> {
             );
 
             return PocketCoderShell(
-              title: commState.chatId ?? 'POCKETCODER MAIN',
+              title: commState.chats
+                      .where((c) => c.id == commState.chatId)
+                      .map((c) => c.title)
+                      .firstOrNull
+                      ?.toUpperCase() ??
+                  'CHAT SESSION',
               activePillar: NavPillar.chats,
               showBack: true,
               configureBadge: hasPendingMcp,
