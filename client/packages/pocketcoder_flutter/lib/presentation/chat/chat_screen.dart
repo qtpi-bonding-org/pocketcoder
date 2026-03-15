@@ -86,18 +86,18 @@ class _ChatViewState extends State<_ChatView> {
                       .map((c) => c.title)
                       .firstOrNull
                       ?.toUpperCase() ??
-                  'CHAT SESSION',
+                  context.l10n.chatSessionTitle,
               activePillar: NavPillar.chats,
               showBack: true,
               configureBadge: hasPendingMcp,
               padding: EdgeInsets.zero,
               extraHeaderActions: [
                 TerminalAction(
-                  label: 'TERMINAL',
+                  label: context.l10n.chatTerminalAction,
                   onTap: () => AppNavigation.toTerminal(context),
                 ),
                 TerminalAction(
-                  label: 'FILES',
+                  label: context.l10n.chatFilesAction,
                   onTap: () => AppNavigation.toFiles(context),
                 ),
               ],
@@ -133,8 +133,8 @@ class _ChatViewState extends State<_ChatView> {
                       return currPending > prevPending;
                     },
                     listener: (context, state) {
-                      getIt<IFeedbackService>().show(const FeedbackMessage(
-                        message: '[!] NEW CAPABILITY REQUEST RECEIVED',
+                      getIt<IFeedbackService>().show(FeedbackMessage(
+                        message: context.l10n.chatNewCapabilityRequest,
                         type: MessageType.warning,
                       ));
                     },
@@ -226,7 +226,7 @@ class _ChatViewState extends State<_ChatView> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (commState.isLoading) ...[
-                            const TerminalLoadingIndicator(label: 'THINKING'),
+                            TerminalLoadingIndicator(label: context.l10n.chatThinking),
                             VSpace.x1,
                           ],
                           TerminalInput(
@@ -297,20 +297,20 @@ class _ChatViewState extends State<_ChatView> {
             child: Row(
               children: [
                 TerminalText.label(
-                  'MODEL:',
+                  context.l10n.chatModelLabel,
                   alpha: 0.5,
                 ),
                 HSpace.x1,
                 Expanded(
                   child: TerminalText.label(
-                    currentModel?.toUpperCase() ?? 'DEFAULT',
+                    currentModel?.toUpperCase() ?? context.l10n.chatModelDefault,
                     color: colors.primary,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isPerChat) ...[
                   TerminalText.mini(
-                    '[CHAT]',
+                    context.l10n.chatModelPerChat,
                     alpha: 0.3,
                   ),
                   HSpace.x1,
@@ -335,7 +335,7 @@ class _ChatViewState extends State<_ChatView> {
       builder: (dialogContext) {
         final colors = Theme.of(dialogContext).colorScheme;
         return TerminalDialog(
-          title: 'SELECT MODEL',
+          title: context.l10n.chatSelectModelTitle,
           content: SizedBox(
             width: double.maxFinite,
             height: 300,
@@ -373,7 +373,7 @@ class _ChatViewState extends State<_ChatView> {
                         ),
                       ),
                       child: TerminalText(
-                        'USE GLOBAL DEFAULT',
+                        context.l10n.chatUseGlobalDefault,
                         alpha: 0.7,
                       ),
                     ),

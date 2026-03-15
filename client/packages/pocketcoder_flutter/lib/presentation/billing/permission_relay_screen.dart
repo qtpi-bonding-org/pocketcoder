@@ -37,11 +37,11 @@ class PermissionRelayView extends StatelessWidget {
       child: BlocBuilder<BillingCubit, BillingState>(
         builder: (context, state) {
           return PocketCoderShell(
-            title: 'PERMISSION RELAY',
+            title: context.l10n.relayTitle,
             activePillar: NavPillar.configure,
             showBack: true,
             body: BiosFrame(
-              title: 'RELAY SUBSYSTEM',
+              title: context.l10n.relaySubsystem,
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(AppSizes.space),
                 child: Column(
@@ -58,9 +58,9 @@ class PermissionRelayView extends StatelessWidget {
                     ),
                     VSpace.x2,
                     if (state.isLoading)
-                      const Center(
+                      Center(
                         child: TerminalLoadingIndicator(
-                          label: 'CHECKING RELAY STATUS...',
+                          label: context.l10n.relayCheckingStatus,
                         ),
                       )
                     else if (state.isPremium)
@@ -101,7 +101,7 @@ class PermissionRelayView extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            '>>> RELAY ACTIVE <<<',
+            context.l10n.relayActive,
             style: TextStyle(
               color: colors.primary,
               fontWeight: FontWeight.bold,
@@ -111,9 +111,9 @@ class PermissionRelayView extends StatelessWidget {
           VSpace.x2,
           AsciiFace.happy(fontSize: 24),
           VSpace.x2,
-          const Text(
-            'SUBSYSTEMS NOMINAL',
-            style: TextStyle(package: 'pocketcoder_flutter'),
+          Text(
+            context.l10n.relaySubsystemsNominal,
+            style: const TextStyle(package: 'pocketcoder_flutter'),
           ),
           VSpace.x1,
           Text(
@@ -139,7 +139,7 @@ class PermissionRelayView extends StatelessWidget {
       children: [
         if (paywallPackages.isNotEmpty) ...[
           BiosSection(
-            title: 'RELAY CONFIGURATION',
+            title: context.l10n.relayConfigSection,
             child: Column(
               children:
                   paywallPackages.map((pkg) => _PackageCard(pkg: pkg)).toList(),
@@ -205,7 +205,7 @@ class _PackageCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: TerminalButton(
-              label: 'ACTIVATE RELAY',
+              label: context.l10n.relayActivate,
               onTap: () =>
                   context.read<BillingCubit>().purchase(pkg.identifier),
             ),
@@ -251,7 +251,7 @@ class _NtfySetupCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: TerminalButton(
-              label: 'CONFIGURE',
+              label: context.l10n.actionConfigure,
               isPrimary: false,
               onTap: () {
                 GetIt.I<PushService>().configure();

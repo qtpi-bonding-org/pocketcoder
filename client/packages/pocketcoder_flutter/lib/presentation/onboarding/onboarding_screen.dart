@@ -38,7 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // Reset Poco for this screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PocoCubit>().reset(
-          'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.');
+          context.l10n.onboardingPocoChallengeMessage);
       context.read<PocoCubit>().setExpression(PocoExpressions.scanning);
     });
 
@@ -87,14 +87,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             context.read<PocoCubit>().setExpression(PocoExpressions.scanning);
           } else if (state.status == UiFlowStatus.success) {
             context.read<PocoCubit>().updateMessage(
-                'Identity verified! Welcome home. I knew it was you—just had to make sure the Cloud wasn\'t spoofing your signature.',
+                context.l10n.onboardingPocoWelcome,
                 sequence: PocoExpressions.happy);
             Future.delayed(const Duration(seconds: 2), () {
               if (context.mounted) context.goNamed(RouteNames.home);
             });
           } else if (state.status == UiFlowStatus.failure) {
             context.read<PocoCubit>().updateMessage(
-                state.error?.toString() ?? 'ACCESS DENIED.',
+                state.error?.toString() ?? context.l10n.onboardingAccessDenied,
                 sequence: PocoExpressions.nervous);
           }
         },
@@ -103,11 +103,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             final isLoading = authState.status == UiFlowStatus.loading;
 
             return TerminalScaffold(
-              title: 'IDENTIFICATION UNLOCK',
+              title: context.l10n.onboardingTitle,
               showHeader: false, // Onboarding has its own layout
               actions: [
                 TerminalAction(
-                  label: isLoading ? 'PROCESSING...' : 'LOGIN',
+                  label: isLoading ? context.l10n.onboardingProcessing : context.l10n.onboardingLogin,
                   onTap: isLoading
                       ? () {}
                       : () => _handleLogin(context.read<AuthCubit>()),
@@ -130,20 +130,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         VSpace.x4,
                         TerminalTextField(
                           controller: _urlController,
-                          label: 'HOME SERVER',
+                          label: context.l10n.onboardingHomeServer,
                           hint: 'http://127.0.0.1:8090',
                         ),
                         VSpace.x2,
                         TerminalTextField(
                           controller: _emailController,
-                          label: 'IDENTITY',
-                          hint: 'ENTER EMAIL',
+                          label: context.l10n.onboardingIdentityLabel,
+                          hint: context.l10n.onboardingEmailHint,
                         ),
                         VSpace.x2,
                         TerminalTextField(
                           controller: _passwordController,
-                          label: 'PASSPHRASE',
-                          hint: 'ENTER PASSWORD',
+                          label: context.l10n.onboardingPassphraseLabel,
+                          hint: context.l10n.onboardingPasswordHint,
                           obscureText: true,
                           onSubmitted: (_) => isLoading
                               ? null
@@ -151,8 +151,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         VSpace.x2,
                         if (isLoading)
-                          const TerminalLoadingIndicator(
-                              label: 'AUTHENTICATING'),
+                          TerminalLoadingIndicator(
+                              label: context.l10n.onboardingAuthenticating),
                       ],
                     ),
                   ),

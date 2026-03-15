@@ -29,7 +29,7 @@ class _HomeView extends StatelessWidget {
     return BlocBuilder<ChatListCubit, ChatListState>(
       builder: (context, state) {
         return PocketCoderShell(
-          title: 'CHATS',
+          title: context.l10n.homeTitle,
           activePillar: NavPillar.chats,
           showBack: false,
           body: _buildBody(context, state),
@@ -43,14 +43,14 @@ class _HomeView extends StatelessWidget {
     final textTheme = context.textTheme;
 
     if (state.isLoading) {
-      return const Center(
-          child: TerminalLoadingIndicator(label: 'LOADING CHATS'));
+      return Center(
+          child: TerminalLoadingIndicator(label: context.l10n.homeLoadingChats));
     }
 
     if (state.hasError) {
       return Center(
         child: Text(
-          'ERROR: ${state.error}',
+          context.l10n.homeErrorPrefix('${state.error}'),
           style: textTheme.bodyMedium?.copyWith(color: colors.error),
         ),
       );
@@ -62,7 +62,7 @@ class _HomeView extends StatelessWidget {
         Padding(
           padding: EdgeInsets.all(AppSizes.space),
           child: TerminalButton(
-            label: 'NEW CHAT',
+            label: context.l10n.homeNewChat,
             onTap: () => _handleNewChat(context),
           ),
         ),
@@ -70,7 +70,7 @@ class _HomeView extends StatelessWidget {
           child: state.chats.isEmpty
               ? Center(
                   child: Text(
-                    'No active chats found.',
+                    context.l10n.homeNoChats,
                     style: textTheme.bodyMedium?.copyWith(
                       color: colors.onSurface.withValues(alpha: 0.5),
                     ),

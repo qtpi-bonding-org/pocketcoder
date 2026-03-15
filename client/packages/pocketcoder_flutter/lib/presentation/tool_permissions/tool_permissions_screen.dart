@@ -33,11 +33,11 @@ class ToolPermissionsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: 'GATEKEEPER CONFIGURATION',
+      title: context.l10n.toolPermissionsTitle,
       activePillar: NavPillar.configure,
       showBack: true,
-      body: const BiosFrame(
-        title: 'TOOL PERMISSIONS',
+      body: BiosFrame(
+        title: context.l10n.toolPermissionsFrameTitle,
         child: PermissionsTab(),
       ),
     );
@@ -56,11 +56,11 @@ class PermissionsTab extends StatelessWidget {
           children: [
             Expanded(
               child: state.isLoading
-                  ? const Center(
-                      child: TerminalLoadingIndicator(label: 'LOADING PERMISSIONS'))
+                  ? Center(
+                      child: TerminalLoadingIndicator(label: context.l10n.toolPermissionsLoading))
                   : state.toolPermissions.isEmpty
                       ? Center(
-                          child: Text('NO PERMISSIONS DEFINED.',
+                          child: Text(context.l10n.toolPermissionsEmpty,
                               style: TextStyle(
                                   color:
                                       colors.onSurface.withValues(alpha: 0.5))))
@@ -74,7 +74,7 @@ class PermissionsTab extends StatelessWidget {
             ),
             VSpace.x2,
             TerminalButton(
-              label: 'ADD PERMISSION',
+              label: context.l10n.toolPermissionsAdd,
               onTap: () => _showAddPermissionDialog(context),
             ),
           ],
@@ -91,8 +91,8 @@ class PermissionsTab extends StatelessWidget {
         : colors.onSurface.withValues(alpha: 0.5);
 
     final scope = perm.agent?.isNotEmpty == true
-        ? 'AGENT'
-        : 'GLOBAL';
+        ? context.l10n.toolPermissionsScopeAgent
+        : context.l10n.toolPermissionsScopeGlobal;
 
     return TerminalCard(
       child: Row(
@@ -139,7 +139,7 @@ class PermissionsTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: 'ADD TOOL PERMISSION',
+        title: context.l10n.toolPermissionsAddTitle,
         content: StatefulBuilder(builder: (context, setState) {
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -147,16 +147,16 @@ class PermissionsTab extends StatelessWidget {
               _buildTerminalTextField(
                   context: context,
                   controller: toolController,
-                  label: 'TOOL (e.g. bash, edit, cao_*)'),
+                  label: context.l10n.toolPermissionsToolLabel),
               VSpace.x2,
               _buildTerminalTextField(
                   context: context,
                   controller: patternController,
-                  label: 'PATTERN (e.g. *, git *, rm *)'),
+                  label: context.l10n.toolPermissionsPatternLabel),
               VSpace.x2,
               Row(
                 children: [
-                  TerminalText.tiny('ACTION:',
+                  TerminalText.tiny(context.l10n.toolPermissionsActionLabel,
                       color: context.colorScheme.onSurface),
                   HSpace.x2,
                   _buildActionOption(context, 'allow', action, (val) {
@@ -177,7 +177,7 @@ class PermissionsTab extends StatelessWidget {
         }),
         actions: [
           TerminalButton(
-            label: 'CANCEL',
+            label: context.l10n.actionCancel,
             isPrimary: false,
             onTap: () => Navigator.pop(dialogContext),
           ),

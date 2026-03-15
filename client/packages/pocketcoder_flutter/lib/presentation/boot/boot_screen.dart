@@ -56,7 +56,7 @@ class _BootScreenState extends State<BootScreen> {
         fileContent = await rootBundle.loadString('assets/boot_log.txt');
       } catch (e2) {
         fileContent =
-            'SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS\n[!] CHECK_ASSET_MANIFEST\n';
+            '${context.l10n.bootLoadError}\n';
       }
     }
 
@@ -87,7 +87,7 @@ class _BootScreenState extends State<BootScreen> {
   void _wakeUpPoco() async {
     if (mounted) {
       context.read<PocoCubit>().reset(
-            "Hi! I'm Poco, your Private Operations Coding Officer representing the PocketCoder Initiative.",
+            context.l10n.bootPocoIntro,
           );
       context.read<PocoCubit>().setExpression([
         (PocoExpression.sleepy, 1000),
@@ -130,7 +130,7 @@ class _BootScreenState extends State<BootScreen> {
 
   Future<void> _checkConnection() async {
     if (mounted) {
-      context.read<PocoCubit>().updateMessage("Checking secure connection...");
+      context.read<PocoCubit>().updateMessage(context.l10n.bootCheckingConnection);
     }
 
     bool pocketbaseAlive = false;
@@ -159,7 +159,7 @@ class _BootScreenState extends State<BootScreen> {
         if (!mounted) return;
 
         context.read<PocoCubit>().updateMessage(
-              alreadyLoggedIn ? "Welcome back." : "Systems nominal. I'm ready.",
+              alreadyLoggedIn ? context.l10n.bootWelcomeBack : context.l10n.bootSystemsNominal,
               sequence: PocoExpressions.happy,
             );
         await Future.delayed(const Duration(seconds: 2));
@@ -172,7 +172,7 @@ class _BootScreenState extends State<BootScreen> {
         }
       } else {
         context.read<PocoCubit>().updateMessage(
-          "Connection failed. I'll take you back to the setup screen so we can check the server settings.",
+          context.l10n.bootConnectionFailed,
           sequence: [
             (PocoExpression.nervous, 500),
             (PocoExpression.lookRight, 1000),

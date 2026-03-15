@@ -21,7 +21,7 @@ class DeployPickerScreen extends StatelessWidget {
     final options = GetIt.I<IDeployOptionService>().getAvailableProviders();
 
     return PocketCoderShell(
-      title: 'DEPLOY POCKETCODER',
+      title: context.l10n.deployTitle,
       activePillar: NavPillar.configure,
       showBack: true,
       body: Center(
@@ -32,14 +32,14 @@ class DeployPickerScreen extends StatelessWidget {
             child: Column(
               children: [
                 BiosFrame(
-                  title: 'SELECT PROVIDER',
+                  title: context.l10n.deploySelectProvider,
                   child: Padding(
                     padding: EdgeInsets.all(AppSizes.space),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TerminalText(
-                          'CHOOSE WHERE TO DEPLOY YOUR INSTANCE',
+                          context.l10n.deployChooseProvider,
                           alpha: 0.7,
                         ),
                         VSpace.x3,
@@ -121,7 +121,7 @@ class _ProviderCard extends StatelessWidget {
                   border: Border.all(color: colors.primary),
                 ),
                 child: TerminalText(
-                  'PRO',
+                  context.l10n.deployProBadge,
                   size: TerminalTextSize.tiny,
                   weight: TerminalTextWeight.heavy,
                   color: colors.primary,

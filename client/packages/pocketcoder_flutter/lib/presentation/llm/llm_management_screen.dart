@@ -36,14 +36,14 @@ class _LlmManagementView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: 'LLM MANAGEMENT',
+      title: context.l10n.llmTitle,
       activePillar: NavPillar.configure,
       showBack: true,
       body: BlocBuilder<LlmCubit, LlmState>(
         builder: (context, state) {
           if (state.isLoading && state.providers.isEmpty) {
-            return const Center(
-              child: TerminalLoadingIndicator(label: 'LOADING PROVIDERS'),
+            return Center(
+              child: TerminalLoadingIndicator(label: context.l10n.llmLoadingProviders),
             );
           }
 
@@ -52,20 +52,20 @@ class _LlmManagementView extends StatelessWidget {
             children: [
               // ── ACTIVE MODEL ──
               BiosSection(
-                title: 'ACTIVE MODEL',
+                title: context.l10n.llmActiveModelSection,
                 child: _buildActiveModel(context, state),
               ),
 
               // ── PROVIDERS & KEYS ──
               BiosSection(
-                title: 'PROVIDERS',
+                title: context.l10n.llmProvidersSection,
                 child: _buildProviderList(context, state),
               ),
 
               // ── CONFIGURED KEYS ──
               if (state.keys.isNotEmpty)
                 BiosSection(
-                  title: 'API KEYS',
+                  title: context.l10n.llmApiKeysSection,
                   child: _buildKeyList(context, state),
                 ),
             ],
@@ -87,7 +87,7 @@ class _LlmManagementView extends StatelessWidget {
     final allModels = _collectAvailableModels(state);
 
     return BiosFrame(
-      title: 'GLOBAL DEFAULT',
+      title: context.l10n.llmGlobalDefault,
       child: Padding(
         padding: EdgeInsets.all(AppSizes.space),
         child: Column(
@@ -98,7 +98,7 @@ class _LlmManagementView extends StatelessWidget {
               children: [
                 Expanded(
                   child: TerminalText(
-                    currentModel?.toUpperCase() ?? 'NOT SET',
+                    currentModel?.toUpperCase() ?? context.l10n.llmNotSet,
                     size: TerminalTextSize.base,
                     weight: TerminalTextWeight.heavy,
                     color: currentModel != null
@@ -108,7 +108,7 @@ class _LlmManagementView extends StatelessWidget {
                   ),
                 ),
                 TerminalButton(
-                  label: 'CHANGE',
+                  label: context.l10n.actionChange,
                   onTap: allModels.isNotEmpty
                       ? () => _showModelPicker(context, allModels)
                       : () {},
@@ -118,7 +118,7 @@ class _LlmManagementView extends StatelessWidget {
             if (allModels.isEmpty) ...[
               VSpace.x1,
               TerminalText.mini(
-                'ADD AN API KEY TO ENABLE MODEL SELECTION',
+                context.l10n.llmAddKeyHint,
                 alpha: 0.5,
               ),
             ],
@@ -136,7 +136,7 @@ class _LlmManagementView extends StatelessWidget {
         padding: EdgeInsets.all(AppSizes.space * 2),
         child: Center(
           child: TerminalText(
-            'NO PROVIDERS AVAILABLE',
+            context.l10n.llmNoProviders,
             alpha: 0.5,
           ),
         ),
@@ -171,7 +171,7 @@ class _LlmManagementView extends StatelessWidget {
                 weight: TerminalTextWeight.heavy,
               ),
               TerminalText.label(
-                hasKey ? '[ CONNECTED ]' : '[ NO KEY ]',
+                hasKey ? context.l10n.llmConnected : context.l10n.llmNoKey,
                 color: hasKey ? colors.primary : null,
                 alpha: hasKey ? null : 0.5,
               ),
@@ -180,7 +180,7 @@ class _LlmManagementView extends StatelessWidget {
           if (modelCount > 0) ...[
             VSpace.x1,
             TerminalText.mini(
-              '$modelCount MODEL${modelCount == 1 ? '' : 'S'} AVAILABLE',
+              context.l10n.llmModelsAvailable(modelCount),
               alpha: 0.5,
             ),
           ],
@@ -189,14 +189,14 @@ class _LlmManagementView extends StatelessWidget {
             children: [
               Expanded(
                 child: TerminalButton(
-                  label: hasKey ? 'UPDATE KEY' : 'ADD KEY',
+                  label: hasKey ? context.l10n.llmUpdateKey : context.l10n.llmAddKey,
                   onTap: () => _showKeyDialog(context, provider),
                 ),
               ),
               if (hasKey) ...[
                 HSpace.x2,
                 TerminalButton(
-                  label: 'MODELS',
+                  label: context.l10n.llmModelsButton,
                   isPrimary: false,
                   onTap: () =>
                       _showProviderModels(context, provider),
@@ -276,13 +276,13 @@ class _LlmManagementView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: 'API KEY: ${provider.name.toUpperCase()}',
+        title: context.l10n.llmApiKeyDialogTitle(provider.name.toUpperCase()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TerminalText(
-              'Enter credentials for ${provider.name}:',
+              context.l10n.llmEnterCredentials(provider.name),
               alpha: 0.7,
             ),
             VSpace.x2,
@@ -301,13 +301,13 @@ class _LlmManagementView extends StatelessWidget {
         ),
         actions: [
           TerminalButton(
-            label: 'CANCEL',
+            label: context.l10n.actionCancel,
             isPrimary: false,
             onTap: () => Navigator.pop(dialogContext),
           ),
           HSpace.x2,
           TerminalButton(
-            label: 'SAVE',
+            label: context.l10n.actionSave,
             onTap: () {
               final envVars = <String, dynamic>{};
               controllers.forEach((key, controller) {
@@ -334,7 +334,7 @@ class _LlmManagementView extends StatelessWidget {
       builder: (dialogContext) {
         final colors = Theme.of(dialogContext).colorScheme;
         return TerminalDialog(
-          title: 'SELECT MODEL',
+          title: context.l10n.llmSelectModelTitle,
           content: SizedBox(
             width: double.maxFinite,
             height: 300,
@@ -367,7 +367,7 @@ class _LlmManagementView extends StatelessWidget {
           ),
           actions: [
             TerminalButton(
-              label: 'CANCEL',
+              label: context.l10n.actionCancel,
               isPrimary: false,
               onTap: () => Navigator.pop(dialogContext),
             ),
@@ -384,14 +384,14 @@ class _LlmManagementView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: '${provider.name.toUpperCase()} MODELS',
+        title: context.l10n.llmProviderModelsTitle(provider.name.toUpperCase()),
         content: SizedBox(
           width: double.maxFinite,
           height: 300,
           child: models.isEmpty
               ? Center(
                   child: TerminalText(
-                    'NO MODELS LISTED',
+                    context.l10n.llmNoModels,
                     alpha: 0.5,
                   ),
                 )
@@ -425,7 +425,7 @@ class _LlmManagementView extends StatelessWidget {
                               ),
                             ),
                             TerminalText.label(
-                              '[ SELECT ]',
+                              context.l10n.llmSelect,
                               color: colors.primary,
                             ),
                           ],
@@ -437,7 +437,7 @@ class _LlmManagementView extends StatelessWidget {
         ),
         actions: [
           TerminalButton(
-            label: 'CLOSE',
+            label: context.l10n.actionClose,
             isPrimary: false,
             onTap: () => Navigator.pop(dialogContext),
           ),

@@ -35,11 +35,11 @@ class _McpManagementView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: 'MCP MANAGEMENT',
+      title: context.l10n.mcpTitle,
       activePillar: NavPillar.configure,
       showBack: true,
       body: BiosFrame(
-        title: 'CAPABILITIES REGISTRY',
+        title: context.l10n.mcpCapabilitiesRegistry,
         child: BlocBuilder<McpCubit, McpState>(
           builder: (context, state) {
             final colors = context.colorScheme;
@@ -64,7 +64,7 @@ class _McpManagementView extends StatelessWidget {
                     ),
                     if (pending.isNotEmpty)
                       BiosSection(
-                        title: 'PENDING APPROVAL',
+                        title: context.l10n.mcpPendingApproval,
                         child: Column(
                           children: pending
                               .map((s) => _buildMcpItem(context, s))
@@ -73,7 +73,7 @@ class _McpManagementView extends StatelessWidget {
                       ),
                     if (active.isNotEmpty)
                       BiosSection(
-                        title: 'ACTIVE CAPABILITIES',
+                        title: context.l10n.mcpActiveCapabilities,
                         child: Column(
                           children: active
                               .map((s) => _buildMcpItem(context, s))
@@ -85,7 +85,7 @@ class _McpManagementView extends StatelessWidget {
                         child: Padding(
                           padding: EdgeInsets.all(AppSizes.space * 4),
                           child: TerminalText(
-                            'NO CAPABILITIES REGISTERED',
+                            context.l10n.mcpNoCapabilities,
                             alpha: 0.5,
                           ),
                         ),
@@ -138,21 +138,21 @@ class _McpManagementView extends StatelessWidget {
           if (server.image?.isNotEmpty == true) ...[
             VSpace.x1,
             TerminalText.mini(
-              'IMAGE: ${server.image}',
+              context.l10n.mcpImageLabel(server.image ?? ''),
               alpha: 0.5,
             ),
           ],
           if (server.reason?.isNotEmpty == true) ...[
             VSpace.x1,
             TerminalText.mini(
-              'PURPOSE: ${server.reason}',
+              context.l10n.mcpPurposeLabel(server.reason ?? ''),
               alpha: 0.5,
             ),
           ],
           if (isPending && server.configSchema != null) ...[
             VSpace.x1,
             TerminalText.label(
-              'REQUIRED CONFIG:',
+              context.l10n.mcpRequiredConfig,
               color: colors.primary,
               alpha: 0.8,
             ),
@@ -165,7 +165,7 @@ class _McpManagementView extends StatelessWidget {
               children: [
                 Expanded(
                   child: TerminalButton(
-                    label: 'AUTHORIZE CAPABILITY',
+                    label: context.l10n.mcpAuthorizeCap,
                     onTap: () => _showAuthorizeDialog(context, server),
                   ),
                 ),
@@ -183,14 +183,14 @@ class _McpManagementView extends StatelessWidget {
               children: [
                 Expanded(
                   child: TerminalButton(
-                    label: 'EDIT CONFIGURATION',
+                    label: context.l10n.mcpEditConfig,
                     isPrimary: false,
                     onTap: () => _showAuthorizeDialog(context, server),
                   ),
                 ),
                 HSpace.x2,
                 TerminalButton(
-                  label: 'REVOKE',
+                  label: context.l10n.mcpRevoke,
                   onTap: () => context.read<McpCubit>().deny(server.id),
                   color: colors.error,
                 ),
@@ -248,28 +248,28 @@ class _McpManagementView extends StatelessWidget {
       context: context,
       builder: (dialogContext) => TerminalDialog(
         title: server.status == McpServerStatus.pending
-            ? 'AUTHORIZE: ${server.name.toUpperCase()}'
-            : 'UPDATE CONFIG: ${server.name.toUpperCase()}',
+            ? context.l10n.mcpAuthorizeDialogTitle(server.name.toUpperCase())
+            : context.l10n.mcpUpdateConfigDialogTitle(server.name.toUpperCase()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (server.image?.isNotEmpty == true) ...[
               TerminalText(
-                'IMAGE: ${server.image}',
+                context.l10n.mcpImageLabel(server.image ?? ''),
                 alpha: 0.7,
               ),
               VSpace.x2,
             ],
             if (controllers.isEmpty) ...[
               TerminalText(
-                'No configuration required.',
+                context.l10n.mcpNoConfigRequired,
                 size: TerminalTextSize.base,
                 alpha: 0.7,
               ),
             ] else ...[
               TerminalText(
-                'Enter required secrets:',
+                context.l10n.mcpEnterSecrets,
                 size: TerminalTextSize.base,
                 alpha: 0.7,
               ),
@@ -296,7 +296,7 @@ class _McpManagementView extends StatelessWidget {
               shape:
                   const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
-            child: const Text('CANCEL'),
+            child: Text(context.l10n.actionCancel),
           ),
           HSpace.x2,
           OutlinedButton(

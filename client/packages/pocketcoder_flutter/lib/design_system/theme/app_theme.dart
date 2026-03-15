@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_color_palette/flutter_color_palette.dart';
+import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import '../primitives/app_palette.dart';
 import '../primitives/app_fonts.dart';
 import '../primitives/app_sizes.dart';
@@ -182,5 +183,14 @@ extension AppThemeExtension on BuildContext {
     final ext = theme.extension<TerminalColors>();
     if (ext == null) throw StateError('TerminalColors not registered in theme');
     return ext;
+  }
+
+  /// Shorthand for [AppLocalizations.of(this)].
+  AppLocalizations get l10n {
+    final l10n = AppLocalizations.of(this);
+    if (l10n == null) {
+      throw StateError('AppLocalizations not found. Ensure localization delegates are configured.');
+    }
+    return l10n;
   }
 }

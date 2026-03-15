@@ -264,12 +264,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
+    gh.factory<_i89.ToolPermissionsCubit>(
+        () => _i89.ToolPermissionsCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i925.QuestionCubit>(
         () => _i925.QuestionCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i955.PermissionCubit>(
         () => _i955.PermissionCubit(gh<_i20.IHitlRepository>()));
-    gh.factory<_i89.ToolPermissionsCubit>(
-        () => _i89.ToolPermissionsCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i85.LlmCubit>(() => _i85.LlmCubit(gh<_i615.ILlmRepository>()));
     gh.factory<_i655.SandboxAgentCubit>(
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));

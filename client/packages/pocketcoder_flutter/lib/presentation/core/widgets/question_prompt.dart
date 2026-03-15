@@ -64,7 +64,7 @@ class _QuestionPromptState extends State<QuestionPrompt> {
               HSpace.x2,
               Expanded(
                 child: Text(
-                  "INCOMING QUERY",
+                  context.l10n.questionIncomingTitle,
                   style: TextStyle(
                     color: terminalColors.attention,
                     fontSize: AppSizes.fontTiny,
@@ -77,7 +77,7 @@ class _QuestionPromptState extends State<QuestionPrompt> {
           ),
           VSpace.x2,
           Text(
-            'POCO IS ASKING:',
+            context.l10n.questionPocoAsking,
             style: TextStyle(
               color: terminalColors.attention.withValues(alpha: 0.8),
               fontSize: AppSizes.fontMini,
@@ -127,7 +127,7 @@ class _QuestionPromptState extends State<QuestionPrompt> {
                 HSpace.x2,
                 Expanded(
                   child: TerminalButton(
-                    label: 'SEND REPLY',
+                    label: context.l10n.questionSendReply,
                     onTap: () => widget.onAnswer(_controller.text),
                   ),
                 ),
