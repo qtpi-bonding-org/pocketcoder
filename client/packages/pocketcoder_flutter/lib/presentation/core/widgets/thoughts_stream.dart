@@ -12,7 +12,7 @@ class ThoughtsStream extends StatelessWidget {
     if (parts.isEmpty) {
       return Center(
         child: TerminalText.tiny(
-          '[NEURAL LINK ACTIVE. WAITING FOR THOUGHTS...]',
+          context.l10n.thoughtsWaiting,
           alpha: 0.3,
         ),
       );

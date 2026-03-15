@@ -12,22 +12,22 @@ class SopManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: 'SOP MANAGEMENT',
+      title: context.l10n.sopTitle,
       activePillar: NavPillar.configure,
       showBack: true,
       body: BiosFrame(
-        title: 'PROJECT PROCEDURES',
+        title: context.l10n.sopProjectProcedures,
         child: ListView(
           padding: EdgeInsets.all(AppSizes.space),
           children: [
             // Inline NEW PROPOSAL button
             TerminalButton(
-              label: 'NEW PROPOSAL',
+              label: context.l10n.sopNewProposal,
               onTap: () {},
             ),
             VSpace.x2,
             BiosSection(
-              title: 'ACTIVE PROCEDURES',
+              title: context.l10n.sopActiveProcedures,
               child: Column(
                 children: [
                   _buildSopItem(
@@ -47,12 +47,12 @@ class SopManagementScreen extends StatelessWidget {
             ),
             VSpace.x2,
             BiosSection(
-              title: 'DRAFT PROPOSALS',
+              title: context.l10n.sopDraftProposals,
               child: _buildSopItem(
                 context,
                 title: 'DOCKER-SECURITY-HARDENING',
                 version: 'DRAFT',
-                lastUpdated: 'PENDING SIGNATURE',
+                lastUpdated: context.l10n.sopPendingSignature,
                 isDraft: true,
               ),
             ),

@@ -7,36 +7,40 @@ import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import '../../app_router.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  static const _sections = <(String, List<(String, String, String)>)>[
-    ('AI & AGENTS', [
-      ('LLM MANAGEMENT', '[KEYS]', 'configureLlm'),
-      ('AGENT REGISTRY', '[MODELS]', 'configureAi'),
-    ]),
-    ('SECURITY', [
-      ('TOOL PERMISSIONS', '[SETUP]', 'configureToolPermissions'),
-      ('MCP MANAGEMENT', '[CONFIGURE]', 'configureMcp'),
-    ]),
-    ('GOVERNANCE', [
-      ('SOP MANAGEMENT', '[LIBRARY]', 'configureSop'),
-    ]),
-    ('SYSTEM', [
-      ('SYSTEM CHECKS', '[DIAGNOSE]', 'configureSystemChecks'),
-      ('PERMISSION RELAY', '[STATUS]', 'configurePaywall'),
-    ]),
-    ('OBSERVABILITY', [
-      ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
-    ]),
-  ];
+  static List<(String, List<(String, String, String)>)> _sections(
+      BuildContext context) {
+    return [
+      (context.l10n.settingsAiAgentsSection, [
+        ('LLM MANAGEMENT', '[KEYS]', 'configureLlm'),
+        ('AGENT REGISTRY', '[MODELS]', 'configureAi'),
+      ]),
+      (context.l10n.settingsSecuritySection, [
+        ('TOOL PERMISSIONS', '[SETUP]', 'configureToolPermissions'),
+        ('MCP MANAGEMENT', '[CONFIGURE]', 'configureMcp'),
+      ]),
+      (context.l10n.settingsGovernanceSection, [
+        ('SOP MANAGEMENT', '[LIBRARY]', 'configureSop'),
+      ]),
+      (context.l10n.settingsSystemSection, [
+        ('SYSTEM CHECKS', '[DIAGNOSE]', 'configureSystemChecks'),
+        ('PERMISSION RELAY', '[STATUS]', 'configurePaywall'),
+      ]),
+      (context.l10n.settingsObservabilitySection, [
+        ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
+      ]),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: 'CONFIGURE',
+      title: context.l10n.settingsTitle,
       activePillar: NavPillar.configure,
       showBack: false,
       body: BlocBuilder<McpCubit, McpState>(
@@ -49,7 +53,7 @@ class SettingsScreen extends StatelessWidget {
 
           return ListView(
             children: [
-              for (final section in _sections) ...[
+              for (final section in _sections(context)) ...[
                 BiosSection(
                   title: section.$1,
                   child: Column(
