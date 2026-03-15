@@ -51,23 +51,23 @@ class PocketCoderApi {
     return [];
   }
 
-  /// Fetches the raw content of an artifact.
-  Future<String> fetchArtifact(String path) async {
-    if (!ApiEndpoints.isSafeArtifactPath(path)) {
-      throw ArgumentError('Invalid or unsafe artifact path: $path');
+  /// Fetches the raw content of a file.
+  Future<String> fetchFile(String path) async {
+    if (!ApiEndpoints.isSafeFilePath(path)) {
+      throw ArgumentError('Invalid or unsafe file path: $path');
     }
     final response = await _pb.send(
-      ApiEndpoints.artifact(path),
+      ApiEndpoints.files(path),
       method: 'GET',
     );
     return response.toString();
   }
 
-  /// Returns the full URL for a workspace artifact.
-  String getArtifactUrl(String path) {
-    if (!ApiEndpoints.isSafeArtifactPath(path)) {
-      throw ArgumentError('Invalid or unsafe artifact path: $path');
+  /// Returns the full URL for a workspace file.
+  String getFileUrl(String path) {
+    if (!ApiEndpoints.isSafeFilePath(path)) {
+      throw ArgumentError('Invalid or unsafe file path: $path');
     }
-    return '${_pb.baseURL}${ApiEndpoints.artifact(path)}';
+    return '${_pb.baseURL}${ApiEndpoints.files(path)}';
   }
 }

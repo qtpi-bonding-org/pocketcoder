@@ -11,24 +11,23 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.
 import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_state.dart';
 
-class ArtifactScreen extends StatefulWidget {
+class FileScreen extends StatefulWidget {
   final String? initialPath;
 
-  const ArtifactScreen({super.key, this.initialPath});
+  const FileScreen({super.key, this.initialPath});
 
   @override
-  State<ArtifactScreen> createState() => _ArtifactScreenState();
+  State<FileScreen> createState() => _FileScreenState();
 }
 
-class _ArtifactScreenState extends State<ArtifactScreen> {
+class _FileScreenState extends State<FileScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialPath != null) {
+    final path = widget.initialPath;
+    if (path != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context
-            .read<ChatCubit>()
-            .fetchArtifactContent(widget.initialPath!);
+        context.read<ChatCubit>().fetchFileContent(path);
       });
     }
   }
@@ -47,7 +46,7 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
               ),
               TerminalAction(
                 label: 'CLEAR',
-                onTap: () => context.read<ChatCubit>().clearArtifact(),
+                onTap: () => context.read<ChatCubit>().clearFile(),
               ),
               TerminalAction(
                 label: 'BACK',
@@ -55,8 +54,8 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
               ),
             ],
             body: BiosFrame(
-              title: state.currentArtifactPath ?? 'DELIVERABLES & ARTIFACTS',
-              child: _buildArtifactContent(context, state),
+              title: state.currentFilePath ?? 'FILES',
+              child: _buildFileContent(context, state),
             ),
           );
         },
@@ -64,17 +63,17 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
     );
   }
 
-  Widget _buildArtifactContent(BuildContext context, ChatState state) {
+  Widget _buildFileContent(BuildContext context, ChatState state) {
     final colors = context.colorScheme;
 
-    if (state.currentArtifactPath == null) {
+    if (state.currentFilePath == null) {
       return Center(
         child: BiosSection(
           title: 'REGISTRY STATUS',
           child: Column(
             children: [
               Text(
-                'NO ARTIFACT SELECTED.',
+                'NO FILE SELECTED.',
                 style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
                   color: colors.onSurface.withValues(alpha: 0.5),
@@ -109,7 +108,7 @@ class _ArtifactScreenState extends State<ArtifactScreen> {
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.space),
       child: Text(
-        state.currentArtifactContent ?? 'EMPTY FILE',
+        state.currentFileContent ?? 'EMPTY FILE',
         style: TextStyle(
           fontFamily: AppFonts.bodyFamily,
           color: colors.onSurface,

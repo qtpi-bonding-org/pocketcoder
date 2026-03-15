@@ -265,23 +265,23 @@ class ChatCubit extends AppCubit<ChatState> {
     ));
   }
 
-  Future<void> fetchArtifactContent(String path) async {
-    logInfo('💬 [CommCubit] Fetching artifact: $path');
+  Future<void> fetchFileContent(String path) async {
+    logInfo('💬 [CommCubit] Fetching file: $path');
     emit(state.copyWith(
       status: UiFlowStatus.loading,
-      lastOperation: ChatOperation.fetchArtifact,
-      currentArtifactPath: path,
-      currentArtifactContent: null,
+      lastOperation: ChatOperation.fetchFile,
+      currentFilePath: path,
+      currentFileContent: null,
     ));
 
     try {
-      final content = await _repository.fetchArtifact(path);
+      final content = await _repository.fetchFile(path);
       emit(state.copyWith(
-        currentArtifactContent: content,
+        currentFileContent: content,
         status: UiFlowStatus.success,
       ));
     } catch (e) {
-      logError('💬 [CommCubit] Failed to fetch artifact: $e');
+      logError('💬 [CommCubit] Failed to fetch file: $e');
       emit(state.copyWith(
         error: e,
         status: UiFlowStatus.failure,
@@ -289,10 +289,10 @@ class ChatCubit extends AppCubit<ChatState> {
     }
   }
 
-  void clearArtifact() {
+  void clearFile() {
     emit(state.copyWith(
-      currentArtifactPath: null,
-      currentArtifactContent: null,
+      currentFilePath: null,
+      currentFileContent: null,
     ));
   }
 }
