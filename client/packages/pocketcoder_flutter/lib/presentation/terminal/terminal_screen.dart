@@ -53,9 +53,6 @@ class _TerminalViewState extends State<_TerminalView> {
     final opencodeId = chatState.opencodeId;
 
     context.read<SshTerminalCubit>().connect(
-          host: 'localhost',
-          port: 2222,
-          username: 'worker',
           sessionId: opencodeId,
         );
   }
@@ -236,7 +233,7 @@ class _TerminalViewState extends State<_TerminalView> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'SSH LINK: SANDBOX:2222',
+              'SSH LINK: ${context.read<SshTerminalCubit>().sshHost}:${SshTerminalCubit.sshPort}',
               style: TextStyle(
                 fontFamily: AppFonts.bodyFamily,
                 color: colors.onSurface,

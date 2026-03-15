@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:flutter/services.dart';
@@ -15,10 +14,9 @@ abstract class ExternalModule {
   Future<PocketBase> get pocketBase async {
     logInfo('PocketBaseInit: Starting...');
 
-    // Determine base URL based on environment
-    const baseUrl =
-        kDebugMode ? 'http://127.0.0.1:8090' : 'http://pocketbase:8090';
-    logDebug('PocketBaseInit: Using URL: $baseUrl');
+    // Default URL — overridden by user input on the onboarding screen
+    const baseUrl = 'http://127.0.0.1:8090';
+    logDebug('PocketBaseInit: Using default URL: $baseUrl');
 
     // Load Schema (for offline capabilities)
     String? schemaJson;

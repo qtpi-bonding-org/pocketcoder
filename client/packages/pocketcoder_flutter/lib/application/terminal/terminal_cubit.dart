@@ -24,10 +24,20 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
 
   SshTerminalCubit(this._pb) : super(SshTerminalState.initial());
 
+  /// SSH port exposed by the sandbox container.
+  static const int sshPort = 2222;
+
+  /// Derives the SSH host from the PocketBase URL.
+  /// The sandbox runs on the same server as PocketBase, just a different port.
+  String get sshHost {
+    try {
+      return Uri.parse(_pb.baseURL).host;
+    } catch (_) {
+      return 'localhost';
+    }
+  }
+
   Future<void> connect({
-    required String host,
-    required int port,
-    required String username,
     String? sessionId,
   }) async {
     if (state.isConnected) return;
@@ -42,13 +52,16 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
         await _syncPublicKey(keys.publicKeyStr);
       }
 
+      final host = sshHost;
+      const port = sshPort;
+
       logInfo(
-          '🌐 [Terminal] Connecting to $host:$port as $username (via Key)...');
+          '🌐 [Terminal] Connecting to $host:$port as worker (via Key)...');
       final socket = await SSHSocket.connect(host, port);
 
       _client = SSHClient(
         socket,
-        username: username,
+        username: 'worker',
         identities: [keys.privateKey],
       );
 
