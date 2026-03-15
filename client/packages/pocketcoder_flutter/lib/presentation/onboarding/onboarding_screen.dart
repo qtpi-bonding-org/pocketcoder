@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
@@ -41,7 +42,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       context.read<PocoCubit>().setExpression(PocoExpressions.scanning);
     });
 
+    _restoreSavedUrl();
     _checkInitialStatus();
+  }
+
+  Future<void> _restoreSavedUrl() async {
+    final saved = await getIt<FlutterSecureStorage>().read(key: 'pb_server_url');
+    if (saved != null && mounted) {
+      _urlController.text = saved;
+    }
   }
 
   Future<void> _checkInitialStatus() async {
@@ -56,10 +65,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _handleLogin(AuthCubit cubit) {
+  Future<void> _handleLogin(AuthCubit cubit) async {
     final url = _urlController.text.trim();
     if (url.isNotEmpty) {
-      getIt<IAuthRepository>().updateBaseUrl(url);
+      await getIt<IAuthRepository>().updateBaseUrl(url);
     }
     cubit.login(
       _emailController.text.trim(),

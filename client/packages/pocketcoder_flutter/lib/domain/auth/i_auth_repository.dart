@@ -13,7 +13,7 @@ abstract class IAuthRepository {
   String? get currentUserEmail;
   String? get currentUserRole;
 
-  void updateBaseUrl(String url);
+  Future<void> updateBaseUrl(String url);
 
   // --- Users ---
   Future<List<User>> getUsers();
