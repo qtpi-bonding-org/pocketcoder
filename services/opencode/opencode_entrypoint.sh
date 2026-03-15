@@ -71,6 +71,9 @@ fi
     tail -f /root/.local/share/opencode/log/*.log
 ) &
 
-# 4. Launch OpenCode immediately — don't block on Sandbox
+# 4. Launch OpenCode — don't block on Sandbox
+# docker-compose passes "serve --port 3000 ..." as args, running headless.
+# The Interface drives OpenCode entirely via the SDK/API, so no TUI is needed.
+# Users can still attach a TUI on-demand by SSH'ing in and running: opencode
 echo "🚀 Launching OpenCode Reasoning Engine..."
 exec opencode "$@"
