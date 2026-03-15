@@ -19,7 +19,7 @@ class AgentObservabilityScreen extends StatelessWidget {
       child: BlocBuilder<ObservabilityCubit, ObservabilityState>(
         builder: (context, state) {
           return PocketCoderShell(
-            title: 'PLATFORM OBSERVABILITY',
+            title: context.l10n.observabilityTitle,
             activePillar: NavPillar.configure,
             showBack: true,
             body: Column(
@@ -34,7 +34,7 @@ class AgentObservabilityScreen extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: TerminalButton(
-                      label: 'REFRESH',
+                      label: context.l10n.actionRefresh,
                       onTap: () =>
                           context.read<ObservabilityCubit>().refreshStats(),
                     ),
@@ -50,7 +50,7 @@ class AgentObservabilityScreen extends StatelessWidget {
                       SizedBox(
                         width: 250,
                         child: BiosFrame(
-                          title: 'REGISTRY',
+                          title: context.l10n.observabilityRegistry,
                           child: ListView(
                             padding: EdgeInsets.all(AppSizes.space),
                             children: [
@@ -94,7 +94,7 @@ class AgentObservabilityScreen extends StatelessWidget {
                         child: BiosFrame(
                           title: state.currentContainer != null
                               ? 'LOGS: ${state.currentContainer}'
-                              : 'SYSTEM LOG TERMINAL',
+                              : context.l10n.observabilityLogTerminal,
                           child: _buildLogTerminal(context, state),
                         ),
                       ),
@@ -116,16 +116,16 @@ class AgentObservabilityScreen extends StatelessWidget {
     }
     return Row(
       children: [
-        TerminalMetricBox(label: 'COST', value: stats.cumulativeCost),
+        TerminalMetricBox(label: context.l10n.observabilityCost, value: stats.cumulativeCost),
         HSpace.x2,
         TerminalMetricBox(
-            label: 'TOKENS', value: stats.cumulativeTokens.toString()),
+            label: context.l10n.observabilityTokens, value: stats.cumulativeTokens.toString()),
         HSpace.x2,
         TerminalMetricBox(
-            label: 'MSGS', value: stats.totalMessages.toString()),
+            label: context.l10n.observabilityMsgs, value: stats.totalMessages.toString()),
         HSpace.x2,
         TerminalMetricBox(
-            label: 'BACKEND', value: stats.backendStatus.toUpperCase()),
+            label: context.l10n.observabilityBackend, value: stats.backendStatus.toUpperCase()),
       ],
     );
   }
@@ -182,7 +182,7 @@ class AgentObservabilityScreen extends StatelessWidget {
     if (state.currentContainer == null) {
       return Center(
         child: TerminalText(
-          '>> SELECT CONTAINER FOR LOG STREAM\n>> AUTHENTICATED AS POCKETCODER ADMIN',
+          '${context.l10n.observabilitySelectContainer}\n>> AUTHENTICATED AS POCKETCODER ADMIN',
           textAlign: TextAlign.center,
           alpha: 0.3,
         ),

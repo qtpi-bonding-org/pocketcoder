@@ -36,15 +36,15 @@ class AgentManagementView extends StatelessWidget {
     return BlocBuilder<AiConfigCubit, AiConfigState>(
       builder: (context, state) {
         return PocketCoderShell(
-          title: 'AGENT REGISTRY',
+          title: context.l10n.agentTitle,
           activePillar: NavPillar.configure,
           showBack: true,
           body: BiosFrame(
-            title: 'MODELS & PERSONAS',
+            title: context.l10n.agentModelsPersonas,
             child: state.isLoading
-                ? const Center(
+                ? Center(
                     child: TerminalLoadingIndicator(
-                    label: 'SEARCHING...',
+                    label: context.l10n.agentSearching,
                   ))
                 : _buildAgentList(context, state),
           ),
@@ -58,7 +58,7 @@ class AgentManagementView extends StatelessWidget {
     if (state.agents.isEmpty) {
       return Center(
         child: Text(
-          'REGISTRY EMPTY.',
+          context.l10n.agentRegistryEmpty,
           style: TextStyle(
             color: colors.onSurface.withValues(alpha: 0.5),
             package: 'pocketcoder_flutter',
@@ -94,7 +94,7 @@ class AgentManagementView extends StatelessWidget {
         ),
         VSpace.x2,
         TerminalText.tiny(
-          'SELECT AGENT TO CONFIGURE',
+          context.l10n.agentSelectToConfigure,
           alpha: 0.5,
         ),
       ],
@@ -111,30 +111,30 @@ class AgentManagementView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: 'AGENT: ${agent.name.toUpperCase()}',
+        title: context.l10n.agentDialogTitle(agent.name.toUpperCase()),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TerminalTextField(
                 controller: nameController,
-                label: 'NAME',
+                label: context.l10n.agentNameLabel,
               ),
               VSpace.x2,
               TerminalTextField(
                 controller: descController,
-                label: 'DESCRIPTION',
+                label: context.l10n.agentDescriptionLabel,
                 maxLines: 2,
               ),
               VSpace.x2,
               _buildSelection(
                 context: dialogContext,
-                label: 'PROMPTS',
+                label: context.l10n.agentPromptsLabel,
                 currentValue: state.prompts.any((p) => p.id == selectedPromptId)
                     ? state.prompts
                         .firstWhere((p) => p.id == selectedPromptId)
                         .name
-                    : 'NONE',
+                    : context.l10n.agentNone,
                 onTap: () {
                   // TODO: Implement list picker
                 },
@@ -142,12 +142,12 @@ class AgentManagementView extends StatelessWidget {
               VSpace.x2,
               _buildSelection(
                 context: dialogContext,
-                label: 'MODELS',
+                label: context.l10n.agentModelsLabel,
                 currentValue: state.models.any((m) => m.id == selectedModelId)
                     ? state.models
                         .firstWhere((m) => m.id == selectedModelId)
                         .name
-                    : 'NONE SELECTED',
+                    : context.l10n.agentNoneSelected,
                 onTap: () {
                   // TODO: Implement list picker
                 },
@@ -155,8 +155,8 @@ class AgentManagementView extends StatelessWidget {
               VSpace.x2,
               _buildSelection(
                 context: dialogContext,
-                label: 'PARAMETERS',
-                currentValue: 'DEFAULT [TUNED]',
+                label: context.l10n.agentParametersLabel,
+                currentValue: context.l10n.agentDefaultTuned,
                 onTap: () {
                   // TODO: Implement parameters tuning
                 },
@@ -166,13 +166,13 @@ class AgentManagementView extends StatelessWidget {
         ),
         actions: [
           TerminalButton(
-            label: 'CANCEL',
+            label: context.l10n.actionCancel,
             isPrimary: false,
             onTap: () => Navigator.pop(dialogContext),
           ),
           HSpace.x2,
           TerminalButton(
-            label: 'SAVE',
+            label: context.l10n.actionSave,
             onTap: () {
               if (nameController.text.isNotEmpty &&
                   selectedPromptId.isNotEmpty) {

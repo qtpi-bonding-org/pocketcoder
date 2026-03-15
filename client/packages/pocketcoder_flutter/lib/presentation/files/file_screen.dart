@@ -39,16 +39,16 @@ class _FileScreenState extends State<FileScreen> {
       child: BlocBuilder<ChatCubit, ChatState>(
         builder: (context, state) {
           return PocketCoderShell(
-            title: 'SOURCE OUTPUT MANIFEST',
+            title: context.l10n.fileTitle,
             activePillar: NavPillar.chats,
             showBack: true,
             extraHeaderActions: [
               TerminalAction(
-                label: 'DASHBOARD',
+                label: context.l10n.fileDashboardAction,
                 onTap: () => context.goNamed(RouteNames.home),
               ),
               TerminalAction(
-                label: 'CLEAR',
+                label: context.l10n.fileClearAction,
                 onTap: () => context.read<ChatCubit>().clearFile(),
               ),
             ],
@@ -72,11 +72,11 @@ class _FileScreenState extends State<FileScreen> {
           child: Column(
             children: [
               TerminalText(
-                'NO FILE SELECTED.',
+                context.l10n.fileNoFileSelected,
                 alpha: 0.5,
               ),
               TerminalText.mini(
-                '>> SELECT FROM CHAT TO VIEW',
+                context.l10n.fileSelectFromChat,
                 alpha: 0.5,
               ),
             ],
@@ -88,7 +88,7 @@ class _FileScreenState extends State<FileScreen> {
     if (state.isLoading) {
       return Center(
         child: TerminalText(
-          'FETCHING DATA...',
+          context.l10n.fileFetching,
           color: colors.primary,
         ),
       );
@@ -97,7 +97,7 @@ class _FileScreenState extends State<FileScreen> {
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.space),
       child: TerminalText(
-        state.currentFileContent ?? 'EMPTY FILE',
+        state.currentFileContent ?? context.l10n.fileEmpty,
         size: TerminalTextSize.base,
       ),
     );

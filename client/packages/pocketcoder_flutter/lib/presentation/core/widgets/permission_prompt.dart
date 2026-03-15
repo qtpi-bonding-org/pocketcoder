@@ -45,7 +45,7 @@ class PermissionPrompt extends StatelessWidget {
               HSpace.x2,
               Expanded(
                 child: Text(
-                  "COMMANDER'S SIGNOFF",
+                  context.l10n.permissionSignoffTitle,
                   style: TextStyle(
                     color: terminalColors.warning,
                     fontSize: AppSizes.fontTiny,
@@ -58,7 +58,7 @@ class PermissionPrompt extends StatelessWidget {
           ),
           VSpace.x2,
           Text(
-            '${(request.source == "relay-go" ? "POCO" : request.source ?? "SYSTEM").toUpperCase()} IS REQUESTING PERMISSION:',
+            context.l10n.permissionRequestingLabel((request.source == "relay-go" ? "POCO" : request.source ?? "SYSTEM").toUpperCase()),
             style: TextStyle(
               color: terminalColors.warning.withValues(alpha: 0.8),
               fontSize: AppSizes.fontMini,
@@ -92,7 +92,7 @@ class PermissionPrompt extends StatelessWidget {
           if ((request.patterns ?? []).isNotEmpty) ...[
             VSpace.x2,
             Text(
-              'Patterns:',
+              context.l10n.permissionPatternsLabel,
               style: TextStyle(
                 color: terminalColors.warning.withValues(alpha: 0.5),
                 fontSize: AppSizes.fontMini,
@@ -112,7 +112,7 @@ class PermissionPrompt extends StatelessWidget {
             children: [
               Expanded(
                 child: TerminalButton(
-                  label: 'DENY',
+                  label: context.l10n.actionDeny,
                   isPrimary: false,
                   color: terminalColors.danger,
                   onTap: onDeny,
@@ -121,7 +121,7 @@ class PermissionPrompt extends StatelessWidget {
               HSpace.x2,
               Expanded(
                 child: TerminalButton(
-                  label: 'AUTHORIZE',
+                  label: context.l10n.actionAuthorize,
                   onTap: onAuthorize,
                 ),
               ),

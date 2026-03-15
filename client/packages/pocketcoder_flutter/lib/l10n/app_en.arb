@@ -1,9 +1,10 @@
 {
   "@@locale": "en",
-  "appTitle": "Flutter Template",
+  "appTitle": "PocketCoder",
   "@appTitle": {
     "description": "The title of the application"
   },
+
   "errorNetwork": "Network error occurred",
   "errorTimeout": "Operation timed out",
   "errorAuthUnauthorized": "Unauthorized access",
@@ -32,5 +33,274 @@
 
   "toolPermissionsFetchFailed": "Unable to load tool permissions",
   "toolPermissionsUpdateFailed": "Failed to update tool permissions",
-  "toolPermissionsError": "Tool permissions error"
+  "toolPermissionsError": "Tool permissions error",
+
+  "actionCancel": "CANCEL",
+  "actionSave": "SAVE",
+  "actionClose": "CLOSE",
+  "actionDeny": "DENY",
+  "actionAuthorize": "AUTHORIZE",
+  "actionRefresh": "REFRESH",
+  "actionBack": "BACK",
+  "actionChange": "CHANGE",
+  "actionCreate": "CREATE",
+  "actionAddNew": "ADD NEW",
+  "actionRestore": "RESTORE",
+  "actionConfigure": "CONFIGURE",
+  "actionReject": "REJECT",
+
+  "navChats": "CHATS",
+  "navMonitor": "MONITOR",
+  "navConfigure": "CONFIGURE",
+
+  "bootLoadError": "SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS...",
+  "bootPocoIntro": "Hi! I'm Poco, your Private Operations Coding Officer. I help you build software on your own terms — private, powerful, and under your control. Let's get started!",
+  "bootCheckingConnection": "Checking secure connection...",
+  "bootWelcomeBack": "Welcome back.",
+  "bootSystemsNominal": "Systems nominal. I'm ready.",
+  "bootConnectionFailed": "Connection failed. I'll take you back to reconnect.",
+
+  "onboardingTitle": "IDENTIFICATION UNLOCK",
+  "onboardingPocoChallengeMessage": "WHO GOES THERE? IDENTIFY YOURSELF. ENTER YOUR SERVER ADDRESS AND CREDENTIALS TO PROVE YOU BELONG HERE.",
+  "onboardingPocoWelcome": "Identity verified! Welcome home, Commander. All systems are at your disposal.",
+  "onboardingAccessDenied": "ACCESS DENIED.",
+  "onboardingProcessing": "PROCESSING...",
+  "onboardingLogin": "LOGIN",
+  "onboardingHomeServer": "HOME SERVER",
+  "onboardingIdentityLabel": "IDENTITY",
+  "onboardingEmailHint": "ENTER EMAIL",
+  "onboardingPassphraseLabel": "PASSPHRASE",
+  "onboardingPasswordHint": "ENTER PASSWORD",
+  "onboardingAuthenticating": "AUTHENTICATING",
+
+  "homeTitle": "CHATS",
+  "homeLoadingChats": "LOADING CHATS",
+  "homeErrorPrefix": "ERROR: {error}",
+  "@homeErrorPrefix": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "homeNewChat": "NEW CHAT",
+  "homeNoChats": "No active chats found.",
+
+  "chatSessionTitle": "CHAT SESSION",
+  "chatTerminalAction": "TERMINAL",
+  "chatFilesAction": "FILES",
+  "chatNewCapabilityRequest": "[!] NEW CAPABILITY REQUEST RECEIVED",
+  "chatThinking": "THINKING",
+  "chatModelLabel": "MODEL:",
+  "chatModelDefault": "DEFAULT",
+  "chatModelPerChat": "[CHAT]",
+  "chatSelectModelTitle": "SELECT MODEL",
+  "chatUseGlobalDefault": "USE GLOBAL DEFAULT",
+
+  "llmTitle": "LLM MANAGEMENT",
+  "llmLoadingProviders": "LOADING PROVIDERS",
+  "llmActiveModelSection": "ACTIVE MODEL",
+  "llmProvidersSection": "PROVIDERS",
+  "llmApiKeysSection": "API KEYS",
+  "llmGlobalDefault": "GLOBAL DEFAULT",
+  "llmNotSet": "NOT SET",
+  "llmAddKeyHint": "ADD AN API KEY TO ENABLE MODEL SELECTION",
+  "llmNoProviders": "NO PROVIDERS AVAILABLE",
+  "llmConnected": "[ CONNECTED ]",
+  "llmNoKey": "[ NO KEY ]",
+  "llmModelsAvailable": "{count} MODEL(S) AVAILABLE",
+  "@llmModelsAvailable": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "llmUpdateKey": "UPDATE KEY",
+  "llmAddKey": "ADD KEY",
+  "llmModelsButton": "MODELS",
+  "llmApiKeyDialogTitle": "API KEY: {provider}",
+  "@llmApiKeyDialogTitle": {
+    "placeholders": {
+      "provider": { "type": "String" }
+    }
+  },
+  "llmEnterCredentials": "Enter credentials for {provider}:",
+  "@llmEnterCredentials": {
+    "placeholders": {
+      "provider": { "type": "String" }
+    }
+  },
+  "llmSelectModelTitle": "SELECT MODEL",
+  "llmProviderModelsTitle": "{provider} MODELS",
+  "@llmProviderModelsTitle": {
+    "placeholders": {
+      "provider": { "type": "String" }
+    }
+  },
+  "llmNoModels": "NO MODELS LISTED",
+  "llmSelect": "[ SELECT ]",
+
+  "mcpTitle": "MCP MANAGEMENT",
+  "mcpCapabilitiesRegistry": "CAPABILITIES REGISTRY",
+  "mcpPendingApproval": "PENDING APPROVAL",
+  "mcpActiveCapabilities": "ACTIVE CAPABILITIES",
+  "mcpNoCapabilities": "NO CAPABILITIES REGISTERED",
+  "mcpImageLabel": "IMAGE: {image}",
+  "@mcpImageLabel": {
+    "placeholders": {
+      "image": { "type": "String" }
+    }
+  },
+  "mcpPurposeLabel": "PURPOSE: {reason}",
+  "@mcpPurposeLabel": {
+    "placeholders": {
+      "reason": { "type": "String" }
+    }
+  },
+  "mcpRequiredConfig": "REQUIRED CONFIG:",
+  "mcpAuthorizeCap": "AUTHORIZE CAPABILITY",
+  "mcpEditConfig": "EDIT CONFIGURATION",
+  "mcpRevoke": "REVOKE",
+  "mcpAuthorizeDialogTitle": "AUTHORIZE: {name}",
+  "@mcpAuthorizeDialogTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "mcpUpdateConfigDialogTitle": "UPDATE CONFIG: {name}",
+  "@mcpUpdateConfigDialogTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "mcpNoConfigRequired": "No configuration required.",
+  "mcpEnterSecrets": "Enter required secrets:",
+
+  "settingsTitle": "CONFIGURE",
+  "settingsAiAgentsSection": "AI & AGENTS",
+  "settingsSecuritySection": "SECURITY",
+  "settingsGovernanceSection": "GOVERNANCE",
+  "settingsSystemSection": "SYSTEM",
+  "settingsObservabilitySection": "OBSERVABILITY",
+
+  "agentTitle": "AGENT REGISTRY",
+  "agentModelsPersonas": "MODELS & PERSONAS",
+  "agentSearching": "SEARCHING...",
+  "agentRegistryEmpty": "REGISTRY EMPTY.",
+  "agentSelectToConfigure": "SELECT AGENT TO CONFIGURE",
+  "agentDialogTitle": "AGENT: {name}",
+  "@agentDialogTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "agentNameLabel": "NAME",
+  "agentDescriptionLabel": "DESCRIPTION",
+  "agentPromptsLabel": "PROMPTS",
+  "agentModelsLabel": "MODELS",
+  "agentParametersLabel": "PARAMETERS",
+  "agentNone": "NONE",
+  "agentNoneSelected": "NONE SELECTED",
+  "agentDefaultTuned": "DEFAULT [TUNED]",
+
+  "toolPermissionsTitle": "GATEKEEPER CONFIGURATION",
+  "toolPermissionsFrameTitle": "TOOL PERMISSIONS",
+  "toolPermissionsLoading": "LOADING PERMISSIONS",
+  "toolPermissionsEmpty": "NO PERMISSIONS DEFINED.",
+  "toolPermissionsAdd": "ADD PERMISSION",
+  "toolPermissionsScopeAgent": "AGENT",
+  "toolPermissionsScopeGlobal": "GLOBAL",
+  "toolPermissionsAddTitle": "ADD TOOL PERMISSION",
+  "toolPermissionsToolLabel": "TOOL (e.g. bash, edit, cao_*)",
+  "toolPermissionsPatternLabel": "PATTERN (e.g. *, git *, rm *)",
+  "toolPermissionsActionLabel": "ACTION:",
+
+  "terminalTitle": "TERMINAL MIRROR",
+  "terminalTransfer": "TRANSFER",
+  "terminalReconnect": "RECONNECT",
+  "terminalConnecting": "ESTABLISHING SSH LINK",
+  "terminalConnectionFailed": "CONNECTION FAILED",
+  "terminalRetry": "RETRY CONNECTION",
+  "terminalSftpTitle": "SFTP TRANSFER",
+  "terminalDestinationPath": "DESTINATION PATH",
+  "terminalUpload": "UPLOAD",
+  "terminalConnectionStatus": "CONNECTION_STATUS",
+  "terminalSshLink": "SSH LINK: {host}:{port}",
+  "@terminalSshLink": {
+    "placeholders": {
+      "host": { "type": "String" },
+      "port": { "type": "String" }
+    }
+  },
+  "terminalOnline": "ONLINE",
+  "terminalOffline": "OFFLINE",
+
+  "monitorTitle": "MONITOR",
+  "monitorFetchingTelemetry": "FETCHING TELEMETRY",
+  "monitorSystemHealth": "SYSTEM HEALTH",
+  "monitorKeyMetrics": "KEY METRICS",
+  "monitorTokenUsage": "TOKEN USAGE BY MODEL",
+  "monitorAgentActivity": "AGENT ACTIVITY",
+  "monitorTelemetryUnavailable": "TELEMETRY UNAVAILABLE",
+  "monitorNoData": "NO DATA — TAP REFRESH",
+  "monitorMessagesLabel": "MESSAGES",
+  "monitorCostLabel": "COST",
+  "monitorTokensLabel": "TOKENS",
+
+  "fileTitle": "SOURCE OUTPUT MANIFEST",
+  "fileDashboardAction": "DASHBOARD",
+  "fileClearAction": "CLEAR",
+  "fileNoFileSelected": "NO FILE SELECTED.",
+  "fileSelectFromChat": ">> SELECT FROM CHAT TO VIEW",
+  "fileFetching": "FETCHING DATA...",
+  "fileEmpty": "EMPTY FILE",
+
+  "sopTitle": "SOP MANAGEMENT",
+  "sopProjectProcedures": "PROJECT PROCEDURES",
+  "sopNewProposal": "NEW PROPOSAL",
+  "sopActiveProcedures": "ACTIVE PROCEDURES",
+  "sopDraftProposals": "DRAFT PROPOSALS",
+  "sopPendingSignature": "PENDING SIGNATURE",
+
+  "systemChecksTitle": "SYSTEM CHECKS",
+  "systemChecksDiagnostics": "SYSTEM DIAGNOSTICS",
+  "systemChecksEmpty": "NO DIAGNOSTICS AVAILABLE",
+
+  "observabilityTitle": "PLATFORM OBSERVABILITY",
+  "observabilityRegistry": "REGISTRY",
+  "observabilityLogTerminal": "SYSTEM LOG TERMINAL",
+  "observabilityCost": "COST",
+  "observabilityTokens": "TOKENS",
+  "observabilityMsgs": "MSGS",
+  "observabilityBackend": "BACKEND",
+  "observabilitySelectContainer": ">> SELECT CONTAINER FOR LOG STREAM",
+
+  "relayTitle": "PERMISSION RELAY",
+  "relaySubsystem": "RELAY SUBSYSTEM",
+  "relayCheckingStatus": "CHECKING RELAY STATUS...",
+  "relayActive": ">>> RELAY ACTIVE <<<",
+  "relaySubsystemsNominal": "SUBSYSTEMS NOMINAL",
+  "relayConfigSection": "RELAY CONFIGURATION",
+  "relayActivate": "ACTIVATE RELAY",
+
+  "deployTitle": "DEPLOY POCKETCODER",
+  "deploySelectProvider": "SELECT PROVIDER",
+  "deployChooseProvider": "CHOOSE WHERE TO DEPLOY YOUR INSTANCE",
+  "deployProBadge": "PRO",
+
+  "permissionSignoffTitle": "COMMANDER'S SIGNOFF",
+  "permissionRequestingLabel": "{source} IS REQUESTING PERMISSION:",
+  "@permissionRequestingLabel": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "permissionPatternsLabel": "Patterns:",
+  "questionIncomingTitle": "INCOMING QUERY",
+  "questionPocoAsking": "POCO IS ASKING:",
+  "questionSendReply": "SEND REPLY",
+  "thoughtsWaiting": "[NEURAL LINK ACTIVE. WAITING FOR THOUGHTS...]",
+  "notificationSignalReceived": "SIGNAL RECEIVED: {title}",
+  "@notificationSignalReceived": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  }
 }

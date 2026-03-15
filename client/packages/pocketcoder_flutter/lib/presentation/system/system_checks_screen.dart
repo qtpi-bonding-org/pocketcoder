@@ -31,11 +31,11 @@ class _SystemChecksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: 'SYSTEM CHECKS',
+      title: context.l10n.systemChecksTitle,
       activePillar: NavPillar.configure,
       showBack: true,
       body: BiosFrame(
-        title: 'SYSTEM DIAGNOSTICS',
+        title: context.l10n.systemChecksDiagnostics,
         child: BlocBuilder<HealthCubit, HealthState>(
           builder: (context, state) {
             return Column(
@@ -46,7 +46,7 @@ class _SystemChecksView extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: TerminalButton(
-                      label: 'REFRESH',
+                      label: context.l10n.actionRefresh,
                       onTap: () => context.read<HealthCubit>().refresh(),
                     ),
                   ),
@@ -55,7 +55,7 @@ class _SystemChecksView extends StatelessWidget {
                   child: state.checks.isEmpty && !state.isLoading
                       ? Center(
                           child: TerminalText(
-                            'NO DIAGNOSTICS AVAILABLE',
+                            context.l10n.systemChecksEmpty,
                             alpha: 0.5,
                           ),
                         )

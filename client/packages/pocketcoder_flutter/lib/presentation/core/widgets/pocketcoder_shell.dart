@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
@@ -38,7 +39,7 @@ class PocketCoderShell extends StatelessWidget {
     final headerActions = <TerminalAction>[
       if (showBack)
         TerminalAction(
-          label: 'BACK',
+          label: context.l10n.actionBack,
           onTap: () => AppNavigation.back(context),
         ),
       ...?extraHeaderActions,
@@ -56,7 +57,7 @@ class PocketCoderShell extends StatelessWidget {
   List<TerminalAction> _buildPillarActions(BuildContext context) {
     return [
       TerminalAction(
-        label: 'CHATS',
+        label: context.l10n.navChats,
         isActive: activePillar == NavPillar.chats,
         onTap: () {
           if (activePillar != NavPillar.chats) {
@@ -65,7 +66,7 @@ class PocketCoderShell extends StatelessWidget {
         },
       ),
       TerminalAction(
-        label: 'MONITOR',
+        label: context.l10n.navMonitor,
         isActive: activePillar == NavPillar.monitor,
         onTap: () {
           if (activePillar != NavPillar.monitor) {
@@ -74,7 +75,7 @@ class PocketCoderShell extends StatelessWidget {
         },
       ),
       TerminalAction(
-        label: 'CONFIGURE',
+        label: context.l10n.navConfigure,
         isActive: activePillar == NavPillar.configure,
         hasBadge: configureBadge,
         onTap: () {

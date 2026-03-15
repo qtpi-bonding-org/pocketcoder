@@ -62,7 +62,7 @@ class _TerminalViewState extends State<_TerminalView> {
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
     return PocketCoderShell(
-      title: 'TERMINAL MIRROR',
+      title: context.l10n.terminalTitle,
       activePillar: NavPillar.chats,
       showBack: true,
       body: Column(
@@ -77,12 +77,12 @@ class _TerminalViewState extends State<_TerminalView> {
             child: Row(
               children: [
                 TerminalButton(
-                  label: 'TRANSFER',
+                  label: context.l10n.terminalTransfer,
                   onTap: () => _pickAndUploadFile(context),
                 ),
                 HSpace.x2,
                 TerminalButton(
-                  label: 'RECONNECT',
+                  label: context.l10n.terminalReconnect,
                   onTap: _connect,
                 ),
               ],
@@ -104,9 +104,9 @@ class _TerminalViewState extends State<_TerminalView> {
                   final cubit = context.read<SshTerminalCubit>();
 
                   if (state.isConnecting) {
-                    return const Center(
+                    return Center(
                       child: TerminalLoadingIndicator(
-                        label: 'ESTABLISHING SSH LINK',
+                        label: context.l10n.terminalConnecting,
                       ),
                     );
                   }
@@ -117,7 +117,7 @@ class _TerminalViewState extends State<_TerminalView> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           TerminalText(
-                            'CONNECTION FAILED',
+                            context.l10n.terminalConnectionFailed,
                             color: colors.error,
                             weight: TerminalTextWeight.heavy,
                           ),
@@ -127,7 +127,7 @@ class _TerminalViewState extends State<_TerminalView> {
                           ),
                           VSpace.x4,
                           TerminalButton(
-                              label: 'RETRY CONNECTION', onTap: _connect),
+                              label: context.l10n.terminalRetry, onTap: _connect),
                         ],
                       ),
                     );
@@ -171,7 +171,7 @@ class _TerminalViewState extends State<_TerminalView> {
       context: context,
       builder: (dialogContext) {
         return TerminalDialog(
-          title: 'SFTP TRANSFER',
+          title: context.l10n.terminalSftpTitle,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,19 +182,19 @@ class _TerminalViewState extends State<_TerminalView> {
               VSpace.x2,
               TerminalTextField(
                 controller: destinationController,
-                label: 'DESTINATION PATH',
+                label: context.l10n.terminalDestinationPath,
                 hint: '/home/worker/$fileName',
               ),
             ],
           ),
           actions: [
             TerminalButton(
-              label: 'CANCEL',
+              label: context.l10n.actionCancel,
               onTap: () => Navigator.of(dialogContext).pop(),
             ),
             HSpace.x2,
             TerminalButton(
-              label: 'UPLOAD',
+              label: context.l10n.terminalUpload,
               onTap: () {
                 Navigator.of(dialogContext).pop();
                 context.read<SshTerminalCubit>().uploadFile(
@@ -214,15 +214,15 @@ class _TerminalViewState extends State<_TerminalView> {
     return BlocBuilder<StatusCubit, StatusState>(builder: (context, state) {
       final isConnected = state.isConnected;
       return BiosSection(
-        title: 'CONNECTION_STATUS',
+        title: context.l10n.terminalConnectionStatus,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             TerminalText.mini(
-              'SSH LINK: ${context.read<SshTerminalCubit>().sshHost}:${SshTerminalCubit.sshPort}',
+              context.l10n.terminalSshLink(context.read<SshTerminalCubit>().sshHost, '${SshTerminalCubit.sshPort}'),
             ),
             TerminalText.label(
-              '[ ${isConnected ? 'ONLINE' : 'OFFLINE'} ]',
+              '[ ${isConnected ? context.l10n.terminalOnline : context.l10n.terminalOffline} ]',
               color: isConnected
                   ? context.terminalColors.warning
                   : context.terminalColors.danger,

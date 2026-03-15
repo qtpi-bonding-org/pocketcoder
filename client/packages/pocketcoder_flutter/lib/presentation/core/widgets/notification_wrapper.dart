@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import '../../../app_router.dart';
 
@@ -59,7 +60,7 @@ class _NotificationWrapperState extends State<NotificationWrapper> {
     try {
       final feedback = GetIt.I<IFeedbackService>();
       feedback.show(FeedbackMessage(
-        message: "SIGNAL RECEIVED: ${payload.title}",
+        message: context.l10n.notificationSignalReceived(payload.title),
         type: MessageType.info,
       ));
     } catch (_) {

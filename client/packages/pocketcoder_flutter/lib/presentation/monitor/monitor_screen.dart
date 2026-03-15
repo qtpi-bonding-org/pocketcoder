@@ -34,7 +34,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
     return BlocBuilder<ObservabilityCubit, ObservabilityState>(
       builder: (context, state) {
         return PocketCoderShell(
-          title: 'MONITOR',
+          title: context.l10n.monitorTitle,
           activePillar: NavPillar.monitor,
           showBack: false,
           body: _buildBody(context, state),
@@ -55,7 +55,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: TerminalButton(
-              label: 'REFRESH',
+              label: context.l10n.actionRefresh,
               isLoading: state.isLoading,
               onTap: () => context.read<ObservabilityCubit>().refreshStats(),
             ),
@@ -63,46 +63,46 @@ class _MonitorScreenState extends State<MonitorScreen> {
           VSpace.x2,
 
           if (state.isLoading && state.stats == null)
-            const Center(
-              child: TerminalLoadingIndicator(label: 'FETCHING TELEMETRY'),
+            Center(
+              child: TerminalLoadingIndicator(label: context.l10n.monitorFetchingTelemetry),
             )
           else if (state.stats case final stats?) ...[
             // System Health
             BiosSection(
-              title: 'SYSTEM HEALTH',
+              title: context.l10n.monitorSystemHealth,
               child: _buildHealthStatus(context, stats),
             ),
 
             // Key Metrics
             BiosSection(
-              title: 'KEY METRICS',
+              title: context.l10n.monitorKeyMetrics,
               child: _buildMetricsGrid(context, stats),
             ),
 
             // Token Usage by Model
             if (stats.tokenUsage.isNotEmpty)
               BiosSection(
-                title: 'TOKEN USAGE BY MODEL',
+                title: context.l10n.monitorTokenUsage,
                 child: _buildTokenUsage(context, stats.tokenUsage),
               ),
 
             // Agent Activity (CAO Tasks)
             if (stats.tasks.isNotEmpty)
               BiosSection(
-                title: 'AGENT ACTIVITY',
+                title: context.l10n.monitorAgentActivity,
                 child: _buildAgentActivity(context, stats.tasks),
               ),
           ] else if (state.hasError)
             Center(
               child: TerminalText.label(
-                'TELEMETRY UNAVAILABLE',
+                context.l10n.monitorTelemetryUnavailable,
                 color: colors.error,
               ),
             )
           else
             Center(
               child: TerminalText(
-                'NO DATA — TAP REFRESH',
+                context.l10n.monitorNoData,
                 alpha: 0.5,
               ),
             ),
@@ -138,17 +138,17 @@ class _MonitorScreenState extends State<MonitorScreen> {
     return Row(
       children: [
         TerminalMetricBox(
-          label: 'MESSAGES',
+          label: context.l10n.monitorMessagesLabel,
           value: stats.totalMessages.toString(),
         ),
         HSpace.x1,
         TerminalMetricBox(
-          label: 'COST',
+          label: context.l10n.monitorCostLabel,
           value: stats.cumulativeCost,
         ),
         HSpace.x1,
         TerminalMetricBox(
-          label: 'TOKENS',
+          label: context.l10n.monitorTokensLabel,
           value: _formatNumber(stats.cumulativeTokens),
         ),
       ],
