@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_fiel
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 
 class McpManagementScreen extends StatelessWidget {
@@ -83,12 +84,9 @@ class _McpManagementView extends StatelessWidget {
                       Center(
                         child: Padding(
                           padding: EdgeInsets.all(AppSizes.space * 4),
-                          child: Text(
+                          child: TerminalText(
                             'NO CAPABILITIES REGISTERED',
-                            style: TextStyle(
-                              color: colors.onSurface.withValues(alpha: 0.5),
-                              fontFamily: AppFonts.bodyFamily,
-                            ),
+                            alpha: 0.5,
                           ),
                         ),
                       ),
@@ -124,59 +122,39 @@ class _McpManagementView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              TerminalText(
                 server.name.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface,
-                  fontWeight: AppFonts.heavy,
-                ),
+                weight: TerminalTextWeight.heavy,
               ),
-              Text(
+              TerminalText(
                 server.status.name.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: isPending
-                      ? colors.primary
-                      : colors.onSurface.withValues(alpha: 0.7),
-                  fontSize: AppSizes.fontTiny,
-                  fontWeight: AppFonts.heavy,
-                ),
+                size: TerminalTextSize.tiny,
+                weight: TerminalTextWeight.heavy,
+                color: isPending ? colors.primary : null,
+                alpha: isPending ? null : 0.7,
               ),
             ],
           ),
           if (server.image?.isNotEmpty == true) ...[
             VSpace.x1,
-            Text(
+            TerminalText.mini(
               'IMAGE: ${server.image}',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface.withValues(alpha: 0.5),
-                fontSize: AppSizes.fontMini,
-              ),
+              alpha: 0.5,
             ),
           ],
           if (server.reason?.isNotEmpty == true) ...[
             VSpace.x1,
-            Text(
+            TerminalText.mini(
               'PURPOSE: ${server.reason}',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface.withValues(alpha: 0.5),
-                fontSize: AppSizes.fontMini,
-              ),
+              alpha: 0.5,
             ),
           ],
           if (isPending && server.configSchema != null) ...[
             VSpace.x1,
-            Text(
+            TerminalText.label(
               'REQUIRED CONFIG:',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.primary.withValues(alpha: 0.8),
-                fontSize: AppSizes.fontMini,
-                fontWeight: AppFonts.heavy,
-              ),
+              color: colors.primary,
+              alpha: 0.8,
             ),
             VSpace.x1,
             ..._buildConfigSchemaList(context, server.configSchema),
@@ -226,7 +204,6 @@ class _McpManagementView extends StatelessWidget {
 
   List<Widget> _buildConfigSchemaList(
       BuildContext context, dynamic configSchema) {
-    final colors = Theme.of(context).colorScheme;
     if (configSchema == null) return [];
 
     final Map<String, dynamic> schema;
@@ -239,13 +216,9 @@ class _McpManagementView extends StatelessWidget {
     return schema.entries.map((entry) {
       return Padding(
         padding: EdgeInsets.only(left: AppSizes.space),
-        child: Text(
+        child: TerminalText.mini(
           '• ${entry.key}',
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: colors.onSurface.withValues(alpha: 0.6),
-            fontSize: AppSizes.fontMini,
-          ),
+          alpha: 0.6,
         ),
       );
     }).toList();
@@ -282,33 +255,23 @@ class _McpManagementView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (server.image?.isNotEmpty == true) ...[
-              Text(
+              TerminalText(
                 'IMAGE: ${server.image}',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface.withValues(alpha: 0.7),
-                  fontSize: AppSizes.fontSmall,
-                ),
+                alpha: 0.7,
               ),
               VSpace.x2,
             ],
             if (controllers.isEmpty) ...[
-              Text(
+              TerminalText(
                 'No configuration required.',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface.withValues(alpha: 0.7),
-                  fontSize: AppSizes.fontStandard,
-                ),
+                size: TerminalTextSize.base,
+                alpha: 0.7,
               ),
             ] else ...[
-              Text(
+              TerminalText(
                 'Enter required secrets:',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface.withValues(alpha: 0.7),
-                  fontSize: AppSizes.fontStandard,
-                ),
+                size: TerminalTextSize.base,
+                alpha: 0.7,
               ),
               VSpace.x2,
               ...controllers.entries.map((entry) {

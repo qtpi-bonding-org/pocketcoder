@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
 class LlmManagementScreen extends StatelessWidget {
@@ -96,16 +97,14 @@ class _LlmManagementView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
+                  child: TerminalText(
                     currentModel?.toUpperCase() ?? 'NOT SET',
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: currentModel != null
-                          ? colors.primary
-                          : colors.onSurface.withValues(alpha: 0.5),
-                      fontSize: AppSizes.fontStandard,
-                      fontWeight: AppFonts.heavy,
-                    ),
+                    size: TerminalTextSize.base,
+                    weight: TerminalTextWeight.heavy,
+                    color: currentModel != null
+                        ? colors.primary
+                        : null,
+                    alpha: currentModel != null ? null : 0.5,
                   ),
                 ),
                 TerminalButton(
@@ -118,13 +117,9 @@ class _LlmManagementView extends StatelessWidget {
             ),
             if (allModels.isEmpty) ...[
               VSpace.x1,
-              Text(
+              TerminalText.mini(
                 'ADD AN API KEY TO ENABLE MODEL SELECTION',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface.withValues(alpha: 0.5),
-                  fontSize: AppSizes.fontMini,
-                ),
+                alpha: 0.5,
               ),
             ],
           ],
@@ -136,18 +131,13 @@ class _LlmManagementView extends StatelessWidget {
   // ── PROVIDER LIST ──
 
   Widget _buildProviderList(BuildContext context, LlmState state) {
-    final colors = context.colorScheme;
-
     if (state.providers.isEmpty) {
       return Padding(
         padding: EdgeInsets.all(AppSizes.space * 2),
         child: Center(
-          child: Text(
+          child: TerminalText(
             'NO PROVIDERS AVAILABLE',
-            style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
-              color: colors.onSurface.withValues(alpha: 0.5),
-            ),
+            alpha: 0.5,
           ),
         ),
       );
@@ -176,36 +166,22 @@ class _LlmManagementView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              TerminalText(
                 provider.name.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface,
-                  fontWeight: AppFonts.heavy,
-                ),
+                weight: TerminalTextWeight.heavy,
               ),
-              Text(
+              TerminalText.label(
                 hasKey ? '[ CONNECTED ]' : '[ NO KEY ]',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: hasKey
-                      ? colors.primary
-                      : colors.onSurface.withValues(alpha: 0.5),
-                  fontSize: AppSizes.fontMini,
-                  fontWeight: AppFonts.heavy,
-                ),
+                color: hasKey ? colors.primary : null,
+                alpha: hasKey ? null : 0.5,
               ),
             ],
           ),
           if (modelCount > 0) ...[
             VSpace.x1,
-            Text(
+            TerminalText.mini(
               '$modelCount MODEL${modelCount == 1 ? '' : 'S'} AVAILABLE',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface.withValues(alpha: 0.5),
-                fontSize: AppSizes.fontMini,
-              ),
+              alpha: 0.5,
             ),
           ],
           VSpace.x1,
@@ -254,21 +230,13 @@ class _LlmManagementView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TerminalText(
                       providerName.toUpperCase(),
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: colors.onSurface,
-                        fontWeight: AppFonts.heavy,
-                      ),
+                      weight: TerminalTextWeight.heavy,
                     ),
-                    Text(
+                    TerminalText.mini(
                       _maskKeyPreview(key.envVars),
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: colors.onSurface.withValues(alpha: 0.5),
-                        fontSize: AppSizes.fontMini,
-                      ),
+                      alpha: 0.5,
                     ),
                   ],
                 ),
@@ -313,13 +281,9 @@ class _LlmManagementView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
+            TerminalText(
               'Enter credentials for ${provider.name}:',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: Theme.of(dialogContext).colorScheme.onSurface.withValues(alpha: 0.7),
-                fontSize: AppSizes.fontSmall,
-              ),
+              alpha: 0.7,
             ),
             VSpace.x2,
             ...controllers.entries.map((entry) {
@@ -392,14 +356,9 @@ class _LlmManagementView extends StatelessWidget {
                         color: colors.onSurface.withValues(alpha: 0.2),
                       ),
                     ),
-                    child: Text(
+                    child: TerminalText(
                       model.toUpperCase(),
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: colors.onSurface,
-                        fontWeight: AppFonts.heavy,
-                        fontSize: AppSizes.fontSmall,
-                      ),
+                      weight: TerminalTextWeight.heavy,
                     ),
                   ),
                 );
@@ -431,12 +390,9 @@ class _LlmManagementView extends StatelessWidget {
           height: 300,
           child: models.isEmpty
               ? Center(
-                  child: Text(
+                  child: TerminalText(
                     'NO MODELS LISTED',
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: colors.onSurface.withValues(alpha: 0.5),
-                    ),
+                    alpha: 0.5,
                   ),
                 )
               : ListView.builder(
@@ -463,24 +419,14 @@ class _LlmManagementView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
+                              child: TerminalText(
                                 model.toUpperCase(),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.bodyFamily,
-                                  color: colors.onSurface,
-                                  fontSize: AppSizes.fontSmall,
-                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            Text(
+                            TerminalText.label(
                               '[ SELECT ]',
-                              style: TextStyle(
-                                fontFamily: AppFonts.bodyFamily,
-                                color: colors.primary,
-                                fontSize: AppSizes.fontMini,
-                                fontWeight: AppFonts.heavy,
-                              ),
+                              color: colors.primary,
                             ),
                           ],
                         ),

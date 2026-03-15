@@ -24,6 +24,7 @@ import 'package:pocketcoder_flutter/application/llm/llm_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 
@@ -295,36 +296,22 @@ class _ChatViewState extends State<_ChatView> {
             ),
             child: Row(
               children: [
-                Text(
+                TerminalText.label(
                   'MODEL:',
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: colors.onSurface.withValues(alpha: 0.5),
-                    fontSize: AppSizes.fontMini,
-                    fontWeight: AppFonts.heavy,
-                  ),
+                  alpha: 0.5,
                 ),
                 HSpace.x1,
                 Expanded(
-                  child: Text(
+                  child: TerminalText.label(
                     currentModel?.toUpperCase() ?? 'DEFAULT',
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: colors.primary,
-                      fontSize: AppSizes.fontMini,
-                      fontWeight: AppFonts.heavy,
-                    ),
+                    color: colors.primary,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isPerChat) ...[
-                  Text(
+                  TerminalText.mini(
                     '[CHAT]',
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: colors.onSurface.withValues(alpha: 0.3),
-                      fontSize: AppSizes.fontMini,
-                    ),
+                    alpha: 0.3,
                   ),
                   HSpace.x1,
                 ],
@@ -385,13 +372,9 @@ class _ChatViewState extends State<_ChatView> {
                           color: colors.onSurface.withValues(alpha: 0.2),
                         ),
                       ),
-                      child: Text(
+                      child: TerminalText(
                         'USE GLOBAL DEFAULT',
-                        style: TextStyle(
-                          fontFamily: AppFonts.bodyFamily,
-                          color: colors.onSurface.withValues(alpha: 0.7),
-                          fontSize: AppSizes.fontSmall,
-                        ),
+                        alpha: 0.7,
                       ),
                     ),
                   );
@@ -419,15 +402,12 @@ class _ChatViewState extends State<_ChatView> {
                           ? colors.primary.withValues(alpha: 0.05)
                           : null,
                     ),
-                    child: Text(
+                    child: TerminalText(
                       model.toUpperCase(),
-                      style: TextStyle(
-                        fontFamily: AppFonts.bodyFamily,
-                        color: isSelected ? colors.primary : colors.onSurface,
-                        fontWeight:
-                            isSelected ? AppFonts.heavy : AppFonts.medium,
-                        fontSize: AppSizes.fontSmall,
-                      ),
+                      color: isSelected ? colors.primary : colors.onSurface,
+                      weight: isSelected
+                          ? TerminalTextWeight.heavy
+                          : TerminalTextWeight.medium,
                     ),
                   ),
                 );

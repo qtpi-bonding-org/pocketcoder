@@ -15,6 +15,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
 class TerminalScreen extends StatelessWidget {
@@ -115,22 +116,14 @@ class _TerminalViewState extends State<_TerminalView> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
+                          TerminalText(
                             'CONNECTION FAILED',
-                            style: TextStyle(
-                              color: colors.error,
-                              fontFamily: AppFonts.bodyFamily,
-                              fontWeight: AppFonts.heavy,
-                            ),
+                            color: colors.error,
+                            weight: TerminalTextWeight.heavy,
                           ),
                           VSpace.x1,
-                          Text(
+                          TerminalText.tiny(
                             (state.error ?? 'Unknown error').toString().toUpperCase(),
-                            style: TextStyle(
-                              color: colors.onSurface,
-                              fontSize: AppSizes.fontTiny,
-                              fontFamily: AppFonts.bodyFamily,
-                            ),
                           ),
                           VSpace.x4,
                           TerminalButton(
@@ -177,21 +170,14 @@ class _TerminalViewState extends State<_TerminalView> {
     showDialog(
       context: context,
       builder: (dialogContext) {
-        final colors = dialogContext.colorScheme;
         return TerminalDialog(
           title: 'SFTP TRANSFER',
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              TerminalText(
                 'FILE: $fileName',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface,
-                  fontSize: AppSizes.fontSmall,
-                  package: 'pocketcoder_flutter',
-                ),
               ),
               VSpace.x2,
               TerminalTextField(
@@ -226,33 +212,20 @@ class _TerminalViewState extends State<_TerminalView> {
 
   Widget _buildStatus(BuildContext context) {
     return BlocBuilder<StatusCubit, StatusState>(builder: (context, state) {
-      final colors = context.colorScheme;
       final isConnected = state.isConnected;
       return BiosSection(
         title: 'CONNECTION_STATUS',
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            TerminalText.mini(
               'SSH LINK: ${context.read<SshTerminalCubit>().sshHost}:${SshTerminalCubit.sshPort}',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface,
-                fontSize: AppSizes.fontMini,
-                package: 'pocketcoder_flutter',
-              ),
             ),
-            Text(
+            TerminalText.label(
               '[ ${isConnected ? 'ONLINE' : 'OFFLINE'} ]',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: isConnected
-                    ? context.terminalColors.warning
-                    : context.terminalColors.danger,
-                fontSize: AppSizes.fontMini,
-                fontWeight: AppFonts.heavy,
-                package: 'pocketcoder_flutter',
-              ),
+              color: isConnected
+                  ? context.terminalColors.warning
+                  : context.terminalColors.danger,
             ),
           ],
         ),

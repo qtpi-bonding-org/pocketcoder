@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class AgentManagementScreen extends StatelessWidget {
   const AgentManagementScreen({super.key});
@@ -92,14 +93,9 @@ class AgentManagementView extends StatelessWidget {
           ),
         ),
         VSpace.x2,
-        Text(
+        TerminalText.tiny(
           'SELECT AGENT TO CONFIGURE',
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: colors.onSurface.withValues(alpha: 0.5),
-            fontSize: AppSizes.fontTiny,
-            package: 'pocketcoder_flutter',
-          ),
+          alpha: 0.5,
         ),
       ],
     );
@@ -206,14 +202,9 @@ class AgentManagementView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        TerminalText.tiny(
           label,
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: colors.onSurface,
-            fontSize: AppSizes.fontTiny,
-            package: 'pocketcoder_flutter',
-          ),
+          color: colors.onSurface,
         ),
         VSpace.x1,
         InkWell(
@@ -228,14 +219,9 @@ class AgentManagementView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
+                  child: TerminalText(
                     currentValue.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: colors.onSurface,
-                      fontSize: AppSizes.fontSmall,
-                      package: 'pocketcoder_flutter',
-                    ),
+                    color: colors.onSurface,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

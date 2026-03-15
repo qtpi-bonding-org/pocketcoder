@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/message.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/thoughts_stream.dart';
 
 class SpeechBubble extends StatefulWidget {
@@ -103,14 +104,12 @@ class _SpeechBubbleState extends State<SpeechBubble> {
               if (!widget.isUser && hasTrace)
                 GestureDetector(
                   onTap: () => setState(() => _isExpanded = !_isExpanded),
-                  child: Text(
+                  child: TerminalText(
                     _isExpanded ? '[-] TRACE' : '[+] TRACE',
-                    style: TextStyle(
-                      color: colors.secondary.withValues(alpha: 0.6),
-                      fontSize: AppSizes.fontTiny,
-                      fontFamily: AppFonts.bodyFamily,
-                      fontWeight: AppFonts.heavy,
-                    ),
+                    size: TerminalTextSize.tiny,
+                    weight: TerminalTextWeight.heavy,
+                    color: colors.secondary,
+                    alpha: 0.6,
                   ),
                 ),
             ],
@@ -131,14 +130,11 @@ class _SpeechBubbleState extends State<SpeechBubble> {
             ),
           ] else ...[
             // The "Main Text" view
-            Text(
+            TerminalText(
               mainText,
-              style: TextStyle(
-                color: widget.isUser ? accentColor : colors.onSurface,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontStandard,
-                height: 1.4,
-              ),
+              size: TerminalTextSize.base,
+              color: widget.isUser ? accentColor : colors.onSurface,
+              height: 1.4,
             ),
           ],
         ],

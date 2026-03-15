@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
@@ -93,23 +94,16 @@ class _MonitorScreenState extends State<MonitorScreen> {
               ),
           ] else if (state.hasError)
             Center(
-              child: Text(
+              child: TerminalText.label(
                 'TELEMETRY UNAVAILABLE',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.error,
-                  fontWeight: AppFonts.heavy,
-                ),
+                color: colors.error,
               ),
             )
           else
             Center(
-              child: Text(
+              child: TerminalText(
                 'NO DATA — TAP REFRESH',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface.withValues(alpha: 0.5),
-                ),
+                alpha: 0.5,
               ),
             ),
         ],
@@ -129,21 +123,10 @@ class _MonitorScreenState extends State<MonitorScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'BACKEND STATUS',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface,
-                fontWeight: AppFonts.heavy,
-              ),
-            ),
-            Text(
+            TerminalText.label('BACKEND STATUS'),
+            TerminalText.label(
               '[ ${stats.backendStatus.toUpperCase()} ]',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: isHealthy ? colors.primary : colors.error,
-                fontWeight: AppFonts.heavy,
-              ),
+              color: isHealthy ? colors.primary : colors.error,
             ),
           ],
         ),
@@ -182,25 +165,16 @@ class _MonitorScreenState extends State<MonitorScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
+                child: TerminalText(
                   entry.model.toUpperCase(),
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: colors.onSurface,
-                    fontWeight: AppFonts.heavy,
-                    fontSize: AppSizes.fontSmall,
-                  ),
+                  weight: TerminalTextWeight.heavy,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(
+              TerminalText(
                 _formatNumber(entry.tokens),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.primary,
-                  fontWeight: AppFonts.heavy,
-                  fontSize: AppSizes.fontSmall,
-                ),
+                color: colors.primary,
+                weight: TerminalTextWeight.heavy,
               ),
             ],
           ),
@@ -224,47 +198,30 @@ class _MonitorScreenState extends State<MonitorScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  TerminalText(
                     '${task.sender} -> ${task.receiver}'.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: colors.onSurface,
-                      fontWeight: AppFonts.heavy,
-                      fontSize: AppSizes.fontSmall,
-                    ),
+                    weight: TerminalTextWeight.heavy,
                   ),
-                  Text(
+                  TerminalText.label(
                     '[ ${task.status.toUpperCase()} ]',
-                    style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      color: isActive ? colors.primary : colors.onSurface.withValues(alpha: 0.5),
-                      fontWeight: AppFonts.heavy,
-                      fontSize: AppSizes.fontMini,
-                    ),
+                    color: isActive ? colors.primary : null,
+                    alpha: isActive ? null : 0.5,
                   ),
                 ],
               ),
               if (task.summary.isNotEmpty) ...[
                 VSpace.x1,
-                Text(
+                TerminalText.mini(
                   task.summary,
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: colors.onSurface.withValues(alpha: 0.7),
-                    fontSize: AppSizes.fontMini,
-                  ),
+                  alpha: 0.7,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
               VSpace.x1,
-              Text(
+              TerminalText.mini(
                 task.timestamp,
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface.withValues(alpha: 0.3),
-                  fontSize: AppSizes.fontMini,
-                ),
+                alpha: 0.3,
               ),
             ],
           ),

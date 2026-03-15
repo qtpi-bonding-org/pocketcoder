@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/application/system/health_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/health_state.dart';
@@ -37,7 +38,6 @@ class _SystemChecksView extends StatelessWidget {
         title: 'SYSTEM DIAGNOSTICS',
         child: BlocBuilder<HealthCubit, HealthState>(
           builder: (context, state) {
-            final colors = context.colorScheme;
             return Column(
               children: [
                 // Inline REFRESH button
@@ -54,13 +54,9 @@ class _SystemChecksView extends StatelessWidget {
                 Expanded(
                   child: state.checks.isEmpty && !state.isLoading
                       ? Center(
-                          child: Text(
+                          child: TerminalText(
                             'NO DIAGNOSTICS AVAILABLE',
-                            style: TextStyle(
-                              color:
-                                  colors.onSurface.withValues(alpha: 0.5),
-                              fontFamily: AppFonts.bodyFamily,
-                            ),
+                            alpha: 0.5,
                           ),
                         )
                       : ListView.builder(
@@ -96,21 +92,14 @@ class _SystemChecksView extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
+          TerminalText(
             component,
-            style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
-              color: colors.onSurface,
-              fontWeight: AppFonts.heavy,
-            ),
+            weight: TerminalTextWeight.heavy,
           ),
-          Text(
+          TerminalText(
             '[$status]',
-            style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
-              color: isOk ? colors.primary : colors.error,
-              fontWeight: AppFonts.heavy,
-            ),
+            color: isOk ? colors.primary : colors.error,
+            weight: TerminalTextWeight.heavy,
           ),
         ],
       ),
