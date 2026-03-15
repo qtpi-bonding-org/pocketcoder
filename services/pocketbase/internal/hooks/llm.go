@@ -32,7 +32,6 @@ import (
 const (
 	llmEnvPath       = "/workspace/.opencode/llm.env"
 	llmEnvPathShared = "/llm_keys/llm.env"
-	openCodeContainer = "pocketcoder-opencode"
 )
 
 // RegisterLlmHooks registers hooks on the llm_keys collection.
@@ -43,19 +42,10 @@ func RegisterLlmHooks(app core.App) {
 
 	handleLlmKeysChange := func(e *core.RecordEvent) error {
 		log.Println("🔑 [LLM] LLM keys changed, re-rendering llm.env...")
-		if err := renderLlmEnv(app); err != nil {
-			log.Printf("❌ [LLM] Failed to render llm.env: %v", err)
-			return e.Next()
-		}
-		if err := restartContainer(openCodeContainer, 30*time.Second); err != nil {
-			log.Printf("❌ [LLM] Failed to restart OpenCode: %v", err)
-		}
-		return e.Next()
+		return renderAndRestart("[LLM]", func() error { return renderLlmEnv(app) }, OpenCodeContainer, e)
 	}
 
-	app.OnRecordAfterCreateSuccess("llm_keys").BindFunc(handleLlmKeysChange)
-	app.OnRecordAfterUpdateSuccess("llm_keys").BindFunc(handleLlmKeysChange)
-	app.OnRecordAfterDeleteSuccess("llm_keys").BindFunc(handleLlmKeysChange)
+	registerCrudHooks(app, "llm_keys", handleLlmKeysChange)
 
 	// Initial render on startup
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {

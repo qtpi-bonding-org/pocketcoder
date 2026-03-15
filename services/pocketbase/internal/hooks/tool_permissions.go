@@ -44,33 +44,21 @@ type permEntry struct {
 func RegisterToolPermissionHooks(app core.App) {
 	log.Println("⚙️ [ToolPerms] Registering tool permission hooks...")
 
-	handleToolPermsChange := func(e *core.RecordEvent) error {
-		log.Println("⚙️ [ToolPerms] Tool permissions changed, re-rendering opencode.json...")
-		if err := renderOpenCodeConfig(app); err != nil {
-			log.Printf("⚙️ [ToolPerms] Failed to render opencode.json: %v", err)
-			return e.Next()
-		}
-		if err := restartContainer(openCodeContainer, 30*time.Second); err != nil {
-			log.Printf("⚙️ [ToolPerms] Failed to restart OpenCode: %v", err)
-		}
-		return e.Next()
+	renderAndRestartOpenCode := func(e *core.RecordEvent) error {
+		return renderAndRestart("[ToolPerms]", func() error { return renderOpenCodeConfig(app) }, OpenCodeContainer, e)
 	}
 
-	app.OnRecordAfterCreateSuccess("tool_permissions").BindFunc(handleToolPermsChange)
-	app.OnRecordAfterUpdateSuccess("tool_permissions").BindFunc(handleToolPermsChange)
-	app.OnRecordAfterDeleteSuccess("tool_permissions").BindFunc(handleToolPermsChange)
+	handleToolPermsChange := func(e *core.RecordEvent) error {
+		log.Println("⚙️ [ToolPerms] Tool permissions changed, re-rendering opencode.json...")
+		return renderAndRestartOpenCode(e)
+	}
+
+	registerCrudHooks(app, "tool_permissions", handleToolPermsChange)
 
 	// Also re-render when agent model or prompt changes
 	app.OnRecordAfterUpdateSuccess("ai_agents").BindFunc(func(e *core.RecordEvent) error {
 		log.Println("⚙️ [ToolPerms] Agent updated, re-rendering opencode.json...")
-		if err := renderOpenCodeConfig(app); err != nil {
-			log.Printf("⚙️ [ToolPerms] Failed to render opencode.json: %v", err)
-			return e.Next()
-		}
-		if err := restartContainer(openCodeContainer, 30*time.Second); err != nil {
-			log.Printf("⚙️ [ToolPerms] Failed to restart OpenCode: %v", err)
-		}
-		return e.Next()
+		return renderAndRestartOpenCode(e)
 	})
 
 	// Initial render on startup
