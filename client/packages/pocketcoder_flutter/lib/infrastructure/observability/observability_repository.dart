@@ -31,9 +31,10 @@ class ObservabilityRepository implements IObservabilityRepository {
         "Authorization": "Bearer ${_pb.authStore.token}",
       },
     ).listen((event) {
-      if (event.data != null) {
+      final data = event.data;
+      if (data != null) {
         // SSEClient handles the "data: " prefix and heartbeats
-        controller.add(event.data!);
+        controller.add(data);
       }
     }, onError: (e, stack) {
       logError('📈 [Observability] Log stream error', e, stack);

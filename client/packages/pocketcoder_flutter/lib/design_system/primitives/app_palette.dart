@@ -39,13 +39,13 @@ class AppPalette {
 /// Extension for semantic color access
 extension AppColors on IColorPalette {
   // Background & Surface
-  Color get backgroundPrimary => getColor('color1')!;
-  Color get black => getColor('color1')!;
+  Color get backgroundPrimary => getColor('color1') ?? const Color(0xFF050505);
+  Color get black => getColor('color1') ?? const Color(0xFF050505);
 
   // Green Hierarchy
-  Color get vividGreen => getColor('color2')!;
-  Color get phosphorGreen => getColor('color3')!;
-  Color get traceGreen => getColor('neutral1')!;
+  Color get vividGreen => getColor('color2') ?? const Color(0xFF00FF41);
+  Color get phosphorGreen => getColor('color3') ?? const Color(0xFF00B82A);
+  Color get traceGreen => getColor('neutral1') ?? const Color(0xFF003B00);
 
   // Legacy mappings for stability
   Color get textPrimary => vividGreen;
@@ -53,20 +53,20 @@ extension AppColors on IColorPalette {
   Color get primaryColor => phosphorGreen;
 
   // ANSI Accents
-  Color get userCyan => getColor('userCyan')!;
-  Color get dangerRed => getColor('dangerRed')!;
-  Color get infoWhite => getColor('infoWhite')!;
-  Color get warningAmber => getColor('warningAmber')!;
+  Color get userCyan => getColor('userCyan') ?? const Color(0xFF00FFFF);
+  Color get dangerRed => getColor('dangerRed') ?? const Color(0xFFFF3333);
+  Color get infoWhite => getColor('infoWhite') ?? const Color(0xFFE4E4E4);
+  Color get warningAmber => getColor('warningAmber') ?? const Color(0xFFFFB100);
 
   // Interactable
-  Color get interactableColor => getColor('interactable')!;
+  Color get interactableColor => getColor('interactable') ?? const Color(0xFF00FF41);
 
   // Semantic colors
-  Color get infoColor => getColor('info')!;
-  Color get successColor => getColor('success')!;
-  Color get errorColor => getColor('error')!;
-  Color get warningColor => getColor('warning')!;
+  Color get infoColor => getColor('info') ?? const Color(0xFF00B82A);
+  Color get successColor => getColor('success') ?? const Color(0xFF00FF41);
+  Color get errorColor => getColor('error') ?? const Color(0xFFFF3333);
+  Color get warningColor => getColor('warning') ?? const Color(0xFFFFB100);
 
   // Destructive color
-  Color get destructiveColor => getColor('destructive')!;
+  Color get destructiveColor => getColor('destructive') ?? const Color(0xFFFF3333);
 }

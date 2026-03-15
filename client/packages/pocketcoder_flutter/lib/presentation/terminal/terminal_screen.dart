@@ -125,7 +125,7 @@ class _TerminalViewState extends State<_TerminalView> {
                           ),
                           VSpace.x1,
                           Text(
-                            state.error!.toString().toUpperCase(),
+                            (state.error ?? 'Unknown error').toString().toUpperCase(),
                             style: TextStyle(
                               color: colors.onSurface,
                               fontSize: AppSizes.fontTiny,
@@ -162,10 +162,11 @@ class _TerminalViewState extends State<_TerminalView> {
     if (result == null || result.files.isEmpty) return;
 
     final file = result.files.first;
-    if (file.path == null) return;
+    final filePath = file.path;
+    if (filePath == null) return;
 
     if (!context.mounted) return;
-    _showUploadDialog(context, file.name, file.path!);
+    _showUploadDialog(context, file.name, filePath);
   }
 
   void _showUploadDialog(

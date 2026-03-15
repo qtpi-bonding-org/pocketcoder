@@ -108,10 +108,10 @@ class AgentObservabilityScreen extends StatelessWidget {
   }
 
   Widget _buildMetricsRow(BuildContext context, ObservabilityState state) {
-    if (state.stats == null) {
+    final stats = state.stats;
+    if (stats == null) {
       return const SizedBox.shrink();
     }
-    final stats = state.stats!;
     return Row(
       children: [
         _buildMetricBox(context, 'COST', stats.cumulativeCost),

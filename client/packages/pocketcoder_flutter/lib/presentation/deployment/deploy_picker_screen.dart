@@ -160,12 +160,13 @@ class _ProviderCard extends StatelessWidget {
       }
     }
 
-    if (option.url != null) {
-      final uri = Uri.parse(option.url!);
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (option.routePath != null) {
+    final url = option.url;
+    final routePath = option.routePath;
+    if (url != null) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else if (routePath != null) {
       if (context.mounted) {
-        context.push(option.routePath!);
+        context.push(routePath);
       }
     }
   }
