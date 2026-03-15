@@ -73,12 +73,13 @@ The only system prerequisite is **Docker**. Everything else is completely contai
 
 | Language | LoC | Component |
 | :--- | ---: | :--- |
-| Go | ~2,800 | PocketBase backend & relay |
-| Rust | ~1,500 | Sandbox proxy + poco-agents + poco-memory |
-| TypeScript | ~1,000 | OpenCode tools, plugins & Interface bridge |
-| Dart | ~36,500 | Flutter client (non-generated) |
-| Bash | ~10,600 | Shell scripts (infra — separate tally) |
-| **CORE TOTAL** | **~52,400** | **Lean, Fast, Fully Sovereign.** |
+| Go | 3,324 | PocketBase backend & relay |
+| Rust | 596 | Proxy |
+| TypeScript | 1,375 | OpenCode tools, plugins & Interface bridge |
+| Python | +0 vs upstream | CAO fork (vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator)) |
+| Dart | 32,279 | Flutter client (non-generated) |
+| Bash | 15,090 | Shell scripts (infra — separate tally) |
+| **CORE TOTAL** | **~37,574** | **Lean, Fast, Fully Sovereign.** |
 
 ## System Requirements
 
