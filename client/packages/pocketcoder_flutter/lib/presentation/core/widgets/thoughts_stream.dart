@@ -41,26 +41,99 @@ class ThoughtsStream extends StatelessWidget {
 
     switch (type) {
       case 'text':
+        // Full stream view uses '> ' prefix and header font
         return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
+          padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
           child: Text(
             '> ${part['text'] ?? ""}',
             style: TextStyle(
               color: colors.secondary,
               fontFamily: AppFonts.headerFamily,
-              fontSize: 10,
+              fontSize: AppSizes.fontTiny,
+            ),
+          ),
+        );
+      case 'reasoning':
+      case 'tool':
+        return ThoughtsStreamContent(part: part);
+      case 'file':
+        return Padding(
+          padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
+          child: Text(
+            'FILE [${part['mime']}]: ${part['filename'] ?? part['url']}',
+            style: TextStyle(
+                color: colors.secondary, fontSize: AppSizes.fontTiny),
+          ),
+        );
+      case 'step-start':
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.5),
+          child: Divider(
+              color: colors.onSurface.withValues(alpha: 0.1), height: 1),
+        );
+      case 'step-finish':
+        return Padding(
+          padding: EdgeInsets.only(bottom: AppSizes.space),
+          child: Text(
+            'STEP COMPLETE (${part['reason']})',
+            style: TextStyle(
+              color: colors.secondary.withValues(alpha: 0.5),
+              fontSize: AppSizes.fontTiny,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        );
+      default:
+        // Handle unrecognized types by showing raw JSON summary
+        return Padding(
+          padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
+          child: Text(
+            'PROTOCOL: ${part.keys.take(3).join(', ')}...',
+            style: TextStyle(
+              color: colors.onSurface.withValues(alpha: 0.2),
+              fontSize: AppSizes.fontTiny,
+            ),
+          ),
+        );
+    }
+  }
+}
+
+/// Shared widget for rendering individual thought-stream parts (reasoning, tool, text).
+/// Used by both [ThoughtsStream] (full stream view) and [SpeechBubble] (in-chat expanded view).
+class ThoughtsStreamContent extends StatelessWidget {
+  final Map<String, dynamic> part;
+
+  const ThoughtsStreamContent({super.key, required this.part});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final type = part['type'] as String?;
+
+    switch (type) {
+      case 'text':
+        return Padding(
+          padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
+          child: Text(
+            part['text'] ?? "",
+            style: TextStyle(
+              color: colors.onSurface,
+              fontFamily: AppFonts.bodyFamily,
+              fontSize: AppSizes.fontStandard,
+              height: 1.4,
             ),
           ),
         );
       case 'reasoning':
         return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
+          padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
           child: Text(
             'THOUGHT: ${part['text'] ?? ""}',
             style: TextStyle(
               color: colors.secondary.withValues(alpha: 0.7),
               fontFamily: AppFonts.bodyFamily,
-              fontSize: 10,
+              fontSize: AppSizes.fontTiny,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -69,15 +142,15 @@ class ThoughtsStream extends StatelessWidget {
         final toolName = (part['tool'] as String?) ?? 'unknown';
         final state = (part['state'] as Map<String, dynamic>?) ?? {};
         final status = (state['status'] as String?) ?? 'pending';
+        final statusColor = getStatusColor(context, status);
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 8.0, top: 4.0),
-          padding: const EdgeInsets.all(8.0),
+          margin: EdgeInsets.only(
+              bottom: AppSizes.space, top: AppSizes.space * 0.5),
+          padding: EdgeInsets.all(AppSizes.space),
           decoration: BoxDecoration(
             color: colors.surface.withValues(alpha: 0.3),
-            border: Border(
-                left: BorderSide(
-                    color: _getStatusColor(context, status), width: 2)),
+            border: Border(left: BorderSide(color: statusColor, width: 2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,92 +160,52 @@ class ThoughtsStream extends StatelessWidget {
                   Text(
                     'EXEC: ${toolName.toUpperCase()}',
                     style: TextStyle(
-                      color: _getStatusColor(context, status),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
+                      color: statusColor,
+                      fontWeight: AppFonts.heavy,
+                      fontSize: AppSizes.fontTiny,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _buildToolStatus(context, status),
+                  HSpace.x1,
+                  Text(
+                    status.toUpperCase(),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: AppSizes.fontTiny,
+                      fontWeight: AppFonts.heavy,
+                    ),
+                  ),
                 ],
               ),
-              _buildToolPayload(context, state),
+              buildToolPayload(context, state),
             ],
           ),
         );
-      case 'file':
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
-          child: Text(
-            'FILE [${part['mime']}]: ${part['filename'] ?? part['url']}',
-            style: TextStyle(color: colors.secondary, fontSize: 10),
-          ),
-        );
-      case 'step-start':
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Divider(
-              color: colors.onSurface.withValues(alpha: 0.1), height: 1),
-        );
-      case 'step-finish':
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            'STEP COMPLETE (${part['reason']})',
-            style: TextStyle(
-              color: colors.secondary.withValues(alpha: 0.5),
-              fontSize: 9,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        );
       default:
-        // Handle unrecognized types by showing raw JSON summary
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
-          child: Text(
-            'PROTOCOL: ${part.keys.take(3).join(', ')}...',
-            style: TextStyle(
-              color: colors.onSurface.withValues(alpha: 0.2),
-              fontSize: 8,
-            ),
-          ),
-        );
+        return const SizedBox.shrink();
     }
   }
 
-  Color _getStatusColor(BuildContext context, String status) {
+  /// Returns a color for the given tool execution status.
+  static Color getStatusColor(BuildContext context, String status) {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
     switch (status) {
       case 'pending':
         return colors.secondary.withValues(alpha: 0.5);
       case 'running':
-        return colors.secondary; // Phosphor Green
+        return colors.secondary;
       case 'completed':
-        return colors.primary; // Vivid Green
+        return colors.primary;
       case 'error':
-        return terminalColors.danger; // Danger Red
+        return terminalColors.danger;
       default:
         return colors.onSurface.withValues(alpha: 0.3);
     }
   }
 
-  Widget _buildToolStatus(BuildContext context, String status) {
-    String label = '[$status]'.toUpperCase();
-    if (status == 'running') label = '[RUNNING...]';
-
-    return Text(
-      label,
-      style: TextStyle(
-        color: _getStatusColor(context, status),
-        fontSize: 8,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-  Widget _buildToolPayload(BuildContext context, Map<String, dynamic> state) {
+  /// Builds the tool input/output payload display.
+  static Widget buildToolPayload(
+      BuildContext context, Map<String, dynamic> state) {
     final colors = context.colorScheme;
     final status = state['status'] as String?;
     final input = (state['input'] as Map<String, dynamic>?) ?? {};
@@ -180,38 +213,37 @@ class ThoughtsStream extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _jsonText(context, input),
+        Text(
+          input.toString(),
+          style: TextStyle(
+            color: colors.onSurface.withValues(alpha: 0.8),
+            fontSize: AppSizes.fontTiny,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
         if (status == 'completed' && state.containsKey('output')) ...[
-          Divider(height: 8, color: colors.onSurface.withValues(alpha: 0.1)),
+          Divider(
+              height: AppSizes.space,
+              color: colors.onSurface.withValues(alpha: 0.1)),
           Text(
             state['output'].toString(),
             style: TextStyle(
-                color: colors.secondary, fontSize: 10), // Phosphor Green
+                color: colors.secondary, fontSize: AppSizes.fontTiny),
             maxLines: 15,
             overflow: TextOverflow.ellipsis,
           ),
         ],
         if (status == 'error' && state.containsKey('error')) ...[
-          Divider(height: 8, color: colors.onSurface.withValues(alpha: 0.1)),
+          Divider(
+              height: AppSizes.space,
+              color: colors.onSurface.withValues(alpha: 0.1)),
           Text(
             state['error'].toString(),
-            style: TextStyle(color: colors.error, fontSize: 10),
+            style: TextStyle(color: colors.error, fontSize: AppSizes.fontTiny),
           ),
         ],
       ],
-    );
-  }
-
-  Widget _jsonText(BuildContext context, Map<String, dynamic> json) {
-    final colors = context.colorScheme;
-    return Text(
-      json.toString(),
-      style: TextStyle(
-        color: colors.onSurface.withValues(alpha: 0.8),
-        fontSize: 9,
-      ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart'
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
@@ -167,17 +168,8 @@ class _LlmManagementView extends StatelessWidget {
     final models = _parseModels(provider.models);
     final modelCount = models.length;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: hasKey
-              ? colors.primary.withValues(alpha: 0.5)
-              : colors.onSurface.withValues(alpha: 0.2),
-        ),
-        color: hasKey ? colors.primary.withValues(alpha: 0.05) : null,
-      ),
+    return TerminalCard(
+      isActive: hasKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -255,13 +247,7 @@ class _LlmManagementView extends StatelessWidget {
         final providerName =
             provider.isNotEmpty ? provider.first.name : key.providerId;
 
-        return Container(
-          margin: EdgeInsets.only(bottom: AppSizes.space),
-          padding: EdgeInsets.all(AppSizes.space),
-          decoration: BoxDecoration(
-            border: Border.all(
-                color: colors.onSurface.withValues(alpha: 0.2)),
-          ),
+        return TerminalCard(
           child: Row(
             children: [
               Expanded(
