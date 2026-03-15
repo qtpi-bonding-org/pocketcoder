@@ -4,22 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
-import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
-import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import '../../app_router.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  // Grouped configuration sections
   static const _sections = <(String, List<(String, String, String)>)>[
     ('AI & AGENTS', [
       ('LLM MANAGEMENT', '[KEYS]', 'configureLlm'),
@@ -78,26 +70,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ],
-              BiosSection(
-                title: 'SESSION',
-                child: BiosListTile(
-                  label: 'DISCONNECT',
-                  value: '[LOGOUT]',
-                  isDestructive: true,
-                  onTap: () => _handleLogout(context),
-                ),
-              ),
             ],
           );
         },
       ),
     );
-  }
-
-  Future<void> _handleLogout(BuildContext context) async {
-    await getIt<IAuthRepository>().logout();
-    if (!context.mounted) return;
-    context.go(AppRoutes.onboarding);
   }
 
   void _navigateTo(BuildContext context, String routeKey) {
