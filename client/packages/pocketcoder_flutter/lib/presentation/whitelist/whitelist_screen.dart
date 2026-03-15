@@ -88,7 +88,7 @@ class PermissionsTab extends StatelessWidget {
         ? colors.onSurface
         : colors.onSurface.withValues(alpha: 0.5);
 
-    final scope = perm.agent != null && perm.agent!.isNotEmpty
+    final scope = perm.agent?.isNotEmpty == true
         ? 'AGENT'
         : 'GLOBAL';
 

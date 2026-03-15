@@ -63,31 +63,31 @@ class _MonitorScreenState extends State<MonitorScreen> {
             const Center(
               child: TerminalLoadingIndicator(label: 'FETCHING TELEMETRY'),
             )
-          else if (state.stats != null) ...[
+          else if (state.stats case final stats?) ...[
             // System Health
             BiosSection(
               title: 'SYSTEM HEALTH',
-              child: _buildHealthStatus(context, state.stats!),
+              child: _buildHealthStatus(context, stats),
             ),
 
             // Key Metrics
             BiosSection(
               title: 'KEY METRICS',
-              child: _buildMetricsGrid(context, state.stats!),
+              child: _buildMetricsGrid(context, stats),
             ),
 
             // Token Usage by Model
-            if (state.stats!.tokenUsage.isNotEmpty)
+            if (stats.tokenUsage.isNotEmpty)
               BiosSection(
                 title: 'TOKEN USAGE BY MODEL',
-                child: _buildTokenUsage(context, state.stats!.tokenUsage),
+                child: _buildTokenUsage(context, stats.tokenUsage),
               ),
 
             // Agent Activity (CAO Tasks)
-            if (state.stats!.tasks.isNotEmpty)
+            if (stats.tasks.isNotEmpty)
               BiosSection(
                 title: 'AGENT ACTIVITY',
-                child: _buildAgentActivity(context, state.stats!.tasks),
+                child: _buildAgentActivity(context, stats.tasks),
               ),
           ] else if (state.hasError)
             Center(

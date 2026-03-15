@@ -55,13 +55,13 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
   TerminalColors lerp(ThemeExtension<TerminalColors>? other, double t) {
     if (other is! TerminalColors) return this;
     return TerminalColors(
-      glow: Color.lerp(glow, other.glow, t)!,
-      scanline: Color.lerp(scanline, other.scanline, t)!,
-      scanlineOpacity: lerpDouble(scanlineOpacity, other.scanlineOpacity, t)!,
-      user: Color.lerp(user, other.user, t)!,
-      danger: Color.lerp(danger, other.danger, t)!,
-      attention: Color.lerp(attention, other.attention, t)!,
-      warning: Color.lerp(warning, other.warning, t)!,
+      glow: Color.lerp(glow, other.glow, t) ?? glow,
+      scanline: Color.lerp(scanline, other.scanline, t) ?? scanline,
+      scanlineOpacity: lerpDouble(scanlineOpacity, other.scanlineOpacity, t) ?? scanlineOpacity,
+      user: Color.lerp(user, other.user, t) ?? user,
+      danger: Color.lerp(danger, other.danger, t) ?? danger,
+      attention: Color.lerp(attention, other.attention, t) ?? attention,
+      warning: Color.lerp(warning, other.warning, t) ?? warning,
     );
   }
 
@@ -178,5 +178,9 @@ extension AppThemeExtension on BuildContext {
   ThemeData get theme => Theme.of(this);
   ColorScheme get colorScheme => theme.colorScheme;
   TextTheme get textTheme => theme.textTheme;
-  TerminalColors get terminalColors => theme.extension<TerminalColors>()!;
+  TerminalColors get terminalColors {
+    final ext = theme.extension<TerminalColors>();
+    if (ext == null) throw StateError('TerminalColors not registered in theme');
+    return ext;
+  }
 }

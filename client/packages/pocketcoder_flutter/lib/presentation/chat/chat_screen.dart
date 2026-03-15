@@ -13,6 +13,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/permission_prompt.
 import 'package:pocketcoder_flutter/presentation/core/widgets/question_prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/speech_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/question/question_cubit.dart';
@@ -83,17 +85,28 @@ class _ChatViewState extends State<_ChatView> {
               showBack: true,
               configureBadge: hasPendingMcp,
               padding: EdgeInsets.zero,
+              extraHeaderActions: [
+                TerminalAction(
+                  label: 'TERMINAL',
+                  onTap: () => AppNavigation.toTerminal(context),
+                ),
+                TerminalAction(
+                  label: 'FILES',
+                  onTap: () => AppNavigation.toFiles(context),
+                ),
+              ],
               body: MultiBlocListener(
                 listeners: [
                   BlocListener<ChatCubit, ChatState>(
                     listenWhen: (previous, current) =>
                         previous.chatId != current.chatId,
                     listener: (context, state) {
-                      if (state.chatId != null) {
+                      final chatId = state.chatId;
+                      if (chatId != null) {
                         context
                             .read<PermissionCubit>()
-                            .watchChat(state.chatId!);
-                        context.read<QuestionCubit>().watchChat(state.chatId!);
+                            .watchChat(chatId);
+                        context.read<QuestionCubit>().watchChat(chatId);
                       }
                     },
                   ),

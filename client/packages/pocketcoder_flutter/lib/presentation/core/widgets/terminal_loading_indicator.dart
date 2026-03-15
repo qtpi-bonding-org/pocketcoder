@@ -57,7 +57,7 @@ class _TerminalLoadingIndicatorState extends State<TerminalLoadingIndicator> {
         if (widget.label != null) ...[
           VSpace.x1,
           Text(
-            '[ ${widget.label!.toUpperCase()} ]',
+            '[ ${widget.label?.toUpperCase() ?? ''} ]',
             style: TextStyle(
               fontFamily: AppFonts.bodyFamily,
               color: colors.secondary,

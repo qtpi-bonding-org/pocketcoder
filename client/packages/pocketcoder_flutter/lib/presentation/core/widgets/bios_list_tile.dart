@@ -77,7 +77,7 @@ class BiosListTile extends StatelessWidget {
               HSpace.x2,
               Flexible(
                 child: Text(
-                  value!.toUpperCase(),
+                  value?.toUpperCase() ?? '',
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
                   style: TextStyle(

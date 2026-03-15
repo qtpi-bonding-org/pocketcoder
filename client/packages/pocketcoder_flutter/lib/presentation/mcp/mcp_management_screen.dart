@@ -153,7 +153,7 @@ class _McpManagementView extends StatelessWidget {
               ),
             ],
           ),
-          if (server.image != null && server.image!.isNotEmpty) ...[
+          if (server.image?.isNotEmpty == true) ...[
             VSpace.x1,
             Text(
               'IMAGE: ${server.image}',
@@ -164,7 +164,7 @@ class _McpManagementView extends StatelessWidget {
               ),
             ),
           ],
-          if (server.reason != null && server.reason!.isNotEmpty) ...[
+          if (server.reason?.isNotEmpty == true) ...[
             VSpace.x1,
             Text(
               'PURPOSE: ${server.reason}',
@@ -289,7 +289,7 @@ class _McpManagementView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (server.image != null && server.image!.isNotEmpty) ...[
+            if (server.image?.isNotEmpty == true) ...[
               Text(
                 'IMAGE: ${server.image}',
                 style: TextStyle(
