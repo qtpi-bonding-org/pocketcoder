@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_state.dart';
 
@@ -70,20 +71,13 @@ class _FileScreenState extends State<FileScreen> {
           title: 'REGISTRY STATUS',
           child: Column(
             children: [
-              Text(
+              TerminalText(
                 'NO FILE SELECTED.',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface.withValues(alpha: 0.5),
-                ),
+                alpha: 0.5,
               ),
-              Text(
+              TerminalText.mini(
                 '>> SELECT FROM CHAT TO VIEW',
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: colors.onSurface.withValues(alpha: 0.5),
-                  fontSize: AppSizes.fontMini,
-                ),
+                alpha: 0.5,
               ),
             ],
           ),
@@ -93,25 +87,18 @@ class _FileScreenState extends State<FileScreen> {
 
     if (state.isLoading) {
       return Center(
-        child: Text(
+        child: TerminalText(
           'FETCHING DATA...',
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: colors.primary,
-          ),
+          color: colors.primary,
         ),
       );
     }
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.space),
-      child: Text(
+      child: TerminalText(
         state.currentFileContent ?? 'EMPTY FILE',
-        style: TextStyle(
-          fontFamily: AppFonts.bodyFamily,
-          color: colors.onSurface,
-          fontSize: AppSizes.fontStandard,
-        ),
+        size: TerminalTextSize.base,
       ),
     );
   }
