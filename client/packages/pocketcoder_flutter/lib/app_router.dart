@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.da
 import 'package:pocketcoder_flutter/presentation/files/file_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/agent_management_screen.dart';
-import 'package:pocketcoder_flutter/presentation/whitelist/whitelist_screen.dart';
+import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
 import 'package:pocketcoder_flutter/presentation/terminal/terminal_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/agent_observability_screen.dart';
@@ -44,7 +44,7 @@ class AppRouter {
       // Legacy redirects
       if (loc == '/settings') return AppRoutes.configure;
       if (loc == '/settings/ai') return AppRoutes.configureAi;
-      if (loc == '/settings/whitelist') return AppRoutes.configureWhitelist;
+      if (loc == '/settings/whitelist') return AppRoutes.configureToolPermissions;
       if (loc == '/mcp') return AppRoutes.configureMcp;
       if (loc == '/sop') return AppRoutes.configureSop;
       if (loc == '/system-checks') return AppRoutes.configureSystemChecks;
@@ -144,12 +144,12 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.configureWhitelist,
-        name: RouteNames.configureWhitelist,
+        path: AppRoutes.configureToolPermissions,
+        name: RouteNames.configureToolPermissions,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const WhitelistScreen(),
+          child: const ToolPermissionsScreen(),
         ),
       ),
       GoRoute(
@@ -242,7 +242,7 @@ class AppRoutes {
   static const String terminal = '/terminal';
   // Configure sub-routes
   static const String configureAi = '/configure/ai';
-  static const String configureWhitelist = '/configure/whitelist';
+  static const String configureToolPermissions = '/configure/tool-permissions';
   static const String configureMcp = '/configure/mcp';
   static const String configureSop = '/configure/sop';
   static const String configureSystemChecks = '/configure/system-checks';
@@ -252,7 +252,7 @@ class AppRoutes {
   // Legacy aliases (redirected)
   static const String settings = '/settings';
   static const String aiRegistry = '/settings/ai';
-  static const String whitelist = '/settings/whitelist';
+  static const String toolPermissions = '/settings/whitelist';
   static const String agentObservability = '/observability';
   static const String mcpManagement = '/mcp';
   static const String sopManagement = '/sop';
@@ -282,7 +282,7 @@ class RouteNames {
   static const String terminal = 'terminal';
   // Configure sub-routes
   static const String configureAi = 'configureAi';
-  static const String configureWhitelist = 'configureWhitelist';
+  static const String configureToolPermissions = 'configureToolPermissions';
   static const String configureMcp = 'configureMcp';
   static const String configureSop = 'configureSop';
   static const String configureSystemChecks = 'configureSystemChecks';
@@ -291,7 +291,7 @@ class RouteNames {
   static const String configureLlm = 'configureLlm';
   // Legacy aliases
   static const String aiRegistry = 'configureAi';
-  static const String whitelist = 'configureWhitelist';
+  static const String toolPermissions = 'configureToolPermissions';
   static const String agentObservability = 'configureObservability';
   static const String mcpManagement = 'configureMcp';
   static const String sopManagement = 'configureSop';
@@ -316,10 +316,14 @@ class AppNavigation {
       context.go('${AppRoutes.chat}/new');
   static void toSettings(BuildContext context) =>
       context.go(AppRoutes.configure);
-  static void toWhitelist(BuildContext context) =>
-      context.push(AppRoutes.configureWhitelist);
+  static void toToolPermissions(BuildContext context) =>
+      context.push(AppRoutes.configureToolPermissions);
   static void toPaywall(BuildContext context) =>
       context.push(AppRoutes.configurePaywall);
+  static void toTerminal(BuildContext context) =>
+      context.push(AppRoutes.terminal);
+  static void toFiles(BuildContext context) =>
+      context.push(AppRoutes.files);
   static void toMonitor(BuildContext context) =>
       context.go(AppRoutes.monitor);
   static void toDeploy(BuildContext context) =>

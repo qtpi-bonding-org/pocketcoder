@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
-import 'package:pocketcoder_flutter/application/whitelist/whitelist_cubit.dart';
+import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_cubit.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -11,22 +11,22 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
-class WhitelistScreen extends StatelessWidget {
-  const WhitelistScreen({super.key});
+class ToolPermissionsScreen extends StatelessWidget {
+  const ToolPermissionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<WhitelistCubit>()..load(),
-      child: UiFlowListener<WhitelistCubit, WhitelistState>(
-        child: const WhitelistView(),
+      create: (context) => getIt<ToolPermissionsCubit>()..load(),
+      child: UiFlowListener<ToolPermissionsCubit, ToolPermissionsState>(
+        child: const ToolPermissionsView(),
       ),
     );
   }
 }
 
-class WhitelistView extends StatelessWidget {
-  const WhitelistView({super.key});
+class ToolPermissionsView extends StatelessWidget {
+  const ToolPermissionsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +47,7 @@ class PermissionsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WhitelistCubit, WhitelistState>(
+    return BlocBuilder<ToolPermissionsCubit, ToolPermissionsState>(
       builder: (context, state) {
         final colors = context.colorScheme;
         return Column(
@@ -128,12 +128,12 @@ class PermissionsTab extends StatelessWidget {
             activeThumbColor: colors.onSurface,
             activeTrackColor: colors.onSurface.withValues(alpha: 0.2),
             onChanged: (val) =>
-                context.read<WhitelistCubit>().toggleToolPermission(perm.id, val),
+                context.read<ToolPermissionsCubit>().toggleToolPermission(perm.id, val),
           ),
           IconButton(
             icon: Icon(Icons.delete_outline, size: 16, color: colors.error),
             onPressed: () =>
-                context.read<WhitelistCubit>().deleteToolPermission(perm.id),
+                context.read<ToolPermissionsCubit>().deleteToolPermission(perm.id),
           ),
         ],
       ),
@@ -198,7 +198,7 @@ class PermissionsTab extends StatelessWidget {
             label: 'CREATE',
             onTap: () {
               if (toolController.text.isNotEmpty) {
-                context.read<WhitelistCubit>().createToolPermission(
+                context.read<ToolPermissionsCubit>().createToolPermission(
                       tool: toolController.text,
                       pattern: patternController.text.isEmpty
                           ? '*'

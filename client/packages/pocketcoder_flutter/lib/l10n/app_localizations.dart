@@ -226,23 +226,23 @@ abstract class AppLocalizations {
   /// **'AI error'**
   String get aiError;
 
-  /// No description provided for @whitelistFetchFailed.
+  /// No description provided for @toolPermissionsFetchFailed.
   ///
   /// In en, this message translates to:
-  /// **'Unable to load whitelist'**
-  String get whitelistFetchFailed;
+  /// **'Unable to load tool permissions'**
+  String get toolPermissionsFetchFailed;
 
-  /// No description provided for @whitelistUpdateFailed.
+  /// No description provided for @toolPermissionsUpdateFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to update whitelist'**
-  String get whitelistUpdateFailed;
+  /// **'Failed to update tool permissions'**
+  String get toolPermissionsUpdateFailed;
 
-  /// No description provided for @whitelistError.
+  /// No description provided for @toolPermissionsError.
   ///
   /// In en, this message translates to:
-  /// **'Whitelist error'**
-  String get whitelistError;
+  /// **'Tool permissions error'**
+  String get toolPermissionsError;
 }
 
 class _AppLocalizationsDelegate

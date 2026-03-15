@@ -15,7 +15,7 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
       ChatException() => _mapChatException(exception),
       PermissionException() => _mapPermissionException(exception),
       AiException() => _mapAiException(exception),
-      WhitelistException() => _mapWhitelistException(exception),
+      ToolPermissionsException() => _mapToolPermissionsException(exception),
       _ => null,
     };
   }
@@ -54,11 +54,11 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
     };
   }
 
-  MessageKey? _mapWhitelistException(WhitelistException exception) {
+  MessageKey? _mapToolPermissionsException(ToolPermissionsException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('whitelist.fetchFailed'),
-      String msg when msg.contains('update') => const MessageKey.error('whitelist.updateFailed'),
-      _ => const MessageKey.error('whitelist.error'),
+      String msg when msg.contains('fetch') => const MessageKey.error('toolPermissions.fetchFailed'),
+      String msg when msg.contains('update') => const MessageKey.error('toolPermissions.updateFailed'),
+      _ => const MessageKey.error('toolPermissions.error'),
     };
   }
 }

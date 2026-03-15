@@ -1,16 +1,16 @@
-part of 'whitelist_cubit.dart';
+part of 'tool_permissions_cubit.dart';
 
 @freezed
-class WhitelistState with _$WhitelistState implements IUiFlowState {
-  const WhitelistState._();
+class ToolPermissionsState with _$ToolPermissionsState implements IUiFlowState {
+  const ToolPermissionsState._();
 
-  const factory WhitelistState({
+  const factory ToolPermissionsState({
     @Default(UiFlowStatus.idle) UiFlowStatus status,
     @Default([]) List<ToolPermission> toolPermissions,
     Object? error,
-  }) = _WhitelistState;
+  }) = _ToolPermissionsState;
 
-  factory WhitelistState.initial() => const WhitelistState();
+  factory ToolPermissionsState.initial() => const ToolPermissionsState();
 
   @override
   bool get isIdle => status == UiFlowStatus.idle;

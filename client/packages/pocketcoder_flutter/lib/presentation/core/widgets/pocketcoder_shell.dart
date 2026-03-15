@@ -19,6 +19,9 @@ class PocketCoderShell extends StatelessWidget {
   final bool configureBadge;
   final EdgeInsets? padding;
 
+  /// Extra toolbar actions shown after the BACK button in the header row.
+  final List<TerminalAction>? extraHeaderActions;
+
   const PocketCoderShell({
     super.key,
     required this.title,
@@ -27,19 +30,24 @@ class PocketCoderShell extends StatelessWidget {
     this.showBack = false,
     this.configureBadge = false,
     this.padding,
+    this.extraHeaderActions,
   });
 
   @override
   Widget build(BuildContext context) {
+    final headerActions = <TerminalAction>[
+      if (showBack)
+        TerminalAction(
+          label: 'BACK',
+          onTap: () => AppNavigation.back(context),
+        ),
+      ...?extraHeaderActions,
+    ];
+
     return TerminalScaffold(
       title: title,
       padding: padding,
-      headerAction: showBack
-          ? TerminalAction(
-              label: 'BACK',
-              onTap: () => AppNavigation.back(context),
-            )
-          : null,
+      headerActions: headerActions.isNotEmpty ? headerActions : null,
       actions: _buildPillarActions(context),
       body: body,
     );

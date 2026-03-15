@@ -56,14 +56,6 @@ class ApiEndpoints {
   static const String observability = '/api/pocketcoder/proxy/observability/';
 
   // ===========================================================================
-  // SUBAGENT ENDPOINTS
-  // ===========================================================================
-
-  /// POST /api/pocketcoder/subagent
-  /// Orchestrates subagent creation and task delegation.
-  static const String subagent = '/api/pocketcoder/subagent';
-
-  // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
 
@@ -72,7 +64,6 @@ class ApiEndpoints {
     permission,
     sshKeys,
     health,
-    subagent,
     observability,
   ];
 
