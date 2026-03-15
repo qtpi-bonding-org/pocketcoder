@@ -57,7 +57,11 @@ func RegisterPermissionApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		})
 
 		// 2. Create Audit Record
-		permColl, _ := app.FindCollectionByNameOrId("permissions")
+		permColl, err := app.FindCollectionByNameOrId("permissions")
+		if err != nil {
+			log.Printf("❌ Failed to find permissions collection: %v", err)
+			return re.JSON(500, map[string]string{"error": "Internal error"})
+		}
 		record := core.NewRecord(permColl)
 
 		record.Set("ai_engine_permission_id", input.OpencodeID)

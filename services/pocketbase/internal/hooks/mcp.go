@@ -32,9 +32,8 @@ import (
 )
 
 const (
-	mcpConfigPath    = "/mcp_config/docker-mcp.yaml"
-	mcpSecretsPath   = "/mcp_config/mcp.env"
-	gatewayContainer = "pocketcoder-mcp-gateway"
+	mcpConfigPath  = "/mcp_config/docker-mcp.yaml"
+	mcpSecretsPath = "/mcp_config/mcp.env"
 )
 
 // RegisterMcpHooks registers hooks for MCP server lifecycle management.
@@ -57,7 +56,7 @@ func RegisterMcpHooks(app core.App, openCodeURL string) {
 				log.Printf("❌ [MCP] Failed to render config: %v", err)
 				return e.Next()
 			}
-			if err := restartContainer(gatewayContainer, 30*time.Second); err != nil {
+			if err := restartContainer(GatewayContainer, 30*time.Second); err != nil {
 				log.Printf("❌ [MCP] Failed to restart gateway: %v", err)
 			}
 			notifyPoco(app, openCodeURL, serverName, newStatus)
@@ -151,12 +150,26 @@ func renderMcpConfig(app core.App) error {
 		}
 	}
 
-	if err := os.WriteFile(mcpConfigPath, []byte(catalog.String()), 0600); err != nil {
-		return fmt.Errorf("failed to write catalog to %s: %w", mcpConfigPath, err)
+	// Atomic writes: write to temp files first, then rename
+	tmpCatalog := mcpConfigPath + ".tmp"
+	if err := os.WriteFile(tmpCatalog, []byte(catalog.String()), 0600); err != nil {
+		return fmt.Errorf("failed to write catalog to %s: %w", tmpCatalog, err)
 	}
 
-	if err := os.WriteFile(mcpSecretsPath, []byte(secrets.String()), 0600); err != nil {
-		return fmt.Errorf("failed to write secrets to %s: %w", mcpSecretsPath, err)
+	tmpSecrets := mcpSecretsPath + ".tmp"
+	if err := os.WriteFile(tmpSecrets, []byte(secrets.String()), 0600); err != nil {
+		os.Remove(tmpCatalog)
+		return fmt.Errorf("failed to write secrets to %s: %w", tmpSecrets, err)
+	}
+
+	if err := os.Rename(tmpCatalog, mcpConfigPath); err != nil {
+		os.Remove(tmpCatalog)
+		os.Remove(tmpSecrets)
+		return fmt.Errorf("failed to rename catalog: %w", err)
+	}
+	if err := os.Rename(tmpSecrets, mcpSecretsPath); err != nil {
+		os.Remove(tmpSecrets)
+		return fmt.Errorf("failed to rename secrets: %w", err)
 	}
 
 	log.Printf("✅ [MCP] Rendered catalog and secrets for %d approved servers", len(uniqueServers))
@@ -214,7 +227,7 @@ func notifyPoco(app core.App, openCodeURL string, serverName string, status stri
 			log.Printf("⚠️ [MCP] Failed to notify Poco for chat %s: %v", chatID, err)
 			continue
 		}
-		resp.Body.Close()
+		defer resp.Body.Close()
 
 		log.Printf("✅ [MCP] Notification sent to Poco for chat %s", chatID)
 	}

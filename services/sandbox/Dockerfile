@@ -1,5 +1,5 @@
 # Use shared Rust builder
-FROM rust:alpine AS rust-builder
+FROM rust:1.83-alpine AS rust-builder
 RUN apk add --no-cache musl-dev gcc
 WORKDIR /build
 COPY services/proxy/Cargo.toml services/proxy/Cargo.lock* ./
@@ -11,7 +11,7 @@ RUN touch src/main.rs
 RUN cargo build --release
 
 # poco-agents builder (Alpine musl — no ONNX needed)
-FROM rust:alpine AS agents-builder
+FROM rust:1.83-alpine AS agents-builder
 RUN apk add --no-cache musl-dev gcc
 WORKDIR /build
 COPY services/poco-agents/Cargo.toml services/poco-agents/Cargo.lock* ./
@@ -61,18 +61,8 @@ RUN install -m 0755 -d /etc/apt/keyrings && \
     apt-get update && apt-get install -y docker-ce-cli && \
     rm -rf /var/lib/apt/lists/*
 
-RUN ARCH=$(uname -m) && \
-    case $ARCH in \
-      x86_64)  M_ARCH="amd64" ;; \
-      aarch64) M_ARCH="arm64" ;; \
-    esac && \
-    VERSION="v0.39.3" && \
-    curl -L "https://github.com/docker/mcp-gateway/releases/download/${VERSION}/docker-mcp-linux-${M_ARCH}.tar.gz" -o /tmp/docker-mcp.tar.gz && \
-    tar -xzf /tmp/docker-mcp.tar.gz -C /tmp && \
-    mkdir -p /usr/local/lib/docker/cli-plugins/ && \
-    mv /tmp/docker-mcp /usr/local/lib/docker/cli-plugins/docker-mcp && \
-    chmod +x /usr/local/lib/docker/cli-plugins/docker-mcp && \
-    rm /tmp/docker-mcp.tar.gz
+COPY scripts/install-docker-mcp.sh /tmp/install-docker-mcp.sh
+RUN /tmp/install-docker-mcp.sh && rm /tmp/install-docker-mcp.sh
 
 ENV DOCKER_MCP_IN_CONTAINER=1
 

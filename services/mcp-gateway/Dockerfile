@@ -7,20 +7,9 @@ RUN apk add --no-cache \
     docker-cli \
     ca-certificates
 
-# Download and install docker-mcp binary (pinned version v0.39.3, multi-arch)
-RUN ARCH=$(uname -m) && \
-    case $ARCH in \
-      x86_64)  M_ARCH="amd64" ;; \
-      aarch64) M_ARCH="arm64" ;; \
-      *)       M_ARCH="amd64" ;; \
-    esac && \
-    VERSION="v0.39.3" && \
-    curl -L "https://github.com/docker/mcp-gateway/releases/download/${VERSION}/docker-mcp-linux-${M_ARCH}.tar.gz" -o /tmp/docker-mcp.tar.gz && \
-    tar -xzf /tmp/docker-mcp.tar.gz -C /tmp && \
-    mkdir -p /usr/local/lib/docker/cli-plugins/ && \
-    mv /tmp/docker-mcp /usr/local/lib/docker/cli-plugins/docker-mcp && \
-    chmod +x /usr/local/lib/docker/cli-plugins/docker-mcp && \
-    rm /tmp/docker-mcp.tar.gz
+# Install docker-mcp plugin (shared script, pinned version)
+COPY scripts/install-docker-mcp.sh /tmp/install-docker-mcp.sh
+RUN /tmp/install-docker-mcp.sh && rm /tmp/install-docker-mcp.sh
 
 # Set environment variable for container detection
 ENV DOCKER_MCP_IN_CONTAINER=1

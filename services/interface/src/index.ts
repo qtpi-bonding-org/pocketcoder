@@ -130,6 +130,7 @@ const SESSION_CACHE_MAX = 1000;
 const sessionToChat = new Map<string, string>();
 
 function cacheSession(sessionID: string, chatID: string) {
+    sessionToChat.delete(sessionID); // promote to end for LRU
     if (sessionToChat.size >= SESSION_CACHE_MAX) {
         const oldest = sessionToChat.keys().next().value;
         if (oldest) sessionToChat.delete(oldest);
@@ -164,6 +165,34 @@ function scrubPart(part: MessagePart): MessagePart {
     return { ...part, metadata: scrubbedMetadata };
 }
 
+// Notification constants
+const Notifications = {
+    TASK_COMPLETE_TYPE: 'task_complete',
+    TASK_ERROR_TYPE: 'task_error',
+    TASK_COMPLETE_TITLE: 'Task Complete',
+    TASK_ERROR_TITLE: 'Task Error',
+    TASK_COMPLETE_MSG: 'Your coding task has finished',
+    TASK_ERROR_MSG: 'Your coding task encountered an error',
+} as const;
+
+// Reconnect with exponential backoff + jitter
+function scheduleReconnect(name: string, retryFn: () => void, backoff: { delay: number }) {
+    const jitter = Math.random() * 1000;
+    const delay = Math.min(backoff.delay + jitter, MAX_RECONNECT_DELAY);
+    console.log(`[Interface] Reconnecting ${name} in ${Math.round(delay)}ms...`);
+    setTimeout(retryFn, delay);
+    backoff.delay = Math.min(backoff.delay * 2, MAX_RECONNECT_DELAY);
+}
+
+// Unsubscribe all command pump subscriptions
+function unsubscribeCommandPump() {
+    try {
+        pb.collection(Collections.MESSAGES).unsubscribe('*');
+        pb.collection(Collections.PERMISSIONS).unsubscribe('*');
+        pb.collection(Collections.MODEL_SELECTION).unsubscribe('*');
+    } catch (_) { /* ignore if not yet subscribed */ }
+}
+
 // Per-message update lock (prevents streaming race conditions)
 const messageUpdateLocks = new Map<string, Promise<void>>();
 
@@ -191,15 +220,15 @@ let commandPumpHealthy = false;
 /**
  * OPENCODE -> POCKETBASE (Event Pump)
  */
-let reconnectDelay = 1000;
 const MAX_RECONNECT_DELAY = 60000;
+const eventPumpBackoff = { delay: 1000 };
 
 async function startEventPump() {
     console.log('[Interface] Starting OpenCode Event Pump...');
 
     try {
         const subscription = await oc.event.subscribe();
-        reconnectDelay = 1000; // Reset on successful connection
+        eventPumpBackoff.delay = 1000;
         eventPumpHealthy = true;
 
         for await (const event of (subscription as any).stream) {
@@ -212,16 +241,11 @@ async function startEventPump() {
             } else if (type === EventType.PERMISSION_UPDATED) {
                 await handlePermissionUpdated(properties);
             }
-            // NOTE: OpenCode questions arrive as regular assistant messages via message.updated events
         }
     } catch (err) {
         console.error('[Interface] Event Pump Error:', err);
         eventPumpHealthy = false;
-        const jitter = Math.random() * 1000;
-        const delay = Math.min(reconnectDelay + jitter, MAX_RECONNECT_DELAY);
-        console.log(`[Interface] Reconnecting event pump in ${Math.round(delay)}ms...`);
-        setTimeout(startEventPump, delay);
-        reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
+        scheduleReconnect('event pump', startEventPump, eventPumpBackoff);
     }
 }
 
@@ -250,8 +274,9 @@ async function handleMessagePartUpdated(properties: OcEventProperties) {
         }
     }
 
+    const recordId = msgRecord!.id;
     await withMessageLock(messageID, async () => {
-        const fresh = await pb.collection(Collections.MESSAGES).getOne(msgRecord.id);
+        const fresh = await pb.collection(Collections.MESSAGES).getOne(recordId);
         let parts: MessagePart[] = Array.isArray(fresh.parts) ? [...fresh.parts] : [];
 
         if (delta) {
@@ -270,7 +295,7 @@ async function handleMessagePartUpdated(properties: OcEventProperties) {
             else parts.push(processed);
         }
 
-        await pb.collection(Collections.MESSAGES).update(msgRecord.id, { parts });
+        await pb.collection(Collections.MESSAGES).update(recordId, { parts });
     });
 }
 
@@ -304,11 +329,9 @@ async function sendTaskNotification(sessionID: string, status: string) {
         const userID = chat.user;
         if (!userID) return;
 
-        const notifType = status === Status.COMPLETED ? 'task_complete' : 'task_error';
-        const title = status === Status.COMPLETED ? 'Task Complete' : 'Task Error';
-        const message = status === Status.COMPLETED
-            ? 'Your coding task has finished'
-            : 'Your coding task encountered an error';
+        const notifType = status === Status.COMPLETED ? Notifications.TASK_COMPLETE_TYPE : Notifications.TASK_ERROR_TYPE;
+        const title = status === Status.COMPLETED ? Notifications.TASK_COMPLETE_TITLE : Notifications.TASK_ERROR_TITLE;
+        const message = status === Status.COMPLETED ? Notifications.TASK_COMPLETE_MSG : Notifications.TASK_ERROR_MSG;
 
         await pb.send('/api/pocketcoder/push', {
             method: 'POST',
@@ -347,18 +370,13 @@ async function handlePermissionUpdated(permission: OcPermission) {
 /**
  * POCKETBASE -> OPENCODE (Command Pump)
  */
-let commandPumpReconnectDelay = 1000;
+const commandPumpBackoff = { delay: 1000 };
 
 async function startCommandPump() {
     console.log('[Interface] Starting PocketBase Command Pump...');
 
     try {
-        // Unsubscribe first to avoid duplicate subscriptions on reconnect
-        try {
-            pb.collection(Collections.MESSAGES).unsubscribe('*');
-            pb.collection(Collections.PERMISSIONS).unsubscribe('*');
-            pb.collection(Collections.MODEL_SELECTION).unsubscribe('*');
-        } catch (_) { /* ignore if not yet subscribed */ }
+        unsubscribeCommandPump();
 
         // 1. New Messages
         await pb.collection(Collections.MESSAGES).subscribe('*', async (e: { action: string; record: MessageRecord }) => {
@@ -394,16 +412,12 @@ async function startCommandPump() {
         });
 
         commandPumpHealthy = true;
-        commandPumpReconnectDelay = 1000; // Reset on success
+        commandPumpBackoff.delay = 1000;
         console.log('[Interface] Command Pump subscriptions established');
     } catch (err) {
         console.error('[Interface] Command Pump subscription failed:', err);
         commandPumpHealthy = false;
-        const jitter = Math.random() * 1000;
-        const delay = Math.min(commandPumpReconnectDelay + jitter, MAX_RECONNECT_DELAY);
-        console.log(`[Interface] Reconnecting command pump in ${Math.round(delay)}ms...`);
-        setTimeout(startCommandPump, delay);
-        commandPumpReconnectDelay = Math.min(commandPumpReconnectDelay * 2, MAX_RECONNECT_DELAY);
+        scheduleReconnect('command pump', startCommandPump, commandPumpBackoff);
     }
 }
 
@@ -423,7 +437,7 @@ async function handleUserMessage(input: UserMessageInput) {
 
         if (!sessionID) {
             const result = await oc.session.create({ query: { directory: '/workspace' } });
-            sessionID = (result.data as any).id;
+            sessionID = (result.data as { id: string })?.id;
             await pb.collection(Collections.CHATS).update(chat.id, { ai_engine_session_id: sessionID });
         }
 
@@ -532,7 +546,12 @@ async function handleModelSwitch(record: ModelSelectionRecord) {
 // --- Utilities ---
 
 async function resolveChatID(sessionID: string): Promise<string | null> {
-    if (sessionToChat.has(sessionID)) return sessionToChat.get(sessionID)!;
+    if (sessionToChat.has(sessionID)) {
+        const chatID = sessionToChat.get(sessionID)!;
+        sessionToChat.delete(sessionID);
+        sessionToChat.set(sessionID, chatID);
+        return chatID;
+    }
     try {
         const chat = await pb.collection(Collections.CHATS).getFirstListItem(
             pb.filter('ai_engine_session_id = {:id}', { id: sessionID })
@@ -589,9 +608,7 @@ function setupGracefulShutdown() {
     const shutdown = async () => {
         console.log('[Interface] Shutting down gracefully...');
         try {
-            pb.collection(Collections.MESSAGES).unsubscribe('*');
-            pb.collection(Collections.PERMISSIONS).unsubscribe('*');
-            pb.collection(Collections.MODEL_SELECTION).unsubscribe('*');
+            unsubscribeCommandPump();
             if (providerSyncInterval) clearInterval(providerSyncInterval);
         } catch (err) {
             console.error('[Interface] Error during unsubscribe:', err);
