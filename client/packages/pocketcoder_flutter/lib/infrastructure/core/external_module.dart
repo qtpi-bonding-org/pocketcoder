@@ -14,9 +14,11 @@ abstract class ExternalModule {
   Future<PocketBase> get pocketBase async {
     logInfo('PocketBaseInit: Starting...');
 
-    // Default URL — overridden by user input on the onboarding screen
-    const baseUrl = 'http://127.0.0.1:8090';
-    logDebug('PocketBaseInit: Using default URL: $baseUrl');
+    // Restore persisted server URL, or fall back to default
+    const storage = FlutterSecureStorage();
+    final savedUrl = await storage.read(key: 'pb_server_url');
+    final baseUrl = savedUrl ?? 'http://127.0.0.1:8090';
+    logDebug('PocketBaseInit: Using URL: $baseUrl${savedUrl != null ? ' (restored)' : ' (default)'}');
 
     // Load Schema (for offline capabilities)
     String? schemaJson;
@@ -38,8 +40,7 @@ abstract class ExternalModule {
       }
     }
 
-    // Create secure auth store with flutter_secure_storage
-    const storage = FlutterSecureStorage();
+    // Create secure auth store (reuses storage from above)
     final authStoreConfig = AuthStoreConfig(storage);
     final authStore = authStoreConfig.createAuthStore();
 

@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
@@ -13,12 +14,14 @@ import 'auth_daos.dart';
 class AuthRepository implements IAuthRepository {
   final PocketBase _pocketBase;
   final AuthStoreConfig _authStoreConfig;
+  final FlutterSecureStorage _storage;
   final UserDao _userDao;
   final SshKeyDao _sshKeyDao;
 
   AuthRepository(
     this._pocketBase,
     this._authStoreConfig,
+    this._storage,
     this._userDao,
     this._sshKeyDao,
   );
@@ -78,8 +81,9 @@ class AuthRepository implements IAuthRepository {
       _pocketBase.authStore.record?.getStringValue('role');
 
   @override
-  void updateBaseUrl(String url) {
+  Future<void> updateBaseUrl(String url) async {
     _pocketBase.baseURL = url;
+    await _storage.write(key: 'pb_server_url', value: url);
   }
 
   // --- Users ---
