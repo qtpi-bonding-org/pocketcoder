@@ -39,6 +39,8 @@ CORE_DIRS=(
   "services/opencode"
   "services/interface"
   "services/mcp-gateway"
+  "services/poco-agents"
+  "services/poco-memory"
   "scripts"
   "client"
 )

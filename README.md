@@ -78,7 +78,7 @@ The only system prerequisite is **Docker**. Everything else is completely contai
 | TypeScript | 1,375 | OpenCode tools, plugins & Interface bridge |
 | Python | +0 vs upstream | CAO fork (vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator)) |
 | Dart | 32,279 | Flutter client (non-generated) |
-| Bash | 15,090 | Shell scripts (infra — separate tally) |
+| Bash | 15,092 | Shell scripts (infra — separate tally) |
 | **CORE TOTAL** | **~37,574** | **Lean, Fast, Fully Sovereign.** |
 
 ## System Requirements
