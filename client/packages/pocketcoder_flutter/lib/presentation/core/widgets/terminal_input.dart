@@ -64,7 +64,7 @@ class _TerminalInputState extends State<TerminalInput> {
           Text(
             '${widget.prompt} ',
             style: TextStyle(
-              color: widget.enabled ? terminalColors.attention : Colors.grey,
+              color: widget.enabled ? terminalColors.attention : colors.onSurface.withValues(alpha: 0.3),
               fontFamily: AppFonts.bodyFamily,
               package: 'pocketcoder_flutter',
               fontSize: AppSizes.fontStandard,

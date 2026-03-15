@@ -8,6 +8,7 @@ class ScanlineWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Stack(
       children: [
         child,
@@ -18,9 +19,9 @@ class ScanlineWidget extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.white.withValues(alpha: 0.0),
-                  Colors.white.withValues(alpha: 0.02),
-                  Colors.white.withValues(alpha: 0.0),
+                  colors.onSurface.withValues(alpha: 0.0),
+                  colors.onSurface.withValues(alpha: 0.02),
+                  colors.onSurface.withValues(alpha: 0.0),
                 ],
                 stops: const [0.0, 0.5, 1.0],
               ),

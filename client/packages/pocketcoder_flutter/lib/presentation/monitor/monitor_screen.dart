@@ -6,6 +6,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
@@ -150,56 +152,23 @@ class _MonitorScreenState extends State<MonitorScreen> {
   }
 
   Widget _buildMetricsGrid(BuildContext context, SystemStats stats) {
-    final colors = context.colorScheme;
     return Row(
       children: [
-        _buildMetricCard(
-            context, 'MESSAGES', stats.totalMessages.toString(), colors.primary),
+        TerminalMetricBox(
+          label: 'MESSAGES',
+          value: stats.totalMessages.toString(),
+        ),
         HSpace.x1,
-        _buildMetricCard(
-            context, 'COST', stats.cumulativeCost, colors.primary),
+        TerminalMetricBox(
+          label: 'COST',
+          value: stats.cumulativeCost,
+        ),
         HSpace.x1,
-        _buildMetricCard(context, 'TOKENS',
-            _formatNumber(stats.cumulativeTokens), colors.primary),
+        TerminalMetricBox(
+          label: 'TOKENS',
+          value: _formatNumber(stats.cumulativeTokens),
+        ),
       ],
-    );
-  }
-
-  Widget _buildMetricCard(
-      BuildContext context, String label, String value, Color accent) {
-    final colors = context.colorScheme;
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.all(AppSizes.space * 1.5),
-        decoration: BoxDecoration(
-          border: Border.all(color: accent.withValues(alpha: 0.5)),
-          color: accent.withValues(alpha: 0.05),
-        ),
-        child: Column(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: accent,
-                fontSize: AppSizes.fontMini,
-                fontWeight: AppFonts.heavy,
-                letterSpacing: 1,
-              ),
-            ),
-            VSpace.x1,
-            Text(
-              value,
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface,
-                fontSize: AppSizes.fontBig,
-                fontWeight: AppFonts.heavy,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -247,17 +216,8 @@ class _MonitorScreenState extends State<MonitorScreen> {
       children: tasks.map((task) {
         final isActive = task.status.toLowerCase() == 'active' ||
             task.status.toLowerCase() == 'running';
-        return Container(
-          margin: EdgeInsets.only(bottom: AppSizes.space),
-          padding: EdgeInsets.all(AppSizes.space),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: isActive
-                  ? colors.primary.withValues(alpha: 0.5)
-                  : colors.onSurface.withValues(alpha: 0.2),
-            ),
-            color: isActive ? colors.primary.withValues(alpha: 0.05) : null,
-          ),
+        return TerminalCard(
+          isActive: isActive,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
