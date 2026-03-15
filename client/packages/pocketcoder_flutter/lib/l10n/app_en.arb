@@ -30,7 +30,7 @@
   "aiSaveFailed": "Failed to save AI configuration",
   "aiError": "AI error",
 
-  "whitelistFetchFailed": "Unable to load whitelist",
-  "whitelistUpdateFailed": "Failed to update whitelist",
-  "whitelistError": "Whitelist error"
+  "toolPermissionsFetchFailed": "Unable to load tool permissions",
+  "toolPermissionsUpdateFailed": "Failed to update tool permissions",
+  "toolPermissionsError": "Tool permissions error"
 }

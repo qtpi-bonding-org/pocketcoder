@@ -44,8 +44,8 @@ import 'package:pocketcoder_flutter/application/system/status_cubit.dart'
     as _i506;
 import 'package:pocketcoder_flutter/application/terminal/terminal_cubit.dart'
     as _i1000;
-import 'package:pocketcoder_flutter/application/whitelist/whitelist_cubit.dart'
-    as _i528;
+import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_cubit.dart'
+    as _i89;
 import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart'
     as _i704;
 import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart'
@@ -227,10 +227,26 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i922.IMcpRepository>(
         () => _i662.McpRepository(gh<_i444.McpServerDao>()));
+    gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
+          gh<_i824.PocketBase>(),
+          gh<_i520.AuthStoreConfig>(),
+          gh<_i558.FlutterSecureStorage>(),
+          gh<_i589.UserDao>(),
+          gh<_i589.SshKeyDao>(),
+        ));
+    gh.lazySingleton<_i405.IChatRepository>(() => _i543.ChatRepository(
+          gh<_i464.ChatDao>(),
+          gh<_i464.MessageDao>(),
+          gh<_i61.AiAgentDao>(),
+          gh<_i50.IAuthRepository>(),
+          gh<_i589.PocketCoderApi>(),
+        ));
     gh.factory<_i616.AiConfigCubit>(
         () => _i616.AiConfigCubit(gh<_i536.IAiConfigRepository>()));
     gh.factory<_i252.SopCubit>(
         () => _i252.SopCubit(gh<_i656.IEvolutionRepository>()));
+    gh.factory<_i506.StatusCubit>(
+        () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i615.ILlmRepository>(() => _i935.LlmRepository(
           gh<_i1055.LlmKeyDao>(),
           gh<_i1055.ModelSelectionDao>(),
@@ -238,12 +254,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i328.McpCubit>(
         () => _i328.McpCubit(gh<_i922.IMcpRepository>()));
-    gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
-          gh<_i824.PocketBase>(),
-          gh<_i520.AuthStoreConfig>(),
-          gh<_i589.UserDao>(),
-          gh<_i589.SshKeyDao>(),
-        ));
     gh.lazySingleton<_i20.IHitlRepository>(() => _i441.HitlRepository(
           gh<_i658.PermissionDao>(),
           gh<_i658.QuestionDao>(),
@@ -254,32 +264,23 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
-    gh.factory<_i528.WhitelistCubit>(
-        () => _i528.WhitelistCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i925.QuestionCubit>(
         () => _i925.QuestionCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i955.PermissionCubit>(
         () => _i955.PermissionCubit(gh<_i20.IHitlRepository>()));
+    gh.factory<_i89.ToolPermissionsCubit>(
+        () => _i89.ToolPermissionsCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i85.LlmCubit>(() => _i85.LlmCubit(gh<_i615.ILlmRepository>()));
     gh.factory<_i655.SandboxAgentCubit>(
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
     gh.factory<_i464.AuthCubit>(
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
-    gh.lazySingleton<_i405.IChatRepository>(() => _i543.ChatRepository(
-          gh<_i464.ChatDao>(),
-          gh<_i464.MessageDao>(),
-          gh<_i61.AiAgentDao>(),
-          gh<_i50.IAuthRepository>(),
-          gh<_i589.PocketCoderApi>(),
-        ));
-    gh.factory<_i967.HealthCubit>(
-        () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
-    gh.factory<_i506.StatusCubit>(
-        () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
     gh.factory<_i278.ChatCubit>(
         () => _i278.ChatCubit(gh<_i405.IChatRepository>()));
     gh.factory<_i606.ChatListCubit>(
         () => _i606.ChatListCubit(gh<_i405.IChatRepository>()));
+    gh.factory<_i967.HealthCubit>(
+        () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     return this;
   }
 }

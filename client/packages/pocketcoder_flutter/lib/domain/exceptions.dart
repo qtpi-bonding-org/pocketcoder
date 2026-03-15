@@ -53,14 +53,14 @@ class AiException extends DomainException {
       AiException('Failed to save AI configuration', cause);
 }
 
-/// Whitelist-related exceptions.
-class WhitelistException extends DomainException {
-  WhitelistException(super.message, [super.cause]);
+/// Tool-permissions-related exceptions.
+class ToolPermissionsException extends DomainException {
+  ToolPermissionsException(super.message, [super.cause]);
 
-  factory WhitelistException.fetchFailed([dynamic cause]) =>
-      WhitelistException('Failed to fetch whitelist', cause);
-  factory WhitelistException.updateFailed([dynamic cause]) =>
-      WhitelistException('Failed to update whitelist', cause);
+  factory ToolPermissionsException.fetchFailed([dynamic cause]) =>
+      ToolPermissionsException('Failed to fetch tool permissions', cause);
+  factory ToolPermissionsException.updateFailed([dynamic cause]) =>
+      ToolPermissionsException('Failed to update tool permissions', cause);
 }
 
 /// Generic repository exceptions.
