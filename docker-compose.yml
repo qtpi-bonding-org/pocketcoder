@@ -214,6 +214,12 @@ services:
     networks:
       - pocketcoder-dashboard
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
       - pocketbase
       - opencode
@@ -234,6 +240,12 @@ services:
     networks:
       - pocketcoder-knowledge
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   # 📓 OPEN NOTEBOOK (Knowledge Base — NotebookLM Alternative)
   # To enable: docker compose --profile knowledge up
@@ -259,6 +271,12 @@ services:
     networks:
       - pocketcoder-knowledge
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8502/_stcore/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # 🔗 OPEN NOTEBOOK MCP (MCP Bridge for OpenCode)
   # To enable: docker compose --profile knowledge up
@@ -279,6 +297,12 @@ services:
     networks:
       - pocketcoder-knowledge
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   # 🧠 POCO-MEMORY (Agent Memory MCP Server)
   # To enable: docker compose --profile knowledge up
@@ -333,6 +357,12 @@ services:
     networks:
       - pocketcoder-pocketbase-sdk
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
 volumes:
   pb_data:

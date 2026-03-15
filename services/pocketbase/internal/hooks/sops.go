@@ -65,7 +65,10 @@ func SealProposal(app core.App, proposal *core.Record) error {
 
 	// 2. Look for existing record to update or create new
 	// We use the name as a unique identifier for the SOP in the ledger.
-	record, _ := app.FindFirstRecordByFilter("sops", "name = {:name}", map[string]any{"name": name})
+	record, err := app.FindFirstRecordByFilter("sops", "name = {:name}", map[string]any{"name": name})
+	if err != nil {
+		log.Printf("⚠️ [SOP] Lookup for '%s' failed: %v (creating new)", name, err)
+	}
 	if record == nil {
 		record = core.NewRecord(sopCollection)
 		record.Set("name", name)

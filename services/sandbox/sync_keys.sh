@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # PocketCoder: An accessible, secure, and user-friendly open-source coding assistant platform.
 # Copyright (C) 2026 Qtpi Bonding LLC
