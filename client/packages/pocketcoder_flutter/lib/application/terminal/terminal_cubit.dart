@@ -59,25 +59,27 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
           '🌐 [Terminal] Connecting to $host:$port as worker (via Key)...');
       final socket = await SSHSocket.connect(host, port);
 
-      _client = SSHClient(
+      final client = SSHClient(
         socket,
         username: 'worker',
         identities: [keys.privateKey],
       );
+      _client = client;
 
-      await _client!.authenticated;
+      await client.authenticated;
       logInfo('🔓 [Terminal] SSH Authenticated.');
 
-      _session = await _client!.shell(
+      final session = await client.shell(
         pty: SSHPtyConfig(
             width: terminal.viewWidth, height: terminal.viewHeight),
       );
+      _session = session;
 
       // Pipe SSH -> XTerm
-      _session!.stdout.listen((data) {
+      session.stdout.listen((data) {
         terminal.write(utf8.decode(data));
       });
-      _session!.stderr.listen((data) {
+      session.stderr.listen((data) {
         terminal.write(utf8.decode(data));
       });
 
@@ -85,12 +87,12 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
       if (sessionId != null) {
         final initialCommand =
             'tmux -S /tmp/tmux/pocketcoder attach -t pc_$sessionId || tmux -S /tmp/tmux/pocketcoder new-session -s pc_$sessionId';
-        _session!.stdin.add(utf8.encode('$initialCommand\n'));
+        session.stdin.add(utf8.encode('$initialCommand\n'));
       }
 
       // Pipe XTerm -> SSH
       terminal.onOutput = (data) {
-        _session!.stdin.add(utf8.encode(data));
+        session.stdin.add(utf8.encode(data));
       };
 
       return createSuccessState();
@@ -202,7 +204,8 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
     required String remotePath,
     required String fileName,
   }) async {
-    if (!state.isConnected || _client == null) return;
+    final client = _client;
+    if (!state.isConnected || client == null) return;
     if (state.isUploading) return;
 
     emit(state.copyWith(isUploading: true, uploadFileName: fileName));
@@ -211,7 +214,7 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
     terminal.write('  DEST: $remotePath\r\n');
 
     try {
-      final sftp = await _client!.sftp();
+      final sftp = await client.sftp();
       final localFile = File(localPath);
       final fileSize = await localFile.length();
       terminal.write('  SIZE: ${_formatBytes(fileSize)}\r\n');

@@ -33,18 +33,19 @@ class ChatCubit extends AppCubit<ChatState> {
     ));
 
     try {
-      _currentChatId = await _repository.ensureChat(title);
-      logInfo('💬 [CommCubit] Chat ID: $_currentChatId');
+      final chatId = await _repository.ensureChat(title);
+      _currentChatId = chatId;
+      logInfo('💬 [CommCubit] Chat ID: $chatId');
 
-      final opencodeId = await _repository.getOpencodeId(_currentChatId!);
+      final opencodeId = await _repository.getOpencodeId(chatId);
       logInfo('💬 [CommCubit] OpenCode ID: $opencodeId');
 
       emit(state.copyWith(
-        chatId: _currentChatId,
+        chatId: chatId,
         opencodeId: opencodeId,
         status: UiFlowStatus.success,
       ));
-      _subscribeToColdPipe(_currentChatId!);
+      _subscribeToColdPipe(chatId);
       _subscribeToHotPipe();
       logInfo('💬 [CommCubit] Initialization complete.');
     } catch (e) {
@@ -109,12 +110,13 @@ class ChatCubit extends AppCubit<ChatState> {
         // the hot message shadowing the DB record forever.
         Message? nextHot = state.hotMessage;
         if (nextHot != null) {
+          final capturedHot = nextHot;
           final dbEquivalent = messages.where((m) {
-            if (m.id == nextHot!.id) {
+            if (m.id == capturedHot.id) {
               return true;
             }
-            if (nextHot.aiEngineMessageId != null &&
-                m.aiEngineMessageId == nextHot.aiEngineMessageId) {
+            if (capturedHot.aiEngineMessageId != null &&
+                m.aiEngineMessageId == capturedHot.aiEngineMessageId) {
               return true;
             }
             return false;
@@ -162,7 +164,7 @@ class ChatCubit extends AppCubit<ChatState> {
     ));
 
     try {
-      await _repository.sendMessage(_currentChatId!, content);
+      await _repository.sendMessage(_currentChatId ?? '', content);
       emit(state.copyWith(status: UiFlowStatus.success));
     } catch (e) {
       logError('💬 [CommCubit] Failed to send message: $e');
@@ -179,7 +181,7 @@ class ChatCubit extends AppCubit<ChatState> {
     logDebug(
         '💬 [CommCubit] Subscribing to HotPipe (SSE) for $_currentChatId...');
     _hotSub?.cancel();
-    _hotSub = _repository.watchHotPipe(_currentChatId!).listen((event) {
+    _hotSub = _repository.watchHotPipe(_currentChatId ?? '').listen((event) {
       event.map(
         textDelta: _onHotTextDelta,
         toolStatus: _onHotToolStatus,

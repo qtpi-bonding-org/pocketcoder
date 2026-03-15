@@ -64,12 +64,14 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
   }
 
   void _handleMappedState(S state) {
-    var messageKey = mapper!.map(state);
+    final mapper = this.mapper;
+    if (mapper == null) return;
+    var messageKey = mapper.map(state);
 
     if (messageKey == null && state.hasError && state.error != null) {
       try {
         final exceptionMapper = GetIt.instance<IExceptionKeyMapper>();
-        messageKey = exceptionMapper.map(state.error!);
+        messageKey = exceptionMapper.map(state.error ?? 'Unknown error');
       } catch (_) {}
 
       messageKey ??= MessageKey.error(
@@ -100,7 +102,7 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
     String message = state.error.toString();
     try {
       final exceptionMapper = GetIt.instance<IExceptionKeyMapper>();
-      final messageKey = exceptionMapper.map(state.error!);
+      final messageKey = exceptionMapper.map(state.error ?? 'Unknown error');
       if (messageKey != null) {
         try {
           final localization = GetIt.instance<ILocalizationService>();
