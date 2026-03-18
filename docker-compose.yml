@@ -265,9 +265,9 @@ services:
       - OPEN_NOTEBOOK_ENCRYPTION_KEY=${OPEN_NOTEBOOK_ENCRYPTION_KEY}
     volumes:
       - notebook_data:/app/data
-    ports:
-      - "8502:8502"  # OpenNotebook UI
-      - "5055:5055"  # OpenNotebook REST API
+    # ports:
+    #   - "8502:8502"  # OpenNotebook UI
+    #   - "5055:5055"  # OpenNotebook REST API
     networks:
       - pocketcoder-knowledge
     restart: unless-stopped
@@ -352,8 +352,8 @@ services:
     volumes:
       - ntfy-cache:/var/cache/ntfy
       - ntfy-auth:/var/lib/ntfy
-    ports:
-      - "2586:80"
+    # ports:
+    #   - "2586:80"
     networks:
       - pocketcoder-pocketbase-sdk
     restart: unless-stopped
