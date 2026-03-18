@@ -81,5 +81,6 @@ services/sandbox/cao/
 
 # Local Scratchpad/Misc
 .misc/
+.notes/
 tobedeleted/
 out.json
