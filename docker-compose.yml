@@ -40,6 +40,7 @@ services:
       - pocketcoder-docker
       - pocketcoder-pocketbase-sdk
       - pocketcoder-opencode-sdk
+      - pocketcoder-tailscale
 
   # 🧠 OPENCODE (Reasoning Engine)
   opencode:
@@ -213,6 +214,7 @@ services:
       - ./services/sqlpage/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
     networks:
       - pocketcoder-dashboard
+      - pocketcoder-tailscale
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/"]
@@ -364,6 +366,35 @@ services:
       retries: 5
       start_period: 15s
 
+  # 🔗 TAILSCALE (Remote Access Tunnel)
+  # To enable: docker compose --profile tailscale up
+  # Modes: TAILSCALE_MODE=funnel (default, public URL) or TAILSCALE_MODE=private (Tailnet only)
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: pocketcoder-tailscale
+    profiles:
+      - tailscale
+    hostname: ${TS_HOSTNAME:-pocketcoder}
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY:-}
+      - TS_HOSTNAME=${TS_HOSTNAME:-pocketcoder}
+      - TAILSCALE_MODE=${TAILSCALE_MODE:-funnel}
+    volumes:
+      - tailscale_state:/var/lib/tailscale
+      - ./deploy/tailscale/entrypoint.sh:/entrypoint.sh:ro
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    networks:
+      - pocketcoder-tailscale
+    restart: unless-stopped
+
 volumes:
   pb_data:
   # pb_backups:
@@ -379,6 +410,7 @@ volumes:
   surrealdb_data:
   notebook_data:
   fastembed_cache:  # ONNX model cache for poco-memory embeddings
+  tailscale_state:  # Persists Tailscale node identity across restarts
 
 networks:
   pocketcoder-dashboard:
@@ -394,4 +426,6 @@ networks:
   pocketcoder-pocketbase-sdk:
     driver: bridge
   pocketcoder-knowledge:
+    driver: bridge
+  pocketcoder-tailscale:
     driver: bridge
