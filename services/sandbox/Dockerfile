@@ -1,5 +1,5 @@
 # Use shared Rust builder
-FROM rust:1.83-alpine AS rust-builder
+FROM rust:1.88-alpine AS rust-builder
 RUN apk add --no-cache musl-dev gcc
 WORKDIR /build
 COPY services/proxy/Cargo.toml services/proxy/Cargo.lock* ./
@@ -11,7 +11,7 @@ RUN touch src/main.rs
 RUN cargo build --release
 
 # poco-agents builder (Alpine musl — no ONNX needed)
-FROM rust:1.83-alpine AS agents-builder
+FROM rust:1.88-alpine AS agents-builder
 RUN apk add --no-cache musl-dev gcc
 WORKDIR /build
 COPY services/poco-agents/Cargo.toml services/poco-agents/Cargo.lock* ./
@@ -91,8 +91,6 @@ RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 # Allow root for debugging if needed, but worker is preferred
 RUN echo "PermitRootLogin no" >> /etc/ssh/sshd_config
-# Enable SFTP subsystem for file transfer from Flutter
-RUN echo "Subsystem sftp /usr/lib/ssh/sftp-server" >> /etc/ssh/sshd_config
 
 # Fix entrypoint permissions
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh 
