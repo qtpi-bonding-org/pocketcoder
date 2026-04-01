@@ -395,6 +395,32 @@ services:
       - pocketcoder-tailscale
     restart: unless-stopped
 
+  # 🔒 CADDY (Automatic HTTPS Reverse Proxy)
+  # To enable: docker compose --profile caddy up -d
+  # Uses sslip.io for automatic SSL without a domain name.
+  # Set CADDY_DOMAIN in .env (e.g. 194-163-45-3.sslip.io)
+  caddy:
+    image: caddy:2-alpine
+    container_name: pocketcoder-caddy
+    profiles:
+      - caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    environment:
+      - CADDY_DOMAIN=${CADDY_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    networks:
+      - pocketcoder-dashboard
+    restart: unless-stopped
+
 volumes:
   pb_data:
   # pb_backups:
@@ -411,6 +437,8 @@ volumes:
   notebook_data:
   fastembed_cache:  # ONNX model cache for poco-memory embeddings
   tailscale_state:  # Persists Tailscale node identity across restarts
+  caddy_data:       # Persists TLS certificates
+  caddy_config:
 
 networks:
   pocketcoder-dashboard:
