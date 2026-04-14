@@ -25,33 +25,45 @@ echo "🏗️  [PocketCoder] Initializing Hardened Sandbox..."
 # --- Constants ---
 TMUX_SOCKET="/tmp/tmux/pocketcoder"
 TMUX_SESSION="pocketcoder"
-POCO_WINDOW="poco"    # The Poco TUI window (SSH bridge to OpenCode)
+
+# --- PIDs for critical processes ---
+PROXY_PID=""
+AGENTS_PID=""
+
+# --- 🛡️ SIGNAL HANDLING ---
+# Trap SIGTERM/SIGINT to cleanly shut down child processes.
+# tini (init: true) forwards signals here; we propagate to children.
+cleanup() {
+    echo "🛑 [PocketCoder] Shutdown signal received, cleaning up..."
+    [ -n "$AGENTS_PID" ] && kill "$AGENTS_PID" 2>/dev/null
+    [ -n "$PROXY_PID" ] && kill "$PROXY_PID" 2>/dev/null
+    # sshd manages its own children; sending TERM is sufficient
+    killall sshd 2>/dev/null
+    wait 2>/dev/null
+    echo "👋 [PocketCoder] Sandbox shut down cleanly."
+    exit 0
+}
+trap cleanup SIGTERM SIGINT
 
 # --- 🧹 CLEANUP RITUAL (Ensuring Statelessness) ---
 echo "🧹 Cleaning up stale sockets and locks..."
-
-# 1. Wipe TMUX sockets to prevent 'Address already in use' or 'Ghost' sessions
 rm -rf /tmp/tmux/*
 mkdir -p /tmp/tmux
 chmod 777 /tmp/tmux
 
-# --- 🖥️ TMUX SETUP ---
-echo "🖥️ Preparing tmux socket directory..."
-mkdir -p /tmp/tmux
-chmod 777 /tmp/tmux
-
-# Start the Rust axum server in the background
-echo "🚀 Starting PocketCoder axum server on port 3001..."
-/usr/local/bin/pocketcoder server --port 3001 &
-
 # --- 🚀 SERVICE STARTUP ---
 
-# 4. Start sshd
+# 1. Pocketcoder proxy (CRITICAL — opencode shells through this)
+echo "🚀 Starting PocketCoder axum server on port 3001..."
+/usr/local/bin/pocketcoder server --port 3001 &
+PROXY_PID=$!
+
+# 2. SSH daemon (non-critical — container survives without it)
 echo "🔑 Starting SSH Daemon on port 2222..."
 mkdir -p /var/run/sshd
 /usr/sbin/sshd
 
-# 4. SSH Key Localization (Smart Retry)
+# 3. SSH Key sync (non-critical, background)
 echo "🔄 Localizing SSH keys for 'worker' user..."
 (
   for i in {1..10}; do
@@ -68,19 +80,19 @@ echo "🔄 Localizing SSH keys for 'worker' user..."
   fi
 ) &
 
-# --- TMUX SESSION ---
+# 4. Tmux session
 echo "🖥️ Creating tmux session..."
 tmux -S "$TMUX_SOCKET" new-session -d -s "$TMUX_SESSION" -n "system"
 chmod 777 "$TMUX_SOCKET"
-
-# Create default terminal window for Poco (used by /exec endpoint)
 tmux -S "$TMUX_SOCKET" new-window -t "$TMUX_SESSION" -n "poco-terminal" -c /workspace
 
-# --- POCO-AGENTS ---
+# 5. Poco-agents (CRITICAL — sub-agent orchestration)
 echo "🤖 Starting poco-agents MCP server on port 9888..."
 mkdir -p /workspace/.agents
 /usr/local/bin/poco-agents &
+AGENTS_PID=$!
 
+# Wait for poco-agents to be ready
 for i in {1..15}; do
     if curl -s http://localhost:9888/health > /dev/null 2>&1; then
         echo "✅ poco-agents is ready."
@@ -93,4 +105,17 @@ if ! curl -s http://localhost:9888/health > /dev/null 2>&1; then
 fi
 
 echo "✅ [PocketCoder] Sandbox is LIVE and HARDENED."
-tail -f /dev/null
+
+# --- 🔄 PROCESS MONITOR ---
+# Monitor critical processes. If either dies, exit 1 so Docker restarts us.
+while true; do
+    if ! kill -0 "$PROXY_PID" 2>/dev/null; then
+        echo "💀 [PocketCoder] Proxy process (PID $PROXY_PID) died. Exiting for restart."
+        exit 1
+    fi
+    if ! kill -0 "$AGENTS_PID" 2>/dev/null; then
+        echo "💀 [PocketCoder] poco-agents process (PID $AGENTS_PID) died. Exiting for restart."
+        exit 1
+    fi
+    sleep 5
+done

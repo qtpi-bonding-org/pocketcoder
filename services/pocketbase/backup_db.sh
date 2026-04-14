@@ -19,7 +19,14 @@ fi
 # Backup using SQLite's backup command (atomic and safe)
 sqlite3 "$DB_PATH" ".backup '$BACKUP_FILE.tmp'"
 
-# Atomic move
+# Rotate: keep one previous backup as safety net
+if [ -f "$BACKUP_FILE" ]; then
+    mv "$BACKUP_FILE" "$BACKUP_FILE.prev"
+    mv "$BACKUP_FILE-wal" "$BACKUP_FILE.prev-wal" 2>/dev/null || true
+    mv "$BACKUP_FILE-shm" "$BACKUP_FILE.prev-shm" 2>/dev/null || true
+fi
+
+# Atomic move new backup into place
 mv "$BACKUP_FILE.tmp" "$BACKUP_FILE"
 
 # Copy WAL and SHM files
