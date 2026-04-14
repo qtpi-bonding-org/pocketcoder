@@ -58,7 +58,12 @@ async fn main() -> anyhow::Result<()> {
     info!("fastembed ready");
 
     info!("connecting to SurrealDB at {surreal_addr}…");
-    let db = Db::new(&surreal_addr, &surreal_user, &surreal_pass, &surreal_ns, &surreal_db).await?;
+    let db = tokio::time::timeout(
+        std::time::Duration::from_secs(60),
+        Db::new(&surreal_addr, &surreal_user, &surreal_pass, &surreal_ns, &surreal_db),
+    )
+    .await
+    .map_err(|_| anyhow::anyhow!("SurrealDB connection timed out after 60s"))??;
     info!("SurrealDB ready");
 
     // Build MCP service

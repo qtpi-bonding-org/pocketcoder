@@ -85,6 +85,7 @@ services:
       context: .
       dockerfile: services/sandbox/Dockerfile
     container_name: pocketcoder-sandbox
+    init: true  # tini as PID 1 — handles zombie reaping + signal forwarding
     ports:
       - "2222:2222"  # SSH + SFTP (key-auth only)
     volumes:
@@ -105,6 +106,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    restart: unless-stopped
     networks:
       - pocketcoder-control
       - pocketcoder-tools
@@ -170,6 +172,12 @@ services:
     networks:
       - pocketcoder-docker
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:2375/info"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # 🛰️ SOVEREIGN INTERFACE (Linear Bridge)
   interface:
@@ -223,9 +231,12 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      - pocketbase
-      - opencode
-      - sandbox
+      pocketbase:
+        condition: service_healthy
+      opencode:
+        condition: service_healthy
+      sandbox:
+        condition: service_healthy
 
 
   # 📚 SURREALDB (Knowledge + Memory Database)
@@ -394,6 +405,12 @@ services:
     networks:
       - pocketcoder-tailscale
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "tailscale", "status", "--json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # 🔒 CADDY (Automatic HTTPS Reverse Proxy)
   # To enable: docker compose --profile caddy up -d
@@ -420,6 +437,12 @@ services:
     networks:
       - pocketcoder-dashboard
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   pb_data:

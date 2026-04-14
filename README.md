@@ -116,9 +116,9 @@ docker logs pocketcoder-tailscale
 | Rust | 596 | Proxy |
 | TypeScript | 1,375 | OpenCode tools, plugins & Interface bridge |
 | Python | +0 vs upstream | CAO fork (vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator)) |
-| Dart | 32,279 | Flutter client (non-generated) |
-| Bash | 15,092 | Shell scripts (infra — separate tally) |
-| **CORE TOTAL** | **~37,574** | **Lean, Fast, Fully Sovereign.** |
+| Dart | 34,750 | Flutter client (non-generated) |
+| Bash | 15,147 | Shell scripts (infra — separate tally) |
+| **CORE TOTAL** | **~40,045** | **Lean, Fast, Fully Sovereign.** |
 
 ## System Requirements
 
