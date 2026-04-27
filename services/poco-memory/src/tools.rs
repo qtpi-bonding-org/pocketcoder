@@ -39,6 +39,8 @@ pub struct StoreParams {
     /// Optional categorization tags.
     #[serde(default)]
     pub tags: Vec<String>,
+    /// Per-memory decay half-life in days (default 7.0). Higher = sticks around longer.
+    pub decay_rate_days: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -47,8 +49,6 @@ pub struct RecallParams {
     pub query: String,
     /// Max results to return (default 5).
     pub limit: Option<usize>,
-    /// Decay half-life in days (default 7.0). Older unused memories score lower.
-    pub decay_days: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -57,8 +57,6 @@ pub struct SearchParams {
     pub query: String,
     /// Max results to return (default 5).
     pub limit: Option<usize>,
-    /// Decay half-life in days (default 7.0).
-    pub decay_days: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -107,30 +105,30 @@ impl PocoMemory {
 
 // ── Decay helper ────────────────────────────────────────────────────────────
 
-/// Compute exponential decay: exp(-days_since_retrieval / decay_days)
-fn compute_decay(retrieved_at: &str, decay_days: f64) -> f64 {
+/// Compute exponential decay: exp(-days_since_retrieval / decay_rate_days)
+fn compute_decay(retrieved_at: &str, decay_rate_days: f64) -> f64 {
     let now = chrono::Utc::now();
     let retrieved = chrono::DateTime::parse_from_rfc3339(retrieved_at)
         .or_else(|_| chrono::DateTime::parse_from_str(retrieved_at, "%Y-%m-%dT%H:%M:%S%.fZ"))
         .map(|dt| dt.with_timezone(&chrono::Utc))
         .unwrap_or(now);
     let days = (now - retrieved).num_seconds() as f64 / 86400.0;
-    (-days / decay_days).exp()
+    (-days / decay_rate_days).exp()
 }
 
 /// Apply decay to candidates, re-sort, take top `limit`, touch retrieved_at.
+/// Each record's own `decay_rate_days` is used.
 async fn apply_decay_and_touch(
     db: &Db,
     candidates: Vec<MemoryRecord>,
     score_field: impl Fn(&MemoryRecord) -> f64,
-    decay_days: f64,
     limit: usize,
 ) -> Vec<(MemoryRecord, f64)> {
     let mut scored: Vec<(MemoryRecord, f64)> = candidates
         .into_iter()
         .map(|r| {
             let raw = score_field(&r);
-            let decay = compute_decay(&r.retrieved_at, decay_days);
+            let decay = compute_decay(&r.retrieved_at, r.decay_rate_days);
             let final_score = raw * decay;
             (r, final_score)
         })
@@ -157,9 +155,10 @@ fn format_results(results: &[(MemoryRecord, f64)]) -> String {
         .iter()
         .map(|(r, score)| {
             format!(
-                "[{}] (score: {:.3}, tags: [{}])\n{}",
+                "[{}] (score: {:.3}, accessed: {}, tags: [{}])\n{}",
                 r.id,
                 score,
+                r.access_count,
                 r.tags.join(", "),
                 r.content
             )
@@ -176,28 +175,28 @@ fn mcp_err(e: impl std::fmt::Display) -> McpError {
 
 #[tool_router]
 impl PocoMemory {
-    #[tool(description = "Store a fact or memory for later recall. Provide content text and optional tags for categorization.")]
+    #[tool(description = "Store a fact or memory for later recall. Provide content text, optional tags, and optional decay_rate_days (per-memory half-life, default 7.0).")]
     async fn memory_store(
         &self,
         Parameters(params): Parameters<StoreParams>,
     ) -> Result<CallToolResult, McpError> {
+        let decay_rate_days = params.decay_rate_days.unwrap_or(7.0);
         let embedding = self.embedder.embed(&params.content).await.map_err(mcp_err)?;
-        let id = self.db.store(params.content, params.tags, embedding).await.map_err(mcp_err)?;
+        let id = self.db.store(params.content, params.tags, embedding, decay_rate_days).await.map_err(mcp_err)?;
         Ok(CallToolResult::success(vec![Content::text(format!("Memory stored: {id}"))]))
     }
 
-    #[tool(description = "Recall memories by semantic similarity. Recent memories are boosted; old unused ones fade. Use decay_days to control fade speed (default 7).")]
+    #[tool(description = "Recall memories by semantic similarity. Recent memories are boosted; old unused ones fade. Per-memory decay rate is set at store time.")]
     async fn memory_recall(
         &self,
         Parameters(params): Parameters<RecallParams>,
     ) -> Result<CallToolResult, McpError> {
         let limit = params.limit.unwrap_or(5);
-        let decay_days = params.decay_days.unwrap_or(7.0);
         let fetch_limit = limit * 3;
 
         let embedding = self.embedder.embed(&params.query).await.map_err(mcp_err)?;
         let candidates = self.db.vector_search(embedding, fetch_limit).await.map_err(mcp_err)?;
-        let results = apply_decay_and_touch(&self.db, candidates, |r| r.similarity.unwrap_or(0.0), decay_days, limit).await;
+        let results = apply_decay_and_touch(&self.db, candidates, |r| r.similarity.unwrap_or(0.0), limit).await;
         Ok(CallToolResult::success(vec![Content::text(format_results(&results))]))
     }
 
@@ -207,11 +206,10 @@ impl PocoMemory {
         Parameters(params): Parameters<SearchParams>,
     ) -> Result<CallToolResult, McpError> {
         let limit = params.limit.unwrap_or(5);
-        let decay_days = params.decay_days.unwrap_or(7.0);
         let fetch_limit = limit * 3;
 
         let candidates = self.db.fts_search(params.query, fetch_limit).await.map_err(mcp_err)?;
-        let results = apply_decay_and_touch(&self.db, candidates, |r| r.score.unwrap_or(0.0), decay_days, limit).await;
+        let results = apply_decay_and_touch(&self.db, candidates, |r| r.score.unwrap_or(0.0), limit).await;
         Ok(CallToolResult::success(vec![Content::text(format_results(&results))]))
     }
 
@@ -263,6 +261,91 @@ impl PocoMemory {
     ) -> Result<CallToolResult, McpError> {
         self.db.forget(&params.id).await.map_err(mcp_err)?;
         Ok(CallToolResult::success(vec![Content::text(format!("Forgotten: {}", params.id))]))
+    }
+}
+
+// ── Tests ───────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Duration, Utc};
+    use surrealdb::sql::Thing;
+
+    fn ts_days_ago(days: i64) -> String {
+        (Utc::now() - Duration::days(days)).to_rfc3339()
+    }
+
+    #[test]
+    fn decay_now_is_one() {
+        let now = Utc::now().to_rfc3339();
+        let d = compute_decay(&now, 7.0);
+        assert!((d - 1.0).abs() < 1e-3, "expected ~1.0, got {d}");
+    }
+
+    #[test]
+    fn decay_one_half_life_is_e_minus_one() {
+        let d = compute_decay(&ts_days_ago(7), 7.0);
+        let expected = (-1.0_f64).exp();
+        assert!((d - expected).abs() < 1e-3, "expected ~{expected}, got {d}");
+    }
+
+    #[test]
+    fn decay_far_past_collapses() {
+        let d = compute_decay(&ts_days_ago(30), 7.0);
+        let expected = (-30.0_f64 / 7.0).exp();
+        assert!((d - expected).abs() < 1e-3, "expected ~{expected}, got {d}");
+    }
+
+    #[test]
+    fn decay_longer_half_life_decays_slower() {
+        let d_short = compute_decay(&ts_days_ago(7), 7.0);
+        let d_long = compute_decay(&ts_days_ago(7), 30.0);
+        assert!(
+            d_long > d_short,
+            "longer half-life should decay slower: short={d_short}, long={d_long}"
+        );
+        let expected_long = (-7.0_f64 / 30.0).exp();
+        assert!((d_long - expected_long).abs() < 1e-3);
+    }
+
+    #[test]
+    fn decay_malformed_falls_back_to_now() {
+        let d = compute_decay("not-a-timestamp", 7.0);
+        assert!(
+            (d - 1.0).abs() < 1e-3,
+            "malformed timestamp should fall back to now (decay~1.0), got {d}"
+        );
+    }
+
+    fn make_record(content: &str, access_count: i64) -> MemoryRecord {
+        let now = Utc::now().to_rfc3339();
+        MemoryRecord {
+            id: Thing::from(("memory", "test1")),
+            content: content.to_string(),
+            tags: vec!["greeting".to_string()],
+            created_at: now.clone(),
+            retrieved_at: now,
+            access_count,
+            decay_rate_days: 7.0,
+            similarity: None,
+            score: None,
+        }
+    }
+
+    #[test]
+    fn format_results_empty() {
+        assert_eq!(format_results(&[]), "No memories found.");
+    }
+
+    #[test]
+    fn format_results_includes_access_count_and_score() {
+        let rec = make_record("hello world", 5);
+        let s = format_results(&[(rec, 0.42)]);
+        assert!(s.contains("accessed: 5"), "missing access_count: {s}");
+        assert!(s.contains("0.420"), "missing score: {s}");
+        assert!(s.contains("hello world"), "missing content: {s}");
+        assert!(s.contains("greeting"), "missing tags: {s}");
     }
 }
 

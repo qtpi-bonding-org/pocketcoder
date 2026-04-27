@@ -11,6 +11,8 @@ DEFINE FIELD IF NOT EXISTS tags ON memory TYPE array<string> DEFAULT [];
 DEFINE FIELD IF NOT EXISTS embedding ON memory TYPE array<float> ASSERT array::len($value) = 384;
 DEFINE FIELD IF NOT EXISTS created_at ON memory TYPE datetime DEFAULT time::now();
 DEFINE FIELD IF NOT EXISTS retrieved_at ON memory TYPE datetime DEFAULT time::now();
+DEFINE FIELD IF NOT EXISTS access_count ON memory TYPE int DEFAULT 0;
+DEFINE FIELD IF NOT EXISTS decay_rate_days ON memory TYPE float DEFAULT 7.0;
 
 -- Vector index (HNSW, cosine, 384 dims for AllMiniLML6V2)
 DEFINE INDEX IF NOT EXISTS idx_memory_embedding ON memory FIELDS embedding HNSW DIMENSION 384 DIST COSINE TYPE F32;
