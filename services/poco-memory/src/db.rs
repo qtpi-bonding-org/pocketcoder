@@ -39,6 +39,8 @@ pub struct MemoryRecord {
     pub tags: Vec<String>,
     pub created_at: String,
     pub retrieved_at: String,
+    pub access_count: i64,
+    pub decay_rate_days: f64,
     /// Present on vector search results.
     #[serde(default)]
     pub similarity: Option<f64>,
@@ -51,6 +53,12 @@ pub struct MemoryRecord {
 #[derive(Debug, Deserialize)]
 pub struct CreatedRecord {
     pub id: Thing,
+}
+
+/// Single source of truth for the touch_retrieved SQL — used by both the
+/// production method and the test that asserts its semantics.
+fn touch_retrieved_query(id: &str) -> String {
+    format!("UPDATE {id} SET retrieved_at = time::now(), access_count += 1")
 }
 
 impl Db {
@@ -77,16 +85,24 @@ impl Db {
     }
 
     /// Store a new memory, returning its record ID.
-    pub async fn store(&self, content: String, tags: Vec<String>, embedding: Vec<f32>) -> anyhow::Result<String> {
+    pub async fn store(
+        &self,
+        content: String,
+        tags: Vec<String>,
+        embedding: Vec<f32>,
+        decay_rate_days: f64,
+    ) -> anyhow::Result<String> {
         let mut result = self
             .client
             .query(
                 "CREATE memory SET content = $content, tags = $tags, embedding = $embedding, \
+                 decay_rate_days = $decay_rate_days, \
                  created_at = time::now(), retrieved_at = time::now()",
             )
             .bind(("content", content))
             .bind(("tags", tags))
             .bind(("embedding", embedding))
+            .bind(("decay_rate_days", decay_rate_days))
             .await?;
 
         let created: Option<CreatedRecord> = result.take(0)?;
@@ -118,11 +134,10 @@ impl Db {
         Ok(records)
     }
 
-    /// Batch-update retrieved_at on returned memories (keeps them fresh).
+    /// Batch-update retrieved_at + access_count on returned memories.
     pub async fn touch_retrieved(&self, ids: &[String]) -> anyhow::Result<()> {
         for id in ids {
-            let query = format!("UPDATE {id} SET retrieved_at = time::now()");
-            self.client.query(&query).await?;
+            self.client.query(&touch_retrieved_query(id)).await?;
         }
         Ok(())
     }
@@ -148,5 +163,101 @@ impl Db {
         let query = format!("DELETE {id}");
         self.client.query(&query).await?.check()?;
         Ok(())
+    }
+}
+
+// ── Tests ───────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use surrealdb::engine::local::Mem;
+
+    /// Spin up an in-process SurrealDB and apply schema.sql.
+    async fn setup_mem_client() -> Surreal<surrealdb::engine::local::Db> {
+        let client = Surreal::new::<Mem>(()).await.expect("mem connect");
+        client.use_ns("test").use_db("test").await.expect("ns/db");
+        let schema = include_str!("schema.sql");
+        client.query(schema).await.expect("schema query").check().expect("schema ok");
+        client
+    }
+
+    #[derive(Deserialize)]
+    struct AccessCountRow {
+        access_count: i64,
+    }
+
+    #[derive(Deserialize)]
+    struct DefaultsRow {
+        access_count: i64,
+        decay_rate_days: f64,
+    }
+
+    #[tokio::test]
+    async fn schema_defaults_apply_on_create() {
+        let client = setup_mem_client().await;
+
+        // Create a memory without setting access_count or decay_rate_days —
+        // schema DEFAULT clauses should fill them.
+        client
+            .query("CREATE memory:row1 SET content = 'hi', tags = [], embedding = $emb")
+            .bind(("emb", vec![0.0_f32; 384]))
+            .await
+            .expect("create");
+
+        let mut r = client
+            .query("SELECT access_count, decay_rate_days FROM memory:row1")
+            .await
+            .expect("select");
+        let rows: Vec<DefaultsRow> = r.take(0).expect("take");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].access_count, 0, "schema default access_count must be 0");
+        assert!(
+            (rows[0].decay_rate_days - 7.0).abs() < f64::EPSILON,
+            "schema default decay_rate_days must be 7.0, got {}",
+            rows[0].decay_rate_days,
+        );
+    }
+
+    #[tokio::test]
+    async fn touch_retrieved_increments_access_count() {
+        let client = setup_mem_client().await;
+
+        client
+            .query("CREATE memory:row2 SET content = 'hi', tags = [], embedding = $emb")
+            .bind(("emb", vec![0.0_f32; 384]))
+            .await
+            .expect("create");
+
+        // Use the production-shared SQL helper so a refactor of the SQL is
+        // caught here too.
+        client
+            .query(touch_retrieved_query("memory:row2"))
+            .await
+            .expect("touch 1");
+
+        let mut r = client
+            .query("SELECT access_count FROM memory:row2")
+            .await
+            .expect("select 1");
+        let rows: Vec<AccessCountRow> = r.take(0).expect("take 1");
+        assert_eq!(rows[0].access_count, 1, "first touch should set access_count = 1");
+
+        // Two more touches → 3
+        client
+            .query(touch_retrieved_query("memory:row2"))
+            .await
+            .expect("touch 2");
+        client
+            .query(touch_retrieved_query("memory:row2"))
+            .await
+            .expect("touch 3");
+
+        let mut r = client
+            .query("SELECT access_count FROM memory:row2")
+            .await
+            .expect("select 2");
+        let rows: Vec<AccessCountRow> = r.take(0).expect("take 2");
+        assert_eq!(rows[0].access_count, 3, "three touches should set access_count = 3");
     }
 }
