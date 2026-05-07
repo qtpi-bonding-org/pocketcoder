@@ -20,6 +20,7 @@ class McpServer with _$McpServer {
     dynamic configSchema,
     DateTime? created,
     DateTime? updated,
+    @JsonKey(unknownEnumValue: McpServerAcpTransport.unknown) McpServerAcpTransport? acpTransport,
   }) = _McpServer;
 
   factory McpServer.fromRecord(RecordModel record) =>
@@ -38,6 +39,17 @@ enum McpServerStatus {
   denied,
   @JsonValue('revoked')
   revoked,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum McpServerAcpTransport {
+  @JsonValue('http')
+  http,
+  @JsonValue('sse')
+  sse,
+  @JsonValue('stdio')
+  stdio,
   @JsonValue('__unknown__')
   unknown,
 }

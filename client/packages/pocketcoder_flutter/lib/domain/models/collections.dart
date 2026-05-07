@@ -21,6 +21,16 @@ class Collections {
   static const String llmProviders = 'llm_providers';
   static const String notificationRules = 'notification_rules';
   static const String cronJobs = 'cron_jobs';
+  static const String harnesses = 'harnesses';
+  static const String models = 'models';
+  static const String harnessModels = 'harness_models';
+  static const String providerKeys = 'provider_keys';
+  static const String harnessAuth = 'harness_auth';
+  static const String prompts = 'prompts';
+  static const String skills = 'skills';
+  static const String pocoConfigs = 'poco_configs';
+  static const String sandboxConfigs = 'sandbox_configs';
+  static const String acpTerminals = 'acp_terminals';
 
   static const List<String> all = [
     users,
@@ -44,5 +54,15 @@ class Collections {
     llmProviders,
     notificationRules,
     cronJobs,
+    harnesses,
+    models,
+    harnessModels,
+    providerKeys,
+    harnessAuth,
+    prompts,
+    skills,
+    pocoConfigs,
+    sandboxConfigs,
+    acpTerminals,
   ];
 }

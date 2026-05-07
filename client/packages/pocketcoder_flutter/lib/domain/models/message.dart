@@ -19,6 +19,10 @@ class Message with _$Message {
     dynamic errorPayload,
     DateTime? created,
     DateTime? updated,
+    dynamic content,
+    @JsonKey(unknownEnumValue: MessageAcpStatus.unknown) MessageAcpStatus? acpStatus,
+    dynamic usage,
+    dynamic cost,
   }) = _Message;
 
   factory Message.fromRecord(RecordModel record) =>
@@ -70,6 +74,19 @@ enum MessageErrorDomain {
   infrastructure,
   @JsonValue('provider')
   provider,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum MessageAcpStatus {
+  @JsonValue('streaming')
+  streaming,
+  @JsonValue('completed')
+  completed,
+  @JsonValue('failed')
+  failed,
+  @JsonValue('cancelled')
+  cancelled,
   @JsonValue('__unknown__')
   unknown,
 }
