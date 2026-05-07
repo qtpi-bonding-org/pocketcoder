@@ -26,7 +26,6 @@ services:
       - PN_URL=${PN_URL}
       - PN_RELAY_SECRET=${PN_RELAY_SECRET}
       - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
-      - OPENCODE_URL=http://opencode:3000
     command: ["/app/pocketbase", "serve", "--http=0.0.0.0:8090"]
     restart: unless-stopped
     healthcheck:
@@ -39,45 +38,7 @@ services:
       - pocketcoder-dashboard
       - pocketcoder-docker
       - pocketcoder-pocketbase-sdk
-      - pocketcoder-opencode-sdk
       - pocketcoder-tailscale
-
-  # 🧠 OPENCODE (Reasoning Engine)
-  opencode:
-    build:
-      context: .
-      dockerfile: services/opencode/Dockerfile
-    container_name: pocketcoder-opencode
-    depends_on:
-      sandbox:
-        condition: service_healthy
-    environment:
-      - PORT=3000
-      - PROXY_URL=http://sandbox:3001
-      - SHELL=/usr/local/bin/pocketcoder-shell
-      - AGENT_EMAIL=${AGENT_EMAIL}
-      - AGENT_PASSWORD=${AGENT_PASSWORD}
-    working_dir: /workspace
-    user: root
-    volumes:
-      - opencode_workspace:/workspace
-      - ./services/opencode:/workspace/.opencode
-      - opencode_data:/root/.local/share/opencode
-      - ./services/opencode/opencode.json:/root/.config/opencode/opencode.json:ro
-      - ./services/mcp-gateway/config:/mcp_config:ro
-      - shell_bridge:/shell_bridge
-    command: serve --port 3000 --hostname 0.0.0.0 --log-level INFO
-    healthcheck:
-      test: ["CMD", "/bin/ash", "-c", "curl -f http://localhost:3000/health"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    restart: unless-stopped
-    networks:
-      - pocketcoder-opencode-sdk
-      - pocketcoder-control
-      - pocketcoder-knowledge
 
   # 🔨 SANDBOX (Isolated Execution Environment)
   sandbox:
@@ -179,33 +140,40 @@ services:
       retries: 5
       start_period: 10s
 
-  # 🛰️ SOVEREIGN INTERFACE (Linear Bridge)
+  # 🛰️ SOVEREIGN INTERFACE (ACP Bridge)
   interface:
     build:
-      context: services/interface
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/interface/Dockerfile
+      args:
+        POCO_AGENT: ${POCO_AGENT:-opencode}
     container_name: pocketcoder-interface
+    restart: unless-stopped
+    environment:
+      POCKETBASE_URL: http://pocketbase:8090
+      SANDBOX_PROXY_URL: http://sandbox:3001
+      WORKSPACE_PATH: /workspace
+      POCO_AGENT_CMD: ${POCO_AGENT_CMD:-opencode acp}
+      AGENT_EMAIL: ${AGENT_EMAIL}
+      AGENT_PASSWORD: ${AGENT_PASSWORD}
+      HEALTH_PORT: "8080"
+    volumes:
+      - opencode_workspace:/workspace
+      - llm_keys:/llm_keys:ro
+    networks:
+      - pocketcoder-pocketbase-sdk
+      - pocketcoder-control
     depends_on:
       pocketbase:
         condition: service_healthy
-      opencode:
+      sandbox:
         condition: service_healthy
-        restart: true  # Retry if opencode restarts during startup resource crunch
-    environment:
-      - POCKETBASE_URL=http://pocketbase:8090
-      - OPENCODE_URL=http://opencode:3000
-      - AGENT_EMAIL=${AGENT_EMAIL}
-      - AGENT_PASSWORD=${AGENT_PASSWORD}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 15s
-    networks:
-      - pocketcoder-opencode-sdk
-      - pocketcoder-pocketbase-sdk
-    restart: unless-stopped
+      start_period: 30s
+      retries: 3
 
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
@@ -232,8 +200,6 @@ services:
       start_period: 15s
     depends_on:
       pocketbase:
-        condition: service_healthy
-      opencode:
         condition: service_healthy
       sandbox:
         condition: service_healthy
@@ -471,8 +437,6 @@ networks:
   pocketcoder-docker:
     driver: bridge
   pocketcoder-tools:
-    driver: bridge
-  pocketcoder-opencode-sdk:
     driver: bridge
   pocketcoder-pocketbase-sdk:
     driver: bridge
