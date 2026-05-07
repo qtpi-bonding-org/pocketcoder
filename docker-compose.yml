@@ -59,7 +59,6 @@ services:
       - TMUX_TMPDIR=/tmp/tmux
       - TMUX_SOCKET=/tmp/tmux/pocketcoder
       - MCP_HOST=http://mcp-gateway:8811/sse
-      - OPENCODE_URL=http://opencode:3000
       - DOCKER_MCP_IN_CONTAINER=1
     healthcheck:
       test: ["CMD", "/bin/bash", "-c", "curl -f http://localhost:3001/health && curl -f http://localhost:9888/health"]
