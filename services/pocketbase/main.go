@@ -22,7 +22,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -51,11 +50,8 @@ func main() {
 	hooks.RegisterNotificationHooks(app)
 
 	// 3. Register MCP Hooks (config rendering + gateway restart)
-	openCodeURL := os.Getenv("OPENCODE_URL")
-	if openCodeURL == "" {
-		openCodeURL = "http://opencode:3000"
-	}
-	hooks.RegisterMcpHooks(app, openCodeURL)
+	// The interface receives MCP status updates via PocketBase realtime subscriptions.
+	hooks.RegisterMcpHooks(app)
 
 	// 3b. Register LLM Hooks (env file rendering + OpenCode restart)
 	hooks.RegisterLlmHooks(app)

@@ -34,18 +34,18 @@ const (
 	llmEnvPathShared = "/llm_keys/llm.env"
 )
 
-// RegisterLlmHooks registers hooks on the llm_keys collection.
+// RegisterLlmHooks registers hooks on the provider_keys collection.
 // When a user saves, updates, or deletes an API key, this hook
-// re-renders the llm.env file and restarts the OpenCode container.
+// re-renders the llm.env file and restarts the interface container.
 func RegisterLlmHooks(app core.App) {
 	log.Println("🔑 [LLM] Registering LLM key hooks...")
 
 	handleLlmKeysChange := func(e *core.RecordEvent) error {
 		log.Println("🔑 [LLM] LLM keys changed, re-rendering llm.env...")
-		return renderAndRestart("[LLM]", func() error { return renderLlmEnv(app) }, OpenCodeContainer, e)
+		return renderAndRestart("[LLM]", func() error { return renderLlmEnv(app) }, PocoContainer, e)
 	}
 
-	registerCrudHooks(app, "llm_keys", handleLlmKeysChange)
+	registerCrudHooks(app, "provider_keys", handleLlmKeysChange)
 
 	// Initial render on startup
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
@@ -59,16 +59,16 @@ func RegisterLlmHooks(app core.App) {
 	})
 }
 
-// renderLlmEnv queries ALL llm_keys records and writes a flat env file.
+// renderLlmEnv queries ALL provider_keys records and writes a flat env file.
 func renderLlmEnv(app core.App) error {
 	records, err := app.FindRecordsByFilter(
-		"llm_keys",
+		"provider_keys",
 		"1=1",
 		"",
 		0, 0,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to query llm_keys: %w", err)
+		return fmt.Errorf("failed to query provider_keys: %w", err)
 	}
 
 	var envFile strings.Builder

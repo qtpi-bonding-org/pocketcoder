@@ -39,11 +39,11 @@ func GetAgentBundle(app core.App, agent *core.Record) (string, error) {
 	if model == nil {
 		modelID := agent.GetString("model")
 		if modelID != "" {
-			model, _ = app.FindRecordById("ai_models", modelID)
+			model, _ = app.FindRecordById("harness_models", modelID)
 		}
 	}
 	if model != nil {
-		frontmatter["model"] = model.GetString("identifier")
+		frontmatter["model"] = model.GetString("harness_model_id")
 	}
 
 	yamlBytes, err := yaml.Marshal(frontmatter)
@@ -57,7 +57,7 @@ func GetAgentBundle(app core.App, agent *core.Record) (string, error) {
 	if prompt == nil {
 		promptID := agent.GetString("prompt")
 		if promptID != "" {
-			prompt, _ = app.FindRecordById("ai_prompts", promptID)
+			prompt, _ = app.FindRecordById("prompts", promptID)
 		}
 	}
 
