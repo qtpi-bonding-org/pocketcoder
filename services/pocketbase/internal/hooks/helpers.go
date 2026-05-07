@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	OpenCodeContainer = "pocketcoder-opencode"
-	GatewayContainer  = "pocketcoder-mcp-gateway"
-	SandboxContainer  = "pocketcoder-sandbox"
+	PocoContainer    = "pocketcoder-interface"
+	GatewayContainer = "pocketcoder-mcp-gateway"
+	SandboxContainer = "pocketcoder-sandbox"
 )
 
 // renderAndRestart runs a config render function and restarts the given container.

@@ -40,12 +40,12 @@ type permEntry struct {
 }
 
 // RegisterToolPermissionHooks registers hooks that re-render the OpenCode config
-// whenever tool_permissions or ai_agents change.
+// whenever tool_permissions or poco_configs change.
 func RegisterToolPermissionHooks(app core.App) {
 	log.Println("⚙️ [ToolPerms] Registering tool permission hooks...")
 
 	renderAndRestartOpenCode := func(e *core.RecordEvent) error {
-		return renderAndRestart("[ToolPerms]", func() error { return renderOpenCodeConfig(app) }, OpenCodeContainer, e)
+		return renderAndRestart("[ToolPerms]", func() error { return renderOpenCodeConfig(app) }, PocoContainer, e)
 	}
 
 	handleToolPermsChange := func(e *core.RecordEvent) error {
@@ -56,7 +56,7 @@ func RegisterToolPermissionHooks(app core.App) {
 	registerCrudHooks(app, "tool_permissions", handleToolPermsChange)
 
 	// Also re-render when agent model or prompt changes
-	app.OnRecordAfterUpdateSuccess("ai_agents").BindFunc(func(e *core.RecordEvent) error {
+	app.OnRecordAfterUpdateSuccess("poco_configs").BindFunc(func(e *core.RecordEvent) error {
 		log.Println("⚙️ [ToolPerms] Agent updated, re-rendering opencode.json...")
 		return renderAndRestartOpenCode(e)
 	})
@@ -108,7 +108,7 @@ func renderOpenCodeConfig(app core.App) error {
 			pattern: rec.GetString("pattern"),
 			action:  rec.GetString("action"),
 		}
-		agentId := rec.GetString("agent")
+		agentId := rec.GetString("poco_config")
 		if agentId == "" {
 			globalPerms = append(globalPerms, entry)
 		} else {
@@ -122,13 +122,13 @@ func renderOpenCodeConfig(app core.App) error {
 
 	// Query all agents for model/prompt rendering
 	agents, err := app.FindRecordsByFilter(
-		"ai_agents",
+		"poco_configs",
 		"1=1",
 		"",
 		0, 0,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to query ai_agents: %w", err)
+		return fmt.Errorf("failed to query poco_configs: %w", err)
 	}
 
 	// Get or create the agent block in config
@@ -149,19 +149,19 @@ func renderOpenCodeConfig(app core.App) error {
 			agentConfig = make(map[string]interface{})
 		}
 
-		// Resolve model identifier via ai_models relation
+		// Resolve model identifier via harness_models relation
 		modelId := agent.GetString("model")
 		if modelId != "" {
-			modelRecord, err := app.FindRecordById("ai_models", modelId)
+			modelRecord, err := app.FindRecordById("harness_models", modelId)
 			if err == nil {
-				agentConfig["model"] = modelRecord.GetString("identifier")
+				agentConfig["model"] = modelRecord.GetString("harness_model_id")
 			}
 		}
 
-		// Resolve prompt body via ai_prompts relation
+		// Resolve prompt body via prompts relation
 		promptId := agent.GetString("prompt")
 		if promptId != "" {
-			promptRecord, err := app.FindRecordById("ai_prompts", promptId)
+			promptRecord, err := app.FindRecordById("prompts", promptId)
 			if err == nil {
 				agentConfig["prompt"] = promptRecord.GetString("body")
 			}

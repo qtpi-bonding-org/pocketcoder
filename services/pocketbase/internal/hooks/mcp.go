@@ -20,10 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package hooks
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -39,7 +37,8 @@ const (
 // RegisterMcpHooks registers hooks for MCP server lifecycle management.
 // When a user approves or revokes an MCP server in the Flutter UI, this hook
 // re-renders the gateway config and restarts the MCP gateway container.
-func RegisterMcpHooks(app core.App, openCodeURL string) {
+// The interface receives status updates via PocketBase realtime subscriptions.
+func RegisterMcpHooks(app core.App) {
 	log.Println("🔌 [MCP] Registering MCP server hooks...")
 
 	app.OnRecordAfterUpdateSuccess("mcp_servers").BindFunc(func(e *core.RecordEvent) error {
@@ -59,10 +58,8 @@ func RegisterMcpHooks(app core.App, openCodeURL string) {
 			if err := restartContainer(GatewayContainer, 30*time.Second); err != nil {
 				log.Printf("❌ [MCP] Failed to restart gateway: %v", err)
 			}
-			notifyPoco(app, openCodeURL, serverName, newStatus)
 		case "denied":
 			log.Printf("🔌 [MCP] Server '%s' was denied", serverName)
-			notifyPoco(app, openCodeURL, serverName, newStatus)
 		}
 
 		return e.Next()
@@ -176,63 +173,3 @@ func renderMcpConfig(app core.App) error {
 	return nil
 }
 
-// notifyPoco sends a system message to Poco about MCP server status changes.
-func notifyPoco(app core.App, openCodeURL string, serverName string, status string) {
-	log.Printf("📢 [MCP] Notifying Poco about server '%s' status: %s", serverName, status)
-
-	chats, err := app.FindRecordsByFilter(
-		"chats",
-		"ai_engine_session_id != '' && turn = 'assistant'",
-		"-last_active",
-		10, 0,
-	)
-	if err != nil {
-		log.Printf("⚠️ [MCP] Failed to find chats for notification: %v", err)
-		return
-	}
-
-	var message string
-	switch status {
-	case "approved":
-		message = fmt.Sprintf("[SYSTEM] MCP server '%s' is now available. Sandbox agents can connect to the gateway at http://mcp-gateway:8811/sse.", serverName)
-	case "revoked":
-		message = fmt.Sprintf("[SYSTEM] MCP server '%s' has been revoked and is no longer available to sandbox agents.", serverName)
-	case "denied":
-		message = fmt.Sprintf("[SYSTEM] MCP server '%s' request was denied by the user.", serverName)
-	default:
-		message = fmt.Sprintf("[SYSTEM] MCP server '%s' status updated to '%s'.", serverName, status)
-	}
-
-	for _, chat := range chats {
-		chatID := chat.Id
-		sessionID := chat.GetString("ai_engine_session_id")
-		if sessionID == "" {
-			continue
-		}
-
-		url := fmt.Sprintf("%s/session/%s/prompt_async", openCodeURL, sessionID)
-		payload := map[string]interface{}{
-			"parts": []interface{}{
-				map[string]interface{}{
-					"type": "text",
-					"text": message,
-				},
-			},
-		}
-		body, err := json.Marshal(payload)
-		if err != nil {
-			log.Printf("⚠️ [MCP] Failed to marshal notification payload for chat %s: %v", chatID, err)
-			continue
-		}
-
-		client := &http.Client{Timeout: 10 * time.Second}
-		resp, err := client.Post(url, "application/json", strings.NewReader(string(body)))
-		if err != nil {
-			log.Printf("⚠️ [MCP] Failed to notify Poco for chat %s: %v", chatID, err)
-			continue
-		}
-		defer resp.Body.Close()
-
-		log.Printf("✅ [MCP] Notification sent to Poco for chat %s", chatID)
-	}
-}
