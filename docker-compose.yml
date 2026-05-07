@@ -142,8 +142,8 @@ services:
   # 🛰️ SOVEREIGN INTERFACE (ACP Bridge)
   interface:
     build:
-      context: .
-      dockerfile: services/interface/Dockerfile
+      context: services/interface
+      dockerfile: Dockerfile
       args:
         POCO_AGENT: ${POCO_AGENT:-opencode}
     container_name: pocketcoder-interface
