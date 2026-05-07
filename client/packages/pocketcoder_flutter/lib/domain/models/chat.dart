@@ -21,6 +21,10 @@ class Chat with _$Chat {
     String? tags,
     DateTime? created,
     DateTime? updated,
+    String? acpSessionId,
+    @JsonKey(unknownEnumValue: ChatCurrentRole.unknown) ChatCurrentRole? currentRole,
+    String? pocoConfig,
+    String? harnessModelOverride,
   }) = _Chat;
 
   factory Chat.fromRecord(RecordModel record) =>
@@ -44,6 +48,15 @@ enum ChatEngineType {
 }
 
 enum ChatTurn {
+  @JsonValue('user')
+  user,
+  @JsonValue('assistant')
+  assistant,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum ChatCurrentRole {
   @JsonValue('user')
   user,
   @JsonValue('assistant')

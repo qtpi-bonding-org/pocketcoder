@@ -24,6 +24,16 @@ class Permission with _$Permission {
     DateTime? approvedAt,
     DateTime? created,
     DateTime? updated,
+    String? acpRequestId,
+    String? acpSessionId,
+    String? toolName,
+    dynamic toolInput,
+    String? description,
+    dynamic permissionOptions,
+    @JsonKey(unknownEnumValue: PermissionAcpStatus.unknown) PermissionAcpStatus? acpStatus,
+    String? selectedOptionId,
+    String? acpMessageId,
+    String? toolCallId,
   }) = _Permission;
 
   factory Permission.fromRecord(RecordModel record) =>
@@ -40,6 +50,19 @@ enum PermissionStatus {
   authorized,
   @JsonValue('denied')
   denied,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum PermissionAcpStatus {
+  @JsonValue('pending')
+  pending,
+  @JsonValue('allow_once')
+  allow_once,
+  @JsonValue('allow_always')
+  allow_always,
+  @JsonValue('deny')
+  deny,
   @JsonValue('__unknown__')
   unknown,
 }
