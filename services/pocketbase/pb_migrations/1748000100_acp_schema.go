@@ -228,10 +228,138 @@ func init() {
 			return err
 		}
 
+		// =========================================================================
+		// ACP LAYER — modifications to existing collections + new acp_terminals
+		// =========================================================================
+
+		// 10. CHATS — add ACP fields
+		chats, err := app.FindCollectionByNameOrId("chats")
+		if err != nil {
+			return err
+		}
+		addFields(chats,
+			&core.TextField{Name: "acp_session_id"},
+			&core.SelectField{Name: "current_role", MaxSelect: 1, Values: []string{"user", "assistant"}},
+			&core.RelationField{Name: "poco_config", CollectionId: pocoConfigs.Id, MaxSelect: 1},
+			&core.RelationField{Name: "harness_model_override", CollectionId: harnessModels.Id, MaxSelect: 1},
+		)
+		chats.Indexes = append(chats.Indexes,
+			"CREATE INDEX idx_chats_acp_session_id ON chats (acp_session_id)",
+		)
+		if err := app.Save(chats); err != nil {
+			return err
+		}
+
+		// 11. MESSAGES — add ACP fields
+		messages, err := app.FindCollectionByNameOrId("messages")
+		if err != nil {
+			return err
+		}
+		addFields(messages,
+			&core.JSONField{Name: "content"},
+			&core.SelectField{Name: "acp_status", MaxSelect: 1, Values: []string{"streaming", "completed", "failed", "cancelled"}},
+			&core.JSONField{Name: "usage"},
+			&core.JSONField{Name: "cost"},
+		)
+		if err := app.Save(messages); err != nil {
+			return err
+		}
+
+		// 12. PERMISSIONS — add ACP fields
+		permissions, err := app.FindCollectionByNameOrId("permissions")
+		if err != nil {
+			return err
+		}
+		addFields(permissions,
+			&core.TextField{Name: "acp_request_id"},
+			&core.TextField{Name: "acp_session_id"},
+			&core.TextField{Name: "tool_name"},
+			&core.JSONField{Name: "tool_input"},
+			&core.TextField{Name: "description"},
+			&core.JSONField{Name: "permission_options"},
+			&core.SelectField{Name: "acp_status", MaxSelect: 1, Values: []string{"pending", "allow_once", "allow_always", "deny"}},
+			&core.TextField{Name: "selected_option_id"},
+			&core.TextField{Name: "acp_message_id"},
+			&core.TextField{Name: "tool_call_id"},
+		)
+		permissions.Indexes = append(permissions.Indexes,
+			"CREATE UNIQUE INDEX idx_permissions_acp_request_id ON permissions (acp_request_id)",
+			"CREATE INDEX idx_permissions_acp_session_id ON permissions (acp_session_id)",
+		)
+		if err := app.Save(permissions); err != nil {
+			return err
+		}
+
+		// 13. ACP TERMINALS — new collection
+		agentOrAdmin := ptr("@request.auth.role = 'agent' || @request.auth.role = 'admin'")
+		acpTerminals, err := getOrCreate("pc_acp_terminals", "acp_terminals")
+		if err != nil {
+			return err
+		}
+		addFields(acpTerminals,
+			&core.TextField{Name: "acp_terminal_id", Required: true},
+			&core.TextField{Name: "acp_session_id", Required: true},
+			&core.TextField{Name: "name"},
+			&core.TextField{Name: "cwd"},
+			&core.NumberField{Name: "exit_code"},
+			&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"running", "exited", "killed"}},
+			&core.RelationField{Name: "chat", CollectionId: chats.Id, MaxSelect: 1},
+			&core.NumberField{Name: "tmux_window_id"},
+		)
+		acpTerminals.ListRule = authOnly
+		acpTerminals.ViewRule = authOnly
+		acpTerminals.CreateRule = agentOrAdmin
+		acpTerminals.UpdateRule = agentOrAdmin
+		acpTerminals.Indexes = []string{
+			"CREATE UNIQUE INDEX idx_acp_terminals_terminal_id ON acp_terminals (acp_terminal_id)",
+			"CREATE INDEX idx_acp_terminals_session_id ON acp_terminals (acp_session_id)",
+		}
+		if err := app.Save(acpTerminals); err != nil {
+			return err
+		}
+
+		// 14. TOOL PERMISSIONS — add poco_config and sandbox_config fields
+		toolPermissions, err := app.FindCollectionByNameOrId("tool_permissions")
+		if err != nil {
+			return err
+		}
+		addFields(toolPermissions,
+			&core.RelationField{Name: "poco_config", CollectionId: pocoConfigs.Id, MaxSelect: 1},
+			&core.RelationField{Name: "sandbox_config", CollectionId: sandboxConfigs.Id, MaxSelect: 1},
+		)
+		if err := app.Save(toolPermissions); err != nil {
+			return err
+		}
+
+		// 15. CRON JOBS — add poco_config field
+		cronJobs, err := app.FindCollectionByNameOrId("cron_jobs")
+		if err != nil {
+			return err
+		}
+		addFields(cronJobs,
+			&core.RelationField{Name: "poco_config", CollectionId: pocoConfigs.Id, MaxSelect: 1},
+		)
+		if err := app.Save(cronJobs); err != nil {
+			return err
+		}
+
+		// 16. MCP SERVERS — add acp_transport field
+		mcpServers, err := app.FindCollectionByNameOrId("mcp_servers")
+		if err != nil {
+			return err
+		}
+		addFields(mcpServers,
+			&core.SelectField{Name: "acp_transport", MaxSelect: 1, Values: []string{"http", "sse", "stdio"}},
+		)
+		if err := app.Save(mcpServers); err != nil {
+			return err
+		}
+
 		return nil
 	}, func(app core.App) error {
 		// down: drop all new collections in reverse order
 		for _, name := range []string{
+			"acp_terminals",
 			"sandbox_configs",
 			"poco_configs",
 			"skills",
