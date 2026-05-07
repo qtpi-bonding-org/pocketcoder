@@ -16,658 +16,318 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// @pocketcoder-core: Interface Bridge. Event pump + command pump syncing PocketBase with OpenCode.
-import PocketBase, { ClientResponseError } from 'pocketbase';
-import { createOpencodeClient } from '@opencode-ai/sdk';
-import { EventSource } from 'eventsource';
-
-(globalThis as any).EventSource = EventSource;
+// @pocketcoder-core: Interface Bridge (ACP). Wires PocketBase ↔ PocoProcess via ACP ClientSideConnection.
+import PocketBase from 'pocketbase';
+import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk';
+import type { McpServer } from '@agentclientprotocol/sdk';
+import { SandboxProxy } from './sandbox-proxy';
+import { PocoProcess } from './poco-process';
+import { buildAcpClient } from './acp-client';
+import { EventPump } from './event-pump';
+import { CommandPump } from './command-pump';
 
 // --- Configuration ---
-const POCKETBASE_URL = process.env.POCKETBASE_URL || 'http://pocketbase:8090';
-const OPENCODE_URL = process.env.OPENCODE_URL || 'http://opencode:3000';
-const HEALTH_PORT = parseInt(process.env.HEALTH_PORT || '8080', 10);
+const POCKETBASE_URL = process.env.POCKETBASE_URL ?? 'http://pocketbase:8090';
+const SANDBOX_PROXY_URL = process.env.SANDBOX_PROXY_URL ?? 'http://sandbox:3001';
+const WORKSPACE_PATH = process.env.WORKSPACE_PATH ?? '/workspace';
+const POCO_AGENT_CMD = process.env.POCO_AGENT_CMD ?? 'opencode acp';
+const AGENT_EMAIL = process.env.AGENT_EMAIL!;
+const AGENT_PASSWORD = process.env.AGENT_PASSWORD!;
+const HEALTH_PORT = parseInt(process.env.HEALTH_PORT ?? '8080', 10);
 
-const pb = new PocketBase(POCKETBASE_URL);
-const oc = createOpencodeClient({ baseUrl: OPENCODE_URL });
-
-// Collection names
-const Collections = {
-    MESSAGES: 'messages',
-    CHATS: 'chats',
-    PERMISSIONS: 'permissions',
-    MODEL_SELECTION: 'model_selection',
-    LLM_PROVIDERS: 'llm_providers',
-    USERS: 'users',
-} as const;
-
-// Status values
-const Status = {
-    DRAFT: 'draft',
-    PROCESSING: 'processing',
-    COMPLETED: 'completed',
-    FAILED: 'failed',
-    AUTHORIZED: 'authorized',
-    DENIED: 'denied',
-    PENDING: 'pending',
-} as const;
-
-// OpenCode event types
-const EventType = {
-    MESSAGE_PART_UPDATED: 'message.part.updated',
-    MESSAGE_UPDATED: 'message.updated',
-    PERMISSION_UPDATED: 'permission.updated',
-} as const;
-
-// PocketBase record types (minimal shape for interface needs)
-interface PbRecord {
-    id: string;
-    [key: string]: any;
-}
-
-interface ChatRecord extends PbRecord {
-    ai_engine_session_id: string;
-    user: string;
-    agent?: string;
-}
-
-interface MessageRecord extends PbRecord {
-    chat: string;
-    role: string;
-    parts: MessagePart[];
-    ai_engine_message_id?: string;
-    engine_message_status?: string;
-    user_message_status?: string;
-}
-
-interface MessagePart {
-    id?: string;
-    type: string;
-    text?: string;
-    metadata?: Record<string, any>;
-    [key: string]: any;
-}
-
-interface PermissionRecord extends PbRecord {
-    ai_engine_permission_id: string;
-    session_id: string;
-    chat: string;
-    status: string;
-    permission: string;
-}
-
-interface ModelSelectionRecord extends PbRecord {
-    model: string;
-    chat?: string;
-}
-
-interface UserMessageInput {
-    id: string;
-    chat: string;
-    text: string;
-}
-
-// OpenCode event types
-interface OcEventProperties {
-    part?: any;
-    delta?: string;
-    info?: any;
-}
-
-interface OcPermission {
-    id: string;
-    sessionID: string;
-    type: string;
-    title: string;
-    pattern: string;
-    metadata: any;
-    messageID: string;
-    callID: string;
-}
-
-// Bounded cache for Session ID -> Chat Record ID
-const SESSION_CACHE_MAX = 1000;
-const sessionToChat = new Map<string, string>();
-
-function cacheSession(sessionID: string, chatID: string) {
-    sessionToChat.delete(sessionID); // promote to end for LRU
-    if (sessionToChat.size >= SESSION_CACHE_MAX) {
-        const oldest = sessionToChat.keys().next().value;
-        if (oldest) sessionToChat.delete(oldest);
-    }
-    sessionToChat.set(sessionID, chatID);
-}
-
-// Whitelist for Narrative Sync
-const NARRATIVE_PART_TYPES = new Set([
-    'text',
-    'reasoning',
-    'tool',
-    'file',
-    'agent',
-    'step-start',
-    'step-finish'
-]);
-
-// Metadata fields to scrub
-const SCRUB_FIELDS = [
-    'tokens_consumed',
-    'latency_ms',
-    'provider_internal_id'
+// Default MCP server for sandbox (used when chat has no poco_config)
+const DEFAULT_MCP_SERVERS: McpServer[] = [
+  { type: 'http', url: 'http://sandbox:9888/mcp', name: 'sandbox', headers: [] },
 ];
 
-function scrubPart(part: MessagePart): MessagePart {
-    if (!part.metadata) return part;
-    const scrubbedMetadata = { ...part.metadata };
-    for (const field of SCRUB_FIELDS) {
-        delete scrubbedMetadata[field];
-    }
-    return { ...part, metadata: scrubbedMetadata };
-}
-
-// Notification constants
-const Notifications = {
-    TASK_COMPLETE_TYPE: 'task_complete',
-    TASK_ERROR_TYPE: 'task_error',
-    TASK_COMPLETE_TITLE: 'Task Complete',
-    TASK_ERROR_TITLE: 'Task Error',
-    TASK_COMPLETE_MSG: 'Your coding task has finished',
-    TASK_ERROR_MSG: 'Your coding task encountered an error',
-} as const;
-
-// Reconnect with exponential backoff + jitter
-function scheduleReconnect(name: string, retryFn: () => void, backoff: { delay: number }) {
-    const jitter = Math.random() * 1000;
-    const delay = Math.min(backoff.delay + jitter, MAX_RECONNECT_DELAY);
-    console.log(`[Interface] Reconnecting ${name} in ${Math.round(delay)}ms...`);
-    setTimeout(retryFn, delay);
-    backoff.delay = Math.min(backoff.delay * 2, MAX_RECONNECT_DELAY);
-}
-
-// Unsubscribe all command pump subscriptions
-function unsubscribeCommandPump() {
-    try {
-        pb.collection(Collections.MESSAGES).unsubscribe('*');
-        pb.collection(Collections.PERMISSIONS).unsubscribe('*');
-        pb.collection(Collections.MODEL_SELECTION).unsubscribe('*');
-    } catch (_) { /* ignore if not yet subscribed */ }
-}
-
-// Per-message update lock (prevents streaming race conditions)
-const messageUpdateLocks = new Map<string, Promise<void>>();
-
-async function withMessageLock(messageID: string, fn: () => Promise<void>) {
-    const prev = messageUpdateLocks.get(messageID) ?? Promise.resolve();
-    const next = prev.then(fn, fn);
-    messageUpdateLocks.set(messageID, next);
-    try {
-        await next;
-    } finally {
-        if (messageUpdateLocks.get(messageID) === next) {
-            messageUpdateLocks.delete(messageID);
-        }
-    }
-}
-
-// Provider sync interval handle
-let providerSyncInterval: ReturnType<typeof setInterval> | null = null;
-const PROVIDER_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-// Pump status tracking for health check
-let eventPumpHealthy = false;
-let commandPumpHealthy = false;
-
 /**
- * OPENCODE -> POCKETBASE (Event Pump)
+ * Convert a PocketBase poco_config mcp_servers array into ACP McpServer objects.
+ *
+ * The stored format is {type, url} — we normalise to the SDK's required shape
+ * (name + headers required for http/sse).
  */
-const MAX_RECONNECT_DELAY = 60000;
-const eventPumpBackoff = { delay: 1000 };
+function toAcpMcpServers(raw: Array<{ type?: string; url?: string; name?: string }> | undefined): McpServer[] {
+  if (!raw?.length) return DEFAULT_MCP_SERVERS;
+  return raw.map((s) => {
+    const type = (s.type ?? 'http') as 'http' | 'sse';
+    if (type === 'http' || type === 'sse') {
+      return { type, url: s.url ?? '', name: s.name ?? 'mcp', headers: [] } as McpServer;
+    }
+    // stdio — not expected in practice but handle gracefully
+    return { type: 'stdio', command: s.url ?? '', args: [] } as unknown as McpServer;
+  });
+}
 
-async function startEventPump() {
-    console.log('[Interface] Starting OpenCode Event Pump...');
+async function main() {
+  // 1. PocketBase auth
+  const pb = new PocketBase(POCKETBASE_URL);
+  await pb.collection('users').authWithPassword(AGENT_EMAIL, AGENT_PASSWORD);
+  console.log(`[interface] authenticated as ${AGENT_EMAIL}`);
+
+  // Re-authenticate proactively before the token expires (every ~6 days)
+  setInterval(async () => {
+    try {
+      await pb.collection('users').authRefresh();
+    } catch {
+      await pb.collection('users').authWithPassword(AGENT_EMAIL, AGENT_PASSWORD);
+    }
+  }, 6 * 24 * 60 * 60 * 1000);
+
+  // 2. Sandbox proxy
+  const proxy = new SandboxProxy({ workspacePath: WORKSPACE_PATH, proxyUrl: SANDBOX_PROXY_URL });
+
+  // 3. Spawn agent CLI subprocess
+  const poco = new PocoProcess({ agentCmd: POCO_AGENT_CMD });
+  await poco.start();
+
+  poco.exited.then((code) => {
+    console.error(`[interface] agent process exited with code ${code} — restarting service`);
+    process.exit(1);
+  });
+
+  // 4. Per-chat state: EventPumps and session↔chat mapping
+  const eventPumps = new Map<string, EventPump>(); // chatId → EventPump
+  const sessionToChat = new Map<string, string>(); // acpSessionId → chatId
+
+  // 5. ACP client implementation
+  //
+  // The AcpClientImpl.sessionUpdate method is called by the SDK whenever the agent
+  // sends a session/update notification (streaming content, status changes, usage).
+  // We intercept it by wrapping the client object returned by buildAcpClient:
+  // the session routing (acpSessionId → chatId → EventPump) is resolved here.
+  //
+  // chatId is needed for permission requests; we track the "current" chatId via a
+  // mutable ref that is updated before each prompt is sent.
+  const chatIdRef = { value: undefined as string | undefined };
+
+  // Build the base client implementation. deps.chatId is read lazily via the getter.
+  const baseClient = buildAcpClient({
+    pb,
+    proxy,
+    get chatId() { return chatIdRef.value; },
+  });
+
+  // Wrap sessionUpdate to dispatch to the correct EventPump by session ID.
+  const clientImpl = {
+    ...baseClient,
+    async sessionUpdate(update: Parameters<typeof baseClient.sessionUpdate>[0]): Promise<void> {
+      // The SDK passes the full SessionNotification which has {sessionId, update}.
+      // We resolve chatId from sessionId, then delegate to the per-chat EventPump.
+      const sessionNotification = update as { sessionId?: string; update?: unknown };
+      const acpSessionId = sessionNotification.sessionId;
+      if (!acpSessionId) return;
+
+      const chatId = sessionToChat.get(acpSessionId);
+      if (!chatId) {
+        console.warn(`[interface] session_update for unknown sessionId=${acpSessionId}`);
+        return;
+      }
+
+      let pump = eventPumps.get(chatId);
+      if (!pump) {
+        pump = new EventPump({ pb, chatId });
+        eventPumps.set(chatId, pump);
+      }
+
+      // EventPump.handleSessionUpdate expects a SessionUpdateEvent shape.
+      // The ACP SessionNotification wraps the actual update inside `.update`.
+      const innerUpdate = sessionNotification.update ?? update;
+      await pump.handleSessionUpdate(innerUpdate as Parameters<typeof pump.handleSessionUpdate>[0]);
+    },
+  };
+
+  // 6. Wire ACP ClientSideConnection
+  //
+  // ClientSideConnection(toClient, stream):
+  //   - toClient: factory called with the connection itself, returns a Client object
+  //   - stream: { readable, writable } of AnyMessage (not raw bytes)
+  //
+  // ndJsonStream(output, input) converts between raw Uint8Array byte streams and
+  // AnyMessage objects. The PocoProcess exposes poco.stdin (WritableStream<Uint8Array>)
+  // and poco.stdout (ReadableStream<Uint8Array>).
+  //
+  // ndJsonStream signature: ndJsonStream(output: WritableStream<Uint8Array>, input: ReadableStream<Uint8Array>)
+  const stream = ndJsonStream(poco.stdin, poco.stdout);
+  const connection = new ClientSideConnection((_conn) => clientImpl, stream);
+
+  // 7. Initialize the ACP connection (protocol handshake)
+  connection.initialize({ protocolVersion: PROTOCOL_VERSION }).then((info) => {
+    console.log(`[interface] ACP initialized — agent: ${info.agentInfo?.name ?? 'unknown'} v${info.agentInfo?.version ?? '?'}`);
+  }).catch((err) => {
+    console.warn('[interface] ACP initialize failed (agent may not support it):', err?.message ?? err);
+  });
+
+  // Handle connection closure
+  connection.closed.then(() => {
+    console.error('[interface] ACP connection closed — restarting service');
+    process.exit(1);
+  });
+
+  // 8. Command pump — adapts CommandPump.AcpAgent interface to ClientSideConnection.
+  //
+  // The CommandPump's AcpAgent interface uses a simpler/different shape than the
+  // SDK's ClientSideConnection methods. We create an adapter object that translates:
+  //
+  //   newSession({ mcpServers, workspaceFolders }) → connection.newSession({ cwd, mcpServers })
+  //   resumeSession({ sessionId })                 → connection.resumeSession({ sessionId, cwd })
+  //   prompt({ sessionId, content })               → connection.prompt({ sessionId, prompt })
+  //   setSessionConfigOption({ sessionId, key, v}) → connection.setSessionConfigOption({ sessionId, configId, value })
+  const acpAdapter = {
+    async newSession(params: {
+      mcpServers: Array<{ type?: string; url?: string; name?: string }>;
+      workspaceFolders: Array<{ uri: string }>;
+    }): Promise<{ sessionId: string }> {
+      const cwd = params.workspaceFolders[0]?.uri.replace('file://', '') ?? WORKSPACE_PATH;
+      const additionalDirectories = params.workspaceFolders
+        .slice(1)
+        .map((f) => f.uri.replace('file://', ''));
+
+      const result = await connection.newSession({
+        cwd,
+        mcpServers: toAcpMcpServers(params.mcpServers),
+        ...(additionalDirectories.length ? { additionalDirectories } : {}),
+      });
+      return { sessionId: result.sessionId };
+    },
+
+    async resumeSession(params: { sessionId: string }): Promise<unknown> {
+      return connection.resumeSession({ sessionId: params.sessionId, cwd: WORKSPACE_PATH });
+    },
+
+    async prompt(params: {
+      sessionId: string;
+      content: Array<{ type: string; text: string }>;
+    }): Promise<void> {
+      await connection.prompt({
+        sessionId: params.sessionId,
+        prompt: params.content.map((c) => ({ type: 'text' as const, text: c.text })),
+      });
+    },
+
+    async setSessionConfigOption(params: {
+      sessionId: string;
+      key: string;
+      value: string;
+    }): Promise<void> {
+      await connection.setSessionConfigOption({
+        sessionId: params.sessionId,
+        configId: params.key,
+        value: params.value,
+      } as Parameters<typeof connection.setSessionConfigOption>[0]);
+    },
+  };
+
+  const commandPump = new CommandPump({ acp: acpAdapter });
+
+  // 9. PocketBase subscriptions
+
+  // Messages: handle new user messages → send to agent
+  await pb.collection('messages').subscribe('*', async (e) => {
+    if (e.action !== 'create') return;
+    const msg = e.record;
+    if (msg.role !== 'user') return;
 
     try {
-        const subscription = await oc.event.subscribe();
-        eventPumpBackoff.delay = 1000;
-        eventPumpHealthy = true;
+      const chat = await pb.collection('chats').getOne(msg.chat, {
+        expand: 'poco_config',
+      });
+      const pocoConfig = chat.expand?.poco_config;
+      const mcpServers = pocoConfig?.acp_mcp_servers ?? [];
+      const workspaceFolders: Array<{ uri: string }> = pocoConfig?.workspace_folders ?? [
+        { uri: `file://${WORKSPACE_PATH}` },
+      ];
 
-        for await (const event of (subscription as any).stream) {
-            const { type, properties } = event;
+      // Set chatId ref before prompt so permission requests can reference it
+      chatIdRef.value = msg.chat;
 
-            if (type === EventType.MESSAGE_PART_UPDATED) {
-                await handleMessagePartUpdated(properties);
-            } else if (type === EventType.MESSAGE_UPDATED) {
-                await handleMessageCompletion(properties);
-            } else if (type === EventType.PERMISSION_UPDATED) {
-                await handlePermissionUpdated(properties);
-            }
-        }
+      const sessionId = await commandPump.handleNewMessage({
+        chatId: msg.chat,
+        text: (msg.content as Array<{ text?: string }>)?.[0]?.text ?? '',
+        acpSessionId: chat.acp_session_id ?? null,
+        mcpServers,
+        workspaceFolders,
+      });
+
+      // Persist session ID and keep the mapping warm
+      if (!chat.acp_session_id) {
+        await pb.collection('chats').update(msg.chat, { acp_session_id: sessionId });
+      }
+      sessionToChat.set(sessionId, msg.chat);
+
+      // Ensure EventPump exists for this chat
+      if (!eventPumps.has(msg.chat)) {
+        eventPumps.set(msg.chat, new EventPump({ pb, chatId: msg.chat }));
+      }
     } catch (err) {
-        console.error('[Interface] Event Pump Error:', err);
-        eventPumpHealthy = false;
-        scheduleReconnect('event pump', startEventPump, eventPumpBackoff);
+      console.error(`[interface] error handling user message (chat=${msg.chat}):`, err);
     }
-}
+  });
 
-async function handleMessagePartUpdated(properties: OcEventProperties) {
-    const { part, delta } = properties;
-    const messageID = part.messageID;
-    const sessionID = part.sessionID;
-    const chatID = await resolveChatID(sessionID);
-    if (!chatID) return;
+  // Chats: handle harness_model_override changes → update session config
+  await pb.collection('chats').subscribe('*', async (e) => {
+    if (e.action !== 'update') return;
+    const chat = e.record;
+    if (!chat.harness_model_override || !chat.acp_session_id) return;
 
-    let msgRecord = await findMessageByEngineId(messageID);
-
-    if (!msgRecord) {
-        try {
-            msgRecord = await pb.collection(Collections.MESSAGES).create({
-                chat: chatID,
-                role: 'assistant',
-                ai_engine_message_id: messageID,
-                engine_message_status: Status.PROCESSING,
-                parts: []
-            });
-        } catch (err) {
-            // Another event may have created this record concurrently
-            msgRecord = await findMessageByEngineId(messageID);
-            if (!msgRecord) throw err;
-        }
-    }
-
-    const recordId = msgRecord!.id;
-    await withMessageLock(messageID, async () => {
-        const fresh = await pb.collection(Collections.MESSAGES).getOne(recordId);
-        let parts: MessagePart[] = Array.isArray(fresh.parts) ? [...fresh.parts] : [];
-
-        if (delta) {
-            // Streaming text delta — append to existing part or create new one
-            let target = parts.find((p: MessagePart) => p.id === part.id);
-            if (!target) {
-                target = { id: part.id, type: 'text', text: '' };
-                parts.push(target);
-            }
-            target.text = (target.text || '') + delta;
-        } else if (NARRATIVE_PART_TYPES.has(part.type)) {
-            // Full part upsert
-            const processed = scrubPart(part);
-            const idx = parts.findIndex((p: MessagePart) => p.id === part.id);
-            if (idx !== -1) parts[idx] = processed;
-            else parts.push(processed);
-        }
-
-        await pb.collection(Collections.MESSAGES).update(recordId, { parts });
-    });
-}
-
-async function handleMessageCompletion(properties: OcEventProperties) {
-    const message = properties.info;
-    if (message.role !== 'assistant') return;
-
-    const msgRecord = await findMessageByEngineId(message.id);
-    if (!msgRecord) return;
-
-    let status: string = Status.PROCESSING;
-    if (message.error) status = Status.FAILED;
-    else if (message.time?.completed) status = Status.COMPLETED;
-
-    await pb.collection(Collections.MESSAGES).update(msgRecord.id, {
-        engine_message_status: status
-    });
-
-    // Send push notification for terminal states (task_complete / task_error)
-    if (status === Status.COMPLETED || status === Status.FAILED) {
-        await sendTaskNotification(message.sessionID, status);
-    }
-}
-
-async function sendTaskNotification(sessionID: string, status: string) {
     try {
-        const chatID = await resolveChatID(sessionID);
-        if (!chatID) return;
-
-        const chat = await pb.collection(Collections.CHATS).getOne(chatID);
-        const userID = chat.user;
-        if (!userID) return;
-
-        const notifType = status === Status.COMPLETED ? Notifications.TASK_COMPLETE_TYPE : Notifications.TASK_ERROR_TYPE;
-        const title = status === Status.COMPLETED ? Notifications.TASK_COMPLETE_TITLE : Notifications.TASK_ERROR_TITLE;
-        const message = status === Status.COMPLETED ? Notifications.TASK_COMPLETE_MSG : Notifications.TASK_ERROR_MSG;
-
-        await pb.send('/api/pocketcoder/push', {
-            method: 'POST',
-            body: { user_id: userID, title, message, type: notifType, chat: chatID }
-        });
-        console.log(`[Interface] Push notification sent: ${notifType} for chat ${chatID}`);
+      const hm = await pb.collection('harness_models').getOne(chat.harness_model_override);
+      await commandPump.handleModelChange({
+        sessionId: chat.acp_session_id,
+        model: hm.harness_model_id,
+      });
+      console.log(`[interface] model changed for session ${chat.acp_session_id}: ${hm.harness_model_id}`);
     } catch (err) {
-        // Non-fatal — don't crash the event pump over a notification failure
-        console.error('[Interface] Push notification failed:', err);
+      console.error(`[interface] error handling model change (chat=${chat.id}):`, err);
     }
-}
+  });
 
-async function handlePermissionUpdated(permission: OcPermission) {
-    const chatID = await resolveChatID(permission.sessionID);
-    if (!chatID) return;
-
-    try {
-        await pb.collection(Collections.PERMISSIONS).create({
-            ai_engine_permission_id: permission.id,
-            session_id: permission.sessionID,
-            chat: chatID,
-            permission: permission.type,
-            message: permission.title,
-            patterns: permission.pattern,
-            metadata: permission.metadata,
-            message_id: permission.messageID,
-            call_id: permission.callID,
-            status: Status.DRAFT
-        });
-        console.log(`[Interface] Permission requested: ${permission.id}`);
-    } catch (err) {
-        console.error('[Interface] Failed to sync permission:', err);
+  // Permissions: no extra action — the AcpClientImpl.requestPermission polls PB directly.
+  // We subscribe to log updates and keep the UI reactive, but no command is sent here.
+  await pb.collection('permissions').subscribe('*', async (e) => {
+    if (e.action === 'update') {
+      const rec = e.record;
+      if (rec.acp_status && rec.acp_status !== 'pending') {
+        console.log(`[interface] permission ${rec.id} resolved: ${rec.acp_status}`);
+      }
     }
-}
+  });
 
-/**
- * POCKETBASE -> OPENCODE (Command Pump)
- */
-const commandPumpBackoff = { delay: 1000 };
-
-async function startCommandPump() {
-    console.log('[Interface] Starting PocketBase Command Pump...');
-
-    try {
-        unsubscribeCommandPump();
-
-        // 1. New Messages
-        await pb.collection(Collections.MESSAGES).subscribe('*', async (e: { action: string; record: MessageRecord }) => {
-            try {
-                if (e.action === 'create' && e.record.role === 'user' && !e.record.ai_engine_message_id) {
-                    await handleUserMessage(recordToInput(e.record));
-                }
-            } catch (err) {
-                console.error('[Interface] Error handling message subscription event:', err);
-            }
-        });
-
-        // 2. Permission Responses
-        await pb.collection(Collections.PERMISSIONS).subscribe('*', async (e: { action: string; record: PermissionRecord }) => {
-            try {
-                if (e.action === 'update' && (e.record.status === Status.AUTHORIZED || e.record.status === Status.DENIED)) {
-                    await handlePermissionReply(e.record);
-                }
-            } catch (err) {
-                console.error('[Interface] Error handling permission subscription event:', err);
-            }
-        });
-
-        // 3. LLM Config Changes (model switching)
-        await pb.collection(Collections.MODEL_SELECTION).subscribe('*', async (e: { action: string; record: ModelSelectionRecord }) => {
-            try {
-                if (e.action === 'create' || e.action === 'update') {
-                    await handleModelSwitch(e.record);
-                }
-            } catch (err) {
-                console.error('[Interface] Error handling model selection subscription event:', err);
-            }
-        });
-
-        commandPumpHealthy = true;
-        commandPumpBackoff.delay = 1000;
-        console.log('[Interface] Command Pump subscriptions established');
-    } catch (err) {
-        console.error('[Interface] Command Pump subscription failed:', err);
-        commandPumpHealthy = false;
-        scheduleReconnect('command pump', startCommandPump, commandPumpBackoff);
+  // 10. Pre-warm session→chat cache from existing chats
+  try {
+    const chats = await pb.collection('chats').getFullList({ filter: 'acp_session_id != ""' });
+    for (const chat of chats) {
+      if (chat.acp_session_id) {
+        sessionToChat.set(chat.acp_session_id, chat.id);
+      }
     }
-}
+    console.log(`[interface] pre-warmed ${sessionToChat.size} session→chat mappings`);
+  } catch (err) {
+    console.warn('[interface] could not pre-warm session cache:', err);
+  }
 
-function recordToInput(record: MessageRecord): UserMessageInput {
-    const parts: MessagePart[] = Array.isArray(record.parts) ? record.parts : [];
-    const text = parts
-        .filter((p: MessagePart) => p.type === 'text')
-        .map((p: MessagePart) => p.text || '')
-        .join('\n');
-    return { id: record.id, chat: record.chat, text };
-}
-
-async function handleUserMessage(input: UserMessageInput) {
-    try {
-        const chat = await pb.collection(Collections.CHATS).getOne(input.chat);
-        let sessionID = chat.ai_engine_session_id;
-
-        if (!sessionID) {
-            const result = await oc.session.create({ query: { directory: '/workspace' } });
-            sessionID = (result.data as { id: string })?.id;
-            await pb.collection(Collections.CHATS).update(chat.id, { ai_engine_session_id: sessionID });
-        }
-
-        await oc.session.prompt({
-            path: { id: sessionID },
-            body: { parts: [{ type: 'text', text: input.text }] }
-        });
-    } catch (err) {
-        console.error(`[Interface] Failed to handle user message (chat: ${input.chat}):`, err);
-    }
-}
-
-async function handlePermissionReply(record: PermissionRecord) {
-    console.log(`[Interface] Replying to permission: ${record.ai_engine_permission_id} -> ${record.status}`);
-    const response: 'always' | 'reject' = record.status === Status.AUTHORIZED ? 'always' : 'reject';
-
-    try {
-        await oc.postSessionIdPermissionsPermissionId({
-            path: {
-                id: record.session_id,
-                permissionID: record.ai_engine_permission_id
-            },
-            body: { response }
-        });
-        console.log('[Interface] Permission decision sent');
-    } catch (err) {
-        console.error('[Interface] Permission reply failed:', err);
-    }
-}
-
-/**
- * LLM PROVIDER SYNC (OpenCode -> PocketBase)
- */
-async function syncProviders() {
-    console.log('[Interface] Syncing LLM providers from OpenCode...');
-    try {
-        const result = await oc.provider.list();
-        const data = result.data as any;
-        const providers: any[] = data?.all ?? [];
-        const connectedIds: string[] = data?.connected ?? [];
-        const connectedSet = new Set(connectedIds);
-
-        for (const provider of providers) {
-            const pid = provider.id;
-            const record = {
-                provider_id: pid,
-                name: provider.name || pid,
-                env_vars: provider.env ?? [],
-                models: provider.models ?? {},
-                is_connected: connectedSet.has(pid),
-            };
-            try {
-                const existing = await pb.collection(Collections.LLM_PROVIDERS).getFirstListItem(
-                    pb.filter('provider_id = {:pid}', { pid })
-                );
-                await pb.collection(Collections.LLM_PROVIDERS).update(existing.id, record);
-            } catch (err) {
-                if (err instanceof ClientResponseError && err.status === 404) {
-                    await pb.collection(Collections.LLM_PROVIDERS).create(record);
-                } else {
-                    console.error(`[Interface] Failed to sync provider '${pid}':`, err);
-                }
-            }
-        }
-        console.log(`[Interface] Synced ${providers.length} LLM providers (${connectedIds.length} connected)`);
-    } catch (err) {
-        console.error('[Interface] Provider sync failed:', err);
-    }
-}
-
-/**
- * LLM MODEL SWITCH (PocketBase -> OpenCode)
- */
-async function handleModelSwitch(record: ModelSelectionRecord) {
-    const model = record.model;
-    const chatId = record.chat;
-
-    if (chatId) {
-        // Per-chat model switch: find the session and send command
-        try {
-            const chat = await pb.collection(Collections.CHATS).getOne(chatId);
-            const sessionID = chat.ai_engine_session_id;
-            if (!sessionID) {
-                console.log(`[Interface] Chat ${chatId} has no session, skipping model switch`);
-                return;
-            }
-            await oc.session.command({
-                path: { id: sessionID },
-                body: { command: 'model', arguments: model }
-            });
-            console.log(`[Interface] Switched model to '${model}' for session ${sessionID}`);
-        } catch (err) {
-            console.error(`[Interface] Per-chat model switch failed for chat ${chatId}:`, err);
-        }
-    } else {
-        // Global default model switch
-        try {
-            await oc.config.update({ body: { model } });
-            console.log(`[Interface] Updated global default model to '${model}'`);
-        } catch (err) {
-            console.error('[Interface] Global model switch failed:', err);
-        }
-    }
-}
-
-// --- Utilities ---
-
-async function resolveChatID(sessionID: string): Promise<string | null> {
-    if (sessionToChat.has(sessionID)) {
-        const chatID = sessionToChat.get(sessionID)!;
-        sessionToChat.delete(sessionID);
-        sessionToChat.set(sessionID, chatID);
-        return chatID;
-    }
-    try {
-        const chat = await pb.collection(Collections.CHATS).getFirstListItem(
-            pb.filter('ai_engine_session_id = {:id}', { id: sessionID })
+  // 11. Health endpoint
+  Bun.serve({
+    port: HEALTH_PORT,
+    fetch(req) {
+      const url = new URL(req.url);
+      if (url.pathname === '/healthz') {
+        return new Response(
+          JSON.stringify({
+            status: 'ok',
+            agent: POCO_AGENT_CMD,
+            sessions: sessionToChat.size,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
         );
-        cacheSession(sessionID, chat.id);
-        return chat.id;
-    } catch (err) {
-        if (err instanceof ClientResponseError && err.status === 404) return null;
-        console.error('[Interface] Failed to resolve chat ID:', err);
-        throw err;
-    }
+      }
+      return new Response('not found', { status: 404 });
+    },
+  });
+
+  console.log(`[interface] started — agent: ${POCO_AGENT_CMD}, health: :${HEALTH_PORT}`);
 }
 
-async function findMessageByEngineId(engineID: string): Promise<MessageRecord | null> {
-    try {
-        return await pb.collection(Collections.MESSAGES).getFirstListItem(
-            pb.filter('ai_engine_message_id = {:id}', { id: engineID })
-        );
-    } catch (err) {
-        if (err instanceof ClientResponseError && err.status === 404) return null;
-        console.error('[Interface] Failed to find message by engine ID:', err);
-        throw err;
-    }
-}
-
-// --- Health Check ---
-
-function startHealthCheck() {
-    Bun.serve({
-        port: HEALTH_PORT,
-        fetch(req: Request) {
-            const url = new URL(req.url);
-            if (url.pathname === '/healthz') {
-                const healthy = eventPumpHealthy && commandPumpHealthy;
-                return new Response(JSON.stringify({
-                    status: healthy ? 'ok' : 'degraded',
-                    eventPump: eventPumpHealthy ? 'connected' : 'disconnected',
-                    commandPump: commandPumpHealthy ? 'connected' : 'disconnected',
-                    sessionCacheSize: sessionToChat.size
-                }), {
-                    status: healthy ? 200 : 503,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            }
-            return new Response('Not Found', { status: 404 });
-        }
-    });
-    console.log(`[Interface] Health check listening on port ${HEALTH_PORT}`);
-}
-
-// --- Graceful Shutdown ---
-
-function setupGracefulShutdown() {
-    const shutdown = async () => {
-        console.log('[Interface] Shutting down gracefully...');
-        try {
-            unsubscribeCommandPump();
-            if (providerSyncInterval) clearInterval(providerSyncInterval);
-        } catch (err) {
-            console.error('[Interface] Error during unsubscribe:', err);
-        }
-        process.exit(0);
-    };
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
-}
-
-// --- Start ---
-(async () => {
-    const agentEmail = process.env.AGENT_EMAIL;
-    const agentPass = process.env.AGENT_PASSWORD;
-
-    if (!agentEmail || !agentPass) {
-        console.error('[Interface] AGENT_EMAIL and AGENT_PASSWORD environment variables are required');
-        process.exit(1);
-    }
-
-    try {
-        console.log(`[Interface] Authenticating as Agent (${agentEmail})...`);
-        await pb.collection(Collections.USERS).authWithPassword(agentEmail, agentPass);
-        console.log('[Interface] Agent authenticated!');
-
-        // Auth token refresh hook — re-authenticates when token expires
-        let refreshPromise: Promise<void> | null = null;
-        pb.beforeSend = async function (url, options) {
-            if (!pb.authStore.isValid) {
-                if (!refreshPromise) {
-                    refreshPromise = pb.collection(Collections.USERS).authWithPassword(agentEmail, agentPass)
-                        .then(() => { refreshPromise = null; })
-                        .catch((err) => {
-                            refreshPromise = null;
-                            console.error('[Interface] Auth refresh failed:', err);
-                        });
-                }
-                await refreshPromise;
-            }
-            return { url, options };
-        };
-
-        // Pre-cache active sessions
-        const chats = await pb.collection(Collections.CHATS).getFullList({ filter: 'ai_engine_session_id != ""' });
-        for (const chat of chats) {
-            cacheSession(chat.ai_engine_session_id, chat.id);
-        }
-        console.log(`[Interface] Pre-cached ${sessionToChat.size} active sessions`);
-
-        setupGracefulShutdown();
-        startHealthCheck();
-        startEventPump();
-        startCommandPump();
-
-        // Initial provider sync + daily refresh
-        syncProviders();
-        providerSyncInterval = setInterval(syncProviders, PROVIDER_SYNC_INTERVAL_MS);
-    } catch (err) {
-        console.error('[Interface] Initialization failed:', err);
-        process.exit(1);
-    }
-})();
+main().catch((err) => {
+  console.error('[interface] fatal:', err);
+  process.exit(1);
+});
