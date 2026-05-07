@@ -22,6 +22,7 @@ class CronJob with _$CronJob {
     String? lastError,
     DateTime? created,
     DateTime? updated,
+    String? pocoConfig,
   }) = _CronJob;
 
   factory CronJob.fromRecord(RecordModel record) =>

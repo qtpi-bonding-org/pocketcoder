@@ -13,6 +13,8 @@ class ToolPermission with _$ToolPermission {
     required String pattern,
     @JsonKey(unknownEnumValue: ToolPermissionAction.unknown) required ToolPermissionAction action,
     bool? active,
+    String? pocoConfig,
+    String? sandboxConfig,
   }) = _ToolPermission;
 
   factory ToolPermission.fromRecord(RecordModel record) =>
