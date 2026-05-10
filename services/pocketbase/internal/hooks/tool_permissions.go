@@ -149,8 +149,8 @@ func renderOpenCodeConfig(app core.App) error {
 			agentConfig = make(map[string]interface{})
 		}
 
-		// Resolve model identifier via harness_models relation
-		modelId := agent.GetString("model")
+		// Resolve model identifier via harness_model relation
+		modelId := agent.GetString("harness_model")
 		if modelId != "" {
 			modelRecord, err := app.FindRecordById("harness_models", modelId)
 			if err == nil {
@@ -158,18 +158,14 @@ func renderOpenCodeConfig(app core.App) error {
 			}
 		}
 
-		// Resolve prompt body via prompts relation
-		promptId := agent.GetString("prompt")
+		// Resolve prompt body via system_prompt relation
+		promptId := agent.GetString("system_prompt")
 		if promptId != "" {
 			promptRecord, err := app.FindRecordById("prompts", promptId)
 			if err == nil {
 				agentConfig["prompt"] = promptRecord.GetString("body")
 			}
 		}
-
-		// Set agent metadata
-		agentConfig["description"] = agent.GetString("description")
-		agentConfig["mode"] = agent.GetString("mode")
 
 		// Build per-agent permission block
 		if perms, exists := agentPermsMap[agent.Id]; exists {

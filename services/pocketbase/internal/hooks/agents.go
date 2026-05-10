@@ -50,9 +50,9 @@ func RegisterAgentHooks(app core.App) {
 		collection := e.Record.Collection().Name
 
 		if collection == "prompts" {
-			agentsList, err := app.FindRecordsByFilter("poco_configs", "prompt = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
+			agentsList, err := app.FindRecordsByFilter("poco_configs", "system_prompt = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
 			if err != nil {
-				log.Printf("⚠️ [Agents] Failed to query agents by prompt %s: %v", e.Record.Id, err)
+				log.Printf("⚠️ [Agents] Failed to query agents by system_prompt %s: %v", e.Record.Id, err)
 			}
 			for _, a := range agentsList {
 				agents.UpdateAgentConfig(app, a)
@@ -60,9 +60,9 @@ func RegisterAgentHooks(app core.App) {
 		}
 
 		if collection == "harness_models" {
-			agentsList, err := app.FindRecordsByFilter("poco_configs", "model = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
+			agentsList, err := app.FindRecordsByFilter("poco_configs", "harness_model = {:id}", "created", 100, 0, map[string]any{"id": e.Record.Id})
 			if err != nil {
-				log.Printf("⚠️ [Agents] Failed to query agents by model %s: %v", e.Record.Id, err)
+				log.Printf("⚠️ [Agents] Failed to query agents by harness_model %s: %v", e.Record.Id, err)
 			}
 			for _, a := range agentsList {
 				agents.UpdateAgentConfig(app, a)
