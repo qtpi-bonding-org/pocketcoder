@@ -27,17 +27,14 @@ import (
 // GetAgentBundle converts an Agent record into a frontmatter-laden bundle.
 func GetAgentBundle(app core.App, agent *core.Record) (string, error) {
 	// 1. Expand dependencies
-	app.ExpandRecord(agent, []string{"prompt", "model"}, nil)
+	app.ExpandRecord(agent, []string{"system_prompt", "harness_model"}, nil)
 
 	// 2. Build Frontmatter
 	frontmatter := make(map[string]any)
-	if desc := agent.GetString("description"); desc != "" {
-		frontmatter["description"] = desc
-	}
 
-	model := agent.ExpandedOne("model")
+	model := agent.ExpandedOne("harness_model")
 	if model == nil {
-		modelID := agent.GetString("model")
+		modelID := agent.GetString("harness_model")
 		if modelID != "" {
 			model, _ = app.FindRecordById("harness_models", modelID)
 		}
@@ -51,11 +48,11 @@ func GetAgentBundle(app core.App, agent *core.Record) (string, error) {
 		return "", err
 	}
 
-	// 4. Combine with Prompt Body
+	// 3. Combine with Prompt Body
 	body := ""
-	prompt := agent.ExpandedOne("prompt")
+	prompt := agent.ExpandedOne("system_prompt")
 	if prompt == nil {
-		promptID := agent.GetString("prompt")
+		promptID := agent.GetString("system_prompt")
 		if promptID != "" {
 			prompt, _ = app.FindRecordById("prompts", promptID)
 		}
