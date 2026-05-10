@@ -12,7 +12,6 @@ services:
       # - pb_backups:/app/pb_backups
       - pocketcoder-logs:/app/pb_public/logs
       - opencode_workspace:/workspace
-      - ./services/opencode:/workspace/.opencode
       - ./services/mcp-gateway/config:/mcp_config
       - llm_keys:/llm_keys
     environment:
@@ -51,7 +50,6 @@ services:
       - "2222:2222"  # SSH + SFTP (key-auth only)
     volumes:
       - opencode_workspace:/workspace
-      - ./services/sandbox/opencode.json:/root/.config/opencode/opencode.json:ro
       - shell_bridge:/app/shell_bridge
       - llm_keys:/llm_keys:ro
     working_dir: /workspace
@@ -184,7 +182,6 @@ services:
       - SQLPAGE_SITE_PREFIX=/api/pocketcoder/proxy/observability/
     volumes:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
-      - opencode_data:/database/opencode       # OpenCode DB (analytics)
       - ./services/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
       - ./services/sqlpage/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
     networks:
@@ -416,7 +413,6 @@ volumes:
   #   name: pocketcoder_pb_backups
   pocketcoder-logs:
   opencode_workspace:
-  opencode_data:
   llm_keys:  # Shared LLM API keys (env file written by PocketBase, read by sandbox)
   shell_bridge:
   ntfy-cache:
