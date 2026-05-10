@@ -1800,7 +1800,7 @@ git commit -m "chore: full ACP stack integration — opencode acp verified end-t
 
 ## Out of Scope (Future Plans)
 
-- **A2A bridge** (`services/a2a-bridge/`) — sub-agent escalation back to Poco. Separate plan.
+- **A2A server in sandbox** — replaces `spawn_agent`/`check_agent`/`list_agents` MCP tools with proper A2A task delegation. Lives inside sandbox container alongside poco-agents, not a separate service. Low-level MCP tools (bash, file, terminal, memory) are unchanged. Separate plan.
 - **Gemini CLI / Claude Code ACP containers** — additional harness configs. Separate plan once base is stable.
 - **`harness_auth` OAuth flow** — Claude Code subscription login. Separate plan.
 - **Flutter UI updates** — model picker showing harnesses + models, permission UI using new `acp_status` enum. Separate plan.

@@ -125,9 +125,11 @@ Transport: ACP over WebSocket on a fixed port (e.g. `:4000`) so Interface can co
 **Capability declaration:**  
 On `initialize()`, Poco declares only the capabilities it supports. Interface uses capability negotiation — no hard failures if an agent doesn't support optional features.
 
-### 3. Poco → Sandbox wiring — Option A (MCP passthrough)
+### 3. Poco → Sandbox wiring — MCP for tools, A2A for agent delegation
 
-Interface includes `mcpServers` in every `newSession()` call:
+Two protocols, two different jobs:
+
+**MCP (stays)** — low-level tool calls. Poco gets these via `mcpServers` in every `newSession()` call:
 
 ```typescript
 await poco.newSession({
@@ -138,10 +140,24 @@ await poco.newSession({
 })
 ```
 
-Poco receives this and connects to poco-agents as MCP tools automatically. Sub-agents run in sandbox via poco-agents exactly as today.
+MCP handles: `bash`, `read_file`, `write_file`, `memory_search`, terminal management. These are deterministic, structured, the sandbox is passive.
 
-**Why not Option B (sandbox agents as ACP `AgentSideConnection`):**  
-Real-time streaming from sub-agents back to Poco pollutes Poco's context window with intermediate noise. Poco delegates tasks to sub-agents precisely to avoid processing that detail. Batch MCP (delegate → result) is the right coordination pattern for agent-to-agent. Human visibility into sub-agent activity is served by sub-agents writing directly to PocketBase, not by routing through Poco.
+**A2A (future, lives in sandbox)** — full agent delegation. When Poco needs to hand off a whole task to another agent (not just a tool call), it uses A2A. The A2A server runs inside the sandbox container alongside poco-agents — no separate bridge container. Poco calls `http://sandbox:4001/a2a` directly.
+
+The sandbox is the right place for the A2A server because:
+- Execution already happens there
+- No trust boundary being crossed that would justify an extra hop
+- poco-agents already runs orchestration logic (spawn_agent, check_agent) — A2A replaces that part cleanly
+- The Rust proxy (`pocketcoder-proxy`) already manages the entry point
+
+**MCP vs A2A split:**
+
+| | MCP | A2A |
+|---|---|---|
+| `bash`, `file`, `terminal`, `memory` | ✅ stays MCP | — |
+| `spawn_agent`, `check_agent`, `list_agents` | ❌ replaced | ✅ A2A task delegation |
+
+A2A is a future phase (see Out of Scope). The MCP passthrough ships now.
 
 ### 4. Docker Compose changes
 
@@ -177,6 +193,7 @@ Real-time streaming from sub-agents back to Poco pollutes Poco's context window 
 | Provider management (list/set/disable) | Agent CLI handles internally |
 | `unstable_forkSession` | API surface not finalised |
 | Option B sandbox ACP agents | Unnecessary complexity; MCP batch is better for agent coordination |
+| A2A server (separate bridge container) | No trust boundary justifies the extra hop; A2A server lives in sandbox instead |
 
 ---
 
