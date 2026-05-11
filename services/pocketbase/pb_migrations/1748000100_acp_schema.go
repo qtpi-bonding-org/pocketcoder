@@ -239,7 +239,6 @@ func init() {
 		}
 		addFields(chats,
 			&core.TextField{Name: "acp_session_id"},
-			&core.SelectField{Name: "current_role", MaxSelect: 1, Values: []string{"user", "assistant"}},
 			&core.RelationField{Name: "poco_config", CollectionId: pocoConfigs.Id, MaxSelect: 1},
 			&core.RelationField{Name: "harness_model_override", CollectionId: harnessModels.Id, MaxSelect: 1},
 		)
