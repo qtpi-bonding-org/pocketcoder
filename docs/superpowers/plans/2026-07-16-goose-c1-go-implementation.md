@@ -13,8 +13,11 @@
 > owner, persists only `chat → goose_session_id` in the new `goose_sessions`
 > collection, keeps c2 credentials server-side, and streams typed AG-UI events.
 > It requires `GOOSE_ACP_URL`, `GOOSE_SERVER__SECRET_KEY`, and a container-visible
-> `GOOSE_WORKSPACE`. Tool execution, cancellation, and phone permission-response
-> endpoints are intentionally the next slice; c1 currently advertises no
+> `GOOSE_WORKSPACE`. The authenticated
+> `POST /api/pocketcoder/chats/{chatId}/cancel` route forwards cancellation only
+> to an in-process active prompt; that prompt's correlated Goose response still
+> produces the deterministic AG-UI terminal events. Tool execution and phone
+> permission-response endpoints remain intentionally deferred; c1 currently advertises no
 > filesystem/terminal capability and sends no MCP server configuration.
 
 **Goal:** add the new runtime to the existing PocketBase executable. c1 remains one Go process and one public service; it is **not** a new microservice and does not introduce a second HTTP listener.
