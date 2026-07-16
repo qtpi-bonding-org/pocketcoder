@@ -65,7 +65,7 @@ c3: Docker MCP Gateway
    └── Cognee (memory: remember / recall / forget)
 ```
 
-Every tool call — shell exec via the `developer` extension, or an MCP call like Cognee's `remember` — is expected to surface back up through goose's ACP `session/update` → c1's `requestPermission` handling → the phone approve/deny UX. (Whether MCP-sourced calls actually hit this path identically to builtins is unconfirmed — see Open Questions. You've said this one doesn't worry you much either way, noted here for completeness.)
+Developer tool calls have been proven to surface through Goose ACP `session/request_permission` → c1's approval handling → the phone approve/deny UX. Gateway MCP attachment is not yet functional through the selected Goose c2 hop: the 2026-07-16 spike supplied an SSE Docker MCP Gateway but Goose did not expose its tools. Therefore Cognee and all gateway MCP tools remain disabled by default; do not assume MCP calls share the developer-tool approval path until that attachment is fixed and re-tested.
 
 ## Why goose sits where it does (two ACP roles at once)
 
@@ -109,7 +109,7 @@ Cognee is an MCP server by design (`remember`/`recall`/`forget`, plus code-graph
 ## Open questions / risks carried forward
 
 - **ACP-over-HTTP maturity**: `goosed`→ACP-over-HTTP consolidation (upstream issue #6642) is active, not finalized. Pin a goose version.
-- **MCP-sourced tool calls through `requestPermission`**: unconfirmed whether they surface identically to builtins. Low concern per your read, but relevant the moment Cognee's calls need to show up in the approval UI the same way shell commands do.
+- **Gateway MCP attachment and permission flow**: blocked in the selected Goose v1.36.0 configuration. A real SSE Docker MCP Gateway supplied via `mcpServers` did not expose its built-in tool to Goose. Pin/validate a working attachment before enabling Cognee; then prove its calls reach `request_permission` before changing the default-deny policy.
 - **SDK maturity, Go side**: solid — `coder/acp-go-sdk` (Coder-backed) and the community AG-UI Go SDK (used by Microsoft's Agent Framework and Tencent's trpc-agent-go independently) are reasonable bets.
 - **SDK maturity, Dart side**: `ag_ui` is the selected Flutter-side AG-UI client, but Flutter work is intentionally deferred. Pin and exercise it against PocketCoder's authenticated c1 SSE endpoint—especially reconnect and background/resume—before committing to the cutover.
 - **Governance signal, positive**: goose has moved from Block to the Agentic AI Foundation (Linux Foundation), the same body governing MCP — reduces single-vendor churn risk relative to when this bet was first considered.
