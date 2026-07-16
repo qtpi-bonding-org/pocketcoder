@@ -1,0 +1,8 @@
+{
+  "catalogs": {
+    "docker-mcp": {
+      "displayName": "PocketCoder MCP spike catalog",
+      "url": "https://desktop.docker.com/mcp/catalog/v2/catalog.yaml"
+    }
+  }
+}

@@ -25,8 +25,9 @@ Two additional provider-backed protocol checks succeeded against that same pinne
 
 - `session/cancel` was sent after the first agent output of an intentionally long turn. Goose accepted the notification, emitted no more message chunks, and resolved the original `session/prompt` with a deterministic `{"stopReason":"end_turn", ...}` terminal response. c1 must treat the correlated prompt response—not a guessed final text chunk—as the authoritative end-of-turn signal.
 - In `approve` mode, Goose emitted `session/request_permission` for both a developer write and read. The harness held each request for three seconds, returned its offered `allow_always` option, executed the resulting ACP filesystem request, and the turn ended successfully. A fresh connection's `session/load` replay included the completed tool calls and final assistant message. The replay does **not** reissue the already-resolved permission callback, so PocketBase must never try to reconstruct a pending approval from history.
+- Gateway MCP attachment is **not yet usable** through this hop. An isolated Docker MCP Gateway (SSE, its built-in `mcp-find` catalog tool, and no auto-enabled server) was supplied in `session/new.mcpServers` and Goose accepted the session. In `approve` mode, however, Goose exposed only its built-in extensions; it never exposed or invoked `mcp-find`, so no gateway MCP `request_permission` could occur. The same result occurred with the gateway's required Docker socket attached. Treat this as a c2 compatibility/configuration blocker, not proof that gateway MCP calls bypass approvals.
 
-**Decision:** select Goose v1.36.0 for c2 and use the current Streamable-HTTP ACP profile. Gate A is complete and the developer-tool portion of Gate C is complete. It is safe to build c1's small Go ACP transport package; keep Flutter deferred. The remaining protocol spike before c3 is an MCP/Gateway permission-policy check.
+**Decision:** select Goose v1.36.0 for c2 and use the current Streamable-HTTP ACP profile. Gate A is complete and the developer-tool portion of Gate C is complete. It is safe to build c1's small Go ACP transport package; keep Flutter deferred. Do **not** enable Cognee or gateway MCP tools by default until a pinned Goose configuration/release exposes the attached gateway's tools and the permission check can be repeated.
 
 ## Prerequisites
 
@@ -86,6 +87,8 @@ go run . --transport=http --http-url http://127.0.0.1:3000/acp \
 
 For Goose v1.36.0, use `--http-dialect=streamable` and a container-visible `--cwd` (the spike uses `/workspace`). This is the selected c1→c2 profile.
 
+`--mcp-sse-url` supplies one SSE MCP server in the ACP `mcpServers` request. The checked-in `mcp-gateway-config/` is only the controlled Docker Gateway fixture used for the negative attachment finding above; it is not production gateway configuration.
+
 ## Exit criteria
 
 - [x] A current-Goose remote transport is selected and pinned.
@@ -93,6 +96,6 @@ For Goose v1.36.0, use `--http-dialect=streamable` and a container-visible `--cw
 - [x] The selected release conforms to the current ACP transport.
 - [x] `session/cancel` works over the selected transport and ends the correlated prompt request.
 - [x] Developer-tool `request_permission` pass-through works and completed history replays after `session/load`.
-- [ ] Gateway MCP permission behavior is captured and a policy is selected.
+- [x] Gateway MCP attachment was attempted against a real isolated Docker MCP Gateway and did not expose tools through Goose; Cognee/gateway MCP is disabled by default pending a working c2 attachment.
 
 Delete this directory once that decision is implemented and covered by the production c1 integration tests.

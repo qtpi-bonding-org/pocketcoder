@@ -34,7 +34,7 @@ type terminalResult struct {
 	exitCode int
 }
 
-func runStreamableHTTP(rawURL, secret, prompt, existingSession, cwd, mode string, autoApprove bool, permissionDelay, cancelAfter, timeout time.Duration) error {
+func runStreamableHTTP(rawURL, secret, prompt, existingSession, cwd, mode, mcpSSEURL string, autoApprove bool, permissionDelay, cancelAfter, timeout time.Duration) error {
 	if rawURL == "" || secret == "" {
 		return fmt.Errorf("--http-url and --secret are required for --transport=http")
 	}
@@ -50,8 +50,12 @@ func runStreamableHTTP(rawURL, secret, prompt, existingSession, cwd, mode string
 	}
 
 	sessionID := existingSession
+	mcpServers := []any{}
+	if mcpSSEURL != "" {
+		mcpServers = append(mcpServers, map[string]any{"name": "gateway", "type": "sse", "url": mcpSSEURL, "headers": []any{}})
+	}
 	if sessionID == "" {
-		reply, err := h.call(ctx, "session/new", map[string]any{"cwd": cwd, "mcpServers": []any{}}, "")
+		reply, err := h.call(ctx, "session/new", map[string]any{"cwd": cwd, "mcpServers": mcpServers}, "")
 		if err != nil {
 			return err
 		}
@@ -73,7 +77,7 @@ func runStreamableHTTP(rawURL, secret, prompt, existingSession, cwd, mode string
 	}
 	if existingSession != "" {
 		fmt.Fprintf(stderr(), "loading_session_id=%s\n", sessionID)
-		if _, err := h.call(ctx, "session/load", map[string]any{"sessionId": sessionID, "cwd": cwd, "mcpServers": []any{}}, sessionID); err != nil {
+		if _, err := h.call(ctx, "session/load", map[string]any{"sessionId": sessionID, "cwd": cwd, "mcpServers": mcpServers}, sessionID); err != nil {
 			return err
 		}
 		fmt.Fprintf(stderr(), "loaded_session_id=%s\n", sessionID)
