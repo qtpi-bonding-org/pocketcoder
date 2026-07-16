@@ -1,6 +1,6 @@
 # STAGE 1: The PocketBase (Go / PocketBase)
 # ------------------------------------------------------------------------------
-FROM golang:1.24-alpine AS pocketbase-builder
+FROM golang:1.24.4-alpine AS pocketbase-builder
 
 RUN apk add --no-cache git gcc musl-dev
 
@@ -53,4 +53,3 @@ RUN chmod +x /app/entrypoint.sh
 EXPOSE 8090
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["/app/pocketbase", "serve", "--http=0.0.0.0:8090"]
-

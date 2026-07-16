@@ -1,5 +1,13 @@
 # c1 Go Implementation Plan — PocketBase + Goose ACP + AG-UI
 
+> Implementation status (2026-07-16): the first foundation commit pins
+> `coder/acp-go-sdk` v0.13.5 and the AG-UI community Go SDK, and adds the
+> Streamable-HTTP ACP transport plus a typed ACP→AG-UI bridge. The community
+> AG-UI SDK requires Go 1.24.4, so the PocketBase builder image is pinned to
+> that patch release as well. The next step is the PocketBase
+> `goose_sessions` migration and authenticated coordinator/routes; no browser
+> endpoint is exposed by this foundation alone.
+
 **Goal:** add the new runtime to the existing PocketBase executable. c1 remains one Go process and one public service; it is **not** a new microservice and does not introduce a second HTTP listener.
 
 ## Fixed boundaries
