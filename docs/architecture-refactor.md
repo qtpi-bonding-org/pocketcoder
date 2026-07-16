@@ -24,7 +24,7 @@ Here's the full reference list, grouped by where each thing sits.
 - [`ag_ui`](https://pub.dev/packages/ag_ui) on pub.dev — the Dart AG-UI client to use for the eventual Flutter data-layer swap. It supplies typed AG-UI event models, decoding, and SSE support; PocketCoder should wrap it in its existing repository/cubit layer rather than rebuild the client protocol. Pin a released version and validate authenticated reconnect/background behavior against c1 before cutover.
 - `acp_dart` and `dart_acp` — unnecessary in this architecture: Flutter speaks AG-UI only, while c1 (Go) is the ACP client.
 
-One more useful one for tracking maturity/timing risk on the c2 side: the [`goosed`→ACP-over-HTTP tracking issue](https://github.com/aaif-goose/goose/issues/6642) — worth watching since that's the transport your whole c1↔c2 hop depends on, and it's still consolidating. The 2026-07-16 spike selected Goose v1.36.0, pinned by digest in `spikes/goose-acp-http/README.md`: it completed remote create, prompt, fresh-connection `session/load`, history replay, and a second prompt over the current Streamable-HTTP ACP profile. The earlier image's legacy SSE transport is rejected for c1.
+One more useful one for tracking maturity/timing risk on the c2 side: the [`goosed`→ACP-over-HTTP tracking issue](https://github.com/aaif-goose/goose/issues/6642) — worth watching since that's the transport your whole c1↔c2 hop depends on, and it's still consolidating. The 2026-07-16 spike selected Goose v1.36.0, pinned by digest in `spikes/goose-acp-http/README.md`: it completed remote create, prompt, fresh-connection `session/load`, history replay, a second prompt, and cancellation of an in-flight streaming turn over the current Streamable-HTTP ACP profile. In `approve` mode, developer-tool permissions were held and resolved through ACP, and completed tool history replayed on load; no PocketBase approval copy is needed. The earlier image's legacy SSE transport is rejected for c1.
 
 
 # PocketCoder Revamp v2 — Architecture Plan
@@ -39,7 +39,7 @@ Lean on FOSS protocols/tools instead of hand-rolled glue: MCP for tools, ACP for
 
 | Container | Runs | Role |
 |---|---|---|
-| **c1** | PocketBase (as Go library) + Go AG-UI server + Go ACP client | Auth, state ledger, approval log, ACP↔AG-UI translation. The "front door" to the mobile app. |
+| **c1** | PocketBase (as Go library) + Go AG-UI server + Go ACP client | Auth, chat ownership, the one chat→Goose-session mapping, and ACP↔AG-UI translation. The "front door" to the mobile app; not a conversation or approval ledger. |
 | **c2** | goose, in ACP agent-server mode (`goose serve`) | The agent core. Spawns `claude-agent-acp` / `codex-acp` as a child process depending on `GOOSE_PROVIDER`. Least-trusted container — this is where arbitrary tool execution happens. |
 | **c3** | Docker MCP Gateway | Hosts/proxies every external tool as an MCP server: GitHub, Notion, internal servers, and **Cognee** (memory/knowledge graph). |
 
@@ -53,7 +53,7 @@ Down from the original 4 (pocketbase, sandbox, interface, mcp-gateway) → this 
 Mobile (Flutter)
    │  AG-UI events over SSE (JSON, not binary protobuf)
    ▼
-c1: PocketBase (auth, approval ledger)
+c1: PocketBase (auth, chat→Goose-session mapping)
    │  ACP-over-HTTP (JSON-RPC), via Go ACP client (coder/acp-go-sdk or similar)
    ▼
 c2: goose (ACP agent-server mode)
@@ -101,8 +101,8 @@ Cognee is an MCP server by design (`remember`/`recall`/`forget`, plus code-graph
 
 **Real code (scoped, but real):**
 1. **ACP→AG-UI translation layer**, in c1. The event mapping itself is small (~6 rules: message chunks, tool call start/args/end, one state-update for approval). The actual work is bridging ACP's *blocking* `request_permission()` to the *async* phone-approve flow.
-2. **Session-ID correlation.** goose session ID ≠ inner ACP session ID ≠ PocketBase approval-log row ≠ push notification target. This bookkeeping is yours to own; nothing upstream hands it to you.
-3. **PocketBase auth + reverse-proxy**: JWT verify → look up `user_id → goose_session_id` → inject `GOOSE_SERVER__SECRET_KEY` → forward into `goose serve`.
+2. **Session-ID correlation.** PocketBase owns the authenticated `user → N chats → one Goose ACP session per chat` mapping. Goose's session ID remains distinct from any inner provider ACP session; do not create PocketBase approval-log rows or a duplicate event ledger.
+3. **PocketBase auth + bridge**: JWT verify → authorize the chat owner → look up `chat_id → goose_session_id` → use c1-held c2 credentials to maintain the ACP connection. Do not expose or forward `GOOSE_SERVER__SECRET_KEY` to Flutter.
 4. **Flutter data-layer swap**, deferred until c1↔c2 is proven — use the Dart `ag_ui` client for AG-UI SSE events, wrapped behind the existing repository/cubit layer, and handle reconnect/resume when the OS backgrounds the app.
 5. **Dart contract validation** — capture one real c1 payload per AG-UI event type and validate it against the pinned `ag_ui` decoder in Flutter tests. Keep PocketCoder-specific mapping types only where the app's existing UI state needs them; do not generate a parallel general-purpose AG-UI client.
 
