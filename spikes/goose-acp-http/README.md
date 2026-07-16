@@ -5,20 +5,22 @@ Disposable harness for the first PocketCoder c1↔c2 gate. It deliberately has n
 ## What it proves
 
 1. The selected Go ACP SDK can initialize a goose ACP session, create a session, forward streamed updates, and prompt it over the supported `goose acp` stdio transport.
-2. A returned session ID can be saved and supplied back to `session/load` in a fresh harness process.
-3. `goose serve` is reachable at its authenticated `/acp` endpoint before investing in the missing Go streamable-HTTP transport adapter.
+2. The authenticated remote `/acp` endpoint can initialize, create a session, stream updates, and prompt through the actual pinned Goose image.
+3. The exact remote transport dialect and reconnect behavior are captured before c1 is designed around it.
 
-The Go SDK currently exposes a line-delimited JSON-RPC connection API. The HTTP preflight is therefore intentionally separate: do not treat its success as proof that c1 can already issue ACP methods over HTTP.
+The Go SDK currently exposes a line-delimited JSON-RPC connection API. The HTTP path here is a minimal raw adapter for compatibility discovery, not production c1 code.
 
 ## Result — 2026-07-16
 
 Using Goose image `ghcr.io/block/goose@sha256:d85a724ee487425f38ce015323adf2003591268ee515d9018ac89450ed7d3a5a` and MiniMax M2.5:
 
 - `initialize → session/new → session/prompt` succeeded through the Go SDK and `goose acp`; streamed thought and message updates were received.
-- `goose serve` started successfully with `GOOSE_SERVER__SECRET_KEY`; `/status` was healthy and an authenticated `GET /acp` returned `400`, confirming authentication succeeded and a valid Streamable-HTTP ACP request is required.
-- A separate-process `session/load` test is **not yet proven**. The stdio harness is the wrong topology for that restart check because it spawns a new goose process; the production test must attach c1 to one long-lived `goose serve` instance and exercise `session/load` through its HTTP transport.
+- `goose serve` started successfully with `GOOSE_SERVER__SECRET_KEY`; `/status` was healthy.
+- `initialize → session/new → session/prompt` also succeeded remotely through one persistent `goose serve`, with thought and message updates streamed to the Go harness.
+- The pinned image does **not** implement the current ACP Streamable-HTTP RFD described in the architecture references. Its observed contract is: `POST /acp` returns `200 text/event-stream` (not `202` plus a long-lived GET stream); initialization returns `Acp-Session-Id` (not `Acp-Connection-Id`); later requests carry that header and return their own SSE response stream. It currently responds over HTTP/1.1.
+- A fresh remote connection followed by `session/load` returned EOF without a JSON-RPC response and Goose produced no diagnostic log. Therefore persisted-session reconnect remains **unproven** and is a blocking c1 spike result.
 
-**Decision:** proceed with a small Go Streamable-HTTP transport adapter (or adopt one from the ACP SDK if it lands) before starting PocketBase integration. Do not build c1 routes or Flutter work yet.
+**Decision:** do not build c1 routes or Flutter work yet. First either (a) pin and implement the observed Goose legacy HTTP dialect, including a working remote `session/load` test, or (b) upgrade Goose to a release that actually implements the current ACP Streamable-HTTP RFD and rerun this spike. The latter is preferable, because c1 should not own a bespoke obsolete transport.
 
 ## Prerequisites
 
@@ -53,7 +55,7 @@ The wrapper persists Goose's session database in the named Docker volume `pocket
 docker volume rm pocketcoder-goose-acp-spike-state
 ```
 
-## Run the HTTP preflight
+## Run the observed remote HTTP adapter
 
 In a separate terminal, start a pinned goose server. Bind it only to a private network during the spike:
 
@@ -68,13 +70,20 @@ Then:
 GOOSE_SERVER__SECRET_KEY="$GOOSE_SERVER__SECRET_KEY" ./http-preflight.sh
 ```
 
-Expected: `/status` succeeds and `/acp` returns anything except `401`/`403` when sent `Accept: text/event-stream` and `X-Secret-Key`.
+Then, against that server:
+
+```bash
+go run . --transport=http --http-url http://127.0.0.1:3000/acp \
+  --secret "$GOOSE_SERVER__SECRET_KEY" --cwd "$(pwd)" \
+  --prompt 'Reply with exactly: goose HTTP ACP spike connected'
+```
+
+This command targets the **observed legacy Goose dialect** and is intentionally not a general ACP Streamable-HTTP client.
 
 ## Exit criteria
 
-- `initialize`, `session/new`, one prompt, and `session/load` work with a pinned goose version.
-- The same session can be loaded after the harness restarts.
-- The exact HTTP behavior, response headers, and stream framing at `/acp` are captured.
-- A follow-up implementation decision is recorded: use an upstream Go streamable-HTTP ACP transport, or add the smallest adapter around the ACP SDK's existing line-delimited connection.
+- A current-Goose remote transport is selected and pinned.
+- `initialize`, `session/new`, one prompt, and `session/load` work after the harness restarts.
+- The selected release conforms to the current ACP transport, or PocketCoder explicitly owns and tests a legacy adapter.
 
 Delete this directory once that decision is implemented and covered by the production c1 integration tests.

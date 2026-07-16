@@ -96,13 +96,24 @@ func (*client) WaitForTerminalExit(_ context.Context, _ acp.WaitForTerminalExitR
 }
 
 func main() {
+	transport := flag.String("transport", "stdio", "ACP transport: stdio or http")
 	goose := flag.String("goose", "goose", "path to the pinned goose binary")
+	httpURL := flag.String("http-url", "", "Goose serve /acp URL when --transport=http")
+	secret := flag.String("secret", "", "GOOSE_SERVER__SECRET_KEY when --transport=http")
 	prompt := flag.String("prompt", "Reply with exactly: goose ACP spike connected", "prompt to send")
 	sessionID := flag.String("session", "", "existing ACP session ID to load before prompting")
 	cwd := flag.String("cwd", mustGetwd(), "absolute workspace path supplied to goose")
 	autoApprove := flag.Bool("auto-approve", false, "select an allow option when goose requests permission")
 	timeout := flag.Duration("timeout", 2*time.Minute, "timeout for initialize, load, and prompt")
 	flag.Parse()
+	if *transport == "http" {
+		failIf(runHTTP(*httpURL, *secret, *prompt, *sessionID, *cwd, *autoApprove, *timeout))
+		return
+	}
+	if *transport != "stdio" {
+		failIf(fmt.Errorf("unknown transport %q", *transport))
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
