@@ -24,7 +24,7 @@ Here's the full reference list, grouped by where each thing sits.
 - [`ag_ui`](https://pub.dev/packages/ag_ui) on pub.dev — the Dart AG-UI client to use for the eventual Flutter data-layer swap. It supplies typed AG-UI event models, decoding, and SSE support; PocketCoder should wrap it in its existing repository/cubit layer rather than rebuild the client protocol. Pin a released version and validate authenticated reconnect/background behavior against c1 before cutover.
 - `acp_dart` and `dart_acp` — unnecessary in this architecture: Flutter speaks AG-UI only, while c1 (Go) is the ACP client.
 
-One more useful one for tracking maturity/timing risk on the c2 side: the [`goosed`→ACP-over-HTTP tracking issue](https://github.com/aaif-goose/goose/issues/6642) — worth watching since that's the transport your whole c1↔c2 hop depends on, and it's still consolidating.
+One more useful one for tracking maturity/timing risk on the c2 side: the [`goosed`→ACP-over-HTTP tracking issue](https://github.com/aaif-goose/goose/issues/6642) — worth watching since that's the transport your whole c1↔c2 hop depends on, and it's still consolidating. The 2026-07-16 spike found that the currently pinned Goose image exposes an older per-POST SSE dialect rather than the current ACP Streamable-HTTP RFD, and remote `session/load` has not yet succeeded. Treat a successful remote reload on the selected Goose version as a hard prerequisite for c1.
 
 
 # PocketCoder Revamp v2 — Architecture Plan
