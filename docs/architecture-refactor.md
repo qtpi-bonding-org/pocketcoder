@@ -20,9 +20,9 @@ Here's the full reference list, grouped by where each thing sits.
 **Reference only — not a dependency, but worth keeping bookmarked**
 - [`namanrajpal/acp-to-agui`](https://github.com/namanrajpal/acp-to-agui) — the small Python/TS reference bridge with the ACP→AG-UI event mapping table. Don't depend on it (early, 6 stars, built for a talk), but it's the best existing worked example of the exact translation you're writing in Go.
 
-**Flutter side — treat these as reading material, not dependencies to pull in**
-- [`ag_ui`](https://pub.dev/packages/ag_ui) on pub.dev — the community Dart AG-UI client. One maintainer, git-dependency distribution, thin. Worth reading its event model as a sanity check against whatever you hand-write or JSON-Schema-generate.
-- `acp_dart` and `dart_acp` — two separate, overlapping Dart ACP implementations if you ever need one; you likely won't, since c1 (Go) is the ACP client in this design, not Flutter.
+**Flutter side — deferred until the c1↔c2 Go spike succeeds**
+- [`ag_ui`](https://pub.dev/packages/ag_ui) on pub.dev — the Dart AG-UI client to use for the eventual Flutter data-layer swap. It supplies typed AG-UI event models, decoding, and SSE support; PocketCoder should wrap it in its existing repository/cubit layer rather than rebuild the client protocol. Pin a released version and validate authenticated reconnect/background behavior against c1 before cutover.
+- `acp_dart` and `dart_acp` — unnecessary in this architecture: Flutter speaks AG-UI only, while c1 (Go) is the ACP client.
 
 One more useful one for tracking maturity/timing risk on the c2 side: the [`goosed`→ACP-over-HTTP tracking issue](https://github.com/aaif-goose/goose/issues/6642) — worth watching since that's the transport your whole c1↔c2 hop depends on, and it's still consolidating.
 
@@ -103,13 +103,13 @@ Cognee is an MCP server by design (`remember`/`recall`/`forget`, plus code-graph
 1. **ACP→AG-UI translation layer**, in c1. The event mapping itself is small (~6 rules: message chunks, tool call start/args/end, one state-update for approval). The actual work is bridging ACP's *blocking* `request_permission()` to the *async* phone-approve flow.
 2. **Session-ID correlation.** goose session ID ≠ inner ACP session ID ≠ PocketBase approval-log row ≠ push notification target. This bookkeeping is yours to own; nothing upstream hands it to you.
 3. **PocketBase auth + reverse-proxy**: JWT verify → look up `user_id → goose_session_id` → inject `GOOSE_SERVER__SECRET_KEY` → forward into `goose serve`.
-4. **Flutter data-layer swap**, not a rebuild — point the existing client at AG-UI SSE events instead of its current source, plus handle reconnect/resume when the OS backgrounds the app.
-5. **Dart types for the AG-UI events you actually use**, generated from a **JSON Schema** derived from real payloads captured off the Go AG-UI server — *not* from AG-UI's `.proto` files (those model the binary wire format, which you're not using, and the community Go AG-UI SDK isn't built from them anyway — it's a hand-written JSON implementation with cross-SDK-compatible casing). Capture one sample per event type, derive/write a JSON Schema, generate Dart from that, and regenerate whenever c1's emitted shape changes.
+4. **Flutter data-layer swap**, deferred until c1↔c2 is proven — use the Dart `ag_ui` client for AG-UI SSE events, wrapped behind the existing repository/cubit layer, and handle reconnect/resume when the OS backgrounds the app.
+5. **Dart contract validation** — capture one real c1 payload per AG-UI event type and validate it against the pinned `ag_ui` decoder in Flutter tests. Keep PocketCoder-specific mapping types only where the app's existing UI state needs them; do not generate a parallel general-purpose AG-UI client.
 
 ## Open questions / risks carried forward
 
 - **ACP-over-HTTP maturity**: `goosed`→ACP-over-HTTP consolidation (upstream issue #6642) is active, not finalized. Pin a goose version.
 - **MCP-sourced tool calls through `requestPermission`**: unconfirmed whether they surface identically to builtins. Low concern per your read, but relevant the moment Cognee's calls need to show up in the approval UI the same way shell commands do.
 - **SDK maturity, Go side**: solid — `coder/acp-go-sdk` (Coder-backed) and the community AG-UI Go SDK (used by Microsoft's Agent Framework and Tencent's trpc-agent-go independently) are reasonable bets.
-- **SDK maturity, Dart side**: thin. Community `ag_ui` and the various `acp_dart`/`dart_acp` packages are one-or-few-maintainer efforts, not consolidated. Plan to read/vendor/patch rather than depend on them as black boxes — consistent with generating your own Dart types off your own JSON Schema rather than pulling in someone else's codegen pipeline.
+- **SDK maturity, Dart side**: `ag_ui` is the selected Flutter-side AG-UI client, but Flutter work is intentionally deferred. Pin and exercise it against PocketCoder's authenticated c1 SSE endpoint—especially reconnect and background/resume—before committing to the cutover.
 - **Governance signal, positive**: goose has moved from Block to the Agentic AI Foundation (Linux Foundation), the same body governing MCP — reduces single-vendor churn risk relative to when this bet was first considered.
