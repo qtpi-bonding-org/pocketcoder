@@ -64,6 +64,24 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 		return nil
 	}).Bind(apis.RequireAuth())
+
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/cancel", func(re *core.RequestEvent) error {
+		if configErr != nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
+		}
+		chatID := re.Request.PathValue("chatId")
+		chat, err := app.FindRecordById("chats", chatID)
+		if err != nil || chat.GetString("user") != re.Auth.Id {
+			return re.NotFoundError("Chat not found", err)
+		}
+		if err := service.Cancel(re.Request.Context(), chatID); err != nil {
+			if errors.Is(err, coordinator.ErrNoActiveRun) {
+				return re.BadRequestError("No active run to cancel", nil)
+			}
+			return apis.NewApiError(http.StatusBadGateway, "Unable to cancel agent run", err)
+		}
+		return re.NoContent(http.StatusAccepted)
+	}).Bind(apis.RequireAuth())
 }
 
 func gooseSessionForChat(app core.App, chatID, userID string) (string, error) {
