@@ -5,6 +5,7 @@ package coordinator
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -38,16 +39,54 @@ type ResolveSession func(context.Context) (string, error)
 type OnSessionCreated func(context.Context, string) error
 
 type Coordinator struct {
-	config Config
-	mu     sync.Mutex
-	locks  map[string]*sync.Mutex
+	config    Config
+	mu        sync.Mutex
+	locks     map[string]*sync.Mutex
+	activeRun map[string]*activeRun
+}
+
+// ErrNoActiveRun means there is no in-process prompt to cancel. Goose remains
+// authoritative for completed turns; c1 deliberately does not reconstruct
+// active work from persisted state after a restart.
+var ErrNoActiveRun = errors.New("no active run")
+
+type acpClient interface {
+	Initialize(context.Context, any) (json.RawMessage, error)
+	OnNotification(acp.NotificationHandler)
+	OpenStream(context.Context, string) error
+	Call(context.Context, string, any, string) (json.RawMessage, error)
+	Notify(context.Context, string, any, string) error
+}
+
+type activeRun struct {
+	sessionID string
+	client    acpClient
 }
 
 func New(config Config) (*Coordinator, error) {
 	if config.GooseURL == "" || config.GooseSecret == "" || config.Workspace == "" {
 		return nil, fmt.Errorf("GOOSE_ACP_URL, GOOSE_SERVER__SECRET_KEY, and GOOSE_WORKSPACE are required")
 	}
-	return &Coordinator{config: config, locks: make(map[string]*sync.Mutex)}, nil
+	return &Coordinator{
+		config:    config,
+		locks:     make(map[string]*sync.Mutex),
+		activeRun: make(map[string]*activeRun),
+	}, nil
+}
+
+// Cancel forwards cancellation only to a currently active prompt for the
+// chat. The run goroutine still waits for Goose's matching session/prompt
+// response and emits the terminal AG-UI events itself.
+func (c *Coordinator) Cancel(ctx context.Context, chatID string) error {
+	c.mu.Lock()
+	run := c.activeRun[chatID]
+	c.mu.Unlock()
+	if run == nil {
+		return ErrNoActiveRun
+	}
+	return run.client.Notify(ctx, "session/cancel", map[string]string{
+		"sessionId": run.sessionID,
+	}, run.sessionID)
 }
 
 // Run creates or reloads the one Goose session for a chat, then emits AG-UI
@@ -145,6 +184,10 @@ func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, re
 	if err := emitLocked(bridge.Started()); err != nil {
 		return err
 	}
+	if err := c.startRun(request.ChatID, sessionID, client); err != nil {
+		return err
+	}
+	defer c.finishRun(request.ChatID, client)
 	if _, err := client.Call(ctx, "session/prompt", map[string]any{
 		"sessionId": sessionID,
 		"prompt":    []map[string]string{{"type": "text", "text": request.Prompt}},
@@ -160,6 +203,24 @@ func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, re
 		}
 	}
 	return nil
+}
+
+func (c *Coordinator) startRun(chatID, sessionID string, client acpClient) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.activeRun[chatID] != nil {
+		return fmt.Errorf("chat already has an active run")
+	}
+	c.activeRun[chatID] = &activeRun{sessionID: sessionID, client: client}
+	return nil
+}
+
+func (c *Coordinator) finishRun(chatID string, client acpClient) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if run := c.activeRun[chatID]; run != nil && run.client == client {
+		delete(c.activeRun, chatID)
+	}
 }
 
 func (c *Coordinator) chatLock(chatID string) *sync.Mutex {
