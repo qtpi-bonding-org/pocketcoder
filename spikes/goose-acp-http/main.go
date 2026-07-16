@@ -104,6 +104,7 @@ func main() {
 	prompt := flag.String("prompt", "Reply with exactly: goose ACP spike connected", "prompt to send")
 	sessionID := flag.String("session", "", "existing ACP session ID to load before prompting")
 	mode := flag.String("mode", "", "ACP session mode to set before prompting (streamable HTTP only)")
+	mcpSSEURL := flag.String("mcp-sse-url", "", "SSE MCP server URL supplied when creating/loading a streamable HTTP session")
 	cwd := flag.String("cwd", mustGetwd(), "absolute workspace path supplied to goose")
 	autoApprove := flag.Bool("auto-approve", false, "select an allow option when goose requests permission")
 	permissionDelay := flag.Duration("permission-delay", 0, "hold a permission request before selecting an allow option (streamable HTTP only)")
@@ -112,7 +113,7 @@ func main() {
 	flag.Parse()
 	if *transport == "http" {
 		if *httpDialect == "streamable" {
-			failIf(runStreamableHTTP(*httpURL, *secret, *prompt, *sessionID, *cwd, *mode, *autoApprove, *permissionDelay, *cancelAfter, *timeout))
+			failIf(runStreamableHTTP(*httpURL, *secret, *prompt, *sessionID, *cwd, *mode, *mcpSSEURL, *autoApprove, *permissionDelay, *cancelAfter, *timeout))
 		} else if *httpDialect == "legacy" {
 			failIf(runHTTP(*httpURL, *secret, *prompt, *sessionID, *cwd, *autoApprove, *timeout))
 		} else {
