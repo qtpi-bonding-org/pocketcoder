@@ -21,7 +21,12 @@ Using MiniMax M2.5:
 - Goose **v1.36.0**, pinned as `ghcr.io/aaif-goose/goose@sha256:8452dbb1aed8b46ec8b25895a1dd60a2e8ad89a10692f782cff32a6cbe35176e`, implements the current Streamable-HTTP handshake: initialize returns JSON with `Acp-Connection-Id`; subsequent ACP POSTs return `202`; connection and session GETs deliver SSE updates.
 - On v1.36.0, `initialize → session/new → session/prompt` succeeded, then a new Go client connection ran `session/load`, received replayed history, and completed a second provider-backed prompt. The remote session mapping required no PocketBase conversation copy.
 
-**Decision:** select Goose v1.36.0 for c2 and use the current Streamable-HTTP ACP profile. It is now safe to begin c1's small Go ACP transport package; keep Flutter deferred. Before c1 route work, add a focused cancellation and permission pass-through spike.
+Two additional provider-backed protocol checks succeeded against that same pinned image:
+
+- `session/cancel` was sent after the first agent output of an intentionally long turn. Goose accepted the notification, emitted no more message chunks, and resolved the original `session/prompt` with a deterministic `{"stopReason":"end_turn", ...}` terminal response. c1 must treat the correlated prompt response—not a guessed final text chunk—as the authoritative end-of-turn signal.
+- In `approve` mode, Goose emitted `session/request_permission` for both a developer write and read. The harness held each request for three seconds, returned its offered `allow_always` option, executed the resulting ACP filesystem request, and the turn ended successfully. A fresh connection's `session/load` replay included the completed tool calls and final assistant message. The replay does **not** reissue the already-resolved permission callback, so PocketBase must never try to reconstruct a pending approval from history.
+
+**Decision:** select Goose v1.36.0 for c2 and use the current Streamable-HTTP ACP profile. Gate A is complete and the developer-tool portion of Gate C is complete. It is safe to build c1's small Go ACP transport package; keep Flutter deferred. The remaining protocol spike before c3 is an MCP/Gateway permission-policy check.
 
 ## Prerequisites
 
@@ -48,7 +53,7 @@ MINIMAX_AUTH_FILE=/Users/aicoder/.local/share/gait/auth.json \
   --session '<session_id>' --prompt 'Reply with exactly: session load succeeded'
 ```
 
-The program prints raw `session/update` notifications as JSON on stdout and lifecycle evidence on stderr. Use `--auto-approve` only for a controlled, disposable workspace when testing permission callbacks.
+The program prints raw `session/update` notifications as JSON on stdout and lifecycle evidence on stderr. The disposable streamable adapter also supports `--mode approve`, `--auto-approve --permission-delay 3s`, and `--cancel-after 5s` for the recorded checks. It implements only enough filesystem/terminal callbacks for the controlled spike; production c1 must use the real sandboxed executor and strict workspace path policy.
 
 The wrapper persists Goose's session database in the named Docker volume `pocketcoder-goose-acp-spike-state`. It runs the disposable container as root solely so Docker's new named volume is writable; the production c2 image must create/chown its state directory and run as an unprivileged user. To start the persistence test over, remove only that disposable volume:
 
@@ -86,6 +91,8 @@ For Goose v1.36.0, use `--http-dialect=streamable` and a container-visible `--cw
 - [x] A current-Goose remote transport is selected and pinned.
 - [x] `initialize`, `session/new`, one prompt, and `session/load` work after the harness restarts.
 - [x] The selected release conforms to the current ACP transport.
-- [ ] `session/cancel` and `request_permission` pass-through work over the same transport.
+- [x] `session/cancel` works over the selected transport and ends the correlated prompt request.
+- [x] Developer-tool `request_permission` pass-through works and completed history replays after `session/load`.
+- [ ] Gateway MCP permission behavior is captured and a policy is selected.
 
 Delete this directory once that decision is implemented and covered by the production c1 integration tests.
