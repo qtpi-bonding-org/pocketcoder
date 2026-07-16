@@ -1,0 +1,59 @@
+# PocketBase Legacy Runtime Prune Plan
+
+**Goal:** after the c1 Go runtime and Flutter cutover are proven, remove PocketBase state and code that duplicate Goose-owned conversation/runtime state. This is a separate, delayed, forward-only migration—not part of c1 implementation.
+
+## Retain
+
+- Users, PocketBase auth, chat ownership/title metadata, and the new `goose_sessions` mapping.
+- Product configuration that remains independently authoritative: account settings, MCP server catalog approval/configuration, provider configuration, SSH keys, scheduled jobs, and any explicitly retained audit decision.
+- Legacy chat data only for a documented read-only retention window.
+
+## Candidate removal scope
+
+Audit each dependency before removal; likely targets are:
+
+| Legacy state/code | New runtime decision |
+|---|---|
+| `messages` writes and live message command path | Goose owns message history and replay. Retire for Goose-backed chats. |
+| `permissions` per-turn records, approval hooks, notifications, and realtime polling | Goose owns the decision/history; c1 keeps only an in-memory pending callback. |
+| `acp_terminals` and terminal persistence | c1 executes/proxies live terminal requests only; Goose owns tool history. |
+| `chats.acp_session_id` / `ai_engine_session_id` and related indices | Replace with the unique `goose_sessions` relation. |
+| interface/OpenCode/sandbox-specific hooks and API routes | Remove only after v2 is the sole runtime. |
+
+`tool_permissions` and `mcp_servers` are not automatically removable: they configure product policy/catalog behavior and need a separate decision after c3 is re-enabled.
+
+## Preconditions
+
+1. c1 implementation plan is complete and v2 has passed its restart/replay, permission, cancellation, and rollback acceptance suite.
+2. Flutter has shipped the c1 AG-UI path and legacy chats remain readable through the documented retention window.
+3. Every active/new chat is classified immutable as legacy or Goose-backed; no runtime switches an existing chat between types.
+4. Backup/restore is tested for PocketBase and Goose volumes, and the rollback window has elapsed.
+5. The gateway/Cognee attachment blocker is resolved separately or remains explicitly disabled; cleanup must not assume it works.
+
+## Delivery steps
+
+1. **Inventory and classify**
+   - Trace every query, hook, route, Flutter repository, test, and notification path that reads/writes `messages`, `permissions`, `acp_terminals`, old session-ID fields, or interface/OpenCode state.
+   - Label each as legacy display, active command path, configuration, or removable dead code. Publish the list before schema changes.
+
+2. **Stop new writes first**
+   - Add assertions/metrics that v2 requests never create legacy message, permission, or terminal records.
+   - Remove v2 callers, then observe production/test traffic through the retention period. Do not delete fields or tables yet.
+
+3. **Remove legacy runtime paths**
+   - Delete the old interface/OpenCode/sandbox command flow and its PocketBase hooks, API routes, realtime subscriptions, push-notification producers, and integration tests.
+   - Keep a read-only legacy history adapter only until the retention date; make it impossible to append to an old chat.
+
+4. **Forward-only schema cleanup**
+   - Add a new migration—never edit old applied migrations—to remove unused fields/indexes and then collections only after dependency checks pass.
+   - Migrate any deliberately retained audit/reporting requirement into an explicit, minimal product model before deleting `permissions`; do not retain a hidden duplicate ledger by default.
+   - Update access rules, timestamp hooks, seeds, backups, and admin UI references in the same release.
+
+5. **Acceptance and deletion**
+   - Verify a Goose-backed chat has no PocketBase runtime duplicates; a legacy chat is either read-only or expired by policy.
+   - Test backup restore, downgrade/rollback behavior for the supported window, and account/chat deletion cascades.
+   - Delete obsolete collections only after the verification release, not alongside initial c1 rollout.
+
+## Done when
+
+PocketBase contains identity, chat metadata, and one Goose-session mapping for v2 chats—no durable duplicated conversation, tool, approval, or terminal state—and no active code path can recreate it.

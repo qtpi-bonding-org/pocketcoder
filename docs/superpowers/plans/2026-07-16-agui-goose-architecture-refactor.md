@@ -2,6 +2,8 @@
 
 **Goal:** Replace the current `interface` + OpenCode + sandbox execution path with the three-container design in `docs/architecture-refactor.md`.
 
+**Execution plans:** build c1 from [the PocketBase/Go implementation plan](2026-07-16-goose-c1-go-implementation.md). Defer deletion of legacy PocketBase state and runtime code to [the forward-only prune plan](2026-07-16-pocketbase-goose-legacy-prune.md) after cutover and retention.
+
 | Container | Responsibility |
 |---|---|
 | **c1 — PocketBase + Go** | Authenticate the mobile user, authorize access to a PocketCoder chat, map that chat to its goose ACP session, and translate the live ACP connection to AG-UI SSE. |
