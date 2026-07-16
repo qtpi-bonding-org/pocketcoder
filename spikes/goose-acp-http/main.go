@@ -100,6 +100,7 @@ func main() {
 	goose := flag.String("goose", "goose", "path to the pinned goose binary")
 	httpURL := flag.String("http-url", "", "Goose serve /acp URL when --transport=http")
 	secret := flag.String("secret", "", "GOOSE_SERVER__SECRET_KEY when --transport=http")
+	httpDialect := flag.String("http-dialect", "legacy", "Goose HTTP dialect: legacy or streamable")
 	prompt := flag.String("prompt", "Reply with exactly: goose ACP spike connected", "prompt to send")
 	sessionID := flag.String("session", "", "existing ACP session ID to load before prompting")
 	cwd := flag.String("cwd", mustGetwd(), "absolute workspace path supplied to goose")
@@ -107,7 +108,13 @@ func main() {
 	timeout := flag.Duration("timeout", 2*time.Minute, "timeout for initialize, load, and prompt")
 	flag.Parse()
 	if *transport == "http" {
-		failIf(runHTTP(*httpURL, *secret, *prompt, *sessionID, *cwd, *autoApprove, *timeout))
+		if *httpDialect == "streamable" {
+			failIf(runStreamableHTTP(*httpURL, *secret, *prompt, *sessionID, *cwd, *timeout))
+		} else if *httpDialect == "legacy" {
+			failIf(runHTTP(*httpURL, *secret, *prompt, *sessionID, *cwd, *autoApprove, *timeout))
+		} else {
+			failIf(fmt.Errorf("unknown HTTP dialect %q", *httpDialect))
+		}
 		return
 	}
 	if *transport != "stdio" {
