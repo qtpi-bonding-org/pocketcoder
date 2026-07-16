@@ -12,15 +12,16 @@ The Go SDK currently exposes a line-delimited JSON-RPC connection API. The HTTP 
 
 ## Result — 2026-07-16
 
-Using Goose image `ghcr.io/block/goose@sha256:d85a724ee487425f38ce015323adf2003591268ee515d9018ac89450ed7d3a5a` and MiniMax M2.5:
+Using MiniMax M2.5:
 
 - `initialize → session/new → session/prompt` succeeded through the Go SDK and `goose acp`; streamed thought and message updates were received.
 - `goose serve` started successfully with `GOOSE_SERVER__SECRET_KEY`; `/status` was healthy.
 - `initialize → session/new → session/prompt` also succeeded remotely through one persistent `goose serve`, with thought and message updates streamed to the Go harness.
-- The pinned image does **not** implement the current ACP Streamable-HTTP RFD described in the architecture references. Its observed contract is: `POST /acp` returns `200 text/event-stream` (not `202` plus a long-lived GET stream); initialization returns `Acp-Session-Id` (not `Acp-Connection-Id`); later requests carry that header and return their own SSE response stream. It currently responds over HTTP/1.1.
-- A fresh remote connection followed by `session/load` returned EOF without a JSON-RPC response and Goose produced no diagnostic log. Therefore persisted-session reconnect remains **unproven** and is a blocking c1 spike result.
+- Older Goose image `ghcr.io/block/goose@sha256:d85a724ee487425f38ce015323adf2003591268ee515d9018ac89450ed7d3a5a` is **not suitable** for c1: it exposes an older per-POST SSE dialect and a fresh remote `session/load` returned EOF.
+- Goose **v1.36.0**, pinned as `ghcr.io/aaif-goose/goose@sha256:8452dbb1aed8b46ec8b25895a1dd60a2e8ad89a10692f782cff32a6cbe35176e`, implements the current Streamable-HTTP handshake: initialize returns JSON with `Acp-Connection-Id`; subsequent ACP POSTs return `202`; connection and session GETs deliver SSE updates.
+- On v1.36.0, `initialize → session/new → session/prompt` succeeded, then a new Go client connection ran `session/load`, received replayed history, and completed a second provider-backed prompt. The remote session mapping required no PocketBase conversation copy.
 
-**Decision:** do not build c1 routes or Flutter work yet. First either (a) pin and implement the observed Goose legacy HTTP dialect, including a working remote `session/load` test, or (b) upgrade Goose to a release that actually implements the current ACP Streamable-HTTP RFD and rerun this spike. The latter is preferable, because c1 should not own a bespoke obsolete transport.
+**Decision:** select Goose v1.36.0 for c2 and use the current Streamable-HTTP ACP profile. It is now safe to begin c1's small Go ACP transport package; keep Flutter deferred. Before c1 route work, add a focused cancellation and permission pass-through spike.
 
 ## Prerequisites
 
@@ -78,12 +79,13 @@ go run . --transport=http --http-url http://127.0.0.1:3000/acp \
   --prompt 'Reply with exactly: goose HTTP ACP spike connected'
 ```
 
-This command targets the **observed legacy Goose dialect** and is intentionally not a general ACP Streamable-HTTP client.
+For Goose v1.36.0, use `--http-dialect=streamable` and a container-visible `--cwd` (the spike uses `/workspace`). This is the selected c1→c2 profile.
 
 ## Exit criteria
 
-- A current-Goose remote transport is selected and pinned.
-- `initialize`, `session/new`, one prompt, and `session/load` work after the harness restarts.
-- The selected release conforms to the current ACP transport, or PocketCoder explicitly owns and tests a legacy adapter.
+- [x] A current-Goose remote transport is selected and pinned.
+- [x] `initialize`, `session/new`, one prompt, and `session/load` work after the harness restarts.
+- [x] The selected release conforms to the current ACP transport.
+- [ ] `session/cancel` and `request_permission` pass-through work over the same transport.
 
 Delete this directory once that decision is implemented and covered by the production c1 integration tests.
