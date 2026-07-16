@@ -127,7 +127,11 @@ func main() {
 		},
 	})
 	failIf(err)
-	fmt.Fprintf(os.Stderr, "initialized protocol=%d agent=%s\n", initialized.ProtocolVersion, initialized.AgentInfo.Name)
+	agentName := "unknown"
+	if initialized.AgentInfo != nil {
+		agentName = initialized.AgentInfo.Name
+	}
+	fmt.Fprintf(os.Stderr, "initialized protocol=%d agent=%s\n", initialized.ProtocolVersion, agentName)
 
 	activeSessionID := acp.SessionId(*sessionID)
 	if activeSessionID == "" {
@@ -136,6 +140,7 @@ func main() {
 		activeSessionID = created.SessionId
 		fmt.Fprintf(os.Stderr, "session_id=%s\n", activeSessionID)
 	} else {
+		fmt.Fprintf(os.Stderr, "loading_session_id=%s\n", activeSessionID)
 		_, err := connection.LoadSession(ctx, acp.LoadSessionRequest{SessionId: activeSessionID, Cwd: *cwd})
 		failIf(err)
 		fmt.Fprintf(os.Stderr, "loaded_session_id=%s\n", activeSessionID)
