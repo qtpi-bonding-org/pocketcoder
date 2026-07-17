@@ -38,7 +38,7 @@ Freeze as **legacy topology tests**; do not repair them for c1/c2:
 - c3 gateway end-to-end tests while gateway attachment remains disabled
 - `services/interface/src/*.test.ts` that assert Interface/OpenCode pumps
 
-At cutover, replace the frozen agent tests with a small `tests/agent/` Docker
-acceptance suite that calls only the authenticated c1 routes. Remove legacy
-tests only with the corresponding Interface/OpenCode deletion migration, not
-before.
+The replacement suite now lives in `tests/agent-c1/`. Its Compose override and
+runner start only c1/c2 plus a disposable BATS container; see
+`tests/agent-c1/README.md`. Remove legacy tests only with the corresponding
+Interface/OpenCode deletion migration, not before.
