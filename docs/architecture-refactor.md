@@ -138,7 +138,8 @@ were spiked against pinned Goose v1.36.0 (evidence in
 | connection-id correlation | required | n/a | **none** (single duplex channel) |
 | ecosystem fit | draft fallback | local transport, tunneled | **blessed remote transport** |
 
-WebSocket wins on every axis except channel auth (below). Endpoint: `goose serve`
+WebSocket wins on every axis; its one gap, channel auth, was closed by the
+v1.43.0 pin bump (below). Endpoint: `goose serve`
 exposes WS at **`/acp`** (same path, content-negotiated by the `Upgrade` header);
 one JSON-RPC message per text frame, so a thin adapter presents it to the SDK as
 newline-delimited JSON. `session/load` resume, history replay, developer-tool
@@ -149,10 +150,26 @@ concurrent writers.
 **Consequences / open items:**
 - c2 runs `goose serve --host 0.0.0.0` (WebSocket), not `goose acp` (stdio). No
   socat, no supervisor shim, no per-connection process spawn.
-- **WS auth gap:** in v1.36.0 the WS `/acp` endpoint accepted a full
-  unauthenticated session (HTTP `/acp` enforces `X-Secret-Key`; WS did not).
-  Until fixed upstream, the c1↔c2 channel is protected by network isolation —
-  c2 has no published port and shares only the single relay network with c1.
+- **WS auth (resolved 2026-07-17):** v1.36.0's WS `/acp` accepted a full
+  unauthenticated session. Fixed upstream in **v1.39.0** ("secret-key support at
+  goose serve ACP endpoint"); we bumped the pin to **v1.43.0**. WS clients present
+  the secret as a `?token=<secret>` query param (browsers can't set headers), so
+  c1 appends it to the dial URL — see `internal/agent/acp/websocket.go`
+  (`wsURLWithToken`). goose now refuses to serve without `GOOSE_SERVER__SECRET_KEY`,
+  so it is **required** for the `agent` profile. Validated locally against
+  v1.43.0 (2026-07-17): the production `Coordinator.Run` path completed an
+  authenticated new-session turn, and a wrong token got `401` on the WS
+  handshake — see the `live_acp`-tagged test in `internal/agent/coordinator`.
+- **nginx relay retired (2026-07-17):** with the WS channel authenticated at the
+  endpoint, the one-way `goose-acp-relay` chokepoint is redundant. c1 dials goose
+  directly on a shared private `pocketcoder-agent` network (2 nodes: PocketBase +
+  goose). goose still publishes no host port and joins no other PocketBase
+  network. The remaining isolation model is identity- + scope-based: only c1 holds
+  the secret; PocketBase stores only auth + the `chat_id→goose_session_id` mapping
+  (goose is the sole system of record, so there is no goose→PocketBase call path to
+  protect); and goose never receives a PocketBase token. The trade vs. the relay is
+  that the shared network is bidirectional — a compromised goose could *reach*
+  `pocketbase:8090`, but is bounded by collection rules and holds no credentials.
 - **Reconnect/replay on a mid-turn WS drop** is the same open Gate-B question as
   every transport: the model is fail-fast on drop, then recover on the next run
   via `session/load`; verify before relying on anything stronger.

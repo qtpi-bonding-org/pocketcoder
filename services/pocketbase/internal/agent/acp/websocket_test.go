@@ -12,6 +12,28 @@ import (
 	"github.com/coder/websocket"
 )
 
+func TestWSURLWithTokenAppendsQueryParam(t *testing.T) {
+	cases := []struct {
+		name, url, secret, want string
+	}{
+		{"empty secret leaves url untouched", "ws://goose:3000/acp", "", "ws://goose:3000/acp"},
+		{"no existing query uses question mark", "ws://goose:3000/acp", "s3cret", "ws://goose:3000/acp?token=s3cret"},
+		{"existing query is preserved", "ws://goose:3000/acp?v=1", "s3cret", "ws://goose:3000/acp?token=s3cret&v=1"},
+		{"secret is url-encoded", "ws://goose:3000/acp", "a b/c&d", "ws://goose:3000/acp?token=a+b%2Fc%26d"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := wsURLWithToken(c.url, c.secret)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != c.want {
+				t.Fatalf("wsURLWithToken(%q, %q) = %q, want %q", c.url, c.secret, got, c.want)
+			}
+		})
+	}
+}
+
 func TestWSStreamFramesNewlineDelimitedMessages(t *testing.T) {
 	defer func() {
 		if recover() != nil {

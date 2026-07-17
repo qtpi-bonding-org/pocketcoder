@@ -4,12 +4,31 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/coder/websocket"
 )
+
+// wsURLWithToken carries the Goose secret in the WS URL as ?token=<secret>.
+// Goose enforces auth on the WebSocket upgrade via this query parameter (the
+// browser WebSocket API cannot set headers); the X-Secret-Key header remains
+// for HTTP parity. An empty secret leaves the URL untouched.
+func wsURLWithToken(rawURL, secret string) (string, error) {
+	if secret == "" {
+		return rawURL, nil
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("parse ACP URL: %w", err)
+	}
+	q := u.Query()
+	q.Set("token", secret)
+	u.RawQuery = q.Encode()
+	return u.String(), nil
+}
 
 type DialConfig struct{ URL, Secret string }
 
@@ -71,12 +90,16 @@ type sdkConn struct {
 	stream *wsStream
 }
 
-func dialWS(ctx context.Context, url, secret string) (*wsStream, error) {
+func dialWS(ctx context.Context, rawURL, secret string) (*wsStream, error) {
+	dialURL, err := wsURLWithToken(rawURL, secret)
+	if err != nil {
+		return nil, err
+	}
 	opts := &websocket.DialOptions{}
 	if secret != "" {
 		opts.HTTPHeader = map[string][]string{"X-Secret-Key": {secret}}
 	}
-	conn, _, err := websocket.Dial(ctx, url, opts)
+	conn, _, err := websocket.Dial(ctx, dialURL, opts)
 	if err != nil {
 		return nil, err
 	}
