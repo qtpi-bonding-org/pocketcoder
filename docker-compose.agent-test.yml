@@ -23,4 +23,6 @@ services:
       GOOSE_CONTAINER: ${GOOSE_CONTAINER:-pocketcoder-goose}
       POCKETBASE_CONTAINER: ${POCKETBASE_CONTAINER:-pocketcoder-pocketbase}
     networks:
-      - pocketcoder-agent-c1
+      # Reaches PocketBase's API only; the private pocketcoder-agent ACP net
+      # stays a two-node c1<->c2 channel.
+      - pocketcoder-pocketbase-sdk

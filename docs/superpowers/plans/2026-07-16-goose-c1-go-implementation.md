@@ -69,13 +69,17 @@ export ANTHROPIC_API_KEY="$(jq -r '.minimax.key' /Users/aicoder/.local/share/gai
 export ANTHROPIC_HOST='https://api.minimax.io/anthropic'
 export GOOSE_MODEL='MiniMax-M2.5'
 
-docker compose --profile agent up -d --build goose goose-acp-relay
+docker compose --profile agent up -d --build goose
 docker compose up -d --build pocketbase
 ```
 
-`goose-acp-relay` has no published port and is the only service shared between
-the c1 and c2 networks. Goose is unprivileged, stores its state in the named
-`goose_data` volume, and has no network in common with PocketBase. It currently
+> Superseded 2026-07-17: the `goose-acp-relay` was retired. c1 now dials goose
+> directly over an authenticated WebSocket (`?token=`) on the shared private
+> `pocketcoder-agent` network. `GOOSE_SERVER__SECRET_KEY` is required.
+
+Goose is unprivileged, stores its state in the named
+`goose_data` volume, and shares only the private `pocketcoder-agent` ACP network
+with PocketBase. It currently
 permits only the provider configuration proven by the spike (`anthropic` via
 the configured Anthropic-compatible endpoint); MCP and gateway tools remain
 disabled.
