@@ -94,6 +94,24 @@ stored or replayed. A hard process failure still relies on c2 connection-loss
 handling; the same mapped chat must subsequently be able to load and complete a
 new run, which remains an acceptance requirement.
 
+### AG-UI event vocabulary (the Flutter decoding contract)
+
+c1 emits a deliberately small AG-UI subset, mapped from the ACP `session/update`
+variants Goose actually sends. Flutter is built against exactly this set:
+
+| AG-UI event(s) | Mapped from ACP | Notes |
+|---|---|---|
+| `RUN_STARTED` / `RUN_FINISHED` / `RUN_ERROR` | run lifecycle | Terminal signal is the correlated `session/prompt` response, never a final chunk. |
+| `TEXT_MESSAGE_START` / `_CONTENT` / `_END` | `agent_message_chunk` | Message boundary keyed on ACP `messageId`. |
+| `REASONING_MESSAGE_START` / `_CONTENT` / `_END` | `agent_thought_chunk` | Agent reasoning stream; mutually exclusive open-state with assistant text (opening one closes the other). |
+| `TOOL_CALL_START` / `_ARGS` / `_RESULT` / `_END` | `tool_call` + `tool_call_update` | `_RESULT` carries rendered tool output (text content blocks, or JSON-encoded `rawOutput` fallback) and is emitted before `_END` on a terminal status. |
+| `STATE_DELTA` (`/pocketcoder/permission`) | `session/request_permission` | The only transient c1 state exposed; detailed options are fetched/answered via the approvals route. |
+
+Variants outside this table (`usage`, `session_info`, `plan`, `available_commands`,
+`current_mode`, `user_message_chunk`) are intentionally dropped at the bridge and
+are not part of the frozen contract. Adding any of them is a deliberate contract
+change, not an implementation detail.
+
 ## Why goose sits where it does (two ACP roles at once)
 
 goose in c2 is simultaneously:
