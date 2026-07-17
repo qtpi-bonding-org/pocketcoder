@@ -15,14 +15,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/agui"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/executor"
 )
 
 type Config struct {
 	GooseURL    string
 	GooseSecret string
 	Workspace   string
-	SandboxURL  string
 }
 
 type RunRequest struct {
@@ -78,8 +76,8 @@ type activeRun struct {
 }
 
 func New(config Config) (*Coordinator, error) {
-	if config.GooseURL == "" || config.GooseSecret == "" || config.Workspace == "" || config.SandboxURL == "" {
-		return nil, fmt.Errorf("GOOSE_ACP_URL, GOOSE_SERVER__SECRET_KEY, GOOSE_WORKSPACE, and SANDBOX_PROXY_URL are required")
+	if config.GooseURL == "" || config.GooseSecret == "" || config.Workspace == "" {
+		return nil, fmt.Errorf("GOOSE_ACP_URL, GOOSE_SERVER__SECRET_KEY, and GOOSE_WORKSPACE are required")
 	}
 	return &Coordinator{
 		config:    config,
@@ -157,11 +155,10 @@ func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, re
 	if err != nil {
 		return err
 	}
-	sandbox, err := executor.New(executor.Config{URL: c.config.SandboxURL, Workspace: c.config.Workspace})
-	if err != nil {
-		return err
-	}
-	if _, err := client.Initialize(ctx, executor.Capabilities()); err != nil {
+	// Goose owns execution in c2 for the selected simplified runtime. Do not
+	// advertise ACP filesystem/terminal callbacks: Goose's built-in shell does
+	// not use them, and c1 must not imply a sandbox boundary it does not enforce.
+	if _, err := client.Initialize(ctx, map[string]any{}); err != nil {
 		return err
 	}
 	if err := client.OpenStream(ctx, ""); err != nil {
@@ -196,8 +193,8 @@ func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, re
 			}
 			return
 		}
-		if len(message.ID) != 0 && acceptingUpdates.Load() {
-			go c.handleCallback(context.Background(), request.ChatID, sessionID, client, sandbox, bridge, emitLocked, message)
+		if message.Method == "session/request_permission" && len(message.ID) != 0 && acceptingUpdates.Load() {
+			go c.handlePermissionRequest(context.Background(), request.ChatID, sessionID, client, bridge, emitLocked, message)
 		}
 	})
 
@@ -269,89 +266,21 @@ func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, re
 	return nil
 }
 
-func (c *Coordinator) handleCallback(ctx context.Context, chatID, sessionID string, client acpClient, sandbox *executor.Sandbox, bridge *agui.Bridge, emit Emit, message acp.Message) {
-	respond := func(result any, err error) {
-		if err != nil {
-			_ = client.RespondError(ctx, message.ID, -32000, err.Error(), sessionID)
-			return
-		}
-		_ = client.Respond(ctx, message.ID, result, sessionID)
+func (c *Coordinator) handlePermissionRequest(ctx context.Context, chatID, sessionID string, client acpClient, bridge *agui.Bridge, emit Emit, message acp.Message) {
+	var permission acpsdk.RequestPermissionRequest
+	if err := json.Unmarshal(message.Params, &permission); err != nil {
+		_ = client.RespondError(ctx, message.ID, -32602, "invalid permission request", sessionID)
+		return
 	}
-	switch message.Method {
-	case "fs/read_text_file":
-		var request acpsdk.ReadTextFileRequest
-		if err := json.Unmarshal(message.Params, &request); err != nil {
-			respond(nil, err)
-			return
-		}
-		result, err := sandbox.ReadTextFile(ctx, request)
-		respond(result, err)
-	case "fs/write_text_file":
-		var request acpsdk.WriteTextFileRequest
-		if err := json.Unmarshal(message.Params, &request); err != nil {
-			respond(nil, err)
-			return
-		}
-		result, err := sandbox.WriteTextFile(ctx, request)
-		respond(result, err)
-	case "terminal/create":
-		var request acpsdk.CreateTerminalRequest
-		if err := json.Unmarshal(message.Params, &request); err != nil {
-			respond(nil, err)
-			return
-		}
-		result, err := sandbox.CreateTerminal(ctx, request)
-		respond(result, err)
-	case "terminal/output":
-		var request acpsdk.TerminalOutputRequest
-		if err := json.Unmarshal(message.Params, &request); err != nil {
-			respond(nil, err)
-			return
-		}
-		result, err := sandbox.TerminalOutput(ctx, request)
-		respond(result, err)
-	case "terminal/wait_for_exit":
-		var request acpsdk.WaitForTerminalExitRequest
-		if err := json.Unmarshal(message.Params, &request); err != nil {
-			respond(nil, err)
-			return
-		}
-		result, err := sandbox.WaitForTerminalExit(ctx, request)
-		respond(result, err)
-	case "terminal/kill":
-		var request acpsdk.KillTerminalRequest
-		if err := json.Unmarshal(message.Params, &request); err != nil {
-			respond(nil, err)
-			return
-		}
-		result, err := sandbox.KillTerminal(ctx, request)
-		respond(result, err)
-	case "terminal/release":
-		var request acpsdk.ReleaseTerminalRequest
-		if err := json.Unmarshal(message.Params, &request); err != nil {
-			respond(nil, err)
-			return
-		}
-		result, err := sandbox.ReleaseTerminal(ctx, request)
-		respond(result, err)
-	case "session/request_permission":
-		var permission acpsdk.RequestPermissionRequest
-		if err := json.Unmarshal(message.Params, &permission); err != nil {
-			respond(nil, err)
-			return
-		}
-		id := uuid.NewString()
-		options := make(map[string]struct{}, len(permission.Options))
-		for _, option := range permission.Options {
-			options[string(option.OptionId)] = struct{}{}
-		}
-		c.mu.Lock()
-		c.pending[id] = &pendingPermission{chatID: chatID, sessionID: sessionID, rpcID: message.ID, options: options, client: client}
-		c.mu.Unlock()
-		_ = emit(bridge.PermissionPending(id, permission.Options))
-	default:
-		_ = client.RespondError(ctx, message.ID, -32601, "unsupported ACP client callback", sessionID)
+	id := uuid.NewString()
+	options := make(map[string]struct{}, len(permission.Options))
+	for _, option := range permission.Options {
+		options[string(option.OptionId)] = struct{}{}
 	}
+	c.mu.Lock()
+	c.pending[id] = &pendingPermission{chatID: chatID, sessionID: sessionID, rpcID: message.ID, options: options, client: client}
+	c.mu.Unlock()
+	_ = emit(bridge.PermissionPending(id, permission.Options))
 }
 
 func (c *Coordinator) dropPendingForChat(chatID string) {

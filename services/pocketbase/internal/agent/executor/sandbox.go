@@ -1,5 +1,6 @@
-// Package executor is the only ACP tool boundary used by c1. It delegates to
-// the sandbox container; it never reads files or starts processes on c1.
+// Package executor preserves the sandbox ACP adapter for a future Goose tool
+// integration. The selected c1 runtime does not currently advertise or call
+// it because Goose's built-in shell executes in c2 rather than via ACP.
 package executor
 
 import (
