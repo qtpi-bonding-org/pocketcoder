@@ -205,3 +205,263 @@ this planning document.
 ## Done when
 
 A newly created v2 chat has exactly one stored Goose session mapping; an authenticated client can reconnect after a c1 restart and receive its history solely from `session/load`; prompts, developer permissions, and cancellation work without creating PocketBase message/permission/terminal records.
+
+---
+
+## Transport rewrite slice (2026-07-17): WebSocket via the SDK connection
+
+> **For agentic workers:** implement task-by-task with TDD. This slice REPLACES
+> the hand-rolled Streamable-HTTP transport; it does not add a parallel one.
+> Evidence for every design choice is in `spikes/goose-acp-http/README.md`
+> (2026-07-17 results) and the transport-decision section of
+> `docs/architecture-refactor.md`.
+
+**Goal:** Replace `internal/agent/acp/streamable.go` with `goose serve`
+WebSocket driven through the maintained `coder/acp-go-sdk` `ClientSideConnection`
+plus a thin WS↔byte-stream adapter, and rewire the coordinator from its imperative
+`acpClient` interface to the SDK's callback + typed-method model. Delete the
+hand-rolled transport at the end.
+
+**Unchanged by this slice:** `internal/agent/agui/bridge.go` (it already consumes
+`acpsdk.SessionUpdate`, which is exactly what the SDK's `Client.SessionUpdate`
+callback delivers); the public routes in `internal/api/agent.go` (route shapes,
+auth, `goose_sessions` mapping); the frozen AG-UI event contract. Do not touch
+them except where a signature note below says so.
+
+### Design decisions (resolved — do not re-litigate during execution)
+
+1. **Per-run connection, not persistent.** Keep today's lifecycle: each run/replay
+   dials a fresh WS, `Initialize`, `session/new` or `session/load`,
+   `SetSessionMode`, `Prompt`/replay, then closes. This preserves the existing
+   fail-fast semantics for free — a dropped WS surfaces as an SDK error from the
+   in-flight `Prompt`/`LoadSession` call, so the run ends deterministically as
+   `RUN_ERROR` (no hang; the bug the deleted `streamable.go` had cannot recur).
+   Recovery is the next run's `session/load`, exactly as today.
+
+2. **`RequestPermission` is the blocking callback — this is the load-bearing
+   change.** The SDK inverts control: instead of an `OnNotification` switch that
+   spawns `handlePermissionRequest`, the SDK calls our `Client.RequestPermission`
+   method and BLOCKS on its return value. Map it onto the existing async phone
+   flow: inside `RequestPermission`, register a pending waiter keyed by a
+   generated id, emit the AG-UI `STATE_DELTA` (permission pending), then block on
+   a channel. The `/approvals` route signals that channel with the chosen option;
+   the callback returns the corresponding `RequestPermissionResponse{Selected}`.
+   The blocking `select` MUST include the SDK-provided callback `ctx.Done()`
+   (this is `reqCtx`, cancelled when Goose sends `$/cancel_request` or the WS
+   drops) alongside the decision channel and the expiry timer — do **not**
+   substitute `context.Background()`, or a mid-turn WS drop leaves the waiter
+   hung until the 5-min timeout after `Prompt` has already returned `RUN_ERROR`.
+   On decision, timer, or ctx cancellation, return the matching
+   `RequestPermissionResponse{Selected|Cancelled}`. This is a *better* fit than
+   the old `Respond`-by-rpcID design and removes the manual JSON-RPC id plumbing.
+   Concurrency is safe (verified against `acpsdk` connection.go): inbound
+   *requests* like `RequestPermission` are each dispatched on their own
+   goroutine, while `SessionUpdate` notifications drain on a separate single
+   goroutine — so blocking in `RequestPermission` cannot stall update delivery
+   or the outstanding `Prompt` response.
+
+3. **Test seam = an injected connection factory + a fake connection that drives
+   callbacks.** The SDK `ClientSideConnection` is a concrete struct, so introduce
+   a narrow `Conn` interface (only the methods the coordinator calls) and a
+   `DialFunc` the coordinator holds. Production `DialFunc` builds the WS adapter +
+   `NewClientSideConnection`. Test `DialFunc` returns a scripted fake whose
+   `Prompt`/`LoadSession` invoke the passed-in `acpsdk.Client` callbacks
+   (`SessionUpdate`, `RequestPermission`) to reproduce update streams, permission
+   requests, and terminal responses — mirroring how `run_test.go`'s current fake
+   drives `OnNotification`.
+
+4. **c1 advertises no fs/terminal capabilities.** `InitializeRequest`'s
+   `ClientCapabilities` stays empty (Goose's in-container shell acts; c1 implies
+   no sandbox). The SDK `Client` interface still requires
+   `ReadTextFile`/`WriteTextFile`/`CreateTerminal`/`KillTerminal`/`TerminalOutput`/`ReleaseTerminal`/`WaitForTerminalExit`
+   — implement them as rejecting stubs returning an error; Goose will not call
+   them because the capabilities are not advertised.
+
+5. **WS auth gap accepted for now.** v1.36.0's WS `/acp` did not enforce
+   `X-Secret-Key`. Still send the header (for when upstream fixes it); the real
+   control is network isolation — c2 has no published port and shares only the
+   relay network with c1. Do not block this slice on it; leave a `TODO(ws-auth)`
+   and the open item in the architecture doc.
+
+6. **The update-suppression gate is load-bearing — preserve it (Opus review C1).**
+   The SDK's `LoadSession` drains and delivers *every* queued `SessionUpdate` to
+   our callback **before it returns** (`acpsdk` connection.go `waitNotificationsUpTo`).
+   Today `run.go` guards this with `atomic.Bool acceptingUpdates`, set true only
+   *after* `LoadSession` + `SetSessionMode`, so Goose's replayed history is not
+   copied into the fresh prompt's frontend stream (frozen-contract requirement).
+   The `sessionClient` MUST carry the same gate: `SessionUpdate` returns early
+   while false; set it true immediately before `Started()`/`Prompt`. Without
+   this, every reconnect run leaks full history into the live stream.
+
+7. **Two SDK-call footguns (Opus review S2/S3).**
+   - `InitializeRequest` must set `ProtocolVersion: acpsdk.ProtocolVersionNumber`
+     (the spike's `main.go` does; the old transport negotiated it internally).
+   - `NewSessionRequest`/`LoadSessionRequest` must set `McpServers:
+     []acpsdk.McpServer{}` — a nil slice marshals to `null`, which v1.36.0
+     rejects (`invalid type: null, expected a sequence`; README harness note).
+
+### File plan
+
+- **Create** `services/pocketbase/internal/agent/acp/websocket.go`:
+  the `wsStream` adapter (ported from `spikes/goose-acp-http/ws_transport.go`,
+  proven), the `Conn` interface, a `Dial(ctx, DialConfig, acpsdk.Client) (Conn, error)`
+  that builds the WS + `acpsdk.NewClientSideConnection`, and `DialConfig{URL, Secret}`.
+- **Create** `services/pocketbase/internal/agent/acp/websocket_test.go`:
+  unit tests for `wsStream` framing (see Task 1).
+- **Modify** `services/pocketbase/internal/agent/coordinator/run.go`:
+  replace the `acpClient` interface (lines ~59-67), `pendingPermission`,
+  `activeRun`, the `OnNotification` wiring, and `handlePermissionRequest` with the
+  `Conn`/`DialFunc` + `acpsdk.Client` callback model. Preserve the public methods
+  and every behavior the current `run_test.go` asserts.
+- **Modify** `services/pocketbase/internal/agent/coordinator/run_test.go`:
+  the fake becomes a fake `Conn` + `DialFunc` that drives `acpsdk.Client`
+  callbacks (contract below). Non-permission test *names* are preserved; the five
+  permission tests are **rewritten as concurrent tests** (Task 3b) because they
+  no longer assert a `Respond` payload but the blocking callback's return value.
+- **Modify** `services/pocketbase/internal/api/agent.go`:
+  only if `coordinator.New`/`coordinator.Config` signatures change (e.g. URL is
+  now a `ws://` value). Route bodies stay.
+- **Modify** `services/pocketbase/go.mod` / `go.sum`: add
+  `github.com/coder/websocket` (`coder/acp-go-sdk` already present).
+- **Delete** `services/pocketbase/internal/agent/acp/streamable.go` (Task 6, only
+  after the new path is green and no references remain).
+- **Modify** `docker-compose.yml`: c2 runs `goose serve --host 0.0.0.0` on the
+  relay network (was the stdio/HTTP entrypoint); `GOOSE_ACP_URL` becomes the
+  `ws://…/acp` relay URL. No published c2 port.
+
+### Interfaces (exact — later tasks rely on these)
+
+```go
+// acp/websocket.go
+type DialConfig struct{ URL, Secret string }
+
+// Conn is the subset of *acpsdk.ClientSideConnection the coordinator uses,
+// plus Close. Signatures match acpsdk exactly (verified against the spike's
+// working main.go: Initialize/NewSession/LoadSession/Prompt/SetSessionMode/Cancel).
+type Conn interface {
+    Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error)
+    NewSession(context.Context, acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error)
+    LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error)
+    SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error)
+    Prompt(context.Context, acpsdk.PromptRequest) (acpsdk.PromptResponse, error)
+    Cancel(context.Context, acpsdk.CancelNotification) error
+    Close() error
+}
+
+func Dial(ctx context.Context, cfg DialConfig, client acpsdk.Client) (Conn, error)
+
+// coordinator/run.go — the coordinator holds this and defaults to acp.Dial;
+// tests inject a fake.
+type DialFunc func(ctx context.Context, client acpsdk.Client) (acp.Conn, error)
+```
+
+### Tasks
+
+**Task 1 — Port the WS adapter into the acp package.**
+Move `wsStream` + `Dial` from `spikes/goose-acp-http/ws_transport.go` into
+`acp/websocket.go`. TDD: `websocket_test.go` starts an in-process
+`httptest` WebSocket echo server, writes two newline-delimited JSON messages
+through `wsStream.Write`, and asserts each arrives as its own frame and reads
+back newline-delimited via `wsStream.Read`. Add `coder/websocket` to go.mod.
+Commit.
+
+**Task 2 — `Conn` interface + real `Dial`.**
+Define `Conn` and `DialConfig`; `Dial` builds the WS `wsStream` and
+`acpsdk.NewClientSideConnection(client, ws, ws)`, returning a wrapper whose
+`Close` closes the WS. No new behavior test here (covered live in Task 6);
+`go build ./internal/agent/acp/` must pass. Commit.
+
+**Fake `Conn` contract (define before Task 3 — Opus review S5).** The fake's
+`Prompt`/`LoadSession` are stateful and concurrent, not one-shot returns. For a
+run: `Prompt` must (a) invoke `SessionUpdate` callbacks for scripted updates,
+(b) optionally invoke the coordinator's `RequestPermission` callback (which
+blocks in the coordinator until `Approve`/`Cancel`/expiry), and (c) return the
+terminal `PromptResponse` only *after* that permission resolves — so the fake
+needs an internal signal from the permission path, not a fixed return. For a
+replay: `LoadSession` invokes `SessionUpdate` callbacks for scripted history,
+then returns. Specify this contract as a helper in `run_test.go` so the tests
+don't race.
+
+**Task 3a — Rewire `Run`/`RunReserved` and `ReplayReserved` to typed methods +
+the gate.** Behavior-preserving for the non-permission tests.
+- Introduce the coordinator-scoped `acpsdk.Client` impl (`sessionClient`):
+  `SessionUpdate` → gate check (Design #6) → `bridge.Update` → emit; rejecting
+  fs/terminal stubs (Design #4). Leave `RequestPermission` for Task 3b.
+- Replace `acpClient`/`OnNotification`/`Call`/`Notify`/`Respond` in
+  `RunReserved` with `Conn` typed calls (`Initialize` with `ProtocolVersion`,
+  `NewSession`/`LoadSession` with non-nil `McpServers`, `SetSessionMode`,
+  `Prompt`, `Cancel`) via the injected `DialFunc`. Set the gate true immediately
+  before `Started()`/`Prompt`.
+- **Port `ReplayReserved` too** (Opus S4): its own `sessionClient` wiring
+  `SessionUpdate → bridge → emit`, `Initialize` → `LoadSession` → `Close`, no
+  `Prompt`, no permission path. The fake `Conn.LoadSession` drives the replay
+  `SessionUpdate` callbacks.
+- Keep green: concurrent-run reject, unmapped-replay-no-c2,
+  client-disconnect-cancels, restart-clears-pending, shutdown-cancels-active-run.
+  Commit.
+
+**Task 3b — Permission callback + concurrent test rewrite (Opus review C2 — NOT
+a name-preserving swap).** The five permission tests currently assert the ACP
+outcome by reading the old `Respond` payload; there is no `Respond` now — the
+outcome is the *return value* of the blocking `RequestPermission`.
+- Implement `sessionClient.RequestPermission` per Design #2 (register pending
+  waiter, emit `STATE_DELTA`, block on `select { decision / timer / ctx.Done() }`,
+  return `Selected|Cancelled`). `Approve` signals the channel (keep
+  `ErrNoPendingPermission`, `ErrPermissionOptionNotOffered`); `Cancel`/expiry/
+  `Shutdown` resolve it as cancelled.
+- **Rewrite these five as concurrent tests** (launch `RequestPermission` in a
+  goroutine, await the pending registration/`STATE_DELTA`, act, then synchronize
+  on and assert the goroutine's returned `RequestPermissionResponse`):
+  `TestApproveForwardsOnlyOfferedOptionAndIsMemoryOnly`,
+  `TestDenyForwardsAnOfferedRejectOption`,
+  `TestCancelResolvesPendingPermissionAsCancelled`,
+  `TestPermissionExpiryResolvesPendingPermissionAsCancelled`,
+  `TestShutdownCancelsActiveRunAndResolvesPendingPermission`. Full `coordinator`
+  package green. Commit.
+
+**Task 4 — Config + route wiring.**
+Update `coordinator.Config`/`New` and `api/agent.go` so the coordinator dials the
+`ws://…/acp` relay URL and injects `acp.Dial` by default. Keep env var names
+where possible; if `GOOSE_ACP_URL` now carries a `ws://` value, note it. `go build
+./...` and `go vet ./internal/agent/...` clean. Commit.
+
+**Task 5 — Compose: `goose serve`.**
+Point c2 at `goose serve --host 0.0.0.0` on the relay network, no published port;
+set the c1 `GOOSE_ACP_URL` to the relay `ws://` URL. Do not enable MCP/gateway.
+Commit.
+
+**Task 6 — Delete `streamable.go` + live integration test.**
+Remove `streamable.go` once nothing references it (`grep` for `acp.NewClient`,
+`OpenStream`, `NotificationHandler`). Extend `tests/agent-c1/` with a live
+`goose serve` WS case mirroring the spike: new chat → run → tool/permission →
+`session/load` replay → cancel, over the real relay. Full `go test
+./internal/agent/...` green; c1 acceptance suite green. Commit.
+
+### Minor notes (Opus review, N-items)
+
+- `Conn.Close()` must close the `wsStream`; confirm this makes an in-flight
+  `Prompt` return a peer-disconnect error (WS read error → SDK `Done()`) — the
+  per-run fail-fast in Design #1 depends on it.
+- The SDK `Prompt` auto-sends `Cancel` on ctx error, so `cancelOnClientDisconnect`
+  partly overlaps it; keep it (it also resolves the pending waiter) but don't
+  mistake it for the only cancellation path.
+- Stale spike wording: `main.go` flag help says `--mode`/`--cancel-after` are
+  "streamable HTTP only", but they apply to every transport and WS mode+cancel
+  are proven; ignore the stale help text.
+
+> **Review:** this slice was reviewed by Opus (2026-07-17), verified against
+> `acpsdk` v0.13.5 source. Verdict: executable-with-fixes; the C1 update-gate,
+> C2 permission-test-restructure, and S1–S5 fixes above are folded in.
+
+### Open items to settle during execution (not blockers)
+
+- **WS auth** (Design #5): leave `TODO(ws-auth)`; rely on network isolation.
+- **Mid-turn WS drop reconnect/replay**: the fail-fast + next-run `session/load`
+  model is the baseline; do not build reconnection in this slice.
+
+### Done when
+
+`go test ./internal/agent/...` is green with the SDK-connection coordinator and
+the WS adapter; `streamable.go` is deleted with no references; the live
+`tests/agent-c1/` WS case passes end-to-end against `goose serve`; and the AG-UI
+bridge + public routes + frozen contract are unchanged.
