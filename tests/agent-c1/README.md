@@ -31,8 +31,10 @@ it is intentionally not part of the default fast test command.
 ## Coverage
 
 - prompt plus same-chat `session/load` reconnect
+- owned Goose-history replay and unmapped empty replay
 - offered permission allow and deny
 - cancel while permission is pending
 - concurrent run returns HTTP 409 before a second SSE response begins
-- c1 restart discards an outstanding in-memory approval
+- c1 restart invalidates an outstanding in-memory approval and unblocks the
+  same chat for a later run
 - c2 restart resumes the durable Goose session

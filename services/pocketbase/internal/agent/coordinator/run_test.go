@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
 )
 
@@ -71,6 +72,23 @@ func TestReserveRejectsConcurrentRunAndReleases(t *testing.T) {
 	c.release("chat-1")
 	if err := c.Reserve("chat-1"); err != nil {
 		t.Fatalf("reserve after release = %v", err)
+	}
+}
+
+func TestUnmappedReplayEmitsEmptySnapshotWithoutACP(t *testing.T) {
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var received []events.Event
+	if err := c.Replay(context.Background(), "chat-1", "", func(event events.Event) error {
+		received = append(received, event)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if len(received) != 2 || received[0].Type() != events.EventTypeRunStarted || received[1].Type() != events.EventTypeRunFinished {
+		t.Fatalf("empty replay events = %#v", received)
 	}
 }
 
@@ -156,6 +174,45 @@ func TestCancelResolvesPendingPermissionAsCancelled(t *testing.T) {
 	result, _ := client.response()
 	if result["outcome"].(map[string]string)["outcome"] != "cancelled" {
 		t.Fatalf("cancel response=%#v", result)
+	}
+}
+
+func TestPermissionExpiryResolvesPendingPermissionAsCancelled(t *testing.T) {
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := &fakeACPClient{}
+	pending := &pendingPermission{chatID: "chat-1", sessionID: "goose-1", rpcID: json.RawMessage("42"), options: map[string]struct{}{"allow_once": {}}, client: client}
+	c.pending["approval-1"] = pending
+	c.expirePermission("approval-1", pending)
+	if err := c.Approve(context.Background(), "chat-1", "approval-1", "allow_once"); !errors.Is(err, ErrNoPendingPermission) {
+		t.Fatalf("Approve after expiry = %v, want ErrNoPendingPermission", err)
+	}
+	result, _ := client.response()
+	if result["outcome"].(map[string]string)["outcome"] != "cancelled" {
+		t.Fatalf("expiry response=%#v", result)
+	}
+}
+
+func TestShutdownCancelsActiveRunAndResolvesPendingPermission(t *testing.T) {
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := &fakeACPClient{}
+	if err := c.startRun("chat-1", "goose-1", client); err != nil {
+		t.Fatal(err)
+	}
+	c.pending["approval-1"] = &pendingPermission{chatID: "chat-1", sessionID: "goose-1", rpcID: json.RawMessage("42"), options: map[string]struct{}{"allow_once": {}}, client: client}
+	c.Shutdown(context.Background())
+	method, _, _ := client.notification()
+	if method != "session/cancel" {
+		t.Fatalf("shutdown notification = %q", method)
+	}
+	result, _ := client.response()
+	if result["outcome"].(map[string]string)["outcome"] != "cancelled" {
+		t.Fatalf("shutdown response=%#v", result)
 	}
 }
 
