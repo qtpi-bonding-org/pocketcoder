@@ -1,5 +1,10 @@
 # PocketBase Legacy Runtime Prune Plan
 
+> Status (2026-07-16): deferred. Flutter integration is intentionally not yet
+> an acceptance gate, and no table, field, route, or legacy test is to be
+> removed while the c1 backend contract is still being closed out. The only
+> authorized near-term work in this plan is a read-only dependency inventory.
+
 **Goal:** after the c1 Go runtime and Flutter cutover are proven, remove PocketBase state and code that duplicate Goose-owned conversation/runtime state. This is a separate, delayed, forward-only migration—not part of c1 implementation.
 
 ## Retain

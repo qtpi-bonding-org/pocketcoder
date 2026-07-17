@@ -39,6 +39,13 @@
 > messages. Inspection confirmed Goose shares no Docker network with
 > PocketBase.
 
+> **Backend-closeout plan (2026-07-16):** Flutter is deliberately deferred.
+> Before any mobile migration, complete and freeze the c1 contract: make a
+> Goose-authoritative chat replay/read boundary explicit; define every public
+> run, cancellation, approval, and failure outcome; and prove the contract in
+> the isolated c1/c2 acceptance suite. The separate legacy-prune plan remains
+> inventory-only until this contract is frozen and Flutter has later cut over.
+
 **Goal:** add the new runtime to the existing PocketBase executable. c1 remains one Go process and one public service; it is **not** a new microservice and does not introduce a second HTTP listener.
 
 ## Fixed boundaries
@@ -123,6 +130,49 @@ Do not reuse the old `internal/agents`, `interface`, or PocketBase realtime comm
    - Real integration test: pinned c2 with a provider-backed turn, c1 restart, `session/load` replay, then a follow-up turn.
    - Keep legacy routes/runtime active. Gate the new path with `AGENT_RUNTIME=v2` and make it available only to newly created Goose-backed chats.
    - Do not begin Flutter migration until this c1 suite is green.
+
+## Remaining backend-closeout slices
+
+These are the implementation order from the current, live
+`POST /api/pocketcoder/chats/{chatId}/runs` contract. They supersede the earlier
+aspirational v2 route names above; do not rename public routes merely to match
+this planning document.
+
+1. **Goose-owned chat replay contract**
+   - Capture the exact `session/load` updates that represent durable Goose
+     history, then specify a c1 authenticated read/replay response that emits
+     the same minimal AG-UI model as a live run.
+   - Authorize ownership before contacting c2. It must never return a
+     PocketBase copy of messages or synthesize an unresolved permission.
+   - Specify empty/new sessions, malformed/rejected c2 replay, and a replay
+     concurrent with a live run. Decide the wire shape and event ordering in
+     fixtures before exposing the route.
+
+2. **Contract hardening**
+   - Document stable HTTP and AG-UI outcomes for unknown/non-owner chats,
+     no active run, active-run conflict, stale/invalid approval, cancellation,
+     c2 unavailable, c2 protocol failure, and client stream disconnect.
+   - Bound process-local pending approval lifetime and ensure cancellation,
+     turn termination, and c1 restart clear it exactly once. Do not persist or
+     replay it.
+   - Add narrowly scoped operational diagnostics/metrics for mapping creation,
+     session load, turn terminal outcome, permission resolution, and c2 errors;
+     never log prompt text, provider credentials, or offered permission payloads.
+
+3. **Backend acceptance gate**
+   - Extend `tests/agent-c1/` with replay fixtures and live c1/c2 cases for
+     owner versus non-owner reads, empty history, history after a tool/approval,
+     replay after c1 restart, c2 restart, c2 failure, and replay/run contention.
+   - Keep focused Go tests deterministic with fake ACP. The Docker suite is the
+     only provider-backed interop gate; legacy Interface/OpenCode tests remain
+     frozen rather than being adapted.
+   - Publish the final route/event/error contract in the architecture document
+     and mark it frozen before beginning Flutter integration.
+
+4. **Prepare, but do not execute, legacy removal**
+   - Use `2026-07-16-pocketbase-goose-legacy-prune.md` to produce an exact
+     table/field/route/test dependency inventory and a retention/rollback
+     decision. This slice changes no legacy schema and deletes no code.
 
 ## Explicit non-goals
 
