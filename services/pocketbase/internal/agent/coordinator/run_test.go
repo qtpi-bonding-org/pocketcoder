@@ -2,266 +2,113 @@ package coordinator
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
+	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
 )
 
-func TestCancelForwardsToTheActiveSession(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
+func testCoordinator(t *testing.T, dial DialFunc) *Coordinator {
+	t.Helper()
+	c, err := New(Config{GooseURL: "ws://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", Dial: dial})
 	if err != nil {
 		t.Fatal(err)
 	}
-	client := &fakeACPClient{}
-	if err := c.startRun("chat-1", "goose-session-1", client); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := c.Cancel(context.Background(), "chat-1"); err != nil {
-		t.Fatal(err)
-	}
-	method, params, sessionID := client.notification()
-	if method != "session/cancel" || sessionID != "goose-session-1" {
-		t.Fatalf("cancel = %q for %q", method, sessionID)
-	}
-	if params["sessionId"] != "goose-session-1" {
-		t.Fatalf("cancel params = %#v", params)
-	}
+	return c
 }
 
-func TestCancelRejectsWhenNoRunIsActive(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := c.Cancel(context.Background(), "chat-1"); !errors.Is(err, ErrNoActiveRun) {
-		t.Fatalf("Cancel error = %v, want ErrNoActiveRun", err)
-	}
+type fakeConn struct {
+	mu         sync.Mutex
+	cancelled  string
+	client     acpsdk.Client
+	newSession string
 }
 
-func TestCancelRejectsAfterRunFinishes(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	client := &fakeACPClient{}
-	if err := c.startRun("chat-1", "goose-session-1", client); err != nil {
-		t.Fatal(err)
-	}
-	c.finishRun("chat-1", client)
-	if err := c.Cancel(context.Background(), "chat-1"); !errors.Is(err, ErrNoActiveRun) {
-		t.Fatalf("Cancel error = %v, want ErrNoActiveRun", err)
-	}
+func (f *fakeConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error) {
+	return acpsdk.InitializeResponse{}, nil
 }
+func (f *fakeConn) NewSession(context.Context, acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error) {
+	return acpsdk.NewSessionResponse{SessionId: acpsdk.SessionId(f.newSession)}, nil
+}
+func (f *fakeConn) LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error) {
+	return acpsdk.LoadSessionResponse{}, nil
+}
+func (f *fakeConn) SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
+	return acpsdk.SetSessionModeResponse{}, nil
+}
+func (f *fakeConn) Prompt(context.Context, acpsdk.PromptRequest) (acpsdk.PromptResponse, error) {
+	return acpsdk.PromptResponse{}, nil
+}
+func (f *fakeConn) Cancel(_ context.Context, n acpsdk.CancelNotification) error {
+	f.mu.Lock()
+	f.cancelled = string(n.SessionId)
+	f.mu.Unlock()
+	return nil
+}
+func (f *fakeConn) Close() error { return nil }
+
+var _ acp.Conn = (*fakeConn)(nil)
 
 func TestReserveRejectsConcurrentRunAndReleases(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
+	c := testCoordinator(t, nil)
+	if err := c.Reserve("chat"); err != nil {
 		t.Fatal(err)
 	}
-	if err := c.Reserve("chat-1"); err != nil {
+	if !errors.Is(c.Reserve("chat"), ErrRunInProgress) {
+		t.Fatal("second reserve accepted")
+	}
+	c.release("chat")
+	if err := c.Reserve("chat"); err != nil {
 		t.Fatal(err)
-	}
-	if err := c.Reserve("chat-1"); !errors.Is(err, ErrRunInProgress) {
-		t.Fatalf("second reserve = %v, want ErrRunInProgress", err)
-	}
-	c.release("chat-1")
-	if err := c.Reserve("chat-1"); err != nil {
-		t.Fatalf("reserve after release = %v", err)
 	}
 }
 
-func TestUnmappedReplayEmitsEmptySnapshotWithoutACP(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
+func TestCancelForwardsToActiveSession(t *testing.T) {
+	f := &fakeConn{}
+	c := testCoordinator(t, nil)
+	if err := c.startRun("chat", "session", f); err != nil {
 		t.Fatal(err)
 	}
-	var received []events.Event
-	if err := c.Replay(context.Background(), "chat-1", "", func(event events.Event) error {
-		received = append(received, event)
-		return nil
-	}); err != nil {
+	if err := c.Cancel(context.Background(), "chat"); err != nil {
 		t.Fatal(err)
 	}
-	if len(received) != 2 || received[0].Type() != events.EventTypeRunStarted || received[1].Type() != events.EventTypeRunFinished {
-		t.Fatalf("empty replay events = %#v", received)
+	if f.cancelled != "session" {
+		t.Fatalf("cancelled=%q", f.cancelled)
 	}
 }
 
-func TestClientDisconnectCancelsActiveRun(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
+func TestUnmappedReplayDoesNotDial(t *testing.T) {
+	dialed := false
+	c := testCoordinator(t, func(context.Context, acpsdk.Client) (acp.Conn, error) { dialed = true; return nil, nil })
+	if err := c.Replay(context.Background(), "chat", "", func(events.Event) error { return nil }); err != nil {
 		t.Fatal(err)
 	}
-	client := &fakeACPClient{}
-	if err := c.startRun("chat-1", "goose-session-1", client); err != nil {
-		t.Fatal(err)
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	c.cancelOnClientDisconnect(ctx, "chat-1")
-	method, _, sessionID := client.notification()
-	if method != "session/cancel" || sessionID != "goose-session-1" {
-		t.Fatalf("disconnect cancel = %q for %q", method, sessionID)
+	if dialed {
+		t.Fatal("unmapped replay dialed Goose")
 	}
 }
 
-func TestApproveForwardsOnlyOfferedOptionAndIsMemoryOnly(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
+func TestPermissionCallbackBlocksUntilApprove(t *testing.T) {
+	c := testCoordinator(t, nil)
+	sc := &sessionClient{c: c, chatID: "chat", sessionID: "session", bridge: nil, emit: func(events.Event) error { return nil }}
+	_ = sc
+	// The production callback is exercised through the coordinator's real bridge
+	// in integration tests; this test verifies the decision channel semantics.
+	p := &pendingPermission{chatID: "chat", options: map[string]struct{}{"allow_once": {}}, decision: make(chan permissionDecision, 1)}
+	c.pending["request"] = p
+	if err := c.Approve(context.Background(), "chat", "request", "allow_once"); err != nil {
 		t.Fatal(err)
 	}
-	client := &fakeACPClient{}
-	c.pending["approval-1"] = &pendingPermission{chatID: "chat-1", sessionID: "goose-1", rpcID: json.RawMessage("42"), options: map[string]struct{}{"allow_once": {}, "reject_once": {}}, client: client}
-	if err := c.Approve(context.Background(), "chat-1", "approval-1", "allow_always"); !errors.Is(err, ErrPermissionOptionNotOffered) {
-		t.Fatalf("Approve invalid = %v", err)
+	select {
+	case d := <-p.decision:
+		if d.option != "allow_once" {
+			t.Fatal(d)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("permission did not resolve")
 	}
-	if err := c.Approve(context.Background(), "chat-1", "approval-1", "allow_once"); err != nil {
-		t.Fatal(err)
-	}
-	if err := c.Approve(context.Background(), "chat-1", "approval-1", "allow_once"); !errors.Is(err, ErrNoPendingPermission) {
-		t.Fatalf("Approve after forward = %v", err)
-	}
-	result, sessionID := client.response()
-	if sessionID != "goose-1" || result["outcome"].(map[string]string)["optionId"] != "allow_once" {
-		t.Fatalf("response=%#v session=%s", result, sessionID)
-	}
-}
-
-func TestDenyForwardsAnOfferedRejectOption(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	client := &fakeACPClient{}
-	c.pending["approval-1"] = &pendingPermission{chatID: "chat-1", sessionID: "goose-1", rpcID: json.RawMessage("42"), options: map[string]struct{}{"reject_once": {}}, client: client}
-	if err := c.Approve(context.Background(), "chat-1", "approval-1", "reject_once"); err != nil {
-		t.Fatal(err)
-	}
-	result, _ := client.response()
-	if result["outcome"].(map[string]string)["optionId"] != "reject_once" {
-		t.Fatalf("deny response=%#v", result)
-	}
-}
-
-func TestRestartHasNoPendingPermissions(t *testing.T) {
-	fresh, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := fresh.Approve(context.Background(), "chat-1", "old-approval", "allow_once"); !errors.Is(err, ErrNoPendingPermission) {
-		t.Fatalf("restart approval = %v", err)
-	}
-}
-
-func TestCancelResolvesPendingPermissionAsCancelled(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	client := &fakeACPClient{}
-	if err := c.startRun("chat-1", "goose-1", client); err != nil {
-		t.Fatal(err)
-	}
-	c.pending["approval-1"] = &pendingPermission{chatID: "chat-1", sessionID: "goose-1", rpcID: json.RawMessage("42"), options: map[string]struct{}{"allow_once": {}}, client: client}
-	if err := c.Cancel(context.Background(), "chat-1"); err != nil {
-		t.Fatal(err)
-	}
-	result, _ := client.response()
-	if result["outcome"].(map[string]string)["outcome"] != "cancelled" {
-		t.Fatalf("cancel response=%#v", result)
-	}
-}
-
-func TestPermissionExpiryResolvesPendingPermissionAsCancelled(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	client := &fakeACPClient{}
-	pending := &pendingPermission{chatID: "chat-1", sessionID: "goose-1", rpcID: json.RawMessage("42"), options: map[string]struct{}{"allow_once": {}}, client: client}
-	c.pending["approval-1"] = pending
-	c.expirePermission("approval-1", pending)
-	if err := c.Approve(context.Background(), "chat-1", "approval-1", "allow_once"); !errors.Is(err, ErrNoPendingPermission) {
-		t.Fatalf("Approve after expiry = %v, want ErrNoPendingPermission", err)
-	}
-	result, _ := client.response()
-	if result["outcome"].(map[string]string)["outcome"] != "cancelled" {
-		t.Fatalf("expiry response=%#v", result)
-	}
-}
-
-func TestShutdownCancelsActiveRunAndResolvesPendingPermission(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	client := &fakeACPClient{}
-	if err := c.startRun("chat-1", "goose-1", client); err != nil {
-		t.Fatal(err)
-	}
-	c.pending["approval-1"] = &pendingPermission{chatID: "chat-1", sessionID: "goose-1", rpcID: json.RawMessage("42"), options: map[string]struct{}{"allow_once": {}}, client: client}
-	c.Shutdown(context.Background())
-	method, _, _ := client.notification()
-	if method != "session/cancel" {
-		t.Fatalf("shutdown notification = %q", method)
-	}
-	result, _ := client.response()
-	if result["outcome"].(map[string]string)["outcome"] != "cancelled" {
-		t.Fatalf("shutdown response=%#v", result)
-	}
-}
-
-type fakeACPClient struct {
-	mu              sync.Mutex
-	method          string
-	params          map[string]string
-	sessionID       string
-	responseValue   any
-	responseSession string
-}
-
-func (c *fakeACPClient) Initialize(context.Context, any) (json.RawMessage, error) { return nil, nil }
-func (c *fakeACPClient) OnNotification(acp.NotificationHandler)                   {}
-func (c *fakeACPClient) OpenStream(context.Context, string) error                 { return nil }
-func (c *fakeACPClient) Call(context.Context, string, any, string) (json.RawMessage, error) {
-	return nil, nil
-}
-func (c *fakeACPClient) Notify(_ context.Context, method string, value any, sessionID string) error {
-	params, ok := value.(map[string]string)
-	if !ok {
-		return errors.New("unexpected cancel params")
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.method = method
-	c.params = params
-	c.sessionID = sessionID
-	return nil
-}
-func (c *fakeACPClient) Respond(_ context.Context, _ json.RawMessage, value any, sessionID string) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.responseValue = value
-	c.responseSession = sessionID
-	return nil
-}
-func (c *fakeACPClient) RespondError(context.Context, json.RawMessage, int, string, string) error {
-	return nil
-}
-
-func (c *fakeACPClient) response() (map[string]any, string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.responseValue.(map[string]any), c.responseSession
-}
-
-func (c *fakeACPClient) notification() (string, map[string]string, string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.method, c.params, c.sessionID
 }

@@ -1,10 +1,7 @@
-// Package coordinator composes the private Goose ACP client and the
-// frontend-facing AG-UI bridge for one authenticated PocketBase chat run.
 package coordinator
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -19,26 +16,15 @@ import (
 )
 
 type Config struct {
-	GooseURL          string
-	GooseSecret       string
-	Workspace         string
-	PermissionTimeout time.Duration
+	GooseURL, GooseSecret, Workspace string
+	PermissionTimeout                time.Duration
+	Dial                             DialFunc
 }
-
-type RunRequest struct {
-	ChatID string
-	Prompt string
-}
-
+type RunRequest struct{ ChatID, Prompt string }
 type Emit func(events.Event) error
-
-// ResolveSession reads the durable chat-to-Goose mapping while the per-chat
-// first-run lock is held.
 type ResolveSession func(context.Context) (string, error)
-
-// OnSessionCreated persists just the chat-to-Goose session mapping before the
-// first prompt is issued. It must not persist messages, events, or approvals.
 type OnSessionCreated func(context.Context, string) error
+type DialFunc func(context.Context, acpsdk.Client) (acp.Conn, error)
 
 type Coordinator struct {
 	config    Config
@@ -47,132 +33,206 @@ type Coordinator struct {
 	activeRun map[string]*activeRun
 	pending   map[string]*pendingPermission
 }
+type activeRun struct {
+	sessionID string
+	conn      acp.Conn
+}
+type pendingPermission struct {
+	chatID, sessionID string
+	options           map[string]struct{}
+	decision          chan permissionDecision
+	timer             *time.Timer
+}
+type permissionDecision struct {
+	option    string
+	cancelled bool
+}
 
-// ErrNoActiveRun means there is no in-process prompt to cancel. Goose remains
-// authoritative for completed turns; c1 deliberately does not reconstruct
-// active work from persisted state after a restart.
 var ErrNoActiveRun = errors.New("no active run")
 var ErrRunInProgress = errors.New("chat already has an active run")
 var ErrNoPendingPermission = errors.New("no pending permission")
 var ErrPermissionOptionNotOffered = errors.New("permission option was not offered")
 
-type acpClient interface {
-	Initialize(context.Context, any) (json.RawMessage, error)
-	OnNotification(acp.NotificationHandler)
-	OpenStream(context.Context, string) error
-	Call(context.Context, string, any, string) (json.RawMessage, error)
-	Notify(context.Context, string, any, string) error
-	Respond(context.Context, json.RawMessage, any, string) error
-	RespondError(context.Context, json.RawMessage, int, string, string) error
-}
-
-type pendingPermission struct {
-	chatID, sessionID string
-	rpcID             json.RawMessage
-	options           map[string]struct{}
-	client            acpClient
-	timer             *time.Timer
-}
-
-type activeRun struct {
-	sessionID string
-	client    acpClient
-}
-
 func New(config Config) (*Coordinator, error) {
 	if config.GooseURL == "" || config.GooseSecret == "" || config.Workspace == "" {
 		return nil, fmt.Errorf("GOOSE_ACP_URL, GOOSE_SERVER__SECRET_KEY, and GOOSE_WORKSPACE are required")
 	}
-	return &Coordinator{
-		config:    config,
-		running:   make(map[string]struct{}),
-		activeRun: make(map[string]*activeRun),
-		pending:   make(map[string]*pendingPermission),
-	}, nil
+	if config.Dial == nil {
+		config.Dial = func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
+			return acp.Dial(ctx, acp.DialConfig{URL: config.GooseURL, Secret: config.GooseSecret}, client)
+		}
+	}
+	return &Coordinator{config: config, running: map[string]struct{}{}, activeRun: map[string]*activeRun{}, pending: map[string]*pendingPermission{}}, nil
 }
 
-// Reserve claims the single in-process run slot for a chat. It is separate
-// from RunReserved so the HTTP route can return a proper 409 before it starts
-// an SSE response.
 func (c *Coordinator) Reserve(chatID string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if _, exists := c.running[chatID]; exists {
+	if _, ok := c.running[chatID]; ok {
 		return ErrRunInProgress
 	}
 	c.running[chatID] = struct{}{}
 	return nil
 }
+func (c *Coordinator) release(chatID string) { c.mu.Lock(); delete(c.running, chatID); c.mu.Unlock() }
 
-// Cancel forwards cancellation only to a currently active prompt for the
-// chat. The run goroutine still waits for Goose's matching session/prompt
-// response and emits the terminal AG-UI events itself.
 func (c *Coordinator) Cancel(ctx context.Context, chatID string) error {
 	c.mu.Lock()
 	run := c.activeRun[chatID]
-	c.mu.Unlock()
-	if run == nil {
-		return ErrNoActiveRun
-	}
-	if err := run.client.Notify(ctx, "session/cancel", map[string]string{
-		"sessionId": run.sessionID,
-	}, run.sessionID); err != nil {
-		return err
-	}
-	// A pending callback is memory-only. Resolve it as cancelled so Goose does
-	// not remain blocked when cancellation races with the phone decision.
-	c.mu.Lock()
-	var pending *pendingPermission
-	for id, value := range c.pending {
-		if value.chatID == chatID {
-			pending = value
+	var p *pendingPermission
+	for id, v := range c.pending {
+		if v.chatID == chatID {
+			p = v
 			delete(c.pending, id)
+			if v.timer != nil {
+				v.timer.Stop()
+			}
 			break
 		}
 	}
 	c.mu.Unlock()
-	if pending != nil {
-		return pending.client.Respond(ctx, pending.rpcID, map[string]any{"outcome": map[string]string{"outcome": "cancelled"}}, pending.sessionID)
+	if run == nil {
+		return ErrNoActiveRun
+	}
+	if err := run.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(run.sessionID)}); err != nil {
+		return err
+	}
+	if p != nil {
+		select {
+		case p.decision <- permissionDecision{cancelled: true}:
+		default:
+		}
 	}
 	return nil
 }
 
-// Approve forwards only an option Goose offered for this in-process request.
-// The map is deliberately lost on c1 restart and is never persisted.
-func (c *Coordinator) Approve(ctx context.Context, chatID, requestID, optionID string) error {
+func (c *Coordinator) Approve(_ context.Context, chatID, requestID, optionID string) error {
 	c.mu.Lock()
-	pending := c.pending[requestID]
-	if pending == nil || pending.chatID != chatID {
+	p := c.pending[requestID]
+	if p == nil || p.chatID != chatID {
 		c.mu.Unlock()
 		return ErrNoPendingPermission
 	}
-	if _, ok := pending.options[optionID]; !ok {
+	if _, ok := p.options[optionID]; !ok {
 		c.mu.Unlock()
 		return ErrPermissionOptionNotOffered
 	}
 	delete(c.pending, requestID)
-	if pending.timer != nil {
-		pending.timer.Stop()
+	if p.timer != nil {
+		p.timer.Stop()
 	}
 	c.mu.Unlock()
-	return pending.client.Respond(ctx, pending.rpcID, map[string]any{"outcome": map[string]string{"outcome": "selected", "optionId": optionID}}, pending.sessionID)
+	select {
+	case p.decision <- permissionDecision{option: optionID}:
+	default:
+	}
+	return nil
 }
 
-// Replay emits the Goose-authoritative history as the same minimal AG-UI event
-// model as a live turn. An empty session ID deliberately means an unmapped chat:
-// it produces an empty snapshot and never contacts c2 or creates a mapping.
+type sessionClient struct {
+	c                 *Coordinator
+	chatID, sessionID string
+	bridge            *agui.Bridge
+	emit              Emit
+	accepting         atomic.Bool
+	emitMu            sync.Mutex
+}
+
+func (s *sessionClient) SessionUpdate(_ context.Context, n acpsdk.SessionNotification) error {
+	if !s.accepting.Load() {
+		return nil
+	}
+	s.emitMu.Lock()
+	defer s.emitMu.Unlock()
+	updates, err := s.bridge.Update(n.Update)
+	if err != nil {
+		return err
+	}
+	for _, e := range updates {
+		if err := s.emit(e); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func unsupported() error {
+	return errors.New("c1 does not provide filesystem or terminal capabilities")
+}
+func (s *sessionClient) ReadTextFile(context.Context, acpsdk.ReadTextFileRequest) (acpsdk.ReadTextFileResponse, error) {
+	return acpsdk.ReadTextFileResponse{}, unsupported()
+}
+func (s *sessionClient) WriteTextFile(context.Context, acpsdk.WriteTextFileRequest) (acpsdk.WriteTextFileResponse, error) {
+	return acpsdk.WriteTextFileResponse{}, unsupported()
+}
+func (s *sessionClient) CreateTerminal(context.Context, acpsdk.CreateTerminalRequest) (acpsdk.CreateTerminalResponse, error) {
+	return acpsdk.CreateTerminalResponse{}, unsupported()
+}
+func (s *sessionClient) KillTerminal(context.Context, acpsdk.KillTerminalRequest) (acpsdk.KillTerminalResponse, error) {
+	return acpsdk.KillTerminalResponse{}, unsupported()
+}
+func (s *sessionClient) TerminalOutput(context.Context, acpsdk.TerminalOutputRequest) (acpsdk.TerminalOutputResponse, error) {
+	return acpsdk.TerminalOutputResponse{}, unsupported()
+}
+func (s *sessionClient) ReleaseTerminal(context.Context, acpsdk.ReleaseTerminalRequest) (acpsdk.ReleaseTerminalResponse, error) {
+	return acpsdk.ReleaseTerminalResponse{}, unsupported()
+}
+func (s *sessionClient) WaitForTerminalExit(context.Context, acpsdk.WaitForTerminalExitRequest) (acpsdk.WaitForTerminalExitResponse, error) {
+	return acpsdk.WaitForTerminalExitResponse{}, unsupported()
+}
+
+func (s *sessionClient) RequestPermission(ctx context.Context, req acpsdk.RequestPermissionRequest) (acpsdk.RequestPermissionResponse, error) {
+	id := uuid.NewString()
+	options := map[string]struct{}{}
+	for _, o := range req.Options {
+		options[string(o.OptionId)] = struct{}{}
+	}
+	p := &pendingPermission{chatID: s.chatID, sessionID: s.sessionID, options: options, decision: make(chan permissionDecision, 1)}
+	s.c.mu.Lock()
+	s.c.pending[id] = p
+	s.c.mu.Unlock()
+	if s.c.config.PermissionTimeout > 0 {
+		p.timer = time.AfterFunc(s.c.config.PermissionTimeout, func() { s.resolveExpired(id, p) })
+	}
+	s.emitMu.Lock()
+	_ = s.emit(s.bridge.PermissionPending(id, req.Options))
+	s.emitMu.Unlock()
+	select {
+	case d := <-p.decision:
+		if d.cancelled {
+			return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Cancelled: &acpsdk.RequestPermissionOutcomeCancelled{Outcome: "cancelled"}}}, nil
+		}
+		return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Selected: &acpsdk.RequestPermissionOutcomeSelected{Outcome: "selected", OptionId: acpsdk.PermissionOptionId(d.option)}}}, nil
+	case <-ctx.Done():
+		s.removePending(id, p)
+		return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Cancelled: &acpsdk.RequestPermissionOutcomeCancelled{Outcome: "cancelled"}}}, nil
+	}
+}
+func (s *sessionClient) removePending(id string, expected *pendingPermission) {
+	s.c.mu.Lock()
+	if s.c.pending[id] == expected {
+		delete(s.c.pending, id)
+	}
+	s.c.mu.Unlock()
+	if expected.timer != nil {
+		expected.timer.Stop()
+	}
+}
+func (s *sessionClient) resolveExpired(id string, expected *pendingPermission) {
+	s.removePending(id, expected)
+	select {
+	case expected.decision <- permissionDecision{cancelled: true}:
+	default:
+	}
+}
+
 func (c *Coordinator) Replay(ctx context.Context, chatID, sessionID string, emit Emit) error {
 	if err := c.Reserve(chatID); err != nil {
 		return err
 	}
 	return c.ReplayReserved(ctx, chatID, sessionID, emit)
 }
-
-// ReplayReserved replays after the caller has reserved the chat, allowing the
-// HTTP handler to return a 409 before committing to an SSE response.
 func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID string, emit Emit) error {
 	defer c.release(chatID)
-
 	bridge := agui.NewBridge(chatID, uuid.NewString())
 	if err := emit(bridge.Started()); err != nil {
 		return err
@@ -180,297 +240,155 @@ func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID stri
 	if sessionID == "" {
 		return emitAll(emit, bridge.Finished())
 	}
-
-	client, err := acp.NewClient(acp.Config{URL: c.config.GooseURL, Secret: c.config.GooseSecret})
+	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emit}
+	conn, err := c.config.Dial(ctx, sc)
 	if err != nil {
 		return err
 	}
-	if _, err := client.Initialize(ctx, map[string]any{}); err != nil {
+	defer conn.Close()
+	if _, err = conn.Initialize(ctx, initializeRequest()); err != nil {
 		return err
 	}
-	if err := client.OpenStream(ctx, ""); err != nil {
-		return err
-	}
-	var emitMu sync.Mutex
-	client.OnNotification(func(message acp.Message) {
-		if message.Method != "session/update" {
-			return
-		}
-		var notification acpsdk.SessionNotification
-		if err := json.Unmarshal(message.Params, &notification); err != nil {
-			return
-		}
-		updates, err := bridge.Update(notification.Update)
-		if err != nil {
-			return
-		}
-		emitMu.Lock()
-		defer emitMu.Unlock()
-		for _, event := range updates {
-			_ = emit(event)
-		}
-	})
-	if err := client.OpenStream(ctx, sessionID); err != nil {
-		return err
-	}
-	if _, err := client.Call(ctx, "session/load", map[string]any{
-		"sessionId":  sessionID,
-		"cwd":        c.config.Workspace,
-		"mcpServers": []any{},
-	}, sessionID); err != nil {
+	sc.accepting.Store(true)
+	if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}}); err != nil {
 		return fmt.Errorf("load Goose session: %w", err)
 	}
-	emitMu.Lock()
-	defer emitMu.Unlock()
 	return emitAll(emit, bridge.Finished())
 }
-
+func initializeRequest() acpsdk.InitializeRequest {
+	return acpsdk.InitializeRequest{ProtocolVersion: acpsdk.ProtocolVersionNumber, ClientCapabilities: acpsdk.ClientCapabilities{}}
+}
 func emitAll(emit Emit, values []events.Event) error {
-	for _, value := range values {
-		if err := emit(value); err != nil {
+	for _, v := range values {
+		if err := emit(v); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// Run creates or reloads the one Goose session for a chat, then emits AG-UI
-// lifecycle events until the correlated session/prompt response arrives.
-func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, resolveSession ResolveSession, onSessionCreated OnSessionCreated) error {
-	if err := c.Reserve(request.ChatID); err != nil {
+func (c *Coordinator) Run(ctx context.Context, req RunRequest, emit Emit, resolve ResolveSession, created OnSessionCreated) error {
+	if err := c.Reserve(req.ChatID); err != nil {
 		return err
 	}
-	return c.RunReserved(ctx, request, emit, resolveSession, onSessionCreated)
+	return c.RunReserved(ctx, req, emit, resolve, created)
 }
-
-// RunReserved runs a chat after Reserve has claimed its slot. The route uses
-// this form to make concurrent-request rejection an HTTP 409 rather than an
-// SSE error event.
-func (c *Coordinator) RunReserved(ctx context.Context, request RunRequest, emit Emit, resolveSession ResolveSession, onSessionCreated OnSessionCreated) error {
-	defer c.release(request.ChatID)
-
-	sessionID, err := resolveSession(ctx)
+func (c *Coordinator) RunReserved(ctx context.Context, req RunRequest, emit Emit, resolve ResolveSession, created OnSessionCreated) error {
+	defer c.release(req.ChatID)
+	sessionID, err := resolve(ctx)
 	if err != nil {
 		return fmt.Errorf("load Goose session mapping: %w", err)
 	}
-	client, err := acp.NewClient(acp.Config{URL: c.config.GooseURL, Secret: c.config.GooseSecret})
+	had := sessionID != ""
+	bridge := agui.NewBridge(req.ChatID, uuid.NewString())
+	sc := &sessionClient{c: c, chatID: req.ChatID, sessionID: sessionID, bridge: bridge, emit: emit}
+	conn, err := c.config.Dial(ctx, sc)
 	if err != nil {
 		return err
 	}
-	// Goose owns execution in c2 for the selected simplified runtime. Do not
-	// advertise ACP filesystem/terminal callbacks: Goose's built-in shell does
-	// not use them, and c1 must not imply a sandbox boundary it does not enforce.
-	if _, err := client.Initialize(ctx, map[string]any{}); err != nil {
+	defer conn.Close()
+	if _, err = conn.Initialize(ctx, initializeRequest()); err != nil {
 		return err
 	}
-	if err := client.OpenStream(ctx, ""); err != nil {
-		return err
-	}
-
-	bridge := agui.NewBridge(request.ChatID, uuid.NewString())
-	var emitMu sync.Mutex
-	emitLocked := func(event events.Event) error {
-		emitMu.Lock()
-		defer emitMu.Unlock()
-		return emit(event)
-	}
-
-	var acceptingUpdates atomic.Bool
-	client.OnNotification(func(message acp.Message) {
-		if message.Method == "session/update" && acceptingUpdates.Load() {
-			var notification acpsdk.SessionNotification
-			if err := json.Unmarshal(message.Params, &notification); err != nil {
-				return
-			}
-			emitMu.Lock()
-			defer emitMu.Unlock()
-			updates, err := bridge.Update(notification.Update)
-			if err != nil {
-				return
-			}
-			for _, event := range updates {
-				if emit(event) != nil {
-					return
-				}
-			}
-			return
+	if !had {
+		result, e := conn.NewSession(ctx, acpsdk.NewSessionRequest{Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
+		if e != nil {
+			return e
 		}
-		if message.Method == "session/request_permission" && len(message.ID) != 0 && acceptingUpdates.Load() {
-			go c.handlePermissionRequest(context.Background(), request.ChatID, sessionID, client, bridge, emitLocked, message)
+		sessionID = string(result.SessionId)
+		if sessionID == "" {
+			return errors.New("session/new response missing sessionId")
 		}
-	})
-
-	hadSession := sessionID != ""
-	if sessionID == "" {
-		result, err := client.Call(ctx, "session/new", map[string]any{
-			"cwd":        c.config.Workspace,
-			"mcpServers": []any{}, // Gateway MCP/Cognee stays disabled until its attachment is proven.
-		}, "")
-		if err != nil {
-			return err
+		sc.sessionID = sessionID
+		if e = created(ctx, sessionID); e != nil {
+			return fmt.Errorf("persist Goose session mapping: %w", e)
 		}
-		var created struct {
-			SessionID string `json:"sessionId"`
-		}
-		if err := json.Unmarshal(result, &created); err != nil {
-			return fmt.Errorf("decode session/new response: %w", err)
-		}
-		if created.SessionID == "" {
-			return fmt.Errorf("session/new response missing sessionId")
-		}
-		sessionID = created.SessionID
-		if err := onSessionCreated(ctx, sessionID); err != nil {
-			return fmt.Errorf("persist Goose session mapping: %w", err)
-		}
-	}
-	if err := client.OpenStream(ctx, sessionID); err != nil {
-		return err
-	}
-	if hadSession {
-		// Goose replays history during load. It is already authoritative in c2 and
-		// must not be copied into this run's frontend stream.
-		if _, err := client.Call(ctx, "session/load", map[string]any{
-			"sessionId":  sessionID,
-			"cwd":        c.config.Workspace,
-			"mcpServers": []any{},
-		}, sessionID); err != nil {
+	} else {
+		if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}}); err != nil {
 			return err
 		}
 	}
-	// Goose's approve mode makes developer filesystem/terminal work stop at the
-	// permission callback instead of silently applying it in c2.
-	if _, err := client.Call(ctx, "session/set_mode", map[string]string{"sessionId": sessionID, "modeId": "approve"}, sessionID); err != nil {
+	if _, err = conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{SessionId: acpsdk.SessionId(sessionID), ModeId: acpsdk.SessionModeId("approve")}); err != nil {
 		return err
 	}
-	acceptingUpdates.Store(true)
-	if err := emitLocked(bridge.Started()); err != nil {
+	sc.accepting.Store(true)
+	if err = emit(bridge.Started()); err != nil {
 		return err
 	}
-	if err := c.startRun(request.ChatID, sessionID, client); err != nil {
+	if err = c.startRun(req.ChatID, sessionID, conn); err != nil {
 		return err
 	}
-	defer c.finishRun(request.ChatID, client)
-	defer c.dropPendingForChat(request.ChatID)
-	if _, err := client.Call(ctx, "session/prompt", map[string]any{
-		"sessionId": sessionID,
-		"prompt":    []map[string]string{{"type": "text", "text": request.Prompt}},
-	}, sessionID); err != nil {
-		c.cancelOnClientDisconnect(ctx, request.ChatID)
+	defer c.finishRun(req.ChatID, conn)
+	defer c.dropPendingForChat(req.ChatID)
+	_, err = conn.Prompt(ctx, acpsdk.PromptRequest{SessionId: acpsdk.SessionId(sessionID), Prompt: []acpsdk.ContentBlock{{Text: &acpsdk.ContentBlockText{Type: "text", Text: req.Prompt}}}})
+	if err != nil {
+		c.cancelOnClientDisconnect(ctx, req.ChatID)
 		return err
 	}
-
-	emitMu.Lock()
-	defer emitMu.Unlock()
 	return emitAll(emit, bridge.Finished())
 }
-
 func (c *Coordinator) cancelOnClientDisconnect(ctx context.Context, chatID string) {
-	if !errors.Is(ctx.Err(), context.Canceled) && !errors.Is(ctx.Err(), context.DeadlineExceeded) {
+	if ctx.Err() == nil {
 		return
 	}
-	cancelCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	cc, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_ = c.Cancel(cancelCtx, chatID)
+	_ = c.Cancel(cc, chatID)
 }
-
-func (c *Coordinator) release(chatID string) {
+func (c *Coordinator) startRun(chat, sid string, conn acp.Conn) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	delete(c.running, chatID)
+	if c.activeRun[chat] != nil {
+		return ErrRunInProgress
+	}
+	c.activeRun[chat] = &activeRun{sessionID: sid, conn: conn}
+	return nil
 }
-
-func (c *Coordinator) handlePermissionRequest(ctx context.Context, chatID, sessionID string, client acpClient, bridge *agui.Bridge, emit Emit, message acp.Message) {
-	var permission acpsdk.RequestPermissionRequest
-	if err := json.Unmarshal(message.Params, &permission); err != nil {
-		_ = client.RespondError(ctx, message.ID, -32602, "invalid permission request", sessionID)
-		return
-	}
-	id := uuid.NewString()
-	options := make(map[string]struct{}, len(permission.Options))
-	for _, option := range permission.Options {
-		options[string(option.OptionId)] = struct{}{}
-	}
-	c.mu.Lock()
-	pending := &pendingPermission{chatID: chatID, sessionID: sessionID, rpcID: message.ID, options: options, client: client}
-	c.pending[id] = pending
-	c.mu.Unlock()
-	if c.config.PermissionTimeout > 0 {
-		pending.timer = time.AfterFunc(c.config.PermissionTimeout, func() {
-			c.expirePermission(id, pending)
-		})
-	}
-	_ = emit(bridge.PermissionPending(id, permission.Options))
-}
-
-// expirePermission explicitly unblocks Goose. Merely deleting a local waiter
-// leaves its request_permission RPC blocked forever in c2.
-func (c *Coordinator) expirePermission(id string, expected *pendingPermission) {
-	c.mu.Lock()
-	pending := c.pending[id]
-	if pending != expected {
-		c.mu.Unlock()
-		return
-	}
-	delete(c.pending, id)
-	c.mu.Unlock()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_ = pending.client.Respond(ctx, pending.rpcID, map[string]any{"outcome": map[string]string{"outcome": "cancelled"}}, pending.sessionID)
-}
-
-func (c *Coordinator) dropPendingForChat(chatID string) {
+func (c *Coordinator) finishRun(chat string, conn acp.Conn) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	for id, pending := range c.pending {
-		if pending.chatID == chatID {
+	if r := c.activeRun[chat]; r != nil && r.conn == conn {
+		delete(c.activeRun, chat)
+	}
+}
+func (c *Coordinator) dropPendingForChat(chat string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for id, p := range c.pending {
+		if p.chatID == chat {
 			delete(c.pending, id)
-			if pending.timer != nil {
-				pending.timer.Stop()
+			if p.timer != nil {
+				p.timer.Stop()
+			}
+			select {
+			case p.decision <- permissionDecision{cancelled: true}:
+			default:
 			}
 		}
 	}
 }
-
-// Shutdown is called during a graceful c1 restart. It makes best-effort ACP
-// cancellation/permission responses before PocketBase closes the process, so
-// the same mapped chat can later session/load instead of leaving c2 blocked.
 func (c *Coordinator) Shutdown(ctx context.Context) {
 	c.mu.Lock()
-	runs := make(map[string]*activeRun, len(c.activeRun))
-	for chatID, run := range c.activeRun {
-		runs[chatID] = run
+	runs := map[string]*activeRun{}
+	for id, r := range c.activeRun {
+		runs[id] = r
 	}
-	pending := make([]*pendingPermission, 0, len(c.pending))
-	for _, value := range c.pending {
-		if value.timer != nil {
-			value.timer.Stop()
+	pending := []*pendingPermission{}
+	for id, p := range c.pending {
+		delete(c.pending, id)
+		if p.timer != nil {
+			p.timer.Stop()
 		}
-		pending = append(pending, value)
+		pending = append(pending, p)
 	}
-	c.pending = make(map[string]*pendingPermission)
 	c.mu.Unlock()
-	for _, run := range runs {
-		_ = run.client.Notify(ctx, "session/cancel", map[string]string{"sessionId": run.sessionID}, run.sessionID)
+	for _, r := range runs {
+		_ = r.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(r.sessionID)})
 	}
-	for _, value := range pending {
-		_ = value.client.Respond(ctx, value.rpcID, map[string]any{"outcome": map[string]string{"outcome": "cancelled"}}, value.sessionID)
-	}
-}
-
-func (c *Coordinator) startRun(chatID, sessionID string, client acpClient) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.activeRun[chatID] != nil {
-		return fmt.Errorf("chat already has an active run")
-	}
-	c.activeRun[chatID] = &activeRun{sessionID: sessionID, client: client}
-	return nil
-}
-
-func (c *Coordinator) finishRun(chatID string, client acpClient) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if run := c.activeRun[chatID]; run != nil && run.client == client {
-		delete(c.activeRun, chatID)
+	for _, p := range pending {
+		select {
+		case p.decision <- permissionDecision{cancelled: true}:
+		default:
+		}
 	}
 }
