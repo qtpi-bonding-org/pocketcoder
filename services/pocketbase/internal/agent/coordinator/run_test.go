@@ -57,6 +57,41 @@ func TestCancelRejectsAfterRunFinishes(t *testing.T) {
 	}
 }
 
+func TestReserveRejectsConcurrentRunAndReleases(t *testing.T) {
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Reserve("chat-1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Reserve("chat-1"); !errors.Is(err, ErrRunInProgress) {
+		t.Fatalf("second reserve = %v, want ErrRunInProgress", err)
+	}
+	c.release("chat-1")
+	if err := c.Reserve("chat-1"); err != nil {
+		t.Fatalf("reserve after release = %v", err)
+	}
+}
+
+func TestClientDisconnectCancelsActiveRun(t *testing.T) {
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := &fakeACPClient{}
+	if err := c.startRun("chat-1", "goose-session-1", client); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	c.cancelOnClientDisconnect(ctx, "chat-1")
+	method, _, sessionID := client.notification()
+	if method != "session/cancel" || sessionID != "goose-session-1" {
+		t.Fatalf("disconnect cancel = %q for %q", method, sessionID)
+	}
+}
+
 func TestApproveForwardsOnlyOfferedOptionAndIsMemoryOnly(t *testing.T) {
 	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
 	if err != nil {
