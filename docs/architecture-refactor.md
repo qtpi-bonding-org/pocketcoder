@@ -71,6 +71,29 @@ The selected simplified runtime leaves Goose's built-in filesystem and shell exe
 
 **Live acceptance (2026-07-16):** a real authenticated Goose turn emitted the four offered permission options, accepted `allow_once` at the c1 approval route (202), and completed with AG-UI `RUN_FINISHED`. `reject_once` completed the turn without creating its requested file. `cancel` while pending completed deterministically. Two turns on the same chat proved fresh-c1 `session/load` reconnection. Restarting PocketBase while an approval was pending made the old approval ID return 404, proving pending state is not persisted. A later compatibility probe confirmed that Goose's built-in `shell` tool executes in c2 rather than through ACP `terminal/*`; this is the deliberate simplified-runtime choice, not a sandbox guarantee.
 
+## Frozen c1 backend contract (2026-07-17)
+
+All public agent routes require PocketBase authentication and chat ownership.
+`POST /api/pocketcoder/chats/{chatId}/runs` opens an AG-UI SSE run; a second
+run, or replay during it, returns HTTP 409 before an SSE response begins.
+`POST .../cancel` returns 202 for an active run and 400 when none exists.
+`POST .../approvals/{approvalId}` returns 202 only for an exact currently
+offered option; stale IDs return 404 and invented options return 400.
+
+`GET /api/pocketcoder/chats/{chatId}/events` is a bounded AG-UI replay, not a
+live subscription: it emits `RUN_STARTED`, Goose `session/load` history updates,
+then `RUN_FINISHED`. An owned chat with no `goose_sessions` mapping emits the
+empty start/finish snapshot and neither contacts c2 nor creates a mapping.
+Unknown or non-owned chats return 404. c2 initialization/load failures are
+represented as a `RUN_ERROR` with `goose_replay_failed` after SSE starts.
+
+Pending permissions are process-local and expire after `GOOSE_PERMISSION_TIMEOUT`
+(five minutes by default). Expiry, cancellation, and graceful c1 termination
+send Goose a `cancelled` decision so c2 does not remain blocked. They are never
+stored or replayed. A hard process failure still relies on c2 connection-loss
+handling; the same mapped chat must subsequently be able to load and complete a
+new run, which remains an acceptance requirement.
+
 ## Why goose sits where it does (two ACP roles at once)
 
 goose in c2 is simultaneously:

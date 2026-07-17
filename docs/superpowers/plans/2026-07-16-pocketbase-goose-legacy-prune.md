@@ -4,6 +4,29 @@
 > an acceptance gate, and no table, field, route, or legacy test is to be
 > removed while the c1 backend contract is still being closed out. The only
 > authorized near-term work in this plan is a read-only dependency inventory.
+> The current inventory is published in
+> `2026-07-17-legacy-runtime-dependency-inventory.md`.
+>
+> **Pre-launch simplification (2026-07-17): there are no production users and no
+> live user data.** The retention/rollback ceremony below is scaffolding for a
+> running product; most of it can collapse. Concretely, while pre-launch:
+> - **Hard-cut, not coexist.** No `AGENT_RUNTIME=v1/v2` dual runtime and no
+>   read-only legacy history adapter are required. Once v2 passes its acceptance
+>   suite and Flutter has cut over, delete the legacy runtime outright.
+> - **No retention window / rollback window.** "Observe production traffic
+>   through the retention period" and "wait for the rollback window to elapse"
+>   are moot with zero users; delete legacy state as soon as v2 is proven.
+> - **Chat-type immutability is unnecessary.** Precondition #3 exists to protect
+>   legacy chats during coexistence. With nothing to protect, you may drop the
+>   legacy `messages`/`permissions`/`acp_terminals` data instead of preserving
+>   it. If any legacy chats exist at cut time, deleting them is acceptable.
+> - **Still keep forward-only migrations** (don't edit applied ones) purely for
+>   clean local/dev history — that discipline is cheap and unrelated to users.
+>
+> Re-introduce the full ceremony below only once real users exist. The pieces
+> that survive pre-launch regardless are: `goose_sessions` as the sole c1
+> runtime state, `tool_permissions`/`mcp_servers` as configuration (not runtime
+> duplicates), and tested backup/restore of the `goose_data` volume.
 
 **Goal:** after the c1 Go runtime and Flutter cutover are proven, remove PocketBase state and code that duplicate Goose-owned conversation/runtime state. This is a separate, delayed, forward-only migration—not part of c1 implementation.
 

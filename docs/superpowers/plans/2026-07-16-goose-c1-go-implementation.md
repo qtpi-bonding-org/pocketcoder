@@ -21,7 +21,7 @@
 > terminal capabilities, and sends no MCP server configuration. Goose's native shell
 > executes in c2 for the selected simplified runtime.
 
-> Acceptance status (2026-07-16): real Docker c1/c2 tests passed for allow, deny, cancel while pending, fresh-c1 session-load reconnect, c1 restart, and c2 restart. Pending approvals correctly vanish on c1 restart; that is intentional and not a recovery failure. Focused Go coverage rejects concurrent runs before SSE begins and sends `session/cancel` when a client context disconnects. Keep the Rust sandbox ACP adapter and legacy agent/MCP services dormant until Goose can be deliberately routed through them; do not present them as part of the active path.
+> Acceptance status (2026-07-16): real Docker c1/c2 tests passed for allow, deny, cancel while pending, fresh-c1 session-load reconnect, c1 restart, and c2 restart. Pending approval IDs vanish on c1 restart because they are never persisted, but graceful c1 termination sends Goose a cancelled decision before discarding them; the same chat must subsequently load and run again. Focused Go coverage rejects concurrent runs before SSE begins and sends `session/cancel` when a client context disconnects. Keep the Rust sandbox ACP adapter and legacy agent/MCP services dormant until Goose can be deliberately routed through them; do not present them as part of the active path.
 
 > Testing strategy: retain focused Go c1 tests and PocketBase-only BATS coverage; freeze rather than repair BATS and TypeScript tests that assert the retired Interface/OpenCode topology. See `docs/agent-testing-strategy.md`. Replace frozen agent tests with a c1-route Docker acceptance suite at cutover.
 >
@@ -166,6 +166,13 @@ this planning document.
      the same chat must accept a later `session/load` and new run. If a c2
      prompt remains blocked after c1 has restarted, that is a defect to solve,
      not an accepted lost-approval outcome.
+   - Orphaned Goose session (minor): if `session/new` succeeds but persisting
+     the `goose_sessions` mapping fails, the unique `chat` index still prevents
+     a second *mapped* session — the created Goose session is simply
+     unreferenced and the next run creates a fresh one. This is a c2 resource
+     leak, not a correctness bug, so it is acceptable pre-launch. Cheap
+     mitigation if wanted: on persist failure, best-effort `session/cancel` the
+     just-created session and log it; do not build durable orphan tracking.
    - Add narrowly scoped operational diagnostics/metrics for mapping creation,
      session load, turn terminal outcome, permission resolution, and c2 errors;
      never log prompt text, provider credentials, or offered permission payloads.

@@ -19,9 +19,10 @@ import (
 )
 
 type Config struct {
-	GooseURL    string
-	GooseSecret string
-	Workspace   string
+	GooseURL          string
+	GooseSecret       string
+	Workspace         string
+	PermissionTimeout time.Duration
 }
 
 type RunRequest struct {
@@ -70,6 +71,7 @@ type pendingPermission struct {
 	rpcID             json.RawMessage
 	options           map[string]struct{}
 	client            acpClient
+	timer             *time.Timer
 }
 
 type activeRun struct {
@@ -149,8 +151,87 @@ func (c *Coordinator) Approve(ctx context.Context, chatID, requestID, optionID s
 		return ErrPermissionOptionNotOffered
 	}
 	delete(c.pending, requestID)
+	if pending.timer != nil {
+		pending.timer.Stop()
+	}
 	c.mu.Unlock()
 	return pending.client.Respond(ctx, pending.rpcID, map[string]any{"outcome": map[string]string{"outcome": "selected", "optionId": optionID}}, pending.sessionID)
+}
+
+// Replay emits the Goose-authoritative history as the same minimal AG-UI event
+// model as a live turn. An empty session ID deliberately means an unmapped chat:
+// it produces an empty snapshot and never contacts c2 or creates a mapping.
+func (c *Coordinator) Replay(ctx context.Context, chatID, sessionID string, emit Emit) error {
+	if err := c.Reserve(chatID); err != nil {
+		return err
+	}
+	return c.ReplayReserved(ctx, chatID, sessionID, emit)
+}
+
+// ReplayReserved replays after the caller has reserved the chat, allowing the
+// HTTP handler to return a 409 before committing to an SSE response.
+func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID string, emit Emit) error {
+	defer c.release(chatID)
+
+	bridge := agui.NewBridge(chatID, uuid.NewString())
+	if err := emit(bridge.Started()); err != nil {
+		return err
+	}
+	if sessionID == "" {
+		return emitAll(emit, bridge.Finished())
+	}
+
+	client, err := acp.NewClient(acp.Config{URL: c.config.GooseURL, Secret: c.config.GooseSecret})
+	if err != nil {
+		return err
+	}
+	if _, err := client.Initialize(ctx, map[string]any{}); err != nil {
+		return err
+	}
+	if err := client.OpenStream(ctx, ""); err != nil {
+		return err
+	}
+	var emitMu sync.Mutex
+	client.OnNotification(func(message acp.Message) {
+		if message.Method != "session/update" {
+			return
+		}
+		var notification acpsdk.SessionNotification
+		if err := json.Unmarshal(message.Params, &notification); err != nil {
+			return
+		}
+		updates, err := bridge.Update(notification.Update)
+		if err != nil {
+			return
+		}
+		emitMu.Lock()
+		defer emitMu.Unlock()
+		for _, event := range updates {
+			_ = emit(event)
+		}
+	})
+	if err := client.OpenStream(ctx, sessionID); err != nil {
+		return err
+	}
+	if _, err := client.Call(ctx, "session/load", map[string]any{
+		"sessionId":  sessionID,
+		"cwd":        c.config.Workspace,
+		"mcpServers": []any{},
+	}, sessionID); err != nil {
+		return fmt.Errorf("load Goose session: %w", err)
+	}
+	emitMu.Lock()
+	defer emitMu.Unlock()
+	return emitAll(emit, bridge.Finished())
+}
+
+func emitAll(emit Emit, values []events.Event) error {
+	for _, value := range values {
+		if err := emit(value); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Run creates or reloads the one Goose session for a chat, then emits AG-UI
@@ -280,12 +361,7 @@ func (c *Coordinator) RunReserved(ctx context.Context, request RunRequest, emit 
 
 	emitMu.Lock()
 	defer emitMu.Unlock()
-	for _, event := range bridge.Finished() {
-		if err := emit(event); err != nil {
-			return err
-		}
-	}
-	return nil
+	return emitAll(emit, bridge.Finished())
 }
 
 func (c *Coordinator) cancelOnClientDisconnect(ctx context.Context, chatID string) {
@@ -315,9 +391,31 @@ func (c *Coordinator) handlePermissionRequest(ctx context.Context, chatID, sessi
 		options[string(option.OptionId)] = struct{}{}
 	}
 	c.mu.Lock()
-	c.pending[id] = &pendingPermission{chatID: chatID, sessionID: sessionID, rpcID: message.ID, options: options, client: client}
+	pending := &pendingPermission{chatID: chatID, sessionID: sessionID, rpcID: message.ID, options: options, client: client}
+	c.pending[id] = pending
 	c.mu.Unlock()
+	if c.config.PermissionTimeout > 0 {
+		pending.timer = time.AfterFunc(c.config.PermissionTimeout, func() {
+			c.expirePermission(id, pending)
+		})
+	}
 	_ = emit(bridge.PermissionPending(id, permission.Options))
+}
+
+// expirePermission explicitly unblocks Goose. Merely deleting a local waiter
+// leaves its request_permission RPC blocked forever in c2.
+func (c *Coordinator) expirePermission(id string, expected *pendingPermission) {
+	c.mu.Lock()
+	pending := c.pending[id]
+	if pending != expected {
+		c.mu.Unlock()
+		return
+	}
+	delete(c.pending, id)
+	c.mu.Unlock()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_ = pending.client.Respond(ctx, pending.rpcID, map[string]any{"outcome": map[string]string{"outcome": "cancelled"}}, pending.sessionID)
 }
 
 func (c *Coordinator) dropPendingForChat(chatID string) {
@@ -326,7 +424,36 @@ func (c *Coordinator) dropPendingForChat(chatID string) {
 	for id, pending := range c.pending {
 		if pending.chatID == chatID {
 			delete(c.pending, id)
+			if pending.timer != nil {
+				pending.timer.Stop()
+			}
 		}
+	}
+}
+
+// Shutdown is called during a graceful c1 restart. It makes best-effort ACP
+// cancellation/permission responses before PocketBase closes the process, so
+// the same mapped chat can later session/load instead of leaving c2 blocked.
+func (c *Coordinator) Shutdown(ctx context.Context) {
+	c.mu.Lock()
+	runs := make(map[string]*activeRun, len(c.activeRun))
+	for chatID, run := range c.activeRun {
+		runs[chatID] = run
+	}
+	pending := make([]*pendingPermission, 0, len(c.pending))
+	for _, value := range c.pending {
+		if value.timer != nil {
+			value.timer.Stop()
+		}
+		pending = append(pending, value)
+	}
+	c.pending = make(map[string]*pendingPermission)
+	c.mu.Unlock()
+	for _, run := range runs {
+		_ = run.client.Notify(ctx, "session/cancel", map[string]string{"sessionId": run.sessionID}, run.sessionID)
+	}
+	for _, value := range pending {
+		_ = value.client.Respond(ctx, value.rpcID, map[string]any{"outcome": map[string]string{"outcome": "cancelled"}}, value.sessionID)
 	}
 }
 
