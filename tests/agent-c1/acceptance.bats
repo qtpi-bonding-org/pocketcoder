@@ -79,19 +79,42 @@ wait_for() {
   return 1
 }
 
+wait_for_text() {
+  local expected="$1"
+  local attempts="${2:-40}"
+  local text
+  for _ in $(seq 1 "$attempts"); do
+    text=$(grep '^data: ' "$RUN_FILE" 2>/dev/null | sed 's/^data: //' |
+      jq -r 'select(.type == "TEXT_MESSAGE_CONTENT") | .delta' 2>/dev/null | tr -d '\n')
+    printf '%s' "$text" | grep -Fq "$expected" && return 0
+    sleep 1
+  done
+  cat "$RUN_FILE" >&2 || true
+  return 1
+}
+
 approval_id() {
-  grep -o '"requestId":"[^"]+"' "$RUN_FILE" | head -1 | cut -d'"' -f4
+  grep -o '"requestId":"[^"]*"' "$RUN_FILE" | head -1 | cut -d'"' -f4
+}
+
+wait_for_approval() {
+  APPROVAL_ID=''
+  for _ in $(seq 1 10); do
+    APPROVAL_ID=$(approval_id)
+    [ -n "$APPROVAL_ID" ] && return 0
+    sleep 1
+  done
+  cat "$RUN_FILE" >&2 || true
+  return 1
 }
 
 submit_option() {
   local option_id="$1"
-  local request_id
-  request_id=$(approval_id)
-  [ -n "$request_id" ]
-  curl -fsS -o /dev/null -w '%{http_code}' \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/approvals/$request_id" \
+  [ -n "${APPROVAL_ID:-}" ]
+  APPROVAL_HTTP_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' \
+    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/approvals/$APPROVAL_ID" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"optionId\":\"$option_id\"}"
+    -d "{\"optionId\":\"$option_id\"}")
 }
 
 wait_for_finish() {
@@ -102,32 +125,40 @@ wait_for_finish() {
 @test "same chat reconnects through Goose session/load" {
   new_chat
   start_run "Reply with exactly: agent-c1-first"
-  wait_for 'agent-c1-first'
+  wait_for_text 'agent-c1-first'
   wait_for_finish
 
   start_run "Reply with exactly: agent-c1-second"
-  wait_for 'agent-c1-second'
+  wait_for_text 'agent-c1-second'
   wait_for_finish
 }
 
 @test "offered allow and deny decisions reach Goose" {
   new_chat
-  start_run "Use your shell tool to run: printf allowed-by-c1. Do not answer before requesting permission."
-  wait_for '"requestId"'
-  [ "$(submit_option allow_once)" = 202 ]
+  start_run "Invoke the shell tool immediately. Execute exactly: printf allowed-by-c1. Do not ask a question, explain, or reply with text before the tool call."
+  wait_for_approval
+  submit_option allow_once
+  if [ "$APPROVAL_HTTP_STATUS" != 202 ]; then
+    cat "$RUN_FILE" >&3
+  fi
+  [ "$APPROVAL_HTTP_STATUS" = 202 ]
   wait_for_finish
 
   new_chat
-  start_run "Use your shell tool to run: printf denied-by-c1. Do not answer before requesting permission."
-  wait_for '"requestId"'
-  [ "$(submit_option reject_once)" = 202 ]
+  start_run "Invoke the shell tool immediately. Execute exactly: printf denied-by-c1. Do not ask a question, explain, or reply with text before the tool call."
+  wait_for_approval
+  submit_option reject_once
+  if [ "$APPROVAL_HTTP_STATUS" != 202 ]; then
+    cat "$RUN_FILE" >&3
+  fi
+  [ "$APPROVAL_HTTP_STATUS" = 202 ]
   wait_for_finish
 }
 
 @test "cancel and concurrent run behave deterministically" {
   new_chat
-  start_run "Use your shell tool to run: sleep 20. Do not answer before requesting permission."
-  wait_for '"requestId"'
+  start_run "Invoke the shell tool immediately. Execute exactly: sleep 20. Do not ask a question, explain, or reply with text before the tool call."
+  wait_for_approval
 
   local conflict
   conflict=$(curl -sS -o "$BATS_TEST_TMPDIR/conflict.json" -w '%{http_code}' \
@@ -146,10 +177,10 @@ wait_for_finish() {
 
 @test "c1 restart drops pending approval and c2 restart reloads session" {
   new_chat
-  start_run "Use your shell tool to run: printf pending-c1-restart. Do not answer before requesting permission."
-  wait_for '"requestId"'
+  start_run "Invoke the shell tool immediately. Execute exactly: printf pending-c1-restart. Do not ask a question, explain, or reply with text before the tool call."
+  wait_for_approval
   local old_approval
-  old_approval=$(approval_id)
+  old_approval="$APPROVAL_ID"
   docker restart "$POCKETBASE_CONTAINER" >/dev/null
   wait_for_pocketbase
   local stale_status
@@ -163,11 +194,11 @@ wait_for_finish() {
   # chat proves the restarted c1 is usable before testing c2 persistence.
   new_chat
   start_run "Reply with exactly: before-c2-restart"
-  wait_for 'before-c2-restart'
+  wait_for_text 'before-c2-restart'
   wait_for_finish
   docker restart "$GOOSE_CONTAINER" >/dev/null
   wait_for_goose
   start_run "Reply with exactly: after-c2-restart"
-  wait_for 'after-c2-restart'
+  wait_for_text 'after-c2-restart'
   wait_for_finish
 }
