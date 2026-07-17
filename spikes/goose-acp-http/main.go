@@ -10,7 +10,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log/slog"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,7 +28,9 @@ type client struct {
 var _ acp.Client = (*client)(nil)
 
 func (c *client) RequestPermission(_ context.Context, p acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
+	fmt.Fprintf(os.Stderr, "request_permission received: options=%d\n", len(p.Options))
 	if !c.autoApprove || len(p.Options) == 0 {
+		fmt.Fprintln(os.Stderr, "permission auto-approve disabled -> cancelled")
 		return acp.RequestPermissionResponse{Outcome: acp.RequestPermissionOutcome{
 			Cancelled: &acp.RequestPermissionOutcomeCancelled{},
 		}}, nil
@@ -34,12 +38,14 @@ func (c *client) RequestPermission(_ context.Context, p acp.RequestPermissionReq
 
 	for _, option := range p.Options {
 		if option.Kind == acp.PermissionOptionKindAllowOnce || option.Kind == acp.PermissionOptionKindAllowAlways {
+			fmt.Fprintf(os.Stderr, "permission auto-approved option=%s kind=%s\n", option.OptionId, option.Kind)
 			return acp.RequestPermissionResponse{Outcome: acp.RequestPermissionOutcome{
 				Selected: &acp.RequestPermissionOutcomeSelected{OptionId: option.OptionId},
 			}}, nil
 		}
 	}
 
+	fmt.Fprintf(os.Stderr, "permission auto-approved fallback option=%s\n", p.Options[0].OptionId)
 	return acp.RequestPermissionResponse{Outcome: acp.RequestPermissionOutcome{
 		Selected: &acp.RequestPermissionOutcomeSelected{OptionId: p.Options[0].OptionId},
 	}}, nil
@@ -96,8 +102,10 @@ func (*client) WaitForTerminalExit(_ context.Context, _ acp.WaitForTerminalExitR
 }
 
 func main() {
-	transport := flag.String("transport", "stdio", "ACP transport: stdio or http")
+	transport := flag.String("transport", "stdio", "ACP transport: stdio, tcp, or http")
 	goose := flag.String("goose", "goose", "path to the pinned goose binary")
+	tcpAddr := flag.String("tcp-addr", "", "host:port of a goose acp byte-stream bridge when --transport=tcp")
+	wsURL := flag.String("ws-url", "", "ws:// URL of goose serve /acp when --transport=ws")
 	httpURL := flag.String("http-url", "", "Goose serve /acp URL when --transport=http")
 	secret := flag.String("secret", "", "GOOSE_SERVER__SECRET_KEY when --transport=http")
 	httpDialect := flag.String("http-dialect", "legacy", "Goose HTTP dialect: legacy or streamable")
@@ -121,24 +129,50 @@ func main() {
 		}
 		return
 	}
-	if *transport != "stdio" {
-		failIf(fmt.Errorf("unknown transport %q", *transport))
-		return
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
+	cl := &client{autoApprove: *autoApprove}
 
-	cmd := exec.CommandContext(ctx, *goose, "acp")
-	cmd.Stderr = os.Stderr
-	stdin, err := cmd.StdinPipe()
-	failIf(err)
-	stdout, err := cmd.StdoutPipe()
-	failIf(err)
-	failIf(cmd.Start())
-	defer func() { _ = cmd.Process.Kill(); _ = cmd.Wait() }()
+	switch *transport {
+	case "stdio":
+		cmd := exec.CommandContext(ctx, *goose, "acp")
+		cmd.Stderr = os.Stderr
+		stdin, err := cmd.StdinPipe()
+		failIf(err)
+		stdout, err := cmd.StdoutPipe()
+		failIf(err)
+		failIf(cmd.Start())
+		defer func() { _ = cmd.Process.Kill(); _ = cmd.Wait() }()
+		runOverStreams(ctx, cl, stdin, stdout, *prompt, *sessionID, *cwd, *mode, *cancelAfter)
+	case "tcp":
+		if *tcpAddr == "" {
+			failIf(fmt.Errorf("--tcp-addr host:port is required for --transport=tcp"))
+		}
+		conn, err := net.Dial("tcp", *tcpAddr)
+		failIf(err)
+		defer conn.Close()
+		fmt.Fprintf(os.Stderr, "dialed tcp=%s\n", *tcpAddr)
+		runOverStreams(ctx, cl, conn, conn, *prompt, *sessionID, *cwd, *mode, *cancelAfter)
+	case "ws":
+		if *wsURL == "" {
+			failIf(fmt.Errorf("--ws-url is required for --transport=ws"))
+		}
+		ws, err := dialWS(ctx, *wsURL, *secret)
+		failIf(err)
+		defer ws.Close()
+		fmt.Fprintf(os.Stderr, "dialed ws=%s\n", *wsURL)
+		runOverStreams(ctx, cl, ws, ws, *prompt, *sessionID, *cwd, *mode, *cancelAfter)
+	default:
+		failIf(fmt.Errorf("unknown transport %q", *transport))
+	}
+}
 
-	connection := acp.NewClientSideConnection(&client{autoApprove: *autoApprove}, stdin, stdout)
+// runOverStreams drives the robust SDK ClientSideConnection over any byte
+// stream — a subprocess pipe (stdio) or a TCP socket (the cross-container
+// bridge). This is the whole point of the stdio-vs-HTTP question: the SDK
+// only needs an io.Writer/io.Reader.
+func runOverStreams(ctx context.Context, cl *client, peerIn io.Writer, peerOut io.Reader, prompt, sessionID, cwd, mode string, cancelAfter time.Duration) {
+	connection := acp.NewClientSideConnection(cl, peerIn, peerOut)
 	connection.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, nil)))
 
 	initialized, err := connection.Initialize(ctx, acp.InitializeRequest{
@@ -155,25 +189,42 @@ func main() {
 	}
 	fmt.Fprintf(os.Stderr, "initialized protocol=%d agent=%s\n", initialized.ProtocolVersion, agentName)
 
-	activeSessionID := acp.SessionId(*sessionID)
+	activeSessionID := acp.SessionId(sessionID)
 	if activeSessionID == "" {
-		created, err := connection.NewSession(ctx, acp.NewSessionRequest{Cwd: *cwd, McpServers: []acp.McpServer{}})
+		created, err := connection.NewSession(ctx, acp.NewSessionRequest{Cwd: cwd, McpServers: []acp.McpServer{}})
 		failIf(err)
 		activeSessionID = created.SessionId
 		fmt.Fprintf(os.Stderr, "session_id=%s\n", activeSessionID)
 	} else {
 		fmt.Fprintf(os.Stderr, "loading_session_id=%s\n", activeSessionID)
-		_, err := connection.LoadSession(ctx, acp.LoadSessionRequest{SessionId: activeSessionID, Cwd: *cwd})
+		_, err := connection.LoadSession(ctx, acp.LoadSessionRequest{SessionId: activeSessionID, Cwd: cwd, McpServers: []acp.McpServer{}})
 		failIf(err)
 		fmt.Fprintf(os.Stderr, "loaded_session_id=%s\n", activeSessionID)
 	}
 
-	_, err = connection.Prompt(ctx, acp.PromptRequest{
+	if mode != "" {
+		_, err := connection.SetSessionMode(ctx, acp.SetSessionModeRequest{SessionId: activeSessionID, ModeId: acp.SessionModeId(mode)})
+		failIf(err)
+		fmt.Fprintf(os.Stderr, "mode_set=%s\n", mode)
+	}
+
+	if cancelAfter > 0 {
+		go func() {
+			select {
+			case <-time.After(cancelAfter):
+				fmt.Fprintf(os.Stderr, "sending session/cancel after %s\n", cancelAfter)
+				_ = connection.Cancel(ctx, acp.CancelNotification{SessionId: activeSessionID})
+			case <-ctx.Done():
+			}
+		}()
+	}
+
+	result, err := connection.Prompt(ctx, acp.PromptRequest{
 		SessionId: activeSessionID,
-		Prompt:    []acp.ContentBlock{acp.TextBlock(*prompt)},
+		Prompt:    []acp.ContentBlock{acp.TextBlock(prompt)},
 	})
 	failIf(err)
-	fmt.Fprintln(os.Stderr, "prompt_completed=true")
+	fmt.Fprintf(os.Stderr, "prompt_completed=true stopReason=%s\n", result.StopReason)
 }
 
 func mustGetwd() string {
