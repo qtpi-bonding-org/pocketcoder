@@ -99,3 +99,142 @@ For Goose v1.36.0, use `--http-dialect=streamable` and a container-visible `--cw
 - [x] Gateway MCP attachment was attempted against a real isolated Docker MCP Gateway and did not expose tools through Goose; Cognee/gateway MCP is disabled by default pending a working c2 attachment.
 
 Delete this directory once that decision is implemented and covered by the production c1 integration tests.
+
+## Result — 2026-07-17 (stdio `session/load` across process restarts)
+
+**Question:** does the `goose acp` **stdio** transport support `session/load`
+against the durable on-disk store across a process restart, with history replay?
+This decides whether c1 could use the robust `acp.NewClientSideConnection`
+(byte-stream) instead of the hand-rolled Streamable-HTTP `streamable.go`.
+
+Tested against the **selected c2 image** (Goose v1.36.0,
+`ghcr.io/aaif-goose/goose@sha256:8452dbb1...`) via `container-goose-v136.sh`,
+persisting the session DB in the named volume `pocketcoder-goose-stdio-load-test`.
+
+- **Step 1 (process A):** `initialize → session/new → session/prompt` over stdio
+  succeeded. Session `20260717_1` created; prompt "Remember this magic number:
+  4271 …" completed with streamed updates.
+- **Step 2 (process B, fresh container, same volume):** `initialize →
+  session/load(20260717_1) → session/prompt` succeeded. Load **replayed the prior
+  turn's history** (the earlier user message and assistant reply). The follow-up
+  prompt "What magic number did I ask you to remember earlier?" was answered
+  **`4271`** — memory carried across the process restart.
+
+**Conclusion:** Goose's session store is on-disk and **transport-independent**;
+stdio `session/load` resume works identically to the proven HTTP path. The
+"smash the containers together with stdio" option is therefore viable at the
+foundational level: c1 could dial a byte stream (e.g. `socat TCP-LISTEN,fork
+EXEC:"goose acp"` in c2) into `acp.NewClientSideConnection` and delete
+`streamable.go`. Still unproven over stdio-across-containers: the socat/TCP
+bridge itself, permission pass-through, and cancellation — each a smaller,
+separate check before committing to the transport switch.
+
+**Harness note:** v1.36.0 rejects `session/load` with `mcpServers: null`
+(`invalid type: null, expected a sequence`). `LoadSessionRequest` must send
+`McpServers: []acp.McpServer{}`, mirroring `NewSession`. Fixed in `main.go`.
+The in-container workspace path (`--cwd /workspace`), not the host path, must be
+passed to goose.
+
+## Result — 2026-07-17 (cross-container stdio bridge over TCP)
+
+**Question:** can c1 reach `goose acp` (stdio) across the container boundary
+over a socket, feeding a plain byte stream into the SDK's robust
+`ClientSideConnection` — i.e. is "smash the containers together with stdio"
+real, without collapsing c1 and c2 into one container?
+
+Setup: `Dockerfile.socat` layers `socat` onto the pinned v1.36.0 image. c2 runs
+`socat TCP-LISTEN:9000,reuseaddr,fork EXEC:"goose acp"` (a fresh `goose acp`
+process per TCP connection). The harness gained a `--transport tcp --tcp-addr`
+mode that dials the socket and hands the `net.Conn` to
+`acp.NewClientSideConnection(conn, conn)` — no `streamable.go`, no hand-rolled
+HTTP.
+
+- **TCP new:** `initialize → session/new → session/prompt` over the socket
+  succeeded (session `20260717_2`). socat's EXEC framing carried newline-JSON
+  cleanly; c2 logs showed no corruption.
+- **TCP load (cross-process over bridge):** a fresh connection (new forked goose
+  process) ran `session/load(20260717_2)` and the agent recalled `8888` from the
+  earlier bridged turn.
+- **Cross-transport:** session `20260717_1`, created earlier over **plain
+  stdio**, loaded over the **TCP bridge** and recalled `4271`. A session is
+  transport-independent.
+
+**Conclusion:** the bridge mechanics work. c1 could dial a socket into the
+maintained SDK connection and delete `streamable.go`. For production, replace
+socat with a small Go supervisor shim in c2 (restores channel auth, controls
+child lifecycle, reaps zombies on socket drop).
+
+**Still unproven for the stdio/bridge path (next spike slices, per review):**
+concurrent-writer safety on the on-disk session store (the gating question);
+permission pass-through; `session/cancel`; child/orphan behavior + session-store
+sanity when the socket drops mid-turn; and cold-start latency per run.
+
+## Result — 2026-07-17 (stdio gating checks: concurrency, permission, cancel, drop, latency)
+
+Ran the reviewer's gating list for the stdio/bridge path against pinned v1.36.0.
+
+- **Session storage:** `data/sessions/sessions.db` is **SQLite in WAL mode**
+  (`-wal`/`-shm` present).
+- **Concurrent writers:** two `goose acp` processes creating+prompting distinct
+  sessions **simultaneously** against the same `sessions.db` both completed with
+  **no `database is locked` / `SQLITE_BUSY` / corruption**. WAL handles the
+  two-chats-at-once case. (Two writers on the *same* session is prevented by
+  c1's per-chat run serialization and was not stress-tested.)
+- **Permission pass-through over stdio:** in `approve` mode, `request_permission`
+  fired over stdio and the auto-approved option was sent back; Goose's built-in
+  **shell** tool then executed in-container and returned its result
+  (`permission-shell-ok`), `stopReason=end_turn`. (An ACP *file-write* tool
+  failed only because the spike's host-side `WriteTextFile` callback can't write
+  the container path — a harness artifact; production c1 advertises no fs
+  callbacks and lets Goose's in-container shell act.)
+- **Cancel over stdio:** `session/cancel` mid-turn resolved the prompt with a
+  deterministic terminal `stopReason`, no hang — same contract as HTTP.
+- **Socket drop mid-turn (TCP bridge):** killing the c1 side mid-turn left the
+  session store sane — a fresh `session/load` of the dropped session succeeded
+  with no lock/corruption. No lingering goose observed (image lacks `ps` for a
+  definitive orphan check; the planned production Go supervisor shim owns child
+  lifecycle/reaping explicitly).
+- **Cold start:** ~1.7s wall for a fresh connection + trivial turn *including one
+  provider round-trip*; goose spawn/init is a negligible fraction. No mobile
+  time-to-first-token concern.
+
+**Verdict:** every gating check the reviewer named passes over stdio. The
+stdio-via-socket-bridge path is a viable, lower-code alternative to the
+hand-rolled Streamable-HTTP transport. Recommended production shape: a small Go
+supervisor shim in c2 (not raw socat) for channel auth + child lifecycle, and a
+tripwire to adopt the official ACP-over-HTTP SDK transport if/when it ships.
+
+## Result — 2026-07-17 (WebSocket dialect: does it plug into the SDK connection?)
+
+**Question:** `goose serve` advertises "ACP server over HTTP and WebSocket." Is
+the WS dialect clean enough that a thin adapter lets the robust SDK
+`ClientSideConnection` run over it — retiring both the hand-rolled
+`streamable.go` and the stdio socat/shim?
+
+Setup: `goose serve --host 0.0.0.0` (v1.36.0, default port 3284). WS endpoint is
+**`/acp`** (same path, content-negotiated by the `Upgrade` header; `/ws` and `/`
+are 404). Added `ws_transport.go`: a ~40-line `wsStream` adapter presenting the
+WS as newline-delimited JSON (one JSON-RPC message per text frame) and feeding it
+straight into `acp.NewClientSideConnection` — no `streamable.go`.
+
+- **init → new → prompt:** succeeded over WS; 5 `session/update` frames streamed.
+  **No `Acp-Connection-Id` correlation needed** — the single duplex WS channel
+  is the connection.
+- **Load/resume:** a fresh WS connection ran `session/load` and recalled `5309`
+  from the earlier turn.
+- **Permission:** in `approve` mode the built-in shell tool executed and returned
+  `ws-perm-ok`, `stopReason=end_turn`.
+- **Cancel:** `session/cancel` mid-turn resolved the prompt with a terminal
+  `stopReason`, no hang.
+- **Auth gap:** the WS `/acp` endpoint accepted a full unauthenticated session
+  (no `X-Secret-Key`) in v1.36.0, whereas HTTP `/acp` enforces the secret. WS
+  auth therefore currently rests on network isolation (same as a raw socket).
+  Flag upstream / gate c2 at the network layer regardless.
+
+**Verdict:** WebSocket is the cleanest fit. `goose serve` (persistent WS server,
+no socat/shim, no per-connection process spawn) + a ~40-line WS→bytestream
+adapter + the maintained SDK `ClientSideConnection` gives every capability the
+other transports have, with the least bespoke code and no c2 bridge process.
+Recommended c1 transport, pending: (1) confirm/repair WS channel auth or enforce
+network isolation, (2) verify reconnect/replay semantics on a mid-turn WS drop
+(the same open Gate-B question for all transports).
