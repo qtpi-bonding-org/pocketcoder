@@ -27,7 +27,7 @@ services:
       - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
       # Private c1 -> relay -> c2 path. Leave the secret unset unless the
       # `agent` profile is started; the PocketBase route then stays disabled.
-      - GOOSE_ACP_URL=${GOOSE_ACP_URL:-http://goose-acp-relay:3000/acp}
+      - GOOSE_ACP_URL=${GOOSE_ACP_URL:-ws://goose-acp-relay:3000/acp}
       - GOOSE_SERVER__SECRET_KEY=${GOOSE_SERVER__SECRET_KEY:-}
       - GOOSE_WORKSPACE=${GOOSE_WORKSPACE:-/workspace}
     command: ["/app/pocketbase", "serve", "--http=0.0.0.0:8090"]
