@@ -67,6 +67,8 @@ c3: Docker MCP Gateway
 
 Developer tool calls have been proven to surface through Goose ACP `session/request_permission` → c1's approval handling → the phone approve/deny UX. Gateway MCP attachment is not yet functional through the selected Goose c2 hop: the 2026-07-16 spike supplied an SSE Docker MCP Gateway but Goose did not expose its tools. Therefore Cognee and all gateway MCP tools remain disabled by default; do not assume MCP calls share the developer-tool approval path until that attachment is fixed and re-tested.
 
+The c1 implementation uses a narrow, ACP-specific sandbox API for `fs/read_text_file`, `fs/write_text_file`, and every `terminal/*` callback. Both c1 and the sandbox enforce `/workspace`; c1 never reads the shared volume or executes a host command for these requests. c1 advertises those capabilities only after that boundary is configured. A `session/request_permission` is an in-memory c1 record containing the raw ACP request ID and exact offered options. The authenticated chat owner can submit one offered option; c1 forwards it verbatim to Goose and stores nothing in PocketBase. Cancelling a pending turn resolves the callback as cancelled. A c1 restart intentionally loses pending approvals; a reconnect resumes the durable Goose session mapping and does not reconstruct approvals.
+
 ## Why goose sits where it does (two ACP roles at once)
 
 goose in c2 is simultaneously:

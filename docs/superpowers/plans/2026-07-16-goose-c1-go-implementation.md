@@ -17,8 +17,9 @@
 > `POST /api/pocketcoder/chats/{chatId}/cancel` route forwards cancellation only
 > to an in-process active prompt; that prompt's correlated Goose response still
 > produces the deterministic AG-UI terminal events. Tool execution and phone
-> permission-response endpoints remain intentionally deferred; c1 currently advertises no
-> filesystem/terminal capability and sends no MCP server configuration.
+> c1 now exposes the authenticated approval endpoint and advertises only the ACP
+> filesystem/terminal capabilities implemented through the sandbox container; it still
+> sends no MCP server configuration.
 >
 > Runtime status (2026-07-16): the additive Compose `agent` profile runs the
 > pinned Goose c2 image behind an internal, un-published ACP relay. PocketBase

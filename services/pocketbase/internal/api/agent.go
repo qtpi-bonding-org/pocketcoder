@@ -24,6 +24,7 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		GooseURL:    os.Getenv("GOOSE_ACP_URL"),
 		GooseSecret: os.Getenv("GOOSE_SERVER__SECRET_KEY"),
 		Workspace:   os.Getenv("GOOSE_WORKSPACE"),
+		SandboxURL:  os.Getenv("SANDBOX_PROXY_URL"),
 	})
 
 	e.Router.POST("/api/pocketcoder/chats/{chatId}/runs", func(re *core.RequestEvent) error {
@@ -79,6 +80,36 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 				return re.BadRequestError("No active run to cancel", nil)
 			}
 			return apis.NewApiError(http.StatusBadGateway, "Unable to cancel agent run", err)
+		}
+		return re.NoContent(http.StatusAccepted)
+	}).Bind(apis.RequireAuth())
+
+	// Permission records are transient process state. The option is checked
+	// against the exact set Goose offered before it is forwarded over ACP.
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/approvals/{approvalId}", func(re *core.RequestEvent) error {
+		if configErr != nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
+		}
+		chatID := re.Request.PathValue("chatId")
+		chat, err := app.FindRecordById("chats", chatID)
+		if err != nil || chat.GetString("user") != re.Auth.Id {
+			return re.NotFoundError("Chat not found", err)
+		}
+		var input struct {
+			OptionID string `json:"optionId"`
+		}
+		if err := re.BindBody(&input); err != nil || strings.TrimSpace(input.OptionID) == "" {
+			return re.BadRequestError("optionId is required", err)
+		}
+		err = service.Approve(re.Request.Context(), chatID, re.Request.PathValue("approvalId"), input.OptionID)
+		if errors.Is(err, coordinator.ErrNoPendingPermission) {
+			return re.NotFoundError("Pending permission not found", err)
+		}
+		if errors.Is(err, coordinator.ErrPermissionOptionNotOffered) {
+			return re.BadRequestError("Permission option was not offered", err)
+		}
+		if err != nil {
+			return apis.NewApiError(http.StatusBadGateway, "Unable to submit permission decision", err)
 		}
 		return re.NoContent(http.StatusAccepted)
 	}).Bind(apis.RequireAuth())

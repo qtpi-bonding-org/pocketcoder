@@ -32,7 +32,7 @@ func TestBridgeMessageLifecycleAndTerminal(t *testing.T) {
 
 func TestBridgePermissionState(t *testing.T) {
 	bridge := NewBridge("chat-1", "run-1")
-	event := bridge.PermissionPending("rpc-42")
+	event := bridge.PermissionPending("rpc-42", nil)
 	b, err := json.Marshal(event)
 	if err != nil {
 		t.Fatal(err)

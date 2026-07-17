@@ -91,9 +91,13 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 
 // PermissionPending represents the one transient c1 state exposed to AG-UI.
 // The detailed choices stay in the authenticated c1 approval endpoint.
-func (b *Bridge) PermissionPending(requestID string) events.Event {
+func (b *Bridge) PermissionPending(requestID string, options []acpsdk.PermissionOption) events.Event {
+	choices := make([]map[string]string, 0, len(options))
+	for _, option := range options {
+		choices = append(choices, map[string]string{"optionId": string(option.OptionId), "name": option.Name, "kind": string(option.Kind)})
+	}
 	return events.NewStateDeltaEvent([]events.JSONPatchOperation{{
-		Op: "add", Path: "/pocketcoder/permission", Value: map[string]string{"requestId": requestID, "status": "pending"},
+		Op: "add", Path: "/pocketcoder/permission", Value: map[string]any{"requestId": requestID, "status": "pending", "options": choices},
 	}})
 }
 
