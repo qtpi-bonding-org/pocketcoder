@@ -5,6 +5,7 @@ package agui
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
@@ -17,6 +18,8 @@ type Bridge struct {
 	threadID, runID string
 	messageID       string
 	messageOpen     bool
+	reasoningID     string
+	reasoningOpen   bool
 	openTools       map[string]bool
 }
 
@@ -39,7 +42,8 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 		if !ok || text == "" {
 			return nil, nil
 		}
-		result := make([]events.Event, 0, 3)
+		// Reasoning and assistant text are mutually exclusive open states.
+		result := b.closeReasoning()
 		if b.messageOpen && update.AgentMessageChunk.MessageId != nil && *update.AgentMessageChunk.MessageId != b.messageID {
 			result = append(result, b.closeMessage()...)
 		}
@@ -49,8 +53,24 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 			b.messageOpen = true
 		}
 		return append(result, events.NewTextMessageContentEvent(messageID, text)), nil
-	case update.ToolCall != nil:
+	case update.AgentThoughtChunk != nil:
+		text, ok := textContent(update.AgentThoughtChunk.Content)
+		if !ok || text == "" {
+			return nil, nil
+		}
 		result := b.closeMessage()
+		if b.reasoningOpen && update.AgentThoughtChunk.MessageId != nil && *update.AgentThoughtChunk.MessageId != b.reasoningID {
+			result = append(result, b.closeReasoning()...)
+		}
+		reasoningID := b.ensureReasoningID(update.AgentThoughtChunk.MessageId)
+		if !b.reasoningOpen {
+			result = append(result, events.NewReasoningMessageStartEvent(reasoningID, "assistant"))
+			b.reasoningOpen = true
+		}
+		return append(result, events.NewReasoningMessageContentEvent(reasoningID, text)), nil
+	case update.ToolCall != nil:
+		result := b.closeReasoning()
+		result = append(result, b.closeMessage()...)
 		tool := update.ToolCall
 		id := string(tool.ToolCallId)
 		if id == "" {
@@ -72,19 +92,28 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 		if id == "" {
 			return nil, fmt.Errorf("ACP tool_call_update missing toolCallId")
 		}
+		var result []events.Event
 		if tool.RawInput != nil {
 			input, err := json.Marshal(tool.RawInput)
 			if err != nil {
 				return nil, fmt.Errorf("encode ACP tool update: %w", err)
 			}
-			return []events.Event{events.NewToolCallArgsEvent(id, string(input))}, nil
+			result = append(result, events.NewToolCallArgsEvent(id, string(input)))
+		}
+		output, hasOutput, err := toolResultText(tool.Content, tool.RawOutput)
+		if err != nil {
+			return nil, err
+		}
+		if hasOutput {
+			result = append(result, events.NewToolCallResultEvent("tool-result-"+id, id, output))
 		}
 		if tool.Status != nil && isTerminalToolStatus(string(*tool.Status)) {
 			if b.openTools[id] {
 				delete(b.openTools, id)
-				return []events.Event{events.NewToolCallEndEvent(id)}, nil
+				result = append(result, events.NewToolCallEndEvent(id))
 			}
 		}
+		return result, nil
 	}
 	return nil, nil
 }
@@ -104,7 +133,8 @@ func (b *Bridge) PermissionPending(requestID string, options []acpsdk.Permission
 // Finished closes all lifecycle events. Call this only after the correlated
 // session/prompt response, never by guessing from the final text chunk.
 func (b *Bridge) Finished() []events.Event {
-	result := b.closeMessage()
+	result := b.closeReasoning()
+	result = append(result, b.closeMessage()...)
 	for id := range b.openTools {
 		result = append(result, events.NewToolCallEndEvent(id))
 	}
@@ -120,6 +150,25 @@ func (b *Bridge) closeMessage() []events.Event {
 	return []events.Event{events.NewTextMessageEndEvent(b.messageID)}
 }
 
+func (b *Bridge) closeReasoning() []events.Event {
+	if !b.reasoningOpen {
+		return nil
+	}
+	b.reasoningOpen = false
+	return []events.Event{events.NewReasoningMessageEndEvent(b.reasoningID)}
+}
+
+func (b *Bridge) ensureReasoningID(messageID *string) string {
+	if messageID != nil && *messageID != "" && *messageID != b.reasoningID {
+		b.reasoningID = *messageID
+		b.reasoningOpen = false
+	}
+	if b.reasoningID == "" {
+		b.reasoningID = uuid.NewString()
+	}
+	return b.reasoningID
+}
+
 func (b *Bridge) ensureMessageID(messageID *string) string {
 	if messageID != nil && *messageID != "" && *messageID != b.messageID {
 		b.messageID = *messageID
@@ -129,6 +178,32 @@ func (b *Bridge) ensureMessageID(messageID *string) string {
 		b.messageID = uuid.NewString()
 	}
 	return b.messageID
+}
+
+// toolResultText renders a tool call's produced content for the UI. Text
+// blocks are preferred; RawOutput is JSON-encoded as a fallback so Flutter
+// always sees what the tool returned, not just that it finished.
+func toolResultText(content []acpsdk.ToolCallContent, rawOutput any) (string, bool, error) {
+	var parts []string
+	for _, block := range content {
+		if block.Content == nil {
+			continue
+		}
+		if text, ok := textContent(block.Content.Content); ok && text != "" {
+			parts = append(parts, text)
+		}
+	}
+	if len(parts) > 0 {
+		return strings.Join(parts, "\n"), true, nil
+	}
+	if rawOutput != nil {
+		encoded, err := json.Marshal(rawOutput)
+		if err != nil {
+			return "", false, fmt.Errorf("encode ACP tool output: %w", err)
+		}
+		return string(encoded), true, nil
+	}
+	return "", false, nil
 }
 
 func textContent(block acpsdk.ContentBlock) (string, bool) {
