@@ -24,7 +24,6 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		GooseURL:    os.Getenv("GOOSE_ACP_URL"),
 		GooseSecret: os.Getenv("GOOSE_SERVER__SECRET_KEY"),
 		Workspace:   os.Getenv("GOOSE_WORKSPACE"),
-		SandboxURL:  os.Getenv("SANDBOX_PROXY_URL"),
 	})
 
 	e.Router.POST("/api/pocketcoder/chats/{chatId}/runs", func(re *core.RequestEvent) error {
