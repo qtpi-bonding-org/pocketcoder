@@ -69,6 +69,8 @@ Developer tool calls have been proven to surface through Goose ACP `session/requ
 
 The c1 implementation uses a narrow, ACP-specific sandbox API for `fs/read_text_file`, `fs/write_text_file`, and every `terminal/*` callback. Both c1 and the sandbox enforce `/workspace`; c1 never reads the shared volume or executes a host command for these requests. c1 advertises those capabilities only after that boundary is configured. A `session/request_permission` is an in-memory c1 record containing the raw ACP request ID and exact offered options. The authenticated chat owner can submit one offered option; c1 forwards it verbatim to Goose and stores nothing in PocketBase. Cancelling a pending turn resolves the callback as cancelled. A c1 restart intentionally loses pending approvals; a reconnect resumes the durable Goose session mapping and does not reconstruct approvals.
 
+**Live acceptance (2026-07-16):** rebuilt `sandbox` and `pocketbase` images passed the `/workspace` boundary check (sandbox write/read succeeded; `/etc/passwd` was rejected with 403). A real authenticated Goose turn emitted the four offered permission options, accepted `allow_once` at the c1 approval route (202), completed with AG-UI `RUN_FINISHED`, and wrote only in the sandbox workspace. `reject_once` completed the turn without creating its requested file. `cancel` while pending completed deterministically. Two turns on the same chat proved fresh-c1 `session/load` reconnection. Restarting PocketBase while an approval was pending made the old approval ID return 404, proving pending state is not persisted.
+
 ## Why goose sits where it does (two ACP roles at once)
 
 goose in c2 is simultaneously:

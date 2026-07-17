@@ -20,6 +20,8 @@
 > c1 now exposes the authenticated approval endpoint and advertises only the ACP
 > filesystem/terminal capabilities implemented through the sandbox container; it still
 > sends no MCP server configuration.
+
+> Acceptance status (2026-07-16): real Docker c1/c2/sandbox tests passed for workspace rejection, allow, deny, cancel while pending, fresh-c1 session-load reconnect, and c1 restart. Pending approvals correctly vanish on restart; that is intentional and not a recovery failure.
 >
 > Runtime status (2026-07-16): the additive Compose `agent` profile runs the
 > pinned Goose c2 image behind an internal, un-published ACP relay. PocketBase
