@@ -21,7 +21,7 @@ Audit each dependency before removal; likely targets are:
 |---|---|
 | `messages` writes and live message command path | Goose owns message history and replay. Retire for Goose-backed chats. |
 | `permissions` per-turn records, approval hooks, notifications, and realtime polling | Goose owns the decision/history; c1 keeps only an in-memory pending callback. |
-| `acp_terminals` and terminal persistence | c1 executes/proxies live terminal requests only; Goose owns tool history. |
+| `acp_terminals` and terminal persistence | The active c1/c2 path advertises no terminal callbacks; Goose's built-in shell runs in c2. Treat c1 executor/proxy code as dormant legacy code, and retire it only after the inventory confirms no remaining legacy caller. |
 | `chats.acp_session_id` / `ai_engine_session_id` and related indices | Replace with the unique `goose_sessions` relation. |
 | interface/OpenCode/sandbox-specific hooks and API routes | Remove only after v2 is the sole runtime. |
 

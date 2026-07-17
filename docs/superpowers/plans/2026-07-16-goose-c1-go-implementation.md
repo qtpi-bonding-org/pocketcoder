@@ -141,28 +141,43 @@ this planning document.
 1. **Goose-owned chat replay contract**
    - Capture the exact `session/load` updates that represent durable Goose
      history, then specify a c1 authenticated read/replay response that emits
-     the same minimal AG-UI model as a live run.
+     the same minimal AG-UI model as a live run. A chat with no
+     `goose_sessions` mapping returns an authenticated empty snapshot: a read
+     must neither create a Goose session/mapping nor contact c2.
    - Authorize ownership before contacting c2. It must never return a
      PocketBase copy of messages or synthesize an unresolved permission.
-   - Specify empty/new sessions, malformed/rejected c2 replay, and a replay
-     concurrent with a live run. Decide the wire shape and event ordering in
-     fixtures before exposing the route.
+   - Serialize reads through the coordinator. While a run is active, replay
+     returns the documented active-run conflict rather than opening a second
+     ACP client and calling `session/load` concurrently with `session/prompt`.
+   - Specify empty/new sessions, malformed/rejected c2 replay, and the
+     active-run conflict. Decide the wire shape and event ordering in fixtures
+     before exposing the route.
 
 2. **Contract hardening**
    - Document stable HTTP and AG-UI outcomes for unknown/non-owner chats,
      no active run, active-run conflict, stale/invalid approval, cancellation,
      c2 unavailable, c2 protocol failure, and client stream disconnect.
-   - Bound process-local pending approval lifetime and ensure cancellation,
-     turn termination, and c1 restart clear it exactly once. Do not persist or
-     replay it.
+   - Bound process-local pending approval lifetime. Expiry and cancellation
+     must send Goose the explicit cancelled/denied decision that unblocks its
+     `request_permission` call, then yield the documented terminal run result.
+     Do not persist or replay the pending record.
+   - Treat c1 restart as a recovery contract, not merely deletion of the
+     in-memory approval ID: c2 must observe the broken/cancelled request and
+     the same chat must accept a later `session/load` and new run. If a c2
+     prompt remains blocked after c1 has restarted, that is a defect to solve,
+     not an accepted lost-approval outcome.
    - Add narrowly scoped operational diagnostics/metrics for mapping creation,
      session load, turn terminal outcome, permission resolution, and c2 errors;
      never log prompt text, provider credentials, or offered permission payloads.
 
 3. **Backend acceptance gate**
    - Extend `tests/agent-c1/` with replay fixtures and live c1/c2 cases for
-     owner versus non-owner reads, empty history, history after a tool/approval,
-     replay after c1 restart, c2 restart, c2 failure, and replay/run contention.
+     owner versus non-owner reads, an unmapped empty read with no c2 side
+     effect, history after a tool/approval, replay after c1 restart, c2
+     restart, c2 failure, and the replay-versus-active-run conflict.
+   - Prove permission expiry sends the expected ACP decision and terminal
+     update. In the live suite, restart c1 while an approval is pending, then
+     prove that the *same chat* can load and complete a later run.
    - Keep focused Go tests deterministic with fake ACP. The Docker suite is the
      only provider-backed interop gate; legacy Interface/OpenCode tests remain
      frozen rather than being adapted.
