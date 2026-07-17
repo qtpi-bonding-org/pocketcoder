@@ -25,9 +25,11 @@ services:
       - PN_URL=${PN_URL}
       - PN_RELAY_SECRET=${PN_RELAY_SECRET}
       - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
-      # Private c1 -> relay -> c2 path. Leave the secret unset unless the
-      # `agent` profile is started; the PocketBase route then stays disabled.
-      - GOOSE_ACP_URL=${GOOSE_ACP_URL:-ws://goose-acp-relay:3000/acp}
+      # Direct authenticated c1 -> c2 WebSocket (goose enforces the secret on
+      # the /acp upgrade as of v1.39; c1 sends it as ?token=). The secret is
+      # REQUIRED for the `agent` profile — goose refuses to serve without it.
+      # Leave it unset otherwise and the PocketBase agent route stays disabled.
+      - GOOSE_ACP_URL=${GOOSE_ACP_URL:-ws://goose:3000/acp}
       - GOOSE_SERVER__SECRET_KEY=${GOOSE_SERVER__SECRET_KEY:-}
       - GOOSE_WORKSPACE=${GOOSE_WORKSPACE:-/workspace}
     command: ["/app/pocketbase", "serve", "--http=0.0.0.0:8090"]
@@ -43,11 +45,14 @@ services:
       - pocketcoder-docker
       - pocketcoder-pocketbase-sdk
       - pocketcoder-tailscale
-      - pocketcoder-agent-c1
+      - pocketcoder-agent
 
   # 🪿 GOOSE C2 (private agent core)
   # Starts only with `docker compose --profile agent up`. It never publishes a
-  # host port and cannot share a Docker network with PocketBase.
+  # host port; it shares only the private `pocketcoder-agent` ACP network with
+  # PocketBase (authenticated WS) plus its own model-provider egress network.
+  # goose is the sole system of record for history; PocketBase never calls it
+  # back, so this network carries only c1 -> c2 ACP traffic.
   goose:
     build:
       context: services/goose
@@ -68,7 +73,7 @@ services:
       - opencode_workspace:/workspace
     working_dir: /workspace
     networks:
-      - pocketcoder-agent-c2
+      - pocketcoder-agent
       - pocketcoder-goose-egress
     restart: unless-stopped
     healthcheck:
@@ -77,22 +82,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
-
-  # One-way architectural relay: c1 can reach this service, which can reach
-  # c2. Goose never joins a PocketBase network.
-  goose-acp-relay:
-    image: nginx:1.27.5-alpine
-    container_name: pocketcoder-goose-acp-relay
-    profiles: ["agent"]
-    depends_on:
-      goose:
-        condition: service_healthy
-    volumes:
-      - ./services/goose/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - pocketcoder-agent-c1
-      - pocketcoder-agent-c2
-    restart: unless-stopped
 
   # 🔨 SANDBOX (Isolated Execution Environment)
   sandbox:
@@ -495,11 +484,10 @@ networks:
     driver: bridge
   pocketcoder-tailscale:
     driver: bridge
-  # c1 is PocketBase + the relay; c2 deliberately is not attached here.
-  pocketcoder-agent-c1:
-    driver: bridge
-  # c2 contains Goose and the relay only. It carries private ACP traffic.
-  pocketcoder-agent-c2:
+  # Private ACP network shared only by PocketBase (c1) and Goose (c2). Goose is
+  # reached over an authenticated WebSocket; it publishes no host port and joins
+  # no other PocketBase network, so this is its sole path to/from c1.
+  pocketcoder-agent:
     driver: bridge
   # Gives Goose model-provider egress without a route to PocketBase services.
   pocketcoder-goose-egress:
