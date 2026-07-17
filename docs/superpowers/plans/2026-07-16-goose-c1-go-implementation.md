@@ -19,6 +19,20 @@
 > produces the deterministic AG-UI terminal events. Tool execution and phone
 > permission-response endpoints remain intentionally deferred; c1 currently advertises no
 > filesystem/terminal capability and sends no MCP server configuration.
+>
+> Runtime status (2026-07-16): the additive Compose `agent` profile runs the
+> pinned Goose c2 image behind an internal, un-published ACP relay. PocketBase
+> uses the relay URL; c2 has no Docker network in common with PocketBase and
+> persists its SQLite/session state only in the separate `goose_data` volume.
+> `GOOSE_SERVER__SECRET_KEY` and the Anthropic-compatible provider credentials
+> must be set by the deployer before starting that profile.
+>
+> Compose smoke result (2026-07-16): a real authenticated PocketBase request
+> completed `RUN_STARTED → TEXT_MESSAGE_CONTENT → RUN_FINISHED` through c1,
+> the relay, and pinned c2. A second request to the same chat completed after
+> `session/load`, proving the durable mapping works without copied PocketBase
+> messages. Inspection confirmed Goose shares no Docker network with
+> PocketBase.
 
 **Goal:** add the new runtime to the existing PocketBase executable. c1 remains one Go process and one public service; it is **not** a new microservice and does not introduce a second HTTP listener.
 
@@ -29,6 +43,30 @@
 - Goose is authoritative for messages, tool calls, permissions, decisions, active turns, and history. c1 has only process-local subscribers and pending permission waiters.
 - c1 connects to the pinned Goose v1.36.0 Streamable-HTTP endpoint. It owns c2 credentials; Flutter never receives the Goose secret.
 - Flutter and c3/Cognee stay unchanged/disabled in this plan.
+
+## Local c2 runtime
+
+The additive Compose profile is intentionally off by default, so existing
+PocketBase deployments do not start an agent service without provider
+credentials. Set the secret once for both c1 and c2, then start the private
+runtime before PocketBase:
+
+```bash
+export GOOSE_SERVER__SECRET_KEY='use-a-long-random-secret'
+export ANTHROPIC_API_KEY="$(jq -r '.minimax.key' /Users/aicoder/.local/share/gait/auth.json)"
+export ANTHROPIC_HOST='https://api.minimax.io/anthropic'
+export GOOSE_MODEL='MiniMax-M2.5'
+
+docker compose --profile agent up -d --build goose goose-acp-relay
+docker compose up -d --build pocketbase
+```
+
+`goose-acp-relay` has no published port and is the only service shared between
+the c1 and c2 networks. Goose is unprivileged, stores its state in the named
+`goose_data` volume, and has no network in common with PocketBase. It currently
+permits only the provider configuration proven by the spike (`anthropic` via
+the configured Anthropic-compatible endpoint); MCP and gateway tools remain
+disabled.
 
 ## Package shape
 
