@@ -11,7 +11,7 @@ import (
 )
 
 func TestCancelForwardsToTheActiveSession(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", SandboxURL: "http://sandbox:3001"})
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestCancelForwardsToTheActiveSession(t *testing.T) {
 }
 
 func TestCancelRejectsWhenNoRunIsActive(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", SandboxURL: "http://sandbox:3001"})
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestCancelRejectsWhenNoRunIsActive(t *testing.T) {
 }
 
 func TestCancelRejectsAfterRunFinishes(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", SandboxURL: "http://sandbox:3001"})
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestCancelRejectsAfterRunFinishes(t *testing.T) {
 }
 
 func TestApproveForwardsOnlyOfferedOptionAndIsMemoryOnly(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", SandboxURL: "http://sandbox:3001"})
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestApproveForwardsOnlyOfferedOptionAndIsMemoryOnly(t *testing.T) {
 }
 
 func TestDenyForwardsAnOfferedRejectOption(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", SandboxURL: "http://sandbox:3001"})
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +96,7 @@ func TestDenyForwardsAnOfferedRejectOption(t *testing.T) {
 }
 
 func TestRestartHasNoPendingPermissions(t *testing.T) {
-	fresh, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", SandboxURL: "http://sandbox:3001"})
+	fresh, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func TestRestartHasNoPendingPermissions(t *testing.T) {
 }
 
 func TestCancelResolvesPendingPermissionAsCancelled(t *testing.T) {
-	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", SandboxURL: "http://sandbox:3001"})
+	c, err := New(Config{GooseURL: "http://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace"})
 	if err != nil {
 		t.Fatal(err)
 	}
