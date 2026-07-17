@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
@@ -41,7 +42,7 @@ type OnSessionCreated func(context.Context, string) error
 type Coordinator struct {
 	config    Config
 	mu        sync.Mutex
-	locks     map[string]*sync.Mutex
+	running   map[string]struct{}
 	activeRun map[string]*activeRun
 	pending   map[string]*pendingPermission
 }
@@ -50,6 +51,7 @@ type Coordinator struct {
 // authoritative for completed turns; c1 deliberately does not reconstruct
 // active work from persisted state after a restart.
 var ErrNoActiveRun = errors.New("no active run")
+var ErrRunInProgress = errors.New("chat already has an active run")
 var ErrNoPendingPermission = errors.New("no pending permission")
 var ErrPermissionOptionNotOffered = errors.New("permission option was not offered")
 
@@ -81,10 +83,23 @@ func New(config Config) (*Coordinator, error) {
 	}
 	return &Coordinator{
 		config:    config,
-		locks:     make(map[string]*sync.Mutex),
+		running:   make(map[string]struct{}),
 		activeRun: make(map[string]*activeRun),
 		pending:   make(map[string]*pendingPermission),
 	}, nil
+}
+
+// Reserve claims the single in-process run slot for a chat. It is separate
+// from RunReserved so the HTTP route can return a proper 409 before it starts
+// an SSE response.
+func (c *Coordinator) Reserve(chatID string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, exists := c.running[chatID]; exists {
+		return ErrRunInProgress
+	}
+	c.running[chatID] = struct{}{}
+	return nil
 }
 
 // Cancel forwards cancellation only to a currently active prompt for the
@@ -141,11 +156,17 @@ func (c *Coordinator) Approve(ctx context.Context, chatID, requestID, optionID s
 // Run creates or reloads the one Goose session for a chat, then emits AG-UI
 // lifecycle events until the correlated session/prompt response arrives.
 func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, resolveSession ResolveSession, onSessionCreated OnSessionCreated) error {
-	// A first run has no persisted mapping yet. Serialize it per chat so two
-	// simultaneous requests cannot create two Goose sessions for one chat.
-	lock := c.chatLock(request.ChatID)
-	lock.Lock()
-	defer lock.Unlock()
+	if err := c.Reserve(request.ChatID); err != nil {
+		return err
+	}
+	return c.RunReserved(ctx, request, emit, resolveSession, onSessionCreated)
+}
+
+// RunReserved runs a chat after Reserve has claimed its slot. The route uses
+// this form to make concurrent-request rejection an HTTP 409 rather than an
+// SSE error event.
+func (c *Coordinator) RunReserved(ctx context.Context, request RunRequest, emit Emit, resolveSession ResolveSession, onSessionCreated OnSessionCreated) error {
+	defer c.release(request.ChatID)
 
 	sessionID, err := resolveSession(ctx)
 	if err != nil {
@@ -253,6 +274,7 @@ func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, re
 		"sessionId": sessionID,
 		"prompt":    []map[string]string{{"type": "text", "text": request.Prompt}},
 	}, sessionID); err != nil {
+		c.cancelOnClientDisconnect(ctx, request.ChatID)
 		return err
 	}
 
@@ -264,6 +286,21 @@ func (c *Coordinator) Run(ctx context.Context, request RunRequest, emit Emit, re
 		}
 	}
 	return nil
+}
+
+func (c *Coordinator) cancelOnClientDisconnect(ctx context.Context, chatID string) {
+	if !errors.Is(ctx.Err(), context.Canceled) && !errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return
+	}
+	cancelCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_ = c.Cancel(cancelCtx, chatID)
+}
+
+func (c *Coordinator) release(chatID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.running, chatID)
 }
 
 func (c *Coordinator) handlePermissionRequest(ctx context.Context, chatID, sessionID string, client acpClient, bridge *agui.Bridge, emit Emit, message acp.Message) {
@@ -309,15 +346,4 @@ func (c *Coordinator) finishRun(chatID string, client acpClient) {
 	if run := c.activeRun[chatID]; run != nil && run.client == client {
 		delete(c.activeRun, chatID)
 	}
-}
-
-func (c *Coordinator) chatLock(chatID string) *sync.Mutex {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	lock := c.locks[chatID]
-	if lock == nil {
-		lock = &sync.Mutex{}
-		c.locks[chatID] = lock
-	}
-	return lock
 }

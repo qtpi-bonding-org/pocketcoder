@@ -45,6 +45,12 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		if input.Prompt == "" {
 			return re.BadRequestError("prompt is required", nil)
 		}
+		if err := service.Reserve(chatID); err != nil {
+			if errors.Is(err, coordinator.ErrRunInProgress) {
+				return apis.NewApiError(http.StatusConflict, "A run is already active for this chat", nil)
+			}
+			return apis.NewApiError(http.StatusInternalServerError, "Unable to start agent run", err)
+		}
 
 		re.Response.Header().Set("Content-Type", "text/event-stream")
 		re.Response.Header().Set("Cache-Control", "no-cache")
@@ -52,7 +58,7 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		re.Response.WriteHeader(http.StatusOK)
 		writer := sse.NewSSEWriter()
 		emit := func(event events.Event) error { return writer.WriteEvent(re.Request.Context(), re.Response, event) }
-		err = service.Run(re.Request.Context(), coordinator.RunRequest{
+		err = service.RunReserved(re.Request.Context(), coordinator.RunRequest{
 			ChatID: chatID, Prompt: input.Prompt,
 		}, emit, func(ctx context.Context) (string, error) {
 			return gooseSessionForChat(app, chatID, re.Auth.Id)

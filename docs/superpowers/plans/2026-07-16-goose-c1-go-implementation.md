@@ -21,7 +21,9 @@
 > terminal capabilities, and sends no MCP server configuration. Goose's native shell
 > executes in c2 for the selected simplified runtime.
 
-> Acceptance status (2026-07-16): real Docker c1/c2 tests passed for allow, deny, cancel while pending, fresh-c1 session-load reconnect, and c1 restart. Pending approvals correctly vanish on restart; that is intentional and not a recovery failure. Keep the Rust sandbox ACP adapter and legacy agent/MCP services dormant until Goose can be deliberately routed through them; do not present them as part of the active path.
+> Acceptance status (2026-07-16): real Docker c1/c2 tests passed for allow, deny, cancel while pending, fresh-c1 session-load reconnect, c1 restart, and c2 restart. Pending approvals correctly vanish on c1 restart; that is intentional and not a recovery failure. Focused Go coverage rejects concurrent runs before SSE begins and sends `session/cancel` when a client context disconnects. Keep the Rust sandbox ACP adapter and legacy agent/MCP services dormant until Goose can be deliberately routed through them; do not present them as part of the active path.
+
+> Testing strategy: retain focused Go c1 tests and PocketBase-only BATS coverage; freeze rather than repair BATS and TypeScript tests that assert the retired Interface/OpenCode topology. See `docs/agent-testing-strategy.md`. Replace frozen agent tests with a c1-route Docker acceptance suite at cutover.
 >
 > Runtime status (2026-07-16): the additive Compose `agent` profile runs the
 > pinned Goose c2 image behind an internal, un-published ACP relay. PocketBase
