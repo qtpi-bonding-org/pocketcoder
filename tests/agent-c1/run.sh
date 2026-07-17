@@ -11,4 +11,4 @@ done
 docker compose --profile agent up -d --build goose goose-acp-relay pocketbase
 docker compose -f docker-compose.yml -f docker-compose.agent-test.yml \
   --profile agent --profile agent-test run --rm agent-c1-test \
-  bats --tap /tests/agent-c1/acceptance.bats
+  --tap /tests/agent-c1/acceptance.bats
