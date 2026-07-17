@@ -1,0 +1,26 @@
+# Opt-in acceptance runner for the active c1 PocketBase + c2 Goose runtime.
+# It intentionally does not depend on Interface, OpenCode, sandbox, or c3.
+services:
+  agent-c1-test:
+    build:
+      context: .
+      dockerfile: services/test/Dockerfile
+    profiles: ["agent-test"]
+    depends_on:
+      goose:
+        condition: service_healthy
+      pocketbase:
+        condition: service_healthy
+    volumes:
+      - ./tests:/tests:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PB_URL: http://pocketbase:8090
+      PB_AUTH_COLLECTION: ${PB_AUTH_COLLECTION:-_pb_users_auth_}
+      AGENT_TEST_EMAIL: ${AGENT_TEST_EMAIL:?set an ordinary PocketBase test-user email}
+      AGENT_TEST_PASSWORD: ${AGENT_TEST_PASSWORD:?set that test user's password}
+      AGENT_TEST_TIMEOUT_SECONDS: ${AGENT_TEST_TIMEOUT_SECONDS:-120}
+      GOOSE_CONTAINER: ${GOOSE_CONTAINER:-pocketcoder-goose}
+      POCKETBASE_CONTAINER: ${POCKETBASE_CONTAINER:-pocketcoder-pocketbase}
+    networks:
+      - pocketcoder-agent-c1
