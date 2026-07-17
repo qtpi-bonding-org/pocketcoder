@@ -24,7 +24,7 @@ Here's the full reference list, grouped by where each thing sits.
 - [`ag_ui`](https://pub.dev/packages/ag_ui) on pub.dev — the Dart AG-UI client to use for the eventual Flutter data-layer swap. It supplies typed AG-UI event models, decoding, and SSE support; PocketCoder should wrap it in its existing repository/cubit layer rather than rebuild the client protocol. Pin a released version and validate authenticated reconnect/background behavior against c1 before cutover.
 - `acp_dart` and `dart_acp` — unnecessary in this architecture: Flutter speaks AG-UI only, while c1 (Go) is the ACP client.
 
-One more useful one for tracking maturity/timing risk on the c2 side: the [`goosed`→ACP-over-HTTP tracking issue](https://github.com/aaif-goose/goose/issues/6642) — worth watching since that's the transport your whole c1↔c2 hop depends on, and it's still consolidating. The 2026-07-16 spike selected Goose v1.36.0, pinned by digest in `spikes/goose-acp-http/README.md`: it completed remote create, prompt, fresh-connection `session/load`, history replay, a second prompt, and cancellation of an in-flight streaming turn over the current Streamable-HTTP ACP profile. In `approve` mode, developer-tool permissions were held and resolved through ACP, and completed tool history replayed on load; no PocketBase approval copy is needed. The earlier image's legacy SSE transport is rejected for c1.
+One more useful one for tracking maturity/timing risk on the c2 side: the [`goosed`→ACP-over-HTTP tracking issue](https://github.com/aaif-goose/goose/issues/6642) — worth watching since that's the transport your whole c1↔c2 hop depends on, and it's still consolidating. The 2026-07-16 spike selected Goose v1.36.0, pinned by digest in `spikes/goose-acp-http/README.md`: it completed remote create, prompt, fresh-connection `session/load`, history replay, a second prompt, and cancellation of an in-flight streaming turn over the current Streamable-HTTP ACP profile. In `approve` mode, developer-tool permissions were held and resolved through ACP, and completed tool history replayed on load; no PocketBase approval copy is needed. The earlier image's legacy SSE transport is rejected for c1. **Update (2026-07-17): the hand-rolled Streamable-HTTP profile is superseded by `goose serve` WebSocket via the SDK `ClientSideConnection` — see the transport-decision section below.**
 
 
 # PocketCoder Revamp v2 — Architecture Plan
@@ -54,7 +54,7 @@ Mobile (Flutter)
    │  AG-UI events over SSE (JSON, not binary protobuf)
    ▼
 c1: PocketBase (auth, chat→Goose-session mapping)
-   │  ACP-over-HTTP (JSON-RPC), via Go ACP client (coder/acp-go-sdk or similar)
+   │  ACP over WebSocket (JSON-RPC), via coder/acp-go-sdk ClientSideConnection (see 2026-07-17 transport decision)
    ▼
 c2: goose (ACP agent-server mode)
    │  Provider trait → spawns claude-agent-acp / codex-acp as child process
@@ -112,6 +112,51 @@ Variants outside this table (`usage`, `session_info`, `plan`, `available_command
 are not part of the frozen contract. Adding any of them is a deliberate contract
 change, not an implementation detail.
 
+## c1↔c2 transport decision (2026-07-17): WebSocket via the SDK connection
+
+**Supersedes the 2026-07-16 selection of the hand-rolled Streamable-HTTP profile.**
+The c1↔c2 hop is now **`goose serve` WebSocket** driven through the maintained
+`coder/acp-go-sdk` `ClientSideConnection`, adapted with a ~40-line
+WS↔byte-stream shim. The bespoke `services/pocketbase/internal/agent/acp/streamable.go`
+transport is to be **deleted**; the AG-UI bridge and the frozen event contract
+above are transport-independent and unchanged.
+
+Why: the ACP SDK ships a robust, typed, battle-tested connection (initialize /
+new / load / prompt / cancel, JSON-RPC correlation, cancellation, notification
+dispatch) but only over an `io.Reader`/`io.Writer` byte stream — it has no HTTP
+transport and no retry logic. Streamable-HTTP forced ~300 lines of hand-rolled
+protocol (its own correlation, SSE reading, `Acp-Connection-Id` dance) around a
+*draft* spec, and produced a mid-turn hang bug. All three candidate transports
+were spiked against pinned Goose v1.36.0 (evidence in
+`spikes/goose-acp-http/README.md`):
+
+| | Streamable-HTTP (hand-rolled) | stdio (socat/shim) | **WebSocket** |
+|---|---|---|---|
+| init/new/prompt/load+replay/stream/permission/cancel | ✅ | ✅ | ✅ |
+| uses the maintained SDK connection | ❌ (~300 bespoke lines) | ✅ | ✅ (~40-line adapter) |
+| c2 bridge process | none | socat/shim, one goose per connection | **none** (persistent `goose serve`) |
+| connection-id correlation | required | n/a | **none** (single duplex channel) |
+| ecosystem fit | draft fallback | local transport, tunneled | **blessed remote transport** |
+
+WebSocket wins on every axis except channel auth (below). Endpoint: `goose serve`
+exposes WS at **`/acp`** (same path, content-negotiated by the `Upgrade` header);
+one JSON-RPC message per text frame, so a thin adapter presents it to the SDK as
+newline-delimited JSON. `session/load` resume, history replay, developer-tool
+permission pass-through, and mid-turn `session/cancel` all succeeded over WS; the
+on-disk `sessions.db` (SQLite WAL) proved transport-independent and safe under
+concurrent writers.
+
+**Consequences / open items:**
+- c2 runs `goose serve --host 0.0.0.0` (WebSocket), not `goose acp` (stdio). No
+  socat, no supervisor shim, no per-connection process spawn.
+- **WS auth gap:** in v1.36.0 the WS `/acp` endpoint accepted a full
+  unauthenticated session (HTTP `/acp` enforces `X-Secret-Key`; WS did not).
+  Until fixed upstream, the c1↔c2 channel is protected by network isolation —
+  c2 has no published port and shares only the single relay network with c1.
+- **Reconnect/replay on a mid-turn WS drop** is the same open Gate-B question as
+  every transport: the model is fail-fast on drop, then recover on the next run
+  via `session/load`; verify before relying on anything stronger.
+
 ## Why goose sits where it does (two ACP roles at once)
 
 goose in c2 is simultaneously:
@@ -153,7 +198,7 @@ Cognee is an MCP server by design (`remember`/`recall`/`forget`, plus code-graph
 
 ## Open questions / risks carried forward
 
-- **ACP-over-HTTP maturity**: `goosed`→ACP-over-HTTP consolidation (upstream issue #6642) is active, not finalized. Pin a goose version.
+- **ACP transport maturity**: the `goosed`→ACP-over-HTTP/WS consolidation (upstream issue #6642) is active, not finalized. c1 now uses `goose serve` WebSocket via the SDK connection (2026-07-17 decision); pin a goose version and watch for the WS auth gap and an official SDK transport.
 - **Gateway MCP attachment and permission flow**: blocked in the selected Goose v1.36.0 configuration. A real SSE Docker MCP Gateway supplied via `mcpServers` did not expose its built-in tool to Goose. Pin/validate a working attachment before enabling Cognee; then prove its calls reach `request_permission` before changing the default-deny policy.
 - **SDK maturity, Go side**: solid — `coder/acp-go-sdk` (Coder-backed) and the community AG-UI Go SDK (used by Microsoft's Agent Framework and Tencent's trpc-agent-go independently) are reasonable bets.
 - **SDK maturity, Dart side**: `ag_ui` is the selected Flutter-side AG-UI client, but Flutter work is intentionally deferred. Pin and exercise it against PocketCoder's authenticated c1 SSE endpoint—especially reconnect and background/resume—before committing to the cutover.
