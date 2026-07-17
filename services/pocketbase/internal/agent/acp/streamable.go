@@ -217,6 +217,24 @@ func (c *Client) Respond(ctx context.Context, id json.RawMessage, result any, se
 	return nil
 }
 
+// RespondError rejects an agent-originated request without attempting a local
+// fallback. c1 uses this when the sandbox boundary rejects an ACP callback.
+func (c *Client) RespondError(ctx context.Context, id json.RawMessage, code int, message string, sessionID string) error {
+	errBody, err := json.Marshal(map[string]any{"code": code, "message": message})
+	if err != nil {
+		return fmt.Errorf("encode ACP error response: %w", err)
+	}
+	resp, err := c.post(ctx, Message{JSONRPC: "2.0", ID: id, Error: errBody}, sessionID)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusAccepted {
+		return responseError("ACP error response", resp)
+	}
+	return nil
+}
+
 func (c *Client) post(ctx context.Context, message Message, sessionID string) (*http.Response, error) {
 	body, err := json.Marshal(message)
 	if err != nil {

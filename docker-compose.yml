@@ -30,6 +30,7 @@ services:
       - GOOSE_ACP_URL=${GOOSE_ACP_URL:-http://goose-acp-relay:3000/acp}
       - GOOSE_SERVER__SECRET_KEY=${GOOSE_SERVER__SECRET_KEY:-}
       - GOOSE_WORKSPACE=${GOOSE_WORKSPACE:-/workspace}
+      - SANDBOX_PROXY_URL=${SANDBOX_PROXY_URL:-http://sandbox:3001}
     command: ["/app/pocketbase", "serve", "--http=0.0.0.0:8090"]
     restart: unless-stopped
     healthcheck:
@@ -44,6 +45,7 @@ services:
       - pocketcoder-pocketbase-sdk
       - pocketcoder-tailscale
       - pocketcoder-agent-c1
+      - pocketcoder-control
 
   # 🪿 GOOSE C2 (private agent core)
   # Starts only with `docker compose --profile agent up`. It never publishes a
