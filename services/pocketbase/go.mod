@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	github.com/ag-ui-protocol/ag-ui/sdks/community/go v0.0.0-20260716182252-b646b4634455
 	github.com/coder/acp-go-sdk v0.13.5
+	github.com/coder/websocket v1.8.15
 	github.com/google/uuid v1.6.0
 	github.com/pocketbase/pocketbase v0.36.1
 	gopkg.in/yaml.v3 v3.0.1
