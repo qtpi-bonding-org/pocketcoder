@@ -6,7 +6,7 @@
 
 **Architecture:** Pure deletion pass over PocketBase Go, docker-compose, service build contexts, and legacy tests. One forward-only migration drops legacy collections/fields. No features added, no refactors.
 
-**Tech Stack:** Go (PocketBase v0.30-era `core` API), docker-compose, bats.
+**Tech Stack:** Go (PocketBase v0.36.1 `core` API), docker-compose, bats.
 
 **Design spec:** `docs/superpowers/specs/2026-07-18-legacy-runtime-prune-design.md`
 
@@ -60,7 +60,7 @@ git rm internal/api/permission.go internal/hooks/permissions.go
 
 - [ ] **Step 3: Remove the two registration lines from `main.go`**
 
-Delete line 47 `hooks.RegisterPermissionHooks(app)` and line 73 `api.RegisterPermissionApi(app, e)` (and any now-orphaned comment directly above line 73 referring to the permission endpoint).
+Delete exactly two lines: `hooks.RegisterPermissionHooks(app)` (line 47) and `api.RegisterPermissionApi(app, e)` (line 73). Do NOT delete the `// 2. Register Global Sovereign Hooks` or `// B. Register Custom API Endpoints` comments — they are generic section headers, not permission-specific.
 
 - [ ] **Step 4: Build**
 
@@ -82,7 +82,7 @@ git add -A && git commit -m "prune: delete dead OpenCode permission route and ho
 
 ## Task 2: Trim boot-critical hooks that bind to deleted collections
 
-`messages`/`permissions` are dropped in Task 3. PocketBase binds these hooks at **startup**, so they must stop referencing those collections *before* the collections vanish, or boot breaks.
+`messages`/`permissions` are dropped in Task 3. These hooks bind to those collections at registration. In PocketBase v0.36 the bindings are lazy-by-tag (they won't panic at boot — they'd just never fire), but they are dead references to about-to-be-dropped collections, so remove them here, before the migration.
 
 **Files:**
 - Modify: `services/pocketbase/internal/hooks/notifications.go:139`
@@ -94,13 +94,13 @@ git add -A && git commit -m "prune: delete dead OpenCode permission route and ho
 
 - [ ] **Step 1: Remove the `permissions` create trigger in `notifications.go`**
 
-Delete the entire block starting at line 139:
+Delete the orphaned comment at line 138 (`// Hook: permission created -> push notification`) AND the entire block starting at line 139:
 ```go
 app.OnRecordAfterCreateSuccess("permissions").BindFunc(func(e *core.RecordEvent) error {
     // ...
 })
 ```
-Remove the whole statement (from `app.OnRecordAfterCreateSuccess("permissions")` through its closing `})`). Leave the rest of `RegisterNotificationHooks` and `RegisterPushApi` intact.
+Remove the whole statement (from `app.OnRecordAfterCreateSuccess("permissions")` through its closing `})`) plus the comment line above it. Leave the rest of `RegisterNotificationHooks` and `RegisterPushApi` intact. `core` stays imported (still used by `RegisterPushApi`).
 
 - [ ] **Step 2: Trim the timestamps collection list**
 
@@ -116,7 +116,7 @@ collections := []string{"chats", "usages", "ssh_keys", "poco_configs"}
 - [ ] **Step 3: Build**
 
 Run: `cd services/pocketbase && go build ./...`
-Expected: exit 0. If `core` becomes an unused import in `notifications.go`, remove it.
+Expected: exit 0. (`core` stays used in `notifications.go`; no import change expected.)
 
 - [ ] **Step 4: Unit tests green**
 
@@ -220,11 +220,16 @@ Expected: migrations apply through `1752000000` with no error. (If the binary ne
 
 - [ ] **Step 4: Assert the collections are gone**
 
-Run:
+`go run . migrate collections` does NOT list collections (it writes a snapshot migration file), so boot the server against the throwaway dir and check the API:
 ```bash
-cd services/pocketbase && go run . migrate collections --dir /tmp/pb_prune_check 2>/dev/null | grep -E "messages|permissions|acp_terminals" || echo "LEGACY COLLECTIONS ABSENT"
+cd services/pocketbase && (timeout 12 go run . serve --http=127.0.0.1:8098 --dir /tmp/pb_prune_check &) ; sleep 8
+for c in messages permissions acp_terminals; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:8098/api/collections/$c/records")
+  echo "$c -> $code"
+done
+pkill -f "serve --http=127.0.0.1:8098" 2>/dev/null || true
 ```
-Expected: prints `LEGACY COLLECTIONS ABSENT`. (If `migrate collections` is unavailable in this PocketBase build, instead boot `go run . serve` against `/tmp/pb_prune_check` and confirm via the admin API that the three collections 404.)
+Expected: each collection prints `404` (collection no longer exists). A `200`/`403` means the drop did not apply.
 
 - [ ] **Step 5: Commit**
 
@@ -304,9 +309,17 @@ Do NOT remove `opencode_workspace` (still mounted by pocketbase + goose), `pocke
 
 ```bash
 cd /Users/aicoder/Documents/pocketcoder
-git rm -r services/interface services/opencode services/sandbox services/open-notebook-mcp
+git rm -r services/interface services/opencode services/sandbox services/open-notebook-mcp services/poco-memory
 ```
-(If `services/surrealdb`, `services/open-notebook`, or `services/poco-memory` directories exist as build contexts, delete those too; note in the commit which existed.)
+(`services/surrealdb` and `services/open-notebook` do not exist — those services are image-based, nothing to delete. Only `poco-memory` among the knowledge services has a build context.)
+
+- [ ] **Step 5b: Delete the legacy OpenCode test-compose override**
+
+`docker-compose.test.yml` wires a `test` service to the now-deleted `sandbox` and `opencode` (`depends_on: sandbox`/`opencode`, `SANDBOX_HOST=sandbox`, `OPENCODE_URL`). It is the OpenCode-era test harness; `docker-compose.agent-test.yml` is the live replacement.
+```bash
+git rm docker-compose.test.yml
+```
+(Also remove its now-orphaned `pocketcoder-opencode-sdk` network if that network is defined only in this file — confirm with `grep -rn pocketcoder-opencode-sdk docker-compose*.yml`.)
 
 - [ ] **Step 6: Validate every compose profile parses**
 
@@ -387,11 +400,13 @@ Confirm the boot in Step 2 logs nothing about binding hooks to `messages`, `perm
 Run:
 ```bash
 cd /Users/aicoder/Documents/pocketcoder
-grep -rn "goose-acp-relay\|open-notebook\|surrealdb\|poco-memory\|services/interface\|services/opencode\|services/sandbox\|RegisterPermissionHooks\|RegisterPermissionApi\|acp_terminals\|ai_engine_session_id\|acp_session_id" \
+grep -rn "goose-acp-relay\|open-notebook\|surrealdb\|poco-memory\|services/interface\|services/opencode\|services/sandbox\|RegisterPermissionHooks\|RegisterPermissionApi\|acp_terminals\|acp_session_id" \
   --include='*.go' --include='*.yml' --include='*.sh' --include='*.template' . 2>/dev/null \
   | grep -v node_modules | grep -v "pb_migrations/17" | grep -v "docs/"
+# Bare service names in any compose file (catches override files the path-grep misses):
+grep -rn "\bsandbox\b\|\bopencode\b\|\binterface\b" docker-compose*.yml 2>/dev/null | grep -v "^docker-compose.yml:.*# "
 ```
-Expected: no output. Any hit outside applied migrations/docs is a miss to fix. (Cron's `hooks/cron.go`/`api/cron.go` still referencing `messages`/`ai_engine_session_id` is EXPECTED and intentionally left loud — but note them explicitly if they appear so the reviewer confirms they are the known cron follow-up, not an oversight.)
+Expected: no output from either. Any hit outside applied migrations/docs is a miss to fix. Two EXPECTED, intentionally-left-loud hits that are NOT misses: `hooks/cron.go` (`messages` write) and `api/cron.go` (`ai_engine_session_id` read) — the known cron follow-up. Note them explicitly if they appear so a reviewer confirms they are deliberate, not oversights.
 
 - [ ] **Step 4: The agent path still works end-to-end**
 

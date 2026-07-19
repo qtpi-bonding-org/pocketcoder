@@ -33,8 +33,11 @@ only durable c1 runtime record (per migration `1748000500`).
 - **Loud errors, no guards.** Where a *kept* code path still references a
   removed collection/field (cron; the agent-definition config hooks), leave it
   untouched so it fails loudly on use. Do **not** add existence guards or
-  no-ops. The only edits to kept code are the ones required to keep PocketBase
-  **booting** (startup-time hook bindings to deleted collections).
+  no-ops. The only edits to kept code are removing now-dead **startup hook
+  bindings** that reference deleted collections (`notifications.go`,
+  `timestamps.go`). In PocketBase v0.36 these bind lazily by collection tag, so
+  they would not panic at boot — but they are dead references to dropped
+  collections and are removed as cleanup, before the migration drops them.
 - **Pre-launch.** No users, no data to preserve. Deleting any existing legacy
   records is acceptable; no retention window, no rollback window, no dual runtime.
 
@@ -62,7 +65,13 @@ Remove these compose services and delete their `services/<name>/` directories
 (build contexts): `interface`, `sandbox`, `surrealdb`, `open-notebook`,
 `open-notebook-mcp`, `poco-memory`. There is no standalone `opencode` compose
 service — OpenCode ran inside `interface`/`sandbox`; also delete the
-`services/opencode/` and `services/interface/` directories.
+`services/opencode/`, `services/interface/`, and `services/poco-memory/`
+directories (the other knowledge services are image-based, no build context).
+
+Delete the legacy override `docker-compose.test.yml` — its `test` service
+depends on the removed `sandbox`/`opencode` and would otherwise break
+`docker compose -f docker-compose.yml -f docker-compose.test.yml config`.
+`docker-compose.agent-test.yml` is the live replacement.
 
 Fix the vestigial `depends_on: sandbox` gate on `sqlpage` (sandbox is gone).
 
