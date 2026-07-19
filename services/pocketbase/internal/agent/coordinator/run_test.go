@@ -26,6 +26,7 @@ type fakeConn struct {
 	cancelled  string
 	client     acpsdk.Client
 	newSession string
+	deletedSession string
 }
 
 func (f *fakeConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error) {
@@ -40,6 +41,9 @@ func (f *fakeConn) LoadSession(context.Context, acpsdk.LoadSessionRequest) (acps
 func (f *fakeConn) SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
 	return acpsdk.SetSessionModeResponse{}, nil
 }
+func (f *fakeConn) SetSessionConfigOption(context.Context, acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) {
+	return acpsdk.SetSessionConfigOptionResponse{}, nil
+}
 func (f *fakeConn) Prompt(context.Context, acpsdk.PromptRequest) (acpsdk.PromptResponse, error) {
 	return acpsdk.PromptResponse{}, nil
 }
@@ -48,6 +52,12 @@ func (f *fakeConn) Cancel(_ context.Context, n acpsdk.CancelNotification) error 
 	f.cancelled = string(n.SessionId)
 	f.mu.Unlock()
 	return nil
+}
+func (f *fakeConn) UnstableDeleteSession(_ context.Context, req acpsdk.UnstableDeleteSessionRequest) (acpsdk.UnstableDeleteSessionResponse, error) {
+	f.mu.Lock()
+	f.deletedSession = string(req.SessionId)
+	f.mu.Unlock()
+	return acpsdk.UnstableDeleteSessionResponse{}, nil
 }
 func (f *fakeConn) Close() error { return nil }
 
