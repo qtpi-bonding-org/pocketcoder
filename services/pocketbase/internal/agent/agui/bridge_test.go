@@ -45,9 +45,11 @@ func TestBridgePermissionState(t *testing.T) {
 }
 
 // TestBridgeEmitsToolResultBeforeEnd covers the legacy two-shot sequence
-// (start without status, update with status + content). The new semantics must
-// keep emitting exactly TOOL_CALL_RESULT + TOOL_CALL_END on a terminal update,
-// in that order, so clients that consume this event pair keep working.
+// (start without status, update with status + content). The new semantics
+// still emit TOOL_CALL_RESULT before TOOL_CALL_END on a terminal update, so
+// clients that consume that ordering keep working; a CUSTOM pocketcoder:tool
+// event now lands between them carrying the tool's kind/status/locations
+// (never-drop: every tool_call_update surfaces its metadata, not just start).
 func TestBridgeEmitsToolResultBeforeEnd(t *testing.T) {
 	bridge := NewBridge("chat-1", "run-1")
 	start := acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
@@ -72,7 +74,7 @@ func TestBridgeEmitsToolResultBeforeEnd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(evs) != 2 || evs[0].Type() != "TOOL_CALL_RESULT" || evs[1].Type() != "TOOL_CALL_END" {
+	if len(evs) != 3 || evs[0].Type() != "TOOL_CALL_RESULT" || evs[1].Type() != "CUSTOM" || evs[2].Type() != "TOOL_CALL_END" {
 		t.Fatalf("unexpected tool result events: %#v", evs)
 	}
 	b, err := json.Marshal(evs[0])
