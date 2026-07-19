@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
 )
 
@@ -43,6 +44,10 @@ func TestBridgePermissionState(t *testing.T) {
 	}
 }
 
+// TestBridgeEmitsToolResultBeforeEnd covers the legacy two-shot sequence
+// (start without status, update with status + content). The new semantics must
+// keep emitting exactly TOOL_CALL_RESULT + TOOL_CALL_END on a terminal update,
+// in that order, so clients that consume this event pair keep working.
 func TestBridgeEmitsToolResultBeforeEnd(t *testing.T) {
 	bridge := NewBridge("chat-1", "run-1")
 	start := acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
@@ -63,14 +68,14 @@ func TestBridgeEmitsToolResultBeforeEnd(t *testing.T) {
 			Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "file body"}},
 		}}},
 	}}
-	events, err := bridge.Update(update)
+	evs, err := bridge.Update(update)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(events) != 2 || events[0].Type() != "TOOL_CALL_RESULT" || events[1].Type() != "TOOL_CALL_END" {
-		t.Fatalf("unexpected tool result events: %#v", events)
+	if len(evs) != 2 || evs[0].Type() != "TOOL_CALL_RESULT" || evs[1].Type() != "TOOL_CALL_END" {
+		t.Fatalf("unexpected tool result events: %#v", evs)
 	}
-	b, err := json.Marshal(events[0])
+	b, err := json.Marshal(evs[0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,4 +222,106 @@ func TestBridgeAgentImageEmitsContentCustom(t *testing.T) {
 	if !found {
 		t.Fatalf("image chunk should emit CUSTOM pocketcoder:content, got %#v", evs)
 	}
+}
+
+// TestBridgeSingleShotCompletedToolCall covers Task 6's single-shot fix: ACP
+// can deliver a tool_call already in a terminal state with content. The bridge
+// must emit START, RESULT, and END in one burst so the output is never lost
+// (the old code only tracked the tool as open and waited for an update that
+// never came).
+func TestBridgeSingleShotCompletedToolCall(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	status := acpsdk.ToolCallStatusCompleted
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call",
+		ToolCallId:    "tc1",
+		Title:         "Read",
+		Kind:          acpsdk.ToolKindRead,
+		Status:        status,
+		Content: []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{
+			Type:    "content",
+			Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "file body"}},
+		}}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	types := eventTypes(evs)
+	if !contains(types, "TOOL_CALL_START") || !contains(types, "TOOL_CALL_RESULT") || !contains(types, "TOOL_CALL_END") {
+		t.Fatalf("single-shot must emit START+RESULT+END: %v", types)
+	}
+}
+
+// TestBridgeToolUpdateDiffEmitsCustom covers the structured diff path: a
+// tool_call_update carrying a diff content block must surface a CUSTOM
+// pocketcoder:diff event AND close the tool with TOOL_CALL_END when the
+// status is terminal.
+func TestBridgeToolUpdateDiffEmitsCustom(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call",
+		ToolCallId:    "tc2",
+		Title:         "Edit",
+		Kind:          acpsdk.ToolKindEdit,
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	old := "a\n"
+	done := acpsdk.ToolCallStatusCompleted
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ToolCallUpdate: &acpsdk.SessionToolCallUpdate{
+		SessionUpdate: "tool_call_update",
+		ToolCallId:    "tc2",
+		Status:        &done,
+		Content: []acpsdk.ToolCallContent{{Diff: &acpsdk.ToolCallContentDiff{
+			Path:    "/f.go",
+			OldText: &old,
+			NewText: "b\n",
+		}}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	types := eventTypes(evs)
+	if !contains(types, "CUSTOM") || !contains(types, "TOOL_CALL_END") {
+		t.Fatalf("diff update should emit CUSTOM + END: %v", types)
+	}
+}
+
+// TestBridgeToolCallMissingIDRaw covers the soft-miss case: a tool_call with
+// no ToolCallId must surface as a single redacted RAW event rather than an
+// error, so a single malformed update doesn't abort the whole turn.
+func TestBridgeToolCallMissingIDRaw(t *testing.T) {
+	evs, err := (NewBridge("c", "r")).Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call",
+		Title:         "x", // no ToolCallId (flat struct — no nested acpsdk.ToolCall)
+	}})
+	if err != nil {
+		t.Fatalf("missing toolCallId must not error: %v", err)
+	}
+	if len(evs) != 1 || evs[0].Type() != "RAW" {
+		t.Fatalf("missing toolCallId → RAW to client, not error: %#v err=%v", evs, err)
+	}
+}
+
+// helpers
+
+// eventTypes flattens an event slice to its Type() strings for easy
+// substring-presence checks in tests.
+func eventTypes(evs []events.Event) []string {
+	out := make([]string, 0, len(evs))
+	for _, e := range evs {
+		out = append(out, string(e.Type()))
+	}
+	return out
+}
+
+// contains is a tiny linear search helper — stdlib slices.Contains isn't in
+// the supported toolchain baseline for this package's tests.
+func contains(s []string, v string) bool {
+	for _, x := range s {
+		if x == v {
+			return true
+		}
+	}
+	return false
 }
