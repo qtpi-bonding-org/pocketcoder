@@ -12,20 +12,34 @@ import (
 	"github.com/google/uuid"
 )
 
+// toolMeta is the per-tool retained state kept while a tool call is open: the
+// last seen title/kind/status (read-modify-write across tool_call_update).
+// Declared here in Task 5 so the openTools map can carry structured values
+// from the start; Task 6 populates it through startTool/updateTool.
+type toolMeta struct {
+	title, kind, status string
+}
+
 // Bridge keeps only the open-event state needed to turn ACP chunks into AG-UI
 // message boundaries for one run.
 type Bridge struct {
 	threadID, runID string
 	messageID       string
 	messageOpen     bool
+	messageRole     string
 	reasoningID     string
 	reasoningOpen   bool
-	openTools       map[string]bool
+	openTools       map[string]toolMeta
+	state           projection
 }
 
 // NewBridge starts an AG-UI run for one PocketCoder chat / Goose session pair.
 func NewBridge(threadID, runID string) *Bridge {
-	return &Bridge{threadID: threadID, runID: runID, openTools: make(map[string]bool)}
+	return &Bridge{
+		threadID:  threadID,
+		runID:     runID,
+		openTools: map[string]toolMeta{},
+	}
 }
 
 // Started emits the first AG-UI event for a turn.
@@ -37,24 +51,18 @@ func (b *Bridge) Started() events.Event {
 // intentionally ignored rather than leaking vendor details to Flutter.
 func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 	switch {
+	case update.UserMessageChunk != nil:
+		return b.messageChunk("user", update.UserMessageChunk.MessageId, update.UserMessageChunk.Content), nil
 	case update.AgentMessageChunk != nil:
-		text, ok := textContent(update.AgentMessageChunk.Content)
-		if !ok || text == "" {
-			return nil, nil
-		}
-		// Reasoning and assistant text are mutually exclusive open states.
-		result := b.closeReasoning()
-		if b.messageOpen && update.AgentMessageChunk.MessageId != nil && *update.AgentMessageChunk.MessageId != b.messageID {
-			result = append(result, b.closeMessage()...)
-		}
-		messageID := b.ensureMessageID(update.AgentMessageChunk.MessageId)
-		if !b.messageOpen {
-			result = append(result, events.NewTextMessageStartEvent(messageID, events.WithRole("assistant")))
-			b.messageOpen = true
-		}
-		return append(result, events.NewTextMessageContentEvent(messageID, text)), nil
+		return b.messageChunk("assistant", update.AgentMessageChunk.MessageId, update.AgentMessageChunk.Content), nil
 	case update.AgentThoughtChunk != nil:
-		text, ok := textContent(update.AgentThoughtChunk.Content)
+		text, media, ok := renderContent(update.AgentThoughtChunk.Content)
+		if media != nil {
+			// Media in a reasoning chunk: emit CUSTOM pocketcoder:content without
+			// opening a REASONING_MESSAGE scope.
+			id := b.ensureReasoningID(update.AgentThoughtChunk.MessageId)
+			return []events.Event{customContent(id, *media)}, nil
+		}
 		if !ok || text == "" {
 			return nil, nil
 		}
@@ -84,7 +92,7 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 			}
 			result = append(result, events.NewToolCallArgsEvent(id, string(input)))
 		}
-		b.openTools[id] = true
+		b.openTools[id] = toolMeta{}
 		return result, nil
 	case update.ToolCallUpdate != nil:
 		tool := update.ToolCallUpdate
@@ -108,7 +116,7 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 			result = append(result, events.NewToolCallResultEvent("tool-result-"+id, id, output))
 		}
 		if tool.Status != nil && isTerminalToolStatus(string(*tool.Status)) {
-			if b.openTools[id] {
+			if _, open := b.openTools[id]; open {
 				delete(b.openTools, id)
 				result = append(result, events.NewToolCallEndEvent(id))
 			}
@@ -116,6 +124,39 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 		return result, nil
 	}
 	return nil, nil
+}
+
+// messageChunk is the shared emit path for ACP user/agent message chunks. It
+// routes text to TEXT_MESSAGE_START/CONTENT with the given role, and routes
+// media (image/audio/resource/resource_link) to CUSTOM pocketcoder:content
+// without opening a text scope. Reasoning and the previous message are closed
+// before opening a new assistant text scope, so mutual-exclusion between
+// REASONING_MESSAGE and TEXT_MESSAGE is preserved across chunks.
+//
+// The msgID switch check happens before ensureMessageID mutates b.messageID
+// (ensureMessageID itself resets b.messageOpen when the ID changes), so a
+// pending TEXT_MESSAGE_END for the previous message still fires.
+func (b *Bridge) messageChunk(role string, msgID *string, content acpsdk.ContentBlock) []events.Event {
+	text, media, ok := renderContent(content)
+	if media != nil {
+		id := b.ensureMessageID(msgID)
+		return []events.Event{customContent(id, *media)}
+	}
+	if !ok || text == "" {
+		return nil
+	}
+	var result []events.Event
+	result = append(result, b.closeReasoning()...)
+	if b.messageOpen && msgID != nil && *msgID != "" && *msgID != b.messageID {
+		result = append(result, b.closeMessage()...)
+	}
+	id := b.ensureMessageID(msgID)
+	if !b.messageOpen {
+		result = append(result, events.NewTextMessageStartEvent(id, events.WithRole(role)))
+		b.messageOpen = true
+		b.messageRole = role
+	}
+	return append(result, events.NewTextMessageContentEvent(id, text))
 }
 
 // PermissionPending represents the one transient c1 state exposed to AG-UI.
@@ -126,7 +167,9 @@ func (b *Bridge) PermissionPending(requestID string, options []acpsdk.Permission
 		choices = append(choices, map[string]string{"optionId": string(option.OptionId), "name": option.Name, "kind": string(option.Kind)})
 	}
 	return events.NewStateDeltaEvent([]events.JSONPatchOperation{{
-		Op: "add", Path: "/pocketcoder/permission", Value: map[string]any{"requestId": requestID, "status": "pending", "options": choices},
+		Op:    "add",
+		Path:  "/pocketcoder/permission",
+		Value: map[string]any{"requestId": requestID, "status": "pending", "options": choices},
 	}})
 }
 
@@ -138,7 +181,7 @@ func (b *Bridge) Finished() []events.Event {
 	for id := range b.openTools {
 		result = append(result, events.NewToolCallEndEvent(id))
 	}
-	b.openTools = make(map[string]bool)
+	b.openTools = map[string]toolMeta{}
 	return append(result, events.NewRunFinishedEventWithOptions(b.threadID, b.runID, events.WithSuccessOutcome()))
 }
 
@@ -183,6 +226,10 @@ func (b *Bridge) ensureMessageID(messageID *string) string {
 // toolResultText renders a tool call's produced content for the UI. Text
 // blocks are preferred; RawOutput is JSON-encoded as a fallback so Flutter
 // always sees what the tool returned, not just that it finished.
+//
+// Deprecated: superseded by renderContent/renderToolContent (Task 6 will wire
+// those in). Kept here so Task 5's tool arms keep the diff scoped to the
+// message/reasoning paths only.
 func toolResultText(content []acpsdk.ToolCallContent, rawOutput any) (string, bool, error) {
 	var parts []string
 	for _, block := range content {

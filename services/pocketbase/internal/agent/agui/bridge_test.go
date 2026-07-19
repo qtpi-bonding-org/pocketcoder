@@ -146,3 +146,75 @@ func TestBridgeClosesPreviousMessageBeforeNewMessage(t *testing.T) {
 		t.Fatalf("unexpected message switch events: %#v", events)
 	}
 }
+
+// TestBridgeUserMessageChunkReplay covers the UserMessageChunk arm added in
+// Task 5: a user chunk must replay as a TEXT_MESSAGE_START (role=user) +
+// TEXT_MESSAGE_CONTENT pair, mirroring the agent chunk shape but with the
+// "user" role so Flutter can render replayed inputs verbatim.
+func TestBridgeUserMessageChunkReplay(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	mid := "user-1"
+	evs, err := bridge.Update(acpsdk.SessionUpdate{UserMessageChunk: &acpsdk.SessionUpdateUserMessageChunk{
+		SessionUpdate: "user_message_chunk",
+		MessageId:     &mid,
+		Content:       acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "do X"}},
+	}})
+	if err != nil {
+		t.Fatalf("user chunk error: %v", err)
+	}
+	if len(evs) != 2 {
+		t.Fatalf("expected 2 events, got %#v", evs)
+	}
+	if evs[0].Type() != "TEXT_MESSAGE_START" {
+		t.Fatalf("event 0 type = %s, want TEXT_MESSAGE_START", evs[0].Type())
+	}
+	if evs[1].Type() != "TEXT_MESSAGE_CONTENT" {
+		t.Fatalf("event 1 type = %s, want TEXT_MESSAGE_CONTENT", evs[1].Type())
+	}
+	b, err := json.Marshal(evs[0])
+	if err != nil {
+		t.Fatalf("marshal start: %v", err)
+	}
+	if !strings.Contains(string(b), `"role":"user"`) {
+		t.Fatalf("expected user role in start payload: %s", string(b))
+	}
+}
+
+// TestBridgeAgentImageEmitsContentCustom covers Task 5's media path on the
+// agent side: an image content block must produce a CUSTOM pocketcoder:content
+// event instead of opening a text scope, with image metadata preserved.
+func TestBridgeAgentImageEmitsContentCustom(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	mid := "m1"
+	uri := "https://x/y.png"
+	evs, err := bridge.Update(acpsdk.SessionUpdate{AgentMessageChunk: &acpsdk.SessionUpdateAgentMessageChunk{
+		SessionUpdate: "agent_message_chunk",
+		MessageId:     &mid,
+		Content:       acpsdk.ContentBlock{Image: &acpsdk.ContentBlockImage{Type: "image", MimeType: "image/png", Uri: &uri}},
+	}})
+	if err != nil {
+		t.Fatalf("image chunk error: %v", err)
+	}
+	found := false
+	for _, e := range evs {
+		if e.Type() == "CUSTOM" {
+			found = true
+			b, _ := json.Marshal(e)
+			if !strings.Contains(string(b), `"pocketcoder:content"`) {
+				t.Fatalf("custom event missing pocketcoder:content name: %s", string(b))
+			}
+			if !strings.Contains(string(b), `"kind":"image"`) {
+				t.Fatalf("custom event missing kind=image: %s", string(b))
+			}
+			if !strings.Contains(string(b), `"uri":"https://x/y.png"`) {
+				t.Fatalf("custom event missing uri: %s", string(b))
+			}
+		}
+		if e.Type() == "TEXT_MESSAGE_START" {
+			t.Fatalf("media chunk must not open TEXT_MESSAGE scope: got %#v", evs)
+		}
+	}
+	if !found {
+		t.Fatalf("image chunk should emit CUSTOM pocketcoder:content, got %#v", evs)
+	}
+}
