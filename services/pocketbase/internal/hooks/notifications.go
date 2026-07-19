@@ -135,34 +135,6 @@ func (p *FcmRelayProvider) Send(token, title, body string) error {
 // RegisterNotificationHooks registers hooks for triggering push notifications
 // and the /api/push custom endpoint.
 func RegisterNotificationHooks(app core.App) {
-	// Hook: permission created -> push notification
-	app.OnRecordAfterCreateSuccess("permissions").BindFunc(func(e *core.RecordEvent) error {
-		if e.Record.GetString("status") != "draft" {
-			return e.Next()
-		}
-
-		userID := ""
-		chatID := e.Record.GetString("chat")
-		if chatID != "" {
-			chat, err := e.App.FindRecordById("chats", chatID)
-			if err == nil {
-				userID = chat.GetString("user")
-			}
-		}
-
-		if userID == "" {
-			return e.Next()
-		}
-
-		go SendPushNotification(e.App, userID,
-			"SIGNATURE REQUIRED",
-			"Action: "+e.Record.GetString("permission"),
-			"permission",
-			chatID,
-		)
-
-		return e.Next()
-	})
 }
 
 // RegisterPushApi registers the POST /api/push endpoint.
