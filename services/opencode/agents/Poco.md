@@ -1,1 +1,0 @@
-{"tools": {"write": true, "edit": true, "bash": true}}
