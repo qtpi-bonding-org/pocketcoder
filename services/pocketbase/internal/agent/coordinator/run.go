@@ -669,7 +669,7 @@ func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessio
 		if err := created(ctx, sessionID); err != nil {
 			// Orphan compensation (Task 11): the Goose session exists but is
 			// unmapped — delete it so the next prompt does not strand history.
-			if dErr := conn.UnstableDeleteSession(ctx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)}); dErr != nil {
+			if _, dErr := conn.UnstableDeleteSession(ctx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)}); dErr != nil {
 				log.Printf("coordinator: orphan session delete failed: %v", dErr)
 			}
 			return "", fmt.Errorf("persist Goose session mapping: %w", err)
