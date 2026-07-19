@@ -71,7 +71,7 @@ chat ──> resolveProfile(app, chatID) ──> SessionProfile
 | `cwd` / `additionalDirectories` | same request | **now** |
 | `mode` | `applier.Apply` → `set_session_mode` | **now** |
 | model / provider | global `config.yaml` + restart | global now; per-chat when #7596 lands |
-| system prompt | global `config.yaml` instructions + restart | global now; per-chat when #7596 lands |
+| system prompt | **uncertain** — `config.yaml` has no documented global `instructions` key (that is a *recipe* field, and recipes can't load over ACP). Global delivery is conditional on §13.5; if unsupported, the system prompt is **inert** until recipe-over-ACP, same as per-chat model. | verify §13.5 |
 | provider keys | global `keys.env` (sourced on restart) | global now |
 | `chats.harness_model_override` | **inert** (per-chat model can't apply) | per-chat when #7596 lands |
 
@@ -122,7 +122,7 @@ A chat set to a non-default agent (or with `harness_model_override`) gets that a
 ## 6. Render pipeline (replaces the OpenCode renders)
 
 ### 6.1 New pure package `internal/gooseconfig/` (no I/O — golden-testable)
-- `config.go` — the default `poco_config` (+ `harness_model`, `system_prompt`) → a `config.yaml` document: `GOOSE_PROVIDER`, `GOOSE_MODEL`, `GOOSE_MODE`, an `instructions` value from `system_prompt`, and an `extensions:` block **for globally-declared/builtin extensions only** (not the per-chat MCP servers). Marshals to YAML.
+- `config.go` — the default `poco_config` (+ `harness_model`, `system_prompt`) → a `config.yaml` document: `GOOSE_PROVIDER`, `GOOSE_MODEL`, `GOOSE_MODE`, and an `extensions:` block **for globally-declared/builtin extensions only** (not the per-chat MCP servers). A global `instructions`/system-prompt key is emitted **only if §13.5 confirms the pinned build supports one** — otherwise omitted (do not invent a key). Marshals to YAML.
 - `keys.go` — `provider_keys.env_vars` (JSON, all rows) merged → `KEY=VALUE` lines. **This file is the only place secrets live; never returned to any client.**
 - `permissions.go` — `tool_permissions` (active) → per-extension `available_tools` allowlist + a mode nudge, per §7. Returns the merged config plus the list of dropped/degraded rules for logging.
 
@@ -163,15 +163,19 @@ Rules & documented degradations (all **logged**, never silent):
 
 ## 8. Coordinator changes
 
-New `internal/agent/coordinator/profile.go`:
-- `type SessionProfile struct { Model, Provider, Instructions, Cwd string; AdditionalDirectories []string; McpServers []acpsdk.McpServer; Mode acpsdk.SessionModeId }` (Opus N3 — fully specified; no `toolPolicy`, per S7).
-- `func resolveProfile(app core.App, chatID string) (SessionProfile, error)` — reads `chats.poco_config` (or default per §5.2), applies `harness_model_override` into `Model` (inert per-chat today, §4.1), performs the two-hop harness_model→model→provider expand, `system_prompt→body`, parses `acp_mcp_servers` (§5.1) and `workspace_folders` (§5 / S4), resolves `mode`.
-- `ProfileApplier` interface + `GlobalConfigApplier` (impl) + `PerSessionApplier` (stub) + `selectApplier(initResp)` (§4).
+**Injection boundary (important):** the `Coordinator` holds **no `core.App`** — it is PocketBase-agnostic, and all DB access is injected from the API layer via closures (`ResolveSession`, `OnSessionCreated`; see `internal/api/agent.go`). Profile resolution follows the same seam. So `SessionProfile` and the appliers live in the coordinator (pure, acpsdk types only), but **`resolveProfile` reads PocketBase and therefore lives at the API layer** and is injected — it is *not* a coordinator function with a `core.App` parameter.
 
-`initSession` (function, not line):
-- Capture the `Initialize` response (currently discarded) to feed `selectApplier` (Opus S8).
-- Build `NewSession`/`LoadSession` requests from `profile.Cwd`/`AdditionalDirectories`/`McpServers` in **both** branches (Opus C2), replacing the hardcoded empty `McpServers`.
-- After the sessionID exists, `applier.Apply(ctx, conn, sessionID, profile)` — replaces the hardcoded `SetSessionMode("approve")`.
+New `internal/agent/coordinator/profile.go` (no `core.App` import):
+- `type SessionProfile struct { Model, Provider, Instructions, Cwd string; AdditionalDirectories []string; McpServers []acpsdk.McpServer; Mode acpsdk.SessionModeId }` (Opus N3 — fully specified; no `toolPolicy`, per S7).
+- `type ProfileFunc func(context.Context) (SessionProfile, error)` — the injected resolver, mirroring `ResolveSession`.
+- `ProfileApplier` interface + `GlobalConfigApplier` (impl) + `PerSessionApplier` (stub) + `selectApplier(initResp *acpsdk.InitializeResponse) ProfileApplier` (§4).
+
+New `internal/api/profile.go` (has `core.App`):
+- `func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfile, error)` — reads `chats.poco_config` (or default per §5.2), applies `harness_model_override` into `Model` (inert per-chat today, §4.1), performs the two-hop `harness_model → harness_models.model → models.provider` expand, `system_prompt → prompts.body`, parses `acp_mcp_servers` (§5.1) and `workspace_folders` (§5 / S4), resolves `mode`. The `session/prompt` and `stream`(cold-replay) handlers build it and pass it in.
+
+Coordinator wiring:
+- `StartPrompt` (and the cold-replay entry `StreamColdReplay`) gain a `ProfileFunc` parameter, injected by the API handlers exactly as `ResolveSession` is today.
+- `initSession` (function, not line): capture the `Initialize` response (currently discarded) to feed `selectApplier` (Opus S8); build `NewSession`/`LoadSession` requests from the resolved `profile.Cwd`/`AdditionalDirectories`/`McpServers` in **both** branches (Opus C2), replacing the hardcoded empty `McpServers`; after the sessionID exists, `applier.Apply(ctx, conn, sessionID, profile)` replaces the hardcoded `SetSessionMode("approve")`.
 - `SeedSession` and orphan compensation stay exactly as the bridge plan built them.
 
 ## 9. Infra (compose + entrypoint)
@@ -209,6 +213,7 @@ New `internal/agent/coordinator/profile.go`:
 2. Secret delivery with `GOOSE_DISABLE_KEYRING=1` — confirm keys are read from **env** (sourced `keys.env`) and not a keyring/secrets file; if Goose expects a secrets file, render that instead.
 3. **(Elevated — gates the schema enum)** Which session modes / config options the ACP server advertises in our build. The `poco_configs.mode` enum (§5) is provisional until confirmed; only `approve` is known-good.
 4. **(New — Opus C1)** The Goose runtime **uid/gid** in the pinned image, so PocketBase's `chown` targets the right owner (§6.4).
+5. **(New)** Whether `config.yaml` (or an env var) supports a **global system prompt / instructions** in the pinned build. If yes, the renderer emits it; if no, the system prompt is inert (documented in §4.1) and the renderer omits it — do **not** invent a config key. `system_prompt`/`Instructions` stays on the record + `SessionProfile` regardless (it becomes live per-chat when recipe-over-ACP lands).
 
 ## 14. Module structure summary
 
@@ -221,8 +226,10 @@ internal/hooks/llm.go            REMOVE OpenCode render (superseded by gooseconf
 internal/hooks/tool_permissions.go REMOVE opencode.json render (superseded by gooseconfig.config/permissions)
 internal/hooks/agents.go         REMOVE bundle hook
 internal/agents/bundler.go       REMOVE GetAgentBundle/UpdateAgentConfig
-internal/agent/coordinator/profile.go  NEW — SessionProfile, resolveProfile, ProfileApplier, GlobalConfigApplier, PerSessionApplier(stub), selectApplier
-internal/agent/coordinator/run.go      MODIFY initSession — capture initResp; build NewSession/LoadSession from profile; Apply(mode) post-create
+internal/agent/coordinator/profile.go  NEW — SessionProfile, ProfileFunc, ProfileApplier, GlobalConfigApplier, PerSessionApplier(stub), selectApplier (no core.App)
+internal/api/profile.go                NEW — buildSessionProfile(app, chatID) (has core.App); injected into StartPrompt/StreamColdReplay
+internal/agent/coordinator/run.go      MODIFY StartPrompt/StreamColdReplay take ProfileFunc; initSession — capture initResp; build NewSession/LoadSession from profile; Apply(mode) post-create
+internal/api/agent.go                  MODIFY prompt + stream handlers build & inject the profile
 migrations/                      NEW — add poco_configs.mode enum (after §13.3); drop poco_configs.config
 services/goose/entrypoint.sh     MODIFY — source /goose-config/keys.env before provider validation
 docker-compose.yml               MODIFY — goose_config shared volume; config path per §13.1
