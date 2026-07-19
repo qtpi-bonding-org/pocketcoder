@@ -305,6 +305,74 @@ func TestBridgeToolCallMissingIDRaw(t *testing.T) {
 	}
 }
 
+// TestBridgePlanAndModeAndUsageState covers Task 7's state-bearing Update
+// arms: Plan / CurrentModeUpdate / UsageUpdate must each surface as a single
+// STATE_DELTA carrying the corresponding /pocketcoder/* namespace. The
+// existing Task 5/6 tests already exercised message/tool paths; this pins the
+// projection wiring so a regression in b.state.set dispatch is caught.
+func TestBridgePlanAndModeAndUsageState(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	plan, _ := bridge.Update(acpsdk.SessionUpdate{Plan: &acpsdk.SessionUpdatePlan{
+		SessionUpdate: "plan",
+		Entries: []acpsdk.PlanEntry{{
+			Content:  "step 1",
+			Priority: acpsdk.PlanEntryPriorityHigh,
+			Status:   acpsdk.PlanEntryStatusPending,
+		}},
+	}})
+	if len(plan) != 1 || plan[0].Type() != "STATE_DELTA" {
+		t.Fatalf("plan: %#v", plan)
+	}
+	mode, _ := bridge.Update(acpsdk.SessionUpdate{CurrentModeUpdate: &acpsdk.SessionCurrentModeUpdate{
+		SessionUpdate: "current_mode_update",
+		CurrentModeId: "plan",
+	}})
+	if len(mode) != 1 || mode[0].Type() != "STATE_DELTA" {
+		t.Fatalf("mode: %#v", mode)
+	}
+	usage, _ := bridge.Update(acpsdk.SessionUpdate{UsageUpdate: &acpsdk.SessionUsageUpdate{
+		SessionUpdate: "usage_update",
+		Size:          200000,
+		Used:          1234,
+	}})
+	if len(usage) != 1 || usage[0].Type() != "STATE_DELTA" {
+		t.Fatalf("usage: %#v", usage)
+	}
+}
+
+// TestBridgeConfigOptionUnion covers the ACP discriminated-union decode:
+// a ConfigOptionUpdate carrying both a Boolean and a Select option must
+// produce one STATE_DELTA whose payload preserves the kind discriminator
+// for each entry, so the client can rebuild either a checkbox or a dropdown.
+func TestBridgeConfigOptionUnion(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ConfigOptionUpdate: &acpsdk.SessionConfigOptionUpdate{
+		SessionUpdate: "config_option_update",
+		ConfigOptions: []acpsdk.SessionConfigOption{
+			{Boolean: &acpsdk.SessionConfigOptionBoolean{Id: "b1", Name: "Verbose", CurrentValue: true}},
+			{Select: &acpsdk.SessionConfigOptionSelect{Id: "s1", Name: "Model", CurrentValue: "fast"}},
+		},
+	}})
+	if err != nil || len(evs) != 1 || evs[0].Type() != "STATE_DELTA" {
+		t.Fatalf("config: %#v err=%v", evs, err)
+	}
+	b, _ := json.Marshal(evs[0])
+	if !strings.Contains(string(b), `"kind":"boolean"`) || !strings.Contains(string(b), `"kind":"select"`) {
+		t.Fatalf("config union not decoded: %s", string(b))
+	}
+}
+
+// TestBridgeUnknownVariantRaw covers the never-drop default: an all-nil
+// SessionUpdate stands in for an unknown / vendor / future variant, and must
+// surface as a single redacted RAW event rather than silently returning nil
+// (which would otherwise be dropped on the wire).
+func TestBridgeUnknownVariantRaw(t *testing.T) {
+	evs, err := (NewBridge("c", "r")).Update(acpsdk.SessionUpdate{})
+	if err != nil || len(evs) != 1 || evs[0].Type() != "RAW" {
+		t.Fatalf("unknown → RAW: %#v err=%v", evs, err)
+	}
+}
+
 // helpers
 
 // eventTypes flattens an event slice to its Type() strings for easy
