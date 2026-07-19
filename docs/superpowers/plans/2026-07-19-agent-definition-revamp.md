@@ -6,7 +6,7 @@
 
 **Architecture:** A pure render package (`internal/gooseconfig`) turns config records into Goose's native `config.yaml` + a sourced `keys.env`; a hook writes them (goose-uid-owned) and restarts the goose container. A `SessionProfile` + capability-gated `ProfileApplier` seam in the coordinator delivers the per-session bits ACP allows (cwd, mcpServers at `session/new`; mode via `set_session_mode`). Profile resolution lives at the API layer (the coordinator holds no `core.App`) and is injected like the existing `ResolveSession` closure.
 
-**Tech Stack:** Go, PocketBase v0.29-era (`core.App`, migrations, record hooks), `coder/acp-go-sdk@v0.13.5`, `ag-ui-protocol/ag-ui` Go SDK, `gopkg.in/yaml.v3`, Docker Compose + docker-socket-proxy.
+**Tech Stack:** Go, PocketBase `v0.36.1` (`core.App`, migrations, record hooks; verified against `go.mod`), `coder/acp-go-sdk@v0.13.5`, `ag-ui-protocol/ag-ui` Go SDK, `gopkg.in/yaml.v3` (already a dependency), Docker Compose + docker-socket-proxy.
 
 **Source spec:** `docs/superpowers/specs/2026-07-19-agent-definition-revamp-design.md`. Read it first; this plan implements it section-by-section.
 
@@ -149,10 +149,13 @@ git commit -m "feat(gooseconfig): render provider_keys into keys.env"
 - Create: `internal/gooseconfig/permissions.go`
 - Test: `internal/gooseconfig/permissions_test.go`
 
+> **DECISION — single-extension bucket (resolves Sonnet C1).** `tool_permissions` has **no `extension` field** (verified: `1748000100_acp_schema.go` — fields are `poco_config`/`sandbox_config`, `tool`, `pattern`, `action`, `active`). Goose's `available_tools` is keyed per-extension, but the data model provides no extension binding. For v1 we therefore treat **all `tool_permissions` rows as governing the single builtin coding extension `developer`** (`DefaultToolExtension`), which is the only extension a coding agent runs by default. Per-extension policy needs a future `tool_permissions.extension` field + UI — **out of scope, logged as a limitation.** So `PermRow` carries no `Extension`, and `RenderPermissions` returns one flat allowlist that the hook maps under `DefaultToolExtension`.
+
 **Interfaces:**
-- Consumes: a plain `PermRow{Tool, Pattern, Action, Extension string}` slice (the hook builds these from `tool_permissions`; `Extension` is the extension the tool belongs to — default `""` = the global/builtin bucket).
+- Consumes: a plain `PermRow{Tool, Pattern, Action string}` slice (the hook builds these from active `tool_permissions`).
 - Produces:
-  - `func RenderPermissions(rows []PermRow) (allow map[string][]string, dropped []string)` — `allow[extension] = sorted allowlist` = (allow-set − deny-set) per extension; extensions with no allow/deny rows are absent (→ omit `available_tools`, Goose default = all). `dropped` is human-readable strings for every degraded rule (each `ask`, each dropped non-`*` `pattern`, each allow∩deny conflict). The hook logs `dropped` (spec §7).
+  - `const DefaultToolExtension = "developer"`
+  - `func RenderPermissions(rows []PermRow) (allow []string, dropped []string)` — `allow` = sorted (allow-set − deny-set) for the single default extension; empty if no allow rows (→ hook omits `available_tools`, Goose default = all). `dropped` is human-readable strings for every degraded rule (each `ask`, each dropped non-`*` `pattern`, each allow∩deny conflict). The hook logs `dropped` (spec §7).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -163,25 +166,24 @@ import "testing"
 
 func TestRenderPermissions_AllowMinusDeny_AndDegradations(t *testing.T) {
 	rows := []PermRow{
-		{Tool: "read", Action: "allow", Pattern: "*", Extension: "developer"},
-		{Tool: "write", Action: "allow", Pattern: "*", Extension: "developer"},
-		{Tool: "write", Action: "deny", Pattern: "*", Extension: "developer"}, // conflict: deny wins
-		{Tool: "shell", Action: "ask", Pattern: "*", Extension: "developer"},  // ask: dropped
-		{Tool: "read", Action: "allow", Pattern: "src/*", Extension: "developer"}, // pattern dropped
+		{Tool: "read", Action: "allow", Pattern: "*"},
+		{Tool: "write", Action: "allow", Pattern: "*"},
+		{Tool: "write", Action: "deny", Pattern: "*"},   // conflict: deny wins
+		{Tool: "shell", Action: "ask", Pattern: "*"},    // ask: dropped
+		{Tool: "read", Action: "allow", Pattern: "src/*"}, // pattern dropped
 	}
 	allow, dropped := RenderPermissions(rows)
-	if got := allow["developer"]; len(got) != 1 || got[0] != "read" {
-		t.Fatalf("allow[developer] = %v, want [read]", got)
+	if len(allow) != 1 || allow[0] != "read" {
+		t.Fatalf("allow = %v, want [read]", allow)
 	}
 	if len(dropped) != 3 {
 		t.Fatalf("dropped = %v, want 3 entries (ask, pattern, conflict)", dropped)
 	}
 }
 
-func TestRenderPermissions_NoRulesOmitsExtension(t *testing.T) {
-	allow, _ := RenderPermissions(nil)
-	if len(allow) != 0 {
-		t.Fatalf("expected empty allow map, got %v", allow)
+func TestRenderPermissions_NoRulesOmits(t *testing.T) {
+	if allow, _ := RenderPermissions(nil); len(allow) != 0 {
+		t.Fatalf("expected empty allowlist, got %v", allow)
 	}
 }
 ```
@@ -199,58 +201,49 @@ import (
 	"sort"
 )
 
-type PermRow struct{ Tool, Pattern, Action, Extension string }
+// DefaultToolExtension is the single builtin extension all tool_permissions
+// rows are assumed to govern (see Task 2 DECISION); per-extension policy is a
+// future extension-field enhancement.
+const DefaultToolExtension = "developer"
 
-// RenderPermissions maps rich allow/ask/deny rows onto Goose's per-extension
-// available_tools allowlist (non-empty = only those tools). Lossy by design
-// (spec §7): non-"*" patterns are discarded, per-tool `ask` has no equivalent,
-// and same-tool allow+deny resolves deny-wins. Every degradation is returned
-// in `dropped` for the caller to log.
-func RenderPermissions(rows []PermRow) (map[string][]string, []string) {
-	type set = map[string]struct{}
-	allowByExt := map[string]set{}
-	denyByExt := map[string]set{}
+type PermRow struct{ Tool, Pattern, Action string }
+
+// RenderPermissions maps rich allow/ask/deny rows onto Goose's available_tools
+// allowlist (non-empty = only those tools) for the default extension. Lossy by
+// design (spec §7): non-"*" patterns are discarded, per-tool `ask` has no
+// equivalent, and same-tool allow+deny resolves deny-wins. Every degradation is
+// returned in `dropped` for the caller to log.
+func RenderPermissions(rows []PermRow) ([]string, []string) {
+	allow := map[string]struct{}{}
+	deny := map[string]struct{}{}
 	var dropped []string
-
-	ensure := func(m map[string]set, ext string) set {
-		if m[ext] == nil {
-			m[ext] = set{}
-		}
-		return m[ext]
-	}
 
 	for _, r := range rows {
 		if r.Pattern != "" && r.Pattern != "*" {
-			dropped = append(dropped, fmt.Sprintf("pattern dropped (Goose allowlist is tool-name-only): %s.%s pattern=%q", r.Extension, r.Tool, r.Pattern))
+			dropped = append(dropped, fmt.Sprintf("pattern dropped (Goose allowlist is tool-name-only): %s pattern=%q", r.Tool, r.Pattern))
 		}
 		switch r.Action {
 		case "allow":
-			ensure(allowByExt, r.Extension)[r.Tool] = struct{}{}
+			allow[r.Tool] = struct{}{}
 		case "deny":
-			ensure(denyByExt, r.Extension)[r.Tool] = struct{}{}
+			deny[r.Tool] = struct{}{}
 		case "ask":
-			dropped = append(dropped, fmt.Sprintf("ask dropped (no per-tool Goose equivalent; governed by mode): %s.%s", r.Extension, r.Tool))
+			dropped = append(dropped, fmt.Sprintf("ask dropped (no per-tool Goose equivalent; governed by mode): %s", r.Tool))
 		}
 	}
 
-	out := map[string][]string{}
-	for ext, allow := range allowByExt {
-		var tools []string
-		for tool := range allow {
-			if _, denied := denyByExt[ext][tool]; denied {
-				dropped = append(dropped, fmt.Sprintf("allow/deny conflict, deny wins: %s.%s", ext, tool))
-				continue
-			}
-			tools = append(tools, tool)
+	var tools []string
+	for tool := range allow {
+		if _, denied := deny[tool]; denied {
+			dropped = append(dropped, fmt.Sprintf("allow/deny conflict, deny wins: %s", tool))
+			continue
 		}
-		// deny-only extensions (allow empty) intentionally do not synthesize an
-		// allowlist: we cannot enumerate the full tool set to subtract from.
-		if len(tools) > 0 {
-			sort.Strings(tools)
-			out[ext] = tools
-		}
+		tools = append(tools, tool)
 	}
-	return out, dropped
+	// deny-only (no allow rows) intentionally yields no allowlist: we cannot
+	// enumerate the full tool set to subtract from.
+	sort.Strings(tools)
+	return tools, dropped
 }
 ```
 
@@ -424,7 +417,7 @@ func TestRenderGooseConfig_WritesConfigAndKeys(t *testing.T) {
 }
 ```
 
-> If `internal/hooks` has no existing test app helper, this task's test is written against the real `tests/agent-c1` integration harness instead (the same decision the bridge plan made for PB HTTP). Check for a helper first: `grep -rl "func newTestApp\|tests.NewTestApp" internal/hooks ../..`. If none exists, implement `renderGooseConfig` and cover it in the integration suite; keep the pure renderer tests (Tasks 1–3) as the unit gate.
+> **Test-harness reality (Sonnet S6):** `internal/hooks` has **no** unit test-app helper (verified — grep for `newTestApp`/`NewTestApp` is empty), and `tests/agent-c1` is an opt-in, live-model BATS suite requiring real API keys — not something an agent can drive in a RED→GREEN loop. **Therefore this hook-layer step is EXEMPT from the plan's `run test → FAIL/PASS` cycle.** The pure renderers (Tasks 1–3) are the deterministic unit gate; `renderGooseConfig` is verified manually/on-box in Task 7 Step 3 (rendered files appear, goose can read them). Write the test above only if you first add a reusable PB-app helper; otherwise skip it and rely on Task 7's on-box check. Do not fabricate a passing unit test against a non-existent helper.
 
 - [ ] **Step 3: Run — expect FAIL** (`undefined: renderGooseConfig` / `gooseConfigDir`).
 
@@ -527,7 +520,16 @@ func writeGoose(name string, data []byte, mode os.FileMode) error {
 }
 ```
 
-Implement the two helpers `defaultPocoConfig(app) (*core.Record, error)` (spec §5.2 tie-break: filter `is_default = true` sorted `created`; if >1 log warning + take first; if 0 return nil) and `configInputFor(app, def) (gooseconfig.ConfigInput, []string, error)` (resolve `harness_model → harness_models.harness_model_id` for `Model`, `→ models.provider` for `Provider`, `mode` field for `Mode`; build `[]gooseconfig.PermRow` from active `tool_permissions` and call `gooseconfig.RenderPermissions`) in the same file.
+Implement the two helpers in the same file:
+- `defaultPocoConfig(app) (*core.Record, error)` — spec §5.2 tie-break: `FindRecordsByFilter("poco_configs", "is_default = true", "created", 0, 0)`; if >1 log warning + take first; if 0 return `nil, nil`.
+- `configInputFor(app, def) (gooseconfig.ConfigInput, []string, error)` — resolve `def.harness_model → harness_models.harness_model_id` for `Model`, and `harness_models.model → models.provider` for `Provider` (two hops; field names verified against `1748000100_acp_schema.go`); `def.GetString("mode")` for `Mode`. Then query active `tool_permissions` (global + this poco_config's rows), build `[]gooseconfig.PermRow{Tool,Pattern,Action}`, call `allow, dropped := gooseconfig.RenderPermissions(rows)`, and set:
+  ```go
+  in := gooseconfig.ConfigInput{Provider: provider, Model: model, Mode: mode}
+  if len(allow) > 0 {
+      in.AvailableTools = map[string][]string{gooseconfig.DefaultToolExtension: allow}
+  }
+  return in, dropped, nil
+  ```
 
 - [ ] **Step 5: Run — expect PASS** (or integration-suite green per Step 2 note).
 
@@ -619,8 +621,8 @@ This is one coherent commit: everything that references `PocoContainer` / OpenCo
 - [ ] **Step 1: Remove the dead renders**
   - Delete `RegisterLlmHooks` + `renderLlmEnv` from `llm.go` (whole file, or gut to nothing). Its shared `/llm_keys/llm.env` had no post-prune consumer.
   - Delete `RegisterToolPermissionHooks` + `renderOpenCodeConfig` + `buildPermissionBlock` + `permEntry` from `tool_permissions.go`.
-  - Delete `RegisterAgentHooks` from `agents.go` (the `config` bundle writer).
-  - Delete `internal/agents/bundler.go`.
+  - Delete `internal/hooks/agents.go` **entirely** (its only content is `RegisterAgentHooks` + imports; gutting just the function leaves unused imports → compile error).
+  - Delete `internal/agents/bundler.go` (and its test if any).
   - Remove `PocoContainer` from `helpers.go`.
 
 - [ ] **Step 2: Swap registrations in `main.go`**
@@ -722,14 +724,16 @@ import (
 )
 
 func TestGlobalConfigApplier_SetsMode(t *testing.T) {
-	fc := &fakeConn{} // existing coordinator test fake (extend to capture SetSessionMode args)
+	fc := &fakeConn{} // existing coordinator test fake
 	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
 		SessionProfile{Mode: acpsdk.SessionModeId("auto")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fc.lastModeSession != "sess-1" || fc.lastModeID != "auto" {
-		t.Fatalf("set_mode not forwarded: sess=%q mode=%q", fc.lastModeSession, fc.lastModeID)
+	// fc.lastMode is the EXISTING field (run_test.go), already read by
+	// session_test.go:TestSetModeDispatchesToConn — keep it. Add lastModeSession.
+	if fc.lastModeSession != "sess-1" || fc.lastMode != "auto" {
+		t.Fatalf("set_mode not forwarded: sess=%q mode=%q", fc.lastModeSession, fc.lastMode)
 	}
 }
 
@@ -798,7 +802,7 @@ func selectApplier(init *acpsdk.InitializeResponse) ProfileApplier {
 }
 ```
 
-(Extend the coordinator test `fakeConn` with `lastModeSession`/`lastModeID` capture in its `SetSessionMode`.)
+**`fakeConn` change (Sonnet S4):** the real `fakeConn` (`run_test.go`) already has `lastMode string`, set in `SetSessionMode` and read by `session_test.go:TestSetModeDispatchesToConn`. **Keep `lastMode` exactly as-is** (do not rename/remove it — that breaks `session_test.go`). **Add one new field** `lastModeSession string` and set it alongside `lastMode` inside the existing `SetSessionMode`. No other test changes.
 
 - [ ] **Step 4: Run — expect PASS.**
 - [ ] **Step 5: Commit** `feat(coordinator): SessionProfile + capability-gated applier seam`
@@ -814,14 +818,129 @@ func selectApplier(init *acpsdk.InitializeResponse) ProfileApplier {
 **Interfaces:**
 - Produces: `func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfile, error)` — resolves the chat's `poco_config` (or default §5.2), two-hop `harness_model → harness_models.harness_model_id` / `→ models.provider`, `system_prompt → prompts.body`, parses `acp_mcp_servers` (stdio-only, §5.1) → `[]acpsdk.McpServer`, `workspace_folders` → `Cwd` + `AdditionalDirectories` (§S4), `mode` → `acpsdk.SessionModeId`.
 
-- [ ] **Step 1: Write the failing test** — seed a chat + default poco_config with a stdio MCP entry and two workspace folders; assert `Cwd`, `AdditionalDirectories`, one `McpServers` (stdio), and `Mode`. (Use the `tests/agent-c1` harness if `internal/api` has no unit app helper — same decision as the bridge plan; check with `grep -rl "newTestApp" internal/api ../..`.)
+> **Test-harness reality (Sonnet S6):** `internal/api` has **no** unit PB-app helper either. This step is **EXEMPT from the RED→GREEN cycle** unless you first add a helper; otherwise verify `buildSessionProfile` through the Task 11 integration path (a real prompt whose Goose `session/new` carries the resolved cwd/mcpServers). The code below must still be written and compile (`go build ./...`).
 
-- [ ] **Step 2: Run — expect FAIL.**
+- [ ] **Step 1: Implement `internal/api/profile.go`.** The `McpServer` construction is a discriminated union — `acpsdk.McpServer{Stdio: &acpsdk.McpServerStdio{...}}`, and `Env` is `[]acpsdk.EnvVariable{{Name,Value}}`, **not** a map (Sonnet C2, verified in `types_gen.go`). Full code:
 
-- [ ] **Step 3: Implement** `buildSessionProfile` per the interface, reusing the `defaultPocoConfig` §5.2 semantics (extract that helper to a shared location or reimplement the same tie-break). Skip + log non-`stdio` MCP entries. Apply `chats.harness_model_override` into `Model` (document: inert per-chat today, §4.1).
+```go
+package api
 
-- [ ] **Step 4: Run — expect PASS.**
-- [ ] **Step 5: Commit** `feat(api): buildSessionProfile resolves a chat's agent definition`
+import (
+	"encoding/json"
+	"log"
+
+	acpsdk "github.com/coder/acp-go-sdk"
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
+)
+
+// stdioMcp is the stored acp_mcp_servers JSON shape (spec §5.1). Only stdio is
+// supported today; http/sse/acp entries are skipped + logged.
+type stdioMcp struct {
+	Type    string            `json:"type"`
+	Name    string            `json:"name"`
+	Command string            `json:"command"`
+	Args    []string          `json:"args"`
+	Env     map[string]string `json:"env"`
+}
+
+func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfile, error) {
+	var p coordinator.SessionProfile
+
+	chat, err := app.FindRecordById("chats", chatID)
+	if err != nil {
+		return p, err
+	}
+
+	// Resolve the agent definition: chat's poco_config, else the default (§5.2).
+	pocoID := chat.GetString("poco_config")
+	var poco *core.Record
+	if pocoID != "" {
+		if poco, err = app.FindRecordById("poco_configs", pocoID); err != nil {
+			return p, err
+		}
+	} else if poco, err = defaultPocoConfigAPI(app); err != nil {
+		return p, err
+	}
+	if poco == nil {
+		// No definition at all: minimal floor (spec §5.2). Coordinator falls
+		// back to c.config.Workspace when Cwd == "".
+		p.Mode = acpsdk.SessionModeId("approve")
+		return p, nil
+	}
+
+	// Model: chat.harness_model_override wins, else the poco's harness_model.
+	// (Per-chat model is INERT today — spec §4.1 — but resolved for forward-compat.)
+	hmID := chat.GetString("harness_model_override")
+	if hmID == "" {
+		hmID = poco.GetString("harness_model")
+	}
+	if hmID != "" {
+		if hm, err := app.FindRecordById("harness_models", hmID); err == nil {
+			p.Model = hm.GetString("harness_model_id")
+			if m, err := app.FindRecordById("models", hm.GetString("model")); err == nil {
+				p.Provider = m.GetString("provider")
+			}
+		}
+	}
+	if spID := poco.GetString("system_prompt"); spID != "" {
+		if sp, err := app.FindRecordById("prompts", spID); err == nil {
+			p.Instructions = sp.GetString("body")
+		}
+	}
+	if mode := poco.GetString("mode"); mode != "" {
+		p.Mode = acpsdk.SessionModeId(mode)
+	} else {
+		p.Mode = acpsdk.SessionModeId("approve")
+	}
+
+	// workspace_folders (JSON array) -> Cwd (first) + AdditionalDirectories (§S4).
+	var folders []string
+	_ = poco.UnmarshalJSONField("workspace_folders", &folders)
+	if len(folders) > 0 {
+		p.Cwd = folders[0]
+		p.AdditionalDirectories = folders[1:]
+	}
+
+	// acp_mcp_servers (JSON array) -> []acpsdk.McpServer, stdio only (§5.1).
+	var raw []stdioMcp
+	_ = poco.UnmarshalJSONField("acp_mcp_servers", &raw)
+	for _, m := range raw {
+		if m.Type != "" && m.Type != "stdio" {
+			log.Printf("[Profile] skipping non-stdio MCP server %q (type=%s) — unsupported today", m.Name, m.Type)
+			continue
+		}
+		env := make([]acpsdk.EnvVariable, 0, len(m.Env))
+		for k, v := range m.Env {
+			env = append(env, acpsdk.EnvVariable{Name: k, Value: v})
+		}
+		p.McpServers = append(p.McpServers, acpsdk.McpServer{
+			Stdio: &acpsdk.McpServerStdio{Name: m.Name, Command: m.Command, Args: m.Args, Env: env},
+		})
+	}
+	return p, nil
+}
+
+// defaultPocoConfigAPI mirrors the hook's §5.2 tie-break (is_default=true,
+// oldest on multiple, nil on none). Kept separate from the hooks package to
+// avoid a hooks→api import; the logic is small and identical.
+func defaultPocoConfigAPI(app core.App) (*core.Record, error) {
+	recs, err := app.FindRecordsByFilter("poco_configs", "is_default = true", "created", 0, 0)
+	if err != nil {
+		return nil, err
+	}
+	if len(recs) == 0 {
+		return nil, nil
+	}
+	if len(recs) > 1 {
+		log.Printf("[Profile] %d poco_configs marked is_default; using oldest %q", len(recs), recs[0].GetString("name"))
+	}
+	return recs[0], nil
+}
+```
+
+- [ ] **Step 2: Verify build** — `go build ./...`. Expected: compiles. (Field names `harness_model_id`, `model`, `provider`, `harness_model_override` verified against `1748000100_acp_schema.go`.)
+- [ ] **Step 3: Commit** `feat(api): buildSessionProfile resolves a chat's agent definition`
 
 ---
 
@@ -860,13 +979,34 @@ func selectApplier(init *acpsdk.InitializeResponse) ProfileApplier {
 - Modify: `internal/api/agent.go` (build + pass the profile)
 - Modify: tests as needed
 
-- [ ] **Step 1: Extend the coordinator entry points** — add a `ProfileFunc` parameter to `StartPrompt` and `StreamColdReplay`, mirroring the existing `ResolveSession` closure; resolve it once at run start and hand the `SessionProfile` to `initSession` (Task 10).
+> **Two distinct init paths (Sonnet C3 — important).** `StartPrompt` runs through `initSession` (Task 10 already wires the profile there). But `StreamColdReplay` (`run.go`) has its **own separate inline init** — `Initialize` → `LoadSession{Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}}` — and does **not** call `initSession`. So threading the profile "into `initSession`" does nothing for cold replay; its own `LoadSession` must be patched directly.
 
-- [ ] **Step 2: Wire the handlers** — in `agent.go`, the `session/prompt` and `stream` handlers pass:
+- [ ] **Step 1a: `StartPrompt`** — add a `ProfileFunc` parameter, mirroring the existing `ResolveSession` closure; resolve it once at run start and pass the `SessionProfile` to `initSession` (Task 10).
+
+- [ ] **Step 1b: `StreamColdReplay`** — add a `ProfileFunc` parameter and **patch its own `LoadSession` call directly**:
+```go
+profile, err := profileFn(ctx)
+if err != nil {
+    return err
+}
+cwd := profile.Cwd
+if cwd == "" {
+    cwd = c.config.Workspace
+}
+if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{
+    SessionId:             acpsdk.SessionId(sessionID),
+    Cwd:                   cwd,
+    AdditionalDirectories: profile.AdditionalDirectories,
+    McpServers:            profile.McpServers,
+}); err != nil { /* existing error handling */ }
+```
+(Cold replay does not set mode — it only re-attaches to replay history — so no `applier.Apply` here.)
+
+- [ ] **Step 2: Wire the handlers** — in `agent.go`, the `session/prompt` and `stream`(cold-replay) handlers pass:
 ```go
 func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) }
 ```
-as the new `ProfileFunc` argument (alongside the existing `gooseSessionForChat`/`saveGooseSession` closures).
+as the new `ProfileFunc` argument (alongside the existing `gooseSessionForChat`/`saveGooseSession` closures). The `stream` handler builds it before `service.StreamColdReplay(...)`.
 
 - [ ] **Step 3: Verify** — `go build ./... && go test ./...`; then the `tests/agent-c1` integration suite exercises a real prompt end-to-end (per-chat MCP/cwd/mode reach Goose). Expected: green.
 
@@ -879,6 +1019,7 @@ as the new `ProfileFunc` argument (alongside the existing `gooseSessionForChat`/
 ## Self-Review (completed against the spec)
 
 - **Spec coverage:** §4 seam → Tasks 8/10/11; §5 schema → Task 5 + resolution in 9; §5.1 MCP stdio-only → Task 9; §5.2 default tie-break → Task 4 (`defaultPocoConfig`) + 9; §6 renders → Tasks 1–4; §6.3 retire → Task 6; §6.4 ownership → Task 4 `writeGoose`; §6.5 initial render → Task 4 `OnServe`; §7 tool map → Task 2; §9 infra → Task 7; §10 restart-vs-run → documented (no code); §13 verify-items → surfaced inline at Tasks 4/5/7 and in Global Constraints.
-- **Placeholders:** none — every code step carries real code; helper bodies (`defaultPocoConfig`, `configInputFor`, `buildSessionProfile`) are specified by exact behavior where the two-hop expand is mechanical.
-- **Type consistency:** `SessionProfile`/`ProfileFunc`/`ProfileApplier`/`ConfigInput`/`PermRow`/`RenderKeysEnv`/`RenderConfigYAML`/`RenderPermissions`/`GooseContainer`/`gooseConfigDir` are used identically across tasks.
-- **Testing-harness honesty:** where `internal/hooks`/`internal/api` lack a unit app helper, tests fall to the real `tests/agent-c1` integration suite (same call the bridge plan made); pure renderers (Tasks 1–3) are the deterministic unit gate.
+- **Placeholders:** `buildSessionProfile` and the `McpServer` union construction now carry full code (Sonnet C2/S5). `defaultPocoConfig`/`configInputFor` are specified by exact behavior + the two verified two-hop field names; `RenderPermissions` returns a single flat allowlist under `DefaultToolExtension` (Sonnet C1 — no phantom `Extension` field).
+- **Type consistency:** `SessionProfile`/`ProfileFunc`/`ProfileApplier`/`ConfigInput`/`PermRow`/`RenderKeysEnv`/`RenderConfigYAML`/`RenderPermissions`/`DefaultToolExtension`/`GooseContainer`/`gooseConfigDir` are used identically across tasks. `fakeConn.lastMode` is preserved (Sonnet S4).
+- **TDD deviations (declared):** Task 3's golden test goes RED only because the fixture is absent (standard serialization-golden convention, not a logic RED). Task 4 (hook) and Task 9 (api) are EXEMPT from the RED→GREEN loop — no PB-app unit helper exists; the pure renderers (Tasks 1–3) are the unit gate and Task 7 Step 3 / Task 11 Step 3 are the on-box/integration gates.
+- **Two init paths:** `StartPrompt`→`initSession` (Task 10) and `StreamColdReplay`'s own inline `LoadSession` (Task 11 Step 1b) are both patched (Sonnet C3).
