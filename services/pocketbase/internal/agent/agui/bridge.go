@@ -364,3 +364,73 @@ func configOptions(opts []acpsdk.SessionConfigOption) []map[string]any {
 	}
 	return out
 }
+
+// SeedSession primes the /pocketcoder projection with the modes and config that
+// the agent advertised on session/new (or session/load). It is called once per
+// run, before any Update. The returned events are STATE_DELTAs that a
+// subscriber can replay so the Flutter side has the initial state without
+// waiting for a CurrentModeUpdate / ConfigOptionUpdate to arrive.
+func (b *Bridge) SeedSession(modes *acpsdk.SessionModeState, config []acpsdk.SessionConfigOption) []events.Event {
+	var out []events.Event
+	if modes != nil {
+		out = append(out, b.state.set("modes", map[string]any{
+			"currentModeId":  string(modes.CurrentModeId),
+			"availableModes": sessionModes(modes.AvailableModes),
+		}))
+	}
+	if len(config) > 0 {
+		out = append(out, b.state.set("config", map[string]any{"options": configOptions(config)}))
+	}
+	return out
+}
+
+// Snapshot returns the current /pocketcoder projection as a single
+// STATE_SNAPSHOT (or nil when nothing has been recorded). Intended for
+// subscriber attach so a late-joining client can catch up without re-emitting
+// every delta.
+func (b *Bridge) Snapshot() []events.Event {
+	return b.state.snapshot()
+}
+
+// ResolvePermission clears a pending permission from the projection. The id
+// is accepted for call-site symmetry with the c1 approval endpoint and a
+// future multi-pending model; v1 stores a single pending entry per namespace
+// so the param is unused and remove suffices.
+func (b *Bridge) ResolvePermission(id string) []events.Event {
+	_ = id
+	return []events.Event{b.state.remove("permission")}
+}
+
+// ResolveElicitation clears a pending elicitation from the projection. Same
+// id-symmetry rationale as ResolvePermission.
+func (b *Bridge) ResolveElicitation(id string) []events.Event {
+	_ = id
+	return []events.Event{b.state.remove("elicitation")}
+}
+
+// ElicitationPending records a pending elicitation in the projection. The
+// returned STATE_DELTA mirrors PermissionPending's shape so the client UI can
+// render any pending side-channel request from the same STATE stream.
+func (b *Bridge) ElicitationPending(id, message, mode string, schema any) events.Event {
+	return b.state.set("elicitation", map[string]any{
+		"elicitationId":   id,
+		"message":         message,
+		"mode":            mode,
+		"requestedSchema": schema,
+	})
+}
+
+// sessionModes projects an ACP session-mode slice into the AG-UI client's
+// expected shape (id + name + optional description). Kept package-private; it
+// is only consumed by SeedSession.
+func sessionModes(modes []acpsdk.SessionMode) []map[string]any {
+	out := make([]map[string]any, 0, len(modes))
+	for _, m := range modes {
+		out = append(out, map[string]any{
+			"id":          string(m.Id),
+			"name":        m.Name,
+			"description": deref(m.Description),
+		})
+	}
+	return out
+}
