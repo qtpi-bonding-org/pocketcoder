@@ -632,7 +632,7 @@ func (b *Bridge) messageChunk(role string, msgID *string, content acpsdk.Content
 
 In `Update`, replace the `AgentMessageChunk` arm with `return b.messageChunk("assistant", u.AgentMessageChunk.MessageId, u.AgentMessageChunk.Content), nil`, add a `UserMessageChunk` arm `return b.messageChunk("user", u.UserMessageChunk.MessageId, u.UserMessageChunk.Content), nil`, and keep `AgentThoughtChunk` routed through the existing reasoning path (also via `renderContent` for media). Initialize `openTools: map[string]toolMeta{}` in `NewBridge`.
 
-> `toolMeta` is introduced in Task 6; for this task use `map[string]bool` and migrate in Task 6, OR introduce `toolMeta` now as `type toolMeta struct{ title, kind, status string }`. Prefer introducing `toolMeta` now to avoid churn.
+> Declare `type toolMeta struct{ title, kind, status string }` in **this** task (bridge.go) — `openTools` uses it now; Task 6 populates it. `NewBridge` initializes `openTools: map[string]toolMeta{}` and the `state projection`. This keeps the type owned by the task that first uses it (no forward reference).
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -666,10 +666,8 @@ func TestBridgeSingleShotCompletedToolCall(t *testing.T) {
 	status := acpsdk.ToolCallStatusCompleted
 	evs, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
 		SessionUpdate: "tool_call",
-		ToolCall: acpsdk.ToolCall{
-			ToolCallId: "tc1", Title: "Read", Kind: acpsdk.ToolKindRead, Status: status,
-			Content: []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{Type: "content", Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "file body"}}}}},
-		},
+		ToolCallId:    "tc1", Title: "Read", Kind: acpsdk.ToolKindRead, Status: status,
+		Content: []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{Type: "content", Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "file body"}}}}},
 	}})
 	if err != nil {
 		t.Fatal(err)
@@ -684,14 +682,13 @@ func TestBridgeSingleShotCompletedToolCall(t *testing.T) {
 func TestBridgeToolUpdateDiffEmitsCustom(t *testing.T) {
 	bridge := NewBridge("chat-1", "run-1")
 	_, _ = bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
-		SessionUpdate: "tool_call", ToolCall: acpsdk.ToolCall{ToolCallId: "tc2", Title: "Edit", Kind: acpsdk.ToolKindEdit},
+		SessionUpdate: "tool_call", ToolCallId: "tc2", Title: "Edit", Kind: acpsdk.ToolKindEdit,
 	}})
 	old := "a\n"
 	done := acpsdk.ToolCallStatusCompleted
 	evs, _ := bridge.Update(acpsdk.SessionUpdate{ToolCallUpdate: &acpsdk.SessionToolCallUpdate{
-		SessionUpdate: "tool_call_update",
-		ToolCallUpdate: acpsdk.ToolCallUpdate{ToolCallId: "tc2", Status: &done,
-			Content: []acpsdk.ToolCallContent{{Diff: &acpsdk.ToolCallContentDiff{Path: "/f.go", OldText: &old, NewText: "b\n"}}}},
+		SessionUpdate: "tool_call_update", ToolCallId: "tc2", Status: &done,
+		Content: []acpsdk.ToolCallContent{{Diff: &acpsdk.ToolCallContentDiff{Path: "/f.go", OldText: &old, NewText: "b\n"}}},
 	}})
 	if !contains(eventTypes(evs), "CUSTOM") || !contains(eventTypes(evs), "TOOL_CALL_END") {
 		t.Fatalf("diff update should emit CUSTOM + END: %v", eventTypes(evs))
@@ -700,7 +697,7 @@ func TestBridgeToolUpdateDiffEmitsCustom(t *testing.T) {
 
 func TestBridgeToolCallMissingIDRaw(t *testing.T) {
 	evs, err := (NewBridge("c", "r")).Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
-		SessionUpdate: "tool_call", ToolCall: acpsdk.ToolCall{Title: "x"}, // no ToolCallId
+		SessionUpdate: "tool_call", Title: "x", // no ToolCallId (flat struct — no nested acpsdk.ToolCall)
 	}})
 	if err != nil || len(evs) != 1 || evs[0].Type() != "RAW" {
 		t.Fatalf("missing toolCallId → RAW to client, not error: %#v err=%v", evs, err)
@@ -736,9 +733,11 @@ Expected: FAIL (single-shot leaks open tool, no RESULT; diff dropped).
 Replace the `ToolCall`/`ToolCallUpdate` arms. Sketch:
 
 ```go
-type toolMeta struct{ title, kind, status string }
-
-func (b *Bridge) startTool(tc acpsdk.ToolCall) []events.Event {
+// startTool handles an initial tool_call. `tc` is the FLAT SessionUpdate variant
+// — fields (`ToolCallId`, `Title`, `Kind` non-ptr, `Status` non-ptr, `Content`,
+// `RawInput`, `RawOutput`, `Locations`) live directly on it; there is NO nested
+// acpsdk.ToolCall. (`toolMeta` is declared in Task 5.)
+func (b *Bridge) startTool(tc *acpsdk.SessionUpdateToolCall) []events.Event {
 	id := string(tc.ToolCallId)
 	if id == "" { // soft miss: never abort the turn; surface as redacted RAW
 		return []events.Event{rawEvent("tool_call", nil)}
@@ -761,6 +760,40 @@ func (b *Bridge) startTool(tc acpsdk.ToolCall) []events.Event {
 		result = append(result, b.toolResult(id, tc.Content, tc.RawOutput)...)
 	}
 	if isTerminalToolStatus(status) {
+		result = append(result, b.endTool(id)...)
+	}
+	return result
+}
+
+// updateTool handles tool_call_update. Its fields are POINTERS (partial update),
+// unlike startTool's flat non-pointer struct — read-modify-write the retained meta.
+func (b *Bridge) updateTool(u *acpsdk.SessionToolCallUpdate) []events.Event {
+	id := string(u.ToolCallId)
+	if id == "" {
+		return []events.Event{rawEvent("tool_call_update", nil)}
+	}
+	var result []events.Event
+	if u.RawInput != nil {
+		if in, err := json.Marshal(u.RawInput); err == nil {
+			result = append(result, events.NewToolCallArgsEvent(id, string(in)))
+		}
+	}
+	if len(u.Content) > 0 {
+		result = append(result, b.toolResult(id, u.Content, u.RawOutput)...)
+	}
+	meta := b.openTools[id] // zero value if the tool is unknown; still emit an update
+	if u.Title != nil {
+		meta.title = *u.Title
+	}
+	if u.Kind != nil {
+		meta.kind = string(*u.Kind)
+	}
+	if u.Status != nil {
+		meta.status = string(*u.Status)
+	}
+	b.openTools[id] = meta
+	result = append(result, customTool(id, meta.title, meta.kind, meta.status, u.Locations))
+	if u.Status != nil && isTerminalToolStatus(string(*u.Status)) {
 		result = append(result, b.endTool(id)...)
 	}
 	return result
@@ -793,7 +826,7 @@ func (b *Bridge) endTool(id string) []events.Event {
 }
 ```
 
-`ToolCallUpdate` arm: if new `RawInput` → `NewToolCallArgsEvent`; then `toolResult(...)` for its content; update `openTools[id].status` + re-emit `customTool`; if terminal status → `endTool`. Update `Finished()` to iterate `openTools` (now `map[string]toolMeta`) emitting `NewToolCallEndEvent`.
+Wire the dispatch arms in `Update`: `case u.ToolCall != nil: return b.startTool(u.ToolCall), nil` and `case u.ToolCallUpdate != nil: return b.updateTool(u.ToolCallUpdate), nil` (both fields are `*SessionUpdateToolCall`/`*SessionToolCallUpdate`). Update `Finished()` to iterate `openTools` (`map[string]toolMeta`) emitting `NewToolCallEndEvent(id)`. **Delete the now-dead `textContent`/`toolResultText` helpers** (`bridge.go:186-214`) — superseded by `renderContent`/`renderToolContent`.
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -837,6 +870,24 @@ func TestBridgePlanAndModeAndUsageState(t *testing.T) {
 	usage, _ := bridge.Update(acpsdk.SessionUpdate{UsageUpdate: &acpsdk.SessionUsageUpdate{SessionUpdate: "usage_update", Size: 200000, Used: 1234}})
 	if len(usage) != 1 || usage[0].Type() != "STATE_DELTA" {
 		t.Fatalf("usage: %#v", usage)
+	}
+}
+
+func TestBridgeConfigOptionUnion(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ConfigOptionUpdate: &acpsdk.SessionConfigOptionUpdate{
+		SessionUpdate: "config_option_update",
+		ConfigOptions: []acpsdk.SessionConfigOption{
+			{Boolean: &acpsdk.SessionConfigOptionBoolean{Id: "b1", Name: "Verbose", CurrentValue: true}},
+			{Select: &acpsdk.SessionConfigOptionSelect{Id: "s1", Name: "Model", CurrentValue: "fast"}},
+		},
+	}})
+	if err != nil || len(evs) != 1 || evs[0].Type() != "STATE_DELTA" {
+		t.Fatalf("config: %#v err=%v", evs, err)
+	}
+	b, _ := json.Marshal(evs[0])
+	if !strings.Contains(string(b), `"kind":"boolean"`) || !strings.Contains(string(b), `"kind":"select"`) {
+		t.Fatalf("config union not decoded: %s", string(b))
 	}
 }
 
@@ -885,7 +936,50 @@ case u.SessionInfoUpdate != nil:
 return []events.Event{rawEvent("session_update", nil)}, nil
 ```
 
-Add helpers `planEntries`, `configOptions`, `commands` mapping ACP slices → `[]map[string]any`. Make `PermissionPending`/`ElicitationPending` also call `b.state.set("permission"/"elicitation", ...)` in addition to returning their event (so `Snapshot` includes them). For `CurrentModeUpdate`, `set("modes", …)` should merge with existing `availableModes` if `SeedSession` set them (Task 8) — store modes as a struct and update only `currentModeId`.
+**Rewrite `PermissionPending` to record projection state** (this is what makes Task 8's Snapshot-omits-resolved test reachable — the old `bridge.go:123` version is stateless). Signature is preserved (still returns one `events.Event`, which `run.go:197` consumes):
+```go
+func (b *Bridge) PermissionPending(requestID string, options []acpsdk.PermissionOption) events.Event {
+	choices := make([]map[string]string, 0, len(options))
+	for _, o := range options {
+		choices = append(choices, map[string]string{"optionId": string(o.OptionId), "name": o.Name, "kind": string(o.Kind)})
+	}
+	// state.set stores it AND returns the STATE_DELTA (same event type as before).
+	return b.state.set("permission", map[string]any{"requestId": requestID, "status": "pending", "options": choices})
+}
+```
+
+Add the slice→`[]map[string]any` helpers:
+```go
+func planEntries(entries []acpsdk.PlanEntry) []map[string]any {
+	out := make([]map[string]any, 0, len(entries))
+	for _, e := range entries {
+		out = append(out, map[string]any{"content": e.Content, "priority": string(e.Priority), "status": string(e.Status)})
+	}
+	return out
+}
+func commands(cmds []acpsdk.AvailableCommand) []map[string]any {
+	out := make([]map[string]any, 0, len(cmds))
+	for _, c := range cmds {
+		out = append(out, map[string]any{"name": c.Name, "description": c.Description})
+	}
+	return out
+}
+// configOptions decodes ACP's discriminated union (Select | Boolean). Verify the
+// Select/Boolean field names against types_gen.go:4486-4531 at impl time.
+func configOptions(opts []acpsdk.SessionConfigOption) []map[string]any {
+	out := make([]map[string]any, 0, len(opts))
+	for _, o := range opts {
+		switch {
+		case o.Boolean != nil:
+			out = append(out, map[string]any{"kind": "boolean", "id": string(o.Boolean.Id), "name": o.Boolean.Name, "currentValue": o.Boolean.CurrentValue})
+		case o.Select != nil:
+			out = append(out, map[string]any{"kind": "select", "id": string(o.Select.Id), "name": o.Select.Name, "currentValue": string(o.Select.CurrentValue)})
+		}
+	}
+	return out
+}
+```
+For `PlanUpdate` merge-vs-replace and `CurrentModeUpdate` (which should update only `currentModeId` while preserving `availableModes` seeded by `SeedSession`), store `modes` as a retained value and patch its `currentModeId` field rather than overwriting the whole namespace.
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -989,7 +1083,17 @@ func (b *Bridge) ElicitationPending(id, message, mode string, schema any) events
 	return b.state.set("elicitation", map[string]any{"elicitationId": id, "message": message, "mode": mode, "requestedSchema": schema})
 }
 ```
-Add `sessionModes` helper (`[]acpsdk.SessionMode` → `[]map[string]any` with id/name/description). Confirm the side-channel test passes because `b.state.set` never calls `closeMessage`.
+Add the `sessionModes` helper:
+```go
+func sessionModes(modes []acpsdk.SessionMode) []map[string]any {
+	out := make([]map[string]any, 0, len(modes))
+	for _, m := range modes {
+		out = append(out, map[string]any{"id": string(m.Id), "name": m.Name, "description": deref(m.Description)})
+	}
+	return out
+}
+```
+The side-channel test (`TestBridgeStateDoesNotCloseOpenMessage`) passes because `b.state.set` only appends a `STATE_DELTA` and never calls `closeMessage`/`closeReasoning`.
 
 > `ResolvePermission`/`ResolveElicitation` take `id` for a future multi-pending model; v1 stores a single pending entry per namespace, so `remove` suffices. Keep the param for the coordinator's call-site stability.
 
