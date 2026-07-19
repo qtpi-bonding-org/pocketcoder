@@ -37,10 +37,14 @@ type Conn interface {
 	NewSession(context.Context, acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error)
 	LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error)
 	SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error)
+	SetSessionConfigOption(context.Context, acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error)
 	Prompt(context.Context, acpsdk.PromptRequest) (acpsdk.PromptResponse, error)
 	Cancel(context.Context, acpsdk.CancelNotification) error
+	UnstableDeleteSession(context.Context, acpsdk.UnstableDeleteSessionRequest) (acpsdk.UnstableDeleteSessionResponse, error)
 	Close() error
 }
+
+var _ Conn = (*sdkConn)(nil)
 
 type wsStream struct {
 	ctx  context.Context
