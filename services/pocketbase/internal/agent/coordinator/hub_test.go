@@ -116,3 +116,44 @@ func TestAttachEvictedGapNeedsColdReplay(t *testing.T) {
 	}
 	att.Unsubscribe()
 }
+
+func TestSlowSubscriberDroppedWhenLiveFull(t *testing.T) {
+	h := NewChatHub(NewFakeClock(time.Unix(0, 0)), 30*time.Second, 2) // tiny live buffer
+	h.StartRun("run-1", func() []events.Event { return nil })
+	att := h.Attach(0) // subscriber never drains
+	// Publish more than the buffer can hold; the subscriber must be dropped,
+	// and the run (Publish) must keep working and keep assigning seq.
+	var last int
+	for i := 0; i < 10; i++ {
+		last = h.Publish(textEv("x"))
+	}
+	if last != 10 {
+		t.Fatalf("run stalled: last seq = %d, want 10", last)
+	}
+	if _, more := <-att.Live; more {
+		// Channel should be closed (dropped) — a closed channel yields !more.
+		t.Fatal("slow subscriber was not dropped (live channel still open)")
+	}
+}
+
+func TestCursorResumeAfterDrop(t *testing.T) {
+	h := NewChatHub(NewFakeClock(time.Unix(0, 0)), 30*time.Second, 2)
+	h.StartRun("run-1", func() []events.Event { return nil })
+	att1 := h.Attach(0)
+	for i := 0; i < 10; i++ {
+		h.Publish(textEv("x")) // drops att1 partway
+	}
+	// Reconnect with the last seq the client actually saw (say 1).
+	att2 := h.Attach(1)
+	if att2.ColdReplayNeeded {
+		t.Fatal("run still buffered; resume must be from memory")
+	}
+	if len(att2.Buffered) != 9 { // seqs 2..10
+		t.Fatalf("resume buffered = %d, want 9", len(att2.Buffered))
+	}
+	if att2.Buffered[0].Seq != 2 {
+		t.Fatalf("resume starts at seq %d, want 2", att2.Buffered[0].Seq)
+	}
+	att2.Unsubscribe()
+	_ = att1
+}
