@@ -507,7 +507,11 @@ func TestFinishedCarriesStopReasonOnNonEndTurn(t *testing.T) {
 	if fin.Result == nil {
 		t.Fatal("non-end_turn stop must attach a Result carrying the stopReason")
 	}
-	reason, _ := fin.Result["stopReason"].(string)
+	resultMap, ok := fin.Result.(map[string]any)
+	if !ok {
+		t.Fatalf("Result = %#v, want map[string]any", fin.Result)
+	}
+	reason, _ := resultMap["stopReason"].(string)
 	if reason != string(acpsdk.StopReasonRefusal) {
 		t.Fatalf("Result.stopReason = %q, want %q", reason, acpsdk.StopReasonRefusal)
 	}
