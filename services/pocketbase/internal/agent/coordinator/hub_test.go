@@ -171,3 +171,44 @@ func TestAttachIncludesSnapshotFromActiveRun(t *testing.T) {
 	}
 	att.Unsubscribe()
 }
+
+func TestLingerThenEvictFallsToColdReplay(t *testing.T) {
+	clk := NewFakeClock(time.Unix(0, 0))
+	h := NewChatHub(clk, 30*time.Second, 8)
+	h.StartRun("run-1", func() []events.Event { return nil })
+	h.Publish(textEv("a")) // 1
+	h.FinishRun()
+
+	// Within the linger window, a tail reconnect still resumes from memory.
+	att := h.Attach(0)
+	if att.ColdReplayNeeded {
+		t.Fatal("within linger window, reconnect must resume from buffer")
+	}
+	if len(att.Buffered) != 1 {
+		t.Fatalf("linger buffered = %d, want 1", len(att.Buffered))
+	}
+	att.Unsubscribe()
+
+	// After the window, the run is evicted; reconnect needs cold replay.
+	clk.Advance(31 * time.Second)
+	att2 := h.Attach(0)
+	if !att2.ColdReplayNeeded {
+		t.Fatal("after eviction, reconnect must fall to cold replay")
+	}
+	att2.Unsubscribe()
+}
+
+func TestIsEmptyAfterEvictionAndNoSubscribers(t *testing.T) {
+	clk := NewFakeClock(time.Unix(0, 0))
+	h := NewChatHub(clk, 30*time.Second, 8)
+	h.StartRun("run-1", func() []events.Event { return nil })
+	h.Publish(textEv("a"))
+	h.FinishRun()
+	if h.IsEmpty() {
+		t.Fatal("hub with a lingering run is not empty")
+	}
+	clk.Advance(31 * time.Second)
+	if !h.IsEmpty() {
+		t.Fatal("hub with no run and no subscribers should be empty")
+	}
+}

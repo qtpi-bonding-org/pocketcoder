@@ -144,3 +144,41 @@ func (h *ChatHub) seqForTest(to int) {
 		h.seq = to
 	}
 }
+
+func (h *ChatHub) FinishRun() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.active == nil || h.active.finished {
+		return
+	}
+	h.active.finished = true
+	r := h.active
+	r.lingerTimer = h.clock.AfterFunc(h.lingerWindow, func() {
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		if h.active == r { // still the same lingering run
+			h.active = nil
+		}
+	})
+}
+
+func (h *ChatHub) IsEmpty() bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return len(h.subs) == 0 && h.active == nil
+}
+
+// evictNow forces the lingering run to be evicted immediately. Test-only.
+func (h *ChatHub) evictNow() {
+	h.mu.Lock()
+	r := h.active
+	h.mu.Unlock()
+	if r != nil && r.lingerTimer != nil {
+		r.lingerTimer.Stop()
+	}
+	h.mu.Lock()
+	if h.active == r {
+		h.active = nil
+	}
+	h.mu.Unlock()
+}
