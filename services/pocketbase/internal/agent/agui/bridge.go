@@ -78,8 +78,32 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 		return b.startTool(update.ToolCall), nil
 	case update.ToolCallUpdate != nil:
 		return b.updateTool(update.ToolCallUpdate), nil
+	case update.Plan != nil:
+		return []events.Event{b.state.set("plan", map[string]any{"entries": planEntries(update.Plan.Entries)})}, nil
+	case update.PlanUpdate != nil:
+		// Unstable ACP. Verify SessionPlanUpdate's shape at impl time: if it carries
+		// entries, full-replace like Plan; otherwise surface as RAW (don't guess a merge).
+		return []events.Event{rawEvent("plan_update", nil)}, nil
+	case update.PlanRemoved != nil:
+		return []events.Event{b.state.remove("plan")}, nil
+	case update.CurrentModeUpdate != nil:
+		return []events.Event{b.state.set("modes", map[string]any{"currentModeId": string(update.CurrentModeUpdate.CurrentModeId)})}, nil
+	case update.ConfigOptionUpdate != nil:
+		return []events.Event{b.state.set("config", map[string]any{"options": configOptions(update.ConfigOptionUpdate.ConfigOptions)})}, nil
+	case update.AvailableCommandsUpdate != nil:
+		return []events.Event{b.state.set("commands", commands(update.AvailableCommandsUpdate.AvailableCommands))}, nil
+	case update.UsageUpdate != nil:
+		v := map[string]any{"size": update.UsageUpdate.Size, "used": update.UsageUpdate.Used}
+		if update.UsageUpdate.Cost != nil {
+			v["cost"] = map[string]any{"amount": update.UsageUpdate.Cost.Amount, "currency": update.UsageUpdate.Cost.Currency}
+		}
+		return []events.Event{b.state.set("usage", v)}, nil
+	case update.SessionInfoUpdate != nil:
+		return []events.Event{b.state.set("session_info", map[string]any{"title": deref(update.SessionInfoUpdate.Title)})}, nil
 	}
-	return nil, nil
+	// default (no variant matched) — never-drop: surface as redacted RAW so the
+	// client still sees that an update arrived, just not the undecoded blob.
+	return []events.Event{rawEvent("session_update", nil)}, nil
 }
 
 // startTool handles the initial tool_call. tc is the FLAT SessionUpdate variant:
@@ -219,16 +243,17 @@ func (b *Bridge) messageChunk(role string, msgID *string, content acpsdk.Content
 
 // PermissionPending represents the one transient c1 state exposed to AG-UI.
 // The detailed choices stay in the authenticated c1 approval endpoint.
+// Routing through b.state.set records the pending permission in the projection
+// (so Snapshot() surfaces it) AND returns the same STATE_DELTA/add/pocketcoder-
+// permission event shape the bare version emitted — TestBridgePermissionState
+// keeps passing on the payload, and Task 8's Snapshot-omits-resolved becomes
+// reachable because the value is now retained.
 func (b *Bridge) PermissionPending(requestID string, options []acpsdk.PermissionOption) events.Event {
 	choices := make([]map[string]string, 0, len(options))
 	for _, option := range options {
 		choices = append(choices, map[string]string{"optionId": string(option.OptionId), "name": option.Name, "kind": string(option.Kind)})
 	}
-	return events.NewStateDeltaEvent([]events.JSONPatchOperation{{
-		Op:    "add",
-		Path:  "/pocketcoder/permission",
-		Value: map[string]any{"requestId": requestID, "status": "pending", "options": choices},
-	}})
+	return b.state.set("permission", map[string]any{"requestId": requestID, "status": "pending", "options": choices})
 }
 
 // Finished closes all lifecycle events. Call this only after the correlated
@@ -283,4 +308,59 @@ func (b *Bridge) ensureMessageID(messageID *string) string {
 
 func isTerminalToolStatus(status string) bool {
 	return status == "completed" || status == "failed" || status == "cancelled"
+}
+
+// planEntries projects an ACP plan entry slice into the AG-UI client's
+// expected shape (content + priority + status strings). Helper kept
+// package-private since it's only consumed by the Update dispatch.
+func planEntries(entries []acpsdk.PlanEntry) []map[string]any {
+	out := make([]map[string]any, 0, len(entries))
+	for _, e := range entries {
+		out = append(out, map[string]any{
+			"content":  e.Content,
+			"priority": string(e.Priority),
+			"status":   string(e.Status),
+		})
+	}
+	return out
+}
+
+// commands projects an ACP available-commands slice into the AG-UI client's
+// expected shape (name + description).
+func commands(cmds []acpsdk.AvailableCommand) []map[string]any {
+	out := make([]map[string]any, 0, len(cmds))
+	for _, c := range cmds {
+		out = append(out, map[string]any{
+			"name":        c.Name,
+			"description": c.Description,
+		})
+	}
+	return out
+}
+
+// configOptions decodes ACP's discriminated union (Boolean | Select). The
+// `kind` discriminator is preserved so clients can branch on it; the original
+// id/name/currentValue are carried alongside so the Flutter side can rebuild
+// either a checkbox or a dropdown from one slice.
+func configOptions(opts []acpsdk.SessionConfigOption) []map[string]any {
+	out := make([]map[string]any, 0, len(opts))
+	for _, o := range opts {
+		switch {
+		case o.Boolean != nil:
+			out = append(out, map[string]any{
+				"kind":         "boolean",
+				"id":           string(o.Boolean.Id),
+				"name":         o.Boolean.Name,
+				"currentValue": o.Boolean.CurrentValue,
+			})
+		case o.Select != nil:
+			out = append(out, map[string]any{
+				"kind":         "select",
+				"id":           string(o.Select.Id),
+				"name":         o.Select.Name,
+				"currentValue": string(o.Select.CurrentValue),
+			})
+		}
+	}
+	return out
 }
