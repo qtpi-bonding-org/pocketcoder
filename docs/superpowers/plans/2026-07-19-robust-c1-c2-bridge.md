@@ -792,7 +792,9 @@ git commit -m "feat(agent): hub linger-then-evict and emptiness"
 
 ## Phase B — Detached run lifecycle
 
-Phase B consumes Phase A's hub and the translation `Bridge`. It **requires the translation plan merged first** (so `bridge.go` is the translation unit's version, with `SeedSession`/`Snapshot`/`Resolve*`/`ElicitationPending`). Unit tests use a fake `acp.Conn`; live Goose is Task 16.
+Phase B consumes Phase A's hub and the translation `Bridge`. Unit tests use a fake `acp.Conn`; live Goose is Task 16.
+
+> **HARD PREREQUISITE — do not start Phase B until this is true.** The sibling translation plan (`2026-07-19-acp-agui-translation.md`) must be **fully merged, through its final Task 8** — i.e. `internal/agent/agui/bridge.go` must already export `Snapshot`, `SeedSession`, `ElicitationPending`, `ResolvePermission`, `ResolveElicitation` (in addition to `Started`/`Update`/`PermissionPending`/`Finished`). As of this plan's authoring the translation unit is only partially merged (no `Snapshot`/`SeedSession` yet), so Task 10's `hub.StartRun(runID, bridge.Snapshot)` and Task 12's `bridge.SeedSession(...)` **will not compile** against the current tree. Verify before starting: `grep -n "^func (b \*Bridge) \(Snapshot\|SeedSession\|ElicitationPending\|ResolvePermission\|ResolveElicitation\)" services/pocketbase/internal/agent/agui/bridge.go` must list all five. Phase A (Tasks 1–6) has no such dependency and can proceed immediately.
 
 **Green-build discipline (read before starting Phase B):** the current `internal/api/agent.go` (lines 71, 119) calls `service.RunReserved`/`service.ReplayReserved`, and `internal/agent/coordinator/live_test.go` (`//go:build live_acp`) calls `service.Run`/`RunRequest`. To keep `go build ./...` and `go test ./...` green at **every** commit, Phase B **adds the detached path alongside** the legacy `Run`/`Replay`/`RunReserved`/`ReplayReserved`/`activeRun`/`startRun`/`finishRun`/`cancelOnClientDisconnect` — it deletes none of them. All legacy removal happens in **one coherent commit at Task 14** (the transport cutover), which rewrites the API routes, deletes the now-dead coordinator methods, and fixes the two legacy unit tests together. Task 16 replaces the legacy `live_test.go`.
 
@@ -831,10 +833,28 @@ func (f *fakeConn) UnstableDeleteSession(_ context.Context, req acpsdk.UnstableD
 
 (Add a `deletedSession string` field to `fakeConn` now — it is used again in Task 12.)
 
-- [ ] **Step 2: Run to verify it fails**
+- [ ] **Step 2: Run to verify it fails (real RED)**
 
-Run: `cd services/pocketbase && go vet ./internal/agent/acp/ ./internal/agent/coordinator/`
-Expected: FAIL — before adding the two methods to the `Conn` interface, `*fakeConn` now has extra methods (harmless) but `sdkConn` does NOT yet need them; the real RED is that removing the old interface and adding the new methods must compile. Simpler RED: temporarily reference `var _ interface{ UnstableDeleteSession(context.Context, acpsdk.UnstableDeleteSessionRequest) (acpsdk.UnstableDeleteSessionResponse, error) } = (Conn)(nil)` in a scratch test — it fails until the interface gains the method. (This task's true verification is that the package compiles with the extended interface AND `sdkConn` still satisfies it via embedding.)
+Add this compile-time assertion to a new `internal/agent/acp/conn_test.go` — it FAILS to compile until the `Conn` interface actually declares the two methods:
+
+```go
+package acp
+
+import (
+	"context"
+
+	acpsdk "github.com/coder/acp-go-sdk"
+)
+
+// Fails to build until Conn declares SetSessionConfigOption + UnstableDeleteSession.
+var _ = func(c Conn) {
+	var _ func(context.Context, acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) = c.SetSessionConfigOption
+	var _ func(context.Context, acpsdk.UnstableDeleteSessionRequest) (acpsdk.UnstableDeleteSessionResponse, error) = c.UnstableDeleteSession
+}
+```
+
+Run: `cd services/pocketbase && go test ./internal/agent/acp/ -run TestNothing`
+Expected: FAIL — `c.SetSessionConfigOption undefined (type Conn has no field or method SetSessionConfigOption)`.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -864,7 +884,7 @@ Expected: PASS (whole module still builds; `sdkConn` satisfies the extended inte
 - [ ] **Step 5: Commit**
 
 ```bash
-git add services/pocketbase/internal/agent/acp/websocket.go services/pocketbase/internal/agent/coordinator/run_test.go
+git add services/pocketbase/internal/agent/acp/websocket.go services/pocketbase/internal/agent/acp/conn_test.go services/pocketbase/internal/agent/coordinator/run_test.go
 git commit -m "feat(agent): extend acp.Conn with config-option and delete"
 ```
 
@@ -924,24 +944,19 @@ Expected: FAIL — `not enough arguments in call to b.Finished` (signature is st
 
 - [ ] **Step 3: Write minimal implementation**
 
-Update `Finished` in `bridge.go` (current construction is at ~`bridge.go:135`, using `NewRunFinishedEventWithOptions(... WithSuccessOutcome())` in the translation unit). Keep its existing close-message/close-reasoning/close-open-tools prologue; only change the terminal event:
+Update `Finished` in `bridge.go`. **Preserve the exact prologue of the merged translation-unit `Finished()`** — read the current file first (`grep -n "func (b \*Bridge) Finished" -A 15 services/pocketbase/internal/agent/agui/bridge.go`) and keep its close-order (it does `closeReasoning()` → `closeMessage()` → open-tool ends → resets `b.openTools`). Change **only** the terminal `RUN_FINISHED` construction from the unconditional `WithSuccessOutcome()` to stop-reason-aware options. Sketch (adapt to the real prologue, do not blindly overwrite it):
 
 ```go
-func (b *Bridge) Finished(stopReason acpsdk.StopReason) []events.Event {
-	out := b.closeMessage()
-	out = append(out, b.closeReasoning()...)
-	for id := range b.openTools {
-		out = append(out, events.NewToolCallEndEvent(id))
-	}
-	opts := []events.RunFinishedOption{events.WithSuccessOutcome()}
-	if stopReason != acpsdk.StopReasonEndTurn {
-		opts = []events.RunFinishedOption{events.WithResult(map[string]any{"stopReason": string(stopReason)})}
-	}
-	return append(out, events.NewRunFinishedEventWithOptions(b.threadID, b.runID, opts...))
+// ... unchanged prologue: closeReasoning/closeMessage/open-tool ends/reset openTools,
+//     accumulated into `out` exactly as the current file does ...
+opts := []events.RunFinishedOption{events.WithSuccessOutcome()}
+if stopReason != acpsdk.StopReasonEndTurn {
+	opts = []events.RunFinishedOption{events.WithResult(map[string]any{"stopReason": string(stopReason)})}
 }
+return append(out, events.NewRunFinishedEventWithOptions(b.threadID, b.runID, opts...))
 ```
 
-(`NewRunFinishedEvent` takes NO options — use `NewRunFinishedEventWithOptions` (`run_events.go:133`). Field names `threadID`/`runID`/`openTools`/`closeMessage`/`closeReasoning` must match the translation unit's actual `bridge.go`; verify at impl.)
+(`NewRunFinishedEvent` takes NO options — use `NewRunFinishedEventWithOptions` (`run_events.go:133`). Field names `threadID`/`runID`/`openTools` and helper names must match the merged translation unit; verify at impl — the RED step catches a mismatch.)
 
 Then update every remaining call site:
 
@@ -1045,7 +1060,38 @@ Expected: FAIL — `Config` has no `Clock` / `undefined: runHandle` / `undefined
 
 - [ ] **Step 3: Write minimal implementation**
 
-Extend `Config`/`New` (defaults above), add fields to `Coordinator` (`clock Clock`, `hubs map[string]*ChatHub`, `runs map[string]*runHandle`, `lingerWindow/maxRun/elicitationTimeout time.Duration`, `maxRunEvents/liveBuf int`), and:
+Extend `Config`/`New` (defaults above), add fields to `Coordinator` (`clock Clock`, `hubs map[string]*ChatHub`, `runs map[string]*runHandle`, `lingerWindow/maxRun/elicitationTimeout time.Duration`, `maxRunEvents/liveBuf int`). **`New` must initialize both maps** or the first `c.hubs[chatID]=…`/`c.runs[chatID]=…` write panics on a nil map — extend the existing `return &Coordinator{...}` literal (`run.go:65`):
+
+```go
+func New(config Config) (*Coordinator, error) {
+	if config.GooseURL == "" || config.GooseSecret == "" || config.Workspace == "" {
+		return nil, fmt.Errorf("GOOSE_ACP_URL, GOOSE_SERVER__SECRET_KEY, and GOOSE_WORKSPACE are required")
+	}
+	if config.Dial == nil {
+		config.Dial = func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
+			return acp.Dial(ctx, acp.DialConfig{URL: config.GooseURL, Secret: config.GooseSecret}, client)
+		}
+	}
+	if config.Clock == nil {
+		config.Clock = RealClock()
+	}
+	orElseD := func(d, def time.Duration) time.Duration { if d <= 0 { return def }; return d }
+	orElseI := func(n, def int) int { if n <= 0 { return def }; return n }
+	c := &Coordinator{
+		config: config, clock: config.Clock,
+		running: map[string]struct{}{}, activeRun: map[string]*activeRun{}, pending: map[string]*pendingPermission{},
+		hubs: map[string]*ChatHub{}, runs: map[string]*runHandle{},
+		lingerWindow:       orElseD(config.LingerWindow, 30*time.Second),
+		maxRun:             orElseD(config.MaxRun, 15*time.Minute),
+		elicitationTimeout: orElseD(config.ElicitationTimeout, orElseD(config.PermissionTimeout, 5*time.Minute)),
+		maxRunEvents:       orElseI(config.MaxRunEvents, 50000),
+		liveBuf:            orElseI(config.LiveBuffer, 256),
+	}
+	return c, nil
+}
+```
+
+(Keep `activeRun`/`pending` for the legacy path until Task 14.) Then add the helpers:
 
 ```go
 func (c *Coordinator) hubFor(chatID string) *ChatHub {
@@ -1318,8 +1364,12 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	bridge := agui.NewBridge(chatID, runID)
 	hub.StartRun(runID, bridge.Snapshot)
 
+	// Detached path routes ALL client callbacks (SessionUpdate AND
+	// RequestPermission — both call s.emit) through the hub, so emit is never
+	// nil. accepting is the SHARED pointer from the runHandle.
 	sc := &sessionClient{c: c, chatID: chatID, runID: runID, sessionID: sessionID, bridge: bridge,
-		accepting: h.accepting, hub: hub, maxEvents: c.maxRunEvents, cancel: h.cancel}
+		emit:      func(e events.Event) error { hub.Publish(e); return nil },
+		accepting: h.accepting, maxEvents: c.maxRunEvents, cancel: h.cancel}
 	conn, err := c.config.Dial(runCtx, sc) // runCtx is ALSO the dial ctx (spec N1)
 	if err != nil {
 		hub.Publish(events.NewRunErrorEvent("goose dial", events.WithErrorCode("goose_unavailable")))
@@ -1357,40 +1407,99 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 }
 ```
 
-Extend `sessionClient` (additive fields, keep the legacy `emit`): add `runID string`, `accepting *atomic.Bool` (replace the value `atomic.Bool` — see note), `hub *ChatHub`, `maxEvents int`, `cancel context.CancelFunc`, `events atomic.Int64`. **Note:** the existing `sessionClient.accepting` is a value `atomic.Bool` (`run.go:137`) used by legacy `RunReserved`. To avoid disturbing legacy, keep that field and ADD a pointer field `acceptingP *atomic.Bool` used by the detached path — or, cleaner, have `SessionUpdate` publish through `s.hub` when set and fall back to `s.emit` otherwise. Minimal change to `SessionUpdate`:
+**Change `sessionClient.accepting` from a value `atomic.Bool` (`run.go:137`) to `*atomic.Bool`**, and add fields `runID string`, `maxEvents int`, `cancel context.CancelFunc`, `events atomic.Int64`. All `s.accepting.Load()/Store()` sites still compile (pointer deref is implicit). The legacy `RunReserved`/`ReplayReserved` literals must now init it: add `accepting: &atomic.Bool{}` to their `&sessionClient{...}` construction (two sites; both deleted in Task 14 anyway). The detached literal shares the runHandle's pointer (above).
+
+**Unify `SessionUpdate`** so both paths use `s.emit` (detached emit publishes to the hub; legacy emit is the request-scoped SSE writer). This is what makes `RequestPermission` (which also calls `s.emit`, `run.go:197`) safe on the detached path — `emit` is always non-nil. Replace the body with:
 
 ```go
 func (s *sessionClient) SessionUpdate(_ context.Context, n acpsdk.SessionNotification) error {
-	if s.acceptingP != nil { // detached path
-		if !s.acceptingP.Load() {
-			return nil
-		}
-		if s.maxEvents > 0 && int(s.events.Add(1)) > s.maxEvents {
-			s.hub.Publish(events.NewRunErrorEvent("run too large", events.WithErrorCode("run_too_large")))
+	if !s.accepting.Load() {
+		return nil
+	}
+	if s.maxEvents > 0 && int(s.events.Add(1)) > s.maxEvents {
+		_ = s.emit(events.NewRunErrorEvent("run too large", events.WithErrorCode("run_too_large")))
+		if s.cancel != nil {
 			s.cancel()
-			return nil
-		}
-		updates, err := s.bridge.Update(n.Update)
-		if err != nil {
-			// Soft-miss handling is the bridge's job (RAW to client); a hard
-			// error here is logged by the SDK. Publish what we have.
-			for _, e := range updates {
-				s.hub.Publish(e)
-			}
-			return nil
-		}
-		for _, e := range updates {
-			s.hub.Publish(e)
 		}
 		return nil
 	}
-	// ... legacy path unchanged (existing body) ...
+	s.emitMu.Lock()
+	defer s.emitMu.Unlock()
+	updates, err := s.bridge.Update(n.Update)
+	// Soft-miss: the bridge already emitted redacted RAW for unmapped shapes;
+	// a returned error is non-fatal, so publish what we have and keep going.
+	for _, e := range updates {
+		if emitErr := s.emit(e); emitErr != nil {
+			return emitErr
+		}
+	}
+	_ = err
+	return nil
 }
 ```
 
-(Wire `sc.acceptingP = h.accepting` in `runLoop` instead of `accepting: h.accepting`; adjust field names to whatever you choose — keep them consistent.) Provide a temporary `initSession` stub that does the current `RunReserved` init sequence (initialize → new/load → set_mode) returning `sessionID`; Task 11/12 flesh it out with capability advertisement, seeding, and orphan compensation.
+`RequestPermission` (`run.go:183`) needs NO change — it calls `s.emit`, now always set. (Task 12 adds the sibling `UnstableCreateElicitation` handler the same way.)
 
-Update `Cancel` to prefer the detached run: at the top, `if h := c.runFor(chatID); h != nil { h.cancel(); if h.conn != nil { _ = h.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(h.sessionID)}) }; ... resolve pending ...; return nil }`, else fall through to the existing legacy `activeRun` path.
+Add a permission-through-detached-run test to prove C2 is closed:
+
+```go
+func TestDetachedRunPermissionEmitsThroughHub(t *testing.T) {
+	f := newFakeConn()
+	f.requestPermission = true // fake calls sc.RequestPermission during Prompt, then auto-approves via decision
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	c.StartPrompt("A", "do it",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context, string) error { return nil })
+	id := c.waitForPendingPermission(t, "A") // polls c.pending for the chat
+	if err := c.Approve(context.Background(), "A", id, "allow_once"); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A") // must not panic on a nil emit
+}
+```
+
+Extend `fakeConn` with `requestPermission bool`; in `Prompt`, when set, call `s.RequestPermission(ctx, acpsdk.RequestPermissionRequest{Options: []acpsdk.PermissionOption{{OptionId: "allow_once", Name: "Allow once"}}})` on the captured client (via the same type-assertion shape used for elicitation) and block until it returns. Add coordinator helper `waitForPendingPermission(t, chatID)` (polls `c.pending` for an entry whose `chatID` matches, returns its id).
+
+**`initSession`** — write the concrete stub (Task 11/12 extend it):
+
+```go
+func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessionClient, bridge *agui.Bridge, sessionID string, created OnSessionCreated) (string, error) {
+	if _, err := conn.Initialize(ctx, initializeRequest()); err != nil {
+		return "", err
+	}
+	if sessionID == "" {
+		res, err := conn.NewSession(ctx, acpsdk.NewSessionRequest{Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
+		if err != nil {
+			return "", err
+		}
+		sessionID = string(res.SessionId)
+		if sessionID == "" {
+			return "", errors.New("session/new response missing sessionId")
+		}
+		if err := created(ctx, sessionID); err != nil {
+			// Orphan compensation (Task 11): the Goose session exists but is
+			// unmapped — delete it so the next prompt does not strand history.
+			_, _ = conn.UnstableDeleteSession(ctx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)})
+			return "", fmt.Errorf("persist Goose session mapping: %w", err)
+		}
+		// Task 12: bridge.SeedSession(res.Modes, res.ConfigOptions) -> hub.Publish
+	} else {
+		res, err := conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
+		if err != nil {
+			return "", err
+		}
+		_ = res // Task 12: bridge.SeedSession(res.Modes, res.ConfigOptions) -> hub.Publish
+	}
+	if _, err := conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{SessionId: acpsdk.SessionId(sessionID), ModeId: acpsdk.SessionModeId("approve")}); err != nil {
+		return "", err
+	}
+	return sessionID, nil
+}
+```
+
+(The orphan-compensation line lands here in Task 11's commit; Task 10 may write it now since the fake already supports `deletedSession`. The `SeedSession` publish lands in Task 12.)
+
+Update `Cancel` to prefer the detached run: at the top, `if h := c.runFor(chatID); h != nil { h.cancel(); if h.conn != nil { _ = h.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(h.sessionID)}) }; resolve any pending permission for the chat; return nil }`, else fall through to the existing legacy `activeRun` path (removed in Task 14).
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -1682,27 +1791,23 @@ The single coherent commit that deletes legacy. Before this task, both transport
 - Modify: `internal/api/agent.go` (replace `/runs` + `/events` with `/session/prompt` + `/stream`; keep `/cancel`)
 - Modify: `internal/agent/coordinator/run.go` (delete `Run`, `Replay`, `RunReserved`, `ReplayReserved`, `RunRequest`, `activeRun`, `startRun`, `finishRun`, `cancelOnClientDisconnect`; simplify `Cancel` to the detached path only; drop the legacy branch of `sessionClient.SessionUpdate`)
 - Modify: `internal/agent/coordinator/run_test.go` (delete `TestCancelForwardsToActiveSession` and `TestUnmappedReplayDoesNotDial` — they exercise removed legacy methods; the detached equivalents live in Tasks 10–11)
-- Test: `internal/api/agent_test.go`
+- Modify: `tests/agent-c1/*` (the real integration suite — see Step 1 testing note)
 
 **Interfaces:**
 - `POST /api/pocketcoder/chats/{chatId}/session/prompt` — `{"prompt"}` → `202 {"runId"}`; `409` active; `503` unconfigured.
 - `GET /api/pocketcoder/chats/{chatId}/stream?cursor=N` — SSE; no `Reserve`; `att := service.Attach(chatID, cursor)`; flush `att.Snapshot` (each with `id:` = cursor) then `att.Buffered` (each `writeSeqFrame(w, e.Seq, e.Ev)`) then loop `att.Live` until `ctx.Done()` or close; `att.Unsubscribe()` on exit. On `att.ColdReplayNeeded`, first run a Goose bounded replay (reuse the `session/load`→bridge walk, no `Reserve`) writing frames, then Buffered+Live. `cursor` from `?cursor=` or the `Last-Event-ID` header.
 - `POST …/session/cancel` unchanged (202).
 
-- [ ] **Step 1: Write the failing test**
+**Testing note (why these routes are integration-tested, not Go-unit-tested).** The handlers are thin wiring over coordinator methods that are already fully unit-tested with a fake `acp.Conn` in Tasks 9–12 (`StartPrompt`→202+`runId`, `Reserve`→409, `Attach`→snapshot/backlog/live, cancel). The repo has **no** PocketBase Go HTTP-test harness (no `internal/api/*_test.go`, no `test_pb_data`, no `tests.ApiScenario` usage anywhere) and standing one up requires a migrated collections fixture (`users`/`chats`/`goose_sessions`) that does not exist. Rather than fabricate an unverifiable bootstrap, verify the wire behavior in the **existing `tests/agent-c1` integration suite** (real server, real collections, real auth), which Task 16 already updates. The only Go-level change here that carries its own unit proof is the dial **seam** (Step 3) so integration/local runs can inject a fake Goose.
 
-```go
-func TestPromptReturns202WithRunId(t *testing.T) { /* boot test app + auth, POST session/prompt, assert 202 + JSON {"runId": non-empty}; inject a fake dial via the api test seam */ }
-func TestStreamAttachesWithoutReserveAndEmitsSeqIds(t *testing.T) { /* start a run, GET stream?cursor=0, assert id: lines ascend by seq; a second concurrent GET stream also 200s (no 409) */ }
-func TestSecondPromptWhileActiveReturns409(t *testing.T) { /* two prompts without finishing; second is 409 */ }
-```
+- [ ] **Step 1: Update the integration suite (the failing "test")**
 
-(Model on the existing `internal/api/agent_test.go` harness — same app bootstrap, auth token, and the fake-dial injection point. If the API constructs the coordinator internally with no seam, add one: e.g. an exported `RegisterAgentApiWithDial(app, e, dial)` used by tests, with `RegisterAgentApi` delegating with the real dial. Confirm the current test file's setup before writing.)
+In `tests/agent-c1/`, replace the `POST …/runs` + `GET …/events` calls with: `POST …/session/prompt` asserting `202` and a JSON `runId`; `GET …/session/stream?cursor=0` asserting an SSE stream whose `id:` lines ascend and that carries `RUN_STARTED … RUN_FINISHED`; a second `POST …/session/prompt` while active asserting `409`; a second concurrent `GET …/session/stream` asserting `200` (no 409 on subscribe). Run the suite before implementing — it fails because the new routes don't exist yet. (This suite runs against a live c1+c2; gate it as the suite already does.)
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: Run to verify it fails**
 
-Run: `cd services/pocketbase && go test ./internal/api/ -run 'TestPromptReturns202|TestStreamAttaches|TestSecondPrompt' -v`
-Expected: FAIL — new routes absent.
+Run the `tests/agent-c1` suite per its README against a running stack.
+Expected: FAIL — the `session/prompt`/`session/stream` routes are absent (still `/runs`, `/events`).
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -1791,17 +1896,39 @@ e.Router.GET("/api/pocketcoder/chats/{chatId}/stream", func(re *core.RequestEven
 }).Bind(apis.RequireAuth())
 ```
 
-Add `writeFlush` (calls `writeSeqFrame` then `flusher.Flush()`), `parseCursor`, and a thin `Coordinator.StreamColdReplay(ctx, chatID, userID, emit func(seq int, ev events.Event) error) error` that resolves the session and does a no-Reserve `session/load` replay (adapt the legacy `ReplayReserved` body, assigning ascending seqs from 1). Then **delete** the legacy methods/tests listed in Files, and simplify `Cancel` + `SessionUpdate` to the detached-only path. Confirm `go build ./...` is green (this is the commit that closes the api gap).
+Add `writeFlush` (calls `writeSeqFrame` then `flusher.Flush()`), `parseCursor`, and a thin `Coordinator.StreamColdReplay(ctx, chatID, userID string, emit func(seq int, ev events.Event) error) error` that resolves the mapping (`gooseSessionForChat`-equivalent via an injected resolver or an `app`-free session lookup passed in), dials a short-lived conn, runs a no-Reserve `session/load` walk through a fresh `agui.NewBridge` (adapt the legacy `ReplayReserved` body), and calls `emit(seq, ev)` with ascending seqs from 1. Then **delete** the legacy methods/tests listed in Files, and simplify `Cancel` + `SessionUpdate` to the detached-only path.
 
-- [ ] **Step 4: Run test to verify it passes**
+**Import cleanup:** the two current `sse.NewSSEWriter()` uses (`agent.go:69,117`) live inside the deleted `/runs` and `/events` handlers; the replacements use `writeSeqFrame`/`writeFlush` instead, so **remove the now-unused `github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/encoding/sse` import** or `go build` fails on an unused import.
+
+**Dial seam (for integration/local fake Goose).** `RegisterAgentApi` builds the coordinator from env with the real dial. Add a seam so a test/local harness can inject a fake `acp.Conn`:
+
+```go
+// RegisterAgentApi keeps the production signature and delegates.
+func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+	registerAgentApi(app, e, nil) // nil => coordinator.New uses the real acp.Dial
+}
+// registerAgentApi is the seam: a non-nil dial overrides Config.Dial.
+func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coordinator.DialFunc) {
+	cfg := coordinator.Config{
+		GooseURL: os.Getenv("GOOSE_ACP_URL"), GooseSecret: os.Getenv("GOOSE_SERVER__SECRET_KEY"),
+		Workspace: os.Getenv("GOOSE_WORKSPACE"), PermissionTimeout: permissionTimeout(), Dial: dial,
+	}
+	service, configErr := coordinator.New(cfg)
+	// ... rest of the current RegisterAgentApi body unchanged ...
+}
+```
+
+Then **delete** the legacy methods/tests listed in Files, and simplify `Cancel` + `SessionUpdate` to the detached-only path. Confirm `go build ./...` is green (this is the commit that closes the api gap).
+
+- [ ] **Step 4: Verify build + coordinator tests + integration suite**
 
 Run: `cd services/pocketbase && go build ./... && go test ./internal/api/ ./internal/agent/coordinator/ -v`
-Expected: PASS across both packages; module builds with no legacy references.
+Expected: PASS + module builds with no legacy references. Then run the updated `tests/agent-c1` suite against a live stack (Step 1) and confirm the new routes behave.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add services/pocketbase/internal/api/agent.go services/pocketbase/internal/agent/coordinator/
+git add services/pocketbase/internal/api/agent.go services/pocketbase/internal/agent/coordinator/ tests/agent-c1
 git commit -m "feat(api): cut over to prompt(202)+stream(cursor); remove legacy run path"
 ```
 
@@ -1811,7 +1938,7 @@ git commit -m "feat(api): cut over to prompt(202)+stream(cursor); remove legacy 
 
 **Files:**
 - Modify: `internal/api/agent.go`
-- Test: `internal/api/agent_test.go`
+- Modify: `tests/agent-c1/*` (route behavior verified in the integration suite — same rationale as Task 14's testing note)
 
 **Interfaces:**
 - `POST …/session/set_mode` — `{"modeId"}` → `service.SetMode`; 202.
@@ -1820,17 +1947,15 @@ git commit -m "feat(api): cut over to prompt(202)+stream(cursor); remove legacy 
 - `POST …/session/elicitation/{id}` — `{"outcome":"accept|decline|cancel"}` (+ optional form content) → map to `acpsdk.UnstableCreateElicitationResponse{Accept|Decline|Cancel}` → `service.ResolveElicitation`; 202.
 - `OnRecordAfterDeleteSuccess("chats")` → `go service.DeleteSession(ctx, app, chatID)` (best-effort `UnstableDeleteSession` + remove `goose_sessions` row; on failure log `session_delete_failed` and leave the row for a reconcile sweep; never blocks the delete).
 
-- [ ] **Step 1: Write the failing test**
+The route handlers are thin wiring over `SetMode`/`SetConfigOption`/`Approve`/`ResolveElicitation`, each unit-tested in Task 12/11 with a fake `acp.Conn`. Verify the wire behavior (202 status, id routing, delete hook) in `tests/agent-c1`, not a fabricated PB HTTP unit test (Task 14 testing note).
 
-```go
-func TestSetModeRoute202(t *testing.T) { /* active run; POST set_mode {"modeId":"plan"} -> 202; fake conn saw "plan" */ }
-func TestElicitationRoute202(t *testing.T) { /* pending elicitation; POST elicitation/{id} {"outcome":"accept"} -> 202; handler resumes */ }
-func TestChatDeleteTriggersSessionDelete(t *testing.T) { /* chat + goose_sessions row; delete chat; fake conn saw UnstableDeleteSession; row gone */ }
-```
+- [ ] **Step 1: Extend the integration suite (the failing "test")**
 
-- [ ] **Step 2: Run test to verify it fails**
+Add to `tests/agent-c1/`: during an active run, `POST …/session/set_mode {"modeId":"plan"}` → `202`; a pending-elicitation turn resolved via `POST …/session/elicitation/{id} {"outcome":"accept"}` → `202` and the turn resumes; permission via `POST …/session/request_permission/{id}`; and deleting a chat with a `goose_sessions` row triggers a Goose `session/delete` and removes the row. Run before implementing — the new routes/hook don't exist yet.
 
-Run: `cd services/pocketbase && go test ./internal/api/ -run 'TestSetModeRoute|TestElicitationRoute|TestChatDeleteTriggers' -v`
+- [ ] **Step 2: Run to verify it fails**
+
+Run the `tests/agent-c1` suite against a live stack.
 Expected: FAIL — routes/hook absent.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -1851,15 +1976,15 @@ app.OnRecordAfterDeleteSuccess("chats").BindFunc(func(e *core.RecordEvent) error
 
 `Coordinator.DeleteSession(ctx, app core.App, chatID string) error`: resolve the mapping (any user — it's a system cleanup), dial a short-lived conn, `UnstableDeleteSession`, then delete the `goose_sessions` row on success. On failure, return the error (the hook logs it; the row remains for a future reconcile pass — documented v1 floor).
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 4: Verify build + integration suite**
 
-Run: `cd services/pocketbase && go build ./... && go test ./internal/api/ -v`
-Expected: PASS.
+Run: `cd services/pocketbase && go build ./... && go test ./internal/api/ ./internal/agent/coordinator/ -v`
+Expected: PASS + module builds. Then run the updated `tests/agent-c1` suite against a live stack and confirm the new routes + delete hook behave.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add services/pocketbase/internal/api/agent.go services/pocketbase/internal/api/agent_test.go services/pocketbase/internal/agent/coordinator/
+git add services/pocketbase/internal/api/agent.go services/pocketbase/internal/agent/coordinator/ tests/agent-c1
 git commit -m "feat(api): set_mode/set_config/permission/elicitation routes + chat-delete hook"
 ```
 
@@ -1920,7 +2045,11 @@ git commit -m "test(agent): live_acp integration for the detached stream bridge"
 
 **No orphaned references:** `Finished(stopReason)` (Task 8) updates all call sites in its own commit. `Conn` additions (Task 7) precede the code (Tasks 11/12) that calls them and are mirrored on `fakeConn`. `Attach`/`Attachment` (Task 3) → `Coordinator.Attach` (Task 9) → stream route (Task 14). `writeSeqFrame` (Task 13) → stream route (Task 14). Legacy `Run`/`Replay`/`RunReserved`/`ReplayReserved`/`activeRun`/`startRun`/`finishRun`/`cancelOnClientDisconnect` and `TestCancelForwardsToActiveSession`/`TestUnmappedReplayDoesNotDial` are all removed together in Task 14; `live_test.go`'s use of `Run`/`RunRequest` is fixed in Task 16.
 
-**Verify-at-impl-time (intentional, TDD RED catches mismatches):** translation-unit internal field names (`threadID`/`runID`/`openTools`/`closeMessage`/`closeReasoning`) and AG-UI accessors (`RunFinishedEvent.Result`); the `UnstableCreateElicitationForm` field names for message/mode/schema extraction; the existing `internal/api/agent_test.go` bootstrap + dial-injection seam. Pinned against `acp-go-sdk@v0.13.5` / AG-UI SDK by this plan: `NewRunFinishedEventWithOptions`+`WithResult`/`WithSuccessOutcome` (NOT `NewRunFinishedEvent`, which takes no options), `NewRunErrorEvent`+`WithErrorCode`, `NewToolCallEndEvent`, `NewTextMessageContentEvent`, `NewStateSnapshotEvent`, `event.ToJSON()`, the SSE writer's hardcoded `id: <Type>_<ts>` (why Task 13 hand-writes frames), `PromptResponse.StopReason`, `StopReason*`, `ClientCapabilities.Elicitation`/`ElicitationCapabilities.Form`, `SetSessionConfigOptionRequest` (union; `SessionId` inside each variant), `UnstableDeleteSessionRequest`, `UnstableCreateElicitation{Request,Response,Accept,Decline,Cancel}`, `NewSessionResponse.{Modes,ConfigOptions}`, `ClientSideConnection.{SetSessionConfigOption,UnstableDeleteSession}` (so `sdkConn` satisfies the extended `Conn` by embedding), and the `UnstableCreateElicitation` dispatch-by-type-assertion (`client_gen.go:37`) — so the handler method on `sessionClient` is routed correctly.
+**Testing strategy:** the concurrency- and lifecycle-critical logic (hub, detached run, cancel/timeout/panic, elicitation, permission-through-detached-run — see `TestDetachedRunPermissionEmitsThroughHub`, Task 10) is deterministically unit-tested at the coordinator layer with a fake `acp.Conn` and a fake `Clock`. The thin HTTP handlers (Tasks 14/15) are verified in the real `tests/agent-c1` integration suite, because the repo has no PocketBase Go HTTP-test harness and standing one up would need an unverifiable migrated-collections fixture; a dial **seam** (`registerAgentApi`) lets that suite (and local runs) inject a fake Goose. `live_acp` (Task 16) proves the full stack.
+
+**Prerequisite (blocking):** the sibling translation plan must be merged **through its final task** so `bridge.go` exports `Snapshot`/`SeedSession`/`ElicitationPending`/`ResolvePermission`/`ResolveElicitation` before Phase B starts (see the Phase B hard-prerequisite box). Phase A has no such dependency.
+
+**Verify-at-impl-time (intentional, TDD RED catches mismatches):** translation-unit internal field names (`threadID`/`runID`/`openTools` + the exact `Finished` prologue) and AG-UI accessors (`RunFinishedEvent.Result`); the `UnstableCreateElicitationForm` field names for message/mode/schema extraction. Pinned against `acp-go-sdk@v0.13.5` / AG-UI SDK by this plan: `NewRunFinishedEventWithOptions`+`WithResult`/`WithSuccessOutcome` (NOT `NewRunFinishedEvent`, which takes no options), `NewRunErrorEvent`+`WithErrorCode`, `NewToolCallEndEvent`, `NewTextMessageContentEvent`, `NewStateSnapshotEvent`, `event.ToJSON()`, the SSE writer's hardcoded `id: <Type>_<ts>` (why Task 13 hand-writes frames), `PromptResponse.StopReason`, `StopReason*`, `ClientCapabilities.Elicitation`/`ElicitationCapabilities.Form`, `SetSessionConfigOptionRequest` (union; `SessionId` inside each variant), `UnstableDeleteSessionRequest`, `UnstableCreateElicitation{Request,Response,Accept,Decline,Cancel}`, `NewSessionResponse.{Modes,ConfigOptions}`, `ClientSideConnection.{SetSessionConfigOption,UnstableDeleteSession}` (so `sdkConn` satisfies the extended `Conn` by embedding), and the `UnstableCreateElicitation` dispatch-by-type-assertion (`client_gen.go:37`) — so the handler method on `sessionClient` is routed correctly.
 
 ## Execution Handoff
 
