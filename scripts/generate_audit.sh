@@ -21,7 +21,6 @@
 #
 # Counts lines of code across PocketCoder core components.
 # EXCLUDES: bash scripts, .bats files, test files. Those are tallied separately.
-# For services/sandbox/cao: counts lines ADDED vs awslabs/cli-agent-orchestrator upstream.
 
 set -uo pipefail
 
@@ -35,12 +34,9 @@ TAG="@pocketcoder-core"
 CORE_DIRS=(
   "services/pocketbase"
   "services/proxy"
-  "services/sandbox"   # entrypoint.sh, sync_keys.sh (not cao submodule python — handled below)
-  "services/opencode"
-  "services/interface"
+  "services/goose"
   "services/mcp-gateway"
   "services/poco-agents"
-  "services/poco-memory"
   "scripts"
   "client"
 )
@@ -76,7 +72,6 @@ If a file isn't on this list, it's either a third-party dependency or unlabelled
 
 > **Counting rules**: Core logic = Go / Rust / TypeScript / Python / Dart.
 > Shell scripts are tallied separately. Tests are excluded from both counts.
-> The `sandbox/cao` forked submodule is measured as a diff vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator).
 
 ## 🏛️ Original Logic Index
 
@@ -94,11 +89,6 @@ FILE_COUNT=0
 scan_file() {
   local FILE_PATH="$1"
   local REL_PATH="${FILE_PATH#$REPO_ROOT/}"
-
-  # Skip CAO python files — handled via git diff below
-  if [[ "$REL_PATH" == services/sandbox/cao/* ]]; then
-    return
-  fi
 
   # Skip test files
   if is_test_file "$FILE_PATH"; then
@@ -173,40 +163,12 @@ for f in "${ROOT_FILES[@]}"; do
 done
 
 # ---------------------------------------------------------------------------
-# CAO submodule: diff vs awslabs upstream
+# The CAO fork submodule was removed with the legacy sandbox service;
+# Python delta accounting is retired along with it.
 # ---------------------------------------------------------------------------
-CAO_DIR="$REPO_ROOT/services/sandbox/cao"
 CAO_ADDED=0
 CAO_DELETED=0
-CAO_NOTE="(skipped)"
-
-if [[ -d "$CAO_DIR/.git" || -f "$CAO_DIR/.git" ]]; then
-  cd "$CAO_DIR"
-
-  # Ensure upstream remote exists
-  if ! git remote get-url upstream &>/dev/null; then
-    git remote add upstream https://github.com/awslabs/cli-agent-orchestrator.git
-  fi
-
-  # Fetch silently; tolerate offline
-  if git fetch upstream main --quiet 2>/dev/null; then
-    NUMSTAT=$(git diff upstream/main HEAD --numstat -- '*.py' 2>/dev/null || true)
-    if [[ -n "$NUMSTAT" ]]; then
-      CAO_ADDED=$(echo "$NUMSTAT" | awk '{a+=$1} END{print a+0}')
-      CAO_DELETED=$(echo "$NUMSTAT" | awk '{d+=$2} END{print d+0}')
-    fi
-    CAO_NOTE="+${CAO_ADDED} added / -${CAO_DELETED} removed vs upstream"
-
-    # List tagged py files in the diff (new/modified, not deleted)
-    while IFS= read -r PY_FILE; do
-      ABS_PY="$CAO_DIR/$PY_FILE"
-      [[ -f "$ABS_PY" ]] && scan_file "$ABS_PY"
-    done < <(git diff upstream/main HEAD --name-only -- '*.py' 2>/dev/null | grep -v '^test/' || true)
-  else
-    CAO_NOTE="(offline — upstream fetch skipped)"
-  fi
-  cd "$REPO_ROOT"
-fi
+CAO_NOTE="(retired — sandbox/cao removed)"
 
 # ---------------------------------------------------------------------------
 # Flutter client: full Dart count (non-generated, non-test)
@@ -226,11 +188,10 @@ done < <(find "$REPO_ROOT/client" \
 # ---------------------------------------------------------------------------
 GO_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*.go' ! -path '*/tests/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
 RUST_LOC=$(find "$REPO_ROOT/services/proxy/src" -name '*.rs' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
-TS_LOC=$(find "$REPO_ROOT/services/opencode/tools" "$REPO_ROOT/services/opencode/plugins" "$REPO_ROOT/services/interface/src" -name '*.ts' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+TS_LOC=0
 
-# Bash: all project shell scripts excluding cao submodule, node_modules, tests
+# Bash: all project shell scripts excluding node_modules, tests
 BASH_LOC=$(find "$REPO_ROOT" \
-  -path "$REPO_ROOT/services/sandbox/cao" -prune -o \
   -path "$REPO_ROOT/node_modules" -prune -o \
   -path "$REPO_ROOT/client/node_modules" -prune -o \
   -path "*/tests/*" -prune -o \
@@ -251,7 +212,7 @@ echo "| Language | LoC | Notes |"
 echo "| :--- | ---: | :--- |"
 echo "| Go | ${GO_LOC} | PocketBase backend & relay |"
 echo "| Rust | ${RUST_LOC} | Sentinel Proxy |"
-echo "| TypeScript | ${TS_LOC} | OpenCode tools, plugins & Interface bridge |"
+echo "| TypeScript | ${TS_LOC} | (none currently tracked) |"
 echo "| Python | ${CAO_ADDED} added / -${CAO_DELETED} removed | CAO fork delta vs [awslabs upstream](https://github.com/awslabs/cli-agent-orchestrator) |"
 echo "| Dart | ${DART_LOC} | Flutter client (non-generated, non-test) |"
 echo "| Bash | ${BASH_LOC} | Shell scripts (infra / helpers, not counted in core) |"
@@ -283,7 +244,7 @@ if [[ -f "$README_FILE" ]]; then
 | :--- | ---: | :--- |
 | Go | $(fmt $GO_LOC) | PocketBase backend & relay |
 | Rust | $(fmt $RUST_LOC) | Proxy |
-| TypeScript | $(fmt $TS_LOC) | OpenCode tools, plugins & Interface bridge |
+| TypeScript | $(fmt $TS_LOC) | (none currently tracked) |
 | Python | +$(fmt $CAO_ADDED) vs upstream | CAO fork (vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator)) |
 | Dart | $(fmt $DART_LOC) | Flutter client (non-generated) |
 | Bash | $(fmt $BASH_LOC) | Shell scripts (infra — separate tally) |
