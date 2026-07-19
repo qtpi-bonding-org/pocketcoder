@@ -304,3 +304,54 @@ func TestDetachedRunPermissionEmitsThroughHub(t *testing.T) {
 	}
 	c.waitRunDone(t, "A") // must not panic on a nil emit
 }
+
+// ---- Task 11: cancel triggers + orphan-session compensation ----
+
+// Explicit cancel must propagate to the ACP conn as a Cancel notification
+// carrying the detached run's sessionId.
+func TestExplicitCancelSendsAcpCancel(t *testing.T) {
+	f := newFakeConn()
+	f.blockPrompt = make(chan struct{})
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context, string) error { return nil })
+	f.waitForPrompt(t)
+	if err := c.Cancel(context.Background(), "A"); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A")
+	if f.cancelled != "s1" {
+		t.Fatalf("cancelled=%q, want s1", f.cancelled)
+	}
+}
+
+// Max-run timer (default 15m) must fire under a fake clock, cancel the run,
+// and let the detached teardown release Reserve.
+func TestMaxRunTimeoutTearsDown(t *testing.T) {
+	f := newFakeConn()
+	f.blockPrompt = make(chan struct{}) // never unblocked
+	clk := NewFakeClock(time.Unix(0, 0))
+	c := testCoordinatorWithConn(t, f, clk)
+	c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context, string) error { return nil })
+	f.waitForPrompt(t)
+	clk.Advance(15*time.Minute + time.Second)
+	c.waitRunDone(t, "A")
+}
+
+// When session/new succeeds but the mapping persist fails, the freshly minted
+// Goose session must be deleted so it does not strand history on the server.
+func TestOrphanSessionCompensatedOnPersistFailure(t *testing.T) {
+	f := newFakeConn()
+	f.newSession = "orphan-1"
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "", nil }, // unmapped -> session/new
+		func(context.Context, string) error { return errors.New("db down") })
+	c.waitRunDone(t, "A")
+	if f.deletedSession != "orphan-1" {
+		t.Fatalf("persist failure must compensate via delete, deleted=%q", f.deletedSession)
+	}
+}
