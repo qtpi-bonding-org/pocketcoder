@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-19
 **Status:** DRAFT SPEC — ready for user review, then a plan. Scoped to the translation layer only.
-**Motivated by:** the audit showing `internal/agent/agui/bridge.go` is a happy-path — it handles 4 of ~12 `SessionUpdate` variants, 1 of 3 content-block types, 1 of 3 tool-content types, and drops the rest silently.
+**Motivated by:** the audit showing `internal/agent/agui/bridge.go` is a happy-path — it handles 4 of 13 `SessionUpdate` variants, 1 of 5 content-block types, 1 of 3 tool-content types, and drops the rest silently.
 **Grounded against:** `coder/acp-go-sdk@v0.13.5`, `ag-ui-protocol/ag-ui` Go SDK. Reference reviewed (not adopted as law): `github.com/namanrajpal/acp-to-agui` — we borrow its *never-drop → CUSTOM* idea and confirm its `STATE`-for-permission pattern; it does not map diffs/terminal/plan, which we do.
 
 ## 1. Goal & scope
@@ -15,7 +15,7 @@ Make the ACP→AG-UI translation **complete and robust**: every ACP `SessionUpda
 
 ## 2. Design principles
 
-1. **Never drop.** Unknown, vendor (`_*.dev/…`), or unmapped-Unstable variants emit a `RAW` AG-UI event carrying the original payload — observable and forward-compatible, never invisible.
+1. **Never drop — but filter.** Unknown, vendor (`_*.dev/…`), or unmapped variants emit a `RAW` AG-UI event — observable and forward-compatible, never invisible. **RAW is a controlled surface, not a passthrough:** strip ACP `_meta` and any cost/provider internals before emit, and debug-gate it (production emits a minimal redacted marker). "Never dropped" ≠ "never filtered."
 2. **Two output channels, one rule:**
    - **Standard AG-UI events** (`TEXT_*`, `REASONING_*`, `TOOL_CALL_*`, `RUN_*`) carry the linear, text-first timeline a dumb client can render alone.
    - **`STATE_SNAPSHOT`/`STATE_DELTA` on `/pocketcoder/*`** carry **bounded, current-value** state (snapshot-able for re-attach).
@@ -39,22 +39,21 @@ Make the ACP→AG-UI translation **complete and robust**: every ACP `SessionUpda
 | `CurrentModeUpdate` | `STATE_DELTA` `/pocketcoder/modes` `currentModeId` | agent-initiated mode switch (was dropped) |
 | `ConfigOptionUpdate` | `STATE_SNAPSHOT` `/pocketcoder/config` | refreshed option set/values (was dropped) |
 | `AvailableCommandsUpdate` | `STATE_SNAPSHOT` `/pocketcoder/commands` | `[{name,description,input?}]` — command palette |
-| `SessionInfoUpdate` *(Unstable)* | `STATE_DELTA` `/pocketcoder/session_info` | title/info |
-| *unknown / vendor / future* | `RAW` | never dropped (principle 1) |
+| `SessionInfoUpdate` *(Unstable)* | `STATE_DELTA` `/pocketcoder/session_info` | title/info; gated on the pinned image actually emitting it |
+| `UsageUpdate` | `STATE_DELTA` `/pocketcoder/usage` | context/cost meter — `{size, used, cost?}` (bounded current-value) |
+| *unknown / vendor / future* | `RAW` (redacted) | never dropped; `_meta`/cost internals stripped, debug-gated (principle 1) |
 
 Session-init responses (`NewSession`/`LoadSession`) seed `/pocketcoder/modes` and `/pocketcoder/config` from `Modes`/`ConfigOptions` (also previously discarded).
 
 ## 4. Complete content handling
 
-### 4.1 `ContentBlock` (agent/user/thought chunks) — 4 variants
+### 4.1 `ContentBlock` (agent/user/thought chunks) — 5 variants
 | variant | mapping |
 |---|---|
 | `Text` | text → `delta` |
-| `Image` | `CUSTOM pocketcoder:media` `{messageId, kind:"image", mimeType, data, uri?}` |
-| `Audio` | `CUSTOM pocketcoder:media` `{messageId, kind:"audio", mimeType, data}` |
-| `ResourceLink` | `CUSTOM pocketcoder:media` `{messageId, kind:"resource_link", name, uri, mimeType?, size?}` |
+| `Image` / `Audio` / `ResourceLink` / `Resource` | `CUSTOM pocketcoder:content` `{messageId, kind, + a minimal safe descriptor: mimeType?, uri?, name?, size?}` — **no inline data, no `_meta`** |
 
-A shared `renderContent` helper is the single place content is decoded — no variant falls through.
+A shared `renderContent` helper is the single decode point — **all 5 handled, none falls through**; the non-text arm is the generic `pocketcoder:content` fallback. Rich media rendering (inline image/audio, embedded resource contents) is **deferred** (§10): Goose is a coding agent and effectively never emits image/audio blocks, so v1 ships only the safe descriptor, not a media pipeline.
 
 ### 4.2 `ToolCallContent` (tool results) — 3 variants
 | variant | mapping |
@@ -76,26 +75,27 @@ Carries `Kind` (icon/type rendering), `Status` (spinner/badges incl. intermediat
 ## 5. Correctness fixes (regression tests required)
 
 1. **Single-shot completed `ToolCall`:** read the initial `ToolCall.Status` and `ToolCall.Content`. If status is terminal, emit `START`+`ARGS`+`RESULT`+`END` in one pass instead of leaking an open tool with no result.
-2. **Non-fatal updates:** `Update` returns `(events, err)` where `err` is reserved for fatal only; unmappable/partial updates log + emit `RAW` and continue. The coordinator's `SessionUpdate` handler must **not** abort the turn on a soft translation miss.
+2. **Soft misses must reach the client (corrected diagnosis).** An `Update` error today does **not** abort the turn — ACP treats `session/update` as a notification, so the coordinator's returned error is merely logged (`connection.go:583-591`) and the turn continues. The real defect is **silent loss**: the failing update's events never reach the client, visible only in the server log. Fix: `Update` returns `(events, err)` with `err` reserved for genuinely fatal cases; a soft/partial miss emits a redacted `RAW` event **to the client** and continues. The load-bearing test is *"malformed update → RAW is visible to the client"*, not "turn not aborted" (which already holds).
 3. **User-message replay:** `UserMessageChunk` handling (§3) so `GET …/stream` history shows both sides.
 4. **Multimodal never-drop:** image/audio/resource surface via `pocketcoder:media` (§4.1) rather than vanishing.
 5. **Intermediate tool status:** surfaced via `pocketcoder:tool.status` (§4.3).
 
 ## 6. State projection + `Snapshot()`
 
-The Bridge maintains a **current-state model** for the `/pocketcoder/*` STATE namespaces (`permission`, `elicitation`, `modes`, `config`, `plan`, `commands`, `session_info`). It exposes:
+The Bridge maintains a **current-state model** for the `/pocketcoder/*` STATE namespaces (`permission`, `elicitation`, `modes`, `config`, `plan`, `commands`, `usage`, `session_info`). It exposes:
 - `Update(SessionNotification) ([]events.Event, error)` — emits standard + STATE_DELTA + CUSTOM.
+- `ResolvePermission(id)` / `ResolveElicitation(id) []events.Event` — **clear** a pending HITL entry from the projection (emit the removing `STATE_DELTA`). The **coordinator owns *when*** resolution happens (`Approve`/`Cancel`/timeout) and calls these, so the projection — and therefore `Snapshot()` — never shows an already-answered request to a late joiner. This is the explicit seam between coordinator-owned *resolution* and translation-owned *projection*.
 - `Snapshot() []events.Event` — a `STATE_SNAPSHOT` per non-empty namespace, for a **late-joining subscriber** (the run hub calls this on attach; hub logic is the c1↔c2 spec's concern — this unit just provides the projection).
 - `Started()` / `Finished()` — unchanged lifecycle (still correct).
 
-STATE_DELTA remains the wire format for incremental changes; `Snapshot()` gives new subscribers the baseline so cursors/replay stay cheap (no Goose round-trip for ambient state).
+STATE_DELTA remains the wire format for incremental changes; `Snapshot()` gives new subscribers the baseline so cursors/replay stay cheap (no Goose round-trip for ambient state). Making `permission`/`elicitation` snapshot-able means the Bridge must now **record** them (today `PermissionPending` is stateless) and clear them via the `Resolve*` methods above.
 
 ## 7. Module structure
 
 - `internal/agent/agui/bridge.go` — the Bridge: text/reasoning/tool boundary machine + `Update`/`Snapshot`/`Started`/`Finished`. (Refactor of today's file.)
 - `internal/agent/agui/content.go` — `renderContent` (all `ContentBlock` variants) + `renderToolContent` (all `ToolCallContent` variants). Single decode point.
 - `internal/agent/agui/state.go` — the `/pocketcoder/*` state projection: apply an update, produce `STATE_DELTA`, produce `STATE_SNAPSHOT`.
-- `internal/agent/agui/custom.go` — constructors for the `pocketcoder:*` `CUSTOM` events (`tool`, `diff`, `terminal`, `media`, and the `RAW` fallback).
+- `internal/agent/agui/custom.go` — constructors for the `pocketcoder:*` `CUSTOM` events (`tool`, `diff`, `terminal`, `content`) and the redacted `RAW` fallback (strips `_meta`/cost internals).
 - `internal/agent/agui/bridge_test.go` (+ `content_test.go`, `state_test.go`) — golden-sequence tests.
 
 Small, focused files; each independently testable.
@@ -104,20 +104,22 @@ Small, focused files; each independently testable.
 
 Table-driven golden tests — for each ACP update, assert the exact ordered `[]events.Event`:
 - Every `SessionUpdate` variant in §3 (incl. `RAW` for a synthetic unknown/vendor update).
-- Content variants: text / image / audio / resource_link (§4.1).
+- Content variants: text / image / audio / resource_link / **resource** — all 5; non-text via the `pocketcoder:content` fallback (§4.1).
 - Tool-content variants: content / **diff** / **terminal** (§4.2).
-- Correctness: **single-shot completed tool call**; malformed update (missing `toolCallId`) → `RAW`, **turn not aborted**; `UserMessageChunk` → user text.
+- Correctness: **single-shot completed tool call** (terminal initial `ToolCall` → START+ARGS+RESULT+END, output not lost); malformed update (missing `toolCallId`) → **redacted `RAW` reaches the client** (load-bearing; today it's silently logged); `UserMessageChunk` → user text on replay.
 - Boundary interleavings: text→tool→text; reasoning→text; concurrent open tools closed at `Finished()`.
-- Plan lifecycle (`Plan` snapshot → `PlanUpdate` delta → `PlanRemoved`); mode/config/commands updates → correct STATE.
-- `Snapshot()` after a sequence returns a correct per-namespace `STATE_SNAPSHOT`.
+- **Principle 3:** a STATE/CUSTOM emission injected mid-`TEXT_MESSAGE` stream does **not** close the text boundary (no spurious `TEXT_MESSAGE_END`).
+- Plan lifecycle (`Plan` snapshot → `PlanUpdate` delta → `PlanRemoved`); mode/config/commands/**usage** updates → correct STATE.
+- `Snapshot()` after a sequence returns a correct per-namespace `STATE_SNAPSHOT`, and **omits a resolved** permission/elicitation (after `ResolvePermission`/`ResolveElicitation`).
+- `RAW` redaction: a payload carrying `_meta`/cost internals is stripped before emit.
 
 ## 9. Consequences for the contract & coordinator
 
-- **Contract spec (`2026-07-19-c1-flutter-contract-spec.md`):** the down-channel catalog gains `/pocketcoder/plan`, `/pocketcoder/commands`, `/pocketcoder/session_info` STATE and the `pocketcoder:{tool,diff,terminal,media}` + `RAW` CUSTOM events. Update §5 there once this lands.
+- **Contract spec (`2026-07-19-c1-flutter-contract-spec.md`):** the down-channel catalog gains `/pocketcoder/plan`, `/pocketcoder/commands`, `/pocketcoder/usage`, `/pocketcoder/session_info` STATE and the `pocketcoder:{tool,diff,terminal,content}` + redacted `RAW` CUSTOM events. Update §5 there once this lands.
 - **Coordinator:** its `sessionClient.SessionUpdate` must treat soft `Update` misses as non-fatal (§5.2), and it must feed session-init `Modes`/`ConfigOptions` into the Bridge, and call `Snapshot()` for late subscribers (the latter is wired in the c1↔c2 bridge spec).
 
 ## 10. Open items
 
-- **`pocketcoder:media` transport for large images:** inline base64 vs. a fetch URL. Lean fetch-URL for large payloads to keep the SSE stream light — decide in the plan.
+- **Rich media rendering (deferred):** v1 ships only the safe `pocketcoder:content` descriptor for image/audio/resource_link/resource (§4.1). If/when Goose actually emits media, decide inline-base64 vs. fetch-URL then — not before a real emitter exists.
 - **`Diff` fallback text:** generate a real unified diff (needs a tiny diff lib or a naive line diff) vs. just shipping `{oldText,newText}` and letting Flutter render. Lean: ship structured, minimal/no server-side diff text.
 - **Unstable-variant churn:** `PlanUpdate`/`PlanRemoved`/`SessionInfoUpdate` are Unstable ACP; pin behavior to the Goose image's actual emissions and gate on presence.

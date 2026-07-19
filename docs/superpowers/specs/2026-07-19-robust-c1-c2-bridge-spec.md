@@ -65,7 +65,9 @@ Evaluated `tmaxmax/go-sse` (best fit: topic pub/sub, `FiniteReplayer` bounded re
 2. Our replay semantics are **bespoke**: per-run `seq`, linger-then-evict, `Snapshot()` injection of ambient `/pocketcoder/*` STATE on join, and Goose cold-replay fallback. A generic finite replayer covers ~half.
 3. The concurrency core (bounded per-subscriber channel, non-blocking publish, drop-on-full, atomic attach, per-run log) is ~150–250 lines and is the **most test-critical, most deterministically-testable** part of the project.
 
-**Detached-run lifecycle** has no library candidate at all — it's stdlib `context`/goroutines/timers (+ maybe `golang.org/x/sync`). Optional: use `tmaxmax/go-sse` (or stdlib) only for trivial SSE **framing/encoding**, and its `FiniteReplayer` as a **reference pattern**. The hub *policy* stays ours.
+**Verified backpressure fact (Opus review, from go-sse source):** the `Joe` provider **sends synchronously** — a subscriber whose callback blocks stalls `Publish` and every other subscriber; Joe removes a subscriber only on a `Send` *error*, never for merely being *slow*. So the library does **not** provide the keystone; we would write the bounded-channel, non-blocking, drop-on-full delivery ourselves regardless. That is decisive.
+
+**Detached-run lifecycle** has no library candidate at all — it's stdlib `context`/goroutines/timers (+ maybe `golang.org/x/sync`). SSE framing (`id:`/`data:` + flush) is ~20 lines and the writer needs an `id:` line added anyway, so we **skip go-sse even for framing** — a dependency for 20 lines is negative value. Keep its `FiniteReplayer` as a **reference pattern** only. The hub is fully in-house.
 
 ## 5. Detached run lifecycle
 
@@ -130,7 +132,7 @@ Implements the contract spec §6 verbatim; `sessionId` injected from `{chatId}`.
 5. Mid-turn Goose WS failure → `RUN_ERROR`, **no auto-resume**; c1-restart durability out of scope.
 6. `session/close` deferred; `fork` deferred to fast-follow.
 7. Linger window 30s; max-run timeout ~15m; both configurable (env).
-8. **Hub built in-house** (not a library); optional `tmaxmax/go-sse` for SSE framing only (§4a).
+8. **Hub built fully in-house** — no `tmaxmax/go-sse` (its `Joe` provider sends synchronously → can't satisfy the drop-slow keystone; framing is ~20 lines) (§4a).
 
 ## 12. Testing strategy (TDD)
 
