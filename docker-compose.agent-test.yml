@@ -16,7 +16,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       PB_URL: http://pocketbase:8090
-      PB_AUTH_COLLECTION: ${PB_AUTH_COLLECTION:-_pb_users_auth_}
+      PB_AUTH_COLLECTION: ${PB_AUTH_COLLECTION:-users}
       AGENT_TEST_EMAIL: ${AGENT_TEST_EMAIL:?set an ordinary PocketBase test-user email}
       AGENT_TEST_PASSWORD: ${AGENT_TEST_PASSWORD:?set that test user's password}
       AGENT_TEST_TIMEOUT_SECONDS: ${AGENT_TEST_TIMEOUT_SECONDS:-120}
