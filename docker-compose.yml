@@ -83,43 +83,13 @@ services:
       retries: 10
       start_period: 20s
 
-  # 🔨 SANDBOX (Isolated Execution Environment)
-  sandbox:
-    build:
-      context: .
-      dockerfile: services/sandbox/Dockerfile
-    container_name: pocketcoder-sandbox
-    init: true  # tini as PID 1 — handles zombie reaping + signal forwarding
-    ports:
-      - "2222:2222"  # SSH + SFTP (key-auth only)
-    volumes:
-      - opencode_workspace:/workspace
-      - shell_bridge:/app/shell_bridge
-      - llm_keys:/llm_keys:ro
-    working_dir: /workspace
-    environment:
-      - TMUX_TMPDIR=/tmp/tmux
-      - TMUX_SOCKET=/tmp/tmux/pocketcoder
-      - MCP_HOST=http://mcp-gateway:8811/sse
-      - DOCKER_MCP_IN_CONTAINER=1
-    healthcheck:
-      test: ["CMD", "/bin/bash", "-c", "curl -f http://localhost:3001/health && curl -f http://localhost:9888/health"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    restart: unless-stopped
-    networks:
-      - pocketcoder-control
-      - pocketcoder-tools
-
-
   # 🔌 MCP GATEWAY (MCP Server Gateway)
   mcp-gateway:
     build:
       context: .
       dockerfile: services/mcp-gateway/Dockerfile
     container_name: pocketcoder-mcp-gateway
+    profiles: ["c3"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./services/mcp-gateway/config:/root/.docker/mcp
@@ -181,41 +151,6 @@ services:
       retries: 5
       start_period: 10s
 
-  # 🛰️ SOVEREIGN INTERFACE (ACP Bridge)
-  interface:
-    build:
-      context: services/interface
-      dockerfile: Dockerfile
-      args:
-        POCO_AGENT: ${POCO_AGENT:-opencode}
-    container_name: pocketcoder-interface
-    restart: unless-stopped
-    environment:
-      POCKETBASE_URL: http://pocketbase:8090
-      SANDBOX_PROXY_URL: http://sandbox:3001
-      WORKSPACE_PATH: /workspace
-      POCO_AGENT_CMD: ${POCO_AGENT_CMD:-opencode acp}
-      AGENT_EMAIL: ${AGENT_EMAIL}
-      AGENT_PASSWORD: ${AGENT_PASSWORD}
-      HEALTH_PORT: "8080"
-    volumes:
-      - opencode_workspace:/workspace
-      - llm_keys:/llm_keys:ro
-    networks:
-      - pocketcoder-pocketbase-sdk
-      - pocketcoder-control
-    depends_on:
-      pocketbase:
-        condition: service_healthy
-      sandbox:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
-      interval: 10s
-      timeout: 5s
-      start_period: 30s
-      retries: 3
-
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
     image: lovasoa/sqlpage:v0.32.0
@@ -241,118 +176,6 @@ services:
     depends_on:
       pocketbase:
         condition: service_healthy
-      sandbox:
-        condition: service_healthy
-
-
-  # 📚 SURREALDB (Knowledge + Memory Database)
-  # To enable: docker compose --profile knowledge up
-  surrealdb:
-    image: surrealdb/surrealdb:v2
-    container_name: pocketcoder-surrealdb
-    user: root
-    profiles:
-      - knowledge
-    command: start --log info --user ${SURREAL_USER:-root} --pass ${SURREAL_PASSWORD:-root} rocksdb:/mydata/mydatabase.db
-    volumes:
-      - surrealdb_data:/mydata
-    networks:
-      - pocketcoder-knowledge
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-
-  # 📓 OPEN NOTEBOOK (Knowledge Base — NotebookLM Alternative)
-  # To enable: docker compose --profile knowledge up
-  open-notebook:
-    image: lfnovo/open_notebook:v1-latest
-    container_name: pocketcoder-open-notebook
-    profiles:
-      - knowledge
-    depends_on:
-      - surrealdb
-    environment:
-      - SURREAL_URL=ws://surrealdb:8000/rpc
-      - SURREAL_USER=root
-      - SURREAL_PASSWORD=root
-      - SURREAL_NAMESPACE=open_notebook
-      - SURREAL_DATABASE=open_notebook
-      - OPEN_NOTEBOOK_ENCRYPTION_KEY=${OPEN_NOTEBOOK_ENCRYPTION_KEY}
-    volumes:
-      - notebook_data:/app/data
-    # ports:
-    #   - "8502:8502"  # OpenNotebook UI
-    #   - "5055:5055"  # OpenNotebook REST API
-    networks:
-      - pocketcoder-knowledge
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8502/_stcore/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  # 🔗 OPEN NOTEBOOK MCP (MCP Bridge for OpenCode)
-  # To enable: docker compose --profile knowledge up
-  open-notebook-mcp:
-    build:
-      context: services/open-notebook-mcp
-      dockerfile: Dockerfile
-    container_name: pocketcoder-open-notebook-mcp
-    profiles:
-      - knowledge
-    depends_on:
-      - open-notebook
-    environment:
-      - OPEN_NOTEBOOK_URL=http://open-notebook:5055
-      - MCP_TRANSPORT=streamable-http
-      - HOST=0.0.0.0
-      - PORT=8000
-    networks:
-      - pocketcoder-knowledge
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-
-  # 🧠 POCO-MEMORY (Agent Memory MCP Server)
-  # To enable: docker compose --profile knowledge up
-  poco-memory:
-    build:
-      context: services/poco-memory
-      dockerfile: Dockerfile
-    container_name: pocketcoder-poco-memory
-    profiles:
-      - knowledge
-    depends_on:
-      - surrealdb
-    environment:
-      - SURREAL_URL=ws://surrealdb:8000/rpc
-      - SURREAL_USER=root
-      - SURREAL_PASSWORD=root
-      - SURREAL_NAMESPACE=poco_memory
-      - SURREAL_DATABASE=poco_memory
-      - HOST=0.0.0.0
-      - PORT=8001
-    volumes:
-      - fastembed_cache:/root/.cache/fastembed
-    networks:
-      - pocketcoder-knowledge
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
 
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
@@ -458,12 +281,8 @@ volumes:
   pocketcoder-logs:
   opencode_workspace:
   llm_keys:  # Shared LLM API keys (env file written by PocketBase, read by sandbox)
-  shell_bridge:
   ntfy-cache:
   ntfy-auth:
-  surrealdb_data:
-  notebook_data:
-  fastembed_cache:  # ONNX model cache for poco-memory embeddings
   tailscale_state:  # Persists Tailscale node identity across restarts
   caddy_data:       # Persists TLS certificates
   caddy_config:
@@ -472,15 +291,11 @@ volumes:
 networks:
   pocketcoder-dashboard:
     driver: bridge
-  pocketcoder-control:
-    driver: bridge
   pocketcoder-docker:
     driver: bridge
   pocketcoder-tools:
     driver: bridge
   pocketcoder-pocketbase-sdk:
-    driver: bridge
-  pocketcoder-knowledge:
     driver: bridge
   pocketcoder-tailscale:
     driver: bridge
