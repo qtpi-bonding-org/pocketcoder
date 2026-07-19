@@ -52,6 +52,7 @@ type Coordinator struct {
 	clock              Clock
 	hubs               map[string]*ChatHub
 	runs               map[string]*runHandle
+	elicits            map[string]*pendingElicitation
 	lingerWindow       time.Duration
 	maxRun             time.Duration
 	elicitationTimeout time.Duration
@@ -73,10 +74,24 @@ type permissionDecision struct {
 	cancelled bool
 }
 
+// pendingElicitation mirrors pendingPermission's shape but lives in a
+// separate map (spec N5): elicitation and permission are distinct ACP
+// side-channels and must not share id-space or resolution paths.
+type pendingElicitation struct {
+	chatID, sessionID string
+	decision          chan elicitationDecision
+	timer             Timer
+}
+type elicitationDecision struct {
+	resp      acpsdk.UnstableCreateElicitationResponse
+	cancelled bool
+}
+
 var ErrNoActiveRun = errors.New("no active run")
 var ErrRunInProgress = errors.New("chat already has an active run")
 var ErrNoPendingPermission = errors.New("no pending permission")
 var ErrPermissionOptionNotOffered = errors.New("permission option was not offered")
+var ErrNoPendingElicitation = errors.New("no pending elicitation")
 
 func New(config Config) (*Coordinator, error) {
 	if config.GooseURL == "" || config.GooseSecret == "" || config.Workspace == "" {
@@ -105,7 +120,7 @@ func New(config Config) (*Coordinator, error) {
 	c := &Coordinator{
 		config: config, clock: config.Clock,
 		running: map[string]struct{}{}, activeRun: map[string]*activeRun{}, pending: map[string]*pendingPermission{},
-		hubs: map[string]*ChatHub{}, runs: map[string]*runHandle{},
+		hubs: map[string]*ChatHub{}, runs: map[string]*runHandle{}, elicits: map[string]*pendingElicitation{},
 		lingerWindow:       orElseD(config.LingerWindow, 30*time.Second),
 		maxRun:             orElseD(config.MaxRun, 15*time.Minute),
 		elicitationTimeout: orElseD(config.ElicitationTimeout, orElseD(config.PermissionTimeout, 5*time.Minute)),
@@ -273,6 +288,50 @@ func (c *Coordinator) Approve(_ context.Context, chatID, requestID, optionID str
 	return nil
 }
 
+// ResolveElicitation delivers the user's response to a pending elicitation
+// (identified by id, scoped to chatID) so the blocked
+// sessionClient.UnstableCreateElicitation call can return.
+func (c *Coordinator) ResolveElicitation(chatID, id string, resp acpsdk.UnstableCreateElicitationResponse) error {
+	c.mu.Lock()
+	p := c.elicits[id]
+	if p == nil || p.chatID != chatID {
+		c.mu.Unlock()
+		return ErrNoPendingElicitation
+	}
+	delete(c.elicits, id)
+	if p.timer != nil {
+		p.timer.Stop()
+	}
+	c.mu.Unlock()
+	select {
+	case p.decision <- elicitationDecision{resp: resp}:
+	default:
+	}
+	return nil
+}
+
+// SetMode dispatches session/set_mode to the active run's connection.
+func (c *Coordinator) SetMode(ctx context.Context, chatID, modeID string) error {
+	h := c.runFor(chatID)
+	if h == nil || h.conn == nil {
+		return ErrNoActiveRun
+	}
+	_, err := h.conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{SessionId: acpsdk.SessionId(h.sessionID), ModeId: acpsdk.SessionModeId(modeID)})
+	return err
+}
+
+// SetConfigOption dispatches session/set_config_option to the active run's
+// connection. The caller is expected to have already set SessionId on
+// whichever variant of the union is populated.
+func (c *Coordinator) SetConfigOption(ctx context.Context, chatID string, req acpsdk.SetSessionConfigOptionRequest) error {
+	h := c.runFor(chatID)
+	if h == nil || h.conn == nil {
+		return ErrNoActiveRun
+	}
+	_, err := h.conn.SetSessionConfigOption(ctx, req)
+	return err
+}
+
 type sessionClient struct {
 	c                 *Coordinator
 	chatID, sessionID string
@@ -380,6 +439,64 @@ func (s *sessionClient) resolveExpired(id string, expected *pendingPermission) {
 	}
 }
 
+// UnstableCreateElicitation mirrors RequestPermission's block-until-resolved
+// shape but lives in its own map (pendingElicitation, spec N5) and its
+// timeout runs through the injectable Clock so tests are deterministic.
+func (s *sessionClient) UnstableCreateElicitation(ctx context.Context, req acpsdk.UnstableCreateElicitationRequest) (acpsdk.UnstableCreateElicitationResponse, error) {
+	id := uuid.NewString()
+	p := &pendingElicitation{chatID: s.chatID, sessionID: s.sessionID, decision: make(chan elicitationDecision, 1)}
+	s.c.mu.Lock()
+	s.c.elicits[id] = p
+	if s.c.elicitationTimeout > 0 {
+		// Set the timer inside the same critical section that publishes p
+		// into the map: removePendingElicitation/ResolveElicitation always
+		// read/write p.timer under c.mu, so this avoids a data race between
+		// this assignment and a concurrent expiry firing on another
+		// goroutine (notably the fake clock in tests, which invokes the
+		// AfterFunc callback synchronously from Advance).
+		p.timer = s.c.clock.AfterFunc(s.c.elicitationTimeout, func() { s.resolveExpiredElicitation(id, p) })
+	}
+	s.c.mu.Unlock()
+	var message, mode string
+	var schema any
+	switch {
+	case req.Form != nil:
+		message, mode, schema = req.Form.Message, req.Form.Mode, req.Form.RequestedSchema
+	case req.Url != nil:
+		mode = "url"
+	}
+	s.emitMu.Lock()
+	_ = s.emit(s.bridge.ElicitationPending(id, message, mode, schema))
+	s.emitMu.Unlock()
+	select {
+	case d := <-p.decision:
+		if d.cancelled {
+			return acpsdk.UnstableCreateElicitationResponse{Cancel: &acpsdk.UnstableCreateElicitationCancel{Action: "cancel"}}, nil
+		}
+		return d.resp, nil
+	case <-ctx.Done():
+		s.removePendingElicitation(id, p)
+		return acpsdk.UnstableCreateElicitationResponse{Cancel: &acpsdk.UnstableCreateElicitationCancel{Action: "cancel"}}, nil
+	}
+}
+func (s *sessionClient) removePendingElicitation(id string, expected *pendingElicitation) {
+	s.c.mu.Lock()
+	if s.c.elicits[id] == expected {
+		delete(s.c.elicits, id)
+	}
+	s.c.mu.Unlock()
+	if expected.timer != nil {
+		expected.timer.Stop()
+	}
+}
+func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingElicitation) {
+	s.removePendingElicitation(id, expected)
+	select {
+	case expected.decision <- elicitationDecision{cancelled: true}:
+	default:
+	}
+}
+
 func (c *Coordinator) Replay(ctx context.Context, chatID, sessionID string, emit Emit) error {
 	if err := c.Reserve(chatID); err != nil {
 		return err
@@ -411,7 +528,12 @@ func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID stri
 	return emitAll(emit, bridge.Finished(acpsdk.StopReasonEndTurn))
 }
 func initializeRequest() acpsdk.InitializeRequest {
-	return acpsdk.InitializeRequest{ProtocolVersion: acpsdk.ProtocolVersionNumber, ClientCapabilities: acpsdk.ClientCapabilities{}}
+	return acpsdk.InitializeRequest{
+		ProtocolVersion: acpsdk.ProtocolVersionNumber,
+		ClientCapabilities: acpsdk.ClientCapabilities{
+			Elicitation: &acpsdk.ElicitationCapabilities{Form: &acpsdk.ElicitationFormCapabilities{}},
+		},
+	}
 }
 func emitAll(emit Emit, values []events.Event) error {
 	for _, v := range values {
@@ -521,6 +643,18 @@ func (c *Coordinator) dropPendingForChat(chat string) {
 			}
 		}
 	}
+	for id, p := range c.elicits {
+		if p.chatID == chat {
+			delete(c.elicits, id)
+			if p.timer != nil {
+				p.timer.Stop()
+			}
+			select {
+			case p.decision <- elicitationDecision{cancelled: true}:
+			default:
+			}
+		}
+	}
 }
 func (c *Coordinator) Shutdown(ctx context.Context) {
 	c.mu.Lock()
@@ -616,7 +750,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		return
 	}
 	h.conn = conn
-	sessionID, err = c.initSession(runCtx, conn, sc, bridge, sessionID, created) // Task 11/12
+	sessionID, err = c.initSession(runCtx, conn, sc, bridge, hub, sessionID, created)
 	if err != nil {
 		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 		return
@@ -647,12 +781,13 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 }
 
 // initSession runs the ACP init sequence on a freshly dialed conn: initialize,
-// session/new (and persist) or session/load (by sessionID), and set_session_mode
-// to "approve". On a session/new whose mapping persist fails, the freshly
-// minted Goose session is deleted (orphan compensation) before returning the
-// wrapped error. Tasks 11/12 extend this further.
-func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessionClient, bridge *agui.Bridge, sessionID string, created OnSessionCreated) (string, error) {
-	_ = bridge
+// session/new (and persist) or session/load (by sessionID), set_session_mode
+// to "approve", and publishes the modes/config the agent advertised (via
+// bridge.SeedSession) so a late-joining subscriber's snapshot already has
+// them. On a session/new whose mapping persist fails, the freshly minted
+// Goose session is deleted (orphan compensation) before returning the
+// wrapped error.
+func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessionClient, bridge *agui.Bridge, hub *ChatHub, sessionID string, created OnSessionCreated) (string, error) {
 	_ = sc
 	if _, err := conn.Initialize(ctx, initializeRequest()); err != nil {
 		return "", err
@@ -674,13 +809,17 @@ func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessio
 			}
 			return "", fmt.Errorf("persist Goose session mapping: %w", err)
 		}
-		// Task 12: bridge.SeedSession(res.Modes, res.ConfigOptions) -> hub.Publish
+		for _, e := range bridge.SeedSession(res.Modes, res.ConfigOptions) {
+			hub.Publish(e)
+		}
 	} else {
 		res, err := conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
 		if err != nil {
 			return "", err
 		}
-		_ = res // Task 12: bridge.SeedSession(res.Modes, res.ConfigOptions) -> hub.Publish
+		for _, e := range bridge.SeedSession(res.Modes, res.ConfigOptions) {
+			hub.Publish(e)
+		}
 	}
 	if _, err := conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{SessionId: acpsdk.SessionId(sessionID), ModeId: acpsdk.SessionModeId("approve")}); err != nil {
 		return "", err
