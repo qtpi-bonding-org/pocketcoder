@@ -65,8 +65,15 @@ func (h *ChatHub) Publish(ev events.Event) int {
 		select {
 		case s.live <- item:
 		default:
-			// Full live channel: drop the subscriber (keystone). Its SSE
-			// goroutine sees a closed channel and returns; client reconnects.
+			// Full live channel: drop the subscriber (keystone). Drain any
+			// items still buffered in its channel first so a subsequent
+			// receive observes the close immediately rather than replaying
+			// stale events the subscriber already fell behind on — it must
+			// reconnect via Attach(cursor) to resume from the hub's log, not
+			// from remnants of its own dropped live channel.
+			for len(s.live) > 0 {
+				<-s.live
+			}
 			close(s.live)
 			delete(h.subs, s)
 		}
