@@ -258,14 +258,20 @@ func (b *Bridge) PermissionPending(requestID string, options []acpsdk.Permission
 
 // Finished closes all lifecycle events. Call this only after the correlated
 // session/prompt response, never by guessing from the final text chunk.
-func (b *Bridge) Finished() []events.Event {
+func (b *Bridge) Finished(stopReason acpsdk.StopReason) []events.Event {
 	result := b.closeReasoning()
 	result = append(result, b.closeMessage()...)
 	for id := range b.openTools {
 		result = append(result, events.NewToolCallEndEvent(id))
 	}
 	b.openTools = map[string]toolMeta{}
-	return append(result, events.NewRunFinishedEventWithOptions(b.threadID, b.runID, events.WithSuccessOutcome()))
+	var opts []events.RunFinishedOption
+	if stopReason == acpsdk.StopReasonEndTurn {
+		opts = []events.RunFinishedOption{events.WithSuccessOutcome()}
+	} else {
+		opts = []events.RunFinishedOption{events.WithResult(map[string]any{"stopReason": string(stopReason)})}
+	}
+	return append(result, events.NewRunFinishedEventWithOptions(b.threadID, b.runID, opts...))
 }
 
 func (b *Bridge) closeMessage() []events.Event {

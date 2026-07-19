@@ -238,7 +238,7 @@ func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID stri
 		return err
 	}
 	if sessionID == "" {
-		return emitAll(emit, bridge.Finished())
+		return emitAll(emit, bridge.Finished(acpsdk.StopReasonEndTurn))
 	}
 	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emit}
 	conn, err := c.config.Dial(ctx, sc)
@@ -253,7 +253,7 @@ func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID stri
 	if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}}); err != nil {
 		return fmt.Errorf("load Goose session: %w", err)
 	}
-	return emitAll(emit, bridge.Finished())
+	return emitAll(emit, bridge.Finished(acpsdk.StopReasonEndTurn))
 }
 func initializeRequest() acpsdk.InitializeRequest {
 	return acpsdk.InitializeRequest{ProtocolVersion: acpsdk.ProtocolVersionNumber, ClientCapabilities: acpsdk.ClientCapabilities{}}
@@ -325,7 +325,7 @@ func (c *Coordinator) RunReserved(ctx context.Context, req RunRequest, emit Emit
 		c.cancelOnClientDisconnect(ctx, req.ChatID)
 		return err
 	}
-	return emitAll(emit, bridge.Finished())
+	return emitAll(emit, bridge.Finished(acpsdk.StopReasonEndTurn))
 }
 func (c *Coordinator) cancelOnClientDisconnect(ctx context.Context, chatID string) {
 	if ctx.Err() == nil {

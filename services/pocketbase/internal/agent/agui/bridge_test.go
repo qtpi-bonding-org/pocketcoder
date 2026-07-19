@@ -25,7 +25,7 @@ func TestBridgeMessageLifecycleAndTerminal(t *testing.T) {
 	if len(events) != 2 || events[0].Type() != "TEXT_MESSAGE_START" || events[1].Type() != "TEXT_MESSAGE_CONTENT" {
 		t.Fatalf("unexpected chunk events: %#v", events)
 	}
-	finished := bridge.Finished()
+	finished := bridge.Finished(acpsdk.StopReasonEndTurn)
 	if len(finished) != 2 || finished[0].Type() != "TEXT_MESSAGE_END" || finished[1].Type() != "RUN_FINISHED" {
 		t.Fatalf("unexpected terminal events: %#v", finished)
 	}
@@ -101,7 +101,7 @@ func TestBridgeEmitsReasoningLifecycle(t *testing.T) {
 	if len(events) != 2 || events[0].Type() != "REASONING_MESSAGE_START" || events[1].Type() != "REASONING_MESSAGE_CONTENT" {
 		t.Fatalf("unexpected reasoning events: %#v", events)
 	}
-	finished := bridge.Finished()
+	finished := bridge.Finished(acpsdk.StopReasonEndTurn)
 	if len(finished) == 0 || finished[0].Type() != "REASONING_MESSAGE_END" {
 		t.Fatalf("expected reasoning end first on finish: %#v", finished)
 	}
@@ -475,5 +475,40 @@ func TestBridgeStateDoesNotCloseOpenMessage(t *testing.T) {
 	}
 	if contains(eventTypes(evs), "TEXT_MESSAGE_END") {
 		t.Fatal("a STATE emission must not close the open text message")
+	}
+}
+
+// TestFinishedSuccessOnEndTurn covers Task 8's success path: when the run
+// stops with StopReasonEndTurn, the trailing RUN_FINISHED carries the success
+// outcome (the default pre-Task-8 behavior), not a Result map.
+func TestFinishedSuccessOnEndTurn(t *testing.T) {
+	b := NewBridge("chat", "run")
+	evs := b.Finished(acpsdk.StopReasonEndTurn)
+	if len(evs) == 0 || evs[len(evs)-1].Type() != events.EventTypeRunFinished {
+		t.Fatalf("expected trailing RUN_FINISHED, got %v", evs)
+	}
+	fin := evs[len(evs)-1].(*events.RunFinishedEvent)
+	if fin.Result != nil {
+		t.Fatalf("end_turn stop must not attach a Result, got %#v", fin.Result)
+	}
+}
+
+// TestFinishedCarriesStopReasonOnNonEndTurn covers Task 8's non-success path:
+// any stop reason other than EndTurn must produce a RUN_FINISHED that attaches
+// a Result carrying the stopReason, so clients can distinguish refusal /
+// max-tokens / cancelled from a clean end-of-turn.
+func TestFinishedCarriesStopReasonOnNonEndTurn(t *testing.T) {
+	b := NewBridge("chat", "run")
+	evs := b.Finished(acpsdk.StopReasonRefusal)
+	if len(evs) == 0 || evs[len(evs)-1].Type() != events.EventTypeRunFinished {
+		t.Fatalf("expected RUN_FINISHED on refusal, got %v", evs)
+	}
+	fin := evs[len(evs)-1].(*events.RunFinishedEvent)
+	if fin.Result == nil {
+		t.Fatal("non-end_turn stop must attach a Result carrying the stopReason")
+	}
+	reason, _ := fin.Result["stopReason"].(string)
+	if reason != string(acpsdk.StopReasonRefusal) {
+		t.Fatalf("Result.stopReason = %q, want %q", reason, acpsdk.StopReasonRefusal)
 	}
 }
