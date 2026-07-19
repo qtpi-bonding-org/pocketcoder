@@ -444,7 +444,7 @@ func TestBridgeSeedSessionModes(t *testing.T) {
 		t.Fatalf("seed: %#v", evs)
 	}
 	b, _ := json.Marshal(evs[0])
-	if !strings.Contains(string(b), `"modes"`) || !strings.Contains(string(b), `"currentModeId":"approve"`) {
+	if !strings.Contains(string(b), `/pocketcoder/modes`) || !strings.Contains(string(b), `"currentModeId":"approve"`) {
 		t.Fatalf("seed payload missing modes/currentModeId: %s", string(b))
 	}
 }
