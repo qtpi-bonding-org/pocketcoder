@@ -8,9 +8,12 @@
 //	GOOSE_WORKSPACE=/workspace \
 //	go test -tags live_acp ./internal/agent/coordinator/ -run TestLive -v
 //
-// It drives the production Coordinator (real acp.Dial + wsURLWithToken), so it
-// proves: WS auth is enforced, ?token= satisfies it, and the full ACP turn
-// sequence still works on the bumped goose image.
+// It drives the production Coordinator (real acp.Dial + wsURLWithToken)
+// through the detached StartPrompt+Attach path (the synchronous Run/Replay
+// path was removed at the transport cutover), so it proves: WS auth is
+// enforced, ?token= satisfies it, the full ACP turn sequence still works on
+// the bumped goose image, and a reconnect mid-history replays without a
+// gap while the run's log is still lingering in the hub.
 package coordinator
 
 import (
@@ -36,29 +39,63 @@ func liveConfig(t *testing.T) Config {
 	return Config{GooseURL: url, GooseSecret: secret, Workspace: ws, PermissionTimeout: time.Minute}
 }
 
-func collect(emit *[]events.EventType) Emit {
-	return func(e events.Event) error { *emit = append(*emit, e.Type()); return nil }
+// drainEventTypes collects Buffered event types, then reads Live until it
+// observes a terminal RUN_FINISHED/RUN_ERROR, the channel closes, or the
+// deadline passes (which fails the test — a live run must terminate).
+func drainEventTypes(t *testing.T, att Attachment, timeout time.Duration) []events.EventType {
+	t.Helper()
+	var got []events.EventType
+	for _, e := range att.Buffered {
+		got = append(got, e.Ev.Type())
+		if terminal(e.Ev.Type()) {
+			return got
+		}
+	}
+	deadline := time.After(timeout)
+	for {
+		select {
+		case e, ok := <-att.Live:
+			if !ok {
+				return got
+			}
+			got = append(got, e.Ev.Type())
+			if terminal(e.Ev.Type()) {
+				return got
+			}
+		case <-deadline:
+			t.Fatalf("timed out waiting for a terminal event; got %v", got)
+			return got
+		}
+	}
+}
+func terminal(t events.EventType) bool {
+	return t == events.EventTypeRunFinished || t == events.EventTypeRunError
 }
 
 // TestLiveRunNewSession proves an authenticated new-session turn completes and
-// persists a Goose session id.
+// persists a Goose session id, and that a subsequent Attach at cursor 0 (the
+// run is still lingering) replays the same history without a cold-replay
+// fallback (no gap between what the first subscriber saw and what a fresh
+// attach observes).
 func TestLiveRunNewSession(t *testing.T) {
 	c, err := New(liveConfig(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
 
-	var got []events.EventType
+	chatID := "live-chat"
 	var savedSession string
 	resolve := func(context.Context) (string, error) { return "", nil }
 	created := func(_ context.Context, sid string) error { savedSession = sid; return nil }
 
-	err = c.Run(ctx, RunRequest{ChatID: "live-chat", Prompt: "Reply with exactly: ws token ok"}, collect(&got), resolve, created)
-	if err != nil {
-		t.Fatalf("live run failed: %v", err)
+	if _, err := c.StartPrompt(chatID, "Reply with exactly: ws token ok", resolve, created); err != nil {
+		t.Fatalf("StartPrompt failed: %v", err)
 	}
+
+	att := c.Attach(chatID, 0)
+	got := drainEventTypes(t, att, 2*time.Minute)
+	att.Unsubscribe()
+
 	if savedSession == "" {
 		t.Fatal("expected a persisted Goose session id")
 	}
@@ -66,10 +103,23 @@ func TestLiveRunNewSession(t *testing.T) {
 		t.Fatalf("expected RUN_STARTED…RUN_FINISHED, got %v", got)
 	}
 	t.Logf("live turn ok: session=%s events=%d", savedSession, len(got))
+
+	// The run just finished and should still be lingering (default 30s
+	// window): a reattach at cursor 0 must resume from the in-memory log,
+	// not fall back to a Goose cold replay.
+	att2 := c.Attach(chatID, 0)
+	defer att2.Unsubscribe()
+	if att2.ColdReplayNeeded {
+		t.Fatal("run just finished and should still be lingering in the hub")
+	}
+	if len(att2.Buffered) != len(got) {
+		t.Fatalf("reattach saw %d buffered events, want %d (no gap/dup)", len(att2.Buffered), len(got))
+	}
 }
 
-// TestLiveWrongSecretRejected proves the WS endpoint enforces auth: a bad token
-// must fail the handshake, so the run errors instead of driving goose.
+// TestLiveWrongSecretRejected proves the WS endpoint enforces auth: a bad
+// token must fail the handshake, so the detached run publishes RUN_ERROR
+// instead of driving goose.
 func TestLiveWrongSecretRejected(t *testing.T) {
 	cfg := liveConfig(t)
 	cfg.GooseSecret = "definitely-not-the-secret"
@@ -77,16 +127,19 @@ func TestLiveWrongSecretRejected(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
-	var got []events.EventType
+	chatID := "live-chat-bad"
 	resolve := func(context.Context) (string, error) { return "", nil }
 	created := func(context.Context, string) error { return nil }
-
-	err = c.Run(ctx, RunRequest{ChatID: "live-chat-bad", Prompt: "should never run"}, collect(&got), resolve, created)
-	if err == nil {
-		t.Fatal("expected the run to fail with an unauthenticated WS handshake")
+	if _, err := c.StartPrompt(chatID, "should never run", resolve, created); err != nil {
+		t.Fatalf("StartPrompt failed: %v", err)
 	}
-	t.Logf("unauthenticated dial rejected as expected: %v", err)
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	got := drainEventTypes(t, att, 30*time.Second)
+	if len(got) == 0 || got[len(got)-1] != events.EventTypeRunError {
+		t.Fatalf("expected RUN_ERROR on unauthenticated dial, got %v", got)
+	}
+	t.Logf("unauthenticated dial rejected as expected: %v", got)
 }
