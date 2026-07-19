@@ -157,3 +157,17 @@ func TestCursorResumeAfterDrop(t *testing.T) {
 	att2.Unsubscribe()
 	_ = att1
 }
+
+func TestAttachIncludesSnapshotFromActiveRun(t *testing.T) {
+	snap := []events.Event{events.NewStateSnapshotEvent(map[string]any{
+		"pocketcoder": map[string]any{"modes": "x"},
+	})}
+	h := NewChatHub(NewFakeClock(time.Unix(0, 0)), 30*time.Second, 8)
+	h.StartRun("run-1", func() []events.Event { return snap })
+	h.Publish(textEv("a"))
+	att := h.Attach(0)
+	if len(att.Snapshot) != 1 || att.Snapshot[0].Type() != events.EventTypeStateSnapshot {
+		t.Fatalf("attach must carry one STATE_SNAPSHOT from the active run, got %v", att.Snapshot)
+	}
+	att.Unsubscribe()
+}
