@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
-	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/encoding/sse"
+	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -21,11 +22,19 @@ import (
 // RegisterAgentApi registers PocketBase-owned routes. AG-UI is the response
 // format, not a second public service and never exposes Goose credentials.
 func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+	registerAgentApi(app, e, nil) // nil => coordinator.New uses the real acp.Dial
+}
+
+// registerAgentApi is the seam: a non-nil dial overrides Config.Dial so
+// integration/local runs can inject a fake Goose without touching the
+// production entry point.
+func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coordinator.DialFunc) {
 	service, configErr := coordinator.New(coordinator.Config{
 		GooseURL:          os.Getenv("GOOSE_ACP_URL"),
 		GooseSecret:       os.Getenv("GOOSE_SERVER__SECRET_KEY"),
 		Workspace:         os.Getenv("GOOSE_WORKSPACE"),
 		PermissionTimeout: permissionTimeout(),
+		Dial:              dial,
 	})
 	if service != nil {
 		app.OnTerminate().BindFunc(func(_ *core.TerminateEvent) error {
@@ -36,7 +45,7 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		})
 	}
 
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/runs", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/prompt", func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -55,42 +64,31 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		if input.Prompt == "" {
 			return re.BadRequestError("prompt is required", nil)
 		}
-		if err := service.Reserve(chatID); err != nil {
+		runID, err := service.StartPrompt(chatID, input.Prompt,
+			func(context.Context) (string, error) { return gooseSessionForChat(app, chatID, re.Auth.Id) },
+			func(ctx context.Context, sessionID string) error {
+				err := saveGooseSession(ctx, app, chatID, re.Auth.Id, sessionID)
+				if err == nil {
+					app.Logger().Debug("Goose session mapping created", "chat_id", chatID)
+				}
+				return err
+			})
+		if err != nil {
 			if errors.Is(err, coordinator.ErrRunInProgress) {
 				return apis.NewApiError(http.StatusConflict, "A run is already active for this chat", nil)
 			}
 			return apis.NewApiError(http.StatusInternalServerError, "Unable to start agent run", err)
 		}
-
-		re.Response.Header().Set("Content-Type", "text/event-stream")
-		re.Response.Header().Set("Cache-Control", "no-cache")
-		re.Response.Header().Set("Connection", "keep-alive")
-		re.Response.WriteHeader(http.StatusOK)
-		writer := sse.NewSSEWriter()
-		emit := func(event events.Event) error { return writer.WriteEvent(re.Request.Context(), re.Response, event) }
-		err = service.RunReserved(re.Request.Context(), coordinator.RunRequest{
-			ChatID: chatID, Prompt: input.Prompt,
-		}, emit, func(ctx context.Context) (string, error) {
-			return gooseSessionForChat(app, chatID, re.Auth.Id)
-		}, func(ctx context.Context, sessionID string) error {
-			err := saveGooseSession(ctx, app, chatID, re.Auth.Id, sessionID)
-			if err == nil {
-				app.Logger().Debug("Goose session mapping created", "chat_id", chatID)
-			}
-			return err
-		})
-		if err != nil && !errors.Is(err, context.Canceled) {
-			app.Logger().Warn("Goose turn failed", "chat_id", chatID, "error", err)
-			_ = emit(events.NewRunErrorEvent("Agent run failed", events.WithErrorCode("goose_unavailable")))
-		}
-		return nil
+		return re.JSON(http.StatusAccepted, map[string]string{"runId": runID})
 	}).Bind(apis.RequireAuth())
 
-	// GET events is a bounded Goose-owned replay, not a live subscription. It
-	// emits RUN_STARTED, the durable session/load updates, then RUN_FINISHED.
-	// An unmapped chat emits only the empty start/finish snapshot and never
-	// creates a Goose session or contacts c2.
-	e.Router.GET("/api/pocketcoder/chats/{chatId}/events", func(re *core.RequestEvent) error {
+	// GET stream is the durable subscription: it attaches to the chat's hub at
+	// a caller-supplied cursor (?cursor= or Last-Event-ID), flushing the
+	// active run's snapshot + backlog before tailing new live events. It never
+	// Reserves — any number of subscribers can attach without stalling or
+	// conflicting with an active run. A cursor whose history has been evicted
+	// (ColdReplayNeeded) is first backfilled via a bounded Goose replay.
+	e.Router.GET("/api/pocketcoder/chats/{chatId}/stream", func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -99,32 +97,48 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		if err != nil || chat.GetString("user") != re.Auth.Id {
 			return re.NotFoundError("Chat not found", err)
 		}
-		sessionID, err := gooseSessionForChat(app, chatID, re.Auth.Id)
-		if err != nil {
-			return apis.NewApiError(http.StatusInternalServerError, "Unable to read agent session mapping", err)
-		}
-		if err := service.Reserve(chatID); err != nil {
-			if errors.Is(err, coordinator.ErrRunInProgress) {
-				return apis.NewApiError(http.StatusConflict, "A run is already active for this chat", nil)
-			}
-			return apis.NewApiError(http.StatusInternalServerError, "Unable to replay agent chat", err)
-		}
+		cursor := parseCursor(re)
+		att := service.Attach(chatID, cursor)
+		defer att.Unsubscribe()
 
 		re.Response.Header().Set("Content-Type", "text/event-stream")
 		re.Response.Header().Set("Cache-Control", "no-cache")
 		re.Response.Header().Set("Connection", "keep-alive")
 		re.Response.WriteHeader(http.StatusOK)
-		writer := sse.NewSSEWriter()
-		emit := func(event events.Event) error { return writer.WriteEvent(re.Request.Context(), re.Response, event) }
-		err = service.ReplayReserved(re.Request.Context(), chatID, sessionID, emit)
-		if err != nil && !errors.Is(err, context.Canceled) {
-			app.Logger().Warn("Goose session replay failed", "chat_id", chatID, "error", err)
-			_ = emit(events.NewRunErrorEvent("Agent replay failed", events.WithErrorCode("goose_replay_failed")))
+		flusher, _ := re.Response.(http.Flusher)
+
+		if att.ColdReplayNeeded {
+			sessionID, err := gooseSessionForChat(app, chatID, re.Auth.Id)
+			if err != nil {
+				_ = writeFlush(re.Response, flusher, cursor, events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
+			} else if err := service.StreamColdReplay(re.Request.Context(), chatID, sessionID, func(seq int, ev events.Event) error {
+				return writeFlush(re.Response, flusher, seq, ev)
+			}); err != nil {
+				_ = writeSeqFrame(re.Response, cursor, events.NewRunErrorEvent("replay failed", events.WithErrorCode("goose_replay_failed")))
+			}
 		}
-		return nil
+		for _, ev := range att.Snapshot {
+			_ = writeFlush(re.Response, flusher, cursor, ev)
+		}
+		for _, e := range att.Buffered {
+			_ = writeFlush(re.Response, flusher, e.Seq, e.Ev)
+		}
+		for {
+			select {
+			case <-re.Request.Context().Done():
+				return nil
+			case e, ok := <-att.Live:
+				if !ok {
+					return nil // dropped or run ended + unsubscribed
+				}
+				if err := writeFlush(re.Response, flusher, e.Seq, e.Ev); err != nil {
+					return nil
+				}
+			}
+		}
 	}).Bind(apis.RequireAuth())
 
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/cancel", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/cancel", func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -142,9 +156,58 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		return re.NoContent(http.StatusAccepted)
 	}).Bind(apis.RequireAuth())
 
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/set_mode", func(re *core.RequestEvent) error {
+		if configErr != nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
+		}
+		chatID := re.Request.PathValue("chatId")
+		chat, err := app.FindRecordById("chats", chatID)
+		if err != nil || chat.GetString("user") != re.Auth.Id {
+			return re.NotFoundError("Chat not found", err)
+		}
+		var input struct {
+			ModeID string `json:"modeId"`
+		}
+		if err := re.BindBody(&input); err != nil || strings.TrimSpace(input.ModeID) == "" {
+			return re.BadRequestError("modeId is required", err)
+		}
+		if err := service.SetMode(re.Request.Context(), chatID, input.ModeID); err != nil {
+			if errors.Is(err, coordinator.ErrNoActiveRun) {
+				return re.BadRequestError("No active run to set mode on", nil)
+			}
+			return apis.NewApiError(http.StatusBadGateway, "Unable to set mode", err)
+		}
+		return re.NoContent(http.StatusAccepted)
+	}).Bind(apis.RequireAuth())
+
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/set_config_option", func(re *core.RequestEvent) error {
+		if configErr != nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
+		}
+		chatID := re.Request.PathValue("chatId")
+		chat, err := app.FindRecordById("chats", chatID)
+		if err != nil || chat.GetString("user") != re.Auth.Id {
+			return re.NotFoundError("Chat not found", err)
+		}
+		var req acpsdk.SetSessionConfigOptionRequest
+		if err := re.BindBody(&req); err != nil {
+			return re.BadRequestError("Invalid config option request", err)
+		}
+		if req.Boolean == nil && req.ValueId == nil {
+			return re.BadRequestError("a config option value is required", nil)
+		}
+		if err := service.SetConfigOption(re.Request.Context(), chatID, req); err != nil {
+			if errors.Is(err, coordinator.ErrNoActiveRun) {
+				return re.BadRequestError("No active run to set config on", nil)
+			}
+			return apis.NewApiError(http.StatusBadGateway, "Unable to set config option", err)
+		}
+		return re.NoContent(http.StatusAccepted)
+	}).Bind(apis.RequireAuth())
+
 	// Permission records are transient process state. The option is checked
 	// against the exact set Goose offered before it is forwarded over ACP.
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/approvals/{approvalId}", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/request_permission/{id}", func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -159,7 +222,7 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		if err := re.BindBody(&input); err != nil || strings.TrimSpace(input.OptionID) == "" {
 			return re.BadRequestError("optionId is required", err)
 		}
-		err = service.Approve(re.Request.Context(), chatID, re.Request.PathValue("approvalId"), input.OptionID)
+		err = service.Approve(re.Request.Context(), chatID, re.Request.PathValue("id"), input.OptionID)
 		if errors.Is(err, coordinator.ErrNoPendingPermission) {
 			return re.NotFoundError("Pending permission not found", err)
 		}
@@ -171,6 +234,87 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 		return re.NoContent(http.StatusAccepted)
 	}).Bind(apis.RequireAuth())
+
+	// Elicitation is a separate ACP side-channel from permission (spec N5):
+	// its own id-space, its own resolution path.
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/elicitation/{id}", func(re *core.RequestEvent) error {
+		if configErr != nil {
+			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
+		}
+		chatID := re.Request.PathValue("chatId")
+		chat, err := app.FindRecordById("chats", chatID)
+		if err != nil || chat.GetString("user") != re.Auth.Id {
+			return re.NotFoundError("Chat not found", err)
+		}
+		var input struct {
+			Outcome string         `json:"outcome"`
+			Content map[string]any `json:"content,omitempty"`
+		}
+		if err := re.BindBody(&input); err != nil {
+			return re.BadRequestError("Invalid elicitation response", err)
+		}
+		var resp acpsdk.UnstableCreateElicitationResponse
+		switch input.Outcome {
+		case "accept":
+			resp.Accept = &acpsdk.UnstableCreateElicitationAccept{Action: "accept", Content: input.Content}
+		case "decline":
+			resp.Decline = &acpsdk.UnstableCreateElicitationDecline{Action: "decline"}
+		case "cancel":
+			resp.Cancel = &acpsdk.UnstableCreateElicitationCancel{Action: "cancel"}
+		default:
+			return re.BadRequestError("outcome must be accept, decline, or cancel", nil)
+		}
+		err = service.ResolveElicitation(chatID, re.Request.PathValue("id"), resp)
+		if errors.Is(err, coordinator.ErrNoPendingElicitation) {
+			return re.NotFoundError("Pending elicitation not found", err)
+		}
+		if err != nil {
+			return apis.NewApiError(http.StatusBadGateway, "Unable to submit elicitation response", err)
+		}
+		return re.NoContent(http.StatusAccepted)
+	}).Bind(apis.RequireAuth())
+
+	if service != nil {
+		// Best-effort cleanup: a deleted chat's mapped Goose session is
+		// deleted too, but a failure never blocks the record delete — the row
+		// is left for a future reconcile sweep (v1 floor, documented).
+		app.OnRecordAfterDeleteSuccess("chats").BindFunc(func(re *core.RecordEvent) error {
+			chatID := re.Record.Id
+			go func() {
+				if err := service.DeleteSession(context.Background(), app, chatID); err != nil {
+					app.Logger().Error("goose session delete failed; left for reconcile", "chat_id", chatID, "error", err)
+				}
+			}()
+			return re.Next()
+		})
+	}
+}
+
+// parseCursor reads the resume cursor from ?cursor= or the Last-Event-ID
+// header (falling back to 0, meaning "everything"). ?cursor= wins if both
+// are present.
+func parseCursor(re *core.RequestEvent) int {
+	if raw := re.Request.URL.Query().Get("cursor"); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil {
+			return n
+		}
+	}
+	if raw := re.Request.Header.Get("Last-Event-ID"); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil {
+			return n
+		}
+	}
+	return 0
+}
+
+func writeFlush(w http.ResponseWriter, flusher http.Flusher, seq int, ev events.Event) error {
+	if err := writeSeqFrame(w, seq, ev); err != nil {
+		return err
+	}
+	if flusher != nil {
+		flusher.Flush()
+	}
+	return nil
 }
 
 func permissionTimeout() time.Duration {
