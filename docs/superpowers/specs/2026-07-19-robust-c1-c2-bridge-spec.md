@@ -43,17 +43,25 @@ New/changed components:
 
 Specified as invariants; data structures are the plan's concern.
 
-**Sequencing.** Each event published to a run gets a **monotonic `seq` starting at 1** (per run). `seq` is emitted as the SSE `id:` (the writer must add `id:`, currently absent).
+**Sequencing (chat-global seq).** Each event published to a chat's hub gets a **chat-global monotonic `seq`** — it does **not** reset per run. Successive runs continue the same counter (run 1 ends at, say, `seq=40`; run 2's first event is `seq=41`). `seq` is emitted as the SSE `id:` (the writer must add `id:`, currently absent). A chat-global seq makes the stream cursor **totally ordered across runs**, so a subscriber holding `cursor=40` from run 1 that reconnects during run 2 correctly replays 41…live with no gap and no ambiguity. *(Rationale: a per-run `seq` restarting at 1 would make `cursor=40` look "ahead of" run 2's `seq=15` log and silently skip run 2's first 15 events — the C2 bug. The chat-global counter closes it.)* The `runId` returned by `prompt` (§5) identifies the run for cancel/status; the **cursor is the seq**, not the runId.
 
-**Atomic attach (no gap/dup).** A subscriber attaching with `cursor` is registered **and** served its backlog under a single hub lock hold, so no event can slip between "replay" and "live." Backlog =
-- events in the current/lingering run's log with `seq > cursor`, **plus** `Bridge.Snapshot()` (a `STATE_SNAPSHOT` per `/pocketcoder/*` namespace) so ambient state (modes, config, plan, pending permission/elicitation) is correct on join;
-- if the cursor is older than the log's base (evicted) or there's no buffered run → a **Goose bounded history replay** (`session/load` → AG-UI), then live registration. (Heavier cold-open path; run outside the lock.)
+**Atomic attach — backlog is subscriber-owned, only *live* delivery can drop (keystone-safe).** Attaching must not conflate the (possibly large) backlog with the bounded live channel, or a late-joiner to a 500-event run would overflow its channel under the lock and drop-loop forever (the C1 bug). The attach protocol is:
 
-**Never block the run (keystone).** Publishing pushes to each subscriber's **bounded** channel **non-blocking**. A subscriber whose channel is full is **dropped** (channel closed → its SSE handler returns); the client reconnects with its last `cursor` and replays. The run's authoritative log write never blocks and never waits on a subscriber.
+1. **Under a single hub-lock hold:** capture a **snapshot backlog** into a *subscriber-owned buffer* (a slice, unbounded for this subscriber) = `Bridge.Snapshot()` (see below) followed by the current/lingering run's log events with `seq > cursor`; **then** register the subscriber's live bounded channel; **then** release the lock. Because registration and backlog-capture are atomic, every event that lands on the live channel afterward carries a strictly higher `seq` than everything in the buffer — ordering holds with no gap and no dup.
+2. **Outside the lock**, the subscriber's SSE goroutine first flushes the buffer slice to the client, **then** switches to draining the live bounded channel.
+3. **Only the live channel is subject to drop-on-full.** The backlog buffer is never dropped (it's a plain slice the SSE goroutine owns); a subscriber too slow to drain even the backlog just disconnects normally and reconnects with its last cursor.
 
-**Bounded memory.** The authoritative log holds **one run's** events (bounded by that run's length). On `RUN_FINISHED`, the run **lingers** in the hub for a grace window (default 30s, configurable) so tail-reconnects resume; then the log is evicted. Post-eviction reconnects fall back to Goose replay.
+Cold-open / evicted path: if `cursor` is older than the log's base (evicted) or there's no buffered run for the chat → the backlog is instead a **Goose bounded history replay** (`session/load` → AG-UI via the Bridge), produced into the subscriber buffer. This is the heavier path and is produced **outside** the hub lock (the lock only guards the registration + in-memory log copy).
 
-**Hub teardown.** A ChatHub with no subscribers **and** no active/lingering run is removed. No orphan goroutines: the run's producer goroutine exits on turn completion/cancel; subscriber goroutines exit on client disconnect or drop.
+**`Bridge.Snapshot()` shape (pinned — cross-cutting with the translation unit).** Snapshot MUST produce **one** `STATE_SNAPSHOT` whose `snapshot` payload is the **merged** `{pocketcoder:{modes,config,plan,permission,elicitation,commands,usage,session_info}}` object — **not** one `STATE_SNAPSHOT` per namespace. AG-UI's `StateSnapshotEvent` carries a single whole-state field and **replaces** the client's entire state on receipt; emitting one per namespace would leave the client holding only the last namespace's subtree and wipe the rest (the C3 bug). *This constrains the sibling Robust ACP→AG-UI Translation unit's `Snapshot()` — its plan must pin `Snapshot()` to a single merged snapshot (or an equivalent ordered set of `STATE_DELTA` add-ops that build the full tree). Flag this to the translation impl before it finalizes `Snapshot()`.*
+
+**Never block the run (keystone).** Publishing a live event pushes to each subscriber's **bounded** channel **non-blocking**. A subscriber whose channel is full is **dropped** (channel closed → its SSE handler returns); the client reconnects with its last `cursor` and replays. The run's authoritative log write (append + seq increment) happens under the hub lock and never waits on a subscriber; the per-subscriber sends are in-memory channel ops, so holding the lock across the O(N-subscribers) fan-out is bounded and non-blocking.
+
+**Bounded memory.** The authoritative log holds **the current run's** events (bounded by that run's length; the chat-global seq counter is just an int, it doesn't retain evicted events). A pathological single turn can still grow one run's log without cap — so the run enforces a **per-run event cap** (configurable, e.g. 50k events); exceeding it ends the run with `RUN_ERROR(run_too_large)`. On `RUN_FINISHED`, the run **lingers** in the hub for a grace window (default 30s, configurable) so tail-reconnects resume; then the log is evicted. Post-eviction reconnects fall back to Goose replay.
+
+**Deterministic timers (test seam).** The linger window and the max-run/per-run timers MUST be driven through an injectable `Clock`/timer-factory seam (not bare `time.AfterFunc`/`time.Sleep`), and the hub exposes test-only `evictNow()`/`expireNow()` hooks, so §12's linger/eviction/timeout tests are deterministic rather than sleep-based.
+
+**Hub teardown.** A ChatHub with no subscribers **and** no active/lingering run is removed. No orphan goroutines: the run's producer goroutine exits on turn completion/cancel; subscriber goroutines exit on client disconnect or drop. Teardown is idempotent (§5).
 
 **Multi-subscriber.** N concurrent subscribers per chat (multi-device) each get independent cursor-based replay + live tail off the same log.
 
@@ -71,20 +79,25 @@ Evaluated `tmaxmax/go-sse` (best fit: topic pub/sub, `FiniteReplayer` bounded re
 
 ## 5. Detached run lifecycle
 
-- **Start:** `Reserve(chatID)` (one run per chat) → spawn the run on a **`context.Background()`-derived** ctx owned by the run, **not** the request. `POST …/session/prompt` returns **202 `{runId}`** immediately; it does not stream.
+- **Start:** `Reserve(chatID)` (one run per chat) → spawn the run on a **`context.Background()`-derived** ctx owned by the run, **not** the request. This same run ctx MUST be the ctx passed to the Goose WS `Dial` (the ACP read/write loop is bound to the dial ctx, `acp/websocket.go:107`) — dialing with the request ctx would kill the WS on client disconnect, reintroducing the exact bug this design removes. `POST …/session/prompt` returns **202 `{runId}`** immediately; it does not stream.
 - **Produce:** the ACP `sessionClient` callbacks call `Bridge.Update(...)`; results are published to the ChatHub (§4). This replaces today's direct-to-`emit`.
-- **Finish:** on ACP `PromptResponse`, append `RUN_FINISHED` (mapping `stopReason`), enter linger, release `Reserve`, tear down the ACP conn.
+- **Finish:** on ACP `PromptResponse`, append `RUN_FINISHED` carrying the mapped `stopReason` (SDK `StopReason` = `end_turn`/`cancelled`/`refusal`/`max_tokens`/`max_turn_requests`) — so the consumed `Bridge.Finished(stopReason)` reports a **non-success** outcome for non-`end_turn` stops instead of hardcoding success (today `Finished()` is arg-less and always `WithSuccessOutcome`, `bridge.go:135`). Then enter linger, release `Reserve`, tear down the ACP conn. *(This pins the sibling translation unit's `Finished` to accept a `stopReason`.)*
+- **Idempotent teardown (`sync.Once`).** Detached runs have multiple teardown triggers that can fire concurrently (finish, cancel, permission/elicitation timeout, max-run timeout, shutdown, per-run cap). Teardown is guarded by a `sync.Once` and, in order: (1) atomically flip the run's `accepting` flag **false** and detach the hub's active-run pointer, so a straggler `SessionUpdate` can never publish into the *next* run's log; (2) stop **all** run timers (permission, elicitation, max-run) — an un-stopped `AfterFunc` otherwise pins the run/conn closure and can fire post-teardown; (3) close the ACP conn once; (4) drop pending permission/elicitation for the chat; (5) release `Reserve`. Release is **last**, so a new run cannot reuse the hub while stragglers are in flight.
+- **Panic safety.** The run goroutine `defer`s a `recover()` that emits `RUN_ERROR(protocol_error)` and runs teardown (releasing `Reserve`). Without this, a panic in produce/teardown leaks the in-memory `Reserve` and wedges the chat at `409` until c1 restart.
 - **Cancel triggers (disconnect is NOT one):**
   - explicit `POST …/session/cancel`;
-  - permission timeout (exists);
+  - permission timeout (exists) / elicitation timeout (new, §8);
   - **new max-run timeout** (safety for a wedged headless run) — configurable, e.g. 15 min;
+  - per-run event cap exceeded (§4) → `RUN_ERROR(run_too_large)`;
   - coordinator `Shutdown` (exists).
-- **`Reserve` decoupled from streaming.** `Reserve` guards **prompt-start only**. `GET …/stream` subscribes **without** reserving (today's `events` wrongly reserves and 409s). A run and its subscribers coexist.
+- **`Reserve` decoupled from streaming.** `Reserve` guards **prompt-start only**. `GET …/stream` subscribes **without** reserving (today's `events` wrongly reserves and 409s). A run and its subscribers coexist. Reserve is released in teardown, **after** `RUN_FINISHED` is appended and the hub's active-run pointer is detached — so the window between "finish appended" and "Reserve free" cannot admit a second prompt that races the still-lingering log; a 2nd prompt during that window either 409s (Reserve still held) or starts cleanly (Reserve freed, new run, continuing chat-global seq).
 
 ## 6. Goose connection lifecycle
 
-- **Dial-per-run**, connection **owned by the run** (not the request) so it survives client disconnect. Isolated failure domain per run; simplest correct model.
+- **Dial-per-run**, connection **owned by the run** (not the request, N1 above) so it survives client disconnect. Isolated failure domain per run; simplest correct model.
+- **`initialize` must advertise `ClientCapabilities.Elicitation`** (currently empty, `run.go:259`), or Goose will never send elicitations and §8's handler is dead code.
 - **Init sequence per run:** `initialize` → `session/new` (lazy, first prompt; persist `goose_sessions` map) or `session/load` → seed `/pocketcoder/modes` + `/pocketcoder/config` from the response into the Bridge → `set_mode` (default or client-chosen) → `Started()` → `prompt`.
+- **Orphaned-session compensation (S4).** `session/new` creates a **durable** Goose session; if the subsequent `goose_sessions` mapping-persist fails, the session exists but is unmapped → the next prompt would `session/new` again and strand the first turn's history. On persist failure the run MUST compensate: `session/delete` the just-created session before erroring, so no orphan is left. *(Symmetric to §9's delete path.)*
 - **Mid-turn WS failure → `RUN_ERROR` (`goose_unavailable`), no auto-resume** of an in-flight prompt (documented boundary). Replay reflects whatever Goose durably persisted.
 - **Pooled/persistent connection** (one WS serving many chats via ACP session multiplexing) is a **deferred optimization** — more failure-domain coupling; not needed for robust v1.
 
@@ -106,7 +119,7 @@ Implements the contract spec §6 verbatim; `sessionId` injected from `{chatId}`.
 
 ## 8. New capability wiring
 
-- **Elicitation (Unstable ACP):** implement the `sessionClient` handler for `unstable/create_elicitation` — surface via the Bridge as `/pocketcoder/elicitation` state, block the ACP request on a `pendingElicitation` channel (mirroring `pendingPermission`), resolve on `POST …/session/elicitation/{id}` (accept/decline/cancel) or timeout. Gate on the pinned Goose image actually emitting it.
+- **Elicitation (Unstable ACP):** the client must additionally implement `UnstableCreateElicitation` — the SDK dispatches elicitation by type-asserting the client (`client_gen.go:37`), so it is **not** satisfied by the base `Client` interface the current struct implements (S7). The handler surfaces the request via the Bridge as `/pocketcoder/elicitation` state, blocks the ACP request on a `pendingElicitation` channel (mirroring `pendingPermission`), and resolves on `POST …/session/elicitation/{id}` (accept/decline/cancel) or an **explicit elicitation timeout** (configurable, mirror the permission `5m`; on timeout resolve `cancelled`). Permission-id and elicitation-id keyspaces must not collide in coordinator state (keep them in separate maps, N5). With detached runs a permission/elicitation can fire with **zero** attached subscribers; that is bounded by its own timeout (well under max-run) and its pending state is in `Snapshot()` (§4) so a late-joiner can still resolve it. Gate on the pinned Goose image actually emitting it.
 - **set_mode / set_config_option:** dispatch to the ACP methods; the resulting `CurrentModeUpdate`/`ConfigOptionUpdate` from Goose flow back through the Bridge to update state (closed loop).
 - **Modes/config surfacing:** feed `NewSession`/`LoadSession` response `Modes`/`ConfigOptions` into the Bridge on run init (§6).
 
@@ -114,14 +127,15 @@ Implements the contract spec §6 verbatim; `sessionId` injected from `{chatId}`.
 
 - **new** — lazy on first prompt (exists; keep).
 - **load** — on cold-open replay / run init (exists; keep).
-- **delete** — hook `chats` record delete → `session/delete` on Goose + remove `goose_sessions` map. Loud error if Goose rejects (no silent guard).
+- **delete** — hook `chats` record delete → `session/delete` on Goose + remove `goose_sessions` map. This fires from a PocketBase record hook where there is **no active run or SSE stream** to carry a `RUN_ERROR`, so "loud" is defined concretely (S5): the `session/delete` runs in the **`OnRecordAfterDeleteSuccess`-adjacent** path and, on Goose rejection, does **not** silently swallow — it logs at error and records the orphan for a reconcile sweep (a startup/periodic pass that retries `session/delete` for `goose_sessions` rows whose `chats` parent is gone). We do **not** block the user's chat delete on Goose availability (Goose may be down); we guarantee eventual cleanup instead. Add `session_delete_failed` to the §10 taxonomy for the logged/reconcile surface. The `Conn` interface must expose `UnstableDeleteSession` (SDK `client_gen.go:271`), not currently in `acp.Conn`.
 - **close** — **deferred** (Goose owns session persistence; revisit under resource pressure).
 - **fork** — **deferred to fast-follow** (Unstable ACP; needs new-chat orchestration). Not v1.
 
 ## 10. Error taxonomy
 
 - **HTTP:** `202` / `400` / `401` / `404` / `409 run active` / `503 not configured` (per contract §7).
-- **`RUN_ERROR` codes:** `goose_unavailable` (dial/turn/WS failure), `goose_replay_failed` (history replay), `session_load_failed`, `protocol_error` (fatal translation/ACP error), `run_timeout` (max-run cap). Soft translation misses are `RAW`, not `RUN_ERROR` (translation spec §5.2).
+- **`RUN_ERROR` codes:** `goose_unavailable` (dial/turn/WS failure), `goose_replay_failed` (history replay), `session_load_failed`, `protocol_error` (fatal translation/ACP error, incl. panic-recover), `run_timeout` (max-run cap), `run_too_large` (per-run event cap, §4). Soft translation misses are `RAW`, not `RUN_ERROR` (translation spec §5.2).
+- **Non-run surfaces:** `session_delete_failed` (§9 — logged + reconcile sweep, not carried on a stream since delete has no active run).
 
 ## 11. Decisions taken (robust defaults — veto on review)
 
@@ -131,24 +145,29 @@ Implements the contract spec §6 verbatim; `sessionId` injected from `{chatId}`.
 4. **Dial-per-run**, connection owned by the run; pooled connection deferred.
 5. Mid-turn Goose WS failure → `RUN_ERROR`, **no auto-resume**; c1-restart durability out of scope.
 6. `session/close` deferred; `fork` deferred to fast-follow.
-7. Linger window 30s; max-run timeout ~15m; both configurable (env).
+7. Linger window 30s; max-run timeout ~15m; elicitation timeout ~5m; per-run event cap ~50k; all configurable (env). Timers/linger go through an injectable clock seam for deterministic tests (§4, §12).
 8. **Hub built fully in-house** — no `tmaxmax/go-sse` (its `Joe` provider sends synchronously → can't satisfy the drop-slow keystone; framing is ~20 lines) (§4a).
+9. **`seq` is chat-global monotonic**, not per-run-from-1; the stream cursor is the `seq` (totally ordered across runs), and the `runId` from `prompt` identifies the run for cancel/status only (§4, resolves review C2).
+10. **Backlog is subscriber-owned (unbounded slice); only live delivery is drop-on-full** — attach captures backlog + merged `Snapshot()` under the lock, flushes outside it, then joins the live bounded channel (§4, resolves review C1).
+11. **`Snapshot()` is one merged `STATE_SNAPSHOT`** over all `/pocketcoder/*` namespaces, never one-per-namespace (AG-UI snapshot replaces whole state) — pins the sibling translation unit (§4, resolves review C3).
+12. **Teardown is `sync.Once`-idempotent**; `Reserve` released last; run goroutine `recover()`s and releases on panic (§5, resolves review S2/S3/S8).
 
 ## 12. Testing strategy (TDD)
 
-- **Hub unit tests (deterministic, no Goose):** atomic attach (no gap/dup across replay→live); multi-subscriber fan-out; **slow-subscriber drop** (full channel → closed, run unaffected); cursor resume after drop; linger window (tail reconnect vs post-eviction Goose-replay fallback); teardown leaves no goroutine/hub.
-- **Run lifecycle tests:** disconnect does **not** cancel; explicit cancel does; max-run timeout fires; `Reserve` blocks a 2nd prompt (409) but not a stream subscribe.
+- **Hub unit tests (deterministic via the clock seam, no Goose):** atomic attach (no gap/dup across backlog→live, incl. a backlog **larger than the live channel cap** — must NOT drop, proving C1's subscriber-owned buffer); **chat-global seq continuity** across two runs (cursor from run 1 resumes into run 2 with no skipped events, proving C2); merged single `STATE_SNAPSHOT` on join (proving C3); multi-subscriber fan-out; **slow-subscriber drop** (full *live* channel → closed, run unaffected); cursor resume after drop; linger window and eviction driven by `evictNow()` (tail reconnect vs post-eviction Goose-replay fallback); teardown leaves no goroutine/hub.
+- **Run lifecycle tests:** disconnect does **not** cancel; explicit cancel does; max-run/per-run-cap fire via `expireNow()`; teardown idempotency (concurrent finish+cancel → single conn close, single Reserve release, no straggler into next run); panic in produce releases Reserve; `Reserve` blocks a 2nd prompt (409) but not a stream subscribe.
 - **Method tests:** set_mode/set_config round-trip updates state; elicitation request→response→resume; permission unchanged.
 - **`live_acp` integration (build-tagged, real Goose):** full authed turn over the new stream; reconnect mid-turn resumes; wrong token → 401; a real diff/tool turn renders through the translation unit.
 - Existing `tests/agent-c1` wiring updated to the `prompt`+`stream` split.
 
 ## 13. Module structure
 
-- `internal/agent/coordinator/hub.go` — ChatHub, Subscriber, seq log, fan-out, linger, teardown.
-- `internal/agent/coordinator/run.go` — reworked: detached run lifecycle, background ctx, cancel triggers, publish-to-hub.
-- `internal/agent/coordinator/session.go` — ACP init sequence, lifecycle (new/load/delete), modes/config seeding, elicitation handler.
+- `internal/agent/coordinator/hub.go` — ChatHub, Subscriber, chat-global seq log, subscriber-owned backlog + live bounded channel, fan-out, linger, clock seam, teardown.
+- `internal/agent/coordinator/run.go` — reworked: detached run lifecycle, background ctx (also the dial ctx), `sync.Once` teardown, panic-recover, cancel triggers, publish-to-hub.
+- `internal/agent/coordinator/session.go` — ACP init sequence (incl. `Elicitation` capability advertise), lifecycle (new/load/delete + orphan compensation/reconcile), modes/config seeding, elicitation handler.
 - `internal/agent/coordinator/coordinator.go` — Reserve/dispatch/timers/shutdown.
-- `internal/api/agent.go` — reworked routes (prompt/stream/cancel/set_mode/set_config/permission/elicitation), SSE `id:` emission, `chats` delete hook.
+- `internal/agent/acp/` — extend the `Conn` interface + client: `SetSessionConfigOption` (`client_gen.go:304`), `UnstableDeleteSession` (`client_gen.go:271`), and the `UnstableCreateElicitation` handler method (`client_gen.go:37`).
+- `internal/api/agent.go` — reworked routes (prompt/stream/cancel/set_mode/set_config/permission/elicitation), SSE `id:` emission (echoing the chat-global seq), `chats` delete hook.
 - Tests alongside each.
 
 ## 14. Scope boundaries
