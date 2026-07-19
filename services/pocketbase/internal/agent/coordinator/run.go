@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -190,6 +191,36 @@ func (c *Coordinator) isReserved(chatID string) bool {
 }
 
 func (c *Coordinator) Cancel(ctx context.Context, chatID string) error {
+	// Detached-run path: prefer the registry entry over the legacy activeRun so
+	// a StartPrompt-launched run is cancelled even when no legacy bookkeeping
+	// was attached to it.
+	if h := c.runFor(chatID); h != nil {
+		if h.conn != nil {
+			_ = h.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(h.sessionID)})
+		}
+		h.cancel()
+		c.mu.Lock()
+		var p *pendingPermission
+		for id, v := range c.pending {
+			if v.chatID == chatID {
+				p = v
+				delete(c.pending, id)
+				if v.timer != nil {
+					v.timer.Stop()
+				}
+				break
+			}
+		}
+		c.mu.Unlock()
+		if p != nil {
+			select {
+			case p.decision <- permissionDecision{cancelled: true}:
+			default:
+			}
+		}
+		return nil
+	}
+
 	c.mu.Lock()
 	run := c.activeRun[chatID]
 	var p *pendingPermission
@@ -245,9 +276,13 @@ func (c *Coordinator) Approve(_ context.Context, chatID, requestID, optionID str
 type sessionClient struct {
 	c                 *Coordinator
 	chatID, sessionID string
+	runID             string
 	bridge            *agui.Bridge
 	emit              Emit
-	accepting         atomic.Bool
+	accepting         *atomic.Bool
+	events            atomic.Int64
+	maxEvents         int
+	cancel            context.CancelFunc
 	emitMu            sync.Mutex
 }
 
@@ -255,15 +290,22 @@ func (s *sessionClient) SessionUpdate(_ context.Context, n acpsdk.SessionNotific
 	if !s.accepting.Load() {
 		return nil
 	}
+	if s.maxEvents > 0 && int(s.events.Add(1)) > s.maxEvents {
+		_ = s.emit(events.NewRunErrorEvent("run too large", events.WithErrorCode("run_too_large")))
+		if s.cancel != nil {
+			s.cancel()
+		}
+		return nil
+	}
 	s.emitMu.Lock()
 	defer s.emitMu.Unlock()
 	updates, err := s.bridge.Update(n.Update)
-	if err != nil {
-		return err
-	}
+	// Soft-miss: the bridge already emitted redacted RAW for unmapped shapes;
+	// a returned error is non-fatal, so publish what we have and keep going.
+	_ = err
 	for _, e := range updates {
-		if err := s.emit(e); err != nil {
-			return err
+		if emitErr := s.emit(e); emitErr != nil {
+			return emitErr
 		}
 	}
 	return nil
@@ -353,7 +395,7 @@ func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID stri
 	if sessionID == "" {
 		return emitAll(emit, bridge.Finished(acpsdk.StopReasonEndTurn))
 	}
-	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emit}
+	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emit, accepting: &atomic.Bool{}}
 	conn, err := c.config.Dial(ctx, sc)
 	if err != nil {
 		return err
@@ -394,7 +436,7 @@ func (c *Coordinator) RunReserved(ctx context.Context, req RunRequest, emit Emit
 	}
 	had := sessionID != ""
 	bridge := agui.NewBridge(req.ChatID, uuid.NewString())
-	sc := &sessionClient{c: c, chatID: req.ChatID, sessionID: sessionID, bridge: bridge, emit: emit}
+	sc := &sessionClient{c: c, chatID: req.ChatID, sessionID: sessionID, bridge: bridge, emit: emit, accepting: &atomic.Bool{}}
 	conn, err := c.config.Dial(ctx, sc)
 	if err != nil {
 		return err
@@ -504,4 +546,144 @@ func (c *Coordinator) Shutdown(ctx context.Context) {
 		default:
 		}
 	}
+}
+
+// StartPrompt reserves chatID, spawns a detached run goroutine on a fresh
+// context.Background()-derived ctx (which also doubles as the Goose dial ctx,
+// spec N1), and returns the run id immediately. The run survives the caller
+// returning: teardown fires on Prompt return / cancel / panic, last in the
+// gate is always the release of Reserve so a second StartPrompt can take over.
+func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, created OnSessionCreated) (string, error) {
+	if err := c.Reserve(chatID); err != nil {
+		return "", err
+	}
+	runID := uuid.NewString()
+	runCtx, cancel := context.WithCancel(context.Background())
+	accepting := &atomic.Bool{}
+	h := &runHandle{runID: runID, cancel: cancel, accepting: accepting}
+	c.registerRun(chatID, h)
+	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, created)
+	return runID, nil
+}
+
+// runLoop is the per-run goroutine. It owns the *one* sync.Once teardown,
+// a single panic recover that publishes RUN_ERROR, and the publish-through-
+// hub `emit` so RequestPermission (which also calls s.emit) remains safe on
+// the detached path with no client lifetime dependency.
+func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, created OnSessionCreated) {
+	hub := c.hubFor(chatID)
+	var once sync.Once
+	teardown := func() {
+		once.Do(func() {
+			h.accepting.Store(false) // straggler SessionUpdates now return early
+			c.stopTimers(h)
+			if h.conn != nil {
+				_ = h.conn.Close()
+			}
+			c.dropPendingForChat(chatID)
+			hub.FinishRun()
+			h.cancel()
+			c.clearRun(chatID, runID)
+			c.reapHub(chatID)
+			c.release(chatID) // LAST
+		})
+	}
+	h.teardown = func(bool) { teardown() }
+	defer teardown()
+	defer func() {
+		if r := recover(); r != nil {
+			hub.Publish(events.NewRunErrorEvent("internal error", events.WithErrorCode("protocol_error")))
+		}
+	}()
+
+	sessionID, err := resolve(runCtx)
+	if err != nil {
+		hub.Publish(events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
+		return
+	}
+	bridge := agui.NewBridge(chatID, runID)
+	hub.StartRun(runID, bridge.Snapshot)
+
+	// Detached path routes ALL client callbacks (SessionUpdate AND
+	// RequestPermission — both call s.emit) through the hub, so emit is never
+	// nil. accepting is the SHARED pointer from the runHandle.
+	sc := &sessionClient{c: c, chatID: chatID, runID: runID, sessionID: sessionID, bridge: bridge,
+		emit:      func(e events.Event) error { hub.Publish(e); return nil },
+		accepting: h.accepting, maxEvents: c.maxRunEvents, cancel: h.cancel}
+	conn, err := c.config.Dial(runCtx, sc) // runCtx is ALSO the dial ctx (spec N1)
+	if err != nil {
+		hub.Publish(events.NewRunErrorEvent("goose dial", events.WithErrorCode("goose_unavailable")))
+		return
+	}
+	h.conn = conn
+	sessionID, err = c.initSession(runCtx, conn, sc, bridge, sessionID, created) // Task 11/12
+	if err != nil {
+		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
+		return
+	}
+	h.sessionID = sessionID
+	sc.sessionID = sessionID
+	h.accepting.Store(true)
+	hub.Publish(bridge.Started())
+
+	maxTimer := c.clock.AfterFunc(c.maxRun, func() { h.cancel() })
+	c.trackTimer(chatID, runID, maxTimer)
+
+	resp, err := conn.Prompt(runCtx, acpsdk.PromptRequest{
+		SessionId: acpsdk.SessionId(sessionID),
+		Prompt:    []acpsdk.ContentBlock{{Text: &acpsdk.ContentBlockText{Type: "text", Text: prompt}}},
+	})
+	if err != nil {
+		code := "goose_unavailable"
+		if runCtx.Err() != nil {
+			code = "run_timeout"
+		}
+		hub.Publish(events.NewRunErrorEvent("goose turn failed", events.WithErrorCode(code)))
+		return
+	}
+	for _, e := range bridge.Finished(resp.StopReason) {
+		hub.Publish(e)
+	}
+}
+
+// initSession runs the ACP init sequence on a freshly dialed conn: initialize,
+// session/new (and persist) or session/load (by sessionID), and set_session_mode
+// to "approve". On a session/new whose mapping persist fails, the freshly
+// minted Goose session is deleted (orphan compensation) before returning the
+// wrapped error. Tasks 11/12 extend this further.
+func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessionClient, bridge *agui.Bridge, sessionID string, created OnSessionCreated) (string, error) {
+	_ = bridge
+	_ = sc
+	if _, err := conn.Initialize(ctx, initializeRequest()); err != nil {
+		return "", err
+	}
+	if sessionID == "" {
+		res, err := conn.NewSession(ctx, acpsdk.NewSessionRequest{Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
+		if err != nil {
+			return "", err
+		}
+		sessionID = string(res.SessionId)
+		if sessionID == "" {
+			return "", errors.New("session/new response missing sessionId")
+		}
+		if err := created(ctx, sessionID); err != nil {
+			// Orphan compensation (Task 11): the Goose session exists but is
+			// unmapped — delete it so the next prompt does not strand history.
+			if dErr := conn.UnstableDeleteSession(ctx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)}); dErr != nil {
+				log.Printf("coordinator: orphan session delete failed: %v", dErr)
+			}
+			return "", fmt.Errorf("persist Goose session mapping: %w", err)
+		}
+		// Task 12: bridge.SeedSession(res.Modes, res.ConfigOptions) -> hub.Publish
+	} else {
+		res, err := conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
+		if err != nil {
+			return "", err
+		}
+		_ = res // Task 12: bridge.SeedSession(res.Modes, res.ConfigOptions) -> hub.Publish
+	}
+	if _, err := conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{SessionId: acpsdk.SessionId(sessionID), ModeId: acpsdk.SessionModeId("approve")}); err != nil {
+		return "", err
+	}
+	return sessionID, nil
 }
