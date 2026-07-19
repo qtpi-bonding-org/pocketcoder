@@ -395,3 +395,85 @@ func contains(s []string, v string) bool {
 	}
 	return false
 }
+
+// TestBridgeSnapshotOmitsResolvedPermission covers Task 8's Snapshot invariant:
+// a permission recorded via PermissionPending shows up in Snapshot, and after
+// ResolvePermission it must be gone. This is the test that required Task 7's
+// PermissionPending rewrite to route through b.state.set (so the value is
+// retained rather than emitted-and-forgotten).
+func TestBridgeSnapshotOmitsResolvedPermission(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	bridge.PermissionPending("p1", nil)
+	snap := bridge.Snapshot()
+	if len(snap) == 0 {
+		t.Fatal("snapshot should include pending permission")
+	}
+	sawPermission := false
+	for _, e := range snap {
+		b, _ := json.Marshal(e)
+		if strings.Contains(string(b), `"permission"`) {
+			sawPermission = true
+		}
+	}
+	if !sawPermission {
+		t.Fatalf("pending permission should appear in snapshot: %v", snap)
+	}
+	bridge.ResolvePermission("p1")
+	for _, e := range bridge.Snapshot() {
+		b, _ := json.Marshal(e)
+		if strings.Contains(string(b), `"permission"`) {
+			t.Fatalf("resolved permission must not appear in snapshot: %s", string(b))
+		}
+	}
+}
+
+// TestBridgeSeedSessionModes covers Task 8's SeedSession: a non-nil
+// SessionModeState must produce at least one STATE_DELTA event carrying the
+// currentModeId + availableModes shape so subscribers can render the initial
+// mode dropdown before any CurrentModeUpdate arrives.
+func TestBridgeSeedSessionModes(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	modes := &acpsdk.SessionModeState{
+		CurrentModeId: "approve",
+		AvailableModes: []acpsdk.SessionMode{
+			{Id: "approve", Name: "Approve"},
+		},
+	}
+	evs := bridge.SeedSession(modes, nil)
+	if len(evs) == 0 || evs[0].Type() != "STATE_DELTA" {
+		t.Fatalf("seed: %#v", evs)
+	}
+	b, _ := json.Marshal(evs[0])
+	if !strings.Contains(string(b), `"modes"`) || !strings.Contains(string(b), `"currentModeId":"approve"`) {
+		t.Fatalf("seed payload missing modes/currentModeId: %s", string(b))
+	}
+}
+
+// TestBridgeStateDoesNotCloseOpenMessage covers the side-channel invariant:
+// emitting a STATE_DELTA (via UsageUpdate → b.state.set) must NOT close the
+// currently-open TEXT_MESSAGE. The text machine's open/close lifecycle is
+// scoped to message/reasoning/tool calls only; state events ride alongside
+// without disturbing them. This is the regression guard the plan calls out:
+// "side-channels don't perturb the text machine."
+func TestBridgeStateDoesNotCloseOpenMessage(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	mid := "m1"
+	if _, err := bridge.Update(acpsdk.SessionUpdate{AgentMessageChunk: &acpsdk.SessionUpdateAgentMessageChunk{
+		SessionUpdate: "agent_message_chunk",
+		MessageId:     &mid,
+		Content:       acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "hi"}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	evs, err := bridge.Update(acpsdk.SessionUpdate{UsageUpdate: &acpsdk.SessionUsageUpdate{
+		SessionUpdate: "usage_update",
+		Size:          1,
+		Used:          1,
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if contains(eventTypes(evs), "TEXT_MESSAGE_END") {
+		t.Fatal("a STATE emission must not close the open text message")
+	}
+}
