@@ -27,7 +27,6 @@ type Config struct {
 	MaxRunEvents                     int
 	LiveBuffer                       int
 }
-type RunRequest struct{ ChatID, Prompt string }
 type Emit func(events.Event) error
 type ResolveSession func(context.Context) (string, error)
 type OnSessionCreated func(context.Context, string) error
@@ -44,11 +43,10 @@ type runHandle struct {
 }
 
 type Coordinator struct {
-	config    Config
-	mu        sync.Mutex
-	running   map[string]struct{}
-	activeRun map[string]*activeRun
-	pending   map[string]*pendingPermission
+	config             Config
+	mu                 sync.Mutex
+	running            map[string]struct{}
+	pending            map[string]*pendingPermission
 	clock              Clock
 	hubs               map[string]*ChatHub
 	runs               map[string]*runHandle
@@ -58,10 +56,6 @@ type Coordinator struct {
 	elicitationTimeout time.Duration
 	maxRunEvents       int
 	liveBuf            int
-}
-type activeRun struct {
-	sessionID string
-	conn      acp.Conn
 }
 type pendingPermission struct {
 	chatID, sessionID string
@@ -119,7 +113,7 @@ func New(config Config) (*Coordinator, error) {
 	}
 	c := &Coordinator{
 		config: config, clock: config.Clock,
-		running: map[string]struct{}{}, activeRun: map[string]*activeRun{}, pending: map[string]*pendingPermission{},
+		running: map[string]struct{}{}, pending: map[string]*pendingPermission{},
 		hubs: map[string]*ChatHub{}, runs: map[string]*runHandle{}, elicits: map[string]*pendingElicitation{},
 		lingerWindow:       orElseD(config.LingerWindow, 30*time.Second),
 		maxRun:             orElseD(config.MaxRun, 15*time.Minute),
@@ -205,63 +199,21 @@ func (c *Coordinator) isReserved(chatID string) bool {
 	return ok
 }
 
+// Cancel sends an ACP session/cancel for chatID's active detached run (if
+// any) and resolves any pending permission/elicitation for that chat as
+// cancelled, so a blocked ACP callback unblocks instead of stalling
+// teardown. There is no legacy fallback path: every run is now started via
+// StartPrompt and lives in the run registry.
 func (c *Coordinator) Cancel(ctx context.Context, chatID string) error {
-	// Detached-run path: prefer the registry entry over the legacy activeRun so
-	// a StartPrompt-launched run is cancelled even when no legacy bookkeeping
-	// was attached to it.
-	if h := c.runFor(chatID); h != nil {
-		if h.conn != nil {
-			_ = h.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(h.sessionID)})
-		}
-		h.cancel()
-		c.mu.Lock()
-		var p *pendingPermission
-		for id, v := range c.pending {
-			if v.chatID == chatID {
-				p = v
-				delete(c.pending, id)
-				if v.timer != nil {
-					v.timer.Stop()
-				}
-				break
-			}
-		}
-		c.mu.Unlock()
-		if p != nil {
-			select {
-			case p.decision <- permissionDecision{cancelled: true}:
-			default:
-			}
-		}
-		return nil
-	}
-
-	c.mu.Lock()
-	run := c.activeRun[chatID]
-	var p *pendingPermission
-	for id, v := range c.pending {
-		if v.chatID == chatID {
-			p = v
-			delete(c.pending, id)
-			if v.timer != nil {
-				v.timer.Stop()
-			}
-			break
-		}
-	}
-	c.mu.Unlock()
-	if run == nil {
+	h := c.runFor(chatID)
+	if h == nil {
 		return ErrNoActiveRun
 	}
-	if err := run.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(run.sessionID)}); err != nil {
-		return err
+	if h.conn != nil {
+		_ = h.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(h.sessionID)})
 	}
-	if p != nil {
-		select {
-		case p.decision <- permissionDecision{cancelled: true}:
-		default:
-		}
-	}
+	h.cancel()
+	c.dropPendingForChat(chatID)
 	return nil
 }
 
@@ -327,6 +279,14 @@ func (c *Coordinator) SetConfigOption(ctx context.Context, chatID string, req ac
 	h := c.runFor(chatID)
 	if h == nil || h.conn == nil {
 		return ErrNoActiveRun
+	}
+	// The Goose session id is server-resolved from the active run, never
+	// trusted from the request body: the client only supplies configId/value.
+	switch {
+	case req.Boolean != nil:
+		req.Boolean.SessionId = acpsdk.SessionId(h.sessionID)
+	case req.ValueId != nil:
+		req.ValueId.SessionId = acpsdk.SessionId(h.sessionID)
 	}
 	_, err := h.conn.SetSessionConfigOption(ctx, req)
 	return err
@@ -497,22 +457,27 @@ func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingEl
 	}
 }
 
-func (c *Coordinator) Replay(ctx context.Context, chatID, sessionID string, emit Emit) error {
-	if err := c.Reserve(chatID); err != nil {
-		return err
-	}
-	return c.ReplayReserved(ctx, chatID, sessionID, emit)
-}
-func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID string, emit Emit) error {
-	defer c.release(chatID)
+// StreamColdReplay runs a bounded, no-Reserve Goose replay for a subscriber
+// whose Attach reported ColdReplayNeeded (the buffered run was evicted or
+// never existed for this chat-global cursor). It dials a short-lived conn,
+// walks session/load through a fresh Bridge exactly like the old
+// ReplayReserved body, and hands each resulting event to emit with
+// ascending seqs starting at 1 — the caller (the stream route) writes these
+// as SSE frames before falling through to the hub's Buffered/Live tail.
+func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID string, emit func(seq int, ev events.Event) error) error {
 	bridge := agui.NewBridge(chatID, uuid.NewString())
-	if err := emit(bridge.Started()); err != nil {
+	seq := 0
+	emitSeq := func(ev events.Event) error {
+		seq++
+		return emit(seq, ev)
+	}
+	if err := emitSeq(bridge.Started()); err != nil {
 		return err
 	}
 	if sessionID == "" {
-		return emitAll(emit, bridge.Finished(acpsdk.StopReasonEndTurn))
+		return emitAll(emitSeq, bridge.Finished(acpsdk.StopReasonEndTurn))
 	}
-	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emit, accepting: &atomic.Bool{}}
+	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emitSeq, accepting: &atomic.Bool{}}
 	conn, err := c.config.Dial(ctx, sc)
 	if err != nil {
 		return err
@@ -525,7 +490,7 @@ func (c *Coordinator) ReplayReserved(ctx context.Context, chatID, sessionID stri
 	if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}}); err != nil {
 		return fmt.Errorf("load Goose session: %w", err)
 	}
-	return emitAll(emit, bridge.Finished(acpsdk.StopReasonEndTurn))
+	return emitAll(emitSeq, bridge.Finished(acpsdk.StopReasonEndTurn))
 }
 func initializeRequest() acpsdk.InitializeRequest {
 	return acpsdk.InitializeRequest{
@@ -544,90 +509,6 @@ func emitAll(emit Emit, values []events.Event) error {
 	return nil
 }
 
-func (c *Coordinator) Run(ctx context.Context, req RunRequest, emit Emit, resolve ResolveSession, created OnSessionCreated) error {
-	if err := c.Reserve(req.ChatID); err != nil {
-		return err
-	}
-	return c.RunReserved(ctx, req, emit, resolve, created)
-}
-func (c *Coordinator) RunReserved(ctx context.Context, req RunRequest, emit Emit, resolve ResolveSession, created OnSessionCreated) error {
-	defer c.release(req.ChatID)
-	sessionID, err := resolve(ctx)
-	if err != nil {
-		return fmt.Errorf("load Goose session mapping: %w", err)
-	}
-	had := sessionID != ""
-	bridge := agui.NewBridge(req.ChatID, uuid.NewString())
-	sc := &sessionClient{c: c, chatID: req.ChatID, sessionID: sessionID, bridge: bridge, emit: emit, accepting: &atomic.Bool{}}
-	conn, err := c.config.Dial(ctx, sc)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	if _, err = conn.Initialize(ctx, initializeRequest()); err != nil {
-		return err
-	}
-	if !had {
-		result, e := conn.NewSession(ctx, acpsdk.NewSessionRequest{Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
-		if e != nil {
-			return e
-		}
-		sessionID = string(result.SessionId)
-		if sessionID == "" {
-			return errors.New("session/new response missing sessionId")
-		}
-		sc.sessionID = sessionID
-		if e = created(ctx, sessionID); e != nil {
-			return fmt.Errorf("persist Goose session mapping: %w", e)
-		}
-	} else {
-		if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}}); err != nil {
-			return err
-		}
-	}
-	if _, err = conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{SessionId: acpsdk.SessionId(sessionID), ModeId: acpsdk.SessionModeId("approve")}); err != nil {
-		return err
-	}
-	sc.accepting.Store(true)
-	if err = emit(bridge.Started()); err != nil {
-		return err
-	}
-	if err = c.startRun(req.ChatID, sessionID, conn); err != nil {
-		return err
-	}
-	defer c.finishRun(req.ChatID, conn)
-	defer c.dropPendingForChat(req.ChatID)
-	_, err = conn.Prompt(ctx, acpsdk.PromptRequest{SessionId: acpsdk.SessionId(sessionID), Prompt: []acpsdk.ContentBlock{{Text: &acpsdk.ContentBlockText{Type: "text", Text: req.Prompt}}}})
-	if err != nil {
-		c.cancelOnClientDisconnect(ctx, req.ChatID)
-		return err
-	}
-	return emitAll(emit, bridge.Finished(acpsdk.StopReasonEndTurn))
-}
-func (c *Coordinator) cancelOnClientDisconnect(ctx context.Context, chatID string) {
-	if ctx.Err() == nil {
-		return
-	}
-	cc, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_ = c.Cancel(cc, chatID)
-}
-func (c *Coordinator) startRun(chat, sid string, conn acp.Conn) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.activeRun[chat] != nil {
-		return ErrRunInProgress
-	}
-	c.activeRun[chat] = &activeRun{sessionID: sid, conn: conn}
-	return nil
-}
-func (c *Coordinator) finishRun(chat string, conn acp.Conn) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if r := c.activeRun[chat]; r != nil && r.conn == conn {
-		delete(c.activeRun, chat)
-	}
-}
 func (c *Coordinator) dropPendingForChat(chat string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -656,13 +537,16 @@ func (c *Coordinator) dropPendingForChat(chat string) {
 		}
 	}
 }
+// Shutdown cancels every in-flight detached run and resolves every pending
+// permission/elicitation as cancelled, so no ACP callback is left blocked
+// when the process is asked to terminate.
 func (c *Coordinator) Shutdown(ctx context.Context) {
 	c.mu.Lock()
-	runs := map[string]*activeRun{}
-	for id, r := range c.activeRun {
-		runs[id] = r
+	runs := make([]*runHandle, 0, len(c.runs))
+	for _, h := range c.runs {
+		runs = append(runs, h)
 	}
-	pending := []*pendingPermission{}
+	pending := make([]*pendingPermission, 0, len(c.pending))
 	for id, p := range c.pending {
 		delete(c.pending, id)
 		if p.timer != nil {
@@ -670,13 +554,30 @@ func (c *Coordinator) Shutdown(ctx context.Context) {
 		}
 		pending = append(pending, p)
 	}
+	elicits := make([]*pendingElicitation, 0, len(c.elicits))
+	for id, p := range c.elicits {
+		delete(c.elicits, id)
+		if p.timer != nil {
+			p.timer.Stop()
+		}
+		elicits = append(elicits, p)
+	}
 	c.mu.Unlock()
-	for _, r := range runs {
-		_ = r.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(r.sessionID)})
+	for _, h := range runs {
+		if h.conn != nil {
+			_ = h.conn.Cancel(ctx, acpsdk.CancelNotification{SessionId: acpsdk.SessionId(h.sessionID)})
+		}
+		h.cancel()
 	}
 	for _, p := range pending {
 		select {
 		case p.decision <- permissionDecision{cancelled: true}:
+		default:
+		}
+	}
+	for _, p := range elicits {
+		select {
+		case p.decision <- elicitationDecision{cancelled: true}:
 		default:
 		}
 	}

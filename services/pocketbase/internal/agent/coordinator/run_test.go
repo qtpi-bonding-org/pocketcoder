@@ -201,31 +201,6 @@ func TestReserveRejectsConcurrentRunAndReleases(t *testing.T) {
 	}
 }
 
-func TestCancelForwardsToActiveSession(t *testing.T) {
-	f := &fakeConn{}
-	c := testCoordinator(t, nil)
-	if err := c.startRun("chat", "session", f); err != nil {
-		t.Fatal(err)
-	}
-	if err := c.Cancel(context.Background(), "chat"); err != nil {
-		t.Fatal(err)
-	}
-	if f.cancelled != "session" {
-		t.Fatalf("cancelled=%q", f.cancelled)
-	}
-}
-
-func TestUnmappedReplayDoesNotDial(t *testing.T) {
-	dialed := false
-	c := testCoordinator(t, func(context.Context, acpsdk.Client) (acp.Conn, error) { dialed = true; return nil, nil })
-	if err := c.Replay(context.Background(), "chat", "", func(events.Event) error { return nil }); err != nil {
-		t.Fatal(err)
-	}
-	if dialed {
-		t.Fatal("unmapped replay dialed Goose")
-	}
-}
-
 func TestPermissionCallbackBlocksUntilApprove(t *testing.T) {
 	c := testCoordinator(t, nil)
 	sc := &sessionClient{c: c, chatID: "chat", sessionID: "session", bridge: nil, emit: func(events.Event) error { return nil }}
