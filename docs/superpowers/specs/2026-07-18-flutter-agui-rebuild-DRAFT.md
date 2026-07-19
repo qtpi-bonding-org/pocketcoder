@@ -2,6 +2,7 @@
 
 **Date:** 2026-07-18
 **Status:** DRAFT — capture only. Needs a full brainstorming pass before it earns an implementation plan. Do NOT execute from this document.
+**Superseded in part / re-sequenced (2026-07-19):** brainstorming this rebuild revealed the c1↔c2 bridge is a thin happy-path that must be made robust *first*. The Flutter-facing wire contract is now specced separately in **`2026-07-19-c1-flutter-contract-spec.md`** (the acceptance target), and the foundation is the **Robust c1↔c2 ACP bridge** (to be specced next). Build order is now: robust c1↔c2 bridge → (this) Flutter client on top. Treat this doc as the client-side notes; the contract + open questions live in the newer specs.
 **Depends on:** Legacy Runtime Prune (`2026-07-18-legacy-runtime-prune-design.md`) landing first. The pruned backend drops `messages`/`permissions`/`acp_terminals` and the legacy `chats` fields, which breaks the current Flutter client — this rebuild is what makes the app work again.
 
 ## Why this exists
