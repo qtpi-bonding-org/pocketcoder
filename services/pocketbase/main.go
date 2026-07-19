@@ -44,7 +44,6 @@ func main() {
 
 	// 2. Register Global Sovereign Hooks
 	hooks.RegisterGlobalTimestamps(app)
-	hooks.RegisterPermissionHooks(app)
 	hooks.RegisterAgentHooks(app)
 	hooks.RegisterSopHooks(app)
 	hooks.RegisterNotificationHooks(app)
@@ -70,7 +69,6 @@ func main() {
 		provisioning.ProvisionSops(app)
 
 		// B. Register Custom API Endpoints
-		api.RegisterPermissionApi(app, e)
 		api.RegisterSSHApi(app, e)
 		api.RegisterMcpApi(app, e)
 		api.RegisterProxyApi(app, e)
