@@ -4,8 +4,6 @@ package agui
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
@@ -77,53 +75,113 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 		}
 		return append(result, events.NewReasoningMessageContentEvent(reasoningID, text)), nil
 	case update.ToolCall != nil:
-		result := b.closeReasoning()
-		result = append(result, b.closeMessage()...)
-		tool := update.ToolCall
-		id := string(tool.ToolCallId)
-		if id == "" {
-			return nil, fmt.Errorf("ACP tool_call missing toolCallId")
-		}
-		result = append(result, events.NewToolCallStartEvent(id, tool.Title))
-		if tool.RawInput != nil {
-			input, err := json.Marshal(tool.RawInput)
-			if err != nil {
-				return nil, fmt.Errorf("encode ACP tool input: %w", err)
-			}
-			result = append(result, events.NewToolCallArgsEvent(id, string(input)))
-		}
-		b.openTools[id] = toolMeta{}
-		return result, nil
+		return b.startTool(update.ToolCall), nil
 	case update.ToolCallUpdate != nil:
-		tool := update.ToolCallUpdate
-		id := string(tool.ToolCallId)
-		if id == "" {
-			return nil, fmt.Errorf("ACP tool_call_update missing toolCallId")
-		}
-		var result []events.Event
-		if tool.RawInput != nil {
-			input, err := json.Marshal(tool.RawInput)
-			if err != nil {
-				return nil, fmt.Errorf("encode ACP tool update: %w", err)
-			}
-			result = append(result, events.NewToolCallArgsEvent(id, string(input)))
-		}
-		output, hasOutput, err := toolResultText(tool.Content, tool.RawOutput)
-		if err != nil {
-			return nil, err
-		}
-		if hasOutput {
-			result = append(result, events.NewToolCallResultEvent("tool-result-"+id, id, output))
-		}
-		if tool.Status != nil && isTerminalToolStatus(string(*tool.Status)) {
-			if _, open := b.openTools[id]; open {
-				delete(b.openTools, id)
-				result = append(result, events.NewToolCallEndEvent(id))
-			}
-		}
-		return result, nil
+		return b.updateTool(update.ToolCallUpdate), nil
 	}
 	return nil, nil
+}
+
+// startTool handles the initial tool_call. tc is the FLAT SessionUpdate variant:
+// fields (ToolCallId, Title, Kind, Status, Content, RawInput, RawOutput,
+// Locations) live directly on it. Single-shot: an initial terminal status with
+// content emits TOOL_CALL_RESULT + TOOL_CALL_END in the same burst so the
+// output is never lost when ACP delivers a completed call up-front.
+func (b *Bridge) startTool(tc *acpsdk.SessionUpdateToolCall) []events.Event {
+	id := string(tc.ToolCallId)
+	if id == "" {
+		// Soft miss: never abort the turn; surface as redacted RAW.
+		return []events.Event{rawEvent("tool_call", nil)}
+	}
+	var result []events.Event
+	result = append(result, b.closeReasoning()...)
+	result = append(result, b.closeMessage()...)
+	result = append(result, events.NewToolCallStartEvent(id, tc.Title))
+	if tc.RawInput != nil {
+		if in, err := json.Marshal(tc.RawInput); err == nil {
+			result = append(result, events.NewToolCallArgsEvent(id, string(in)))
+		}
+	}
+	kind := string(tc.Kind)
+	status := string(tc.Status)
+	b.openTools[id] = toolMeta{title: tc.Title, kind: kind, status: status}
+	result = append(result, customTool(id, tc.Title, kind, status, tc.Locations))
+	if len(tc.Content) > 0 {
+		result = append(result, b.toolResult(id, tc.Content, tc.RawOutput)...)
+	}
+	if isTerminalToolStatus(status) {
+		result = append(result, b.endTool(id)...)
+	}
+	return result
+}
+
+// updateTool handles tool_call_update. Its fields are POINTERS (partial
+// update), unlike startTool's flat non-pointer struct — read-modify-write the
+// retained meta. Unknown tool ids still emit an update (zero-value meta) so
+// the client always sees the latest state.
+func (b *Bridge) updateTool(u *acpsdk.SessionToolCallUpdate) []events.Event {
+	id := string(u.ToolCallId)
+	if id == "" {
+		return []events.Event{rawEvent("tool_call_update", nil)}
+	}
+	var result []events.Event
+	if u.RawInput != nil {
+		if in, err := json.Marshal(u.RawInput); err == nil {
+			result = append(result, events.NewToolCallArgsEvent(id, string(in)))
+		}
+	}
+	if len(u.Content) > 0 {
+		result = append(result, b.toolResult(id, u.Content, u.RawOutput)...)
+	}
+	meta := b.openTools[id] // zero value if the tool is unknown; still emit an update
+	if u.Title != nil {
+		meta.title = *u.Title
+	}
+	if u.Kind != nil {
+		meta.kind = string(*u.Kind)
+	}
+	if u.Status != nil {
+		meta.status = string(*u.Status)
+	}
+	b.openTools[id] = meta
+	result = append(result, customTool(id, meta.title, meta.kind, meta.status, u.Locations))
+	if u.Status != nil && isTerminalToolStatus(string(*u.Status)) {
+		result = append(result, b.endTool(id)...)
+	}
+	return result
+}
+
+// toolResult splits ACP tool result content into TOOL_CALL_RESULT (text/
+// rawOutput fallback) plus CUSTOM pocketcoder:{diff,terminal} for structured
+// results. Returns a single redacted RAW on render error so the client still
+// sees that something arrived, just not the malformed blob.
+func (b *Bridge) toolResult(id string, content []acpsdk.ToolCallContent, rawOutput any) []events.Event {
+	text, diffs, terms, has, err := renderToolContent(content, rawOutput)
+	if err != nil {
+		return []events.Event{rawEvent("tool_call_content", nil)}
+	}
+	var out []events.Event
+	if has {
+		out = append(out, events.NewToolCallResultEvent("tool-result-"+id, id, text))
+	}
+	for _, d := range diffs {
+		out = append(out, customDiff(id, d))
+	}
+	for _, tm := range terms {
+		out = append(out, customTerminal(id, tm))
+	}
+	return out
+}
+
+// endTool closes a single open tool id. Returns nil if the id is unknown so
+// re-entry (e.g. a late terminal status) is a no-op rather than a duplicate
+// TOOL_CALL_END.
+func (b *Bridge) endTool(id string) []events.Event {
+	if _, open := b.openTools[id]; !open {
+		return nil
+	}
+	delete(b.openTools, id)
+	return []events.Event{events.NewToolCallEndEvent(id)}
 }
 
 // messageChunk is the shared emit path for ACP user/agent message chunks. It
@@ -221,43 +279,6 @@ func (b *Bridge) ensureMessageID(messageID *string) string {
 		b.messageID = uuid.NewString()
 	}
 	return b.messageID
-}
-
-// toolResultText renders a tool call's produced content for the UI. Text
-// blocks are preferred; RawOutput is JSON-encoded as a fallback so Flutter
-// always sees what the tool returned, not just that it finished.
-//
-// Deprecated: superseded by renderContent/renderToolContent (Task 6 will wire
-// those in). Kept here so Task 5's tool arms keep the diff scoped to the
-// message/reasoning paths only.
-func toolResultText(content []acpsdk.ToolCallContent, rawOutput any) (string, bool, error) {
-	var parts []string
-	for _, block := range content {
-		if block.Content == nil {
-			continue
-		}
-		if text, ok := textContent(block.Content.Content); ok && text != "" {
-			parts = append(parts, text)
-		}
-	}
-	if len(parts) > 0 {
-		return strings.Join(parts, "\n"), true, nil
-	}
-	if rawOutput != nil {
-		encoded, err := json.Marshal(rawOutput)
-		if err != nil {
-			return "", false, fmt.Errorf("encode ACP tool output: %w", err)
-		}
-		return string(encoded), true, nil
-	}
-	return "", false, nil
-}
-
-func textContent(block acpsdk.ContentBlock) (string, bool) {
-	if block.Text == nil {
-		return "", false
-	}
-	return block.Text.Text, true
 }
 
 func isTerminalToolStatus(status string) bool {
