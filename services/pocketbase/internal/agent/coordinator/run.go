@@ -19,6 +19,12 @@ type Config struct {
 	GooseURL, GooseSecret, Workspace string
 	PermissionTimeout                time.Duration
 	Dial                             DialFunc
+	Clock                            Clock
+	LingerWindow                     time.Duration
+	MaxRun                           time.Duration
+	ElicitationTimeout               time.Duration
+	MaxRunEvents                     int
+	LiveBuffer                       int
 }
 type RunRequest struct{ ChatID, Prompt string }
 type Emit func(events.Event) error
@@ -26,12 +32,30 @@ type ResolveSession func(context.Context) (string, error)
 type OnSessionCreated func(context.Context, string) error
 type DialFunc func(context.Context, acpsdk.Client) (acp.Conn, error)
 
+type runHandle struct {
+	runID, sessionID string
+	cancel           context.CancelFunc
+	conn             acp.Conn
+	accepting        *atomic.Bool
+	events           atomic.Int64
+	timers           []Timer
+	teardown         func(release bool)
+}
+
 type Coordinator struct {
 	config    Config
 	mu        sync.Mutex
 	running   map[string]struct{}
 	activeRun map[string]*activeRun
 	pending   map[string]*pendingPermission
+	clock              Clock
+	hubs               map[string]*ChatHub
+	runs               map[string]*runHandle
+	lingerWindow       time.Duration
+	maxRun             time.Duration
+	elicitationTimeout time.Duration
+	maxRunEvents       int
+	liveBuf            int
 }
 type activeRun struct {
 	sessionID string
@@ -62,7 +86,32 @@ func New(config Config) (*Coordinator, error) {
 			return acp.Dial(ctx, acp.DialConfig{URL: config.GooseURL, Secret: config.GooseSecret}, client)
 		}
 	}
-	return &Coordinator{config: config, running: map[string]struct{}{}, activeRun: map[string]*activeRun{}, pending: map[string]*pendingPermission{}}, nil
+	if config.Clock == nil {
+		config.Clock = RealClock()
+	}
+	orElseD := func(d, def time.Duration) time.Duration {
+		if d <= 0 {
+			return def
+		}
+		return d
+	}
+	orElseI := func(n, def int) int {
+		if n <= 0 {
+			return def
+		}
+		return n
+	}
+	c := &Coordinator{
+		config: config, clock: config.Clock,
+		running: map[string]struct{}{}, activeRun: map[string]*activeRun{}, pending: map[string]*pendingPermission{},
+		hubs: map[string]*ChatHub{}, runs: map[string]*runHandle{},
+		lingerWindow:       orElseD(config.LingerWindow, 30*time.Second),
+		maxRun:             orElseD(config.MaxRun, 15*time.Minute),
+		elicitationTimeout: orElseD(config.ElicitationTimeout, orElseD(config.PermissionTimeout, 5*time.Minute)),
+		maxRunEvents:       orElseI(config.MaxRunEvents, 50000),
+		liveBuf:            orElseI(config.LiveBuffer, 256),
+	}
+	return c, nil
 }
 
 func (c *Coordinator) Reserve(chatID string) error {
@@ -75,6 +124,70 @@ func (c *Coordinator) Reserve(chatID string) error {
 	return nil
 }
 func (c *Coordinator) release(chatID string) { c.mu.Lock(); delete(c.running, chatID); c.mu.Unlock() }
+
+func (c *Coordinator) hubFor(chatID string) *ChatHub {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	h := c.hubs[chatID]
+	if h == nil {
+		h = NewChatHub(c.clock, c.lingerWindow, c.liveBuf)
+		c.hubs[chatID] = h
+	}
+	return h
+}
+
+func (c *Coordinator) reapHub(chatID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if h := c.hubs[chatID]; h != nil && h.IsEmpty() {
+		delete(c.hubs, chatID)
+	}
+}
+
+func (c *Coordinator) Attach(chatID string, cursor int) Attachment {
+	return c.hubFor(chatID).Attach(cursor)
+}
+
+func (c *Coordinator) registerRun(chatID string, h *runHandle) {
+	c.mu.Lock()
+	c.runs[chatID] = h
+	c.mu.Unlock()
+}
+
+func (c *Coordinator) runFor(chatID string) *runHandle {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.runs[chatID]
+}
+
+func (c *Coordinator) clearRun(chatID, runID string) {
+	c.mu.Lock()
+	if h := c.runs[chatID]; h != nil && h.runID == runID {
+		delete(c.runs, chatID)
+	}
+	c.mu.Unlock()
+}
+
+func (c *Coordinator) trackTimer(chatID, runID string, t Timer) {
+	c.mu.Lock()
+	if h := c.runs[chatID]; h != nil && h.runID == runID {
+		h.timers = append(h.timers, t)
+	}
+	c.mu.Unlock()
+}
+
+func (c *Coordinator) stopTimers(h *runHandle) {
+	for _, t := range h.timers {
+		t.Stop()
+	}
+}
+
+func (c *Coordinator) isReserved(chatID string) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_, ok := c.running[chatID]
+	return ok
+}
 
 func (c *Coordinator) Cancel(ctx context.Context, chatID string) error {
 	c.mu.Lock()
