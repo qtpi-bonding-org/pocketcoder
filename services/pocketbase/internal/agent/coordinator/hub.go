@@ -100,8 +100,12 @@ func (h *ChatHub) Attach(cursor int) Attachment {
 
 	if h.active == nil {
 		// No buffered run. If the chat has emitted anything past the cursor,
-		// the only source of that history is Goose.
-		att.ColdReplayNeeded = cursor < h.seq
+		// the only source of that history is Goose. A fresh hub (h.seq == 0)
+		// also needs replay: either the chat has never run — so the route
+		// emits the bounded empty replay (RUN_STARTED+RUN_FINISHED) instead of
+		// hanging silently — or its history lives only in Goose after a
+		// PocketBase restart that reset the in-memory log.
+		att.ColdReplayNeeded = cursor < h.seq || h.seq == 0
 		return att
 	}
 
