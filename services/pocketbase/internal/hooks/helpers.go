@@ -26,11 +26,6 @@ import (
 )
 
 const (
-	// PocoContainer is the legacy OpenCode/interface container. Retained here
-	// until plan Task 6 retires the OpenCode renders and drops this constant;
-	// removing it now would break the build (tool_permissions.go and friends
-	// still reference it).
-	PocoContainer = "pocketcoder-interface"
 	// GooseContainer is the Goose agent container that consumes the rendered
 	// /goose-config/config.yaml + keys.env (plan 2026-07-19-… Task 4).
 	GooseContainer   = "pocketcoder-goose"

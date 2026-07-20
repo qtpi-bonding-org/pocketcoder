@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 // @pocketcoder-core: Main Orchestrator. Registers hooks, starts the relay, and boots PocketBase.
-// @pocketcoder-core: Sovereign Relay. The orchestration layer that syncs OpenCode with the Sandbox.
+// @pocketcoder-core: Sovereign Relay. The orchestration layer that syncs the agent runtime with the Sandbox.
 package main
 
 import (
@@ -44,7 +44,6 @@ func main() {
 
 	// 2. Register Global Sovereign Hooks
 	hooks.RegisterGlobalTimestamps(app)
-	hooks.RegisterAgentHooks(app)
 	hooks.RegisterSopHooks(app)
 	hooks.RegisterNotificationHooks(app)
 
@@ -52,13 +51,10 @@ func main() {
 	// The interface receives MCP status updates via PocketBase realtime subscriptions.
 	hooks.RegisterMcpHooks(app)
 
-	// 3b. Register LLM Hooks (env file rendering + OpenCode restart)
-	hooks.RegisterLlmHooks(app)
+	// 3b. Register Goose Config Hooks (config.yaml + keys.env render + goose restart)
+	hooks.RegisterGooseConfigHooks(app)
 
-	// 3c. Register Tool Permission Hooks (opencode.json rendering + OpenCode restart)
-	hooks.RegisterToolPermissionHooks(app)
-
-	// 3d. Register Cron Hooks (scheduled agent tasks)
+	// 3c. Register Cron Hooks (scheduled agent tasks)
 	hooks.RegisterCronHooks(app)
 
 	// 4. Main Application Boot & API Registration
