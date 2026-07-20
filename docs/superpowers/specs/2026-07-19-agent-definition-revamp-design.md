@@ -212,7 +212,7 @@ Coordinator wiring — **two distinct init paths** (verified against merged `run
 
 ## 13. Verify against the pinned Goose version (do NOT assume)
 
-1. **(Elevated — load-bearing)** Goose config-file location. `GOOSE_PATH_ROOT=/goose` is already set; confirm whether config lives at `$GOOSE_PATH_ROOT/config.yaml`, `~/.config/goose/config.yaml`, or honors `XDG_CONFIG_HOME`, and mount the shared volume accordingly. Interacts with §6.4.
+1. **(Elevated — load-bearing) — RESOLVED (Goose 1.43.0, commit 35ea65594).** Config lives at `$GOOSE_PATH_ROOT/config/config.yaml` = `/goose/config/config.yaml` (confirmed via `goose info`), **not** `~/.config/goose`. The shared `goose_config` volume is mounted at `/goose/config` in the goose container (nested inside `goose_data`) and the entrypoint sources `$GOOSE_PATH_ROOT/config/keys.env`. Guarded by the live `mount==configdir` invariant in `tests/agent-c1/config_pipeline.bats`. Interacts with §6.4.
 2. Secret delivery with `GOOSE_DISABLE_KEYRING=1` — confirm keys are read from **env** (sourced `keys.env`) and not a keyring/secrets file; if Goose expects a secrets file, render that instead.
 3. **(Elevated — gates the schema enum)** Which session modes / config options the ACP server advertises in our build. The `poco_configs.mode` enum (§5) is provisional until confirmed; only `approve` is known-good.
 4. **(New — Opus C1)** The Goose runtime **uid/gid** in the pinned image, so PocketBase's `chown` targets the right owner (§6.4).
