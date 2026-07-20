@@ -66,6 +66,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		}
 		runID, err := service.StartPrompt(chatID, input.Prompt,
 			func(context.Context) (string, error) { return gooseSessionForChat(app, chatID, re.Auth.Id) },
+			func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
 			func(ctx context.Context, sessionID string) error {
 				err := saveGooseSession(ctx, app, chatID, re.Auth.Id, sessionID)
 				if err == nil {
@@ -111,9 +112,11 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			sessionID, err := gooseSessionForChat(app, chatID, re.Auth.Id)
 			if err != nil {
 				_ = writeFlush(re.Response, flusher, cursor, events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
-			} else if err := service.StreamColdReplay(re.Request.Context(), chatID, sessionID, func(seq int, ev events.Event) error {
-				return writeFlush(re.Response, flusher, seq, ev)
-			}); err != nil {
+			} else if err := service.StreamColdReplay(re.Request.Context(), chatID, sessionID,
+				func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
+				func(seq int, ev events.Event) error {
+					return writeFlush(re.Response, flusher, seq, ev)
+				}); err != nil {
 				_ = writeSeqFrame(re.Response, cursor, events.NewRunErrorEvent("replay failed", events.WithErrorCode("goose_replay_failed")))
 			}
 		}
