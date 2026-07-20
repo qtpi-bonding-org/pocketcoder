@@ -14,6 +14,7 @@ services:
       - opencode_workspace:/workspace
       - ./services/mcp-gateway/config:/mcp_config
       - llm_keys:/llm_keys
+      - goose_config:/goose-config
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -70,6 +71,7 @@ services:
       - GOOSE_TELEMETRY_ENABLED=false
     volumes:
       - goose_data:/goose
+      - goose_config:/home/goose/.config/goose
       - opencode_workspace:/workspace
     working_dir: /workspace
     networks:
@@ -287,6 +289,7 @@ volumes:
   caddy_data:       # Persists TLS certificates
   caddy_config:
   goose_data:        # Goose SQLite/session state; back up independently of PocketBase
+  goose_config:      # Goose config.yaml + keys.env, written by PocketBase, read by goose
 
 networks:
   pocketcoder-dashboard:
