@@ -38,6 +38,7 @@ func TestElicitationResolveResumes(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	c.StartPrompt("A", "need input",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	id := c.waitForPendingElicitation(t, "A")
 	if err := c.ResolveElicitation("A", id, acpsdk.UnstableCreateElicitationResponse{
@@ -61,6 +62,7 @@ func TestElicitationTimeoutResolvesCancel(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, clk)
 	c.StartPrompt("A", "need input",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	c.waitForPendingElicitation(t, "A")
 	clk.Advance(6 * time.Minute)
@@ -73,6 +75,7 @@ func TestSetModeDispatchesToConn(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	f.waitForPrompt(t)
 	if err := c.SetMode(context.Background(), "A", "plan"); err != nil {
