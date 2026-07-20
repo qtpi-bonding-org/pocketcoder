@@ -4,12 +4,14 @@ set -eu
 : "${GOOSE_SERVER__SECRET_KEY:?GOOSE_SERVER__SECRET_KEY is required}"
 
 # App-managed provider keys (rendered by PocketBase onto the shared goose_config
-# volume). Sourced before provider validation so ANTHROPIC_API_KEY etc. are
+# volume, which is mounted at Goose's config dir: $GOOSE_PATH_ROOT/config, spec
+# §13.1). Sourced before provider validation so ANTHROPIC_API_KEY etc. are
 # present in the goose process. Guarded so set -e cannot abort on a missing or
 # unreadable file at cold boot, before PocketBase has rendered the first set.
-if [ -r "$HOME/.config/goose/keys.env" ]; then
+GOOSE_KEYS_ENV="${GOOSE_PATH_ROOT:-/goose}/config/keys.env"
+if [ -r "$GOOSE_KEYS_ENV" ]; then
   set -a
-  . "$HOME/.config/goose/keys.env"
+  . "$GOOSE_KEYS_ENV"
   set +a
 fi
 
