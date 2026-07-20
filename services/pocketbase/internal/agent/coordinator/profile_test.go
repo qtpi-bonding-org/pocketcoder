@@ -24,3 +24,23 @@ func TestSelectApplier_DefaultsToGlobalToday(t *testing.T) {
 		t.Fatal("expected GlobalConfigApplier under today's capabilities")
 	}
 }
+
+// Goose's session/new|load rejects a null mcpServers/additionalDirectories
+// with -32602 "invalid type: null, expected a sequence". A profile with no MCP
+// servers and no extra directories (the default chat) must still serialize
+// those fields as empty arrays, so the accessors never return nil.
+func TestSessionProfile_SliceAccessorsNeverNil(t *testing.T) {
+	var p SessionProfile // zero value: both slices nil
+	if got := p.mcpServers(); got == nil {
+		t.Fatal("mcpServers() returned nil; Goose requires an array")
+	}
+	if got := p.additionalDirectories(); got == nil {
+		t.Fatal("additionalDirectories() returned nil; Goose requires an array")
+	}
+
+	server := acpsdk.McpServer{Stdio: &acpsdk.McpServerStdio{Name: "x"}}
+	p2 := SessionProfile{McpServers: []acpsdk.McpServer{server}, AdditionalDirectories: []string{"/d"}}
+	if len(p2.mcpServers()) != 1 || len(p2.additionalDirectories()) != 1 {
+		t.Fatal("accessors must pass through populated slices unchanged")
+	}
+}

@@ -100,10 +100,12 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 }
 
 // defaultPocoConfigAPI mirrors the hook's §5.2 tie-break (is_default=true,
-// oldest on multiple, nil on none). Kept separate from the hooks package to
-// avoid a hooks→api import; the logic is small and identical.
+// deterministic first on multiple, nil on none). Kept separate from the hooks
+// package to avoid a hooks→api import; the logic is small and identical.
+// poco_configs has no created/updated autodate field, so the stable,
+// unique-indexed `name` column is the sort key (matches defaultPocoConfig).
 func defaultPocoConfigAPI(app core.App) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter("poco_configs", "is_default = true", "created", 0, 0)
+	recs, err := app.FindRecordsByFilter("poco_configs", "is_default = true", "name", 0, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +113,7 @@ func defaultPocoConfigAPI(app core.App) (*core.Record, error) {
 		return nil, nil
 	}
 	if len(recs) > 1 {
-		log.Printf("[Profile] %d poco_configs marked is_default; using oldest %q", len(recs), recs[0].GetString("name"))
+		log.Printf("[Profile] %d poco_configs marked is_default; using first by name %q", len(recs), recs[0].GetString("name"))
 	}
 	return recs[0], nil
 }
