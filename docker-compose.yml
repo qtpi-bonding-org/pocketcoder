@@ -71,7 +71,11 @@ services:
       - GOOSE_TELEMETRY_ENABLED=false
     volumes:
       - goose_data:/goose
-      - goose_config:/home/goose/.config/goose
+      # Goose derives its config dir from GOOSE_PATH_ROOT: /goose/config/config.yaml
+      # (verified via `goose info`, spec §13.1). Mount the PocketBase-written
+      # config volume there — nested inside goose_data — so Goose actually reads
+      # the rendered config.yaml/keys.env. NOT ~/.config/goose (goose ignores it).
+      - goose_config:/goose/config
       - opencode_workspace:/workspace
     working_dir: /workspace
     networks:
