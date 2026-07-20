@@ -149,9 +149,11 @@ The retired hooks rendered once on `OnServe` **without** a restart. `goose_confi
 
 Goose has no per-tool allow/ask/deny; it has a per-extension `available_tools` allowlist (non-empty = only those tools) plus the coarse `mode`. `available_tools` applies **only to extensions declared in `config.yaml`** (builtins/global), not to per-session MCP servers (§5.1).
 
-| `tool_permissions.action` | Goose effect |
+**Single-extension bucket (data-model reality):** `tool_permissions` has **no `extension` field** (its fields are `poco_config`/`sandbox_config`, `tool`, `pattern`, `action`, `active`), so a row carries no binding to a specific Goose extension. For v1, **all `tool_permissions` rows are treated as governing the single builtin coding extension `developer`** (`DefaultToolExtension`); the renderer emits one allowlist under that key. Genuine per-extension policy requires a future `tool_permissions.extension` field + UI and is **out of scope**, logged as a limitation.
+
+| `tool_permissions.action` | Goose effect (on the `developer` allowlist) |
 | --- | --- |
-| `allow(tool)` | add `tool` to that extension's `available_tools` |
+| `allow(tool)` | add `tool` to `available_tools` |
 | `deny(tool)` | ensure `tool` is excluded from `available_tools` |
 | `ask(tool)` | **no per-tool Goose equivalent** — dropped from the allowlist and **logged**; governance falls to `mode` |
 
@@ -173,10 +175,11 @@ New `internal/agent/coordinator/profile.go` (no `core.App` import):
 New `internal/api/profile.go` (has `core.App`):
 - `func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfile, error)` — reads `chats.poco_config` (or default per §5.2), applies `harness_model_override` into `Model` (inert per-chat today, §4.1), performs the two-hop `harness_model → harness_models.model → models.provider` expand, `system_prompt → prompts.body`, parses `acp_mcp_servers` (§5.1) and `workspace_folders` (§5 / S4), resolves `mode`. The `session/prompt` and `stream`(cold-replay) handlers build it and pass it in.
 
-Coordinator wiring:
-- `StartPrompt` (and the cold-replay entry `StreamColdReplay`) gain a `ProfileFunc` parameter, injected by the API handlers exactly as `ResolveSession` is today.
-- `initSession` (function, not line): capture the `Initialize` response (currently discarded) to feed `selectApplier` (Opus S8); build `NewSession`/`LoadSession` requests from the resolved `profile.Cwd`/`AdditionalDirectories`/`McpServers` in **both** branches (Opus C2), replacing the hardcoded empty `McpServers`; after the sessionID exists, `applier.Apply(ctx, conn, sessionID, profile)` replaces the hardcoded `SetSessionMode("approve")`.
-- `SeedSession` and orphan compensation stay exactly as the bridge plan built them.
+Coordinator wiring — **two distinct init paths** (verified against merged `run.go`):
+- `StartPrompt` gains a `ProfileFunc` parameter and runs through `initSession`, which: captures the `Initialize` response (currently discarded) to feed `selectApplier` (Opus S8); builds the `NewSession`/`LoadSession` request from the resolved `profile.Cwd`/`AdditionalDirectories`/`McpServers` in **both** branches (Opus C2), replacing the hardcoded empty `McpServers`; and after the sessionID exists, calls `applier.Apply(ctx, conn, sessionID, profile)` in place of the hardcoded `SetSessionMode("approve")`.
+- `StreamColdReplay` (the resume/cold-replay entry) has its **own separate inline init** and does **not** call `initSession` — it also gains a `ProfileFunc` and its own `LoadSession` call is patched directly with `profile.Cwd`/`AdditionalDirectories`/`McpServers`. Cold replay only re-attaches to replay history, so it does **not** set mode (`Apply` is only on the prompt path).
+- Both parameters are injected by the API handlers (`session/prompt` and `stream`) exactly as `ResolveSession` is today. `SeedSession` and orphan compensation stay exactly as the bridge plan built them.
+- `Cwd` fallback: when `profile.Cwd == ""`, both paths fall back to `c.config.Workspace` (the existing default remains the floor).
 
 ## 9. Infra (compose + entrypoint)
 
