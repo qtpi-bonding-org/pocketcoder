@@ -14,7 +14,7 @@
 
 - **Security (verbatim):** Flutter never sees `goose_session_id`, never holds `GOOSE_SERVER__SECRET_KEY` or the Goose ACP URL; the only credential it sends is the user's PB auth token. c2 (Goose) has no PB DB access and no published port.
 - **PocketBase collections & the model pipeline are OUT OF SCOPE.** No `export_schema.sh`, no `generate_models.py`, no model regeneration, no collection edits. Do not delete `message`/`permission`/`acp_terminal` model files (leave dead).
-- **Protocol types are never hand-mirrored.** Down = `ag_ui` types; up = `acp_dart` types. The single allowed hand-authored protocol DTO is the elicitation response (Task 12b) — `acp_dart` ships none.
+- **Protocol types are never hand-mirrored.** Down = `ag_ui` types; up = `acp_dart` types. The single allowed hand-authored protocol DTO is the elicitation response (Task 9) — `acp_dart` ships none.
 - **Backend regression gate:** the c1 acceptance suite (`tests/agent-c1/acceptance.bats`) must stay **9/9** after every Phase 0 task.
 - **Pinned SDK versions:** `ag_ui` and `acp_dart` pinned to exact versions; any bump re-runs the parity tests (Tasks 7, 9).
 - **Model note:** local testing uses the real MiniMax model; VPS is down, so all testing is local. Test user: `agent-test@example.com` / `test-password-1234`.
@@ -75,7 +75,7 @@ emitSeq := func(ev events.Event) error {
 }
 ```
 (delete `seq := 0`).
-- [ ] **Step 4: Fix the borrowed-cursor frames** in `agent.go` — replace the three `writeFlush(..., cursor, ...)` / `writeSeqFrame(..., cursor, ...)` calls at lines ~114, ~120, ~124 with a hub-allocated seq: `service.NextSeq(chatID)` for each frame written on the cold path (the two `RUN_ERROR` fallbacks and the `att.Snapshot` loop).
+- [ ] **Step 4: Fix the borrowed-cursor frames** in `agent.go` — replace the three `writeFlush(..., cursor, ...)` / `writeSeqFrame(..., cursor, ...)` calls at lines ~114, ~120, ~124 with a hub-allocated seq: `service.NextSeq(chatID)` for each. Note the two paths are mutually exclusive branches of `hub.Attach`: lines ~114/~120 are the **cold-replay** `RUN_ERROR` fallbacks (`ColdReplayNeeded`), while the `att.Snapshot` loop at ~123-125 is the **active-run attach** path (`h.active != nil`). Both currently borrow `cursor`; both must get a real hub-allocated seq.
 - [ ] **Step 5: Run tests** — `go test ./internal/agent/...` PASS; rebuild container; `bats agent-c1/acceptance.bats` → 9/9.
 - [ ] **Step 6: Commit** — `git commit -m "fix(agent): unify SSE seq counter across cold replay, live, and catch-up frames"`
 
@@ -105,10 +105,10 @@ func TestReplayStartedIsReplaceMarker(t *testing.T) {
 // cached view and rebuilds from this replay (Goose is authority). Distinct
 // from Started() which begins a live turn.
 func (b *Bridge) ReplayStarted() events.Event {
-	return events.NewCustomEvent("pocketcoder:sync", events.WithCustomValue(map[string]any{"mode": "replace"}))
+	return events.NewCustomEvent("pocketcoder:sync", events.WithValue(map[string]any{"mode": "replace"}))
 }
 ```
-(match the exact `NewCustomEvent` option API used at the existing `pocketcoder:tool` call site.) In `StreamColdReplay`, emit it as the very first frame, before `bridge.Started()`:
+(the option is `events.WithValue`, confirmed at the existing `pocketcoder:tool` call site `internal/agent/agui/custom.go:26`.) In `StreamColdReplay`, emit it as the very first frame, before `bridge.Started()`:
 ```go
 if err := emitSeq(bridge.ReplayStarted()); err != nil { return err }
 if err := emitSeq(bridge.Started()); err != nil { return err }
@@ -173,7 +173,7 @@ Change `bridge.go:90` to `b.state.setSub("modes", "currentModeId", string(update
 - [ ] **Step 1 (prompt):** change the `session/prompt` handler to bind `acpsdk.PromptRequest`, extract the first text `ContentBlock` into the string passed to `StartPrompt`. Reject `400` if no text block. Keep `StartPrompt(chatID, prompt string, …)` unchanged.
 - [ ] **Step 2 (permission):** change `request_permission/{id}` to bind `acpsdk.RequestPermissionResponse`; switch on `outcome.outcome`: `"selected"` → `service.Approve(ctx, chatID, id, outcome.optionId)`; `"cancelled"` → `service.DenyPermission(chatID, id)`. Add `DenyPermission` to the coordinator (send `cancelled:true` to the pending decision channel; `ErrNoPendingPermission` if absent).
 - [ ] **Step 3 (elicitation):** change `elicitation/{id}` to bind ACP's `action` field (`accept`/`decline`/`cancel`) instead of `outcome`, building `acpsdk.UnstableCreateElicitationResponse` as today.
-- [ ] **Step 4:** update the acceptance bats prompts/bodies to the new shapes (permission response now `{"outcome":{"outcome":"selected","optionId":"…"}}`; prompt now `{"prompt":[{"type":"text","text":"…"}]}`).
+- [ ] **Step 4:** update **both** occurrences of each body shape in `tests/agent-c1/acceptance.bats` (verified: the `{"prompt":"…"}` body appears at `:103` and `:241`; the `{"optionId":"…"}` body at `:154` and `:302`). New shapes: permission response `{"outcome":{"outcome":"selected","optionId":"…"}}`; prompt `{"prompt":[{"type":"text","text":"…"}]}`. Grep to confirm no stale occurrence remains before rebuilding.
 - [ ] **Step 5:** rebuild; `bats agent-c1/acceptance.bats` → 9/9 with the new bodies.
 - [ ] **Step 6: Commit** — `git commit -m "fix(agent): up-channel accepts verbatim ACP bodies (prompt/permission/elicitation)"`
 
@@ -189,7 +189,7 @@ Working dir for all Flutter tasks: `client/packages/pocketcoder_flutter`. After 
 
 **Files:** Modify `pubspec.yaml`; Create `test/spikes/acp_dart_serialize_test.dart`.
 
-- [ ] **Step 1:** add to `pubspec.yaml` dependencies, pinned to the exact current versions (resolve with `dart pub add`): `ag_ui: <pinned>`, `acp_dart: <pinned>`. `flutter_client_sse` and `drift` already present.
+- [ ] **Step 1:** add to `pubspec.yaml` dependencies, pinned to exact current versions (resolve with `dart pub add`): `ag_ui: <pinned>`, `acp_dart: <pinned>`, and **`drift_flutter: <pinned>`** (needed for `driftDatabase()` in Task 6 — core `drift` does not export it; `path`/`path_provider` are the fallback). `flutter_client_sse`, `drift`, and `http` are already present.
 - [ ] **Step 2 (spike = §13 Q1):** write `test/spikes/acp_dart_serialize_test.dart` that constructs `PromptRequest`, `RequestPermissionResponse`, `SetSessionModeRequest`, `SetSessionConfigOptionRequest` and calls `.toJson()` **without** any `ClientSideConnection`, asserting the JSON shape. Run it.
 - [ ] **Step 3:** if any type is not standalone-serializable, record the deviation in the spec's §13 Q1 and adjust Task 9 (wrap minimally). Expected: all pass.
 - [ ] **Step 4: Commit** — `git commit -m "chore(flutter): pin ag_ui + acp_dart; confirm standalone acp serialization"`
@@ -205,7 +205,7 @@ Use a dedicated Drift database for the agent cache (do not entangle with pocketb
 
 - [ ] **Step 1: Write failing tests** — upsert-by-`(chatId,seq)` overwrites; `watchChat` emits ordered rows; `maxSeq` returns the high-water; `clearChat` empties one chat only.
 - [ ] **Step 2: Run, verify fail.**
-- [ ] **Step 3: Implement** the `@DriftDatabase` with table `ChatEvents` (`chatId TEXT, seq INT, type TEXT, json TEXT`, PK `(chatId, seq)`), in-memory `NativeDatabase.memory()` for tests, on-disk for prod via the standard drift `driftDatabase(name:'agent_cache')`.
+- [ ] **Step 3: Implement** the `@DriftDatabase` with table `ChatEvents` (`chatId TEXT, seq INT, type TEXT, json TEXT`, PK `(chatId, seq)`), in-memory `NativeDatabase.memory()` for tests, on-disk for prod via `driftDatabase(name:'agent_cache')` (from `drift_flutter`, added in Task 5) — or, if `drift_flutter` is undesirable, `LazyDatabase(() => NativeDatabase.createInBackground(File('${(await getApplicationSupportDirectory()).path}/agent_cache.sqlite')))` using `path_provider`.
 - [ ] **Step 4: Run, PASS.** Register `AgentCacheDb` as `@lazySingleton` (or via a DI module).
 - [ ] **Step 5: Commit** — `git commit -m "feat(flutter): agent Drift cache (chat_events, server-authoritative mirror)"`
 
@@ -214,7 +214,7 @@ Use a dedicated Drift database for the agent cache (do not entangle with pocketb
 **Files:** Create `lib/infrastructure/agent/agui_decode.dart`; Test `test/infrastructure/agent/agui_parity_test.dart` (uses `test/fixtures/agui_frames.jsonl` from Task 4).
 
 **Interfaces:**
-- Produces: `AguiEvent decodeAguiFrame(String dataJson)` (wraps `ag_ui`'s `EventDecoder`/event factory; verify exact API against pinned `ag_ui`). A typed helper `bool isReplaceMarker(AguiEvent)` for the `pocketcoder:sync` CUSTOM event.
+- Produces: `DecodedFrame decodeAguiFrame(String dataJson)` where `DecodedFrame = ({String rawJson, AguiEvent event})` — it retains the raw JSON string so the cache (Task 6, `upsertEvent(..., String json)`) can persist the raw event without a lossy re-encode round-trip. Wraps `ag_ui`'s `EventDecoder`/event factory (verify exact API against pinned `ag_ui`). A typed helper `bool isReplaceMarker(AguiEvent)` for the `pocketcoder:sync` CUSTOM event.
 
 - [ ] **Step 1: Write the failing parity test** — read every line of `agui_frames.jsonl`, `decodeAguiFrame` each, assert none throw and each yields the expected `ag_ui` event subtype (RUN_STARTED, TEXT_MESSAGE_CONTENT, TOOL_CALL_*, STATE_DELTA, the CUSTOM sync marker, etc.).
 - [ ] **Step 2: Run, verify fail** (`decodeAguiFrame` undefined).
@@ -231,12 +231,14 @@ Use a dedicated Drift database for the agent cache (do not entangle with pocketb
 **Files:** Create `lib/infrastructure/agent/agent_stream_client.dart`; Test `test/infrastructure/agent/agent_stream_client_test.dart`.
 
 **Interfaces:**
-- Consumes: injected `PocketBase` (for `baseURL` + `authStore.token`), `decodeAguiFrame` (Task 7).
-- Produces: `Stream<StreamFrame> connect(String chatId, {required int cursor})` where `StreamFrame = ({int seq, AguiEvent event})`; surfaces connection close as stream done (caller reconnects). Reconnect cursor is supplied by the caller (`ChatCubit`), not internal.
+- Consumes: injected `PocketBase` (for `baseURL` + `authStore.token`), `http.Client`, `decodeAguiFrame` (Task 7).
+- Produces: `Stream<StreamFrame> connect(String chatId, {required int cursor})` where `StreamFrame = ({int seq, String rawJson, AguiEvent event})` — `rawJson` carries through to the cache (finding: nothing else retains the raw string). The stream **completes on disconnect** so the caller (`ChatCubit`) reconnects with a fresh cursor. Reconnect is caller-driven, not internal.
 
-- [ ] **Step 1: Write failing tests** (fake SSE source): frames `id: N\n data: {json}` parse to `(seq:N, event)`; `: ping` lines are skipped; the URL includes `?cursor=<n>`; the `Authorization` header equals `pb.authStore.token`.
+> **Blocker fixed here (Sonnet review):** the pinned `flutter_client_sse@2.0.3` `SSEClient.subscribeToSSE` **cannot** be used as-is — on any error it auto-retries after 5s reusing the *stale* `?cursor=` baked into the first call, feeds into the same `StreamController` (so the stream never completes), and shares a global `static` client. That silently defeats caller-driven reconnect (spec §5.1). A fake-source unit test would not catch it. We therefore **hand-roll the SSE read** over `http.Client` (the frame parsing is ~25 trivial lines) instead of calling `subscribeToSSE`.
+
+- [ ] **Step 1: Write failing tests** (fake `http.Client` streaming a byte body): frames `id: N\n data: {json}\n\n` parse to `(seq:N, rawJson, event)`; `: ping` comment lines are skipped; multi-frame bodies split correctly; the request URL includes `?cursor=<n>`; the `Authorization` header equals `pb.authStore.token`; **on body close the returned stream completes** (does not hang or auto-retry).
 - [ ] **Step 2: Run, verify fail.**
-- [ ] **Step 3: Implement** using `flutter_client_sse` (`SSEClient.subscribeToSSE`) against `${pb.baseURL}/api/pocketcoder/chats/$chatId/stream?cursor=$cursor` with header `{'Authorization': pb.authStore.token}`; map each event's `id`→seq and `data`→`decodeAguiFrame`. Do **not** rely on the package's `Last-Event-ID` auto-resend; reconnect is caller-driven.
+- [ ] **Step 3: Implement** a hand-rolled reader: `http.Request('GET', Uri.parse('${pb.baseURL}/api/pocketcoder/chats/$chatId/stream?cursor=$cursor'))` with header `{'Authorization': pb.authStore.token}`, send via the injected `http.Client`, then parse the streamed response body line-by-line into SSE frames (accumulate `id:`/`data:`, dispatch on blank line, skip `:`-comments), mapping `id`→seq and `data`→`decodeAguiFrame`. Complete the stream when the body ends or errors; do **not** retry internally.
 - [ ] **Step 4: Run, PASS.**
 - [ ] **Step 5: Commit** — `git commit -m "feat(flutter): AgentStreamClient (authed SSE → ag_ui events)"`
 
@@ -256,7 +258,7 @@ Use a dedicated Drift database for the agent cache (do not entangle with pocketb
 
 - [ ] **Step 1: Write the up-parity test** — for each method, capture the JSON body it would POST (inject a fake `PocketBase.send` recorder) and assert it equals the shape c1 now accepts after Task 4 (e.g. permission → `{"outcome":{"outcome":"selected","optionId":"x"}}`; prompt → `{"prompt":[{"type":"text","text":"hi"}]}`).
 - [ ] **Step 2: Run, verify fail.**
-- [ ] **Step 3: Implement** `ElicitationResponse` (freezed: `accept{content}` | `decline` | `cancel`) and `AgentActionsApi` using `acp_dart` types' `.toJson()` with `sessionId` removed. Map HTTP status → typed failures (`RunInProgress` on 409, `NotFound` on 404, etc.).
+- [ ] **Step 3: Implement** `ElicitationResponse` (freezed: `accept{content}` | `decline` | `cancel`) and `AgentActionsApi` using `acp_dart` types' `.toJson()` with `sessionId` removed. Map **all five** HTTP statuses from spec §10 to typed failures — `400`→`BadRequest`, `401`→`Unauthenticated`, `404`→`NotFound`, `409`→`RunInProgress`, `503`→`AgentUnavailable` — and add a test asserting each status raises the right failure (not just 404/409).
 - [ ] **Step 4: Run, PASS.** This is the Dart↔Go-SDK up-drift gate.
 - [ ] **Step 5: Commit** — `git commit -m "feat(flutter): AgentActionsApi (acp_dart bodies) + elicitation DTO + up-parity test"`
 
@@ -276,6 +278,8 @@ Use a dedicated Drift database for the agent cache (do not entangle with pocketb
   - reasoning START/CONTENT/END → one reasoning block.
   - TOOL_CALL_START/ARGS/RESULT/END → one tool-call with name, args, result.
   - STATE_DELTA add `/pocketcoder/permission` then remove → permission present then cleared.
+  - STATE_DELTA add `/pocketcoder/elicitation` → elicitation form (with `requestedSchema`) surfaced in `SessionState`.
+  - STATE_DELTA/`STATE_SNAPSHOT` `/pocketcoder/config` → config options surfaced.
   - `modes` snapshot + `CurrentModeUpdate` sub-path delta → `currentModeId` updated, `availableModes` **retained** (guards Task 3).
   - sub-path patch (`/pocketcoder/modes/currentModeId`) applied when parent absent → parent created, no throw.
   - `session_info` delta → title surfaced.
@@ -294,7 +298,7 @@ Use a dedicated Drift database for the agent cache (do not entangle with pocketb
 **Files:** Create `lib/infrastructure/agent/agent_chat_repository.dart`; Create `lib/application/agent/chat_cubit.dart` + `chat_state.dart`; Tests alongside.
 
 **Interfaces:**
-- `AgentChatRepository` — wires `AgentStreamClient` → `AgentCacheDb`: on connect, for each frame either **replace** (on `isReplaceMarker`: `clearChat` then ingest) or **upsert** by seq; exposes `Stream<Conversation> watch(String chatId)` (from `AgentCacheDb.watchChat` → decode → `reduce`) and `Future<int> cursorFor(String chatId)` (`maxSeq ?? 0`). Delegates actions to `AgentActionsApi`.
+- `AgentChatRepository` — wires `AgentStreamClient` → `AgentCacheDb`: on connect, for each `StreamFrame` either **replace** (on `isReplaceMarker(frame.event)`: `clearChat` then ingest) or **upsert** via `upsertEvent(chatId, frame.seq, frame.event.type, frame.rawJson)` (raw JSON from the frame, no re-encode); exposes `Stream<Conversation> watch(String chatId)` (from `AgentCacheDb.watchChat` → `decodeAguiFrame(row.json).event` → `reduce`) and `Future<int> cursorFor(String chatId)` (`maxSeq ?? 0`). Delegates actions to `AgentActionsApi`.
 - `ChatCubit` — `open(chatId)` starts the stream at `cursorFor`, reconnects on drop with a fresh `cursorFor`; `sendPrompt(text)`, `cancel()`; emits `ChatState` from the reduced `Conversation`.
 
 - [ ] **Step 1: Write failing tests** (fake stream client + real in-memory `AgentCacheDb`): replace-marker path clears then rebuilds; warm frames upsert; `sendPrompt` calls the API and does **not** mutate local state directly (effect arrives via the stream); reconnect uses `maxSeq` as cursor.
@@ -334,7 +338,7 @@ Use a dedicated Drift database for the agent cache (do not entangle with pocketb
 **Files:** Modify DI module(s) under `lib/infrastructure/core/`; delete-or-detach old transport imports; rerun codegen.
 
 - [ ] **Step 1:** register `AgentCacheDb`, `AgentStreamClient`, `AgentActionsApi`, `AgentChatRepository`, and the new cubits with injectable; run `dart run build_runner build --delete-conflicting-outputs`.
-- [ ] **Step 2:** remove references to the old `ChatRepository` cold/hot pipe, `communication_daos` (`MessageDao`), and `hitl_daos`/`hitl_repository` from wiring (leave the model files, per Global Constraints). Ensure the app compiles: `flutter analyze`.
+- [ ] **Step 2:** **Delete the concrete files** (not just references — `@InjectableInit()` at `lib/app/bootstrap.dart:18` source-scans the whole package for `@injectable` annotations, so a dead `@injectable` cubit keeps auto-registering with broken deps unless the file is removed): `lib/application/chat/chat_cubit.dart` (+ `chat_state.dart` + generated siblings), `lib/infrastructure/communication/chat_repository.dart`, `communication_daos.dart`, `lib/infrastructure/hitl/hitl_daos.dart`, `hitl_repository.dart`, and their now-unused domain interfaces (`domain/communication/i_chat_repository.dart`, `domain/hitl/i_hitl_repository.dart`) if nothing else references them. **Explicitly preserve** the model files per Global Constraints: `lib/domain/models/{message,permission,acp_terminal}.dart` and their `.freezed.dart`/`.g.dart` siblings. Re-run `build_runner`; then `flutter analyze` must be clean (no dangling imports).
 - [ ] **Step 3:** local end-to-end smoke against the running stack (containers up, test user): open a chat, send "Reply with exactly: hello", observe streamed text; trigger a tool + permission; switch mode; confirm cold-open replay renders after leaving+reopening. Document the run.
 - [ ] **Step 4:** `flutter test` (full suite) green.
 - [ ] **Step 5: Commit** — `git commit -m "feat(flutter): wire AG-UI agent stack; retire legacy chat/HITL transport"`
