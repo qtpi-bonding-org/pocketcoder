@@ -59,6 +59,7 @@ type fakeConn struct {
 	emitElicitation   bool
 	elicitationResolved bool
 	lastMode          string
+	lastModeSession   string
 	requestPermission bool
 }
 
@@ -122,6 +123,7 @@ func (f *fakeConn) LoadSession(context.Context, acpsdk.LoadSessionRequest) (acps
 func (f *fakeConn) SetSessionMode(_ context.Context, req acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
 	f.mu.Lock()
 	f.lastMode = string(req.ModeId)
+	f.lastModeSession = string(req.SessionId)
 	f.mu.Unlock()
 	return acpsdk.SetSessionModeResponse{}, nil
 }
