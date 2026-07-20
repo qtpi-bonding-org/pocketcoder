@@ -31,9 +31,11 @@ import (
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/gooseconfig"
 )
 
-// gooseConfigDir is the shared-volume path Goose reads its config from.
-// The exact path is a verify item (spec §13.1) — GOOSE_PATH_ROOT=/goose is set
-// on the goose container; /goose-config is the writable mount PocketBase owns.
+// gooseConfigDir is the PocketBase-side mount of the shared goose_config volume.
+// Resolved verify item (spec §13.1): Goose 1.43.0 derives its config dir from
+// GOOSE_PATH_ROOT=/goose, reading /goose/config/config.yaml (confirmed via
+// `goose info`), NOT ~/.config/goose. The goose container mounts this same
+// volume at /goose/config, so files written here reach the path Goose reads.
 var gooseConfigDir = "/goose-config"
 
 // gooseUID/GID own the rendered files so the non-root goose user can read them
