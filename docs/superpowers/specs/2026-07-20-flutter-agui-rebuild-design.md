@@ -1,198 +1,168 @@
 # Flutter AG-UI Rebuild — Design Spec
 
 **Date:** 2026-07-20
-**Status:** DESIGN — approved in brainstorming; pending spec review (incl. an independent Opus review of the connection plan) before an implementation plan is written. Do NOT execute from this document yet.
-**Grounded against:** `services/pocketbase/internal/api/agent.go` (live route surface, verified 2026-07-19 acceptance suite 9/9), the c1↔Flutter contract (`2026-07-19-c1-flutter-contract-spec.md`, now satisfied by c1), `coder/acp-go-sdk@v0.13.5` (c1's ACP SDK), `ag-ui-protocol/ag-ui` Go SDK (`@v0.0.0-20260716182252`, c1's emitter), and the current Flutter package `client/packages/pocketcoder_flutter`.
+**Status:** DESIGN v2 — approved in brainstorming; **incorporates an independent Opus review of the connection plan** (2026-07-20) that found the original v1 seq-keyed durable-cache model unsound and led to the revised cache architecture below. Pending a final user read before an implementation plan is written. Do NOT execute from this document yet.
+**Grounded against:** `services/pocketbase/internal/api/agent.go` and `internal/agent/{coordinator,agui}` (live route + bridge surface, verified 2026-07-19 acceptance suite 9/9), the c1↔Flutter contract (`2026-07-19-c1-flutter-contract-spec.md`, satisfied by c1), `coder/acp-go-sdk@v0.13.5`, `ag-ui-protocol/ag-ui` Go SDK (`@v0.0.0-20260716182252`), and the current Flutter package `client/packages/pocketcoder_flutter`.
 
 ---
 
 ## 1. Why this exists
 
-The backend was rebuilt around a 3-container architecture (c1 = PocketBase/Go, c2 = Goose over ACP, c3 = dormant gateway). c1 now exposes an **AG-UI-over-SSE down-channel** plus an **ACP-shaped REST up-channel**, and treats **Goose as the sole system of record** for turn history. The current Flutter client still speaks the *old* surface: it reads history from a Drift mirror of the deleted `messages` collection (the "cold pipe"), streams turns over `pb.realtime` (the "hot pipe"), and does HITL over the deleted `permissions` collection. Against the new backend the client is broken. This project re-points it at the AG-UI/ACP surface.
+The backend was rebuilt around a 3-container architecture (c1 = PocketBase/Go, c2 = Goose over ACP, c3 = dormant gateway). c1 exposes an **AG-UI-over-SSE down-channel** plus an **ACP-shaped REST up-channel**, and treats **Goose as the sole system of record** for turn history. The current Flutter client still speaks the *old* surface: it reads history from a Drift mirror of the deleted `messages` collection (the "cold pipe"), streams turns over `pb.realtime` (the "hot pipe"), and does HITL over the deleted `permissions` collection. Against the new backend the client is broken. This project re-points it at the AG-UI/ACP surface.
 
-The backend side of the contract is **already built and live-verified**; this is a client-only rebuild plus one small backend conformance fix (§8).
+The backend down/up surface is already built and live-verified; this is a client rebuild plus a small set of backend correctness fixes (§8).
 
 ## 2. Goal
 
-Re-point the Flutter client at c1's AG-UI/ACP surface, implementing the **full contract in v1** — prompt, streaming (text/reasoning/tool-calls), cancel, permission HITL, modes switcher, config picker, and elicitation forms — with a **server-authoritative local cache**, reusing the canonical protocol SDKs at every interface so no protocol schema is hand-mirrored.
+Re-point the Flutter client at c1's AG-UI/ACP surface, implementing the **full contract in v1** — prompt, streaming (text/reasoning/tool-calls), cancel, permission HITL, modes switcher, config picker, and elicitation forms — reusing the canonical protocol SDKs at every interface so no protocol schema is hand-mirrored, with **Goose as the sole authority for history** and the local cache as a Goose-refreshed offline mirror.
 
-## 3. The governing principle: reuse the protocols at the interfaces
+## 3. Governing principle: reuse the protocols at the interfaces
 
-Every wire surface has a canonical, machine-defined schema. We consume that schema from an SDK rather than re-describing it by hand. There are exactly three wire surfaces and three sources of truth:
+Every wire surface has a canonical, machine-defined schema; we consume it from an SDK rather than re-describing it. Three surfaces, three sources of truth:
 
 | Wire surface | Source of truth | How Flutter gets the types |
 |---|---|---|
-| **Down-channel** — AG-UI event envelope (`RUN_*`, `TEXT_MESSAGE_*`, `REASONING_*`, `TOOL_CALL_*`, `STATE_SNAPSHOT`/`STATE_DELTA`) | AG-UI protocol; c1 emits via the AG-UI **Go** SDK | **`ag_ui` Dart SDK** (`ag_ui.events` / `ag_ui.types` / `ag_ui.encoder`) |
-| **Up-channel** — REST bodies that are verbatim ACP payloads minus `sessionId`, **and** the ACP-shaped *values* carried inside `/pocketcoder/*` state deltas | ACP protocol; c1 consumes via `coder/acp-go-sdk` | **`acp_dart` SDK** (types only, `json_serializable`) |
-| **PocketBase collections** (`chats`, auth, config…) | PB collection schema | **Out of scope for this project** — see §9 |
+| **Down-channel** — AG-UI events (`RUN_*`, `TEXT_MESSAGE_*`, `REASONING_*`, `TOOL_CALL_*`, `STATE_SNAPSHOT`/`STATE_DELTA`) | AG-UI protocol; c1 emits via the AG-UI **Go** SDK | **`ag_ui` Dart SDK** (`ag_ui.events` / `ag_ui.types` / `ag_ui.encoder`) |
+| **Up-channel** — REST bodies = verbatim ACP payloads minus `sessionId`, **and** the ACP-shaped values inside `/pocketcoder/*` state deltas | ACP protocol; c1 consumes via `coder/acp-go-sdk` | **`acp_dart` SDK** (types only, `json_serializable`) |
+| **PocketBase collections** (`chats`, auth, config…) | PB collection schema | **Out of scope** — see §9 |
 
-**Consequence:** the only Dart we author for the protocols is composition glue (open the stream, feed frames to a decoder, POST a serialized body) — never the field definitions themselves. The one anticipated exception is the elicitation response type if `acp_dart` turns out not to ship it (§6.2, §8).
+The only Dart we author for the protocols is composition glue. The single anticipated exception is the elicitation response DTO (`acp_dart` does not ship it — §6.2, resolved in review).
 
 ### 3.1 Why not the python model pipeline for the up-channel
+`generate_models.py`'s only input is `assets/pb_schema.json` (PocketBase collections). The up-channel bodies and `/pocketcoder/*` values are transient ACP-shaped shapes in c1's Go code, never persisted, so they can never appear in `pb_schema.json`. Their canonical generator is an ACP SDK (`acp_dart`), not the PB pipeline.
 
-`generate_models.py` has a single input, `assets/pb_schema.json` — the export of **PocketBase collections**. The up-channel bodies and the `/pocketcoder/*` state values are **transient request/state shapes defined in c1's Go code**, never persisted, so they can never appear in `pb_schema.json`. They are ACP-shaped, so their canonical generator is an ACP SDK (`acp_dart`), not the PB pipeline. Forcing them through PB schema would mean inventing fake collections — strictly worse.
+## 4. History authority & the cache model (revised after review)
 
-## 4. Architecture & data flow
+**Goose is the sole authority for conversation history.** c1 does **not** persist an event log; the only durable anchor is the existing **`goose_sessions`** row (`chat → goose_session_id`), created on first prompt. c1's run hub is an in-memory, per-process live buffer + fan-out; durable history is obtained by replaying the Goose session (`session/load` → AG-UI) on demand.
 
-```
-                    c1  (PocketBase / Go)
-   ┌───────────────────────────────────────────────┐
-   │  GET  /chats/{id}/stream?cursor=<seq>   (down)  │  AG-UI over SSE
-   │  POST /chats/{id}/session/prompt        (up)    │  ACP body − sessionId
-   │  POST /chats/{id}/session/cancel                │
-   │  POST /chats/{id}/session/set_mode             │
-   │  POST /chats/{id}/session/set_config_option     │
-   │  POST /chats/{id}/session/request_permission/{r}│
-   │  POST /chats/{id}/session/elicitation/{e}       │
-   └───────────────────────────────────────────────┘
-                    ▲ (authed: PB token)         │
-                    │ REST (acp_dart bodies)     │ SSE frames (id: seq + data: json)
-                    │                            ▼
-   ┌────────────────┴───────────────┐   ┌───────────────────────────────┐
-   │      AgentActionsApi           │   │      AgentStreamClient         │
-   │  (acp_dart types → JSON POST)  │   │ flutter_client_sse GET →       │
-   └────────────────────────────────┘   │ ag_ui EventDecoder → AguiEvent │
-                    ▲                    └───────────────┬───────────────┘
-                    │                                    │ raw event JSON + seq
-                    │                                    ▼
-                    │                     ┌───────────────────────────────┐
-                    │                     │  Drift: chat_events            │
-                    │                     │  (chatId, seq, type, json)     │  server-authoritative
-                    │                     │  PK(chatId, seq)  upsert       │  cursor = MAX(seq)
-                    │                     └───────────────┬───────────────┘
-                    │                                     │ reactive watch (ORDER BY seq)
-                    │                                     ▼
-                    │                     ┌───────────────────────────────┐
-                    │                     │  ConversationReducer (pure)    │
-                    │                     │  events → Conversation +       │
-                    │                     │  SessionState(/pocketcoder/*)  │
-                    │                     └───────────────┬───────────────┘
-                    │                                     ▼
-   ┌────────────────┴─────────────────────────────────────────────────────┐
-   │  ChatCubit · PermissionCubit · ElicitationCubit · SessionControlsCubit │
-   └───────────────────────────────────────┬──────────────────────────────┘
-                                            ▼
-                          chat_screen + widgets (messages, tool cards,
-                          permission prompt, elicitation form, mode/config)
-```
+The Flutter cache is therefore **an offline-display mirror, not an authoritative incremental log.** It exists so a chat renders instantly and works offline — never as a system of record. Its contents are always subordinate to what Goose replays.
 
-**One directional rule:** the stream is the only writer into the cache; the cache is the only reader for the UI. Up-channel actions never mutate local state directly — their effect returns as events on the stream. This is what makes "server always wins" true by construction.
+**Two reconnect modes:**
+- **Warm resume** — c1 still holds the run in memory and the client's cursor is valid → c1 sends only events with `seq > cursor` (in-memory backlog) then live-tails. The client **appends**. `seq` is a within-connection cursor; that is its only role.
+- **Cold replay → replace** — the run was evicted (linger expired), or c1 restarted, or another device / a never-run chat is opening → c1 replays the whole Goose history. The client **replaces** that chat's cached view with the replayed history. Goose wins, by definition.
 
-## 5. Connection plan (the load-bearing section)
+The client distinguishes the two by an explicit **replay marker** c1 emits at the start of a cold replay (§8.3) — not by inspecting seq values. This is the standard "full snapshot, then deltas" pattern and it removes the entire class of seq-identity problems the v1 design had (there is nothing to *match*; a cold replay is authoritative and replaces).
 
-This section is deliberately exhaustive because the whole design rests on using each protocol the way its authors intend.
+### 4.1 What this deliberately gives up
+Reopening an evicted/old chat, opening it on a second device, or opening it after a c1 restart triggers a **cold replay and a re-render** from Goose. Offline, the stale cached view shows until the next successful replay. This is the accepted cost of not duplicating conversation content in c1; it matches the "Goose is source of truth / keep it simple" architecture.
 
-### 5.1 Opening the stream
+## 5. Connection plan
 
-- One SSE connection per open chat: `GET /api/pocketcoder/chats/{chatId}/stream?cursor=<n>`, `Authorization: <PB token>` from the existing auth store. `n` = `MAX(seq)` currently in Drift for this chat (0 if none → full bounded replay).
-- `flutter_client_sse` owns the transport: connection, the `: ping` heartbeat comments (ignored), and reconnection. On reconnect it resends `Last-Event-ID` (the last `id:` it saw) — which **is** our per-run `seq` cursor. c1 already reads `Last-Event-ID` as the cursor (`agent.go` `parseCursor`), so resume is native, no bespoke logic.
-- Each received SSE frame is `id: <seq>\n data: <json>\n\n`. We take `seq` from `id:` and hand `data` to `ag_ui`'s `EventDecoder`/event factory to get a typed `AguiEvent`. **We never parse event JSON by hand.**
+### 5.1 Opening & resuming the stream
+- One SSE connection per open chat: `GET /api/pocketcoder/chats/{chatId}/stream?cursor=<n>`, `Authorization: <PB token>` from the existing auth store.
+- **Reconnect is driven explicitly by the client**, not by transport magic: on any drop the client reconnects with `?cursor=<MAX(seq) it has this session>`. We do **not** rely on `flutter_client_sse` auto-resending `Last-Event-ID` (unverified package behavior; review SHOULD-FIX 6). `flutter_client_sse` owns only byte transport and `: ping` heartbeat skipping.
+- Each frame is `id: <seq>\n data: <json>\n\n` (c1 emits `id:` — confirmed `sse_frame.go`, and newline-escapes `data` so each event is one line). We take `seq` from `id:` and hand `data` to `ag_ui`'s `EventDecoder`. **No hand JSON parsing of events.**
 
-### 5.2 Cursor / replay semantics (mirrors c1 exactly)
-
-c1's `Attach(cursor)` already decides replay vs live-tail (`hub.go`), including cold replay from Goose for evicted/never-run/ post-restart cases. The client's job is only to *supply the right cursor* and *persist every event it sees*:
-
-- Cold open (nothing cached): `cursor=0` → c1 emits bounded Goose history (`RUN_STARTED … RUN_FINISHED`) then idles/live-tails. We persist all of it; `MAX(seq)` advances.
-- Warm reconnect: `cursor=MAX(seq)` → c1 replays only `seq > cursor` from the run hub, else fresh history. No duplicates because `seq` is chat-global monotonic and our upsert PK is `(chatId, seq)`.
-- The client treats a replayed event and a live event **identically** — both are just rows upserted by `seq`. Reduction is unaware of the distinction.
+### 5.2 Replay-vs-append handling
+- On the **replay marker** (§8.3): clear the chat's in-memory reduced view + cache rows, then ingest the replayed events as the new baseline. `MAX(seq)` resets to the replay's last seq for subsequent warm resume.
+- Otherwise (warm): upsert incoming events by `seq` and append to the reduced view.
+- `seq` is treated as a live-connection cursor only; it is never assumed stable across a cold replay or a c1 restart. The cache is keyed by `(chatId, seq)` **within the current connection epoch**; a replay marker starts a fresh epoch by replacing.
 
 ### 5.3 Sending actions (up-channel)
+`AgentActionsApi` builds an `acp_dart` request, `.toJson()`, strips `sessionId` (c1 injects from the path), POSTs. Returns `202`; the effect appears on the stream. Bodies (all = ACP payload − `sessionId`):
+- `session/prompt` ← `PromptRequest` (ACP `ContentBlock[]`; v1 sends one text block). Returns `{runId}`. `409` if a run is active.
+- `session/cancel` ← `{}`.
+- `session/set_mode` ← `SetSessionModeRequest{modeId}`.
+- `session/set_config_option` ← `SetSessionConfigOptionRequest` (boolean | select union).
+- `session/request_permission/{requestId}` ← `RequestPermissionResponse` (`{outcome:{outcome:"selected",optionId}}` | `{outcome:{outcome:"cancelled"}}`).
+- `session/elicitation/{elicitationId}` ← elicitation response (`accept{content}` | `decline` | `cancel`) — the one hand-authored DTO (§6.2).
 
-- `AgentActionsApi` builds an `acp_dart` request object, calls `.toJson()`, strips `sessionId` (c1 injects it from the path), and POSTs. Returns `202`; the effect appears on the stream.
-- Mapping (all bodies = ACP payload − `sessionId`):
-  - `session/prompt` ← `PromptRequest` (ACP `ContentBlock[]`; v1 sends a single text block, but the type admits image/resource later for free). Returns `{runId}`. `409` if a run is active.
-  - `session/cancel` ← `{}` (ACP notification).
-  - `session/set_mode` ← `SetSessionModeRequest{modeId}`.
-  - `session/set_config_option` ← `SetSessionConfigOptionRequest` (boolean | select union).
-  - `session/request_permission/{requestId}` ← `RequestPermissionResponse` (`{outcome:{outcome:"selected",optionId}}` | `{outcome:{outcome:"cancelled"}}`).
-  - `session/elicitation/{elicitationId}` ← ACP elicitation response (`accept{content}` | `decline` | `cancel`).
+### 5.4 Ambient session state (`/pocketcoder/*`) — all namespaces
+c1's bridge emits **eight** state namespaces (verified `internal/agent/agui/bridge.go`), not the four the v1 spec named (review SHOULD-FIX 4). The reducer must handle every one it means to surface and explicitly ignore the rest:
 
-### 5.4 Ambient session state (`/pocketcoder/*`)
+| namespace | v1 handling |
+|---|---|
+| `permission` | HITL prompt (respond via up-channel) |
+| `elicitation` | HITL form (respond via up-channel) |
+| `modes` | mode switcher |
+| `config` | config picker |
+| `plan` | **surface** — todo/plan panel (user-visible) |
+| `session_info` | **surface** — chat title (resolves §13 Q4) |
+| `commands` | v1: ignore (documented) |
+| `usage` | v1: ignore (documented) |
+| `permission` cleared via `op:"remove"` | drop the affordance |
 
-- c1 mirrors four namespaces into the AG-UI state object via `STATE_SNAPSHOT` / `STATE_DELTA` (JSON-Patch RFC 6902): `permission`, `elicitation`, `modes`, `config`.
-- `ag_ui` applies the JSON-Patch to a generic state map (this is a first-class SDK feature). Our reducer reads the resulting `/pocketcoder/*` subtrees and hydrates **`acp_dart`-typed** domain values (permission options, mode descriptors, config options, elicitation `requestedSchema`), because those values are ACP shapes c1 lifted out of `session/update`.
-- Cleared entries arrive as `op:"remove"`; the reducer drops the corresponding UI affordance.
+`ag_ui` provides a JSON-Patch (RFC 6902) `applyJsonPatch(state, delta)` **helper**; it does **not** maintain a materialized state object (review correction). The reducer owns the `/pocketcoder/*` map, applies `STATE_DELTA` patches (cloning — the helper mutates in place) and resets a subtree on `STATE_SNAPSHOT`, then hydrates **`acp_dart`-typed** domain values from the subtrees.
 
 ### 5.5 What we deliberately do NOT use from the SDKs
-
-- **`ag_ui` `AgUiClient.runAgent()` / `SimpleRunAgentInput`** — assumes a standard AG-UI `/run` up-channel. Ours is ACP-shaped REST. We use only `ag_ui`'s **event models + decoder**, not its client. (The sub-package split makes this clean.)
-- **`acp_dart` `ClientSideConnection` / `AgentSideConnection` / stdio transport** — that's for a process speaking ACP directly. Flutter never speaks ACP; c1 does. We use only `acp_dart`'s **types** for serialization. (Requires the types to be usable without the connection layer — a verification item, §11.)
+- `ag_ui` `AgUiClient` / `runAgent` / `SimpleRunAgentInput` (assumes a standard `/run` up-channel) — we use only its event models + `EventDecoder`.
+- `acp_dart` `ClientSideConnection` / `AgentSideConnection` / stdio transport — we use only its types for serialization (standalone `toJson`; §13 Q1 spike to confirm).
 
 ## 6. Components & interfaces
 
 ### 6.1 Transport — `infrastructure/agent/`
-- `AgentStreamClient` — `Stream<(int seq, AguiEvent)> connect(String chatId, {int cursor})`. Wraps `flutter_client_sse`; decodes via `ag_ui`. Surfaces connection loss so the repository can reconnect from `MAX(seq)`.
-- `AgentActionsApi` — one method per up-endpoint (§5.3), taking `acp_dart` types, returning the small JSON where present (`{runId}`) or void. Maps HTTP status → typed failures (§10).
+- `AgentStreamClient` — `Stream<(int seq, AguiEvent)> connect(String chatId, {int cursor})`; wraps `flutter_client_sse`, decodes via `ag_ui`; surfaces the replay marker and connection loss so the repository can replace-or-append and reconnect from `MAX(seq)`.
+- `AgentActionsApi` — one method per up-endpoint (§5.3), taking `acp_dart` types, mapping HTTP status → typed failures (§10).
 
 ### 6.2 Domain — `domain/agent/`
-- **Events:** re-exported `ag_ui` event types. No local redefinition.
-- **Up-channel + ambient values:** re-exported `acp_dart` types. **Anticipated exception:** if `acp_dart` lacks the elicitation response type, we author exactly one small DTO here (`ElicitationResponse`), documented as the sole hand-mirrored protocol type, guarded by the contract test.
-- `ConversationReducer` — pure function `List<AguiEvent> → Conversation` (ordered messages: text, reasoning, tool-calls with args+result) `+ SessionState` (permission, elicitation, modes, config). No I/O. Highest-value unit-test target.
+- **Events:** re-exported `ag_ui` types. **Up-channel + ambient values:** re-exported `acp_dart` types. **One exception:** `ElicitationResponse` DTO authored locally (review confirmed `acp_dart` ships no elicitation type), guarded by the contract test.
+- `ConversationReducer` — pure `List<AguiEvent> → Conversation` (ordered messages: text, reasoning, tool-calls with args+result) `+ SessionState` (the surfaced `/pocketcoder/*` namespaces). No I/O.
 
 ### 6.3 Persistence — `infrastructure/agent/cache/`
-- Drift table `chat_events(chatId TEXT, seq INT, type TEXT, json TEXT, PRIMARY KEY(chatId, seq))`. Repository upserts each streamed event; conflict on `(chatId, seq)` overwrites (server wins). Cursor = `SELECT MAX(seq) FROM chat_events WHERE chatId = ?`. Reactive `watch(chatId) ORDER BY seq` drives the reducer. Storing raw event JSON (not normalized columns) is deliberate — new event/tool types need zero schema migration.
+Drift table `chat_events(chatId TEXT, seq INT, type TEXT, json TEXT, PRIMARY KEY(chatId, seq))`, scoped per connection epoch: a replay marker clears the chat's rows before ingesting the new baseline. Raw event JSON (not normalized columns) → zero schema migration for new event/tool types. Reactive `watch(chatId) ORDER BY seq` drives the reducer. **The cache is an offline mirror (§4), not authoritative.**
 
 ### 6.4 Application — `application/`
-- `ChatCubit` — watches the cache → reduces → `ChatState`; owns the stream-subscription lifecycle (connect on open, reconnect on loss, close on leave); `sendPrompt`, `cancel`.
-- `PermissionCubit` / `ElicitationCubit` / `SessionControlsCubit` (modes + config) — each reads its slice of `SessionState` and responds via `AgentActionsApi`.
+- `ChatCubit` — watches the cache → reduces → `ChatState`; owns the stream lifecycle (connect, explicit reconnect from `MAX(seq)`, replace-on-replay-marker, close on leave); `sendPrompt`, `cancel`.
+- `PermissionCubit` / `ElicitationCubit` / `SessionControlsCubit` (modes + config) — read their `SessionState` slice, respond via `AgentActionsApi`.
 
 ### 6.5 Presentation — `presentation/`
-- `chat_screen` (message list + tool cards + cancel), `permission_prompt` (reused/adapted), new `elicitation_form` (renders `requestedSchema`), `mode_switcher`, `config_picker`.
+`chat_screen` (messages + tool cards + cancel + plan panel + title), `permission_prompt`, new `elicitation_form` (renders `requestedSchema`), `mode_switcher`, `config_picker`.
 
-## 7. Cache semantics — server-authoritative, restated
+## 7. Cache semantics — restated
 
-1. The stream is the sole writer; the UI reads only the cache. Offline = last cached rows render; no write-back.
-2. Conflict resolution is trivial and total: upsert by `(chatId, seq)`, server value wins. There is no client-side merge, no "which is newer" logic — the class of cache-reconciliation bugs the old cold/hot split had is removed by construction.
-3. Cursor is derived (`MAX(seq)`), not separately tracked — nothing to get out of sync.
+1. **Goose is authority.** The cache never overrides a replay; a cold replay replaces it wholesale.
+2. **Warm resume appends** by `seq` (within-connection cursor); **cold replay replaces** (driven by the §8.3 marker). No cross-connection/cross-restart seq matching is attempted — the design that required it (v1) was refuted by review.
+3. Offline shows the last cached reduced view; it is refreshed on the next successful replay.
 
-## 8. Backend pre-requisite: up-channel ACP conformance fix
+## 8. Backend work (pre-requisite tasks)
 
-For `acp_dart` types to drop into the up-channel verbatim, c1 must accept the true ACP body shapes. Audit of `agent.go`:
-
+### 8.1 Up-channel ACP conformance fix (from v1, unchanged)
+So `acp_dart` types drop in verbatim, c1 must accept true ACP bodies. Audit of `agent.go` (confirmed by review):
 - **Already conformant:** `session/cancel` (`{}`), `session/set_mode` (`{modeId}`), `session/set_config_option` (binds `acpsdk.SetSessionConfigOptionRequest`).
-- **Drifted — re-align (small handler edits + coordinator unwrap):**
-  1. `session/prompt`: accept ACP `PromptRequest` (`prompt: ContentBlock[]`) instead of `{prompt: string}`. c1 already forwards a prompt to Goose; it now reads the first text block (and is forward-compatible with richer blocks).
-  2. `session/request_permission/{id}`: accept `RequestPermissionResponse{outcome:{outcome,optionId}}` instead of `{optionId}`; the coordinator's option-offered check unwraps `outcome.optionId`.
-  3. `session/elicitation/{id}`: accept ACP's `action` field instead of the current `outcome` field.
+- **Re-align:** (1) `session/prompt` accept `PromptRequest.prompt: ContentBlock[]` (read first text block; forward-compatible with richer blocks); (2) `session/request_permission/{id}` accept `RequestPermissionResponse{outcome:{outcome,optionId}}`, coordinator unwraps `outcome.optionId`; (3) `session/elicitation/{id}` accept ACP's `action` field (currently `outcome`).
 
-This restores contract §6.4 ("verbatim ACP up"), which the impl had flattened. It is scoped as a **conformance fix, not new capability**, and is a hard pre-req task in the plan. The existing c1 acceptance suite must stay 9/9 after it.
+### 8.2 Seq correctness (from review — required regardless of cache model)
+The cold-replay path uses a **separate** seq counter (`run.go:469-472`, `seq := 0; seq++`) independent of the hub's live counter (`hub.go:59`, `h.seq++`), so a single persistent stream can emit `id:1..N` (replay) then `id:1..M` (live) — non-monotonic ids, which breaks even within-session `Last-Event-ID` resume. **Fix:** cold replay and live must draw from one monotonic per-connection counter so a stream's `id:`s are strictly increasing.
 
-## 9. Out of scope / deferred (explicit)
+### 8.3 Replay marker (from review — the one new wire signal)
+c1 must emit a distinguishable **"cold replay starting → replace"** marker at the head of a `StreamColdReplay` so the client rebuilds rather than appends (§5.2). Also fix the borrowed-cursor frames: `STATE_SNAPSHOT` and the two cold-replay `RUN_ERROR` fallbacks are written with `seq = cursor` (`agent.go:114,120,124`) — give them real monotonic seqs, or mark `STATE_SNAPSHOT` as apply-don't-persist on the client.
 
-- **PocketBase collections & the model pipeline — untouched.** No `export_schema.sh`, no `generate_models.py` run, no deletion of `message`/`permission`/`acp_terminal` models in this project. The client keeps its current `chats`/auth/config access as-is. A separate effort will decide the collection future; this spec must not depend on that decision. (Old `chat_repository`/`hitl` transport code is *replaced* and left dead-but-present; model files are not regenerated here.)
-- **`session/fork`** — `acp_dart` supports it, but it creates a chat and belongs with chat-creation orchestration. Fast-follow, not v1.
-- **Rich prompt content (image/audio/resource blocks)** — the `PromptRequest` type admits them; v1 UI sends text only.
-- **`fs/*`, `terminal/*`, `document/*`, `nes/*` ACP client callbacks** — c1 answers these `unsupported` by architecture (Goose owns the workspace); file/terminal activity reaches Flutter as tool-call events. N/A to the client.
+### 8.4 Live `modes` delta preserves `availableModes` (from review SHOULD-FIX 5)
+A `CurrentModeUpdate` does `set("modes", {currentModeId})` (`bridge.go:90`), which emits `op:"add"` replacing the whole `/pocketcoder/modes` subtree (`state.go`), wiping `availableModes` until the next snapshot. **Fix:** emit a `currentModeId`-only patch (or have the reducer merge rather than trust the subtree). The `mode_switcher` depends on this.
+
+The existing c1 acceptance suite must stay 9/9 after all of §8.
+
+## 9. Out of scope / deferred
+
+- **PocketBase collections & the model pipeline — untouched.** No `export_schema.sh`, no `generate_models.py` run, no deletion of `message`/`permission`/`acp_terminal` models. The client keeps its current `chats`/auth/config access as-is. Old `chat_repository`/`hitl` transport code is replaced and left dead-but-present; models are not regenerated here. A separate effort decides the collection future.
+- **`session/fork`** — `acp_dart` supports it; creates a chat, belongs with chat-creation orchestration. Fast-follow.
+- **Rich prompt content (image/audio/resource)** — `PromptRequest` admits them; v1 sends text only.
+- **`fs/*`, `terminal/*`, `document/*`, `nes/*`** — c1 answers `unsupported` by architecture; activity reaches Flutter as tool-call events. N/A.
+- **`commands`, `usage` state namespaces** — parsed-past, not surfaced in v1.
 
 ## 10. Error handling
-
-- **Up (HTTP):** `202` accepted · `400` malformed/option-not-offered · `401` unauth · `404` chat-not-found/unknown-request/not-owner · `409` run-already-active · `503` agent-not-configured. `AgentActionsApi` maps each to a typed failure the cubits surface.
-- **Down (stream):** `RUN_ERROR{code}` — `goose_unavailable`, `goose_replay_failed` (+ any bridge codes). Rendered inline in the conversation, not as a fatal.
-- **Transport:** SSE drop → `flutter_client_sse` reconnect with `Last-Event-ID`; the cubit shows a transient "reconnecting" state, never loses cached history.
+- **Up (HTTP):** `202` · `400` malformed/option-not-offered · `401` · `404` chat/unknown-request/not-owner · `409` run-active · `503` agent-not-configured → typed failures.
+- **Down (stream):** `RUN_ERROR{code}` (`goose_unavailable`, `goose_replay_failed`, +bridge codes) rendered inline, non-fatal. Cold-path `RUN_ERROR`s must carry real seqs (§8.3).
+- **Transport:** SSE drop → client reconnects explicitly with `?cursor=MAX(seq)`; transient "reconnecting" state; cached view never lost.
 
 ## 11. Testing strategy
-
-- **`ConversationReducer` unit tests** (highest value, pure): curated event sequences → expected `Conversation` + `SessionState`, incl. interleaved tool-calls, reasoning, permission add/remove, mode/config deltas, replay-then-live-with-overlap (dedupe by seq).
-- **Contract / golden parity tests** (the SDK safety net):
-  - Down: decode **real captured c1 frames** (from the 2026-07-19 acceptance run) through `ag_ui`'s decoder — every frame must decode; catches Go-emit ↔ Dart-decode skew.
-  - Up: serialize each `acp_dart` body and assert it matches the shape c1 accepts (post against a c1 fixture or asserted JSON) — catches Dart ↔ Go-SDK skew and pins the §8 re-alignment.
-- **`AgentStreamClient`** — SSE frame parsing, cursor/`Last-Event-ID` resume, reconnect, against a fake stream.
-- **Cubits** — fake repository; assert state transitions and that actions call the API without mutating local state directly.
-- **Version pinning** — `ag_ui` and `acp_dart` pinned to exact versions; upgrading either re-runs the parity tests as the gate.
+- **`ConversationReducer` unit tests** (highest value, pure): interleaved tool-calls/reasoning/text; permission add+remove; mode/config deltas; **`modes` delta must not drop `availableModes`** (§8.4); all surfaced namespaces (`plan`, `session_info`); **replay-marker → replace** semantics (a cold replay wipes and rebuilds).
+- **Contract / golden parity tests** (the SDK safety net): down — decode **real captured c1 frames** (2026-07-19 acceptance run) through `ag_ui`; up — serialize each `acp_dart` body (+ the elicitation DTO) and assert it matches what c1 accepts, pinning the §8.1 re-alignment.
+- **`AgentStreamClient`** — frame parsing; explicit `?cursor=MAX` reconnect (not `Last-Event-ID` reliance); replay-marker surfacing; against a fake stream.
+- **Cubits** — fake repository; state transitions; actions call the API without mutating local state directly.
+- **Version pinning** — `ag_ui` and `acp_dart` pinned; upgrading either re-runs the parity tests as the gate.
 
 ## 12. Security invariants (client side)
+- Flutter addresses everything by `chatId`; never sees or sends `goose_session_id`.
+- Flutter never holds the Goose secret or ACP URL.
+- Only credential sent is the user's PB auth token, on the same c1 endpoints it already uses.
 
-- Flutter addresses everything by `chatId`; it never sees or sends `goose_session_id`.
-- Flutter never holds the Goose secret or ACP URL — those live only in c1.
-- The only credential the client sends is the user's PB auth token, on the same-origin c1 endpoints it already uses.
-
-## 13. Open questions (for spec review)
-
-1. **`acp_dart` standalone types** — confirm the request/response types serialize without instantiating `ClientSideConnection` (§5.5). If not, we wrap minimally or fall back to hand-authored bodies for the affected types.
-2. **Elicitation type presence** in `acp_dart` (§6.2) — confirm; if absent, the one-DTO exception applies.
-3. **ACP protocol-version skew** — `acp_dart` (targets ACP ~0.1.0 wire) vs c1's `coder/acp-go-sdk@v0.13.5`. The parity tests are the guard; is any field known to differ today?
-4. **Reducer location of `session_info`/title** — c1 emits a `/pocketcoder/session_info` delta (seen live); confirm we surface chat title from it vs. the `chats` record.
+## 13. Open questions (for final review)
+1. **`acp_dart` standalone types** — confirm request/response types `.toJson()` without instantiating `ClientSideConnection` (§5.5). 5-minute spike; low risk (json_serializable data classes).
+2. ~~Elicitation type in `acp_dart`~~ — **RESOLVED (review): absent.** The one hand-authored DTO applies (§6.2).
+3. **ACP field-naming skew** — c1 binds `acpsdk.SetSessionConfigOptionRequest` and checks `Boolean`/`ValueId` (`agent.go:199`); the `acp_dart` type must match `coder/acp-go-sdk@v0.13.5` field naming, not the contract prose. Pin via the up-parity test. Capture the golden corpus from a live run on the pinned Goose image.
+4. ~~Session title source~~ — **RESOLVED (review): from `/pocketcoder/session_info` state** (`bridge.go`), surfaced by the reducer (§5.4).
 
 ---
 
-**Next:** independent spec review (including an Opus pass focused on the §5 connection plan — that we use `ag_ui`, `acp_dart`, SSE, and the JSON-Patch state model the way each is intended, and that the cursor/replay/reconnect handshake with c1 is exactly consistent). Then `writing-plans` → implementation plan, with the §8 c1 conformance fix as the first task.
+**Next:** final user read of this v2, then `writing-plans` → implementation plan. Task ordering: **§8 backend fixes first** (up-channel ACP conformance, seq correctness, replay marker, modes-delta) with the c1 acceptance suite staying 9/9 — then the Flutter client (transport → cache → reducer → cubits → UI), reducer + parity tests leading each slice.
