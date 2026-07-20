@@ -86,9 +86,10 @@ func TestLiveRunNewSession(t *testing.T) {
 	chatID := "live-chat"
 	var savedSession string
 	resolve := func(context.Context) (string, error) { return "", nil }
+	profileFn := func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil }
 	created := func(_ context.Context, sid string) error { savedSession = sid; return nil }
 
-	if _, err := c.StartPrompt(chatID, "Reply with exactly: ws token ok", resolve, created); err != nil {
+	if _, err := c.StartPrompt(chatID, "Reply with exactly: ws token ok", resolve, profileFn, created); err != nil {
 		t.Fatalf("StartPrompt failed: %v", err)
 	}
 
@@ -130,8 +131,9 @@ func TestLiveWrongSecretRejected(t *testing.T) {
 
 	chatID := "live-chat-bad"
 	resolve := func(context.Context) (string, error) { return "", nil }
+	profileFn := func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil }
 	created := func(context.Context, string) error { return nil }
-	if _, err := c.StartPrompt(chatID, "should never run", resolve, created); err != nil {
+	if _, err := c.StartPrompt(chatID, "should never run", resolve, profileFn, created); err != nil {
 		t.Fatalf("StartPrompt failed: %v", err)
 	}
 

@@ -464,7 +464,7 @@ func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingEl
 // ReplayReserved body, and hands each resulting event to emit with
 // ascending seqs starting at 1 — the caller (the stream route) writes these
 // as SSE frames before falling through to the hub's Buffered/Live tail.
-func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID string, emit func(seq int, ev events.Event) error) error {
+func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID string, profileFn ProfileFunc, emit func(seq int, ev events.Event) error) error {
 	bridge := agui.NewBridge(chatID, uuid.NewString())
 	seq := 0
 	emitSeq := func(ev events.Event) error {
@@ -477,6 +477,10 @@ func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID st
 	if sessionID == "" {
 		return emitAll(emitSeq, bridge.Finished(acpsdk.StopReasonEndTurn))
 	}
+	profile, err := profileFn(ctx)
+	if err != nil {
+		return fmt.Errorf("resolve session profile: %w", err)
+	}
 	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emitSeq, accepting: &atomic.Bool{}}
 	conn, err := c.config.Dial(ctx, sc)
 	if err != nil {
@@ -487,7 +491,13 @@ func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID st
 		return err
 	}
 	sc.accepting.Store(true)
-	if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}}); err != nil {
+	cwd := profile.Cwd
+	if cwd == "" {
+		cwd = c.config.Workspace
+	}
+	if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{
+		SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.AdditionalDirectories, McpServers: profile.McpServers,
+	}); err != nil {
 		return fmt.Errorf("load Goose session: %w", err)
 	}
 	return emitAll(emitSeq, bridge.Finished(acpsdk.StopReasonEndTurn))
@@ -537,6 +547,7 @@ func (c *Coordinator) dropPendingForChat(chat string) {
 		}
 	}
 }
+
 // Shutdown cancels every in-flight detached run and resolves every pending
 // permission/elicitation as cancelled, so no ACP callback is left blocked
 // when the process is asked to terminate.
@@ -588,7 +599,7 @@ func (c *Coordinator) Shutdown(ctx context.Context) {
 // spec N1), and returns the run id immediately. The run survives the caller
 // returning: teardown fires on Prompt return / cancel / panic, last in the
 // gate is always the release of Reserve so a second StartPrompt can take over.
-func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, created OnSessionCreated) (string, error) {
+func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated) (string, error) {
 	if err := c.Reserve(chatID); err != nil {
 		return "", err
 	}
@@ -597,7 +608,7 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 	accepting := &atomic.Bool{}
 	h := &runHandle{runID: runID, cancel: cancel, accepting: accepting}
 	c.registerRun(chatID, h)
-	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, created)
+	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created)
 	return runID, nil
 }
 
@@ -605,7 +616,7 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 // a single panic recover that publishes RUN_ERROR, and the publish-through-
 // hub `emit` so RequestPermission (which also calls s.emit) remains safe on
 // the detached path with no client lifetime dependency.
-func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, created OnSessionCreated) {
+func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated) {
 	hub := c.hubFor(chatID)
 	var once sync.Once
 	teardown := func() {
@@ -636,6 +647,11 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		hub.Publish(events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
 		return
 	}
+	profile, err := profileFn(runCtx)
+	if err != nil {
+		hub.Publish(events.NewRunErrorEvent("profile resolution", events.WithErrorCode("goose_unavailable")))
+		return
+	}
 	bridge := agui.NewBridge(chatID, runID)
 	hub.StartRun(runID, bridge.Snapshot)
 
@@ -651,7 +667,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		return
 	}
 	h.conn = conn
-	sessionID, err = c.initSession(runCtx, conn, sc, bridge, hub, sessionID, created)
+	sessionID, err = c.initSession(runCtx, conn, sc, bridge, hub, sessionID, profile, created)
 	if err != nil {
 		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 		return
@@ -688,13 +704,23 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 // them. On a session/new whose mapping persist fails, the freshly minted
 // Goose session is deleted (orphan compensation) before returning the
 // wrapped error.
-func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessionClient, bridge *agui.Bridge, hub *ChatHub, sessionID string, created OnSessionCreated) (string, error) {
+func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessionClient, bridge *agui.Bridge, hub *ChatHub, sessionID string, profile SessionProfile, created OnSessionCreated) (string, error) {
 	_ = sc
-	if _, err := conn.Initialize(ctx, initializeRequest()); err != nil {
+	initResp, err := conn.Initialize(ctx, initializeRequest())
+	if err != nil {
 		return "", err
 	}
+	applier := selectApplier(&initResp)
+
+	cwd := profile.Cwd
+	if cwd == "" {
+		cwd = c.config.Workspace
+	}
+
 	if sessionID == "" {
-		res, err := conn.NewSession(ctx, acpsdk.NewSessionRequest{Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
+		res, err := conn.NewSession(ctx, acpsdk.NewSessionRequest{
+			Cwd: cwd, AdditionalDirectories: profile.AdditionalDirectories, McpServers: profile.McpServers,
+		})
 		if err != nil {
 			return "", err
 		}
@@ -714,7 +740,9 @@ func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessio
 			hub.Publish(e)
 		}
 	} else {
-		res, err := conn.LoadSession(ctx, acpsdk.LoadSessionRequest{SessionId: acpsdk.SessionId(sessionID), Cwd: c.config.Workspace, McpServers: []acpsdk.McpServer{}})
+		res, err := conn.LoadSession(ctx, acpsdk.LoadSessionRequest{
+			SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.AdditionalDirectories, McpServers: profile.McpServers,
+		})
 		if err != nil {
 			return "", err
 		}
@@ -722,7 +750,7 @@ func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessio
 			hub.Publish(e)
 		}
 	}
-	if _, err := conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{SessionId: acpsdk.SessionId(sessionID), ModeId: acpsdk.SessionModeId("approve")}); err != nil {
+	if err := applier.Apply(ctx, conn, sessionID, profile); err != nil {
 		return "", err
 	}
 	return sessionID, nil

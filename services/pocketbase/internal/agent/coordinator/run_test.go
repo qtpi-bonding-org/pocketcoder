@@ -45,22 +45,27 @@ func newFakeConn() *fakeConn {
 }
 
 type fakeConn struct {
-	mu                 sync.Mutex
-	cancelled          string
-	client             acpsdk.Client
-	newSession         string
-	deletedSession     string
+	mu             sync.Mutex
+	cancelled      string
+	client         acpsdk.Client
+	newSession     string
+	deletedSession string
+
+	// Task 10: captures the last NewSession/LoadSession request so tests can
+	// assert a resolved SessionProfile reaches ACP.
+	lastNewSessionReq  acpsdk.NewSessionRequest
+	lastLoadSessionReq acpsdk.LoadSessionRequest
 
 	// Task 10 extensions.
-	closeCount        int
-	blockPrompt       chan struct{}
-	panicOnPrompt     bool
-	promptCalled      chan struct{}
-	emitElicitation   bool
+	closeCount          int
+	blockPrompt         chan struct{}
+	panicOnPrompt       bool
+	promptCalled        chan struct{}
+	emitElicitation     bool
 	elicitationResolved bool
-	lastMode          string
-	lastModeSession   string
-	requestPermission bool
+	lastMode            string
+	lastModeSession     string
+	requestPermission   bool
 }
 
 // waitForPrompt blocks until the fake's Prompt method is invoked (or 2 s timeout).
@@ -114,10 +119,16 @@ func (c *Coordinator) waitForPendingPermission(t *testing.T, chatID string) stri
 func (f *fakeConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error) {
 	return acpsdk.InitializeResponse{}, nil
 }
-func (f *fakeConn) NewSession(context.Context, acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error) {
+func (f *fakeConn) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error) {
+	f.mu.Lock()
+	f.lastNewSessionReq = req
+	f.mu.Unlock()
 	return acpsdk.NewSessionResponse{SessionId: acpsdk.SessionId(f.newSession)}, nil
 }
-func (f *fakeConn) LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error) {
+func (f *fakeConn) LoadSession(_ context.Context, req acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error) {
+	f.mu.Lock()
+	f.lastLoadSessionReq = req
+	f.mu.Unlock()
 	return acpsdk.LoadSessionResponse{}, nil
 }
 func (f *fakeConn) SetSessionMode(_ context.Context, req acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
@@ -231,6 +242,7 @@ func TestStartPromptDetachedProceedsAfterCallerReturns(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	runID, err := c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	if err != nil || runID == "" {
 		t.Fatalf("StartPrompt runID=%q err=%v", runID, err)
@@ -248,6 +260,7 @@ func TestTeardownIdempotentClosesConnOnce(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	f.waitForPrompt(t)
 	go c.Cancel(context.Background(), "A")
@@ -264,6 +277,7 @@ func TestPanicInProduceReleasesReserve(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	c.StartPrompt("A", "boom",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	c.waitRunDone(t, "A") // must still release Reserve despite the panic
 }
@@ -274,6 +288,7 @@ func TestDetachedRunPermissionEmitsThroughHub(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	c.StartPrompt("A", "do it",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	id := c.waitForPendingPermission(t, "A") // polls c.pending for the chat
 	if err := c.Approve(context.Background(), "A", id, "allow_once"); err != nil {
@@ -292,6 +307,7 @@ func TestExplicitCancelSendsAcpCancel(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	f.waitForPrompt(t)
 	if err := c.Cancel(context.Background(), "A"); err != nil {
@@ -312,6 +328,7 @@ func TestMaxRunTimeoutTearsDown(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, clk)
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return nil })
 	f.waitForPrompt(t)
 	clk.Advance(15*time.Minute + time.Second)
@@ -326,9 +343,49 @@ func TestOrphanSessionCompensatedOnPersistFailure(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "", nil }, // unmapped -> session/new
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
 		func(context.Context, string) error { return errors.New("db down") })
 	c.waitRunDone(t, "A")
 	if f.deletedSession != "orphan-1" {
 		t.Fatalf("persist failure must compensate via delete, deleted=%q", f.deletedSession)
+	}
+}
+
+// TestResolvedProfileReachesNewSessionAndMode proves a resolved SessionProfile
+// (cwd, additional directories, MCP servers, mode) reaches the ACP
+// session/new + set_session_mode calls made during a detached run.
+func TestResolvedProfileReachesNewSessionAndMode(t *testing.T) {
+	f := newFakeConn()
+	f.newSession = "s-new"
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	profile := SessionProfile{
+		Cwd:                   "/repo",
+		AdditionalDirectories: []string{"/repo/extra"},
+		McpServers:            []acpsdk.McpServer{{Stdio: &acpsdk.McpServerStdio{Name: "fs", Command: "mcp-fs"}}},
+		Mode:                  acpsdk.SessionModeId("auto"),
+	}
+	c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "", nil }, // unmapped -> session/new
+		func(context.Context) (SessionProfile, error) { return profile, nil },
+		func(context.Context, string) error { return nil })
+	c.waitRunDone(t, "A")
+
+	f.mu.Lock()
+	newReq := f.lastNewSessionReq
+	mode := f.lastMode
+	modeSess := f.lastModeSession
+	f.mu.Unlock()
+
+	if newReq.Cwd != "/repo" {
+		t.Fatalf("NewSession cwd = %q, want /repo", newReq.Cwd)
+	}
+	if len(newReq.AdditionalDirectories) != 1 || newReq.AdditionalDirectories[0] != "/repo/extra" {
+		t.Fatalf("NewSession additionalDirectories = %v", newReq.AdditionalDirectories)
+	}
+	if len(newReq.McpServers) != 1 || newReq.McpServers[0].Stdio == nil || newReq.McpServers[0].Stdio.Name != "fs" {
+		t.Fatalf("NewSession mcpServers = %+v", newReq.McpServers)
+	}
+	if mode != "auto" || modeSess != "s-new" {
+		t.Fatalf("set_session_mode not applied from profile: mode=%q sess=%q", mode, modeSess)
 	}
 }
