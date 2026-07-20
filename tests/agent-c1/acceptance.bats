@@ -243,10 +243,13 @@ resolve_permissions_until_finish() {
 
   # A second, independent subscriber attaching mid-run must never see a 409
   # (streams never Reserve; any number of subscribers can join a live run).
+  # The stream is durable and never closes itself, so curl always hits
+  # --max-time and exits 28; `|| true` keeps that expected timeout from failing
+  # the line while -w still captures the 200 status line received up front.
   local concurrent_stream_status
   concurrent_stream_status=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 \
     "$PB_URL/api/pocketcoder/chats/$CHAT_ID/stream?cursor=0" \
-    -H "Authorization: $USER_TOKEN")
+    -H "Authorization: $USER_TOKEN" || true)
   [ "$concurrent_stream_status" = 200 ]
 
   local cancelled
@@ -301,14 +304,17 @@ resolve_permissions_until_finish() {
 
   # This must use the original chat. A c1 restart cannot leave its Goose
   # request_permission blocked indefinitely after the in-memory ID is gone.
+  # The reloaded session carries the prior shell-tool context, which nudges a
+  # real model to re-invoke the tool and stall on a fresh permission prompt;
+  # steer it to a plain text reply so this asserts chat recovery, not tool use.
   open_stream
-  start_run "Reply with exactly: same-chat-after-c1-restart"
+  start_run "Do not use any tools. Reply with exactly: same-chat-after-c1-restart"
   wait_for_text 'same-chat-after-c1-restart'
   wait_for_finish
   docker restart "$GOOSE_CONTAINER" >/dev/null
   wait_for_goose
   open_stream
-  start_run "Reply with exactly: after-c2-restart"
+  start_run "Do not use any tools. Reply with exactly: after-c2-restart"
   wait_for_text 'after-c2-restart'
   wait_for_finish
 }

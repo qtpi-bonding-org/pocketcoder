@@ -198,6 +198,20 @@ func TestLingerThenEvictFallsToColdReplay(t *testing.T) {
 	att2.Unsubscribe()
 }
 
+// A never-run chat (fresh hub, nothing ever published) must still report
+// ColdReplayNeeded so the stream route emits the bounded empty replay
+// (RUN_STARTED+RUN_FINISHED) instead of hanging silently — and so a chat whose
+// only history lives in Goose (fresh in-memory hub after a PocketBase restart)
+// is replayed rather than dropped.
+func TestAttachFreshChatNeedsColdReplay(t *testing.T) {
+	h := NewChatHub(NewFakeClock(time.Unix(0, 0)), 30*time.Second, 8)
+	att := h.Attach(0) // no run has ever happened: h.seq == 0
+	if !att.ColdReplayNeeded {
+		t.Fatal("fresh chat must need cold replay so the stream is not silent")
+	}
+	att.Unsubscribe()
+}
+
 func TestIsEmptyAfterEvictionAndNoSubscribers(t *testing.T) {
 	clk := NewFakeClock(time.Unix(0, 0))
 	h := NewChatHub(clk, 30*time.Second, 8)
