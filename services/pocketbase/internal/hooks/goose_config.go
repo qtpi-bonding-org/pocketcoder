@@ -118,11 +118,14 @@ func renderGooseConfig(app core.App) error {
 	return writeGoose("config.yaml", yamlBytes, 0o640)
 }
 
-// defaultPocoConfig returns the single agent definition that drives the
-// global goose config, applying the spec §5.2 tie-break: is_default=true,
-// oldest-on-multiple (take first), nil-on-none.
+// defaultPocoConfig returns the single agent definition that drives the global
+// goose config, applying the spec §5.2 tie-break: is_default=true, deterministic
+// first-on-multiple, nil-on-none. poco_configs has no created/updated autodate
+// field (see 1748000100_acp_schema), so the stable, unique-indexed `name`
+// column is the sort key; multiple defaults is a warned misconfiguration where
+// any deterministic pick is acceptable.
 func defaultPocoConfig(app core.App) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter("poco_configs", "is_default = true", "created", 0, 0)
+	recs, err := app.FindRecordsByFilter("poco_configs", "is_default = true", "name", 0, 0)
 	if err != nil {
 		return nil, fmt.Errorf("query default poco_configs: %w", err)
 	}
@@ -130,7 +133,7 @@ func defaultPocoConfig(app core.App) (*core.Record, error) {
 		return nil, nil
 	}
 	if len(recs) > 1 {
-		log.Printf("⚠️ [GooseConfig] %d poco_configs marked is_default; using oldest %q", len(recs), recs[0].GetString("name"))
+		log.Printf("⚠️ [GooseConfig] %d poco_configs marked is_default; using first by name %q", len(recs), recs[0].GetString("name"))
 	}
 	return recs[0], nil
 }

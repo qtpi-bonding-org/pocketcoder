@@ -496,7 +496,7 @@ func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID st
 		cwd = c.config.Workspace
 	}
 	if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{
-		SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.AdditionalDirectories, McpServers: profile.McpServers,
+		SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
 	}); err != nil {
 		return fmt.Errorf("load Goose session: %w", err)
 	}
@@ -719,7 +719,7 @@ func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessio
 
 	if sessionID == "" {
 		res, err := conn.NewSession(ctx, acpsdk.NewSessionRequest{
-			Cwd: cwd, AdditionalDirectories: profile.AdditionalDirectories, McpServers: profile.McpServers,
+			Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
 		})
 		if err != nil {
 			return "", err
@@ -741,7 +741,7 @@ func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessio
 		}
 	} else {
 		res, err := conn.LoadSession(ctx, acpsdk.LoadSessionRequest{
-			SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.AdditionalDirectories, McpServers: profile.McpServers,
+			SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
 		})
 		if err != nil {
 			return "", err

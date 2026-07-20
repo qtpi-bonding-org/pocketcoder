@@ -17,6 +17,26 @@ type SessionProfile struct {
 	Mode                               acpsdk.SessionModeId
 }
 
+// mcpServers returns the profile's MCP servers as a non-nil slice. Goose's
+// session/new|load deserializer rejects a null mcpServers with -32602
+// "invalid type: null, expected a sequence", so a chat with no MCP servers
+// must still serialize the field as an empty array.
+func (p SessionProfile) mcpServers() []acpsdk.McpServer {
+	if p.McpServers == nil {
+		return []acpsdk.McpServer{}
+	}
+	return p.McpServers
+}
+
+// additionalDirectories returns the profile's extra directories as a non-nil
+// slice, for the same Goose-contract reason as mcpServers.
+func (p SessionProfile) additionalDirectories() []string {
+	if p.AdditionalDirectories == nil {
+		return []string{}
+	}
+	return p.AdditionalDirectories
+}
+
 // ProfileFunc resolves a SessionProfile for the run currently starting.
 // Injected from internal/api, mirroring the existing ResolveSession closure,
 // so the coordinator stays PocketBase-agnostic.
