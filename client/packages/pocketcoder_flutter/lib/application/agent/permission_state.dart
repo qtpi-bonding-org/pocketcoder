@@ -14,7 +14,7 @@ enum PermissionOperation {
 }
 
 @freezed
-class PermissionState with _$PermissionState implements IUiFlowState {
+sealed class PermissionState with _$PermissionState implements IUiFlowState {
   const PermissionState._();
 
   const factory PermissionState({

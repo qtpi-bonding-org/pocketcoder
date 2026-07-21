@@ -1,7 +1,7 @@
 part of 'tool_permissions_cubit.dart';
 
 @freezed
-class ToolPermissionsState with _$ToolPermissionsState implements IUiFlowState {
+sealed class ToolPermissionsState with _$ToolPermissionsState implements IUiFlowState {
   const ToolPermissionsState._();
 
   const factory ToolPermissionsState({

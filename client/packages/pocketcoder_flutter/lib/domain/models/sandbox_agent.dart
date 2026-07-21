@@ -5,7 +5,7 @@ part 'sandbox_agent.freezed.dart';
 part 'sandbox_agent.g.dart';
 
 @freezed
-class SandboxAgent with _$SandboxAgent {
+sealed class SandboxAgent with _$SandboxAgent {
   const factory SandboxAgent({
     required String id,
     required String sandboxAgentId,

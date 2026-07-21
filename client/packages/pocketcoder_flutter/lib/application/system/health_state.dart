@@ -5,7 +5,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 part 'health_state.freezed.dart';
 
 @freezed
-class HealthState with _$HealthState implements IUiFlowState {
+sealed class HealthState with _$HealthState implements IUiFlowState {
   const HealthState._();
 
   const factory HealthState({

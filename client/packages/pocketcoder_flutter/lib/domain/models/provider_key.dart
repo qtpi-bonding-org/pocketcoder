@@ -5,7 +5,7 @@ part 'provider_key.freezed.dart';
 part 'provider_key.g.dart';
 
 @freezed
-class ProviderKey with _$ProviderKey {
+sealed class ProviderKey with _$ProviderKey {
   const factory ProviderKey({
     required String id,
     required String user,

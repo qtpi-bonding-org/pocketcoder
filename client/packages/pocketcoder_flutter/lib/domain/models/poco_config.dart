@@ -5,7 +5,7 @@ part 'poco_config.freezed.dart';
 part 'poco_config.g.dart';
 
 @freezed
-class PocoConfig with _$PocoConfig {
+sealed class PocoConfig with _$PocoConfig {
   const factory PocoConfig({
     required String id,
     required String name,

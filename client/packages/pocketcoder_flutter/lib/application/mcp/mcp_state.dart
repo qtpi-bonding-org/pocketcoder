@@ -5,7 +5,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 part 'mcp_state.freezed.dart';
 
 @freezed
-class McpState with _$McpState implements IUiFlowState {
+sealed class McpState with _$McpState implements IUiFlowState {
   const McpState._();
 
   const factory McpState.initial() = _Initial;

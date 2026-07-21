@@ -13,7 +13,7 @@ part 'elicitation_response.freezed.dart';
 /// `Bridge.ElicitationPending`). Mirrors ACP's `action` discriminator:
 /// `accept` (with the filled-in form `content`), `decline`, or `cancel`.
 @freezed
-class ElicitationResponse with _$ElicitationResponse {
+sealed class ElicitationResponse with _$ElicitationResponse {
   const factory ElicitationResponse.accept(Map<String, dynamic> content) =
       ElicitationResponseAccept;
   const factory ElicitationResponse.decline() = ElicitationResponseDecline;

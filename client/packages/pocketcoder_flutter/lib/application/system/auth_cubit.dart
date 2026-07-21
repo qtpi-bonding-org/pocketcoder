@@ -7,7 +7,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 part 'auth_cubit.freezed.dart';
 
 @freezed
-class AuthState with _$AuthState implements IUiFlowState {
+sealed class AuthState with _$AuthState implements IUiFlowState {
   const AuthState._();
 
   const factory AuthState({

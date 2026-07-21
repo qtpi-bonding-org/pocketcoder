@@ -7,7 +7,7 @@ part 'deployment_state.freezed.dart';
 
 /// Deployment state for managing instance deployment lifecycle
 @freezed
-class DeploymentState with _$DeploymentState implements IUiFlowState {
+sealed class DeploymentState with _$DeploymentState implements IUiFlowState {
   const DeploymentState._();
 
   const factory DeploymentState({

@@ -5,7 +5,7 @@ part 'permission.freezed.dart';
 part 'permission.g.dart';
 
 @freezed
-class Permission with _$Permission {
+sealed class Permission with _$Permission {
   const factory Permission({
     required String id,
     required String aiEnginePermissionId,
