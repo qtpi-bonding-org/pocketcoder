@@ -45,6 +45,13 @@ func (b *Bridge) Started() events.Event {
 	return events.NewRunStartedEvent(b.threadID, b.runID)
 }
 
+// ReplayStarted marks the head of a cold replay so the client discards its
+// cached view and rebuilds from this replay (Goose is authority). Distinct
+// from Started() which begins a live turn.
+func (b *Bridge) ReplayStarted() events.Event {
+	return events.NewCustomEvent("pocketcoder:sync", events.WithValue(map[string]any{"mode": "replace"}))
+}
+
 // Update converts output-bearing ACP updates. Unknown update variants are
 // intentionally ignored rather than leaking vendor details to Flutter.
 func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
