@@ -53,11 +53,25 @@ func (h *ChatHub) StartRun(runID string, snapshot func() []events.Event) {
 	h.active = &run{id: runID, snapshot: snapshot}
 }
 
+// nextSeq allocates the next hub-global monotonic sequence number. It is
+// used both by live Publish and by cold-replay emission so a single stream's
+// ids are strictly increasing regardless of which path produced them.
+func (h *ChatHub) nextSeq() int {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.nextSeqLocked()
+}
+
+// nextSeqLocked allocates the next seq; caller must hold h.mu.
+func (h *ChatHub) nextSeqLocked() int {
+	h.seq++
+	return h.seq
+}
+
 func (h *ChatHub) Publish(ev events.Event) int {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.seq++
-	item := seqEvent{Seq: h.seq, Ev: ev}
+	item := seqEvent{Seq: h.nextSeqLocked(), Ev: ev}
 	if h.active != nil {
 		h.active.log = append(h.active.log, item)
 	}

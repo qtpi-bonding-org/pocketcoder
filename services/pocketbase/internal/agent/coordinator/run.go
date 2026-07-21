@@ -146,6 +146,13 @@ func (c *Coordinator) hubFor(chatID string) *ChatHub {
 	return h
 }
 
+// NextSeq allocates the next hub-global monotonic sequence number for
+// chatID, shared between cold replay and live publish so a stream's ids are
+// strictly increasing regardless of which path produced them.
+func (c *Coordinator) NextSeq(chatID string) int {
+	return c.hubFor(chatID).nextSeq()
+}
+
 func (c *Coordinator) reapHub(chatID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -466,10 +473,8 @@ func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingEl
 // as SSE frames before falling through to the hub's Buffered/Live tail.
 func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID string, profileFn ProfileFunc, emit func(seq int, ev events.Event) error) error {
 	bridge := agui.NewBridge(chatID, uuid.NewString())
-	seq := 0
 	emitSeq := func(ev events.Event) error {
-		seq++
-		return emit(seq, ev)
+		return emit(c.NextSeq(chatID), ev)
 	}
 	if err := emitSeq(bridge.Started()); err != nil {
 		return err
