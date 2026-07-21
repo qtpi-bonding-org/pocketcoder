@@ -516,3 +516,25 @@ func TestFinishedCarriesStopReasonOnNonEndTurn(t *testing.T) {
 		t.Fatalf("Result.stopReason = %q, want %q", reason, acpsdk.StopReasonRefusal)
 	}
 }
+
+func TestReplayStartedIsReplaceMarker(t *testing.T) {
+	b := NewBridge("chat-1", "run-1")
+	ev := b.ReplayStarted()
+	if ev.Type() != events.EventTypeCustom {
+		t.Fatalf("want CUSTOM, got %v", ev.Type())
+	}
+	custom, ok := ev.(*events.CustomEvent)
+	if !ok {
+		t.Fatalf("event = %#v, want *events.CustomEvent", ev)
+	}
+	if custom.Name != "pocketcoder:sync" {
+		t.Fatalf("Name = %q, want pocketcoder:sync", custom.Name)
+	}
+	value, ok := custom.Value.(map[string]any)
+	if !ok {
+		t.Fatalf("Value = %#v, want map[string]any", custom.Value)
+	}
+	if value["mode"] != "replace" {
+		t.Fatalf("Value[mode] = %#v, want \"replace\"", value["mode"])
+	}
+}
