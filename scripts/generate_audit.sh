@@ -190,14 +190,11 @@ GO_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*.go' ! -path '*/tests/*' 
 RUST_LOC=$(find "$REPO_ROOT/services/proxy/src" -name '*.rs' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
 TS_LOC=0
 
-# Bash: all project shell scripts excluding node_modules, tests
-BASH_LOC=$(find "$REPO_ROOT" \
-  -path "$REPO_ROOT/node_modules" -prune -o \
-  -path "$REPO_ROOT/client/node_modules" -prune -o \
-  -path "*/tests/*" -prune -o \
-  -path "*/.git/*" -prune -o \
-  -type f -name '*.sh' -print \
-  | xargs wc -l 2>/dev/null | awk 'END{print $1+0}')
+# Bash: git-TRACKED shell scripts only. A repo-wide find would sweep in
+# gitignored vendored trees (.independent_repos, venv, fdroid_env, client
+# iOS/Flutter tooling), inflating the count several-fold. Tracked-only is
+# the honest measure of PocketCoder's own shell surface.
+BASH_LOC=$( (cd "$REPO_ROOT" && git ls-files -z '*.sh' ':!:*/tests/*' | xargs -0 cat 2>/dev/null) | wc -l | tr -d ' ')
 
 # Core total = Go + Rust + TS + Python (CAO added) + Dart (non-generated)
 CORE_TOTAL=$((GO_LOC + RUST_LOC + TS_LOC + CAO_ADDED + DART_LOC))
@@ -210,13 +207,11 @@ echo "## 📊 Lines of Code by Language"
 echo ""
 echo "| Language | LoC | Notes |"
 echo "| :--- | ---: | :--- |"
-echo "| Go | ${GO_LOC} | PocketBase backend & relay |"
-echo "| Rust | ${RUST_LOC} | Sentinel Proxy |"
-echo "| TypeScript | ${TS_LOC} | (none currently tracked) |"
-echo "| Python | ${CAO_ADDED} added / -${CAO_DELETED} removed | CAO fork delta vs [awslabs upstream](https://github.com/awslabs/cli-agent-orchestrator) |"
+echo "| Go | ${GO_LOC} | c1: PocketBase + ACP client + AG-UI server |"
+echo "| Rust | ${RUST_LOC} | Sandbox proxy (dormant, retained for future hardening) |"
 echo "| Dart | ${DART_LOC} | Flutter client (non-generated, non-test) |"
 echo "| Bash | ${BASH_LOC} | Shell scripts (infra / helpers, not counted in core) |"
-echo "| **Core total** | **${CORE_TOTAL}** | Go + Rust + TS + Python delta + Dart |"
+echo "| **Core total** | **${CORE_TOTAL}** | Go + Rust + Dart |"
 echo ""
 echo "*Tagged core files (index above): $FILE_COUNT.*"
 } >> "$TARGET_FILE"
@@ -242,10 +237,8 @@ if [[ -f "$README_FILE" ]]; then
   cat > "$README_TABLE_FILE" <<READMEEOF
 | Language | LoC | Component |
 | :--- | ---: | :--- |
-| Go | $(fmt $GO_LOC) | PocketBase backend & relay |
-| Rust | $(fmt $RUST_LOC) | Proxy |
-| TypeScript | $(fmt $TS_LOC) | (none currently tracked) |
-| Python | +$(fmt $CAO_ADDED) vs upstream | CAO fork (vs [awslabs/cli-agent-orchestrator](https://github.com/awslabs/cli-agent-orchestrator)) |
+| Go | $(fmt $GO_LOC) | c1: PocketBase + ACP client + AG-UI server |
+| Rust | $(fmt $RUST_LOC) | Sandbox proxy (dormant) |
 | Dart | $(fmt $DART_LOC) | Flutter client (non-generated) |
 | Bash | $(fmt $BASH_LOC) | Shell scripts (infra — separate tally) |
 | **CORE TOTAL** | **~$(fmt $CORE_TOTAL)** | **Lean, Fast, Fully Sovereign.** |
