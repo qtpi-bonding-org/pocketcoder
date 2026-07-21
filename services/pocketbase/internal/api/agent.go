@@ -54,17 +54,21 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		if err != nil || chat.GetString("user") != re.Auth.Id {
 			return re.NotFoundError("Chat not found", err)
 		}
-		var input struct {
-			Prompt string `json:"prompt"`
-		}
+		var input acpsdk.PromptRequest
 		if err := re.BindBody(&input); err != nil {
 			return re.BadRequestError("Invalid run request", err)
 		}
-		input.Prompt = strings.TrimSpace(input.Prompt)
-		if input.Prompt == "" {
-			return re.BadRequestError("prompt is required", nil)
+		prompt := ""
+		for _, block := range input.Prompt {
+			if block.Text != nil {
+				prompt = strings.TrimSpace(block.Text.Text)
+				break
+			}
 		}
-		runID, err := service.StartPrompt(chatID, input.Prompt,
+		if prompt == "" {
+			return re.BadRequestError("prompt must include a text content block", nil)
+		}
+		runID, err := service.StartPrompt(chatID, prompt,
 			func(context.Context) (string, error) { return gooseSessionForChat(app, chatID, re.Auth.Id) },
 			func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
 			func(ctx context.Context, sessionID string) error {
@@ -219,13 +223,23 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		if err != nil || chat.GetString("user") != re.Auth.Id {
 			return re.NotFoundError("Chat not found", err)
 		}
-		var input struct {
-			OptionID string `json:"optionId"`
+		var input acpsdk.RequestPermissionResponse
+		if err := re.BindBody(&input); err != nil {
+			return re.BadRequestError("Invalid permission response", err)
 		}
-		if err := re.BindBody(&input); err != nil || strings.TrimSpace(input.OptionID) == "" {
-			return re.BadRequestError("optionId is required", err)
+		requestID := re.Request.PathValue("id")
+		switch {
+		case input.Outcome.Selected != nil:
+			optionID := strings.TrimSpace(string(input.Outcome.Selected.OptionId))
+			if optionID == "" {
+				return re.BadRequestError("optionId is required", nil)
+			}
+			err = service.Approve(re.Request.Context(), chatID, requestID, optionID)
+		case input.Outcome.Cancelled != nil:
+			err = service.DenyPermission(chatID, requestID)
+		default:
+			return re.BadRequestError("outcome must be selected or cancelled", nil)
 		}
-		err = service.Approve(re.Request.Context(), chatID, re.Request.PathValue("id"), input.OptionID)
 		if errors.Is(err, coordinator.ErrNoPendingPermission) {
 			return re.NotFoundError("Pending permission not found", err)
 		}
@@ -250,14 +264,14 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			return re.NotFoundError("Chat not found", err)
 		}
 		var input struct {
-			Outcome string         `json:"outcome"`
+			Action  string         `json:"action"`
 			Content map[string]any `json:"content,omitempty"`
 		}
 		if err := re.BindBody(&input); err != nil {
 			return re.BadRequestError("Invalid elicitation response", err)
 		}
 		var resp acpsdk.UnstableCreateElicitationResponse
-		switch input.Outcome {
+		switch input.Action {
 		case "accept":
 			resp.Accept = &acpsdk.UnstableCreateElicitationAccept{Action: "accept", Content: input.Content}
 		case "decline":
@@ -265,7 +279,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		case "cancel":
 			resp.Cancel = &acpsdk.UnstableCreateElicitationCancel{Action: "cancel"}
 		default:
-			return re.BadRequestError("outcome must be accept, decline, or cancel", nil)
+			return re.BadRequestError("action must be accept, decline, or cancel", nil)
 		}
 		err = service.ResolveElicitation(chatID, re.Request.PathValue("id"), resp)
 		if errors.Is(err, coordinator.ErrNoPendingElicitation) {

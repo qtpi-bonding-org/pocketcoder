@@ -247,6 +247,28 @@ func (c *Coordinator) Approve(_ context.Context, chatID, requestID, optionID str
 	return nil
 }
 
+// DenyPermission cancels a pending permission decision (the ACP "cancelled"
+// outcome) without requiring an offered option, mirroring dropPendingForChat's
+// cancellation but scoped to a single requestID.
+func (c *Coordinator) DenyPermission(chatID, requestID string) error {
+	c.mu.Lock()
+	p := c.pending[requestID]
+	if p == nil || p.chatID != chatID {
+		c.mu.Unlock()
+		return ErrNoPendingPermission
+	}
+	delete(c.pending, requestID)
+	if p.timer != nil {
+		p.timer.Stop()
+	}
+	c.mu.Unlock()
+	select {
+	case p.decision <- permissionDecision{cancelled: true}:
+	default:
+	}
+	return nil
+}
+
 // ResolveElicitation delivers the user's response to a pending elicitation
 // (identified by id, scoped to chatID) so the blocked
 // sessionClient.UnstableCreateElicitation call can return.
