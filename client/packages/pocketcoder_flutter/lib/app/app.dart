@@ -5,9 +5,6 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/application/system/status_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
-import 'package:pocketcoder_flutter/application/chat/chat_cubit.dart';
-import 'package:pocketcoder_flutter/application/permission/permission_cubit.dart';
-import 'package:pocketcoder_flutter/application/question/question_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 // import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart'; // Unused here
@@ -39,15 +36,6 @@ class App extends StatelessWidget {
             ),
             BlocProvider(
               create: (context) => getIt<PocoCubit>(),
-            ),
-            BlocProvider(
-              create: (context) => getIt<ChatCubit>()..initialize(),
-            ),
-            BlocProvider(
-              create: (context) => getIt<PermissionCubit>(),
-            ),
-            BlocProvider(
-              create: (context) => getIt<QuestionCubit>(),
             ),
             BlocProvider(
               create: (context) => getIt<McpCubit>()..watchServers(),

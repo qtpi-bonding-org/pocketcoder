@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
-import 'package:pocketcoder_flutter/presentation/home/home_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
-import 'package:pocketcoder_flutter/presentation/files/file_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/agent_management_screen.dart';
-import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
-import 'package:pocketcoder_flutter/presentation/terminal/terminal_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/agent_observability_screen.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart';
@@ -44,7 +40,6 @@ class AppRouter {
       // Legacy redirects
       if (loc == '/settings') return AppRoutes.configure;
       if (loc == '/settings/ai') return AppRoutes.configureAi;
-      if (loc == '/settings/whitelist') return AppRoutes.configureToolPermissions;
       if (loc == '/mcp') return AppRoutes.configureMcp;
       if (loc == '/sop') return AppRoutes.configureSop;
       if (loc == '/system-checks') return AppRoutes.configureSystemChecks;
@@ -72,13 +67,20 @@ class AppRouter {
         ),
       ),
       // ── CHATS pillar ──
+      // NOTE: the chat-list landing (old HomeScreen/ChatListCubit) was removed
+      // with the OpenCode stack. Placeholder until it is rebuilt on
+      // AgentChatRepository (AG-UI). The chat conversation screen is live.
       GoRoute(
         path: AppRoutes.chats,
         name: RouteNames.chats,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const HomeScreen(),
+          child: const Scaffold(
+            body: Center(
+              child: Text('Chat list — pending rebuild on AG-UI'),
+            ),
+          ),
         ),
       ),
       GoRoute(
@@ -90,27 +92,6 @@ class AppRouter {
             context: context,
             state: state,
             child: ChatScreen(chatId: chatId),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.terminal,
-        name: RouteNames.terminal,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const TerminalScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.files,
-        name: RouteNames.files,
-        pageBuilder: (context, state) {
-          final path = state.uri.queryParameters['path'];
-          return TerminalTransition.buildPage(
-            context: context,
-            state: state,
-            child: FileScreen(initialPath: path),
           );
         },
       ),
@@ -141,15 +122,6 @@ class AppRouter {
           context: context,
           state: state,
           child: const AgentManagementScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.configureToolPermissions,
-        name: RouteNames.configureToolPermissions,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const ToolPermissionsScreen(),
         ),
       ),
       GoRoute(
