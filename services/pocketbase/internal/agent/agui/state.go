@@ -42,6 +42,25 @@ func (p *projection) set(ns string, value any) events.Event {
 	}})
 }
 
+// setSub patches /pocketcoder/<ns>/<key> in place, preserving any sibling
+// keys already stored under ns (unlike set, which replaces the whole ns
+// value). If ns isn't a map yet (or holds a non-map value), a fresh sub-map
+// is created so the patch never throws on an absent parent.
+func (p *projection) setSub(ns, key string, value any) events.Event {
+	p.ensure()
+	sub, ok := p.state[ns].(map[string]any)
+	if !ok {
+		sub = map[string]any{}
+		p.state[ns] = sub
+	}
+	sub[key] = value
+	return events.NewStateDeltaEvent([]events.JSONPatchOperation{{
+		Op:    "add",
+		Path:  "/pocketcoder/" + ns + "/" + key,
+		Value: value,
+	}})
+}
+
 // remove deletes the /pocketcoder/<ns> namespace and returns the matching
 // STATE_DELTA. remove on an unknown namespace still emits a remove patch; the
 // client treats it as a no-op and the next snapshot stays empty.

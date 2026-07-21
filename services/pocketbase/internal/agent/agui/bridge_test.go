@@ -538,3 +538,50 @@ func TestReplayStartedIsReplaceMarker(t *testing.T) {
 		t.Fatalf("Value[mode] = %#v, want \"replace\"", value["mode"])
 	}
 }
+
+// TestCurrentModeUpdateKeepsAvailableModes guards Task 3: a live
+// CurrentModeUpdate must patch only /pocketcoder/modes/currentModeId, not
+// replace the whole /pocketcoder/modes subtree (which used to wipe
+// availableModes until the next snapshot).
+func TestCurrentModeUpdateKeepsAvailableModes(t *testing.T) {
+	b := NewBridge("c", "r")
+	b.SeedSession(&acpsdk.SessionModeState{
+		CurrentModeId: "auto",
+		AvailableModes: []acpsdk.SessionMode{
+			{Id: "auto", Name: "auto"},
+			{Id: "chat", Name: "chat"},
+		},
+	}, nil)
+	if _, err := b.Update(acpsdk.SessionUpdate{
+		CurrentModeUpdate: &acpsdk.SessionCurrentModeUpdate{CurrentModeId: "chat"},
+	}); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	snap := b.Snapshot()
+	if len(snap) != 1 {
+		t.Fatalf("snapshot = %v, want 1 STATE_SNAPSHOT", snap)
+	}
+	b2, err := json.Marshal(snap[0])
+	if err != nil {
+		t.Fatalf("marshal snapshot: %v", err)
+	}
+	var decoded struct {
+		Snapshot struct {
+			Pocketcoder struct {
+				Modes struct {
+					CurrentModeId  string           `json:"currentModeId"`
+					AvailableModes []map[string]any `json:"availableModes"`
+				} `json:"modes"`
+			} `json:"pocketcoder"`
+		} `json:"snapshot"`
+	}
+	if err := json.Unmarshal(b2, &decoded); err != nil {
+		t.Fatalf("unmarshal snapshot: %v", err)
+	}
+	if decoded.Snapshot.Pocketcoder.Modes.CurrentModeId != "chat" {
+		t.Fatalf("currentModeId = %q, want chat", decoded.Snapshot.Pocketcoder.Modes.CurrentModeId)
+	}
+	if len(decoded.Snapshot.Pocketcoder.Modes.AvailableModes) != 2 {
+		t.Fatalf("availableModes = %v, want length 2 (must survive the mode update)", decoded.Snapshot.Pocketcoder.Modes.AvailableModes)
+	}
+}

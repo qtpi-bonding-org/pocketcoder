@@ -94,7 +94,7 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 	case update.PlanRemoved != nil:
 		return []events.Event{b.state.remove("plan")}, nil
 	case update.CurrentModeUpdate != nil:
-		return []events.Event{b.state.set("modes", map[string]any{"currentModeId": string(update.CurrentModeUpdate.CurrentModeId)})}, nil
+		return []events.Event{b.state.setSub("modes", "currentModeId", string(update.CurrentModeUpdate.CurrentModeId))}, nil
 	case update.ConfigOptionUpdate != nil:
 		return []events.Event{b.state.set("config", map[string]any{"options": configOptions(update.ConfigOptionUpdate.ConfigOptions)})}, nil
 	case update.AvailableCommandsUpdate != nil:
