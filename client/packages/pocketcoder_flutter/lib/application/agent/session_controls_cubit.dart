@@ -1,0 +1,93 @@
+// SessionControlsCubit (plan Task 12): owns the SessionState.modes and
+// SessionState.config slices of one chat's reduced Conversation stream and
+// acts on them through AgentChatRepository.setMode / setConfigOption.
+// Mirrors ChatCubit's open-pattern (subscribe via repository.watch; replace
+// the subscription on a subsequent open). selectMode/setOption never mutate
+// the modes/config maps directly — the next watch() emission carries the
+// updated snapshot.
+import 'dart:async';
+
+import 'package:acp_dart/acp_dart.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:injectable/injectable.dart';
+
+import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
+import 'session_controls_state.dart';
+
+@injectable
+class SessionControlsCubit extends AppCubit<SessionControlsState> {
+  SessionControlsCubit(this._repository) : super(const SessionControlsState());
+
+  final AgentChatRepository _repository;
+
+  StreamSubscription? _watchSub;
+  String? _chatId;
+
+  @override
+  Future<void> close() {
+    _watchSub?.cancel();
+    return super.close();
+  }
+
+  /// Starts watching [chatId]'s reduced Conversation and surfaces its
+  /// `sessionState.modes` + `sessionState.config` slices in
+  /// [SessionControlsState]. Calling this again with a different chatId
+  /// tears down the previous subscription first.
+  void open(String chatId) {
+    _chatId = chatId;
+    _watchSub?.cancel();
+    emit(state.copyWith(
+      chatId: chatId,
+      status: UiFlowStatus.loading,
+      lastOperation: SessionControlsOperation.open,
+    ));
+
+    _watchSub = _repository.watch(chatId).listen(
+      (conversation) {
+        emit(state.copyWith(
+          sessionState: conversation.sessionState,
+          status: UiFlowStatus.success,
+        ));
+      },
+      onError: (Object e) {
+        logError('🤖 [SessionControlsCubit] watch($chatId) error: $e');
+        emit(state.copyWith(error: e, status: UiFlowStatus.failure));
+      },
+    );
+  }
+
+  /// Selects [modeId] as the active session mode.
+  Future<void> selectMode(String modeId) async {
+    final chatId = _chatId;
+    if (chatId == null) {
+      logWarning('🤖 [SessionControlsCubit] selectMode called before open()');
+      return;
+    }
+    await tryOperation(() async {
+      await _repository.setMode(chatId, modeId);
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        lastOperation: SessionControlsOperation.selectMode,
+      );
+    });
+  }
+
+  /// Sets a session config option via the ACP-shaped
+  /// [SetSessionConfigOptionRequest].
+  Future<void> setOption(SetSessionConfigOptionRequest req) async {
+    final chatId = _chatId;
+    if (chatId == null) {
+      logWarning('🤖 [SessionControlsCubit] setOption called before open()');
+      return;
+    }
+    await tryOperation(() async {
+      await _repository.setConfigOption(chatId, req);
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        lastOperation: SessionControlsOperation.setOption,
+      );
+    });
+  }
+}

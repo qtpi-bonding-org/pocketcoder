@@ -18,6 +18,12 @@ import 'package:pocketbase/pocketbase.dart' as _i169;
 import 'package:pocketbase_drift/pocketbase_drift.dart' as _i824;
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart'
     as _i1066;
+import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart'
+    as _i710;
+import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart'
+    as _i225;
+import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart'
+    as _i312;
 import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart'
     as _i616;
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart'
@@ -305,6 +311,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     gh.factory<_i1066.ChatCubit>(
         () => _i1066.ChatCubit(gh<_i763.AgentChatRepository>()));
+    gh.factory<_i312.SessionControlsCubit>(
+        () => _i312.SessionControlsCubit(gh<_i763.AgentChatRepository>()));
+    gh.factory<_i225.PermissionCubit>(
+        () => _i225.PermissionCubit(gh<_i763.AgentChatRepository>()));
+    gh.factory<_i710.ElicitationCubit>(
+        () => _i710.ElicitationCubit(gh<_i763.AgentChatRepository>()));
     return this;
   }
 }
