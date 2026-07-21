@@ -11,11 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart';
-import 'package:pocketcoder_flutter/application/agent/elicitation_state.dart';
 import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart';
-import 'package:pocketcoder_flutter/application/agent/permission_state.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart';
-import 'package:pocketcoder_flutter/application/agent/session_controls_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
@@ -104,7 +101,13 @@ Widget _wrap(Widget child) {
       GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: const [Locale('en')],
-    home: child,
+    // Scaffold (not just a bare Material) so widgets that need both a
+    // Material ancestor (Switch, InkResponse/GestureDetector ink splashes)
+    // and unconstrained vertical space (Column/ListView inside these
+    // widgets) get real layout constraints instead of the tight/zero-size
+    // constraints `home: child` alone would hand them directly under
+    // MaterialApp.
+    home: Scaffold(body: child),
   );
 }
 
@@ -128,8 +131,16 @@ void main() {
 
     testWidgets('renders availableModes and tapping one calls selectMode',
         (tester) async {
+      await tester.pumpWidget(_wrap(
+        BlocProvider<SessionControlsCubit>.value(
+          value: cubit,
+          child: const ModeSwitcher(),
+        ),
+      ));
+      await _settle(tester);
+
       cubit.open('chat-1');
-      await Future<void>.delayed(Duration.zero);
+      await _settle(tester);
 
       repo.controllerFor('chat-1').add(Conversation(
             sessionState: SessionState(modes: {
@@ -140,14 +151,6 @@ void main() {
               ],
             }),
           ));
-      await _settle(tester);
-
-      await tester.pumpWidget(_wrap(
-        BlocProvider<SessionControlsCubit>.value(
-          value: cubit,
-          child: const ModeSwitcher(),
-        ),
-      ));
       await _settle(tester);
 
       expect(find.text('AUTO'), findsOneWidget);
@@ -178,8 +181,16 @@ void main() {
     testWidgets(
       'renders boolean + select options; flipping a boolean calls setOption',
       (tester) async {
+        await tester.pumpWidget(_wrap(
+          BlocProvider<SessionControlsCubit>.value(
+            value: cubit,
+            child: const ConfigPicker(),
+          ),
+        ));
+        await _settle(tester);
+
         cubit.open('chat-1');
-        await Future<void>.delayed(Duration.zero);
+        await _settle(tester);
 
         repo.controllerFor('chat-1').add(Conversation(
               sessionState: SessionState(config: {
@@ -203,14 +214,6 @@ void main() {
                 ],
               }),
             ));
-        await _settle(tester);
-
-        await tester.pumpWidget(_wrap(
-          BlocProvider<SessionControlsCubit>.value(
-            value: cubit,
-            child: const ConfigPicker(),
-          ),
-        ));
         await _settle(tester);
 
         expect(find.text('AUTO APPROVE'), findsOneWidget);
@@ -245,8 +248,16 @@ void main() {
     testWidgets(
       'renders the form for a pending elicitation; submit calls respondElicitation',
       (tester) async {
+        await tester.pumpWidget(_wrap(
+          BlocProvider<ElicitationCubit>.value(
+            value: cubit,
+            child: const ElicitationForm(),
+          ),
+        ));
+        await _settle(tester);
+
         cubit.open('chat-1');
-        await Future<void>.delayed(Duration.zero);
+        await _settle(tester);
 
         repo.controllerFor('chat-1').add(Conversation(
               sessionState: SessionState(elicitation: {
@@ -260,14 +271,6 @@ void main() {
                 },
               }),
             ));
-        await _settle(tester);
-
-        await tester.pumpWidget(_wrap(
-          BlocProvider<ElicitationCubit>.value(
-            value: cubit,
-            child: const ElicitationForm(),
-          ),
-        ));
         await _settle(tester);
 
         expect(find.text('Pick a value'), findsOneWidget);
@@ -290,15 +293,15 @@ void main() {
 
     testWidgets('renders nothing when no elicitation is pending',
         (tester) async {
-      cubit.open('chat-1');
-      await Future<void>.delayed(Duration.zero);
-
       await tester.pumpWidget(_wrap(
         BlocProvider<ElicitationCubit>.value(
           value: cubit,
           child: const ElicitationForm(),
         ),
       ));
+      await _settle(tester);
+
+      cubit.open('chat-1');
       await _settle(tester);
 
       expect(find.text('SUBMIT'), findsNothing);
@@ -321,8 +324,16 @@ void main() {
     testWidgets(
       'renders pending permission; tapping allow calls authorize(optionId)',
       (tester) async {
+        await tester.pumpWidget(_wrap(
+          BlocProvider<PermissionCubit>.value(
+            value: cubit,
+            child: const PermissionPrompt(),
+          ),
+        ));
+        await _settle(tester);
+
         cubit.open('chat-1');
-        await Future<void>.delayed(Duration.zero);
+        await _settle(tester);
 
         repo.controllerFor('chat-1').add(Conversation(
               sessionState: SessionState(permission: {
@@ -337,14 +348,6 @@ void main() {
                 ],
               }),
             ));
-        await _settle(tester);
-
-        await tester.pumpWidget(_wrap(
-          BlocProvider<PermissionCubit>.value(
-            value: cubit,
-            child: const PermissionPrompt(),
-          ),
-        ));
         await _settle(tester);
 
         expect(find.text('run shell'), findsOneWidget);
@@ -362,8 +365,16 @@ void main() {
 
     testWidgets('tapping deny calls respondPermission with cancelled:true',
         (tester) async {
+      await tester.pumpWidget(_wrap(
+        BlocProvider<PermissionCubit>.value(
+          value: cubit,
+          child: const PermissionPrompt(),
+        ),
+      ));
+      await _settle(tester);
+
       cubit.open('chat-1');
-      await Future<void>.delayed(Duration.zero);
+      await _settle(tester);
 
       repo.controllerFor('chat-1').add(Conversation(
             sessionState: SessionState(permission: {
@@ -373,14 +384,6 @@ void main() {
               ],
             }),
           ));
-      await _settle(tester);
-
-      await tester.pumpWidget(_wrap(
-        BlocProvider<PermissionCubit>.value(
-          value: cubit,
-          child: const PermissionPrompt(),
-        ),
-      ));
       await _settle(tester);
 
       await tester.tap(find.text('DENY'));
