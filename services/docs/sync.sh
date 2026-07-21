@@ -39,13 +39,6 @@ else
   ROOT_DIR="../../"
 fi
 
-if [ -f "$ROOT_DIR/DEVELOPMENT.md" ]; then
-  echo -e "---\ntitle: Development\ndescription: How to set up and build PocketCoder locally.\nhead: []\n---\n" > ./src/content/docs/development.md
-  extract_body "$ROOT_DIR/DEVELOPMENT.md" >> ./src/content/docs/development.md
-else
-  echo "⚠️ DEVELOPMENT.md not found at $ROOT_DIR"
-fi
-
 if [ -f "$ROOT_DIR/SECURITY.md" ]; then
   echo -e "---\ntitle: Security Architecture\ndescription: How PocketCoder enforces sovereign isolation.\nhead: []\n---\n" > ./src/content/docs/architecture.md
   extract_body "$ROOT_DIR/SECURITY.md" >> ./src/content/docs/architecture.md
@@ -117,64 +110,6 @@ if command -v cargo-docs-md &> /dev/null; then
 else
   echo "❌ Error: cargo-docs-md not found"
 fi
-
-# 4. Extract TypeScript Docs (OpenCode Tools, Plugins, Interface)
-echo "📘 Extracting TypeScript docs..."
-
-TS_OUT="./src/content/docs/reference/tools.md"
-cat > "$TS_OUT" << 'FRONTMATTER'
----
-title: Tools & Interface Reference
-head: []
----
-FRONTMATTER
-
-TS_DIRS=("$ROOT_DIR/services/opencode/tools" "$ROOT_DIR/services/opencode/plugins" "$ROOT_DIR/services/interface/src")
-TAG="@pocketcoder-core"
-
-for ts_dir in "${TS_DIRS[@]}"; do
-  [ -d "$ts_dir" ] || continue
-  find "$ts_dir" -name "*.ts" -type f | sort | while read -r ts_file; do
-    # Only process tagged files
-    grep -q "$TAG" "$ts_file" || continue
-
-    # Extract the @pocketcoder-core description
-    tag_line=$(grep -m1 "$TAG:" "$ts_file" | sed "s/.*$TAG: //")
-    [ -z "$tag_line" ] && continue
-
-    # Split into title and subtitle at first period
-    title=$(echo "$tag_line" | sed 's/\..*//')
-    subtitle=$(echo "$tag_line" | sed 's/^[^.]*\. *//')
-
-    echo "" >> "$TS_OUT"
-    echo "## $title" >> "$TS_OUT"
-    echo "> $subtitle" >> "$TS_OUT"
-    echo "" >> "$TS_OUT"
-
-    # Extract tool description (if present)
-    tool_desc=$(grep -m1 'description:' "$ts_file" | sed 's/.*description: *"//; s/",*$//' | head -1)
-    if [ -n "$tool_desc" ]; then
-      echo "**Description:** $tool_desc" >> "$TS_OUT"
-      echo "" >> "$TS_OUT"
-    fi
-
-    # Extract args and their .describe() strings
-    arg_lines=$(grep '\.describe(' "$ts_file" | grep -v '//' || true)
-    if [ -n "$arg_lines" ]; then
-      echo "**Args:**" >> "$TS_OUT"
-      echo "$arg_lines" | while read -r arg_line; do
-        arg_name=$(echo "$arg_line" | sed 's/^ *//' | sed 's/:.*//')
-        arg_desc=$(echo "$arg_line" | sed 's/.*\.describe("//; s/").*$//')
-        echo "- \`$arg_name\` — $arg_desc" >> "$TS_OUT"
-      done
-      echo "" >> "$TS_OUT"
-    fi
-
-    echo "---" >> "$TS_OUT"
-  done
-done
-
-echo "✅ TypeScript reference written to $TS_OUT"
 
 # 5. Extract Stats and Update Landing Page
 # Extract TOTAL_CORE from the generated CODEBASE.md
