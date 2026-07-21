@@ -16,6 +16,8 @@ import 'package:http/http.dart' as _i519;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:pocketbase/pocketbase.dart' as _i169;
 import 'package:pocketbase_drift/pocketbase_drift.dart' as _i824;
+import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart'
+    as _i1066;
 import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart'
     as _i616;
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart'
@@ -74,6 +76,10 @@ import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart'
     as _i800;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
     as _i300;
+import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart'
+    as _i763;
+import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dart'
+    as _i313;
 import 'package:pocketcoder_flutter/infrastructure/agent/cache/agent_cache_db.dart'
     as _i619;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_daos.dart'
@@ -250,6 +256,10 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i616.AiConfigCubit>(
         () => _i616.AiConfigCubit(gh<_i536.IAiConfigRepository>()));
+    gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
+          pocketBase: gh<_i169.PocketBase>(),
+          httpClient: gh<_i519.Client>(),
+        ));
     gh.factory<_i252.SopCubit>(
         () => _i252.SopCubit(gh<_i656.IEvolutionRepository>()));
     gh.factory<_i506.StatusCubit>(
@@ -282,12 +292,19 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
     gh.factory<_i464.AuthCubit>(
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
+    gh.lazySingleton<_i763.AgentChatRepository>(() => _i763.AgentChatRepository(
+          gh<_i313.AgentStreamClient>(),
+          gh<_i619.AgentCacheDb>(),
+          gh<_i300.AgentActionsApi>(),
+        ));
     gh.factory<_i278.ChatCubit>(
         () => _i278.ChatCubit(gh<_i405.IChatRepository>()));
     gh.factory<_i606.ChatListCubit>(
         () => _i606.ChatListCubit(gh<_i405.IChatRepository>()));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
+    gh.factory<_i1066.ChatCubit>(
+        () => _i1066.ChatCubit(gh<_i763.AgentChatRepository>()));
     return this;
   }
 }
