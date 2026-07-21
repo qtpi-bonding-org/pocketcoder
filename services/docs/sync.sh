@@ -57,7 +57,7 @@ for guide in ./guides/*.md; do
   fi
 done
 
-# 2. Extract Go Docs (Backend & Relay)
+# 2. Extract Go Docs (c1 backend)
 echo "🐹 Extracting Go docs..."
 echo -e "---\ntitle: Backend Reference\nhead: []\n---\n" > ./src/content/docs/reference/backend.md
 if command -v gomarkdoc &> /dev/null; then
@@ -72,44 +72,8 @@ else
   echo "❌ Error: gomarkdoc not found"
 fi
 
-# 3. Extract Proxy Docs (Rust)
-echo "🦀 Generating High-Fidelity Proxy docs (Rust)..."
-# We generate rustdoc JSON first (requires stable + bootstrap for unstable flags)
-if [ -d "$ROOT_DIR/services/proxy" ]; then
-  (cd "$ROOT_DIR/services/proxy" && RUSTC_BOOTSTRAP=1 cargo rustdoc -- -Z unstable-options --output-format json) || echo "⚠️ RustDoc JSON generation failed"
-else
-  echo "⚠️ services/proxy directory not found"
-fi
-
-echo -e "---\ntitle: Proxy Reference\nhead: []\n---\n" > ./src/content/docs/reference/proxy.md
-
-if command -v cargo-docs-md &> /dev/null; then
-  echo "📦 Converting rustdoc JSON to Markdown..."
-  # Generate to a temporary location
-  mkdir -p /tmp/proxy_docs
-  if [ -d "$ROOT_DIR/services/proxy" ]; then
-    (cd "$ROOT_DIR/services/proxy" && cargo docs-md --path target/doc/pocketcoder_proxy.json --output /tmp/proxy_docs)
-    
-    # Concatenate the results into our reference file
-    # Primary index first
-    if [ -f /tmp/proxy_docs/index.md ]; then
-      cat /tmp/proxy_docs/index.md >> ./src/content/docs/reference/proxy.md
-    fi
-    
-    # Then append submodules
-    for mod_dir in /tmp/proxy_docs/*/; do
-      if [ -d "$mod_dir" ]; then
-        mod_name=$(basename "$mod_dir")
-        echo -e "\n\n---\n# Module: $mod_name\n" >> ./src/content/docs/reference/proxy.md
-        if [ -f "$mod_dir/index.md" ]; then
-          cat "$mod_dir/index.md" >> ./src/content/docs/reference/proxy.md
-        fi
-      fi
-    done
-  fi
-else
-  echo "❌ Error: cargo-docs-md not found"
-fi
+# The Rust sandbox proxy is dormant (moved to dormant/); its reference page is
+# no longer generated. See dormant/README.md.
 
 # 5. Extract Stats and Update Landing Page
 # Extract TOTAL_CORE from the generated CODEBASE.md

@@ -25,7 +25,6 @@ export default defineConfig({
                     label: 'Reference',
                     items: [
                         { label: 'Backend (Go)', link: '/reference/backend' },
-                        { label: 'Proxy (Rust)', link: '/reference/proxy' },
                     ],
                 },
             ],

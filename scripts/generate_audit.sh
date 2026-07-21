@@ -31,12 +31,12 @@ TAG="@pocketcoder-core"
 # ---------------------------------------------------------------------------
 # Core source directories to scan for the tag index (new services/ layout)
 # ---------------------------------------------------------------------------
+# Active product code only. Dormant components (dormant/) are intentionally
+# excluded — they are retained for reference but are not built or shipped.
 CORE_DIRS=(
   "services/pocketbase"
-  "services/proxy"
   "services/goose"
   "services/mcp-gateway"
-  "services/poco-agents"
   "scripts"
   "client"
 )
@@ -187,31 +187,39 @@ done < <(find "$REPO_ROOT/client" \
 # Footer: language breakdown
 # ---------------------------------------------------------------------------
 GO_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*.go' ! -path '*/tests/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
-RUST_LOC=$(find "$REPO_ROOT/services/proxy/src" -name '*.rs' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
-TS_LOC=0
 
 # Bash: git-TRACKED shell scripts only. A repo-wide find would sweep in
 # gitignored vendored trees (.independent_repos, venv, fdroid_env, client
 # iOS/Flutter tooling), inflating the count several-fold. Tracked-only is
-# the honest measure of PocketCoder's own shell surface.
+# the honest measure of PocketCoder's own shell surface. Bash is tooling and
+# test harnesses, not product code — reported separately and never in the core.
 BASH_LOC=$( (cd "$REPO_ROOT" && git ls-files -z '*.sh' ':!:*/tests/*' | xargs -0 cat 2>/dev/null) | wc -l | tr -d ' ')
 
-# Core total = Go + Rust + TS + Python (CAO added) + Dart (non-generated)
-CORE_TOTAL=$((GO_LOC + RUST_LOC + TS_LOC + CAO_ADDED + DART_LOC))
+# Core = active product code only: Go (c1) + Dart (client). Dormant Rust is
+# excluded (see dormant/); Bash is tooling/tests, tallied but not core.
+CORE_TOTAL=$((GO_LOC + DART_LOC))
 
 {
 echo ""
 echo "---"
 echo ""
-echo "## 📊 Lines of Code by Language"
+echo "## 📊 Lines of Code"
 echo ""
-echo "| Language | LoC | Notes |"
+echo "**Core product code:**"
+echo ""
+echo "| Language | LoC | Component |"
 echo "| :--- | ---: | :--- |"
 echo "| Go | ${GO_LOC} | c1: PocketBase + ACP client + AG-UI server |"
-echo "| Rust | ${RUST_LOC} | Sandbox proxy (dormant, retained for future hardening) |"
 echo "| Dart | ${DART_LOC} | Flutter client (non-generated, non-test) |"
-echo "| Bash | ${BASH_LOC} | Shell scripts (infra / helpers, not counted in core) |"
-echo "| **Core total** | **${CORE_TOTAL}** | Go + Rust + Dart |"
+echo "| **Core total** | **${CORE_TOTAL}** | Go + Dart |"
+echo ""
+echo "**Tooling & tests** (not product code):"
+echo ""
+echo "| Type | LoC | Notes |"
+echo "| :--- | ---: | :--- |"
+echo "| Bash | ${BASH_LOC} | Scripts, infra, and test harnesses (git-tracked only) |"
+echo ""
+echo "_Dormant (retained, not built): Rust sandbox proxy & poco-agents — see \`dormant/\`._"
 echo ""
 echo "*Tagged core files (index above): $FILE_COUNT.*"
 } >> "$TARGET_FILE"
@@ -238,10 +246,9 @@ if [[ -f "$README_FILE" ]]; then
 | Language | LoC | Component |
 | :--- | ---: | :--- |
 | Go | $(fmt $GO_LOC) | c1: PocketBase + ACP client + AG-UI server |
-| Rust | $(fmt $RUST_LOC) | Sandbox proxy (dormant) |
 | Dart | $(fmt $DART_LOC) | Flutter client (non-generated) |
-| Bash | $(fmt $BASH_LOC) | Shell scripts (infra — separate tally) |
-| **CORE TOTAL** | **~$(fmt $CORE_TOTAL)** | **Lean, Fast, Fully Sovereign.** |
+| **Core code** | **~$(fmt $CORE_TOTAL)** | Go + Dart — product code |
+| Bash | $(fmt $BASH_LOC) | Tests & tooling — scripts/infra, not product code |
 READMEEOF
 
   # Replace the table: find header row, insert replacement, skip old rows until blank line
