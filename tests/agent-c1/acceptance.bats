@@ -100,7 +100,7 @@ start_run() {
   resp=$(curl --max-time 15 -sS \
     -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/prompt" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"prompt\":$(jq -Rs . <<<"$prompt")}")
+    -d "{\"prompt\":[{\"type\":\"text\",\"text\":$(jq -Rs . <<<"$prompt")}]}")
   RUN_ID=$(jq -r .runId <<<"$resp")
   [ -n "$RUN_ID" ] && [ "$RUN_ID" != null ]
 }
@@ -151,7 +151,7 @@ submit_option() {
   APPROVAL_HTTP_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' \
     -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/request_permission/$APPROVAL_ID" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"optionId\":\"$option_id\"}")
+    -d "{\"outcome\":{\"outcome\":\"selected\",\"optionId\":\"$option_id\"}}")
 }
 
 # wait_for_finish polls the stream capture for RUN_FINISHED rather than
@@ -238,7 +238,7 @@ resolve_permissions_until_finish() {
   conflict=$(curl -sS -o "$BATS_TEST_TMPDIR/conflict.json" -w '%{http_code}' \
     -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/prompt" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d '{"prompt":"This must be rejected as concurrent."}')
+    -d '{"prompt":[{"type":"text","text":"This must be rejected as concurrent."}]}')
   [ "$conflict" = 409 ]
 
   # A second, independent subscriber attaching mid-run must never see a 409
@@ -299,7 +299,7 @@ resolve_permissions_until_finish() {
   stale_status=$(curl -sS -o "$BATS_TEST_TMPDIR/stale.json" -w '%{http_code}' \
     -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/request_permission/$old_approval" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d '{"optionId":"allow_once"}')
+    -d '{"outcome":{"outcome":"selected","optionId":"allow_once"}}')
   [ "$stale_status" = 404 ]
 
   # This must use the original chat. A c1 restart cannot leave its Goose
