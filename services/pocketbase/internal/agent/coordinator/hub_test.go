@@ -226,3 +226,21 @@ func TestIsEmptyAfterEvictionAndNoSubscribers(t *testing.T) {
 		t.Fatal("hub with no run and no subscribers should be empty")
 	}
 }
+
+func TestColdReplayAndLiveShareOneMonotonicSeq(t *testing.T) {
+	h := NewChatHub(NewFakeClock(time.Unix(0, 0)), 30*time.Second, 8)
+	// Simulate a cold replay allocating 3 seqs, then a live run allocating 2.
+	a, b, c := h.nextSeq(), h.nextSeq(), h.nextSeq()
+	h.StartRun("run-1", func() []events.Event { return nil })
+	d := h.Publish(textEv("x"))
+	e := h.Publish(textEv("y"))
+	got := []int{a, b, c, d, e}
+	for i := 1; i < len(got); i++ {
+		if got[i] != got[i-1]+1 {
+			t.Fatalf("seqs not strictly monotonic: %v", got)
+		}
+	}
+	if a != 1 || e != 5 {
+		t.Fatalf("want 1..5, got %v", got)
+	}
+}

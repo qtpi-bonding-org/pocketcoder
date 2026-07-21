@@ -111,17 +111,17 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		if att.ColdReplayNeeded {
 			sessionID, err := gooseSessionForChat(app, chatID, re.Auth.Id)
 			if err != nil {
-				_ = writeFlush(re.Response, flusher, cursor, events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
+				_ = writeFlush(re.Response, flusher, service.NextSeq(chatID), events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
 			} else if err := service.StreamColdReplay(re.Request.Context(), chatID, sessionID,
 				func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
 				func(seq int, ev events.Event) error {
 					return writeFlush(re.Response, flusher, seq, ev)
 				}); err != nil {
-				_ = writeSeqFrame(re.Response, cursor, events.NewRunErrorEvent("replay failed", events.WithErrorCode("goose_replay_failed")))
+				_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("replay failed", events.WithErrorCode("goose_replay_failed")))
 			}
 		}
 		for _, ev := range att.Snapshot {
-			_ = writeFlush(re.Response, flusher, cursor, ev)
+			_ = writeFlush(re.Response, flusher, service.NextSeq(chatID), ev)
 		}
 		for _, e := range att.Buffered {
 			_ = writeFlush(re.Response, flusher, e.Seq, e.Ev)
