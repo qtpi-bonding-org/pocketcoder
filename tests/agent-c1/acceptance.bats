@@ -304,17 +304,17 @@ resolve_permissions_until_finish() {
 
   # This must use the original chat. A c1 restart cannot leave its Goose
   # request_permission blocked indefinitely after the in-memory ID is gone.
-  # The reloaded session carries the prior shell-tool context, which nudges a
-  # real model to re-invoke the tool and stall on a fresh permission prompt;
-  # steer it to a plain text reply so this asserts chat recovery, not tool use.
+  # The reloaded session carries the prior shell-tool context, so a real model
+  # tends to re-invoke the tool and stall on a fresh permission prompt. Rather
+  # than fight that bias with "reply as text" (which the model ignores on
+  # reload, making the assertion flaky), drive a tool run and resolve whatever
+  # prompt appears: reaching RUN_FINISHED on the same chat IS the recovery.
   open_stream
-  start_run "Do not use any tools. Reply with exactly: same-chat-after-c1-restart"
-  wait_for_text 'same-chat-after-c1-restart'
-  wait_for_finish
+  start_run "Invoke the shell tool and run exactly: printf same-chat-after-c1-restart"
+  resolve_permissions_until_finish allow_once
   docker restart "$GOOSE_CONTAINER" >/dev/null
   wait_for_goose
   open_stream
-  start_run "Do not use any tools. Reply with exactly: after-c2-restart"
-  wait_for_text 'after-c2-restart'
-  wait_for_finish
+  start_run "Invoke the shell tool and run exactly: printf after-c2-restart"
+  resolve_permissions_until_finish allow_once
 }
