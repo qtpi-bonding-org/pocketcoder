@@ -24,6 +24,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_i
 import 'package:pocketcoder_flutter/presentation/core/widgets/permission_prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 
 class ChatScreen extends StatelessWidget {
   final String? chatId;
@@ -32,7 +33,23 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ChatView(chatId: chatId);
+    // Each cubit is @injectable (factory), so every ChatScreen mount gets
+    // its own fresh instance scoped to this route — _ChatView.open()s them
+    // against widget.chatId in initState. Nothing above this route provides
+    // these types (the app-root MultiBlocProvider in app/app.dart only
+    // provides the legacy application/chat/ChatCubit, a distinct type still
+    // used by file_screen.dart/terminal_screen.dart for unrelated features),
+    // so this screen must provide them itself.
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ChatCubit>(create: (_) => getIt<ChatCubit>()),
+        BlocProvider<PermissionCubit>(create: (_) => getIt<PermissionCubit>()),
+        BlocProvider<ElicitationCubit>(create: (_) => getIt<ElicitationCubit>()),
+        BlocProvider<SessionControlsCubit>(
+            create: (_) => getIt<SessionControlsCubit>()),
+      ],
+      child: _ChatView(chatId: chatId),
+    );
   }
 }
 
