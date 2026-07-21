@@ -19,7 +19,7 @@ Thanks for checking out PocketCoder! I'm building this as a way to explore how w
 
 ## 🛠 Development Flow
 
-1.  **Setup**: Check out `DEVELOPMENT.md`.
+1.  **Setup**: Check out `README.md` and `CLAUDE.md`.
 2.  **Style**:
     *   **Go**: Logic should be decentralized into `internal/` packages. Keep `main.go` thin.
     *   **Philosophy**: If a feature can be solved with a standard Unix tool (like `grep` or `tmux`), let's use that instead of writing new code.
