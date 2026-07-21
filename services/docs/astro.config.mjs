@@ -19,8 +19,6 @@ export default defineConfig({
                     label: 'Guides',
                     items: [
                         { label: 'Architecture', link: '/architecture' },
-                        { label: 'Development', link: '/development' },
-                        { label: 'Adding Tools', link: '/guides/adding_tools' },
                     ],
                 },
                 {
@@ -28,7 +26,6 @@ export default defineConfig({
                     items: [
                         { label: 'Backend (Go)', link: '/reference/backend' },
                         { label: 'Proxy (Rust)', link: '/reference/proxy' },
-                        { label: 'Tools & Interface (TS)', link: '/reference/tools' },
                     ],
                 },
             ],
