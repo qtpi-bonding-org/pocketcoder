@@ -773,8 +773,8 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: "2e5c947f6dc39037a7323409f42e1532b8502e5f"
-      resolved-ref: "2e5c947f6dc39037a7323409f42e1532b8502e5f"
+      ref: d7a30dfc7922a9903c07dcb0ae15e8a6d606ea6b
+      resolved-ref: d7a30dfc7922a9903c07dcb0ae15e8a6d606ea6b
       url: "git@github.com:qtpi-bonding-org/dart_l10n_key_resolver.git"
     source: git
     version: "0.1.0"

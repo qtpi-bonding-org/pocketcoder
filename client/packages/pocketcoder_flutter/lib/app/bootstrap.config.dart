@@ -72,6 +72,8 @@ import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
     as _i190;
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart'
     as _i800;
+import 'package:pocketcoder_flutter/infrastructure/agent/cache/agent_cache_db.dart'
+    as _i619;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_daos.dart'
     as _i61;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_repository.dart'
@@ -151,6 +153,7 @@ extension GetItInjectableX on _i174.GetIt {
         () => externalModule.flutterSecureStorage);
     gh.lazySingleton<_i992.PocoCubit>(() => _i992.PocoCubit());
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
+    gh.lazySingleton<_i619.AgentCacheDb>(() => _i619.AgentCacheDb());
     gh.factory<_i1000.SshTerminalCubit>(
         () => _i1000.SshTerminalCubit(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i589.PocketCoderApi>(
