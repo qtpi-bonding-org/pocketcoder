@@ -25,6 +25,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agui_decode.dart';
 
@@ -41,6 +42,7 @@ typedef StreamFrame = ({int seq, String rawJson, AguiEvent event});
 ///
 /// Construction is dependency-injected so tests can supply a fake
 /// [http.Client] that produces a deterministic byte stream.
+@lazySingleton
 class AgentStreamClient {
   /// Reads `baseURL` and `authStore.token` off this instance. We never
   /// mutate the PocketBase — injection is for URL + token, nothing more.
