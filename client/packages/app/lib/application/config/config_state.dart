@@ -7,7 +7,7 @@ part 'config_state.freezed.dart';
 
 /// Configuration state for deployment settings
 @freezed
-class ConfigState with _$ConfigState implements IUiFlowState {
+sealed class ConfigState with _$ConfigState implements IUiFlowState {
   const ConfigState._();
 
   const factory ConfigState({

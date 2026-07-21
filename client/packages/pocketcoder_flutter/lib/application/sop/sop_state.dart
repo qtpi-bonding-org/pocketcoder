@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/domain/models/proposal.dart';
 part 'sop_state.freezed.dart';
 
 @freezed
-class SopState with _$SopState {
+sealed class SopState with _$SopState {
   const factory SopState({
     @Default([]) List<Sop> sops,
     @Default([]) List<Proposal> proposals,

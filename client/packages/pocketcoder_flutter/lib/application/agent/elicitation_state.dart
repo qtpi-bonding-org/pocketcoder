@@ -13,7 +13,7 @@ enum ElicitationOperation {
 }
 
 @freezed
-class ElicitationState with _$ElicitationState implements IUiFlowState {
+sealed class ElicitationState with _$ElicitationState implements IUiFlowState {
   const ElicitationState._();
 
   const factory ElicitationState({

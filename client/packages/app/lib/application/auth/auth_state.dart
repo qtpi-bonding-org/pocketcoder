@@ -6,7 +6,7 @@ part 'auth_state.freezed.dart';
 
 /// Authentication state for the mobile deployment feature
 @freezed
-class AuthState with _$AuthState implements IUiFlowState {
+sealed class AuthState with _$AuthState implements IUiFlowState {
   const AuthState._();
 
   const factory AuthState({

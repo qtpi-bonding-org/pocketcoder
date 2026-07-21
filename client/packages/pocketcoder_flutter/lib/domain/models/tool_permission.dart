@@ -5,7 +5,7 @@ part 'tool_permission.freezed.dart';
 part 'tool_permission.g.dart';
 
 @freezed
-class ToolPermission with _$ToolPermission {
+sealed class ToolPermission with _$ToolPermission {
   const factory ToolPermission({
     required String id,
     String? agent,

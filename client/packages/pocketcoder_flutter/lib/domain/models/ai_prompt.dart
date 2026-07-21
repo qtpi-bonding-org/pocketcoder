@@ -5,7 +5,7 @@ part 'ai_prompt.freezed.dart';
 part 'ai_prompt.g.dart';
 
 @freezed
-class AiPrompt with _$AiPrompt {
+sealed class AiPrompt with _$AiPrompt {
   const factory AiPrompt({
     required String id,
     required String name,

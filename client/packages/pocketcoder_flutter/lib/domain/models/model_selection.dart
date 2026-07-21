@@ -5,7 +5,7 @@ part 'model_selection.freezed.dart';
 part 'model_selection.g.dart';
 
 @freezed
-class ModelSelection with _$ModelSelection {
+sealed class ModelSelection with _$ModelSelection {
   const factory ModelSelection({
     required String id,
     required String model,

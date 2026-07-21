@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/domain/models/chat.dart';
 part 'chat_list_state.freezed.dart';
 
 @freezed
-class ChatListState with _$ChatListState implements IUiFlowState {
+sealed class ChatListState with _$ChatListState implements IUiFlowState {
   const factory ChatListState({
     @Default([]) List<Chat> chats,
     @Default(UiFlowStatus.idle) UiFlowStatus status,

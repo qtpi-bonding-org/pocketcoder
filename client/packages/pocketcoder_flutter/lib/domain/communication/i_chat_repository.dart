@@ -34,7 +34,7 @@ abstract class IChatRepository {
 }
 
 @freezed
-class HotPipeEvent with _$HotPipeEvent {
+sealed class HotPipeEvent with _$HotPipeEvent {
   const factory HotPipeEvent.textDelta({
     required String messageId,
     required String partId,

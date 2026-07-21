@@ -5,7 +5,7 @@ part 'llm_provider.freezed.dart';
 part 'llm_provider.g.dart';
 
 @freezed
-class LlmProvider with _$LlmProvider {
+sealed class LlmProvider with _$LlmProvider {
   const factory LlmProvider({
     required String id,
     required String providerId,

@@ -4,7 +4,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 part 'terminal_state.freezed.dart';
 
 @freezed
-class SshTerminalState with _$SshTerminalState implements IUiFlowState {
+sealed class SshTerminalState with _$SshTerminalState implements IUiFlowState {
   const SshTerminalState._();
 
   const factory SshTerminalState({

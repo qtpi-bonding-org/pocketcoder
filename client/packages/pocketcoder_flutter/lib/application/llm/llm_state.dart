@@ -7,7 +7,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 part 'llm_state.freezed.dart';
 
 @freezed
-class LlmState with _$LlmState implements IUiFlowState {
+sealed class LlmState with _$LlmState implements IUiFlowState {
   const LlmState._();
 
   const factory LlmState({

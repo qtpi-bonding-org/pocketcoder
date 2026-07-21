@@ -15,7 +15,7 @@ enum SessionControlsOperation {
 }
 
 @freezed
-class SessionControlsState with _$SessionControlsState
+sealed class SessionControlsState with _$SessionControlsState
     implements IUiFlowState {
   const SessionControlsState._();
 

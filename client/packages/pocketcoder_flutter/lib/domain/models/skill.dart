@@ -5,7 +5,7 @@ part 'skill.freezed.dart';
 part 'skill.g.dart';
 
 @freezed
-class Skill with _$Skill {
+sealed class Skill with _$Skill {
   const factory Skill({
     required String id,
     required String name,

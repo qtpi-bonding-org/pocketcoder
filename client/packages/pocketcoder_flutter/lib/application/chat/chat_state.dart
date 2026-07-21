@@ -13,7 +13,7 @@ enum ChatOperation {
 }
 
 @freezed
-class ChatState with _$ChatState implements IUiFlowState {
+sealed class ChatState with _$ChatState implements IUiFlowState {
   const ChatState._();
 
   const factory ChatState({

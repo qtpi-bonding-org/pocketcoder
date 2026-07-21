@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/domain/observability/i_observability_reposit
 part 'observability_state.freezed.dart';
 
 @freezed
-class ObservabilityState with _$ObservabilityState implements IUiFlowState {
+sealed class ObservabilityState with _$ObservabilityState implements IUiFlowState {
   const ObservabilityState._();
 
   const factory ObservabilityState({
