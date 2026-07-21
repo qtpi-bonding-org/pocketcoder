@@ -5,7 +5,7 @@ part 'ai_model.freezed.dart';
 part 'ai_model.g.dart';
 
 @freezed
-class AiModel with _$AiModel {
+sealed class AiModel with _$AiModel {
   const factory AiModel({
     required String id,
     required String name,

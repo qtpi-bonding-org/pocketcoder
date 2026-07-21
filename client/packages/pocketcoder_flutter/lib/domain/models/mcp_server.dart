@@ -5,7 +5,7 @@ part 'mcp_server.freezed.dart';
 part 'mcp_server.g.dart';
 
 @freezed
-class McpServer with _$McpServer {
+sealed class McpServer with _$McpServer {
   const factory McpServer({
     required String id,
     required String name,

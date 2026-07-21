@@ -4,7 +4,7 @@ part 'permission_api_models.freezed.dart';
 part 'permission_api_models.g.dart';
 
 @freezed
-class PermissionResponse with _$PermissionResponse {
+sealed class PermissionResponse with _$PermissionResponse {
   const factory PermissionResponse({
     required bool permitted,
     required String id,

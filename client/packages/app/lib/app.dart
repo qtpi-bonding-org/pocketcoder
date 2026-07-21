@@ -234,13 +234,15 @@ class RevenueCatBillingService implements BillingService {
         final products = await Purchases.getProducts([identifier]);
         if (products.isEmpty) return false;
 
-        final customerInfo =
+        final purchaseResult =
             await Purchases.purchaseStoreProduct(products.first);
-        return customerInfo.entitlements.active.containsKey('premium');
+        return purchaseResult.customerInfo.entitlements.active
+            .containsKey('premium');
       }
 
-      final customerInfo = await Purchases.purchasePackage(package);
-      return customerInfo.entitlements.active.containsKey('premium');
+      final purchaseResult = await Purchases.purchasePackage(package);
+      return purchaseResult.customerInfo.entitlements.active
+          .containsKey('premium');
     } catch (e) {
       return false;
     }

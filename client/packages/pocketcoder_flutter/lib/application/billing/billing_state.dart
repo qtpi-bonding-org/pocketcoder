@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 part 'billing_state.freezed.dart';
 
 @freezed
-class BillingState with _$BillingState implements IUiFlowState {
+sealed class BillingState with _$BillingState implements IUiFlowState {
   const BillingState._();
 
   const factory BillingState({

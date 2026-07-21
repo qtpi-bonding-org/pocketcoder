@@ -5,7 +5,7 @@ part 'llm_key.freezed.dart';
 part 'llm_key.g.dart';
 
 @freezed
-class LlmKey with _$LlmKey {
+sealed class LlmKey with _$LlmKey {
   const factory LlmKey({
     required String id,
     required String providerId,

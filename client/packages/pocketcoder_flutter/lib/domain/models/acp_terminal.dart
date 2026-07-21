@@ -5,7 +5,7 @@ part 'acp_terminal.freezed.dart';
 part 'acp_terminal.g.dart';
 
 @freezed
-class AcpTerminal with _$AcpTerminal {
+sealed class AcpTerminal with _$AcpTerminal {
   const factory AcpTerminal({
     required String id,
     required String acpTerminalId,

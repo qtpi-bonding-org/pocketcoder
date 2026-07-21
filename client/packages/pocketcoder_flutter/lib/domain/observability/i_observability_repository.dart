@@ -12,7 +12,7 @@ abstract class IObservabilityRepository {
 }
 
 @freezed
-class SystemStats with _$SystemStats {
+sealed class SystemStats with _$SystemStats {
   const factory SystemStats({
     @Default(0) int totalMessages,
     @Default('\$0.00') String cumulativeCost,
@@ -42,7 +42,7 @@ class SystemStats with _$SystemStats {
 }
 
 @freezed
-class OperationalTask with _$OperationalTask {
+sealed class OperationalTask with _$OperationalTask {
   const factory OperationalTask({
     required String id,
     required String status,
@@ -64,7 +64,7 @@ class OperationalTask with _$OperationalTask {
 }
 
 @freezed
-class TokenUsage with _$TokenUsage {
+sealed class TokenUsage with _$TokenUsage {
   const factory TokenUsage({
     required String model,
     required int tokens,

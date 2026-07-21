@@ -5,7 +5,7 @@ part 'ai_agent.freezed.dart';
 part 'ai_agent.g.dart';
 
 @freezed
-class AiAgent with _$AiAgent {
+sealed class AiAgent with _$AiAgent {
   const factory AiAgent({
     required String id,
     required String name,

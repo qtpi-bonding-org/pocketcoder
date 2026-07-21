@@ -7,7 +7,7 @@ import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 part 'poco_cubit.freezed.dart';
 
 @freezed
-class PocoState with _$PocoState {
+sealed class PocoState with _$PocoState {
   const factory PocoState({
     required String message,
     required List<(String, int)> sequence,

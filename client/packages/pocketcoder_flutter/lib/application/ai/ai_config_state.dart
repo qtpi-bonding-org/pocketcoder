@@ -7,7 +7,7 @@ import 'package:pocketcoder_flutter/domain/models/ai_model.dart';
 part 'ai_config_state.freezed.dart';
 
 @freezed
-class AiConfigState with _$AiConfigState implements IUiFlowState {
+sealed class AiConfigState with _$AiConfigState implements IUiFlowState {
   const AiConfigState._();
 
   const factory AiConfigState({

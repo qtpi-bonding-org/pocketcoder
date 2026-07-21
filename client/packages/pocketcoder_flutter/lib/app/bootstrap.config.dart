@@ -1,5 +1,5 @@
-// dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 // **************************************************************************
 // InjectableConfigGenerator
@@ -166,14 +166,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i558.FlutterSecureStorage>(
         () => externalModule.flutterSecureStorage);
     gh.lazySingleton<_i992.PocoCubit>(() => _i992.PocoCubit());
-    gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
     gh.lazySingleton<_i619.AgentCacheDb>(() => _i619.AgentCacheDb());
+    gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
     gh.factory<_i1000.SshTerminalCubit>(
         () => _i1000.SshTerminalCubit(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i589.PocketCoderApi>(
-        () => _i589.PocketCoderApi(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i300.AgentActionsApi>(
         () => _i300.AgentActionsApi(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i589.PocketCoderApi>(
+        () => _i589.PocketCoderApi(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i611.IObservabilityRepository>(
         () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i190.IStatusRepository>(
@@ -188,29 +188,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i304.BillingCubit(gh<_i619.BillingService>()));
     gh.lazySingleton<_i653.ILocalizationService>(
         () => _i1000.AppLocalizationService());
-    gh.lazySingleton<_i1055.LlmKeyDao>(
-        () => _i1055.LlmKeyDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i1055.ModelSelectionDao>(
-        () => _i1055.ModelSelectionDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i1055.LlmProviderDao>(
-        () => _i1055.LlmProviderDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i589.UserDao>(
-        () => _i589.UserDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i589.SshKeyDao>(
-        () => _i589.SshKeyDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i658.PermissionDao>(
-        () => _i658.PermissionDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i658.QuestionDao>(
-        () => _i658.QuestionDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i658.ToolPermissionDao>(
-        () => _i658.ToolPermissionDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i444.McpServerDao>(
-        () => _i444.McpServerDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i1065.HealthcheckDao>(
-        () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i197.ProposalDao>(
-        () => _i197.ProposalDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i197.SopDao>(() => _i197.SopDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i61.AiAgentDao>(
         () => _i61.AiAgentDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i61.AiPromptDao>(
@@ -219,14 +196,37 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i61.AiModelDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i61.SandboxAgentDao>(
         () => _i61.SandboxAgentDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i589.UserDao>(
+        () => _i589.UserDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i589.SshKeyDao>(
+        () => _i589.SshKeyDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i464.ChatDao>(
         () => _i464.ChatDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i464.MessageDao>(
         () => _i464.MessageDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i464.SandboxAgentDao>(
         () => _i464.SandboxAgentDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i197.ProposalDao>(
+        () => _i197.ProposalDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i197.SopDao>(() => _i197.SopDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i658.PermissionDao>(
+        () => _i658.PermissionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i658.QuestionDao>(
+        () => _i658.QuestionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i658.ToolPermissionDao>(
+        () => _i658.ToolPermissionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1055.LlmKeyDao>(
+        () => _i1055.LlmKeyDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1055.ModelSelectionDao>(
+        () => _i1055.ModelSelectionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1055.LlmProviderDao>(
+        () => _i1055.LlmProviderDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i444.McpServerDao>(
+        () => _i444.McpServerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i849.DeviceDao>(
         () => _i849.DeviceDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1065.HealthcheckDao>(
+        () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
     gh.lazySingleton<_i536.IAiConfigRepository>(() => _i846.AiConfigRepository(
@@ -287,12 +287,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
-    gh.factory<_i89.ToolPermissionsCubit>(
-        () => _i89.ToolPermissionsCubit(gh<_i20.IHitlRepository>()));
-    gh.factory<_i925.QuestionCubit>(
-        () => _i925.QuestionCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i955.PermissionCubit>(
         () => _i955.PermissionCubit(gh<_i20.IHitlRepository>()));
+    gh.factory<_i925.QuestionCubit>(
+        () => _i925.QuestionCubit(gh<_i20.IHitlRepository>()));
+    gh.factory<_i89.ToolPermissionsCubit>(
+        () => _i89.ToolPermissionsCubit(gh<_i20.IHitlRepository>()));
     gh.factory<_i85.LlmCubit>(() => _i85.LlmCubit(gh<_i615.ILlmRepository>()));
     gh.factory<_i655.SandboxAgentCubit>(
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
@@ -311,12 +311,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     gh.factory<_i1066.ChatCubit>(
         () => _i1066.ChatCubit(gh<_i763.AgentChatRepository>()));
-    gh.factory<_i312.SessionControlsCubit>(
-        () => _i312.SessionControlsCubit(gh<_i763.AgentChatRepository>()));
-    gh.factory<_i225.PermissionCubit>(
-        () => _i225.PermissionCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i710.ElicitationCubit>(
         () => _i710.ElicitationCubit(gh<_i763.AgentChatRepository>()));
+    gh.factory<_i225.PermissionCubit>(
+        () => _i225.PermissionCubit(gh<_i763.AgentChatRepository>()));
+    gh.factory<_i312.SessionControlsCubit>(
+        () => _i312.SessionControlsCubit(gh<_i763.AgentChatRepository>()));
     return this;
   }
 }
