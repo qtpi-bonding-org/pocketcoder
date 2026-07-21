@@ -186,18 +186,33 @@ done < <(find "$REPO_ROOT/client" \
 # ---------------------------------------------------------------------------
 # Footer: language breakdown
 # ---------------------------------------------------------------------------
-GO_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*.go' ! -path '*/tests/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+# Product Go excludes both a tests/ dir AND Go's *_test.go convention files,
+# which live alongside their packages — otherwise ~2k of test code would be
+# miscounted as product code.
+GO_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*.go' ! -name '*_test.go' ! -path '*/tests/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+GO_TEST_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*_test.go' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
 
-# Bash: git-TRACKED shell scripts only. A repo-wide find would sweep in
-# gitignored vendored trees (.independent_repos, venv, fdroid_env, client
-# iOS/Flutter tooling), inflating the count several-fold. Tracked-only is
-# the honest measure of PocketCoder's own shell surface. Bash is tooling and
-# test harnesses, not product code — reported separately and never in the core.
+# Dart tests: *_test.dart or files under a test/ or tests/ dir (non-generated).
+DART_TEST_LOC=$(find "$REPO_ROOT/client" \
+  -path "*/.dart_tool/*" -prune -o \
+  -path "*/build/*" -prune -o \
+  -path "*/generated/*" -prune -o \
+  -type f \( -name '*_test.dart' -o -path '*/test/*.dart' \) -print 2>/dev/null \
+  | sort -u | xargs wc -l 2>/dev/null | awk 'END{print $1+0}')
+
+# Bash tests: the tests/ tree — .bats suites plus their .sh harnesses.
+BASH_TEST_LOC=$(find "$REPO_ROOT/tests" \( -name '*.bats' -o -name '*.sh' \) -type f 2>/dev/null \
+  | xargs wc -l 2>/dev/null | awk 'END{print $1+0}')
+
+# Bash tooling: git-TRACKED shell scripts, EXCLUDING the tests/ tree. A repo-wide
+# find would sweep in gitignored vendored trees (.independent_repos, venv,
+# fdroid_env, client iOS/Flutter tooling), inflating the count several-fold.
 BASH_LOC=$( (cd "$REPO_ROOT" && git ls-files -z '*.sh' ':!:*/tests/*' | xargs -0 cat 2>/dev/null) | wc -l | tr -d ' ')
 
 # Core = active product code only: Go (c1) + Dart (client). Dormant Rust is
-# excluded (see dormant/); Bash is tooling/tests, tallied but not core.
+# excluded (see dormant/); tests and tooling are tallied separately, never core.
 CORE_TOTAL=$((GO_LOC + DART_LOC))
+TEST_TOTAL=$((GO_TEST_LOC + DART_TEST_LOC + BASH_TEST_LOC))
 
 {
 echo ""
@@ -213,11 +228,20 @@ echo "| Go | ${GO_LOC} | c1: PocketBase + ACP client + AG-UI server |"
 echo "| Dart | ${DART_LOC} | Flutter client (non-generated, non-test) |"
 echo "| **Core total** | **${CORE_TOTAL}** | Go + Dart |"
 echo ""
-echo "**Tooling & tests** (not product code):"
+echo "**Tests** (not product code):"
 echo ""
 echo "| Type | LoC | Notes |"
 echo "| :--- | ---: | :--- |"
-echo "| Bash | ${BASH_LOC} | Scripts, infra, and test harnesses (git-tracked only) |"
+echo "| Go tests | ${GO_TEST_LOC} | \`*_test.go\` |"
+echo "| Dart tests | ${DART_TEST_LOC} | \`*_test.dart\`, \`test/\` |"
+echo "| Bash tests | ${BASH_TEST_LOC} | \`tests/\` — bats suites + shell harnesses |"
+echo "| **Test total** | **${TEST_TOTAL}** | |"
+echo ""
+echo "**Tooling** (not product code):"
+echo ""
+echo "| Type | LoC | Notes |"
+echo "| :--- | ---: | :--- |"
+echo "| Bash | ${BASH_LOC} | Scripts / infra (git-tracked, excludes tests/) |"
 echo ""
 echo "_Dormant (retained, not built): Rust sandbox proxy & poco-agents — see \`dormant/\`._"
 echo ""
@@ -248,7 +272,8 @@ if [[ -f "$README_FILE" ]]; then
 | Go | $(fmt $GO_LOC) | c1: PocketBase + ACP client + AG-UI server |
 | Dart | $(fmt $DART_LOC) | Flutter client (non-generated) |
 | **Core code** | **~$(fmt $CORE_TOTAL)** | Go + Dart — product code |
-| Bash | $(fmt $BASH_LOC) | Tests & tooling — scripts/infra, not product code |
+| Tests | $(fmt $TEST_TOTAL) | not code — Go $(fmt $GO_TEST_LOC) · Dart $(fmt $DART_TEST_LOC) · Bash $(fmt $BASH_TEST_LOC) |
+| Tooling | $(fmt $BASH_LOC) | not code — Bash scripts / infra |
 READMEEOF
 
   # Replace the table: find header row, insert replacement, skip old rows until blank line

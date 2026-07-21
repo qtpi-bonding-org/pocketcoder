@@ -183,10 +183,11 @@ It brings up the `agent` profile via `docker-compose.agent-test.yml` and runs th
 
 | Language | LoC | Component |
 | :--- | ---: | :--- |
-| Go | 8,696 | c1: PocketBase + ACP client + AG-UI server |
+| Go | 6,697 | c1: PocketBase + ACP client + AG-UI server |
 | Dart | 47,306 | Flutter client (non-generated) |
-| **Core code** | **~56,002** | Go + Dart — product code |
-| Bash | 5,131 | Tests & tooling — scripts/infra, not product code |
+| **Core code** | **~54,003** | Go + Dart — product code |
+| Tests | 12,242 | not code — Go 1,999 · Dart 2,505 · Bash 7,738 |
+| Tooling | 5,156 | not code — Bash scripts / infra |
 
 ## Third-Party Licenses
 
