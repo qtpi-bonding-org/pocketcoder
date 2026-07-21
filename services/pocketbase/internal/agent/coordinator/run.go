@@ -476,6 +476,9 @@ func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID st
 	emitSeq := func(ev events.Event) error {
 		return emit(c.NextSeq(chatID), ev)
 	}
+	if err := emitSeq(bridge.ReplayStarted()); err != nil {
+		return err
+	}
 	if err := emitSeq(bridge.Started()); err != nil {
 		return err
 	}
