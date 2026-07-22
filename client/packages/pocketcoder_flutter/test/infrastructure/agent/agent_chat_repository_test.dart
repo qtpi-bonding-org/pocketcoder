@@ -10,6 +10,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dart';
@@ -125,8 +126,8 @@ void main() {
       );
 
       final conversation = await repo.watch('chat-1').first;
-      expect(conversation.messages, hasLength(1));
-      expect(conversation.messages.single.text, 'hi');
+      expect(conversation.timeline, hasLength(1));
+      expect((conversation.timeline.single as TextTimelineItem).text, 'hi');
     });
   });
 }
