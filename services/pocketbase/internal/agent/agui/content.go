@@ -87,6 +87,17 @@ func renderContent(block acpsdk.ContentBlock) (string, *MediaDescriptor, bool) {
 		}
 		return "", m, true
 	case block.Resource != nil:
+		switch {
+		case block.Resource.Resource.TextResourceContents != nil:
+			return block.Resource.Resource.TextResourceContents.Text, nil, true
+		case block.Resource.Resource.BlobResourceContents != nil:
+			b := block.Resource.Resource.BlobResourceContents
+			return "", &MediaDescriptor{
+				Kind:     "resource",
+				URI:      b.Uri,
+				MimeType: deref(b.MimeType),
+			}, true
+		}
 		return "", &MediaDescriptor{Kind: "resource"}, true
 	}
 	return "", nil, false
