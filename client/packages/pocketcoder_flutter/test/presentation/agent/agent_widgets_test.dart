@@ -2,7 +2,7 @@
 // Pumps each widget with a directly-instantiated cubit fed by a fake
 // AgentChatRepository (the same pattern used by the application/agent/
 // cubit tests), asserts it renders the relevant state slice, and that a
-// tap routes through to the cubit method. Light per-widget coverage — one
+// tap routes through to the cubit method. Light per-widget coverage -- one
 // or two assertions per behavior.
 import 'dart:async';
 
@@ -10,7 +10,6 @@ import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
@@ -18,7 +17,6 @@ import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent/config_picker.dart';
-import 'package:pocketcoder_flutter/presentation/agent/elicitation_form.dart';
 import 'package:pocketcoder_flutter/presentation/agent/mode_switcher.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -228,81 +226,5 @@ void main() {
         expect(req.value, 'true');
       },
     );
-  });
-
-  group('ElicitationForm', () {
-    late _FakeAgentChatRepository repo;
-    late ElicitationCubit cubit;
-
-    setUp(() {
-      repo = _FakeAgentChatRepository();
-      cubit = ElicitationCubit(repo);
-    });
-
-    tearDown(() async {
-      await cubit.close();
-    });
-
-    testWidgets(
-      'renders the form for a pending elicitation; submit calls respondElicitation',
-      (tester) async {
-        await tester.pumpWidget(_wrap(
-          BlocProvider<ElicitationCubit>.value(
-            value: cubit,
-            child: const ElicitationForm(),
-          ),
-        ));
-        await _settle(tester);
-
-        cubit.open('chat-1');
-        await _settle(tester);
-
-        repo.controllerFor('chat-1').add(Conversation(
-              sessionState: SessionState(elicitation: {
-                'elicitationId': 'elic-1',
-                'message': 'Pick a value',
-                'requestedSchema': {
-                  'type': 'object',
-                  'properties': {
-                    'color': {'type': 'string', 'title': 'Color'},
-                  },
-                },
-              }),
-            ));
-        await _settle(tester);
-
-        expect(find.text('Pick a value'), findsOneWidget);
-        expect(find.text('SUBMIT'), findsOneWidget);
-
-        await tester.enterText(find.byType(TextField), 'blue');
-        await tester.tap(find.text('SUBMIT'));
-        await _settle(tester);
-
-        expect(repo.respondElicitationCalls, hasLength(1));
-        expect(repo.respondElicitationCalls.single['elicitationId'], 'elic-1');
-        final resp = repo.respondElicitationCalls.single['resp']
-            as ElicitationResponse;
-        expect(resp.toJson(), {
-          'action': 'accept',
-          'content': {'color': 'blue'},
-        });
-      },
-    );
-
-    testWidgets('renders nothing when no elicitation is pending',
-        (tester) async {
-      await tester.pumpWidget(_wrap(
-        BlocProvider<ElicitationCubit>.value(
-          value: cubit,
-          child: const ElicitationForm(),
-        ),
-      ));
-      await _settle(tester);
-
-      cubit.open('chat-1');
-      await _settle(tester);
-
-      expect(find.text('SUBMIT'), findsNothing);
-    });
   });
 }

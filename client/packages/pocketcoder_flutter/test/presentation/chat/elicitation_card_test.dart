@@ -1,0 +1,163 @@
+import 'dart:async';
+
+import 'package:acp_dart/acp_dart.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
+import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
+import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
+import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/chat/elicitation_card.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+class _FakeAgentChatRepository implements AgentChatRepository {
+  final Map<String, StreamController<Conversation>> _controllers = {};
+  final List<Map<String, Object?>> respondElicitationCalls = [];
+
+  StreamController<Conversation> controllerFor(String chatId) =>
+      _controllers.putIfAbsent(chatId, () => StreamController.broadcast());
+
+  @override
+  Stream<Conversation> watch(String chatId) => controllerFor(chatId).stream;
+
+  @override
+  Future<int> cursorFor(String chatId) async => 0;
+
+  @override
+  Future<void> ingestOnce(String chatId, {required int cursor}) async {}
+
+  @override
+  Future<String> sendPrompt(String chatId, String text) async => 'run-1';
+
+  @override
+  Future<void> cancel(String chatId) async {}
+
+  @override
+  Future<void> setMode(String chatId, String modeId) async {}
+
+  @override
+  Future<void> setConfigOption(
+    String chatId,
+    SetSessionConfigOptionRequest req,
+  ) async {}
+
+  @override
+  Future<void> respondPermission(
+    String chatId,
+    String requestId, {
+    String? optionId,
+    bool cancelled = false,
+  }) async {}
+
+  @override
+  Future<void> respondElicitation(
+    String chatId,
+    String elicitationId,
+    ElicitationResponse resp,
+  ) async {
+    respondElicitationCalls.add({
+      'chatId': chatId,
+      'elicitationId': elicitationId,
+      'resp': resp,
+    });
+  }
+}
+
+Widget _wrap(Widget child) {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('en')],
+    home: Scaffold(body: child),
+  );
+}
+
+Future<void> _settle(WidgetTester tester) async {
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  group('ElicitationCard', () {
+    late _FakeAgentChatRepository repo;
+    late ElicitationCubit cubit;
+
+    setUp(() {
+      repo = _FakeAgentChatRepository();
+      cubit = ElicitationCubit(repo);
+    });
+
+    tearDown(() async {
+      await cubit.close();
+    });
+
+    testWidgets(
+      'renders the form for a pending elicitation; submit calls respondElicitation',
+      (tester) async {
+        await tester.pumpWidget(_wrap(
+          BlocProvider<ElicitationCubit>.value(
+            value: cubit,
+            child: const ElicitationCard(),
+          ),
+        ));
+        await _settle(tester);
+
+        cubit.open('chat-1');
+        await _settle(tester);
+
+        repo.controllerFor('chat-1').add(Conversation(
+              sessionState: SessionState(elicitation: {
+                'elicitationId': 'elic-1',
+                'message': 'Pick a value',
+                'requestedSchema': {
+                  'type': 'object',
+                  'properties': {
+                    'color': {'type': 'string', 'title': 'Color'},
+                  },
+                },
+              }),
+            ));
+        await _settle(tester);
+
+        expect(find.text('Pick a value'), findsOneWidget);
+        expect(find.text('SUBMIT'), findsOneWidget);
+
+        await tester.enterText(find.byType(TextField), 'blue');
+        await tester.tap(find.text('SUBMIT'));
+        await _settle(tester);
+
+        expect(repo.respondElicitationCalls, hasLength(1));
+        expect(repo.respondElicitationCalls.single['elicitationId'], 'elic-1');
+        final resp = repo.respondElicitationCalls.single['resp']
+            as ElicitationResponse;
+        expect(resp.toJson(), {
+          'action': 'accept',
+          'content': {'color': 'blue'},
+        });
+      },
+    );
+
+    testWidgets('renders nothing when no elicitation is pending',
+        (tester) async {
+      await tester.pumpWidget(_wrap(
+        BlocProvider<ElicitationCubit>.value(
+          value: cubit,
+          child: const ElicitationCard(),
+        ),
+      ));
+      await _settle(tester);
+
+      cubit.open('chat-1');
+      await _settle(tester);
+
+      expect(find.text('SUBMIT'), findsNothing);
+    });
+  });
+}
