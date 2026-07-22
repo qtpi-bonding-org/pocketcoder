@@ -71,6 +71,9 @@ dependencies:
   ag_ui: 0.3.0
   acp_dart: 0.4.0
   drift_flutter: 0.2.8
+  flutter_chat_core: ^2.9.0
+  flutter_chat_ui: ^2.11.1
+  flyer_chat_text_stream_message: ^2.3.0
 dependency_overrides:
   webcrypto:
     git:
