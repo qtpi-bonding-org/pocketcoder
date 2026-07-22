@@ -465,16 +465,16 @@ func (s *sessionClient) UnstableCreateElicitation(ctx context.Context, req acpsd
 		p.timer = s.c.clock.AfterFunc(s.c.elicitationTimeout, func() { s.resolveExpiredElicitation(id, p) })
 	}
 	s.c.mu.Unlock()
-	var message, mode string
+	var message, mode, url string
 	var schema any
 	switch {
 	case req.Form != nil:
 		message, mode, schema = req.Form.Message, req.Form.Mode, req.Form.RequestedSchema
 	case req.Url != nil:
-		mode = "url"
+		message, mode, url = req.Url.Message, "url", req.Url.Url
 	}
 	s.emitMu.Lock()
-	_ = s.emit(s.bridge.ElicitationPending(id, message, mode, schema))
+	_ = s.emit(s.bridge.ElicitationPending(id, message, mode, schema, url))
 	s.emitMu.Unlock()
 	select {
 	case d := <-p.decision:
