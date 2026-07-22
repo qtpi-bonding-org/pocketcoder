@@ -91,8 +91,8 @@ void main() {
     await _settle();
 
     final conversation = Conversation(
-      messages: const [
-        ChatMessage(id: 'm1', kind: ChatMessageKind.text, role: 'assistant', text: 'hi'),
+      timeline: const [
+        TimelineItem.text(id: 'm1', kind: ChatMessageKind.text, role: 'assistant', text: 'hi'),
       ],
       sessionState: SessionState.empty,
     );
@@ -100,7 +100,7 @@ void main() {
     await _settle();
 
     expect(cubit.state.chatId, 'chat-1');
-    expect(cubit.state.conversation.messages, hasLength(1));
+    expect(cubit.state.conversation.timeline, hasLength(1));
     expect(cubit.state.status, UiFlowStatus.success);
   });
 
