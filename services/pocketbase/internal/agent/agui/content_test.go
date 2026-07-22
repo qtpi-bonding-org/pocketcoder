@@ -79,7 +79,7 @@ func TestRenderToolContentTextDiffTerminal(t *testing.T) {
 		{Diff: &acpsdk.ToolCallContentDiff{Path: "/f.go", OldText: &old, NewText: "b\n"}},
 		{Terminal: &acpsdk.ToolCallContentTerminal{TerminalId: "t1", Type: "terminal"}},
 	}
-	text, diffs, terms, has, err := renderToolContent(content, nil)
+	text, diffs, terms, _, has, err := renderToolContent(content, nil)
 	if err != nil || !has {
 		t.Fatalf("err=%v has=%v", err, has)
 	}
@@ -95,8 +95,27 @@ func TestRenderToolContentTextDiffTerminal(t *testing.T) {
 }
 
 func TestRenderToolContentRawFallback(t *testing.T) {
-	text, _, _, has, err := renderToolContent(nil, map[string]any{"exit": 0})
+	text, _, _, _, has, err := renderToolContent(nil, map[string]any{"exit": 0})
 	if err != nil || !has || text == "" {
 		t.Fatalf("rawOutput fallback: text=%q has=%v err=%v", text, has, err)
+	}
+}
+
+// TestRenderToolContentMediaNotDiscarded covers the fix for the ACP->AG-UI
+// field-drop audit finding: a tool result containing an image/resource
+// content block (e.g. a screenshot tool) was silently discarded --
+// renderToolContent only read the text half of renderContent's return.
+func TestRenderToolContentMediaNotDiscarded(t *testing.T) {
+	content := []acpsdk.ToolCallContent{
+		{Content: &acpsdk.ToolCallContentContent{Type: "content", Content: acpsdk.ContentBlock{
+			Image: &acpsdk.ContentBlockImage{Type: "image", MimeType: "image/png"},
+		}}},
+	}
+	_, _, _, medias, has, err := renderToolContent(content, nil)
+	if err != nil || !has {
+		t.Fatalf("err=%v has=%v", err, has)
+	}
+	if len(medias) != 1 || medias[0].Kind != "image" || medias[0].MimeType != "image/png" {
+		t.Fatalf("medias=%+v", medias)
 	}
 }
