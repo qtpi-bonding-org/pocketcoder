@@ -2,7 +2,9 @@ package coordinator
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -57,15 +59,16 @@ type fakeConn struct {
 	lastLoadSessionReq acpsdk.LoadSessionRequest
 
 	// Task 10 extensions.
-	closeCount          int
-	blockPrompt         chan struct{}
-	panicOnPrompt       bool
-	promptCalled        chan struct{}
-	emitElicitation     bool
-	elicitationResolved bool
-	lastMode            string
-	lastModeSession     string
-	requestPermission   bool
+	closeCount                  int
+	blockPrompt                 chan struct{}
+	panicOnPrompt               bool
+	promptCalled                chan struct{}
+	emitElicitation             bool
+	elicitationResolved         bool
+	lastMode                    string
+	lastModeSession             string
+	requestPermission           bool
+	requestPermissionToolCallID string
 }
 
 // waitForPrompt blocks until the fake's Prompt method is invoked (or 2 s timeout).
@@ -156,7 +159,8 @@ func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.P
 			RequestPermission(context.Context, acpsdk.RequestPermissionRequest) (acpsdk.RequestPermissionResponse, error)
 		}); ok {
 			_, _ = rp.RequestPermission(ctx, acpsdk.RequestPermissionRequest{
-				Options: []acpsdk.PermissionOption{{OptionId: "allow_once", Name: "Allow once"}},
+				Options:  []acpsdk.PermissionOption{{OptionId: "allow_once", Name: "Allow once"}},
+				ToolCall: acpsdk.ToolCallUpdate{ToolCallId: acpsdk.ToolCallId(f.requestPermissionToolCallID)},
 			})
 		}
 	}
@@ -295,6 +299,44 @@ func TestDetachedRunPermissionEmitsThroughHub(t *testing.T) {
 		t.Fatal(err)
 	}
 	c.waitRunDone(t, "A") // must not panic on a nil emit
+}
+
+// TestRequestPermissionForwardsToolCallID covers the fix for the
+// ACP->AG-UI field-drop audit finding: RequestPermissionRequest.ToolCall
+// (the id of the tool call this permission gates) must reach the AG-UI
+// STATE_DELTA published to the hub, not be dropped in sessionClient.RequestPermission.
+func TestRequestPermissionForwardsToolCallID(t *testing.T) {
+	f := newFakeConn()
+	f.requestPermission = true
+	f.requestPermissionToolCallID = "tool-99"
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	c.StartPrompt("A", "do it",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil })
+	id := c.waitForPendingPermission(t, "A")
+
+	att := c.Attach("A", 0)
+	found := false
+	for _, se := range att.Buffered {
+		b, err := json.Marshal(se.Ev)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(b), `"toolCallId":"tool-99"`) {
+			found = true
+			break
+		}
+	}
+	att.Unsubscribe()
+	if !found {
+		t.Fatalf("expected a buffered event carrying toolCallId=tool-99, got %d events", len(att.Buffered))
+	}
+
+	if err := c.Approve(context.Background(), "A", id, "allow_once"); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A")
 }
 
 // ---- Task 11: cancel triggers + orphan-session compensation ----
