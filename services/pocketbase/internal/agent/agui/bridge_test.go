@@ -389,6 +389,50 @@ func TestBridgeConfigOptionUnion(t *testing.T) {
 	}
 }
 
+// TestBridgeConfigSelectOptionsAndDescription covers the fix for the
+// ACP->AG-UI field-drop audit finding: a select-type config option's
+// candidate values (SessionConfigOptionSelect.Options) were never forwarded,
+// so the client had a dropdown control with nothing to select from.
+// Description/Category (both boolean and select) were dropped too.
+func TestBridgeConfigSelectOptionsAndDescription(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	desc := "Controls response verbosity"
+	category := acpsdk.SessionConfigOptionCategoryMode
+	optDesc := "Fastest, least capable"
+	ungrouped := acpsdk.SessionConfigSelectOptionsUngrouped{
+		{Name: "Fast", Value: "fast", Description: &optDesc},
+		{Name: "Slow", Value: "slow"},
+	}
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ConfigOptionUpdate: &acpsdk.SessionConfigOptionUpdate{
+		SessionUpdate: "config_option_update",
+		ConfigOptions: []acpsdk.SessionConfigOption{
+			{Boolean: &acpsdk.SessionConfigOptionBoolean{Id: "b1", Name: "Verbose", CurrentValue: true, Description: &desc}},
+			{Select: &acpsdk.SessionConfigOptionSelect{
+				Id: "s1", Name: "Model", CurrentValue: "fast", Category: &category,
+				Options: acpsdk.SessionConfigSelectOptions{Ungrouped: &ungrouped},
+			}},
+		},
+	}})
+	if err != nil || len(evs) != 1 {
+		t.Fatalf("config: %#v err=%v", evs, err)
+	}
+	b, _ := json.Marshal(evs[0])
+	s := string(b)
+	for _, want := range []string{
+		`"description":"Controls response verbosity"`,
+		`"category":"mode"`,
+		`"name":"Fast"`,
+		`"value":"fast"`,
+		`"description":"Fastest, least capable"`,
+		`"name":"Slow"`,
+		`"value":"slow"`,
+	} {
+		if !strings.Contains(s, want) {
+			t.Fatalf("config event missing %s: %s", want, s)
+		}
+	}
+}
+
 // TestBridgeUnknownVariantRaw covers the never-drop default: an all-nil
 // SessionUpdate stands in for an unknown / vendor / future variant, and must
 // surface as a single redacted RAW event rather than silently returning nil

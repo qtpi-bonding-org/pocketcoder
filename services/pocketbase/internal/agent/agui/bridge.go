@@ -383,19 +383,62 @@ func configOptions(opts []acpsdk.SessionConfigOption) []map[string]any {
 	for _, o := range opts {
 		switch {
 		case o.Boolean != nil:
-			out = append(out, map[string]any{
+			v := map[string]any{
 				"kind":         "boolean",
 				"id":           string(o.Boolean.Id),
 				"name":         o.Boolean.Name,
 				"currentValue": o.Boolean.CurrentValue,
-			})
+			}
+			if o.Boolean.Description != nil {
+				v["description"] = *o.Boolean.Description
+			}
+			if o.Boolean.Category != nil {
+				v["category"] = string(*o.Boolean.Category)
+			}
+			out = append(out, v)
 		case o.Select != nil:
-			out = append(out, map[string]any{
+			v := map[string]any{
 				"kind":         "select",
 				"id":           string(o.Select.Id),
 				"name":         o.Select.Name,
 				"currentValue": string(o.Select.CurrentValue),
-			})
+				"options":      selectOptions(o.Select.Options),
+			}
+			if o.Select.Description != nil {
+				v["description"] = *o.Select.Description
+			}
+			if o.Select.Category != nil {
+				v["category"] = string(*o.Select.Category)
+			}
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+// selectOptions projects a select config option's candidate values into a
+// flat list of {name, value, description} maps. Grouped options are
+// flattened (group headers dropped) since the client has no grouped-dropdown
+// UI to render them into; ungrouped options pass through as-is.
+func selectOptions(opts acpsdk.SessionConfigSelectOptions) []map[string]any {
+	var out []map[string]any
+	appendOne := func(o acpsdk.SessionConfigSelectOption) {
+		v := map[string]any{"name": o.Name, "value": string(o.Value)}
+		if o.Description != nil {
+			v["description"] = *o.Description
+		}
+		out = append(out, v)
+	}
+	if opts.Ungrouped != nil {
+		for _, o := range *opts.Ungrouped {
+			appendOne(o)
+		}
+	}
+	if opts.Grouped != nil {
+		for _, g := range *opts.Grouped {
+			for _, o := range g.Options {
+				appendOne(o)
+			}
 		}
 	}
 	return out
