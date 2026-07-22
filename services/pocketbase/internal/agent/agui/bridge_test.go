@@ -433,6 +433,31 @@ func TestBridgeConfigSelectOptionsAndDescription(t *testing.T) {
 	}
 }
 
+// TestBridgeAvailableCommandsForwardsHint covers the fix for the ACP->AG-UI
+// field-drop audit finding: AvailableCommand.Input.Hint (the placeholder
+// text for a command's argument, e.g. "/model <name>") was never read.
+func TestBridgeAvailableCommandsForwardsHint(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	evs, err := bridge.Update(acpsdk.SessionUpdate{AvailableCommandsUpdate: &acpsdk.SessionAvailableCommandsUpdate{
+		SessionUpdate: "available_commands_update",
+		AvailableCommands: []acpsdk.AvailableCommand{
+			{
+				Name:        "model",
+				Description: "Switch the active model",
+				Input:       &acpsdk.AvailableCommandInput{Unstructured: &acpsdk.UnstructuredCommandInput{Hint: "model name"}},
+			},
+			{Name: "help", Description: "Show help"},
+		},
+	}})
+	if err != nil || len(evs) != 1 {
+		t.Fatalf("commands: %#v err=%v", evs, err)
+	}
+	b, _ := json.Marshal(evs[0])
+	if !strings.Contains(string(b), `"hint":"model name"`) {
+		t.Fatalf("commands event missing hint: %s", b)
+	}
+}
+
 // TestBridgeUnknownVariantRaw covers the never-drop default: an all-nil
 // SessionUpdate stands in for an unknown / vendor / future variant, and must
 // surface as a single redacted RAW event rather than silently returning nil
