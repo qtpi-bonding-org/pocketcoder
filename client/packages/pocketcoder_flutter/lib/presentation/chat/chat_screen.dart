@@ -170,6 +170,8 @@ class _ChatViewState extends State<_ChatView> {
             child: Column(
               children: [
                 const PlanPanel(),
+                const ModeSwitcher(),
+                const ConfigPicker(),
                 Expanded(
                   child: commState.conversation.timeline.isEmpty
                       ? Center(
