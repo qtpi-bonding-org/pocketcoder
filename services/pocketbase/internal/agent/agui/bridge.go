@@ -366,10 +366,14 @@ func planEntries(entries []acpsdk.PlanEntry) []map[string]any {
 func commands(cmds []acpsdk.AvailableCommand) []map[string]any {
 	out := make([]map[string]any, 0, len(cmds))
 	for _, c := range cmds {
-		out = append(out, map[string]any{
+		v := map[string]any{
 			"name":        c.Name,
 			"description": c.Description,
-		})
+		}
+		if c.Input != nil && c.Input.Unstructured != nil {
+			v["hint"] = c.Input.Unstructured.Hint
+		}
+		out = append(out, v)
 	}
 	return out
 }
