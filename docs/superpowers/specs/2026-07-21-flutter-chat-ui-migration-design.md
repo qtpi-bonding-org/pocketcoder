@@ -93,4 +93,8 @@ Pure function, `List<TimelineItem> → List<flyer_chat_core.Message>`:
 
 ## Explicitly out of scope
 
-- The 5 other ACP→AG-UI field-drop bugs found by the audit (elicitation `Url` variant, config `Select.Options`, embedded `ContentBlock.Resource`, tool-result media, `AvailableCommand.Input.Hint`) — tracked separately, planned to be fixed *before* this migration starts (see project decision: bug-fix pass runs first).
+- Elicitation URL-mode UI: the Go bridge now forwards `url`/`message` correctly for URL-mode elicitations (fixed in the pre-migration bug-fix pass), but `ElicitationCard` still only renders schema-based forms. A "here's a link" rendering is a small standalone follow-up, not part of this migration.
+
+## Status
+
+The 5 other ACP→AG-UI field-drop bugs found by the audit (elicitation `Url` variant, config `Select.Options`, embedded `ContentBlock.Resource`, tool-result media, `AvailableCommand.Input.Hint`) were fixed in a Go-only pass before this migration started, per the project decision to land the backend bug fixes first. This migration itself (`TimelineItem` domain model, reducer rewrite, `flutter_chat_ui` adoption, inline permission/elicitation cards, token-level streaming) is implemented and committed; see `docs/superpowers/plans/2026-07-21-flutter-chat-ui-migration.md` for the task-by-task record. Automated verification (analyzer + full test suite) is green; a manual browser walkthrough is still pending.

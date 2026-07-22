@@ -29,6 +29,7 @@ android/key.properties
 android/local.properties
 android/app/src/main/res/raw/google_services.json
 ios/Runner/GoogleService-Info.plist
+macos/Podfile.lock
 
 # Symbol files
 **/*.pdb
