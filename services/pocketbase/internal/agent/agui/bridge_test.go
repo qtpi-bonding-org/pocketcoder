@@ -33,7 +33,7 @@ func TestBridgeMessageLifecycleAndTerminal(t *testing.T) {
 
 func TestBridgePermissionState(t *testing.T) {
 	bridge := NewBridge("chat-1", "run-1")
-	event := bridge.PermissionPending("rpc-42", nil)
+	event := bridge.PermissionPending("rpc-42", nil, "")
 	b, err := json.Marshal(event)
 	if err != nil {
 		t.Fatal(err)
@@ -41,6 +41,33 @@ func TestBridgePermissionState(t *testing.T) {
 	want := `"type":"STATE_DELTA"`
 	if !strings.Contains(string(b), want) || !strings.Contains(string(b), `"requestId":"rpc-42"`) {
 		t.Fatalf("permission event = %s", b)
+	}
+}
+
+// TestBridgePermissionStateCarriesToolCallID covers the fix for the
+// ACP->AG-UI field-drop audit finding: RequestPermissionRequest.ToolCall
+// carries the id of the tool call this permission gates, and it must reach
+// the client so the phone can correlate a pending permission with its tool
+// call (rather than only being able to append it at the end of the
+// timeline). Absent id is a no-op (tested above): the key must not appear
+// at all rather than surfacing as an empty string.
+func TestBridgePermissionStateCarriesToolCallID(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	event := bridge.PermissionPending("rpc-42", nil, "tool-7")
+	b, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"toolCallId":"tool-7"`) {
+		t.Fatalf("permission event missing toolCallId: %s", b)
+	}
+	event2 := bridge.PermissionPending("rpc-43", nil, "")
+	b2, err := json.Marshal(event2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b2), `toolCallId`) {
+		t.Fatalf("permission event should omit toolCallId when absent: %s", b2)
 	}
 }
 
@@ -403,7 +430,7 @@ func contains(s []string, v string) bool {
 // retained rather than emitted-and-forgotten).
 func TestBridgeSnapshotOmitsResolvedPermission(t *testing.T) {
 	bridge := NewBridge("c", "r")
-	bridge.PermissionPending("p1", nil)
+	bridge.PermissionPending("p1", nil, "")
 	snap := bridge.Snapshot()
 	if len(snap) == 0 {
 		t.Fatal("snapshot should include pending permission")

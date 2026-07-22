@@ -274,12 +274,16 @@ func (b *Bridge) messageChunk(role string, msgID *string, content acpsdk.Content
 // permission event shape the bare version emitted — TestBridgePermissionState
 // keeps passing on the payload, and Task 8's Snapshot-omits-resolved becomes
 // reachable because the value is now retained.
-func (b *Bridge) PermissionPending(requestID string, options []acpsdk.PermissionOption) events.Event {
+func (b *Bridge) PermissionPending(requestID string, options []acpsdk.PermissionOption, toolCallID string) events.Event {
 	choices := make([]map[string]string, 0, len(options))
 	for _, option := range options {
 		choices = append(choices, map[string]string{"optionId": string(option.OptionId), "name": option.Name, "kind": string(option.Kind)})
 	}
-	return b.state.set("permission", map[string]any{"requestId": requestID, "status": "pending", "options": choices})
+	payload := map[string]any{"requestId": requestID, "status": "pending", "options": choices}
+	if toolCallID != "" {
+		payload["toolCallId"] = toolCallID
+	}
+	return b.state.set("permission", payload)
 }
 
 // Finished closes all lifecycle events. Call this only after the correlated
