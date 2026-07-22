@@ -64,6 +64,7 @@ type fakeConn struct {
 	panicOnPrompt               bool
 	promptCalled                chan struct{}
 	emitElicitation             bool
+	emitElicitationURL          bool
 	elicitationResolved         bool
 	lastMode                    string
 	lastModeSession             string
@@ -169,6 +170,22 @@ func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.P
 			UnstableCreateElicitation(context.Context, acpsdk.UnstableCreateElicitationRequest) (acpsdk.UnstableCreateElicitationResponse, error)
 		}); ok {
 			_, _ = el.UnstableCreateElicitation(ctx, acpsdk.UnstableCreateElicitationRequest{Form: &acpsdk.UnstableCreateElicitationForm{}})
+			f.mu.Lock()
+			f.elicitationResolved = true
+			f.mu.Unlock()
+		}
+	}
+	if f.emitElicitationURL {
+		if el, ok := f.client.(interface {
+			UnstableCreateElicitation(context.Context, acpsdk.UnstableCreateElicitationRequest) (acpsdk.UnstableCreateElicitationResponse, error)
+		}); ok {
+			_, _ = el.UnstableCreateElicitation(ctx, acpsdk.UnstableCreateElicitationRequest{
+				Url: &acpsdk.UnstableCreateElicitationUrl{
+					Message: "Please authorize in your browser",
+					Mode:    "url",
+					Url:     "https://example.com/auth",
+				},
+			})
 			f.mu.Lock()
 			f.elicitationResolved = true
 			f.mu.Unlock()

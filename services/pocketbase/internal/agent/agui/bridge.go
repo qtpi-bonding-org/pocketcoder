@@ -447,13 +447,17 @@ func (b *Bridge) ResolveElicitation(id string) []events.Event {
 // ElicitationPending records a pending elicitation in the projection. The
 // returned STATE_DELTA mirrors PermissionPending's shape so the client UI can
 // render any pending side-channel request from the same STATE stream.
-func (b *Bridge) ElicitationPending(id, message, mode string, schema any) events.Event {
-	return b.state.set("elicitation", map[string]any{
+func (b *Bridge) ElicitationPending(id, message, mode string, schema any, url string) events.Event {
+	payload := map[string]any{
 		"elicitationId":   id,
 		"message":         message,
 		"mode":            mode,
 		"requestedSchema": schema,
-	})
+	}
+	if url != "" {
+		payload["url"] = url
+	}
+	return b.state.set("elicitation", payload)
 }
 
 // sessionModes projects an ACP session-mode slice into the AG-UI client's

@@ -2,6 +2,8 @@ package coordinator
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -66,6 +68,47 @@ func TestElicitationTimeoutResolvesCancel(t *testing.T) {
 		func(context.Context, string) error { return nil })
 	c.waitForPendingElicitation(t, "A")
 	clk.Advance(6 * time.Minute)
+	c.waitRunDone(t, "A")
+}
+
+// TestElicitationURLForwardsMessageAndURL covers the fix for the ACP->AG-UI
+// field-drop audit finding: a URL-mode elicitation (UnstableCreateElicitationRequest.Url)
+// must forward its message and url into the AG-UI STATE_DELTA rather than
+// only surfacing mode="url" with nothing else — the client otherwise has no
+// way to tell the user what to do.
+func TestElicitationURLForwardsMessageAndURL(t *testing.T) {
+	f := newFakeConn()
+	f.emitElicitationURL = true
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	c.StartPrompt("A", "need input",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil })
+	id := c.waitForPendingElicitation(t, "A")
+
+	att := c.Attach("A", 0)
+	found := false
+	for _, se := range att.Buffered {
+		b, err := json.Marshal(se.Ev)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(b), `"url":"https://example.com/auth"`) &&
+			strings.Contains(string(b), `"message":"Please authorize in your browser"`) {
+			found = true
+			break
+		}
+	}
+	att.Unsubscribe()
+	if !found {
+		t.Fatalf("expected a buffered event carrying the elicitation url+message, got %d events", len(att.Buffered))
+	}
+
+	if err := c.ResolveElicitation("A", id, acpsdk.UnstableCreateElicitationResponse{
+		Accept: &acpsdk.UnstableCreateElicitationAccept{},
+	}); err != nil {
+		t.Fatal(err)
+	}
 	c.waitRunDone(t, "A")
 }
 

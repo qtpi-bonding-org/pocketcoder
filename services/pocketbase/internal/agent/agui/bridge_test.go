@@ -544,6 +544,36 @@ func TestFinishedCarriesStopReasonOnNonEndTurn(t *testing.T) {
 	}
 }
 
+// TestBridgeElicitationPendingCarriesURL covers the fix for the ACP->AG-UI
+// field-drop audit finding: a URL-mode elicitation (UnstableCreateElicitationRequest.Url)
+// was reaching the bridge with mode="url" but no message/url, making the
+// feature non-functional on the client. ElicitationPending must forward the
+// url so the client has something to show/act on; empty url must not add
+// the key (mirrors PermissionPending's toolCallId omission).
+func TestBridgeElicitationPendingCarriesURL(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	event := bridge.ElicitationPending("elicit-1", "Please authorize in your browser", "url", nil, "https://example.com/auth")
+	b, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"url":"https://example.com/auth"`) {
+		t.Fatalf("elicitation event missing url: %s", b)
+	}
+	if !strings.Contains(string(b), `"message":"Please authorize in your browser"`) {
+		t.Fatalf("elicitation event missing message: %s", b)
+	}
+
+	formEvent := bridge.ElicitationPending("elicit-2", "form message", "form", map[string]any{"type": "object"}, "")
+	fb, err := json.Marshal(formEvent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(fb), `"url"`) {
+		t.Fatalf("form-mode elicitation should omit url key: %s", fb)
+	}
+}
+
 func TestReplayStartedIsReplaceMarker(t *testing.T) {
 	b := NewBridge("chat-1", "run-1")
 	ev := b.ReplayStarted()
