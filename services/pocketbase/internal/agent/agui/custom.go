@@ -84,6 +84,21 @@ func customContent(messageID string, m MediaDescriptor) events.Event {
 	}))
 }
 
+// customToolContent emits `pocketcoder:content` for media-bearing tool
+// result content blocks (image / audio / resource / resource_link), keyed by
+// toolCallId rather than messageId -- same event kind and field shape as
+// customContent, distinct id namespace (mirrors customDiff/customTerminal).
+func customToolContent(toolCallID string, m MediaDescriptor) events.Event {
+	return events.NewCustomEvent("pocketcoder:content", events.WithValue(map[string]any{
+		"toolCallId": toolCallID,
+		"kind":       m.Kind,
+		"mimeType":   m.MimeType,
+		"uri":        m.URI,
+		"name":       m.Name,
+		"size":       m.Size,
+	}))
+}
+
 // rawEvent is the redacted fallback emitted for any unmapped ACP update
 // variant. It only ships `{"unmapped": <kind>}` (plus source); the payload
 // argument is intentionally ignored so ACP `_meta` / cost blobs cannot leak.

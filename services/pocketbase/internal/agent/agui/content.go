@@ -104,18 +104,26 @@ func renderContent(block acpsdk.ContentBlock) (string, *MediaDescriptor, bool) {
 }
 
 // renderToolContent splits ACP tool result content into a fallback text
-// rendering (for TOOL_CALL_RESULT.content) plus structured diffs/terminals
-// (for CUSTOM pocketcoder:{diff,terminal}). rawOutput is the JSON fallback
-// when no content blocks are present.
-func renderToolContent(content []acpsdk.ToolCallContent, rawOutput any) (string, []ToolDiff, []ToolTerminal, bool, error) {
+// rendering (for TOOL_CALL_RESULT.content), structured diffs/terminals (for
+// CUSTOM pocketcoder:{diff,terminal}), and any media content blocks (for
+// CUSTOM pocketcoder:content) -- a tool result's content block can itself be
+// an image/resource, same as a message chunk, and must not be silently
+// dropped just because renderContent's text half was empty. rawOutput is the
+// JSON fallback when no content blocks are present.
+func renderToolContent(content []acpsdk.ToolCallContent, rawOutput any) (string, []ToolDiff, []ToolTerminal, []MediaDescriptor, bool, error) {
 	var textParts []string
 	var diffs []ToolDiff
 	var terminals []ToolTerminal
+	var medias []MediaDescriptor
 	for _, c := range content {
 		switch {
 		case c.Content != nil:
-			if t, _, ok := renderContent(c.Content.Content); ok && t != "" {
-				textParts = append(textParts, t)
+			if t, m, ok := renderContent(c.Content.Content); ok {
+				if m != nil {
+					medias = append(medias, *m)
+				} else if t != "" {
+					textParts = append(textParts, t)
+				}
 			}
 		case c.Diff != nil:
 			diffs = append(diffs, ToolDiff{
@@ -131,13 +139,13 @@ func renderToolContent(content []acpsdk.ToolCallContent, rawOutput any) (string,
 		}
 	}
 	text := strings.Join(textParts, "\n")
-	has := text != "" || len(diffs) > 0 || len(terminals) > 0
+	has := text != "" || len(diffs) > 0 || len(terminals) > 0 || len(medias) > 0
 	if !has && rawOutput != nil {
 		encoded, err := json.Marshal(rawOutput)
 		if err != nil {
-			return "", nil, nil, false, fmt.Errorf("encode tool rawOutput: %w", err)
+			return "", nil, nil, nil, false, fmt.Errorf("encode tool rawOutput: %w", err)
 		}
-		return string(encoded), nil, nil, true, nil
+		return string(encoded), nil, nil, nil, true, nil
 	}
-	return text, diffs, terminals, has, nil
+	return text, diffs, terminals, medias, has, nil
 }
