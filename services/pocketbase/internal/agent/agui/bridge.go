@@ -202,11 +202,11 @@ func (b *Bridge) updateTool(u *acpsdk.SessionToolCallUpdate) []events.Event {
 }
 
 // toolResult splits ACP tool result content into TOOL_CALL_RESULT (text/
-// rawOutput fallback) plus CUSTOM pocketcoder:{diff,terminal} for structured
-// results. Returns a single redacted RAW on render error so the client still
-// sees that something arrived, just not the malformed blob.
+// rawOutput fallback) plus CUSTOM pocketcoder:{diff,terminal,content} for
+// structured results. Returns a single redacted RAW on render error so the
+// client still sees that something arrived, just not the malformed blob.
 func (b *Bridge) toolResult(id string, content []acpsdk.ToolCallContent, rawOutput any) []events.Event {
-	text, diffs, terms, has, err := renderToolContent(content, rawOutput)
+	text, diffs, terms, medias, has, err := renderToolContent(content, rawOutput)
 	if err != nil {
 		return []events.Event{rawEvent("tool_call_content", nil)}
 	}
@@ -219,6 +219,9 @@ func (b *Bridge) toolResult(id string, content []acpsdk.ToolCallContent, rawOutp
 	}
 	for _, tm := range terms {
 		out = append(out, customTerminal(id, tm))
+	}
+	for _, m := range medias {
+		out = append(out, customToolContent(id, m))
 	}
 	return out
 }
