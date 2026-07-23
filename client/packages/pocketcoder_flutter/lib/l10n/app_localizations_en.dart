@@ -489,6 +489,57 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get providerScreenTitle => 'PROVIDER MANAGEMENT';
+
+  @override
+  String get providerScreenLoading => 'LOADING PROVIDERS';
+
+  @override
+  String get providerScreenHarnessModelsSection => 'HARNESS MODELS';
+
+  @override
+  String get providerScreenApiKeysSection => 'API KEYS';
+
+  @override
+  String get providerScreenNoHarnessModels => 'NO HARNESS MODELS LISTED';
+
+  @override
+  String get providerScreenNoApiKeys => 'NO API KEYS CONFIGURED';
+
+  @override
+  String get providerScreenEmptyHint => 'NO HARNESS MODELS OR API KEYS YET';
+
+  @override
+  String get providerScreenAddKey => 'ADD KEY';
+
+  @override
+  String get providerScreenUpdateKey => 'UPDATE KEY';
+
+  @override
+  String providerScreenAddKeyTitle(String provider) {
+    return 'API KEY: $provider';
+  }
+
+  @override
+  String providerScreenAddKeyBody(String provider) {
+    return 'Enter credentials for $provider:';
+  }
+
+  @override
+  String get providerScreenSelectProvider => 'SELECT PROVIDER';
+
+  @override
+  String get providerScreenNoProviders => 'NO PROVIDERS AVAILABLE';
+
+  @override
+  String get providerScreenDefaultBadge => '[ DEFAULT ]';
+
+  @override
+  String providerScreenErrorPrefix(String error) {
+    return 'ERROR: $error';
+  }
+
+  @override
   String get toolPermissionsTitle => 'GATEKEEPER CONFIGURATION';
 
   @override

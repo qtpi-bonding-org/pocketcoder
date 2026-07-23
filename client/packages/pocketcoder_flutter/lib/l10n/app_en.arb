@@ -236,6 +236,37 @@
     }
   },
 
+  "providerScreenTitle": "PROVIDER MANAGEMENT",
+  "providerScreenLoading": "LOADING PROVIDERS",
+  "providerScreenHarnessModelsSection": "HARNESS MODELS",
+  "providerScreenApiKeysSection": "API KEYS",
+  "providerScreenNoHarnessModels": "NO HARNESS MODELS LISTED",
+  "providerScreenNoApiKeys": "NO API KEYS CONFIGURED",
+  "providerScreenEmptyHint": "NO HARNESS MODELS OR API KEYS YET",
+  "providerScreenAddKey": "ADD KEY",
+  "providerScreenUpdateKey": "UPDATE KEY",
+  "providerScreenAddKeyTitle": "API KEY: {provider}",
+  "@providerScreenAddKeyTitle": {
+    "placeholders": {
+      "provider": { "type": "String" }
+    }
+  },
+  "providerScreenAddKeyBody": "Enter credentials for {provider}:",
+  "@providerScreenAddKeyBody": {
+    "placeholders": {
+      "provider": { "type": "String" }
+    }
+  },
+  "providerScreenSelectProvider": "SELECT PROVIDER",
+  "providerScreenNoProviders": "NO PROVIDERS AVAILABLE",
+  "providerScreenDefaultBadge": "[ DEFAULT ]",
+  "providerScreenErrorPrefix": "ERROR: {error}",
+  "@providerScreenErrorPrefix": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
   "toolPermissionsTitle": "GATEKEEPER CONFIGURATION",
   "toolPermissionsFrameTitle": "TOOL PERMISSIONS",
   "toolPermissionsLoading": "LOADING PERMISSIONS",

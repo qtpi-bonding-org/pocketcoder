@@ -994,6 +994,96 @@ abstract class AppLocalizations {
   /// **'ERROR: {error}'**
   String agentConfigErrorPrefix(String error);
 
+  /// No description provided for @providerScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PROVIDER MANAGEMENT'**
+  String get providerScreenTitle;
+
+  /// No description provided for @providerScreenLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'LOADING PROVIDERS'**
+  String get providerScreenLoading;
+
+  /// No description provided for @providerScreenHarnessModelsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'HARNESS MODELS'**
+  String get providerScreenHarnessModelsSection;
+
+  /// No description provided for @providerScreenApiKeysSection.
+  ///
+  /// In en, this message translates to:
+  /// **'API KEYS'**
+  String get providerScreenApiKeysSection;
+
+  /// No description provided for @providerScreenNoHarnessModels.
+  ///
+  /// In en, this message translates to:
+  /// **'NO HARNESS MODELS LISTED'**
+  String get providerScreenNoHarnessModels;
+
+  /// No description provided for @providerScreenNoApiKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'NO API KEYS CONFIGURED'**
+  String get providerScreenNoApiKeys;
+
+  /// No description provided for @providerScreenEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'NO HARNESS MODELS OR API KEYS YET'**
+  String get providerScreenEmptyHint;
+
+  /// No description provided for @providerScreenAddKey.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD KEY'**
+  String get providerScreenAddKey;
+
+  /// No description provided for @providerScreenUpdateKey.
+  ///
+  /// In en, this message translates to:
+  /// **'UPDATE KEY'**
+  String get providerScreenUpdateKey;
+
+  /// No description provided for @providerScreenAddKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'API KEY: {provider}'**
+  String providerScreenAddKeyTitle(String provider);
+
+  /// No description provided for @providerScreenAddKeyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter credentials for {provider}:'**
+  String providerScreenAddKeyBody(String provider);
+
+  /// No description provided for @providerScreenSelectProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECT PROVIDER'**
+  String get providerScreenSelectProvider;
+
+  /// No description provided for @providerScreenNoProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'NO PROVIDERS AVAILABLE'**
+  String get providerScreenNoProviders;
+
+  /// No description provided for @providerScreenDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'[ DEFAULT ]'**
+  String get providerScreenDefaultBadge;
+
+  /// No description provided for @providerScreenErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'ERROR: {error}'**
+  String providerScreenErrorPrefix(String error);
+
   /// No description provided for @toolPermissionsTitle.
   ///
   /// In en, this message translates to:
