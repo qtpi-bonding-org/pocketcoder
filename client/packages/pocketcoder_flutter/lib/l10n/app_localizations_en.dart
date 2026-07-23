@@ -423,6 +423,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentDefaultTuned => 'DEFAULT [TUNED]';
 
   @override
+  String get agentConfigTitle => 'AGENT CONFIGURATION';
+
+  @override
+  String get agentConfigRegistry => 'AGENT CONFIGS';
+
+  @override
+  String get agentConfigEmpty => 'NO AGENT CONFIGS YET';
+
+  @override
+  String agentConfigDialogTitle(String name) {
+    return 'AGENT CONFIG: $name';
+  }
+
+  @override
+  String get agentConfigNameLabel => 'NAME';
+
+  @override
+  String get agentConfigHarnessModelLabel => 'HARNESS MODEL';
+
+  @override
+  String get agentConfigPromptLabel => 'SYSTEM PROMPT';
+
+  @override
+  String get agentConfigModeLabel => 'MODE';
+
+  @override
+  String get agentConfigIsDefaultLabel => 'IS DEFAULT';
+
+  @override
+  String get agentConfigNoHarnessModels => 'NO HARNESS MODELS AVAILABLE';
+
+  @override
+  String get agentConfigNoPrompts => 'NO PROMPTS AVAILABLE';
+
+  @override
+  String get agentConfigNoModes => 'NO MODES AVAILABLE';
+
+  @override
+  String get agentConfigSelectPrompt => 'SELECT PROMPT';
+
+  @override
+  String get agentConfigSelectHarnessModel => 'SELECT HARNESS MODEL';
+
+  @override
+  String get agentConfigSelectMode => 'SELECT MODE';
+
+  @override
+  String get agentConfigDelete => 'DELETE';
+
+  @override
+  String get agentConfigDeleteConfirmTitle => 'DELETE CONFIG?';
+
+  @override
+  String agentConfigDeleteConfirmBody(String name) {
+    return 'DELETE $name? THIS CANNOT BE UNDONE.';
+  }
+
+  @override
+  String get agentConfigDefaultBadge => '[ DEFAULT ]';
+
+  @override
+  String agentConfigErrorPrefix(String error) {
+    return 'ERROR: $error';
+  }
+
+  @override
   String get toolPermissionsTitle => 'GATEKEEPER CONFIGURATION';
 
   @override

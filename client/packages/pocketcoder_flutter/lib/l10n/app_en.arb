@@ -200,6 +200,42 @@
   "agentNoneSelected": "NONE SELECTED",
   "agentDefaultTuned": "DEFAULT [TUNED]",
 
+  "agentConfigTitle": "AGENT CONFIGURATION",
+  "agentConfigRegistry": "AGENT CONFIGS",
+  "agentConfigEmpty": "NO AGENT CONFIGS YET",
+  "agentConfigDialogTitle": "AGENT CONFIG: {name}",
+  "@agentConfigDialogTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "agentConfigNameLabel": "NAME",
+  "agentConfigHarnessModelLabel": "HARNESS MODEL",
+  "agentConfigPromptLabel": "SYSTEM PROMPT",
+  "agentConfigModeLabel": "MODE",
+  "agentConfigIsDefaultLabel": "IS DEFAULT",
+  "agentConfigNoHarnessModels": "NO HARNESS MODELS AVAILABLE",
+  "agentConfigNoPrompts": "NO PROMPTS AVAILABLE",
+  "agentConfigNoModes": "NO MODES AVAILABLE",
+  "agentConfigSelectPrompt": "SELECT PROMPT",
+  "agentConfigSelectHarnessModel": "SELECT HARNESS MODEL",
+  "agentConfigSelectMode": "SELECT MODE",
+  "agentConfigDelete": "DELETE",
+  "agentConfigDeleteConfirmTitle": "DELETE CONFIG?",
+  "agentConfigDeleteConfirmBody": "DELETE {name}? THIS CANNOT BE UNDONE.",
+  "@agentConfigDeleteConfirmBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "agentConfigDefaultBadge": "[ DEFAULT ]",
+  "agentConfigErrorPrefix": "ERROR: {error}",
+  "@agentConfigErrorPrefix": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
   "toolPermissionsTitle": "GATEKEEPER CONFIGURATION",
   "toolPermissionsFrameTitle": "TOOL PERMISSIONS",
   "toolPermissionsLoading": "LOADING PERMISSIONS",
