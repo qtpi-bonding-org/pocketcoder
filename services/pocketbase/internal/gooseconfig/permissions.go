@@ -24,46 +24,77 @@ import (
 )
 
 // DefaultToolExtension is the single builtin extension all tool_permissions
-// rows are assumed to govern (see Task 2 DECISION); per-extension policy is a
-// future extension-field enhancement.
+// rows are assumed to govern; per-extension policy is a future enhancement.
 const DefaultToolExtension = "developer"
 
 type PermRow struct{ Tool, Pattern, Action string }
 
-// RenderPermissions maps rich allow/ask/deny rows onto Goose's available_tools
-// allowlist (non-empty = only those tools) for the default extension. Lossy by
-// design (spec §7): non-"*" patterns are discarded, per-tool `ask` has no
-// equivalent, and same-tool allow+deny resolves deny-wins. Every degradation is
-// returned in `dropped` for the caller to log.
-func RenderPermissions(rows []PermRow) ([]string, []string) {
-	allow := map[string]struct{}{}
-	deny := map[string]struct{}{}
+// Goose's _goose/unstable/tools/permissions/set ToolPermissionLevel enum,
+// verified against acp-schema.json's ToolPermissionLevel def.
+const (
+	PermissionAlwaysAllow = "always_allow"
+	PermissionAskBefore   = "ask_before"
+	PermissionNeverAllow  = "never_allow"
+)
+
+// ToolPermissionEntry mirrors one entry of Goose's
+// _goose/unstable/tools/permissions/set request
+// (SetToolPermissionsRequest_unstable.toolPermissions[]:
+// {toolName, permission}). Plain strings, not acp-go-sdk types — this
+// package stays pure (no I/O, no ACP SDK dependency); the hooks layer maps
+// this onto the real request struct.
+type ToolPermissionEntry struct {
+	ToolName   string
+	Permission string
+}
+
+// RenderToolPermissions maps tool_permissions rows onto Goose's per-tool
+// tools/permissions/set entries. Non-"*" patterns are dropped (Goose's
+// ToolPermissionEntry is tool-name-only, same limitation the old file-render
+// allowlist had). Same-tool conflicts resolve deny > ask > allow — deny
+// always wins (noted in dropped); otherwise ask beats allow only because a
+// tool can carry both an explicit ask row and a broader allow row and the
+// more cautious one should apply. Unlike the old config.yaml allowlist,
+// "ask" is never dropped — ask_before is a real permission level here.
+func RenderToolPermissions(rows []PermRow) ([]ToolPermissionEntry, []string) {
+	actions := map[string]map[string]bool{}
 	var dropped []string
 
 	for _, r := range rows {
 		if r.Pattern != "" && r.Pattern != "*" {
-			dropped = append(dropped, fmt.Sprintf("pattern dropped (Goose allowlist is tool-name-only): %s pattern=%q", r.Tool, r.Pattern))
+			dropped = append(dropped, fmt.Sprintf("pattern dropped (Goose tool permissions are tool-name-only): %s pattern=%q", r.Tool, r.Pattern))
 		}
 		switch r.Action {
-		case "allow":
-			allow[r.Tool] = struct{}{}
-		case "deny":
-			deny[r.Tool] = struct{}{}
-		case "ask":
-			dropped = append(dropped, fmt.Sprintf("ask dropped (no per-tool Goose equivalent; governed by mode): %s", r.Tool))
-		}
-	}
-
-	var tools []string
-	for tool := range allow {
-		if _, denied := deny[tool]; denied {
-			dropped = append(dropped, fmt.Sprintf("allow/deny conflict, deny wins: %s", tool))
+		case "allow", "deny", "ask":
+		default:
 			continue
 		}
+		if actions[r.Tool] == nil {
+			actions[r.Tool] = map[string]bool{}
+		}
+		actions[r.Tool][r.Action] = true
+	}
+
+	tools := make([]string, 0, len(actions))
+	for tool := range actions {
 		tools = append(tools, tool)
 	}
-	// deny-only (no allow rows) intentionally yields no allowlist: we cannot
-	// enumerate the full tool set to subtract from.
 	sort.Strings(tools)
-	return tools, dropped
+
+	entries := make([]ToolPermissionEntry, 0, len(tools))
+	for _, tool := range tools {
+		seen := actions[tool]
+		switch {
+		case seen["deny"]:
+			if seen["allow"] {
+				dropped = append(dropped, fmt.Sprintf("allow/deny conflict, deny wins: %s", tool))
+			}
+			entries = append(entries, ToolPermissionEntry{ToolName: tool, Permission: PermissionNeverAllow})
+		case seen["ask"]:
+			entries = append(entries, ToolPermissionEntry{ToolName: tool, Permission: PermissionAskBefore})
+		case seen["allow"]:
+			entries = append(entries, ToolPermissionEntry{ToolName: tool, Permission: PermissionAlwaysAllow})
+		}
+	}
+	return entries, dropped
 }
