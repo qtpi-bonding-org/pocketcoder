@@ -377,6 +377,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionAdd => 'ADD';
 
   @override
+  String get toolPermissionsScreenTitle => 'TOOL PERMISSIONS';
+
+  @override
+  String get toolPermissionsRulesRegistry => 'PERMISSION RULES';
+
+  @override
+  String get toolPermissionsNoRules => 'NO RULES CONFIGURED';
+
+  @override
+  String get toolPermissionsAddRuleTitle => 'ADD PERMISSION RULE';
+
+  @override
+  String get toolPermissionsToolNameLabel => 'TOOL NAME';
+
+  @override
+  String get toolPermissionsAllowLabel => 'ALLOW';
+
+  @override
+  String get toolPermissionsAskLabel => 'ASK';
+
+  @override
+  String get toolPermissionsDenyLabel => 'DENY';
+
+  @override
   String get settingsTitle => 'CONFIGURE';
 
   @override
