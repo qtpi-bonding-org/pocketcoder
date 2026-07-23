@@ -5,14 +5,13 @@ part 'sandbox_agent.freezed.dart';
 part 'sandbox_agent.g.dart';
 
 @freezed
-sealed class SandboxAgent with _$SandboxAgent {
+class SandboxAgent with _$SandboxAgent {
   const factory SandboxAgent({
     required String id,
     required String sandboxAgentId,
     required String delegatingAgentId,
     double? tmuxWindowId,
     String? chat,
-    String? delegatingAgent,
   }) = _SandboxAgent;
 
   factory SandboxAgent.fromRecord(RecordModel record) =>

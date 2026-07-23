@@ -5,14 +5,11 @@ part 'chat.freezed.dart';
 part 'chat.g.dart';
 
 @freezed
-sealed class Chat with _$Chat {
+class Chat with _$Chat {
   const factory Chat({
     required String id,
     required String title,
-    String? aiEngineSessionId,
-    @JsonKey(unknownEnumValue: ChatEngineType.unknown) ChatEngineType? engineType,
     required String user,
-    String? agent,
     DateTime? lastActive,
     String? preview,
     @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
@@ -21,8 +18,6 @@ sealed class Chat with _$Chat {
     String? tags,
     DateTime? created,
     DateTime? updated,
-    String? acpSessionId,
-    @JsonKey(unknownEnumValue: ChatCurrentRole.unknown) ChatCurrentRole? currentRole,
     String? pocoConfig,
     String? harnessModelOverride,
   }) = _Chat;
@@ -34,29 +29,7 @@ sealed class Chat with _$Chat {
       _$ChatFromJson(json);
 }
 
-enum ChatEngineType {
-  @JsonValue('opencode')
-  opencode,
-  @JsonValue('claude-code')
-  claude_code,
-  @JsonValue('cursor')
-  cursor,
-  @JsonValue('custom')
-  custom,
-  @JsonValue('__unknown__')
-  unknown,
-}
-
 enum ChatTurn {
-  @JsonValue('user')
-  user,
-  @JsonValue('assistant')
-  assistant,
-  @JsonValue('__unknown__')
-  unknown,
-}
-
-enum ChatCurrentRole {
   @JsonValue('user')
   user,
   @JsonValue('assistant')

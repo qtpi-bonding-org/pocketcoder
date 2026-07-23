@@ -5,7 +5,7 @@ part 'sop.freezed.dart';
 part 'sop.g.dart';
 
 @freezed
-sealed class Sop with _$Sop {
+class Sop with _$Sop {
   const factory Sop({
     required String id,
     required String name,

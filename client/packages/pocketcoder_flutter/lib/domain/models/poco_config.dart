@@ -5,7 +5,7 @@ part 'poco_config.freezed.dart';
 part 'poco_config.g.dart';
 
 @freezed
-sealed class PocoConfig with _$PocoConfig {
+class PocoConfig with _$PocoConfig {
   const factory PocoConfig({
     required String id,
     required String name,
@@ -14,6 +14,7 @@ sealed class PocoConfig with _$PocoConfig {
     dynamic workspaceFolders,
     dynamic acpMcpServers,
     bool? isDefault,
+    @JsonKey(unknownEnumValue: PocoConfigMode.unknown) PocoConfigMode? mode,
   }) = _PocoConfig;
 
   factory PocoConfig.fromRecord(RecordModel record) =>
@@ -21,4 +22,17 @@ sealed class PocoConfig with _$PocoConfig {
 
   factory PocoConfig.fromJson(Map<String, dynamic> json) =>
       _$PocoConfigFromJson(json);
+}
+
+enum PocoConfigMode {
+  @JsonValue('auto')
+  auto,
+  @JsonValue('approve')
+  approve,
+  @JsonValue('smart_approve')
+  smart_approve,
+  @JsonValue('chat')
+  chat,
+  @JsonValue('__unknown__')
+  unknown,
 }
