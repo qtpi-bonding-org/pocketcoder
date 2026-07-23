@@ -41,9 +41,18 @@ exception class. No PocketBase schema or backend delivery logic changes.
   same: *"exact-name match only (no glob/prefix)"*. `tool_permissions.pattern`
   was designed (2026-05-07, before this was confirmed) for glob/argument
   matching within a tool call — a capability Goose's ACP surface never
-  shipped. `RenderToolPermissions` already drops any row where
-  `pattern != "*"` (`gooseconfig/permissions.go:64-66`), so `pattern` is
-  permanently dead weight for every row this UI will ever create.
+  shipped. `RenderToolPermissions` does **not** drop the row for a non-`"*"`
+  pattern — it ignores the pattern value and still emits a permission entry
+  from the row's `action` (confirmed by
+  `TestRenderToolPermissions_PatternDropped`: `{tool:"read", action:"allow",
+  pattern:"src/*"}` still produces an `always_allow` entry for `read`; only
+  a diagnostic string is added to `dropped`). So `pattern` isn't
+  enforcement-inert for existing rows with the seed data's non-`"*"`
+  patterns (e.g. `bash`/`"ls *"`/`allow`) — those still grant a blanket
+  `always_allow` for the whole tool, which is broader than the pattern
+  text implies. This UI sidesteps the ambiguity going forward by never
+  writing anything but `pattern: "*"` (Component 2) — it does not fix or
+  touch the pre-existing rows' misleading patterns.
 
 ## Architecture
 
@@ -73,13 +82,19 @@ backend reality: only the default config's scoped rows are ever delivered.
 
 This UI manages exactly the deployment-wide rows: every row it creates has
 `poco_config` unset (empty string) and `sandbox_config` unset. The DAO reads
-apply the same filter, so pre-existing per-`poco_config` rows (e.g. the seed
-data's `bash`/`edit`/`skill` overrides scoped to a specific poco_config) are
-invisible to this screen — they still exist, still get delivered by
-`activeToolPermissionRows`, just aren't editable here. If per-config editing
-is wanted later, it's a new, separate increment once the backend actually
-supports choosing which `poco_config` a session runs, not a gap this spec
-needs to close.
+apply the same filter (`poco_config = ""`). In practice this currently
+surfaces *every* existing `tool_permissions` row — the seed data's
+`bash`/`edit`/`skill` overrides were originally scoped by an `agent`
+relation field (`1740000101_consolidated_seed.go:144-168`), which was
+dropped entirely by `1753000000_prune_legacy_ai_config.go:43` with no data
+migration onto `poco_config`; no row in the current schema has
+`poco_config` set to anything. So Component 1's scope restriction is
+forward-looking, not something that hides existing data today — it exists
+so that if/when a per-`poco_config` row is ever created (e.g. by a future
+increment, or manually via the PocketBase Admin UI), this screen won't
+silently ignore or misrepresent it. If per-config editing is wanted later,
+it's a new, separate increment once the backend actually supports choosing
+which `poco_config` a session runs, not a gap this spec needs to close.
 
 ### Component 2 — `pattern` is fixed, not exposed
 
@@ -120,8 +135,17 @@ Mirrors the MCP governance UI's shape exactly
   - `setActive(String id, bool active)` →
     `_dao.save(id, {'active': active})` — this is how a rule is "removed"
     (Component 4).
-  - All four wrapped in `tryMethod(..., ToolPermissionsException.new, '<methodName>')`,
-    matching `McpRepository`'s pattern exactly.
+  - `watchRules()` returns a `Stream`, not a `Future` — it is **not** wrapped
+    in `tryMethod` (`tryMethod`'s signature is `Future<T> Function()`; it
+    cannot wrap a stream-returning method). This matches
+    `McpRepository.watchServers()` exactly, which deliberately returns
+    `_mcpServerDao.watch(...)` directly with no `tryMethod` wrapper
+    (`mcp_repository.dart:15-17`) — stream errors are instead handled by the
+    cubit's `onError` callback (see `ToolPermissionsCubit` below). The other
+    three methods (`createRule`, `updateAction`, `setActive`) are `Future`-
+    returning and are each wrapped in
+    `tryMethod(..., ToolPermissionsException.new, '<methodName>')`, matching
+    `McpRepository`'s `authorizeServer`/`denyServer`/`createServer`.
 - **`ToolPermissionsState`** (new, Freezed, `implements IUiFlowState`) —
   same four-variant shape as `McpState`
   (`initial`/`loading`/`loaded(List<ToolPermission> rules)`/`error(String)`),
@@ -143,11 +167,21 @@ Mirrors the MCP governance UI's shape exactly
   section, just a dimmed appearance (`TerminalCard`'s existing `isActive`
   flag, inverted: `isActive: rule.active == true`) so disabled rules are
   visually distinct but still present and editable. Each row is a
-  `TerminalCard` showing the tool name, a 3-way segmented control
-  (ALLOW / ASK / DENY, backed by
-  `context.read<ToolPermissionsCubit>().updateAction(rule.id, ...)`), and an
+  `TerminalCard` showing the tool name and an action selector, backed by
+  `context.read<ToolPermissionsCubit>().updateAction(rule.id, ...)`, and an
   active/inactive toggle (`setActive`) that a user can flip either
-  direction. The "ADD RULE" button opens a
+  direction. **No 3-way segmented-control widget exists anywhere in this
+  codebase today** — unlike every other widget this spec cites, this one
+  has no existing file to point to. Build it from three adjacent
+  `TerminalButton`s (ALLOW / ASK / DENY), each `onTap` calling
+  `updateAction` with the corresponding action string and the currently-
+  selected one visually distinguished (e.g. `isPrimary: rule.action ==
+  ToolPermissionAction.allow` per button, mirroring how
+  `_buildMcpItem`/`TerminalButton(isPrimary: false, ...)` already varies
+  button emphasis in `mcp_management_screen.dart:186-188`) — this is new,
+  small, single-purpose UI, not a new reusable design-system component; it
+  does not need to live in `presentation/core/widgets/`. The "ADD RULE"
+  button opens a
   `TerminalDialog` with one `TerminalTextField` (tool name, free text — no
   catalog, no autocomplete, matches the seed data's own free-text
   convention) and the same 3-way action picker, calling `createRule` on
@@ -235,6 +269,19 @@ so no Go tests are needed.
   `loading` → `loaded([...])` on a repository stream event and `error(...)`
   on a stream error; that `createRule`/`updateAction`/`setActive` call
   through to the repository and emit `error(...)` on a thrown exception.
+
+## Known pre-existing gaps not touched by this spec
+
+- `activeToolPermissionRows` returns zero rows when no `poco_configs` row is
+  marked `is_default` (not just "global + default union" — an empty default
+  means an empty result entirely). Pre-existing backend behavior, unrelated
+  to this UI, not addressed here.
+- `McpCubit` (and by extension `ToolPermissionsCubit`, which mirrors it)
+  does not follow `client/CLAUDE.md`'s documented `AppCubit`/`tryOperation`
+  convention — it's a plain `Cubit<T>` with manual try/catch. This spec
+  inherits that existing deviation for consistency with the screen it
+  mirrors rather than introducing a second, inconsistent cubit convention;
+  reconciling `McpCubit` itself is out of scope here.
 
 ## Out of scope
 
