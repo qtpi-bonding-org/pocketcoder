@@ -596,14 +596,16 @@ git commit -m "feat(tool-permissions): add ToolPermissionsState/ToolPermissionsC
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `context.l10n.toolPermissionsTitle`, `context.l10n.toolPermissionsRulesRegistry`, `context.l10n.toolPermissionsNoRules`, `context.l10n.toolPermissionsAddRuleTitle`, `context.l10n.toolPermissionsToolNameLabel`, `context.l10n.toolPermissionsAllowLabel`, `context.l10n.toolPermissionsAskLabel`, `context.l10n.toolPermissionsDenyLabel` — Task 5's screen uses these exact getter names. (`context.l10n.actionAdd` and `context.l10n.actionCancel` already exist, reused as-is.)
+- Produces: `context.l10n.toolPermissionsScreenTitle`, `context.l10n.toolPermissionsRulesRegistry`, `context.l10n.toolPermissionsNoRules`, `context.l10n.toolPermissionsAddRuleTitle`, `context.l10n.toolPermissionsToolNameLabel`, `context.l10n.toolPermissionsAllowLabel`, `context.l10n.toolPermissionsAskLabel`, `context.l10n.toolPermissionsDenyLabel` — Task 5's screen uses these exact getter names. (`context.l10n.actionAdd` and `context.l10n.actionCancel` already exist, reused as-is.)
 
 - [ ] **Step 1: Add the new ARB keys**
+
+`lib/l10n/app_en.arb` already has a `"toolPermissionsTitle": "GATEKEEPER CONFIGURATION"` key (line 275) and several other `toolPermissions*` keys, dead scaffolding left over from the earlier abandoned attempt at this screen (referenced only by generated `l10n_key_resolver.g.dart` codegen, not by any application code — confirmed by grep). Reusing or deleting that block is out of scope here; instead, every new key below is deliberately named to avoid colliding with it — note the screen's title key is `toolPermissionsScreenTitle`, not `toolPermissionsTitle`.
 
 Open `client/packages/pocketcoder_flutter/lib/l10n/app_en.arb`. After the existing `"actionAdd": "ADD",` line (line 179, immediately before the blank line preceding `"settingsTitle"`), insert:
 
 ```json
-  "toolPermissionsTitle": "TOOL PERMISSIONS",
+  "toolPermissionsScreenTitle": "TOOL PERMISSIONS",
   "toolPermissionsRulesRegistry": "PERMISSION RULES",
   "toolPermissionsNoRules": "NO RULES CONFIGURED",
   "toolPermissionsAddRuleTitle": "ADD PERMISSION RULE",
@@ -618,7 +620,7 @@ Verify the file is still valid JSON (the ARB format is a flat JSON object) — n
 - [ ] **Step 2: Regenerate localization files**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter gen-l10n`
-Expected: no errors; `lib/l10n/app_localizations.dart` and `lib/l10n/app_localizations_en.dart` now declare the 8 new getters (grep for `toolPermissionsTitle` in `app_localizations_en.dart` to confirm).
+Expected: no errors; `lib/l10n/app_localizations.dart` and `lib/l10n/app_localizations_en.dart` now declare the 8 new getters (grep for `toolPermissionsScreenTitle` in `app_localizations_en.dart` to confirm).
 
 - [ ] **Step 3: Commit**
 
@@ -683,7 +685,7 @@ class _ToolPermissionsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: context.l10n.toolPermissionsTitle,
+      title: context.l10n.toolPermissionsScreenTitle,
       activePillar: NavPillar.configure,
       showBack: true,
       body: BiosFrame(
@@ -808,7 +810,7 @@ class _ToolPermissionsView extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
+      builder: (_) => StatefulBuilder(
         builder: (dialogContext, setState) => TerminalDialog(
           title: context.l10n.toolPermissionsAddRuleTitle,
           content: Column(
@@ -913,7 +915,7 @@ import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissio
 
 - [ ] **Step 2: Register the route**
 
-Insert this `GoRoute`, placed immediately after the existing `configureMcp` route block (`app_router.dart:127-135`, so it sits between `configureMcp` and `configureSop`):
+Insert this `GoRoute`, placed immediately after the existing `configureMcp` route block (`app_router.dart:127-135`, so it sits between `configureMcp` and `configureSop`) — `GoRoute` list order has no effect on routing, this placement is just for readability, keeping `configure*` routes grouped together:
 
 ```dart
       GoRoute(
