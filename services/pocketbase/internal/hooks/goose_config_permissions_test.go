@@ -83,6 +83,41 @@ func TestDeliverToolPermissions_CallsToolsPermissionsSetWithResolvedRows(t *test
 		t.Fatalf("coordinator.New: %v", err)
 	}
 
+	harnesses, err := app.FindCollectionByNameOrId("harnesses")
+	if err != nil {
+		t.Fatalf("find harnesses collection: %v", err)
+	}
+	harnessRec := core.NewRecord(harnesses)
+	harnessRec.Set("name", "goose")
+	harnessRec.Set("cli_id", "goose")
+	harnessRec.Set("acp_transport", "websocket")
+	if err := app.Save(harnessRec); err != nil {
+		t.Fatalf("save harness: %v", err)
+	}
+
+	models, err := app.FindCollectionByNameOrId("models")
+	if err != nil {
+		t.Fatalf("find models collection: %v", err)
+	}
+	modelRec := core.NewRecord(models)
+	modelRec.Set("name", "test-model")
+	modelRec.Set("provider", "anthropic")
+	if err := app.Save(modelRec); err != nil {
+		t.Fatalf("save model: %v", err)
+	}
+
+	harnessModels, err := app.FindCollectionByNameOrId("harness_models")
+	if err != nil {
+		t.Fatalf("find harness_models collection: %v", err)
+	}
+	harnessModelRec := core.NewRecord(harnessModels)
+	harnessModelRec.Set("harness", harnessRec.Id)
+	harnessModelRec.Set("model", modelRec.Id)
+	harnessModelRec.Set("harness_model_id", "test-model")
+	if err := app.Save(harnessModelRec); err != nil {
+		t.Fatalf("save harness_model: %v", err)
+	}
+
 	poco, err := app.FindCollectionByNameOrId("poco_configs")
 	if err != nil {
 		t.Fatalf("find poco_configs collection: %v", err)
@@ -90,6 +125,7 @@ func TestDeliverToolPermissions_CallsToolsPermissionsSetWithResolvedRows(t *test
 	rec := core.NewRecord(poco)
 	rec.Set("name", "default")
 	rec.Set("is_default", true)
+	rec.Set("harness_model", harnessModelRec.Id)
 	if err := app.Save(rec); err != nil {
 		t.Fatalf("save poco_config: %v", err)
 	}
@@ -123,7 +159,17 @@ func TestDeliverToolPermissions_CallsToolsPermissionsSetWithResolvedRows(t *test
 	if !ok {
 		t.Fatalf("params type = %T, want setToolPermissionsParams", fc.lastParams)
 	}
-	if len(params.ToolPermissions) != 1 || params.ToolPermissions[0].ToolName != "read" || params.ToolPermissions[0].Permission != "always_allow" {
-		t.Fatalf("params = %+v, want one read/always_allow entry", params)
+	// The test DB's migrations seed their own global tool_permissions rows
+	// (poco_config empty, so they apply to every default poco_config) — assert
+	// our row made it through rather than asserting an exact count.
+	found := false
+	for _, e := range params.ToolPermissions {
+		if e.ToolName == "read" && e.Permission == "always_allow" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("params = %+v, want a read/always_allow entry", params)
 	}
 }

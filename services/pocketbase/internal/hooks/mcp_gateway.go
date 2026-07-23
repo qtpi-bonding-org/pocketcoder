@@ -47,6 +47,11 @@ const mcpGatewayURL = "http://mcp-gateway:8811/mcp"
 // already present, or exhausts its retries. Intended to be called with `go`
 // from main.go's OnServe handler — never blocks PocketBase startup.
 func RegisterMcpGatewayExtension(coord func() *coordinator.Coordinator) {
+	if os.Getenv("GOOSE_ACP_URL") == "" || os.Getenv("GOOSE_SERVER__SECRET_KEY") == "" || os.Getenv("GOOSE_WORKSPACE") == "" {
+		log.Println("ℹ️  [MCPGateway] agent profile not configured (GOOSE_ACP_URL/GOOSE_SERVER__SECRET_KEY/GOOSE_WORKSPACE unset); skipping gateway registration")
+		return
+	}
+
 	const maxAttempts = 6
 	const retryDelay = 10 * time.Second
 
@@ -66,13 +71,11 @@ func RegisterMcpGatewayExtension(coord func() *coordinator.Coordinator) {
 }
 
 // registerMcpGatewayExtensionOnce does one gate-check-add pass. Returns true
-// if the caller should stop retrying (success, already-registered, or the
-// agent profile isn't configured at all — retrying that case is pointless).
+// if the caller should stop retrying (success or already-registered). The
+// GOOSE_ACP_URL/GOOSE_SERVER__SECRET_KEY/GOOSE_WORKSPACE env-var gate lives in
+// RegisterMcpGatewayExtension, not here, so this function stays testable with
+// an injected coordinator regardless of the process's real env vars.
 func registerMcpGatewayExtensionOnce(ctx context.Context, coord func() *coordinator.Coordinator) bool {
-	if os.Getenv("GOOSE_ACP_URL") == "" || os.Getenv("GOOSE_SERVER__SECRET_KEY") == "" || os.Getenv("GOOSE_WORKSPACE") == "" {
-		log.Println("ℹ️  [MCPGateway] agent profile not configured (GOOSE_ACP_URL/GOOSE_SERVER__SECRET_KEY/GOOSE_WORKSPACE unset); skipping gateway registration")
-		return true
-	}
 	c := coord()
 	if c == nil {
 		log.Println("⚠️ [MCPGateway] agent profile configured but coordinator not yet available")
