@@ -95,6 +95,9 @@ func main() {
 		// retried with backoff — see RegisterMcpGatewayExtension).
 		go hooks.RegisterMcpGatewayExtension(coordGetter)
 
+		// D. Skills API (pure ACP passthrough, no PocketBase storage).
+		api.RegisterSkillsApi(app, e, coordGetter)
+
 		return e.Next()
 	})
 
