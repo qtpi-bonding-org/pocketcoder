@@ -19,7 +19,6 @@ class Collections {
   static const String providerKeys = 'provider_keys';
   static const String harnessAuth = 'harness_auth';
   static const String prompts = 'prompts';
-  static const String skills = 'skills';
   static const String pocoConfigs = 'poco_configs';
   static const String sandboxConfigs = 'sandbox_configs';
   static const String gooseSessions = 'goose_sessions';
@@ -44,7 +43,6 @@ class Collections {
     providerKeys,
     harnessAuth,
     prompts,
-    skills,
     pocoConfigs,
     sandboxConfigs,
     gooseSessions,
