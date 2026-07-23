@@ -1,10 +1,3 @@
 GOOSE_MODE: approve
 GOOSE_MODEL: MiniMax-M2.5
 GOOSE_PROVIDER: anthropic
-extensions:
-    developer:
-        available_tools:
-            - read
-            - write
-        enabled: true
-        name: developer

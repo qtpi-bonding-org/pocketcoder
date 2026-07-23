@@ -22,34 +22,28 @@ package gooseconfig
 import "gopkg.in/yaml.v3"
 
 // ConfigInput captures the resolved default poco_config fields needed to render
-// a Goose config.yaml. The hook layer fills this from the default poco_config
-// + RenderPermissions; this package stays pure (no I/O, no PB types).
+// a Goose config.yaml. The hook layer fills this from the default poco_config;
+// this package stays pure (no I/O, no PB types).
+//
+// Deliberately does NOT carry tool permissions or extensions: Goose is the
+// sole writer of config.yaml's `extensions` key (via _goose/unstable/
+// config/extensions/add, called by hooks.RegisterMcpGatewayExtension and
+// tools/permissions/set, called by hooks.deliverToolPermissions) — writing
+// either here would clobber whatever Goose itself has written live.
 type ConfigInput struct {
 	Provider, Model, Mode string
-	AvailableTools        map[string][]string // extension -> allowlist
 	// Instructions is intentionally omitted: config.yaml has no documented
-	// global system-prompt key (spec §13.5). Add only if verification confirms one.
+	// global system-prompt key. Add only if verification confirms one.
 }
 
-// RenderConfigYAML renders a Goose config.yaml: GOOSE_PROVIDER/MODEL/MODE plus
-// an extensions: map of named builtins with available_tools allowlists. No
-// secrets (they live in keys.env). No per-chat MCP (delivered over ACP only).
+// RenderConfigYAML renders a Goose config.yaml: GOOSE_PROVIDER/MODEL/MODE
+// only. No secrets (they live in keys.env). No extensions (Goose owns that
+// key exclusively — see ConfigInput's doc comment).
 func RenderConfigYAML(in ConfigInput) ([]byte, error) {
 	doc := map[string]any{
 		"GOOSE_PROVIDER": in.Provider,
 		"GOOSE_MODEL":    in.Model,
 		"GOOSE_MODE":     in.Mode,
-	}
-	if len(in.AvailableTools) > 0 {
-		exts := map[string]any{}
-		for ext, tools := range in.AvailableTools {
-			exts[ext] = map[string]any{
-				"name":            ext,
-				"enabled":         true,
-				"available_tools": tools,
-			}
-		}
-		doc["extensions"] = exts
 	}
 	return yaml.Marshal(doc)
 }
