@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:ag_ui/ag_ui.dart';
-import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:acp_dart/acp_dart.dart';

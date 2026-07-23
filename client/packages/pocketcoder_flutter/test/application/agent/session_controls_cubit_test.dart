@@ -5,11 +5,11 @@
 import 'dart:async';
 
 import 'package:ag_ui/ag_ui.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:acp_dart/acp_dart.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart';
-import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 
 class _FakeAgentChatRepository implements AgentChatRepository {
