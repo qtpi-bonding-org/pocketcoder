@@ -49,13 +49,20 @@ type ToolPermissionEntry struct {
 }
 
 // RenderToolPermissions maps tool_permissions rows onto Goose's per-tool
-// tools/permissions/set entries. Non-"*" patterns are dropped (Goose's
-// ToolPermissionEntry is tool-name-only, same limitation the old file-render
-// allowlist had). Same-tool conflicts resolve deny > ask > allow — deny
-// always wins (noted in dropped); otherwise ask beats allow only because a
-// tool can carry both an explicit ask row and a broader allow row and the
-// more cautious one should apply. Unlike the old config.yaml allowlist,
-// "ask" is never dropped — ask_before is a real permission level here.
+// tools/permissions/set entries. A non-"*" pattern is NOT dropped from the
+// resulting entry — Goose's ToolPermissionEntry is tool-name-only (verified
+// against acp-schema.json's ToolPermissionEntry def and the exact-match
+// lookup in Goose's permission.rs), so the pattern value is ignored and the
+// row's action still produces an entry; only a diagnostic note is added to
+// the dropped-reasons slice. Callers that write new rows should always use
+// pattern "*" (the Tool-Permissions UI does — see
+// docs/superpowers/specs/2026-07-23-tool-permissions-ui-design.md) since
+// any other pattern value is enforcement-misleading, not enforcement-inert.
+// Same-tool conflicts resolve deny > ask > allow — deny always wins (noted
+// in dropped); otherwise ask beats allow only because a tool can carry both
+// an explicit ask row and a broader allow row and the more cautious one
+// should apply. Unlike the old config.yaml allowlist, "ask" is never
+// dropped — ask_before is a real permission level here.
 func RenderToolPermissions(rows []PermRow) ([]ToolPermissionEntry, []string) {
 	actions := map[string]map[string]bool{}
 	var dropped []string
