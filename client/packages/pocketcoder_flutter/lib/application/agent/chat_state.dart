@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
 
 part 'chat_state.freezed.dart';
 

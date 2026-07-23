@@ -1,76 +1,66 @@
 import 'dart:async';
 
+import 'package:ag_ui/ag_ui.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_transport.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'chat_state.dart';
 
-/// Owns one chat's AG-UI stream lifecycle: connect at the cached cursor,
-/// reconnect on drop with a fresh cursor (spec §5.1 — "reconnect is
-/// explicitly driven by the client"), and reduce the cache into [ChatState]
-/// via [AgentChatRepository.watch]. Actions ([sendPrompt], [cancel]) never
-/// mutate local state directly — their effect always arrives back through
-/// the watched stream once c1/Goose emits it.
 @injectable
 class ChatCubit extends AppCubit<ChatState> {
   ChatCubit(this._repository) : super(const ChatState());
 
   final AgentChatRepository _repository;
-
-  StreamSubscription? _watchSub;
+  PocketcoderAgUiTransport? _transport;
+  ConversationReducer? _reducer;
+  StreamSubscription<BaseEvent>? _eventSub;
   int _generation = 0;
 
   @override
   Future<void> close() {
     _generation++;
-    _watchSub?.cancel();
+    _eventSub?.cancel();
+    _transport?.dispose();
     return super.close();
   }
 
-  /// Starts watching [chatId]: subscribes the reduced Conversation view and
-  /// kicks off the reconnect-forever ingest loop. Calling this again with a
-  /// different chatId tears down the previous subscription/loop first.
+  static const _reconnectDelay = Duration(milliseconds: 200);
+
   void open(String chatId) {
     _generation++;
     final myGeneration = _generation;
 
-    _watchSub?.cancel();
+    _eventSub?.cancel();
+    _transport?.dispose();
+    _reducer = ConversationReducer();
+    _transport = PocketcoderAgUiTransport(_repository, chatId: chatId);
+
     emit(state.copyWith(
       chatId: chatId,
       status: UiFlowStatus.loading,
       lastOperation: AgentChatOperation.open,
     ));
 
-    _watchSub = _repository.watch(chatId).listen(
-      (conversation) {
+    _eventSub = _transport!.events.listen(
+      (event) {
         if (myGeneration != _generation) return;
-        emit(state.copyWith(
-          conversation: conversation,
-          status: UiFlowStatus.success,
-        ));
+        _reducer!.apply(event);
+        emit(state.copyWith(conversation: _reducer!.current, status: UiFlowStatus.success));
       },
       onError: (Object e) {
         if (myGeneration != _generation) return;
-        logError('🤖 [ChatCubit] watch($chatId) error: $e');
+        logError('🤖 [ChatCubit] events($chatId) error: $e');
         emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );
 
     unawaited(_ingestForever(chatId, myGeneration));
   }
-
-  /// Connects, ingests until the connection drops (or errors), then
-  /// reconnects with a fresh cursor (`AgentCacheDb.maxSeq`) — forever, until
-  /// a newer [open] call (or [close]) bumps the generation. A short delay
-  /// between attempts is a real macrotask yield (not just a microtask), so
-  /// a connection that ends instantly (e.g. a fake in tests, or a server
-  /// that drops the connection immediately) can't busy-loop and starve the
-  /// event loop; it also functions as a minimal reconnect backoff so a
-  /// persistently failing connection doesn't hammer c1.
-  static const _reconnectDelay = Duration(milliseconds: 200);
 
   Future<void> _ingestForever(String chatId, int myGeneration) async {
     while (myGeneration == _generation) {
@@ -88,28 +78,23 @@ class ChatCubit extends AppCubit<ChatState> {
 
   Future<void> sendPrompt(String text) async {
     final chatId = state.chatId;
-    if (chatId == null) {
+    final transport = _transport;
+    if (chatId == null || transport == null) {
       logWarning('🤖 [ChatCubit] sendPrompt called before open()');
       return;
     }
     await tryOperation(() async {
-      await _repository.sendPrompt(chatId, text);
-      return state.copyWith(
-        status: UiFlowStatus.success,
-        lastOperation: AgentChatOperation.sendPrompt,
-      );
+      await transport.sendMessage(text);
+      return state.copyWith(status: UiFlowStatus.success, lastOperation: AgentChatOperation.sendPrompt);
     });
   }
 
   Future<void> cancel() async {
-    final chatId = state.chatId;
-    if (chatId == null) return;
+    final transport = _transport;
+    if (transport == null) return;
     await tryOperation(() async {
-      await _repository.cancel(chatId);
-      return state.copyWith(
-        status: UiFlowStatus.success,
-        lastOperation: AgentChatOperation.cancel,
-      );
+      await transport.cancel();
+      return state.copyWith(status: UiFlowStatus.success, lastOperation: AgentChatOperation.cancel);
     });
   }
 }
