@@ -401,6 +401,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolPermissionsDenyLabel => 'DENY';
 
   @override
+  String get skillsTitle => 'SKILLS';
+
+  @override
+  String get skillsRegistryTitle => 'SKILLS REGISTRY';
+
+  @override
+  String get skillsGlobalSection => 'GLOBAL';
+
+  @override
+  String get skillsProjectSection => 'PROJECT';
+
+  @override
+  String get skillsNoSkills => 'NO SKILLS CONFIGURED';
+
+  @override
+  String get skillsAddButton => 'ADD SKILL';
+
+  @override
+  String get skillsEditButton => 'EDIT';
+
+  @override
+  String get skillsDeleteButton => 'DELETE';
+
+  @override
+  String get skillsSaveButton => 'SAVE';
+
+  @override
+  String get skillsNameLabel => 'NAME';
+
+  @override
+  String get skillsDescriptionLabel => 'DESCRIPTION';
+
+  @override
+  String get skillsContentLabel => 'CONTENT';
+
+  @override
+  String get skillsGlobalLabel => 'GLOBAL';
+
+  @override
+  String get skillsProjectLabel => 'PROJECT';
+
+  @override
+  String get skillsAddDialogTitle => 'ADD SKILL';
+
+  @override
+  String skillsEditDialogTitle(String name) {
+    return 'EDIT: $name';
+  }
+
+  @override
+  String get skillsNoEligibleConfig =>
+      'No agent config has a workspace folder configured.';
+
+  @override
   String get settingsTitle => 'CONFIGURE';
 
   @override
