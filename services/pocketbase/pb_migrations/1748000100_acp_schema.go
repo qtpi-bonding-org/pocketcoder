@@ -178,28 +178,10 @@ func init() {
 			return err
 		}
 
-		// =========================================================================
-		// 7. SKILLS
-		// =========================================================================
-		skills, err := getOrCreate("pc_skills", "skills")
-		if err != nil {
-			return err
-		}
-		addFields(skills,
-			&core.TextField{Name: "name", Required: true},
-			&core.TextField{Name: "description"},
-			&core.TextField{Name: "body", Required: true},
-			&core.TextField{Name: "tags"},
-			&core.BoolField{Name: "active"},
-		)
-		skills.ListRule = authOnly
-		skills.ViewRule = authOnly
-		skills.Indexes = []string{
-			"CREATE UNIQUE INDEX idx_skills_name ON skills (name)",
-		}
-		if err := app.Save(skills); err != nil {
-			return err
-		}
+		// Note: no "skills" collection here. Skills are managed entirely via
+		// ACP passthrough (services/pocketbase/internal/api/skills.go) — Goose
+		// itself is the source of truth, PocketBase never stores one. See
+		// docs/superpowers/specs/2026-07-23-skills-ui-design.md.
 
 		// =========================================================================
 		// 8. POCO CONFIGS
@@ -379,7 +361,6 @@ func init() {
 			"acp_terminals",
 			"sandbox_configs",
 			"poco_configs",
-			"skills",
 			"prompts",
 			"harness_auth",
 			"provider_keys",
