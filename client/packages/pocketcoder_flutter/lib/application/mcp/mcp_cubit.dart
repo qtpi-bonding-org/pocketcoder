@@ -49,4 +49,17 @@ class McpCubit extends Cubit<McpState> {
       emit(McpState.error(e.toString()));
     }
   }
+
+  Future<void> createServer({
+    required String name,
+    String? image,
+    Map<String, dynamic>? config,
+  }) async {
+    try {
+      await _repository.createServer(name: name, image: image, config: config);
+    } catch (e) {
+      logError('MCP: Failed to create server', e);
+      emit(McpState.error(e.toString()));
+    }
+  }
 }
