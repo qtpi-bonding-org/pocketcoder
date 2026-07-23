@@ -9,10 +9,7 @@
 // instead of as standalone banners below the list.
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
-import 'package:flutter_chat_ui/flutter_chat_ui.dart' as chat_ui;
-import 'package:flyer_chat_text_stream_message/flyer_chat_text_stream_message.dart'
-    as chat_stream;
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart' as ag_ui_widgets;
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
@@ -26,7 +23,6 @@ import 'package:pocketcoder_flutter/presentation/agent/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_message_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/chat/elicitation_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
-import 'package:pocketcoder_flutter/presentation/chat/timeline_to_messages.dart';
 import 'package:pocketcoder_flutter/presentation/chat/tool_call_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -65,8 +61,6 @@ class _ChatView extends StatefulWidget {
 
 class _ChatViewState extends State<_ChatView> {
   final TextEditingController _inputController = TextEditingController();
-  final chat_core.InMemoryChatController _chatController =
-      chat_core.InMemoryChatController();
   bool _opened = false;
 
   @override
@@ -108,7 +102,6 @@ class _ChatViewState extends State<_ChatView> {
   @override
   void dispose() {
     _inputController.dispose();
-    _chatController.dispose();
     super.dispose();
   }
 
@@ -129,11 +122,6 @@ class _ChatViewState extends State<_ChatView> {
             context.l10n.chatSessionTitle;
         final isRunning = commState.status == UiFlowStatus.loading ||
             commState.lastOperation == AgentChatOperation.sendPrompt;
-
-        _chatController.setMessages(
-            timelineToMessages(commState.conversation.timeline));
-        final streamStates =
-            streamStatesFromTimeline(commState.conversation.timeline);
 
         return PocketCoderShell(
           title: title,
@@ -185,35 +173,21 @@ class _ChatViewState extends State<_ChatView> {
                             ),
                           ),
                         )
-                      : chat_ui.Chat(
-                          currentUserId: kUserAuthorId,
-                          resolveUser: (id) async => chat_core.User(id: id),
-                          chatController: _chatController,
-                          builders: chat_core.Builders(
+                      : ag_ui_widgets.AgUiChat(
+                            conversation: commState.conversation,
+                            currentUserId: 'user',
+                            onSendMessage: (text) =>
+                                context.read<ChatCubit>().sendPrompt(text),
                             textMessageBuilder: (context, message, index,
                                     {required isSentByMe, groupStatus}) =>
                                 ChatMessageBubble(message: message),
-                            textStreamMessageBuilder: (context, message, index,
+                            toolCallBuilder: (context, message, index,
                                     {required isSentByMe, groupStatus}) =>
-                                ChatStreamMessageBubble(
-                              message: message,
-                              index: index,
-                              streamState: streamStates[message.id] ??
-                                  const chat_stream.StreamStateLoading(),
-                            ),
-                            customMessageBuilder: (context, message, index,
-                                {required isSentByMe, groupStatus}) {
-                              switch (message.metadata?['kind']) {
-                                case 'toolCall':
-                                  return ToolCallCard(message: message);
-                                case 'permission':
-                                  return const PermissionCard();
-                                case 'elicitation':
-                                  return const ElicitationCard();
-                                default:
-                                  return const SizedBox.shrink();
-                              }
-                            },
+                                ToolCallCard(message: message),
+                            permissionBuilder: (context, requestId) =>
+                                const PermissionCard(),
+                            elicitationBuilder: (context, requestId) =>
+                                const ElicitationCard(),
                             composerBuilder: (context) => Padding(
                               padding: EdgeInsets.all(AppSizes.space),
                               child: Column(
@@ -235,7 +209,6 @@ class _ChatViewState extends State<_ChatView> {
                               ),
                             ),
                           ),
-                        ),
                 ),
               ],
             ),
