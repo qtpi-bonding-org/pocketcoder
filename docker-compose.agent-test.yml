@@ -1,5 +1,6 @@
-# Opt-in acceptance runner for the active c1 PocketBase + c2 Goose runtime.
-# It intentionally does not depend on Interface, OpenCode, sandbox, or c3.
+# Opt-in acceptance runner for the active c1 PocketBase + c2 Goose runtime,
+# plus c3 (the Docker MCP Gateway) for MCP-governance coverage. It
+# intentionally does not depend on Interface, OpenCode, or the sandbox.
 services:
   agent-c1-test:
     build:
@@ -10,6 +11,8 @@ services:
       goose:
         condition: service_healthy
       pocketbase:
+        condition: service_healthy
+      mcp-gateway:
         condition: service_healthy
     volumes:
       - ./tests:/tests:ro
@@ -22,6 +25,7 @@ services:
       AGENT_TEST_TIMEOUT_SECONDS: ${AGENT_TEST_TIMEOUT_SECONDS:-120}
       GOOSE_CONTAINER: ${GOOSE_CONTAINER:-pocketcoder-goose}
       POCKETBASE_CONTAINER: ${POCKETBASE_CONTAINER:-pocketcoder-pocketbase}
+      MCP_GATEWAY_CONTAINER: ${MCP_GATEWAY_CONTAINER:-pocketcoder-mcp-gateway}
     networks:
       # Reaches PocketBase's API only; the private pocketcoder-agent ACP net
       # stays a two-node c1<->c2 channel.
