@@ -784,6 +784,54 @@ abstract class AppLocalizations {
   /// **'ADD'**
   String get actionAdd;
 
+  /// No description provided for @toolPermissionsScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TOOL PERMISSIONS'**
+  String get toolPermissionsScreenTitle;
+
+  /// No description provided for @toolPermissionsRulesRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'PERMISSION RULES'**
+  String get toolPermissionsRulesRegistry;
+
+  /// No description provided for @toolPermissionsNoRules.
+  ///
+  /// In en, this message translates to:
+  /// **'NO RULES CONFIGURED'**
+  String get toolPermissionsNoRules;
+
+  /// No description provided for @toolPermissionsAddRuleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD PERMISSION RULE'**
+  String get toolPermissionsAddRuleTitle;
+
+  /// No description provided for @toolPermissionsToolNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TOOL NAME'**
+  String get toolPermissionsToolNameLabel;
+
+  /// No description provided for @toolPermissionsAllowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ALLOW'**
+  String get toolPermissionsAllowLabel;
+
+  /// No description provided for @toolPermissionsAskLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ASK'**
+  String get toolPermissionsAskLabel;
+
+  /// No description provided for @toolPermissionsDenyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DENY'**
+  String get toolPermissionsDenyLabel;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
