@@ -5,7 +5,7 @@ part 'cron_job.freezed.dart';
 part 'cron_job.g.dart';
 
 @freezed
-class CronJob with _$CronJob {
+abstract class CronJob with _$CronJob {
   const factory CronJob({
     required String id,
     required String name,

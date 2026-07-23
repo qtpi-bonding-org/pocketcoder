@@ -5,7 +5,7 @@ part 'goose_session.freezed.dart';
 part 'goose_session.g.dart';
 
 @freezed
-class GooseSession with _$GooseSession {
+abstract class GooseSession with _$GooseSession {
   const factory GooseSession({
     required String id,
     required String chat,
