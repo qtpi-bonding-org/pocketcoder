@@ -5,7 +5,7 @@ part 'question.freezed.dart';
 part 'question.g.dart';
 
 @freezed
-sealed class Question with _$Question {
+class Question with _$Question {
   const factory Question({
     required String id,
     required String chat,

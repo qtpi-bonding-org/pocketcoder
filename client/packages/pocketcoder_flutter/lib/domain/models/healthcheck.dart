@@ -5,7 +5,7 @@ part 'healthcheck.freezed.dart';
 part 'healthcheck.g.dart';
 
 @freezed
-sealed class Healthcheck with _$Healthcheck {
+class Healthcheck with _$Healthcheck {
   const factory Healthcheck({
     required String id,
     required String name,

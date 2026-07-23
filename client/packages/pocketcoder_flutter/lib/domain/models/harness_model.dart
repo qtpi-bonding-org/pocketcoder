@@ -5,7 +5,7 @@ part 'harness_model.freezed.dart';
 part 'harness_model.g.dart';
 
 @freezed
-sealed class HarnessModel with _$HarnessModel {
+class HarnessModel with _$HarnessModel {
   const factory HarnessModel({
     required String id,
     required String harness,

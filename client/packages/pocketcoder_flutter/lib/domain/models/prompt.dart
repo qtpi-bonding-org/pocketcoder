@@ -5,7 +5,7 @@ part 'prompt.freezed.dart';
 part 'prompt.g.dart';
 
 @freezed
-sealed class Prompt with _$Prompt {
+class Prompt with _$Prompt {
   const factory Prompt({
     required String id,
     required String name,

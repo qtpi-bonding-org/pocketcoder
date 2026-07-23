@@ -5,7 +5,7 @@ part 'model.freezed.dart';
 part 'model.g.dart';
 
 @freezed
-sealed class Model with _$Model {
+class Model with _$Model {
   const factory Model({
     required String id,
     required String name,
