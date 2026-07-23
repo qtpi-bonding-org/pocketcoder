@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_scree
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/agent_observability_screen.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
+import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
@@ -131,6 +132,15 @@ class AppRouter {
           context: context,
           state: state,
           child: const McpManagementScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.configureToolPermissions,
+        name: RouteNames.configureToolPermissions,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const ToolPermissionsScreen(),
         ),
       ),
       GoRoute(
