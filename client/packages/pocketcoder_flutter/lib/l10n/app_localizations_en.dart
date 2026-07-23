@@ -361,6 +361,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpEnterSecrets => 'Enter required secrets:';
 
   @override
+  String get mcpAddDialogTitle => 'ADD MCP SERVER';
+
+  @override
+  String get mcpServerNameLabel => 'SERVER NAME';
+
+  @override
+  String get mcpImageOptionalLabel => 'IMAGE (OPTIONAL)';
+
+  @override
+  String get mcpAddConfigOptional =>
+      'Optional config (leave blank if none needed)';
+
+  @override
+  String get actionAdd => 'ADD';
+
+  @override
   String get settingsTitle => 'CONFIGURE';
 
   @override

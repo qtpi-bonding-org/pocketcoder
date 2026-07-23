@@ -754,6 +754,36 @@ abstract class AppLocalizations {
   /// **'Enter required secrets:'**
   String get mcpEnterSecrets;
 
+  /// No description provided for @mcpAddDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD MCP SERVER'**
+  String get mcpAddDialogTitle;
+
+  /// No description provided for @mcpServerNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER NAME'**
+  String get mcpServerNameLabel;
+
+  /// No description provided for @mcpImageOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IMAGE (OPTIONAL)'**
+  String get mcpImageOptionalLabel;
+
+  /// No description provided for @mcpAddConfigOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional config (leave blank if none needed)'**
+  String get mcpAddConfigOptional;
+
+  /// No description provided for @actionAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD'**
+  String get actionAdd;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

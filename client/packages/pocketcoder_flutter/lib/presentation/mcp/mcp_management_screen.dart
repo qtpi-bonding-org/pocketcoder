@@ -59,7 +59,7 @@ class _McpManagementView extends StatelessWidget {
                       padding: EdgeInsets.all(AppSizes.space),
                       child: TerminalButton(
                         label: 'ADD NEW',
-                        onTap: () {}, // TODO: Implement add new MCP
+                        onTap: () => _showAddServerDialog(context),
                       ),
                     ),
                     if (pending.isNotEmpty)
@@ -318,6 +318,70 @@ class _McpManagementView extends StatelessWidget {
                   const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: const Text('AUTHORIZE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddServerDialog(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final cubit = context.read<McpCubit>();
+    final nameController = TextEditingController();
+    final imageController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => TerminalDialog(
+        title: context.l10n.mcpAddDialogTitle,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TerminalTextField(
+              controller: nameController,
+              label: context.l10n.mcpServerNameLabel,
+              obscureText: false,
+            ),
+            VSpace.x2,
+            TerminalTextField(
+              controller: imageController,
+              label: context.l10n.mcpImageOptionalLabel,
+              obscureText: false,
+            ),
+          ],
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: colors.onSurface,
+              side: BorderSide(color: colors.onSurface.withValues(alpha: 0.3)),
+              shape:
+                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Text(context.l10n.actionCancel),
+          ),
+          HSpace.x2,
+          OutlinedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              cubit.createServer(
+                name: name,
+                image: imageController.text.trim().isEmpty
+                    ? null
+                    : imageController.text.trim(),
+              );
+              Navigator.of(dialogContext).pop();
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: colors.primary,
+              side: BorderSide(color: colors.primary),
+              shape:
+                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Text(context.l10n.actionAdd),
           ),
         ],
       ),
