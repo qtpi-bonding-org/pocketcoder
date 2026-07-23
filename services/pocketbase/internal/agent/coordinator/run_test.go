@@ -75,6 +75,10 @@ type fakeConn struct {
 	lastExtensionMethod string
 	lastExtensionParams any
 	callExtensionCalls  int
+
+	// Task 2: capture dial/handshake counts.
+	initializeCalls int
+	newSessionCalls int
 }
 
 // waitForPrompt blocks until the fake's Prompt method is invoked (or 2 s timeout).
@@ -126,11 +130,15 @@ func (c *Coordinator) waitForPendingPermission(t *testing.T, chatID string) stri
 }
 
 func (f *fakeConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error) {
+	f.mu.Lock()
+	f.initializeCalls++
+	f.mu.Unlock()
 	return acpsdk.InitializeResponse{}, nil
 }
 func (f *fakeConn) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error) {
 	f.mu.Lock()
 	f.lastNewSessionReq = req
+	f.newSessionCalls++
 	f.mu.Unlock()
 	return acpsdk.NewSessionResponse{SessionId: acpsdk.SessionId(f.newSession)}, nil
 }
