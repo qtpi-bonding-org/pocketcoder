@@ -5,7 +5,7 @@ part 'proposal.freezed.dart';
 part 'proposal.g.dart';
 
 @freezed
-sealed class Proposal with _$Proposal {
+class Proposal with _$Proposal {
   const factory Proposal({
     required String id,
     required String name,

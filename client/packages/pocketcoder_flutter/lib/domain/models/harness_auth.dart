@@ -5,7 +5,7 @@ part 'harness_auth.freezed.dart';
 part 'harness_auth.g.dart';
 
 @freezed
-sealed class HarnessAuth with _$HarnessAuth {
+class HarnessAuth with _$HarnessAuth {
   const factory HarnessAuth({
     required String id,
     required String user,

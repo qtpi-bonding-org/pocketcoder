@@ -5,7 +5,7 @@ part 'cron_job.freezed.dart';
 part 'cron_job.g.dart';
 
 @freezed
-sealed class CronJob with _$CronJob {
+class CronJob with _$CronJob {
   const factory CronJob({
     required String id,
     required String name,
@@ -14,7 +14,6 @@ sealed class CronJob with _$CronJob {
     required String prompt,
     @JsonKey(unknownEnumValue: CronJobSessionMode.unknown) required CronJobSessionMode sessionMode,
     String? chat,
-    String? agent,
     required String user,
     bool? enabled,
     DateTime? lastExecuted,
