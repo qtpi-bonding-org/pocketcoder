@@ -4,6 +4,7 @@
 // repository.setMode / repository.setConfigOption with the right args.
 import 'dart:async';
 
+import 'package:ag_ui/ag_ui.dart';
 import 'package:acp_dart/acp_dart.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +22,9 @@ class _FakeAgentChatRepository implements AgentChatRepository {
 
   @override
   Stream<Conversation> watch(String chatId) => controllerFor(chatId).stream;
+
+  @override
+  Stream<List<BaseEvent>> watchRawEvents(String chatId) => const Stream.empty();
 
   @override
   Future<int> cursorFor(String chatId) async => 0;

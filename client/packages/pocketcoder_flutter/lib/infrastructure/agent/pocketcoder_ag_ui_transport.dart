@@ -1,0 +1,106 @@
+import 'dart:async';
+
+import 'package:acp_dart/acp_dart.dart';
+import 'package:ag_ui/ag_ui.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
+
+import '../../domain/agent/elicitation_response.dart';
+import 'agent_actions_api.dart' show elidedSessionId;
+import 'agent_chat_repository.dart';
+
+/// Synthetic marker this transport emits itself before replaying a
+/// shrunk cache, since AgentChatRepository.ingestOnce consumes the real
+/// pocketcoder:sync marker before it ever reaches the cache. Recognized by
+/// ConversationReducer's isReplaceMarker (Task 3) identically to the real
+/// wire marker — the reducer doesn't know or care which produced it.
+BaseEvent _syntheticResetMarker() =>
+    CustomEvent(name: 'pocketcoder:sync', value: {'mode': 'replace'});
+
+class PocketcoderAgUiTransport implements IAgUiTransport {
+  PocketcoderAgUiTransport(this._repository, {required String chatId}) : _chatId = chatId;
+
+  final AgentChatRepository _repository;
+  final String _chatId;
+  final _events = StreamController<BaseEvent>.broadcast();
+  StreamSubscription<List<BaseEvent>>? _rawSub;
+  int _seen = 0;
+
+  @override
+  Stream<BaseEvent> get events {
+    _rawSub ??= _repository.watchRawEvents(_chatId).listen((all) {
+      if (all.length > _seen) {
+        for (final event in all.skip(_seen)) {
+          _events.add(event);
+        }
+        _seen = all.length;
+      } else if (all.length < _seen) {
+        // Cache shrank — a cold-replay reset happened. Emit a synthesized
+        // reset marker FIRST so any downstream ConversationReducer
+        // actually resets, then replay everything now in the cache.
+        _events.add(_syntheticResetMarker());
+        for (final event in all) {
+          _events.add(event);
+        }
+        _seen = all.length;
+      }
+      // all.length == _seen: no-op emission (cache row content changed
+      // without a count change — doesn't happen on this repository's
+      // insert-or-replace-by-seq upsert model, but guarding avoids
+      // silently reprocessing on a no-op cache notify).
+    });
+    return _events.stream;
+  }
+
+  @override
+  Future<void> sendMessage(String text) async {
+    await _repository.sendPrompt(_chatId, text);
+  }
+
+  @override
+  Future<void> cancel() async {
+    await _repository.cancel(_chatId);
+  }
+
+  @override
+  Future<void> respondPermission(String callId, {String? optionId, bool cancelled = false}) async {
+    await _repository.respondPermission(_chatId, callId, optionId: optionId, cancelled: cancelled);
+  }
+
+  @override
+  Future<void> respondElicitation(String elicitationId, Map<String, dynamic> response) async {
+    final decoded = switch (response['action']) {
+      'accept' => ElicitationResponse.accept(response['content'] as Map<String, dynamic>? ?? const {}),
+      'decline' => const ElicitationResponse.decline(),
+      _ => const ElicitationResponse.cancel(),
+    };
+    await _repository.respondElicitation(_chatId, elicitationId, decoded);
+  }
+
+  @override
+  Future<void> setMode(String modeId) async {
+    await _repository.setMode(_chatId, modeId);
+  }
+
+  @override
+  Future<void> setConfigOption(String optionId, String value) async {
+    await _repository.setConfigOption(
+      _chatId,
+      SetSessionConfigOptionRequest(
+        sessionId: elidedSessionId, // matches agent_actions_api.dart's
+                                     // elidedSessionId convention — the
+                                     // server derives the real session from
+                                     // the chatId path segment and this
+                                     // field gets stripped before send.
+        configId: optionId,
+        value: value,
+      ),
+    );
+  }
+
+  @override
+  Future<void> dispose() async {
+    await _rawSub?.cancel();
+    _rawSub = null;
+    await _events.close();
+  }
+}

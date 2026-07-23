@@ -6,6 +6,7 @@
 // or two assertions per behavior.
 import 'dart:async';
 
+import 'package:ag_ui/ag_ui.dart';
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,6 +33,9 @@ class _FakeAgentChatRepository implements AgentChatRepository {
 
   @override
   Stream<Conversation> watch(String chatId) => controllerFor(chatId).stream;
+
+  @override
+  Stream<List<BaseEvent>> watchRawEvents(String chatId) => const Stream.empty();
 
   @override
   Future<int> cursorFor(String chatId) async => 0;
