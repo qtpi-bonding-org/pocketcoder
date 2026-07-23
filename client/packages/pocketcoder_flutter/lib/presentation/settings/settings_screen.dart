@@ -23,6 +23,7 @@ class SettingsScreen extends StatelessWidget {
       (context.l10n.settingsSecuritySection, [
         ('TOOL PERMISSIONS', '[SETUP]', 'configureToolPermissions'),
         ('MCP MANAGEMENT', '[CONFIGURE]', 'configureMcp'),
+        ('SKILLS', '[MANAGE]', 'configureSkills'),
       ]),
       (context.l10n.settingsGovernanceSection, [
         ('SOP MANAGEMENT', '[LIBRARY]', 'configureSop'),
@@ -89,6 +90,8 @@ class SettingsScreen extends StatelessWidget {
         context.push(AppRoutes.configureToolPermissions);
       case 'configureMcp':
         context.push(AppRoutes.configureMcp);
+      case 'configureSkills':
+        context.push(AppRoutes.configureSkills);
       case 'configureSop':
         context.push(AppRoutes.configureSop);
       case 'configureSystemChecks':
