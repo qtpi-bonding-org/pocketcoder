@@ -3,6 +3,10 @@
 // (AgentStreamClient, the cache, ConversationReducer) parses AG-UI JSON by
 // hand; they all consume [AguiEvent] via this file.
 import 'package:ag_ui/ag_ui.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
+
+export 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
+    show isReplaceMarker;
 
 /// Re-export of ag_ui's event base type under a PocketCoder-local name, so
 /// call sites don't need to import `package:ag_ui/ag_ui.dart` directly just
@@ -23,17 +27,4 @@ typedef DecodedFrame = ({String rawJson, AguiEvent event});
 DecodedFrame decodeAguiFrame(String dataJson) {
   final event = _decoder.decode(dataJson);
   return (rawJson: dataJson, event: event);
-}
-
-/// Whether [event] is the PocketCoder cold-replay "replace" marker: a
-/// CUSTOM event named `pocketcoder:sync` with `value.mode == "replace"`
-/// (see the backend's `Bridge.ReplayStarted`, plan Task 2). The client's
-/// repository clears its cache for the chat and rebuilds from what follows,
-/// rather than appending — this is how a cold replay is distinguished from
-/// a warm resume without inspecting seq values (spec §5.2).
-bool isReplaceMarker(AguiEvent event) {
-  if (event is! CustomEvent) return false;
-  if (event.name != 'pocketcoder:sync') return false;
-  final value = event.value;
-  return value is Map && value['mode'] == 'replace';
 }

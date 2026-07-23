@@ -3,7 +3,7 @@
 // render the requestedSchema form and submit the user's response.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 
 part 'elicitation_state.freezed.dart';
 
