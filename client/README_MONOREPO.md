@@ -5,7 +5,7 @@ This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It
 ## 🏗️ Structure
 
 - **`packages/pocketcoder_flutter`**: Core logic, UI, and state management. **Must remain FOSS-pure.**
-- **`packages/app`**: Proprietary SDK container (Firebase, RevenueCat, etc.).
+- **`packages/pocketcoder_pro`**: Proprietary SDK container (Firebase, RevenueCat, etc.).
 - **`apps/app`**: The primary PocketCoder application shell. Injects services from both packages.
 
 ## 🚀 Getting Started
@@ -37,5 +37,5 @@ This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It
 ## 🛡️ FOSS Purity Rules
 
 1.  Never add proprietary SDKs (Firebase, RevenueCat, etc.) to `pocketcoder_flutter`.
-2.  Keep all proprietary logic gated inside `packages/app`.
+2.  Keep all proprietary logic gated inside `packages/pocketcoder_pro`.
 3.  Always run `melos run check:purity` before committing core changes.

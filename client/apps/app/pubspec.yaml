@@ -33,8 +33,8 @@ dependencies:
     sdk: flutter
   pocketcoder_flutter:
     path: ../../packages/pocketcoder_flutter
-  app:
-    path: ../../packages/app
+  pocketcoder_pro:
+    path: ../../packages/pocketcoder_pro
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

@@ -1,4 +1,4 @@
-name: app
+name: pocketcoder_pro
 resolution: workspace
 description: "Proprietary implementations and third-party integrations for PocketCoder."
 version: 1.0.0
