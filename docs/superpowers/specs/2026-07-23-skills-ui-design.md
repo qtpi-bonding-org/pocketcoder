@@ -123,11 +123,22 @@ v1.43.0, matches `services/goose/Dockerfile`), not inferred:
   specific project."* This is how list responses expose which scope each
   skill is already in — the UI groups by this field, it never has to guess.
 - **`ListSourcesRequest_unstable`** (`5009-5037`): `type` (send `"skill"`),
-  `includeProjectSources: true` (send always — the list route needs both
-  scopes back in one call so the screen can render Global and Project
-  sections from a single response; `projectDir` filtering is not used since
-  the screen shows all project-scoped skills regardless of which project
-  they belong to, distinguished by `path`).
+  `projectDir?: string`. **`includeProjectSources` does not do what its name
+  suggests for this design and must not be used as the way to surface
+  project-scoped skills.** Traced directly in
+  `crates/goose/src/sources.rs::list_sources_with_roots` (`~857-920`):
+  passing `project_dir: Some(X)` is what makes `discover_skills` scan `X`'s
+  `.agents/skills` directory (alongside the always-scanned global
+  directories, `skills/mod.rs::all_skill_dirs`) — that's the only way a
+  project-scoped skill written under a given directory becomes visible
+  again. `include_project_sources` is a *separate* mechanism: it additionally
+  scans directories registered in Goose's own independent "Project" source
+  registry (`SourceType::Project`, `read_project_dir()`,
+  `~/.local/share/goose/projects/*.md` or equivalent), populated only by
+  `sources/create{type:"project"}` — nothing in this design ever creates one,
+  so that flag would always be a no-op here, not a way to reach `poco_config`
+  workspace folders. See Component 3's list route for how project scope is
+  actually surfaced (one call per known project directory, not one flag).
 - **`UpdateSourceRequest_unstable`** (`5224-5260`), required `["type","path",
   "name","description","content"]` — **path-identified, not id-based**.
   `properties` is optional and, per the schema doc, *"When `None`/omitted,
@@ -144,15 +155,39 @@ to invent.
 
 ### Component 3 — Backend: `services/pocketbase/internal/api/skills.go` (new)
 
-Four routes, admin-only (this is a Settings-style human action — unlike
-`mcp_request`/`ssh_keys`, which agents also call, nothing here is ever
-invoked by Goose itself), mirroring `RegisterMcpApi`'s existing shape
-(`api/mcp.go`):
+Four routes. Route registration (`e.Router.POST(...)`, JSON body bind, JSON
+response) follows the same shape as every existing custom route
+(`api/mcp.go`'s `RegisterMcpApi`), but the role check does not have a
+direct precedent to copy: every existing role-gated custom route
+(`mcp.go`, `ssh.go`, `cron.go`) checks agent-or-admin, since Goose itself
+calls those. This is the first **admin-only** custom route — correct,
+since nothing here is ever invoked by Goose, only by a human through
+Flutter — but it's new gating logic (`if role != "admin"`), not a copy of
+an existing check.
 
-- `POST /api/pocketcoder/skills/list` — `{}` in, calls `sources/list` with
-  `{type:"skill", includeProjectSources:true}`, returns the raw `sources`
-  array back to Flutter unmodified (each entry already carries
-  `name/description/content/path/global`, exactly what the screen needs).
+- `POST /api/pocketcoder/skills/list` — `{}` in. Fans out to multiple
+  `sources/list` calls and merges the results, since `projectDir` (not
+  `includeProjectSources`, see Component 2) is what actually surfaces
+  project-scoped skills:
+  1. One call with `{type:"skill"}` (no `projectDir`) — returns global
+     skills only.
+  2. Query PocketBase's own `poco_configs` collection directly (Go, no ACP
+     call) for every row with a non-empty `workspace_folders`; for each
+     distinct `workspace_folders[0]`, one call with
+     `{type:"skill", projectDir: <that path>}` — each such call returns
+     that directory's project skills *plus* the same global skills again
+     (Goose always scans global dirs regardless of `projectDir`).
+  3. Merge all results, deduplicating by `path` (stable and unique per
+     skill regardless of how many calls returned it) — this collapses the
+     repeated global entries from step 2 back down to one copy each.
+
+  With one `poco_config`, that's 2 Goose calls; with N, it's N+1 — cheap
+  and sequential is fine at this deployment's scale (single/family-scale,
+  matching every other "process-wide, not per-session" scoping decision
+  already accepted elsewhere in this codebase's ACP design). Returns the
+  merged `sources` array back to Flutter unmodified (each entry already
+  carries `name/description/content/path/global`, exactly what the screen
+  needs).
 - `POST /api/pocketcoder/skills/create` — body
   `{name, description, content, scope: {global:true} | {projectDir:string}}`,
   maps to `CreateSourceRequest_unstable{type:"skill", name, description,
@@ -186,15 +221,22 @@ Because there's no PocketBase collection, this doesn't get a
   convention as every other repository.
 - A new `Skill` domain model (Freezed, **not** the deleted PocketBase-backed
   one) shaped to match `SourceEntry`: `{name, description, content, path,
-  global, writable}`. No `id`, no `fromRecord` — it's never built from a
-  PocketBase `RecordModel`, only from JSON the new routes return. `writable`
-  is included deliberately: `SourceEntry`'s schema docs it as *"True when
-  this source can be modified through source CRUD methods. Client-provided
-  bundled sources are returned as read-only"* (default `false`) — this
-  spec's `list` request only asks for `type:"skill"` (never `builtinSkill`),
-  so every entry returned today is expected to be user-authored and
-  writable, but the field exists specifically to distinguish editable from
-  non-editable entries, so the UI checks it rather than assuming.
+  global}`. No `id`, no `fromRecord` — it's never built from a PocketBase
+  `RecordModel`, only from JSON the new routes return. Two `SourceEntry`
+  fields are deliberately dropped, not carried into the model: `properties`
+  (arbitrary frontmatter metadata this UI never writes or reads) and
+  `supportingFiles` (extra files alongside `SKILL.md`, populated by Goose
+  for skills that have them — this UI's create/edit form only ever writes a
+  single-file skill, so it has nothing to show or manage there; a skill
+  with supporting files created some other way would still list/edit fine
+  here, just without surfacing those extra files). `writable` is also
+  dropped: traced directly in `crates/goose/src/skills/mod.rs` and
+  `sources.rs`, every code path that builds a `SourceType::Skill` entry
+  hardcodes `writable: true` — there is no conditional skill path that
+  produces `false` (only other source types like `Agent` vary it). Since
+  this spec's `list` request only ever asks for `type:"skill"`, a UI check
+  on `writable` would gate a branch Goose can never actually take — dead
+  validation for a scenario that can't happen, not defensive design.
 - **`SkillsCubit`**/**`SkillsState`**: same 4-variant shape as `McpState`/
   `ToolPermissionsState` (`initial`/`loading`/`loaded(List<Skill>)`/
   `error`), but `loadSkills()` is a one-shot `Future`-based fetch-and-emit,
@@ -210,8 +252,7 @@ Because there's no PocketBase collection, this doesn't get a
   Project reveals the `poco_config` dropdown, sourced from
   `AgentConfigRepository.watchConfigs()`). Each row has EDIT (re-opens the
   same dialog pre-filled, scope no longer editable — Goose's `update`
-  request has no scope-change field, only content edits) and DELETE — both
-  hidden (row shows read-only) when `skill.writable == false`.
+  request has no scope-change field, only content edits) and DELETE.
 
 ### Component 5 — Remove dead scaffolding
 
