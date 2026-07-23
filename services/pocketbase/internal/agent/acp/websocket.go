@@ -22,6 +22,7 @@ package acp
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -57,6 +58,7 @@ type Conn interface {
 	LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error)
 	SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error)
 	SetSessionConfigOption(context.Context, acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error)
+	CallExtension(ctx context.Context, method string, params any) (json.RawMessage, error)
 	Prompt(context.Context, acpsdk.PromptRequest) (acpsdk.PromptResponse, error)
 	Cancel(context.Context, acpsdk.CancelNotification) error
 	UnstableDeleteSession(context.Context, acpsdk.UnstableDeleteSessionRequest) (acpsdk.UnstableDeleteSessionResponse, error)
