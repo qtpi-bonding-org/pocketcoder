@@ -41,12 +41,12 @@ const (
 func RegisterMcpHooks(app core.App) {
 	log.Println("🔌 [MCP] Registering MCP server hooks...")
 
-	app.OnRecordAfterUpdateSuccess("mcp_servers").BindFunc(func(e *core.RecordEvent) error {
+	mcpStatusHandler := func(e *core.RecordEvent) error {
 		record := e.Record
 		newStatus := record.GetString("status")
 		serverName := record.GetString("name")
 
-		log.Printf("🔌 [MCP] Server '%s' status changed to '%s'", serverName, newStatus)
+		log.Printf("🔌 [MCP] Server '%s' status is '%s'", serverName, newStatus)
 
 		switch newStatus {
 		case "approved", "revoked":
@@ -63,7 +63,13 @@ func RegisterMcpHooks(app core.App) {
 		}
 
 		return e.Next()
-	})
+	}
+	// Update covers the agent-request -> human-approve flow (pending ->
+	// approved/denied). Create covers manual add-by-human, which creates the
+	// row already 'approved' — without this binding that row would never
+	// reach the gateway's catalog until an unrelated update or restart.
+	app.OnRecordAfterCreateSuccess("mcp_servers").BindFunc(mcpStatusHandler)
+	app.OnRecordAfterUpdateSuccess("mcp_servers").BindFunc(mcpStatusHandler)
 
 	// Initial config render after the app is fully started (DB must be ready)
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
@@ -172,4 +178,3 @@ func renderMcpConfig(app core.App) error {
 	log.Printf("✅ [MCP] Rendered catalog and secrets for %d approved servers", len(uniqueServers))
 	return nil
 }
-
