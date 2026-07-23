@@ -94,22 +94,27 @@ void main() {
     cubit.open('chat-1');
     await _settle();
 
-    // Emit raw events (a synthetic reset marker). The ConversationReducer
-    // will reduce these into a Conversation. The key assertion is that the
-    // state is updated when events arrive, not the exact content of the
-    // Conversation (which depends on the event format understood by
-    // ConversationReducer).
-    final event = agui.CustomEvent(
-      name: 'pocketcoder:sync',
-      value: {'mode': 'replace'},
-    );
-    repo.controllerFor('chat-1').add([event]);
+    // Emit real text message events. The ConversationReducer will reduce
+    // these into a Conversation with a populated timeline.
+    final events = [
+      const agui.TextMessageStartEvent(
+        messageId: 'm1',
+        role: agui.TextMessageRole.assistant,
+      ),
+      const agui.TextMessageContentEvent(messageId: 'm1', delta: 'Hello, '),
+      const agui.TextMessageContentEvent(messageId: 'm1', delta: 'world!'),
+      const agui.TextMessageEndEvent(messageId: 'm1'),
+    ];
+    repo.controllerFor('chat-1').add(events);
     await _settle();
 
     expect(cubit.state.chatId, 'chat-1');
-    // The reducer processes the event and emits the reduced conversation,
-    // which might be empty if the event is just a reset marker.
     expect(cubit.state.status, UiFlowStatus.success);
+    // Assert the reducer populated the timeline correctly.
+    expect(cubit.state.conversation.timeline, hasLength(1));
+    final item = cubit.state.conversation.timeline.single;
+    expect(item, isA<agui_widgets.TextTimelineItem>());
+    expect((item as agui_widgets.TextTimelineItem).text, 'Hello, world!');
   });
 
   test('sendPrompt calls the repository via transport and does not mutate '
