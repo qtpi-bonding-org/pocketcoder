@@ -109,55 +109,136 @@ Goose's sole path to/from PocketBase, publishing no host port) is not
 touched — `mcp-gateway` is never added to it, and `goose` keeps its existing
 networks unchanged besides this one addition.
 
+The simpler alternative — adding `goose` to `pocketcoder-tools` (where
+`mcp-gateway` already sits alone today) instead of creating a new network —
+was considered and rejected only for clarity of intent: a network named
+`pocketcoder-tools` reads as "whatever else ends up here later," where a
+dedicated `pocketcoder-mcp-gateway` network documents its one purpose and
+doesn't implicitly grow scope for unrelated future services. Either
+achieves identical isolation today; this is a naming/intent choice, not a
+security difference.
+
+**Accepted, not solved, by this network change:** `mcp-gateway` still
+mounts `/var/run/docker.sock` read-only (`docker-compose.yml:100`) and
+stays on `pocketcoder-docker` alongside PocketBase and the write-scoped
+Docker socket proxy. A compromised gateway process retains host-level
+Docker access regardless of which network carries goose↔gateway traffic —
+this design does not change or reduce that exposure, it only adds `goose`
+as a new peer able to reach the gateway's MCP port. That is the same
+process-wide blast-radius tradeoff the ownership-map already accepted for
+`config/extensions/add` and tool-permission writes being process-wide
+rather than per-session (`ownership-map.md`'s Opus-review corrections,
+point 5) — noted here explicitly rather than re-litigated.
+
 ### Component 3 — One-time gateway registration
 
-New Go code, added to whichever init path already runs after PocketBase
-confirms Goose is healthy (see Task breakdown in the plan — this spec fixes
-behavior, the plan fixes exact wiring point):
+New Go code, registered from `services/pocketbase/main.go`'s existing
+`app.OnServe()` handler (`main.go:61`) — there is no other goose-health init
+path in this codebase; `OnServe` plus the retry below is the concrete
+trigger, not a placeholder for one:
 
-1. Call `AdminConn`, then `_goose/unstable/config/extensions/list` (or
-   equivalent list call — confirm exact method name against
+1. **Gate on the agent profile being enabled at all.** `coordinator.New`
+   already requires `GOOSE_ACP_URL`, `GOOSE_SERVER__SECRET_KEY`, and
+   `GOOSE_WORKSPACE` to be set (`coordinator/run.go:111`) — check the same
+   three env vars before attempting anything. If any are unset, the `agent`
+   Compose profile isn't active (`docker-compose.yml:62` gates the whole
+   `goose` service on it) and registration must skip silently, not retry
+   against a container that will never exist.
+2. If gated-in, call `AdminConn`, then `_goose/unstable/config/extensions/list`
+   (or equivalent list call — confirm exact method name against
    `acp-meta.json` at plan-writing time) to check whether an extension
    named `gateway` already exists.
-2. If absent, call `_goose/unstable/config/extensions/add` with the exact
+3. If absent, call `_goose/unstable/config/extensions/add` with the exact
    payload verified in the spike (`type: "http"`, name `gateway`, url
    `http://mcp-gateway:8811/mcp`).
-3. Retry with backoff if Goose isn't reachable yet (same real risk the
-   ownership-map already flagged for the `provider_keys`-triggered restart
-   window — a Settings/init action landing mid-restart needs to not fail
-   silently).
+4. Bounded retry with backoff (a handful of attempts over ~30-60s, matching
+   the gateway's own restart timeout elsewhere in this design) if Goose is
+   gated-in but not yet reachable — covers the real container-startup race
+   between PocketBase's `OnServe` firing and `goose`'s healthcheck passing.
+   Log and give up after the bound; do not block PocketBase startup on it.
+
+**Plan must resolve:** `main.go` does not currently construct a
+`*Coordinator` at startup — it's built inside `RegisterAgentApi`, per-request.
+The plan needs to wire an accessible `Coordinator` (or just its `AdminConn`)
+into this `OnServe` registration path; this is plumbing, not a design
+decision, but it must be nailed down before implementation starts.
 
 This runs once per PocketBase process lifetime (or is safely re-run on every
 restart — the list-then-add check makes it idempotent either way). It is
 the only place in the entire feature that calls `config/extensions/add`.
 
-### Component 4 — `extensions` key dropped from `goose_config.go`
+### Component 4 — `extensions` key dropped from render, tool permissions move to live delivery
 
-`gooseconfig.RenderConfigYAML`/`ConfigInput` stops emitting the
-`extensions` key entirely. Today it's the only writer of that key, carrying
-the tool-permission allowlist for the `developer` builtin extension
-(`AvailableTools map[string][]string`). That allowlist moves to
-`tools/permissions/set` (the delivery path the foundational
-agent-config-foundations plan's `PerSessionApplier` already builds for tool
-permissions — this spec does not duplicate that work, it removes the now-
-redundant/conflicting `config.yaml` write). After this change, Goose is the
-sole writer of `extensions` for the lifetime of the process — no
-special-casing, no partial-preserve-on-render logic. This is a **hard
-prerequisite**: without it, the next unrelated `poco_configs`/
-`provider_keys`/`tool_permissions`/`harness_models`/`prompts` edit
-(any of which currently triggers a full `renderGooseConfig` + restart)
-overwrites `config.yaml` and wipes the gateway registration, which would
-then have to be re-detected and re-added by Component 3 after every
-unrelated Settings change — functionally fine (idempotent) but wasteful and
-confusing to debug if left in place instead of fixed at the root.
+Two files change together, not one:
 
-### Component 5 — approve/deny/revoke pipeline (unchanged)
+- `services/pocketbase/internal/gooseconfig/config.go`:
+  `RenderConfigYAML`/`ConfigInput` stops emitting the `extensions` key
+  entirely — delete the `AvailableTools`-to-`extensions` block (`config.go:
+  43-53`) and the `AvailableTools` field itself.
+- `services/pocketbase/internal/hooks/goose_config.go`: `configInputFor`
+  stops populating `AvailableTools` from `tool_permissions` rows
+  (`goose_config.go:171-193`).
 
-`hooks/mcp.go`'s `RegisterMcpHooks`/`renderMcpConfig`/restart-on-status-
-change logic is validated as-is by the spike addendum — no code changes
-needed here. Existing behavior: Flutter write → status change →
-`renderMcpConfig` regenerates `docker-mcp.yaml`/`mcp.env` from all
-`status='approved'` rows → `restartContainer(GatewayContainer, 30s)`.
+That deletion removes the **only existing mechanism** that delivers the
+tool-permission allowlist to Goose today — confirmed by grep, nothing named
+`tools/permissions/set` or `ToolPermissionApplier` exists anywhere in the
+Go tree yet, and the foundations plan explicitly defers this
+(`2026-07-22-agent-config-foundations.md:17`: *"Shrinking that pipeline
+\[…\] is Bucket B/MCP-phase work, a separate plan"* — this spec is that
+plan). So this spec must build a minimal replacement, not assume one:
+
+- New: on the same hook events that currently trigger `renderGooseConfig`
+  for `tool_permissions` changes (`RegisterGooseConfigHooks`'s
+  `registerCrudHooks` loop, `goose_config.go:56`), also call
+  `_goose/unstable/tools/permissions/set` over `AdminConn` with the
+  resolved active-row allowlist — same resolution logic
+  `configInputFor`/`RenderPermissions` already computes, just delivered
+  live over ACP instead of baked into `config.yaml`.
+
+  **Plan must resolve:** `RenderPermissions` returns a flat `[]string`
+  allowlist scoped to the `developer` extension; `tools/permissions/set`'s
+  actual param shape (likely per-tool `(tool, permission-level)` entries,
+  not a flat list) has not been confirmed. The plan must verify the exact
+  method name and param schema against `acp-meta.json`/`acp-schema.json`
+  and design the allowlist→permissions-set mapping explicitly — do not
+  assume the flat list can be passed through unchanged.
+
+  The delivery mechanism itself mirrors the exact `CallExtension` pattern
+  already proven at `profile.go:130` for `session/system-prompt/set`, and
+  matches the ownership-map's own confirmation that `tools/permissions/set`
+  is write-only, session-free, and process-wide (`ownership-map.md`'s
+  Decisions section).
+- This is deliberately scoped to *delivering what `tool_permissions` rows
+  already produce* — it is not the separate "Tool-permissions UI" plan
+  (editing screens, per-tool approval flows), which stays out of scope
+  here per the original foundational-trio decomposition.
+
+After both changes, Goose is the sole writer of `config.yaml`'s
+`extensions` key for the lifetime of the process — no special-casing, no
+partial-preserve-on-render logic — and tool-permission enforcement keeps
+working, just delivered live instead of via boot-time file render. This
+ordering matters: land the live delivery in the same change as the
+`extensions` deletion, not after it, or there is a real window with no
+tool-permission enforcement at all.
+
+### Component 5 — approve/deny/revoke pipeline (unchanged), plus a required create hook
+
+`hooks/mcp.go`'s existing `renderMcpConfig`/restart-on-status-change logic
+(the render body itself) is validated as-is by the spike addendum — no
+changes to what it renders or how. But its **trigger** is incomplete for
+this spec's needs: `RegisterMcpHooks` binds only
+`OnRecordAfterUpdateSuccess("mcp_servers")` (`hooks/mcp.go:44`) — there is
+no create hook. The existing agent-request → human-approve flow never
+needed one, because the agent creates a `pending` row
+(`api/mcp.go:110`) and a human's approval is always an *update*. Component
+6 breaks that assumption: it creates a row **already** `status: 'approved'`,
+which fires `OnRecordAfterCreateSuccess` — nothing is bound to that event,
+so a manually-added server would sit in the database and never reach the
+gateway's catalog until an unrelated `mcp_servers` update or a PocketBase
+restart. Fix, part of this spec: also bind
+`app.OnRecordAfterCreateSuccess("mcp_servers")` to the same handler
+function `renderAndRestart`/status-switch logic `OnRecordAfterUpdateSuccess`
+already uses (extract the shared handler once, bind it to both events).
 
 ### Component 6 — manual "ADD NEW" (new Flutter + one new repo method)
 
@@ -238,9 +319,12 @@ for the exact existing test file to extend).
   requesting them (the agent's own `gateway__mcp-find`/`mcp_request` flow
   already covers agent-initiated discovery; a human browsing the Docker MCP
   catalog from Flutter is a separate, later feature if wanted).
-- Any change to `tool_permissions`, skills, recipes, prompt templates, or
-  the scheduler (separate Bucket B plans per the ownership-map's
-  "foundational trio" decomposition).
+- Any UI or schema change to `tool_permissions` (a "Tool-permissions UI"
+  plan — editing screens, per-tool approval flows — stays separate; this
+  spec only changes *how* the already-existing rows are delivered to
+  Goose, per Component 4). Skills, recipes, prompt templates, and the
+  scheduler are untouched entirely (separate Bucket B plans per the
+  ownership-map's "foundational trio" decomposition).
 - Removing the unused `acp_transport` field from `mcp_servers`.
 
 ## Dependencies
