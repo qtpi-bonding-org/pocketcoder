@@ -874,6 +874,126 @@ abstract class AppLocalizations {
   /// **'DEFAULT [TUNED]'**
   String get agentDefaultTuned;
 
+  /// No description provided for @agentConfigTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AGENT CONFIGURATION'**
+  String get agentConfigTitle;
+
+  /// No description provided for @agentConfigRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'AGENT CONFIGS'**
+  String get agentConfigRegistry;
+
+  /// No description provided for @agentConfigEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'NO AGENT CONFIGS YET'**
+  String get agentConfigEmpty;
+
+  /// No description provided for @agentConfigDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AGENT CONFIG: {name}'**
+  String agentConfigDialogTitle(String name);
+
+  /// No description provided for @agentConfigNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'NAME'**
+  String get agentConfigNameLabel;
+
+  /// No description provided for @agentConfigHarnessModelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'HARNESS MODEL'**
+  String get agentConfigHarnessModelLabel;
+
+  /// No description provided for @agentConfigPromptLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SYSTEM PROMPT'**
+  String get agentConfigPromptLabel;
+
+  /// No description provided for @agentConfigModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MODE'**
+  String get agentConfigModeLabel;
+
+  /// No description provided for @agentConfigIsDefaultLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IS DEFAULT'**
+  String get agentConfigIsDefaultLabel;
+
+  /// No description provided for @agentConfigNoHarnessModels.
+  ///
+  /// In en, this message translates to:
+  /// **'NO HARNESS MODELS AVAILABLE'**
+  String get agentConfigNoHarnessModels;
+
+  /// No description provided for @agentConfigNoPrompts.
+  ///
+  /// In en, this message translates to:
+  /// **'NO PROMPTS AVAILABLE'**
+  String get agentConfigNoPrompts;
+
+  /// No description provided for @agentConfigNoModes.
+  ///
+  /// In en, this message translates to:
+  /// **'NO MODES AVAILABLE'**
+  String get agentConfigNoModes;
+
+  /// No description provided for @agentConfigSelectPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECT PROMPT'**
+  String get agentConfigSelectPrompt;
+
+  /// No description provided for @agentConfigSelectHarnessModel.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECT HARNESS MODEL'**
+  String get agentConfigSelectHarnessModel;
+
+  /// No description provided for @agentConfigSelectMode.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECT MODE'**
+  String get agentConfigSelectMode;
+
+  /// No description provided for @agentConfigDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get agentConfigDelete;
+
+  /// No description provided for @agentConfigDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE CONFIG?'**
+  String get agentConfigDeleteConfirmTitle;
+
+  /// No description provided for @agentConfigDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE {name}? THIS CANNOT BE UNDONE.'**
+  String agentConfigDeleteConfirmBody(String name);
+
+  /// No description provided for @agentConfigDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'[ DEFAULT ]'**
+  String get agentConfigDefaultBadge;
+
+  /// No description provided for @agentConfigErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'ERROR: {error}'**
+  String agentConfigErrorPrefix(String error);
+
   /// No description provided for @toolPermissionsTitle.
   ///
   /// In en, this message translates to:
