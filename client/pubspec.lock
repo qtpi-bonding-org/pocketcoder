@@ -33,6 +33,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.0"
+  ag_ui_widgets_flutter:
+    dependency: transitive
+    description:
+      path: "."
+      ref: df010806b11ad127a32a82e6d3eba38bd3e7a241
+      resolved-ref: df010806b11ad127a32a82e6d3eba38bd3e7a241
+      url: "https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git"
+    source: git
+    version: "0.1.0"
   analyzer:
     dependency: transitive
     description:
