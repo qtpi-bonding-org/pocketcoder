@@ -186,6 +186,29 @@
   "toolPermissionsAskLabel": "ASK",
   "toolPermissionsDenyLabel": "DENY",
 
+  "skillsTitle": "SKILLS",
+  "skillsRegistryTitle": "SKILLS REGISTRY",
+  "skillsGlobalSection": "GLOBAL",
+  "skillsProjectSection": "PROJECT",
+  "skillsNoSkills": "NO SKILLS CONFIGURED",
+  "skillsAddButton": "ADD SKILL",
+  "skillsEditButton": "EDIT",
+  "skillsDeleteButton": "DELETE",
+  "skillsSaveButton": "SAVE",
+  "skillsNameLabel": "NAME",
+  "skillsDescriptionLabel": "DESCRIPTION",
+  "skillsContentLabel": "CONTENT",
+  "skillsGlobalLabel": "GLOBAL",
+  "skillsProjectLabel": "PROJECT",
+  "skillsAddDialogTitle": "ADD SKILL",
+  "skillsEditDialogTitle": "EDIT: {name}",
+  "@skillsEditDialogTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "skillsNoEligibleConfig": "No agent config has a workspace folder configured.",
+
   "settingsTitle": "CONFIGURE",
   "settingsAiAgentsSection": "AI & AGENTS",
   "settingsSecuritySection": "SECURITY",

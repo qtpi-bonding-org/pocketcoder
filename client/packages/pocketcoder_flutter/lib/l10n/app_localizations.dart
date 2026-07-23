@@ -832,6 +832,108 @@ abstract class AppLocalizations {
   /// **'DENY'**
   String get toolPermissionsDenyLabel;
 
+  /// No description provided for @skillsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SKILLS'**
+  String get skillsTitle;
+
+  /// No description provided for @skillsRegistryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SKILLS REGISTRY'**
+  String get skillsRegistryTitle;
+
+  /// No description provided for @skillsGlobalSection.
+  ///
+  /// In en, this message translates to:
+  /// **'GLOBAL'**
+  String get skillsGlobalSection;
+
+  /// No description provided for @skillsProjectSection.
+  ///
+  /// In en, this message translates to:
+  /// **'PROJECT'**
+  String get skillsProjectSection;
+
+  /// No description provided for @skillsNoSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'NO SKILLS CONFIGURED'**
+  String get skillsNoSkills;
+
+  /// No description provided for @skillsAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD SKILL'**
+  String get skillsAddButton;
+
+  /// No description provided for @skillsEditButton.
+  ///
+  /// In en, this message translates to:
+  /// **'EDIT'**
+  String get skillsEditButton;
+
+  /// No description provided for @skillsDeleteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get skillsDeleteButton;
+
+  /// No description provided for @skillsSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get skillsSaveButton;
+
+  /// No description provided for @skillsNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'NAME'**
+  String get skillsNameLabel;
+
+  /// No description provided for @skillsDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DESCRIPTION'**
+  String get skillsDescriptionLabel;
+
+  /// No description provided for @skillsContentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTENT'**
+  String get skillsContentLabel;
+
+  /// No description provided for @skillsGlobalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'GLOBAL'**
+  String get skillsGlobalLabel;
+
+  /// No description provided for @skillsProjectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PROJECT'**
+  String get skillsProjectLabel;
+
+  /// No description provided for @skillsAddDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD SKILL'**
+  String get skillsAddDialogTitle;
+
+  /// No description provided for @skillsEditDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'EDIT: {name}'**
+  String skillsEditDialogTitle(String name);
+
+  /// No description provided for @skillsNoEligibleConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'No agent config has a workspace folder configured.'**
+  String get skillsNoEligibleConfig;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
