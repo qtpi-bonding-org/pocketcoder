@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
-import 'package:pocketcoder_flutter/presentation/settings/agent_management_screen.dart';
+import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/agent_observability_screen.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
@@ -11,7 +11,7 @@ import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart'
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
-import 'package:pocketcoder_flutter/presentation/llm/llm_management_screen.dart';
+import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
@@ -121,7 +121,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const AgentManagementScreen(),
+          child: const AgentConfigScreen(),
         ),
       ),
       GoRoute(
@@ -166,7 +166,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const LlmManagementScreen(),
+          child: const ProviderScreen(),
         ),
       ),
       GoRoute(

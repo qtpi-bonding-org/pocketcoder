@@ -25,6 +25,7 @@ class _FakeProviderRepository implements IProviderRepository {
     List<Model> initialModels = const [],
     List<HarnessModel> initialHarnessModels = const [],
     List<ProviderKey> initialProviderKeys = const [],
+    this.neverEmit = false,
   })  : _harnesses = [...initialHarnesses],
         _models = [...initialModels],
         _harnessModels = [...initialHarnessModels],
@@ -35,37 +36,50 @@ class _FakeProviderRepository implements IProviderRepository {
   final List<HarnessModel> _harnessModels;
   final List<ProviderKey> _providerKeys;
 
+  /// When true, every watch* stream stays open without ever emitting — used
+  /// to deterministically pin the cubit in its loading state, since a
+  /// single-yield `async*` stream otherwise resolves within the same
+  /// `pump()` the loading frame would need to be observed in.
+  final bool neverEmit;
+
   final List<ProviderKey> savedKeys = [];
   final List<String> deletedKeyIds = [];
 
   @override
   Stream<List<Harnesse>> watchHarnesses() async* {
+    if (neverEmit) return;
     yield List.unmodifiable(_harnesses);
   }
 
   @override
   Stream<List<Model>> watchModels() async* {
+    if (neverEmit) return;
     yield List.unmodifiable(_models);
   }
 
   @override
   Stream<List<HarnessModel>> watchHarnessModels() async* {
+    if (neverEmit) return;
     yield List.unmodifiable(_harnessModels);
   }
 
   @override
   Stream<List<ProviderKey>> watchProviderKeys() async* {
+    if (neverEmit) return;
     yield List.unmodifiable(_providerKeys);
   }
 
   @override
   Future<void> saveProviderKey(ProviderKey key) async {
     savedKeys.add(key);
+    _providerKeys.removeWhere((k) => k.id == key.id);
+    _providerKeys.add(key);
   }
 
   @override
   Future<void> deleteProviderKey(String id) async {
     deletedKeyIds.add(id);
+    _providerKeys.removeWhere((k) => k.id == id);
   }
 }
 
@@ -188,15 +202,22 @@ void main() {
 
       expect(find.text('GOOSE'), findsWidgets);
       // 8+ char value gives the head..tail form.
-      expect(find.text('supe..cret'), findsOneWidget);
+      expect(find.text('sk-s..cret'), findsOneWidget);
     });
 
     testWidgets('shows loading indicator until data arrives', (tester) async {
+      // A never-emitting repo keeps the cubit pinned in its loading state
+      // deterministically (a single-yield async* stream would otherwise
+      // resolve within the same pump(), racing past the loading frame).
+      await cubit.close();
+      repo = _FakeProviderRepository(neverEmit: true);
+      cubit = ProviderCubit(repo);
+
       await tester.pumpWidget(_wrap(
         wrapWithCubit(const ProviderView()),
       ));
 
-      // Do not call watchAll() — the cubit stays in the initial idle state.
+      cubit.watchAll();
       await tester.pump();
 
       expect(find.text('[ LOADING PROVIDERS ]'), findsOneWidget);
@@ -221,8 +242,14 @@ void main() {
       await tester.tap(find.text('ADD KEY'));
       await tester.pumpAndSettle();
 
-      // Picker dialog opens.
+      // The harness field's placeholder reads "SELECT PROVIDER" until a
+      // harness is picked.
       expect(find.text('SELECT PROVIDER'), findsOneWidget);
+
+      // Tap the harness field to open the nested selection dialog.
+      await tester.tap(find.text('SELECT PROVIDER'));
+      await tester.pumpAndSettle();
+
       expect(find.text('GOOSE'), findsWidgets);
       expect(find.text('goose'), findsWidgets);
     });

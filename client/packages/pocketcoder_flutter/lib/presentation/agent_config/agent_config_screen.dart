@@ -139,31 +139,43 @@ class AgentConfigView extends StatelessWidget {
   }
 
   void _openEditor(BuildContext context, PocoConfig? existing) {
+    // showDialog pushes a route that is a SIBLING of the route holding
+    // AgentConfigScreen's MultiBlocProvider, not a descendant of it — so
+    // BlocBuilder<AgentConfigCubit>/<ProviderCubit> inside the dialog
+    // subtree (the prompt/harness_model pickers) can't find those cubits
+    // via the outer context. Capture them here and re-provide them inside
+    // the dialog's own subtree.
+    final agentConfigCubit = context.read<AgentConfigCubit>();
+    final providerCubit = context.read<ProviderCubit>();
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        return _AgentConfigEditorDialog(
-          existing: existing,
-          onSave: (updated) {
-            context.read<AgentConfigCubit>().saveConfig(updated);
-            Navigator.of(dialogContext).pop();
-          },
-          onDelete: existing != null && existing.id.isNotEmpty
-              ? () async {
-                  final confirmed = await _confirmDelete(
-                    dialogContext,
-                    existing,
-                  );
-                  if (confirmed == true && context.mounted) {
-                    context
-                        .read<AgentConfigCubit>()
-                        .deleteConfig(existing.id);
-                    if (dialogContext.mounted) {
-                      Navigator.of(dialogContext).pop();
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<AgentConfigCubit>.value(value: agentConfigCubit),
+            BlocProvider<ProviderCubit>.value(value: providerCubit),
+          ],
+          child: _AgentConfigEditorDialog(
+            existing: existing,
+            onSave: (updated) {
+              agentConfigCubit.saveConfig(updated);
+              Navigator.of(dialogContext).pop();
+            },
+            onDelete: existing != null && existing.id.isNotEmpty
+                ? () async {
+                    final confirmed = await _confirmDelete(
+                      dialogContext,
+                      existing,
+                    );
+                    if (confirmed == true) {
+                      agentConfigCubit.deleteConfig(existing.id);
+                      if (dialogContext.mounted) {
+                        Navigator.of(dialogContext).pop();
+                      }
                     }
                   }
-                }
-              : null,
+                : null,
+          ),
         );
       },
     );
@@ -267,44 +279,49 @@ class _AgentConfigEditorDialogState extends State<_AgentConfigEditorDialog> {
       title: existing == null
           ? context.l10n.agentConfigTitle
           : context.l10n.agentConfigDialogTitle(existing.name.toUpperCase()),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TerminalTextField(
-              controller: _nameController,
-              label: context.l10n.agentConfigNameLabel,
-            ),
-            VSpace.x2,
-            _PromptPicker(
-              selectedPromptId: _systemPromptId,
-              onSelected: (id) => setState(() => _systemPromptId = id),
-            ),
-            VSpace.x2,
-            _HarnessModelPicker(
-              selectedHarnessModelId: _harnessModelId,
-              onSelected: (id) => setState(() => _harnessModelId = id),
-            ),
-            VSpace.x2,
-            _ModePicker(
-              selectedMode: _mode,
-              onSelected: (mode) => setState(() => _mode = mode),
-            ),
-            VSpace.x2,
-            _IsDefaultToggle(
-              value: _isDefault,
-              onChanged: (v) => setState(() => _isDefault = v),
-            ),
-            if (widget.onDelete case final onDelete?) ...[
-              VSpace.x2,
-              TerminalButton(
-                label: context.l10n.agentConfigDelete,
-                isPrimary: false,
-                onTap: onDelete,
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: 300,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TerminalTextField(
+                controller: _nameController,
+                label: context.l10n.agentConfigNameLabel,
               ),
+              VSpace.x2,
+              _PromptPicker(
+                selectedPromptId: _systemPromptId,
+                onSelected: (id) => setState(() => _systemPromptId = id),
+              ),
+              VSpace.x2,
+              _HarnessModelPicker(
+                selectedHarnessModelId: _harnessModelId,
+                onSelected: (id) => setState(() => _harnessModelId = id),
+              ),
+              VSpace.x2,
+              _ModePicker(
+                selectedMode: _mode,
+                onSelected: (mode) => setState(() => _mode = mode),
+              ),
+              VSpace.x2,
+              _IsDefaultToggle(
+                value: _isDefault,
+                onChanged: (v) => setState(() => _isDefault = v),
+              ),
+              if (widget.onDelete case final onDelete?) ...[
+                VSpace.x2,
+                TerminalButton(
+                  label: context.l10n.agentConfigDelete,
+                  isPrimary: false,
+                  onTap: onDelete,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
       actions: [
@@ -509,14 +526,14 @@ class _SelectionField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TerminalText.tiny(label, color: colors.onSurface),
-        VSpace.x1,
-        InkWell(
-          onTap: onTap,
-          child: Container(
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TerminalText.tiny(label, color: colors.onSurface),
+          VSpace.x1,
+          Container(
             padding: EdgeInsets.all(AppSizes.space),
             decoration: BoxDecoration(
               border: Border.all(
@@ -537,8 +554,8 @@ class _SelectionField extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -573,8 +590,8 @@ Future<T?> _showListDialog<T extends Object>(
                   for (final item in items)
                     BiosListTile(
                       label: item.label,
-                      isSelected: initialValue != null &&
-                          initialValue == item.id,
+                      isSelected:
+                          initialValue != null && initialValue == item.id,
                       onTap: () => Navigator.of(dialogContext).pop(item.id),
                     ),
                 ],

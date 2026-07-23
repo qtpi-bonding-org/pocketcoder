@@ -26,11 +26,8 @@ import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dar
     as _i312;
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_cubit.dart'
     as _i723;
-import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart'
-    as _i616;
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart'
     as _i304;
-import 'package:pocketcoder_flutter/application/llm/llm_cubit.dart' as _i85;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
     as _i273;
@@ -53,8 +50,6 @@ import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart'
     as _i704;
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart'
     as _i630;
-import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart'
-    as _i536;
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart' as _i50;
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart'
     as _i619;
@@ -62,7 +57,6 @@ import 'package:pocketcoder_flutter/domain/evolution/i_evolution_repository.dart
     as _i656;
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart'
     as _i623;
-import 'package:pocketcoder_flutter/domain/llm/i_llm_repository.dart' as _i615;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart'
     as _i148;
@@ -88,10 +82,6 @@ import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_dao
     as _i810;
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_repository.dart'
     as _i857;
-import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_daos.dart'
-    as _i61;
-import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_repository.dart'
-    as _i846;
 import 'package:pocketcoder_flutter/infrastructure/auth/auth_daos.dart'
     as _i589;
 import 'package:pocketcoder_flutter/infrastructure/auth/auth_repository.dart'
@@ -116,9 +106,6 @@ import 'package:pocketcoder_flutter/infrastructure/feedback/localization_service
     as _i1000;
 import 'package:pocketcoder_flutter/infrastructure/healthcheck/healthcheck_repository.dart'
     as _i40;
-import 'package:pocketcoder_flutter/infrastructure/llm/llm_daos.dart' as _i1055;
-import 'package:pocketcoder_flutter/infrastructure/llm/llm_repository.dart'
-    as _i935;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_daos.dart' as _i444;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_repository.dart'
     as _i662;
@@ -186,14 +173,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i810.PocoConfigDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i810.PromptDao>(
         () => _i810.PromptDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i61.AiAgentDao>(
-        () => _i61.AiAgentDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i61.AiPromptDao>(
-        () => _i61.AiPromptDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i61.AiModelDao>(
-        () => _i61.AiModelDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i61.SandboxAgentDao>(
-        () => _i61.SandboxAgentDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i589.UserDao>(
         () => _i589.UserDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i589.SshKeyDao>(
@@ -203,12 +182,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i197.ProposalDao>(
         () => _i197.ProposalDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i197.SopDao>(() => _i197.SopDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i1055.LlmKeyDao>(
-        () => _i1055.LlmKeyDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i1055.ModelSelectionDao>(
-        () => _i1055.ModelSelectionDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i1055.LlmProviderDao>(
-        () => _i1055.LlmProviderDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i444.McpServerDao>(
         () => _i444.McpServerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i849.DeviceDao>(
@@ -225,12 +198,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
-    gh.lazySingleton<_i536.IAiConfigRepository>(() => _i846.AiConfigRepository(
-          gh<_i61.AiAgentDao>(),
-          gh<_i61.AiPromptDao>(),
-          gh<_i61.AiModelDao>(),
-          gh<_i61.SandboxAgentDao>(),
-        ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
@@ -249,8 +216,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i589.UserDao>(),
           gh<_i589.SshKeyDao>(),
         ));
-    gh.factory<_i616.AiConfigCubit>(
-        () => _i616.AiConfigCubit(gh<_i536.IAiConfigRepository>()));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
           httpClient: gh<_i519.Client>(),
@@ -264,11 +229,6 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.factory<_i506.StatusCubit>(
         () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
-    gh.lazySingleton<_i615.ILlmRepository>(() => _i935.LlmRepository(
-          gh<_i1055.LlmKeyDao>(),
-          gh<_i1055.ModelSelectionDao>(),
-          gh<_i1055.LlmProviderDao>(),
-        ));
     gh.factory<_i328.McpCubit>(
         () => _i328.McpCubit(gh<_i922.IMcpRepository>()));
     gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
@@ -283,7 +243,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
-    gh.factory<_i85.LlmCubit>(() => _i85.LlmCubit(gh<_i615.ILlmRepository>()));
     gh.factory<_i655.SandboxAgentCubit>(
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
     gh.factory<_i464.AuthCubit>(
