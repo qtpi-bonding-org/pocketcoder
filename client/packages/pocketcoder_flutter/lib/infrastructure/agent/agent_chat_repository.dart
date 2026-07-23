@@ -4,6 +4,7 @@
 // warm frame just upserts. No direct AG-UI/ACP type leaks past this file
 // except AguiEvent (already re-exported by agui_decode.dart).
 import 'package:acp_dart/acp_dart.dart';
+import 'package:ag_ui/ag_ui.dart';
 import 'package:injectable/injectable.dart';
 
 import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
@@ -49,6 +50,16 @@ class AgentChatRepository {
       final events = rows.map((row) => decodeAguiFrame(row.json).event).toList();
       return reduce(events);
     });
+  }
+
+  /// Reactive view of the chat's cached *raw* decoded events (not reduced),
+  /// for PocketcoderAgUiTransport to diff against. Emits the full list on
+  /// every cache change, same emission cadence as [watch] — the diffing
+  /// happens in PocketcoderAgUiTransport, not here.
+  Stream<List<BaseEvent>> watchRawEvents(String chatId) {
+    return _cache.watchChat(chatId).map(
+          (rows) => rows.map((row) => decodeAguiFrame(row.json).event).toList(),
+        );
   }
 
   /// The SSE resume cursor: the highest seq cached for this chat, or 0 for

@@ -74,6 +74,10 @@ dependencies:
   flutter_chat_core: ^2.9.0
   flutter_chat_ui: ^2.11.1
   flyer_chat_text_stream_message: ^2.3.0
+  ag_ui_widgets_flutter:
+    git:
+      url: git@github.com:qtpi-bonding-org/ag_ui_widgets_flutter.git
+      ref: df010806b11ad127a32a82e6d3eba38bd3e7a241
 dependency_overrides:
   webcrypto:
     git:

@@ -3,6 +3,7 @@
 // mutate state directly, and that reconnect uses the repository's cursor.
 import 'dart:async';
 
+import 'package:ag_ui/ag_ui.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
@@ -29,6 +30,9 @@ class _FakeAgentChatRepository implements AgentChatRepository {
 
   @override
   Stream<Conversation> watch(String chatId) => controllerFor(chatId).stream;
+
+  @override
+  Stream<List<BaseEvent>> watchRawEvents(String chatId) => const Stream.empty();
 
   @override
   Future<int> cursorFor(String chatId) async {

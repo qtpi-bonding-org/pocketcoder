@@ -47,7 +47,7 @@ class UnknownAgentActionFailure extends AgentActionFailure {
 /// constructor parameter; every `toJson()` result below has this key
 /// stripped before the body is sent — c1 derives the real session from the
 /// chatId path segment, and Flutter never sees `goose_session_id` (spec §12).
-const _elidedSessionId = '';
+const elidedSessionId = '';
 
 @lazySingleton
 class AgentActionsApi {
@@ -104,7 +104,7 @@ class AgentActionsApi {
   /// is already active for this chat.
   Future<String> prompt(String chatId, String text) {
     final req = PromptRequest(
-      sessionId: _elidedSessionId,
+      sessionId: elidedSessionId,
       prompt: [TextContentBlock(text: text)],
     );
     return _postJson<String>(
@@ -125,7 +125,7 @@ class AgentActionsApi {
   /// POST `session/set_mode` ← `SetSessionModeRequest`.
   Future<void> setMode(String chatId, String modeId) {
     final req = SetSessionModeRequest(
-      sessionId: _elidedSessionId,
+      sessionId: elidedSessionId,
       modeId: modeId,
     );
     return _postVoid(
