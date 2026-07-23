@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app/app.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
-import 'package:app/app.dart';
+import 'package:pocketcoder_pro/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,5 +1,5 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:app/application/auth/auth_state.dart';
+import 'package:pocketcoder_pro/application/auth/auth_state.dart';
 
 /// Message mapper for authentication state to user-friendly messages
 class AuthMessageMapper implements IStateMessageMapper<AuthState> {

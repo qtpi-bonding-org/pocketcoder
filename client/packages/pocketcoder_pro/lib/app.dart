@@ -23,15 +23,15 @@ import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:app/application/auth/auth_cubit.dart';
-import 'package:app/application/auth/auth_message_mapper.dart';
-import 'package:app/application/config/config_cubit.dart';
-import 'package:app/application/deployment/deployment_cubit.dart';
-import 'package:app/application/deployment/deployment_message_mapper.dart';
-import 'package:app/presentation/auth/auth_screen.dart' as deploy_auth;
-import 'package:app/presentation/deployment/config_screen.dart' as deploy_config;
-import 'package:app/presentation/deployment/progress_screen.dart' as deploy_progress;
-import 'package:app/presentation/deployment/details_screen.dart' as deploy_details;
+import 'package:pocketcoder_pro/application/auth/auth_cubit.dart';
+import 'package:pocketcoder_pro/application/auth/auth_message_mapper.dart';
+import 'package:pocketcoder_pro/application/config/config_cubit.dart';
+import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
+import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
+import 'package:pocketcoder_pro/presentation/auth/auth_screen.dart' as deploy_auth;
+import 'package:pocketcoder_pro/presentation/deployment/config_screen.dart' as deploy_config;
+import 'package:pocketcoder_pro/presentation/deployment/progress_screen.dart' as deploy_progress;
+import 'package:pocketcoder_pro/presentation/deployment/details_screen.dart' as deploy_details;
 
 export 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 export 'package:pocketcoder_flutter/domain/billing/billing_service.dart';

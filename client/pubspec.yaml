@@ -6,7 +6,7 @@ environment:
 
 workspace:
   - packages/pocketcoder_flutter
-  - packages/app
+  - packages/pocketcoder_pro
   - apps/app
 
 dev_dependencies:
