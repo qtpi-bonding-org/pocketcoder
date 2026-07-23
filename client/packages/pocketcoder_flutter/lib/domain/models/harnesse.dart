@@ -5,7 +5,7 @@ part 'harnesse.freezed.dart';
 part 'harnesse.g.dart';
 
 @freezed
-class Harnesse with _$Harnesse {
+abstract class Harnesse with _$Harnesse {
   const factory Harnesse({
     required String id,
     required String name,

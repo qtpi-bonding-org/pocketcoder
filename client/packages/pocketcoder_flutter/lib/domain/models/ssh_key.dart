@@ -5,7 +5,7 @@ part 'ssh_key.freezed.dart';
 part 'ssh_key.g.dart';
 
 @freezed
-class SshKey with _$SshKey {
+abstract class SshKey with _$SshKey {
   const factory SshKey({
     required String id,
     String? user,

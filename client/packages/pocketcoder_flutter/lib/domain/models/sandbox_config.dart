@@ -5,7 +5,7 @@ part 'sandbox_config.freezed.dart';
 part 'sandbox_config.g.dart';
 
 @freezed
-class SandboxConfig with _$SandboxConfig {
+abstract class SandboxConfig with _$SandboxConfig {
   const factory SandboxConfig({
     required String id,
     required String name,

@@ -129,7 +129,7 @@ def generate_model(collection):
         f"part '{file_name.replace('.dart', '.g.dart')}';",
         "",
         "@freezed",
-        f"class {class_name} with _${class_name} {{",
+        f"abstract class {class_name} with _${class_name} {{",
         "  const factory " + class_name + "({",
     ]
 
