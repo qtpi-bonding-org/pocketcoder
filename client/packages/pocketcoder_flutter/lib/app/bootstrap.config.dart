@@ -34,6 +34,8 @@ import 'package:pocketcoder_flutter/application/llm/llm_cubit.dart' as _i85;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
     as _i273;
+import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart'
+    as _i1031;
 import 'package:pocketcoder_flutter/application/sandbox_agent/sandbox_agent_cubit.dart'
     as _i655;
 import 'package:pocketcoder_flutter/application/sop/sop_cubit.dart' as _i252;
@@ -291,6 +293,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i619.AgentCacheDb>(),
           gh<_i300.AgentActionsApi>(),
         ));
+    gh.factory<_i1031.ProviderCubit>(
+        () => _i1031.ProviderCubit(gh<_i422.IProviderRepository>()));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     gh.factory<_i1066.ChatCubit>(
