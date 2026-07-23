@@ -5,10 +5,9 @@
 // except AguiEvent (already re-exported by agui_decode.dart).
 import 'package:acp_dart/acp_dart.dart';
 import 'package:ag_ui/ag_ui.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:injectable/injectable.dart';
 
-import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
-import 'package:pocketcoder_flutter/domain/agent/conversation_reducer.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dart';

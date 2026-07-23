@@ -8,7 +8,6 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart' as agui_widget
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
-import 'package:pocketcoder_flutter/domain/agent/conversation.dart' as local_conversation;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 
 /// Minimal fake standing in for AgentChatRepository: `watchRawEvents` is driven by a
@@ -33,7 +32,7 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   Stream<List<agui.BaseEvent>> watchRawEvents(String chatId) => controllerFor(chatId).stream;
 
   @override
-  Stream<local_conversation.Conversation> watch(String chatId) => const Stream.empty();
+  Stream<agui_widgets.Conversation> watch(String chatId) => const Stream.empty();
 
   @override
   Future<int> cursorFor(String chatId) async {
