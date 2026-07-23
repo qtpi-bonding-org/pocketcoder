@@ -46,6 +46,8 @@ import 'package:pocketcoder_flutter/application/system/status_cubit.dart'
     as _i506;
 import 'package:pocketcoder_flutter/application/terminal/terminal_cubit.dart'
     as _i1000;
+import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_cubit.dart'
+    as _i89;
 import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart'
     as _i704;
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart'
@@ -249,6 +251,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i800.IHealthRepository>(
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
+    gh.factory<_i89.ToolPermissionsCubit>(
+        () => _i89.ToolPermissionsCubit(gh<_i767.IToolPermissionRepository>()));
     gh.factory<_i723.AgentConfigCubit>(
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
