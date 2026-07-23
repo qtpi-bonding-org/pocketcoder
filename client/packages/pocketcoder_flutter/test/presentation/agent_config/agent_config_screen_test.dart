@@ -53,18 +53,26 @@ class _FakeAgentConfigRepository implements IAgentConfigRepository {
   @override
   Future<void> saveConfig(PocoConfig config) async {
     savedConfigs.add(config);
+    _configs.removeWhere((c) => c.id == config.id);
+    _configs.add(config);
   }
 
   @override
   Future<void> deleteConfig(String id) async {
     deletedConfigIds.add(id);
+    _configs.removeWhere((c) => c.id == id);
   }
 
   @override
-  Future<void> savePrompt(Prompt prompt) async {}
+  Future<void> savePrompt(Prompt prompt) async {
+    _prompts.removeWhere((p) => p.id == prompt.id);
+    _prompts.add(prompt);
+  }
 
   @override
-  Future<void> deletePrompt(String id) async {}
+  Future<void> deletePrompt(String id) async {
+    _prompts.removeWhere((p) => p.id == id);
+  }
 }
 
 class _FakeProviderRepository implements IProviderRepository {
@@ -225,7 +233,7 @@ void main() {
 
       // The dialog title should reflect the existing config's name.
       expect(
-        find.text('AGENT CONFIG: TEST CONFIG'),
+        find.text('[ AGENT CONFIG: TEST CONFIG ]'),
         findsOneWidget,
       );
       // And the text field should have the existing name prefilled.
@@ -370,6 +378,8 @@ void main() {
       expect(switchFinder, findsOneWidget);
       expect(tester.widget<Switch>(switchFinder).value, false);
 
+      await tester.ensureVisible(switchFinder);
+      await _settle(tester);
       await tester.tap(switchFinder);
       await _settle(tester);
 
@@ -392,11 +402,13 @@ void main() {
       await _settle(tester);
 
       // Tap the DELETE button inside the edit dialog.
+      await tester.ensureVisible(find.text('DELETE').last);
+      await _settle(tester);
       await tester.tap(find.text('DELETE').last);
       await _settle(tester);
 
       // Confirmation dialog appears.
-      expect(find.text('DELETE CONFIG?'), findsOneWidget);
+      expect(find.text('[ DELETE CONFIG? ]'), findsOneWidget);
       // The "DELETE {name}" body uses the existing config's name uppercased.
       expect(
         find.text('DELETE TEST CONFIG? THIS CANNOT BE UNDONE.'),
@@ -404,7 +416,7 @@ void main() {
       );
 
       // Confirm.
-      await tester.tap(find.text('DELETE'));
+      await tester.tap(find.text('DELETE').last);
       await _settle(tester);
 
       expect(configRepo.deletedConfigIds, ['config-1']);
