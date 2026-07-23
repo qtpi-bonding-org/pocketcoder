@@ -5,7 +5,7 @@ part 'device.freezed.dart';
 part 'device.g.dart';
 
 @freezed
-class Device with _$Device {
+abstract class Device with _$Device {
   const factory Device({
     required String id,
     required String user,

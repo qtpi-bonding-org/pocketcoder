@@ -5,7 +5,7 @@ part 'notification_rule.freezed.dart';
 part 'notification_rule.g.dart';
 
 @freezed
-class NotificationRule with _$NotificationRule {
+abstract class NotificationRule with _$NotificationRule {
   const factory NotificationRule({
     required String id,
     required String user,
