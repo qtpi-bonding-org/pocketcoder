@@ -119,6 +119,53 @@ wait_for_finish() {
   return 1
 }
 
+# approval_id/submit_option/resolve_permissions_until_finish mirror
+# acceptance.bats's own helpers (each bats file in this suite duplicates its
+# helpers rather than sharing a `load`ed file). A gateway tool call is still
+# gated by this deployment's default tool_permissions policy (ask_before for
+# mcp_request), so a real model-invoked call needs the same permission
+# resolution loop acceptance.bats's shell-tool tests already use — plain
+# wait_for_finish alone hangs on the pending request.
+approval_id() {
+  grep -o '"requestId":"[^"]*"' "$STREAM_FILE" | tail -1 | cut -d'"' -f4
+}
+
+submit_option() {
+  local option_id="$1"
+  [ -n "${APPROVAL_ID:-}" ]
+  APPROVAL_HTTP_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' \
+    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/request_permission/$APPROVAL_ID" \
+    -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
+    -d "{\"outcome\":{\"outcome\":\"selected\",\"optionId\":\"$option_id\"}}")
+}
+
+resolve_permissions_until_finish() {
+  local option_id="$1"
+  local submitted=''
+  # A fresh stream's first event pair is a synthetic RUN_STARTED/RUN_FINISHED
+  # tied to the connection's own sync marker, not to the prompt started by
+  # start_run — a blind RUN_FINISHED grep matches that pair immediately and
+  # returns before the real run (and its pending permission) ever resolves.
+  # Match on the specific $RUN_ID captured by start_run instead.
+  for _ in $(seq 1 40); do
+    if grep -q "\"runId\":\"$RUN_ID\"" "$STREAM_FILE" 2>/dev/null &&
+       grep "\"runId\":\"$RUN_ID\"" "$STREAM_FILE" | grep -q '"type":"RUN_FINISHED"'; then
+      return 0
+    fi
+    local current
+    current=$(approval_id)
+    if [ -n "$current" ] && [ "$current" != "$submitted" ]; then
+      APPROVAL_ID="$current"
+      submit_option "$option_id"
+      [ "$APPROVAL_HTTP_STATUS" = 202 ] || return 1
+      submitted="$current"
+    fi
+    sleep 1
+  done
+  cat "$STREAM_FILE" >&2 || true
+  return 1
+}
+
 @test "mcp gateway extension registers exactly once and survives a pocketbase restart" {
   wait_for_gateway_extension
   [ "$(gateway_extension_count)" -eq 1 ]
@@ -163,6 +210,6 @@ wait_for_finish() {
   new_chat
   open_stream
   start_run "Call the gateway__mcp-find tool with query 'hello' and limit 5, then reply with exactly the raw tool result text and nothing else."
-  wait_for_finish
+  resolve_permissions_until_finish allow_once
   wait_for_text 'total_matches'
 }
