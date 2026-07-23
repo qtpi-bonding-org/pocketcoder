@@ -70,6 +70,11 @@ type fakeConn struct {
 	lastModeSession             string
 	requestPermission           bool
 	requestPermissionToolCallID string
+
+	// Task 1/2: CallExtension captures.
+	lastExtensionMethod string
+	lastExtensionParams any
+	callExtensionCalls  int
 }
 
 // waitForPrompt blocks until the fake's Prompt method is invoked (or 2 s timeout).
@@ -212,6 +217,15 @@ func (f *fakeConn) UnstableDeleteSession(_ context.Context, req acpsdk.UnstableD
 	f.mu.Unlock()
 	return acpsdk.UnstableDeleteSessionResponse{}, nil
 }
+func (f *fakeConn) CallExtension(_ context.Context, method string, params any) (json.RawMessage, error) {
+	f.mu.Lock()
+	f.lastExtensionMethod = method
+	f.lastExtensionParams = params
+	f.callExtensionCalls++
+	f.mu.Unlock()
+	return json.RawMessage(`{}`), nil
+}
+
 func (f *fakeConn) Close() error {
 	f.mu.Lock()
 	f.closeCount++
