@@ -79,6 +79,10 @@ type fakeConn struct {
 	// Task 2: capture dial/handshake counts.
 	initializeCalls int
 	newSessionCalls int
+
+	// Task 3: SetSessionConfigOption captures (provider/model live delivery).
+	lastSetConfigOption  acpsdk.SetSessionConfigOptionRequest
+	setConfigOptionCalls []acpsdk.SetSessionConfigOptionRequest
 }
 
 // waitForPrompt blocks until the fake's Prompt method is invoked (or 2 s timeout).
@@ -155,7 +159,11 @@ func (f *fakeConn) SetSessionMode(_ context.Context, req acpsdk.SetSessionModeRe
 	f.mu.Unlock()
 	return acpsdk.SetSessionModeResponse{}, nil
 }
-func (f *fakeConn) SetSessionConfigOption(context.Context, acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) {
+func (f *fakeConn) SetSessionConfigOption(_ context.Context, req acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) {
+	f.mu.Lock()
+	f.lastSetConfigOption = req
+	f.setConfigOptionCalls = append(f.setConfigOptionCalls, req)
+	f.mu.Unlock()
 	return acpsdk.SetSessionConfigOptionResponse{}, nil
 }
 func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.PromptResponse, error) {
