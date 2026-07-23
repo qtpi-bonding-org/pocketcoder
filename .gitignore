@@ -84,3 +84,5 @@ services/sandbox/cao/
 .notes/
 tobedeleted/
 out.json
+audit-status/
+services/pocketbase/backend/
