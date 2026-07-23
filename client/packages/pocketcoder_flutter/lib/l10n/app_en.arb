@@ -172,6 +172,11 @@
   },
   "mcpNoConfigRequired": "No configuration required.",
   "mcpEnterSecrets": "Enter required secrets:",
+  "mcpAddDialogTitle": "ADD MCP SERVER",
+  "mcpServerNameLabel": "SERVER NAME",
+  "mcpImageOptionalLabel": "IMAGE (OPTIONAL)",
+  "mcpAddConfigOptional": "Optional config (leave blank if none needed)",
+  "actionAdd": "ADD",
 
   "settingsTitle": "CONFIGURE",
   "settingsAiAgentsSection": "AI & AGENTS",
