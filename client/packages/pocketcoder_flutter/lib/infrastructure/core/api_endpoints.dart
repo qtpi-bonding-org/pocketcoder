@@ -56,6 +56,26 @@ class ApiEndpoints {
   static const String observability = '/api/pocketcoder/proxy/observability/';
 
   // ===========================================================================
+  // SKILLS ENDPOINTS
+  // ===========================================================================
+
+  /// POST /api/pocketcoder/skills/list
+  /// Lists all skills (global + every known poco_config's project scope).
+  static const String skillsList = '/api/pocketcoder/skills/list';
+
+  /// POST /api/pocketcoder/skills/create
+  /// Creates a skill under global or project scope.
+  static const String skillsCreate = '/api/pocketcoder/skills/create';
+
+  /// POST /api/pocketcoder/skills/update
+  /// Updates a skill's name/description/content by its stable path.
+  static const String skillsUpdate = '/api/pocketcoder/skills/update';
+
+  /// POST /api/pocketcoder/skills/delete
+  /// Deletes a skill by its stable path.
+  static const String skillsDelete = '/api/pocketcoder/skills/delete';
+
+  // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
 
@@ -65,6 +85,10 @@ class ApiEndpoints {
     sshKeys,
     health,
     observability,
+    skillsList,
+    skillsCreate,
+    skillsUpdate,
+    skillsDelete,
   ];
 
   /// Dynamic endpoints that require parameters
