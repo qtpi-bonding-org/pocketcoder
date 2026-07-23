@@ -68,6 +68,8 @@ import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
     as _i422;
 import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_repository.dart'
     as _i184;
+import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart'
+    as _i165;
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
     as _i190;
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart'
@@ -125,6 +127,8 @@ import 'package:pocketcoder_flutter/infrastructure/provider/provider_repository.
     as _i549;
 import 'package:pocketcoder_flutter/infrastructure/sandbox_agent/sandbox_agent_repository.dart'
     as _i853;
+import 'package:pocketcoder_flutter/infrastructure/skills/skills_repository.dart'
+    as _i675;
 import 'package:pocketcoder_flutter/infrastructure/status/status_repository.dart'
     as _i907;
 import 'package:pocketcoder_flutter/infrastructure/system/health_daos.dart'
@@ -171,6 +175,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
         () => _i976.AppExceptionKeyMapper());
+    gh.lazySingleton<_i165.ISkillsRepository>(
+        () => _i675.SkillsRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
     gh.lazySingleton<_i653.ILoadingService>(() => _i976.AppLoadingService());
     gh.factory<_i304.BillingCubit>(

@@ -87,3 +87,8 @@ class SopException extends DomainException {
 class ObservabilityException extends DomainException {
   ObservabilityException(super.message, [super.cause]);
 }
+
+/// Skills-related exceptions.
+class SkillsException extends DomainException {
+  SkillsException(super.message, [super.cause]);
+}
