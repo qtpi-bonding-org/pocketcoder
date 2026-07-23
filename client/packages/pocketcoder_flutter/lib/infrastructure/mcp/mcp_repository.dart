@@ -43,4 +43,24 @@ class McpRepository implements IMcpRepository {
       'denyServer',
     );
   }
+
+  @override
+  Future<void> createServer({
+    required String name,
+    String? image,
+    Map<String, dynamic>? config,
+  }) async {
+    return tryMethod(
+      () async {
+        await _mcpServerDao.save(null, {
+          'name': name,
+          'status': 'approved',
+          if (image != null && image.isNotEmpty) 'image': image,
+          if (config != null) 'config': config,
+        });
+      },
+      McpException.new,
+      'createServer',
+    );
+  }
 }

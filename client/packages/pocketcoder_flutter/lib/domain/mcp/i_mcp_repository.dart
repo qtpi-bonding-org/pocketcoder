@@ -4,4 +4,9 @@ abstract class IMcpRepository {
   Stream<List<McpServer>> watchServers();
   Future<void> authorizeServer(String id, {Map<String, dynamic>? config});
   Future<void> denyServer(String id);
+  Future<void> createServer({
+    required String name,
+    String? image,
+    Map<String, dynamic>? config,
+  });
 }
