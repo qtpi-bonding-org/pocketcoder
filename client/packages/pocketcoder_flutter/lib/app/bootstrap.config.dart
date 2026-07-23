@@ -35,6 +35,8 @@ import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart'
     as _i1031;
 import 'package:pocketcoder_flutter/application/sandbox_agent/sandbox_agent_cubit.dart'
     as _i655;
+import 'package:pocketcoder_flutter/application/skills/skills_cubit.dart'
+    as _i67;
 import 'package:pocketcoder_flutter/application/sop/sop_cubit.dart' as _i252;
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart'
     as _i464;
@@ -240,6 +242,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i252.SopCubit>(
         () => _i252.SopCubit(gh<_i656.IEvolutionRepository>()));
+    gh.factory<_i67.SkillsCubit>(
+        () => _i67.SkillsCubit(gh<_i165.ISkillsRepository>()));
     gh.lazySingleton<_i630.IAgentConfigRepository>(
         () => _i857.AgentConfigRepository(
               gh<_i810.PocoConfigDao>(),
