@@ -70,6 +70,8 @@ import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
     as _i190;
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart'
     as _i800;
+import 'package:pocketcoder_flutter/domain/tool_permissions/i_tool_permission_repository.dart'
+    as _i767;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
     as _i300;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart'
@@ -127,6 +129,10 @@ import 'package:pocketcoder_flutter/infrastructure/system/health_daos.dart'
     as _i1065;
 import 'package:pocketcoder_flutter/infrastructure/system/health_repository.dart'
     as _i700;
+import 'package:pocketcoder_flutter/infrastructure/tool_permissions/tool_permission_daos.dart'
+    as _i398;
+import 'package:pocketcoder_flutter/infrastructure/tool_permissions/tool_permission_repository.dart'
+    as _i220;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -196,12 +202,16 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i294.ProviderKeyDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i1065.HealthcheckDao>(
         () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i398.ToolPermissionDao>(
+        () => _i398.ToolPermissionDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
         ));
+    gh.lazySingleton<_i767.IToolPermissionRepository>(
+        () => _i220.ToolPermissionRepository(gh<_i398.ToolPermissionDao>()));
     gh.lazySingleton<_i656.IEvolutionRepository>(
         () => _i379.EvolutionRepository(
               gh<_i197.ProposalDao>(),
