@@ -24,6 +24,8 @@ import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart'
     as _i225;
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart'
     as _i312;
+import 'package:pocketcoder_flutter/application/agent_config/agent_config_cubit.dart'
+    as _i723;
 import 'package:pocketcoder_flutter/application/ai/ai_config_cubit.dart'
     as _i616;
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart'
@@ -47,6 +49,8 @@ import 'package:pocketcoder_flutter/application/terminal/terminal_cubit.dart'
     as _i1000;
 import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart'
     as _i704;
+import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart'
+    as _i630;
 import 'package:pocketcoder_flutter/domain/ai_config/i_ai_config_repository.dart'
     as _i536;
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart' as _i50;
@@ -62,6 +66,8 @@ import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dar
     as _i148;
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart'
     as _i611;
+import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
+    as _i422;
 import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_repository.dart'
     as _i184;
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
@@ -78,6 +84,8 @@ import 'package:pocketcoder_flutter/infrastructure/agent/cache/agent_cache_db.da
     as _i619;
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart'
     as _i810;
+import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_repository.dart'
+    as _i857;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_daos.dart'
     as _i61;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_repository.dart'
@@ -120,6 +128,8 @@ import 'package:pocketcoder_flutter/infrastructure/observability/observability_r
     as _i310;
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart'
     as _i294;
+import 'package:pocketcoder_flutter/infrastructure/provider/provider_repository.dart'
+    as _i549;
 import 'package:pocketcoder_flutter/infrastructure/sandbox_agent/sandbox_agent_repository.dart'
     as _i853;
 import 'package:pocketcoder_flutter/infrastructure/status/status_repository.dart'
@@ -245,6 +255,11 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i252.SopCubit>(
         () => _i252.SopCubit(gh<_i656.IEvolutionRepository>()));
+    gh.lazySingleton<_i630.IAgentConfigRepository>(
+        () => _i857.AgentConfigRepository(
+              gh<_i810.PocoConfigDao>(),
+              gh<_i810.PromptDao>(),
+            ));
     gh.factory<_i506.StatusCubit>(
         () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i615.ILlmRepository>(() => _i935.LlmRepository(
@@ -254,8 +269,16 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i328.McpCubit>(
         () => _i328.McpCubit(gh<_i922.IMcpRepository>()));
+    gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
+          gh<_i294.HarnesseDao>(),
+          gh<_i294.ModelDao>(),
+          gh<_i294.HarnessModelDao>(),
+          gh<_i294.ProviderKeyDao>(),
+        ));
     gh.lazySingleton<_i800.IHealthRepository>(
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
+    gh.factory<_i723.AgentConfigCubit>(
+        () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
     gh.factory<_i85.LlmCubit>(() => _i85.LlmCubit(gh<_i615.ILlmRepository>()));
