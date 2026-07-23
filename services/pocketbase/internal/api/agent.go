@@ -40,14 +40,17 @@ import (
 
 // RegisterAgentApi registers PocketBase-owned routes. AG-UI is the response
 // format, not a second public service and never exposes Goose credentials.
-func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	registerAgentApi(app, e, nil) // nil => coordinator.New uses the real acp.Dial
+// Returns the constructed Coordinator (nil if configErr != nil) so callers
+// outside this package (main.go) can reuse it for admin-connection work
+// that isn't tied to any HTTP route.
+func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) (*coordinator.Coordinator, error) {
+	return registerAgentApi(app, e, nil) // nil => coordinator.New uses the real acp.Dial
 }
 
 // registerAgentApi is the seam: a non-nil dial overrides Config.Dial so
 // integration/local runs can inject a fake Goose without touching the
 // production entry point.
-func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coordinator.DialFunc) {
+func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coordinator.DialFunc) (*coordinator.Coordinator, error) {
 	service, configErr := coordinator.New(coordinator.Config{
 		GooseURL:          os.Getenv("GOOSE_ACP_URL"),
 		GooseSecret:       os.Getenv("GOOSE_SERVER__SECRET_KEY"),
@@ -324,6 +327,8 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			return re.Next()
 		})
 	}
+
+	return service, configErr
 }
 
 // parseCursor reads the resume cursor from ?cursor= or the Last-Event-ID

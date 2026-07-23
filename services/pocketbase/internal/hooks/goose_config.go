@@ -18,39 +18,45 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // @pocketcoder-core: Goose Config Hooks. Renders config.yaml + keys.env from
 // PocketBase agent-definition records, writes them goose-uid-owned, then
-// restarts the goose container so the new config takes effect.
+// restarts the goose container so the new config takes effect. Also
+// delivers the tool-permission allowlist live over ACP (config.yaml no
+// longer carries it — Goose is the sole writer of its `extensions` key).
 package hooks
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/gooseconfig"
 )
 
 // gooseConfigDir is the PocketBase-side mount of the shared goose_config volume.
-// Resolved verify item (spec §13.1): Goose 1.43.0 derives its config dir from
-// GOOSE_PATH_ROOT=/goose, reading /goose/config/config.yaml (confirmed via
-// `goose info`), NOT ~/.config/goose. The goose container mounts this same
-// volume at /goose/config, so files written here reach the path Goose reads.
+// Goose 1.43.0 derives its config dir from GOOSE_PATH_ROOT=/goose, reading
+// /goose/config/config.yaml (confirmed via `goose info`), NOT ~/.config/goose.
 var gooseConfigDir = "/goose-config"
 
-// gooseUID/GID own the rendered files so the non-root goose user can read them
-// (spec §6.4 / §13.4). Confirm against the pinned goose image; -1 leaves
-// ownership unchanged (dev host).
+// gooseUID/GID own the rendered files so the non-root goose user can read them.
 var gooseUID, gooseGID = 1000, 1000
 
 // RegisterGooseConfigHooks wires CRUD events on the agent-definition
-// collections to a single render+restart handler, and runs an initial render
-// on serve startup (no restart — goose may not exist yet).
-func RegisterGooseConfigHooks(app core.App) {
+// collections to a render+restart handler and a live tool-permission
+// delivery call, and runs an initial render on serve startup (no restart —
+// goose may not exist yet). coord returns the coordinator built inside
+// main.go's OnServe handler; it is nil until that handler runs, and stays
+// nil if the agent profile isn't configured — callers must handle nil.
+func RegisterGooseConfigHooks(app core.App, coord func() *coordinator.Coordinator) {
 	log.Println("🪿 [GooseConfig] Registering Goose config hooks...")
 
 	handler := func(e *core.RecordEvent) error {
-		return renderAndRestart("[GooseConfig]", func() error { return renderGooseConfig(app) }, GooseContainer, e)
+		err := renderAndRestart("[GooseConfig]", func() error { return renderGooseConfig(app) }, GooseContainer, e)
+		deliverToolPermissions(app, coord)
+		return err
 	}
 
 	for _, coll := range []string{"poco_configs", "provider_keys", "tool_permissions", "harness_models", "prompts"} {
@@ -66,16 +72,14 @@ func RegisterGooseConfigHooks(app core.App) {
 }
 
 // renderGooseConfig walks the agent-definition collections and writes the two
-// files Goose consumes: config.yaml (model/provider/mode + extensions
-// allowlist) and keys.env (merged provider_keys env_vars). Returns nil if
-// there is no default poco_config — Goose then runs on compose-env defaults.
+// files Goose consumes: config.yaml (model/provider/mode) and keys.env
+// (merged provider_keys env_vars). Returns nil if there is no default
+// poco_config — Goose then runs on compose-env defaults.
 func renderGooseConfig(app core.App) error {
 	if err := os.MkdirAll(gooseConfigDir, 0o755); err != nil {
 		return fmt.Errorf("mkdir goose config dir: %w", err)
 	}
 
-	// keys.env from every provider_keys row. Later rows win on collision;
-	// RenderKeysEnv sorts the merged result.
 	keyRecs, err := app.FindRecordsByFilter("provider_keys", "1=1", "", 0, 0)
 	if err != nil {
 		return fmt.Errorf("query provider_keys: %w", err)
@@ -93,7 +97,6 @@ func renderGooseConfig(app core.App) error {
 		return err
 	}
 
-	// config.yaml from the default poco_config + tool permissions.
 	def, err := defaultPocoConfig(app)
 	if err != nil {
 		return err
@@ -103,12 +106,9 @@ func renderGooseConfig(app core.App) error {
 		return nil
 	}
 
-	in, dropped, err := configInputFor(app, def)
+	in, err := configInputFor(app, def)
 	if err != nil {
 		return err
-	}
-	for _, d := range dropped {
-		log.Printf("⚠️ [GooseConfig] %s", d)
 	}
 
 	yamlBytes, err := gooseconfig.RenderConfigYAML(in)
@@ -120,10 +120,7 @@ func renderGooseConfig(app core.App) error {
 
 // defaultPocoConfig returns the single agent definition that drives the global
 // goose config, applying the spec §5.2 tie-break: is_default=true, deterministic
-// first-on-multiple, nil-on-none. poco_configs has no created/updated autodate
-// field (see 1748000100_acp_schema), so the stable, unique-indexed `name`
-// column is the sort key; multiple defaults is a warned misconfiguration where
-// any deterministic pick is acceptable.
+// first-on-multiple, nil-on-none.
 func defaultPocoConfig(app core.App) (*core.Record, error) {
 	recs, err := app.FindRecordsByFilter("poco_configs", "is_default = true", "name", 0, 0)
 	if err != nil {
@@ -138,17 +135,10 @@ func defaultPocoConfig(app core.App) (*core.Record, error) {
 	return recs[0], nil
 }
 
-// configInputFor resolves the provider/model/mode + tool allowlist for the
-// given default poco_config. Field names are verified against
-// 1748000100_acp_schema.go:
-//
-//	poco_configs.harness_model → harness_models.id
-//	harness_models.harness_model_id  → GOOSE_MODEL
-//	harness_models.model → models.id  → models.provider  → GOOSE_PROVIDER
-//
-// `mode` is read from poco_configs.mode (added by the Task 5 migration; absent
-// today → empty string, which RenderConfigYAML serializes as GOOSE_MODE: "").
-func configInputFor(app core.App, def *core.Record) (gooseconfig.ConfigInput, []string, error) {
+// configInputFor resolves the provider/model/mode for the given default
+// poco_config. Tool permissions are no longer part of this — see
+// deliverToolPermissions.
+func configInputFor(app core.App, def *core.Record) (gooseconfig.ConfigInput, error) {
 	in := gooseconfig.ConfigInput{
 		Mode: def.GetString("mode"),
 	}
@@ -156,23 +146,34 @@ func configInputFor(app core.App, def *core.Record) (gooseconfig.ConfigInput, []
 	if hmID := def.GetString("harness_model"); hmID != "" {
 		hm, err := app.FindRecordById("harness_models", hmID)
 		if err != nil {
-			return in, nil, fmt.Errorf("resolve poco_configs.harness_model=%s: %w", hmID, err)
+			return in, fmt.Errorf("resolve poco_configs.harness_model=%s: %w", hmID, err)
 		}
 		in.Model = hm.GetString("harness_model_id")
 		if mID := hm.GetString("model"); mID != "" {
 			m, err := app.FindRecordById("models", mID)
 			if err != nil {
-				return in, nil, fmt.Errorf("resolve harness_models.model=%s: %w", mID, err)
+				return in, fmt.Errorf("resolve harness_models.model=%s: %w", mID, err)
 			}
 			in.Provider = m.GetString("provider")
 		}
 	}
+	return in, nil
+}
 
-	// Tool allowlist: active global rows + rows scoped to this poco_config
-	// (poco_config is either empty for global or matches def.Id).
+// activeToolPermissionRows queries the same tool_permissions rows the old
+// config.yaml render used: active rows, global (poco_config empty) or scoped
+// to the current default poco_config.
+func activeToolPermissionRows(app core.App) ([]gooseconfig.PermRow, error) {
+	def, err := defaultPocoConfig(app)
+	if err != nil {
+		return nil, err
+	}
+	if def == nil {
+		return nil, nil
+	}
 	perms, err := app.FindRecordsByFilter("tool_permissions", "active = true", "", 0, 0)
 	if err != nil {
-		return in, nil, fmt.Errorf("query tool_permissions: %w", err)
+		return nil, fmt.Errorf("query tool_permissions: %w", err)
 	}
 	defID := def.Id
 	rows := make([]gooseconfig.PermRow, 0, len(perms))
@@ -187,11 +188,58 @@ func configInputFor(app core.App, def *core.Record) (gooseconfig.ConfigInput, []
 			Action:  p.GetString("action"),
 		})
 	}
-	allow, dropped := gooseconfig.RenderPermissions(rows)
-	if len(allow) > 0 {
-		in.AvailableTools = map[string][]string{gooseconfig.DefaultToolExtension: allow}
+	return rows, nil
+}
+
+// setToolPermissionsParams mirrors Goose's
+// _goose/unstable/tools/permissions/set request
+// (SetToolPermissionsRequest_unstable), verified against acp-schema.json.
+type setToolPermissionsParams struct {
+	ToolPermissions []toolPermissionEntryParam `json:"toolPermissions"`
+}
+
+type toolPermissionEntryParam struct {
+	ToolName   string `json:"toolName"`
+	Permission string `json:"permission"`
+}
+
+// deliverToolPermissions resolves the active tool_permissions rows and pushes
+// them to Goose live via tools/permissions/set. Best-effort: logs and
+// returns on any failure (missing coordinator, unreachable Goose, etc.) —
+// never blocks the calling hook's render+restart.
+func deliverToolPermissions(app core.App, coord func() *coordinator.Coordinator) {
+	c := coord()
+	if c == nil {
+		log.Println("ℹ️  [GooseConfig] no coordinator (agent profile disabled); skipping live tool-permission delivery")
+		return
 	}
-	return in, dropped, nil
+	rows, err := activeToolPermissionRows(app)
+	if err != nil {
+		log.Printf("⚠️ [GooseConfig] failed to resolve tool_permissions rows: %v", err)
+		return
+	}
+	entries, dropped := gooseconfig.RenderToolPermissions(rows)
+	for _, d := range dropped {
+		log.Printf("⚠️ [GooseConfig] %s", d)
+	}
+	params := setToolPermissionsParams{ToolPermissions: make([]toolPermissionEntryParam, 0, len(entries))}
+	for _, e := range entries {
+		params.ToolPermissions = append(params.ToolPermissions, toolPermissionEntryParam{ToolName: e.ToolName, Permission: e.Permission})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	conn, err := c.AdminConn(ctx)
+	if err != nil {
+		log.Printf("⚠️ [GooseConfig] AdminConn failed, tool permissions not delivered live: %v", err)
+		return
+	}
+	defer conn.Close()
+	if _, err := conn.CallExtension(ctx, "_goose/unstable/tools/permissions/set", params); err != nil {
+		log.Printf("⚠️ [GooseConfig] tools/permissions/set failed: %v", err)
+		return
+	}
+	log.Printf("✅ [GooseConfig] delivered %d tool permission(s) live", len(params.ToolPermissions))
 }
 
 // writeGoose writes data to gooseConfigDir/name with the given mode and best-

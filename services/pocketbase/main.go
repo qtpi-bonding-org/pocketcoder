@@ -27,6 +27,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/api"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
@@ -36,6 +37,17 @@ import (
 
 func main() {
 	app := pocketbase.New()
+
+	// coord is nil until RegisterAgentApi runs inside OnServe below, and
+	// stays nil if the agent profile isn't configured. Hooks registered
+	// before OnServe (goose config, MCP) capture this getter and dereference
+	// it whenever they fire. For real traffic that's always after OnServe —
+	// but a from-scratch database's migration-time seed writes to
+	// poco_configs/tool_permissions (during app.Bootstrap(), before OnServe)
+	// can also fire it once with coord still nil; every getter() caller
+	// nil-checks and skips, so this is a harmless no-op, not a bug.
+	var coord *coordinator.Coordinator
+	coordGetter := func() *coordinator.Coordinator { return coord }
 
 	// 1. Register Migrations
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
@@ -51,8 +63,9 @@ func main() {
 	// The interface receives MCP status updates via PocketBase realtime subscriptions.
 	hooks.RegisterMcpHooks(app)
 
-	// 3b. Register Goose Config Hooks (config.yaml + keys.env render + goose restart)
-	hooks.RegisterGooseConfigHooks(app)
+	// 3b. Register Goose Config Hooks (config.yaml + keys.env render + goose
+	// restart + live tool-permission delivery)
+	hooks.RegisterGooseConfigHooks(app, coordGetter)
 
 	// 3c. Register Cron Hooks (scheduled agent tasks)
 	hooks.RegisterCronHooks(app)
@@ -70,9 +83,17 @@ func main() {
 		api.RegisterProxyApi(app, e)
 		api.RegisterLogsApi(app, e)
 		api.RegisterCronApi(app, e)
-		api.RegisterAgentApi(app, e)
+		var err error
+		coord, err = api.RegisterAgentApi(app, e)
+		if err != nil {
+			app.Logger().Warn("agent API not configured; agent profile disabled", "error", err)
+		}
 		filesystem.RegisterFilesApi(app, e)
 		hooks.RegisterPushApi(app, e)
+
+		// C. One-time MCP gateway extension registration (idempotent,
+		// retried with backoff — see RegisterMcpGatewayExtension).
+		go hooks.RegisterMcpGatewayExtension(coordGetter)
 
 		return e.Next()
 	})
