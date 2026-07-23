@@ -76,6 +76,8 @@ import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dar
     as _i313;
 import 'package:pocketcoder_flutter/infrastructure/agent/cache/agent_cache_db.dart'
     as _i619;
+import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart'
+    as _i810;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_daos.dart'
     as _i61;
 import 'package:pocketcoder_flutter/infrastructure/ai_config/ai_config_repository.dart'
@@ -116,6 +118,8 @@ import 'package:pocketcoder_flutter/infrastructure/notifications/device_reposito
     as _i301;
 import 'package:pocketcoder_flutter/infrastructure/observability/observability_repository.dart'
     as _i310;
+import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart'
+    as _i294;
 import 'package:pocketcoder_flutter/infrastructure/sandbox_agent/sandbox_agent_repository.dart'
     as _i853;
 import 'package:pocketcoder_flutter/infrastructure/status/status_repository.dart'
@@ -166,6 +170,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i304.BillingCubit(gh<_i619.BillingService>()));
     gh.lazySingleton<_i653.ILocalizationService>(
         () => _i1000.AppLocalizationService());
+    gh.lazySingleton<_i810.PocoConfigDao>(
+        () => _i810.PocoConfigDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i810.PromptDao>(
+        () => _i810.PromptDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i61.AiAgentDao>(
         () => _i61.AiAgentDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i61.AiPromptDao>(
@@ -193,6 +201,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i444.McpServerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i849.DeviceDao>(
         () => _i849.DeviceDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i294.HarnesseDao>(
+        () => _i294.HarnesseDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i294.ModelDao>(
+        () => _i294.ModelDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i294.HarnessModelDao>(
+        () => _i294.HarnessModelDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i294.ProviderKeyDao>(
+        () => _i294.ProviderKeyDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i1065.HealthcheckDao>(
         () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
