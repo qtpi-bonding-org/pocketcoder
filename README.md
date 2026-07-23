@@ -157,3 +157,5 @@ The backend is deliberately tiny: PocketBase supplies auth, the database, REST, 
 An active research project by a solo developer, built in the open — not a commercial product, no support SLAs. Bug reports are welcome; I move at my own pace.
 
 All PocketCoder code is **AGPLv3**. The agent core (Goose) and PocketBase are OSI-approved open source. The optional memory component (Cognee, behind the dormant c3 gateway) is not yet enabled; any non-OSI runtime dependency it introduces will be documented here and kept optional via a Compose profile.
+
+**Open core:** the client and backend here are open and fully self-hostable — nothing described above requires anything proprietary. The mobile app's one-tap VPS provisioning (OAuth deploy, billing) is a separate, closed-source convenience layer that funds the project; self-hosters skip it entirely by running `deploy.sh` directly.
