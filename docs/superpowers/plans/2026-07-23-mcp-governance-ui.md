@@ -350,7 +350,7 @@ git commit -m "feat(gooseconfig): replace RenderPermissions allowlist with per-t
 
 This is the spec's Component 4, and per the spec it must land as one change: removing `config.yaml`'s `extensions` key without the live-delivery replacement would silently stop enforcing tool permissions.
 
-**Why a getter, not a direct value:** `RegisterGooseConfigHooks` is called from `main.go` before the `*coordinator.Coordinator` exists — the coordinator is only built inside the `app.OnServe()` handler (via `RegisterAgentApi`), but `RegisterGooseConfigHooks`'s hook *bindings* need to be registered earlier, at the same point they are today. A `func() *coordinator.Coordinator` closure lets `main.go` wire the two together: the hook closures capture the getter, and by the time any of them actually fires (always after `OnServe` has run — PocketBase serves no requests and processes no record events until `OnServe` completes), the getter returns a real coordinator. If the coordinator is nil (agent profile disabled, or `configErr != nil`), the live-delivery call skips itself and logs — same pattern the spec's Error Handling section already calls for.
+**Why a getter, not a direct value:** `RegisterGooseConfigHooks` is called from `main.go` before the `*coordinator.Coordinator` exists — the coordinator is only built inside the `app.OnServe()` handler (via `RegisterAgentApi`), but `RegisterGooseConfigHooks`'s hook *bindings* need to be registered earlier, at the same point they are today. A `func() *coordinator.Coordinator` closure lets `main.go` wire the two together: the hook closures capture the getter and dereference it whenever they actually fire, which for real user-driven traffic is always after `OnServe` has run. **One case fires earlier and is expected, not a bug to fix:** a from-scratch database's migrations seed `poco_configs`/`tool_permissions` rows during `app.Bootstrap()` (via `app.Save()` in `pb_migrations`), which completes *before* `OnServe` — so `deliverToolPermissions` can run once during migration with `coord` still nil. `deliverToolPermissions` already nil-checks and logs-and-skips in that case (see its implementation below), so this is a harmless no-op, not a crash — just don't write a comment elsewhere claiming hooks never fire before `OnServe`, because they can, exactly once, at fresh-database bootstrap.
 
 - [ ] **Step 1: Write the failing test for the render-time behavior (no `extensions` key)**
 
@@ -939,10 +939,12 @@ func main() {
 
 	// coord is nil until RegisterAgentApi runs inside OnServe below, and
 	// stays nil if the agent profile isn't configured. Hooks registered
-	// before OnServe (goose config, MCP) capture this getter and only
-	// dereference it when an actual event fires — always after OnServe has
-	// completed, since PocketBase serves no requests and processes no
-	// record CRUD hooks tied to app routes until then.
+	// before OnServe (goose config, MCP) capture this getter and dereference
+	// it whenever they fire. For real traffic that's always after OnServe —
+	// but a from-scratch database's migration-time seed writes to
+	// poco_configs/tool_permissions (during app.Bootstrap(), before OnServe)
+	// can also fire it once with coord still nil; every getter() caller
+	// nil-checks and skips, so this is a harmless no-op, not a bug.
 	var coord *coordinator.Coordinator
 	coordGetter := func() *coordinator.Coordinator { return coord }
 
@@ -1122,7 +1124,12 @@ func TestRegisterMcpGatewayExtension_AddsWhenAbsent(t *testing.T) {
 }
 
 func TestRegisterMcpGatewayExtension_SkipsWhenAlreadyPresent(t *testing.T) {
-	fc := &fakeGatewayConn{extensionsListResponse: `{"extensions":[{"extension":{"name":"gateway"},"enabled":true}],"warnings":[]}`}
+	// Goose's real config/extensions/list response for an mcp-type extension
+	// has no top-level extension.name — the name lives at
+	// extension.server.name (see registerMcpGatewayExtensionOnce's comment).
+	// This fixture must match that real shape, not a simplified one, or this
+	// test would pass while the production parsing logic is still broken.
+	fc := &fakeGatewayConn{extensionsListResponse: `{"extensions":[{"extension":{"type":"mcp","server":{"type":"http","name":"gateway","url":"http://mcp-gateway:8811/mcp","headers":[]}},"enabled":true}],"warnings":[]}`}
 	coord := newTestCoordinator(t, fc)
 
 	registerMcpGatewayExtensionOnce(context.Background(), func() *coordinator.Coordinator { return coord })
@@ -1236,10 +1243,22 @@ func registerMcpGatewayExtensionOnce(ctx context.Context, coord func() *coordina
 		log.Printf("⚠️ [MCPGateway] config/extensions/list failed: %v", err)
 		return false
 	}
+	// GooseExtension is a oneOf(builtin, platform, mcp) union
+	// (acp-schema.json's GooseExtension def). Only builtin/platform carry a
+	// top-level "name" — the mcp variant's required fields are only
+	// {"type","server"}, and the server's name lives at extension.server.name
+	// (McpServerHttp's schema: required ["type","name","url","headers"]).
+	// The gateway is always registered as an mcp-type extension, so its name
+	// only ever appears at extension.server.name — parse both, preferring
+	// server.name, so a future builtin/platform-type collision check (if
+	// ever needed) still works too.
 	var listResp struct {
 		Extensions []struct {
 			Extension struct {
-				Name string `json:"name"`
+				Name   string `json:"name"`
+				Server struct {
+					Name string `json:"name"`
+				} `json:"server"`
 			} `json:"extension"`
 		} `json:"extensions"`
 	}
@@ -1248,7 +1267,11 @@ func registerMcpGatewayExtensionOnce(ctx context.Context, coord func() *coordina
 		return false
 	}
 	for _, e := range listResp.Extensions {
-		if e.Extension.Name == mcpGatewayExtensionName {
+		name := e.Extension.Server.Name
+		if name == "" {
+			name = e.Extension.Name
+		}
+		if name == mcpGatewayExtensionName {
 			log.Println("✅ [MCPGateway] gateway extension already registered")
 			return true
 		}
@@ -1261,7 +1284,7 @@ func registerMcpGatewayExtensionOnce(ctx context.Context, coord func() *coordina
 				Type:    "http",
 				Name:    mcpGatewayExtensionName,
 				URL:     mcpGatewayURL,
-				Headers: []string{},
+				Headers: []httpHeaderParam{},
 			},
 		},
 		Enabled: true,
@@ -1285,15 +1308,24 @@ type addConfigExtensionParams struct {
 }
 
 type gooseExtensionParam struct {
-	Type   string              `json:"type"`
-	Server mcpServerHttpParam  `json:"server"`
+	Type   string             `json:"type"`
+	Server mcpServerHttpParam `json:"server"`
 }
 
 type mcpServerHttpParam struct {
-	Type    string   `json:"type"`
-	Name    string   `json:"name"`
-	URL     string   `json:"url"`
-	Headers []string `json:"headers"`
+	Type    string            `json:"type"`
+	Name    string            `json:"name"`
+	URL     string            `json:"url"`
+	Headers []httpHeaderParam `json:"headers"`
+}
+
+// httpHeaderParam mirrors McpServerHttp.headers' item schema (HttpHeader in
+// acp-schema.json) — {name, value}, not a bare string. Sent empty today
+// (the gateway needs no auth headers), but the type must be right for when
+// it does.
+type httpHeaderParam struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 ```
 
@@ -1541,8 +1573,6 @@ void main() {
   });
 }
 ```
-
-Delete the first (deliberately buggy) draft above before committing — it exists in this plan only to show the mistake explicitly (a mock `thenAnswer` returning the wrong type) so the plan's executor doesn't repeat it while adapting from the `agent_config` test's shape, where every daoed method happens to return `void`/`Future<void>`, unlike `McpServerDao.save`.
 
 - [ ] **Step 2: Run test to verify it fails**
 
