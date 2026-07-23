@@ -20,6 +20,7 @@ package coordinator
 
 import (
 	"context"
+	"fmt"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
@@ -81,18 +82,66 @@ func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID s
 	return err
 }
 
-// PerSessionApplier is the future path (Goose #7596): it will additionally
-// deliver model/instructions/recipe per session. Stub until the capability
-// exists.
+// systemPromptSetParams mirrors Goose's SetSessionSystemPromptRequest
+// (goose-sdk-types/src/custom_requests.rs) — no typed Go SDK support
+// exists for this custom method, so the shape is hand-rolled and must be
+// kept in sync with that Rust struct if Goose's wire format changes.
+type systemPromptSetParams struct {
+	SessionID    string `json:"sessionId"`
+	SystemPrompt string `json:"systemPrompt"`
+}
+
+// PerSessionApplier delivers model/provider/instructions live, in addition
+// to mode. Confirmed against Goose v1.43.0 source
+// (spikes/goose-acp-config-surface/README.md items 1-3): provider and
+// model are standard ACP session/set_config_option calls with configId
+// "provider"/"model"; instructions go through Goose's custom
+// _goose/unstable/session/system-prompt/set method via CallExtension,
+// since no typed SDK support exists for it.
 type PerSessionApplier struct{}
 
 func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile) error {
-	return GlobalConfigApplier{}.Apply(ctx, conn, sessionID, p) // no extra capability yet
+	if err := (GlobalConfigApplier{}).Apply(ctx, conn, sessionID, p); err != nil {
+		return err
+	}
+	if p.Provider != "" {
+		if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
+			ValueId: &acpsdk.SetSessionConfigOptionValueId{
+				SessionId: acpsdk.SessionId(sessionID),
+				ConfigId:  "provider",
+				Value:     acpsdk.SessionConfigValueId(p.Provider),
+			},
+		}); err != nil {
+			return fmt.Errorf("apply provider: %w", err)
+		}
+	}
+	if p.Model != "" {
+		if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
+			ValueId: &acpsdk.SetSessionConfigOptionValueId{
+				SessionId: acpsdk.SessionId(sessionID),
+				ConfigId:  "model",
+				Value:     acpsdk.SessionConfigValueId(p.Model),
+			},
+		}); err != nil {
+			return fmt.Errorf("apply model: %w", err)
+		}
+	}
+	if p.Instructions != "" {
+		if _, err := conn.CallExtension(ctx, "_goose/unstable/session/system-prompt/set", systemPromptSetParams{
+			SessionID:    sessionID,
+			SystemPrompt: p.Instructions,
+		}); err != nil {
+			return fmt.Errorf("apply instructions: %w", err)
+		}
+	}
+	return nil
 }
 
-// selectApplier gates on advertised capabilities. Today no SDK field
-// describes per-session model/prompt config (#7596 unshipped), so this
-// always returns the global applier (spec §4/§S8).
+// selectApplier always returns PerSessionApplier. Provider/model/prompt
+// live delivery is confirmed present in the pinned Goose version
+// (v1.43.0) — see spikes/goose-acp-config-surface/README.md — so, unlike
+// the prior comment on this function ("Goose #7596 unshipped"), there is
+// no capability gate to check.
 func selectApplier(init *acpsdk.InitializeResponse) ProfileApplier {
-	return GlobalConfigApplier{}
+	return PerSessionApplier{}
 }
