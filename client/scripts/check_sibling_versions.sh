@@ -23,7 +23,7 @@ if [[ "$UPDATE" -eq 1 ]]; then
   [[ -n "$NEW_SHA" ]] || { echo "--update requires --sha <sha>" >&2; exit 2; }
   tmp_clone="$(mktemp -d)"
   echo "cloning ag_ui_widgets_flutter@$NEW_SHA to verify tests pass..."
-  git clone --quiet git@github.com:qtpi-bonding-org/ag_ui_widgets_flutter.git "$tmp_clone"
+  git clone --quiet https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git "$tmp_clone"
   git -C "$tmp_clone" checkout --quiet "$NEW_SHA"
   (cd "$tmp_clone" && flutter pub get && flutter test) || {
     echo "REFUSED: ag_ui_widgets_flutter@$NEW_SHA does not pass its own test suite" >&2
@@ -32,7 +32,7 @@ if [[ "$UPDATE" -eq 1 ]]; then
   }
   rm -rf "$tmp_clone"
   sed -i.bak "s/\tag_ui_widgets_flutter.git\t.*/\tag_ui_widgets_flutter.git\t$NEW_SHA/" "$LOCK" 2>/dev/null || \
-    printf 'ag_ui_widgets_flutter\tgit@github.com:qtpi-bonding-org/ag_ui_widgets_flutter.git\t%s\n' "$NEW_SHA" > "$LOCK"
+    printf 'ag_ui_widgets_flutter\thttps://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git\t%s\n' "$NEW_SHA" > "$LOCK"
   rm -f "$LOCK.bak"
   echo "updated ag_ui_widgets_flutter -> $NEW_SHA (tests passed)"
   exit 0
