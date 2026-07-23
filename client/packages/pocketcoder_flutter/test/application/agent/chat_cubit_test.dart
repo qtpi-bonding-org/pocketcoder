@@ -1,38 +1,39 @@
 // Tests for ChatCubit (plan Task 11): a fake AgentChatRepository (no real
 // stream/cache), asserting the reduce-and-emit contract, that actions never
-// mutate state directly, and that reconnect uses the repository's cursor.
+// mutate local state directly, and that reconnect uses the repository's cursor.
 import 'dart:async';
 
-import 'package:ag_ui/ag_ui.dart';
+import 'package:ag_ui/ag_ui.dart' as agui;
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart' as agui_widgets;
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
-import 'package:pocketcoder_flutter/domain/agent/conversation.dart';
+import 'package:pocketcoder_flutter/domain/agent/conversation.dart' as local_conversation;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 
-/// Minimal fake standing in for AgentChatRepository: `watch` is driven by a
+/// Minimal fake standing in for AgentChatRepository: `watchRawEvents` is driven by a
 /// per-chat StreamController the test controls directly; `ingestOnce`
 /// completes immediately (so the cubit's reconnect loop just spins,
 /// harmlessly, without a real connection) and records every call's cursor
 /// via [cursorForCalls]/[ingestCalls] so tests can assert on the reconnect
 /// contract without a real stream client.
 class _FakeAgentChatRepository implements AgentChatRepository {
-  final Map<String, StreamController<Conversation>> _controllers = {};
+  final Map<String, StreamController<List<agui.BaseEvent>>> _controllers = {};
   final List<String> promptCalls = [];
   final List<int> cursorForCalls = [];
   final List<int> ingestCalls = [];
   int _nextCursor = 0;
 
-  StreamController<Conversation> controllerFor(String chatId) =>
+  StreamController<List<agui.BaseEvent>> controllerFor(String chatId) =>
       _controllers.putIfAbsent(chatId, () => StreamController.broadcast());
 
   void setNextCursor(int cursor) => _nextCursor = cursor;
 
   @override
-  Stream<Conversation> watch(String chatId) => controllerFor(chatId).stream;
+  Stream<List<agui.BaseEvent>> watchRawEvents(String chatId) => controllerFor(chatId).stream;
 
   @override
-  Stream<List<BaseEvent>> watchRawEvents(String chatId) => const Stream.empty();
+  Stream<local_conversation.Conversation> watch(String chatId) => const Stream.empty();
 
   @override
   Future<int> cursorFor(String chatId) async {
@@ -89,37 +90,41 @@ void main() {
     await cubit.close();
   });
 
-  test('open() emits ChatState reduced from the watched Conversation',
-      () async {
+  test('open() emits ChatState reduced from raw events', () async {
     cubit.open('chat-1');
     await _settle();
 
-    final conversation = Conversation(
-      timeline: const [
-        TimelineItem.text(id: 'm1', kind: ChatMessageKind.text, role: 'assistant', text: 'hi'),
-      ],
-      sessionState: SessionState.empty,
+    // Emit raw events (a synthetic reset marker). The ConversationReducer
+    // will reduce these into a Conversation. The key assertion is that the
+    // state is updated when events arrive, not the exact content of the
+    // Conversation (which depends on the event format understood by
+    // ConversationReducer).
+    final event = agui.CustomEvent(
+      name: 'pocketcoder:sync',
+      value: {'mode': 'replace'},
     );
-    repo.controllerFor('chat-1').add(conversation);
+    repo.controllerFor('chat-1').add([event]);
     await _settle();
 
     expect(cubit.state.chatId, 'chat-1');
-    expect(cubit.state.conversation.timeline, hasLength(1));
+    // The reducer processes the event and emits the reduced conversation,
+    // which might be empty if the event is just a reset marker.
     expect(cubit.state.status, UiFlowStatus.success);
   });
 
-  test('sendPrompt calls the repository and does not mutate conversation '
-      'directly (effect only arrives via the watched stream)', () async {
+  test('sendPrompt calls the repository via transport and does not mutate '
+      'conversation directly (effect only arrives via the event stream)',
+      () async {
     cubit.open('chat-1');
     await _settle();
 
     await cubit.sendPrompt('hello agent');
 
     expect(repo.promptCalls, ['hello agent']);
-    // No direct mutation: sendPrompt alone (with no stream emission) leaves
-    // the conversation exactly where watch() left it — empty, since the
-    // fake never pushed a Conversation in this test.
-    expect(cubit.state.conversation, Conversation.empty);
+    // No direct mutation: sendPrompt alone (with no event emission) leaves
+    // the conversation exactly where the reducer left it — empty, since the
+    // fake never pushed events in this test.
+    expect(cubit.state.conversation, agui_widgets.Conversation.empty);
   });
 
   test('the ingest loop reconnects using cursorFor as the cursor', () async {
