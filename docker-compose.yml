@@ -81,6 +81,7 @@ services:
     networks:
       - pocketcoder-agent
       - pocketcoder-goose-egress
+      - pocketcoder-mcp-gateway
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:3000/status"]
@@ -105,10 +106,11 @@ services:
       - ENABLE_TF_OPERATIONS=${ENABLE_TF_OPERATIONS}
       - TFE_TOKEN=${TFE_TOKEN}
       - DOCKER_MCP_TELEMETRY_DEBUG=0
-    command: ["--port", "8811", "--transport", "sse", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--secrets", "/root/.docker/mcp/mcp.env", "--enable-all-servers"]
+    command: ["--port", "8811", "--transport", "streaming", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--secrets", "/root/.docker/mcp/mcp.env", "--enable-all-servers"]
     networks:
       - pocketcoder-docker
       - pocketcoder-tools
+      - pocketcoder-mcp-gateway
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8811/health"]
@@ -313,4 +315,9 @@ networks:
     driver: bridge
   # Gives Goose model-provider egress without a route to PocketBase services.
   pocketcoder-goose-egress:
+    driver: bridge
+  # Carries MCP traffic between Goose and the Docker MCP Gateway only -
+  # deliberately separate from pocketcoder-agent (Goose's sole path to/from
+  # PocketBase) so this addition doesn't touch that boundary.
+  pocketcoder-mcp-gateway:
     driver: bridge
