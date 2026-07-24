@@ -15,6 +15,7 @@ services:
       - ./services/mcp-gateway/config:/mcp_config
       - llm_keys:/llm_keys
       - goose_config:/goose-config
+      - cognee_config:/cognee-config
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -82,6 +83,7 @@ services:
       - pocketcoder-agent
       - pocketcoder-goose-egress
       - pocketcoder-mcp-gateway
+      - pocketcoder-cognee
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:3000/status"]
@@ -118,6 +120,43 @@ services:
       timeout: 2s
       retries: 5
       start_period: 10s
+
+  # 🧠 COGNEE (Agent Memory MCP Server)
+  # Standalone MCP memory server for Goose — knowledge-graph + vector recall,
+  # embedded storage (SQLite + LanceDB), no external DB services. Registered
+  # as a live Goose extension by hooks.RegisterCogneeExtension (Task 6), not
+  # via the mcp_servers/Docker-MCP-gateway catalog path.
+  cognee:
+    image: cognee/cognee-mcp:main
+    container_name: pocketcoder-cognee
+    profiles: ["agent"]
+    environment:
+      # TRANSPORT_MODE/HTTP_PORT/MCP_ALLOWED_HOSTS are consumed by the image's
+      # own entrypoint.sh, not passed as --transport CLI args — the entrypoint
+      # appends its own --transport $TRANSPORT_MODE after any passed args, so
+      # a CLI --transport would be silently overridden back to stdio.
+      # MCP_ALLOWED_HOSTS must match the service's network alias:port, else
+      # every cross-container request 421s on the DNS-rebinding Host check.
+      - TRANSPORT_MODE=http
+      - HTTP_PORT=8000
+      - MCP_ALLOWED_HOSTS=cognee:8000
+      # No LLM_API_KEY/embedding env vars required just to boot — those are
+      # consumed lazily by remember/recall tool calls. Task 5's render hook
+      # writes real values into cognee_config later; the placeholder is here
+      # so the compose file is self-describing about the var's existence.
+      - LLM_API_KEY=${COGNEE_LLM_API_KEY:-}
+    volumes:
+      - cognee_data:/cognee_data
+      - cognee_config:/cognee-config
+    networks:
+      - pocketcoder-cognee
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   # 🔒 DOCKER SOCKET PROXY - WRITE (Security Layer for PocketBase)
   # Currently shared by both PocketBase (restart) and Dozzle (logs)
@@ -171,6 +210,7 @@ services:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
       - ./services/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
       - ./services/sqlpage/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
+      - cognee_data:/cognee_data:ro
     networks:
       - pocketcoder-dashboard
       - pocketcoder-tailscale
@@ -296,6 +336,8 @@ volumes:
   caddy_config:
   goose_data:        # Goose SQLite/session state; back up independently of PocketBase
   goose_config:      # Goose config.yaml + keys.env, written by PocketBase, read by goose
+  cognee_data:        # cognee's embedded SQLite/LanceDB/Kuzu storage
+  cognee_config:       # cognee.env, written by PocketBase, read by cognee
 
 networks:
   pocketcoder-dashboard:
@@ -320,4 +362,9 @@ networks:
   # deliberately separate from pocketcoder-agent (Goose's sole path to/from
   # PocketBase) so this addition doesn't touch that boundary.
   pocketcoder-mcp-gateway:
+    driver: bridge
+  # Carries MCP traffic between Goose and cognee only - deliberately separate
+  # from pocketcoder-agent (Goose's sole path to/from PocketBase) so this
+  # addition doesn't touch that boundary. Mirrors pocketcoder-mcp-gateway.
+  pocketcoder-cognee:
     driver: bridge
