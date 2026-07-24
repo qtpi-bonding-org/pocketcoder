@@ -151,6 +151,45 @@ All three verified against `cognee/cognee-mcp:main` directly (`docker run`,
 not this directory's compose override), then re-verified end-to-end against
 the real tracked `docker-compose.yml`'s `cognee`/`cognee-data-init` services.
 
+## Addendum 2 — sqlpage config mount + WAL ATTACH (found by booting the real dashboard stack)
+
+Two more findings, from actually booting `pocketbase`+`cognee`+`sqlpage`
+together and hitting the dashboard, not just validating `docker compose
+config`:
+
+1. **`docker-compose.yml`'s `sqlpage` service mounted a config directory that
+   doesn't exist on disk at all** (`./services/sqlpage/config` — the real
+   files, `sqlpage.json` and `config/on_connect.sql`, live under
+   `./services/sqlpage/dashboard/config/`). This predates this branch
+   (confirmed on `main`). Effect: `sqlpage.json`'s real `database_url` was
+   silently never read (SQLPage fell back to a throwaway in-memory DB every
+   restart), and `on_connect.sql`'s `ATTACH` statements never ran at all —
+   both the pre-existing `opencode` line and this plan's new `cognee` line.
+   Fixed by pointing the mount at the real directory.
+2. **Fixing (1) surfaced two more real bugs, not new ones — code paths that
+   were simply never exercised before**: `on_connect.sql`'s `opencode` ATTACH
+   pointed at a volume/service that has been fully removed from this repo
+   (confirmed via `git log -p -- docker-compose.yml`), so once the config
+   actually loaded, that `ATTACH` hard-errored on a missing parent directory
+   — which fails the *entire* SQLPage connection pool (not just that one
+   query), breaking every dashboard including the new cognee one. Replaced
+   it with goose's own session store (`goose_data` volume,
+   `data/sessions/sessions.db`, real schema confirmed live: `sessions`,
+   `messages` tables). That in turn hit a second issue: goose's
+   `sessions.db` is SQLite **WAL mode**, and `ATTACH DATABASE
+   '/path'` (plain path, `:ro` bind mount) fails with "unable to open
+   database file" because SQLite needs to manage `-shm`/`-wal` sidecar state
+   even for pure reads. Fixed with the `file:` URI form's `immutable=1`
+   parameter (`ATTACH DATABASE 'file:/goose_data/.../sessions.db?immutable=1'
+   AS goose`), which tells SQLite the file won't change and skips that
+   machinery — verified working against both the WAL-mode goose db and the
+   rollback-journal-mode cognee db. `index.sql`'s dead `opencode.message`
+   queries were rewritten against goose's real schema too (`total_messages`,
+   `cumulative_cost`/`cumulative_tokens` from `sessions.accumulated_*`,
+   `token_usage_by_model` from `sessions.model_config_json`), and confirmed
+   returning real numbers (`501` messages, `822306` tokens, model
+   `MiniMax-M2.5`) from an actual populated `goose_data` volume.
+
 ## Cleanup
 
 ```bash
