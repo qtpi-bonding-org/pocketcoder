@@ -455,6 +455,59 @@ class AppLocalizationsEn extends AppLocalizations {
       'No agent config has a workspace folder configured.';
 
   @override
+  String get schedulerTitle => 'SCHEDULER';
+
+  @override
+  String get schedulerRegistryTitle => 'SCHEDULED TASKS';
+
+  @override
+  String get schedulerNoSchedules => 'NO SCHEDULES CONFIGURED';
+
+  @override
+  String get schedulerAddButton => 'ADD SCHEDULE';
+
+  @override
+  String get schedulerEditButton => 'EDIT';
+
+  @override
+  String get schedulerDeleteButton => 'DELETE';
+
+  @override
+  String get schedulerSaveButton => 'SAVE';
+
+  @override
+  String get schedulerPauseButton => 'PAUSE';
+
+  @override
+  String get schedulerResumeButton => 'RESUME';
+
+  @override
+  String get schedulerRunNowButton => 'RUN NOW';
+
+  @override
+  String get schedulerNameLabel => 'NAME';
+
+  @override
+  String get schedulerCronLabel => 'CRON EXPRESSION';
+
+  @override
+  String get schedulerPromptLabel => 'PROMPT';
+
+  @override
+  String get schedulerAddDialogTitle => 'ADD SCHEDULE';
+
+  @override
+  String schedulerEditDialogTitle(String name) {
+    return 'EDIT: $name';
+  }
+
+  @override
+  String get schedulerPausedBadge => 'PAUSED';
+
+  @override
+  String get schedulerRunningBadge => 'RUNNING';
+
+  @override
   String get settingsTitle => 'CONFIGURE';
 
   @override
