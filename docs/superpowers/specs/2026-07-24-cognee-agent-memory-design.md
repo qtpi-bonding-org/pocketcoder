@@ -3,7 +3,7 @@
 **Date:** 2026-07-24
 **Status:** DESIGN — approved for planning.
 **Supersedes:** `docs/superpowers/plans/2026-07-14-memory-stack-simplification.md` (targeted the since-deleted `services/interface` container; that plan is stale and will be deleted as part of this work — see Task in the implementation plan).
-**Grounded against:** `docker-compose.yml`, `services/pocketbase/internal/hooks/{mcp_gateway.go,goose_config.go,mcp.go}`, `services/pocketbase/internal/gooseconfig/config.go`, `services/pocketbase/pb_migrations/schema.json` (`mcp_servers`, `poco_configs`, `provider_keys` collections), `services/sqlpage/dashboard/{index.sql,config/on_connect.sql}`.
+**Grounded against:** `docker-compose.yml`, `services/pocketbase/internal/hooks/{mcp_gateway.go,goose_config.go,mcp.go}`, `services/pocketbase/internal/gooseconfig/config.go`, `services/pocketbase/pb_migrations/schema.json` (`mcp_servers`, `poco_configs`, `provider_keys` collections), `services/sqlpage/dashboard/{index.sql,config/on_connect.sql}`, `.independent_repos/goose_reference/documentation/docs/mcp/cognee-mcp.md` and `advanced-cognee-usage.md`. Reviewed adversarially (Sonnet, 2026-07-24) against the live code and reference docs — see revision notes in §3.1/§3.4/§3.5.
 
 ---
 
@@ -30,10 +30,15 @@ cognee is not a Docker-MCP-catalog server, so it does not belong on the `mcp_ser
 
 ### 3.1 cognee as its own service
 
-`cognee` becomes a new `docker-compose.yml` service running `cognee-mcp` over HTTP, **not** a sibling process inside another container (there is no `interface` container left to be a sibling of). It gets:
+`cognee` becomes a new `docker-compose.yml` service running `cognee-mcp`, **not** a sibling process inside another container (there is no `interface` container left to be a sibling of). It gets:
 
 - A new `cognee_data` named volume (SQLite + LanceDB + Kuzu files — cognee's embedded storage).
-- A new dedicated network, `pocketcoder-cognee`, shared only by `goose` and `cognee` — mirroring the existing `pocketcoder-mcp-gateway` network's isolation rationale ("carries MCP traffic between Goose and X only, deliberately separate from `pocketcoder-agent` so this addition doesn't touch [PocketBase's sole path to/from Goose]"). `pocketcoder-agent` stays untouched.
+- A new dedicated network, `pocketcoder-cognee`, shared only by `goose` and `cognee` — mirroring the existing `pocketcoder-mcp-gateway` network's isolation rationale ("carries MCP traffic between Goose and X only, deliberately separate from `pocketcoder-agent` so this addition doesn't touch [PocketBase's sole path to/from Goose]", paraphrased from `docker-compose.yml`'s `pocketcoder-mcp-gateway` network comment). `pocketcoder-agent` stays untouched.
+- `profiles: ["agent"]` — same profile as `goose`, since cognee is useless without it and must not start on a plain `docker compose up` when the agent stack is off.
+
+**Transport — open question, must be resolved before implementation writes code, not deferred:** Goose's own reference docs (`.independent_repos/goose_reference/documentation/docs/mcp/cognee-mcp.md`) document cognee-mcp exclusively via **stdio**, with a single `LLM_API_KEY` env var — not the multi-field provider config this spec assumes elsewhere. cognee-mcp does separately support `--transport http`, but its HTTP/SSE mode defaults to **loopback-only Host/Origin validation** (DNS-rebinding protection) — which would reject requests from a different container over a Docker bridge network exactly as this spec's `http://cognee:<port>/mcp` design requires. Implementation must, before writing the registration hook: (a) find and set whatever flag/env var widens that allowlist (cognee-mcp's own CLI `--help`/source is the source of truth, not assumption), or (b) fall back to a transport Goose's ACP extension registration actually supports across a container boundary (SSE, or a small local reverse-proxy) if HTTP can't be opened up safely. Registering `"cognee"` as a second, differently-hosted extension alongside `"gateway"` is otherwise unaffected — Goose resolves both via ordinary Docker DNS on their respective networks, no different from how it already reaches `mcp-gateway`.
+
+**Image size — flagged, not resolved here:** community reports put the official `cognee-mcp` image around ~27GB (CUDA/torch dependencies for local embedding/reranking models). Given this repo's VPS-first deploy workflow, implementation must check for a CPU-only/slim tag or build a trimmed custom image before treating "pull cognee-mcp" as a given — this is a real feasibility gate, not a cosmetic concern.
 
 ### 3.2 Registration: direct ACP live-registration
 
@@ -43,16 +48,18 @@ A new hook, `services/pocketbase/internal/hooks/cognee_extension.go`, copies the
 
 Once registered, cognee's MCP tools (store/search) are just more tools in Goose's normal tool-calling loop — identical in kind to the gateway's proxied tools. Goose (the model) decides when to call them, same as any other extension. This deliberately drops the old plan's Task 2 (`command-pump.ts`/`event-pump.ts` manually injecting recalled memories before every prompt) — that mechanism doesn't exist in the current architecture, and forcing recall on every turn would require new coordinator-level plumbing with no current hook point, for no clear benefit over letting the agent decide.
 
-### 3.4 Providers: LLM reuse (open question) + local embeddings (decided)
+Goose's own docs (`advanced-cognee-usage.md` in the vendored reference tree) note that relying on default tool-calling alone for *proactive* recall can be unreliable, and recommend nudging via `.goosehints`/instruction files. This spec accepts that risk for v1 rather than building coordinator-level injection: if recall proves unreliable in practice, the documented fallback is a `.goosehints` nudge telling Goose to check cognee before starting relevant work — zero new code, just a text file, and strictly easier to add later than to build speculatively now.
+
+### 3.4 Providers: cognee gets its own, self-contained credentials — no reuse
 
 cognee needs two providers: an LLM for its knowledge-graph extraction step, and an embedder for the vector-search side.
 
 - **Embeddings: local/self-hosted model, hardcoded, not admin-configurable.** No new API key required. This is a firm decision, not left open.
-- **LLM: attempt to reuse the existing MiniMax-via-Anthropic-compatible credentials** (`ANTHROPIC_API_KEY`/`ANTHROPIC_HOST`) via cognee's LiteLLM-based provider config. **Open question, to verify during implementation** against cognee's actual documentation/behavior — MiniMax-via-Anthropic-compat may or may not be supported by cognee's LiteLLM integration. If unsupported, fall back to either a local LLM or a separate minimal-cost provider key — this decision is deferred to implementation, not resolved here.
+- **LLM: cognee gets its own explicit `llm_api_key`/`llm_provider`/`llm_model`, entered independently — it does not reuse `ANTHROPIC_API_KEY`/`provider_keys` at all.** The earlier idea of reusing Goose's MiniMax credentials was dropped for two concrete reasons, not just simplicity: (1) `provider_keys` is scoped per-user (`user` relation, required — see `schema.json`), and cognee is a single global background service with no logged-in "user" context to attribute a key to; (2) whether cognee's LiteLLM integration even accepts a MiniMax-via-Anthropic-compatible endpoint is unverified, so tying cognee's only credential path to that assumption was a real risk. A self-contained credential (verified independently, e.g. a small OpenAI-compatible or Anthropic-direct key) is simpler and removes both problems at once. If cost/key-sprawl turns out to matter more than this decoupling, revisit — but as a deliberate follow-up, not a hidden default.
 
 ### 3.5 Admin-configurable cognee model settings
 
-A new collection, **`cognee_config`** (single global settings record; admin-only write, matching `poco_configs`' access pattern): `llm_provider` (text, e.g. `"anthropic"`), `llm_model` (text), `llm_base_url` (text, optional — needed for MiniMax's Anthropic-compatible endpoint), `llm_api_key` (text). Embedding provider/model is **not** a field here — it stays hardcoded per §3.4.
+A new collection, **`cognee_config`** (single global settings record; superuser-only — same access rule as `poco_configs`, whose `createRule`/`updateRule`/`deleteRule` are all `null`, i.e. edited only via the PocketBase Admin UI, not exposed to app-level `admin`-role users or Flutter. This differs from `mcp_servers`/`provider_keys`, which use `@request.auth.role = 'admin'` — those are user-facing app settings; `cognee_config` is infra-level deployment config, so it follows `poco_configs`' stricter precedent instead): `llm_provider` (text, e.g. `"openai"`), `llm_model` (text), `llm_base_url` (text, optional), `llm_api_key` (text). Embedding provider/model is **not** a field here — it stays hardcoded per §3.4.
 
 A new hook, `services/pocketbase/internal/hooks/cognee_config.go`, mirrors `RegisterGooseConfigHooks`: CRUD-bound on `cognee_config` (plus an initial render on serve startup), renders a `cognee.env` file into a new `cognee_config` volume, then restarts the `cognee` container via the existing `renderAndRestart` helper. With no `cognee_config` row present, `cognee` falls back to whatever's baked into its own Dockerfile/compose defaults — same fallback shape as Goose running on compose-env defaults with no `poco_config`.
 
@@ -76,7 +83,7 @@ Stays dropped. Already fully removed from `docker-compose.yml` and `services/` �
 
 ### Modified files
 - `docker-compose.yml`:
-  - Add `cognee` service (build or pull `cognee-mcp`, HTTP transport, `cognee_data` volume, `pocketcoder-cognee` network, `cognee_config` volume for `cognee.env`).
+  - Add `cognee` service (`profiles: ["agent"]`; build or pull `cognee-mcp` — image/tag TBD pending the size and transport open questions in §3.1; `cognee_data` volume, `pocketcoder-cognee` network, `cognee_config` volume for `cognee.env`).
   - Add `cognee_data` and `cognee_config` named volumes.
   - Add `pocketcoder-cognee` network.
   - Add `pocketcoder-cognee` to `goose`'s `networks:` list.
@@ -92,4 +99,9 @@ Stays dropped. Already fully removed from `docker-compose.yml` and `services/` �
 
 - Fixing the pre-existing broken `opencode` SQLite attachment / `messages`-table query in `services/sqlpage/dashboard/index.sql` — a separate, unrelated cleanup item, flagged here for visibility only.
 - Any UI (Flutter) surface for browsing memories — SQLPage's `memory.sql` is the only visibility surface this spec adds.
-- Resolving the cognee-LLM-provider open question (§3.4) — deferred to implementation.
+- Sourcing/verifying the actual `cognee_config.llm_api_key` credential (which provider, obtaining the key) — an operational task for whoever runs the migration, not a design decision.
+
+## 6. Open questions that MUST be resolved before or during implementation (not silently deferred)
+
+- **Transport (§3.1):** confirm cognee-mcp's cross-container HTTP/SSE reachability (Host/Origin allowlist) against its actual `--help`/source, or fall back to a transport that works across the Docker network boundary.
+- **Image size (§3.1):** confirm a viable (non-~27GB) image/tag exists, or scope a trimmed custom build, before committing to "pull cognee-mcp" in the file map.
