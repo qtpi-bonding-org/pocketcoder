@@ -146,3 +146,47 @@ func TestBuildCreateScheduleParams(t *testing.T) {
 		t.Fatalf("Cron = %q, want 0 2 * * *", params.Cron)
 	}
 }
+
+func TestRunScheduleNowAndImport_ImportsReturnedSession(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	owner := newTestUser(t, app, "runnow@example.com")
+	rec := newScheduleOwner(t, app, owner.Id, "gsid-runnow", "Ad-hoc Run")
+
+	fc := &fakeAdminConn{
+		response: json.RawMessage(`{"status":"completed","sessionId":"session-runnow"}`),
+	}
+	coord := fakeCoordWith(fc)
+
+	runScheduleNowAndImport(app, coord, rec.Id, "gsid-runnow")
+
+	if fc.lastMethod != "_goose/unstable/schedules/run-now" {
+		t.Fatalf("lastMethod = %q, want schedules/run-now", fc.lastMethod)
+	}
+	if _, err := app.FindFirstRecordByFilter("goose_sessions", "goose_session_id = {:sid}", map[string]any{"sid": "session-runnow"}); err != nil {
+		t.Fatalf("expected session-runnow to be imported: %v", err)
+	}
+}
+
+func TestRunScheduleNowAndImport_NoSessionIdIsNotAnError(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	owner := newTestUser(t, app, "runnow2@example.com")
+	rec := newScheduleOwner(t, app, owner.Id, "gsid-runnow2", "Ad-hoc Run 2")
+
+	fc := &fakeAdminConn{
+		response: json.RawMessage(`{"status":"cancelled","sessionId":null}`),
+	}
+	coord := fakeCoordWith(fc)
+
+	// Must not panic on a nil sessionId — just log and return.
+	runScheduleNowAndImport(app, coord, rec.Id, "gsid-runnow2")
+}
