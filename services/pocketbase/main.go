@@ -67,9 +67,6 @@ func main() {
 	// restart + live tool-permission delivery)
 	hooks.RegisterGooseConfigHooks(app, coordGetter)
 
-	// 3c. Register Cron Hooks (scheduled agent tasks)
-	hooks.RegisterCronHooks(app)
-
 	// 3d. Register Schedule Import Hooks (Goose-native scheduler → chat feed)
 	hooks.RegisterScheduleImportHooks(app, coordGetter)
 
@@ -85,7 +82,6 @@ func main() {
 		api.RegisterMcpApi(app, e)
 		api.RegisterProxyApi(app, e)
 		api.RegisterLogsApi(app, e)
-		api.RegisterCronApi(app, e)
 		var err error
 		coord, err = api.RegisterAgentApi(app, e)
 		if err != nil {
