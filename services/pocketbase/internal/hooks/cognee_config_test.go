@@ -21,6 +21,16 @@ func TestRenderCogneeConfigWritesEnvFile(t *testing.T) {
 	hooks.SetCogneeConfigDirForTest(dir)
 	defer hooks.SetCogneeConfigDirForTest("/cognee-config")
 
+	// Register hooks BEFORE saving the record: RegisterCogneeConfigHooks only
+	// renders synchronously via app.OnServe() (never fired here, matching
+	// production — see cognee_config.go's comment on why this must not run
+	// before app.Bootstrap()/migrations, which OnServe is guaranteed to be
+	// after but a bare RegisterCogneeConfigHooks(app) call is not). The
+	// CRUD hook (OnRecordAfterCreateSuccess) is what actually exercises
+	// renderCogneeConfig in this test, exactly as it will fire in
+	// production when a real cognee_config row is created after startup.
+	hooks.RegisterCogneeConfigHooks(app)
+
 	coll, err := app.FindCollectionByNameOrId("cognee_config")
 	if err != nil {
 		t.Fatal(err)
@@ -33,8 +43,6 @@ func TestRenderCogneeConfigWritesEnvFile(t *testing.T) {
 	if err := app.Save(rec); err != nil {
 		t.Fatal(err)
 	}
-
-	hooks.RegisterCogneeConfigHooks(app)
 
 	envPath := filepath.Join(dir, "cognee.env")
 	data, err := os.ReadFile(envPath)
