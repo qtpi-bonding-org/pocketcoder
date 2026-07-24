@@ -55,6 +55,7 @@ class _BootScreenState extends State<BootScreen> {
         // Fallback to direct path
         fileContent = await rootBundle.loadString('assets/boot_log.txt');
       } catch (e2) {
+        if (!mounted) return;
         fileContent =
             '${context.l10n.bootLoadError}\n';
       }

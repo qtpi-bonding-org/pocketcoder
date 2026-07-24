@@ -1,5 +1,4 @@
 import 'package:ag_ui/ag_ui.dart';
-import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_transport.dart';
 
