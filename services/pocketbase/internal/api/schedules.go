@@ -28,6 +28,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/pocketbase/pocketbase"
@@ -36,6 +37,7 @@ import (
 	"github.com/pocketbase/pocketbase/tools/security"
 
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
 )
 
 // recipeDto mirrors the subset of Goose's RecipeDto (acp-schema.json) this
@@ -84,6 +86,12 @@ type scheduleIDParams struct {
 }
 type listSchedulesResponse struct {
 	Jobs []scheduledJobDto `json:"jobs"`
+}
+
+// runScheduleNowResponse mirrors Goose's RunScheduleNowResponse_unstable.
+type runScheduleNowResponse struct {
+	Status    string  `json:"status"`
+	SessionID *string `json:"sessionId"`
 }
 
 // scheduleResp is what the Flutter Scheduler screen actually consumes —
@@ -369,6 +377,31 @@ func RegisterSchedulesApi(app *pocketbase.PocketBase, e *core.ServeEvent, coord 
 		}
 		return re.JSON(200, map[string]bool{"deleted": true})
 	}).Bind(apis.RequireAuth())
+
+	e.Router.POST("/api/pocketcoder/schedules/run-now", func(re *core.RequestEvent) error {
+		if re.Auth == nil {
+			return re.JSON(401, map[string]string{"error": "Authentication required"})
+		}
+		var input struct {
+			ID string `json:"id"`
+		}
+		if err := re.BindBody(&input); err != nil {
+			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+		}
+		if input.ID == "" {
+			return re.JSON(400, map[string]string{"error": "id is required"})
+		}
+		owner, err := resolveOwnedSchedule(app, re.Auth.Id, input.ID)
+		if err != nil {
+			return re.JSON(404, map[string]string{"error": "Schedule not found"})
+		}
+
+		ownerID := owner.Id
+		gooseScheduleID := owner.GetString("goose_schedule_id")
+		go runScheduleNowAndImport(app, coord, ownerID, gooseScheduleID)
+
+		return re.JSON(202, map[string]string{"status": "started"})
+	}).Bind(apis.RequireAuth())
 }
 
 // registerPauseToggleRoute registers a route sharing pause/unpause's exact
@@ -404,4 +437,50 @@ func registerPauseToggleRoute(e *core.ServeEvent, app *pocketbase.PocketBase, co
 		}
 		return re.JSON(200, map[string]bool{"ok": true})
 	}).Bind(apis.RequireAuth())
+}
+
+// runScheduleNowAndImport is run-now's background half. It runs on its
+// own goroutine with its own context — independent of the HTTP request,
+// which has already returned — because schedules/run-now blocks in Goose
+// until the recipe finishes (scheduler.rs:645-697). On success it imports
+// the resulting session immediately via hooks.ImportSession, using the
+// sessionId Goose's response already contains, instead of waiting up to
+// 60s for runImportPoll's next pass to notice it.
+func runScheduleNowAndImport(app core.App, coord func() *coordinator.Coordinator, ownerRecordID, gooseScheduleID string) {
+	c := coord()
+	if c == nil {
+		log.Printf("⚠️ [Scheduler] run-now: no coordinator configured")
+		return
+	}
+	ctx := context.Background()
+	conn, err := c.AdminConn(ctx)
+	if err != nil {
+		log.Printf("⚠️ [Scheduler] run-now: AdminConn failed: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	raw, err := conn.CallExtension(ctx, "_goose/unstable/schedules/run-now", scheduleIDParams{ScheduleID: gooseScheduleID})
+	if err != nil {
+		log.Printf("⚠️ [Scheduler] run-now failed for %s: %v", gooseScheduleID, err)
+		return
+	}
+	var resp runScheduleNowResponse
+	if err := json.Unmarshal(raw, &resp); err != nil {
+		log.Printf("⚠️ [Scheduler] run-now: failed to parse response for %s: %v", gooseScheduleID, err)
+		return
+	}
+	if resp.SessionID == nil || *resp.SessionID == "" {
+		log.Printf("⚠️ [Scheduler] run-now for %s completed with no sessionId (status=%s)", gooseScheduleID, resp.Status)
+		return
+	}
+
+	owner, err := app.FindRecordById("schedule_owners", ownerRecordID)
+	if err != nil {
+		log.Printf("⚠️ [Scheduler] run-now: owner record %s vanished before import: %v", ownerRecordID, err)
+		return
+	}
+	if err := hooks.ImportSession(app, owner, *resp.SessionID); err != nil {
+		log.Printf("⚠️ [Scheduler] run-now: failed to import session %s: %v", *resp.SessionID, err)
+	}
 }
