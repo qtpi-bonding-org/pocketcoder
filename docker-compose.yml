@@ -126,10 +126,26 @@ services:
   # embedded storage (SQLite + LanceDB), no external DB services. Registered
   # as a live Goose extension by hooks.RegisterCogneeExtension (Task 6), not
   # via the mcp_servers/Docker-MCP-gateway catalog path.
+  # One-shot init: Docker creates the cognee_data named volume root-owned on
+  # first use, but cognee-mcp's image runs as a non-root uid/gid 1000:1000 —
+  # without this, cognee crashes on its first write with
+  # `PermissionError: /cognee_data/system` (verified empirically, see
+  # spikes/cognee-mcp-transport/). Runs once, exits 0, cognee waits for it.
+  cognee-data-init:
+    image: busybox
+    container_name: pocketcoder-cognee-data-init
+    profiles: ["agent"]
+    command: ["chown", "-R", "1000:1000", "/cognee_data"]
+    volumes:
+      - cognee_data:/cognee_data
+
   cognee:
     image: cognee/cognee-mcp:main
     container_name: pocketcoder-cognee
     profiles: ["agent"]
+    depends_on:
+      cognee-data-init:
+        condition: service_completed_successfully
     environment:
       # TRANSPORT_MODE/HTTP_PORT/MCP_ALLOWED_HOSTS are consumed by the image's
       # own entrypoint.sh, not passed as --transport CLI args — the entrypoint
@@ -140,6 +156,15 @@ services:
       - TRANSPORT_MODE=http
       - HTTP_PORT=8000
       - MCP_ALLOWED_HOSTS=cognee:8000
+      # cognee's own defaults (pydantic BaseSettings env vars, case-insensitive)
+      # write its SQLite/LanceDB/Kuzu state under a path baked into the image
+      # (~/.cognee_system, ~/.data_storage) — NOT under /cognee_data. Without
+      # these two, the cognee_data volume mount below is a no-op: nothing is
+      # ever written there, state doesn't persist across container recreates,
+      # and sqlpage's read-only mount (below, and in the sqlpage service) has
+      # nothing to read. Verified empirically: spikes/cognee-mcp-transport.
+      - DATA_ROOT_DIRECTORY=/cognee_data/data
+      - SYSTEM_ROOT_DIRECTORY=/cognee_data/system
       # No LLM_API_KEY/embedding env vars required just to boot — those are
       # consumed lazily by remember/recall tool calls. Task 5's render hook
       # writes real values into cognee_config later; the placeholder is here
