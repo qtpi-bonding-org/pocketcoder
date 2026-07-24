@@ -113,6 +113,44 @@ v1.43.0 requires per the gateway spike's prior finding.
 See `docs/superpowers/plans/2026-07-24-cognee-transport-decision.md` for the
 canonical decision record consumed by Task 3/6.
 
+## Addendum — persistence + permissions (found during Task 7's SQLPage spike)
+
+Two additional findings, discovered while verifying Task 7's SQLPage
+attachment against a real running container (not part of the original
+transport question, but block cross-container *persistence*, so recorded
+here rather than opening a third spike directory):
+
+1. **cognee does not write into the mounted `cognee_data` volume by
+   default.** Its own config (`cognee/base_config.py`, a pydantic
+   `BaseSettings`) defaults `data_root_directory`/`system_root_directory` to
+   paths baked into the image (`~/.data_storage`, `~/.cognee_system`), not
+   `/cognee_data`. Without setting `DATA_ROOT_DIRECTORY=/cognee_data/data`
+   and `SYSTEM_ROOT_DIRECTORY=/cognee_data/system` (env vars, case-insensitive
+   pydantic-settings match), the volume mount is a no-op — nothing persists,
+   and SQLPage's read-only mount has nothing to read.
+2. **The volume needs to be pre-owned by uid/gid 1000.** cognee-mcp's image
+   runs as a non-root `cognee` user (uid/gid 1000:1000) by default. Docker
+   creates a fresh named volume root-owned, so cognee's first write crashes
+   with `PermissionError: [Errno 13] Permission denied: '/cognee_data/system'`.
+   Fixed in `docker-compose.yml` with a one-shot `cognee-data-init` (`busybox
+   chown -R 1000:1000 /cognee_data`) that `cognee` depends on via
+   `condition: service_completed_successfully`.
+3. **The real relational SQLite file is `/cognee_data/system/databases/cognee_db`**
+   (no `.db` extension) once the above two are fixed — confirmed via
+   `sqlite3 .tables` against a live container: `data`, `datasets`, `nodes`,
+   `edges`, `queries`, `results`, and others. `data` (columns include `name`,
+   `mime_type`, `token_count`, `data_size`, `created_at`) is the table that
+   holds each ingested memory item — used by `services/sqlpage/dashboard/memory.sql`.
+   cognee's `remember` tool without a `session_id` needs a real `LLM_API_KEY`
+   to complete its add+cognify pipeline (confirmed: fails with
+   `LLMAPIKeyNotSetError` on a placeholder key) — out of scope for this
+   spike, but noted since it's why the `data` table was still empty when this
+   was checked with a placeholder key.
+
+All three verified against `cognee/cognee-mcp:main` directly (`docker run`,
+not this directory's compose override), then re-verified end-to-end against
+the real tracked `docker-compose.yml`'s `cognee`/`cognee-data-init` services.
+
 ## Cleanup
 
 ```bash
