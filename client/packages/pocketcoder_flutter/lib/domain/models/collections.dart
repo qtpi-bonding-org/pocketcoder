@@ -12,7 +12,6 @@ class Collections {
   static const String questions = 'questions';
   static const String devices = 'devices';
   static const String notificationRules = 'notification_rules';
-  static const String cronJobs = 'cron_jobs';
   static const String harnesses = 'harnesses';
   static const String models = 'models';
   static const String harnessModels = 'harness_models';
@@ -22,6 +21,7 @@ class Collections {
   static const String pocoConfigs = 'poco_configs';
   static const String sandboxConfigs = 'sandbox_configs';
   static const String gooseSessions = 'goose_sessions';
+  static const String scheduleOwners = 'schedule_owners';
 
   static const List<String> all = [
     users,
@@ -36,7 +36,6 @@ class Collections {
     questions,
     devices,
     notificationRules,
-    cronJobs,
     harnesses,
     models,
     harnessModels,
@@ -46,5 +45,6 @@ class Collections {
     pocoConfigs,
     sandboxConfigs,
     gooseSessions,
+    scheduleOwners,
   ];
 }
