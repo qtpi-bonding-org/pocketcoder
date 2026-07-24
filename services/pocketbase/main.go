@@ -70,6 +70,9 @@ func main() {
 	// 3c. Register Cron Hooks (scheduled agent tasks)
 	hooks.RegisterCronHooks(app)
 
+	// 3d. Register Schedule Import Hooks (Goose-native scheduler → chat feed)
+	hooks.RegisterScheduleImportHooks(app, coordGetter)
+
 	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
@@ -97,6 +100,10 @@ func main() {
 
 		// D. Skills API (pure ACP passthrough, no PocketBase storage).
 		api.RegisterSkillsApi(app, e, coordGetter)
+
+		// E. Scheduler API (per-user CRUD over Goose's schedules, backed by
+		// schedule_owners).
+		api.RegisterSchedulesApi(app, e, coordGetter)
 
 		return e.Next()
 	})
