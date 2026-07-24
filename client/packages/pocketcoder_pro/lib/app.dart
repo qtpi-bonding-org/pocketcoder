@@ -112,7 +112,7 @@ class FcmPushService implements PushService {
       } else if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
         deviceName = "${androidInfo.manufacturer} ${androidInfo.model}";
-      } else if (Platform.isIOS || Platform.isMacOS) {
+      } else if (Platform.isIOS) {
         final iosInfo = await deviceInfo.iosInfo;
         deviceName = iosInfo.name;
       }
@@ -172,7 +172,7 @@ class RevenueCatBillingService implements BillingService {
       // REVENUE_CAT_GOOGLE_KEY=...
       String? apiKey;
 
-      if (Platform.isIOS || Platform.isMacOS) {
+      if (Platform.isIOS) {
         apiKey = dotenv.env['REVENUE_CAT_APPLE_KEY'];
       } else if (Platform.isAndroid) {
         apiKey = dotenv.env['REVENUE_CAT_GOOGLE_KEY'];
