@@ -35,6 +35,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
 )
 
@@ -140,21 +141,36 @@ func runImportPoll(app core.App, coord func() *coordinator.Coordinator) {
 	defer conn.Close()
 
 	for _, owner := range owners {
-		gooseScheduleID := owner.GetString("goose_schedule_id")
-		raw, err := conn.CallExtension(ctx, "_goose/unstable/schedules/sessions/list", listScheduleSessionsParams{ScheduleID: gooseScheduleID, Limit: 20})
-		if err != nil {
-			log.Printf("⚠️ [Scheduler] import poll: sessions/list failed for %s: %v", gooseScheduleID, err)
-			continue
+		importOwnerSessions(app, conn, ctx, owner)
+	}
+}
+
+// importOwnerSessions handles one schedule_owners row's sessions/list +
+// import pass. Split out from runImportPoll so a panic here — from Goose,
+// from a nil-pointer edge case, etc. — is recovered and logged per-owner,
+// matching this loop's existing posture of logging and continuing past
+// ordinary errors on one row rather than aborting the whole poll pass.
+func importOwnerSessions(app core.App, conn acp.Conn, ctx context.Context, owner *core.Record) {
+	gooseScheduleID := owner.GetString("goose_schedule_id")
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("⚠️ [Scheduler] import poll: recovered from panic for %s: %v", gooseScheduleID, r)
 		}
-		var resp listScheduleSessionsResponse
-		if err := json.Unmarshal(raw, &resp); err != nil {
-			log.Printf("⚠️ [Scheduler] import poll: failed to parse sessions/list response for %s: %v", gooseScheduleID, err)
-			continue
-		}
-		for _, s := range resp.Sessions {
-			if err := ImportSession(app, owner, s.SessionID); err != nil {
-				log.Printf("⚠️ [Scheduler] import poll: failed to import session %s: %v", s.SessionID, err)
-			}
+	}()
+
+	raw, err := conn.CallExtension(ctx, "_goose/unstable/schedules/sessions/list", listScheduleSessionsParams{ScheduleID: gooseScheduleID, Limit: 20})
+	if err != nil {
+		log.Printf("⚠️ [Scheduler] import poll: sessions/list failed for %s: %v", gooseScheduleID, err)
+		return
+	}
+	var resp listScheduleSessionsResponse
+	if err := json.Unmarshal(raw, &resp); err != nil {
+		log.Printf("⚠️ [Scheduler] import poll: failed to parse sessions/list response for %s: %v", gooseScheduleID, err)
+		return
+	}
+	for _, s := range resp.Sessions {
+		if err := ImportSession(app, owner, s.SessionID); err != nil {
+			log.Printf("⚠️ [Scheduler] import poll: failed to import session %s: %v", s.SessionID, err)
 		}
 	}
 }

@@ -202,9 +202,9 @@ func listSchedulesForUser(ctx context.Context, app core.App, coord func() *coord
 	return out, nil
 }
 
-// RegisterSchedulesApi registers the per-user schedule CRUD endpoints.
-// run-now is registered separately by Task 4, once hooks.ImportSession
-// exists for it to call.
+// RegisterSchedulesApi registers the per-user schedule CRUD endpoints,
+// including run-now (whose background half, runScheduleNowAndImport, calls
+// hooks.ImportSession).
 func RegisterSchedulesApi(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() *coordinator.Coordinator) {
 	e.Router.POST("/api/pocketcoder/schedules/list", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
@@ -447,6 +447,12 @@ func registerPauseToggleRoute(e *core.ServeEvent, app *pocketbase.PocketBase, co
 // sessionId Goose's response already contains, instead of waiting up to
 // 60s for runImportPoll's next pass to notice it.
 func runScheduleNowAndImport(app core.App, coord func() *coordinator.Coordinator, ownerRecordID, gooseScheduleID string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("⚠️ [Scheduler] run-now: recovered from panic for %s: %v", gooseScheduleID, r)
+		}
+	}()
+
 	c := coord()
 	if c == nil {
 		log.Printf("⚠️ [Scheduler] run-now: no coordinator configured")
