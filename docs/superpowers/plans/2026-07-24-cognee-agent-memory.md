@@ -18,68 +18,97 @@
 
 ---
 
-## Task 1: Spike — confirm cognee-mcp is reachable cross-container over HTTP/SSE
+## Task 1: Spike — confirm cognee-mcp is reachable cross-container as a Goose-compatible MCP transport
 
-This gates every later task that assumes `http://cognee:<port>/mcp` is dialable from the `goose` container. Do not skip or assume the answer.
+This gates every later task that assumes `http://cognee:<port>/mcp` is dialable from the `goose` container, AND gates whether Goose will even accept the result. Do not skip or assume the answer.
+
+**Critical constraint, confirmed by this repo's own prior spike** (`spikes/goose-mcp-gateway-attach/README.md`): Goose v1.43.0 advertises `mcpCapabilities: {"http": true, "sse": false}` in its ACP `initialize` response and **hard-rejects any `sse`-typed MCP server** on both attachment mechanisms, with the explicit error `"SSE is unsupported, migrate to streamable_http"`. This means **`TRANSPORT: sse` is not a valid fallback** if plain HTTP doesn't work — it is a dead end identical to the one that spike already ruled out for the Docker MCP Gateway. ACP's `type: "http"` specifically means MCP **Streamable HTTP** (per the same spike), not bare request/response HTTP — the real question this task must answer is whether cognee-mcp's `--transport http` mode implements genuine Streamable HTTP (the gateway's own `--transport streaming` flag was the fix for an equivalent naming trap — `--transport sse` and `--transport streaming` are different modes of the *same* gateway binary despite both being "HTTP-ish"). If cognee-mcp turns out to only offer stdio or SSE, the only viable path is stdio (which breaks this plan's cross-container design and requires a design revisit — flag to a human, do not silently substitute).
+
+Follow this repo's own established spike methodology (`spikes/goose-mcp-gateway-attach/README.md`) rather than ad-hoc `docker run` commands: a git-tracked `spikes/cognee-mcp-transport/` directory, real containers via a disposable `docker-compose.override.yml` (not edited into the tracked `docker-compose.yml`), cleaned up after.
 
 **Files:**
-- Create (scratch, not committed): a throwaway local Docker Compose snippet or two ad-hoc `docker run` commands — nothing under version control.
+- Create: `spikes/cognee-mcp-transport/README.md`, `spikes/cognee-mcp-transport/docker-compose.override.yml` (disposable, deleted in Step 6)
 - Record: `docs/superpowers/plans/2026-07-24-cognee-transport-decision.md`
 
-- [ ] **Step 1: Run cognee-mcp locally in HTTP mode**
+- [ ] **Step 1: Check what cognee-mcp needs to boot at all, before testing transport**
 
-```bash
-docker network create cognee-spike-net
-docker run -d --name cognee-spike --network cognee-spike-net \
-  -e LLM_API_KEY=sk-test-placeholder \
-  cognee/cognee-mcp:main --transport http --port 8000
-docker logs -f cognee-spike   # watch for the actual bind host/port and any startup error
+Read cognee-mcp's actual `--help` and startup requirements first — do not assume `LLM_API_KEY` alone is sufficient. The spec commits to **local-only embeddings** (§3.4), so confirm what env var(s) select that (e.g. a local/self-hosted embedding provider flag) and whether omitting them causes a crash-on-boot (which would look like a transport failure but isn't). Check cognee-mcp's own README/`--help` for terms like `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, or similar, and note the minimum working env set in the spike README before proceeding.
+
+- [ ] **Step 2: Stand up cognee-mcp via a disposable compose override**
+
+Create `spikes/cognee-mcp-transport/docker-compose.override.yml`:
+
+```yaml
+services:
+  cognee-spike:
+    image: cognee/cognee-mcp:main   # substitute the real tag if this doesn't exist — check Docker Hub/GHCR
+    command: ["--transport", "http", "--port", "8000"]
+    environment:
+      - LLM_API_KEY=sk-test-placeholder
+      # add whatever Step 1 found is required for local embeddings to boot
+    networks:
+      - cognee-spike-net
+
+networks:
+  cognee-spike-net:
+    driver: bridge
 ```
 
-If `cognee/cognee-mcp:main` doesn't exist or fails to pull, check cognee's GitHub Container Registry / PyPI page for the current published image tag and substitute it — record whatever tag you actually used in the decision file (Step 4).
+```bash
+cd spikes/cognee-mcp-transport
+docker compose -f docker-compose.override.yml up -d --build
+docker compose -f docker-compose.override.yml logs -f cognee-spike   # watch for the actual bind host/port and any startup error
+```
 
-- [ ] **Step 2: Try to reach it from a second container on the same network**
+- [ ] **Step 3: Try to reach it from a second container on the same network**
 
 ```bash
-docker run --rm --network cognee-spike-net curlimages/curl:latest \
+docker run --rm --network cognee-mcp-transport_cognee-spike-net curlimages/curl:latest \
   curl -sv -X POST http://cognee-spike:8000/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 ```
 
-- [ ] **Step 3: Diagnose based on the result**
+(Adjust the network name to whatever `docker compose` actually generated — check with `docker network ls`.)
 
-- **2xx / a JSON-RPC response body** (even an error response, as long as it's not a connection-level rejection) → HTTP transport works cross-container as-is. Record `TRANSPORT=http`, note the port.
-- **Connection refused / reset** → check `docker logs cognee-spike` for a bind-address issue (e.g. bound to `127.0.0.1` inside its own container instead of `0.0.0.0`) — look for a `--host 0.0.0.0` or equivalent flag/env var in `docker run cognee-spike --help` or `cognee-mcp --help` and retry Step 1 with it.
-- **403 / "Invalid Host header" / "Invalid Origin"** → this is the DNS-rebinding-protection allowlist flagged in the spec (§3.1). Look for an allowlist-widening flag/env var (search `cognee-mcp --help` output and cognee's GitHub repo for terms like `allowed-hosts`, `trusted-hosts`, `CORS`, `DANGEROUSLY_OMIT_AUTH`, or similar) and retry with it set. If no such override exists, fall back to `--transport sse` and repeat Steps 1-2 with an SSE-appropriate request, or note that a stdio-only path is required.
+- [ ] **Step 4: Diagnose based on the result**
 
-- [ ] **Step 4: Write the decision file**
+- **2xx / a JSON-RPC response body** (even an error response, as long as it's not a connection-level rejection) → confirm this is genuine Streamable HTTP, not SSE mislabeled as HTTP (check the response headers/body shape against the MCP Streamable HTTP spec — a `text/event-stream` framing on a POST response is the tell). If confirmed, record `TRANSPORT=http`, note the port.
+- **Connection refused / reset** → check the container logs for a bind-address issue (e.g. bound to `127.0.0.1` inside its own container instead of `0.0.0.0`) — look for a `--host 0.0.0.0` or equivalent flag/env var and retry with it.
+- **403 / "Invalid Host header" / "Invalid Origin"** → this is the DNS-rebinding-protection allowlist flagged in the spec (§3.1). Look for an allowlist-widening flag/env var (search cognee-mcp's `--help` output and GitHub repo for terms like `allowed-hosts`, `trusted-hosts`, `CORS`) and retry with it set.
+- **If HTTP cannot be made to work at all** — do NOT fall back to SSE (see the constraint above; Goose rejects it outright). Record `TRANSPORT=stdio` in the decision file and stop — flag to a human that this invalidates Task 3/6's cross-container design and needs a design revisit (e.g. running cognee-mcp as a stdio child process Goose itself spawns, if Goose's extension config supports that for non-builtin servers, which is a materially different architecture than this plan assumes).
 
-Create `docs/superpowers/plans/2026-07-24-cognee-transport-decision.md` with exactly this shape (fill in the bracketed values from what you actually found):
+- [ ] **Step 5: Write the decision file**
+
+Create `docs/superpowers/plans/2026-07-24-cognee-transport-decision.md`:
 
 ```markdown
 # cognee Transport Decision
 
-- TRANSPORT: [http | sse | stdio]
-- PORT: [port number, if http/sse]
+- TRANSPORT: [http | stdio]
+- PORT: [port number, if http]
 - FLAGS_REQUIRED: [any --flag or env var needed to make it reachable cross-container, or "none"]
+- MIN_ENV_TO_BOOT: [from Step 1 — the full env var set cognee-mcp needs to start, not just LLM_API_KEY]
 - IMAGE_TAG_USED_FOR_SPIKE: [the exact image:tag that worked]
 ```
 
-Task 3 (docker-compose service) and Task 6 (extension registration) both read this file — do not proceed to those tasks until it exists and TRANSPORT is filled in.
+Task 3 (docker-compose service) and Task 6 (extension registration) both read this file — do not proceed to those tasks until it exists and TRANSPORT is filled in as `http` (if `stdio`, stop per Step 4).
 
-- [ ] **Step 5: Clean up the spike containers**
+- [ ] **Step 6: Write the spike README and clean up**
+
+Write `spikes/cognee-mcp-transport/README.md` documenting what was tested and the result (mirror `spikes/goose-mcp-gateway-attach/README.md`'s structure: what it proves, result, headline finding). Then:
 
 ```bash
-docker rm -f cognee-spike
-docker network rm cognee-spike-net
+docker compose -f docker-compose.override.yml down -v
 ```
 
-- [ ] **Step 6: Commit the decision record**
+Leave `docker-compose.override.yml` and `README.md` committed under `spikes/cognee-mcp-transport/` as the disposable-but-documented artifact, matching this repo's existing spike precedent.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add docs/superpowers/plans/2026-07-24-cognee-transport-decision.md
+git add spikes/cognee-mcp-transport/ docs/superpowers/plans/2026-07-24-cognee-transport-decision.md
 git commit -m "docs: record cognee-mcp transport spike findings"
 ```
 
@@ -242,7 +271,7 @@ git commit -m "feat(cognee): add cognee service, network, and volumes to compose
 **Interfaces:**
 - Produces: a `cognee_config` collection with fields `llm_provider` (text), `llm_model` (text), `llm_base_url` (text, optional), `llm_api_key` (text) — consumed by Task 5's render hook via `app.FindRecordsByFilter("cognee_config", ...)`.
 
-Do not hand-type the collection's JSON into `schema.json` from scratch — PocketBase's field `id`s (e.g. `"text1579384326"`) are opaque and must come from PocketBase itself, not be guessed. Capture them the same way the original schema squash did: build the collection with typed Go field structs against a real (temporary) PocketBase app, save it, dump the resulting JSON, then paste that verified JSON into `schema.json`.
+Do not hand-type the collection's JSON into `schema.json` from scratch — PocketBase's field `id`s (e.g. `"text1579384326"`) are opaque and must come from PocketBase itself, not be guessed. Capture them the same way the original schema squash did (per its commit message, "captured directly from the current final-state app, not hand-transcribed"): build the collection with typed Go field structs against a real (temporary) PocketBase app, save it, dump the resulting JSON, then paste that verified JSON into `schema.json`. (Note: this is different from the *ongoing*, day-to-day schema-change workflow `CLAUDE.md` documents for future edits — Admin UI + `scripts/export_schema.sh` against a running server — which is also valid but requires a live server up; the Go-test capture used here and in the original squash needs only `go test`.)
 
 - [ ] **Step 1: Write the failing schema test**
 
@@ -369,6 +398,8 @@ git commit -m "feat(pocketbase): add cognee_config collection"
 - Produces: `RegisterCogneeConfigHooks(app core.App)` — called from `main.go` alongside the existing `hooks.RegisterGooseConfigHooks(app, coordGetter)` call at `main.go:68`. Writes `/cognee-config/cognee.env` (the `cognee_config` volume mounted into both `pocketbase` and `cognee` per Task 3).
 
 This mirrors `goose_config.go`'s `RegisterGooseConfigHooks`/`renderGooseConfig` shape, minus the tool-permissions delivery (cognee has no tool-permission concept) and minus the multi-collection resolution (`cognee_config` is self-contained, no `harness_models`/`models` joins needed).
+
+Note: the test-injection mechanism below (`SetCogneeConfigDirForTest`, a package-level var override) has **no existing analog to actually mirror** — `goose_config.go`'s equivalent `gooseConfigDir` var has no test-injection function, and no test in this package currently opts into `t.Parallel()`. This is safe today but is a genuinely new pattern for this package, not a reuse of one — if a future test in `hooks_test` adds `t.Parallel()`, this mutable package var becomes a real race; that's an accepted tradeoff for now, not a hidden one.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -918,3 +949,5 @@ git commit -m "docs: remove stale memory-simplification plan, superseded by 2026
 **Placeholder scan:** Task 3/6/7 contain bracketed substitution points (`<PORT>`, `<TRANSPORT>`, `<IMAGE>`) — these are not lazy placeholders; they are values a prior task's spike (Task 1/2) determines empirically and could not be known when this plan was written, with explicit instructions for where to find the real value and how to substitute it. Task 7's table name is flagged as needing verification for the same reason (cognee's real schema isn't knowable without running it). Every other step has concrete, complete code.
 
 **Type consistency:** `RegisterCogneeConfigHooks(app core.App)` (Task 5) and `RegisterCogneeExtension(coord func() *coordinator.Coordinator)` (Task 6) match their `main.go` call sites exactly. `CogneeContainer` (Task 5 Step 4) matches the string used in Task 5 Step 3's `renderAndRestart` call. `cogneeExtensionName`/`cogneeURL` (Task 6) are package-level consts, not re-derived elsewhere. `addConfigExtensionParams`/`gooseExtensionParam`/`mcpServerHttpParam`/`httpHeaderParam` are explicitly noted as reused from `mcp_gateway.go`, not redefined — avoids a duplicate-type compile error.
+
+**Second adversarial review pass (Sonnet, 2026-07-24):** verified Task 5/6's code against the real, current `helpers.go`/`mcp_gateway.go`/`main.go` — all cited line numbers, signatures, and reused types (`addConfigExtensionParams` et al.) are accurate as of this plan's writing. Task 4's capture methodology was double-checked against the original squash commit's own message ("captured directly from the current final-state app, not hand-transcribed") and confirmed to match, not contradict, this plan's approach — a caveat was added distinguishing it from `CLAUDE.md`'s separate day-to-day `export_schema.sh` workflow. Two real gaps were fixed: Task 1 originally offered `--transport sse` as a fallback, which this repo's own `spikes/goose-mcp-gateway-attach/README.md` already proved is a hard rejection by Goose v1.43.0 (not a valid fallback at all) — Task 1 now tests for genuine Streamable HTTP specifically and treats "HTTP doesn't work" as a stdio/design-revisit case, not an SSE retry. Task 1 also now spikes cognee-mcp's actual boot requirements (local-embedding env vars) before testing transport, and follows this repo's established `spikes/<name>/` git-tracked methodology instead of ad-hoc `docker run` commands. Task 5's `SetCogneeConfigDirForTest` claim was corrected — it's a novel pattern, not a mirror of an existing one, and its `-parallel` fragility is now called out explicitly.
