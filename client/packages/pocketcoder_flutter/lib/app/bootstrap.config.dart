@@ -35,6 +35,8 @@ import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart'
     as _i1031;
 import 'package:pocketcoder_flutter/application/sandbox_agent/sandbox_agent_cubit.dart'
     as _i655;
+import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart'
+    as _i490;
 import 'package:pocketcoder_flutter/application/skills/skills_cubit.dart'
     as _i67;
 import 'package:pocketcoder_flutter/application/sop/sop_cubit.dart' as _i252;
@@ -273,6 +275,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
+    gh.factory<_i490.SchedulerCubit>(
+        () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
     gh.factory<_i655.SandboxAgentCubit>(
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
     gh.factory<_i464.AuthCubit>(
