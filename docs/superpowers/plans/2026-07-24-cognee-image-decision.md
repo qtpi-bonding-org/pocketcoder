@@ -1,0 +1,6 @@
+# cognee Image Decision
+
+- IMAGE: cognee/cognee-mcp:main
+- APPROX_SIZE: 13.2GB on-disk (docker images), ~6.7GB compressed per Docker Hub's registry API for the `main` tag — well under the ~27GB Docker-MCP-Gateway-class size this spike was checking against.
+- CUSTOM_DOCKERFILE_NEEDED: no
+- NOTES: Checked the full Docker Hub tag list for `cognee/cognee-mcp` (100 tags returned) — every tag clusters in the same 4.6GB–9.5GB (compressed) range; there is no separate `-slim`/`-cpu`/`-cpuonly` tag. Sizes vary slightly release-to-release (older `main-*` shas run larger, ~9.5GB, before shrinking back down around the 1.2.x/1.3.x releases to ~4.6-6.7GB), suggesting upstream has already been trimming this image over time rather than shipping two parallel builds. Given `main` is already viable (no CUDA/torch-only bloat observed at the ~27GB scale this spike was gating against) and cognee's local-embedding default (`fastembed` + a small sentence-transformers model, confirmed working in the transport spike, `spikes/cognee-mcp-transport/README.md`) does not itself require a large model bundled at image-build time (it's pulled/cached lazily into the shared `cognee_data` volume, not baked into the image), a custom trimmed Dockerfile is not warranted — use the upstream image directly.
