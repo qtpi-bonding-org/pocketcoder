@@ -526,6 +526,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsObservabilitySection => 'OBSERVABILITY';
 
   @override
+  String get settingsAutomationSection => 'AUTOMATION';
+
+  @override
   String get agentTitle => 'AGENT REGISTRY';
 
   @override
