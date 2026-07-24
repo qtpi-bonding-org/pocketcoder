@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/presentation/observability/agent_observabili
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_flutter/presentation/skills/skills_screen.dart';
+import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
 import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
@@ -154,6 +155,15 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.configureScheduler,
+        name: RouteNames.configureScheduler,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const SchedulerScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.configureSop,
         name: RouteNames.configureSop,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -236,6 +246,7 @@ class AppRoutes {
   static const String configureAi = '/configure/ai';
   static const String configureToolPermissions = '/configure/tool-permissions';
   static const String configureSkills = '/configure/skills';
+  static const String configureScheduler = '/configure/scheduler';
   static const String configureMcp = '/configure/mcp';
   static const String configureSop = '/configure/sop';
   static const String configureSystemChecks = '/configure/system-checks';
@@ -277,6 +288,7 @@ class RouteNames {
   static const String configureAi = 'configureAi';
   static const String configureToolPermissions = 'configureToolPermissions';
   static const String configureSkills = 'configureSkills';
+  static const String configureScheduler = 'configureScheduler';
   static const String configureMcp = 'configureMcp';
   static const String configureSop = 'configureSop';
   static const String configureSystemChecks = 'configureSystemChecks';

@@ -35,6 +35,9 @@ class SettingsScreen extends StatelessWidget {
       (context.l10n.settingsObservabilitySection, [
         ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
       ]),
+      (context.l10n.settingsAutomationSection, [
+        ('SCHEDULER', '[MANAGE]', 'configureScheduler'),
+      ]),
     ];
   }
 
@@ -102,6 +105,8 @@ class SettingsScreen extends StatelessWidget {
         context.push(AppRoutes.configureObservability);
       case 'configureLlm':
         context.push(AppRoutes.configureLlm);
+      case 'configureScheduler':
+        context.push(AppRoutes.configureScheduler);
     }
   }
 }

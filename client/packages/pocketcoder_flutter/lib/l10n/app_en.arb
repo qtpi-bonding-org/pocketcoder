@@ -238,6 +238,7 @@
   "settingsGovernanceSection": "GOVERNANCE",
   "settingsSystemSection": "SYSTEM",
   "settingsObservabilitySection": "OBSERVABILITY",
+  "settingsAutomationSection": "AUTOMATION",
 
   "agentTitle": "AGENT REGISTRY",
   "agentModelsPersonas": "MODELS & PERSONAS",

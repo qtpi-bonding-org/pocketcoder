@@ -1072,6 +1072,12 @@ abstract class AppLocalizations {
   /// **'OBSERVABILITY'**
   String get settingsObservabilitySection;
 
+  /// No description provided for @settingsAutomationSection.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTOMATION'**
+  String get settingsAutomationSection;
+
   /// No description provided for @agentTitle.
   ///
   /// In en, this message translates to:
