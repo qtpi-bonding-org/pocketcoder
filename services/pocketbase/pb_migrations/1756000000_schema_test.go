@@ -38,6 +38,7 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 		"sandbox_configs":    {"name", "harness_model", "system_prompt"},
 		"goose_sessions":     {"chat", "user", "goose_session_id"},
 		"schedule_owners":    {"user", "goose_schedule_id", "display_name"},
+		"cognee_config":      {"llm_provider", "llm_model", "llm_base_url", "llm_api_key"},
 	}
 
 	for name, fields := range expected {
