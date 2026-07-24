@@ -67,6 +67,9 @@ func main() {
 	// restart + live tool-permission delivery)
 	hooks.RegisterGooseConfigHooks(app, coordGetter)
 
+	// 3c. Register cognee Config Hooks (cognee.env render + cognee restart)
+	hooks.RegisterCogneeConfigHooks(app)
+
 	// 3d. Register Schedule Import Hooks (Goose-native scheduler → chat feed)
 	hooks.RegisterScheduleImportHooks(app, coordGetter)
 
@@ -93,6 +96,10 @@ func main() {
 		// C. One-time MCP gateway extension registration (idempotent,
 		// retried with backoff — see RegisterMcpGatewayExtension).
 		go hooks.RegisterMcpGatewayExtension(coordGetter)
+
+		// C2. One-time cognee extension registration (idempotent, retried
+		// with backoff — see RegisterCogneeExtension).
+		go hooks.RegisterCogneeExtension(coordGetter)
 
 		// D. Skills API (pure ACP passthrough, no PocketBase storage).
 		api.RegisterSkillsApi(app, e, coordGetter)
