@@ -1,0 +1,7 @@
+# cognee Transport Decision
+
+- TRANSPORT: http
+- PORT: 8000
+- FLAGS_REQUIRED: env vars `TRANSPORT_MODE=http`, `HTTP_PORT=8000` (default, set explicitly for clarity), `MCP_ALLOWED_HOSTS=cognee:8000` (must match the service's own network alias:port in `docker-compose.yml`; DNS-rebinding Host-header allowlist, otherwise every request 421s). Note: `TRANSPORT_MODE`/`HTTP_PORT` are **env vars consumed by the image's own `entrypoint.sh`**, not CLI flags passed via `command:` — a `--transport http` CLI arg gets silently overridden back to the image's `stdio` default because the entrypoint appends its own `--transport $TRANSPORT_MODE` after any passed args.
+- MIN_ENV_TO_BOOT: none of the above are required just to start the process (it boots fine and completes DB migration/auth setup with zero env vars set, defaulting to unreachable stdio mode) — `TRANSPORT_MODE`+`MCP_ALLOWED_HOSTS` are specifically what's needed for cross-container HTTP reachability. Confirmed no `LLM_API_KEY`/embedding env var is required for boot or for a full MCP `initialize` handshake; those are only consumed lazily by actual remember/recall tool calls (out of scope for this transport spike, but still needed for a real deployment per spec §3.4 local-only embeddings — see `EMBEDDING_PROVIDER=fastembed`, `EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2` used in the spike's compose override as a working local-embedding example).
+- IMAGE_TAG_USED_FOR_SPIKE: cognee/cognee-mcp:main
