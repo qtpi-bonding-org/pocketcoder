@@ -934,6 +934,108 @@ abstract class AppLocalizations {
   /// **'No agent config has a workspace folder configured.'**
   String get skillsNoEligibleConfig;
 
+  /// No description provided for @schedulerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SCHEDULER'**
+  String get schedulerTitle;
+
+  /// No description provided for @schedulerRegistryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SCHEDULED TASKS'**
+  String get schedulerRegistryTitle;
+
+  /// No description provided for @schedulerNoSchedules.
+  ///
+  /// In en, this message translates to:
+  /// **'NO SCHEDULES CONFIGURED'**
+  String get schedulerNoSchedules;
+
+  /// No description provided for @schedulerAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD SCHEDULE'**
+  String get schedulerAddButton;
+
+  /// No description provided for @schedulerEditButton.
+  ///
+  /// In en, this message translates to:
+  /// **'EDIT'**
+  String get schedulerEditButton;
+
+  /// No description provided for @schedulerDeleteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get schedulerDeleteButton;
+
+  /// No description provided for @schedulerSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get schedulerSaveButton;
+
+  /// No description provided for @schedulerPauseButton.
+  ///
+  /// In en, this message translates to:
+  /// **'PAUSE'**
+  String get schedulerPauseButton;
+
+  /// No description provided for @schedulerResumeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'RESUME'**
+  String get schedulerResumeButton;
+
+  /// No description provided for @schedulerRunNowButton.
+  ///
+  /// In en, this message translates to:
+  /// **'RUN NOW'**
+  String get schedulerRunNowButton;
+
+  /// No description provided for @schedulerNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'NAME'**
+  String get schedulerNameLabel;
+
+  /// No description provided for @schedulerCronLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CRON EXPRESSION'**
+  String get schedulerCronLabel;
+
+  /// No description provided for @schedulerPromptLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PROMPT'**
+  String get schedulerPromptLabel;
+
+  /// No description provided for @schedulerAddDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD SCHEDULE'**
+  String get schedulerAddDialogTitle;
+
+  /// No description provided for @schedulerEditDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'EDIT: {name}'**
+  String schedulerEditDialogTitle(String name);
+
+  /// No description provided for @schedulerPausedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'PAUSED'**
+  String get schedulerPausedBadge;
+
+  /// No description provided for @schedulerRunningBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'RUNNING'**
+  String get schedulerRunningBadge;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

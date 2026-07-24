@@ -209,6 +209,29 @@
   },
   "skillsNoEligibleConfig": "No agent config has a workspace folder configured.",
 
+  "schedulerTitle": "SCHEDULER",
+  "schedulerRegistryTitle": "SCHEDULED TASKS",
+  "schedulerNoSchedules": "NO SCHEDULES CONFIGURED",
+  "schedulerAddButton": "ADD SCHEDULE",
+  "schedulerEditButton": "EDIT",
+  "schedulerDeleteButton": "DELETE",
+  "schedulerSaveButton": "SAVE",
+  "schedulerPauseButton": "PAUSE",
+  "schedulerResumeButton": "RESUME",
+  "schedulerRunNowButton": "RUN NOW",
+  "schedulerNameLabel": "NAME",
+  "schedulerCronLabel": "CRON EXPRESSION",
+  "schedulerPromptLabel": "PROMPT",
+  "schedulerAddDialogTitle": "ADD SCHEDULE",
+  "schedulerEditDialogTitle": "EDIT: {name}",
+  "@schedulerEditDialogTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "schedulerPausedBadge": "PAUSED",
+  "schedulerRunningBadge": "RUNNING",
+
   "settingsTitle": "CONFIGURE",
   "settingsAiAgentsSection": "AI & AGENTS",
   "settingsSecuritySection": "SECURITY",
