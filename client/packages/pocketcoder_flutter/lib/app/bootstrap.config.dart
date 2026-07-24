@@ -70,6 +70,8 @@ import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
     as _i422;
 import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_repository.dart'
     as _i184;
+import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart'
+    as _i470;
 import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart'
     as _i165;
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
@@ -129,6 +131,8 @@ import 'package:pocketcoder_flutter/infrastructure/provider/provider_repository.
     as _i549;
 import 'package:pocketcoder_flutter/infrastructure/sandbox_agent/sandbox_agent_repository.dart'
     as _i853;
+import 'package:pocketcoder_flutter/infrastructure/scheduler/scheduler_repository.dart'
+    as _i715;
 import 'package:pocketcoder_flutter/infrastructure/skills/skills_repository.dart'
     as _i675;
 import 'package:pocketcoder_flutter/infrastructure/status/status_repository.dart'
@@ -181,6 +185,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i675.SkillsRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
     gh.lazySingleton<_i653.ILoadingService>(() => _i976.AppLoadingService());
+    gh.lazySingleton<_i470.ISchedulerRepository>(
+        () => _i715.SchedulerRepository(gh<_i169.PocketBase>()));
     gh.factory<_i304.BillingCubit>(
         () => _i304.BillingCubit(gh<_i619.BillingService>()));
     gh.lazySingleton<_i653.ILocalizationService>(

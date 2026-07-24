@@ -92,3 +92,8 @@ class ObservabilityException extends DomainException {
 class SkillsException extends DomainException {
   SkillsException(super.message, [super.cause]);
 }
+
+/// Scheduler-related exceptions.
+class SchedulerException extends DomainException {
+  SchedulerException(super.message, [super.cause]);
+}

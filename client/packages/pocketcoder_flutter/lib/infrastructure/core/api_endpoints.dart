@@ -76,6 +76,41 @@ class ApiEndpoints {
   static const String skillsDelete = '/api/pocketcoder/skills/delete';
 
   // ===========================================================================
+  // SCHEDULER ENDPOINTS
+  // ===========================================================================
+
+  /// POST /api/pocketcoder/schedules/list
+  /// Lists the caller's own scheduled recipe runs.
+  static const String schedulesList = '/api/pocketcoder/schedules/list';
+
+  /// POST /api/pocketcoder/schedules/create
+  /// Creates a new scheduled recipe run.
+  static const String schedulesCreate = '/api/pocketcoder/schedules/create';
+
+  /// POST /api/pocketcoder/schedules/rename
+  /// Renames a schedule (PocketBase-side display name only).
+  static const String schedulesRename = '/api/pocketcoder/schedules/rename';
+
+  /// POST /api/pocketcoder/schedules/update-cron
+  /// Updates a schedule's cron expression.
+  static const String schedulesUpdateCron =
+      '/api/pocketcoder/schedules/update-cron';
+
+  /// POST /api/pocketcoder/schedules/pause
+  static const String schedulesPause = '/api/pocketcoder/schedules/pause';
+
+  /// POST /api/pocketcoder/schedules/unpause
+  static const String schedulesUnpause = '/api/pocketcoder/schedules/unpause';
+
+  /// POST /api/pocketcoder/schedules/delete
+  static const String schedulesDelete = '/api/pocketcoder/schedules/delete';
+
+  /// POST /api/pocketcoder/schedules/run-now
+  /// Fires a schedule immediately (async — the resulting session is
+  /// imported into the chat feed once it finishes, not returned here).
+  static const String schedulesRunNow = '/api/pocketcoder/schedules/run-now';
+
+  // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
 
@@ -89,6 +124,14 @@ class ApiEndpoints {
     skillsCreate,
     skillsUpdate,
     skillsDelete,
+    schedulesList,
+    schedulesCreate,
+    schedulesRename,
+    schedulesUpdateCron,
+    schedulesPause,
+    schedulesUnpause,
+    schedulesDelete,
+    schedulesRunNow,
   ];
 
   /// Dynamic endpoints that require parameters
