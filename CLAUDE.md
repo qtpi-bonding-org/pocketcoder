@@ -1,5 +1,19 @@
 # PocketCoder
 
+## PocketBase Schema Conventions
+
+**PocketBase always owns its own primary key.** A collection's `id` is always
+PocketBase's own auto-generated id — never repurpose an external system's
+identifier (a Goose session id, schedule id, etc.) as a record's PK. Store
+the external id as a plain (usually unique-indexed) field instead, e.g.
+`goose_sessions.goose_session_id`. The rule of thumb: **if a field holds an
+auto-generated PocketBase id, PocketBase owns that entity's identity; if it
+holds an external id as a plain field, the external system owns it and
+PocketBase is only tracking/attributing it.** This keeps rename/display-name
+changes (PocketBase-side) decoupled from the external system's immutable
+identifier, and matches every existing case in this schema (`chats`,
+`goose_sessions`, etc.).
+
 ## Model Generation Pipeline
 
 After changing PB collections/schema, run this sequence:
