@@ -160,12 +160,18 @@ Settings screens):
   paused, currentlyRunning, lastRun}` — merges the PocketBase row with the
   matching `ScheduledJobDto`.
 - `POST create` — body `{displayName, cron, prompt}`. Generates a fresh
-  `goose_schedule_id`, calls `schedules/create` with
-  `{id: goose_schedule_id, cron, recipe: {title: displayName, description:
-  displayName, prompt}}`, then on success creates the `schedule_owners`
-  row. If the `schedule_owners` write fails after a successful Goose
-  create, best-effort call `schedules/delete` to avoid an orphaned
-  Goose-side schedule with no owner.
+  `goose_schedule_id` (20 random alphanumeric characters — satisfies
+  `validate_schedule_id`, and short enough to stay a sane filesystem
+  filename, since Goose writes the recipe to disk under this id,
+  `schedule.rs:180`), calls `schedules/create` with `{id:
+  goose_schedule_id, cron, recipe: {title: displayName, description:
+  displayName, prompt}}`. On `JobIdExists` (collision), regenerate and
+  retry up to 3 times before giving up with a 500 — collisions are
+  expected to be vanishingly rare at 20 random chars but the RPC can
+  reject one, so the route must not assume the first id always succeeds.
+  On success, creates the `schedule_owners` row; if that write fails,
+  best-effort call `schedules/delete` to avoid an orphaned Goose-side
+  schedule with no owner.
 - `POST rename` — body `{id, displayName}`. PocketBase-only: updates
   `schedule_owners.display_name`. No Goose call.
 - `POST update-cron` — body `{id, cron}`. Looks up `goose_schedule_id` from
@@ -176,10 +182,20 @@ Settings screens):
   `goose_schedule_id`, then deletes the `schedule_owners` row. Does not
   touch any already-imported `chats`/`goose_sessions` rows from past runs
   — those stay as ordinary chat history.
-- `POST run-now` — body `{id}`. Calls `schedules/run-now`. Does not itself
-  create a chat — the background importer (Component 3) picks up the
-  resulting session on its next poll, same as a cron-triggered fire. This
-  keeps there being exactly one code path that creates imported chats.
+- `POST run-now` — body `{id}`. **`schedules/run-now` is synchronous in
+  Goose** — it blocks until the recipe run finishes
+  (`scheduler.rs:645-697` awaits `execute_job` to completion before
+  returning), which can be arbitrarily long. The route must not hold the
+  HTTP request open for that duration: it looks up `goose_schedule_id`,
+  then launches the `schedules/run-now` call in a background goroutine
+  (its own `AdminConn`, independent of the request's context) and
+  returns `202 {status: "started"}` immediately. When the goroutine's
+  call returns, it imports the resulting session itself (call the same
+  import routine Component 3 uses, given the `sessionId` the response
+  already contains, instead of waiting for the next poll — no reason to
+  delay by up to 60s when the id is already in hand). The 60s poll in
+  Component 3 remains the path for cron-triggered fires, which have no
+  request to hang a goroutine off of.
 
 Every route resolves `id → goose_schedule_id` via a `schedule_owners`
 lookup filtered to `user = re.Auth.Id`, so a user can never operate on a
@@ -193,6 +209,15 @@ Registered in `RegisterCronHooks`'s startup path (or a new sibling
 existing `hooks.RegisterCronHooks(app)` line — replacing it, since cron.go
 itself is deleted per Retirement below) via `app.Cron().Add("schedule-import",
 "* * * * *", importFn)` — every minute, PocketBase's existing cron syntax.
+
+Exposes one reusable function, `importSession(app core.App, owner
+*core.Record, sessionId string) error`, implementing steps 4's
+create-chat/create-goose_sessions/notify logic for a single already-known
+session id. `importFn` (the poller) calls it once per unseen session found;
+Component 2's `run-now` route's background goroutine calls it directly with
+the `sessionId` its own synchronous `schedules/run-now` response already
+returned — the poll loop and the run-now fast path share this one import
+routine rather than duplicating it.
 
 `importFn`:
 1. `app.FindRecordsByFilter("schedule_owners", "1=1", "", 0, 0)` — all
@@ -281,3 +306,11 @@ Delete:
   parameters, sub-recipes, retry config) — `RecipeDto`'s full surface is
   intentionally not exposed; this spec only ever constructs the minimal
   `{title, description, prompt}` shape.
+- **Known limitation, accepted as-is:** an imported chat's working
+  directory is whatever the viewer's active `poco_config` resolves to at
+  the moment they open it, not necessarily wherever the scheduled recipe
+  actually ran — `RecipeDto` has no `cwd` field, so there is nothing in
+  this spec's control to pin it. This only matters if a user continues
+  the conversation past reviewing the scheduled run's output; reviewing
+  the output itself is unaffected. Not fixed here — would require Goose
+  itself to expose a `cwd` on `RecipeDto`, out of PocketCoder's control.
