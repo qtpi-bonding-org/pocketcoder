@@ -1,6 +1,6 @@
 -- Memory dashboard: recent entries from cognee's knowledge store.
--- Standalone — does not join against the broken opencode/messages queries
--- in index.sql (see spec 2026-07-24-cognee-agent-memory-design.md §2, §5).
+-- Standalone — does not join against index.sql's goose-sourced queries (see
+-- spec 2026-07-24-cognee-agent-memory-design.md §2, §5).
 --
 -- Table verified against a real running cognee-mcp container (not guessed):
 -- cognee's relational SQLite file lives at

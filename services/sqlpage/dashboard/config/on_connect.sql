@@ -1,2 +1,8 @@
-ATTACH DATABASE '/database/opencode/opencode.db' AS opencode;
-ATTACH DATABASE '/cognee_data/system/databases/cognee_db' AS cognee;
+-- goose's sessions.db is SQLite in WAL mode (spikes/goose-acp-http/README.md)
+-- — ATTACHing a WAL database over a plain :ro bind mount fails ("unable to
+-- open database file"), because SQLite needs to manage -shm/-wal sidecar
+-- state even for readers. The file: URI's immutable=1 tells SQLite the file
+-- won't change during this connection and to skip that machinery entirely
+-- (verified empirically against the real mounted volume).
+ATTACH DATABASE 'file:/goose_data/data/sessions/sessions.db?immutable=1' AS goose;
+ATTACH DATABASE 'file:/cognee_data/system/databases/cognee_db?immutable=1' AS cognee;

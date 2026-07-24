@@ -234,7 +234,22 @@ services:
     volumes:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
       - ./services/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
-      - ./services/sqlpage/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
+      # Config actually lives under dashboard/config/ (sqlpage.json,
+      # config/on_connect.sql) — ./services/sqlpage/config doesn't exist on
+      # disk at all. This mismatch predates this branch (confirmed on main)
+      # and silently no-ops both sqlpage.json's database_url (SQLPage falls
+      # back to a throwaway in-memory DB every restart) and on_connect.sql's
+      # ATTACH statements (opencode/cognee dashboards error "no such table").
+      - ./services/sqlpage/dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
+      # opencode was removed from this repo entirely (see git history) — its
+      # on_connect.sql ATTACH referenced a volume/path that no longer exists
+      # anywhere in this compose file, which hard-fails the whole SQLPage
+      # connection pool the moment the real /etc/sqlpage config actually
+      # loads (fixed above). Replaced with goose's own SQLite session store
+      # instead (data/sessions/sessions.db under GOOSE_PATH_ROOT=/goose, per
+      # spikes/goose-acp-http/README.md — WAL mode, safe for concurrent
+      # read-only access).
+      - goose_data:/goose_data:ro
       - cognee_data:/cognee_data:ro
     networks:
       - pocketcoder-dashboard
