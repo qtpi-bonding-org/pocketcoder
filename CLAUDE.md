@@ -16,6 +16,16 @@ identifier, and matches every existing case in this schema (`chats`,
 
 ## Model Generation Pipeline
 
+PocketBase schema lives in exactly two migration files:
+`services/pocketbase/pb_migrations/1756000000_schema.go` (imports
+`schema.json`, a full collection-schema snapshot) and
+`1756000100_seed.go` (default users/tool-permissions). Make schema
+changes by editing `schema.json` directly (or making the change via the
+PocketBase Admin UI locally, then re-running `scripts/export_schema.sh`
+and copying its output over `schema.json`) rather than appending a new
+timestamped migration file — until one of these two files grows large
+enough that splitting it out makes sense again.
+
 After changing PB collections/schema, run this sequence:
 
 1. `docker compose build pocketbase opencode` — rebuild containers
