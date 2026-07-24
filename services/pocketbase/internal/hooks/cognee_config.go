@@ -53,13 +53,6 @@ func RegisterCogneeConfigHooks(app core.App) {
 	}
 	registerCrudHooks(app, "cognee_config", handler)
 
-	// Render once immediately at registration time (covers any row already
-	// present when PocketBase (re)starts, and matters for callers/tests that
-	// invoke this before app.Serve() ever fires the OnServe hook below).
-	if err := renderCogneeConfig(app); err != nil {
-		log.Printf("⚠️ [CogneeConfig] initial render failed: %v", err)
-	}
-
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		if err := renderCogneeConfig(app); err != nil {
 			log.Printf("⚠️ [CogneeConfig] initial render failed: %v", err)
