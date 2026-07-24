@@ -62,20 +62,20 @@ class AgentObservabilityScreen extends StatelessWidget {
                               ),
                               _buildContainerTile(
                                 context,
-                                'opencode',
-                                'pocketcoder-opencode',
-                                state.currentContainer,
-                              ),
-                              _buildContainerTile(
-                                context,
-                                'sandbox (cao)',
-                                'pocketcoder-sandbox',
+                                'goose',
+                                'pocketcoder-goose',
                                 state.currentContainer,
                               ),
                               _buildContainerTile(
                                 context,
                                 'mcp-gateway',
                                 'pocketcoder-mcp-gateway',
+                                state.currentContainer,
+                              ),
+                              _buildContainerTile(
+                                context,
+                                'cognee',
+                                'pocketcoder-cognee',
                                 state.currentContainer,
                               ),
                               _buildContainerTile(

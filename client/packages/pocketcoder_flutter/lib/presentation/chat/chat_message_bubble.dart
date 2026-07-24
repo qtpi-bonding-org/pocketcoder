@@ -8,7 +8,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
 import 'package:flyer_chat_text_stream_message/flyer_chat_text_stream_message.dart';
-import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 /// authorId used for every user-authored message.

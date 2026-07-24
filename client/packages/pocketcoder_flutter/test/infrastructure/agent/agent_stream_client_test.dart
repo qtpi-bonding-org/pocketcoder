@@ -28,29 +28,17 @@ class _FakeClient extends http.BaseClient {
   /// The byte stream the test wants the fake to serve. Default: empty.
   final Stream<List<int>> body;
 
-  /// Status code to return. Default 200.
-  final int statusCode;
-
-  /// Optional `Content-Type` header for the response. SSE sends
-  /// `text/event-stream` — AgentStreamClient doesn't actually check this,
-  /// but it's here for realism.
-  final Map<String, String> headers;
-
-  _FakeClient({
-    required this.body,
-    this.statusCode = 200,
-    this.headers = const {'Content-Type': 'text/event-stream'},
-  });
+  _FakeClient({required this.body});
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     lastRequest = request;
     return http.StreamedResponse(
       body,
-      statusCode,
+      200,
       contentLength: null,
       request: request,
-      headers: headers,
+      headers: const {'Content-Type': 'text/event-stream'},
     );
   }
 }

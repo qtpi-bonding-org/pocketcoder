@@ -3,7 +3,6 @@
 // (AgentStreamClient, the cache, ConversationReducer) parses AG-UI JSON by
 // hand; they all consume [AguiEvent] via this file.
 import 'package:ag_ui/ag_ui.dart';
-import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 
 export 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
     show isReplaceMarker;
