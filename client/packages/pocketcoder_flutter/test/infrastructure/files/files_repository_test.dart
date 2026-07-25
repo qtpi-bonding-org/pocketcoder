@@ -92,6 +92,27 @@ void main() {
         throwsA(isA<FilesException>()),
       );
     });
+
+    test('throws FilesException on a non-2xx status instead of returning the error body', () async {
+      when(() => httpClient.get(any(), headers: any(named: 'headers'))).thenAnswer(
+        (_) async => http.Response('Forbidden', 403),
+      );
+
+      await expectLater(
+        () => repo.readFile('main.go'),
+        throwsA(isA<FilesException>()),
+      );
+    });
+
+    test('throws FilesException without making a request when the auth token is empty', () async {
+      when(() => authStore.token).thenReturn('');
+
+      await expectLater(
+        () => repo.readFile('main.go'),
+        throwsA(isA<FilesException>()),
+      );
+      verifyNever(() => httpClient.get(any(), headers: any(named: 'headers')));
+    });
   });
 }
 
