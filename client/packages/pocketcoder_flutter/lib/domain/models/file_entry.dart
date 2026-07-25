@@ -11,9 +11,9 @@ part 'file_entry.g.dart';
 abstract class FileEntry with _$FileEntry {
   const factory FileEntry({
     required String name,
-    required bool isDir,
+    @JsonKey(name: 'isDir') required bool isDir,
     required int size,
-    required String modTime,
+    @JsonKey(name: 'modTime') required String modTime,
   }) = _FileEntry;
 
   factory FileEntry.fromJson(Map<String, dynamic> json) =>
