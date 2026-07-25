@@ -1108,6 +1108,36 @@ abstract class AppLocalizations {
   /// **'AUTOMATION'**
   String get settingsAutomationSection;
 
+  /// No description provided for @settingsAccountSection.
+  ///
+  /// In en, this message translates to:
+  /// **'ACCOUNT'**
+  String get settingsAccountSection;
+
+  /// No description provided for @settingsLogoutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGN OUT'**
+  String get settingsLogoutConfirmTitle;
+
+  /// No description provided for @settingsLogoutConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will end your current session. You will need to log in again to continue.'**
+  String get settingsLogoutConfirmBody;
+
+  /// No description provided for @settingsLogoutCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get settingsLogoutCancel;
+
+  /// No description provided for @settingsLogoutConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGN OUT'**
+  String get settingsLogoutConfirm;
+
   /// No description provided for @agentTitle.
   ///
   /// In en, this message translates to:
