@@ -15,8 +15,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FileEntry {
   String get name;
+  @JsonKey(name: 'isDir')
   bool get isDir;
   int get size;
+  @JsonKey(name: 'modTime')
   String get modTime;
 
   /// Create a copy of FileEntry
@@ -55,7 +57,11 @@ abstract mixin class $FileEntryCopyWith<$Res> {
   factory $FileEntryCopyWith(FileEntry value, $Res Function(FileEntry) _then) =
       _$FileEntryCopyWithImpl;
   @useResult
-  $Res call({String name, bool isDir, int size, String modTime});
+  $Res call(
+      {String name,
+      @JsonKey(name: 'isDir') bool isDir,
+      int size,
+      @JsonKey(name: 'modTime') String modTime});
 }
 
 /// @nodoc
@@ -189,7 +195,8 @@ extension FileEntryPatterns on FileEntry {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String name, bool isDir, int size, String modTime)?
+    TResult Function(String name, @JsonKey(name: 'isDir') bool isDir, int size,
+            @JsonKey(name: 'modTime') String modTime)?
         $default, {
     required TResult orElse(),
   }) {
@@ -217,7 +224,8 @@ extension FileEntryPatterns on FileEntry {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String name, bool isDir, int size, String modTime)
+    TResult Function(String name, @JsonKey(name: 'isDir') bool isDir, int size,
+            @JsonKey(name: 'modTime') String modTime)
         $default,
   ) {
     final _that = this;
@@ -243,7 +251,8 @@ extension FileEntryPatterns on FileEntry {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String name, bool isDir, int size, String modTime)?
+    TResult? Function(String name, @JsonKey(name: 'isDir') bool isDir, int size,
+            @JsonKey(name: 'modTime') String modTime)?
         $default,
   ) {
     final _that = this;
@@ -261,19 +270,21 @@ extension FileEntryPatterns on FileEntry {
 class _FileEntry implements FileEntry {
   const _FileEntry(
       {required this.name,
-      required this.isDir,
+      @JsonKey(name: 'isDir') required this.isDir,
       required this.size,
-      required this.modTime});
+      @JsonKey(name: 'modTime') required this.modTime});
   factory _FileEntry.fromJson(Map<String, dynamic> json) =>
       _$FileEntryFromJson(json);
 
   @override
   final String name;
   @override
+  @JsonKey(name: 'isDir')
   final bool isDir;
   @override
   final int size;
   @override
+  @JsonKey(name: 'modTime')
   final String modTime;
 
   /// Create a copy of FileEntry
@@ -320,7 +331,11 @@ abstract mixin class _$FileEntryCopyWith<$Res>
       __$FileEntryCopyWithImpl;
   @override
   @useResult
-  $Res call({String name, bool isDir, int size, String modTime});
+  $Res call(
+      {String name,
+      @JsonKey(name: 'isDir') bool isDir,
+      int size,
+      @JsonKey(name: 'modTime') String modTime});
 }
 
 /// @nodoc
