@@ -37,8 +37,8 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: df010806b11ad127a32a82e6d3eba38bd3e7a241
-      resolved-ref: df010806b11ad127a32a82e6d3eba38bd3e7a241
+      ref: "3f1b2340e52a22b31730610182971b9f2a2d08c1"
+      resolved-ref: "3f1b2340e52a22b31730610182971b9f2a2d08c1"
       url: "https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git"
     source: git
     version: "0.1.0"
@@ -347,6 +347,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.3"
+  diff_match_patch:
+    dependency: transitive
+    description:
+      name: diff_match_patch
+      sha256: "2efc9e6e8f449d0abe15be240e2c2a3bcd977c8d126cfd70598aee60af35c0a4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.1"
   diffutil_dart:
     dependency: transitive
     description:

@@ -46,6 +46,7 @@ dependencies:
 
   # Utilities
   uuid: ^4.0.0
+  diff_match_patch: ^0.4.1
   flutter_dotenv: ^5.1.0
   flutter_secure_storage: ^10.0.0
   http: ^1.2.0
@@ -77,7 +78,7 @@ dependencies:
   ag_ui_widgets_flutter:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
-      ref: df010806b11ad127a32a82e6d3eba38bd3e7a241
+      ref: 3f1b2340e52a22b31730610182971b9f2a2d08c1
 dependency_overrides:
   webcrypto:
     git:
