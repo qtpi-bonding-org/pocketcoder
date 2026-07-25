@@ -27,7 +27,6 @@ import 'package:pocketcoder_flutter/presentation/chat/tool_call_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 
 class ChatScreen extends StatelessWidget {
@@ -133,14 +132,6 @@ class _ChatViewState extends State<_ChatView> {
                 label: 'CANCEL',
                 onTap: () => context.read<ChatCubit>().cancel(),
               ),
-            TerminalAction(
-              label: context.l10n.chatTerminalAction,
-              onTap: () => AppNavigation.toTerminal(context),
-            ),
-            TerminalAction(
-              label: context.l10n.chatFilesAction,
-              onTap: () => AppNavigation.toFiles(context),
-            ),
           ],
           padding: EdgeInsets.zero,
           body: MultiBlocListener(
