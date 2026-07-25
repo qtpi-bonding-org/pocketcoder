@@ -30,6 +30,8 @@ import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart'
     as _i304;
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart'
     as _i606;
+import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart'
+    as _i110;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
     as _i273;
@@ -62,6 +64,8 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart'
     as _i619;
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart'
     as _i34;
+import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart'
+    as _i209;
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart'
     as _i623;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
@@ -116,6 +120,8 @@ import 'package:pocketcoder_flutter/infrastructure/feedback/loading_service.dart
     as _i976;
 import 'package:pocketcoder_flutter/infrastructure/feedback/localization_service.dart'
     as _i1000;
+import 'package:pocketcoder_flutter/infrastructure/files/files_repository.dart'
+    as _i369;
 import 'package:pocketcoder_flutter/infrastructure/healthcheck/healthcheck_repository.dart'
     as _i40;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_daos.dart' as _i444;
@@ -227,6 +233,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
         ));
+    gh.lazySingleton<_i209.IFilesRepository>(() => _i369.FilesRepository(
+          gh<_i169.PocketBase>(),
+          gh<_i519.Client>(),
+        ));
     gh.lazySingleton<_i767.IToolPermissionRepository>(
         () => _i220.ToolPermissionRepository(gh<_i398.ToolPermissionDao>()));
     gh.lazySingleton<_i922.IMcpRepository>(
@@ -275,6 +285,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
     gh.factory<_i655.SandboxAgentCubit>(
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
+    gh.factory<_i110.FileBrowserCubit>(
+        () => _i110.FileBrowserCubit(gh<_i209.IFilesRepository>()));
     gh.factory<_i464.AuthCubit>(
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i763.AgentChatRepository>(() => _i763.AgentChatRepository(
