@@ -34,6 +34,10 @@ class ApiEndpoints {
   /// Prevents path traversal and unauthorized access.
   static String files(String path) => '/api/pocketcoder/files/$path';
 
+  /// GET /api/pocketcoder/files-list/{path}
+  /// Lists the immediate children of a workspace directory.
+  static String filesList(String path) => '/api/pocketcoder/files-list/$path';
+
   // ===========================================================================
   // INFRASTRUCTURE ENDPOINTS
   // ===========================================================================
@@ -137,6 +141,7 @@ class ApiEndpoints {
   /// Dynamic endpoints that require parameters
   static const List<String> dynamicEndpoints = [
     '/api/pocketcoder/files/{path}',
+    '/api/pocketcoder/files-list/{path}',
     '/api/pocketcoder/logs/{containerName}',
   ];
 
