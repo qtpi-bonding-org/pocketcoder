@@ -63,4 +63,15 @@ void main() {
 
     expect(find.text("CAN'T PREVIEW THIS FILE TYPE"), findsOneWidget);
   });
+
+  testWidgets('shows a too-large message instead of decoding a huge file', (tester) async {
+    final hugeBytes = Uint8List(11 * 1024 * 1024); // 11 MB, over the 10 MB cap
+    when(() => repo.readFile('huge.log')).thenAnswer((_) async => hugeBytes);
+
+    await tester.pumpWidget(
+        _wrap(FileViewerScreen(path: 'huge.log', repository: repo)));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('TOO LARGE'), findsOneWidget);
+  });
 }

@@ -243,6 +243,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filesEmpty => 'NO FILES';
 
   @override
+  String get filesTooLargeToPreview => 'FILE TOO LARGE TO PREVIEW';
+
+  @override
+  String get filesCantPreviewType => 'CAN\'T PREVIEW THIS FILE TYPE';
+
+  @override
   String get chatModelLabel => 'MODEL:';
 
   @override
