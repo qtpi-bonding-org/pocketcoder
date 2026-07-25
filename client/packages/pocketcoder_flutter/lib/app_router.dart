@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
@@ -70,20 +71,13 @@ class AppRouter {
         ),
       ),
       // ── CHATS pillar ──
-      // NOTE: the chat-list landing (old HomeScreen/ChatListCubit) was removed
-      // with the OpenCode stack. Placeholder until it is rebuilt on
-      // AgentChatRepository (AG-UI). The chat conversation screen is live.
       GoRoute(
         path: AppRoutes.chats,
         name: RouteNames.chats,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const Scaffold(
-            body: Center(
-              child: Text('Chat list — pending rebuild on AG-UI'),
-            ),
-          ),
+          child: const ChatListScreen(),
         ),
       ),
       GoRoute(

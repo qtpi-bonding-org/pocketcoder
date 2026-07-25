@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
-import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
