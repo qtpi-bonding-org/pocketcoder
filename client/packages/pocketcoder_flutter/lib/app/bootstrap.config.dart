@@ -33,6 +33,8 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart'
 import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart'
     as _i110;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
+import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart'
+    as _i921;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
     as _i273;
 import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart'
@@ -71,6 +73,8 @@ import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart'
     as _i148;
+import 'package:pocketcoder_flutter/domain/notifications/i_notification_rule_repository.dart'
+    as _i821;
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart'
     as _i611;
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
@@ -131,6 +135,10 @@ import 'package:pocketcoder_flutter/infrastructure/notifications/device_daos.dar
     as _i849;
 import 'package:pocketcoder_flutter/infrastructure/notifications/device_repository.dart'
     as _i301;
+import 'package:pocketcoder_flutter/infrastructure/notifications/notification_rule_daos.dart'
+    as _i870;
+import 'package:pocketcoder_flutter/infrastructure/notifications/notification_rule_repository.dart'
+    as _i821;
 import 'package:pocketcoder_flutter/infrastructure/observability/observability_repository.dart'
     as _i310;
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart'
@@ -215,6 +223,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i444.McpServerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i849.DeviceDao>(
         () => _i849.DeviceDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i870.NotificationRuleDao>(
+        () => _i870.NotificationRuleDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i294.HarnesseDao>(
         () => _i294.HarnesseDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i294.ModelDao>(
@@ -239,6 +249,13 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i767.IToolPermissionRepository>(
         () => _i220.ToolPermissionRepository(gh<_i398.ToolPermissionDao>()));
+    gh.lazySingleton<_i821.INotificationRuleRepository>(
+        () => _i821.NotificationRuleRepository(
+              gh<_i870.NotificationRuleDao>(),
+              gh<_i169.PocketBase>(),
+            ));
+    gh.factory<_i921.NotificationRuleCubit>(() =>
+        _i921.NotificationRuleCubit(gh<_i821.INotificationRuleRepository>()));
     gh.lazySingleton<_i922.IMcpRepository>(
         () => _i662.McpRepository(gh<_i444.McpServerDao>()));
     gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
