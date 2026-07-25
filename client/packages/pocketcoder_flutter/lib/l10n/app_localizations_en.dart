@@ -849,24 +849,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileEmpty => 'EMPTY FILE';
 
   @override
-  String get sopTitle => 'SOP MANAGEMENT';
-
-  @override
-  String get sopProjectProcedures => 'PROJECT PROCEDURES';
-
-  @override
-  String get sopNewProposal => 'NEW PROPOSAL';
-
-  @override
-  String get sopActiveProcedures => 'ACTIVE PROCEDURES';
-
-  @override
-  String get sopDraftProposals => 'DRAFT PROPOSALS';
-
-  @override
-  String get sopPendingSignature => 'PENDING SIGNATURE';
-
-  @override
   String get systemChecksTitle => 'SYSTEM CHECKS';
 
   @override
