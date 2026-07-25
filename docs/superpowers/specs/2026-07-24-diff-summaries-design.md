@@ -77,7 +77,9 @@ case ag_ui.CustomEvent(name: 'pocketcoder:diff'):
   }
 ```
 
-This reuses `_updateTool` (`conversation_reducer.dart` — same helper `ToolCallArgsEvent`/`ToolCallResultEvent` already use), which is already a safe no-op if `toolCallId` doesn't match any open tool call (covers out-of-order arrival — see §5). Multiple diffs on the same tool call (e.g. a multi-file edit) each append to the list in arrival order; nothing is ever overwritten.
+This reuses `_updateTool` (`conversation_reducer.dart:157-163` — same helper `ToolCallArgsEvent`/`ToolCallResultEvent` already use). **Note its actual behavior**: `_updateTool` does *not* no-op on an unknown `toolCallId` — it inserts a new orphan `TimelineItem.toolCall(id: id, name: '')` at the end of the timeline and applies the update to that (`conversation_reducer.dart:157-163`). This is existing behavior shared by `args`/`result` today, not something this feature introduces — an out-of-order diff event produces the same kind of orphan nameless tool-call card that an out-of-order `args`/`result` event already would. This spec does not change that behavior; §5 documents it as-is rather than claiming it's a no-op. Multiple diffs on the same tool call (e.g. a multi-file edit) each append to the list in arrival order; nothing is ever overwritten.
+
+**Freezed codegen**: after editing `conversation.dart`, run `dart run build_runner build --delete-conflicting-outputs` inside `ag_ui_widgets_flutter` and commit the regenerated `conversation.freezed.dart` — it's checked into that repo, so the package won't compile for consumers until the generated file is committed alongside the source change.
 
 **`timeline_to_messages.dart`** (`lib/src/widgets/timeline_to_messages.dart:29-34`) — pass `diffs` through into the existing metadata map:
 
@@ -109,7 +111,7 @@ Encoding as `List<Map<String, String>>` (rather than passing `ToolDiff` objects 
 - `DiffSummaryLine` — stateless-looking but wraps local expand/collapse state (a `StatefulWidget`, no cubit — this is pure derived-data rendering, not a data-fetching concern `AppCubit` conventions are for). Displays `path.toUpperCase()` + `(+N -M)` computed once via a pure helper (see below), or `NEW FILE` when `oldText.isEmpty`. Tapping toggles an expanded `DiffBody` beneath it.
 - `DiffBody` — renders the unified diff as a `Column` of `Text` lines: `-` prefixed lines in `terminalColors.danger` (matching the existing `isDestructive` styling precedent from `BiosListTile`), `+` prefixed lines in `terminalColors.attention` (matching `ToolCallCard`'s existing accent color), unchanged context lines in the default body color. Font: `AppFonts.bodyFamily` at `AppSizes.fontMini`, matching `ToolCallCard`'s existing `RESULT:` text style. Capped at 300 rendered lines with a trailing `"N more lines omitted"` footer in muted text if the diff exceeds that — the `(+N -M)` summary count is always computed from the full uncapped diff.
 
-**New pure helper** `lib/presentation/chat/diff_stats.dart` (or a top-level function in `diff_summary_view.dart` if small enough — decide at implementation time, YAGNI a separate file if it's under ~20 lines): given `oldText`/`newText`, returns `{added: int, removed: int, lines: List<DiffLine>}` where `DiffLine` is `{text: String, kind: added|removed|context}`, built from `diff_match_patch`'s line-mode diff (its `diffLinesToChars`/`diffMain` pairing, the package's documented pattern for line-level rather than character-level diffs).
+**New pure helper** `lib/presentation/chat/diff_stats.dart` (or a top-level function in `diff_summary_view.dart` if small enough — decide at implementation time, YAGNI a separate file if it's under ~20 lines): given `oldText`/`newText`, returns `{added: int, removed: int, lines: List<DiffLine>}` where `DiffLine` is `{text: String, kind: added|removed|context}`, built from `diff_match_patch`'s `diff(text1, text2, checklines: true)` — the package's actual top-level function (there is no `diffMain`/`diffLinesToChars` pairing in this Dart port's public API; `checklines: true`, the default, already gives line-mode-quality diffing for this size of input). `diff()` returns a `List<Diff>` of `(operation, text)` pairs (insert/delete/equal); the helper splits each `Diff.text` on newlines and tags every resulting line with its operation to build `List<DiffLine>`.
 
 **`ToolCallCard`** (`lib/presentation/chat/tool_call_card.dart`) — after the existing `RESULT:` block, decode `message.metadata?['diffs'] as List<dynamic>?` and render one `DiffSummaryLine` per entry:
 
@@ -135,7 +137,7 @@ No new PocketBase collection, no new repository method, no new cubit — this is
 
 ## 5. Error handling
 
-- **Diff event for an unknown `toolCallId`** (arrived before `ToolCallStartEvent`, or the tool call was evicted from the timeline) — `_updateTool` is already a safe no-op when the id isn't found (existing behavior shared with `args`/`result`); no new handling needed.
+- **Diff event for an unknown `toolCallId`** (arrived before `ToolCallStartEvent`, or the tool call was evicted from the timeline) — `_updateTool` inserts an orphan `TimelineItem.toolCall(id: id, name: '')` and applies the diff to it, same as an out-of-order `args`/`result` event would today (`conversation_reducer.dart:157-163`). This produces a tool-call card with an empty `NAME` line and just the diff — not ideal, but pre-existing, shared behavior this spec doesn't change or regress. Not treated as an error to fix here.
 - **Malformed event value** (missing `path` or `newText`, non-Map `value`) — the reducer case skips that single event via the null checks shown in §3.1; it never throws.
 - **Empty/no-op diff** (`oldText == newText`) — still renders a `(+0 -0)` summary line rather than being hidden, so the user isn't confused by a tool call that silently dropped a diff it reported.
 - **New-file diffs** (`oldText` empty) — `DiffSummaryLine` shows `NEW FILE` instead of a `+N -M` count; `DiffBody` renders every line of `newText` as an addition.
@@ -144,7 +146,7 @@ No new PocketBase collection, no new repository method, no new cubit — this is
 ## 6. Testing
 
 **`ag_ui_widgets_flutter`:**
-- Reducer test: a `pocketcoder:diff` CustomEvent for a known `toolCallId` appends to that item's `diffs`; a second diff event for the same id appends rather than replaces (multi-file-edit case); an event for an unknown id is a no-op (no crash, no orphan entry).
+- Reducer test: a `pocketcoder:diff` CustomEvent for a known `toolCallId` appends to that item's `diffs`; a second diff event for the same id appends rather than replaces (multi-file-edit case); an event for an unknown id does not crash and produces the same orphan-entry behavior as an out-of-order `args`/`result` event (matching, not fixing, existing `_updateTool` semantics — see §5).
 - `timeline_to_messages` test: a `ToolCallTimelineItem` with non-empty `diffs` produces `CustomMessage.metadata['diffs']` with the expected shape.
 
 **`pocketcoder_flutter`:**
