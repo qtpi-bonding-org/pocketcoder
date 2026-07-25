@@ -41,6 +41,40 @@ type fileEntry struct {
 	ModTime string `json:"modTime"`
 }
 
+// workspaceRoot is the directory the file endpoints serve. It's a package
+// variable (not a const) so tests can point it at a temp directory.
+var workspaceRoot = "/workspace"
+
+// resolveWorkspacePath cleans pathParam and rejects any path that would
+// resolve — after following symlinks — outside workspaceRoot. It returns
+// the cleaned path (relative to workspaceRoot, safe to hand to
+// fsys.GetReader/List) and ok=false if the path should be rejected.
+//
+// A target that doesn't exist yet (or is a broken symlink) is allowed
+// through: sanitization has already passed, so the normal
+// fs.GetReader/List call is left to report its own NotFound error.
+func resolveWorkspacePath(pathParam string) (cleanPath string, ok bool) {
+	cleanPath = filepath.Clean(pathParam)
+	if strings.HasPrefix(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") {
+		return "", false
+	}
+
+	resolvedRoot, err := filepath.EvalSymlinks(workspaceRoot)
+	if err != nil {
+		return "", false
+	}
+
+	target := filepath.Join(workspaceRoot, cleanPath)
+	resolvedTarget, err := filepath.EvalSymlinks(target)
+	if err != nil {
+		return cleanPath, true
+	}
+	if resolvedTarget != resolvedRoot && !strings.HasPrefix(resolvedTarget, resolvedRoot+string(filepath.Separator)) {
+		return "", false
+	}
+	return cleanPath, true
+}
+
 // groupImmediateChildren collapses a flat, recursive listing (as returned by
 // filesystem.System.List, which never sets blob.ListOptions.Delimiter and so
 // never populates ListObject.IsDir) into immediate-children-only entries
@@ -90,15 +124,14 @@ func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			return re.BadRequestError("Empty path.", nil)
 		}
 
-		// Sanitization
-		cleanPath := filepath.Clean(pathParam)
-		if strings.HasPrefix(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") {
+		cleanPath, ok := resolveWorkspacePath(pathParam)
+		if !ok {
 			return re.ForbiddenError("Path escape attempt detected.", nil)
 		}
 
 		// 3. Initialize Filesystem Abstraction (S3-Ready)
-		// For now we point it at the local /workspace volume
-		fsys, err := filesystem.NewLocal("/workspace")
+		// For now we point it at the local workspaceRoot volume
+		fsys, err := filesystem.NewLocal(workspaceRoot)
 		if err != nil {
 			return re.InternalServerError("Sovereign storage failure.", err)
 		}
@@ -129,15 +162,12 @@ func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 
 		pathParam := re.Request.PathValue("path")
-		cleanPath := "."
-		if pathParam != "" {
-			cleanPath = filepath.Clean(pathParam)
-			if strings.HasPrefix(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") {
-				return re.ForbiddenError("Path escape attempt detected.", nil)
-			}
+		cleanPath, ok := resolveWorkspacePath(pathParam)
+		if !ok {
+			return re.ForbiddenError("Path escape attempt detected.", nil)
 		}
 
-		fsys, err := filesystem.NewLocal("/workspace")
+		fsys, err := filesystem.NewLocal(workspaceRoot)
 		if err != nil {
 			return re.InternalServerError("Sovereign storage failure.", err)
 		}

@@ -19,11 +19,104 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package filesystem
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/pocketbase/pocketbase/tools/filesystem/blob"
 )
+
+func withTestWorkspaceRoot(t *testing.T, dir string) {
+	t.Helper()
+	original := workspaceRoot
+	workspaceRoot = dir
+	t.Cleanup(func() { workspaceRoot = original })
+}
+
+func TestResolveWorkspacePath_RejectsDotDot(t *testing.T) {
+	withTestWorkspaceRoot(t, t.TempDir())
+
+	_, ok := resolveWorkspacePath("../etc/passwd")
+	if ok {
+		t.Fatal("expected ok=false for a .. escape, got ok=true")
+	}
+}
+
+func TestResolveWorkspacePath_RejectsAbsolute(t *testing.T) {
+	withTestWorkspaceRoot(t, t.TempDir())
+
+	_, ok := resolveWorkspacePath("/etc/passwd")
+	if ok {
+		t.Fatal("expected ok=false for an absolute path, got ok=true")
+	}
+}
+
+func TestResolveWorkspacePath_AllowsNestedPath(t *testing.T) {
+	dir := t.TempDir()
+	withTestWorkspaceRoot(t, dir)
+	if err := os.Mkdir(filepath.Join(dir, "src"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	cleanPath, ok := resolveWorkspacePath("src")
+	if !ok {
+		t.Fatal("expected ok=true for a legitimate nested path")
+	}
+	if cleanPath != "src" {
+		t.Fatalf("cleanPath = %q, want %q", cleanPath, "src")
+	}
+}
+
+func TestResolveWorkspacePath_AllowsNonExistentPath(t *testing.T) {
+	// A path that doesn't exist yet must still pass sanitization so the
+	// normal fs.GetReader/List call can return its own NotFound error.
+	withTestWorkspaceRoot(t, t.TempDir())
+
+	cleanPath, ok := resolveWorkspacePath("does/not/exist.go")
+	if !ok {
+		t.Fatal("expected ok=true for a non-existent (but non-escaping) path")
+	}
+	if cleanPath != "does/not/exist.go" {
+		t.Fatalf("cleanPath = %q, want %q", cleanPath, "does/not/exist.go")
+	}
+}
+
+func TestResolveWorkspacePath_RejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	if err := os.WriteFile(filepath.Join(outside, "secret.txt"), []byte("top secret"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(root, "escape")); err != nil {
+		t.Fatal(err)
+	}
+	withTestWorkspaceRoot(t, root)
+
+	_, ok := resolveWorkspacePath("escape/secret.txt")
+	if ok {
+		t.Fatal("expected ok=false for a path through a symlink that escapes workspaceRoot")
+	}
+}
+
+func TestResolveWorkspacePath_AllowsSymlinkWithinRoot(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, "real"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "real", "a.go"), []byte("package main"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(root, "real"), filepath.Join(root, "alias")); err != nil {
+		t.Fatal(err)
+	}
+	withTestWorkspaceRoot(t, root)
+
+	_, ok := resolveWorkspacePath("alias/a.go")
+	if !ok {
+		t.Fatal("expected ok=true for a symlink whose target stays inside workspaceRoot")
+	}
+}
 
 func TestGroupImmediateChildren_RootPrefix(t *testing.T) {
 	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
