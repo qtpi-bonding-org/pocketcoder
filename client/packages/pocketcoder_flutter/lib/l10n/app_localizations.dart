@@ -496,6 +496,30 @@ abstract class AppLocalizations {
   /// **'TERMINAL'**
   String get chatTerminalAction;
 
+  /// No description provided for @chatListNewChat.
+  ///
+  /// In en, this message translates to:
+  /// **'+ NEW CHAT'**
+  String get chatListNewChat;
+
+  /// No description provided for @chatListNoMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get chatListNoMessages;
+
+  /// No description provided for @chatListArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'ARCHIVE'**
+  String get chatListArchive;
+
+  /// No description provided for @chatListDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get chatListDelete;
+
   /// No description provided for @chatFilesAction.
   ///
   /// In en, this message translates to:
