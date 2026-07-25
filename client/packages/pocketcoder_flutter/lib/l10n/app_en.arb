@@ -194,6 +194,12 @@
   "toolPermissionsAskLabel": "ASK",
   "toolPermissionsDenyLabel": "DENY",
 
+  "notificationSettingsScreenTitle": "NOTIFICATIONS",
+  "notificationSettingsChatReplyLabel": "CHAT REPLIES",
+  "notificationSettingsScheduleLabel": "SCHEDULED TASKS",
+  "notificationSettingsTaskCompleteLabel": "TASK COMPLETE",
+  "notificationSettingsTaskErrorLabel": "TASK ERRORS",
+
   "skillsTitle": "SKILLS",
   "skillsRegistryTitle": "SKILLS REGISTRY",
   "skillsGlobalSection": "GLOBAL",

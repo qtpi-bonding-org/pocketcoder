@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/agent_observability_screen.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
+import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/skills/skills_screen.dart';
 import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
@@ -144,6 +145,15 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.configureNotifications,
+        name: RouteNames.configureNotifications,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const NotificationSettingsScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.configureSkills,
         name: RouteNames.configureSkills,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -266,6 +276,7 @@ class AppRoutes {
   // Configure sub-routes
   static const String configureAi = '/configure/ai';
   static const String configureToolPermissions = '/configure/tool-permissions';
+  static const String configureNotifications = '/configure/notifications';
   static const String configureSkills = '/configure/skills';
   static const String configureScheduler = '/configure/scheduler';
   static const String configureMcp = '/configure/mcp';
@@ -307,6 +318,7 @@ class RouteNames {
   // Configure sub-routes
   static const String configureAi = 'configureAi';
   static const String configureToolPermissions = 'configureToolPermissions';
+  static const String configureNotifications = 'configureNotifications';
   static const String configureSkills = 'configureSkills';
   static const String configureScheduler = 'configureScheduler';
   static const String configureMcp = 'configureMcp';

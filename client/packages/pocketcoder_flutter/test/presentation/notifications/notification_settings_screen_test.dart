@@ -1,0 +1,107 @@
+// Widget tests for NotificationSettingsScreen.
+//
+// Mirrors `settings_screen_test.dart`'s MockMcpCubit pattern: a mocked
+// cubit (MockNotificationRuleCubit extends Mock implements
+// NotificationRuleCubit) injected via BlocProvider.value, with a
+// MaterialApp that sets `theme: AppTheme.lightTheme` so the screen's
+// context.colorScheme/terminalColors lookups don't crash during the test.
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart';
+import 'package:pocketcoder_flutter/application/notifications/notification_rule_state.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
+
+class MockNotificationRuleCubit extends Mock
+    implements NotificationRuleCubit {}
+
+Widget _wrap(NotificationRuleCubit cubit) {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('en')],
+    home: BlocProvider<NotificationRuleCubit>.value(
+      value: cubit,
+      child: const NotificationSettingsScreen(),
+    ),
+  );
+}
+
+void main() {
+  late MockNotificationRuleCubit cubit;
+
+  setUp(() {
+    cubit = MockNotificationRuleCubit();
+    when(() => cubit.watchRules()).thenReturn(null);
+    when(() => cubit.setTypeEnabled(any(), any())).thenAnswer((_) async {});
+    when(() => cubit.state).thenReturn(const NotificationRuleState.loaded({}));
+    when(() => cubit.stream)
+        .thenAnswer((_) => const Stream<NotificationRuleState>.empty());
+    when(() => cubit.close()).thenAnswer((_) async {});
+  });
+
+  testWidgets(
+      'renders four switches with default-on values when the rules map is empty',
+      (tester) async {
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState.loaded({}));
+
+    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CHAT REPLIES'), findsOneWidget);
+    expect(find.text('SCHEDULED TASKS'), findsOneWidget);
+    expect(find.text('TASK COMPLETE'), findsOneWidget);
+    expect(find.text('TASK ERRORS'), findsOneWidget);
+
+    final switches = find.byType(Switch);
+    expect(switches, findsNWidgets(4));
+    for (var i = 0; i < 4; i++) {
+      expect(tester.widget<Switch>(switches.at(i)).value, isTrue);
+    }
+  });
+
+  testWidgets('honors a non-default value from the loaded rules map',
+      (tester) async {
+    when(() => cubit.state).thenReturn(const NotificationRuleState.loaded({
+      'chat_reply': false,
+      'schedule': true,
+      'task_complete': true,
+      'task_error': false,
+    }));
+
+    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpAndSettle();
+
+    final switches = find.byType(Switch);
+    expect(switches, findsNWidgets(4));
+    expect(tester.widget<Switch>(switches.at(0)).value, isFalse); // chat_reply
+    expect(tester.widget<Switch>(switches.at(1)).value, isTrue); // schedule
+    expect(tester.widget<Switch>(switches.at(2)).value, isTrue); // task_complete
+    expect(tester.widget<Switch>(switches.at(3)).value, isFalse); // task_error
+  });
+
+  testWidgets('tapping a switch calls cubit.setTypeEnabled with the right args',
+      (tester) async {
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState.loaded({}));
+
+    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpAndSettle();
+
+    // Tap the first switch (chat_reply) — flips it off.
+    await tester.tap(find.byType(Switch).first);
+    await tester.pumpAndSettle();
+
+    verify(() => cubit.setTypeEnabled('chat_reply', false)).called(1);
+  });
+}
