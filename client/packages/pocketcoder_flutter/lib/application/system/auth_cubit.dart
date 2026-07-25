@@ -44,4 +44,11 @@ class AuthCubit extends AppCubit<AuthState> {
       return createSuccessState();
     });
   }
+
+  Future<void> logout() async {
+    return tryOperation(() async {
+      await _authRepository.logout();
+      return createSuccessState();
+    });
+  }
 }
