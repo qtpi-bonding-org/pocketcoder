@@ -41,7 +41,8 @@ func TestElicitationResolveResumes(t *testing.T) {
 	c.StartPrompt("A", "need input",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	id := c.waitForPendingElicitation(t, "A")
 	if err := c.ResolveElicitation("A", id, acpsdk.UnstableCreateElicitationResponse{
 		Accept: &acpsdk.UnstableCreateElicitationAccept{},
@@ -65,7 +66,8 @@ func TestElicitationTimeoutResolvesCancel(t *testing.T) {
 	c.StartPrompt("A", "need input",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	c.waitForPendingElicitation(t, "A")
 	clk.Advance(6 * time.Minute)
 	c.waitRunDone(t, "A")
@@ -83,7 +85,8 @@ func TestElicitationURLForwardsMessageAndURL(t *testing.T) {
 	c.StartPrompt("A", "need input",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	id := c.waitForPendingElicitation(t, "A")
 
 	att := c.Attach("A", 0)
@@ -119,7 +122,8 @@ func TestSetModeDispatchesToConn(t *testing.T) {
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	f.waitForPrompt(t)
 	if err := c.SetMode(context.Background(), "A", "plan"); err != nil {
 		t.Fatal(err)

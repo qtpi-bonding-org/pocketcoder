@@ -49,6 +49,7 @@ type Config struct {
 type Emit func(events.Event) error
 type ResolveSession func(context.Context) (string, error)
 type OnSessionCreated func(context.Context, string) error
+type OnRunFinished func(context.Context, acpsdk.StopReason) error
 type DialFunc func(context.Context, acpsdk.Client) (acp.Conn, error)
 
 type runHandle struct {
@@ -648,7 +649,7 @@ func (c *Coordinator) Shutdown(ctx context.Context) {
 // spec N1), and returns the run id immediately. The run survives the caller
 // returning: teardown fires on Prompt return / cancel / panic, last in the
 // gate is always the release of Reserve so a second StartPrompt can take over.
-func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated) (string, error) {
+func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) (string, error) {
 	if err := c.Reserve(chatID); err != nil {
 		return "", err
 	}
@@ -657,7 +658,7 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 	accepting := &atomic.Bool{}
 	h := &runHandle{runID: runID, cancel: cancel, accepting: accepting}
 	c.registerRun(chatID, h)
-	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created)
+	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created, finished)
 	return runID, nil
 }
 
@@ -665,7 +666,7 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 // a single panic recover that publishes RUN_ERROR, and the publish-through-
 // hub `emit` so RequestPermission (which also calls s.emit) remains safe on
 // the detached path with no client lifetime dependency.
-func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated) {
+func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) {
 	hub := c.hubFor(chatID)
 	var once sync.Once
 	teardown := func() {
@@ -743,6 +744,9 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 	for _, e := range bridge.Finished(resp.StopReason) {
 		hub.Publish(e)
+	}
+	if finished != nil && resp.StopReason != acpsdk.StopReasonCancelled && runCtx.Err() == nil {
+		_ = finished(runCtx, resp.StopReason)
 	}
 }
 
