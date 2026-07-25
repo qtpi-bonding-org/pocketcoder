@@ -11,7 +11,7 @@ services:
       - pb_data:/app/pb_data
       # - pb_backups:/app/pb_backups
       - pocketcoder-logs:/app/pb_public/logs
-      - opencode_workspace:/workspace
+      - goose_workspace:/workspace
       - ./services/mcp-gateway/config:/mcp_config
       - llm_keys:/llm_keys
       - goose_config:/goose-config
@@ -77,7 +77,7 @@ services:
       # config volume there — nested inside goose_data — so Goose actually reads
       # the rendered config.yaml/keys.env. NOT ~/.config/goose (goose ignores it).
       - goose_config:/goose/config
-      - opencode_workspace:/workspace
+      - goose_workspace:/workspace
     working_dir: /workspace
     networks:
       - pocketcoder-agent
@@ -367,7 +367,7 @@ volumes:
   #   external: true
   #   name: pocketcoder_pb_backups
   pocketcoder-logs:
-  opencode_workspace:
+  goose_workspace:
   llm_keys:  # Shared LLM API keys (env file written by PocketBase, read by sandbox)
   ntfy-cache:
   ntfy-auth:
