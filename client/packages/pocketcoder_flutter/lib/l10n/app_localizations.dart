@@ -178,6 +178,12 @@ abstract class AppLocalizations {
   /// **'Chat error'**
   String get chatError;
 
+  /// No description provided for @chatListError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load chats'**
+  String get chatListError;
+
   /// No description provided for @chatMessageSent.
   ///
   /// In en, this message translates to:

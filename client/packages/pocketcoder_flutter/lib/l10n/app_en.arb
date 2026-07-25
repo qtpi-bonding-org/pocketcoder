@@ -20,6 +20,7 @@
   "chatSendFailed": "Failed to send message",
   "chatNotFound": "Chat not found",
   "chatError": "Chat error",
+  "chatListError": "Unable to load chats",
   "chatMessageSent": "Message sent",
   "chatCreated": "Chat created",
 
