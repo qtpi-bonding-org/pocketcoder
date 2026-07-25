@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-07-25T01:39:59.586654
+// Generated at: 2026-07-25T02:19:53.720856
 
 import 'app_localizations.dart';
 
@@ -121,6 +121,8 @@ class L10nKeyResolver {
       'file.no.file.selected' => _l10n.fileNoFileSelected,
       'file.select.from.chat' => _l10n.fileSelectFromChat,
       'file.title' => _l10n.fileTitle,
+      'files.empty' => _l10n.filesEmpty,
+      'files.title' => _l10n.filesTitle,
       'home.loading.chats' => _l10n.homeLoadingChats,
       'home.new.chat' => _l10n.homeNewChat,
       'home.no.chats' => _l10n.homeNoChats,
@@ -429,6 +431,8 @@ class L10nKeyResolver {
     'file.no.file.selected',
     'file.select.from.chat',
     'file.title',
+    'files.empty',
+    'files.title',
     'home.error.prefix',
     'home.loading.chats',
     'home.new.chat',
@@ -731,6 +735,8 @@ class L10nKeyResolver {
     'fileNoFileSelected': 'file.no.file.selected',
     'fileSelectFromChat': 'file.select.from.chat',
     'fileTitle': 'file.title',
+    'filesEmpty': 'files.empty',
+    'filesTitle': 'files.title',
     'homeErrorPrefix': 'home.error.prefix',
     'homeLoadingChats': 'home.loading.chats',
     'homeNewChat': 'home.new.chat',
@@ -1030,6 +1036,8 @@ class L10nKeyResolver {
     'file.no.file.selected': 'fileNoFileSelected',
     'file.select.from.chat': 'fileSelectFromChat',
     'file.title': 'fileTitle',
+    'files.empty': 'filesEmpty',
+    'files.title': 'filesTitle',
     'home.error.prefix': 'homeErrorPrefix',
     'home.loading.chats': 'homeLoadingChats',
     'home.new.chat': 'homeNewChat',
@@ -1336,6 +1344,8 @@ abstract class L10nKeys {
   static const fileNoFileSelected = 'file.no.file.selected';
   static const fileSelectFromChat = 'file.select.from.chat';
   static const fileTitle = 'file.title';
+  static const filesEmpty = 'files.empty';
+  static const filesTitle = 'files.title';
   static (String, Map<String, dynamic>) homeErrorPrefix(String error) => ('home.error.prefix', {'error': error});
   static const homeLoadingChats = 'home.loading.chats';
   static const homeNewChat = 'home.new.chat';
