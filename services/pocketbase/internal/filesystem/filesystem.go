@@ -91,9 +91,17 @@ func groupImmediateChildren(prefix string, objects []*blob.ListObject) []fileEnt
 		parts := strings.SplitN(rel, "/", 2)
 		name := parts[0]
 		isDir := len(parts) > 1
-		if _, exists := seen[name]; exists {
+
+		if existing, exists := seen[name]; exists {
+			if isDir && !existing.IsDir {
+				existing.IsDir = true
+				existing.Size = 0
+				existing.ModTime = ""
+				seen[name] = existing
+			}
 			continue
 		}
+
 		entry := fileEntry{Name: name, IsDir: isDir}
 		if !isDir {
 			entry.Size = obj.Size
