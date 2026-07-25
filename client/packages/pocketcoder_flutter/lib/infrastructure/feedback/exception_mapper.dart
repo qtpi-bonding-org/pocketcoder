@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/domain/exceptions/chat_list_exception.dart';
 
 /// Global exception mapper for the application.
 ///
@@ -13,6 +14,7 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
     return switch (exception) {
       AuthException() => _mapAuthException(exception),
       ChatException() => _mapChatException(exception),
+      ChatListException() => _mapChatListException(exception),
       PermissionException() => _mapPermissionException(exception),
       AiException() => _mapAiException(exception),
       ToolPermissionsException() => _mapToolPermissionsException(exception),
@@ -36,6 +38,10 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
       String msg when msg.contains('not found') => const MessageKey.error('chat.notFound'),
       _ => const MessageKey.error('chat.error'),
     };
+  }
+
+  MessageKey? _mapChatListException(ChatListException exception) {
+    return const MessageKey.error('chatList.error');
   }
 
   MessageKey? _mapPermissionException(PermissionException exception) {
