@@ -82,4 +82,7 @@ services/sandbox/cao/
 tobedeleted/
 out.json
 audit-status/
+audit/
 services/pocketbase/backend/
+services/pocketbase/.gocache/
+client/apps/app/ios/**/xcshareddata/swiftpm/
