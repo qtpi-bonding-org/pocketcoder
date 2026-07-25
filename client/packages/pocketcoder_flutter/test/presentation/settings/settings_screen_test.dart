@@ -1,0 +1,78 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
+import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
+import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
+
+class MockAuthRepository extends Mock implements IAuthRepository {}
+
+class MockMcpCubit extends Mock implements McpCubit {}
+
+void main() {
+  late MockAuthRepository authRepo;
+  late MockMcpCubit mcpCubit;
+
+  setUp(() {
+    authRepo = MockAuthRepository();
+    mcpCubit = MockMcpCubit();
+    when(() => mcpCubit.state).thenReturn(const McpState.loaded(servers: []));
+    when(() => mcpCubit.stream)
+        .thenAnswer((_) => const Stream<McpState>.empty());
+
+    getIt.registerFactory<AuthCubit>(() => AuthCubit(authRepo));
+  });
+
+  tearDown(() {
+    getIt.reset();
+  });
+
+  Widget buildTestable() {
+    return MaterialApp(
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: BlocProvider<McpCubit>.value(
+        value: mcpCubit,
+        child: const SettingsScreen(),
+      ),
+    );
+  }
+
+  testWidgets('tapping LOGOUT opens a confirm dialog; confirming calls logout',
+      (tester) async {
+    when(() => authRepo.logout()).thenAnswer((_) async {});
+
+    await tester.pumpWidget(buildTestable());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('LOGOUT'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SIGN OUT'), findsWidgets);
+
+    await tester.tap(find.text('SIGN OUT').last);
+    await tester.pumpAndSettle();
+
+    verify(() => authRepo.logout()).called(1);
+  });
+
+  testWidgets('tapping CANCEL does not call logout', (tester) async {
+    await tester.pumpWidget(buildTestable());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('LOGOUT'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('CANCEL'));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => authRepo.logout());
+  });
+}
