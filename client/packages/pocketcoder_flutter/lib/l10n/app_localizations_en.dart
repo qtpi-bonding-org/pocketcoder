@@ -216,6 +216,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatTerminalAction => 'TERMINAL';
 
   @override
+  String get chatListNewChat => '+ NEW CHAT';
+
+  @override
+  String get chatListNoMessages => 'No messages yet';
+
+  @override
+  String get chatListArchive => 'ARCHIVE';
+
+  @override
+  String get chatListDelete => 'DELETE';
+
+  @override
   String get chatFilesAction => 'FILES';
 
   @override
