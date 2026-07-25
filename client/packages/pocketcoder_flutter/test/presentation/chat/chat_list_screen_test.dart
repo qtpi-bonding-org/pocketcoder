@@ -1,0 +1,72 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
+
+class MockChatListRepository extends Mock implements IChatListRepository {}
+
+Widget _wrap(ChatListCubit cubit) {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: BlocProvider<ChatListCubit>.value(
+      value: cubit,
+      child: const ChatListView(),
+    ),
+  );
+}
+
+void main() {
+  late MockChatListRepository repo;
+
+  setUp(() {
+    repo = MockChatListRepository();
+    when(() => repo.watchChats()).thenAnswer((_) => const Stream.empty());
+  });
+
+  testWidgets('renders title/preview/relative-time for a populated list',
+      (tester) async {
+    final cubit = ChatListCubit(repo);
+    cubit.emit(cubit.state.copyWith(
+      status: UiFlowStatus.success,
+      chats: const [
+        Chat(id: 'chat-1', title: 'Hello World', user: 'u', preview: 'hi there'),
+      ],
+    ));
+
+    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hello World'), findsOneWidget);
+    expect(find.text('hi there'), findsOneWidget);
+  });
+
+  testWidgets('long-press opens an archive/delete menu that calls the cubit',
+      (tester) async {
+    when(() => repo.archiveChat('chat-1')).thenAnswer((_) async {});
+    final cubit = ChatListCubit(repo);
+    cubit.emit(cubit.state.copyWith(
+      status: UiFlowStatus.success,
+      chats: const [Chat(id: 'chat-1', title: 'Hello World', user: 'u')],
+    ));
+
+    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.text('Hello World'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ARCHIVE'));
+    await tester.pumpAndSettle();
+
+    verify(() => repo.archiveChat('chat-1')).called(1);
+  });
+}

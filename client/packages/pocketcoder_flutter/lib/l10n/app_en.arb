@@ -87,6 +87,10 @@
 
   "chatSessionTitle": "CHAT SESSION",
   "chatTerminalAction": "TERMINAL",
+  "chatListNewChat": "+ NEW CHAT",
+  "chatListNoMessages": "No messages yet",
+  "chatListArchive": "ARCHIVE",
+  "chatListDelete": "DELETE",
   "chatFilesAction": "FILES",
   "chatNewCapabilityRequest": "[!] NEW CAPABILITY REQUEST RECEIVED",
   "chatThinking": "THINKING",
