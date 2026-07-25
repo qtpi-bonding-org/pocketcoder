@@ -1684,42 +1684,6 @@ abstract class AppLocalizations {
   /// **'EMPTY FILE'**
   String get fileEmpty;
 
-  /// No description provided for @sopTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'SOP MANAGEMENT'**
-  String get sopTitle;
-
-  /// No description provided for @sopProjectProcedures.
-  ///
-  /// In en, this message translates to:
-  /// **'PROJECT PROCEDURES'**
-  String get sopProjectProcedures;
-
-  /// No description provided for @sopNewProposal.
-  ///
-  /// In en, this message translates to:
-  /// **'NEW PROPOSAL'**
-  String get sopNewProposal;
-
-  /// No description provided for @sopActiveProcedures.
-  ///
-  /// In en, this message translates to:
-  /// **'ACTIVE PROCEDURES'**
-  String get sopActiveProcedures;
-
-  /// No description provided for @sopDraftProposals.
-  ///
-  /// In en, this message translates to:
-  /// **'DRAFT PROPOSALS'**
-  String get sopDraftProposals;
-
-  /// No description provided for @sopPendingSignature.
-  ///
-  /// In en, this message translates to:
-  /// **'PENDING SIGNATURE'**
-  String get sopPendingSignature;
-
   /// No description provided for @systemChecksTitle.
   ///
   /// In en, this message translates to:

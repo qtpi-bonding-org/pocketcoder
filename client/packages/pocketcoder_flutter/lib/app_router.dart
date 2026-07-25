@@ -11,7 +11,6 @@ import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart'
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_flutter/presentation/skills/skills_screen.dart';
 import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
-import 'package:pocketcoder_flutter/presentation/sop/sop_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
@@ -45,7 +44,6 @@ class AppRouter {
       if (loc == '/settings') return AppRoutes.configure;
       if (loc == '/settings/ai') return AppRoutes.configureAi;
       if (loc == '/mcp') return AppRoutes.configureMcp;
-      if (loc == '/sop') return AppRoutes.configureSop;
       if (loc == '/system-checks') return AppRoutes.configureSystemChecks;
       if (loc == '/paywall') return AppRoutes.configurePaywall;
       if (loc == '/observability') return AppRoutes.configureObservability;
@@ -158,15 +156,6 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.configureSop,
-        name: RouteNames.configureSop,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const SopManagementScreen(),
-        ),
-      ),
-      GoRoute(
         path: AppRoutes.configureSystemChecks,
         name: RouteNames.configureSystemChecks,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -242,7 +231,6 @@ class AppRoutes {
   static const String configureSkills = '/configure/skills';
   static const String configureScheduler = '/configure/scheduler';
   static const String configureMcp = '/configure/mcp';
-  static const String configureSop = '/configure/sop';
   static const String configureSystemChecks = '/configure/system-checks';
   static const String configurePaywall = '/configure/paywall';
   static const String configureObservability = '/configure/observability';
@@ -253,7 +241,6 @@ class AppRoutes {
   static const String toolPermissions = '/settings/whitelist';
   static const String agentObservability = '/observability';
   static const String mcpManagement = '/mcp';
-  static const String sopManagement = '/sop';
   static const String systemChecks = '/system-checks';
   static const String paywall = '/paywall';
   // Deploy picker
@@ -284,7 +271,6 @@ class RouteNames {
   static const String configureSkills = 'configureSkills';
   static const String configureScheduler = 'configureScheduler';
   static const String configureMcp = 'configureMcp';
-  static const String configureSop = 'configureSop';
   static const String configureSystemChecks = 'configureSystemChecks';
   static const String configurePaywall = 'configurePaywall';
   static const String configureObservability = 'configureObservability';
@@ -294,7 +280,6 @@ class RouteNames {
   static const String toolPermissions = 'configureToolPermissions';
   static const String agentObservability = 'configureObservability';
   static const String mcpManagement = 'configureMcp';
-  static const String sopManagement = 'configureSop';
   static const String systemChecks = 'configureSystemChecks';
   static const String paywall = 'configurePaywall';
   // Deploy picker
