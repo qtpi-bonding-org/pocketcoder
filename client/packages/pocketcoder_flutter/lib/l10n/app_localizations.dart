@@ -550,6 +550,18 @@ abstract class AppLocalizations {
   /// **'NO FILES'**
   String get filesEmpty;
 
+  /// No description provided for @filesTooLargeToPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'FILE TOO LARGE TO PREVIEW'**
+  String get filesTooLargeToPreview;
+
+  /// No description provided for @filesCantPreviewType.
+  ///
+  /// In en, this message translates to:
+  /// **'CAN\'T PREVIEW THIS FILE TYPE'**
+  String get filesCantPreviewType;
+
   /// No description provided for @chatModelLabel.
   ///
   /// In en, this message translates to:
