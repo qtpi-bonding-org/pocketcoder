@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
@@ -22,7 +23,7 @@ void main() {
   setUp(() {
     authRepo = MockAuthRepository();
     mcpCubit = MockMcpCubit();
-    when(() => mcpCubit.state).thenReturn(const McpState.loaded(servers: []));
+    when(() => mcpCubit.state).thenReturn(const McpState.loaded([]));
     when(() => mcpCubit.stream)
         .thenAnswer((_) => const Stream<McpState>.empty());
 
@@ -34,14 +35,29 @@ void main() {
   });
 
   Widget buildTestable() {
-    return MaterialApp(
+    final router = GoRouter(
+      initialLocation: '/settings',
+      routes: [
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => BlocProvider<McpCubit>.value(
+            value: mcpCubit,
+            child: const SettingsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/onboarding',
+          name: 'onboarding',
+          builder: (context, state) => const SizedBox(),
+        ),
+      ],
+    );
+
+    return MaterialApp.router(
       theme: AppTheme.lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: BlocProvider<McpCubit>.value(
-        value: mcpCubit,
-        child: const SettingsScreen(),
-      ),
+      routerConfig: router,
     );
   }
 
@@ -52,6 +68,12 @@ void main() {
     await tester.pumpWidget(buildTestable());
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('LOGOUT'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('LOGOUT'));
     await tester.pumpAndSettle();
 
@@ -67,6 +89,12 @@ void main() {
     await tester.pumpWidget(buildTestable());
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('LOGOUT'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('LOGOUT'));
     await tester.pumpAndSettle();
 
