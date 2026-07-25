@@ -389,13 +389,6 @@
   "fileFetching": "FETCHING DATA...",
   "fileEmpty": "EMPTY FILE",
 
-  "sopTitle": "SOP MANAGEMENT",
-  "sopProjectProcedures": "PROJECT PROCEDURES",
-  "sopNewProposal": "NEW PROPOSAL",
-  "sopActiveProcedures": "ACTIVE PROCEDURES",
-  "sopDraftProposals": "DRAFT PROPOSALS",
-  "sopPendingSignature": "PENDING SIGNATURE",
-
   "systemChecksTitle": "SYSTEM CHECKS",
   "systemChecksDiagnostics": "SYSTEM DIAGNOSTICS",
   "systemChecksEmpty": "NO DIAGNOSTICS AVAILABLE",

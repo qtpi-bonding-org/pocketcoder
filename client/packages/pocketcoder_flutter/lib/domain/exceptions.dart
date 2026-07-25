@@ -78,11 +78,6 @@ class McpException extends DomainException {
   McpException(super.message, [super.cause]);
 }
 
-/// SOP-related exceptions.
-class SopException extends DomainException {
-  SopException(super.message, [super.cause]);
-}
-
 /// Observability-related exceptions.
 class ObservabilityException extends DomainException {
   ObservabilityException(super.message, [super.cause]);
