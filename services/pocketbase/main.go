@@ -31,7 +31,6 @@ import (
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/api"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/provisioning"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
 
@@ -77,10 +76,7 @@ func main() {
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
 
-		// A. Provision SOPs from filesystem
-		provisioning.ProvisionSops(app)
-
-		// B. Register Custom API Endpoints
+		// A. Register Custom API Endpoints
 		api.RegisterSSHApi(app, e)
 		api.RegisterMcpApi(app, e)
 		api.RegisterProxyApi(app, e)
