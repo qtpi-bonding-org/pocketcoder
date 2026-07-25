@@ -52,6 +52,7 @@ type fakeConn struct {
 	client         acpsdk.Client
 	newSession     string
 	deletedSession string
+	stopReason     acpsdk.StopReason
 
 	// Task 10: captures the last NewSession/LoadSession request so tests can
 	// assert a resolved SessionProfile reaches ACP.
@@ -219,7 +220,13 @@ func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.P
 			return acpsdk.PromptResponse{}, ctx.Err()
 		}
 	}
-	return acpsdk.PromptResponse{StopReason: acpsdk.StopReasonEndTurn}, nil
+	f.mu.Lock()
+	sr := f.stopReason
+	f.mu.Unlock()
+	if sr == "" {
+		sr = acpsdk.StopReasonEndTurn
+	}
+	return acpsdk.PromptResponse{StopReason: sr}, nil
 }
 func (f *fakeConn) Cancel(_ context.Context, n acpsdk.CancelNotification) error {
 	f.mu.Lock()
@@ -294,7 +301,8 @@ func TestStartPromptDetachedProceedsAfterCallerReturns(t *testing.T) {
 	runID, err := c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	if err != nil || runID == "" {
 		t.Fatalf("StartPrompt runID=%q err=%v", runID, err)
 	}
@@ -312,7 +320,8 @@ func TestTeardownIdempotentClosesConnOnce(t *testing.T) {
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	f.waitForPrompt(t)
 	go c.Cancel(context.Background(), "A")
 	close(f.blockPrompt)
@@ -329,7 +338,8 @@ func TestPanicInProduceReleasesReserve(t *testing.T) {
 	c.StartPrompt("A", "boom",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	c.waitRunDone(t, "A") // must still release Reserve despite the panic
 }
 
@@ -340,7 +350,8 @@ func TestDetachedRunPermissionEmitsThroughHub(t *testing.T) {
 	c.StartPrompt("A", "do it",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	id := c.waitForPendingPermission(t, "A") // polls c.pending for the chat
 	if err := c.Approve(context.Background(), "A", id, "allow_once"); err != nil {
 		t.Fatal(err)
@@ -360,7 +371,8 @@ func TestRequestPermissionForwardsToolCallID(t *testing.T) {
 	c.StartPrompt("A", "do it",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	id := c.waitForPendingPermission(t, "A")
 
 	att := c.Attach("A", 0)
@@ -397,7 +409,8 @@ func TestExplicitCancelSendsAcpCancel(t *testing.T) {
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	f.waitForPrompt(t)
 	if err := c.Cancel(context.Background(), "A"); err != nil {
 		t.Fatal(err)
@@ -418,7 +431,8 @@ func TestMaxRunTimeoutTearsDown(t *testing.T) {
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "s1", nil },
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	f.waitForPrompt(t)
 	clk.Advance(15*time.Minute + time.Second)
 	c.waitRunDone(t, "A")
@@ -433,7 +447,8 @@ func TestOrphanSessionCompensatedOnPersistFailure(t *testing.T) {
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "", nil }, // unmapped -> session/new
 		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
-		func(context.Context, string) error { return errors.New("db down") })
+		func(context.Context, string) error { return errors.New("db down") },
+		nil)
 	c.waitRunDone(t, "A")
 	if f.deletedSession != "orphan-1" {
 		t.Fatalf("persist failure must compensate via delete, deleted=%q", f.deletedSession)
@@ -456,7 +471,8 @@ func TestResolvedProfileReachesNewSessionAndMode(t *testing.T) {
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "", nil }, // unmapped -> session/new
 		func(context.Context) (SessionProfile, error) { return profile, nil },
-		func(context.Context, string) error { return nil })
+		func(context.Context, string) error { return nil },
+		nil)
 	c.waitRunDone(t, "A")
 
 	f.mu.Lock()
@@ -478,3 +494,61 @@ func TestResolvedProfileReachesNewSessionAndMode(t *testing.T) {
 		t.Fatalf("set_session_mode not applied from profile: mode=%q sess=%q", mode, modeSess)
 	}
 }
+
+// TestOnRunFinishedInvokedOnEndTurn proves the OnRunFinished callback wired
+// through StartPrompt is invoked exactly once with StopReasonEndTurn on a
+// normal successful prompt.
+func TestOnRunFinishedInvokedOnEndTurn(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	var calls int
+	var last acpsdk.StopReason
+	finished := func(_ context.Context, sr acpsdk.StopReason) error {
+		calls++
+		last = sr
+		return nil
+	}
+	if _, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		finished); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A")
+	if calls != 1 {
+		t.Fatalf("finished callback calls=%d, want 1", calls)
+	}
+	if last != acpsdk.StopReasonEndTurn {
+		t.Fatalf("finished StopReason=%q, want %q", last, acpsdk.StopReasonEndTurn)
+	}
+}
+
+// TestOnRunFinishedNotInvokedOnCancel proves the OnRunFinished callback is
+// never called when the run is cancelled mid-flight: the cancel-guard
+// (StopReasonCancelled + runCtx.Err()) keeps the notification fire path
+// off the user-initiated-cancel branch.
+func TestOnRunFinishedNotInvokedOnCancel(t *testing.T) {
+	f := newFakeConn()
+	f.blockPrompt = make(chan struct{})
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	var calls int
+	finished := func(_ context.Context, _ acpsdk.StopReason) error {
+		calls++
+		return nil
+	}
+	c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		finished)
+	f.waitForPrompt(t)
+	if err := c.Cancel(context.Background(), "A"); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A")
+	if calls != 0 {
+		t.Fatalf("finished callback calls=%d on cancel, want 0", calls)
+	}
+}
+
