@@ -56,19 +56,19 @@ Thread `finished` through `runLoop`'s signature (`run.go:668`):
 func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) {
 ```
 
-Call it right after the existing `bridge.Finished` publish loop at the end of `runLoop` (`run.go:744-746`), guarded to fire only on a genuine agent reply — not on a user-initiated cancel. The coordinator package has no logger of its own, and a failed/slow notification dispatch must never fail or delay run teardown, so the callback's error is deliberately swallowed (fire-and-forget, matching `schedule_importer.go:111`'s existing `go SendPushNotification(...)` style):
+Call it right after the existing `bridge.Finished` publish loop at the end of `runLoop` (`run.go:744-746`), guarded to fire only on a genuine agent reply — not on a user-initiated cancel. The coordinator package has no logger of its own, and a failed/slow notification dispatch must never fail or delay run teardown, so the callback's error is deliberately swallowed (fire-and-forget, matching `notifications.go:167`'s existing `go SendPushNotification(...)` dispatch inside the `/api/pocketcoder/push` handler — not `schedule_importer.go:111`'s call, which is synchronous):
 
 ```go
 	for _, e := range bridge.Finished(resp.StopReason) {
 		hub.Publish(e)
 	}
-	if finished != nil && resp.StopReason != acpsdk.StopReasonCancelled {
+	if finished != nil && resp.StopReason != acpsdk.StopReasonCancelled && runCtx.Err() == nil {
 		_ = finished(runCtx, resp.StopReason)
 	}
 }
 ```
 
-`StopReasonCancelled` is excluded because cancellation is always user-initiated via `POST .../session/cancel` (`api/agent.go:170`), which requires the user to already be actively looking at that chat — a notification would be redundant. All other terminal reasons (`end_turn`, `max_tokens`, `max_turn_requests`, `refusal`) represent the agent stopping on its own and are treated as "the agent replied."
+`StopReasonCancelled` alone is not a reliable guard: `Coordinator.Cancel` (`h.cancel()`) races against `conn.Prompt` returning, so a run that was just cancelled can still come back with `StopReasonEndTurn` if the underlying ACP server absorbs the cancel and finishes the turn anyway (this is exactly what the current `fakeConn` test double already does — see §3.3). Checking `runCtx.Err() == nil` in addition closes most of that window: `h.cancel()` cancels `runCtx` itself, so a cancel that landed before this check runs is caught even when `resp.StopReason` says `end_turn`. A small residual race remains (a cancel arriving in the few instructions between the `Prompt` return and this check) — acceptable here since the cost of a false-positive notification is low and no stronger signal is available without deeper ACP protocol changes, which are out of scope.
 
 ### 3.2 Call site (`api/agent.go:93-102`)
 
@@ -91,7 +91,7 @@ Add a fifth closure argument to the existing `service.StartPrompt(...)` call, ca
 			})
 ```
 
-`internal/hooks` is already imported by `internal/api` (`api/schedules.go:40` imports it for the same `SendPushNotification` function) — no new import cycle. The `go` prefix matches `schedule_importer.go:111`'s existing fire-and-forget dispatch style; `hooks.SendPushNotification` internally re-checks `isNotificationTypeEnabled` (so the `"chat_reply"` toggle is honored) and `IsUserOnline` (so a user actively streaming that chat's SSE connection is correctly suppressed — the exact mechanism this notification type was missing before).
+`agent.go` does not currently import `internal/hooks` (only `api/schedules.go:40` does, for `hooks.ImportSession` — a different file, so that import doesn't carry over). Add `"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"` to `agent.go`'s import block; `internal/api` already depends on `internal/hooks` elsewhere in the package, so this introduces no new import cycle, just a new import line in this specific file. `hooks.SendPushNotification` internally re-checks `isNotificationTypeEnabled` (so the `"chat_reply"` toggle is honored) and `IsUserOnline` (so a user actively streaming that chat's SSE connection is correctly suppressed — the exact mechanism this notification type was missing before).
 
 ### 3.3 Backend tests
 
@@ -299,7 +299,11 @@ static const String configureNotifications = 'configureNotifications';
 GoRoute(
   path: AppRoutes.configureNotifications,
   name: RouteNames.configureNotifications,
-  builder: (context, state) => const NotificationSettingsScreen(),
+  pageBuilder: (context, state) => TerminalTransition.buildPage(
+    context: context,
+    state: state,
+    child: const NotificationSettingsScreen(),
+  ),
 ),
 ```
 
@@ -320,10 +324,10 @@ GoRoute(
 
 ## 7. Testing
 
-- **Backend:** `run_test.go` additions per §3.3 (2 new cases: `finished` called once with `end_turn`; `finished` not called on cancel). `go build ./... && go vet ./... && go test ./...` must pass.
+- **Backend:** `run_test.go` additions per §3.3 (2 new cases: `finished` called once with `end_turn`; `finished` not called on cancel). This requires extending the existing `fakeConn` test double: its `Prompt` method currently always returns `StopReasonEndTurn` unconditionally, including in the existing cancel test (`TestExplicitCancelSendsAcpCancel`) — there is no way today to make it return `StopReasonCancelled` or to simulate the end-turn/cancel race described in §3.1. Add a configurable field to `fakeConn` (e.g. a `stopReason acpsdk.StopReason` field, defaulting to `StopReasonEndTurn`) so the new cancel-path test can set it and assert `finished` is not invoked. `go build ./... && go vet ./... && go test ./...` must pass.
 - **Flutter:**
   - `test/infrastructure/notifications/notification_rule_repository_test.dart` — mirrors `device_repository_test.dart`'s `MockPocketBase`/DAO-mock structure: create-when-absent, update-and-merge-when-present, `watchRules()` mapping.
-  - `test/application/notifications/notification_rule_cubit_test.dart` — mirrors `tool_permissions_cubit_test.dart` (if present) or `auth_cubit_test.dart`'s `bloc_test`-style structure: loading→loaded, loading→error, `setTypeEnabled` error path.
+  - `test/application/notifications/notification_rule_cubit_test.dart` — mirrors `tool_permissions_cubit_test.dart`'s structure: plain `flutter_test` `group()`/`test()` blocks with manual mocktail `verify()` calls (the project has no `bloc_test` dependency — do not add one). Cover: loading→loaded, loading→error, `setTypeEnabled` error path.
   - `test/presentation/notifications/notification_settings_screen_test.dart` — mocked cubit (`MockNotificationRuleCubit extends Mock implements NotificationRuleCubit`, precedented by `MockMcpCubit` in `settings_screen_test.dart`), asserts all 4 switches render with correct default-on state and that tapping one calls `setTypeEnabled` with the right args. Must set `theme: AppTheme.lightTheme` on the test `MaterialApp` (known past bug: a missing theme crashes instead of failing red).
   - `dart run build_runner build --delete-conflicting-outputs`, `flutter analyze`, `flutter test` must all pass.
 
