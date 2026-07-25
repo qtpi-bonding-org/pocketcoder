@@ -7,21 +7,17 @@ class Collections {
   static const String toolPermissions = 'tool_permissions';
   static const String healthchecks = 'healthchecks';
   static const String mcpServers = 'mcp_servers';
-  static const String proposals = 'proposals';
-  static const String sops = 'sops';
-  static const String questions = 'questions';
   static const String devices = 'devices';
   static const String notificationRules = 'notification_rules';
   static const String harnesses = 'harnesses';
   static const String models = 'models';
   static const String harnessModels = 'harness_models';
   static const String providerKeys = 'provider_keys';
-  static const String harnessAuth = 'harness_auth';
   static const String prompts = 'prompts';
   static const String pocoConfigs = 'poco_configs';
-  static const String sandboxConfigs = 'sandbox_configs';
   static const String gooseSessions = 'goose_sessions';
   static const String scheduleOwners = 'schedule_owners';
+  static const String cogneeConfig = 'cognee_config';
 
   static const List<String> all = [
     users,
@@ -31,20 +27,16 @@ class Collections {
     toolPermissions,
     healthchecks,
     mcpServers,
-    proposals,
-    sops,
-    questions,
     devices,
     notificationRules,
     harnesses,
     models,
     harnessModels,
     providerKeys,
-    harnessAuth,
     prompts,
     pocoConfigs,
-    sandboxConfigs,
     gooseSessions,
     scheduleOwners,
+    cogneeConfig,
   ];
 }
