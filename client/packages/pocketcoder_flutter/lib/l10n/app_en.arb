@@ -97,6 +97,8 @@
 
   "filesTitle": "FILES",
   "filesEmpty": "NO FILES",
+  "filesTooLargeToPreview": "FILE TOO LARGE TO PREVIEW",
+  "filesCantPreviewType": "CAN'T PREVIEW THIS FILE TYPE",
   "chatModelLabel": "MODEL:",
   "chatModelDefault": "DEFAULT",
   "chatModelPerChat": "[CHAT]",

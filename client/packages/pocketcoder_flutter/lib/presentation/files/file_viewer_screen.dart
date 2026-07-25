@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_i
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 const _imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+const _maxPreviewBytes = 10 * 1024 * 1024; // 10 MB
 
 class FileViewerScreen extends StatefulWidget {
   final String path;
@@ -80,6 +81,11 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     if (_isImage) {
       return Center(child: Image.memory(bytes));
     }
+    if (bytes.length > _maxPreviewBytes) {
+      return Center(
+        child: TerminalText(context.l10n.filesTooLargeToPreview, alpha: 0.5),
+      );
+    }
     try {
       final text = utf8.decode(bytes);
       return SingleChildScrollView(
@@ -95,7 +101,7 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
       );
     } on FormatException {
       return Center(
-        child: TerminalText("CAN'T PREVIEW THIS FILE TYPE", alpha: 0.5),
+        child: TerminalText(context.l10n.filesCantPreviewType, alpha: 0.5),
       );
     }
   }
