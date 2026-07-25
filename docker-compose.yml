@@ -177,7 +177,11 @@ services:
       - pocketcoder-cognee
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      # No curl/wget in this image, and cognee-mcp exposes no plain /health
+      # route (the streamable-HTTP MCP endpoint 406s on non-MCP requests,
+      # which still proves the process is up and listening) — so just
+      # confirm the port accepts a TCP connection.
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 8000), timeout=3).close()"]
       interval: 10s
       timeout: 5s
       retries: 5
