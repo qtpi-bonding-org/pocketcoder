@@ -55,7 +55,6 @@ func main() {
 
 	// 2. Register Global Sovereign Hooks
 	hooks.RegisterGlobalTimestamps(app)
-	hooks.RegisterSopHooks(app)
 	hooks.RegisterNotificationHooks(app)
 
 	// 3. Register MCP Hooks (config rendering + gateway restart)
