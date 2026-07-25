@@ -544,6 +544,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAutomationSection => 'AUTOMATION';
 
   @override
+  String get settingsAccountSection => 'ACCOUNT';
+
+  @override
+  String get settingsLogoutConfirmTitle => 'SIGN OUT';
+
+  @override
+  String get settingsLogoutConfirmBody =>
+      'This will end your current session. You will need to log in again to continue.';
+
+  @override
+  String get settingsLogoutCancel => 'CANCEL';
+
+  @override
+  String get settingsLogoutConfirm => 'SIGN OUT';
+
+  @override
   String get agentTitle => 'AGENT REGISTRY';
 
   @override

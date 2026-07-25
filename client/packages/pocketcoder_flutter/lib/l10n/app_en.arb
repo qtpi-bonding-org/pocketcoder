@@ -244,6 +244,11 @@
   "settingsSystemSection": "SYSTEM",
   "settingsObservabilitySection": "OBSERVABILITY",
   "settingsAutomationSection": "AUTOMATION",
+  "settingsAccountSection": "ACCOUNT",
+  "settingsLogoutConfirmTitle": "SIGN OUT",
+  "settingsLogoutConfirmBody": "This will end your current session. You will need to log in again to continue.",
+  "settingsLogoutCancel": "CANCEL",
+  "settingsLogoutConfirm": "SIGN OUT",
 
   "agentTitle": "AGENT REGISTRY",
   "agentModelsPersonas": "MODELS & PERSONAS",
