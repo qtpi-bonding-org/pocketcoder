@@ -36,11 +36,15 @@ class FilesRepository implements IFilesRepository {
   Future<List<int>> readFile(String path) async {
     return tryMethod(
       () async {
+        final token = _pb.authStore.token;
+        if (token.isEmpty) {
+          throw FilesException.noAuthToken();
+        }
         final uri = Uri.parse('${_pb.baseURL}${ApiEndpoints.files(path)}');
-        final response = await _http.get(
-          uri,
-          headers: {'Authorization': _pb.authStore.token},
-        );
+        final response = await _http.get(uri, headers: {'Authorization': token});
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw FilesException.httpError(response.statusCode);
+        }
         return response.bodyBytes;
       },
       FilesException.new,

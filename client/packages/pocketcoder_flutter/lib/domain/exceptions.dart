@@ -96,4 +96,9 @@ class SchedulerException extends DomainException {
 /// Files-related exceptions.
 class FilesException extends DomainException {
   FilesException(super.message, [super.cause]);
+
+  factory FilesException.httpError(int statusCode) =>
+      FilesException('Request failed with status $statusCode');
+  factory FilesException.noAuthToken() =>
+      FilesException('No auth token available');
 }
