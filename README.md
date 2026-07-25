@@ -4,11 +4,10 @@
 
 PocketCoder is a solo research project built in the open. It follows an **Alpine Linux** philosophy — a tiny original surface area standing on FOSS "giant's shoulders" rather than hand-rolled glue: **PocketBase** for state and auth, **Goose** as the agent core, and open agent protocols (**ACP**, **AG-UI**, **MCP**) for everything in between.
 
-> ### ⚠️ Status: mid-build, core loop usable, a few surfaces still missing
+> ### ⚠️ Status: mid-build, core loop usable
 > - ✅ **Backend contract (c1 ↔ c2) is implemented and passes live acceptance** against a real model — authenticated runs, streaming, tool calls, and phone approve/deny all work.
-> - ✅ **The Flutter client's core loop is live**: chat list (home screen), conversation, MCP/scheduler/skills/tool-permissions/agent-config settings, logout — all wired to real PocketBase-backed data, no stubs.
+> - ✅ **The Flutter client's core loop is live**: chat list (home screen), conversation, file browser, MCP/scheduler/skills/tool-permissions/agent-config/notification settings, logout — all wired to real PocketBase-backed data, no stubs.
 > - ✅ **Cognee memory is live**, sharing Goose's own `agent` Compose profile — not gated behind the MCP gateway.
-> - 🚧 **Still missing:** a working file/directory browser (route exists, wired to nothing), per-turn diff summaries, and a settings UI for notification-type preferences (the backend already enforces them).
 > - 💤 **Dormant:** the c3 MCP gateway container and the Rust sandbox proxy are retained for future work — see [`dormant/`](dormant/).
 >
 > Treat this as an architecture experiment you can read and run, not a finished product.
