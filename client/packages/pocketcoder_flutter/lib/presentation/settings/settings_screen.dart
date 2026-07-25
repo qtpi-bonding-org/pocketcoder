@@ -40,6 +40,7 @@ class SettingsScreen extends StatelessWidget {
         ('SCHEDULER', '[MANAGE]', 'configureScheduler'),
       ]),
       (context.l10n.settingsAccountSection, [
+        ('NOTIFICATIONS', '[CONFIGURE]', 'configureNotifications'),
         ('LOGOUT', '[SIGN OUT]', 'logout'),
       ]),
     ];
@@ -149,6 +150,8 @@ class SettingsScreen extends StatelessWidget {
         context.push(AppRoutes.configureLlm);
       case 'configureScheduler':
         context.push(AppRoutes.configureScheduler);
+      case 'configureNotifications':
+        context.push(AppRoutes.configureNotifications);
     }
   }
 }

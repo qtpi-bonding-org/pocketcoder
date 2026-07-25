@@ -874,6 +874,36 @@ abstract class AppLocalizations {
   /// **'DENY'**
   String get toolPermissionsDenyLabel;
 
+  /// No description provided for @notificationSettingsScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NOTIFICATIONS'**
+  String get notificationSettingsScreenTitle;
+
+  /// No description provided for @notificationSettingsChatReplyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CHAT REPLIES'**
+  String get notificationSettingsChatReplyLabel;
+
+  /// No description provided for @notificationSettingsScheduleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SCHEDULED TASKS'**
+  String get notificationSettingsScheduleLabel;
+
+  /// No description provided for @notificationSettingsTaskCompleteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TASK COMPLETE'**
+  String get notificationSettingsTaskCompleteLabel;
+
+  /// No description provided for @notificationSettingsTaskErrorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TASK ERRORS'**
+  String get notificationSettingsTaskErrorLabel;
+
   /// No description provided for @skillsTitle.
   ///
   /// In en, this message translates to:
