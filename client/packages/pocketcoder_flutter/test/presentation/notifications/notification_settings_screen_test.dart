@@ -2,14 +2,16 @@
 //
 // Mirrors `settings_screen_test.dart`'s MockMcpCubit pattern: a mocked
 // cubit (MockNotificationRuleCubit extends Mock implements
-// NotificationRuleCubit) injected via BlocProvider.value, with a
-// MaterialApp that sets `theme: AppTheme.lightTheme` so the screen's
-// context.colorScheme/terminalColors lookups don't crash during the test.
+// NotificationRuleCubit) registered into `getIt`, since the screen builds
+// its own BlocProvider internally via `getIt<NotificationRuleCubit>()`
+// (mirroring how SettingsScreen registers its own AuthCubit). A MaterialApp
+// sets `theme: AppTheme.lightTheme` so the screen's context.colorScheme
+// lookups don't crash during the test.
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -19,7 +21,7 @@ import 'package:pocketcoder_flutter/presentation/notifications/notification_sett
 class MockNotificationRuleCubit extends Mock
     implements NotificationRuleCubit {}
 
-Widget _wrap(NotificationRuleCubit cubit) {
+Widget _wrap() {
   return MaterialApp(
     theme: AppTheme.lightTheme,
     localizationsDelegates: const [
@@ -29,10 +31,7 @@ Widget _wrap(NotificationRuleCubit cubit) {
       GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: const [Locale('en')],
-    home: BlocProvider<NotificationRuleCubit>.value(
-      value: cubit,
-      child: const NotificationSettingsScreen(),
-    ),
+    home: const NotificationSettingsScreen(),
   );
 }
 
@@ -47,6 +46,18 @@ void main() {
     when(() => cubit.stream)
         .thenAnswer((_) => const Stream<NotificationRuleState>.empty());
     when(() => cubit.close()).thenAnswer((_) async {});
+
+    // NotificationSettingsScreen creates its own BlocProvider internally via
+    // getIt<NotificationRuleCubit>() (see the screen's build method) rather
+    // than reading one from an ancestor — matches SettingsScreen's own
+    // AuthCubit registration precedent in settings_screen_test.dart. Register
+    // the mock into getIt instead of wrapping the screen in an external
+    // BlocProvider.value, which would conflict with the screen's own.
+    getIt.registerFactory<NotificationRuleCubit>(() => cubit);
+  });
+
+  tearDown(() {
+    getIt.reset();
   });
 
   testWidgets(
@@ -55,7 +66,7 @@ void main() {
     when(() => cubit.state)
         .thenReturn(const NotificationRuleState.loaded({}));
 
-    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
     expect(find.text('CHAT REPLIES'), findsOneWidget);
@@ -79,7 +90,7 @@ void main() {
       'task_error': false,
     }));
 
-    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
     final switches = find.byType(Switch);
@@ -95,7 +106,7 @@ void main() {
     when(() => cubit.state)
         .thenReturn(const NotificationRuleState.loaded({}));
 
-    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
     // Tap the first switch (chat_reply) — flips it off.
