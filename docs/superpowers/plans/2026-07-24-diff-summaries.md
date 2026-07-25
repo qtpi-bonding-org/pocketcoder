@@ -280,16 +280,16 @@ git commit -m "feat: pass ToolCallTimelineItem.diffs through to CustomMessage me
 
 ---
 
-## Task 3: `ag_ui_widgets_flutter` — push and capture the new commit SHA
+## Task 3: `ag_ui_widgets_flutter` — push to origin
 
 **Repo:** `/Users/aicoder/Documents/ag_ui_widgets_flutter`
 
-This is a small, standalone task because Task 4 (in the other repo) needs a real, pushed commit SHA to pin against — `pocketcoder_flutter`'s `pub get` resolves the git dependency by fetching that exact ref from `origin`, so an unpushed local commit would fail resolution for anyone but this machine.
+This is a small, standalone task because Task 4 (in the other repo) needs a real, pushed commit to pin against — `pocketcoder_flutter`'s `pub get` resolves the git dependency by fetching a ref from `origin`, so an unpushed local commit would fail resolution for anyone but this machine.
 
 **Files:** none (git operations only).
 
 **Interfaces:**
-- Produces: a commit SHA (40-char hex), pushed to `origin/main` of `ag_ui_widgets_flutter`, consumed by Task 4's `pubspec.yaml` edit.
+- Produces: `origin/main` of `ag_ui_widgets_flutter` updated to include Tasks 1-2's commits. Task 4 looks this up itself (`git rev-parse origin/main`) rather than depending on a value carried over from this task — see Task 4, Step 1.
 
 - [ ] **Step 1: Confirm the working tree is clean and on `main`**
 
@@ -301,10 +301,10 @@ Expected: `nothing to commit, working tree clean` (both Task 1 and Task 2 commit
 Run: `cd /Users/aicoder/Documents/ag_ui_widgets_flutter && git push origin main`
 Expected: push succeeds (this is the project's own org repo — `git remote -v` confirms `origin` is `git@github-qtpi-bonding-org-ag_ui_widgets_flutter:qtpi-bonding-org/ag_ui_widgets_flutter.git`, not a third-party fork).
 
-- [ ] **Step 3: Capture the commit SHA**
+- [ ] **Step 3: Confirm the push landed**
 
-Run: `cd /Users/aicoder/Documents/ag_ui_widgets_flutter && git rev-parse HEAD`
-Expected: prints a 40-character SHA. **Save this value** — Task 4's Step 1 needs it verbatim.
+Run: `cd /Users/aicoder/Documents/ag_ui_widgets_flutter && git rev-parse HEAD origin/main`
+Expected: both lines print the same 40-character SHA, confirming `origin/main` now points at this task's commits. (Task 4 looks this SHA up itself via `origin/main` rather than depending on it being carried over from here — see Task 4, Step 1.)
 
 ---
 
@@ -316,10 +316,15 @@ Expected: prints a 40-character SHA. **Save this value** — Task 4's Step 1 nee
 - Modify: `client/packages/pocketcoder_flutter/pubspec.yaml`
 
 **Interfaces:**
-- Consumes: the commit SHA captured in Task 3, Step 3.
+- Consumes: the commit pushed to `ag_ui_widgets_flutter`'s `origin/main` in Task 3.
 - Produces: `diff_match_patch` package available for import as `package:diff_match_patch/diff_match_patch.dart`, consumed by Task 5.
 
 - [ ] **Step 1: Bump the pinned ref**
+
+**Do not rely on a remembered value from Task 3's terminal output** — if this task runs as a fresh subagent (per this plan's recommended `subagent-driven-development` execution), it has no memory of Task 3's session. Instead, look the SHA up directly:
+
+Run: `git -C /Users/aicoder/Documents/ag_ui_widgets_flutter rev-parse origin/main`
+Expected: prints the 40-character SHA of the commit Task 3 pushed (its `HEAD` after Tasks 1-2's commits).
 
 In `client/packages/pocketcoder_flutter/pubspec.yaml`, change line 80 from:
 
@@ -327,7 +332,7 @@ In `client/packages/pocketcoder_flutter/pubspec.yaml`, change line 80 from:
       ref: df010806b11ad127a32a82e6d3eba38bd3e7a241
 ```
 
-to the SHA captured in Task 3, Step 3 (do not guess or reuse the old SHA — use the exact value that task printed).
+to that SHA (do not guess or reuse the old SHA — use the exact value the command above printed).
 
 - [ ] **Step 2: Add the `diff_match_patch` dependency**
 
