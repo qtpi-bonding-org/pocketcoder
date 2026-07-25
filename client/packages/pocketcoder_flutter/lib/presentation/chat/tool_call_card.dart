@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'diff_summary_view.dart';
 
 class ToolCallCard extends StatelessWidget {
   final chat_core.CustomMessage message;
@@ -18,6 +19,7 @@ class ToolCallCard extends StatelessWidget {
     final name = (message.metadata?['name'] as String?) ?? '';
     final args = (message.metadata?['args'] as String?) ?? '';
     final result = message.metadata?['result'] as String?;
+    final diffs = (message.metadata?['diffs'] as List<dynamic>?) ?? const [];
 
     return Container(
       margin: EdgeInsets.symmetric(
@@ -80,6 +82,15 @@ class ToolCallCard extends StatelessWidget {
               maxLines: 6,
               overflow: TextOverflow.ellipsis,
             ),
+          ],
+          if (diffs.isNotEmpty) ...[
+            VSpace.x1,
+            for (final d in diffs)
+              DiffSummaryLine(
+                path: (d as Map)['path'] as String? ?? '',
+                oldText: d['oldText'] as String? ?? '',
+                newText: d['newText'] as String? ?? '',
+              ),
           ],
         ],
       ),
