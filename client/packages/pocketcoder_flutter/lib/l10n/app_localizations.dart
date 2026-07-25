@@ -538,6 +538,18 @@ abstract class AppLocalizations {
   /// **'THINKING'**
   String get chatThinking;
 
+  /// No description provided for @filesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FILES'**
+  String get filesTitle;
+
+  /// No description provided for @filesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'NO FILES'**
+  String get filesEmpty;
+
   /// No description provided for @chatModelLabel.
   ///
   /// In en, this message translates to:

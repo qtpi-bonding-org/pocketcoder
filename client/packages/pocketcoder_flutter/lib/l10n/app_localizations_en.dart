@@ -237,6 +237,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatThinking => 'THINKING';
 
   @override
+  String get filesTitle => 'FILES';
+
+  @override
+  String get filesEmpty => 'NO FILES';
+
+  @override
   String get chatModelLabel => 'MODEL:';
 
   @override
