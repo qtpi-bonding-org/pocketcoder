@@ -160,6 +160,7 @@ import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
@@ -188,6 +189,7 @@ void main() {
 
   Widget buildTestable() {
     return MaterialApp(
+      theme: AppTheme.lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: BlocProvider<McpCubit>.value(
@@ -419,6 +421,7 @@ git commit -m "feat: wire logout into settings screen"
 - Modify: `services/pocketbase/pb_migrations/schema.json` (remove 5 collection entries)
 - Delete: `services/pocketbase/internal/hooks/sops.go`
 - Modify: `services/pocketbase/main.go` (remove `RegisterSopHooks` call site)
+- Modify: `services/pocketbase/pb_migrations/1756000000_schema_test.go` (remove 5 expectation entries)
 
 **Interfaces:**
 - Consumes: nothing from earlier tasks.
@@ -454,7 +457,7 @@ print('OK: schema.json valid, all 5 removed. Total collections now:', len(d))
 "
 ```
 
-Expected output: `OK: schema.json valid, all 5 removed. Total collections now: 17` (was 22).
+Expected output: `OK: schema.json valid, all 5 removed. Total collections now: 18` (was 23).
 
 - [ ] **Step 2: Delete the sops.go hook and its call site**
 
@@ -476,12 +479,34 @@ leaving that section as:
 	hooks.RegisterNotificationHooks(app)
 ```
 
-- [ ] **Step 3: Verify Go builds and vets clean**
+- [ ] **Step 3: Update the Go schema test's expectations**
 
-Run: `cd services/pocketbase && go build ./... && go vet ./...`
-Expected: no output (clean build, no errors)
+`services/pocketbase/pb_migrations/1756000000_schema_test.go`'s `TestFinalSchemaCollectionsExist` (lines 11-46) asserts every collection in the schema exists with specific fields, including entries for all 5 collections being removed. Edit the `expected` map (lines 18-41) to delete these 5 entries:
 
-- [ ] **Step 4: Run the Model Generation Pipeline**
+```go
+		"proposals":          {"name", "content", "authored_by", "status"},
+```
+```go
+		"sops":               {"name", "content", "signature", "proposal"},
+```
+```go
+		"questions":          {"chat", "question", "status"},
+```
+```go
+		"harness_auth":       {"user", "harness", "auth_type", "status"},
+```
+```go
+		"sandbox_configs":    {"name", "harness_model", "system_prompt"},
+```
+
+leaving the other 18 entries (`users`, `chats`, `sandbox_agents`, `ssh_keys`, `tool_permissions`, `healthchecks`, `mcp_servers`, `devices`, `notification_rules`, `harnesses`, `models`, `harness_models`, `provider_keys`, `prompts`, `poco_configs`, `goose_sessions`, `schedule_owners`, `cognee_config`) untouched.
+
+- [ ] **Step 4: Verify Go builds, vets, and tests clean**
+
+Run: `cd services/pocketbase && go build ./... && go vet ./... && go test ./...`
+Expected: build and vet produce no output; `go test ./...` reports `ok` for every package, including `pb_migrations` — confirming `TestFinalSchemaCollectionsExist` still passes with the 5 removed entries gone from its expectations.
+
+- [ ] **Step 5: Run the Model Generation Pipeline**
 
 Run each step from the repo root, per root `CLAUDE.md`:
 
@@ -525,10 +550,10 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 Expected: ends with `Succeeded after ...ms with ... outputs`. This regenerates `.freezed.dart`/`.g.dart` for every model still referenced by the codebase — but since the 5 orphaned `.dart` model files still exist on disk (not yet deleted) and still have valid syntax (they just import `Sop`, `Proposal`, etc. which still compile fine as isolated files with no other references), this step should complete without errors. If it errors on the orphaned files, that confirms Task 4 must run before this step in a future iteration — but expect success here since these are self-contained files.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add services/pocketbase/pb_migrations/schema.json services/pocketbase/main.go client/packages/pocketcoder_flutter/assets/pb_schema.json client/packages/pocketcoder_flutter/lib/domain/models/collections.dart
+git add services/pocketbase/pb_migrations/schema.json services/pocketbase/pb_migrations/1756000000_schema_test.go services/pocketbase/main.go client/packages/pocketcoder_flutter/assets/pb_schema.json client/packages/pocketcoder_flutter/lib/domain/models/collections.dart
 git rm services/pocketbase/internal/hooks/sops.go
 git commit -m "feat: remove dead PocketBase collections from schema (proposals, sops, questions, harness_auth, sandbox_configs)
 
@@ -548,6 +573,7 @@ now orphaned; removed in the next commit."
 - Delete: `client/packages/pocketcoder_flutter/lib/domain/evolution/i_evolution_repository.dart`
 - Delete: `client/packages/pocketcoder_flutter/lib/infrastructure/evolution/evolution_repository.dart`, `evolution_daos.dart`
 - Delete: `client/packages/pocketcoder_flutter/lib/domain/exceptions/sop_exception.dart`
+- Modify: `client/packages/pocketcoder_flutter/lib/domain/exceptions.dart` (remove the separate, differently-cased `SopException` class at lines 82-84 — a second, zero-usage dead exception class distinct from `SOPException` above; confirmed via `grep -rn "SopException" lib/` finding only its own declaration)
 - Delete (orphaned generated models, 15 files): `lib/domain/models/{question,harness_auth,sandbox_config,proposal,sop}.dart` and matching `.freezed.dart`/`.g.dart` for each
 - Modify: `client/packages/pocketcoder_flutter/lib/app_router.dart`
 - Modify: `client/packages/pocketcoder_flutter/lib/l10n/app_en.arb`
@@ -577,6 +603,15 @@ rmdir lib/domain/evolution 2>/dev/null || true
 rm lib/infrastructure/evolution/evolution_repository.dart lib/infrastructure/evolution/evolution_daos.dart
 rmdir lib/infrastructure/evolution 2>/dev/null || true
 rm lib/domain/exceptions/sop_exception.dart
+```
+
+Edit `lib/domain/exceptions.dart`, removing this block (a second, differently-cased, zero-usage `SopException` class, distinct from the `SOPException` deleted above):
+
+```dart
+/// SOP-related exceptions.
+class SopException extends DomainException {
+  SopException(super.message, [super.cause]);
+}
 ```
 
 - [ ] **Step 3: Delete the 5 orphaned generated model file sets**
@@ -705,3 +740,5 @@ commit (question, harness_auth, sandbox_config, proposal, sop)."
 **3. Type consistency check:** `AuthCubit.logout()` (Task 1) → called as `context.read<AuthCubit>().logout()` in Task 2, matching signature `Future<void> logout()`. `AuthState.isSuccess`/`.status`/`.error` (existing, unchanged) used consistently in Task 1's test and Task 2's listener. `RouteNames.onboarding` (existing constant) used consistently. No mismatches found.
 
 **4. Ordering resolution (the one open question flagged in the spec):** Confirmed by reading `scripts/generate_models.py` in full — `generate_model()`/`generate_collections()` only ever *write* files for collections present in the schema passed in; there is no deletion logic anywhere in the script. So Task 3 (schema edit + pipeline run) does NOT auto-remove the 5 orphaned model files — Task 4 does that by hand, after Task 3. This ordering (schema/backend first, hand-deletion of app-layer + orphaned models second) is now definitive, not a plan-time guess.
+
+**Adversarial review pass (Sonnet):** verified every file/method/line-number citation against real source. Confirmed correct: `tryOperation`/`createSuccessState()` semantics (checked against the pinned `cubit_ui_flow` package source), `UiFlowListener`'s real `listener:` constructor shape, `BiosListTile.isDestructive`, `TerminalDialog`'s constructor shape, the 5-collections-in-schema.json claim, and the generate_models.py no-deletion-logic claim. Found and fixed 4 real issues: (1) Task 2's widget test omitted `theme: AppTheme.lightTheme` on its `MaterialApp`, which would have made `BiosListTile`'s `context.terminalColors` call throw `StateError` rather than fail red-for-the-right-reason — fixed by adding the theme, matching `test/presentation/chat/chat_list_screen_test.dart`'s pattern. (2) Task 3 never accounted for `services/pocketbase/pb_migrations/1756000000_schema_test.go`'s `TestFinalSchemaCollectionsExist`, which asserts all 5 doomed collections exist with specific fields — fixed by adding a new Task 3 step to remove those 5 map entries and adding `go test ./...` to the build verification. (3) Task 3 Step 1's expected collection count was wrong (claimed 22→17, actually 23→18) — fixed. (4) Task 4 deleted `SOPException` (`sop_exception.dart`) but missed a second, differently-cased, zero-usage `SopException` class in `lib/domain/exceptions.dart:82-84` — fixed by adding its removal to Task 4.
