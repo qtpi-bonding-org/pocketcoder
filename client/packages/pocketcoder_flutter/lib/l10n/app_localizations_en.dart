@@ -422,6 +422,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolPermissionsDenyLabel => 'DENY';
 
   @override
+  String get notificationSettingsScreenTitle => 'NOTIFICATIONS';
+
+  @override
+  String get notificationSettingsChatReplyLabel => 'CHAT REPLIES';
+
+  @override
+  String get notificationSettingsScheduleLabel => 'SCHEDULED TASKS';
+
+  @override
+  String get notificationSettingsTaskCompleteLabel => 'TASK COMPLETE';
+
+  @override
+  String get notificationSettingsTaskErrorLabel => 'TASK ERRORS';
+
+  @override
   String get skillsTitle => 'SKILLS';
 
   @override

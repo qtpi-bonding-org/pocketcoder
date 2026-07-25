@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-07-25T02:19:53.720856
+// Generated at: 2026-07-25T03:05:34.790894
 
 import 'app_localizations.dart';
 
@@ -173,6 +173,11 @@ class L10nKeyResolver {
       'nav.chats' => _l10n.navChats,
       'nav.configure' => _l10n.navConfigure,
       'nav.monitor' => _l10n.navMonitor,
+      'notification.settings.chat.reply.label' => _l10n.notificationSettingsChatReplyLabel,
+      'notification.settings.schedule.label' => _l10n.notificationSettingsScheduleLabel,
+      'notification.settings.screen.title' => _l10n.notificationSettingsScreenTitle,
+      'notification.settings.task.complete.label' => _l10n.notificationSettingsTaskCompleteLabel,
+      'notification.settings.task.error.label' => _l10n.notificationSettingsTaskErrorLabel,
       'observability.backend' => _l10n.observabilityBackend,
       'observability.cost' => _l10n.observabilityCost,
       'observability.log.terminal' => _l10n.observabilityLogTerminal,
@@ -492,6 +497,11 @@ class L10nKeyResolver {
     'nav.chats',
     'nav.configure',
     'nav.monitor',
+    'notification.settings.chat.reply.label',
+    'notification.settings.schedule.label',
+    'notification.settings.screen.title',
+    'notification.settings.task.complete.label',
+    'notification.settings.task.error.label',
     'notification.signal.received',
     'observability.backend',
     'observability.cost',
@@ -796,6 +806,11 @@ class L10nKeyResolver {
     'navChats': 'nav.chats',
     'navConfigure': 'nav.configure',
     'navMonitor': 'nav.monitor',
+    'notificationSettingsChatReplyLabel': 'notification.settings.chat.reply.label',
+    'notificationSettingsScheduleLabel': 'notification.settings.schedule.label',
+    'notificationSettingsScreenTitle': 'notification.settings.screen.title',
+    'notificationSettingsTaskCompleteLabel': 'notification.settings.task.complete.label',
+    'notificationSettingsTaskErrorLabel': 'notification.settings.task.error.label',
     'notificationSignalReceived': 'notification.signal.received',
     'observabilityBackend': 'observability.backend',
     'observabilityCost': 'observability.cost',
@@ -1097,6 +1112,11 @@ class L10nKeyResolver {
     'nav.chats': 'navChats',
     'nav.configure': 'navConfigure',
     'nav.monitor': 'navMonitor',
+    'notification.settings.chat.reply.label': 'notificationSettingsChatReplyLabel',
+    'notification.settings.schedule.label': 'notificationSettingsScheduleLabel',
+    'notification.settings.screen.title': 'notificationSettingsScreenTitle',
+    'notification.settings.task.complete.label': 'notificationSettingsTaskCompleteLabel',
+    'notification.settings.task.error.label': 'notificationSettingsTaskErrorLabel',
     'notification.signal.received': 'notificationSignalReceived',
     'observability.backend': 'observabilityBackend',
     'observability.cost': 'observabilityCost',
@@ -1405,6 +1425,11 @@ abstract class L10nKeys {
   static const navChats = 'nav.chats';
   static const navConfigure = 'nav.configure';
   static const navMonitor = 'nav.monitor';
+  static const notificationSettingsChatReplyLabel = 'notification.settings.chat.reply.label';
+  static const notificationSettingsScheduleLabel = 'notification.settings.schedule.label';
+  static const notificationSettingsScreenTitle = 'notification.settings.screen.title';
+  static const notificationSettingsTaskCompleteLabel = 'notification.settings.task.complete.label';
+  static const notificationSettingsTaskErrorLabel = 'notification.settings.task.error.label';
   static (String, Map<String, dynamic>) notificationSignalReceived(String title) => ('notification.signal.received', {'title': title});
   static const observabilityBackend = 'observability.backend';
   static const observabilityCost = 'observability.cost';
