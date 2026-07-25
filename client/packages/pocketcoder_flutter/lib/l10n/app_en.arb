@@ -94,6 +94,9 @@
   "chatFilesAction": "FILES",
   "chatNewCapabilityRequest": "[!] NEW CAPABILITY REQUEST RECEIVED",
   "chatThinking": "THINKING",
+
+  "filesTitle": "FILES",
+  "filesEmpty": "NO FILES",
   "chatModelLabel": "MODEL:",
   "chatModelDefault": "DEFAULT",
   "chatModelPerChat": "[CHAT]",
