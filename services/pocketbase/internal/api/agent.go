@@ -36,6 +36,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
 )
 
 // RegisterAgentApi registers PocketBase-owned routes. AG-UI is the response
@@ -99,6 +100,10 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 					app.Logger().Debug("Goose session mapping created", "chat_id", chatID)
 				}
 				return err
+			},
+			func(ctx context.Context, stopReason acpsdk.StopReason) error {
+				go hooks.SendPushNotification(app, re.Auth.Id, "PocketCoder", "Your agent replied", "chat_reply", chatID)
+				return nil
 			})
 		if err != nil {
 			if errors.Is(err, coordinator.ErrRunInProgress) {
