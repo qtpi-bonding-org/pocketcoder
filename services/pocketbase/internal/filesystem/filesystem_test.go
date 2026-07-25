@@ -175,6 +175,31 @@ func TestGroupImmediateChildren_EmptyInput(t *testing.T) {
 	}
 }
 
+func TestGroupImmediateChildren_ConflictResolvesToDirRegardlessOfOrder(t *testing.T) {
+	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
+
+	fileFirst := []*blob.ListObject{
+		{Key: "src", Size: 5, ModTime: mod},
+		{Key: "src/a.go", Size: 10, ModTime: mod},
+	}
+	got := groupImmediateChildren("", fileFirst)
+	if len(got) != 1 || got[0].Name != "src" || !got[0].IsDir {
+		t.Fatalf("file-first order: got %+v, want single dir entry named src", got)
+	}
+	if got[0].Size != 0 {
+		t.Fatalf("file-first order: directory entry Size = %d, want 0", got[0].Size)
+	}
+
+	dirFirst := []*blob.ListObject{
+		{Key: "src/a.go", Size: 10, ModTime: mod},
+		{Key: "src", Size: 5, ModTime: mod},
+	}
+	got = groupImmediateChildren("", dirFirst)
+	if len(got) != 1 || got[0].Name != "src" || !got[0].IsDir {
+		t.Fatalf("dir-first order: got %+v, want single dir entry named src", got)
+	}
+}
+
 func TestGroupImmediateChildren_DedupesDirectory(t *testing.T) {
 	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
 	objects := []*blob.ListObject{
