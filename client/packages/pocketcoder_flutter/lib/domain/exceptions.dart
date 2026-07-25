@@ -92,3 +92,8 @@ class SkillsException extends DomainException {
 class SchedulerException extends DomainException {
   SchedulerException(super.message, [super.cause]);
 }
+
+/// Files-related exceptions.
+class FilesException extends DomainException {
+  FilesException(super.message, [super.cause]);
+}
