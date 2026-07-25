@@ -16,8 +16,14 @@ import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
+import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
+import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart';
+import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
 
 /// App routing configuration.
 class AppRouter {
@@ -201,6 +207,37 @@ class AppRouter {
           child: const DeployPickerScreen(),
         ),
       ),
+      // ── FILES ──
+      GoRoute(
+        path: AppRoutes.files,
+        name: RouteNames.files,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: BlocProvider(
+            create: (_) => getIt<FileBrowserCubit>()..open(''),
+            child: FileBrowserScreen(
+              onOpenFile: (context, path) =>
+                  AppNavigation.toFileViewer(context, path),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.fileViewer,
+        name: RouteNames.fileViewer,
+        pageBuilder: (context, state) {
+          final path = state.uri.queryParameters['path'] ?? '';
+          return TerminalTransition.buildPage(
+            context: context,
+            state: state,
+            child: FileViewerScreen(
+              path: path,
+              repository: getIt<IFilesRepository>(),
+            ),
+          );
+        },
+      ),
       // Additional routes injected by proprietary package
       ..._additionalRoutes,
     ],
@@ -225,6 +262,7 @@ class AppRoutes {
   static const String boot = '/boot';
   static const String files = '/files';
   static const String terminal = '/terminal';
+  static const String fileViewer = '/files/view';
   // Configure sub-routes
   static const String configureAi = '/configure/ai';
   static const String configureToolPermissions = '/configure/tool-permissions';
@@ -265,6 +303,7 @@ class RouteNames {
   static const String boot = 'boot';
   static const String files = 'files';
   static const String terminal = 'terminal';
+  static const String fileViewer = 'fileViewer';
   // Configure sub-routes
   static const String configureAi = 'configureAi';
   static const String configureToolPermissions = 'configureToolPermissions';
@@ -309,6 +348,11 @@ class AppNavigation {
       context.push(AppRoutes.terminal);
   static void toFiles(BuildContext context) =>
       context.push(AppRoutes.files);
+  static void toFileViewer(BuildContext context, String path) =>
+      context.pushNamed(
+        RouteNames.fileViewer,
+        queryParameters: {'path': path},
+      );
   static void toMonitor(BuildContext context) =>
       context.go(AppRoutes.monitor);
   static void toDeploy(BuildContext context) =>
