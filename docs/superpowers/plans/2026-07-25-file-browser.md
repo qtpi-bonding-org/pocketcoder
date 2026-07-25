@@ -82,6 +82,8 @@ func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		defer r.Close()
 
 		// Sniff Content Type if possible, or default to octet-stream
+		// Actually, http.ServeContent or similar might be better, but GetReader logic is manual
+		// We'll set a default and let the client handle it for now, or use a basic extension check.
 		re.Response.Header().Set("Content-Type", "application/octet-stream")
 		if strings.HasSuffix(cleanPath, ".html") { re.Response.Header().Set("Content-Type", "text/html") }
 		if strings.HasSuffix(cleanPath, ".png") { re.Response.Header().Set("Content-Type", "image/png") }
@@ -325,6 +327,8 @@ func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		defer r.Close()
 
 		// Sniff Content Type if possible, or default to octet-stream
+		// Actually, http.ServeContent or similar might be better, but GetReader logic is manual
+		// We'll set a default and let the client handle it for now, or use a basic extension check.
 		re.Response.Header().Set("Content-Type", "application/octet-stream")
 		if strings.HasSuffix(cleanPath, ".html") { re.Response.Header().Set("Content-Type", "text/html") }
 		if strings.HasSuffix(cleanPath, ".png") { re.Response.Header().Set("Content-Type", "image/png") }
@@ -480,7 +484,7 @@ git commit -m "feat(flutter): add FileEntry model and files-list endpoint consta
 - Consumes: `FileEntry` (Task 2), `ApiEndpoints.filesList` (Task 2), `ApiEndpoints.files` (existing, `lib/infrastructure/core/api_endpoints.dart:35`).
 - Produces: `abstract class IFilesRepository { Future<List<FileEntry>> listFiles(String path); Future<List<int>> readFile(String path); }`, implemented by `@LazySingleton(as: IFilesRepository) class FilesRepository`. `FilesException extends DomainException`.
 
-`readFile` cannot use `_pb.send` (built for JSON, not raw bytes) — it follows `AgentStreamClient`'s exact DI/token pattern (`lib/infrastructure/agent/agent_stream_client.dart:44-59`): inject both `PocketBase` and `http.Client` via the constructor (not `http.get` as a static call) so tests can supply a fake client, read the URL from `_pb.baseURL` (capital URL — confirmed property name), and set the `Authorization` header to the **raw** `_pb.authStore.token` value with **no `Bearer ` prefix** — `agent_stream_client.dart:88-90`'s comment confirms this is deliberate: "c1 only checks the raw token value, so we mirror what PocketBase's own client does internally."
+`readFile` cannot use `_pb.send` (built for JSON, not raw bytes) — it follows `AgentStreamClient`'s exact DI/token pattern (`lib/infrastructure/agent/agent_stream_client.dart:55-59`): inject both `PocketBase` and `http.Client` via the constructor (not `http.get` as a static call) so tests can supply a fake client, read the URL from `_pb.baseURL` (capital URL — confirmed property name), and set the `Authorization` header to the **raw** `_pb.authStore.token` value with **no `Bearer ` prefix** — `agent_stream_client.dart:88-90`'s comment confirms this is deliberate: "c1 only checks the raw token value, so we mirror what PocketBase's own client does internally."
 
 - [ ] **Step 1: Write the failing repository tests**
 
@@ -925,7 +929,9 @@ git commit -m "feat(flutter): add FileBrowserCubit for directory navigation stat
 
 **Interfaces:**
 - Consumes: `FileBrowserCubit`/`FileBrowserState` (Task 4), `FileEntry` (Task 2), `PocketCoderShell`/`NavPillar` (`lib/presentation/core/widgets/pocketcoder_shell.dart`), `UiFlowListener` (`lib/presentation/core/widgets/ui_flow_listener.dart`), `TerminalText`/`TerminalLoadingIndicator` (`lib/presentation/core/widgets/`).
-- Produces: `class FileBrowserScreen extends StatelessWidget` — no constructor params (opens at the workspace root; navigation happens via cubit calls, not route params). Tapping a directory row calls `context.read<FileBrowserCubit>().navigateInto(entry.name)`. Tapping a file row calls a `void Function(BuildContext, String path) onOpenFile` callback param (kept as a constructor param, not a direct `AppNavigation.toFileViewer` call, so this widget test doesn't need a real `GoRouter` — Task 6/7 wires the real navigation callback in `app_router.dart`).
+- Produces: `class FileBrowserScreen extends StatelessWidget` — takes `onOpenFile` only (opens at the workspace root; navigation happens via cubit calls, not route params). Tapping a directory row calls `context.read<FileBrowserCubit>().navigateInto(entry.name)`. Tapping a file row calls a `void Function(BuildContext, String path) onOpenFile` callback param (kept as a constructor param, not a direct `AppNavigation.toFileViewer` call, so this widget test doesn't need a real `GoRouter` — Task 6/7 wires the real navigation callback in `app_router.dart`).
+
+**Deviation from spec §3.2:** the spec describes `FileBrowserScreen` as mirroring `SkillsScreen`'s structure by owning its own `BlocProvider(create: (_) => getIt<FileBrowserCubit>()..open(''))` internally (`lib/presentation/skills/skills_screen.dart:25-30`). This task instead has `FileBrowserScreen` expect an ancestor-provided `FileBrowserCubit` (via `context.read`), with the `BlocProvider` moved to Task 7's `app_router.dart` route registration. This is a deliberate choice, not an oversight: `FileViewerScreen` (Task 6) already needs `getIt<IFilesRepository>()` resolved at the route's `pageBuilder` rather than inside the widget (for the same widget-testability reason — see Task 6's Interfaces note), so keeping both new screens' DI wiring in one place (`app_router.dart`) is more consistent than splitting it (one screen self-provisions, the other doesn't). Functionally equivalent either way — `getIt<FileBrowserCubit>()..open('')` runs exactly once per navigation to `AppRoutes.files` regardless of which file owns the `BlocProvider` call.
 
 - [ ] **Step 1: Write the failing widget test**
 
@@ -1488,7 +1494,7 @@ Replace with:
           ],
 ```
 
-This uses `context.l10n.chatFilesAction`, an ARB key that **already exists** (`lib/l10n/app_en.arb`, value `"FILES"`) but is currently unused anywhere in the app — no new ARB key needed for this button's label. `AppNavigation` is already imported transitively via `app_router.dart` usage elsewhere in this file (check: if `AppNavigation`/`AppRoutes` aren't already imported in `chat_screen.dart`, add `import 'package:pocketcoder_flutter/app_router.dart';` to the import block).
+This uses `context.l10n.chatFilesAction`, an ARB key that **already exists** (`lib/l10n/app_en.arb`, value `"FILES"`) but is currently unused anywhere in the app — no new ARB key needed for this button's label. `chat_screen.dart` does **not** currently import `app_router.dart` (confirmed: no `AppNavigation`/`AppRoutes`/`app_router` reference anywhere in the file today) — add `import 'package:pocketcoder_flutter/app_router.dart';` to the import block alongside the other imports at the top of the file.
 
 - [ ] **Step 5: Verify the chat screen compiles**
 
