@@ -22,13 +22,59 @@ package filesystem
 import (
 	"io"
 	"path/filepath"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
+	"github.com/pocketbase/pocketbase/tools/filesystem/blob"
 )
+
+// fileEntry is one immediate child of a listed directory.
+type fileEntry struct {
+	Name    string `json:"name"`
+	IsDir   bool   `json:"isDir"`
+	Size    int64  `json:"size"`
+	ModTime string `json:"modTime"`
+}
+
+// groupImmediateChildren collapses a flat, recursive listing (as returned by
+// filesystem.System.List, which never sets blob.ListOptions.Delimiter and so
+// never populates ListObject.IsDir) into immediate-children-only entries
+// relative to prefix. Deeper descendants of a subdirectory are deduped into
+// a single directory entry.
+func groupImmediateChildren(prefix string, objects []*blob.ListObject) []fileEntry {
+	seen := map[string]fileEntry{}
+	order := []string{}
+	for _, obj := range objects {
+		rel := strings.TrimPrefix(obj.Key, prefix)
+		if rel == "" {
+			continue
+		}
+		parts := strings.SplitN(rel, "/", 2)
+		name := parts[0]
+		isDir := len(parts) > 1
+		if _, exists := seen[name]; exists {
+			continue
+		}
+		entry := fileEntry{Name: name, IsDir: isDir}
+		if !isDir {
+			entry.Size = obj.Size
+			entry.ModTime = obj.ModTime.Format(time.RFC3339)
+		}
+		seen[name] = entry
+		order = append(order, name)
+	}
+	sort.Strings(order)
+	result := make([]fileEntry, 0, len(order))
+	for _, name := range order {
+		result = append(result, seen[name])
+	}
+	return result
+}
 
 // RegisterFilesApi provides a secure window into the /workspace using the PB Filesystem abstraction.
 func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
@@ -75,5 +121,45 @@ func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 		_, err = io.Copy(re.Response, r)
 		return err
+	}).Bind(apis.RequireAuth())
+
+	e.Router.GET("/api/pocketcoder/files-list/{path...}", func(re *core.RequestEvent) error {
+		if re.Auth == nil {
+			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
+		}
+
+		pathParam := re.Request.PathValue("path")
+		cleanPath := "."
+		if pathParam != "" {
+			cleanPath = filepath.Clean(pathParam)
+			if strings.HasPrefix(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") {
+				return re.ForbiddenError("Path escape attempt detected.", nil)
+			}
+		}
+
+		fsys, err := filesystem.NewLocal("/workspace")
+		if err != nil {
+			return re.InternalServerError("Sovereign storage failure.", err)
+		}
+		defer fsys.Close()
+
+		prefix := cleanPath
+		if prefix == "." {
+			prefix = ""
+		} else {
+			prefix += "/"
+		}
+
+		objects, err := fsys.List(prefix)
+		if err != nil {
+			return re.NotFoundError("Directory not found.", err)
+		}
+
+		entries := groupImmediateChildren(prefix, objects)
+
+		return re.JSON(200, map[string]any{
+			"path":    cleanPath,
+			"entries": entries,
+		})
 	}).Bind(apis.RequireAuth())
 }
