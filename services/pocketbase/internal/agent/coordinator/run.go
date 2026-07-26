@@ -417,7 +417,7 @@ func (s *sessionClient) RequestPermission(ctx context.Context, req acpsdk.Reques
 		p.timer = time.AfterFunc(s.c.config.PermissionTimeout, func() { s.resolveExpired(id, p) })
 	}
 	s.emitMu.Lock()
-	_ = s.emit(s.bridge.PermissionPending(id, req.Options, string(req.ToolCall.ToolCallId)))
+	_ = s.emit(s.bridge.PermissionPending(id, req.Options, string(req.ToolCall.ToolCallId), req.ToolCall.Title, req.ToolCall.Kind))
 	s.emitMu.Unlock()
 	select {
 	case d := <-p.decision:
