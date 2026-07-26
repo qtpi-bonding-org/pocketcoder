@@ -102,31 +102,38 @@ void main() {
       await cubit.close();
     });
 
+    const item = ElicitationRequestTimelineItem(
+      requestId: 'elic-1',
+      message: 'Pick a value',
+      mode: 'form',
+      schema: {
+        'type': 'object',
+        'properties': {
+          'color': {'type': 'string', 'title': 'Color'},
+        },
+      },
+    );
+
     testWidgets(
-      'renders the form for a pending elicitation; submit calls respondElicitation',
+      'renders the form for the given item; submit calls respondElicitation',
       (tester) async {
         await tester.pumpWidget(_wrap(
           BlocProvider<ElicitationCubit>.value(
             value: cubit,
-            child: const ElicitationCard(),
+            child: const ElicitationCard(item: item),
           ),
         ));
         await _settle(tester);
 
+        // ElicitationCard no longer reads display data from the cubit, but
+        // submit() still resolves its elicitationId from the cubit's own
+        // state internally — seed it so the action call has a match.
         cubit.open('chat-1');
         await _settle(tester);
-
         repo.controllerFor('chat-1').add(Conversation(
-              sessionState: SessionState(elicitation: {
-                'elicitationId': 'elic-1',
-                'message': 'Pick a value',
-                'requestedSchema': {
-                  'type': 'object',
-                  'properties': {
-                    'color': {'type': 'string', 'title': 'Color'},
-                  },
-                },
-              }),
+              sessionState: SessionState(
+                elicitation: {'elicitationId': 'elic-1'},
+              ),
             ));
         await _settle(tester);
 
@@ -148,20 +155,46 @@ void main() {
       },
     );
 
-    testWidgets('renders nothing when no elicitation is pending',
-        (tester) async {
-      await tester.pumpWidget(_wrap(
-        BlocProvider<ElicitationCubit>.value(
-          value: cubit,
-          child: const ElicitationCard(),
-        ),
-      ));
-      await _settle(tester);
+    testWidgets(
+      'swapping to a new item (different requestId) resets form field state',
+      (tester) async {
+        await tester.pumpWidget(_wrap(
+          BlocProvider<ElicitationCubit>.value(
+            value: cubit,
+            child: const ElicitationCard(item: item),
+          ),
+        ));
+        await _settle(tester);
 
-      cubit.open('chat-1');
-      await _settle(tester);
+        cubit.open('chat-1');
+        await _settle(tester);
 
-      expect(find.text('SUBMIT'), findsNothing);
-    });
+        await tester.enterText(find.byType(TextField), 'blue');
+        await _settle(tester);
+        expect(find.text('blue'), findsOneWidget);
+
+        const nextItem = ElicitationRequestTimelineItem(
+          requestId: 'elic-2',
+          message: 'Pick another value',
+          mode: 'form',
+          schema: {
+            'type': 'object',
+            'properties': {
+              'color': {'type': 'string', 'title': 'Color'},
+            },
+          },
+        );
+        await tester.pumpWidget(_wrap(
+          BlocProvider<ElicitationCubit>.value(
+            value: cubit,
+            child: const ElicitationCard(item: nextItem),
+          ),
+        ));
+        await _settle(tester);
+
+        expect(find.text('Pick another value'), findsOneWidget);
+        expect(find.text('blue'), findsNothing);
+      },
+    );
   });
 }

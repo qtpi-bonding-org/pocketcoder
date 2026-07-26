@@ -7,16 +7,18 @@
 // objects) remain out of scope, same as before; URL-mode elicitations
 // (mode == 'url') are also out of scope for this migration -- see the
 // implementation plan's Global Constraints.
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart';
-import 'package:pocketcoder_flutter/application/agent/elicitation_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 class ElicitationCard extends StatefulWidget {
-  const ElicitationCard({super.key});
+  const ElicitationCard({super.key, required this.item});
+
+  final ElicitationRequestTimelineItem item;
 
   @override
   State<ElicitationCard> createState() => _ElicitationCardState();
@@ -51,34 +53,35 @@ class _ElicitationCardState extends State<ElicitationCard> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _resetForNewElicitation(widget.item.requestId);
+  }
+
+  @override
+  void didUpdateWidget(covariant ElicitationCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.requestId != widget.item.requestId) {
+      _resetForNewElicitation(widget.item.requestId);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ElicitationCubit, ElicitationState>(
-      builder: (context, state) {
-        final elicitation = state.elicitation;
-        if (elicitation == null) return const SizedBox.shrink();
-
-        _resetForNewElicitation(elicitation['elicitationId'] as String?);
-
-        final message = elicitation['message'] as String?;
-        final schema = elicitation['requestedSchema'];
-        final properties = (schema is Map ? schema['properties'] : null)
-            as Map<String, dynamic>?;
-
-        return _buildForm(context, state, message, properties);
-      },
-    );
+    final message = widget.item.message;
+    final properties = widget.item.schema?['properties'] as Map<String, dynamic>?;
+    return _buildForm(context, message, properties);
   }
 
   Widget _buildForm(
     BuildContext context,
-    ElicitationState state,
     String? message,
     Map<String, dynamic>? properties,
   ) {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
 
-    final elicitationId = state.elicitation?['elicitationId'];
+    final elicitationId = widget.item.requestId;
     final fields = properties?.entries.toList() ?? const [];
 
     return Container(
@@ -127,7 +130,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
               ),
             ),
           ],
-          if (elicitationId != null) ...[
+          if (elicitationId.isNotEmpty) ...[
             VSpace.x1,
             Text(
               '[$elicitationId]',
