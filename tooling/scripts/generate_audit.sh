@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# scripts/generate_audit.sh
+# tooling/scripts/generate_audit.sh
 # @pocketcoder-core: Audit Generator. Programmatically builds the index of original code.
 #
 # Counts lines of code across PocketCoder core components.
@@ -66,7 +66,7 @@ is_test_file() {
 cat > "$TARGET_FILE" << 'EOF'
 # 🦅 The Sovereign Audit (Original Code Index)
 
-This document is **programmatically generated** by `scripts/generate_audit.sh`.
+This document is **programmatically generated** by `tooling/scripts/generate_audit.sh`.
 It lists files explicitly tagged with `@pocketcoder-core`.
 If a file isn't on this list, it's either a third-party dependency or unlabelled infra.
 

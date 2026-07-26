@@ -4,7 +4,7 @@ Components that are **retained but not part of the current runtime**. Nothing
 here is built, deployed, imported, or wired into `docker-compose.yml`. They are
 kept as reference and as a head start for future work — not deleted, not active.
 
-They are deliberately excluded from the codebase audit (`scripts/generate_audit.sh`)
+They are deliberately excluded from the codebase audit (`tooling/scripts/generate_audit.sh`)
 and the docs site (`website/sync.sh`), because they are not product code.
 
 | Component | Language | Was | Reactivates when |

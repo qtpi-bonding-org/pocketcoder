@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-# scripts/cleanup_and_reseed.sh
+# tooling/scripts/cleanup_and_reseed.sh
 set -e
 
 POCKETBASE_URL="http://127.0.0.1:8090"

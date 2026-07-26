@@ -1,43 +1,75 @@
+#!/bin/bash
+
 # PocketCoder: An accessible, secure, and user-friendly open-source coding assistant platform.
 # Copyright (C) 2026 Qtpi Bonding LLC
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-
-# @pocketcoder-core: Token Utility. Fetches auth tokens for manual API testing and debugging.
-#!/bin/bash
-# scripts/get_token.sh
-# Utility to retrieve JWT tokens for different roles in PocketCoder.
-# Usage: ./scripts/get_token.sh [superuser|user|agent]
+# tooling/scripts/pb_auth.sh
+# PocketCoder Authentication Helper script.
+# Fetches a PocketBase auth token based on the requested role.
 
 set -e
 
-ROLE=$1
+# Default values
+ROLE="admin"
 PB_URL="http://127.0.0.1:8090"
 
-# Load .env
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+# Usage information
+usage() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  --admin       Authenticate as the Admin (default)"
+    echo "  --agent       Authenticate as the AI Agent"
+    echo "  --superuser   Authenticate as the PocketBase Superuser"
+    echo "  --help        Show this help message"
+    exit 1
+}
+
+# Parse flags
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --admin) ROLE="admin" ;;
+        --agent) ROLE="agent" ;;
+        --superuser) ROLE="superuser" ;;
+        --help) usage ;;
+        *) echo -e "${RED}Unknown parameter: $1${NC}"; usage ;;
+    esac
+    shift
+done
+
+# Load environment variables
 if [ -f .env ]; then
+    # Filter out comments and empty lines, then export
     export $(grep -v '^#' .env | xargs)
+else
+    echo -e "${RED}Error: .env file not found.${NC}" >&2
+    exit 1
 fi
 
+# Set identity and collection based on role
 case $ROLE in
     "superuser")
         IDENTITY=$POCKETBASE_SUPERUSER_EMAIL
         PASSWORD=$POCKETBASE_SUPERUSER_PASSWORD
         COLLECTION="_superusers"
         ;;
-    "user")
+    "admin")
         IDENTITY=$POCKETBASE_ADMIN_EMAIL
         PASSWORD=$POCKETBASE_ADMIN_PASSWORD
         COLLECTION="users"
@@ -47,12 +79,14 @@ case $ROLE in
         PASSWORD=$AGENT_PASSWORD
         COLLECTION="users"
         ;;
-    *)
-        echo "Usage: $0 [superuser|user|agent]"
-        exit 1
-        ;;
 esac
 
+if [ -z "$IDENTITY" ] || [ -z "$PASSWORD" ]; then
+    echo -e "${RED}Error: Credentials for $ROLE not found in .env${NC}" >&2
+    exit 1
+fi
+
+# Fetch the token
 TOKEN_RES=$(curl -s -X POST "$PB_URL/api/collections/$COLLECTION/auth-with-password" \
     -H "Content-Type: application/json" \
     -d "{
@@ -60,12 +94,13 @@ TOKEN_RES=$(curl -s -X POST "$PB_URL/api/collections/$COLLECTION/auth-with-passw
         \"password\": \"$PASSWORD\"
     }")
 
-TOKEN=$(echo "$TOKEN_RES" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+TOKEN=$(echo "$TOKEN_RES" | jq -r '.token // empty')
 
-if [ -z "$TOKEN" ]; then
-    echo "❌ Failed to retrieve token for $ROLE" >&2
-    echo "$TOKEN_RES" >&2
+if [ -z "$TOKEN" ] || [ "$TOKEN" == "null" ]; then
+    echo -e "${RED}Error: Authentication failed for $ROLE${NC}" >&2
+    echo "$TOKEN_RES" | jq . >&2
     exit 1
 fi
 
+# Output only the token to stdout
 echo "$TOKEN"
