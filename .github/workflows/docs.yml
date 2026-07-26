@@ -7,8 +7,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'services/docs/**'
-      - 'services/pocketbase/**/*.go'
+      - 'website/**'
+      - 'server/pocketbase/**/*.go'
       - 'scripts/generate_audit.sh'
 
 permissions:
@@ -38,11 +38,11 @@ jobs:
         run: go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest
 
       - name: Install docs dependencies
-        working-directory: services/docs
+        working-directory: website
         run: npm ci
 
       - name: Run sync & build
-        working-directory: services/docs
+        working-directory: website
         run: |
           bash ./sync.sh
           npm run build
@@ -50,7 +50,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: services/docs/dist
+          path: website/dist
 
   deploy:
     needs: build

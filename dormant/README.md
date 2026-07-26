@@ -5,7 +5,7 @@ here is built, deployed, imported, or wired into `docker-compose.yml`. They are
 kept as reference and as a head start for future work — not deleted, not active.
 
 They are deliberately excluded from the codebase audit (`scripts/generate_audit.sh`)
-and the docs site (`services/docs/sync.sh`), because they are not product code.
+and the docs site (`website/sync.sh`), because they are not product code.
 
 | Component | Language | Was | Reactivates when |
 |:---|:---|:---|:---|

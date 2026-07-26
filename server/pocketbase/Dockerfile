@@ -7,8 +7,8 @@ RUN apk add --no-cache git gcc musl-dev
 WORKDIR /app
 
 # 1. Prepare Environment
-COPY services/pocketbase/go.mod ./
-COPY services/pocketbase/ ./
+COPY server/pocketbase/go.mod ./
+COPY server/pocketbase/ ./
 WORKDIR /app
 
 # 2. Tidy and Download
@@ -38,16 +38,16 @@ WORKDIR /app
 COPY --from=pocketbase-builder /app/pocketbase /app/pocketbase
 
 # Copy PocketBase Configs/Hooks
-COPY services/pocketbase/pb_migrations /app/pb_migrations
-COPY services/pocketbase/pb_public /app/pb_public
+COPY server/pocketbase/pb_migrations /app/pb_migrations
+COPY server/pocketbase/pb_public /app/pb_public
 
 # Copy backup and restore scripts
-COPY services/pocketbase/backup_db.sh /app/backup_db.sh
-COPY services/pocketbase/restore_from_backup.sh /app/restore_from_backup.sh
+COPY server/pocketbase/backup_db.sh /app/backup_db.sh
+COPY server/pocketbase/restore_from_backup.sh /app/restore_from_backup.sh
 RUN chmod +x /app/backup_db.sh /app/restore_from_backup.sh
 
 # Copy and set entrypoint
-COPY services/pocketbase/entrypoint.sh /app/entrypoint.sh
+COPY server/pocketbase/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8090

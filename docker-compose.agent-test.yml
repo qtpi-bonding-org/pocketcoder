@@ -5,7 +5,7 @@ services:
   agent-c1-test:
     build:
       context: .
-      dockerfile: services/test/Dockerfile
+      dockerfile: server/test/Dockerfile
     profiles: ["agent-test"]
     depends_on:
       goose:
