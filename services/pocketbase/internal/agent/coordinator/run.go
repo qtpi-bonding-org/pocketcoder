@@ -421,11 +421,17 @@ func (s *sessionClient) RequestPermission(ctx context.Context, req acpsdk.Reques
 	s.emitMu.Unlock()
 	select {
 	case d := <-p.decision:
+		s.emitMu.Lock()
+		_ = emitAll(s.emit, s.bridge.ResolvePermission(id))
+		s.emitMu.Unlock()
 		if d.cancelled {
 			return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Cancelled: &acpsdk.RequestPermissionOutcomeCancelled{Outcome: "cancelled"}}}, nil
 		}
 		return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Selected: &acpsdk.RequestPermissionOutcomeSelected{Outcome: "selected", OptionId: acpsdk.PermissionOptionId(d.option)}}}, nil
 	case <-ctx.Done():
+		s.emitMu.Lock()
+		_ = emitAll(s.emit, s.bridge.ResolvePermission(id))
+		s.emitMu.Unlock()
 		s.removePending(id, p)
 		return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Cancelled: &acpsdk.RequestPermissionOutcomeCancelled{Outcome: "cancelled"}}}, nil
 	}
@@ -479,11 +485,17 @@ func (s *sessionClient) UnstableCreateElicitation(ctx context.Context, req acpsd
 	s.emitMu.Unlock()
 	select {
 	case d := <-p.decision:
+		s.emitMu.Lock()
+		_ = emitAll(s.emit, s.bridge.ResolveElicitation(id))
+		s.emitMu.Unlock()
 		if d.cancelled {
 			return acpsdk.UnstableCreateElicitationResponse{Cancel: &acpsdk.UnstableCreateElicitationCancel{Action: "cancel"}}, nil
 		}
 		return d.resp, nil
 	case <-ctx.Done():
+		s.emitMu.Lock()
+		_ = emitAll(s.emit, s.bridge.ResolveElicitation(id))
+		s.emitMu.Unlock()
 		s.removePendingElicitation(id, p)
 		return acpsdk.UnstableCreateElicitationResponse{Cancel: &acpsdk.UnstableCreateElicitationCancel{Action: "cancel"}}, nil
 	}

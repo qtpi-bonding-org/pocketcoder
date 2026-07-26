@@ -743,3 +743,37 @@ func TestBridgePermissionStateIncludesTitleAndKind(t *testing.T) {
 		t.Fatalf("permission event should omit title/kind when nil: %s", b2)
 	}
 }
+
+// ResolvePermission/ResolveElicitation had zero production callers before
+// this change (the backend never cleared its own /pocketcoder/<ns> state
+// server-side) — these confirm the shape of the remove-delta each emits, now
+// that coordinator/run.go actually calls them on decision.
+func TestBridgeResolvePermissionEmitsRemoveDelta(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	events := bridge.ResolvePermission("rpc-42")
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	b, err := json.Marshal(events[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"op":"remove"`) || !strings.Contains(string(b), `"path":"/pocketcoder/permission"`) {
+		t.Fatalf("expected a remove delta for /pocketcoder/permission, got: %s", b)
+	}
+}
+
+func TestBridgeResolveElicitationEmitsRemoveDelta(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	events := bridge.ResolveElicitation("rpc-42")
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	b, err := json.Marshal(events[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"op":"remove"`) || !strings.Contains(string(b), `"path":"/pocketcoder/elicitation"`) {
+		t.Fatalf("expected a remove delta for /pocketcoder/elicitation, got: %s", b)
+	}
+}
