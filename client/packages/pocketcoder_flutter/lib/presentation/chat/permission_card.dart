@@ -6,40 +6,31 @@
 // data from PermissionCubit (the CustomMessage passed to
 // customMessageBuilder is just a "render here" position marker, see
 // PermissionTimelineItem in domain/agent/conversation.dart).
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart';
-import 'package:pocketcoder_flutter/application/agent/permission_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 class PermissionCard extends StatelessWidget {
-  const PermissionCard({super.key});
+  const PermissionCard({super.key, required this.item});
+
+  final PermissionRequestTimelineItem item;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PermissionCubit, PermissionState>(
-      builder: (context, state) {
-        final permission = state.permission;
-        if (permission == null) return const SizedBox.shrink();
-        return _build(context, permission);
-      },
-    );
+    return _build(context, item);
   }
 
-  Widget _build(BuildContext context, Map<String, dynamic> permission) {
+  Widget _build(BuildContext context, PermissionRequestTimelineItem permission) {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
 
-    final status = (permission['status'] as String?) ?? 'pending';
-    final rawOptions = permission['options'];
-    final options = (rawOptions is List)
-        ? rawOptions.whereType<Map>().map((o) => Map<String, dynamic>.from(o)).toList()
-        : const <Map<String, dynamic>>[];
+    final options = permission.options;
 
-    final requestId = (permission['requestId'] as String?) ?? '';
-    final toolCall = permission['toolCall'];
-    final toolTitle = toolCall is Map ? toolCall['title']?.toString() : null;
+    final requestId = permission.requestId;
+    final toolTitle = permission.toolTitle;
 
     return Container(
       margin: EdgeInsets.all(AppSizes.space),
@@ -77,16 +68,6 @@ class PermissionCard extends StatelessWidget {
             ],
           ),
           VSpace.x2,
-          Text(
-            context.l10n.permissionRequestingLabel(
-              (status.isNotEmpty ? status : 'SYSTEM').toUpperCase(),
-            ),
-            style: TextStyle(
-              color: terminalColors.warning.withValues(alpha: 0.8),
-              fontSize: AppSizes.fontMini,
-              fontWeight: AppFonts.heavy,
-            ),
-          ),
           if (toolTitle != null && toolTitle.isNotEmpty) ...[
             VSpace.x1,
             Container(
@@ -152,7 +133,7 @@ class PermissionCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      ((option['name'] as String?) ?? '').toUpperCase(),
+                      option.label.toUpperCase(),
                       style: TextStyle(
                         color: terminalColors.attention,
                         fontFamily: AppFonts.bodyFamily,
@@ -164,7 +145,7 @@ class PermissionCard extends StatelessWidget {
                     label: context.l10n.actionAuthorize,
                     onTap: () => context
                         .read<PermissionCubit>()
-                        .authorize('${option['optionId'] ?? ''}'),
+                        .authorize(option.optionId),
                   ),
                 ],
               ),

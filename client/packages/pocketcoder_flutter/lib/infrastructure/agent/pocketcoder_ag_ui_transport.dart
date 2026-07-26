@@ -77,6 +77,14 @@ class PocketcoderAgUiTransport implements IAgUiTransport {
   }
 
   @override
+  Future<void> submitToolResult(String callId, String resultJson) async {
+    // pocketcoder has no client-executed-tool convention today (that's an
+    // episutra-only concept, see ACP request/response modeling spec) — no
+    // backend endpoint exists to submit one against, so this is a
+    // deliberate no-op that satisfies IAgUiTransport's now-wider interface.
+  }
+
+  @override
   Future<void> setMode(String modeId) async {
     await _repository.setMode(_chatId, modeId);
   }

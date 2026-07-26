@@ -10,6 +10,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart' as ag_ui_widgets;
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
+    show PermissionRequestTimelineItem, ElicitationRequestTimelineItem;
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
@@ -180,10 +182,12 @@ class _ChatViewState extends State<_ChatView> {
                             toolCallBuilder: (context, message, index,
                                     {required isSentByMe, groupStatus}) =>
                                 ToolCallCard(message: message),
-                            permissionBuilder: (context, requestId) =>
-                                const PermissionCard(),
-                            elicitationBuilder: (context, requestId) =>
-                                const ElicitationCard(),
+                            permissionBuilder: (context, item) =>
+                                PermissionCard(
+                                    item: item as PermissionRequestTimelineItem),
+                            elicitationBuilder: (context, item) =>
+                                ElicitationCard(
+                                    item: item as ElicitationRequestTimelineItem),
                             composerBuilder: (context) => Padding(
                               padding: EdgeInsets.all(AppSizes.space),
                               child: Column(

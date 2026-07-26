@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:ag_ui/ag_ui.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
-import 'package:acp_dart/acp_dart.dart';
+import 'package:acp_dart/acp_dart.dart' hide PermissionOption;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -96,7 +96,6 @@ Future<void> _settle(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-
 void main() {
   group('PermissionCard', () {
     late _FakeAgentChatRepository repo;
@@ -117,26 +116,33 @@ void main() {
         await tester.pumpWidget(_wrap(
           BlocProvider<PermissionCubit>.value(
             value: cubit,
-            child: const PermissionCard(),
+            child: const PermissionCard(
+              item: PermissionRequestTimelineItem(
+                requestId: 'req-1',
+                toolTitle: 'run shell',
+                options: [
+                  PermissionOption(
+                    optionId: 'allow-once',
+                    label: 'Allow Once',
+                    kind: 'allow_once',
+                  ),
+                ],
+              ),
+            ),
           ),
         ));
         await _settle(tester);
 
+        // PermissionCard no longer reads display data from the cubit, but
+        // authorize()/deny() still resolve their requestId from the cubit's
+        // own state internally — seed it so the action call has somewhere
+        // to read a matching requestId from.
         cubit.open('chat-1');
         await _settle(tester);
-
         repo.controllerFor('chat-1').add(Conversation(
-              sessionState: SessionState(permission: {
-                'requestId': 'req-1',
-                'toolCall': {'title': 'run shell'},
-                'options': [
-                  {
-                    'optionId': 'allow-once',
-                    'name': 'Allow Once',
-                    'kind': 'allow_once',
-                  },
-                ],
-              }),
+              sessionState: SessionState(
+                permission: {'requestId': 'req-1', 'status': 'pending'},
+              ),
             ));
         await _settle(tester);
 
@@ -158,21 +164,28 @@ void main() {
       await tester.pumpWidget(_wrap(
         BlocProvider<PermissionCubit>.value(
           value: cubit,
-          child: const PermissionCard(),
+          child: const PermissionCard(
+            item: PermissionRequestTimelineItem(
+              requestId: 'req-2',
+              options: [
+                PermissionOption(
+                  optionId: 'allow-once',
+                  label: 'Allow',
+                  kind: 'allow',
+                ),
+              ],
+            ),
+          ),
         ),
       ));
       await _settle(tester);
 
       cubit.open('chat-1');
       await _settle(tester);
-
       repo.controllerFor('chat-1').add(Conversation(
-            sessionState: SessionState(permission: {
-              'requestId': 'req-2',
-              'options': [
-                {'optionId': 'allow-once', 'name': 'Allow', 'kind': 'allow'},
-              ],
-            }),
+            sessionState: SessionState(
+              permission: {'requestId': 'req-2', 'status': 'pending'},
+            ),
           ));
       await _settle(tester);
 
