@@ -10,7 +10,7 @@ echo "🚨 Destroying containers and wiping persistent volumes..."
 docker compose down -v
 
 # 2. Reset MCP Gateway configuration state
-MCP_DIR="services/mcp-gateway/config"
+MCP_DIR="server/mcp-gateway/config"
 echo "🔌 Cleaning MCP Gateway state files..."
 rm -f "$MCP_DIR/docker-mcp.yaml"
 rm -f "$MCP_DIR/mcp.env"

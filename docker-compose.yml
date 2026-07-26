@@ -3,7 +3,7 @@ services:
   pocketbase:
     build:
       context: .
-      dockerfile: services/pocketbase/Dockerfile
+      dockerfile: server/pocketbase/Dockerfile
     container_name: pocketcoder-pocketbase
     ports:
       - "8090:8090" # PocketBase UI
@@ -12,7 +12,7 @@ services:
       # - pb_backups:/app/pb_backups
       - pocketcoder-logs:/app/pb_public/logs
       - goose_workspace:/workspace
-      - ./services/mcp-gateway/config:/mcp_config
+      - ./server/mcp-gateway/config:/mcp_config
       - llm_keys:/llm_keys
       - goose_config:/goose-config
       - cognee_config:/cognee-config
@@ -57,7 +57,7 @@ services:
   # back, so this network carries only c1 -> c2 ACP traffic.
   goose:
     build:
-      context: services/goose
+      context: server/goose
       dockerfile: Dockerfile
     container_name: pocketcoder-goose
     profiles: ["agent"]
@@ -96,12 +96,12 @@ services:
   mcp-gateway:
     build:
       context: .
-      dockerfile: services/mcp-gateway/Dockerfile
+      dockerfile: server/mcp-gateway/Dockerfile
     container_name: pocketcoder-mcp-gateway
     profiles: ["c3"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./services/mcp-gateway/config:/root/.docker/mcp
+      - ./server/mcp-gateway/config:/root/.docker/mcp
     environment:
       - DOCKER_MCP_IN_CONTAINER=1
       - LINODE_TOKEN=${LINODE_TOKEN}
@@ -237,14 +237,14 @@ services:
       - SQLPAGE_SITE_PREFIX=/api/pocketcoder/proxy/observability/
     volumes:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
-      - ./services/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
+      - ./server/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
       # Config actually lives under dashboard/config/ (sqlpage.json,
-      # config/on_connect.sql) — ./services/sqlpage/config doesn't exist on
+      # config/on_connect.sql) — ./server/sqlpage/config doesn't exist on
       # disk at all. This mismatch predates this branch (confirmed on main)
       # and silently no-ops both sqlpage.json's database_url (SQLPage falls
       # back to a throwaway in-memory DB every restart) and on_connect.sql's
       # ATTACH statements (opencode/cognee dashboards error "no such table").
-      - ./services/sqlpage/dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
+      - ./server/sqlpage/dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
       # opencode was removed from this repo entirely (see git history) — its
       # on_connect.sql ATTACH referenced a volume/path that no longer exists
       # anywhere in this compose file, which hard-fails the whole SQLPage

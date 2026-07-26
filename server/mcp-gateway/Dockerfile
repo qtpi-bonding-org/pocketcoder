@@ -15,7 +15,7 @@ RUN /tmp/install-docker-mcp.sh && rm /tmp/install-docker-mcp.sh
 ENV DOCKER_MCP_IN_CONTAINER=1
 
 # Copy entrypoint script
-COPY services/mcp-gateway/mcp-gateway-entrypoint.sh /mcp-gateway-entrypoint.sh
+COPY server/mcp-gateway/mcp-gateway-entrypoint.sh /mcp-gateway-entrypoint.sh
 RUN chmod +x /mcp-gateway-entrypoint.sh
 
 # Set working directory
