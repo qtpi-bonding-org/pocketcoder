@@ -33,7 +33,7 @@ func TestBridgeMessageLifecycleAndTerminal(t *testing.T) {
 
 func TestBridgePermissionState(t *testing.T) {
 	bridge := NewBridge("chat-1", "run-1")
-	event := bridge.PermissionPending("rpc-42", nil, "")
+	event := bridge.PermissionPending("rpc-42", nil, "", nil, nil)
 	b, err := json.Marshal(event)
 	if err != nil {
 		t.Fatal(err)
@@ -53,7 +53,7 @@ func TestBridgePermissionState(t *testing.T) {
 // at all rather than surfacing as an empty string.
 func TestBridgePermissionStateCarriesToolCallID(t *testing.T) {
 	bridge := NewBridge("chat-1", "run-1")
-	event := bridge.PermissionPending("rpc-42", nil, "tool-7")
+	event := bridge.PermissionPending("rpc-42", nil, "tool-7", nil, nil)
 	b, err := json.Marshal(event)
 	if err != nil {
 		t.Fatal(err)
@@ -61,7 +61,7 @@ func TestBridgePermissionStateCarriesToolCallID(t *testing.T) {
 	if !strings.Contains(string(b), `"toolCallId":"tool-7"`) {
 		t.Fatalf("permission event missing toolCallId: %s", b)
 	}
-	event2 := bridge.PermissionPending("rpc-43", nil, "")
+	event2 := bridge.PermissionPending("rpc-43", nil, "", nil, nil)
 	b2, err := json.Marshal(event2)
 	if err != nil {
 		t.Fatal(err)
@@ -499,7 +499,7 @@ func contains(s []string, v string) bool {
 // retained rather than emitted-and-forgotten).
 func TestBridgeSnapshotOmitsResolvedPermission(t *testing.T) {
 	bridge := NewBridge("c", "r")
-	bridge.PermissionPending("p1", nil, "")
+	bridge.PermissionPending("p1", nil, "", nil, nil)
 	snap := bridge.Snapshot()
 	if len(snap) == 0 {
 		t.Fatal("snapshot should include pending permission")
@@ -709,5 +709,37 @@ func TestCurrentModeUpdateKeepsAvailableModes(t *testing.T) {
 	}
 	if len(decoded.Snapshot.Pocketcoder.Modes.AvailableModes) != 2 {
 		t.Fatalf("availableModes = %v, want length 2 (must survive the mode update)", decoded.Snapshot.Pocketcoder.Modes.AvailableModes)
+	}
+}
+
+// TestBridgePermissionStateIncludesTitleAndKind covers the fix for the
+// ACP->AG-UI field-drop audit finding: the title and kind of the tool call
+// being gated by a permission request must reach the client so the phone
+// can label and icon the pending permission with the tool's metadata.
+// nil title/kind are no-ops (the key must not appear at all rather than
+// surfacing as an empty string).
+func TestBridgePermissionStateIncludesTitleAndKind(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	title := "Run shell command"
+	kind := acpsdk.ToolKindExecute
+	event := bridge.PermissionPending("rpc-42", nil, "", &title, &kind)
+	b, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"title":"Run shell command"`) {
+		t.Fatalf("permission event missing title: %s", b)
+	}
+	if !strings.Contains(string(b), `"kind":"execute"`) {
+		t.Fatalf("permission event missing kind: %s", b)
+	}
+
+	event2 := bridge.PermissionPending("rpc-43", nil, "", nil, nil)
+	b2, err := json.Marshal(event2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b2), `"title"`) || strings.Contains(string(b2), `"kind"`) {
+		t.Fatalf("permission event should omit title/kind when nil: %s", b2)
 	}
 }
