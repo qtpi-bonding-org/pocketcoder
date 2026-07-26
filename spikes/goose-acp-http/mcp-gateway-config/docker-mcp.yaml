@@ -1,9 +1,0 @@
-name: docker-mcp
-displayName: PocketCoder MCP spike catalog
-registry:
-  hello-world:
-    title: hello-world
-    description: Disposable spike entry; this run only calls the gateway's built-in mcp-find tool.
-    type: server
-    image: mcp/hello-world:latest
-    longLived: false

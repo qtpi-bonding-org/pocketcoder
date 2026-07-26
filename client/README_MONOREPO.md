@@ -6,7 +6,7 @@ This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It
 
 - **`packages/pocketcoder_flutter`**: Core logic, UI, and state management. **Must remain FOSS-pure.**
 - **`packages/pocketcoder_pro`**: Proprietary SDK container (Firebase, RevenueCat, etc.).
-- **`apps/app`**: The primary PocketCoder application shell. Injects services from both packages.
+- **`apps/pocketcoder`**: The primary PocketCoder application shell. Injects services from both packages.
 
 ## 🚀 Getting Started
 

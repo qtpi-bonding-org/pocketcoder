@@ -102,7 +102,7 @@ if [ ! -f .ssh_keys/id_rsa ]; then
 fi
 
 # MCP configuration initialization
-MCP_CONFIG_DIR="services/mcp-gateway/config"
+MCP_CONFIG_DIR="server/mcp-gateway/config"
 if [ ! -f "$MCP_CONFIG_DIR/docker-mcp.yaml" ]; then
     echo -e "${BLUE}🔌 Initializing docker-mcp.yaml from template...${NC}"
     cp "$MCP_CONFIG_DIR/docker-mcp.yaml.template" "$MCP_CONFIG_DIR/docker-mcp.yaml"
