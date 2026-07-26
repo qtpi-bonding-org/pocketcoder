@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-# scripts/debug_conversation.sh
+# tooling/scripts/debug_conversation.sh
 # Fetches and formats the full conversation history for the latest or specified chat.
 
 set -e

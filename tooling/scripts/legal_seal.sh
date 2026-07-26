@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/legal_seal.sh
+# tooling/scripts/legal_seal.sh
 # @pocketcoder-core: Legal Seal. Ensures all tagged files have the AGPLv3 license header.
 # This script is strictly surgical: ONLY Bash, Go, Rust, and TypeScript in core directories.
 
@@ -28,7 +28,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>."
 
 # Configuration
 TAG="@pocketcoder-core"
-CORE_DIRS=("backend" "proxy" "scripts" "test" "server/pocketbase" "dormant/proxy" "server/mcp-gateway" "dormant/poco-agents" "server/goose")
+CORE_DIRS=("backend" "proxy" "tooling/scripts" "test" "server/pocketbase" "dormant/proxy" "server/mcp-gateway" "dormant/poco-agents" "server/goose")
 ROOT_FILES=("genesis.sh" "deploy.sh")
 
 if [ "$CHECK_MODE" = true ]; then

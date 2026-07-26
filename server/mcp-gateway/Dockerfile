@@ -8,7 +8,7 @@ RUN apk add --no-cache \
     ca-certificates
 
 # Install docker-mcp plugin (shared script, pinned version)
-COPY scripts/install-docker-mcp.sh /tmp/install-docker-mcp.sh
+COPY tooling/scripts/install-docker-mcp.sh /tmp/install-docker-mcp.sh
 RUN /tmp/install-docker-mcp.sh && rm /tmp/install-docker-mcp.sh
 
 # Set environment variable for container detection
