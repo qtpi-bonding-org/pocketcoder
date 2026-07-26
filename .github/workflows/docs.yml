@@ -9,7 +9,7 @@ on:
     paths:
       - 'website/**'
       - 'server/pocketbase/**/*.go'
-      - 'scripts/generate_audit.sh'
+      - 'tooling/scripts/generate_audit.sh'
 
 permissions:
   contents: read

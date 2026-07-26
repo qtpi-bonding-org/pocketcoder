@@ -41,11 +41,11 @@ ports:
     isAuth: false
 
 lifeCycleConfig:
-  postInstallCommand: "./scripts/elestio/postInstall.sh"
-  preBackupCommand: "./scripts/elestio/preBackup.sh"
-  postBackupCommand: "./scripts/elestio/postBackup.sh"
-  preRestoreCommand: "./scripts/elestio/preRestore.sh"
-  postRestoreCommand: "./scripts/elestio/postRestore.sh"
+  postInstallCommand: "./tooling/scripts/elestio/postInstall.sh"
+  preBackupCommand: "./tooling/scripts/elestio/preBackup.sh"
+  postBackupCommand: "./tooling/scripts/elestio/postBackup.sh"
+  preRestoreCommand: "./tooling/scripts/elestio/preRestore.sh"
+  postRestoreCommand: "./tooling/scripts/elestio/postRestore.sh"
 
 webUI:
   - url: "https://[CI_CD_DOMAIN]"
