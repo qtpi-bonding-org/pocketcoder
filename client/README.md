@@ -35,7 +35,7 @@ This project is a monorepo managed by [Melos](https://melos.invertase.dev).
 ### Architecture
 1. **`packages/pocketcoder_flutter`**: The core FOSS-pure logic and UI components.
 2. **`packages/pocketcoder_pro`**: Proprietary integrations (Optional).
-3. **`apps/app`**: The mobile application shell that assembles the pieces.
+3. **`apps/pocketcoder`**: The mobile application shell that assembles the pieces.
 
 ### Quick Start
 ```bash
@@ -49,7 +49,7 @@ melos bootstrap
 melos run build_gen
 
 # 4. Run the app
-cd apps/app && flutter run
+cd apps/pocketcoder && flutter run
 ```
 
 ### Purity Check
