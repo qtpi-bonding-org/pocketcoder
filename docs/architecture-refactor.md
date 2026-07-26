@@ -117,7 +117,7 @@ change, not an implementation detail.
 **Supersedes the 2026-07-16 selection of the hand-rolled Streamable-HTTP profile.**
 The c1↔c2 hop is now **`goose serve` WebSocket** driven through the maintained
 `coder/acp-go-sdk` `ClientSideConnection`, adapted with a ~40-line
-WS↔byte-stream shim. The bespoke `services/pocketbase/internal/agent/acp/streamable.go`
+WS↔byte-stream shim. The bespoke `server/pocketbase/internal/agent/acp/streamable.go`
 transport is to be **deleted**; the AG-UI bridge and the frozen event contract
 above are transport-independent and unchanged.
 

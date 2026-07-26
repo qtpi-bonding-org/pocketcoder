@@ -22,7 +22,7 @@ RUN cargo install cargo-rdme cargo-docs-md
 WORKDIR /app/docs
 
 # Copy package files and install dependencies
-COPY services/docs/package.json ./
+COPY website/package.json ./
 RUN npm install --verbose
 
 # Exposure for Astro

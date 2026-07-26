@@ -29,14 +29,14 @@ TARGET_FILE="$REPO_ROOT/CODEBASE.md"
 TAG="@pocketcoder-core"
 
 # ---------------------------------------------------------------------------
-# Core source directories to scan for the tag index (new services/ layout)
+# Core source directories to scan for the tag index (new server/ layout)
 # ---------------------------------------------------------------------------
 # Active product code only. Dormant components (dormant/) are intentionally
 # excluded — they are retained for reference but are not built or shipped.
 CORE_DIRS=(
-  "services/pocketbase"
-  "services/goose"
-  "services/mcp-gateway"
+  "server/pocketbase"
+  "server/goose"
+  "server/mcp-gateway"
   "scripts"
   "client"
 )
@@ -189,8 +189,8 @@ done < <(find "$REPO_ROOT/client" \
 # Product Go excludes both a tests/ dir AND Go's *_test.go convention files,
 # which live alongside their packages — otherwise ~2k of test code would be
 # miscounted as product code.
-GO_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*.go' ! -name '*_test.go' ! -path '*/tests/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
-GO_TEST_LOC=$(find "$REPO_ROOT/services/pocketbase" -name '*_test.go' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+GO_LOC=$(find "$REPO_ROOT/server/pocketbase" -name '*.go' ! -name '*_test.go' ! -path '*/tests/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+GO_TEST_LOC=$(find "$REPO_ROOT/server/pocketbase" -name '*_test.go' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
 
 # Dart tests: *_test.dart or files under a test/ or tests/ dir (non-generated).
 DART_TEST_LOC=$(find "$REPO_ROOT/client" \

@@ -17,7 +17,7 @@ identifier, and matches every existing case in this schema (`chats`,
 ## Model Generation Pipeline
 
 PocketBase schema lives in exactly two migration files:
-`services/pocketbase/pb_migrations/1756000000_schema.go` (imports
+`server/pocketbase/pb_migrations/1756000000_schema.go` (imports
 `schema.json`, a full collection-schema snapshot) and
 `1756000100_seed.go` (default users/tool-permissions). Make schema
 changes by editing `schema.json` directly (or making the change via the
