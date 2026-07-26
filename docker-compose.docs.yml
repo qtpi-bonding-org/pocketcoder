@@ -3,13 +3,13 @@ services:
   docs:
     build:
       context: .
-      dockerfile: services/docs/Dockerfile
+      dockerfile: website/Dockerfile
     container_name: pocketcoder-docs
     ports:
       - "4321:4321"
     volumes:
       - .:/app                                 # full project root (must be rw for CODEBASE.md and cargo target/)
-      - ./services/docs:/app/docs              # docs source (writable for build output)
+      - ./website:/app/docs                    # docs source (writable for build output)
       - /app/docs/node_modules                 # keep container's node_modules
       - /app/docs/.astro                       # ditto for astro cache
     working_dir: /app/docs

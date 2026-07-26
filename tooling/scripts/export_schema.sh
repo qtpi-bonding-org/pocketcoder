@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-# scripts/export_schema.sh
+# tooling/scripts/export_schema.sh
 # PocketCoder Schema Export utility.
 # Syncs the backend PocketBase schema to the Flutter assets.
 

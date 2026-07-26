@@ -6,7 +6,7 @@ mapping, AG-UI translation, and process-local pending approvals.
 
 ## Test layers
 
-1. **Fast Go tests (`services/pocketbase`)** run on every change to c1. They
+1. **Fast Go tests (`server/pocketbase`)** run on every change to c1. They
    cover ACP transport envelopes, AG-UI translation, ownership-facing
    coordinator rules, offered-option validation, cancellation, concurrent-run
    rejection, disconnect cancellation, and restart semantics.

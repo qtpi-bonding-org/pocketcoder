@@ -63,10 +63,10 @@ echo -e "---\ntitle: Backend Reference\nhead: []\n---\n" > ./src/content/docs/re
 if command -v gomarkdoc &> /dev/null; then
   # gomarkdoc works best when run from the module root for all packages
   # We use --include-unexported if we want maximum context for the "Sovereign Audit"
-  if [ -d "$ROOT_DIR/services/pocketbase" ]; then
-    (cd "$ROOT_DIR/services/pocketbase" && gomarkdoc --include-unexported . ./internal/... ./pkg/...) >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
+  if [ -d "$ROOT_DIR/server/pocketbase" ]; then
+    (cd "$ROOT_DIR/server/pocketbase" && gomarkdoc --include-unexported . ./internal/... ./pkg/...) >> ./src/content/docs/reference/backend.md || echo "⚠️ Go doc extraction had warnings"
   else
-    echo "⚠️ services/pocketbase not found"
+    echo "⚠️ server/pocketbase not found"
   fi
 else
   echo "❌ Error: gomarkdoc not found"

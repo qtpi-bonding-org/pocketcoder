@@ -8,14 +8,14 @@ RUN apk add --no-cache \
     ca-certificates
 
 # Install docker-mcp plugin (shared script, pinned version)
-COPY scripts/install-docker-mcp.sh /tmp/install-docker-mcp.sh
+COPY tooling/scripts/install-docker-mcp.sh /tmp/install-docker-mcp.sh
 RUN /tmp/install-docker-mcp.sh && rm /tmp/install-docker-mcp.sh
 
 # Set environment variable for container detection
 ENV DOCKER_MCP_IN_CONTAINER=1
 
 # Copy entrypoint script
-COPY services/mcp-gateway/mcp-gateway-entrypoint.sh /mcp-gateway-entrypoint.sh
+COPY server/mcp-gateway/mcp-gateway-entrypoint.sh /mcp-gateway-entrypoint.sh
 RUN chmod +x /mcp-gateway-entrypoint.sh
 
 # Set working directory

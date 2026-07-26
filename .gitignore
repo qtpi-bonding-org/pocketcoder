@@ -25,8 +25,8 @@ dist/
 build/
 # Only ignore binaries, not directories
 **/pocketbase
-!services/pocketbase/
-pocketcoder
+!server/pocketbase/
+/pocketcoder
 *.bun-build
 
 # Local/Independent Repos (Opencode)
@@ -63,18 +63,18 @@ CODEBASE.md
 tests/logs/
 
 # MCP Gateway
-services/mcp-gateway/config/catalogs/
-services/mcp-gateway/config/registry.yaml
-services/mcp-gateway/config/tools.yaml
-services/mcp-gateway/config/config.yaml
-services/mcp-gateway/config/docker-mcp.yaml
-services/mcp-gateway/config/mcp.env
+server/mcp-gateway/config/catalogs/
+server/mcp-gateway/config/registry.yaml
+server/mcp-gateway/config/tools.yaml
+server/mcp-gateway/config/config.yaml
+server/mcp-gateway/config/docker-mcp.yaml
+server/mcp-gateway/config/mcp.env
 
 # TypeScript build info
 **/tsconfig.tsbuildinfo
 
 # CAO (removed submodule, files kept locally)
-services/sandbox/cao/
+server/sandbox/cao/
 
 # Local Scratchpad/Misc
 .misc/
@@ -83,6 +83,7 @@ tobedeleted/
 out.json
 audit-status/
 audit/
-services/pocketbase/backend/
-services/pocketbase/.gocache/
-client/apps/app/ios/**/xcshareddata/swiftpm/
+server/pocketbase/backend/
+server/pocketbase/.gocache/
+server/pocketbase/pocketcoder
+client/apps/pocketcoder/ios/**/xcshareddata/swiftpm/

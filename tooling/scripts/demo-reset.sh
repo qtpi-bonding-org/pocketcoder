@@ -23,7 +23,7 @@ docker volume rm -f \
   pocketcoder_ntfy-auth
 
 # 3. Reset MCP Gateway configuration state
-MCP_DIR="services/mcp-gateway/config"
+MCP_DIR="server/mcp-gateway/config"
 echo "🔌 Cleaning MCP Gateway state files..."
 rm -f "$MCP_DIR/docker-mcp.yaml" \
       "$MCP_DIR/mcp.env" \

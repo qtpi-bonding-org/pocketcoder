@@ -4,8 +4,8 @@ Components that are **retained but not part of the current runtime**. Nothing
 here is built, deployed, imported, or wired into `docker-compose.yml`. They are
 kept as reference and as a head start for future work — not deleted, not active.
 
-They are deliberately excluded from the codebase audit (`scripts/generate_audit.sh`)
-and the docs site (`services/docs/sync.sh`), because they are not product code.
+They are deliberately excluded from the codebase audit (`tooling/scripts/generate_audit.sh`)
+and the docs site (`website/sync.sh`), because they are not product code.
 
 | Component | Language | Was | Reactivates when |
 |:---|:---|:---|:---|
@@ -15,9 +15,9 @@ and the docs site (`services/docs/sync.sh`), because they are not product code.
 ## Ground rules
 
 - **Do not import from `dormant/` into active code.** If something here becomes
-  needed, move it back into `services/` (or the relevant module) as a deliberate,
+  needed, move it back into `server/` (or the relevant module) as a deliberate,
   reviewed step — don't reach across the boundary.
 - These crates may not compile against current dependencies; they are snapshots,
   not maintained builds.
 - Git history is preserved across the move — use `git log --follow` to trace a
-  file back through its `services/` life.
+  file back through its `server/` life.
