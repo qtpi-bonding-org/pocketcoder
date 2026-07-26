@@ -26,7 +26,7 @@ build/
 # Only ignore binaries, not directories
 **/pocketbase
 !server/pocketbase/
-pocketcoder
+/pocketcoder
 *.bun-build
 
 # Local/Independent Repos (Opencode)
