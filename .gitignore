@@ -85,4 +85,5 @@ audit-status/
 audit/
 server/pocketbase/backend/
 server/pocketbase/.gocache/
+server/pocketbase/pocketcoder
 client/apps/pocketcoder/ios/**/xcshareddata/swiftpm/
