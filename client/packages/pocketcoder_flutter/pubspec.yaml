@@ -46,7 +46,6 @@ dependencies:
 
   # Utilities
   uuid: ^4.0.0
-  diff_match_patch: ^0.4.1
   flutter_dotenv: ^5.1.0
   flutter_secure_storage: ^10.0.0
   http: ^1.2.0
