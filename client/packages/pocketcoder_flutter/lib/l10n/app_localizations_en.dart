@@ -135,11 +135,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navConfigure => 'CONFIGURE';
 
   @override
-  String get bootLoadError => 'SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS...';
+  String get bootLoadError =>
+      'SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS\n[!] CHECK_ASSET_MANIFEST';
 
   @override
   String get bootPocoIntro =>
-      'Hi! I\'m Poco, your Private Operations Coding Officer. I help you build software on your own terms — private, powerful, and under your control. Let\'s get started!';
+      'Hi! I\'m Poco, your Private Operations Coding Officer representing the PocketCoder Initiative.';
 
   @override
   String get bootCheckingConnection => 'Checking secure connection...';
@@ -152,18 +153,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bootConnectionFailed =>
-      'Connection failed. I\'ll take you back to reconnect.';
+      'Connection failed. I\'ll take you back to the setup screen so we can check the server settings.';
 
   @override
   String get onboardingTitle => 'IDENTIFICATION UNLOCK';
 
   @override
   String get onboardingPocoChallengeMessage =>
-      'WHO GOES THERE? IDENTIFY YOURSELF. ENTER YOUR SERVER ADDRESS AND CREDENTIALS TO PROVE YOU BELONG HERE.';
+      'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.';
 
   @override
   String get onboardingPocoWelcome =>
-      'Identity verified! Welcome home, Commander. All systems are at your disposal.';
+      'Identity verified! Welcome home. I knew it was you—just had to make sure the Cloud wasn\'t spoofing your signature.';
 
   @override
   String get onboardingAccessDenied => 'ACCESS DENIED.';

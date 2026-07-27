@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
 import 'package:pocketcoder_flutter/domain/models/collections.dart';
@@ -16,7 +16,13 @@ class StatusRepository implements IStatusRepository {
   Future<bool> checkPocketBaseHealth() async {
     try {
       final response = await _pb.health.check();
-      return response.code == 200;
+      final healthy = response.code == 200;
+      if (healthy && _pb is $PocketBase) {
+        // Self-heal a stale offline flag left by a spurious connectivity_plus
+        // event at cold start (see AuthRepository._refireConnectivityCheck).
+        await _pb.connectivity.checkConnectivity();
+      }
+      return healthy;
     } catch (e) {
       logError('StatusRepository: PocketBase health check failed', e);
       return false;
