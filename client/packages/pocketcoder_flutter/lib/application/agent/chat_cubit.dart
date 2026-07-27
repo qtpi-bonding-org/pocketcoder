@@ -30,6 +30,13 @@ class ChatCubit extends AppCubit<ChatState> {
   }
 
   static const _reconnectDelay = Duration(milliseconds: 200);
+  static const _maxReconnectDelay = Duration(seconds: 5);
+
+  /// Consecutive ingest failures before a hung reconnect loop is surfaced to
+  /// the UI. Below this, a blip retries silently; at/above it, the user sees
+  /// a real error instead of an indefinite "thinking" spinner tied to
+  /// [UiFlowStatus.loading] never resolving (see [_ingestForever]).
+  static const _visibleFailureThreshold = 3;
 
   void open(String chatId) {
     _generation++;
@@ -63,16 +70,30 @@ class ChatCubit extends AppCubit<ChatState> {
   }
 
   Future<void> _ingestForever(String chatId, int myGeneration) async {
+    var delay = _reconnectDelay;
+    var consecutiveFailures = 0;
     while (myGeneration == _generation) {
       try {
         final cursor = await _repository.cursorFor(chatId);
         await _repository.ingestOnce(chatId, cursor: cursor);
+        consecutiveFailures = 0;
+        delay = _reconnectDelay;
       } catch (e) {
         if (myGeneration != _generation) return;
         logError('🤖 [ChatCubit] ingest($chatId) error, reconnecting: $e');
+        consecutiveFailures++;
+        // Fires once on crossing the threshold, not on every retry after
+        // it, so the error snackbar doesn't spam while backoff continues.
+        if (consecutiveFailures == _visibleFailureThreshold) {
+          emit(state.copyWith(error: e, status: UiFlowStatus.failure));
+        }
+        delay = Duration(
+          milliseconds: (delay.inMilliseconds * 2)
+              .clamp(_reconnectDelay.inMilliseconds, _maxReconnectDelay.inMilliseconds),
+        );
       }
       if (myGeneration != _generation) return;
-      await Future<void>.delayed(_reconnectDelay);
+      await Future<void>.delayed(delay);
     }
   }
 
