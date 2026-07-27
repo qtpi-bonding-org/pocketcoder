@@ -349,13 +349,13 @@ abstract class AppLocalizations {
   /// No description provided for @bootLoadError.
   ///
   /// In en, this message translates to:
-  /// **'SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS...'**
+  /// **'SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS\n[!] CHECK_ASSET_MANIFEST'**
   String get bootLoadError;
 
   /// No description provided for @bootPocoIntro.
   ///
   /// In en, this message translates to:
-  /// **'Hi! I\'m Poco, your Private Operations Coding Officer. I help you build software on your own terms — private, powerful, and under your control. Let\'s get started!'**
+  /// **'Hi! I\'m Poco, your Private Operations Coding Officer representing the PocketCoder Initiative.'**
   String get bootPocoIntro;
 
   /// No description provided for @bootCheckingConnection.
@@ -379,7 +379,7 @@ abstract class AppLocalizations {
   /// No description provided for @bootConnectionFailed.
   ///
   /// In en, this message translates to:
-  /// **'Connection failed. I\'ll take you back to reconnect.'**
+  /// **'Connection failed. I\'ll take you back to the setup screen so we can check the server settings.'**
   String get bootConnectionFailed;
 
   /// No description provided for @onboardingTitle.
@@ -391,13 +391,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPocoChallengeMessage.
   ///
   /// In en, this message translates to:
-  /// **'WHO GOES THERE? IDENTIFY YOURSELF. ENTER YOUR SERVER ADDRESS AND CREDENTIALS TO PROVE YOU BELONG HERE.'**
+  /// **'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.'**
   String get onboardingPocoChallengeMessage;
 
   /// No description provided for @onboardingPocoWelcome.
   ///
   /// In en, this message translates to:
-  /// **'Identity verified! Welcome home, Commander. All systems are at your disposal.'**
+  /// **'Identity verified! Welcome home. I knew it was you—just had to make sure the Cloud wasn\'t spoofing your signature.'**
   String get onboardingPocoWelcome;
 
   /// No description provided for @onboardingAccessDenied.

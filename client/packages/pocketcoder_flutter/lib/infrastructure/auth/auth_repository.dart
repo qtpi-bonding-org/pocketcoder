@@ -41,11 +41,25 @@ class AuthRepository implements IAuthRepository {
         await _pocketBase
             .collection(Collections.users)
             .authWithPassword(email, password);
+        await _refireConnectivityCheck();
         return true;
       },
       AuthException.new,
       'login',
     );
+  }
+
+  /// Re-checks connectivity after a proven-successful network call.
+  ///
+  /// Works around a `pocketbase_drift` `ConnectivityService` gap: its
+  /// `RequestPolicy.networkOnly` guard latches on the OS-level
+  /// `connectivity_plus` stream and never self-heals from a real request
+  /// succeeding, so a stale/spurious "offline" event at cold start can wedge
+  /// subsequent reads even once we're demonstrably online.
+  Future<void> _refireConnectivityCheck() async {
+    if (_pocketBase is $PocketBase) {
+      await _pocketBase.connectivity.checkConnectivity();
+    }
   }
 
   @override
