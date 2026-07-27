@@ -238,6 +238,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatThinking => 'THINKING';
 
   @override
+  String get chatThinkingLive => 'THINKING...';
+
+  @override
+  String get chatThought => 'THOUGHT';
+
+  @override
   String get filesTitle => 'FILES';
 
   @override

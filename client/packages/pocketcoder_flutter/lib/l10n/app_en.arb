@@ -94,6 +94,8 @@
   "chatFilesAction": "FILES",
   "chatNewCapabilityRequest": "[!] NEW CAPABILITY REQUEST RECEIVED",
   "chatThinking": "THINKING",
+  "chatThinkingLive": "THINKING...",
+  "chatThought": "THOUGHT",
 
   "filesTitle": "FILES",
   "filesEmpty": "NO FILES",
