@@ -11,10 +11,14 @@
 // improvement over today's silent `SizedBox.shrink()`.
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
+import 'package:flyer_chat_text_stream_message/flyer_chat_text_stream_message.dart'
+    show StreamStateStreaming;
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
+import 'thinking_block.dart';
 
 /// Builds this app's `StackedChatBuilders` config: pocketcoder's theme
 /// colors/fonts as a `StackedChatStyle`, plus `ChatActionCallbacks` wired
@@ -30,6 +34,7 @@ StackedChatBuilders pocketcoderChatBuilders(
   BuildContext context, {
   required void Function(String requestId, {String? optionId, bool cancelled}) onPermissionOptionSelected,
   required void Function(String requestId, Map<String, dynamic> response) onElicitationRespond,
+  String? latestReasoningId,
 }) {
   final colors = context.colorScheme;
   final terminalColors = context.terminalColors;
@@ -64,5 +69,47 @@ StackedChatBuilders pocketcoderChatBuilders(
     elicitationCardBuilder: (context, item) => ElicitationCard(item: item),
   );
 
-  return StackedChatBuilders(style, callbacks);
+  return _PocketcoderChatBuilders(style, callbacks, latestReasoningId);
+}
+
+/// Intercepts only reasoning ("thinking") messages -- completed or still
+/// streaming -- to render them as a collapsible [ThinkingBlock] with a Poco
+/// avatar, instead of the generic full-width bubble every other message
+/// kind still gets via the inherited [StackedChatBuilders] behavior.
+class _PocketcoderChatBuilders extends StackedChatBuilders {
+  _PocketcoderChatBuilders(super.style, super.callbacks, this.latestReasoningId);
+
+  final String? latestReasoningId;
+
+  bool _isReasoning(chat_core.Message message) => message.metadata?['kind'] == 'reasoning';
+
+  @override
+  chat_core.TextMessageBuilder get textMessageBuilder =>
+      (context, message, index, {required isSentByMe, groupStatus}) {
+        if (_isReasoning(message)) {
+          return ThinkingBlock(
+            key: ValueKey(message.id),
+            text: message.text,
+            isLatest: message.id == latestReasoningId,
+            isStreaming: false,
+          );
+        }
+        return super.textMessageBuilder(context, message, index,
+            isSentByMe: isSentByMe, groupStatus: groupStatus);
+      };
+
+  @override
+  TextStreamCardBuilder get textStreamMessageBuilder =>
+      (context, message, index, {required isSentByMe, groupStatus, required streamState}) {
+        if (_isReasoning(message)) {
+          return ThinkingBlock(
+            key: ValueKey(message.id),
+            text: streamState is StreamStateStreaming ? streamState.accumulatedText : '',
+            isLatest: message.id == latestReasoningId,
+            isStreaming: true,
+          );
+        }
+        return super.textStreamMessageBuilder(context, message, index,
+            isSentByMe: isSentByMe, groupStatus: groupStatus, streamState: streamState);
+      };
 }
