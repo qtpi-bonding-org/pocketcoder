@@ -52,7 +52,10 @@ class PocketcoderAgUiTransport implements IAgUiTransport {
   }
 
   @override
-  Future<void> sendMessage(String text) async {
+  Future<void> sendMessage(String text, {List<AgUiContextItem> context = const []}) async {
+    // pocketcoder's sendPrompt has no context-item support yet (that's a
+    // newer AgUiChat capability) — dropped like submitToolResult below,
+    // satisfying IAgUiTransport's now-wider interface.
     await _repository.sendPrompt(_chatId, text);
   }
 
