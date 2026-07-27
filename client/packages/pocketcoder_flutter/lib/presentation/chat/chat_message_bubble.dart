@@ -87,6 +87,50 @@ class ChatStreamMessageBubble extends StatelessWidget {
   }
 }
 
+/// Renders pocketcoder's COMMANDER/POCO/THINKING label row: an icon + small
+/// uppercase label whose color/text depend on who's speaking and whether
+/// this is a reasoning aside. Passed as `StackedChatStyle.roleHeaderBuilder`
+/// so both completed and streaming messages get identical header treatment.
+Widget pocketcoderRoleHeader(
+  BuildContext context, {
+  required String role,
+  required bool isSentByMe,
+  required bool isReasoning,
+}) {
+  final colors = context.colorScheme;
+  final terminalColors = context.terminalColors;
+  final accent = isReasoning
+      ? terminalColors.warning
+      : isSentByMe
+          ? terminalColors.user
+          : colors.primary;
+  final label = isSentByMe ? 'COMMANDER' : (isReasoning ? 'THINKING' : 'POCO');
+
+  return Padding(
+    padding: EdgeInsets.only(bottom: AppSizes.space),
+    child: Row(
+      children: [
+        Icon(
+          isSentByMe ? Icons.person_outline : Icons.smart_toy_outlined,
+          size: 14,
+          color: accent,
+        ),
+        HSpace.x1,
+        Text(
+          label,
+          style: TextStyle(
+            color: accent,
+            fontFamily: AppFonts.bodyFamily,
+            fontSize: AppSizes.fontTiny,
+            fontWeight: AppFonts.heavy,
+            letterSpacing: 2,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class _Bubble extends StatelessWidget {
   final bool isUser;
   final bool isReasoning;
@@ -97,13 +141,6 @@ class _Bubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-    final accent = isReasoning
-        ? terminalColors.warning
-        : isUser
-            ? terminalColors.user
-            : colors.primary;
-    final label = isUser ? 'COMMANDER' : (isReasoning ? 'THINKING' : 'POCO');
 
     return Container(
       width: double.infinity,
@@ -122,25 +159,11 @@ class _Bubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                isUser ? Icons.person_outline : Icons.smart_toy_outlined,
-                size: 14,
-                color: accent,
-              ),
-              HSpace.x1,
-              Text(
-                label,
-                style: TextStyle(
-                  color: accent,
-                  fontFamily: AppFonts.bodyFamily,
-                  fontSize: AppSizes.fontTiny,
-                  fontWeight: AppFonts.heavy,
-                  letterSpacing: 2,
-                ),
-              ),
-            ],
+          pocketcoderRoleHeader(
+            context,
+            role: isUser ? kUserAuthorId : kAgentAuthorId,
+            isSentByMe: isUser,
+            isReasoning: isReasoning,
           ),
           VSpace.x1,
           child,
