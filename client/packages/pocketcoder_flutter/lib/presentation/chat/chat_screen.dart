@@ -154,70 +154,88 @@ class _ChatViewState extends State<_ChatView> {
                 const ModeSwitcher(),
                 const ConfigPicker(),
                 Expanded(
-                  child: commState.conversation.timeline.isEmpty
-                      ? Center(
-                          child: Text(
-                            context.l10n.chatSessionTitle,
-                            style: TextStyle(
-                              color: context.colorScheme.onSurface
-                                  .withValues(alpha: 0.3),
-                              fontSize: AppSizes.fontStandard,
-                              fontStyle: FontStyle.italic,
+                  child: (() {
+                    final builders = pocketcoderChatBuilders(
+                      context,
+                      onPermissionOptionSelected:
+                          (requestId, {optionId, cancelled = false}) {
+                        final cubit = context.read<PermissionCubit>();
+                        if (cancelled || optionId == null) {
+                          cubit.deny();
+                        } else {
+                          cubit.authorize(optionId);
+                        }
+                      },
+                      onElicitationRespond: (requestId, response) {
+                        // ElicitationCard calls ElicitationCubit.submit directly via its
+                        // own context.read — this callback only fires for a hypothetical
+                        // future generic elicitation card, not the current override.
+                      },
+                    );
+                    // AgUiChat has no built-in empty-state slot, so the
+                    // placeholder is overlaid on top rather than swapped in
+                    // for it -- the composer must stay mounted even with a
+                    // zero-message timeline (a brand-new chat), or there's
+                    // nowhere to type the first message.
+                    return Stack(
+                      children: [
+                        ag_ui_widgets.AgUiChat(
+                          conversation: commState.conversation,
+                          currentUserId: 'user',
+                          onSendMessage: (text) =>
+                              context.read<ChatCubit>().sendPrompt(text),
+                          // Unset, flutter_chat_ui falls back to a light
+                          // theme regardless of the app's own dark theme —
+                          // derive one from the ambient ThemeData so the
+                          // message list background matches the terminal
+                          // chrome instead of rendering white.
+                          theme: ag_ui_widgets.ChatTheme.fromThemeData(
+                              Theme.of(context)),
+                          textMessageBuilder: builders.textMessageBuilder,
+                          textStreamMessageBuilder:
+                              builders.textStreamMessageBuilder,
+                          toolCallBuilder: builders.toolCallBuilder,
+                          permissionBuilder: builders.permissionBuilder,
+                          elicitationBuilder: builders.elicitationBuilder,
+                          toolRequestBuilder: builders.toolRequestBuilder,
+                          composerBuilder: (context) => Padding(
+                            padding: EdgeInsets.all(AppSizes.space),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (commState.isLoading) ...[
+                                  TerminalLoadingIndicator(
+                                    label: context.l10n.chatThinking,
+                                  ),
+                                  VSpace.x1,
+                                ],
+                                _SimpleInput(
+                                  controller: _inputController,
+                                  enabled: !commState.isLoading &&
+                                      commState.chatId != null,
+                                  onSubmitted: () => _handleSubmit(context),
+                                ),
+                              ],
                             ),
                           ),
-                        )
-                      : (() {
-                          final builders = pocketcoderChatBuilders(
-                            context,
-                            onPermissionOptionSelected:
-                                (requestId, {optionId, cancelled = false}) {
-                              final cubit = context.read<PermissionCubit>();
-                              if (cancelled || optionId == null) {
-                                cubit.deny();
-                              } else {
-                                cubit.authorize(optionId);
-                              }
-                            },
-                            onElicitationRespond: (requestId, response) {
-                              // ElicitationCard calls ElicitationCubit.submit directly via its
-                              // own context.read — this callback only fires for a hypothetical
-                              // future generic elicitation card, not the current override.
-                            },
-                          );
-                          return ag_ui_widgets.AgUiChat(
-                            conversation: commState.conversation,
-                            currentUserId: 'user',
-                            onSendMessage: (text) =>
-                                context.read<ChatCubit>().sendPrompt(text),
-                            textMessageBuilder: builders.textMessageBuilder,
-                            textStreamMessageBuilder:
-                                builders.textStreamMessageBuilder,
-                            toolCallBuilder: builders.toolCallBuilder,
-                            permissionBuilder: builders.permissionBuilder,
-                            elicitationBuilder: builders.elicitationBuilder,
-                            toolRequestBuilder: builders.toolRequestBuilder,
-                            composerBuilder: (context) => Padding(
-                              padding: EdgeInsets.all(AppSizes.space),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (commState.isLoading) ...[
-                                    TerminalLoadingIndicator(
-                                      label: context.l10n.chatThinking,
-                                    ),
-                                    VSpace.x1,
-                                  ],
-                                  _SimpleInput(
-                                    controller: _inputController,
-                                    enabled: !commState.isLoading &&
-                                        commState.chatId != null,
-                                    onSubmitted: () => _handleSubmit(context),
-                                  ),
-                                ],
+                        ),
+                        if (commState.conversation.timeline.isEmpty)
+                          IgnorePointer(
+                            child: Center(
+                              child: Text(
+                                context.l10n.chatSessionTitle,
+                                style: TextStyle(
+                                  color: context.colorScheme.onSurface
+                                      .withValues(alpha: 0.3),
+                                  fontSize: AppSizes.fontStandard,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
                             ),
-                          );
-                        })(),
+                          ),
+                      ],
+                    );
+                  })(),
                 ),
               ],
             ),
