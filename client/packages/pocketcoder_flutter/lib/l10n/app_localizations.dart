@@ -538,6 +538,18 @@ abstract class AppLocalizations {
   /// **'THINKING'**
   String get chatThinking;
 
+  /// No description provided for @chatThinkingLive.
+  ///
+  /// In en, this message translates to:
+  /// **'THINKING...'**
+  String get chatThinkingLive;
+
+  /// No description provided for @chatThought.
+  ///
+  /// In en, this message translates to:
+  /// **'THOUGHT'**
+  String get chatThought;
+
   /// No description provided for @filesTitle.
   ///
   /// In en, this message translates to:

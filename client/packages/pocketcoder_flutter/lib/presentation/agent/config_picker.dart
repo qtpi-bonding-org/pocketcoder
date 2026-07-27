@@ -15,8 +15,18 @@ import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dar
 import 'package:pocketcoder_flutter/application/agent/session_controls_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
-class ConfigPicker extends StatelessWidget {
+class ConfigPicker extends StatefulWidget {
   const ConfigPicker({super.key});
+
+  @override
+  State<ConfigPicker> createState() => _ConfigPickerState();
+}
+
+class _ConfigPickerState extends State<ConfigPicker> {
+  // Collapsed by default -- with several select options each rendering a
+  // full label+dropdown row, this panel can eat ~30% of a phone screen if
+  // left expanded, crowding out the message list.
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -55,21 +65,36 @@ class ConfigPicker extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: EdgeInsets.only(bottom: AppSizes.space),
-            child: Text(
-              'CONFIG',
-              style: TextStyle(
-                color: colors.onSurface.withValues(alpha: 0.5),
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontTiny,
-                fontWeight: AppFonts.heavy,
-                letterSpacing: 2,
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.5),
+              child: Row(
+                children: [
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_down
+                        : Icons.keyboard_arrow_right,
+                    color: colors.onSurface.withValues(alpha: 0.5),
+                    size: 16,
+                  ),
+                  Text(
+                    'CONFIG',
+                    style: TextStyle(
+                      color: colors.onSurface.withValues(alpha: 0.5),
+                      fontFamily: AppFonts.bodyFamily,
+                      fontSize: AppSizes.fontTiny,
+                      fontWeight: AppFonts.heavy,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          for (final option in options)
-            _buildOptionRow(context, option),
+          if (_expanded)
+            for (final option in options)
+              _buildOptionRow(context, option),
         ],
       ),
     );

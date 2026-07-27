@@ -59,6 +59,11 @@ class _ChatView extends StatefulWidget {
 class _ChatViewState extends State<_ChatView> {
   final TextEditingController _inputController = TextEditingController();
   bool _opened = false;
+  // Hidden by default: with PlanPanel + ModeSwitcher + ConfigPicker all
+  // visible, they can crowd out the message list entirely. Session chrome
+  // lives behind a header toggle so the default view is just nav + timeline
+  // (thinking/Poco/response) + composer.
+  bool _sessionPanelExpanded = false;
 
   @override
   void initState() {
@@ -102,6 +107,25 @@ class _ChatViewState extends State<_ChatView> {
     super.dispose();
   }
 
+  /// Id of the newest reasoning entry (streaming or finished) in the
+  /// timeline, so [ThinkingBlock] can default only that one to expanded and
+  /// collapse every earlier one -- same as Claude's own app.
+  String? _latestReasoningId(List<ag_ui_widgets.TimelineItem> timeline) {
+    for (final item in timeline.reversed) {
+      switch (item) {
+        case ag_ui_widgets.TextTimelineItem(:final id, :final kind)
+            when kind == ag_ui_widgets.ChatMessageKind.reasoning:
+          return id;
+        case ag_ui_widgets.TextStreamTimelineItem(:final id, :final kind)
+            when kind == ag_ui_widgets.ChatMessageKind.reasoning:
+          return id;
+        default:
+          continue;
+      }
+    }
+    return null;
+  }
+
   void _handleSubmit(BuildContext context) {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
@@ -129,6 +153,12 @@ class _ChatViewState extends State<_ChatView> {
               label: context.l10n.chatFilesAction,
               onTap: () => AppNavigation.toFiles(context),
             ),
+            TerminalAction(
+              label: 'SESSION',
+              isActive: _sessionPanelExpanded,
+              onTap: () => setState(
+                  () => _sessionPanelExpanded = !_sessionPanelExpanded),
+            ),
             if (isRunning)
               TerminalAction(
                 label: 'CANCEL',
@@ -150,13 +180,17 @@ class _ChatViewState extends State<_ChatView> {
             ],
             child: Column(
               children: [
-                const PlanPanel(),
-                const ModeSwitcher(),
-                const ConfigPicker(),
+                if (_sessionPanelExpanded) ...[
+                  const PlanPanel(),
+                  const ModeSwitcher(),
+                  const ConfigPicker(),
+                ],
                 Expanded(
                   child: (() {
                     final builders = pocketcoderChatBuilders(
                       context,
+                      latestReasoningId:
+                          _latestReasoningId(commState.conversation.timeline),
                       onPermissionOptionSelected:
                           (requestId, {optionId, cancelled = false}) {
                         final cubit = context.read<PermissionCubit>();
