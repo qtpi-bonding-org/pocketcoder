@@ -37,11 +37,11 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: "373beebe84a5750c76d188bf77a624fbca9828bf"
-      resolved-ref: "373beebe84a5750c76d188bf77a624fbca9828bf"
+      ref: "04c80d4d27b72f2d6762013f83a8448ce17dd9ce"
+      resolved-ref: "04c80d4d27b72f2d6762013f83a8448ce17dd9ce"
       url: "https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git"
     source: git
-    version: "0.2.0"
+    version: "0.4.0"
   analyzer:
     dependency: transitive
     description:
@@ -592,6 +592,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_markdown_plus:
+    dependency: transitive
+    description:
+      name: flutter_markdown_plus
+      sha256: fce641d6c2106cc495de1cd603f97a4f9d615a97a64011928ded380dbdade935
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.12"
   flutter_math_fork:
     dependency: transitive
     description:
@@ -907,6 +915,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.0"
+  markdown:
+    dependency: transitive
+    description:
+      name: markdown
+      sha256: ee85086ad7698b42522c6ad42fe195f1b9898e4d974a1af4576c1a3a176cada9
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.3.1"
   matcher:
     dependency: transitive
     description:
