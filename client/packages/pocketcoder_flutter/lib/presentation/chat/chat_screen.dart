@@ -10,8 +10,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart' as ag_ui_widgets;
-import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
-    show PermissionRequestTimelineItem, ElicitationRequestTimelineItem;
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
@@ -22,10 +20,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/config_picker.dart';
 import 'package:pocketcoder_flutter/presentation/agent/mode_switcher.dart';
 import 'package:pocketcoder_flutter/presentation/agent/plan_panel.dart';
-import 'package:pocketcoder_flutter/presentation/chat/chat_message_bubble.dart';
-import 'package:pocketcoder_flutter/presentation/chat/elicitation_card.dart';
-import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
-import 'package:pocketcoder_flutter/presentation/chat/tool_call_card.dart';
+import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -171,23 +166,36 @@ class _ChatViewState extends State<_ChatView> {
                             ),
                           ),
                         )
-                      : ag_ui_widgets.AgUiChat(
+                      : (() {
+                          final builders = pocketcoderChatBuilders(
+                            context,
+                            onPermissionOptionSelected:
+                                (requestId, {optionId, cancelled = false}) {
+                              final cubit = context.read<PermissionCubit>();
+                              if (cancelled || optionId == null) {
+                                cubit.deny();
+                              } else {
+                                cubit.authorize(optionId);
+                              }
+                            },
+                            onElicitationRespond: (requestId, response) {
+                              // ElicitationCard calls ElicitationCubit.submit directly via its
+                              // own context.read — this callback only fires for a hypothetical
+                              // future generic elicitation card, not the current override.
+                            },
+                          );
+                          return ag_ui_widgets.AgUiChat(
                             conversation: commState.conversation,
                             currentUserId: 'user',
                             onSendMessage: (text) =>
                                 context.read<ChatCubit>().sendPrompt(text),
-                            textMessageBuilder: (context, message, index,
-                                    {required isSentByMe, groupStatus}) =>
-                                ChatMessageBubble(message: message),
-                            toolCallBuilder: (context, message, index,
-                                    {required isSentByMe, groupStatus}) =>
-                                ToolCallCard(message: message),
-                            permissionBuilder: (context, item) =>
-                                PermissionCard(
-                                    item: item as PermissionRequestTimelineItem),
-                            elicitationBuilder: (context, item) =>
-                                ElicitationCard(
-                                    item: item as ElicitationRequestTimelineItem),
+                            textMessageBuilder: builders.textMessageBuilder,
+                            textStreamMessageBuilder:
+                                builders.textStreamMessageBuilder,
+                            toolCallBuilder: builders.toolCallBuilder,
+                            permissionBuilder: builders.permissionBuilder,
+                            elicitationBuilder: builders.elicitationBuilder,
+                            toolRequestBuilder: builders.toolRequestBuilder,
                             composerBuilder: (context) => Padding(
                               padding: EdgeInsets.all(AppSizes.space),
                               child: Column(
@@ -208,7 +216,8 @@ class _ChatViewState extends State<_ChatView> {
                                 ],
                               ),
                             ),
-                          ),
+                          );
+                        })(),
                 ),
               ],
             ),
