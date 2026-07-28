@@ -1,5 +1,35 @@
 # PocketCoder
 
+## Deployment Model — read this before designing any cross-service feature
+
+**Each docker-compose deployment belongs to exactly one user.** PocketBase,
+goose, and mcp-gateway in a given deployment are that user's own — spun up
+onto their own VPS by **Aeroform** (`flutter_aeroform`, a sibling package
+this org owns), which auto-provisions the box and deploys the stack with
+**no SSH step at all**. The Flutter app that talks to that deployment is
+also that one user's own client. We (the PocketCoder team) never operate
+or reach into any individual user's PocketBase/goose/gateway.
+
+**The only infrastructure we run centrally is `workers/` (Cloudflare
+Workers)** — `push-relay`, `image-relay`, and any sibling worker. That's
+"our backend." Anything that needs a stable, publicly-reachable endpoint
+shared across every self-hosted deployment (OAuth app registrations,
+third-party API brokering, anything requiring a secret no individual
+user's box should hold) belongs in a Worker, not in PocketBase or the
+gateway — a per-deployment service can never be the single registered
+callback/endpoint an external provider expects, since there are as many
+deployments as there are users.
+
+When a design needs "a human to register something with a third party"
+(an OAuth app's redirect URI, an API client registration, etc.), that
+registration has to be done once by us, centrally — end users never see
+that step in a zero-touch Aeroform-provisioned flow. See
+`docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md` for a worked
+example of this pattern (GitHub OAuth: Worker holds the shared
+client_id/client_secret, exchanges the code, hands the finished token to
+the user's own deployment) and `flutter_aeroform`'s existing
+`LinodeOAuthService`/`LinodeAPIClient` for the precedent it followed.
+
 ## PocketBase Schema Conventions
 
 **PocketBase always owns its own primary key.** A collection's `id` is always
