@@ -23,76 +23,76 @@ typedef WebAuthLauncher = Future<String> Function({
 /// Cloudflare-Worker-backed OAuth client for locally-run MCP catalog
 /// servers that need a real user identity (GitHub today) rather than a
 /// static API key. See i_mcp_oauth_service.dart's doc comment and
-/// docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md Component 2.
+/// docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md.
 ///
-/// `provider` is a per-call argument, not a constructor argument, even
-/// though the spec's illustrative pseudocode shows
-/// `McpOAuthService(provider: 'github')` — this class is a DI singleton
-/// (registered once via @LazySingleton below, matching every other
-/// single-implementation infrastructure class in this package, e.g.
-/// AuthRepository/FilesRepository), so it can't be constructed fresh per
-/// provider. The Worker and this provider registry are already generic by
-/// construction, so a method parameter does the same job.
+/// `provider` is a per-call argument, not a constructor argument — this
+/// class is a DI singleton (registered once via @LazySingleton below,
+/// matching every other single-implementation infrastructure class in
+/// this package, e.g. AuthRepository/FilesRepository), so it can't be
+/// constructed fresh per provider. It holds no per-provider config at all
+/// (see the provider-discovery spec) — the Worker's GET /authorize route
+/// builds the real authorize URL server-side, so this class only ever
+/// needs the opaque provider id string.
 @LazySingleton(as: IMcpOAuthService)
 class McpOAuthService implements IMcpOAuthService {
   static const _callbackScheme = 'pocketcoder';
 
-  // Deliberately duplicated (not shared) with workers/mcp-oauth-relay's own
-  // PROVIDERS map: the Worker never builds this authorize URL itself
-  // (Decision 1 — no /start round trip), so the two registries only need
-  // to describe the same OAuth Apps, not share code. Out of scope:
-  // providers other than GitHub (see the spec's Out of scope section).
-  static const _authorizeUrls = {
-    'github': 'https://github.com/login/oauth/authorize',
-  };
-  static const _scopes = {
-    'github': 'repo read:user',
-  };
-
   final http.Client _httpClient;
   final String _relayBaseUrl;
-  final Map<String, String> _clientIds;
 
   McpOAuthService(
     this._httpClient,
     @Named('mcpOAuthRelayBaseUrl') this._relayBaseUrl,
-    @Named('githubOAuthClientId') String githubClientId,
-  ) : _clientIds = {'github': githubClientId};
+  );
 
   /// Overridable in tests only — production code always uses the real
   /// FlutterWebAuth2.authenticate.
   @visibleForTesting
   WebAuthLauncher webAuthLauncher = FlutterWebAuth2.authenticate;
 
+  /// In-memory cache, populated on first successful supportedProviders()
+  /// call. Never populated from a failed fetch — a transient network
+  /// failure must not poison the app session with an empty list that
+  /// silently disables every CONNECT button until restart.
+  List<McpOAuthProvider>? _cachedProviders;
+
+  @override
+  Future<List<McpOAuthProvider>> supportedProviders() {
+    return tryMethod(() async {
+      final cached = _cachedProviders;
+      if (cached != null) return cached;
+
+      final resp = await _httpClient.get(Uri.parse('$_relayBaseUrl/providers'));
+      if (resp.statusCode != 200) {
+        throw McpOAuthException('Failed to fetch supported providers: ${resp.statusCode}');
+      }
+      final body = jsonDecode(resp.body) as Map<String, dynamic>;
+      final rawList = body['providers'] as List<dynamic>? ?? const [];
+      final providers = rawList.map((raw) {
+        final map = raw as Map<String, dynamic>;
+        return (id: map['id'] as String, displayName: map['displayName'] as String);
+      }).toList();
+
+      _cachedProviders = providers;
+      return providers;
+    }, McpOAuthException.new, 'supportedProviders');
+  }
+
   @override
   Future<McpOAuthTokenPair> authenticate(String provider) {
     return tryMethod(() async {
-      final authorizeUrl = _authorizeUrls[provider];
-      final clientId = _clientIds[provider];
-      final scope = _scopes[provider];
-      if (authorizeUrl == null || clientId == null || scope == null) {
-        throw McpOAuthException.unknownProvider(provider);
-      }
-
       final codeVerifier = generateCodeVerifier();
       final codeChallenge = generateCodeChallenge(codeVerifier);
-      final state = encodeState(provider: provider, codeChallenge: codeChallenge);
-      final redirectUri = '$_relayBaseUrl/callback';
 
-      final authUri = Uri.parse(authorizeUrl).replace(queryParameters: {
-        'client_id': clientId,
-        'response_type': 'code',
-        'redirect_uri': redirectUri,
-        'scope': scope,
-        'state': state,
+      final authorizeUri = Uri.parse('$_relayBaseUrl/authorize').replace(queryParameters: {
+        'provider': provider,
         'code_challenge': codeChallenge,
-        'code_challenge_method': 'S256',
       });
 
       String callbackUrl;
       try {
         callbackUrl = await webAuthLauncher(
-          url: authUri.toString(),
+          url: authorizeUri.toString(),
           callbackUrlScheme: _callbackScheme,
         );
       } on PlatformException catch (e) {
@@ -110,6 +110,21 @@ class McpOAuthService implements IMcpOAuthService {
       final exchangeCode = callback.queryParameters['exchange_code'];
       if (exchangeCode == null || exchangeCode.isEmpty) {
         throw McpOAuthException('Worker callback missing exchange_code');
+      }
+
+      // Defense in depth: the Worker now builds `state` itself (see the
+      // provider-discovery spec), so this client-side check doesn't
+      // protect anything /claim's own PKCE verifier check doesn't already
+      // cover — but it's free, catches a spoofed deep-link one hop
+      // earlier, and restores the property `state` is normally for
+      // (RFC 6749 §10.12: the initiator verifies the response corresponds
+      // to its own request).
+      final stateParam = callback.queryParameters['state'];
+      final decodedState = stateParam == null ? null : decodeState(stateParam);
+      if (decodedState == null ||
+          decodedState['cc'] != codeChallenge ||
+          decodedState['p'] != provider) {
+        throw McpOAuthException.stateMismatch();
       }
 
       return _claim(exchangeCode: exchangeCode, codeVerifier: codeVerifier);
@@ -158,14 +173,19 @@ class McpOAuthService implements IMcpOAuthService {
     return base64Url.encode(hash.bytes).replaceAll('=', '');
   }
 
-  /// Encodes {p: provider, cc: code_challenge} as base64url(JSON) into the
-  /// OAuth `state` param. The Worker only ever decodes this at /callback
-  /// time (see workers/mcp-oauth-relay/src/index.js's parseState).
-  /// Plaintext, not HMAC-signed: code_challenge is not secret (RFC 7636
-  /// §4.2) — see this plan's Global Constraints, Decision 1.
+  /// Decodes the `state` param the Worker's GET /authorize route built
+  /// (base64url(JSON.stringify({p, cc}))) — see
+  /// workers/mcp-oauth-relay/src/index.js's handleAuthorize. Returns null
+  /// on any malformed input rather than throwing, since this is used for
+  /// a defense-in-depth equality check, not a required-to-succeed parse.
   @visibleForTesting
-  static String encodeState({required String provider, required String codeChallenge}) {
-    final json = jsonEncode({'p': provider, 'cc': codeChallenge});
-    return base64Url.encode(utf8.encode(json)).replaceAll('=', '');
+  static Map<String, dynamic>? decodeState(String stateParam) {
+    try {
+      final padded = base64Url.normalize(stateParam);
+      final decoded = jsonDecode(utf8.decode(base64Url.decode(padded)));
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (e) {
+      return null;
+    }
   }
 }
