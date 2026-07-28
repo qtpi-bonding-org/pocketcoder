@@ -106,4 +106,20 @@ abstract class ExternalModule {
   /// HTTP client for API requests
   @lazySingleton
   http.Client get httpClient => http.Client();
+
+  /// Base URL of workers/mcp-oauth-relay (Task 1). No trailing slash.
+  /// TODO(mcp-oauth): replace with the real deployed Worker's custom
+  /// domain once Task 1 Step 4's one-time `wrangler deploy` has run.
+  @Named('mcpOAuthRelayBaseUrl')
+  @lazySingleton
+  String get mcpOAuthRelayBaseUrl =>
+      'https://pocketcoder-mcp-oauth-relay.workers.dev';
+
+  /// client_id of the centrally-registered GitHub OAuth App (not secret —
+  /// safe to embed, same as Linode's `linodeClientId` in flutter_aeroform).
+  /// TODO(mcp-oauth): replace with the real GitHub OAuth App's client_id
+  /// once Task 1 Step 4's registration step has happened.
+  @Named('githubOAuthClientId')
+  @lazySingleton
+  String get githubOAuthClientId => 'REPLACE_WITH_REAL_GITHUB_OAUTH_CLIENT_ID';
 }
