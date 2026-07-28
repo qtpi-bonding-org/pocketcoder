@@ -8,5 +8,12 @@ abstract class IMcpRepository {
     required String name,
     String? image,
     Map<String, dynamic>? config,
+    String? oauthProvider,
+    String? oauthTokenEnvVar,
+  });
+  Future<void> deliverOAuthToken(
+    String serverName, {
+    required String accessToken,
+    String? refreshToken,
   });
 }
