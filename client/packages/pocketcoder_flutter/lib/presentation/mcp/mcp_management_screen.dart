@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
+import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
@@ -161,36 +162,72 @@ class _McpManagementView extends StatelessWidget {
           ],
           if (server.oauthProvider?.isNotEmpty == true) ...[
             VSpace.x1,
-            TerminalText.mini(
-              context.l10n.mcpOauthRequiredLabel(server.oauthProvider ?? ''),
-              color: colors.primary,
-              alpha: 0.8,
-            ),
-            VSpace.x1,
-            BlocBuilder<McpCubit, McpState>(
-              builder: (context, _) {
-                final cubit = context.read<McpCubit>();
-                final pendingRetry = cubit.hasPendingOAuthDelivery(server.id);
-                return Row(
+            FutureBuilder<List<McpOAuthProvider>>(
+              future: context.read<McpCubit>().supportedOAuthProviders(),
+              builder: (context, snapshot) {
+                final providers = snapshot.data;
+                McpOAuthProvider? matched;
+                for (final p in providers ?? const <McpOAuthProvider>[]) {
+                  if (p.id == server.oauthProvider) {
+                    matched = p;
+                    break;
+                  }
+                }
+                // Fail open while loading/erroring: only treat a provider
+                // as unsupported once we've heard back successfully and it
+                // genuinely isn't in the list — never block on a slow or
+                // failed /providers fetch. This gate is a UX nicety, not a
+                // security boundary — every authoritative check still
+                // happens server-side at /authorize time regardless. See
+                // docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md.
+                final knownUnsupported = snapshot.connectionState == ConnectionState.done &&
+                    providers != null &&
+                    matched == null;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: TerminalButton(
-                        label: pendingRetry
-                            ? context.l10n.mcpRetryDeliveryCap
-                            : context.l10n.mcpConnectCap,
-                        onTap: () => pendingRetry
-                            ? cubit.retryOAuthDelivery(server.id)
-                            : cubit.connectOAuth(server),
-                      ),
+                    TerminalText.mini(
+                      context.l10n.mcpOauthRequiredLabel(matched?.displayName ?? server.oauthProvider ?? ''),
+                      color: colors.primary,
+                      alpha: 0.8,
                     ),
-                    if (server.status != McpServerStatus.pending) ...[
-                      HSpace.x2,
-                      TerminalButton(
-                        label: context.l10n.mcpRevoke,
-                        onTap: () => cubit.deny(server.id),
+                    VSpace.x1,
+                    if (knownUnsupported)
+                      TerminalText.mini(
+                        context.l10n.mcpOauthProviderNotConfiguredLabel(server.oauthProvider ?? ''),
                         color: colors.error,
+                        alpha: 0.8,
+                      )
+                    else
+                      BlocBuilder<McpCubit, McpState>(
+                        builder: (context, _) {
+                          final cubit = context.read<McpCubit>();
+                          final pendingRetry = cubit.hasPendingOAuthDelivery(server.id);
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: TerminalButton(
+                                  label: pendingRetry
+                                      ? context.l10n.mcpRetryDeliveryCap
+                                      : context.l10n.mcpConnectCap,
+                                  onTap: () => pendingRetry
+                                      ? cubit.retryOAuthDelivery(server.id)
+                                      : cubit.connectOAuth(server),
+                                ),
+                              ),
+                              if (server.status != McpServerStatus.pending) ...[
+                                HSpace.x2,
+                                TerminalButton(
+                                  label: context.l10n.mcpRevoke,
+                                  onTap: () => cubit.deny(server.id),
+                                  color: colors.error,
+                                ),
+                              ],
+                            ],
+                          );
+                        },
                       ),
-                    ],
                   ],
                 );
               },

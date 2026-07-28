@@ -198,6 +198,12 @@
   },
   "mcpOauthProviderOptionalLabel": "OAUTH PROVIDER (OPTIONAL)",
   "mcpOauthTokenEnvVarOptionalLabel": "OAUTH TOKEN ENV VAR (OPTIONAL)",
+  "mcpOauthProviderNotConfiguredLabel": "{provider} NOT YET CONFIGURED",
+  "@mcpOauthProviderNotConfiguredLabel": {
+    "placeholders": {
+      "provider": { "type": "String" }
+    }
+  },
   "actionAdd": "ADD",
   "toolPermissionsScreenTitle": "TOOL PERMISSIONS",
   "toolPermissionsRulesRegistry": "PERMISSION RULES",
