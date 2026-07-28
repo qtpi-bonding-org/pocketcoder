@@ -18,6 +18,8 @@ abstract class McpServer with _$McpServer {
     String? reason,
     String? image,
     dynamic configSchema,
+    String? oauthProvider,
+    String? oauthTokenEnvVar,
     DateTime? created,
     DateTime? updated,
     @JsonKey(unknownEnumValue: McpServerAcpTransport.unknown) McpServerAcpTransport? acpTransport,
