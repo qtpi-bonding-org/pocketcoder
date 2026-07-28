@@ -11,6 +11,14 @@ class MockHttpClient extends Mock implements http.Client {}
 
 class FakeUri extends Fake implements Uri {}
 
+/// Builds a Worker-shaped `state` param the way
+/// workers/mcp-oauth-relay/src/index.js's handleAuthorize does, for tests
+/// that need to simulate a well-formed provider callback.
+String _encodeStateForTest({required String provider, required String codeChallenge}) {
+  final json = jsonEncode({'p': provider, 'cc': codeChallenge});
+  return base64Url.encode(utf8.encode(json)).replaceAll('=', '');
+}
+
 void main() {
   late McpOAuthService service;
   late MockHttpClient httpClient;
@@ -21,11 +29,7 @@ void main() {
 
   setUp(() {
     httpClient = MockHttpClient();
-    service = McpOAuthService(
-      httpClient,
-      'https://relay.example.com',
-      'test-github-client-id',
-    );
+    service = McpOAuthService(httpClient, 'https://relay.example.com');
   });
 
   group('PKCE helpers', () {
@@ -43,14 +47,57 @@ void main() {
       expect(a, isNot(contains('=')));
     });
 
-    test('encodeState round-trips provider + code_challenge', () {
-      final state = McpOAuthService.encodeState(
-        provider: 'github',
-        codeChallenge: 'abc123',
-      );
-      final padded = base64Url.normalize(state);
-      final decoded = jsonDecode(utf8.decode(base64Url.decode(padded)));
+    test('decodeState round-trips a Worker-shaped state param', () {
+      final state = _encodeStateForTest(provider: 'github', codeChallenge: 'abc123');
+      final decoded = McpOAuthService.decodeState(state);
       expect(decoded, {'p': 'github', 'cc': 'abc123'});
+    });
+
+    test('decodeState returns null for malformed input', () {
+      expect(McpOAuthService.decodeState('not-valid-base64url-json'), isNull);
+    });
+  });
+
+  group('McpOAuthService.supportedProviders', () {
+    test('fetches and parses the provider list, then caches it', () async {
+      when(() => httpClient.get(any())).thenAnswer(
+        (_) async => http.Response(
+          jsonEncode({
+            'providers': [
+              {'id': 'github', 'displayName': 'GitHub'},
+            ],
+          }),
+          200,
+        ),
+      );
+
+      final first = await service.supportedProviders();
+      final second = await service.supportedProviders();
+
+      expect(first, [(id: 'github', displayName: 'GitHub')]);
+      expect(second, first);
+      verify(() => httpClient.get(any())).called(1); // second call served from cache
+    });
+
+    test('does not cache a failed fetch — a later call retries', () async {
+      when(() => httpClient.get(any())).thenAnswer((_) async => http.Response('', 500));
+
+      await expectLater(() => service.supportedProviders(), throwsA(isA<McpOAuthException>()));
+
+      when(() => httpClient.get(any())).thenAnswer(
+        (_) async => http.Response(
+          jsonEncode({
+            'providers': [
+              {'id': 'github', 'displayName': 'GitHub'},
+            ],
+          }),
+          200,
+        ),
+      );
+      final result = await service.supportedProviders();
+
+      expect(result, [(id: 'github', displayName: 'GitHub')]);
+      verify(() => httpClient.get(any())).called(2); // first (failed) + second (succeeded)
     });
   });
 
@@ -79,27 +126,36 @@ void main() {
       );
     });
 
-    test('unknown provider throws before launching the browser', () async {
-      var launched = false;
+    test('opens relayBaseUrl/authorize with provider and code_challenge — no local provider knowledge', () async {
+      String? openedUrl;
       service.webAuthLauncher = ({required String url, required String callbackUrlScheme}) async {
-        launched = true;
-        return '';
+        openedUrl = url;
+        final uri = Uri.parse(url);
+        final codeChallenge = uri.queryParameters['code_challenge'] ?? '';
+        final state = _encodeStateForTest(provider: 'github', codeChallenge: codeChallenge);
+        return 'pocketcoder://oauth-callback?exchange_code=xyz&state=$state';
       };
+      when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
+          .thenAnswer((_) async => http.Response(jsonEncode({'access_token': 'tok', 'refresh_token': 'ref'}), 200));
 
-      await expectLater(
-        () => service.authenticate('unknown-provider'),
-        throwsA(isA<McpOAuthException>()),
-      );
-      expect(launched, isFalse);
+      final pair = await service.authenticate('github');
+
+      final uri = Uri.parse(openedUrl!);
+      expect(uri.host, 'relay.example.com');
+      expect(uri.path, '/authorize');
+      expect(uri.queryParameters['provider'], 'github');
+      expect(uri.queryParameters['code_challenge'], isNotEmpty);
+      expect(pair.accessToken, 'tok');
+      expect(pair.refreshToken, 'ref');
     });
 
     test('happy path calls /claim with the generated code_verifier and returns the token pair', () async {
       String? capturedBody;
       service.webAuthLauncher = ({required String url, required String callbackUrlScheme}) async {
         final uri = Uri.parse(url);
-        expect(uri.host, 'github.com');
-        expect(uri.queryParameters['code_challenge_method'], 'S256');
-        return 'pocketcoder://oauth-callback?exchange_code=xyz&state=${uri.queryParameters['state']}';
+        final codeChallenge = uri.queryParameters['code_challenge'] ?? '';
+        final state = _encodeStateForTest(provider: 'github', codeChallenge: codeChallenge);
+        return 'pocketcoder://oauth-callback?exchange_code=xyz&state=$state';
       };
       when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
           .thenAnswer((invocation) async {
@@ -116,10 +172,33 @@ void main() {
       expect(sentBody['code_verifier'], isNotEmpty);
     });
 
+    test('state mismatch throws before calling /claim', () async {
+      service.webAuthLauncher = ({required String url, required String callbackUrlScheme}) async {
+        // state decodes to a code_challenge that doesn't match what this
+        // client generated — simulates a spoofed/mismatched deep link.
+        final state = _encodeStateForTest(provider: 'github', codeChallenge: 'not-the-real-challenge');
+        return 'pocketcoder://oauth-callback?exchange_code=xyz&state=$state';
+      };
+
+      await expectLater(() => service.authenticate('github'), throwsA(isA<McpOAuthException>()));
+      verifyNever(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')));
+    });
+
+    test('missing state throws before calling /claim', () async {
+      service.webAuthLauncher = ({required String url, required String callbackUrlScheme}) async {
+        return 'pocketcoder://oauth-callback?exchange_code=xyz';
+      };
+
+      await expectLater(() => service.authenticate('github'), throwsA(isA<McpOAuthException>()));
+      verifyNever(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')));
+    });
+
     test('/claim non-200 response throws McpOAuthException', () async {
       service.webAuthLauncher = ({required String url, required String callbackUrlScheme}) async {
         final uri = Uri.parse(url);
-        return 'pocketcoder://oauth-callback?exchange_code=xyz&state=${uri.queryParameters['state']}';
+        final codeChallenge = uri.queryParameters['code_challenge'] ?? '';
+        final state = _encodeStateForTest(provider: 'github', codeChallenge: codeChallenge);
+        return 'pocketcoder://oauth-callback?exchange_code=xyz&state=$state';
       };
       when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
           .thenAnswer((_) async => http.Response(jsonEncode({'error': 'verifier_mismatch'}), 400));
