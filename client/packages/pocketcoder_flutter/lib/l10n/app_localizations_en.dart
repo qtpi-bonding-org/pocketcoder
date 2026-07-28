@@ -408,6 +408,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Optional config (leave blank if none needed)';
 
   @override
+  String get mcpConnectCap => 'CONNECT';
+
+  @override
+  String get mcpRetryDeliveryCap => 'RETRY DELIVERY';
+
+  @override
+  String mcpOauthRequiredLabel(String provider) {
+    return 'REQUIRES OAUTH: $provider';
+  }
+
+  @override
+  String get mcpOauthProviderOptionalLabel => 'OAUTH PROVIDER (OPTIONAL)';
+
+  @override
+  String get mcpOauthTokenEnvVarOptionalLabel =>
+      'OAUTH TOKEN ENV VAR (OPTIONAL)';
+
+  @override
   String get actionAdd => 'ADD';
 
   @override

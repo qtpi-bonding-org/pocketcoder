@@ -188,6 +188,16 @@
   "mcpServerNameLabel": "SERVER NAME",
   "mcpImageOptionalLabel": "IMAGE (OPTIONAL)",
   "mcpAddConfigOptional": "Optional config (leave blank if none needed)",
+  "mcpConnectCap": "CONNECT",
+  "mcpRetryDeliveryCap": "RETRY DELIVERY",
+  "mcpOauthRequiredLabel": "REQUIRES OAUTH: {provider}",
+  "@mcpOauthRequiredLabel": {
+    "placeholders": {
+      "provider": { "type": "String" }
+    }
+  },
+  "mcpOauthProviderOptionalLabel": "OAUTH PROVIDER (OPTIONAL)",
+  "mcpOauthTokenEnvVarOptionalLabel": "OAUTH TOKEN ENV VAR (OPTIONAL)",
   "actionAdd": "ADD",
   "toolPermissionsScreenTitle": "TOOL PERMISSIONS",
   "toolPermissionsRulesRegistry": "PERMISSION RULES",

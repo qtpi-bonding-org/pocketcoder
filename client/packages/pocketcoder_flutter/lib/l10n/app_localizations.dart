@@ -844,6 +844,36 @@ abstract class AppLocalizations {
   /// **'Optional config (leave blank if none needed)'**
   String get mcpAddConfigOptional;
 
+  /// No description provided for @mcpConnectCap.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECT'**
+  String get mcpConnectCap;
+
+  /// No description provided for @mcpRetryDeliveryCap.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY DELIVERY'**
+  String get mcpRetryDeliveryCap;
+
+  /// No description provided for @mcpOauthRequiredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'REQUIRES OAUTH: {provider}'**
+  String mcpOauthRequiredLabel(String provider);
+
+  /// No description provided for @mcpOauthProviderOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OAUTH PROVIDER (OPTIONAL)'**
+  String get mcpOauthProviderOptionalLabel;
+
+  /// No description provided for @mcpOauthTokenEnvVarOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OAUTH TOKEN ENV VAR (OPTIONAL)'**
+  String get mcpOauthTokenEnvVarOptionalLabel;
+
   /// No description provided for @actionAdd.
   ///
   /// In en, this message translates to:
