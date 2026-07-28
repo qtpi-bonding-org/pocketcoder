@@ -115,6 +115,15 @@ class ApiEndpoints {
   static const String schedulesRunNow = '/api/pocketcoder/schedules/run-now';
 
   // ===========================================================================
+  // MCP OAUTH ENDPOINTS
+  // ===========================================================================
+
+  /// POST /api/pocketcoder/mcp_oauth/store
+  /// Merges an OAuth {access_token, refresh_token} pair into the target
+  /// mcp_servers row's config, which hooks/mcp.go renders into mcp.env.
+  static const String mcpOAuthStore = '/api/pocketcoder/mcp_oauth/store';
+
+  // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
 
@@ -136,6 +145,7 @@ class ApiEndpoints {
     schedulesUnpause,
     schedulesDelete,
     schedulesRunNow,
+    mcpOAuthStore,
   ];
 
   /// Dynamic endpoints that require parameters
