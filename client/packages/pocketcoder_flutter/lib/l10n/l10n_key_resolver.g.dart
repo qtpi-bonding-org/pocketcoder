@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-07-25T03:49:01.286141
+// Generated at: 2026-07-27T18:58:58.460905
 
 import 'app_localizations.dart';
 
@@ -104,6 +104,8 @@ class L10nKeyResolver {
       'chat.session.title' => _l10n.chatSessionTitle,
       'chat.terminal.action' => _l10n.chatTerminalAction,
       'chat.thinking' => _l10n.chatThinking,
+      'chat.thinking.live' => _l10n.chatThinkingLive,
+      'chat.thought' => _l10n.chatThought,
       'chat.use.global.default' => _l10n.chatUseGlobalDefault,
       'deploy.choose.provider' => _l10n.deployChooseProvider,
       'deploy.pro.badge' => _l10n.deployProBadge,
@@ -421,6 +423,8 @@ class L10nKeyResolver {
     'chat.session.title',
     'chat.terminal.action',
     'chat.thinking',
+    'chat.thinking.live',
+    'chat.thought',
     'chat.use.global.default',
     'deploy.choose.provider',
     'deploy.pro.badge',
@@ -732,6 +736,8 @@ class L10nKeyResolver {
     'chatSessionTitle': 'chat.session.title',
     'chatTerminalAction': 'chat.terminal.action',
     'chatThinking': 'chat.thinking',
+    'chatThinkingLive': 'chat.thinking.live',
+    'chatThought': 'chat.thought',
     'chatUseGlobalDefault': 'chat.use.global.default',
     'deployChooseProvider': 'deploy.choose.provider',
     'deployProBadge': 'deploy.pro.badge',
@@ -1040,6 +1046,8 @@ class L10nKeyResolver {
     'chat.session.title': 'chatSessionTitle',
     'chat.terminal.action': 'chatTerminalAction',
     'chat.thinking': 'chatThinking',
+    'chat.thinking.live': 'chatThinkingLive',
+    'chat.thought': 'chatThought',
     'chat.use.global.default': 'chatUseGlobalDefault',
     'deploy.choose.provider': 'deployChooseProvider',
     'deploy.pro.badge': 'deployProBadge',
@@ -1355,6 +1363,8 @@ abstract class L10nKeys {
   static const chatSessionTitle = 'chat.session.title';
   static const chatTerminalAction = 'chat.terminal.action';
   static const chatThinking = 'chat.thinking';
+  static const chatThinkingLive = 'chat.thinking.live';
+  static const chatThought = 'chat.thought';
   static const chatUseGlobalDefault = 'chat.use.global.default';
   static const deployChooseProvider = 'deploy.choose.provider';
   static const deployProBadge = 'deploy.pro.badge';
