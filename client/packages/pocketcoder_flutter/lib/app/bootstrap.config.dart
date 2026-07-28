@@ -299,8 +299,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i190.IStatusRepository>(
         () => _i907.StatusRepository(gh<_i824.PocketBase>()));
-    gh.factory<_i328.McpCubit>(
-        () => _i328.McpCubit(gh<_i922.IMcpRepository>()));
     gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
           gh<_i294.HarnesseDao>(),
           gh<_i294.ModelDao>(),
@@ -311,6 +309,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
     gh.factory<_i89.ToolPermissionsCubit>(
         () => _i89.ToolPermissionsCubit(gh<_i767.IToolPermissionRepository>()));
+    gh.factory<_i328.McpCubit>(() => _i328.McpCubit(
+          gh<_i922.IMcpRepository>(),
+          gh<_i904.IMcpOAuthService>(),
+        ));
     gh.factory<_i723.AgentConfigCubit>(
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
