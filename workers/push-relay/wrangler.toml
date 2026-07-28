@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2024-12-01"
 
 [vars]
-FCM_PROJECT_ID = "pocketcoder"
+FCM_PROJECT_ID = "pocketcoder-bc547"
 DAILY_PUSH_LIMIT = "1000"
 
 # Secrets (set via `wrangler secret put`):
