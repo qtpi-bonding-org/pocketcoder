@@ -203,10 +203,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
         () => _i976.AppExceptionKeyMapper());
-    gh.lazySingleton<String>(
-      () => externalModule.githubOAuthClientId,
-      instanceName: 'githubOAuthClientId',
-    );
     gh.lazySingleton<_i165.ISkillsRepository>(
         () => _i675.SkillsRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
@@ -249,6 +245,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i398.ToolPermissionDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
+    gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
+          gh<_i519.Client>(),
+          gh<String>(instanceName: 'mcpOAuthRelayBaseUrl'),
+        ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
@@ -274,11 +274,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i558.FlutterSecureStorage>(),
           gh<_i589.UserDao>(),
           gh<_i589.SshKeyDao>(),
-        ));
-    gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
-          gh<_i519.Client>(),
-          gh<String>(instanceName: 'mcpOAuthRelayBaseUrl'),
-          gh<String>(instanceName: 'githubOAuthClientId'),
         ));
     gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
           gh<_i199.ChatDao>(),
