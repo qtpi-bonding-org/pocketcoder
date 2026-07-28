@@ -149,7 +149,7 @@ class _McpManagementView extends StatelessWidget {
               alpha: 0.5,
             ),
           ],
-          if (isPending && server.configSchema != null) ...[
+          if (isPending && server.oauthProvider?.isEmpty != false && server.configSchema != null) ...[
             VSpace.x1,
             TerminalText.label(
               context.l10n.mcpRequiredConfig,
@@ -159,7 +159,43 @@ class _McpManagementView extends StatelessWidget {
             VSpace.x1,
             ..._buildConfigSchemaList(context, server.configSchema),
           ],
-          if (isPending) ...[
+          if (server.oauthProvider?.isNotEmpty == true) ...[
+            VSpace.x1,
+            TerminalText.mini(
+              context.l10n.mcpOauthRequiredLabel(server.oauthProvider ?? ''),
+              color: colors.primary,
+              alpha: 0.8,
+            ),
+            VSpace.x1,
+            BlocBuilder<McpCubit, McpState>(
+              builder: (context, _) {
+                final cubit = context.read<McpCubit>();
+                final pendingRetry = cubit.hasPendingOAuthDelivery(server.id);
+                return Row(
+                  children: [
+                    Expanded(
+                      child: TerminalButton(
+                        label: pendingRetry
+                            ? context.l10n.mcpRetryDeliveryCap
+                            : context.l10n.mcpConnectCap,
+                        onTap: () => pendingRetry
+                            ? cubit.retryOAuthDelivery(server.id)
+                            : cubit.connectOAuth(server),
+                      ),
+                    ),
+                    if (server.status != McpServerStatus.pending) ...[
+                      HSpace.x2,
+                      TerminalButton(
+                        label: context.l10n.mcpRevoke,
+                        onTap: () => cubit.deny(server.id),
+                        color: colors.error,
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ] else if (isPending) ...[
             VSpace.x1,
             Row(
               children: [
@@ -329,6 +365,8 @@ class _McpManagementView extends StatelessWidget {
     final cubit = context.read<McpCubit>();
     final nameController = TextEditingController();
     final imageController = TextEditingController();
+    final oauthProviderController = TextEditingController();
+    final oauthTokenEnvVarController = TextEditingController();
 
     showDialog(
       context: context,
@@ -347,6 +385,18 @@ class _McpManagementView extends StatelessWidget {
             TerminalTextField(
               controller: imageController,
               label: context.l10n.mcpImageOptionalLabel,
+              obscureText: false,
+            ),
+            VSpace.x2,
+            TerminalTextField(
+              controller: oauthProviderController,
+              label: context.l10n.mcpOauthProviderOptionalLabel,
+              obscureText: false,
+            ),
+            VSpace.x2,
+            TerminalTextField(
+              controller: oauthTokenEnvVarController,
+              label: context.l10n.mcpOauthTokenEnvVarOptionalLabel,
               obscureText: false,
             ),
           ],
@@ -372,6 +422,12 @@ class _McpManagementView extends StatelessWidget {
                 image: imageController.text.trim().isEmpty
                     ? null
                     : imageController.text.trim(),
+                oauthProvider: oauthProviderController.text.trim().isEmpty
+                    ? null
+                    : oauthProviderController.text.trim(),
+                oauthTokenEnvVar: oauthTokenEnvVarController.text.trim().isEmpty
+                    ? null
+                    : oauthTokenEnvVarController.text.trim(),
               );
               Navigator.of(dialogContext).pop();
             },
