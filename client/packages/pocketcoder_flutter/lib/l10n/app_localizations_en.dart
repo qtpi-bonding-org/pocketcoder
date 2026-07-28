@@ -426,6 +426,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'OAUTH TOKEN ENV VAR (OPTIONAL)';
 
   @override
+  String mcpOauthProviderNotConfiguredLabel(String provider) {
+    return '$provider NOT YET CONFIGURED';
+  }
+
+  @override
   String get actionAdd => 'ADD';
 
   @override
