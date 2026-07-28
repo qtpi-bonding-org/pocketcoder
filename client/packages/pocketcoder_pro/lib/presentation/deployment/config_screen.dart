@@ -47,7 +47,6 @@ class _ConfigView extends StatefulWidget {
 
 class _ConfigViewState extends State<_ConfigView> {
   final _emailController = TextEditingController();
-  final _apiKeyController = TextEditingController();
   final _linodeTokenController = TextEditingController();
 
   @override
@@ -60,7 +59,6 @@ class _ConfigViewState extends State<_ConfigView> {
   @override
   void dispose() {
     _emailController.dispose();
-    _apiKeyController.dispose();
     _linodeTokenController.dispose();
     super.dispose();
   }
@@ -78,9 +76,6 @@ class _ConfigViewState extends State<_ConfigView> {
           final config = state.config!;
           if (_emailController.text != config.adminEmail) {
             _emailController.text = config.adminEmail;
-          }
-          if (_apiKeyController.text != config.geminiApiKey) {
-            _apiKeyController.text = config.geminiApiKey;
           }
           if (_linodeTokenController.text != (config.linodeToken ?? '')) {
             _linodeTokenController.text = config.linodeToken ?? '';
@@ -138,17 +133,6 @@ class _ConfigViewState extends State<_ConfigView> {
                                 hint: 'YOU@DOMAIN.COM',
                                 errorText:
                                     configState.validationErrors?['adminEmail'],
-                                onChanged: (value) =>
-                                    _updateConfig(configCubit),
-                              ),
-                              VSpace.x2,
-                              TerminalTextField(
-                                controller: _apiKeyController,
-                                label: 'GEMINI API KEY',
-                                hint: 'ENTER KEY',
-                                obscureText: true,
-                                errorText: configState
-                                    .validationErrors?['geminiApiKey'],
                                 onChanged: (value) =>
                                     _updateConfig(configCubit),
                               ),
@@ -371,7 +355,6 @@ class _ConfigViewState extends State<_ConfigView> {
           planType: planType ?? current.planType,
           region: region ?? current.region,
           adminEmail: _emailController.text,
-          geminiApiKey: _apiKeyController.text,
           linodeToken: _linodeTokenController.text.isEmpty
               ? null
               : _linodeTokenController.text,
@@ -383,7 +366,6 @@ class _ConfigViewState extends State<_ConfigView> {
           planType: planType ?? '',
           region: region ?? '',
           adminEmail: _emailController.text,
-          geminiApiKey: _apiKeyController.text,
           linodeToken: _linodeTokenController.text.isEmpty
               ? null
               : _linodeTokenController.text,
