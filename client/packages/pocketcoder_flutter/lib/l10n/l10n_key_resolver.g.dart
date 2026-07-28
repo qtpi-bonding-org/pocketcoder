@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-07-27T18:58:58.460905
+// Generated at: 2026-07-28T02:41:30.543177
 
 import 'app_localizations.dart';
 
@@ -153,13 +153,17 @@ class L10nKeyResolver {
       'mcp.add.dialog.title' => _l10n.mcpAddDialogTitle,
       'mcp.authorize.cap' => _l10n.mcpAuthorizeCap,
       'mcp.capabilities.registry' => _l10n.mcpCapabilitiesRegistry,
+      'mcp.connect.cap' => _l10n.mcpConnectCap,
       'mcp.edit.config' => _l10n.mcpEditConfig,
       'mcp.enter.secrets' => _l10n.mcpEnterSecrets,
       'mcp.image.optional.label' => _l10n.mcpImageOptionalLabel,
       'mcp.no.capabilities' => _l10n.mcpNoCapabilities,
       'mcp.no.config.required' => _l10n.mcpNoConfigRequired,
+      'mcp.oauth.provider.optional.label' => _l10n.mcpOauthProviderOptionalLabel,
+      'mcp.oauth.token.env.var.optional.label' => _l10n.mcpOauthTokenEnvVarOptionalLabel,
       'mcp.pending.approval' => _l10n.mcpPendingApproval,
       'mcp.required.config' => _l10n.mcpRequiredConfig,
+      'mcp.retry.delivery.cap' => _l10n.mcpRetryDeliveryCap,
       'mcp.revoke' => _l10n.mcpRevoke,
       'mcp.server.name.label' => _l10n.mcpServerNameLabel,
       'mcp.title' => _l10n.mcpTitle,
@@ -324,6 +328,8 @@ class L10nKeyResolver {
       'llm.provider.models.title' => _l10n.llmProviderModelsTitle(args?['provider'] as String? ?? ''),
       'mcp.authorize.dialog.title' => _l10n.mcpAuthorizeDialogTitle(args?['name'] as String? ?? ''),
       'mcp.image.label' => _l10n.mcpImageLabel(args?['image'] as String? ?? ''),
+      'mcp.oauth.provider.not.configured.label' => _l10n.mcpOauthProviderNotConfiguredLabel(args?['provider'] as String? ?? ''),
+      'mcp.oauth.required.label' => _l10n.mcpOauthRequiredLabel(args?['provider'] as String? ?? ''),
       'mcp.purpose.label' => _l10n.mcpPurposeLabel(args?['reason'] as String? ?? ''),
       'mcp.update.config.dialog.title' => _l10n.mcpUpdateConfigDialogTitle(args?['name'] as String? ?? ''),
       'notification.signal.received' => _l10n.notificationSignalReceived(args?['title'] as String? ?? ''),
@@ -478,15 +484,21 @@ class L10nKeyResolver {
     'mcp.authorize.cap',
     'mcp.authorize.dialog.title',
     'mcp.capabilities.registry',
+    'mcp.connect.cap',
     'mcp.edit.config',
     'mcp.enter.secrets',
     'mcp.image.label',
     'mcp.image.optional.label',
     'mcp.no.capabilities',
     'mcp.no.config.required',
+    'mcp.oauth.provider.not.configured.label',
+    'mcp.oauth.provider.optional.label',
+    'mcp.oauth.required.label',
+    'mcp.oauth.token.env.var.optional.label',
     'mcp.pending.approval',
     'mcp.purpose.label',
     'mcp.required.config',
+    'mcp.retry.delivery.cap',
     'mcp.revoke',
     'mcp.server.name.label',
     'mcp.title',
@@ -791,15 +803,21 @@ class L10nKeyResolver {
     'mcpAuthorizeCap': 'mcp.authorize.cap',
     'mcpAuthorizeDialogTitle': 'mcp.authorize.dialog.title',
     'mcpCapabilitiesRegistry': 'mcp.capabilities.registry',
+    'mcpConnectCap': 'mcp.connect.cap',
     'mcpEditConfig': 'mcp.edit.config',
     'mcpEnterSecrets': 'mcp.enter.secrets',
     'mcpImageLabel': 'mcp.image.label',
     'mcpImageOptionalLabel': 'mcp.image.optional.label',
     'mcpNoCapabilities': 'mcp.no.capabilities',
     'mcpNoConfigRequired': 'mcp.no.config.required',
+    'mcpOauthProviderNotConfiguredLabel': 'mcp.oauth.provider.not.configured.label',
+    'mcpOauthProviderOptionalLabel': 'mcp.oauth.provider.optional.label',
+    'mcpOauthRequiredLabel': 'mcp.oauth.required.label',
+    'mcpOauthTokenEnvVarOptionalLabel': 'mcp.oauth.token.env.var.optional.label',
     'mcpPendingApproval': 'mcp.pending.approval',
     'mcpPurposeLabel': 'mcp.purpose.label',
     'mcpRequiredConfig': 'mcp.required.config',
+    'mcpRetryDeliveryCap': 'mcp.retry.delivery.cap',
     'mcpRevoke': 'mcp.revoke',
     'mcpServerNameLabel': 'mcp.server.name.label',
     'mcpTitle': 'mcp.title',
@@ -1101,15 +1119,21 @@ class L10nKeyResolver {
     'mcp.authorize.cap': 'mcpAuthorizeCap',
     'mcp.authorize.dialog.title': 'mcpAuthorizeDialogTitle',
     'mcp.capabilities.registry': 'mcpCapabilitiesRegistry',
+    'mcp.connect.cap': 'mcpConnectCap',
     'mcp.edit.config': 'mcpEditConfig',
     'mcp.enter.secrets': 'mcpEnterSecrets',
     'mcp.image.label': 'mcpImageLabel',
     'mcp.image.optional.label': 'mcpImageOptionalLabel',
     'mcp.no.capabilities': 'mcpNoCapabilities',
     'mcp.no.config.required': 'mcpNoConfigRequired',
+    'mcp.oauth.provider.not.configured.label': 'mcpOauthProviderNotConfiguredLabel',
+    'mcp.oauth.provider.optional.label': 'mcpOauthProviderOptionalLabel',
+    'mcp.oauth.required.label': 'mcpOauthRequiredLabel',
+    'mcp.oauth.token.env.var.optional.label': 'mcpOauthTokenEnvVarOptionalLabel',
     'mcp.pending.approval': 'mcpPendingApproval',
     'mcp.purpose.label': 'mcpPurposeLabel',
     'mcp.required.config': 'mcpRequiredConfig',
+    'mcp.retry.delivery.cap': 'mcpRetryDeliveryCap',
     'mcp.revoke': 'mcpRevoke',
     'mcp.server.name.label': 'mcpServerNameLabel',
     'mcp.title': 'mcpTitle',
@@ -1418,15 +1442,21 @@ abstract class L10nKeys {
   static const mcpAuthorizeCap = 'mcp.authorize.cap';
   static (String, Map<String, dynamic>) mcpAuthorizeDialogTitle(String name) => ('mcp.authorize.dialog.title', {'name': name});
   static const mcpCapabilitiesRegistry = 'mcp.capabilities.registry';
+  static const mcpConnectCap = 'mcp.connect.cap';
   static const mcpEditConfig = 'mcp.edit.config';
   static const mcpEnterSecrets = 'mcp.enter.secrets';
   static (String, Map<String, dynamic>) mcpImageLabel(String image) => ('mcp.image.label', {'image': image});
   static const mcpImageOptionalLabel = 'mcp.image.optional.label';
   static const mcpNoCapabilities = 'mcp.no.capabilities';
   static const mcpNoConfigRequired = 'mcp.no.config.required';
+  static (String, Map<String, dynamic>) mcpOauthProviderNotConfiguredLabel(String provider) => ('mcp.oauth.provider.not.configured.label', {'provider': provider});
+  static const mcpOauthProviderOptionalLabel = 'mcp.oauth.provider.optional.label';
+  static (String, Map<String, dynamic>) mcpOauthRequiredLabel(String provider) => ('mcp.oauth.required.label', {'provider': provider});
+  static const mcpOauthTokenEnvVarOptionalLabel = 'mcp.oauth.token.env.var.optional.label';
   static const mcpPendingApproval = 'mcp.pending.approval';
   static (String, Map<String, dynamic>) mcpPurposeLabel(String reason) => ('mcp.purpose.label', {'reason': reason});
   static const mcpRequiredConfig = 'mcp.required.config';
+  static const mcpRetryDeliveryCap = 'mcp.retry.delivery.cap';
   static const mcpRevoke = 'mcp.revoke';
   static const mcpServerNameLabel = 'mcp.server.name.label';
   static const mcpTitle = 'mcp.title';
