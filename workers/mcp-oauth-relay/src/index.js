@@ -11,10 +11,17 @@
  * `wrangler secret put`), never in the app or any self-hosted deployment.
  * Every Aeroform-provisioned PocketCoder instance shares this one Worker.
  *
- * Flow (see the spec's Architecture diagram):
- *   1. App builds an authorize URL itself (this Worker never does) with a
- *      PKCE code_challenge folded into `state` and redirect_uri = this
- *      Worker's own /callback URL, then opens it in a browser sheet.
+ * Flow (see
+ * docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md,
+ * which supersedes the base spec's "app builds the authorize URL itself"
+ * step — this Worker now builds it, so the Flutter client never hardcodes
+ * a provider's authorize URL, scope, or client_id):
+ *   1. App calls GET /authorize?provider=github&code_challenge=... (opened
+ *      in a browser sheet via FlutterWebAuth2, not fetched directly). This
+ *      Worker looks provider up in PROVIDERS, builds `state` itself
+ *      (base64url({p: provider, cc: code_challenge})), and 302s straight
+ *      to the provider's real authorize URL with client_id/scope/
+ *      redirect_uri filled in server-side.
  *   2. Provider redirects here: GET /callback?code&state
  *   3. This Worker exchanges code -> {access_token, refresh_token} using
  *      its held client_secret, stashes the token in KV under a fresh
@@ -26,24 +33,40 @@
  *      entry. This is PKCE's entire purpose in this flow — without it, the
  *      verifier the app generated is never checked by anything.
  *
- * No `/start` route: `state` opaquely carries the code_challenge in
- * plaintext (it is not secret — RFC 7636 §4.2), decoded only here, at
- * /callback time. See this plan's Global Constraints, Decision 1, for why
- * that's safe and why it avoids an extra pre-redirect round trip.
+ * GET /providers lists which providers currently have both a PROVIDERS
+ * entry and live secrets configured — {id, displayName} only, nothing
+ * else (see the provider-discovery spec's security review: this response
+ * shape is a stated invariant, not an accident).
+ *
+ * `state` carries {p, cc} in plaintext (code_challenge is not secret —
+ * RFC 7636 §4.2), built server-side at /authorize time now (previously
+ * client-side — see the provider-discovery spec's security review for why
+ * that's still safe, and why the Flutter client independently re-verifies
+ * the `cc`/`p` it gets back before calling /claim, as defense in depth).
  */
 
 const PROVIDERS = {
 	github: {
+		displayName: 'GitHub',
+		authorizeUrl: 'https://github.com/login/oauth/authorize',
 		tokenUrl: 'https://github.com/login/oauth/access_token',
+		scope: 'repo read:user',
 	},
 };
 
 const EXCHANGE_TTL_SECONDS = 60;
+const CODE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
 
+		if (request.method === 'GET' && url.pathname === '/authorize') {
+			return handleAuthorize(url, env);
+		}
+		if (request.method === 'GET' && url.pathname === '/providers') {
+			return handleProviders(env);
+		}
 		if (request.method === 'GET' && url.pathname === '/callback') {
 			return handleCallback(url, env);
 		}
@@ -53,6 +76,82 @@ export default {
 		return json({ status: 'ok', service: 'pocketcoder-mcp-oauth-relay' }, 200);
 	},
 };
+
+// ---------------------------------------------------------------------------
+// GET /providers
+// ---------------------------------------------------------------------------
+
+async function handleProviders(env) {
+	const providers = [];
+	for (const id of Object.keys(PROVIDERS)) {
+		const envPrefix = id.toUpperCase();
+		const clientId = env[`${envPrefix}_OAUTH_CLIENT_ID`];
+		const clientSecret = env[`${envPrefix}_OAUTH_CLIENT_SECRET`];
+		if (clientId && clientSecret) {
+			// Response shape is a stated invariant: {id, displayName} only —
+			// never authorizeUrl/tokenUrl/scope/client_id or any secret-presence
+			// diagnostic. See the provider-discovery spec's security review.
+			providers.push({ id, displayName: PROVIDERS[id].displayName });
+		}
+	}
+	return json({ providers }, 200, { 'Cache-Control': 'public, max-age=60' });
+}
+
+// ---------------------------------------------------------------------------
+// GET /authorize
+// ---------------------------------------------------------------------------
+
+async function handleAuthorize(url, env) {
+	// Read only the two known params — never forward the inbound query
+	// string wholesale (see the provider-discovery spec's security review,
+	// required change #2): a smuggled duplicate redirect_uri/scope/
+	// client_id must not be able to reach the outgoing URL.
+	const providerId = url.searchParams.get('provider');
+	const codeChallenge = url.searchParams.get('code_challenge');
+
+	// Object.hasOwn, not a bare `PROVIDERS[providerId]` truthy check: plain
+	// property lookup walks the JS prototype chain, so providerId values
+	// like "constructor"/"toString"/"__proto__" would otherwise pass a
+	// `!provider` guard (required change #1).
+	if (!providerId || !Object.hasOwn(PROVIDERS, providerId)) {
+		return redirectToApp({ error: 'unknown_provider' });
+	}
+	if (!codeChallenge || !CODE_CHALLENGE_PATTERN.test(codeChallenge)) {
+		return redirectToApp({ error: 'invalid_code_challenge' });
+	}
+
+	const provider = PROVIDERS[providerId];
+	const envPrefix = providerId.toUpperCase();
+	const clientId = env[`${envPrefix}_OAUTH_CLIENT_ID`];
+	if (!clientId) {
+		console.error(`Missing OAuth client_id for provider ${providerId}`);
+		return redirectToApp({ error: 'server_misconfigured' });
+	}
+
+	const state = base64urlEncode(JSON.stringify({ p: providerId, cc: codeChallenge }));
+	const redirectUri = `${url.origin}/callback`;
+
+	// Fresh URLSearchParams, .set() on exactly these known keys — never
+	// `new URLSearchParams(url.searchParams)` (that would forward whatever
+	// the caller sent, including anything beyond provider/code_challenge).
+	const params = new URLSearchParams();
+	params.set('client_id', clientId);
+	params.set('response_type', 'code');
+	params.set('redirect_uri', redirectUri);
+	params.set('scope', provider.scope);
+	params.set('state', state);
+	params.set('code_challenge', codeChallenge);
+	// Hardcoded server-side, never taken from the client (required change
+	// #3) — /claim only ever computes S256, so accepting a client-supplied
+	// method here would just be a lie about what's actually checked later.
+	params.set('code_challenge_method', 'S256');
+
+	const target = `${provider.authorizeUrl}?${params.toString()}`;
+	return new Response(null, {
+		status: 302,
+		headers: { Location: target, 'Cache-Control': 'no-store' },
+	});
+}
 
 // ---------------------------------------------------------------------------
 // GET /callback
@@ -75,10 +174,13 @@ async function handleCallback(url, env) {
 		return redirectToApp({ error: 'invalid_state' });
 	}
 
-	const provider = PROVIDERS[state.p];
-	if (!provider) {
+	// Object.hasOwn, not a bare `PROVIDERS[state.p]` truthy check — same
+	// reasoning as handleAuthorize above (required change #1, backported
+	// here even though this route predates the provider-discovery review).
+	if (!Object.hasOwn(PROVIDERS, state.p)) {
 		return redirectToApp({ error: `unknown_provider:${state.p}` });
 	}
+	const provider = PROVIDERS[state.p];
 
 	const envPrefix = state.p.toUpperCase();
 	const clientId = env[`${envPrefix}_OAUTH_CLIENT_ID`];
@@ -88,9 +190,8 @@ async function handleCallback(url, env) {
 		return redirectToApp({ error: 'server_misconfigured' });
 	}
 
-	// Must exactly match the redirect_uri the app sent to the provider at
-	// authorize time (RFC 6749 §4.1.3) — the app builds it the same way:
-	// `${relayBaseUrl}/callback`.
+	// Must exactly match the redirect_uri /authorize sent to the provider
+	// (RFC 6749 §4.1.3).
 	const redirectUri = `${url.origin}/callback`;
 
 	let tokenResp;
@@ -131,7 +232,7 @@ async function handleCallback(url, env) {
 	);
 
 	// Tokens never ride in this redirect URL — only the one-time
-	// exchange_code does. See the spec's Component 1.
+	// exchange_code does. See the base spec's Component 1.
 	return redirectToApp({ exchange_code: exchangeCode, state: stateParam });
 }
 
@@ -201,6 +302,10 @@ function base64urlDecode(str) {
 	return atob(padded);
 }
 
+function base64urlEncode(str) {
+	return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
 async function sha256Base64url(input) {
 	const data = new TextEncoder().encode(input);
 	const digest = await crypto.subtle.digest('SHA-256', data);
@@ -216,9 +321,9 @@ function arrayBufferToBase64url(buffer) {
 	return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
 	return new Response(JSON.stringify(data), {
 		status,
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': 'application/json', ...extraHeaders },
 	});
 }
