@@ -94,6 +94,13 @@ class McpCubit extends Cubit<McpState> {
   bool hasPendingOAuthDelivery(String serverId) =>
       _pendingOAuthDelivery?.serverId == serverId;
 
+  /// Thin passthrough to IMcpOAuthService.supportedProviders() (which
+  /// caches in-memory after the first success) — exposed here so the UI
+  /// layer never reaches into the oauth service directly, matching how
+  /// this cubit already encapsulates _repository.
+  Future<List<McpOAuthProvider>> supportedOAuthProviders() =>
+      _oauthService.supportedProviders();
+
   Future<void> connectOAuth(McpServer server) async {
     final provider = server.oauthProvider;
     if (provider == null || provider.isEmpty) {

@@ -874,6 +874,12 @@ abstract class AppLocalizations {
   /// **'OAUTH TOKEN ENV VAR (OPTIONAL)'**
   String get mcpOauthTokenEnvVarOptionalLabel;
 
+  /// No description provided for @mcpOauthProviderNotConfiguredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} NOT YET CONFIGURED'**
+  String mcpOauthProviderNotConfiguredLabel(String provider);
+
   /// No description provided for @actionAdd.
   ///
   /// In en, this message translates to:

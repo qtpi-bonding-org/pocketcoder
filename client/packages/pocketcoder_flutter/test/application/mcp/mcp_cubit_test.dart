@@ -122,4 +122,17 @@ void main() {
       expect(cubit.hasPendingOAuthDelivery('srv1'), isFalse);
     }, timeout: const Timeout(Duration(seconds: 10)));
   });
+
+  group('McpCubit.supportedOAuthProviders', () {
+    test('delegates to IMcpOAuthService.supportedProviders', () async {
+      when(() => oauthService.supportedProviders())
+          .thenAnswer((_) async => [(id: 'github', displayName: 'GitHub')]);
+
+      final cubit = buildCubit();
+      final result = await cubit.supportedOAuthProviders();
+
+      expect(result, [(id: 'github', displayName: 'GitHub')]);
+      verify(() => oauthService.supportedProviders()).called(1);
+    });
+  });
 }
