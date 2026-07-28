@@ -78,6 +78,7 @@ func main() {
 		// A. Register Custom API Endpoints
 		api.RegisterSSHApi(app, e)
 		api.RegisterMcpApi(app, e)
+		api.RegisterMcpOAuthApi(app, e)
 		api.RegisterProxyApi(app, e)
 		api.RegisterLogsApi(app, e)
 		var err error
