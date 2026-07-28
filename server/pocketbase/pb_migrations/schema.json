@@ -991,6 +991,34 @@
         "type": "json"
       },
       {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text2094856317",
+        "max": 0,
+        "min": 0,
+        "name": "oauth_provider",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text5817203964",
+        "max": 0,
+        "min": 0,
+        "name": "oauth_token_env_var",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
         "hidden": false,
         "id": "autodate2990389176",
         "name": "created",
