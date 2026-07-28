@@ -70,6 +70,8 @@ import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart'
     as _i209;
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart'
     as _i623;
+import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart'
+    as _i904;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart'
     as _i148;
@@ -129,6 +131,8 @@ import 'package:pocketcoder_flutter/infrastructure/files/files_repository.dart'
 import 'package:pocketcoder_flutter/infrastructure/healthcheck/healthcheck_repository.dart'
     as _i40;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_daos.dart' as _i444;
+import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_oauth_service.dart'
+    as _i732;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_repository.dart'
     as _i662;
 import 'package:pocketcoder_flutter/infrastructure/notifications/device_daos.dart'
@@ -185,18 +189,24 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i992.PocoCubit>(() => _i992.PocoCubit());
     gh.lazySingleton<_i619.AgentCacheDb>(() => _i619.AgentCacheDb());
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
+    gh.lazySingleton<String>(
+      () => externalModule.mcpOAuthRelayBaseUrl,
+      instanceName: 'mcpOAuthRelayBaseUrl',
+    );
     gh.factory<_i1000.SshTerminalCubit>(
         () => _i1000.SshTerminalCubit(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i300.AgentActionsApi>(
         () => _i300.AgentActionsApi(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i611.IObservabilityRepository>(
         () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i190.IStatusRepository>(
-        () => _i907.StatusRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i623.IHealthcheckRepository>(
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
         () => _i976.AppExceptionKeyMapper());
+    gh.lazySingleton<String>(
+      () => externalModule.githubOAuthClientId,
+      instanceName: 'githubOAuthClientId',
+    );
     gh.lazySingleton<_i165.ISkillsRepository>(
         () => _i675.SkillsRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
@@ -265,6 +275,11 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i589.UserDao>(),
           gh<_i589.SshKeyDao>(),
         ));
+    gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
+          gh<_i519.Client>(),
+          gh<String>(instanceName: 'mcpOAuthRelayBaseUrl'),
+          gh<String>(instanceName: 'githubOAuthClientId'),
+        ));
     gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
           gh<_i199.ChatDao>(),
           gh<_i50.IAuthRepository>(),
@@ -282,6 +297,8 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.factory<_i506.StatusCubit>(
         () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
+    gh.lazySingleton<_i190.IStatusRepository>(
+        () => _i907.StatusRepository(gh<_i824.PocketBase>()));
     gh.factory<_i328.McpCubit>(
         () => _i328.McpCubit(gh<_i922.IMcpRepository>()));
     gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
