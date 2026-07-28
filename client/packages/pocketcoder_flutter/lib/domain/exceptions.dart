@@ -78,6 +78,28 @@ class McpException extends DomainException {
   McpException(super.message, [super.cause]);
 }
 
+/// OAuth-flow-specific exceptions from McpOAuthService. `isCancelled` lets
+/// callers (McpCubit) distinguish "user dismissed the browser sheet" (not
+/// an error state — see the spec's Component 2 failure-mode list) from a
+/// genuine failure.
+class McpOAuthException extends DomainException {
+  final bool isCancelled;
+
+  McpOAuthException(super.message, [super.cause]) : isCancelled = false;
+
+  McpOAuthException._(String message, {this.isCancelled = false, Object? cause})
+      : super(message, cause);
+
+  factory McpOAuthException.cancelled() =>
+      McpOAuthException._('User cancelled the OAuth flow', isCancelled: true);
+  factory McpOAuthException.unknownProvider(String provider) =>
+      McpOAuthException._('Unknown OAuth provider: $provider');
+  factory McpOAuthException.providerError(String error) =>
+      McpOAuthException._('Provider returned an error: $error');
+  factory McpOAuthException.claimFailed([dynamic cause]) =>
+      McpOAuthException._('Failed to claim OAuth token', cause: cause);
+}
+
 /// Observability-related exceptions.
 class ObservabilityException extends DomainException {
   ObservabilityException(super.message, [super.cause]);
