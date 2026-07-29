@@ -55,7 +55,7 @@ func newTestCoordinator(t *testing.T, fc *fakeGatewayConn) *coordinator.Coordina
 	t.Helper()
 	coord, err := coordinator.New(coordinator.Config{
 		GooseURL: "ws://unused", GooseSecret: "x", Workspace: "/tmp",
-		Dial: func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
+		Dial: func(ctx context.Context, client acpsdk.Client, _ coordinator.Target) (acp.Conn, error) {
 			return fc, nil
 		},
 	})
