@@ -622,11 +622,13 @@ func (c *Coordinator) lockChatConnection(key string) func() {
 	for {
 		ch, held := c.connLocks[key]
 		if !held {
-			c.connLocks[key] = make(chan struct{})
+			myCh := make(chan struct{})
+			c.connLocks[key] = myCh
 			c.mu.Unlock()
 			return func() {
 				c.mu.Lock()
 				delete(c.connLocks, key)
+				close(myCh)
 				c.mu.Unlock()
 			}
 		}
