@@ -125,7 +125,7 @@ func init() {
 		}
 		gooseInstance := core.NewRecord(instancesColl)
 		gooseInstance.Set("harness", gooseHarness.Id)
-		gooseInstance.Set("launch_key", "default")
+		gooseInstance.Set("launch_key", "")
 		gooseInstance.Set("container_name", "pocketcoder-goose")
 		gooseInstance.Set("acp_endpoint", "")
 		gooseInstance.Set("secret", "")
