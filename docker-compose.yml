@@ -34,9 +34,9 @@ services:
       - PN_RELAY_SECRET=${PN_RELAY_SECRET}
       - DOCKER_HOST=tcp://docker-socket-proxy-write:2375
       # Direct authenticated c1 -> c2 WebSocket (goose enforces the secret on
-      # the /acp upgrade as of v1.39; c1 sends it as ?token=). The secret is
-      # REQUIRED for the `agent` profile — goose refuses to serve without it.
-      # Leave it unset otherwise and the PocketBase agent route stays disabled.
+      # the /acp upgrade as of v1.39; c1 sends it as ?token=). Required --
+      # goose refuses to serve without it, and the PocketBase agent route
+      # stays disabled if it's unset.
       - GOOSE_ACP_URL=${GOOSE_ACP_URL:-ws://goose:3000/acp}
       - GOOSE_SERVER__SECRET_KEY=${GOOSE_SERVER__SECRET_KEY:-}
       - GOOSE_WORKSPACE=${GOOSE_WORKSPACE:-/workspace}
@@ -56,8 +56,9 @@ services:
       - pocketcoder-agent
 
   # 🪿 GOOSE C2 (private agent core)
-  # Starts only with `docker compose --profile agent up`. It never publishes a
-  # host port; it shares only the private `pocketcoder-agent` ACP network with
+  # Core service -- starts with plain `docker compose up`, same as
+  # PocketBase and mcp-gateway. It never publishes a host port; it shares
+  # only the private `pocketcoder-agent` ACP network with
   # PocketBase (authenticated WS) plus its own model-provider egress network.
   # goose is the sole system of record for history; PocketBase never calls it
   # back, so this network carries only c1 -> c2 ACP traffic.
@@ -66,7 +67,6 @@ services:
       context: server/goose
       dockerfile: Dockerfile
     container_name: pocketcoder-goose
-    profiles: ["agent"]
     environment:
       - GOOSE_SERVER__SECRET_KEY=${GOOSE_SERVER__SECRET_KEY:-}
       - GOOSE_PROVIDER=${GOOSE_PROVIDER:-anthropic}
@@ -104,7 +104,6 @@ services:
       context: .
       dockerfile: server/mcp-gateway/Dockerfile
     container_name: pocketcoder-mcp-gateway
-    profiles: ["c3"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./server/mcp-gateway/config:/root/.docker/mcp
@@ -140,7 +139,6 @@ services:
   cognee-data-init:
     image: busybox
     container_name: pocketcoder-cognee-data-init
-    profiles: ["agent"]
     command: ["chown", "-R", "1000:1000", "/cognee_data"]
     volumes:
       - cognee_data:/cognee_data
@@ -148,7 +146,6 @@ services:
   cognee:
     image: cognee/cognee-mcp:main
     container_name: pocketcoder-cognee
-    profiles: ["agent"]
     depends_on:
       cognee-data-init:
         condition: service_completed_successfully
