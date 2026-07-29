@@ -83,7 +83,7 @@ func TestSessionProfile_SliceAccessorsNeverNil(t *testing.T) {
 
 func TestPerSessionApplierDeliversProviderLive(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Provider: "anthropic"}, nil)
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Provider: "anthropic", SupportsLiveConfig: true}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -94,7 +94,7 @@ func TestPerSessionApplierDeliversProviderLive(t *testing.T) {
 
 func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Model: "claude-opus"}, nil)
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Model: "claude-opus", SupportsLiveConfig: true}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 
 func TestPerSessionApplierDeliversInstructionsViaCustomMethod(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Instructions: "You are a terse assistant."}, nil)
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Instructions: "You are a terse assistant.", SupportsGooseExtensions: true}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
