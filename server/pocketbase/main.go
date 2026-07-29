@@ -56,6 +56,7 @@ func main() {
 	// 2. Register Global Sovereign Hooks
 	hooks.RegisterGlobalTimestamps(app)
 	hooks.RegisterNotificationHooks(app)
+	hooks.RegisterChatsHarnessPinHook(app)
 
 	// 3. Register MCP Hooks (config rendering + gateway restart)
 	// The interface receives MCP status updates via PocketBase realtime subscriptions.
