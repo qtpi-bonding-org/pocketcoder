@@ -526,7 +526,7 @@ func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingEl
 // establishSession is the resolve+pin-check+capability-check+dial+init
 // prefix shared by runLoop and StreamColdReplay. It does NOT call
 // SeedSession, ProfileApplier.Apply, or Prompt — those are each caller's
-// own job, done with the conn/sessionID/modes this returns. See design
+// own job, done with the conn/sessionID/modes/configOptions this returns. See design
 // spec §5.6 for why the split is drawn exactly here.
 //
 // The returned release func must be deferred by the caller immediately
@@ -542,7 +542,7 @@ func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingEl
 func (c *Coordinator) establishSession(
 	ctx context.Context, client acpsdk.Client, profile SessionProfile, sessionID string,
 	beforeSessionCall func(),
-) (conn acp.Conn, newSessionID string, modes *acpsdk.SessionModeState, wasNew bool, release func(), err error) {
+) (conn acp.Conn, newSessionID string, modes *acpsdk.SessionModeState, configOptions []acpsdk.SessionConfigOption, initResp *acpsdk.InitializeResponse, wasNew bool, release func(), err error) {
 	release = func() {}
 
 	// Pin check: compare resolved vs. pinned harness identity, not Targets
@@ -550,7 +550,7 @@ func (c *Coordinator) establishSession(
 	// zero value and would otherwise compare equal).
 	if profile.PinnedInstanceID != "" && profile.ResolvedInstanceID != "" &&
 		profile.PinnedInstanceID != profile.ResolvedInstanceID {
-		return nil, "", nil, false, release, fmt.Errorf("this chat's harness changed after its session was created — start a new chat")
+		return nil, "", nil, nil, nil, false, release, fmt.Errorf("this chat's harness changed after its session was created — start a new chat")
 	}
 
 	if profile.SingleConnectionOnly {
@@ -560,14 +560,15 @@ func (c *Coordinator) establishSession(
 	dialedConn, dialErr := c.config.Dial(ctx, client, profile.Target)
 	if dialErr != nil {
 		release()
-		return nil, "", nil, false, func() {}, fmt.Errorf("dial harness: %w", dialErr)
+		return nil, "", nil, nil, nil, false, func() {}, fmt.Errorf("dial harness: %w", dialErr)
 	}
-	initResp, err := dialedConn.Initialize(ctx, initializeRequest())
+	initRespVal, err := dialedConn.Initialize(ctx, initializeRequest())
 	if err != nil {
 		dialedConn.Close()
 		release()
-		return nil, "", nil, false, func() {}, fmt.Errorf("initialize harness: %w", err)
+		return nil, "", nil, nil, nil, false, func() {}, fmt.Errorf("initialize harness: %w", err)
 	}
+	initResp = &initRespVal
 
 	cwd := profile.Cwd
 	if cwd == "" {
@@ -582,20 +583,20 @@ func (c *Coordinator) establishSession(
 		if err != nil {
 			dialedConn.Close()
 			release()
-			return nil, "", nil, false, func() {}, err
+			return nil, "", nil, nil, nil, false, func() {}, err
 		}
 		if string(res.SessionId) == "" {
 			dialedConn.Close()
 			release()
-			return nil, "", nil, false, func() {}, errors.New("session/new response missing sessionId")
+			return nil, "", nil, nil, nil, false, func() {}, errors.New("session/new response missing sessionId")
 		}
-		return dialedConn, string(res.SessionId), res.Modes, true, release, nil
+		return dialedConn, string(res.SessionId), res.Modes, res.ConfigOptions, initResp, true, release, nil
 	}
 
 	if !initResp.AgentCapabilities.LoadSession {
 		dialedConn.Close()
 		release()
-		return nil, "", nil, false, func() {}, fmt.Errorf("harness does not support resuming a session (AgentCapabilities.LoadSession is false)")
+		return nil, "", nil, nil, nil, false, func() {}, fmt.Errorf("harness does not support resuming a session (AgentCapabilities.LoadSession is false)")
 	}
 	beforeSessionCall()
 	res, err := dialedConn.LoadSession(ctx, acpsdk.LoadSessionRequest{
@@ -604,9 +605,9 @@ func (c *Coordinator) establishSession(
 	if err != nil {
 		dialedConn.Close()
 		release()
-		return nil, "", nil, false, func() {}, fmt.Errorf("load harness session: %w", err)
+		return nil, "", nil, nil, nil, false, func() {}, fmt.Errorf("load harness session: %w", err)
 	}
-	return dialedConn, sessionID, res.Modes, false, release, nil
+	return dialedConn, sessionID, res.Modes, res.ConfigOptions, initResp, false, release, nil
 }
 
 // lockChatConnection blocks until no other caller holds the named key's
@@ -664,24 +665,12 @@ func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID st
 		return fmt.Errorf("resolve session profile: %w", err)
 	}
 	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emitSeq, accepting: &atomic.Bool{}}
-	conn, err := c.config.Dial(ctx, sc)
+	conn, _, _, _, _, _, release, err := c.establishSession(ctx, sc, profile, sessionID, func() { sc.accepting.Store(true) })
 	if err != nil {
 		return err
 	}
+	defer release()
 	defer conn.Close()
-	if _, err = conn.Initialize(ctx, initializeRequest()); err != nil {
-		return err
-	}
-	sc.accepting.Store(true)
-	cwd := profile.Cwd
-	if cwd == "" {
-		cwd = c.config.Workspace
-	}
-	if _, err = conn.LoadSession(ctx, acpsdk.LoadSessionRequest{
-		SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
-	}); err != nil {
-		return fmt.Errorf("load Goose session: %w", err)
-	}
 	return emitAll(emitSeq, bridge.Finished(acpsdk.StopReasonEndTurn))
 }
 func initializeRequest() acpsdk.InitializeRequest {
@@ -801,8 +790,10 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) {
 	hub := c.hubFor(chatID)
 	var once sync.Once
+	var release func() = func() {} // initialize to no-op; updated after establishSession succeeds
 	teardown := func() {
 		once.Do(func() {
+			release() // call release first when tearing down
 			h.accepting.Store(false) // straggler SessionUpdates now return early
 			c.stopTimers(h)
 			if h.conn != nil {
@@ -843,19 +834,37 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	sc := &sessionClient{c: c, chatID: chatID, runID: runID, sessionID: sessionID, bridge: bridge,
 		emit:      func(e events.Event) error { hub.Publish(e); return nil },
 		accepting: h.accepting, maxEvents: c.maxRunEvents, cancel: h.cancel}
-	conn, err := c.config.Dial(runCtx, sc) // runCtx is ALSO the dial ctx (spec N1)
-	if err != nil {
-		hub.Publish(events.NewRunErrorEvent("goose dial", events.WithErrorCode("goose_unavailable")))
-		return
-	}
-	h.conn = conn
-	sessionID, err = c.initSession(runCtx, conn, sc, bridge, hub, sessionID, profile, created)
+
+	conn, sessionID, modes, configOptions, initResp, wasNew, releaseLock, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
 	if err != nil {
 		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 		return
 	}
+	release = releaseLock // update the captured release function
+	h.conn = conn
 	h.sessionID = sessionID
 	sc.sessionID = sessionID
+
+	if wasNew {
+		if err := created(runCtx, sessionID); err != nil {
+			if _, dErr := conn.UnstableDeleteSession(runCtx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)}); dErr != nil {
+				log.Printf("coordinator: orphan session delete failed: %v", dErr)
+			}
+			release()
+			hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
+			return
+		}
+	}
+
+	for _, e := range bridge.SeedSession(modes, configOptions) {
+		hub.Publish(e)
+	}
+	applier := selectApplier(initResp)
+	if err := applier.Apply(runCtx, conn, sessionID, profile); err != nil {
+		release()
+		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
+		return
+	}
 	h.accepting.Store(true)
 	hub.Publish(bridge.Started())
 
@@ -880,63 +889,4 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	if finished != nil && resp.StopReason != acpsdk.StopReasonCancelled && runCtx.Err() == nil {
 		_ = finished(runCtx, resp.StopReason)
 	}
-}
-
-// initSession runs the ACP init sequence on a freshly dialed conn: initialize,
-// session/new (and persist) or session/load (by sessionID), set_session_mode
-// to "approve", and publishes the modes/config the agent advertised (via
-// bridge.SeedSession) so a late-joining subscriber's snapshot already has
-// them. On a session/new whose mapping persist fails, the freshly minted
-// Goose session is deleted (orphan compensation) before returning the
-// wrapped error.
-func (c *Coordinator) initSession(ctx context.Context, conn acp.Conn, sc *sessionClient, bridge *agui.Bridge, hub *ChatHub, sessionID string, profile SessionProfile, created OnSessionCreated) (string, error) {
-	_ = sc
-	initResp, err := conn.Initialize(ctx, initializeRequest())
-	if err != nil {
-		return "", err
-	}
-	applier := selectApplier(&initResp)
-
-	cwd := profile.Cwd
-	if cwd == "" {
-		cwd = c.config.Workspace
-	}
-
-	if sessionID == "" {
-		res, err := conn.NewSession(ctx, acpsdk.NewSessionRequest{
-			Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
-		})
-		if err != nil {
-			return "", err
-		}
-		sessionID = string(res.SessionId)
-		if sessionID == "" {
-			return "", errors.New("session/new response missing sessionId")
-		}
-		if err := created(ctx, sessionID); err != nil {
-			// Orphan compensation (Task 11): the Goose session exists but is
-			// unmapped — delete it so the next prompt does not strand history.
-			if _, dErr := conn.UnstableDeleteSession(ctx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)}); dErr != nil {
-				log.Printf("coordinator: orphan session delete failed: %v", dErr)
-			}
-			return "", fmt.Errorf("persist Goose session mapping: %w", err)
-		}
-		for _, e := range bridge.SeedSession(res.Modes, res.ConfigOptions) {
-			hub.Publish(e)
-		}
-	} else {
-		res, err := conn.LoadSession(ctx, acpsdk.LoadSessionRequest{
-			SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
-		})
-		if err != nil {
-			return "", err
-		}
-		for _, e := range bridge.SeedSession(res.Modes, res.ConfigOptions) {
-			hub.Publish(e)
-		}
-	}
-	if err := applier.Apply(ctx, conn, sessionID, profile); err != nil {
-		return "", err
-	}
-	return sessionID, nil
 }
