@@ -113,7 +113,7 @@
       # --- Start PocketCoder stack ---
       echo "Starting PocketCoder stack..."
       cd "$INSTALL_DIR"
-      docker compose --profile agent --profile c3 up -d
+      docker compose up -d
 
       # --- Mark as initialized ---
       date -Iseconds > "$MARKER"
