@@ -50,7 +50,7 @@ type Emit func(events.Event) error
 type ResolveSession func(context.Context) (string, error)
 type OnSessionCreated func(context.Context, string) error
 type OnRunFinished func(context.Context, acpsdk.StopReason) error
-type DialFunc func(context.Context, acpsdk.Client) (acp.Conn, error)
+type DialFunc func(context.Context, acpsdk.Client, Target) (acp.Conn, error)
 
 type runHandle struct {
 	runID, sessionID string
@@ -112,8 +112,12 @@ func New(config Config) (*Coordinator, error) {
 		return nil, fmt.Errorf("GOOSE_ACP_URL, GOOSE_SERVER__SECRET_KEY, and GOOSE_WORKSPACE are required")
 	}
 	if config.Dial == nil {
-		config.Dial = func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
-			return acp.Dial(ctx, acp.DialConfig{URL: config.GooseURL, Secret: config.GooseSecret}, client)
+		config.Dial = func(ctx context.Context, client acpsdk.Client, t Target) (acp.Conn, error) {
+			url, secret := config.GooseURL, config.GooseSecret
+			if t.URL != "" {
+				url, secret = t.URL, t.Secret
+			}
+			return acp.Dial(ctx, acp.DialConfig{URL: url, Secret: secret}, client)
 		}
 	}
 	if config.Clock == nil {
