@@ -135,13 +135,32 @@ disks/configs *mechanism* (five methods: create installer, create target
 volume, wait, switch-and-boot, delete installer) and called that
 "cross-provider." It wasn't: DigitalOcean **cannot boot a Droplet from an
 attached Block Storage volume at all** (Droplets only ever boot from their
-own root disk), and Hetzner has no custom-images concept — the canonical
-route there is boot the rescue system and `dd` onto the server's *own*
-root disk, no second volume, ever. Both providers would need three of the
-five methods to be lying no-op stubs under the old interface. Worse: it
-buried DigitalOcean's actually-simpler native answer — their Custom Images
-API accepts a URL and pulls the image itself, one call, no installer dance
-needed at all.
+own root disk). Both providers would need three of the five methods to be
+lying no-op stubs under the old interface. Worse: it buried DigitalOcean's
+actually-simpler native answer — **DigitalOcean's Custom Images API
+(`POST /v2/images`) takes a URL directly** (gzip/bzip2-compressed
+raw/qcow2/vhdx/vdi/vmdk, under 100GB decompressed — our existing `.img.gz`
+artifact is usable as-is) and pulls/imports the image itself, one call, no
+installer dance needed at all; a DO implementation of
+`IUrlPullProvisioningApi` would ignore `imageSha256`/`uncompressedBytes`
+(DO doesn't take either) and need one extra provider-specific value (a
+`distribution` string) supplied some other way, but otherwise fits this
+contract directly.
+
+Hetzner is a weaker fit than an earlier pass of this spec claimed, worth
+being honest about rather than citing as a clean third example: Hetzner
+Cloud has no image-import-from-URL API at all, and its rescue-mode API
+only *boots* the rescue system and hands back a root password — there's
+no API-driven command execution, so the real-world flow is "SSH into
+rescue and run `dd` by hand." That's compatible with this interface in
+principle (an SSH executor would live inside a Hetzner implementation's
+constructor, not leak into the method signature), but it's not
+implementable *in this project* without a new dependency this repo
+deliberately doesn't carry — `flutter_aeroform`'s only SSH-related package
+is key serialization (`openssh_ed25519`), no SSH client, and root
+`CLAUDE.md` states Aeroform provisions with "no SSH step at all." A future
+Hetzner implementation is possible, just not free the way DigitalOcean's
+would be.
 
 The contract that's actually shared across providers is much smaller:
 
@@ -191,6 +210,16 @@ being created — Linode requires an explicit device-slot mapping in a
 config profile, and creating one is not implied by creating disks). Full
 corrected sequence:
 
+**Linode's disk create/delete are asynchronous** — a just-created disk
+comes back `status: "not ready"` and the Linode is held busy until the
+event completes; issuing the next call too soon 400s with `Linode busy`
+(documented Linode behavior, not speculative). Every step below that
+follows a disk create or delete is preceded by a poll-until-ready/poll-
+until-gone wait, and every API call in this sequence is wrapped in a
+bounded retry specifically for `400 Linode busy` (a handful of retries
+with a short fixed delay — this is a normal, expected transient state on
+every run, not an error condition).
+
 1. `POST /linode/instances` — no `image` field, `booted: false`, no
    `authorized_keys`/`root_pass` at this step (added at disk-creation time
    below, since disks don't exist yet). **Confirmed live against the real
@@ -200,61 +229,74 @@ corrected sequence:
    *delivery* (see "Pre-implementation verification," below — this is the
    most important open item in this whole design, and the earlier draft
    incorrectly presented it as fully resolved).
-2. `POST .../disks` — installer disk (~2.5GB), `image: "linode/debian12"`,
+2. Fetch the plan's real disk size via `GET /linode/types/{type}` (not
+   hardcoded — `LinodeAPIClient` has no method for this today; add one).
+3. `POST .../disks` — installer disk (~2.5GB), `image: "linode/debian12"`,
    `authorized_keys: [rootSshKey]` **only if D3's mitigation (below) makes
    this safe; otherwise a throwaway random `root_pass` instead of the
    deployment's real key** — `stackscript_id` (our published StackScript,
-   see below), `stackscript_data: {IMAGE_URL, IMAGE_SHA256}`.
-3. `POST .../disks` — target disk, `filesystem: "raw"`, sized to `plan
-   disk − 2.5GB − slack`, floor 8GB (comfortably above the ~4.7GB
-   uncompressed image; the plan whitelist in `validation_service.dart`
+   see below), `stackscript_data: {IMAGE_URL, IMAGE_SHA256,
+   IMAGE_UNCOMPRESSED_BYTES}`. **Wait for this disk's `status: "ready"`**
+   before continuing.
+4. `POST .../disks` — target disk, `filesystem: "raw"`, sized to `plan
+   disk (from step 2) − 2.5GB − slack`, floor 8GB (comfortably above the
+   ~4.7GB uncompressed image; the plan whitelist in `validation_service.dart`
    only allows `g6-standard-*`, min 50GB disk, so this floor is never
    actually reachable in practice — assert it rather than silently clamp,
    so a future plan-whitelist change fails loudly instead of silently
-   under-provisioning).
-4. `POST .../configs` — **installer boot profile**: `devices: {sda:
+   under-provisioning). **Wait for `status: "ready"`.**
+5. `POST .../configs` — **installer boot profile**: `devices: {sda:
    {disk_id: installerDiskId}, sdb: {disk_id: targetDiskId}}`,
    `kernel: "linode/grub2"` (not `linode/direct-disk` — the target image
    installs its own GRUB with `device = "nodev"` + `forceInstall`, so
    there's no MBR for direct-disk booting to find; this needs to be a
    comment in the implementation so nobody "corrects" it later),
-   `root_device: "/dev/sda"`, and **all helpers explicitly disabled**:
-   `helpers: {distro: false, modules_dep: false, network: false,
-   updatedb_disabled: false, devtmpfs_automount: false}` (Linode's own
-   custom-distribution guidance: helpers rewrite `/etc/fstab`,
-   `/etc/hosts`, `/etc/resolv.conf`, inittab consoles — fine for a stock
-   Debian installer disk, actually, since it *is* a normal Debian system
-   at this point; disabling them here is about the config profile being
-   reused later, see step 7).
-5. `POST .../boot` with that config's id.
-6. **Wait for a `running` → `offline` transition**, not a bare `status ==
+   `root_device: "/dev/sda"`, and **helpers left at their defaults** —
+   *not* disabled, unlike the final profile below. This is a live stock
+   Debian system with no guarantee its own boot-time expectations
+   (network config, `/etc/fstab`, etc.) survive helpers being turned off
+   the way NixOS's do; only the final (NixOS) profile in step 9 disables
+   them.
+6. `POST .../boot` with that config's **id passed explicitly** (Linode's
+   "last booted config" default becomes ambiguous once a second profile
+   exists later — always pass `config_id` on every boot call in this
+   sequence, never rely on the default).
+7. **Wait for a `running` → `offline` transition**, not a bare `status ==
    "offline"` check — the instance is created `booted: false`, i.e.
    already `offline` before anything runs, so a naive equality check
    races and can pass instantly. Track "have we observed `running`"
    before accepting `offline` as completion. The StackScript's last line
-   is `shutdown -h now`, so this transition *is* the "disk write
-   finished" signal. Guarded by a hard timeout (see "Failure handling,"
-   below, for what happens on timeout).
-7. **Delete the installer disk now** (`DELETE .../disks/{installerDiskId}`),
-   before creating the final config — not after, as the first draft
-   proposed. Reconsidered: Linode's disk-delete likely requires the
-   Linode to be powered off (needs live verification, but the instance
-   already is powered off here, which is exactly why this ordering is
-   safer), and deleting *after* the final boot would mean deleting a disk
-   out from under a running, serving instance's sibling disk-slot
-   bookkeeping — avoid entirely by never being in that state. Trade-off,
-   stated plainly: this gives up "installer disk as a recovery path if
-   the target disk is bad" — acceptable, since the actual recovery path
-   for a bad deployment is re-running provisioning from scratch (which
-   the app already supports), not resurrecting a half-written disk.
-8. `POST .../configs` — **final boot profile**: `devices: {sda: {disk_id:
+   is a poweroff, so this transition *is* the "disk write finished"
+   signal. Guarded by a hard timeout (see "Failure handling," below, for
+   what happens on timeout).
+8. **Delete the installer disk now** (`DELETE .../disks/{installerDiskId}`)
+   and the installer config profile (`DELETE .../configs/{installerConfigId}`
+   — otherwise every box carries a permanently dangling profile pointing
+   at a disk that no longer exists), before creating the final config —
+   not after, as an earlier draft proposed. Deleting a disk a config
+   profile still references is fine (Linode clears the device slot, it
+   doesn't error), but deleting a disk out from under a *running, serving*
+   instance is the state worth avoiding entirely — this ordering never
+   goes there. **Wait for the delete to complete** (poll until the disk
+   404s) before continuing — the same busy-window concern as creates.
+   Trade-off, stated plainly: this gives up "installer disk as a recovery
+   path if the target disk is bad" — acceptable, since the actual recovery
+   path for a bad deployment is re-running provisioning from scratch
+   (which the app already supports), not resurrecting a half-written disk.
+9. `POST .../configs` — **final boot profile**: `devices: {sda: {disk_id:
    targetDiskId}}`, `kernel: "linode/grub2"`, `root_device: "/dev/sda"`,
-   same disabled-helpers set as step 4 (the target is NixOS with a mostly
-   read-only `/etc` — helpers rewriting boot-time files would fight or
-   corrupt it).
-9. `POST .../boot` with the final config's id. From here,
-   `DeploymentService.monitorDeployment`/`_pollForCertificate` (unchanged)
-   takes over exactly as it does for the existing path.
+   **all helpers explicitly disabled**: `helpers: {distro: false,
+   modules_dep: false, network: false, updatedb_disabled: true,
+   devtmpfs_automount: false}` (Linode's own custom-distribution guidance:
+   helpers rewrite `/etc/fstab`, `/etc/hosts`, `/etc/resolv.conf`, inittab
+   consoles; the target is NixOS with a mostly read-only `/etc`, so
+   helpers rewriting boot-time files would fight or corrupt it — this is
+   *only* safe for the final NixOS profile, not the installer's stock
+   Debian one, hence the split from step 5). Note `updatedb_disabled` is
+   inverted from the others — `true` is what turns updatedb *off*.
+10. `POST .../boot` with the final config's **id passed explicitly**. From
+    here, `DeploymentService.monitorDeployment`/`_pollForCertificate`
+    (unchanged) takes over exactly as it does for the existing path.
 
 `swap_size`: Linode normally provisions a 512MB swap disk automatically;
 this sequence's explicit disk list doesn't include one. Decision: no swap
@@ -282,6 +324,19 @@ time, so it actually runs something that can curl the metadata endpoint
 and print what it got) before any of the rest of this design is worth
 implementing.
 
+Also verify in that same test: instance-level `metadata.user_data` (step
+1) and a *later*, disk-level `stackscript_id`/`stackscript_data` (step 3)
+actually coexist without conflict — Linode's docs position Metadata and
+StackScripts as alternatives and are silent on using both together in the
+same deployment (they're technically different API calls here — instance
+metadata vs. a disk's stackscript — which is likely why it's fine, but
+"likely" isn't good enough for something this design fully depends on).
+
+(Region/Metadata-service compatibility, flagged as a concern in an
+earlier draft, turned out to be moot — Linode's current docs state the
+Metadata service is available in all regions. No region validation needed
+beyond what `validation_service.dart` already does.)
+
 ### The boot script (Linode implementation: a StackScript, published
 once, centrally — see root `CLAUDE.md`'s central-registration principle)
 
@@ -291,36 +346,58 @@ MCP OAuth Worker holding the shared GitHub OAuth App. Published **once**,
 publicly, from our own Linode account; end users never see or interact
 with this registration step.
 
-The first draft's version had two real bugs, both corrected here:
+Bugs found and fixed across two review passes:
 
-- **Checksum race**: `tee >(sha256sum > /tmp/sum)` uses process
-  substitution, which bash does not `wait` on — the script could reach
-  the `grep` check before `sha256sum` has flushed its output, producing a
-  flaky **false** "CHECKSUM MISMATCH" on a perfectly good download. Fixed
-  with an explicit FIFO the script does wait on.
-- **Retry-into-corruption**: `curl --retry 5 --retry-all-errors` piped
-  directly into a running `dd` is actively dangerous — a retry restarts
-  the HTTP transfer from byte 0, but `dd` has already consumed and
-  written the earlier bytes, so the retried stream gets appended onto
-  already-written data instead of replacing it. (This happens to be
-  caught by `gunzip`'s own CRC32 check today, but relying on that as the
-  *only* thing standing between a mid-stream retry and a corrupt boot
-  disk is not a design, it's luck.) Fixed by retrying the **whole
-  pipeline** from scratch in a bash loop instead of letting `curl` retry
-  internally mid-stream.
+- **Checksum race** (first pass): `tee >(sha256sum > /tmp/sum)` uses
+  process substitution, which bash does not `wait` on — the script could
+  reach the check before `sha256sum` has flushed its output, producing a
+  flaky **false** mismatch on a perfectly good download. Fixed with an
+  explicit FIFO the script does `wait` on.
+- **Retry-into-corruption** (first pass): `curl --retry 5
+  --retry-all-errors` piped directly into a running `dd` is actively
+  dangerous — a retry restarts the HTTP transfer from byte 0, but `dd`
+  has already consumed and written the earlier bytes, so the retried
+  stream gets appended onto already-written data instead of replacing
+  it. Fixed by retrying the **whole pipeline** from scratch in a bash
+  loop instead of letting `curl` retry internally mid-stream.
+- **Checksum comparison was actually broken** (second pass — a bug
+  introduced by the first pass's own fix): `sha256sum -c - < /tmp/sum`
+  redirects `sha256sum`'s **stdin** from `/tmp/sum`, which silently
+  discards the `printf` output piped into it — `sha256sum -c` ends up
+  reading `/tmp/sum`'s line as its checklist, then tries to hash a file
+  literally named `-` (stdin, already at EOF), hashes the empty string,
+  and the comparison fails unconditionally. The `grep -qx` fallback also
+  never matches, since `/tmp/sum` contains `<hash>  -`, never a bare
+  hash. Net effect: every attempt reports a mismatch and the script
+  always fails, burning 3 full downloads every run. Fixed by reading the
+  hash out of the file directly instead of trying to feed it through
+  `sha256sum -c`.
+- **Target disk size never actually passed in or checked** (second
+  pass): `uncompressedBytes` flows all the way through
+  `IUrlPullProvisioningApi` but a first pass never threaded it into the
+  StackScript's UDFs, so there was nothing to check against. Also, the
+  size-check under `set -e` ran `blockdev --getsize64 /dev/sdb` as a bare
+  assignment — if `/dev/sdb` doesn't exist, that command fails and the
+  script exits *before* reaching the "not found" error message, making
+  it dead code. Fixed: added a real device-existence test before the
+  assignment, and a real size comparison against a new
+  `IMAGE_UNCOMPRESSED_BYTES` UDF.
 
 ```bash
 #!/bin/bash
 # <UDF name="IMAGE_URL" label="NixOS image URL" />
 # <UDF name="IMAGE_SHA256" label="Expected sha256 of the gzip" />
+# <UDF name="IMAGE_UNCOMPRESSED_BYTES" label="Expected uncompressed size in bytes" />
 set -euo pipefail
 
 command -v curl >/dev/null || { apt-get update && apt-get install -y curl; }
 
+[ -b /dev/sdb ] || { echo "FATAL: /dev/sdb not found"; exit 1; }
 TARGET_BYTES=$(blockdev --getsize64 /dev/sdb)
-# Sanity check before writing anything -- fail loud and early rather than
-# discover an undersized target disk mid-transfer.
-[ "$TARGET_BYTES" -gt 0 ] || { echo "FATAL: /dev/sdb not found"; exit 1; }
+[ "$TARGET_BYTES" -ge "$IMAGE_UNCOMPRESSED_BYTES" ] || {
+  echo "FATAL: target disk ($TARGET_BYTES bytes) smaller than image ($IMAGE_UNCOMPRESSED_BYTES bytes)"
+  exit 1
+}
 
 attempt=0
 until [ "$attempt" -ge 3 ]; do
@@ -330,19 +407,23 @@ until [ "$attempt" -ge 3 ]; do
   sha256sum < /tmp/sumpipe > /tmp/sum &
   SUMPID=$!
 
-  if curl -fsSL --retry 0 "$IMAGE_URL" \
+  # --max-time/--speed-limit/--speed-time: without these a stalled TCP
+  # connection hangs indefinitely -- rely on curl's own stall detection
+  # rather than only the app-level timeout in "Failure handling."
+  if curl -fsSL --retry 0 --max-time 1800 --speed-limit 1024 --speed-time 60 \
+      "$IMAGE_URL" \
       | tee /tmp/sumpipe \
       | gunzip \
       | dd of=/dev/sdb bs=16M conv=fsync status=progress; then
     wait "$SUMPID"
     rm -f /tmp/sumpipe
-    if printf '%s  -\n' "$IMAGE_SHA256" | sha256sum -c - < /tmp/sum >/dev/null 2>&1 \
-        || grep -qx "$IMAGE_SHA256" /tmp/sum; then
+    read -r ACTUAL_SHA _ < /tmp/sum
+    if [ "$ACTUAL_SHA" = "$IMAGE_SHA256" ]; then
       sync
-      shutdown -h now
+      systemctl poweroff --no-block
       exit 0
     fi
-    echo "Checksum mismatch on attempt $attempt"
+    echo "Checksum mismatch on attempt $attempt (got $ACTUAL_SHA)"
   else
     wait "$SUMPID" 2>/dev/null || true
     rm -f /tmp/sumpipe
@@ -354,13 +435,13 @@ echo "FATAL: all attempts failed -- leaving instance online for inspection"
 exit 1
 ```
 
-(The exact `sha256sum -c` invocation above needs a real dry run before
-being treated as final — the point to preserve is: exact comparison via
-`sha256sum -c`, not a substring `grep`, and reading from a file that's
-been `wait`-ed on, not a process substitution.) Fails closed on repeated
-failure — does **not** shut down, leaving the instance online so the
-app's poll times out loudly instead of booting a corrupt disk (see
-"Failure handling" for what the app does with that).
+Fails closed on repeated failure — does **not** shut down, leaving the
+instance online so the app's poll times out loudly instead of booting a
+corrupt disk (see "Failure handling" for what the app does with that —
+notably, this is the *script's* fail-closed behavior for a human
+debugging a specific run, not something the app should ever rely on by
+default; the app-level timeout still deletes the instance rather than
+leaving it running unattended).
 
 Needs only a few MB of RAM regardless of image size (streaming
 `curl | gunzip | dd`, never buffered) — this is what makes the cheapest
@@ -421,6 +502,20 @@ hardcodes an R2 URL or a specific image version, so rotating to a newly
 built image needs zero app changes — it just needs CI to update what the
 manifest points at (see "CI prerequisite," below).
 
+**`/image-manifest` is read-only, on purpose — the Worker has no route
+that writes it.** This needs to be explicit: this manifest is the single
+point of indirection every future deployment trusts for "which image to
+`dd` onto my root disk," and `workers/image-relay` currently has no
+authentication on any route and `Access-Control-Allow-Origin: *`. An
+unauthenticated write endpoint here would mean anyone who found the URL
+could point every future PocketCoder deployment at an arbitrary image —
+and the sha256 gate provides no protection against that, since the
+attacker supplies the sha256 too. CI already has a scoped R2 credential
+(used to upload the image itself); it writes the manifest JSON object
+directly to the R2 bucket with that same credential, no Worker route
+involved. The Worker's `/image-manifest` handler only ever reads that
+object back out.
+
 ### CI prerequisite (blocking, not a follow-up)
 
 `.github/workflows/nixos-image.yml` currently uploads to the **mutable**
@@ -437,10 +532,11 @@ deployment. Required, before any of the rest of this design can work:
 2. CI publishes to an **immutable, versioned key** —
    `pocketcoder-nixos-<git-sha>.img.gz` — instead of (or in addition to,
    for now) the mutable `-latest` key.
-3. The Worker's `/image-manifest` response is updated (a small
-   `PUT`/`env.IMAGES.put` of a JSON object, from the same CI run) to
-   point at the new versioned key + its real sha256/size, atomically with
-   the image upload finishing — never partially updated.
+3. CI writes the manifest JSON object (new versioned key + its real
+   sha256/size) directly to R2 with its existing scoped credential —
+   same run, right after the image upload finishes, never partially
+   updated. The Worker never writes this object, only reads it (see
+   "Worker changes," above).
 
 ### Failure handling and lifecycle
 
@@ -577,6 +673,21 @@ Not addressed at all in the first draft — required:
   `/images?page_size=100` — pre-existing, only affects the (now
   non-default) Custom-Image path; leave a comment rather than fix, since
   that path isn't getting further investment per "Strategy 1" above.
+- `bootstrap.nix`'s secrets heredoc (`cat >> ... <<EOF` with an indented
+  body) writes six-space-indented lines into `.env` — leading whitespace
+  on a key isn't valid for docker compose's `env_file` parsing. Pre-existing,
+  but first boot is now squarely on this design's critical path (the
+  first real proof this whole design worked is a successful first boot),
+  so worth fixing alongside rather than discovering it as a fresh mystery
+  during golden-path testing.
+- Confirmed **not** a new problem worth solving here: `g6-standard-1`
+  (2GB RAM, the cheapest whitelisted plan) still builds `pocketbase` from
+  source on first boot via `docker compose up -d`. Earlier local testing
+  this session (real `docker build`, memory-capped) showed this is a
+  lightweight Go compile, not the Rust build an early assumption feared —
+  low real risk. `fileSystems."/".autoResize` (disk) and plan RAM sizing
+  are separate concerns; this note exists only so a future reader doesn't
+  conflate the two or think the disk fix also covers memory.
 
 ## Out of scope
 
