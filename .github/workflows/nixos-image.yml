@@ -38,21 +38,27 @@ jobs:
         run: |
           SIZE=$(stat -c%s pocketcoder-nixos.img.gz)
           echo "Compressed image size: $SIZE bytes ($((SIZE / 1024 / 1024)) MiB)"
-          # `wrangler r2 object put` does a single non-multipart PUT and
-          # rejects anything over ~300MiB -- fail loudly here instead of
-          # letting that step fail cryptically (or silently write to a
-          # local simulated bucket if --remote is ever dropped by mistake).
-          if [ "$SIZE" -gt $((300 * 1024 * 1024)) ]; then
-            echo "::error::Image is $((SIZE / 1024 / 1024))MiB, over wrangler's ~300MiB r2 object put limit. Needs a multipart/S3-API upload instead (see the CI workflow review notes)." >&2
-            exit 1
-          fi
+
+      - name: Install AWS CLI
+        run: |
+          curl -sf "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+          unzip -q awscliv2.zip
+          sudo ./aws/install
+          rm -rf awscliv2.zip aws
 
       - name: Upload to R2
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: r2 object put pocketcoder-images/pocketcoder-nixos-latest.img.gz --file=pocketcoder-nixos.img.gz --remote
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        # wrangler's `r2 object put` is a single non-multipart PUT capped at
+        # ~300MiB -- this image is ~755MiB. `aws s3 cp` multiparts large
+        # uploads automatically (no extra flags needed) via R2's
+        # S3-compatible API.
+        run: |
+          aws s3 cp pocketcoder-nixos.img.gz \
+            s3://pocketcoder-images/pocketcoder-nixos-latest.img.gz \
+            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
