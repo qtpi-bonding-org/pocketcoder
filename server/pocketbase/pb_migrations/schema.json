@@ -397,9 +397,34 @@
         "required": false,
         "system": false,
         "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pc_harnesses",
+        "hidden": false,
+        "id": "relation_chats_harness",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "harness",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "json_chats_workspace_override",
+        "maxSize": 0,
+        "name": "workspace_override",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
       }
     ],
-    "indexes": [],
+    "indexes": [
+      "CREATE INDEX idx_chats_user_archived ON chats (user, archived)"
+    ],
     "created": "2026-07-24 05:34:49.759Z",
     "updated": "2026-07-24 05:34:50.238Z",
     "system": false
