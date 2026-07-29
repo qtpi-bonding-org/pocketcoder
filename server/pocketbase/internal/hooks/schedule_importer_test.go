@@ -119,3 +119,30 @@ func TestImportFn_ImportsUnseenSessionsAcrossOwners(t *testing.T) {
 		t.Fatalf("expected session-xyz to be imported: %v", err)
 	}
 }
+
+func TestScheduleImporterStampsDefaultHarnessInstance(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	user := newImporterTestUser(t, app, "importer4@example.com")
+	owner := newImporterScheduleOwner(t, app, user.Id, "Default Instance Test")
+
+	// Import a session
+	if err := ImportSession(app, owner, "session-inst-test"); err != nil {
+		t.Fatalf("ImportSession: %v", err)
+	}
+
+	// Find the imported goose_sessions row
+	rec, err := app.FindFirstRecordByFilter("goose_sessions", "goose_session_id = {:sid}", map[string]any{"sid": "session-inst-test"})
+	if err != nil {
+		t.Fatalf("expected a goose_sessions row: %v", err)
+	}
+
+	// Verify harness_instance is populated (should be the default goose instance)
+	if rec.GetString("harness_instance") == "" {
+		t.Error("imported goose_sessions row must have harness_instance set to the default goose instance")
+	}
+}
