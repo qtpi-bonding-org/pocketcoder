@@ -1901,6 +1901,19 @@
         "required": false,
         "system": false,
         "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pc_harness_instances",
+        "hidden": false,
+        "id": "relation_gs_harness_instance",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "harness_instance",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
       }
     ],
     "indexes": [
@@ -2068,6 +2081,175 @@
     "indexes": [],
     "created": "2026-07-24 14:08:25.485Z",
     "updated": "2026-07-24 14:08:25.485Z",
+    "system": false
+  },
+  {
+    "id": "pc_harness_instances",
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "harness_instances",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text_hi_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pc_harnesses",
+        "hidden": false,
+        "id": "relation_hi_harness",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "harness",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pc_harness_models",
+        "hidden": false,
+        "id": "relation_hi_harness_model",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "harness_model",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hi_launch_key",
+        "max": 0,
+        "min": 0,
+        "name": "launch_key",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hi_container_name",
+        "max": 0,
+        "min": 0,
+        "name": "container_name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hi_acp_endpoint",
+        "max": 0,
+        "min": 0,
+        "name": "acp_endpoint",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": true,
+        "id": "text_hi_secret",
+        "max": 0,
+        "min": 0,
+        "name": "secret",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "select_hi_status",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": ["pending", "running", "stopped", "error"]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hi_last_error",
+        "max": 0,
+        "min": 0,
+        "name": "last_error",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "bool_hi_managed",
+        "name": "managed",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_hi_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_hi_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_harness_instances_name ON harness_instances (container_name)",
+      "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (harness, launch_key)"
+    ],
+    "created": "2026-07-29 00:00:00.000Z",
+    "updated": "2026-07-29 00:00:00.000Z",
     "system": false
   }
 ]
