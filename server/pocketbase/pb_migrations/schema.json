@@ -1327,6 +1327,57 @@
           "stdio",
           "http"
         ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_harnesses_container_image",
+        "max": 0,
+        "min": 0,
+        "name": "container_image",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "json_harnesses_launch_template",
+        "maxSize": 0,
+        "name": "launch_template",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "bool_harnesses_supports_live_config",
+        "name": "supports_live_config",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "bool_harnesses_supports_goose_extensions",
+        "name": "supports_goose_extensions",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "bool_harnesses_single_connection_only",
+        "name": "single_connection_only",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
       }
     ],
     "indexes": [
