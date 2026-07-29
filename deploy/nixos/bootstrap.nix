@@ -92,12 +92,12 @@
       # etc.) are already in .env from user-data above and are left as-is.
       if ! grep -q '^POCKETBASE_SUPERUSER_EMAIL=' "$INSTALL_DIR/.env"; then
         cat >> "$INSTALL_DIR/.env" <<EOF
-      POCKETBASE_SUPERUSER_EMAIL=superuser@pocketcoder.local
-      POCKETBASE_SUPERUSER_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
-      AGENT_EMAIL=agent@pocketcoder.local
-      AGENT_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
-      GOOSE_SERVER__SECRET_KEY=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
-      EOF
+POCKETBASE_SUPERUSER_EMAIL=superuser@pocketcoder.local
+POCKETBASE_SUPERUSER_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+AGENT_EMAIL=agent@pocketcoder.local
+AGENT_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+GOOSE_SERVER__SECRET_KEY=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+EOF
       fi
 
       # --- Clone PocketCoder repo ---
