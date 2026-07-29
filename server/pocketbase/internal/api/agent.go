@@ -95,7 +95,11 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			func(context.Context) (string, error) { return gooseSessionForChat(app, chatID, re.Auth.Id) },
 			func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
 			func(ctx context.Context, sessionID string) error {
-				err := saveGooseSession(ctx, app, chatID, re.Auth.Id, sessionID)
+				profile, perr := buildSessionProfile(app, chatID)
+				if perr != nil {
+					return perr
+				}
+				err := saveGooseSession(ctx, app, chatID, re.Auth.Id, sessionID, profile.ResolvedInstanceID)
 				if err == nil {
 					app.Logger().Debug("Goose session mapping created", "chat_id", chatID)
 				}
@@ -386,7 +390,7 @@ func gooseSessionForChat(app core.App, chatID, userID string) (string, error) {
 	return record.GetString("goose_session_id"), nil
 }
 
-func saveGooseSession(ctx context.Context, app core.App, chatID, userID, sessionID string) error {
+func saveGooseSession(ctx context.Context, app core.App, chatID, userID, sessionID, harnessInstanceID string) error {
 	collection, err := app.FindCollectionByNameOrId("goose_sessions")
 	if err != nil {
 		return err
@@ -395,6 +399,7 @@ func saveGooseSession(ctx context.Context, app core.App, chatID, userID, session
 	record.Set("chat", chatID)
 	record.Set("user", userID)
 	record.Set("goose_session_id", sessionID)
+	record.Set("harness_instance", harnessInstanceID)
 	if err := app.Save(record); err != nil {
 		return fmt.Errorf("save Goose session: %w", err)
 	}
