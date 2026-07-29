@@ -131,6 +131,11 @@ services:
   # embedded storage (SQLite + LanceDB), no external DB services. Registered
   # as a live Goose extension by hooks.RegisterCogneeExtension (Task 6), not
   # via the mcp_servers/Docker-MCP-gateway catalog path.
+  # Optional, unlike goose/mcp-gateway: cognee/cognee-mcp:main is a multi-GB
+  # pull (bundles ML/embedding deps), and RegisterCogneeExtension already
+  # handles cognee being absent gracefully (bounded retries, then logs and
+  # gives up -- goose keeps working without the memory extension).
+  # To enable: docker compose --profile memory up
   # One-shot init: Docker creates the cognee_data named volume root-owned on
   # first use, but cognee-mcp's image runs as a non-root uid/gid 1000:1000 —
   # without this, cognee crashes on its first write with
@@ -139,6 +144,7 @@ services:
   cognee-data-init:
     image: busybox
     container_name: pocketcoder-cognee-data-init
+    profiles: ["memory"]
     command: ["chown", "-R", "1000:1000", "/cognee_data"]
     volumes:
       - cognee_data:/cognee_data
@@ -146,6 +152,7 @@ services:
   cognee:
     image: cognee/cognee-mcp:main
     container_name: pocketcoder-cognee
+    profiles: ["memory"]
     depends_on:
       cognee-data-init:
         condition: service_completed_successfully
