@@ -66,10 +66,20 @@ async function handleUploadImage(
   const label = body.imageLabel || DEFAULT_LABEL;
   const region = body.region || "us-east";
 
-  // Check if image already exists
+  // Check if image already exists. `existed: true` specifically means
+  // "ready to use" -- an image can exist but still be mid-processing
+  // (status creating/pending_upload), which Linode's create-instance API
+  // rejects with 400 "Image is not available yet". Report status either
+  // way so the caller can tell an in-progress image from no image at all,
+  // but don't claim it's usable until Linode says so. Return here either
+  // way (not falling through to re-trigger a redundant upload).
   const existing = await findImageByLabel(body.linodeToken, label);
   if (existing) {
-    return json({ imageId: existing.id, status: existing.status, existed: true });
+    return json({
+      imageId: existing.id,
+      status: existing.status,
+      existed: existing.status === "available",
+    });
   }
 
   // Get image size from R2 for the Linode upload request
