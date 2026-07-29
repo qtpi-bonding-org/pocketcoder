@@ -54,7 +54,7 @@ var _ acp.Conn = (*fakeImportAdminConn)(nil)
 func fakeImportCoordWith(fc *fakeImportAdminConn) func() *coordinator.Coordinator {
 	coord, err := coordinator.New(coordinator.Config{
 		GooseURL: "ws://unused", GooseSecret: "x", Workspace: "/tmp",
-		Dial: func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
+		Dial: func(ctx context.Context, client acpsdk.Client, _ coordinator.Target) (acp.Conn, error) {
 			return fc, nil
 		},
 	})
