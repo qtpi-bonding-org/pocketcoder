@@ -39,14 +39,8 @@ jobs:
           SIZE=$(stat -c%s pocketcoder-nixos.img.gz)
           echo "Compressed image size: $SIZE bytes ($((SIZE / 1024 / 1024)) MiB)"
 
-      - name: Install AWS CLI
-        run: |
-          curl -sf "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
-          unzip -q awscliv2.zip
-          sudo ./aws/install
-          rm -rf awscliv2.zip aws
-
       - name: Upload to R2
+        # ubuntu-latest ships with AWS CLI v2 preinstalled -- no setup step needed.
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
