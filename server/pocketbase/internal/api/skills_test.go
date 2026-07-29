@@ -155,7 +155,7 @@ func TestListSkills_MergesGlobalAndPerProjectCalls(t *testing.T) {
 	}
 	harnessRec := core.NewRecord(harnesses)
 	harnessRec.Set("name", "goose")
-	harnessRec.Set("cli_id", "goose")
+	harnessRec.Set("cli_id", "goose-test")
 	harnessRec.Set("acp_transport", "websocket")
 	if err := app.Save(harnessRec); err != nil {
 		t.Fatal(err)
