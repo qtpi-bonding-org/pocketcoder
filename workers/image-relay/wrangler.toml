@@ -19,7 +19,13 @@ NIXOS_IMAGE_KEY = "pocketcoder-nixos-latest.img.gz"
 queue = "pocketcoder-image-uploads"
 binding = "UPLOAD_QUEUE"
 
-[[queues.consumers]]
-queue = "pocketcoder-image-uploads"
-max_batch_size = 1
-max_retries = 3
+# Disabled: CustomImageProvisioningStrategy (the streaming-upload path
+# this queue serves) is no longer the default provisioning path -- see
+# docs/superpowers/specs/2026-07-29-linode-boot-time-image-provisioning-design.md,
+# "Strategy 1." Disabling the consumer (not deleting it) prevents a
+# stale enqueued message from retry-looping against an already-dead,
+# single-use upload_to URL and generating pointless billed activity.
+# [[queues.consumers]]
+# queue = "pocketcoder-image-uploads"
+# max_batch_size = 1
+# max_retries = 3
