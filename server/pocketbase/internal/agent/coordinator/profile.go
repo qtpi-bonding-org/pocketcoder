@@ -78,7 +78,7 @@ type ProfileFunc func(context.Context) (SessionProfile, error)
 // ProfileApplier delivers the parts of a SessionProfile that ACP allows to
 // be set post session/new|load.
 type ProfileApplier interface {
-	Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile) error
+	Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) error
 }
 
 // GlobalConfigApplier delivers only what ACP allows post-create today: the
@@ -86,14 +86,26 @@ type ProfileApplier interface {
 // render pipeline + restart (spec §4).
 type GlobalConfigApplier struct{}
 
-func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile) error {
+func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) error {
 	if p.Mode == "" {
 		return nil
+	}
+	if modes != nil && !modeAdvertised(modes, p.Mode) {
+		return nil // logging is the caller's job at the call site, per existing logging conventions in this file
 	}
 	_, err := conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{
 		SessionId: acpsdk.SessionId(sessionID), ModeId: p.Mode,
 	})
 	return err
+}
+
+func modeAdvertised(modes *acpsdk.SessionModeState, mode acpsdk.SessionModeId) bool {
+	for _, m := range modes.AvailableModes {
+		if m.Id == mode {
+			return true
+		}
+	}
+	return false
 }
 
 // systemPromptSetParams mirrors Goose's SetSessionSystemPromptRequest
@@ -114,33 +126,35 @@ type systemPromptSetParams struct {
 // since no typed SDK support exists for it.
 type PerSessionApplier struct{}
 
-func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile) error {
-	if err := (GlobalConfigApplier{}).Apply(ctx, conn, sessionID, p); err != nil {
+func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) error {
+	if err := (GlobalConfigApplier{}).Apply(ctx, conn, sessionID, p, modes); err != nil {
 		return err
 	}
-	if p.Provider != "" {
-		if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
-			ValueId: &acpsdk.SetSessionConfigOptionValueId{
-				SessionId: acpsdk.SessionId(sessionID),
-				ConfigId:  "provider",
-				Value:     acpsdk.SessionConfigValueId(p.Provider),
-			},
-		}); err != nil {
-			return fmt.Errorf("apply provider: %w", err)
+	if p.SupportsLiveConfig {
+		if p.Provider != "" {
+			if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
+				ValueId: &acpsdk.SetSessionConfigOptionValueId{
+					SessionId: acpsdk.SessionId(sessionID),
+					ConfigId:  "provider",
+					Value:     acpsdk.SessionConfigValueId(p.Provider),
+				},
+			}); err != nil {
+				return fmt.Errorf("apply provider: %w", err)
+			}
+		}
+		if p.Model != "" {
+			if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
+				ValueId: &acpsdk.SetSessionConfigOptionValueId{
+					SessionId: acpsdk.SessionId(sessionID),
+					ConfigId:  "model",
+					Value:     acpsdk.SessionConfigValueId(p.Model),
+				},
+			}); err != nil {
+				return fmt.Errorf("apply model: %w", err)
+			}
 		}
 	}
-	if p.Model != "" {
-		if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
-			ValueId: &acpsdk.SetSessionConfigOptionValueId{
-				SessionId: acpsdk.SessionId(sessionID),
-				ConfigId:  "model",
-				Value:     acpsdk.SessionConfigValueId(p.Model),
-			},
-		}); err != nil {
-			return fmt.Errorf("apply model: %w", err)
-		}
-	}
-	if p.Instructions != "" {
+	if p.SupportsGooseExtensions && p.Instructions != "" {
 		if _, err := conn.CallExtension(ctx, "_goose/unstable/session/system-prompt/set", systemPromptSetParams{
 			SessionID:    sessionID,
 			SystemPrompt: p.Instructions,
@@ -151,11 +165,12 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 	return nil
 }
 
-// selectApplier always returns PerSessionApplier. Provider/model/prompt
-// live delivery is confirmed present in the pinned Goose version
-// (v1.43.0) — see spikes/goose-acp-config-surface/README.md — so, unlike
-// the prior comment on this function ("Goose #7596 unshipped"), there is
-// no capability gate to check.
-func selectApplier(init *acpsdk.InitializeResponse) ProfileApplier {
+// selectApplier always returns PerSessionApplier — the branching that used
+// to matter (whether Goose advertised per-session config at all) now lives
+// inside PerSessionApplier.Apply itself, gated on the resolved harness's
+// own capability flags carried on profile, not on the ACP InitializeResponse
+// (which cannot express a Goose-private capability like
+// SupportsGooseExtensions in the first place).
+func selectApplier(profile SessionProfile) ProfileApplier {
 	return PerSessionApplier{}
 }
