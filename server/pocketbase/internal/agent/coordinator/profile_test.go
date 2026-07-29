@@ -2,15 +2,57 @@ package coordinator
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 )
 
+// recordingConn is a minimal test fake that records which methods were called.
+type recordingConn struct {
+	calledSystemPromptSet  bool
+	calledSetConfigOption  bool
+	calledSetSessionMode   bool
+}
+
+func (r *recordingConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error) {
+	return acpsdk.InitializeResponse{}, nil
+}
+func (r *recordingConn) NewSession(context.Context, acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error) {
+	return acpsdk.NewSessionResponse{}, nil
+}
+func (r *recordingConn) LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error) {
+	return acpsdk.LoadSessionResponse{}, nil
+}
+func (r *recordingConn) SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
+	r.calledSetSessionMode = true
+	return acpsdk.SetSessionModeResponse{}, nil
+}
+func (r *recordingConn) SetSessionConfigOption(context.Context, acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) {
+	r.calledSetConfigOption = true
+	return acpsdk.SetSessionConfigOptionResponse{}, nil
+}
+func (r *recordingConn) Prompt(context.Context, acpsdk.PromptRequest) (acpsdk.PromptResponse, error) {
+	return acpsdk.PromptResponse{}, nil
+}
+func (r *recordingConn) Cancel(context.Context, acpsdk.CancelNotification) error {
+	return nil
+}
+func (r *recordingConn) UnstableDeleteSession(context.Context, acpsdk.UnstableDeleteSessionRequest) (acpsdk.UnstableDeleteSessionResponse, error) {
+	return acpsdk.UnstableDeleteSessionResponse{}, nil
+}
+func (r *recordingConn) CallExtension(context.Context, string, any) (json.RawMessage, error) {
+	r.calledSystemPromptSet = true
+	return json.RawMessage(`{}`), nil
+}
+func (r *recordingConn) Close() error {
+	return nil
+}
+
 func TestGlobalConfigApplier_SetsMode(t *testing.T) {
 	fc := &fakeConn{}
 	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
-		SessionProfile{Mode: acpsdk.SessionModeId("auto")})
+		SessionProfile{Mode: acpsdk.SessionModeId("auto")}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +83,7 @@ func TestSessionProfile_SliceAccessorsNeverNil(t *testing.T) {
 
 func TestPerSessionApplierDeliversProviderLive(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Provider: "anthropic"})
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Provider: "anthropic"}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -52,7 +94,7 @@ func TestPerSessionApplierDeliversProviderLive(t *testing.T) {
 
 func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Model: "claude-opus"})
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Model: "claude-opus"}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -69,7 +111,7 @@ func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 
 func TestPerSessionApplierDeliversInstructionsViaCustomMethod(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Instructions: "You are a terse assistant."})
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Instructions: "You are a terse assistant."}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -90,7 +132,7 @@ func TestPerSessionApplierSkipsEmptyFields(t *testing.T) {
 	// Empty SessionProfile — GlobalConfigApplier already returns nil for
 	// empty Mode (profile.go:76); PerSessionApplier must not call Goose
 	// at all for Provider/Model/Instructions when they're empty either.
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{})
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -100,7 +142,7 @@ func TestPerSessionApplierSkipsEmptyFields(t *testing.T) {
 }
 
 func TestSelectApplierAlwaysReturnsPerSessionApplier(t *testing.T) {
-	applier := selectApplier(&acpsdk.InitializeResponse{})
+	applier := selectApplier(SessionProfile{})
 	if _, ok := applier.(PerSessionApplier); !ok {
 		t.Errorf("expected PerSessionApplier, got %T", applier)
 	}
@@ -123,5 +165,54 @@ func TestSessionProfileCarriesTargetAndCapabilityFlags(t *testing.T) {
 	}
 	if p.ResolvedInstanceID != p.PinnedInstanceID {
 		t.Error("expected fields to be independently settable and equal in this fixture")
+	}
+}
+
+func TestApplySkipsGooseExtensionsWhenUnsupported(t *testing.T) {
+	conn := &recordingConn{}
+	p := SessionProfile{Instructions: "be helpful", SupportsGooseExtensions: false, SupportsLiveConfig: true}
+	applier := PerSessionApplier{}
+	if err := applier.Apply(context.Background(), conn, "sess1", p, nil); err != nil {
+		t.Fatal(err)
+	}
+	if conn.calledSystemPromptSet {
+		t.Error("must not call the Goose-private system-prompt method when SupportsGooseExtensions is false")
+	}
+}
+
+func TestApplySkipsSetConfigOptionWhenLiveConfigUnsupported(t *testing.T) {
+	conn := &recordingConn{}
+	p := SessionProfile{Provider: "anthropic", Model: "claude", SupportsLiveConfig: false}
+	applier := PerSessionApplier{}
+	if err := applier.Apply(context.Background(), conn, "sess1", p, nil); err != nil {
+		t.Fatal(err)
+	}
+	if conn.calledSetConfigOption {
+		t.Error("must not call session/set_config_option when SupportsLiveConfig is false")
+	}
+}
+
+func TestApplySkipsSetSessionModeWhenModeNotAdvertised(t *testing.T) {
+	conn := &recordingConn{}
+	p := SessionProfile{Mode: "approve"}
+	modes := &acpsdk.SessionModeState{AvailableModes: []acpsdk.SessionMode{{Id: "chat"}}} // "approve" not in the list
+	applier := PerSessionApplier{}
+	if err := applier.Apply(context.Background(), conn, "sess1", p, modes); err != nil {
+		t.Fatal(err)
+	}
+	if conn.calledSetSessionMode {
+		t.Error("must not call session/set_mode with a mode id the harness didn't advertise")
+	}
+}
+
+func TestApplyDoesNotSkipModeWhenModesIsNil(t *testing.T) {
+	conn := &recordingConn{}
+	p := SessionProfile{Mode: "approve"}
+	applier := PerSessionApplier{}
+	if err := applier.Apply(context.Background(), conn, "sess1", p, nil); err != nil {
+		t.Fatal(err)
+	}
+	if !conn.calledSetSessionMode {
+		t.Error("nil modes must mean 'don't assert', not 'skip' — expected SetSessionMode to still be called")
 	}
 }
