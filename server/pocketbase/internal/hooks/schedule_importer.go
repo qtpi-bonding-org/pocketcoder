@@ -96,6 +96,15 @@ func ImportSession(app core.App, owner *core.Record, sessionID string) error {
 		session := core.NewRecord(sessionsCol)
 		session.Set("chat", chatID)
 		session.Set("user", userID)
+
+		// Look up the seeded default goose harness_instances row and stamp it.
+		// This row is guaranteed to exist by Task 4's seeding.
+		defaultInstance, err := txApp.FindFirstRecordByFilter("harness_instances", "container_name = 'pocketcoder-goose'", nil)
+		if err != nil {
+			return fmt.Errorf("look up default goose harness_instance for import: %w", err)
+		}
+		session.Set("harness_instance", defaultInstance.Id)
+
 		session.Set("goose_session_id", sessionID)
 		if err := txApp.Save(session); err != nil {
 			return fmt.Errorf("create goose_sessions row: %w", err)
