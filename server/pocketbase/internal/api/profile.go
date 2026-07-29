@@ -19,7 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package api
 
 import (
+	"fmt"
 	"log"
+	"path/filepath"
+	"strings"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/pocketbase/pocketbase/core"
@@ -36,16 +39,45 @@ type stdioMcp struct {
 	Env     map[string]string `json:"env"`
 }
 
+// workspaceRoot is the mount point every catalog harness is required to
+// share (§6.3) — the same value the coordinator falls back to.
+const workspaceRoot = "/workspace"
+
+// validateWorkspacePath validates that a path is within the workspace root.
+func validateWorkspacePath(p string) error {
+	clean := filepath.Clean(p)
+	if clean != workspaceRoot && !strings.HasPrefix(clean, workspaceRoot+"/") {
+		return fmt.Errorf("workspace path %q is outside %s", p, workspaceRoot)
+	}
+	return nil
+}
+
 // buildSessionProfile resolves a chat's agent definition (poco_config, or the
 // default per §5.2) into a coordinator.SessionProfile: model/provider,
 // system prompt, workspace cwd/additional directories, per-chat MCP servers
-// (stdio only), and mode.
+// (stdio only), and mode. It also resolves the harness identity and
+// harness_instances row, and validates workspace paths.
 func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfile, error) {
 	var p coordinator.SessionProfile
 
 	chat, err := app.FindRecordById("chats", chatID)
 	if err != nil {
 		return p, err
+	}
+
+	// Chat-level fields are read FIRST, unconditionally — this is the fix
+	// for the early-return bug: they must not depend on a poco_config
+	// existing at all.
+	hmID := chat.GetString("harness_model_override")
+	harnessID := chat.GetString("harness")
+
+	var chatFolders []string
+	_ = chat.UnmarshalJSONField("workspace_override", &chatFolders)
+	if len(chatFolders) > 0 {
+		if err := validateWorkspacePath(chatFolders[0]); err != nil {
+			return p, err
+		}
+		p.Cwd = chatFolders[0]
 	}
 
 	// Resolve the agent definition: chat's poco_config, else the default (§5.2).
@@ -58,62 +90,117 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	} else if poco, err = defaultPocoConfigAPI(app); err != nil {
 		return p, err
 	}
-	if poco == nil {
-		// No definition at all: minimal floor (spec §5.2). Coordinator falls
-		// back to c.config.Workspace when Cwd == "".
-		p.Mode = acpsdk.SessionModeId("approve")
-		return p, nil
+
+	// Default mode if no poco_config
+	p.Mode = acpsdk.SessionModeId("approve")
+	if poco != nil {
+		// Model: chat.harness_model_override wins, else the poco's harness_model.
+		// (Per-chat model is INERT today — spec §4.1 — but resolved for forward-compat.)
+		if hmID == "" {
+			hmID = poco.GetString("harness_model")
+		}
+		if spID := poco.GetString("system_prompt"); spID != "" {
+			if sp, err := app.FindRecordById("prompts", spID); err == nil {
+				p.Instructions = sp.GetString("body")
+			}
+		}
+		if mode := poco.GetString("mode"); mode != "" {
+			p.Mode = acpsdk.SessionModeId(mode)
+		}
+
+		// workspace_folders (JSON array) -> Cwd (first) + AdditionalDirectories (§5.7).
+		var pocoFolders []string
+		_ = poco.UnmarshalJSONField("workspace_folders", &pocoFolders)
+		if p.Cwd == "" && len(pocoFolders) > 0 {
+			p.Cwd = pocoFolders[0]
+		}
+		if len(pocoFolders) > 1 {
+			p.AdditionalDirectories = pocoFolders[1:] // §5.7: always unioned in, regardless of a chat-level cwd override
+		}
+
+		// acp_mcp_servers (JSON array) -> []acpsdk.McpServer, stdio only (§5.1).
+		var raw []stdioMcp
+		_ = poco.UnmarshalJSONField("acp_mcp_servers", &raw)
+		for _, m := range raw {
+			if m.Type != "" && m.Type != "stdio" {
+				log.Printf("[Profile] skipping non-stdio MCP server %q (type=%s) — unsupported today", m.Name, m.Type)
+				continue
+			}
+			env := make([]acpsdk.EnvVariable, 0, len(m.Env))
+			for k, v := range m.Env {
+				env = append(env, acpsdk.EnvVariable{Name: k, Value: v})
+			}
+			p.McpServers = append(p.McpServers, acpsdk.McpServer{
+				Stdio: &acpsdk.McpServerStdio{Name: m.Name, Command: m.Command, Args: m.Args, Env: env},
+			})
+		}
 	}
 
-	// Model: chat.harness_model_override wins, else the poco's harness_model.
-	// (Per-chat model is INERT today — spec §4.1 — but resolved for forward-compat.)
-	hmID := chat.GetString("harness_model_override")
-	if hmID == "" {
-		hmID = poco.GetString("harness_model")
+	// Resolve harness: chat.harness wins; else the model's harness; else
+	// the seeded default (§5.6.1).
+	var harnessRec *core.Record
+	if harnessID != "" {
+		if harnessRec, err = app.FindRecordById("harnesses", harnessID); err != nil {
+			return p, err
+		}
 	}
 	if hmID != "" {
-		if hm, err := app.FindRecordById("harness_models", hmID); err == nil {
+		hm, err := app.FindRecordById("harness_models", hmID)
+		if err == nil {
 			p.Model = hm.GetString("harness_model_id")
 			if m, err := app.FindRecordById("models", hm.GetString("model")); err == nil {
 				p.Provider = m.GetString("provider")
 			}
+			if harnessRec == nil {
+				if hr, err := app.FindRecordById("harnesses", hm.GetString("harness")); err == nil {
+					harnessRec = hr
+				}
+			}
 		}
 	}
-	if spID := poco.GetString("system_prompt"); spID != "" {
-		if sp, err := app.FindRecordById("prompts", spID); err == nil {
-			p.Instructions = sp.GetString("body")
+	if harnessRec == nil {
+		if harnessRec, err = app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil); err != nil {
+			return p, err
 		}
-	}
-	if mode := poco.GetString("mode"); mode != "" {
-		p.Mode = acpsdk.SessionModeId(mode)
-	} else {
-		p.Mode = acpsdk.SessionModeId("approve")
 	}
 
-	// workspace_folders (JSON array) -> Cwd (first) + AdditionalDirectories (§S4).
-	var folders []string
-	_ = poco.UnmarshalJSONField("workspace_folders", &folders)
-	if len(folders) > 0 {
-		p.Cwd = folders[0]
-		p.AdditionalDirectories = folders[1:]
+	p.SupportsLiveConfig = harnessRec.GetBool("supports_live_config")
+	p.SupportsGooseExtensions = harnessRec.GetBool("supports_goose_extensions")
+	p.SingleConnectionOnly = harnessRec.GetBool("single_connection_only")
+
+	launchKey := ""
+	if !p.SupportsLiveConfig && hmID != "" {
+		launchKey = hmID
 	}
 
-	// acp_mcp_servers (JSON array) -> []acpsdk.McpServer, stdio only (§5.1).
-	var raw []stdioMcp
-	_ = poco.UnmarshalJSONField("acp_mcp_servers", &raw)
-	for _, m := range raw {
-		if m.Type != "" && m.Type != "stdio" {
-			log.Printf("[Profile] skipping non-stdio MCP server %q (type=%s) — unsupported today", m.Name, m.Type)
-			continue
+	// Query harness_instances by harness ID. Due to PocketBase filter limitations with
+	// empty strings in && expressions, we query by harness alone and verify launch_key in code.
+	instances, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnessRec.Id})
+	var instance *core.Record
+	if err == nil && len(instances) > 0 {
+		// Find the instance matching our launch_key
+		for _, inst := range instances {
+			if inst.GetString("launch_key") == launchKey {
+				instance = inst
+				break
+			}
 		}
-		env := make([]acpsdk.EnvVariable, 0, len(m.Env))
-		for k, v := range m.Env {
-			env = append(env, acpsdk.EnvVariable{Name: k, Value: v})
-		}
-		p.McpServers = append(p.McpServers, acpsdk.McpServer{
-			Stdio: &acpsdk.McpServerStdio{Name: m.Name, Command: m.Command, Args: m.Args, Env: env},
-		})
 	}
+	if instance != nil {
+		p.ResolvedInstanceID = instance.Id
+		p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
+	}
+	// Note for the implementer: provisioning a missing instance (§5.1) is
+	// explicitly out of scope for this plan — a missing row here should
+	// surface a clear "harness not provisioned" error, not attempt to
+	// create a container. Wire that error path before shipping; it is not
+	// shown in this draft because provisioning is a separate follow-on
+	// plan per the design spec's §5.1.
+
+	if gs, err := app.FindFirstRecordByFilter("goose_sessions", "chat = {:c}", map[string]any{"c": chatID}); err == nil && gs != nil {
+		p.PinnedInstanceID = gs.GetString("harness_instance")
+	}
+
 	return p, nil
 }
 
