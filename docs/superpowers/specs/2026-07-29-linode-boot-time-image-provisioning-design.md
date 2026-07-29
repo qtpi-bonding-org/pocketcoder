@@ -114,106 +114,134 @@ tested code that should work correctly if anything ever re-selects it.
 
 ### Strategy 2 (new): `BootTimePullProvisioningStrategy`
 
-Linode-specific — this is explicitly *not* forced through
-`ICloudProviderAPIClient`'s provider-agnostic shape, because disks/configs/
-StackScripts are genuinely Linode API primitives without a clean
-cross-provider abstraction, and pretending otherwise would be the kind of
-premature generalization this codebase avoids elsewhere. It depends on a
-new, narrow, Linode-only interface:
+**Cross-provider from the start, even though Linode is the only real
+implementation today.** The initial version of this design scoped the
+underlying API surface to Linode only (disks/configs/StackScripts are
+Linode API primitives with no obvious shared vocabulary) — reconsidered:
+"boot a stock instance, run a first-boot script that streams+writes an
+image onto a second volume, then reboot into that volume" is a real,
+recognizable pattern most providers support in some form (AWS: user-data +
+EBS volume + block-device-mapping swap; DigitalOcean: cloud-init +
+volumes; GCP: startup-script metadata + persistent disk swap; Hetzner:
+cloud-init + volumes). Users of this codebase will reasonably expect a
+second provider to be addable without re-deriving this abstraction from
+scratch, so it's worth naming the shared contract now, even though only
+Linode implements it today — same posture as `ICloudProviderAPIClient`
+itself, which has always had exactly one real implementation
+(`LinodeAPIClient`) but was never written Linode-specific.
 
 ```dart
-abstract class ILinodeDiskProvisioningApi {
-  Future<String> createBareInstance({
+/// Contract for "pull-based" instance provisioning: boot a stock/minimal
+/// instance, run a first-boot script that streams an image onto a second
+/// raw volume, detect completion, then reconfigure the instance to boot
+/// from that volume instead. Each method's *mechanism* is provider-
+/// specific (documented per Linode implementation below); the *contract*
+/// (what each step accomplishes) is not.
+abstract class IPullBasedProvisioningApi {
+  /// Creates a bare/minimal instance with no pre-made target OS image
+  /// applied, configured to run [bootScript] (with [bootScriptVariables]
+  /// substituted in) on first boot, via whatever first-boot-script
+  /// mechanism this provider offers (Linode: StackScript; other
+  /// providers: cloud-init user-data, startup-script metadata, etc).
+  /// [metadata] (e.g. {user_data: ...}) is stored for the *final* boot,
+  /// not the installer boot -- carried through unused until step 6 below.
+  Future<String> createInstallerInstance({
     required String accessToken,
     required String planType,
     required String region,
     required String label,
-    required Map<String, String> metadata, // {user_data: ...}
-  }); // POST /linode/instances, no `image` field, booted: false
-
-  Future<int> createInstallerDisk({
-    required String accessToken,
-    required String instanceId,
+    required String bootScript,
+    required Map<String, String> bootScriptVariables,
     required String rootSshKey,
-    required int stackscriptId,
-    required Map<String, String> stackscriptData, // {IMAGE_URL, IMAGE_SHA256}
-  }); // POST .../disks: {label, size: 2560, image: "linode/debian12",
-      //   authorized_keys: [rootSshKey], stackscript_id, stackscript_data}
+    required Map<String, String> metadata,
+  });
 
-  Future<int> createRawDisk({
+  /// Creates the raw target volume the boot script will write the image
+  /// onto, sized to comfortably exceed the image's uncompressed size.
+  Future<String> createTargetVolume({
     required String accessToken,
     required String instanceId,
-    required String label,
     required int sizeMB,
-  }); // POST .../disks: {label, size, filesystem: "raw"}
+  });
 
-  Future<int> createConfig({
+  /// Blocks until the installer's boot script signals completion
+  /// (provider-specific: Linode = instance status "offline" after the
+  /// script's own `shutdown -h now`; a future provider might use a
+  /// different completion signal appropriate to its platform).
+  Future<void> waitForInstallerCompletion({
     required String accessToken,
     required String instanceId,
-    required String label,
-    required Map<String, int> devices, // {sda: diskId, sdb: diskId}
-    required String rootDevice,
-  }); // POST .../configs: {devices, kernel: "linode/grub2", root_device}
+  });
 
-  Future<void> bootConfig({
+  /// Reconfigures the instance to boot from the target volume (carrying
+  /// through the final-boot [metadata] passed at installer-creation time)
+  /// instead of the installer's own stock disk, and boots it. From here
+  /// on the instance behaves exactly like one created via
+  /// `CustomImageProvisioningStrategy` -- same metadata/user_data
+  /// contract, same cert-polling handoff.
+  Future<void> switchToTargetVolumeAndBoot({
     required String accessToken,
     required String instanceId,
-    required int configId,
-  }); // POST .../boot: {config_id}
+    required String targetVolumeId,
+  });
 
-  Future<void> deleteDisk({
+  /// Cleans up the installer's stock disk/volume -- call only after the
+  /// target volume has been proven to boot successfully (keeping it
+  /// around until then is the recovery path if the target turns out bad).
+  Future<void> deleteInstallerVolume({
     required String accessToken,
     required String instanceId,
-    required int diskId,
-  }); // DELETE .../disks/{diskId}
+  });
 }
 ```
 
-`LinodeAPIClient` implements this alongside its existing
-`ICloudProviderAPIClient` implementation (one class, two interfaces — no
-conflict, matches how it already sits alongside OAuth-token methods that
-aren't part of the image-provisioning surface either).
+`BootTimePullProvisioningStrategy` depends only on
+`IPullBasedProvisioningApi` — it has zero Linode-specific code in it. All
+Linode-specific mechanics live in `LinodeAPIClient`'s implementation of
+this interface (implemented alongside its existing
+`ICloudProviderAPIClient` implementation — one class, two interfaces, no
+conflict):
 
-`BootTimePullProvisioningStrategy.provisionInstance(...)` orchestrates:
+- `createInstallerInstance`: `POST /linode/instances` with no `image`
+  field, `booted: false` (**confirmed live against the real API,
+  2026-07-29 — a real instance was created and deleted: Linode accepts
+  `metadata.user_data` with no `image` field at all**,
+  `"has_user_data": true, "image": null"` in the response — this was the
+  one open risk in this design and it's resolved; `bootstrap.nix` and
+  `DeploymentConfig.toUserData(...)` need **zero changes**), then
+  `POST .../disks` for a small (2.5GB) stock Debian installer disk running
+  a Linode **StackScript** (`bootScript` compiled to StackScript UDF
+  syntax, `bootScriptVariables` passed as `stackscript_data`),
+  `authorized_keys: [rootSshKey]` for debugging access to the installer if
+  something goes wrong (separate from the final NixOS box's own
+  passwordless-SSH setup, unaffected by this design).
+- `createTargetVolume`: `POST .../disks`, `filesystem: "raw"`, sized to
+  the plan's disk minus the installer's 2.5GB minus slack (≥ 8GB floor,
+  comfortably above the ~4.7GB uncompressed image size).
+- `waitForInstallerCompletion`: polls `getInstance` (existing method,
+  reused) until `status == "offline"` — the StackScript's last line is
+  `shutdown -h now`, so instance-offline *is* the "disk write finished"
+  signal. Guarded by a hard timeout.
+- `switchToTargetVolumeAndBoot`: `POST .../configs` (`sda` → target
+  volume only, `root_device: /dev/sda`, `kernel: "linode/grub2"`) then
+  `POST .../boot`. From here, `DeploymentService.monitorDeployment`/
+  `_pollForCertificate` (unchanged) takes over exactly as it does for the
+  existing path.
+- `deleteInstallerVolume`: `DELETE .../disks/{id}`, called by the strategy
+  only after the first successful cert-fingerprint poll.
 
-1. `createBareInstance(...)` — no `image`, `booted: false`. **Confirmed
-   live against the real API (2026-07-29, real instance created and
-   deleted): Linode accepts `metadata.user_data` with no `image` field at
-   all** (`"has_user_data": true, "image": null"` in the response) — this
-   was the one open risk in this design and it's resolved. `bootstrap.nix`
-   and `DeploymentConfig.toUserData(...)` need **zero changes**.
-2. `createInstallerDisk(...)` — a small (2.5GB) stock Debian disk running
-   our public StackScript (see below), passed the target `IMAGE_URL`/
-   `IMAGE_SHA256` via `stackscript_data`, and `rootSshKey` via
-   `authorized_keys` (for debugging access to the installer if something
-   goes wrong — separate from the final NixOS box's own passwordless-SSH
-   setup, unaffected by this design).
-3. `createRawDisk(...)` — target disk, `filesystem: "raw"`, sized to the
-   plan's disk minus the installer's 2.5GB minus slack (≥ 8GB floor,
-   comfortably above the ~4.7GB uncompressed image size).
-4. `createConfig(...)` (installer boot profile: `sda` → installer disk,
-   `sdb` → raw disk, `root_device: /dev/sda`) then `bootConfig(...)`.
-5. **Poll for `status == "offline"`** (reuses existing `getInstance`/status
-   polling machinery, no new signalling channel) — the StackScript's last
-   line is `shutdown -h now`, so instance-offline *is* the "disk write
-   finished" signal. Guarded by a hard timeout.
-6. `createConfig(...)` (final boot profile: `sda` → raw disk only,
-   `root_device: /dev/sda`) then `bootConfig(...)`. From here on,
-   `DeploymentService.monitorDeployment`/`_pollForCertificate` (unchanged)
-   takes over exactly as it does for the existing path.
-7. `deleteDisk(...)` on the installer disk, **after** the first successful
-   cert-fingerprint poll (not before) — reclaims 2.5GB, and keeping the
-   installer disk around until proven-booted preserves it as a recovery
-   path if the target disk turns out bad.
-
-### The StackScript (published once, centrally — see root `CLAUDE.md`'s
-central-registration principle)
+### The boot script (Linode implementation: a StackScript, published
+once, centrally — see root `CLAUDE.md`'s central-registration principle)
 
 Per this repo's deployment model, anything requiring "a human to register
 something once" happens centrally, not per-user — same pattern as the
-MCP OAuth Worker holding the shared GitHub OAuth App. This StackScript is
-published **once**, publicly, from our own Linode account; end users never
-see or interact with this registration step.
+MCP OAuth Worker holding the shared GitHub OAuth App. Linode's
+implementation of `bootScript` is published **once**, publicly, from our
+own Linode account, as a StackScript; end users never see or interact
+with this registration step. (A future provider's implementation of the
+same `bootScript` contract would deliver it differently — e.g. as
+cloud-init user-data — but the script content itself, below, is portable
+as-is.)
 
 ```bash
 #!/bin/bash
@@ -278,11 +306,13 @@ than via a single fixed `@LazySingleton(as: IInstanceProvisioningStrategy)`
 ## Testing
 
 - New unit tests for `BootTimePullProvisioningStrategy` (mocked
-  `ILinodeDiskProvisioningApi`), mirroring the existing
+  `IPullBasedProvisioningApi` — provider-agnostic, no Linode specifics
+  leak into this test file at all), mirroring the existing
   `deployment_service_test.dart` mocking pattern.
-- New unit tests for the 6 new `LinodeAPIClient` methods (mirroring the
-  existing `linode_api_client_test.dart` pattern — request shape
-  assertions against a mocked `http.Client`).
+- New unit tests for `LinodeAPIClient`'s `IPullBasedProvisioningApi`
+  implementation (mirroring the existing `linode_api_client_test.dart`
+  pattern — request shape assertions against a mocked `http.Client`,
+  covering the actual StackScript/disk/config request bodies).
 - `CustomImageProvisioningStrategy`'s tests are the existing
   `deployment_service_test.dart`/`linode_api_client_test.dart` coverage,
   extracted into the new class but otherwise unchanged.
@@ -310,8 +340,12 @@ relay/manifest URL.
   `dd` (confirmed: `deploy/nixos/flake.nix` already uses
   `partitionTableType = "none"`, `format = "raw"`; `configuration.nix`
   already does GRUB `device = "nodev"` + `forceInstall`).
-- A generic cross-provider `IInstanceProvisioningStrategy` abstraction
-  beyond Linode — `ILinodeDiskProvisioningApi` is intentionally
-  Linode-specific; a future provider needing an equivalent pull-based path
-  gets its own concrete strategy + narrow API interface, not a forced
-  shared abstraction invented ahead of a second real use case.
+- **Actually implementing a second `IPullBasedProvisioningApi` provider.**
+  The interface is deliberately cross-provider-shaped now (see Strategy 2),
+  but only `LinodeAPIClient` implements it in this design — no DigitalOcean/
+  AWS/GCP/Hetzner client exists yet, and none is added here. Adding one
+  later is exactly the point of naming the contract now, but it's a
+  separate, future body of work.
+- `ICloudProviderAPIClient` itself is untouched by this design —
+  `IPullBasedProvisioningApi` is a new, separate interface a client can
+  additionally implement, not a change to the existing one.
