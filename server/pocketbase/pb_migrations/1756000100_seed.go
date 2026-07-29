@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package pb_migrations
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -101,6 +102,37 @@ func init() {
 			if err := seedToolPerm(d[0], d[1], d[2]); err != nil {
 				return err
 			}
+		}
+
+		harnessesColl, err := app.FindCollectionByNameOrId("harnesses")
+		if err != nil {
+			return err
+		}
+		gooseHarness := core.NewRecord(harnessesColl)
+		gooseHarness.Set("name", "Goose")
+		gooseHarness.Set("cli_id", "goose")
+		gooseHarness.Set("acp_transport", "websocket")
+		gooseHarness.Set("supports_live_config", true)
+		gooseHarness.Set("supports_goose_extensions", true)
+		gooseHarness.Set("single_connection_only", false)
+		if err := app.Save(gooseHarness); err != nil {
+			return fmt.Errorf("seed goose harness: %w", err)
+		}
+
+		instancesColl, err := app.FindCollectionByNameOrId("harness_instances")
+		if err != nil {
+			return err
+		}
+		gooseInstance := core.NewRecord(instancesColl)
+		gooseInstance.Set("harness", gooseHarness.Id)
+		gooseInstance.Set("launch_key", "default")
+		gooseInstance.Set("container_name", "pocketcoder-goose")
+		gooseInstance.Set("acp_endpoint", "")
+		gooseInstance.Set("secret", "")
+		gooseInstance.Set("status", "running")
+		gooseInstance.Set("managed", false)
+		if err := app.Save(gooseInstance); err != nil {
+			return fmt.Errorf("seed goose harness_instance: %w", err)
 		}
 
 		return nil
