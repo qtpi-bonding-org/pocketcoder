@@ -85,7 +85,7 @@ var _ acp.Conn = (*fakeAdminConn)(nil)
 func fakeCoordWith(fc *fakeAdminConn) func() *coordinator.Coordinator {
 	coord, err := coordinator.New(coordinator.Config{
 		GooseURL: "ws://unused", GooseSecret: "x", Workspace: "/tmp",
-		Dial: func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
+		Dial: func(ctx context.Context, client acpsdk.Client, t coordinator.Target) (acp.Conn, error) {
 			return fc, nil
 		},
 	})
@@ -211,7 +211,7 @@ func TestListSkills_MergesGlobalAndPerProjectCalls(t *testing.T) {
 	}
 	coord, err := coordinator.New(coordinator.Config{
 		GooseURL: "ws://unused", GooseSecret: "x", Workspace: "/tmp",
-		Dial: func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
+		Dial: func(ctx context.Context, client acpsdk.Client, t coordinator.Target) (acp.Conn, error) {
 			return fc, nil
 		},
 	})
