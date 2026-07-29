@@ -80,3 +80,32 @@ func TestSeedCreatesTenToolPermissions(t *testing.T) {
 		t.Error("expected a bash/'ls *'/allow row among seeded tool_permissions")
 	}
 }
+
+func TestSeedCreatesDefaultGooseHarnessInstance(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	harnesses, err := app.FindRecordsByFilter("harnesses", "cli_id = 'goose'", "", 0, 0)
+	if err != nil || len(harnesses) != 1 {
+		t.Fatalf("expected exactly one seeded goose harness, got %d, err %v", len(harnesses), err)
+	}
+
+	instances, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnesses[0].Id})
+	if err != nil || len(instances) != 1 {
+		t.Fatalf("expected exactly one seeded goose harness_instance, got %d, err %v", len(instances), err)
+	}
+
+	inst := instances[0]
+	if inst.GetBool("managed") {
+		t.Error("seeded default goose harness_instances row must have managed = false")
+	}
+	if inst.GetString("container_name") != "pocketcoder-goose" {
+		t.Errorf("container_name = %q, want pocketcoder-goose", inst.GetString("container_name"))
+	}
+	if inst.GetString("acp_endpoint") != "" {
+		t.Error("seeded default row's acp_endpoint must be empty (means: use Coordinator.Config defaults)")
+	}
+}
