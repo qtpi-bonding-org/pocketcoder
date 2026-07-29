@@ -75,7 +75,7 @@ func TestDeliverToolPermissions_CallsToolsPermissionsSetWithResolvedRows(t *test
 	fc := &fakeAdminConn{}
 	coord, err := coordinator.New(coordinator.Config{
 		GooseURL: "ws://unused", GooseSecret: "x", Workspace: "/tmp",
-		Dial: func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
+		Dial: func(ctx context.Context, client acpsdk.Client, _ coordinator.Target) (acp.Conn, error) {
 			return fc, nil
 		},
 	})
@@ -89,7 +89,7 @@ func TestDeliverToolPermissions_CallsToolsPermissionsSetWithResolvedRows(t *test
 	}
 	harnessRec := core.NewRecord(harnesses)
 	harnessRec.Set("name", "goose")
-	harnessRec.Set("cli_id", "goose")
+	harnessRec.Set("cli_id", "goose-test")
 	harnessRec.Set("acp_transport", "websocket")
 	if err := app.Save(harnessRec); err != nil {
 		t.Fatalf("save harness: %v", err)
