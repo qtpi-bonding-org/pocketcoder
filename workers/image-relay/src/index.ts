@@ -8,6 +8,11 @@
 interface Env {
   IMAGES: R2Bucket;
   NIXOS_IMAGE_KEY: string;
+  UPLOAD_QUEUE: Queue<UploadQueueMessage>;
+}
+
+interface UploadQueueMessage {
+  uploadUrl: string;
 }
 
 interface UploadRequest {
@@ -30,7 +35,7 @@ const CORS_HEADERS = {
 };
 
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
@@ -38,7 +43,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/upload-image" && request.method === "POST") {
-      return handleUploadImage(request, env, ctx);
+      return handleUploadImage(request, env);
     }
 
     if (url.pathname === "/image-status" && request.method === "GET") {
@@ -51,12 +56,29 @@ export default {
 
     return json({ error: "Not found" }, 404);
   },
+
+  // The actual R2 -> Linode transfer runs here (queue consumer, up to 15
+  // min per message + automatic retries), not in the HTTP handler's
+  // ctx.waitUntil() -- that has a hard ~30s budget for background work,
+  // nowhere near enough for a multi-hundred-MB upload. Confirmed
+  // empirically: every waitUntil-based attempt left the Linode image at
+  // 0 bytes transferred, regardless of request body format.
+  async queue(batch: MessageBatch<UploadQueueMessage>, env: Env): Promise<void> {
+    for (const message of batch.messages) {
+      try {
+        await streamImageToLinode(env, message.body.uploadUrl);
+        message.ack();
+      } catch (err) {
+        console.error(`Queue message failed: ${err}`);
+        message.retry();
+      }
+    }
+  },
 };
 
 async function handleUploadImage(
   request: Request,
-  env: Env,
-  ctx: ExecutionContext
+  env: Env
 ): Promise<Response> {
   const body = (await request.json()) as UploadRequest;
   if (!body.linodeToken) {
@@ -113,8 +135,9 @@ async function handleUploadImage(
     image: { id: string; status: string };
   };
 
-  // Stream image from R2 to Linode in the background
-  ctx.waitUntil(streamImageToLinode(env, uploadData.upload_to));
+  // Hand the transfer off to the queue consumer -- see the `queue` handler
+  // above for why this doesn't run inline via ctx.waitUntil().
+  await env.UPLOAD_QUEUE.send({ uploadUrl: uploadData.upload_to });
 
   return json({
     imageId: uploadData.image.id,
@@ -126,8 +149,10 @@ async function handleUploadImage(
 async function streamImageToLinode(env: Env, uploadUrl: string): Promise<void> {
   const obj = await env.IMAGES.get(env.NIXOS_IMAGE_KEY);
   if (!obj) {
-    console.error("Failed to read image from R2");
-    return;
+    // Throw (not just log) so the queue consumer's catch block sees this
+    // as a real failure and retries -- a transient R2 read hiccup
+    // shouldn't silently drop the whole upload.
+    throw new Error("Failed to read image from R2");
   }
 
   // Linode's upload_to URL behaves like an S3-style presigned PUT: it
@@ -152,10 +177,9 @@ async function streamImageToLinode(env: Env, uploadUrl: string): Promise<void> {
   await pipeDone;
 
   if (!res.ok) {
-    console.error(`Linode upload failed: ${res.status} ${await res.text()}`);
-  } else {
-    console.log("Image upload to Linode completed successfully");
+    throw new Error(`Linode upload failed: ${res.status} ${await res.text()}`);
   }
+  console.log("Image upload to Linode completed successfully");
 }
 
 async function handleImageStatus(request: Request, env: Env): Promise<Response> {
