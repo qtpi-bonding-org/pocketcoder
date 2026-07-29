@@ -33,7 +33,7 @@ func TestAdminConnDialsAndInitializesWithoutCreatingASession(t *testing.T) {
 	fc := &fakeConn{}
 	coord, err := New(Config{
 		GooseURL: "ws://unused", GooseSecret: "x", Workspace: "/tmp",
-		Dial: func(ctx context.Context, client acpsdk.Client) (acp.Conn, error) {
+		Dial: func(ctx context.Context, client acpsdk.Client, _ Target) (acp.Conn, error) {
 			return fc, nil
 		},
 	})
