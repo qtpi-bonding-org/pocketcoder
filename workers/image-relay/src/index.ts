@@ -130,9 +130,17 @@ async function streamImageToLinode(env: Env, uploadUrl: string): Promise<void> {
     return;
   }
 
+  // Linode's upload_to URL behaves like an S3-style presigned PUT: it
+  // needs a known, fixed Content-Length. A streamed body with no
+  // Content-Length (the previous version of this code) silently fails to
+  // transfer any bytes -- confirmed empirically: the resulting image sat
+  // at status=pending_upload, size=0MB indefinitely.
   const res = await fetch(uploadUrl, {
     method: "PUT",
-    headers: { "Content-Type": "application/octet-stream" },
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Content-Length": String(obj.size),
+    },
     body: obj.body,
   });
 
