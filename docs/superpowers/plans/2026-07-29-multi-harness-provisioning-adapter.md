@@ -79,7 +79,7 @@ func TestInspectParsesMountsAndNetworks(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := &Client{baseURL: srv.URL}
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
 	insp, err := c.Inspect(context.Background(), "pocketcoder-pocketbase")
 	if err != nil {
 		t.Fatal(err)
@@ -754,8 +754,10 @@ git commit -m "feat(hooks): resolve real workspace volume and agent network name
 - Test: `server/pocketbase/internal/hooks/harness_provision_test.go`
 
 **Interfaces:**
-- Consumes: `dockerapi.Client` (Tasks 1-3), `ResolveWorkspaceVolumeAndNetwork` (Task 5), `harnesses`/`harness_instances` schema (Plan 1).
-- Produces: `func ProvisionHarnessInstance(ctx context.Context, app core.App, client *dockerapi.Client, harnessID, launchKey string) (*core.Record, error)` — idempotent: returns the existing row if one already exists for `(harnessID, launchKey)`, otherwise creates a `pending` row, pulls the image, creates+starts the container, and updates the row to `running` or `error`+`last_error`. Consumed by Task 7 (`buildSessionProfile`'s missing-instance path).
+- Consumes: `dockerapi.Client` (Tasks 1-3), `ResolveWorkspaceVolumeAndNetwork` (Task 5), `harnesses`/`harness_instances`/`provider_keys` schema (Plan 1).
+- Produces: `func ProvisionHarnessInstance(ctx context.Context, app core.App, client *dockerapi.Client, harnessID, launchKey string) (*core.Record, error)` — idempotent: returns the existing row if one already exists for `(harnessID, launchKey)`, otherwise creates a `pending` row, mints a per-instance secret, renders `launch_template.env_template` against every `provider_keys` row's merged env vars, pulls the image, creates+starts the container (with that env and the minted secret), and updates the row to `running`+`secret` or `error`+`last_error`. Consumed by Task 7 (`buildSessionProfile`'s missing-instance path).
+
+**Note on scope**: this renders provider keys into the container's environment at create time (§4.2/§5.5's stated create-time-only mechanism for non-Goose harnesses), which is the correct place for it — this plan does not add a *rotation* story beyond what §5.5 already accepts (destroy-and-recreate), since that's explicitly out of scope for v1.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -804,7 +806,7 @@ func TestProvisionHarnessInstanceIsIdempotent(t *testing.T) {
 
 func TestProvisionHarnessInstanceSurfacesPullFailure(t *testing.T) {
 	app := testApp(t)
-	harness := createTestHarness(t, app, map[string]any{"container_image": "nonexistent:latest", "launch_template": map[string]any{"cmd": []string{"/adapter"}}})
+	harness := createTestHarness(t, app, map[string]any{"container_image": "nonexistent:latest", "launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000}})
 	fake := newFakeDockerClient()
 	fake.pullErr = fmt.Errorf("No such image")
 	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
@@ -818,6 +820,59 @@ func TestProvisionHarnessInstanceSurfacesPullFailure(t *testing.T) {
 		t.Error("expected last_error to be populated with the pull failure")
 	}
 }
+
+func TestProvisionHarnessInstanceErrorsOnMissingPort(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{"container_image": "x", "launch_template": map[string]any{"cmd": []string{"/adapter"}}}) // no "port"
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.GetString("status") != "error" {
+		t.Errorf("status = %q, want error — a launch_template with no port must not silently produce ws://host:0/acp", rec.GetString("status"))
+	}
+}
+
+func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T) {
+	app := testApp(t)
+	createTestProviderKey(t, app, map[string]any{"provider": "anthropic", "env_vars": map[string]any{"ANTHROPIC_API_KEY": "sk-test-123"}})
+	harness := createTestHarness(t, app, map[string]any{
+		"container_image": "example.com/harness:1.0",
+		"launch_template": map[string]any{
+			"cmd":  []string{"/adapter"},
+			"port": 3000,
+			"env_template": map[string]any{
+				"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}",
+				"ADAPTER_SECRET":    "{{.__adapter_secret}}",
+			},
+		},
+	})
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.GetString("secret") == "" {
+		t.Error("expected a minted, non-empty secret on the harness_instances row")
+	}
+	env := fake.lastCreateSpec.Env
+	found := map[string]bool{}
+	for _, kv := range env {
+		if kv == "ANTHROPIC_API_KEY=sk-test-123" {
+			found["key"] = true
+		}
+		if kv == "ADAPTER_SECRET="+rec.GetString("secret") {
+			found["secret"] = true
+		}
+	}
+	if !found["key"] {
+		t.Errorf("env = %v, want ANTHROPIC_API_KEY=sk-test-123 rendered from provider_keys", env)
+	}
+	if !found["secret"] {
+		t.Errorf("env = %v, want ADAPTER_SECRET matching the row's minted secret", env)
+	}
+}
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -829,6 +884,11 @@ Expected: FAIL — function undefined
 
 ```go
 import (
+	"bytes"
+	"crypto/rand"
+	"encoding/hex"
+	"text/template"
+
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/google/uuid"
 )
@@ -854,6 +914,11 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		return nil, fmt.Errorf("look up harness %s: %w", harnessID, err)
 	}
 
+	secret, err := mintSecret()
+	if err != nil {
+		return nil, fmt.Errorf("mint harness instance secret: %w", err)
+	}
+
 	coll, err := app.FindCollectionByNameOrId("harness_instances")
 	if err != nil {
 		return nil, err
@@ -863,58 +928,114 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	rec.Set("harness", harnessID)
 	rec.Set("launch_key", launchKey)
 	rec.Set("container_name", containerName)
+	rec.Set("secret", secret)
 	rec.Set("status", "pending")
 	rec.Set("managed", true)
 	if err := app.Save(rec); err != nil {
 		return nil, fmt.Errorf("save pending harness_instances row: %w", err)
 	}
+	fail := func(err error) (*core.Record, error) {
+		rec.Set("status", "error")
+		rec.Set("last_error", err.Error())
+		app.Save(rec)
+		return rec, nil
+	}
 
 	volumeName, networkName, err := ResolveWorkspaceVolumeAndNetwork(ctx, client)
 	if err != nil {
-		rec.Set("status", "error")
-		rec.Set("last_error", err.Error())
-		app.Save(rec)
-		return rec, nil
+		return fail(err)
 	}
 
 	image := harness.GetString("container_image")
-	var template struct {
-		Cmd  []string `json:"cmd"`
-		Port int      `json:"port"`
+	var launch struct {
+		Cmd         []string          `json:"cmd"`
+		Port        int               `json:"port"`
+		EnvTemplate map[string]string `json:"env_template"`
 	}
-	_ = harness.UnmarshalJSONField("launch_template", &template)
+	_ = harness.UnmarshalJSONField("launch_template", &launch)
+	if launch.Port == 0 {
+		return fail(fmt.Errorf("harness %s's launch_template has no port", harnessID))
+	}
+
+	env, err := renderEnv(app, launch.EnvTemplate, secret)
+	if err != nil {
+		return fail(fmt.Errorf("render launch_template.env_template: %w", err))
+	}
 
 	if err := client.PullImage(ctx, image); err != nil {
-		rec.Set("status", "error")
-		rec.Set("last_error", err.Error())
-		app.Save(rec)
-		return rec, nil
+		return fail(err)
 	}
 
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
-		Image: image, Cmd: template.Cmd,
+		Image: image, Cmd: launch.Cmd, Env: env,
 		VolumeName: volumeName, VolumeDest: "/workspace",
 		NetworkName: networkName,
 	})
 	if err != nil {
-		rec.Set("status", "error")
-		rec.Set("last_error", err.Error())
-		app.Save(rec)
-		return rec, nil
+		return fail(err)
 	}
 	if err := client.Start(ctx, containerName); err != nil {
-		rec.Set("status", "error")
-		rec.Set("last_error", err.Error())
-		app.Save(rec)
-		return rec, nil
+		return fail(err)
 	}
 
 	rec.Set("status", "running")
-	rec.Set("acp_endpoint", fmt.Sprintf("ws://%s:%d/acp", containerName, template.Port))
+	rec.Set("acp_endpoint", fmt.Sprintf("ws://%s:%d/acp", containerName, launch.Port))
 	if err := app.Save(rec); err != nil {
 		return nil, fmt.Errorf("save running harness_instances row: %w", err)
 	}
 	return rec, nil
+}
+
+// mintSecret generates the per-instance credential the bundled adapter
+// enforces on its WS upgrade (§5.4.1) — this, not an empty string, is what
+// populates Target.Secret once this row is resolved.
+func mintSecret() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+// renderEnv merges every provider_keys row's env_vars into one lookup map
+// (the same "merge every row" convention gooseconfig.RenderKeysEnv already
+// uses for Goose's own keys.env — deliberately not scoped to one specific
+// provider here, since launch_template doesn't declare which provider(s) a
+// given harness needs ahead of time), adds a reserved "__adapter_secret" key
+// for the minted per-instance secret, and renders each env_template value
+// as a Go text/template against that map — e.g. an entry
+// {"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}"} becomes
+// "ANTHROPIC_API_KEY=sk-..." in the returned KEY=VALUE slice Docker's
+// container-create API expects.
+func renderEnv(app core.App, envTemplate map[string]string, secret string) ([]string, error) {
+	keyRecs, err := app.FindRecordsByFilter("provider_keys", "1=1", "", 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("query provider_keys: %w", err)
+	}
+	values := map[string]string{"__adapter_secret": secret}
+	for _, r := range keyRecs {
+		var vars map[string]string
+		if err := r.UnmarshalJSONField("env_vars", &vars); err != nil {
+			continue
+		}
+		for k, v := range vars {
+			values[k] = v
+		}
+	}
+
+	env := make([]string, 0, len(envTemplate))
+	for name, tmplStr := range envTemplate {
+		tmpl, err := template.New(name).Parse(tmplStr)
+		if err != nil {
+			return nil, fmt.Errorf("parse env_template[%s]: %w", name, err)
+		}
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, values); err != nil {
+			return nil, fmt.Errorf("render env_template[%s]: %w", name, err)
+		}
+		env = append(env, name+"="+buf.String())
+	}
+	return env, nil
 }
 ```
 
@@ -956,12 +1077,21 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 		t.Fatalf("expected ErrHarnessProvisioning, got %v", err)
 	}
 
-	// a pending row should now exist, and provisioning kicked off
-	// asynchronously (this test doesn't assert completion — that's
-	// ProvisionHarnessInstance's own test in Task 6).
-	rec, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h}", map[string]any{"h": harness.Id})
-	if err != nil {
-		t.Fatal(err)
+	// Provisioning is kicked off in a background goroutine (Task 6's row
+	// creation isn't synchronous with buildSessionProfile's return), so this
+	// polls briefly rather than asserting immediately — a bare synchronous
+	// check here would be flaky, not a faithful test of async behavior.
+	deadline := time.Now().Add(2 * time.Second)
+	var rec *core.Record
+	for time.Now().Before(deadline) {
+		if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h}", map[string]any{"h": harness.Id}); err == nil && r != nil {
+			rec = r
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if rec == nil {
+		t.Fatal("expected a harness_instances row to appear within 2s of triggering background provisioning")
 	}
 	if rec.GetString("status") != "pending" && rec.GetString("status") != "running" {
 		t.Errorf("status = %q, want pending or running (provisioning started)", rec.GetString("status"))
@@ -1193,6 +1323,17 @@ Register `StartHarnessWatcher` in `main.go`'s `OnServe` handler, run as a backgr
 **Interfaces:**
 - Produces: a standalone binary, `harness-adapter --cmd <binary> --port <port> --secret <token>`, that listens for websocket connections and bridges each to a freshly-spawned stdio subprocess of `<binary>`.
 
+- [ ] **Step 0: Initialize a separate Go module**
+
+`server/harness-adapter` is a standalone binary, not part of `server/pocketbase`'s module — this repo has exactly one `go.mod` today (`server/pocketbase/go.mod`), and nothing else creates one for this directory.
+
+```bash
+mkdir -p server/harness-adapter
+cd server/harness-adapter
+go mod init github.com/qtpi-automaton/pocketcoder/harness-adapter
+go get github.com/coder/websocket@v1.8.15   # match the version pinned in server/pocketbase/go.mod
+```
+
 - [ ] **Step 1: Write the failing tests**
 
 ```go
@@ -1309,6 +1450,41 @@ func TestAdapterSpawnsFreshSubprocessPerConnection(t *testing.T) {
 		t.Errorf("expected both connections to see a freshly-spawned process announce itself, got %q and %q", first, second)
 	}
 }
+
+func TestAdapterDoesNotHangOnOversizedMessage(t *testing.T) {
+	// Regression test for the teardown bug: an oversized line used to leave
+	// the subprocess (and its still-open stdout pipe) running forever with
+	// nothing draining it, since only the failing goroutine exited and
+	// nothing killed the process or closed the connection. bridgeConnection
+	// must now return promptly regardless.
+	srv := httptest.NewServer(newAdapterHandler(adapterConfig{Cmd: []string{"cat"}, Secret: "", MaxLineBytes: 1024}))
+	defer srv.Close()
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp"
+	conn, _, err := websocket.Dial(context.Background(), wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	oversized := strings.Repeat("x", 4096) // well above the 1024-byte MaxLineBytes configured above
+	if err := conn.Write(context.Background(), websocket.MessageText, []byte(oversized)); err != nil {
+		t.Fatal(err)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		conn.Read(ctx) // expected to fail/close once teardown runs, not hang
+		close(done)
+	}()
+	select {
+	case <-done:
+		// expected: the connection closes promptly instead of hanging
+	case <-time.After(2 * time.Second):
+		t.Fatal("bridge did not tear down within 2s of an oversized message — the deadlock/leak regression")
+	}
+}
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -1345,9 +1521,11 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"io"
 	"net/http"
 	"os/exec"
+	"sync"
 
 	"github.com/coder/websocket"
 )
@@ -1370,18 +1548,34 @@ func newAdapterHandler(cfg adapterConfig) http.Handler {
 			return
 		}
 		conn.SetReadLimit(cfg.MaxLineBytes)
-		defer conn.Close(websocket.StatusNormalClosure, "")
+		defer conn.Close(websocket.StatusNormalClosure, "") // harmless if bridgeConnection's own teardown already closed it — coder/websocket's Close is safe to call more than once
 		bridgeConnection(r.Context(), conn, cfg)
 	})
 	return mux
 }
 
+// initialStdoutBufferSize is the bufio.Reader's internal read-chunk size,
+// NOT a cap on message size — readUnboundedLine accumulates across
+// ReadLine's isPrefix continuations regardless of this value, so it only
+// affects syscall batching, not the (much larger) MaxLineBytes ceiling. A
+// 64 MiB buffer here, once per bridged connection (i.e. once per prompt,
+// per §5.4's spawn-per-connection model), would be wasteful for no benefit.
+const initialStdoutBufferSize = 4096
+
 // bridgeConnection spawns cfg.Cmd fresh for this one connection and relays
 // newline-delimited JSON-RPC both directions: one subprocess stdout line ->
 // one WS TEXT frame; one WS TEXT frame -> one subprocess stdin line. Never
 // inspects message content beyond finding line boundaries.
+//
+// Teardown is symmetric and idempotent: whichever direction exits first
+// (oversized line, subprocess exit, WS close, ctx cancellation) triggers
+// killing the subprocess AND closing the WS connection, which together
+// unblock whichever side was still stuck on a pipe read/write or a
+// conn.Read/Write — otherwise a goroutine, its subprocess, and the OS pipe
+// buffer backing it can all hang forever on exactly the size-limit or
+// abrupt-disconnect paths this bridge exists to handle correctly.
 func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConfig) {
-	cmd := exec.CommandContext(ctx, cfg.Cmd[0], cfg.Cmd[1:]...)
+	cmd := exec.Command(cfg.Cmd[0], cfg.Cmd[1:]...) // NOT CommandContext: teardown() below kills it on our own terms, so a ctx cancellation racing a normal exit is handled the same way as every other exit path, not as a special case
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return
@@ -1393,14 +1587,24 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 	if err := cmd.Start(); err != nil {
 		return
 	}
-	defer cmd.Wait()
 
-	done := make(chan struct{})
+	var once sync.Once
+	teardown := func() {
+		once.Do(func() {
+			_ = cmd.Process.Kill()                              // unblocks a stuck stdout read or stdin write
+			_ = conn.Close(websocket.StatusInternalError, "bridge closing") // unblocks a stuck conn.Read/Write
+		})
+	}
+	defer teardown()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
 
 	// stdout (subprocess) -> WS
 	go func() {
-		defer close(done)
-		reader := bufio.NewReaderSize(stdout, int(cfg.MaxLineBytes))
+		defer wg.Done()
+		defer teardown()
+		reader := bufio.NewReaderSize(stdout, initialStdoutBufferSize)
 		for {
 			line, err := readUnboundedLine(reader, cfg.MaxLineBytes)
 			if err != nil {
@@ -1417,6 +1621,8 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 
 	// WS -> stdin (subprocess)
 	go func() {
+		defer wg.Done()
+		defer teardown()
 		defer stdin.Close()
 		for {
 			_, data, err := conn.Read(ctx)
@@ -1429,7 +1635,8 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 		}
 	}()
 
-	<-done
+	wg.Wait()  // both directions have stopped — guaranteed by teardown() unblocking whichever side didn't exit on its own
+	cmd.Wait() // reap; a non-nil exit error here is expected and ignored in the common (intentionally-killed) case
 }
 
 // readUnboundedLine reads up to a '\n' without Go's bufio.Scanner 64KB
@@ -1543,6 +1750,10 @@ git commit -m "docs: add example Dockerfile for a stdio-native harness bundling 
 ---
 
 ## Self-Review
+
+**Revised after independent review (Sonnet).** That review found and this revision fixed: a nil-pointer crash in Task 1's own test (missing `http: srv.Client()`); a missing Go module for `server/harness-adapter` (Task 9 now has an explicit Step 0); a missing `"context"` import; a real deadlock/leak in `bridgeConnection`'s shutdown path (an oversized line, or any other early exit by one bridging goroutine, used to leave the subprocess and OS pipe running forever with nothing tearing it down — fixed with symmetric, idempotent teardown that kills the subprocess and closes the connection from whichever side exits first, plus a regression test); an oversized preallocated buffer unrelated to the actual size-limit fix; a flaky test asserting immediately after firing a background goroutine (now polls); a missing port-validation check; and — the most significant gap — `ProvisionHarnessInstance` never actually rendering `launch_template.env_template` against `provider_keys` or minting the per-instance `secret` the bundled adapter is supposed to enforce, meaning every harness this plan provisions would have gotten no provider API key and no auth at all. All of these are now fixed in Tasks 1, 6, and 9 above.
+
+**One gap left as an accepted, stated limitation, not fixed**: a `harness_instances` row stuck in `status = "error"` (e.g. a transient pull failure) has no automated retry — `ProvisionHarnessInstance`'s idempotency check treats it identically to a healthy row, so `buildSessionProfile` (Task 7) returns the same hard error for that harness on every future chat until an admin manually deletes the row. The design spec's §5.1.1 only requires the failure to be *surfaced*, not retried, so this isn't a spec-coverage gap — but it's a real operational rough edge worth flagging explicitly rather than leaving implicit, and a natural candidate for a small follow-up (e.g. treat an `error` row older than N minutes as eligible for re-provisioning) once a real non-Goose harness is in use.
 
 **Spec coverage:**
 - §5.1.1 (image pull, `IMAGES=1`) → Tasks 2, 4.
