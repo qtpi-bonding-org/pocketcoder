@@ -29,7 +29,7 @@ func testCoordinator(t *testing.T, dial DialFunc) *Coordinator {
 func testCoordinatorWithConn(t *testing.T, f *fakeConn, clk Clock) *Coordinator {
 	t.Helper()
 	c, err := New(Config{GooseURL: "ws://x", GooseSecret: "s", Workspace: "/w", Clock: clk,
-		Dial: func(_ context.Context, client acpsdk.Client) (acp.Conn, error) {
+		Dial: func(_ context.Context, client acpsdk.Client, _ Target) (acp.Conn, error) {
 			f.mu.Lock()
 			f.client = client
 			f.mu.Unlock()
@@ -84,6 +84,9 @@ type fakeConn struct {
 	// Task 3: SetSessionConfigOption captures (provider/model live delivery).
 	lastSetConfigOption  acpsdk.SetSessionConfigOptionRequest
 	setConfigOptionCalls []acpsdk.SetSessionConfigOptionRequest
+
+	// Task 6: custom InitializeResponse for testing capability flags
+	initResp acpsdk.InitializeResponse
 }
 
 // waitForPrompt blocks until the fake's Prompt method is invoked (or 2 s timeout).
@@ -137,8 +140,9 @@ func (c *Coordinator) waitForPendingPermission(t *testing.T, chatID string) stri
 func (f *fakeConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error) {
 	f.mu.Lock()
 	f.initializeCalls++
+	initResp := f.initResp
 	f.mu.Unlock()
-	return acpsdk.InitializeResponse{}, nil
+	return initResp, nil
 }
 func (f *fakeConn) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error) {
 	f.mu.Lock()
@@ -552,3 +556,89 @@ func TestOnRunFinishedNotInvokedOnCancel(t *testing.T) {
 	}
 }
 
+// ---- Task 6: establishSession tests ----
+
+func TestEstablishSessionRejectsHarnessMismatch(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	profile := SessionProfile{
+		Target:             Target{URL: "ws://new-harness/acp"},
+		ResolvedInstanceID: "newharness12345",
+		PinnedInstanceID:   "oldharness12345", // different from ResolvedInstanceID
+	}
+	_, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	if err == nil {
+		t.Fatal("expected an error when resolved harness differs from pinned harness")
+	}
+}
+
+func TestEstablishSessionAllowsMatchingPin(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	profile := SessionProfile{
+		Target:             Target{URL: "ws://same-harness/acp"},
+		ResolvedInstanceID: "sameharness1234",
+		PinnedInstanceID:   "sameharness1234",
+	}
+	_, _, _, _, release, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	if err != nil {
+		t.Fatalf("expected no error when resolved == pinned, got %v", err)
+	}
+	release()
+}
+
+func TestEstablishSessionCallsBeforeSessionCallBeforeLoadSession(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	var calledBefore bool
+	profile := SessionProfile{PinnedInstanceID: "", ResolvedInstanceID: ""}
+	_, _, _, _, release, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() { calledBefore = true })
+	if err != nil {
+		t.Fatal(err)
+	}
+	release()
+	if !calledBefore {
+		t.Fatal("beforeSessionCall must be invoked before LoadSession")
+	}
+}
+
+func TestEstablishSessionErrorsWhenLoadSessionCapabilityMissing(t *testing.T) {
+	f := newFakeConn()
+	f.initResp = acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{LoadSession: false}}
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	profile := SessionProfile{}
+	_, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	if err == nil {
+		t.Fatal("expected an error resuming a session against a harness that doesn't advertise LoadSession")
+	}
+}
+
+func TestEstablishSessionSerializesSingleConnectionOnlyHarness(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	profile := SessionProfile{ResolvedInstanceID: "inst1", SingleConnectionOnly: true}
+
+	_, _, _, _, release1, err := c.establishSession(context.Background(), nil, profile, "sess1", func() {})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		_, _, _, _, release2, err := c.establishSession(context.Background(), nil, profile, "sess1", func() {})
+		if err != nil {
+			t.Error(err)
+		}
+		release2()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		t.Fatal("second establishSession call must block until the first releases")
+	case <-time.After(50 * time.Millisecond):
+		// expected: still blocked
+	}
+	release1()
+	<-done // must now complete
+}
