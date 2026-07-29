@@ -131,18 +131,25 @@ async function streamImageToLinode(env: Env, uploadUrl: string): Promise<void> {
   }
 
   // Linode's upload_to URL behaves like an S3-style presigned PUT: it
-  // needs a known, fixed Content-Length. A streamed body with no
-  // Content-Length (the previous version of this code) silently fails to
-  // transfer any bytes -- confirmed empirically: the resulting image sat
-  // at status=pending_upload, size=0MB indefinitely.
+  // needs a known, fixed-length body, not a chunked one. Manually setting
+  // a Content-Length header alongside the raw R2 ReadableStream (a prior
+  // version of this code) wasn't enough -- confirmed empirically: the
+  // resulting image sat at status=pending_upload, size=0MB indefinitely,
+  // while the identical request worked when the body was fully buffered
+  // in memory first. FixedLengthStream is the Workers-native way to get a
+  // real fixed-length body while still streaming (buffering the full
+  // object in memory isn't an option here -- Workers' ~128MB per-request
+  // memory limit is well under this image's real size).
+  const { readable, writable } = new FixedLengthStream(obj.size);
+  const pipeDone = obj.body.pipeTo(writable);
+
   const res = await fetch(uploadUrl, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/octet-stream",
-      "Content-Length": String(obj.size),
-    },
-    body: obj.body,
+    headers: { "Content-Type": "application/octet-stream" },
+    body: readable,
   });
+
+  await pipeDone;
 
   if (!res.ok) {
     console.error(`Linode upload failed: ${res.status} ${await res.text()}`);
