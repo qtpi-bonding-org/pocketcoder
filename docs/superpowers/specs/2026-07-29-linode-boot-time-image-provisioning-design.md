@@ -609,8 +609,12 @@ Not addressed at all in the first draft — required:
   deployment's real SSH key (the disk-create API only requires *one* auth
   mechanism), relying on Lish for installer-debugging access instead of
   SSH, so a compromised installer never has the real deployment's key
-  either way. Pick one before implementing step 2 — the sequence above is
-  written to accommodate whichever is chosen.
+  either way. **Resolved in the implementation plan (`docs/superpowers/plans/2026-07-29-linode-boot-time-image-provisioning.md`,
+  Task 10): mitigation (b).** Simpler than (a) (no post-creation
+  metadata-update call to verify against Linode's API) and fully closes
+  the leak — the installer's cloud-init can still see and log the real
+  `user_data`, but nothing can ever SSH in to read those logs, since the
+  installer never receives any real key at all.
 - Installer SSH/network exposure window (~5-8 min per deployment, stock
   Debian, whichever auth mechanism D3 above lands on): low risk, cheap to
   reduce further — a Cloud Firewall (deny-all inbound except the
@@ -637,7 +641,7 @@ Not addressed at all in the first draft — required:
   implementation and its internal `LinodeBootTimeInstaller` helper
   (mirroring `linode_api_client_test.dart`'s existing pattern — request
   shape assertions against a mocked `http.Client`), covering: the full
-  9-step sequence in order, the `running`→`offline` transition-tracking
+  10-step sequence in order, the `running`→`offline` transition-tracking
   logic specifically (not just a status-equality check), the
   installer-disk-deleted-before-final-boot ordering, and timeout/
   teardown behavior.
@@ -648,7 +652,7 @@ Not addressed at all in the first draft — required:
   regression test (the bug — filter silently discarded — had no coverage
   that would have caught it).
 - `test/integration/golden_path_provision_test.dart` gets rewritten for
-  the new 9-step sequence (this is the real, live proof — same
+  the new 10-step sequence (this is the real, live proof — same
   `AEROFORM_LIVE_TEST=1` gating, same real-money/real-instance caveats,
   same auto-teardown requirement as today). Add real-money assertions for
   the new failure paths too: an intentionally-corrupted image URL should
