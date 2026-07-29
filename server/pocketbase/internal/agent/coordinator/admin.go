@@ -74,7 +74,7 @@ func (adminClient) UnstableCreateElicitation(context.Context, acpsdk.UnstableCre
 // Lifetime is meant to match one PocketBase-side request: dial, make
 // whichever calls that request needs, close — not a standing connection.
 func (c *Coordinator) AdminConn(ctx context.Context) (acp.Conn, error) {
-	conn, err := c.config.Dial(ctx, adminClient{})
+	conn, err := c.config.Dial(ctx, adminClient{}, Target{})
 	if err != nil {
 		return nil, err
 	}

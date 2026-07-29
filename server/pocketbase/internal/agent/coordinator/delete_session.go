@@ -50,8 +50,15 @@ func (c *Coordinator) DeleteSession(ctx context.Context, app core.App, chatID st
 		return app.Delete(record)
 	}
 
+	target := Target{}
+	if instID := record.GetString("harness_instance"); instID != "" {
+		if inst, err := app.FindRecordById("harness_instances", instID); err == nil {
+			target = Target{URL: inst.GetString("acp_endpoint"), Secret: inst.GetString("secret")}
+		}
+	}
+
 	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, accepting: &atomic.Bool{}, emit: func(events.Event) error { return nil }}
-	conn, err := c.config.Dial(ctx, sc)
+	conn, err := c.config.Dial(ctx, sc, target)
 	if err != nil {
 		return fmt.Errorf("dial goose for session delete: %w", err)
 	}
