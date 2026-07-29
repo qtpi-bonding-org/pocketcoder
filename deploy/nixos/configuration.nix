@@ -43,8 +43,21 @@
       80    # HTTP (Caddy → HTTPS redirect)
       443   # HTTPS (Caddy → PocketBase)
       22    # SSH
-      2222  # Sandbox SFTP
     ];
+    allowedUDPPorts = [
+      443   # Caddy HTTP/3
+    ];
+    # Docker's own DNAT/FORWARD rules run outside the firewall's INPUT
+    # chain, so `allowedTCPPorts` above can't stop a container from
+    # reaching the Linode instance-metadata endpoint -- and any container
+    # that can (including goose, which runs model-directed code) could read
+    # the same user-data/secrets bootstrap.nix consumes. Docker always
+    # creates a DOCKER-USER chain and guarantees it's consulted before its
+    # own FORWARD rules, so this is the supported hook point for that.
+    extraCommands = ''
+      iptables -C DOCKER-USER -d 169.254.169.254 -j DROP 2>/dev/null || \
+        iptables -I DOCKER-USER -d 169.254.169.254 -j DROP
+    '';
   };
 
   # --- SSH ---

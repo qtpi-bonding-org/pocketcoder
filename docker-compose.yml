@@ -6,7 +6,13 @@ services:
       dockerfile: server/pocketbase/Dockerfile
     container_name: pocketcoder-pocketbase
     ports:
-      - "8090:8090" # PocketBase UI
+      # Loopback-only: Caddy (host-level, see deploy/nixos/caddy.nix) proxies
+      # this over TLS. Publishing on 0.0.0.0 would let anyone reach PocketBase
+      # in plaintext on the public IP -- Docker's port-forwarding runs ahead
+      # of/outside the host firewall's INPUT chain, so the firewall alone
+      # can't block it.
+      - "127.0.0.1:8090:8090" # PocketBase UI
+
     volumes:
       - pb_data:/app/pb_data
       # - pb_backups:/app/pb_backups

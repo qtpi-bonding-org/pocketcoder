@@ -18,14 +18,17 @@
 
       mkdir -p /etc/caddy /etc/pocketcoder
 
-      # Fetch public IP with retries
+      # Fetch public IP with retries, trying multiple providers each round
+      # so a single provider outage doesn't strand the whole deployment.
       PUBLIC_IP=""
       for i in 1 2 3 4 5; do
-        PUBLIC_IP=$(curl -sf --max-time 10 https://ifconfig.me/ip || true)
-        if [ -n "$PUBLIC_IP" ]; then
-          break
-        fi
-        echo "Attempt $i: failed to fetch public IP, retrying in 5s..."
+        for url in https://ifconfig.me/ip https://api.ipify.org https://icanhazip.com; do
+          PUBLIC_IP=$(curl -sf --max-time 10 "$url" | tr -d '[:space:]' || true)
+          if [ -n "$PUBLIC_IP" ]; then
+            break 2
+          fi
+        done
+        echo "Attempt $i: failed to fetch public IP from any provider, retrying in 5s..."
         sleep 5
       done
 
