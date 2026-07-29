@@ -42,8 +42,15 @@ func testCoordinatorWithConn(t *testing.T, f *fakeConn, clk Clock) *Coordinator 
 }
 
 // newFakeConn constructs a fakeConn wired to the new tests' expectations.
+// Defaults AgentCapabilities.LoadSession to true (matching real Goose)
+// since establishSession now gates session resumption on it — tests that
+// specifically want to exercise the unsupported-capability path override
+// f.initResp themselves (see TestEstablishSessionErrorsWhenLoadSessionCapabilityMissing).
 func newFakeConn() *fakeConn {
-	return &fakeConn{promptCalled: make(chan struct{}, 1)}
+	return &fakeConn{
+		promptCalled: make(chan struct{}, 1),
+		initResp:     acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{LoadSession: true}},
+	}
 }
 
 type fakeConn struct {
@@ -566,7 +573,7 @@ func TestEstablishSessionRejectsHarnessMismatch(t *testing.T) {
 		ResolvedInstanceID: "newharness12345",
 		PinnedInstanceID:   "oldharness12345", // different from ResolvedInstanceID
 	}
-	_, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	_, _, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
 	if err == nil {
 		t.Fatal("expected an error when resolved harness differs from pinned harness")
 	}
@@ -580,7 +587,7 @@ func TestEstablishSessionAllowsMatchingPin(t *testing.T) {
 		ResolvedInstanceID: "sameharness1234",
 		PinnedInstanceID:   "sameharness1234",
 	}
-	_, _, _, _, release, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	_, _, _, _, _, _, release, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
 	if err != nil {
 		t.Fatalf("expected no error when resolved == pinned, got %v", err)
 	}
@@ -592,7 +599,7 @@ func TestEstablishSessionCallsBeforeSessionCallBeforeLoadSession(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	var calledBefore bool
 	profile := SessionProfile{PinnedInstanceID: "", ResolvedInstanceID: ""}
-	_, _, _, _, release, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() { calledBefore = true })
+	_, _, _, _, _, _, release, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() { calledBefore = true })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -607,7 +614,7 @@ func TestEstablishSessionErrorsWhenLoadSessionCapabilityMissing(t *testing.T) {
 	f.initResp = acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{LoadSession: false}}
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	profile := SessionProfile{}
-	_, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	_, _, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
 	if err == nil {
 		t.Fatal("expected an error resuming a session against a harness that doesn't advertise LoadSession")
 	}
@@ -618,14 +625,14 @@ func TestEstablishSessionSerializesSingleConnectionOnlyHarness(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	profile := SessionProfile{ResolvedInstanceID: "inst1", SingleConnectionOnly: true}
 
-	_, _, _, _, release1, err := c.establishSession(context.Background(), nil, profile, "sess1", func() {})
+	_, _, _, _, _, _, release1, err := c.establishSession(context.Background(), nil, profile, "sess1", func() {})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	done := make(chan struct{})
 	go func() {
-		_, _, _, _, release2, err := c.establishSession(context.Background(), nil, profile, "sess1", func() {})
+		_, _, _, _, _, _, release2, err := c.establishSession(context.Background(), nil, profile, "sess1", func() {})
 		if err != nil {
 			t.Error(err)
 		}
