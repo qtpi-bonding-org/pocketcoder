@@ -835,7 +835,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		emit:      func(e events.Event) error { hub.Publish(e); return nil },
 		accepting: h.accepting, maxEvents: c.maxRunEvents, cancel: h.cancel}
 
-	conn, sessionID, modes, configOptions, initResp, wasNew, releaseLock, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
+	conn, sessionID, modes, configOptions, _, wasNew, releaseLock, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
 	if err != nil {
 		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 		return
@@ -859,8 +859,8 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	for _, e := range bridge.SeedSession(modes, configOptions) {
 		hub.Publish(e)
 	}
-	applier := selectApplier(initResp)
-	if err := applier.Apply(runCtx, conn, sessionID, profile); err != nil {
+	applier := selectApplier(profile)
+	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
 		release()
 		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 		return
