@@ -26,6 +26,13 @@ import (
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
 )
 
+// Target identifies the harness_instances row a session should dial —
+// empty means "use Coordinator.Config's compose-managed defaults" (the
+// convention harness_instances.acp_endpoint/.secret already use).
+type Target struct {
+	URL, Secret string
+}
+
 // SessionProfile is the per-session configuration resolved from a chat's
 // agent definition (poco_config). Not every field is deliverable over ACP
 // today — see ProfileApplier.
@@ -34,6 +41,13 @@ type SessionProfile struct {
 	AdditionalDirectories              []string
 	McpServers                         []acpsdk.McpServer
 	Mode                               acpsdk.SessionModeId
+
+	Target                  Target
+	ResolvedInstanceID      string // the harness_instances id this chat resolves to right now
+	PinnedInstanceID        string // the harness_instances id goose_sessions.harness_instance already points at (empty if none yet)
+	SupportsLiveConfig      bool
+	SupportsGooseExtensions bool
+	SingleConnectionOnly    bool
 }
 
 // mcpServers returns the profile's MCP servers as a non-nil slice. Goose's
