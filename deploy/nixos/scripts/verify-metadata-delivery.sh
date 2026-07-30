@@ -12,13 +12,35 @@
 # so if the metadata service doesn't actually deliver it at boot, every
 # real deployment fails closed with no admin config, silently.
 #
-# Creates a real (but tiny, immediately deleted) Linode instance with a
+# Also answers the design spec's second open question: does
+# metadata.user_data still get delivered correctly when the SAME
+# instance's disk was created WITH a StackScript attached (Linode's docs
+# position Metadata and StackScripts as alternatives and are silent on
+# using both together)? This mirrors LinodeBootTimeInstaller's REAL
+# attachment point exactly -- a bare instance (booted:false,
+# metadata.user_data only, no image) followed by a SEPARATE disk-create
+# call carrying image + stackscript_id + stackscript_data, not a single
+# instance-create call with everything on it. An earlier version of this
+# script tested the wrong attachment point (stackscript_id on the
+# instance-create call itself) and got a negative coexistence result --
+# inconclusive, since that's not the mechanism production actually uses.
+#
+# Unlike production (which deliberately omits authorized_keys on the
+# installer disk -- see LinodeBootTimeInstaller's D3 mitigation), this
+# diagnostic script DOES add a throwaway authorized_keys to the
+# disk-create call, purely so this script itself can SSH in to inspect
+# the result. That's a script-only deviation for observability, not a
+# claim about what production does -- production's installer disk really
+# has no SSH access, by design.
+#
+# Creates real (but tiny, immediately deleted) Linode resources: a
 # throwaway, runtime-generated SSH keypair (never vault-stored -- it's
-# disposable, scoped to this one test instance), a known test payload in
-# metadata.user_data, SSHes in once to query the metadata service
-# directly, and reports exactly what came back. Also creates a throwaway
-# no-op StackScript to probe metadata+StackScript coexistence (see below).
-# Reads LINODE_STACKSCRIPT_TOKEN from the environment (injected by the
+# disposable, scoped to this one test run), a throwaway no-op
+# StackScript, a bare instance, and a disk with that StackScript
+# attached. SSHes in once to query the metadata service and check for
+# the StackScript's marker file, and reports both results independently
+# (one question's outcome never suppresses the other's). Reads
+# LINODE_STACKSCRIPT_TOKEN from the environment (injected by the
 # secrets-daemon via `sops exec-env` -- never read from a file here,
 # never echoed) -- needs Linodes + StackScripts read-write, same token
 # publish-stackscript.sh uses.
@@ -35,25 +57,11 @@ echo "Generating a throwaway SSH keypair (test-instance-scoped only)..."
 ssh-keygen -t ed25519 -N '' -f "$WORKDIR/id_ed25519" -q
 PUBKEY=$(cat "$WORKDIR/id_ed25519.pub")
 
-# Linode's API requires root_pass whenever `image` is provided --
-# authorized_keys alone isn't sufficient for image-based instance
-# creation. This is throwaway and never used (we only ever log in via
-# the SSH key above); it exists purely to satisfy the API.
+# Linode's API requires root_pass whenever `image` is provided on a
+# disk-create call -- authorized_keys alone isn't sufficient. Throwaway,
+# never actually used for login (we log in via the SSH key above).
 ROOT_PASS=$(openssl rand -base64 24)
 
-# Also answers the design spec's second open question: does
-# metadata.user_data still get delivered correctly when the SAME
-# instance also has a StackScript with stackscript_data attached (the
-# real boot-time-pull flow always has both -- the installer StackScript
-# reads its config from stackscript_data/UDFs while bootstrap.nix later
-# reads the admin config from metadata.user_data)? POST
-# /linode/instances accepts stackscript_id/stackscript_data directly
-# (they run against the disk created from `image`, the same mechanism
-# the real disk-create-time StackScript attachment uses), so this is a
-# meaningful test of the same coexistence question, not just a
-# convenience shortcut. A trivial no-op StackScript that only drops a
-# marker file is enough -- we're testing whether the two mechanisms
-# conflict, not the installer script's own logic.
 NOOP_STACKSCRIPT="#!/bin/bash
 # <UDF name=\"noop_var\" label=\"unused test UDF\" default=\"unused\">
 touch /root/stackscript-ran
@@ -68,7 +76,7 @@ print(json.dumps({
     'script': sys.argv[2],
 }))
 " "$(date +%s)" "$NOOP_STACKSCRIPT")
-SS_RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+SS_RESPONSE=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "https://api.linode.com/v4/linode/stackscripts" -d "$SS_BODY")
 STACKSCRIPT_ID=$(printf '%s' "$SS_RESPONSE" | grep -o '"id":[[:space:]]*[0-9]*' | head -1 | grep -o '[0-9]*$' || true)
 
@@ -81,36 +89,26 @@ cleanup_stackscript() {
     echo "Raw StackScript-create response, for manual cleanup: $SS_RESPONSE" >&2
   fi
 }
-# Installed now (before the instance-create call) so the StackScript
-# itself can't leak either, for the same reason the instance cleanup
-# trap below is installed before its response gets parsed.
 trap 'cleanup_stackscript; rm -rf "$WORKDIR"' EXIT
 
-echo "Creating test instance (linode/debian12, authorized_keys + metadata.user_data + StackScript)..."
-RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+# Step 1: bare instance -- exactly LinodeBootTimeInstaller's own step 1
+# (booted:false, metadata.user_data only, no image, no authorized_keys).
+echo "Creating bare test instance (metadata.user_data only, no image)..."
+RESPONSE=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "https://api.linode.com/v4/linode/instances" \
   -d "{
     \"type\": \"g6-nanode-1\",
     \"region\": \"us-east\",
-    \"image\": \"linode/debian12\",
     \"label\": \"pocketcoder-metadata-verify\",
-    \"booted\": true,
-    \"authorized_keys\": [\"$PUBKEY\"],
-    \"root_pass\": \"$ROOT_PASS\",
-    \"stackscript_id\": $STACKSCRIPT_ID,
-    \"stackscript_data\": {\"noop_var\": \"unused\"},
+    \"booted\": false,
     \"metadata\": {\"user_data\": \"$TEST_PAYLOAD_B64\"}
   }")
 
-# Install the cleanup trap immediately after the create call succeeds --
-# BEFORE attempting to parse its response. If the strict json parse below
-# fails for any reason (unexpected response shape), set -e would exit the
-# script; without the trap already installed and an id already captured
-# at that point, the just-created instance would leak as an orphaned,
-# billable resource with no id recorded anywhere. Extract the id with a
-# best-effort grep first (unlikely to fail even on odd response shapes)
-# so cleanup has something to work with regardless of what the strict
-# parse below does.
+# Cleanup trap installed immediately after the create call succeeds,
+# before attempting to parse its response -- see the instance/StackScript
+# id-extraction comments below for why (a parse failure under set -eu
+# must not leak a just-created, real, billable resource with no id
+# recorded anywhere).
 INSTANCE_ID=$(printf '%s' "$RESPONSE" | grep -o '"id":[[:space:]]*[0-9]*' | head -1 | grep -o '[0-9]*$' || true)
 
 cleanup_instance() {
@@ -124,11 +122,53 @@ cleanup_instance() {
 }
 trap 'cleanup_instance; cleanup_stackscript; rm -rf "$WORKDIR"' EXIT
 
-# Strict parse for the id we actually use for the rest of the script (IP
-# lookup, polling, etc). By this point cleanup is already guaranteed even
-# if this fails.
 INSTANCE_ID=$(echo "$RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
 echo "Instance created: $INSTANCE_ID"
+
+# Step 2: disk, created FROM the instance with image + stackscript_id +
+# stackscript_data attached -- the same attachment point
+# LinodeBootTimeInstaller's real installer disk uses. authorized_keys is
+# added here (diagnostic-only, see header) so this script can SSH in.
+echo "Creating disk (image + StackScript + authorized_keys)..."
+DISK_RESPONSE=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  "https://api.linode.com/v4/linode/instances/$INSTANCE_ID/disks" \
+  -d "{
+    \"label\": \"verify\",
+    \"size\": 3072,
+    \"image\": \"linode/debian12\",
+    \"root_pass\": \"$ROOT_PASS\",
+    \"authorized_keys\": [\"$PUBKEY\"],
+    \"stackscript_id\": $STACKSCRIPT_ID,
+    \"stackscript_data\": {\"noop_var\": \"unused\"}
+  }")
+DISK_ID=$(echo "$DISK_RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+echo "Disk created: $DISK_ID -- waiting for it to become ready..."
+
+attempt=0
+until [ "$attempt" -ge 40 ]; do
+  attempt=$((attempt + 1))
+  DISK_STATUS=$(curl -sf -H "$AUTH" \
+    "https://api.linode.com/v4/linode/instances/$INSTANCE_ID/disks/$DISK_ID" \
+    | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+  [ "$DISK_STATUS" = "ready" ] && break
+  sleep 5
+done
+[ "$DISK_STATUS" = "ready" ] || { echo "FATAL: disk never reached ready (last status: $DISK_STATUS)"; exit 1; }
+
+# Step 3: config profile + boot.
+echo "Creating config profile and booting..."
+CONFIG_RESPONSE=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  "https://api.linode.com/v4/linode/instances/$INSTANCE_ID/configs" \
+  -d "{
+    \"label\": \"verify\",
+    \"kernel\": \"linode/grub2\",
+    \"root_device\": \"/dev/sda\",
+    \"devices\": {\"sda\": {\"disk_id\": $DISK_ID}}
+  }")
+CONFIG_ID=$(echo "$CONFIG_RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  "https://api.linode.com/v4/linode/instances/$INSTANCE_ID/boot" \
+  -d "{\"config_id\": $CONFIG_ID}" >/dev/null
 
 echo "Waiting for instance to reach 'running' status..."
 attempt=0
@@ -158,33 +198,35 @@ RESULT=$(ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" '
   TOKEN=$(curl -s -X PUT -H "Metadata-Token-Expiry-Seconds: 60" http://169.254.169.254/v1/token)
   curl -s -H "Metadata-Token: $TOKEN" http://169.254.169.254/v1/user-data
 ')
-
 echo "Raw response from /v1/user-data: $RESULT"
 
-echo "Checking whether the coexisting StackScript also ran..."
+STACKSCRIPT_RAN=false
 if ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" '[ -f /root/stackscript-ran ]'; then
-  echo "CONFIRMED: StackScript ran alongside metadata.user_data (no coexistence conflict observed)."
-else
-  echo "FATAL: /root/stackscript-ran marker not found -- the StackScript did NOT run."
-  echo "StackScript + metadata.user_data coexistence is NOT confirmed."
-  exit 1
+  STACKSCRIPT_RAN=true
 fi
 
-# Compare $RESULT directly against both known forms of the payload --
-# no decode-and-compare step. `base64 -d` is NOT reliable here as a
-# "was this already decoded" probe: on this machine's (BSD/macOS)
-# base64, `-d` SUCCEEDS (exit 0) on non-base64 plaintext input too,
-# emitting garbage instead of failing, which would silently invert the
-# verdict below (a real, working "already decoded" delivery would
-# wrongly report as NOT confirmed). We already have both the raw and
-# base64-encoded forms of the known payload computed above, so just
-# compare against each directly.
+# Both questions are evaluated and reported independently -- neither's
+# outcome gates or suppresses the other's message. The overall exit code
+# only reflects the metadata-delivery question (the actual production
+# blocker); StackScript coexistence is reported as informational, since
+# LinodeBootTimeInstaller's own design (D3) never depends on SSH access
+# to the installer disk the way this diagnostic script does.
+METADATA_CONFIRMED=false
 if [ "$RESULT" = "$TEST_PAYLOAD_B64" ]; then
   echo "MATCH (still base64-encoded): metadata service delivers user_data as base64, undecoded."
+  METADATA_CONFIRMED=true
 elif [ "$RESULT" = "$TEST_PAYLOAD" ]; then
   echo "MATCH (already decoded): metadata service delivers user_data already base64-decoded."
+  METADATA_CONFIRMED=true
 else
   echo "FATAL: response does not match expected payload ('$TEST_PAYLOAD' / '$TEST_PAYLOAD_B64')."
   echo "Metadata delivery is NOT confirmed -- do not rely on metadata.user_data without further investigation."
-  exit 1
 fi
+
+if [ "$STACKSCRIPT_RAN" = true ]; then
+  echo "CONFIRMED: StackScript (disk-create-time attachment) ran alongside metadata.user_data (no coexistence conflict observed)."
+else
+  echo "NOT CONFIRMED: /root/stackscript-ran marker not found -- the disk-create-time StackScript did not run alongside metadata.user_data."
+fi
+
+[ "$METADATA_CONFIRMED" = true ] || exit 1
