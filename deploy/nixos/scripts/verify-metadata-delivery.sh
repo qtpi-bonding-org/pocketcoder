@@ -38,7 +38,49 @@ PUBKEY=$(cat "$WORKDIR/id_ed25519.pub")
 # the SSH key above); it exists purely to satisfy the API.
 ROOT_PASS=$(openssl rand -base64 24)
 
-echo "Creating test instance (linode/debian12, authorized_keys + metadata.user_data)..."
+# Also answers the design spec's second open question: does
+# metadata.user_data still get delivered correctly when the SAME
+# instance also has a StackScript with stackscript_data attached (the
+# real boot-time-pull flow always has both -- the installer StackScript
+# reads its config from stackscript_data/UDFs while bootstrap.nix later
+# reads the admin config from metadata.user_data)? POST
+# /linode/instances accepts stackscript_id/stackscript_data directly
+# (they run against the disk created from `image`, the same mechanism
+# the real disk-create-time StackScript attachment uses), so this is a
+# meaningful test of the same coexistence question, not just a
+# convenience shortcut. A trivial no-op StackScript that only drops a
+# marker file is enough -- we're testing whether the two mechanisms
+# conflict, not the installer script's own logic.
+NOOP_STACKSCRIPT="#!/bin/bash
+# <UDF name=\"noop_var\" label=\"unused test UDF\" default=\"unused\">
+touch /root/stackscript-ran
+"
+echo "Creating throwaway no-op StackScript (coexistence probe)..."
+SS_BODY=$(python3 -c "
+import json, sys
+print(json.dumps({
+    'label': 'pocketcoder-metadata-verify-noop-' + sys.argv[1],
+    'images': ['linode/debian12'],
+    'is_public': False,
+    'script': sys.argv[2],
+}))
+" "$(date +%s)" "$NOOP_STACKSCRIPT")
+SS_RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  "https://api.linode.com/v4/linode/stackscripts" -d "$SS_BODY")
+STACKSCRIPT_ID=$(printf '%s' "$SS_RESPONSE" | grep -o '"id":[[:space:]]*[0-9]*' | head -1 | grep -o '[0-9]*$')
+
+cleanup_stackscript() {
+  if [ -n "$STACKSCRIPT_ID" ]; then
+    echo "Deleting throwaway StackScript $STACKSCRIPT_ID..."
+    curl -sf -X DELETE -H "$AUTH" "https://api.linode.com/v4/linode/stackscripts/$STACKSCRIPT_ID" || true
+  fi
+}
+# Installed now (before the instance-create call) so the StackScript
+# itself can't leak either, for the same reason the instance cleanup
+# trap below is installed before its response gets parsed.
+trap 'cleanup_stackscript; rm -rf "$WORKDIR"' EXIT
+
+echo "Creating test instance (linode/debian12, authorized_keys + metadata.user_data + StackScript)..."
 RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "https://api.linode.com/v4/linode/instances" \
   -d "{
@@ -49,6 +91,8 @@ RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
     \"booted\": true,
     \"authorized_keys\": [\"$PUBKEY\"],
     \"root_pass\": \"$ROOT_PASS\",
+    \"stackscript_id\": $STACKSCRIPT_ID,
+    \"stackscript_data\": {\"noop_var\": \"unused\"},
     \"metadata\": {\"user_data\": \"$TEST_PAYLOAD_B64\"}
   }")
 
@@ -72,7 +116,7 @@ cleanup_instance() {
     echo "Raw instance-create response, for manual cleanup: $RESPONSE" >&2
   fi
 }
-trap 'cleanup_instance; rm -rf "$WORKDIR"' EXIT
+trap 'cleanup_instance; cleanup_stackscript; rm -rf "$WORKDIR"' EXIT
 
 # Strict parse for the id we actually use for the rest of the script (IP
 # lookup, polling, etc). By this point cleanup is already guaranteed even
@@ -110,6 +154,15 @@ RESULT=$(ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" '
 ')
 
 echo "Raw response from /v1/user-data: $RESULT"
+
+echo "Checking whether the coexisting StackScript also ran..."
+if ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" '[ -f /root/stackscript-ran ]'; then
+  echo "CONFIRMED: StackScript ran alongside metadata.user_data (no coexistence conflict observed)."
+else
+  echo "FATAL: /root/stackscript-ran marker not found -- the StackScript did NOT run."
+  echo "StackScript + metadata.user_data coexistence is NOT confirmed."
+  exit 1
+fi
 
 # Compare $RESULT directly against both known forms of the payload --
 # no decode-and-compare step. `base64 -d` is NOT reliable here as a
