@@ -4,13 +4,16 @@
 # create it (prints the new numeric id -- update
 # LinodeAPIClient._bootTimePullStackscriptId with it), and again any time
 # the StackScript's content changes (updates in place, same id). Reads
-# LINODE_TOKEN from the environment (injected by the secrets-daemon via
-# `sops exec-env` -- never read from a file here, never echoed).
+# LINODE_STACKSCRIPT_TOKEN from the environment (injected by the
+# secrets-daemon via `sops exec-env` -- never read from a file here,
+# never echoed) -- a token scoped to StackScripts/Linodes/Images
+# read-write, separate from the broader LINODE_TOKEN this vault file
+# also carries.
 set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT_BODY=$(cat "$SCRIPT_DIR/stackscripts/pocketcoder-image-installer.sh")
-AUTH="Authorization: Bearer $LINODE_TOKEN"
+AUTH="Authorization: Bearer $LINODE_STACKSCRIPT_TOKEN"
 
 # Server-side filter (not client-side page scan): without this, the
 # unfiltered first page of a potentially-huge public StackScript listing
