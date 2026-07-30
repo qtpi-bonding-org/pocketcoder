@@ -45,33 +45,57 @@
       umask 077
       mkdir -p "$INSTALL_DIR"
 
-      # --- Read Linode user-data from metadata service ---
-      echo "Fetching user-data from Linode metadata service..."
-      USER_DATA=""
-      for i in 1 2 3 4 5; do
-        USER_DATA=$(curl -sf --max-time 10 \
-          -H "Metadata-Token: $(curl -sf --max-time 5 -X PUT -H 'Metadata-Token-Expiry-Seconds: 300' http://169.254.169.254/v1/token)" \
-          http://169.254.169.254/v1/user-data || true)
-        if [ -n "$USER_DATA" ]; then
-          break
+      # --- Read admin config: boot-time-pull disk file, or (legacy
+      # CustomImageProvisioningStrategy) Linode metadata service ---
+      #
+      # The boot-time-pull installer StackScript writes this file directly
+      # onto the target disk (deploy/nixos/stackscripts/
+      # pocketcoder-image-installer.sh) instead of using Linode's
+      # metadata.user_data -- confirmed via live testing that a
+      # disk-create-time StackScript never runs at all when
+      # metadata.user_data is also set on the instance (Linode limitation,
+      # not a bug here). CustomImageProvisioningStrategy never touches a
+      # StackScript, so it has no such conflict and still uses metadata
+      # normally -- this file being absent is how bootstrap.nix tells the
+      # two paths apart.
+      BOOTSTRAP_ENV_FILE="/var/lib/pocketcoder-bootstrap-env"
+      if [ -f "$BOOTSTRAP_ENV_FILE" ]; then
+        echo "Reading admin config from $BOOTSTRAP_ENV_FILE (boot-time-pull path)..."
+        install -m 600 /dev/null "$INSTALL_DIR/.env"
+        cp "$BOOTSTRAP_ENV_FILE" "$INSTALL_DIR/.env"
+        chmod 600 "$INSTALL_DIR/.env"
+        # Consumed once -- don't leave the admin password sitting in
+        # plaintext on disk any longer than necessary.
+        shred -u "$BOOTSTRAP_ENV_FILE" 2>/dev/null || rm -f "$BOOTSTRAP_ENV_FILE"
+      else
+        echo "Fetching user-data from Linode metadata service (legacy custom-image path)..."
+        USER_DATA=""
+        for i in 1 2 3 4 5; do
+          USER_DATA=$(curl -sf --max-time 10 \
+            -H "Metadata-Token: $(curl -sf --max-time 5 -X PUT -H 'Metadata-Token-Expiry-Seconds: 300' http://169.254.169.254/v1/token)" \
+            http://169.254.169.254/v1/user-data || true)
+          if [ -n "$USER_DATA" ]; then
+            break
+          fi
+          echo "Attempt $i: metadata not available yet, retrying in 5s..."
+          sleep 5
+        done
+
+        # Fail closed: a box with no working PocketBase login and no SSH
+        # access (no root_ssh_key parsed) is unrecoverable except via
+        # Linode Rescue Mode. Better to leave the stack down and loudly
+        # say why than to boot a plaintext-credentialed instance nobody
+        # can log into.
+        if [ -z "$USER_DATA" ]; then
+          echo "ERROR: No user-data found from Linode metadata service after 5 attempts." >&2
+          echo "Refusing to start the stack with placeholder credentials." >&2
+          exit 1
         fi
-        echo "Attempt $i: metadata not available yet, retrying in 5s..."
-        sleep 5
-      done
 
-      # Fail closed: a box with no working PocketBase login and no SSH access
-      # (no root_ssh_key parsed) is unrecoverable except via Linode Rescue
-      # Mode. Better to leave the stack down and loudly say why than to boot
-      # a plaintext-credentialed instance nobody can log into.
-      if [ -z "$USER_DATA" ]; then
-        echo "ERROR: No user-data found from Linode metadata service after 5 attempts." >&2
-        echo "Refusing to start the stack with placeholder credentials." >&2
-        exit 1
+        echo "Parsing user-data..."
+        install -m 600 /dev/null "$INSTALL_DIR/.env"
+        base64 -d <<< "$USER_DATA" > "$INSTALL_DIR/.env"
       fi
-
-      echo "Parsing user-data..."
-      install -m 600 /dev/null "$INSTALL_DIR/.env"
-      base64 -d <<< "$USER_DATA" > "$INSTALL_DIR/.env"
 
       # Set root SSH key if provided (required -- see fail-closed check below)
       ROOT_SSH_KEY=$(grep '^root_ssh_key=' "$INSTALL_DIR/.env" | cut -d= -f2- || true)
