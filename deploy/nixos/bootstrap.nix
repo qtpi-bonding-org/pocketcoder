@@ -59,6 +59,7 @@
       # normally -- this file being absent is how bootstrap.nix tells the
       # two paths apart.
       BOOTSTRAP_ENV_FILE="/var/lib/pocketcoder-bootstrap-env"
+      echo "Checking for $BOOTSTRAP_ENV_FILE: $([ -f "$BOOTSTRAP_ENV_FILE" ] && echo "found, $(wc -c < "$BOOTSTRAP_ENV_FILE") bytes" || echo "not present")"
       if [ -f "$BOOTSTRAP_ENV_FILE" ]; then
         echo "Reading admin config from $BOOTSTRAP_ENV_FILE (boot-time-pull path)..."
         install -m 600 /dev/null "$INSTALL_DIR/.env"
