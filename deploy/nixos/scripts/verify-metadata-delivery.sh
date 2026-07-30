@@ -104,11 +104,18 @@ RESULT=$(ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" '
 
 echo "Raw response from /v1/user-data: $RESULT"
 
-DECODED=$(printf '%s' "$RESULT" | base64 -d 2>/dev/null || printf '%s' "$RESULT")
-
+# Compare $RESULT directly against both known forms of the payload --
+# no decode-and-compare step. `base64 -d` is NOT reliable here as a
+# "was this already decoded" probe: on this machine's (BSD/macOS)
+# base64, `-d` SUCCEEDS (exit 0) on non-base64 plaintext input too,
+# emitting garbage instead of failing, which would silently invert the
+# verdict below (a real, working "already decoded" delivery would
+# wrongly report as NOT confirmed). We already have both the raw and
+# base64-encoded forms of the known payload computed above, so just
+# compare against each directly.
 if [ "$RESULT" = "$TEST_PAYLOAD_B64" ]; then
   echo "MATCH (still base64-encoded): metadata service delivers user_data as base64, undecoded."
-elif [ "$DECODED" = "$TEST_PAYLOAD" ]; then
+elif [ "$RESULT" = "$TEST_PAYLOAD" ]; then
   echo "MATCH (already decoded): metadata service delivers user_data already base64-decoded."
 else
   echo "FATAL: response does not match expected payload ('$TEST_PAYLOAD' / '$TEST_PAYLOAD_B64')."
