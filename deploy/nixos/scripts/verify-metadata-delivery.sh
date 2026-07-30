@@ -16,12 +16,15 @@
 # throwaway, runtime-generated SSH keypair (never vault-stored -- it's
 # disposable, scoped to this one test instance), a known test payload in
 # metadata.user_data, SSHes in once to query the metadata service
-# directly, and reports exactly what came back. Reads LINODE_TOKEN from
-# the environment (injected by the secrets-daemon via `sops exec-env` --
-# never read from a file here, never echoed).
+# directly, and reports exactly what came back. Also creates a throwaway
+# no-op StackScript to probe metadata+StackScript coexistence (see below).
+# Reads LINODE_STACKSCRIPT_TOKEN from the environment (injected by the
+# secrets-daemon via `sops exec-env` -- never read from a file here,
+# never echoed) -- needs Linodes + StackScripts read-write, same token
+# publish-stackscript.sh uses.
 set -eu
 
-AUTH="Authorization: Bearer $LINODE_TOKEN"
+AUTH="Authorization: Bearer $LINODE_STACKSCRIPT_TOKEN"
 WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
 
