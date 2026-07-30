@@ -67,12 +67,15 @@ print(json.dumps({
 " "$(date +%s)" "$NOOP_STACKSCRIPT")
 SS_RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "https://api.linode.com/v4/linode/stackscripts" -d "$SS_BODY")
-STACKSCRIPT_ID=$(printf '%s' "$SS_RESPONSE" | grep -o '"id":[[:space:]]*[0-9]*' | head -1 | grep -o '[0-9]*$')
+STACKSCRIPT_ID=$(printf '%s' "$SS_RESPONSE" | grep -o '"id":[[:space:]]*[0-9]*' | head -1 | grep -o '[0-9]*$' || true)
 
 cleanup_stackscript() {
   if [ -n "$STACKSCRIPT_ID" ]; then
     echo "Deleting throwaway StackScript $STACKSCRIPT_ID..."
     curl -sf -X DELETE -H "$AUTH" "https://api.linode.com/v4/linode/stackscripts/$STACKSCRIPT_ID" || true
+  else
+    echo "WARNING: no StackScript id was ever captured -- cannot auto-cleanup." >&2
+    echo "Raw StackScript-create response, for manual cleanup: $SS_RESPONSE" >&2
   fi
 }
 # Installed now (before the instance-create call) so the StackScript
