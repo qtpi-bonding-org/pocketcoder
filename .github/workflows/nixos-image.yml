@@ -65,6 +65,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
         run: |
+          # BLOCKER: images.pocketcoder.dev does not resolve yet (confirmed
+          # NXDOMAIN as of this writing). A Cloudflare custom domain must
+          # be configured in front of the pocketcoder-images R2 bucket
+          # before this workflow is triggered for real, or every
+          # deployment that fetches this manifest URL will fail to
+          # resolve it. This is a one-time, human-owned DNS/Cloudflare
+          # step -- not something to automate here.
           cat > manifest.json <<EOF
           {
             "url": "https://images.pocketcoder.dev/pocketcoder-nixos-${{ github.sha }}.img.gz",
