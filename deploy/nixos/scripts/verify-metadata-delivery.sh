@@ -130,29 +130,44 @@ echo "Instance created: $INSTANCE_ID"
 # LinodeBootTimeInstaller's real installer disk uses. authorized_keys is
 # added here (diagnostic-only, see header) so this script can SSH in.
 echo "Creating disk (image + StackScript + authorized_keys)..."
-# No -f here (unlike the other calls in this script): -f discards the
-# response body on a non-2xx status, which is exactly the diagnostic
-# information needed to fix a 400 from a request this script itself
-# constructs (unlike a 401/404 elsewhere, which is unambiguous without
-# the body). Status is checked explicitly below instead.
-DISK_HTTP_RESPONSE=$(curl -s -w '\n%{http_code}' -X POST -H "$AUTH" -H "Content-Type: application/json" \
-  "https://api.linode.com/v4/linode/instances/$INSTANCE_ID/disks" \
-  -d "{
-    \"label\": \"verify\",
-    \"size\": 3072,
-    \"image\": \"linode/debian12\",
-    \"root_pass\": \"$ROOT_PASS\",
-    \"authorized_keys\": [\"$PUBKEY\"],
-    \"stackscript_id\": $STACKSCRIPT_ID,
-    \"stackscript_data\": {\"noop_var\": \"unused\"}
-  }")
-DISK_HTTP_STATUS=$(printf '%s' "$DISK_HTTP_RESPONSE" | tail -1)
-DISK_RESPONSE=$(printf '%s' "$DISK_HTTP_RESPONSE" | sed '$d')
-if [ "$DISK_HTTP_STATUS" -lt 200 ] || [ "$DISK_HTTP_STATUS" -ge 300 ]; then
-  echo "FATAL: disk-create returned HTTP $DISK_HTTP_STATUS: $DISK_RESPONSE"
-  exit 1
-fi
-DISK_ID=$(echo "$DISK_RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+# Linode routinely 400s a disk-create with "Linode busy." for a few
+# seconds right after instance-create while it settles -- the exact
+# same transient error LinodeBootTimeInstaller's own _busyRetry handles
+# in production. Bounded retry here, matching that behavior.
+DISK_ID=""
+busy_attempt=0
+while [ -z "$DISK_ID" ]; do
+  busy_attempt=$((busy_attempt + 1))
+  # No -f: -f discards the response body on a non-2xx status, which is
+  # exactly the diagnostic information needed to tell a real 400 apart
+  # from a retryable "busy" one. Status is checked explicitly below.
+  DISK_HTTP_RESPONSE=$(curl -s -w '\n%{http_code}' -X POST -H "$AUTH" -H "Content-Type: application/json" \
+    "https://api.linode.com/v4/linode/instances/$INSTANCE_ID/disks" \
+    -d "{
+      \"label\": \"verify\",
+      \"size\": 3072,
+      \"image\": \"linode/debian12\",
+      \"root_pass\": \"$ROOT_PASS\",
+      \"authorized_keys\": [\"$PUBKEY\"],
+      \"stackscript_id\": $STACKSCRIPT_ID,
+      \"stackscript_data\": {\"noop_var\": \"unused\"}
+    }")
+  DISK_HTTP_STATUS=$(printf '%s' "$DISK_HTTP_RESPONSE" | tail -1)
+  DISK_RESPONSE=$(printf '%s' "$DISK_HTTP_RESPONSE" | sed '$d')
+  if [ "$DISK_HTTP_STATUS" -ge 200 ] && [ "$DISK_HTTP_STATUS" -lt 300 ]; then
+    DISK_ID=$(echo "$DISK_RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+  elif [ "$DISK_HTTP_STATUS" -eq 400 ] && printf '%s' "$DISK_RESPONSE" | grep -qi busy; then
+    if [ "$busy_attempt" -ge 10 ]; then
+      echo "FATAL: disk-create still busy after $busy_attempt attempts: $DISK_RESPONSE"
+      exit 1
+    fi
+    echo "Linode busy, retrying disk-create (attempt $busy_attempt)..."
+    sleep 3
+  else
+    echo "FATAL: disk-create returned HTTP $DISK_HTTP_STATUS: $DISK_RESPONSE"
+    exit 1
+  fi
+done
 echo "Disk created: $DISK_ID -- waiting for it to become ready..."
 
 attempt=0
