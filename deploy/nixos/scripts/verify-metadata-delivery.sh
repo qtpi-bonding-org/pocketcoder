@@ -173,9 +173,15 @@ echo "Disk created: $DISK_ID -- waiting for it to become ready..."
 attempt=0
 until [ "$attempt" -ge 40 ]; do
   attempt=$((attempt + 1))
-  DISK_STATUS=$(curl -sf -H "$AUTH" \
+  # `|| true` on both the curl and the python3 parse: under set -eu, a
+  # single transient failure (rate limit, momentary 5xx) inside a
+  # command-substitution assignment aborts the WHOLE script immediately,
+  # not just this poll attempt -- there is no actual retry without this,
+  # despite the surrounding until-loop. A failed poll just means "not
+  # ready yet, try again," same as a non-matching status.
+  DISK_STATUS=$( (curl -sf -H "$AUTH" \
     "https://api.linode.com/v4/linode/instances/$INSTANCE_ID/disks/$DISK_ID" \
-    | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+    || true) | python3 -c "import json,sys; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || true)
   [ "$DISK_STATUS" = "ready" ] && break
   sleep 5
 done
@@ -200,8 +206,10 @@ echo "Waiting for instance to reach 'running' status..."
 attempt=0
 until [ "$attempt" -ge 40 ]; do
   attempt=$((attempt + 1))
-  STATUS=$(curl -sf -H "$AUTH" "https://api.linode.com/v4/linode/instances/$INSTANCE_ID" \
-    | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+  # Same defensive pattern as the disk-status poll above: a transient
+  # failure must not abort the whole script under set -eu.
+  STATUS=$( (curl -sf -H "$AUTH" "https://api.linode.com/v4/linode/instances/$INSTANCE_ID" \
+    || true) | python3 -c "import json,sys; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || true)
   [ "$STATUS" = "running" ] && break
   sleep 5
 done
