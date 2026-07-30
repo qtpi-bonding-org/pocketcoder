@@ -45,14 +45,33 @@ RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
     \"metadata\": {\"user_data\": \"$TEST_PAYLOAD_B64\"}
   }")
 
-INSTANCE_ID=$(echo "$RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
-echo "Instance created: $INSTANCE_ID"
+# Install the cleanup trap immediately after the create call succeeds --
+# BEFORE attempting to parse its response. If the strict json parse below
+# fails for any reason (unexpected response shape), set -e would exit the
+# script; without the trap already installed and an id already captured
+# at that point, the just-created instance would leak as an orphaned,
+# billable resource with no id recorded anywhere. Extract the id with a
+# best-effort grep first (unlikely to fail even on odd response shapes)
+# so cleanup has something to work with regardless of what the strict
+# parse below does.
+INSTANCE_ID=$(printf '%s' "$RESPONSE" | grep -o '"id":[[:space:]]*[0-9]*' | head -1 | grep -o '[0-9]*$' || true)
 
 cleanup_instance() {
-  echo "Deleting test instance $INSTANCE_ID..."
-  curl -sf -X DELETE -H "$AUTH" "https://api.linode.com/v4/linode/instances/$INSTANCE_ID" || true
+  if [ -n "$INSTANCE_ID" ]; then
+    echo "Deleting test instance $INSTANCE_ID..."
+    curl -sf -X DELETE -H "$AUTH" "https://api.linode.com/v4/linode/instances/$INSTANCE_ID" || true
+  else
+    echo "WARNING: no instance id was ever captured -- cannot auto-cleanup." >&2
+    echo "Raw instance-create response, for manual cleanup: $RESPONSE" >&2
+  fi
 }
 trap 'cleanup_instance; rm -rf "$WORKDIR"' EXIT
+
+# Strict parse for the id we actually use for the rest of the script (IP
+# lookup, polling, etc). By this point cleanup is already guaranteed even
+# if this fails.
+INSTANCE_ID=$(echo "$RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+echo "Instance created: $INSTANCE_ID"
 
 echo "Waiting for instance to reach 'running' status..."
 attempt=0
