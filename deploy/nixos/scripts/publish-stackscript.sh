@@ -16,7 +16,7 @@ AUTH="Authorization: Bearer $LINODE_TOKEN"
 # unfiltered first page of a potentially-huge public StackScript listing
 # will essentially never contain our one script, so every run would
 # create a new StackScript instead of updating the existing one in place.
-EXISTING_ID=$(curl -sf -H "$AUTH" \
+EXISTING_ID=$(curl -sf --show-error -H "$AUTH" \
   -H 'X-Filter: {"mine": true, "label": "pocketcoder-image-installer"}' \
   "https://api.linode.com/v4/linode/stackscripts?page_size=100" \
   | python3 -c "
@@ -49,12 +49,12 @@ print(json.dumps({
 
 if [ -n "$EXISTING_ID" ]; then
   echo "Updating existing StackScript $EXISTING_ID"
-  curl -sf -X PUT -H "$AUTH" -H "Content-Type: application/json" \
+  curl -sf --show-error -X PUT -H "$AUTH" -H "Content-Type: application/json" \
     "https://api.linode.com/v4/linode/stackscripts/$EXISTING_ID" \
     -d "$BODY" | python3 -m json.tool
 else
   echo "Creating new StackScript"
-  curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
     "https://api.linode.com/v4/linode/stackscripts" \
     -d "$BODY" | python3 -m json.tool
 fi
