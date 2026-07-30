@@ -13,6 +13,7 @@ abstract class GooseSession with _$GooseSession {
     required String gooseSessionId,
     String? gooseVersion,
     String? provider,
+    String? harnessInstance,
   }) = _GooseSession;
 
   factory GooseSession.fromRecord(RecordModel record) =>
