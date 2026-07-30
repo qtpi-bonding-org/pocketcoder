@@ -32,6 +32,12 @@ echo "Generating a throwaway SSH keypair (test-instance-scoped only)..."
 ssh-keygen -t ed25519 -N '' -f "$WORKDIR/id_ed25519" -q
 PUBKEY=$(cat "$WORKDIR/id_ed25519.pub")
 
+# Linode's API requires root_pass whenever `image` is provided --
+# authorized_keys alone isn't sufficient for image-based instance
+# creation. This is throwaway and never used (we only ever log in via
+# the SSH key above); it exists purely to satisfy the API.
+ROOT_PASS=$(openssl rand -base64 24)
+
 echo "Creating test instance (linode/debian12, authorized_keys + metadata.user_data)..."
 RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "https://api.linode.com/v4/linode/instances" \
@@ -42,6 +48,7 @@ RESPONSE=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
     \"label\": \"pocketcoder-metadata-verify\",
     \"booted\": true,
     \"authorized_keys\": [\"$PUBKEY\"],
+    \"root_pass\": \"$ROOT_PASS\",
     \"metadata\": {\"user_data\": \"$TEST_PAYLOAD_B64\"}
   }")
 
