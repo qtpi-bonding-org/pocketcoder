@@ -93,15 +93,21 @@ trap 'cleanup_stackscript; rm -rf "$WORKDIR"' EXIT
 
 # Step 1: bare instance -- exactly LinodeBootTimeInstaller's own step 1
 # (booted:false, metadata.user_data only, no image, no authorized_keys).
-echo "Creating bare test instance (metadata.user_data only, no image)..."
+# DIAGNOSTIC-ONLY, TEMPORARY: metadata.user_data omitted for one isolated
+# run to isolate whether the StackScript-didn't-run result (seen twice
+# now, at both the instance-create and disk-create attachment points) is
+# actually caused by metadata's presence, or is unrelated (e.g. a
+# StackScript-execution issue independent of metadata entirely, which
+# Linode's own community forum shows happens even without metadata
+# involved). Revert this once the isolated result is in.
+echo "Creating bare test instance (NO metadata.user_data -- isolating the StackScript variable)..."
 RESPONSE=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "https://api.linode.com/v4/linode/instances" \
   -d "{
     \"type\": \"g6-nanode-1\",
     \"region\": \"us-east\",
     \"label\": \"pocketcoder-metadata-verify\",
-    \"booted\": false,
-    \"metadata\": {\"user_data\": \"$TEST_PAYLOAD_B64\"}
+    \"booted\": false
   }")
 
 # Cleanup trap installed immediately after the create call succeeds,
@@ -238,6 +244,17 @@ STACKSCRIPT_RAN=false
 if ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" '[ -f /root/stackscript-ran ]'; then
   STACKSCRIPT_RAN=true
 fi
+
+# Diagnostic evidence either way: Linode's own community forum shows
+# StackScripts sometimes execute but fail silently, logged here rather
+# than just leaving no marker file. Dumped unconditionally so a false
+# STACKSCRIPT_RAN=false (marker never written because the script errored
+# out before reaching `touch`) is distinguishable from the StackScript
+# never having started at all.
+echo "--- /var/log/stackscript.log (if any) ---"
+ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" \
+  'cat /var/log/stackscript.log 2>/dev/null || echo "(no such file)"'
+echo "--- end stackscript.log ---"
 
 # Both questions are evaluated and reported independently -- neither's
 # outcome gates or suppresses the other's message. The overall exit code
