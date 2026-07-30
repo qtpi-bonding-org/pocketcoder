@@ -20,10 +20,20 @@
 # attachment point exactly -- a bare instance (booted:false,
 # metadata.user_data only, no image) followed by a SEPARATE disk-create
 # call carrying image + stackscript_id + stackscript_data, not a single
-# instance-create call with everything on it. An earlier version of this
-# script tested the wrong attachment point (stackscript_id on the
-# instance-create call itself) and got a negative coexistence result --
-# inconclusive, since that's not the mechanism production actually uses.
+# instance-create call with everything on it.
+#
+# CONFIRMED (2026-07-30, three live runs): the StackScript does NOT run
+# when metadata.user_data is also present on the instance -- at BOTH the
+# instance-create attachment point and this (real) disk-create attachment
+# point. A fourth, isolating run with metadata.user_data omitted entirely
+# (same disk-create StackScript attachment, nothing else changed) had the
+# StackScript run successfully. This is a real, load-bearing conflict
+# between the two mechanisms, not test flakiness or the wrong attachment
+# point -- LinodeBootTimeInstaller's current design (metadata.user_data on
+# the instance + stackscript_id on the installer disk, simultaneously)
+# does not work as built. See the SDD ledger / conversation history for
+# the investigation; this needs a design decision before Task 10's
+# approach can ship, not a further script tweak.
 #
 # Unlike production (which deliberately omits authorized_keys on the
 # installer disk -- see LinodeBootTimeInstaller's D3 mitigation), this
@@ -93,21 +103,15 @@ trap 'cleanup_stackscript; rm -rf "$WORKDIR"' EXIT
 
 # Step 1: bare instance -- exactly LinodeBootTimeInstaller's own step 1
 # (booted:false, metadata.user_data only, no image, no authorized_keys).
-# DIAGNOSTIC-ONLY, TEMPORARY: metadata.user_data omitted for one isolated
-# run to isolate whether the StackScript-didn't-run result (seen twice
-# now, at both the instance-create and disk-create attachment points) is
-# actually caused by metadata's presence, or is unrelated (e.g. a
-# StackScript-execution issue independent of metadata entirely, which
-# Linode's own community forum shows happens even without metadata
-# involved). Revert this once the isolated result is in.
-echo "Creating bare test instance (NO metadata.user_data -- isolating the StackScript variable)..."
+echo "Creating bare test instance (metadata.user_data only, no image)..."
 RESPONSE=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "https://api.linode.com/v4/linode/instances" \
   -d "{
     \"type\": \"g6-nanode-1\",
     \"region\": \"us-east\",
     \"label\": \"pocketcoder-metadata-verify\",
-    \"booted\": false
+    \"booted\": false,
+    \"metadata\": {\"user_data\": \"$TEST_PAYLOAD_B64\"}
   }")
 
 # Cleanup trap installed immediately after the create call succeeds,
