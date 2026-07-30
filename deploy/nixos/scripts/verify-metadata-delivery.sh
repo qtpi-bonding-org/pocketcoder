@@ -130,7 +130,12 @@ echo "Instance created: $INSTANCE_ID"
 # LinodeBootTimeInstaller's real installer disk uses. authorized_keys is
 # added here (diagnostic-only, see header) so this script can SSH in.
 echo "Creating disk (image + StackScript + authorized_keys)..."
-DISK_RESPONSE=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
+# No -f here (unlike the other calls in this script): -f discards the
+# response body on a non-2xx status, which is exactly the diagnostic
+# information needed to fix a 400 from a request this script itself
+# constructs (unlike a 401/404 elsewhere, which is unambiguous without
+# the body). Status is checked explicitly below instead.
+DISK_HTTP_RESPONSE=$(curl -s -w '\n%{http_code}' -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "https://api.linode.com/v4/linode/instances/$INSTANCE_ID/disks" \
   -d "{
     \"label\": \"verify\",
@@ -141,6 +146,12 @@ DISK_RESPONSE=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: appli
     \"stackscript_id\": $STACKSCRIPT_ID,
     \"stackscript_data\": {\"noop_var\": \"unused\"}
   }")
+DISK_HTTP_STATUS=$(printf '%s' "$DISK_HTTP_RESPONSE" | tail -1)
+DISK_RESPONSE=$(printf '%s' "$DISK_HTTP_RESPONSE" | sed '$d')
+if [ "$DISK_HTTP_STATUS" -lt 200 ] || [ "$DISK_HTTP_STATUS" -ge 300 ]; then
+  echo "FATAL: disk-create returned HTTP $DISK_HTTP_STATUS: $DISK_RESPONSE"
+  exit 1
+fi
 DISK_ID=$(echo "$DISK_RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
 echo "Disk created: $DISK_ID -- waiting for it to become ready..."
 
