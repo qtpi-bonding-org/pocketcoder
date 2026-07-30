@@ -20,6 +20,8 @@ abstract class Chat with _$Chat {
     DateTime? updated,
     String? pocoConfig,
     String? harnessModelOverride,
+    String? harness,
+    dynamic workspaceOverride,
   }) = _Chat;
 
   factory Chat.fromRecord(RecordModel record) =>

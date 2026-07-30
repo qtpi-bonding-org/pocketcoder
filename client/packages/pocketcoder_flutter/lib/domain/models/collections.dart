@@ -18,6 +18,7 @@ class Collections {
   static const String gooseSessions = 'goose_sessions';
   static const String scheduleOwners = 'schedule_owners';
   static const String cogneeConfig = 'cognee_config';
+  static const String harnessInstances = 'harness_instances';
 
   static const List<String> all = [
     users,
@@ -38,5 +39,6 @@ class Collections {
     gooseSessions,
     scheduleOwners,
     cogneeConfig,
+    harnessInstances,
   ];
 }
