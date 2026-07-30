@@ -59,6 +59,17 @@ jobs:
             s3://pocketcoder-images/pocketcoder-nixos-${{ github.sha }}.img.gz \
             --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
+          # Dual-write to the old mutable "-latest" key too. Nothing else
+          # publishes this key any more (the manifest + versioned key above
+          # are now the primary path), but workers/image-relay's retained
+          # legacy CustomImageProvisioningStrategy / /upload-image path
+          # still reads NIXOS_IMAGE_KEY="pocketcoder-nixos-latest.img.gz"
+          # verbatim -- without this it would silently start failing with
+          # "NixOS image not found in R2" once the old object ages out.
+          aws s3 cp pocketcoder-nixos.img.gz \
+            s3://pocketcoder-images/pocketcoder-nixos-latest.img.gz \
+            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+
       - name: Publish manifest
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
