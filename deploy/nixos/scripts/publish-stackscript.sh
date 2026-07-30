@@ -27,7 +27,13 @@ print(json.dumps({
     'label': 'pocketcoder-image-installer',
     'description': 'Pulls the PocketCoder NixOS image from R2 onto a raw target disk (boot-time-pull provisioning)',
     'images': ['linode/debian12'],
-    'is_public': False,
+    # Deliberately public: this StackScript is published once, centrally,
+    # from our own Linode account, but is REFERENCED at deploy time by
+    # each end user's own Linode token/instance-create call -- a private
+    # StackScript is only visible to the owning account, so it would be
+    # unusable by any real end-user deployment. Also permanent: Linode
+    # public StackScripts cannot be made private or deleted once published.
+    'is_public': True,
     'script': sys.argv[1],
 }))
 " "$SCRIPT_BODY")
