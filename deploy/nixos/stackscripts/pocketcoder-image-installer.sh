@@ -42,10 +42,28 @@ until [ "$attempt" -ge 3 ]; do
       # directly on first real boot rather than querying Linode's
       # metadata service.
       mkdir -p /mnt/target
-      mount /dev/sdb /mnt/target
+      sync
+      if ! mount -t ext4 /dev/sdb /mnt/target; then
+        echo "FATAL: mount /dev/sdb failed -- leaving instance online for inspection"
+        exit 1
+      fi
       mkdir -p /mnt/target/var/lib
       printf '%s' "$ADMIN_USER_DATA" | base64 -d > /mnt/target/var/lib/pocketcoder-bootstrap-env
       chmod 600 /mnt/target/var/lib/pocketcoder-bootstrap-env
+      # Verify before powering off -- a bad write here means the final
+      # NixOS boot fails closed with no admin config and no way to SSH
+      # in to diagnose it (bootstrap.nix's own fail-closed check has no
+      # fallback once metadata.user_data is no longer set at all). Fail
+      # loudly and leave the instance running rather than silently
+      # powering off on top of a bad write.
+      WRITTEN_B64=$(base64 -w0 /mnt/target/var/lib/pocketcoder-bootstrap-env 2>/dev/null || base64 /mnt/target/var/lib/pocketcoder-bootstrap-env | tr -d '\n')
+      if [ "$WRITTEN_B64" != "$ADMIN_USER_DATA" ]; then
+        echo "FATAL: bootstrap-env write verification failed -- leaving instance online for inspection"
+        echo "Wrote to /mnt/target/var/lib/pocketcoder-bootstrap-env, re-read and re-encoded, got:"
+        echo "$WRITTEN_B64"
+        exit 1
+      fi
+      echo "bootstrap-env write verified OK ($(wc -c < /mnt/target/var/lib/pocketcoder-bootstrap-env) bytes)"
       umount /mnt/target
       sync
       systemctl poweroff --no-block
