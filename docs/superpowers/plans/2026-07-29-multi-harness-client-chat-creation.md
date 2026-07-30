@@ -4,6 +4,8 @@
 
 **Status: TENTATIVE.** Plan 1 (schema + coordinator) and Plan 2 (provisioning + adapter) are being implemented concurrently by other agents. This plan assumes their documented interfaces (`chats.harness`, `chats.workspace_override`, `chats.harness_model_override` already exist; `harness_instances`/provisioning happen server-side and need no client awareness beyond "creating a chat with a harness selected may take a moment the first time"). If either lands with a different field name or shape than documented in the design spec, **re-check this plan's Task 1 against the actual `schema.json`/generated Dart models before starting** — do not assume the interface below is final.
 
+**Confirmed live blocker as of this writing:** checked `client/packages/pocketcoder_flutter/assets/pb_schema.json` on this branch directly — the `chats` collection currently has only `poco_config` and a pre-existing `harness_model_override` relation field. There is **no `harness` field and no `workspace_override` field yet** — Plan 1 has not landed them. Do not start Task 1 until `schema.json` shows both fields (re-run `tooling/scripts/export_schema.sh` and check, or confirm with whoever is implementing Plan 1); starting early would write keys PocketBase's schema doesn't define yet.
+
 **Goal:** A user creating a new chat can pick cwd + harness + model before the chat is created, the same way a terminal user picks a working directory and a CLI before starting a session (design spec §1, §7). Today `ChatListCubit.createAndOpen()` → `ChatDao.save({title, user})` is a bare title-only insert; this plan makes harness/model/cwd real, client-side, choices.
 
 **Architecture:** Extend the existing `chat_list` domain/infrastructure/application layers with three new optional parameters (`harness`, `harnessModelOverride`, `workspaceOverride`), threaded from a new `NewChatDialog` widget down to `ChatDao.save`. The dialog reuses the **already-existing** `IProviderRepository` (`watchHarnesses`/`watchModels`/`watchHarnessModels`/`watchProviderKeys` — built for the admin-side provider-config screen, `lib/presentation/provider/provider_screen.dart`) rather than adding new streams — this plan adds zero new PocketBase-facing repository surface beyond `chat_list`'s own three new parameters. Constrained-combination filtering (design spec §5.9: a model needs a `harness_models` row for the selected harness, and the user needs a `provider_keys` row for that model's provider) and cwd path validation (design spec §5.8's textual-prefix rule, client-side nicety only — the server enforces this for real) are both extracted as pure, directly-testable functions rather than buried in widget build methods.
@@ -13,7 +15,7 @@
 ## Global Constraints
 
 - No new PocketBase collections, fields, or repository interfaces beyond `chat_list`'s three new `createChat`/`createAndOpen` parameters — `harnesses`/`models`/`harness_models`/`provider_keys` are already fully exposed client-side via `IProviderRepository` (`lib/domain/provider/i_provider_repository.dart`).
-- Follow the existing screen/cubit/repository/DAO layering exactly (`ChatListScreen`/`ChatListCubit`/`ChatListRepository`/`ChatDao`, mirroring `ProviderScreen`/`ProviderCubit` — read `lib/presentation/provider/provider_screen.dart` before Task 5 for the existing dropdown-from-stream pattern this plan's dialog should match visually).
+- Follow the existing screen/cubit/repository/DAO layering exactly (`ChatListScreen`/`ChatListCubit`/`ChatListRepository`/`ChatDao`, mirroring `ProviderScreen`/`ProviderCubit`). **Note:** `lib/presentation/provider/provider_screen.dart` does NOT contain a dropdown/picker widget to reuse — it renders `harness_models` as a static read-only list of `TerminalCard` tiles and edits provider keys via a separate `_ProviderKeyEditorDialog`. There is no existing dropdown-from-stream pattern in this codebase; Task 5's `DropdownButton` usage is a new pattern, not a reuse of one.
 - `chats.workspace_override` is a nullable JSON field with the exact same element shape as `poco_configs.workspace_folders` — confirmed via `server/pocketbase/internal/api/profile.go:93-99`: a plain `List<String>` where element 0 is cwd. Per design spec §5.7, only element 0 is ever sent from this dialog (there is no "additional directories" picker in v1 — those always come from the poco); when the user leaves cwd at its default, **omit the field entirely** (send nothing, not `[]`), so JSON-null "unset" (inherit the poco's folders) stays distinguishable from an explicit override — do not send `[]` as a stand-in for "no override."
 - `chats.harness_model_override` (existing field, already on the `Chat` model as `harnessModelOverride`) is the field name to write the selected `harness_models.id` to — do not invent a new field name.
 - Existing tests that must keep passing unmodified except where a task explicitly says otherwise: `test/application/chat/chat_list_cubit_test.dart`, `test/infrastructure/chat/chat_list_repository_test.dart`, `test/presentation/chat/chat_list_screen_test.dart`.
@@ -230,7 +232,7 @@ Add to `test/application/chat/chat_list_cubit_test.dart`, inside `group('ChatLis
     });
 ```
 
-The two pre-existing tests in this group (`'creates a chat and sets lastCreatedChatId'`, `'surfaces repo failure as state error'`) call `repo.createChat(title: any(named: 'title'))` with no other named args stubbed — since `mocktail`'s `any(named: ...)` matchers must cover every named parameter the call site actually passes, these two existing stubs and their `verify(() => repo.createChat(title: null))` calls will break once `createAndOpen` starts passing all four named params on every call (Mocktail matches by exact argument list including named-arg matchers). Update those two existing stubs/verifies to also match on the other three params:
+The two pre-existing tests in this group (`'creates a chat and sets lastCreatedChatId'`, `'surfaces repo failure as state error'`) call `repo.createChat(title: any(named: 'title'))` with no other named args stubbed — since `mocktail`'s `any(named: ...)` matchers must cover every named parameter the call site actually passes, these two existing stubs and their `verify(() => repo.createChat(title: null))` calls will break once `createAndOpen` starts passing all four named params on every call (Mocktail matches by exact argument list including named-arg matchers). **A third pre-existing test also needs this same update**: `group('ChatListCubit.watchChats', ...)` contains `'clears a pending lastCreatedChatId on the next list emission'`, which likewise stubs `repo.createChat(title: any(named: 'title'))` and calls `await cubit.createAndOpen()` — it will break for the identical reason and must be updated alongside the two tests below. Update all three existing stubs/verifies to also match on the other three params:
 
 ```dart
       when(() => repo.createChat(
@@ -248,7 +250,7 @@ The two pre-existing tests in this group (`'creates a chat and sets lastCreatedC
           )).called(1);
 ```
 
-Apply the same stub/verify update to the two `checkEmptyAndMaybeAutoCreate` tests in the file (they also call `repo.createChat(title: any(named: 'title'))` and will break for the same reason once `createAndOpen`'s call site always passes all four named args) — `checkEmptyAndMaybeAutoCreate` itself is not changing in this task, only the shape of the call its internals make via `createAndOpen`... actually check: `checkEmptyAndMaybeAutoCreate` calls `_repo.createChat()` directly today, not `createAndOpen()` — confirm this in the current source (`chat_list_cubit.dart:76`) before editing; if it calls the repo directly with no params, its existing `repo.createChat(title: any(named: 'title'))` stub/verify is unaffected by this task and must be left exactly as-is. Only the `createAndOpen`-driven tests need the four-param stub/verify update.
+**Do not touch the two `checkEmptyAndMaybeAutoCreate` tests.** Confirmed against `chat_list_cubit.dart:76`: `checkEmptyAndMaybeAutoCreate` calls `_repo.createChat()` directly, never through `createAndOpen()`. Its existing `repo.createChat(title: any(named: 'title'))` stub/verify is unaffected by this task and must be left exactly as-is. Only the three `createAndOpen`-driven tests identified above (the two in `group('ChatListCubit.createAndOpen', ...)` plus `'clears a pending lastCreatedChatId on the next list emission'` in `group('ChatListCubit.watchChats', ...)`) need the four-param stub/verify update.
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -631,7 +633,7 @@ void main() {
 }
 ```
 
-The third test above is written deliberately loose (`isNull` placeholder) because the exact widget-finder strategy for the harness/model dropdowns depends on which Flutter widget (`DropdownButton`, a custom `TerminalDropdown` if one already exists in `design_system/`, or a list-tile picker matching `TerminalDialog`'s style) Step 3 ends up using — **before writing Step 3, grep `lib/design_system` and `lib/presentation/provider/provider_screen.dart` for an existing dropdown/picker widget and reuse it** rather than introducing a new one; then come back and replace the placeholder assertion with a real one asserting `result?.harness == 'h1'` and `result?.harnessModelOverride == 'hm-1'`, and update the tap-finders to match whatever widget was actually used (e.g. `find.text('Goose')` may need to be a dropdown-item tap sequence instead of a direct text tap, depending on the chosen widget).
+The third test above is written deliberately loose (`isNull` placeholder) because the exact widget-finder strategy for the harness/model dropdowns depends on which Flutter widget (`DropdownButton`, or a custom `TerminalDropdown` if one already exists in `design_system/`) Step 3 ends up using. **Before writing Step 3, grep `lib/design_system` for an existing dropdown/picker widget and reuse it if one exists** — note `provider_screen.dart` itself has no dropdown to reuse (confirmed: it renders `harness_models` as static read-only `TerminalCard` tiles, not a picker), so `design_system/` is the only place worth checking. If nothing suitable exists, `DropdownButton` (as used below) is a reasonable new pattern. Then come back and replace the placeholder assertion with a real one asserting `result?.harness == 'h1'` and `result?.harnessModelOverride == 'hm-1'`, and update the tap-finders to match whatever widget was actually used (e.g. `find.text('Goose')` may need to be a dropdown-item tap sequence instead of a direct text tap, depending on the chosen widget).
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -664,7 +666,7 @@ import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_selection.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
-import 'package:pocketcoder_flutter/support/extensions/localization_extension.dart'; // adjust to whatever `context.l10n` actually resolves from — confirm import path against chat_list_screen.dart's existing usage.
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart'; // `context.l10n` is provided by AppThemeExtension here — confirmed against chat_list_screen.dart:8's existing import.
 
 /// The selection a confirmed [NewChatDialog] returns — `null` fields mean
 /// "no override, inherit from the chat's poco_config" (design spec §5.7).
@@ -829,7 +831,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
 
 Replace `'Title'`/`'Harness'`/`'Model'`/`'Working directory'`/`'/workspace'`/`'CANCEL'`/`'CREATE'`/`'New Chat'` literals with `context.l10n.newChatTitleField` etc. once l10n regeneration is confirmed working — the literals above are given first so this step is independently compilable/testable before wiring l10n, matching this codebase's existing `context.l10n.*` convention seen in `chat_list_screen.dart`.
 
-Before finalizing, grep for an existing dropdown/picker widget as flagged in Step 1 and swap `DropdownButton` for it if one exists, for visual consistency with `provider_screen.dart`.
+Before finalizing, grep `lib/design_system` for an existing dropdown/picker widget as flagged in Step 1 and swap `DropdownButton` for it if one exists.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
