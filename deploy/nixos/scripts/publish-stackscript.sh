@@ -12,12 +12,21 @@ SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT_BODY=$(cat "$SCRIPT_DIR/stackscripts/pocketcoder-image-installer.sh")
 AUTH="Authorization: Bearer $LINODE_TOKEN"
 
+# Server-side filter (not client-side page scan): without this, the
+# unfiltered first page of a potentially-huge public StackScript listing
+# will essentially never contain our one script, so every run would
+# create a new StackScript instead of updating the existing one in place.
 EXISTING_ID=$(curl -sf -H "$AUTH" \
+  -H 'X-Filter: {"mine": true, "label": "pocketcoder-image-installer"}' \
   "https://api.linode.com/v4/linode/stackscripts?page_size=100" \
   | python3 -c "
 import json, sys
 data = json.load(sys.stdin)['data']
 matches = [s for s in data if s.get('label') == 'pocketcoder-image-installer']
+if len(matches) > 1:
+    sys.exit('FATAL: multiple StackScripts match label pocketcoder-image-installer '
+              '(ids: ' + ', '.join(str(m['id']) for m in matches) + ') -- '
+              'this should never happen; investigate before proceeding.')
 print(matches[0]['id'] if matches else '')
 ")
 
