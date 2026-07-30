@@ -228,20 +228,20 @@ echo "Instance IP: $IP -- waiting for SSH..."
 attempt=0
 until [ "$attempt" -ge 30 ]; do
   attempt=$((attempt + 1))
-  ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes \
+  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -o BatchMode=yes \
     -i "$WORKDIR/id_ed25519" "root@$IP" true 2>/dev/null && break
   sleep 5
 done
 
 echo "Querying the metadata service from inside the instance..."
-RESULT=$(ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" '
+RESULT=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "$WORKDIR/id_ed25519" "root@$IP" '
   TOKEN=$(curl -s -X PUT -H "Metadata-Token-Expiry-Seconds: 60" http://169.254.169.254/v1/token)
   curl -s -H "Metadata-Token: $TOKEN" http://169.254.169.254/v1/user-data
 ')
 echo "Raw response from /v1/user-data: $RESULT"
 
 STACKSCRIPT_RAN=false
-if ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" '[ -f /root/stackscript-ran ]'; then
+if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "$WORKDIR/id_ed25519" "root@$IP" '[ -f /root/stackscript-ran ]'; then
   STACKSCRIPT_RAN=true
 fi
 
@@ -252,7 +252,7 @@ fi
 # out before reaching `touch`) is distinguishable from the StackScript
 # never having started at all.
 echo "--- /var/log/stackscript.log (if any) ---"
-ssh -o StrictHostKeyChecking=no -i "$WORKDIR/id_ed25519" "root@$IP" \
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "$WORKDIR/id_ed25519" "root@$IP" \
   'cat /var/log/stackscript.log 2>/dev/null || echo "(no such file)"'
 echo "--- end stackscript.log ---"
 
