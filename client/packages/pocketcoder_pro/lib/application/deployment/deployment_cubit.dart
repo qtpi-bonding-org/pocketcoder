@@ -7,6 +7,8 @@ import 'package:flutter_aeroform/domain/models/instance.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
+import 'package:pocketcoder_pro/infrastructure/server_update/current_instance_store.dart';
+
 import 'deployment_state.dart';
 
 /// Cubit for managing deployment operations and instance lifecycle
@@ -15,6 +17,7 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
   static const Duration _statusRefreshInterval = Duration(seconds: 30);
 
   final IDeploymentService _deploymentService;
+  final CurrentInstanceStore _currentInstanceStore;
 
   // Monitoring state
   Timer? _pollingTimer;
@@ -24,6 +27,7 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
 
   DeploymentCubit(
     this._deploymentService,
+    this._currentInstanceStore,
   ) : super(DeploymentState.initial());
 
   /// Deploys a new instance with the given configuration
@@ -50,6 +54,11 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
       if (result.status == DeploymentStatus.failed) {
         throw DeploymentException(result.errorMessage ?? 'Deployment failed');
       }
+
+      // Persist which instance is "the" deployment so the update feature
+      // can find it later (e.g. from Settings), not just during this
+      // deploy flow's own navigation stack.
+      await _currentInstanceStore.save(result.instanceId);
 
       return state.copyWith(
         status: UiFlowStatus.success,

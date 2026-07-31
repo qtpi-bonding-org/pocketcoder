@@ -32,6 +32,7 @@ class SettingsScreen extends StatelessWidget {
       (context.l10n.settingsSystemSection, [
         ('SYSTEM CHECKS', '[DIAGNOSE]', 'configureSystemChecks'),
         ('PERMISSION RELAY', '[STATUS]', 'configurePaywall'),
+        ('SERVER UPDATE', '[UPDATE]', 'updateServer'),
       ]),
       (context.l10n.settingsObservabilitySection, [
         ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
@@ -144,6 +145,8 @@ class SettingsScreen extends StatelessWidget {
         context.push(AppRoutes.configureSystemChecks);
       case 'configurePaywall':
         context.push(AppRoutes.configurePaywall);
+      case 'updateServer':
+        context.push(AppRoutes.updateServer);
       case 'configureObservability':
         context.push(AppRoutes.configureObservability);
       case 'configureLlm':

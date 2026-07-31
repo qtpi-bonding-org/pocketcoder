@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:flutter_aeroform/domain/models/instance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
@@ -67,6 +69,13 @@ class _DetailsViewState extends State<_DetailsView> {
             TerminalAction(
               label: 'REFRESH',
               onTap: () => cubit.refreshInstanceStatus(widget.instanceId),
+            ),
+            TerminalAction(
+              label: 'UPDATE',
+              onTap: () => context.pushNamed(
+                RouteNames.updateServer,
+                queryParameters: {'instanceId': widget.instanceId},
+              ),
             ),
             TerminalAction(
               label: 'DISMISS',

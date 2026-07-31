@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-07-30T16:53:33.219090
+// Generated at: 2026-07-31T00:41:04.856146
 
 import 'app_localizations.dart';
 
@@ -181,6 +181,17 @@ class L10nKeyResolver {
       'nav.chats' => _l10n.navChats,
       'nav.configure' => _l10n.navConfigure,
       'nav.monitor' => _l10n.navMonitor,
+      'new.chat.cancel' => _l10n.newChatCancel,
+      'new.chat.create' => _l10n.newChatCreate,
+      'new.chat.cwd.field' => _l10n.newChatCwdField,
+      'new.chat.cwd.hint' => _l10n.newChatCwdHint,
+      'new.chat.harness.field' => _l10n.newChatHarnessField,
+      'new.chat.model.field' => _l10n.newChatModelField,
+      'new.chat.no.models.available' => _l10n.newChatNoModelsAvailable,
+      'new.chat.select.harness' => _l10n.newChatSelectHarness,
+      'new.chat.select.model' => _l10n.newChatSelectModel,
+      'new.chat.title' => _l10n.newChatTitle,
+      'new.chat.title.field' => _l10n.newChatTitleField,
       'notification.settings.chat.reply.label' => _l10n.notificationSettingsChatReplyLabel,
       'notification.settings.schedule.label' => _l10n.notificationSettingsScheduleLabel,
       'notification.settings.screen.title' => _l10n.notificationSettingsScreenTitle,
@@ -517,6 +528,17 @@ class L10nKeyResolver {
     'nav.chats',
     'nav.configure',
     'nav.monitor',
+    'new.chat.cancel',
+    'new.chat.create',
+    'new.chat.cwd.field',
+    'new.chat.cwd.hint',
+    'new.chat.harness.field',
+    'new.chat.model.field',
+    'new.chat.no.models.available',
+    'new.chat.select.harness',
+    'new.chat.select.model',
+    'new.chat.title',
+    'new.chat.title.field',
     'notification.settings.chat.reply.label',
     'notification.settings.schedule.label',
     'notification.settings.screen.title',
@@ -836,6 +858,17 @@ class L10nKeyResolver {
     'navChats': 'nav.chats',
     'navConfigure': 'nav.configure',
     'navMonitor': 'nav.monitor',
+    'newChatCancel': 'new.chat.cancel',
+    'newChatCreate': 'new.chat.create',
+    'newChatCwdField': 'new.chat.cwd.field',
+    'newChatCwdHint': 'new.chat.cwd.hint',
+    'newChatHarnessField': 'new.chat.harness.field',
+    'newChatModelField': 'new.chat.model.field',
+    'newChatNoModelsAvailable': 'new.chat.no.models.available',
+    'newChatSelectHarness': 'new.chat.select.harness',
+    'newChatSelectModel': 'new.chat.select.model',
+    'newChatTitle': 'new.chat.title',
+    'newChatTitleField': 'new.chat.title.field',
     'notificationSettingsChatReplyLabel': 'notification.settings.chat.reply.label',
     'notificationSettingsScheduleLabel': 'notification.settings.schedule.label',
     'notificationSettingsScreenTitle': 'notification.settings.screen.title',
@@ -1152,6 +1185,17 @@ class L10nKeyResolver {
     'nav.chats': 'navChats',
     'nav.configure': 'navConfigure',
     'nav.monitor': 'navMonitor',
+    'new.chat.cancel': 'newChatCancel',
+    'new.chat.create': 'newChatCreate',
+    'new.chat.cwd.field': 'newChatCwdField',
+    'new.chat.cwd.hint': 'newChatCwdHint',
+    'new.chat.harness.field': 'newChatHarnessField',
+    'new.chat.model.field': 'newChatModelField',
+    'new.chat.no.models.available': 'newChatNoModelsAvailable',
+    'new.chat.select.harness': 'newChatSelectHarness',
+    'new.chat.select.model': 'newChatSelectModel',
+    'new.chat.title': 'newChatTitle',
+    'new.chat.title.field': 'newChatTitleField',
     'notification.settings.chat.reply.label': 'notificationSettingsChatReplyLabel',
     'notification.settings.schedule.label': 'notificationSettingsScheduleLabel',
     'notification.settings.screen.title': 'notificationSettingsScreenTitle',
@@ -1475,6 +1519,17 @@ abstract class L10nKeys {
   static const navChats = 'nav.chats';
   static const navConfigure = 'nav.configure';
   static const navMonitor = 'nav.monitor';
+  static const newChatCancel = 'new.chat.cancel';
+  static const newChatCreate = 'new.chat.create';
+  static const newChatCwdField = 'new.chat.cwd.field';
+  static const newChatCwdHint = 'new.chat.cwd.hint';
+  static const newChatHarnessField = 'new.chat.harness.field';
+  static const newChatModelField = 'new.chat.model.field';
+  static const newChatNoModelsAvailable = 'new.chat.no.models.available';
+  static const newChatSelectHarness = 'new.chat.select.harness';
+  static const newChatSelectModel = 'new.chat.select.model';
+  static const newChatTitle = 'new.chat.title';
+  static const newChatTitleField = 'new.chat.title.field';
   static const notificationSettingsChatReplyLabel = 'notification.settings.chat.reply.label';
   static const notificationSettingsScheduleLabel = 'notification.settings.schedule.label';
   static const notificationSettingsScreenTitle = 'notification.settings.screen.title';
