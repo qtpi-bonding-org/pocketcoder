@@ -37,28 +37,20 @@ List<HarnessModel> selectableModels({
 /// This is a client-side fast-fail nicety — the server-side check in
 /// buildSessionProfile (backend) is the actual guarantee. Returns null if valid,
 /// or a descriptive error message if validation fails.
-String? validateWorkspacePath(String path) {
-  const workspaceRoot = '/workspace';
-
-  // Empty path is invalid
+String? validateWorkspacePath(String path, {String root = '/workspace'}) {
   if (path.isEmpty) {
     return 'Path cannot be empty';
   }
 
-  // Normalize the path: resolves . and .., removes trailing slashes
+  // Normalize the path: resolves . and .., removes trailing slashes.
   final normalized = p.normalize(path);
 
-  // Check if any ".." segments survived normalization by comparing
-  // the number of ".." in the original with the normalized version
-  if (normalized.contains('..')) {
-    return 'Path cannot escape the workspace root via ".." traversal';
-  }
+  if (normalized == root) return null;
 
-  // Path must be either the workspace root itself or start with workspace root + "/"
-  if (normalized == workspaceRoot || normalized.startsWith('$workspaceRoot/')) {
-    return null; // Valid
-  }
+  // Explicit segment-prefix check (not a bare startsWith(root)) — rejects a
+  // string-prefix-but-not-segment-prefix case like "/workspace-evil".
+  final withSlash = root.endsWith('/') ? root : '$root/';
+  if (normalized.startsWith(withSlash)) return null;
 
-  // Reject relative paths and paths outside /workspace
-  return 'Workspace path must be within $workspaceRoot';
+  return 'Path must be $root or a subdirectory of it';
 }
