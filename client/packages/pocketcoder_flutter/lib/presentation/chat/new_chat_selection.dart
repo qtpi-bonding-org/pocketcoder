@@ -1,3 +1,4 @@
+import 'package:path/path.dart' as p;
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
@@ -24,4 +25,40 @@ List<HarnessModel> selectableModels({
     if (model == null) return false;
     return keyedProviders.contains(model.provider);
   }).toList();
+}
+
+/// Validates that a workspace path is within the /workspace root directory.
+///
+/// Implements the textual, prefix-based check from the design spec (§5.8):
+/// after path normalization, the value must equal the workspace root (/workspace)
+/// or have it as a path-segment prefix (/workspace/...), with no ".." segments
+/// surviving normalization.
+///
+/// This is a client-side fast-fail nicety — the server-side check in
+/// buildSessionProfile (backend) is the actual guarantee. Returns null if valid,
+/// or a descriptive error message if validation fails.
+String? validateWorkspacePath(String path) {
+  const workspaceRoot = '/workspace';
+
+  // Empty path is invalid
+  if (path.isEmpty) {
+    return 'Path cannot be empty';
+  }
+
+  // Normalize the path: resolves . and .., removes trailing slashes
+  final normalized = p.normalize(path);
+
+  // Check if any ".." segments survived normalization by comparing
+  // the number of ".." in the original with the normalized version
+  if (normalized.contains('..')) {
+    return 'Path cannot escape the workspace root via ".." traversal';
+  }
+
+  // Path must be either the workspace root itself or start with workspace root + "/"
+  if (normalized == workspaceRoot || normalized.startsWith('$workspaceRoot/')) {
+    return null; // Valid
+  }
+
+  // Reject relative paths and paths outside /workspace
+  return 'Workspace path must be within $workspaceRoot';
 }
