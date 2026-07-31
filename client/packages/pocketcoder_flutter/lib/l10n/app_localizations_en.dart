@@ -223,6 +223,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatListNoMessages => 'No messages yet';
 
   @override
+  String get newChatTitle => 'New Chat';
+
+  @override
+  String get newChatTitleField => 'Title';
+
+  @override
+  String get newChatHarnessField => 'Harness';
+
+  @override
+  String get newChatModelField => 'Model';
+
+  @override
+  String get newChatCwdField => 'Working directory';
+
+  @override
+  String get newChatCwdHint => '/workspace';
+
+  @override
+  String get newChatCreate => 'CREATE';
+
+  @override
+  String get newChatCancel => 'CANCEL';
+
+  @override
+  String get newChatSelectHarness => 'SELECT HARNESS';
+
+  @override
+  String get newChatSelectModel => 'SELECT MODEL';
+
+  @override
+  String get newChatNoModelsAvailable => 'No models available for this harness';
+
+  @override
   String get chatListArchive => 'ARCHIVE';
 
   @override

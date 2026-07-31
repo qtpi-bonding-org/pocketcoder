@@ -508,6 +508,72 @@ abstract class AppLocalizations {
   /// **'No messages yet'**
   String get chatListNoMessages;
 
+  /// No description provided for @newChatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Chat'**
+  String get newChatTitle;
+
+  /// No description provided for @newChatTitleField.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get newChatTitleField;
+
+  /// No description provided for @newChatHarnessField.
+  ///
+  /// In en, this message translates to:
+  /// **'Harness'**
+  String get newChatHarnessField;
+
+  /// No description provided for @newChatModelField.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get newChatModelField;
+
+  /// No description provided for @newChatCwdField.
+  ///
+  /// In en, this message translates to:
+  /// **'Working directory'**
+  String get newChatCwdField;
+
+  /// No description provided for @newChatCwdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'/workspace'**
+  String get newChatCwdHint;
+
+  /// No description provided for @newChatCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'CREATE'**
+  String get newChatCreate;
+
+  /// No description provided for @newChatCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get newChatCancel;
+
+  /// No description provided for @newChatSelectHarness.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECT HARNESS'**
+  String get newChatSelectHarness;
+
+  /// No description provided for @newChatSelectModel.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECT MODEL'**
+  String get newChatSelectModel;
+
+  /// No description provided for @newChatNoModelsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No models available for this harness'**
+  String get newChatNoModelsAvailable;
+
   /// No description provided for @chatListArchive.
   ///
   /// In en, this message translates to:
