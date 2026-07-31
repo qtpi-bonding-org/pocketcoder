@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, ... }:
 
 {
   # --- IP detection + Caddyfile generation ---
@@ -70,7 +70,22 @@
   systemd.services.caddy = {
     after = [ "detect-public-ip.service" ];
     requires = [ "detect-public-ip.service" ];
-    serviceConfig.ExecStart = lib.mkForce
-      "${pkgs.caddy}/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile";
+    # The upstream caddy.service unit (pulled in via `systemd.packages =
+    # [ cfg.package ]` inside nixpkgs' caddy module) already sets its own
+    # ExecStart, and is Type=notify, not oneshot -- so a plain `lib.mkForce
+    # "cmd"` here renders as a bare `ExecStart=cmd` override drop-in that
+    # gets appended alongside the package's own ExecStart= line rather
+    # than replacing it, giving a Type=notify unit two ExecStart
+    # directives. systemd rejects that outright at load time ("Unit
+    # caddy.service has a bad unit file setting", confirmed via live SSH
+    # diagnostics -- Caddy never even attempted to start). The fix is the
+    # same empty-string-then-value list nixpkgs' own module uses to
+    # override ExecStart on a package-provided unit: the leading "" is
+    # the actual systemd directive to reset prior ExecStart= values
+    # before setting the real one.
+    serviceConfig.ExecStart = [
+      ""
+      "${pkgs.caddy}/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
+    ];
   };
 }
