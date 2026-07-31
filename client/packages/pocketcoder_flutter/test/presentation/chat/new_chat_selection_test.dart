@@ -63,4 +63,66 @@ void main() {
       expect(result, isEmpty);
     });
   });
+
+  group('validateWorkspacePath', () {
+    test('accepts /workspace as a valid root path', () {
+      final error = validateWorkspacePath('/workspace');
+      expect(error, isNull);
+    });
+
+    test('accepts /workspace/ as a valid root path', () {
+      final error = validateWorkspacePath('/workspace/');
+      expect(error, isNull);
+    });
+
+    test('accepts /workspace/subdir as a valid subdirectory', () {
+      final error = validateWorkspacePath('/workspace/subdir');
+      expect(error, isNull);
+    });
+
+    test('accepts /workspace/a/b/c as nested subdirectories', () {
+      final error = validateWorkspacePath('/workspace/a/b/c');
+      expect(error, isNull);
+    });
+
+    test('rejects paths outside /workspace', () {
+      final error = validateWorkspacePath('/etc/passwd');
+      expect(error, isNotNull);
+    });
+
+    test('rejects paths that escape via .. traversal', () {
+      final error = validateWorkspacePath('/workspace/../etc');
+      expect(error, isNotNull);
+    });
+
+    test('rejects /workspace/.. which escapes the workspace root', () {
+      final error = validateWorkspacePath('/workspace/..');
+      expect(error, isNotNull);
+    });
+
+    test('rejects /workspace/subdir/../.. which escapes via multiple segments', () {
+      final error = validateWorkspacePath('/workspace/subdir/../..');
+      expect(error, isNotNull);
+    });
+
+    test('rejects empty path', () {
+      final error = validateWorkspacePath('');
+      expect(error, isNotNull);
+    });
+
+    test('rejects relative paths', () {
+      final error = validateWorkspacePath('workspace/subdir');
+      expect(error, isNotNull);
+    });
+
+    test('normalizes trailing slashes correctly', () {
+      final error1 = validateWorkspacePath('/workspace/subdir/');
+      expect(error1, isNull);
+    });
+
+    test('handles workspace paths with dot segments correctly', () {
+      final error = validateWorkspacePath('/workspace/./subdir');
+      expect(error, isNull);
+    });
+  });
 }
