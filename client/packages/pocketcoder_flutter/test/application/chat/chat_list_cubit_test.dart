@@ -80,8 +80,12 @@ void main() {
       final ctrl = StreamController<List<Chat>>.broadcast();
       addTearDown(() async => ctrl.close());
       when(() => repo.watchChats()).thenAnswer((_) => ctrl.stream);
-      when(() => repo.createChat(title: any(named: 'title')))
-          .thenAnswer((_) async => testChat);
+      when(() => repo.createChat(
+            title: any(named: 'title'),
+            harness: any(named: 'harness'),
+            harnessModelOverride: any(named: 'harnessModelOverride'),
+            workspaceOverride: any(named: 'workspaceOverride'),
+          )).thenAnswer((_) async => testChat);
 
       final cubit = buildCubit();
       cubit.watchChats();
@@ -97,26 +101,65 @@ void main() {
 
   group('ChatListCubit.createAndOpen', () {
     test('creates a chat and sets lastCreatedChatId', () async {
-      when(() => repo.createChat(title: any(named: 'title')))
-          .thenAnswer((_) async => testChat);
+      when(() => repo.createChat(
+            title: any(named: 'title'),
+            harness: any(named: 'harness'),
+            harnessModelOverride: any(named: 'harnessModelOverride'),
+            workspaceOverride: any(named: 'workspaceOverride'),
+          )).thenAnswer((_) async => testChat);
 
       final cubit = buildCubit();
       await cubit.createAndOpen();
 
-      verify(() => repo.createChat(title: null)).called(1);
+      verify(() => repo.createChat(
+            title: null,
+            harness: null,
+            harnessModelOverride: null,
+            workspaceOverride: null,
+          )).called(1);
       expect(cubit.state.lastCreatedChatId, 'chat-1');
       expect(cubit.state.status, UiFlowStatus.success);
     });
 
     test('surfaces repo failure as state error', () async {
-      when(() => repo.createChat(title: any(named: 'title')))
-          .thenThrow(Exception('create failed'));
+      when(() => repo.createChat(
+            title: any(named: 'title'),
+            harness: any(named: 'harness'),
+            harnessModelOverride: any(named: 'harnessModelOverride'),
+            workspaceOverride: any(named: 'workspaceOverride'),
+          )).thenThrow(Exception('create failed'));
 
       final cubit = buildCubit();
       await cubit.createAndOpen();
 
       expect(cubit.state.status, UiFlowStatus.failure);
       expect(cubit.state.lastCreatedChatId, isNull);
+    });
+
+    test('threads harness/harnessModelOverride/workspaceOverride through to repo', () async {
+      when(() => repo.createChat(
+            title: any(named: 'title'),
+            harness: any(named: 'harness'),
+            harnessModelOverride: any(named: 'harnessModelOverride'),
+            workspaceOverride: any(named: 'workspaceOverride'),
+          )).thenAnswer((_) async => testChat);
+
+      final cubit = buildCubit();
+      await cubit.createAndOpen(
+        title: 'Custom Title',
+        harness: 'harness-1',
+        harnessModelOverride: 'model-1',
+        workspaceOverride: ['ws-1', 'ws-2'],
+      );
+
+      verify(() => repo.createChat(
+            title: 'Custom Title',
+            harness: 'harness-1',
+            harnessModelOverride: 'model-1',
+            workspaceOverride: ['ws-1', 'ws-2'],
+          )).called(1);
+      expect(cubit.state.lastCreatedChatId, 'chat-1');
+      expect(cubit.state.status, UiFlowStatus.success);
     });
   });
 
