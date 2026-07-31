@@ -35,13 +35,26 @@ class ChatListRepository implements IChatListRepository {
   }
 
   @override
-  Future<Chat> createChat({String? title}) {
+  Future<Chat> createChat({
+    String? title,
+    String? harness,
+    String? harnessModelOverride,
+    List<String>? workspaceOverride,
+  }) {
     return tryMethod(
       () async {
-        return _dao.save(null, {
+        final data = <String, dynamic>{
           'title': title ?? 'New Chat',
           'user': _auth.currentUserId,
-        });
+        };
+        if (harness != null) data['harness'] = harness;
+        if (harnessModelOverride != null) {
+          data['harness_model_override'] = harnessModelOverride;
+        }
+        if (workspaceOverride != null) {
+          data['workspace_override'] = workspaceOverride;
+        }
+        return _dao.save(null, data);
       },
       ChatListException.new,
       'createChat',
