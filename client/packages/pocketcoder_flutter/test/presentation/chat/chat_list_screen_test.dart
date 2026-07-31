@@ -3,14 +3,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
+import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 
 class MockChatListRepository extends Mock implements IChatListRepository {}
+
+class MockProviderRepository extends Mock implements IProviderRepository {}
 
 Widget _wrap(ChatListCubit cubit) {
   return MaterialApp(
@@ -26,10 +31,26 @@ Widget _wrap(ChatListCubit cubit) {
 
 void main() {
   late MockChatListRepository repo;
+  late MockProviderRepository providerRepo;
 
   setUp(() {
     repo = MockChatListRepository();
     when(() => repo.watchChats()).thenAnswer((_) => const Stream.empty());
+
+    providerRepo = MockProviderRepository();
+    getIt.registerSingleton<IProviderRepository>(providerRepo);
+    when(() => providerRepo.watchHarnesses())
+        .thenAnswer((_) => const Stream.empty());
+    when(() => providerRepo.watchModels())
+        .thenAnswer((_) => const Stream.empty());
+    when(() => providerRepo.watchHarnessModels())
+        .thenAnswer((_) => const Stream.empty());
+    when(() => providerRepo.watchProviderKeys())
+        .thenAnswer((_) => const Stream.empty());
+  });
+
+  tearDown(() {
+    getIt.unregister<IProviderRepository>();
   });
 
   testWidgets('renders title/preview/relative-time for a populated list',
@@ -67,5 +88,25 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => repo.archiveChat('chat-1')).called(1);
+  });
+
+  testWidgets('tapping + NEW CHAT opens NewChatDialog instead of creating immediately',
+      (tester) async {
+    final cubit = ChatListCubit(repo);
+    cubit.emit(cubit.state.copyWith(status: UiFlowStatus.success, chats: const []));
+
+    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('[ + NEW CHAT ]'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NewChatDialog), findsOneWidget);
+    verifyNever(() => repo.createChat(
+          title: any(named: 'title'),
+          harness: any(named: 'harness'),
+          harnessModelOverride: any(named: 'harnessModelOverride'),
+          workspaceOverride: any(named: 'workspaceOverride'),
+        ));
   });
 }
