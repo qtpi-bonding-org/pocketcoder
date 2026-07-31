@@ -90,6 +90,44 @@ export default {
 // Step 2: RevenueCat subscription check with Cloudflare Cache API
 // ---------------------------------------------------------------------------
 
+// V2 keys (sk_...) don't work against the V1 API, so this uses the V2
+// Customer Information endpoints, scoped under env.REVENUECAT_PROJECT_ID.
+// The "premium" identifier configured in the RevenueCat dashboard is a
+// lookup_key, not the internal entitlement id the Customer endpoints key
+// on — resolve it once per isolate and cache it (it practically never
+// changes) rather than re-listing entitlements on every check.
+const PREMIUM_LOOKUP_KEY = 'PocketCoder Pro';
+let entitlementIdCache = { id: null, expiry: 0 };
+
+async function getPremiumEntitlementId(env) {
+	if (entitlementIdCache.id && Date.now() < entitlementIdCache.expiry) {
+		return entitlementIdCache.id;
+	}
+
+	const resp = await fetch(
+		`https://api.revenuecat.com/v2/projects/${env.REVENUECAT_PROJECT_ID}/entitlements`,
+		{
+			headers: {
+				'Authorization': `Bearer ${env.REVENUECAT_SECRET_KEY}`,
+				'Content-Type': 'application/json',
+			},
+		}
+	);
+
+	if (!resp.ok) {
+		throw new Error(`Failed to list RevenueCat entitlements: ${resp.status}`);
+	}
+
+	const data = await resp.json();
+	const entitlement = (data.items || []).find((e) => e.lookup_key === PREMIUM_LOOKUP_KEY);
+	if (!entitlement) {
+		throw new Error(`No RevenueCat entitlement with lookup_key "${PREMIUM_LOOKUP_KEY}"`);
+	}
+
+	entitlementIdCache = { id: entitlement.id, expiry: Date.now() + 3600_000 };
+	return entitlement.id;
+}
+
 async function checkSubscription(userId, env) {
 	const cacheUrl = `https://rc-cache.internal/${userId}`;
 	const cacheKey = new Request(cacheUrl);
@@ -104,8 +142,10 @@ async function checkSubscription(userId, env) {
 
 	// Cache miss — ask RevenueCat
 	try {
+		const premiumEntitlementId = await getPremiumEntitlementId(env);
+
 		const resp = await fetch(
-			`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}`,
+			`https://api.revenuecat.com/v2/projects/${env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}/active_entitlements`,
 			{
 				headers: {
 					'Authorization': `Bearer ${env.REVENUECAT_SECRET_KEY}`,
@@ -114,18 +154,23 @@ async function checkSubscription(userId, env) {
 			}
 		);
 
+		if (resp.status === 404) {
+			// No such customer yet -- definitionally not subscribed.
+			return false;
+		}
+
 		if (!resp.ok) {
 			console.error(`RevenueCat returned ${resp.status} for user ${userId}`);
-			// Fail open on RevenueCat errors — deliver the notification
+			// Fail open on unexpected RevenueCat errors -- deliver the notification
 			return true;
 		}
 
 		const data = await resp.json();
-		const entitlements = data.subscriber?.entitlements || {};
-		const premium = entitlements.premium;
-		const isPremium = !!premium &&
-			!!premium.expires_date &&
-			new Date(premium.expires_date) > new Date();
+		const items = data.items || [];
+		const isPremium = items.some(
+			(e) => e.entitlement_id === premiumEntitlementId &&
+				(e.expires_at == null || e.expires_at > Date.now())
+		);
 
 		// Cache result for 5 minutes at the edge
 		const cacheResp = new Response(JSON.stringify({ isPremium }), {
@@ -276,9 +321,19 @@ async function getAccessToken(env) {
 	return data.access_token;
 }
 
-async function signJWT(header, claims, privateKeyBase64) {
-	// Decode the base64-encoded PEM
-	const pem = atob(privateKeyBase64);
+async function signJWT(header, claims, privateKeyInput) {
+	// Google service-account JSON stores private_key with literal "\n"
+	// (backslash-n) escape sequences, not real newlines -- if that string
+	// was copied straight into the secret store without JSON-unescaping
+	// it first, normalize it back to real newlines here rather than
+	// requiring an exact storage convention.
+	const privateKey = privateKeyInput.replace(/\\n/g, '\n');
+
+	// Accept the secret either as a raw PEM block or as that PEM
+	// base64-encoded one more time (recommended, since it survives
+	// sops/env-var/CLI pipelines as a single line with no embedded
+	// newlines) -- detect which by the PEM's distinctive marker.
+	const pem = privateKey.includes('-----BEGIN') ? privateKey : atob(privateKey);
 
 	// Strip PEM headers and whitespace to get raw DER bytes
 	const pemBody = pem
