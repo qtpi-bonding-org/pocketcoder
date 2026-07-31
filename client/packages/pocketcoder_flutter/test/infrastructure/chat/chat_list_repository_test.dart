@@ -119,6 +119,65 @@ void main() {
         throwsA(isA<ChatListException>()),
       );
     });
+
+    test('includes harness when given', () async {
+      when(() => auth.currentUserId).thenReturn('user-1');
+      when(() => dao.save(any(), any())).thenAnswer(
+        (_) async => const Chat(id: 'chat-1', title: 'My Chat', user: 'user-1'),
+      );
+
+      await repo.createChat(title: 'My Chat', harness: 'harness-1');
+
+      verify(() => dao.save(null, {
+            'title': 'My Chat',
+            'user': 'user-1',
+            'harness': 'harness-1',
+          })).called(1);
+    });
+
+    test('includes harnessModelOverride when given', () async {
+      when(() => auth.currentUserId).thenReturn('user-1');
+      when(() => dao.save(any(), any())).thenAnswer(
+        (_) async => const Chat(id: 'chat-1', title: 'My Chat', user: 'user-1'),
+      );
+
+      await repo.createChat(title: 'My Chat', harnessModelOverride: 'hm-1');
+
+      verify(() => dao.save(null, {
+            'title': 'My Chat',
+            'user': 'user-1',
+            'harness_model_override': 'hm-1',
+          })).called(1);
+    });
+
+    test('includes workspace_override only when non-null, never as an empty stand-in', () async {
+      when(() => auth.currentUserId).thenReturn('user-1');
+      when(() => dao.save(any(), any())).thenAnswer(
+        (_) async => const Chat(id: 'chat-1', title: 'My Chat', user: 'user-1'),
+      );
+
+      await repo.createChat(title: 'My Chat', workspaceOverride: ['/workspace/proj']);
+
+      verify(() => dao.save(null, {
+            'title': 'My Chat',
+            'user': 'user-1',
+            'workspace_override': ['/workspace/proj'],
+          })).called(1);
+    });
+
+    test('omits harness/harnessModelOverride/workspace_override entirely when all null', () async {
+      when(() => auth.currentUserId).thenReturn('user-1');
+      when(() => dao.save(any(), any())).thenAnswer(
+        (_) async => const Chat(id: 'chat-1', title: 'My Chat', user: 'user-1'),
+      );
+
+      await repo.createChat(title: 'My Chat');
+
+      verify(() => dao.save(null, {
+            'title': 'My Chat',
+            'user': 'user-1',
+          })).called(1);
+    });
   });
 
   group('ChatListRepository.archiveChat', () {
