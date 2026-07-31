@@ -43,8 +43,19 @@ class ChatListCubit extends AppCubit<ChatListState> {
         );
   }
 
-  Future<void> createAndOpen({String? title}) => tryOperation(() async {
-        final chat = await _repo.createChat(title: title);
+  Future<void> createAndOpen({
+    String? title,
+    String? harness,
+    String? harnessModelOverride,
+    List<String>? workspaceOverride,
+  }) =>
+      tryOperation(() async {
+        final chat = await _repo.createChat(
+          title: title,
+          harness: harness,
+          harnessModelOverride: harnessModelOverride,
+          workspaceOverride: workspaceOverride,
+        );
         return state.copyWith(
           status: UiFlowStatus.success,
           error: null,
