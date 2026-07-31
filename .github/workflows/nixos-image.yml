@@ -115,3 +115,77 @@ jobs:
         with:
           files: pocketcoder-nixos.img.gz
           generate_release_notes: true
+
+  # Pre-builds the app stack's Docker images and caches them in the same R2
+  # bucket as the NixOS image, so bootstrap.nix can `docker load` a
+  # pre-built tarball instead of compiling PocketBase (Go) and goose (Rust)
+  # from source on every fresh box -- that from-source build was ~2-3 of
+  # the ~12 minutes a real golden-path deploy took (verified via live
+  # timing). Same trigger as the `build` job (manual dispatch or a
+  # `v*-nixos` tag) rather than every push, so this doesn't rebuild/upload
+  # on every dev commit -- deliberately kept coupled to the NixOS image's
+  # own release cadence so the two artifacts never drift out of sync.
+  # bootstrap.nix falls back to building from source if this cache is
+  # missing, stale, or fails to verify, so skipping this job (or landing
+  # code between tags) never breaks a deploy -- it just makes it slower.
+  docker-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build app-stack images
+        run: |
+          # -p pocketcoder pins the image name prefix (pocketcoder-<service>)
+          # to match what bootstrap.nix's `docker compose up -d` produces --
+          # it always runs from /opt/pocketcoder, so its default Compose
+          # project name is "pocketcoder" too. Without this pin, CI's
+          # checkout directory name deciding the project name would be an
+          # implicit coincidence, not a guarantee.
+          docker compose -p pocketcoder build pocketbase goose mcp-gateway
+
+      - name: Save + compress images
+        run: |
+          docker save \
+            pocketcoder-pocketbase:latest \
+            pocketcoder-goose:latest \
+            pocketcoder-mcp-gateway:latest \
+            | gzip > pocketcoder-docker-images.tar.gz
+
+      - name: Compute image metadata
+        id: meta
+        run: |
+          SHA256=$(sha256sum pocketcoder-docker-images.tar.gz | cut -d' ' -f1)
+          SIZE=$(stat -c%s pocketcoder-docker-images.tar.gz)
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "Docker image cache sha256: $SHA256"
+          echo "Compressed size: $SIZE bytes ($((SIZE / 1024 / 1024)) MiB)"
+
+      - name: Upload to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          aws s3 cp pocketcoder-docker-images.tar.gz \
+            s3://pocketcoder-images/pocketcoder-docker-images-${{ github.sha }}.tar.gz \
+            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+
+          aws s3 cp pocketcoder-docker-images.tar.gz \
+            s3://pocketcoder-images/pocketcoder-docker-images-latest.tar.gz \
+            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+
+      - name: Publish manifest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          cat > docker-images-manifest.json <<EOF
+          {
+            "url": "https://images.pocketcoder.org/pocketcoder-docker-images-${{ github.sha }}.tar.gz",
+            "sha256": "${{ steps.meta.outputs.sha256 }}"
+          }
+          EOF
+          aws s3 cp docker-images-manifest.json \
+            s3://pocketcoder-images/docker-images-manifest.json \
+            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com

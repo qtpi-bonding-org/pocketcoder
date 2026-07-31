@@ -23,6 +23,7 @@
       coreutils   # base64, date, cut, chmod, mkdir
       gnused      # sed -i
       gnugrep     # grep
+      gzip        # gunzip -c (Docker image cache)
       config.virtualisation.docker.package
     ];
     script = ''
@@ -135,7 +136,45 @@ EOF
         rm -rf "$SRC_DIR"
       fi
 
+      # --- Try to load pre-built Docker images from R2 cache (optional
+      # speed-up) ---
+      # nixos-image.yml's docker-images job pre-builds and caches
+      # pocketbase/goose/mcp-gateway images in the same R2 bucket as the
+      # NixOS image itself, tagged to match exactly what `docker compose
+      # up -d` below would build on its own (see that job's -p pocketcoder
+      # project-name pin). This is purely best-effort: any failure here
+      # (no manifest published yet, sha256 mismatch, network hiccup) just
+      # falls through to `docker compose up -d` building from source, same
+      # as it always has -- this step must never fail the bootstrap.
+      echo "Checking for cached Docker images..."
+      DOCKER_CACHE_URL="https://images.pocketcoder.org/docker-images-manifest.json"
+      if MANIFEST=$(curl -sf --max-time 15 "$DOCKER_CACHE_URL"); then
+        CACHE_URL=$(echo "$MANIFEST" | jq -r '.url')
+        CACHE_SHA256=$(echo "$MANIFEST" | jq -r '.sha256')
+        CACHE_FILE=$(mktemp)
+        if curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
+          ACTUAL_SHA256=$(sha256sum "$CACHE_FILE" | cut -d' ' -f1)
+          if [ "$ACTUAL_SHA256" = "$CACHE_SHA256" ]; then
+            if gunzip -c "$CACHE_FILE" | docker load; then
+              echo "Loaded cached Docker images (sha256 verified)."
+            else
+              echo "docker load failed on cached images -- falling back to source build."
+            fi
+          else
+            echo "Cached image sha256 mismatch (expected $CACHE_SHA256, got $ACTUAL_SHA256) -- falling back to source build."
+          fi
+        else
+          echo "Failed to download cached Docker images -- falling back to source build."
+        fi
+        rm -f "$CACHE_FILE"
+      else
+        echo "No Docker image cache manifest available -- building from source."
+      fi
+
       # --- Start PocketCoder stack ---
+      # Uses any images loaded above as-is; `docker compose` only builds a
+      # service whose image isn't already present locally, so a
+      # successful cache load above makes this a no-op build.
       echo "Starting PocketCoder stack..."
       cd "$INSTALL_DIR"
       docker compose up -d
