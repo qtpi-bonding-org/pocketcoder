@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -58,7 +59,20 @@ class ChatListView extends StatelessWidget {
           extraHeaderActions: [
             TerminalAction(
               label: context.l10n.chatListNewChat,
-              onTap: () => context.read<ChatListCubit>().createAndOpen(),
+              onTap: () async {
+                final cubit = context.read<ChatListCubit>();
+                final selection = await showDialog<NewChatSelection>(
+                  context: context,
+                  builder: (_) => const NewChatDialog(),
+                );
+                if (selection == null) return;
+                await cubit.createAndOpen(
+                  title: selection.title,
+                  harness: selection.harness,
+                  harnessModelOverride: selection.harnessModelOverride,
+                  workspaceOverride: selection.workspaceOverride,
+                );
+              },
             ),
           ],
           body: state.chats.isEmpty
