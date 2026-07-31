@@ -31,9 +31,8 @@
 
       INSTALL_DIR="/opt/pocketcoder"
       MARKER="$INSTALL_DIR/.initialized"
-      # TODO: point at "main" once the goose stack (this branch) merges.
       POCKETCODER_REPO="https://github.com/qtpi-bonding-org/pocketcoder.git"
-      POCKETCODER_REF="goose-agui-refactor-plan"
+      POCKETCODER_REF="main"
 
       # Skip if already bootstrapped
       if [ -f "$MARKER" ]; then
@@ -127,11 +126,19 @@ EOF
       fi
 
       # --- Clone PocketCoder repo ---
+      # Keeps .git (unlike earlier versions of this script, which stripped
+      # it) so /opt/pocketcoder is a real, working clone with `origin`
+      # already configured -- the update feature (git pull && docker
+      # compose build && docker compose up -d, triggered by the owner from
+      # the app) depends on this being a real git repo already pointed at
+      # the right remote/branch, not something set up by hand later.
+      # Clones to a temp dir first rather than directly into $INSTALL_DIR
+      # because $INSTALL_DIR already has .env written into it above, and
+      # `git clone` refuses to target a non-empty directory.
       echo "Cloning PocketCoder repository ($POCKETCODER_REF)..."
       if [ ! -f "$INSTALL_DIR/docker-compose.yml" ]; then
         SRC_DIR=$(mktemp -d)
         git clone --depth 1 --branch "$POCKETCODER_REF" "$POCKETCODER_REPO" "$SRC_DIR"
-        rm -rf "$SRC_DIR/.git"
         cp -a "$SRC_DIR/." "$INSTALL_DIR/"
         rm -rf "$SRC_DIR"
       fi

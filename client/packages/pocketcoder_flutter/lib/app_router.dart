@@ -299,6 +299,7 @@ class AppRoutes {
   static const String config = '/config';
   static const String deploymentProgress = '/deployment/progress';
   static const String deploymentDetails = '/deployment/details';
+  static const String updateServer = '/deployment/update-server';
 }
 
 class RouteNames {
@@ -340,6 +341,7 @@ class RouteNames {
   static const String config = 'config';
   static const String deploymentProgress = 'deploymentProgress';
   static const String deploymentDetails = 'deploymentDetails';
+  static const String updateServer = 'updateServer';
 }
 
 class AppNavigation {
