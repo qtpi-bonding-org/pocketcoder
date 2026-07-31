@@ -34,24 +34,63 @@ jobs:
       - name: Compress image
         run: gzip -c deploy/nixos/result/nixos.img > pocketcoder-nixos.img.gz
 
+      - name: Compute image metadata
+        id: meta
+        run: |
+          SHA256=$(sha256sum pocketcoder-nixos.img.gz | cut -d' ' -f1)
+          UNCOMPRESSED_BYTES=$(stat -c%s deploy/nixos/result/nixos.img)
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "uncompressed_bytes=$UNCOMPRESSED_BYTES" >> "$GITHUB_OUTPUT"
+          echo "Image sha256: $SHA256"
+          echo "Uncompressed bytes: $UNCOMPRESSED_BYTES"
+
       - name: Check image size
         run: |
           SIZE=$(stat -c%s pocketcoder-nixos.img.gz)
           echo "Compressed image size: $SIZE bytes ($((SIZE / 1024 / 1024)) MiB)"
 
       - name: Upload to R2
-        # ubuntu-latest ships with AWS CLI v2 preinstalled -- no setup step needed.
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
-        # wrangler's `r2 object put` is a single non-multipart PUT capped at
-        # ~300MiB -- this image is ~755MiB. `aws s3 cp` multiparts large
-        # uploads automatically (no extra flags needed) via R2's
-        # S3-compatible API.
         run: |
           aws s3 cp pocketcoder-nixos.img.gz \
+            s3://pocketcoder-images/pocketcoder-nixos-${{ github.sha }}.img.gz \
+            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+
+          # Dual-write to the old mutable "-latest" key too. Nothing else
+          # publishes this key any more (the manifest + versioned key above
+          # are now the primary path), but workers/image-relay's retained
+          # legacy CustomImageProvisioningStrategy / /upload-image path
+          # still reads NIXOS_IMAGE_KEY="pocketcoder-nixos-latest.img.gz"
+          # verbatim -- without this it would silently start failing with
+          # "NixOS image not found in R2" once the old object ages out.
+          aws s3 cp pocketcoder-nixos.img.gz \
             s3://pocketcoder-images/pocketcoder-nixos-latest.img.gz \
+            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+
+      - name: Publish manifest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          # images.pocketcoder.org is a Cloudflare R2 custom domain in
+          # front of the pocketcoder-images bucket (public reads only --
+          # writes still require the scoped R2 credential this job uses).
+          # pocketcoder.org (not .dev) is the real domain already on
+          # Cloudflare's nameservers; .dev was a placeholder used before
+          # this was set up.
+          cat > manifest.json <<EOF
+          {
+            "url": "https://images.pocketcoder.org/pocketcoder-nixos-${{ github.sha }}.img.gz",
+            "sha256": "${{ steps.meta.outputs.sha256 }}",
+            "uncompressedBytes": ${{ steps.meta.outputs.uncompressed_bytes }}
+          }
+          EOF
+          aws s3 cp manifest.json \
+            s3://pocketcoder-images/image-manifest.json \
             --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
       - name: Upload artifact

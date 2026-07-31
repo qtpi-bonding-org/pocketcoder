@@ -237,6 +237,32 @@ services:
       retries: 5
       start_period: 10s
 
+  # 📈 SQLPAGE data init — on_connect.sql ATTACHes goose's and cognee's
+  # SQLite files in `immutable=1` mode (see comment below), which refuses
+  # to open a file that doesn't exist yet. goose only creates sessions.db
+  # after it successfully starts (needs a configured provider key first),
+  # and cognee is an entirely optional `--profile memory` service that may
+  # never run at all -- on a fresh/default deployment, both files are
+  # legitimately absent, which previously made sqlpage's connection pool
+  # fail every single connection attempt ("pool timed out while waiting
+  # for an open connection", verified via local repro). A zero-byte file
+  # is a valid, empty SQLite database, so touching one into existence (only
+  # if missing -- never overwrite real data) is enough for ATTACH to
+  # succeed with zero rows rather than erroring out.
+  sqlpage-data-init:
+    image: busybox
+    container_name: pocketcoder-sqlpage-data-init
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /goose_data/data/sessions /cognee_data/system/databases
+        [ -f /goose_data/data/sessions/sessions.db ] || touch /goose_data/data/sessions/sessions.db
+        [ -f /cognee_data/system/databases/cognee_db ] || touch /cognee_data/system/databases/cognee_db
+    volumes:
+      - goose_data:/goose_data
+      - cognee_data:/cognee_data
+
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
     image: lovasoa/sqlpage:v0.32.0
@@ -278,6 +304,8 @@ services:
     depends_on:
       pocketbase:
         condition: service_healthy
+      sqlpage-data-init:
+        condition: service_completed_successfully
 
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up

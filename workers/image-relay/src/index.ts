@@ -46,8 +46,12 @@ export default {
       return handleUploadImage(request, env);
     }
 
-    if (url.pathname === "/image-status" && request.method === "GET") {
+    if (url.pathname === "/image-status" && request.method === "POST") {
       return handleImageStatus(request, env);
+    }
+
+    if (url.pathname === "/image-manifest" && request.method === "GET") {
+      return handleImageManifest(env);
     }
 
     if (url.pathname === "/health") {
@@ -183,9 +187,8 @@ async function streamImageToLinode(env: Env, uploadUrl: string): Promise<void> {
 }
 
 async function handleImageStatus(request: Request, env: Env): Promise<Response> {
-  const url = new URL(request.url);
-  const token = url.searchParams.get("linodeToken");
-  const label = url.searchParams.get("label");
+  const body = (await request.json()) as StatusRequest;
+  const { linodeToken: token, label } = body;
 
   if (!token || !label) {
     return json({ error: "linodeToken and label are required" }, 400);
@@ -197,6 +200,23 @@ async function handleImageStatus(request: Request, env: Env): Promise<Response> 
   }
 
   return json({ exists: false });
+}
+
+async function handleImageManifest(env: Env): Promise<Response> {
+  // Read-only, deliberately: this manifest is the single point of
+  // indirection every future deployment trusts for which image to dd
+  // onto its root disk. The Worker has no write route for it at all --
+  // CI writes the object directly to R2 with its own scoped credential
+  // (see .github/workflows/nixos-image.yml). An unauthenticated write
+  // route here would be remote code execution on every future
+  // deployment (the sha256 the manifest carries provides no protection
+  // against a malicious manifest, since the attacker supplies that too).
+  const obj = await env.IMAGES.get("image-manifest.json");
+  if (!obj) {
+    return json({ error: "No manifest published yet" }, 404);
+  }
+  const manifest = await obj.json();
+  return json(manifest);
 }
 
 async function findImageByLabel(

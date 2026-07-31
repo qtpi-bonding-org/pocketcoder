@@ -25,10 +25,17 @@
   boot.kernelParams = [ "console=ttyS0,115200n8" ];
   boot.loader.timeout = 10;
 
-  # Root filesystem (Linode provides a single disk)
+  # Root filesystem (Linode provides a single disk). autoResize is
+  # required for boot-time-pull provisioning: dd-ing this image onto a
+  # bigger raw disk does not grow the filesystem on its own -- without
+  # this, every deployment is capped at the image's original ~4.7GB
+  # regardless of the real disk size (docs/superpowers/specs/
+  # 2026-07-29-linode-boot-time-image-provisioning-design.md, "NixOS
+  # image change required").
   fileSystems."/" = {
     device = "/dev/sda";
     fsType = "ext4";
+    autoResize = true;
   };
 
   # --- Networking ---
