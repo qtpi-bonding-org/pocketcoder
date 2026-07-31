@@ -124,5 +124,15 @@ void main() {
       final error = validateWorkspacePath('/workspace/./subdir');
       expect(error, isNull);
     });
+
+    test('rejects a path that is only a prefix-string match, not a real segment prefix', () {
+      // "/workspace-evil" starts with the string "/workspace" but is not
+      // "/workspace" or a "/workspace/..." segment — must be rejected.
+      expect(validateWorkspacePath('/workspace-evil'), isNotNull);
+    });
+
+    test('accepts a custom root when given', () {
+      expect(validateWorkspacePath('/custom/sub', root: '/custom'), isNull);
+    });
   });
 }
