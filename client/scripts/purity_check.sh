@@ -1,41 +1,47 @@
-#!/bin/bash
-# purity_check.sh
-# Verifies that a package and its local dependencies in the workspace are FOSS-pure.
+#!/usr/bin/env bash
+# purity_check.sh <path-relative-to-client>
+#
+# Verifies that the package/app at <path> (e.g. "packages/pocketcoder_flutter"
+# or "apps/pocketcoder_foss") has a FULLY RESOLVED runtime dependency closure
+# built entirely from packages carrying a recognized free/open-source
+# license -- not just a grep of the target's own pubspec.yaml/imports for
+# hardcoded proprietary package names. `dart pub deps --json` returns the
+# WHOLE workspace's graph regardless of cwd (verified -- there is no
+# per-member scoping flag), so it's fetched once here from the workspace
+# root and check_license_purity.py computes the target-scoped closure
+# itself from that graph's dependency edges. See that script for the
+# classification logic and why this replaced the older, shallower check.
+set -euo pipefail
 
-PACKAGE=$1
-if [ -z "$PACKAGE" ]; then
-  echo "Usage: $0 <package_name>"
+TARGET="${1:-}"
+if [ -z "$TARGET" ]; then
+  echo "Usage: $0 <path-relative-to-client, e.g. packages/pocketcoder_flutter>"
   exit 1
 fi
 
-echo "Checking purity for $PACKAGE..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLIENT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+TARGET_DIR="$CLIENT_DIR/$TARGET"
+WORKSPACE_LOCK="$CLIENT_DIR/pubspec.lock"
 
-# 1. Get all local packages that $PACKAGE depends on (using Melos)
-# We can use melos list --graph and parse it, or just use the known structure.
-# For a more robust check, we can use 'melos list --scope=$PACKAGE --include-dependencies --json'
-
-DEPS_JSON=$(melos list --scope=$PACKAGE --include-dependencies --json)
-
-# 2. Check each package in the dependency list
-echo "$DEPS_JSON" | grep -oE '"path":"[^"]+"' | cut -d'"' -f4 | while read -r pkg_path; do
-  echo "  Inspecting $pkg_path..."
-  # Check pubspec.yaml for forbidden strings
-  if grep -riE "firebase|revenuecat|purchases_flutter" "$pkg_path/pubspec.yaml" | grep -v "#" > /dev/null; then
-    echo "  ERROR: Proprietary dependency found in $pkg_path/pubspec.yaml"
-    grep -niE "firebase|revenuecat|purchases_flutter" "$pkg_path/pubspec.yaml" | grep -v "#"
-    exit 1
-  fi
-  
-  # Check lib/ for forbidden imports (excluding comments)
-  if grep -rk "import" "$pkg_path/lib" | grep -riE "firebase|revenuecat|purchases_flutter" > /dev/null; then
-    echo "  ERROR: Proprietary import found in $pkg_path/lib"
-    grep -rk "import" "$pkg_path/lib" | grep -riE "firebase|revenuecat|purchases_flutter"
-    exit 1
-  fi
-done
-
-if [ $? -eq 0 ]; then
-  echo "SUCCESS: $PACKAGE and its local dependencies are FOSS-pure."
-else
+if [ ! -d "$TARGET_DIR" ]; then
+  echo "ERROR: $TARGET_DIR does not exist."
   exit 1
 fi
+if [ ! -f "$WORKSPACE_LOCK" ]; then
+  echo "ERROR: $WORKSPACE_LOCK not found -- run 'flutter pub get' from $CLIENT_DIR first."
+  exit 1
+fi
+
+echo "Checking purity for $TARGET (full resolved dependency closure)..."
+
+DEPS_JSON_FILE="$(mktemp)"
+trap 'rm -f "$DEPS_JSON_FILE"' EXIT
+(cd "$CLIENT_DIR" && dart pub deps --json) > "$DEPS_JSON_FILE"
+
+if [ ! -s "$DEPS_JSON_FILE" ]; then
+  echo "ERROR: 'dart pub deps --json' produced no output."
+  exit 1
+fi
+
+python3 "$SCRIPT_DIR/check_license_purity.py" "$TARGET_DIR" "$DEPS_JSON_FILE" "$WORKSPACE_LOCK"
