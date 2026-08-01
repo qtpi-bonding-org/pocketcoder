@@ -6,8 +6,11 @@ import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:flutter_aeroform/domain/models/instance.dart';
+import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
+import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -39,12 +42,16 @@ class _DetailsView extends StatefulWidget {
 }
 
 class _DetailsViewState extends State<_DetailsView> {
+  InstanceCredentials? _credentials;
+  bool _passwordVisible = false;
+
   @override
   void initState() {
     super.initState();
     // Start periodic status refresh
     final cubit = context.read<DeploymentCubit>();
     cubit.refreshInstanceStatus(widget.instanceId);
+    _loadCredentials();
   }
 
   @override
@@ -52,6 +59,27 @@ class _DetailsViewState extends State<_DetailsView> {
     // Stop periodic refresh when leaving
     context.read<DeploymentCubit>().cancelDeployment();
     super.dispose();
+  }
+
+  Future<void> _loadCredentials() async {
+    final credentials = await GetIt.I<ISecureStorage>()
+        .getInstanceCredentials(widget.instanceId);
+    if (mounted) {
+      setState(() => _credentials = credentials);
+    }
+  }
+
+  void _handleLoginNow(Instance? instance) {
+    final credentials = _credentials;
+    if (instance == null || credentials == null) return;
+    context.pushNamed(
+      RouteNames.onboarding,
+      extra: OnboardingPrefill(
+        url: instance.httpsUrl,
+        email: credentials.adminEmail,
+        password: credentials.adminPassword,
+      ),
+    );
   }
 
   @override
@@ -66,6 +94,11 @@ class _DetailsViewState extends State<_DetailsView> {
         return TerminalScaffold(
           title: 'INSTANCE MANIFEST',
           actions: [
+            if (_credentials != null)
+              TerminalAction(
+                label: 'LOG IN NOW',
+                onTap: () => _handleLoginNow(instance),
+              ),
             TerminalAction(
               label: 'REFRESH',
               onTap: () => cubit.refreshInstanceStatus(widget.instanceId),
@@ -110,6 +143,11 @@ class _DetailsViewState extends State<_DetailsView> {
                       if (instance != null) ...[
                         _buildInfoRow('ADMIN IDENTITY',
                             instance.adminEmail ?? 'N/A', colors),
+                        if (_credentials != null) ...[
+                          VSpace.x1,
+                          _buildPasswordRow(
+                              'ADMIN PASSWORD', _credentials!.adminPassword, colors),
+                        ],
                         VSpace.x1,
                         _buildInfoRow(
                           'PROVISIONED',
@@ -282,6 +320,58 @@ class _DetailsViewState extends State<_DetailsView> {
             fontSize: AppSizes.fontTiny,
             fontWeight: AppFonts.heavy,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordRow(String label, String value, ColorScheme colors) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.bodyFamily,
+            color: colors.onSurface.withValues(alpha: 0.5),
+            fontSize: AppSizes.fontTiny,
+          ),
+        ),
+        Row(
+          children: [
+            Text(
+              _passwordVisible ? value : '•' * value.length,
+              style: TextStyle(
+                fontFamily: AppFonts.bodyFamily,
+                color: colors.onSurface,
+                fontSize: AppSizes.fontTiny,
+                fontWeight: AppFonts.heavy,
+              ),
+            ),
+            HSpace.x1,
+            InkWell(
+              onTap: () =>
+                  setState(() => _passwordVisible = !_passwordVisible),
+              child: Icon(
+                _passwordVisible ? Icons.visibility_off : Icons.visibility,
+                color: colors.primary,
+                size: 14,
+              ),
+            ),
+            HSpace.x1,
+            InkWell(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: value));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$label COPIED TO BUFFER'),
+                    backgroundColor: colors.primary,
+                  ),
+                );
+              },
+              child: Icon(Icons.content_copy, color: colors.primary, size: 14),
+            ),
+          ],
         ),
       ],
     );
