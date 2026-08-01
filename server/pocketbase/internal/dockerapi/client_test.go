@@ -46,3 +46,87 @@ func TestInspectParsesMountsAndNetworks(t *testing.T) {
 		t.Error("expected to find the pocketcoder-agent network by its real prefixed name")
 	}
 }
+
+func TestPullImageCallsImagesCreateEndpoint(t *testing.T) {
+	var gotPath, gotQuery string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotQuery = r.URL.RawQuery
+		w.Write([]byte(`{"status":"Pull complete"}`))
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	if err := c.PullImage(context.Background(), "example.com/harness:1.0"); err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/images/create" {
+		t.Errorf("path = %q, want /images/create", gotPath)
+	}
+	if gotQuery != "fromImage=example.com%2Fharness%3A1.0" {
+		t.Errorf("query = %q", gotQuery)
+	}
+}
+
+func TestPullImageSurfacesNoSuchImage(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"message":"No such image"}`))
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	err := c.PullImage(context.Background(), "nonexistent:latest")
+	if err == nil {
+		t.Fatal("expected an error for a nonexistent image")
+	}
+}
+
+func TestCreateAttachesVolumeAndNetworkInOneCall(t *testing.T) {
+	var body map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json.NewDecoder(r.Body).Decode(&body)
+		json.NewEncoder(w).Encode(map[string]any{"Id": "abc123"})
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	id, err := c.Create(context.Background(), "my-harness", CreateSpec{
+		Image: "example.com/harness:1.0", Cmd: []string{"/adapter"},
+		VolumeName: "myproject_goose_workspace", VolumeDest: "/workspace",
+		NetworkName: "myproject_pocketcoder-agent",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id != "abc123" {
+		t.Errorf("id = %q, want abc123", id)
+	}
+	hostConfig := body["HostConfig"].(map[string]any)
+	binds := hostConfig["Binds"].([]any)
+	if len(binds) != 1 || binds[0] != "myproject_goose_workspace:/workspace" {
+		t.Errorf("Binds = %v, want [myproject_goose_workspace:/workspace]", binds)
+	}
+	netConfig := body["NetworkingConfig"].(map[string]any)
+	endpoints := netConfig["EndpointsConfig"].(map[string]any)
+	if _, ok := endpoints["myproject_pocketcoder-agent"]; !ok {
+		t.Error("expected the network attached via NetworkingConfig in the same create call (NETWORKS=0 blocks a follow-up connect)")
+	}
+	restartPolicy := hostConfig["RestartPolicy"].(map[string]any)
+	if restartPolicy["Name"] != "unless-stopped" {
+		t.Errorf("RestartPolicy.Name = %v, want unless-stopped — every other service in docker-compose.yml restarts automatically; a provisioned harness must too, since nothing else brings it back after a host reboot", restartPolicy["Name"])
+	}
+}
+
+func TestStartCallsContainersStartEndpoint(t *testing.T) {
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	if err := c.Start(context.Background(), "my-harness"); err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/containers/my-harness/start" {
+		t.Errorf("path = %q, want /containers/my-harness/start", gotPath)
+	}
+}
