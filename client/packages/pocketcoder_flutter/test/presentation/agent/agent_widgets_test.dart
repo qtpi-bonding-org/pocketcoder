@@ -216,6 +216,12 @@ void main() {
             ));
         await _settle(tester);
 
+        // ConfigPicker renders collapsed by default (see its own
+        // "Collapsed by default" comment, added in 6eaafb8fa) -- tap the
+        // CONFIG header to expand before asserting on the option rows.
+        await tester.tap(find.text('CONFIG'));
+        await _settle(tester);
+
         expect(find.text('AUTO APPROVE'), findsOneWidget);
         expect(find.text('PRESET'), findsOneWidget);
 
