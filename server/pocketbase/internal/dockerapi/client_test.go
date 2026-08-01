@@ -130,3 +130,47 @@ func TestStartCallsContainersStartEndpoint(t *testing.T) {
 		t.Errorf("path = %q, want /containers/my-harness/start", gotPath)
 	}
 }
+
+func TestEventsStreamsDieAndStartActions(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/events" {
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+		flusher := w.(http.Flusher)
+		w.Write([]byte(`{"Type":"container","Action":"start","Actor":{"Attributes":{"name":"my-harness"}}}` + "\n"))
+		flusher.Flush()
+		w.Write([]byte(`{"Type":"container","Action":"die","Actor":{"Attributes":{"name":"my-harness"}}}` + "\n"))
+		flusher.Flush()
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	ch, err := c.Events(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	e1 := <-ch
+	if e1.Action != "start" || e1.ContainerName != "my-harness" {
+		t.Errorf("first event = %+v, want start/my-harness", e1)
+	}
+	e2 := <-ch
+	if e2.Action != "die" || e2.ContainerName != "my-harness" {
+		t.Errorf("second event = %+v, want die/my-harness", e2)
+	}
+}
+
+func TestListAllReturnsNamesAndState(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode([]map[string]any{
+			{"Names": []string{"/my-harness"}, "State": "running"},
+		})
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	all, err := c.ListAll(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != 1 || all[0].State != "running" {
+		t.Errorf("ListAll = %+v", all)
+	}
+}
