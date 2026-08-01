@@ -310,3 +310,54 @@ func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T)
 		t.Errorf("env = %v, want ADAPTER_SECRET matching the row's minted secret", env)
 	}
 }
+
+// TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace exercises
+// the race two concurrent ProvisionHarnessInstance callers can hit for the
+// same (harness, launch_key): both pass the initial findHarnessInstance
+// check before either row exists, so the loser's own Save fails on the
+// (harness, launch_key) unique index (idx_harness_instances_pair). Real
+// goroutine scheduling can't reliably land both calls in that exact window
+// on demand, so this uses a test-only seam (raceHookForTests) to
+// deterministically simulate a concurrent winner's row landing in the gap
+// between this call's own lookup and its own Save — the same shape of race,
+// without relying on timing. The assertion is the one that matters
+// regardless of how the race is induced: the loser must return the
+// winner's row with a nil error, not a raw save error, and must not
+// provision a second container.
+func TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{
+		"container_image": "example.com/harness:1.0",
+		"launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000},
+	})
+	fake := newFakeDockerClient()
+
+	var winnerID string
+	raceHookForTests = func() {
+		// Clear immediately: this itself recurses into
+		// ProvisionHarnessInstance to play the role of the concurrent
+		// winner, and that inner call must run the real Save path, not
+		// trigger this hook again.
+		raceHookForTests = nil
+		winnerRec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+		if err != nil {
+			t.Fatalf("simulated concurrent winner failed: %v", err)
+		}
+		winnerID = winnerRec.Id
+	}
+	t.Cleanup(func() { raceHookForTests = nil })
+
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	if err != nil {
+		t.Fatalf("expected the loser of the race to return the winner's row, not an error: %v", err)
+	}
+	if winnerID == "" {
+		t.Fatal("simulated concurrent winner never ran")
+	}
+	if rec.Id != winnerID {
+		t.Errorf("row id = %q, want the concurrent winner's row id %q", rec.Id, winnerID)
+	}
+	if fake.createCallCount != 1 {
+		t.Errorf("expected exactly one Create call (only the winner should provision a container), got %d", fake.createCallCount)
+	}
+}

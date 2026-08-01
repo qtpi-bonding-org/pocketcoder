@@ -94,6 +94,14 @@ func findHarnessInstance(app core.App, harnessID, launchKey string) (*core.Recor
 	return nil, nil
 }
 
+// raceHookForTests, when non-nil, is invoked by ProvisionHarnessInstance
+// immediately before it saves its own pending harness_instances row —
+// solely so a test can deterministically simulate another caller's row
+// landing first for the same (harness, launch_key) pair, reproducing the
+// unique-index race the Save-error branch below handles. Always nil outside
+// tests.
+var raceHookForTests func()
+
 // ProvisionHarnessInstance turns a harnesses catalog row into a running,
 // dialable container — idempotent per (harnessID, launchKey), minting a
 // per-instance secret, rendering launch_template.env_template against
@@ -149,7 +157,28 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	rec.Set("secret", secret)
 	rec.Set("status", "pending")
 	rec.Set("managed", true)
+	if raceHookForTests != nil {
+		// Test-only seam: lets a test deterministically land a concurrent
+		// "winner" row for the same (harness, launch_key) in the gap
+		// between this call's own findHarnessInstance lookup (above, which
+		// found nothing) and its own Save below — reproducing the
+		// unique-index race the Save-error branch handles, without relying
+		// on real goroutine scheduling. Always nil in production.
+		raceHookForTests()
+	}
 	if err := app.Save(rec); err != nil {
+		// (harness, launch_key) is unique-indexed (idx_harness_instances_pair),
+		// so a concurrent caller provisioning the same pair can win this race
+		// and land its row first — this Save then fails on the unique-index
+		// violation even though a perfectly usable instance now exists. Re-run
+		// the same lookup findHarnessInstance did up front: if the winner's
+		// row is there now, hand it back instead of surfacing a spurious
+		// error to a caller that just lost a benign race. Only propagate the
+		// raw Save error if the row still isn't there — a genuinely different
+		// failure (e.g. a validation error), not a race loss.
+		if winner, lookupErr := findHarnessInstance(app, harnessID, launchKey); lookupErr == nil && winner != nil {
+			return winner, nil
+		}
 		return nil, fmt.Errorf("save pending harness_instances row: %w", err)
 	}
 	fail := func(err error) (*core.Record, error) {
