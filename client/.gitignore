@@ -27,8 +27,8 @@ ios/Flutter/App.podspec
 ios/Flutter/App.framework
 android/key.properties
 android/local.properties
-android/app/src/main/res/raw/google_services.json
-ios/Runner/GoogleService-Info.plist
+apps/pocketcoder/android/app/google-services.json
+apps/pocketcoder/ios/Runner/GoogleService-Info.plist
 macos/Podfile.lock
 
 # Symbol files
