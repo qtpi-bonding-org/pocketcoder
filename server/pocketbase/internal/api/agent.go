@@ -91,6 +91,20 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		if prompt == "" {
 			return re.BadRequestError("prompt must include a text content block", nil)
 		}
+		// buildSessionProfile is otherwise only invoked from inside
+		// StartPrompt's detached run goroutine (via profileFn below), whose
+		// errors are only ever surfaced as a RUN_ERROR hub event, never as
+		// this handler's HTTP response — StartPrompt returns before that
+		// goroutine runs. Resolve it once synchronously here too so a
+		// harness that's still provisioning can be reported to the caller
+		// as a real HTTP response instead of silently starting (and
+		// immediately failing) a run.
+		if _, perr := buildSessionProfile(app, chatID); perr != nil {
+			if errors.Is(perr, ErrHarnessProvisioning) {
+				return re.JSON(http.StatusAccepted, map[string]string{"status": "provisioning", "message": "Harness is starting; retry shortly"})
+			}
+			return apis.NewApiError(http.StatusInternalServerError, "Unable to resolve session profile", perr)
+		}
 		runID, err := service.StartPrompt(chatID, prompt,
 			func(context.Context) (string, error) { return gooseSessionForChat(app, chatID, re.Auth.Id) },
 			func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
@@ -152,7 +166,16 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 				func(seq int, ev events.Event) error {
 					return writeFlush(re.Response, flusher, seq, ev)
 				}); err != nil {
-				_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("replay failed", events.WithErrorCode("goose_replay_failed")))
+				// Response headers/status are already flushed by the time we
+				// get here (SSE), so a distinct HTTP status is impossible —
+				// the best we can do is a distinct SSE error code so the
+				// client knows to retry shortly instead of treating this as
+				// a hard replay failure.
+				if errors.Is(err, ErrHarnessProvisioning) {
+					_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("harness starting", events.WithErrorCode("harness_provisioning")))
+				} else {
+					_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("replay failed", events.WithErrorCode("goose_replay_failed")))
+				}
 			}
 		}
 		for _, ev := range att.Snapshot {
