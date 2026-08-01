@@ -174,3 +174,35 @@ func TestListAllReturnsNamesAndState(t *testing.T) {
 		t.Errorf("ListAll = %+v", all)
 	}
 }
+
+func TestEventsStopsOnContextCancel(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/events" {
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+		flusher := w.(http.Flusher)
+		w.Write([]byte(`{"Type":"container","Action":"start","Actor":{"Attributes":{"name":"my-harness"}}}` + "\n"))
+		flusher.Flush()
+		// Keep the connection alive; the context cancellation should stop the reading
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithCancel(context.Background())
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	ch, err := c.Events(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Read the first event
+	e1 := <-ch
+	if e1.Action != "start" || e1.ContainerName != "my-harness" {
+		t.Errorf("first event = %+v, want start/my-harness", e1)
+	}
+	// Cancel the context
+	cancel()
+	// The channel should close without hanging
+	_, ok := <-ch
+	if ok {
+		t.Error("expected channel to close after context cancellation")
+	}
+}
