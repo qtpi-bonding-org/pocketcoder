@@ -24,11 +24,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package dockerapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -91,4 +94,95 @@ func (c *Client) Inspect(ctx context.Context, containerName string) (ContainerIn
 		return insp, fmt.Errorf("decode inspect response: %w", err)
 	}
 	return insp, nil
+}
+
+func (c *Client) PullImage(ctx context.Context, image string) error {
+	q := url.Values{"fromImage": {image}}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/images/create?"+q.Encode(), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("pull image %s: %w", image, err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("pull image %s: docker API returned %s: %s", image, resp.Status, string(body))
+	}
+	return nil
+}
+
+type CreateSpec struct {
+	Image                                string
+	Cmd                                  []string
+	Env                                  []string
+	VolumeName, VolumeDest, NetworkName  string
+}
+
+func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (string, error) {
+	payload := map[string]any{
+		"Image": spec.Image,
+		"Cmd":   spec.Cmd,
+		"Env":   spec.Env,
+		"HostConfig": map[string]any{
+			"Binds": []string{spec.VolumeName + ":" + spec.VolumeDest},
+			// Every other service in docker-compose.yml runs
+			// `restart: unless-stopped` — a provisioned harness must match,
+			// or a host reboot (an Aeroform box has no SSH step per
+			// CLAUDE.md, so nobody's there to `docker start` it by hand)
+			// silently strands every chat on that harness with no
+			// automated recovery, unlike Goose. The event watcher (Task 8)
+			// only reflects status reactively; it does not restart
+			// anything, so this is the only thing that brings the
+			// container back after a reboot.
+			"RestartPolicy": map[string]any{"Name": "unless-stopped"},
+		},
+		"NetworkingConfig": map[string]any{
+			"EndpointsConfig": map[string]any{
+				spec.NetworkName: map[string]any{},
+			},
+		},
+	}
+	buf, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/containers/create?name="+url.QueryEscape(name), bytes.NewReader(buf))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("create container %s: %w", name, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("create container %s: docker API returned %s: %s", name, resp.Status, string(body))
+	}
+	var out struct{ Id string }
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return "", fmt.Errorf("decode create response: %w", err)
+	}
+	return out.Id, nil
+}
+
+func (c *Client) Start(ctx context.Context, containerName string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/containers/"+containerName+"/start", nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("start container %s: %w", containerName, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("start container %s: docker API returned %s: %s", containerName, resp.Status, string(body))
+	}
+	return nil
 }
