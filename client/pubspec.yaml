@@ -8,6 +8,7 @@ workspace:
   - packages/pocketcoder_flutter
   - packages/pocketcoder_pro
   - apps/pocketcoder
+  - apps/pocketcoder_foss
 
 dev_dependencies:
   melos: ^7.4.0
@@ -31,6 +32,16 @@ melos:
       run: |
         cd apps/pocketcoder && flutter build apk --debug
       description: Build the PocketCoder Mobile app.
+
+    build_foss:
+      run: |
+        cd apps/pocketcoder_foss && flutter build apk --debug
+      description: Build the PocketCoder FOSS app (F-Droid target).
+
+    run_foss:
+      run: |
+        cd apps/pocketcoder_foss && flutter run
+      description: Run the PocketCoder FOSS app.
 
     run_app:
       run: |
