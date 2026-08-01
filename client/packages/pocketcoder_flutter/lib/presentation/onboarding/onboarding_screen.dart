@@ -17,11 +17,14 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.d
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import '../../app_router.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({super.key, this.prefill});
+
+  final OnboardingPrefill? prefill;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -30,7 +33,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _urlController = TextEditingController(text: 'http://127.0.0.1:8090');
+  final _urlController = TextEditingController();
 
   @override
   void initState() {
@@ -42,7 +45,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       context.read<PocoCubit>().setExpression(PocoExpressions.scanning);
     });
 
-    _restoreSavedUrl();
+    final prefill = widget.prefill;
+    if (prefill != null) {
+      _urlController.text = prefill.url;
+      _emailController.text = prefill.email;
+      _passwordController.text = prefill.password;
+    } else {
+      _urlController.text = 'http://127.0.0.1:8090';
+      _restoreSavedUrl();
+    }
     _checkInitialStatus();
   }
 
