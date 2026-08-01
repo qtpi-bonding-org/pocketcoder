@@ -95,15 +95,21 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		// StartPrompt's detached run goroutine (via profileFn below), whose
 		// errors are only ever surfaced as a RUN_ERROR hub event, never as
 		// this handler's HTTP response — StartPrompt returns before that
-		// goroutine runs. Resolve it once synchronously here too so a
-		// harness that's still provisioning can be reported to the caller
-		// as a real HTTP response instead of silently starting (and
-		// immediately failing) a run.
+		// goroutine runs. Resolve it once synchronously here too, but ONLY
+		// short-circuit for the two new error conditions Task 7 introduces
+		// (still provisioning / failed to start) — every other
+		// buildSessionProfile error (e.g. a workspace-path rejection) must
+		// keep falling through to StartPrompt unchanged, so it continues to
+		// surface asynchronously via the existing RUN_ERROR SSE event exactly
+		// as it did before this task, rather than becoming a new synchronous
+		// 500 for error types this task didn't touch.
 		if _, perr := buildSessionProfile(app, chatID); perr != nil {
 			if errors.Is(perr, ErrHarnessProvisioning) {
 				return re.JSON(http.StatusAccepted, map[string]string{"status": "provisioning", "message": "Harness is starting; retry shortly"})
 			}
-			return apis.NewApiError(http.StatusInternalServerError, "Unable to resolve session profile", perr)
+			if errors.Is(perr, errHarnessFailed) {
+				return apis.NewApiError(http.StatusBadGateway, "Harness failed to start", perr)
+			}
 		}
 		runID, err := service.StartPrompt(chatID, prompt,
 			func(context.Context) (string, error) { return gooseSessionForChat(app, chatID, re.Auth.Id) },
@@ -171,9 +177,12 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 				// the best we can do is a distinct SSE error code so the
 				// client knows to retry shortly instead of treating this as
 				// a hard replay failure.
-				if errors.Is(err, ErrHarnessProvisioning) {
+				switch {
+				case errors.Is(err, ErrHarnessProvisioning):
 					_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("harness starting", events.WithErrorCode("harness_provisioning")))
-				} else {
+				case errors.Is(err, errHarnessFailed):
+					_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("harness failed to start", events.WithErrorCode("harness_failed")))
+				default:
 					_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("replay failed", events.WithErrorCode("goose_replay_failed")))
 				}
 			}
