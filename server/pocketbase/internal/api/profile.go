@@ -19,6 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package api
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -27,7 +29,17 @@ import (
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
 )
+
+// ErrHarnessProvisioning is returned by buildSessionProfile when no
+// harness_instances row exists yet for the resolved (harness, launch_key)
+// pair — provisioning has just been kicked off in the background (§5.1),
+// and the caller should surface "harness starting, try again shortly"
+// rather than blocking on an image pull or proceeding with an empty
+// dial target.
+var ErrHarnessProvisioning = errors.New("harness is being provisioned — retry shortly")
 
 // stdioMcp is the stored acp_mcp_servers JSON shape (spec §5.1). Only stdio is
 // supported today; http/sse/acp entries are skipped + logged.
@@ -189,13 +201,26 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	if instance != nil {
 		p.ResolvedInstanceID = instance.Id
 		p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
+		switch instance.GetString("status") {
+		case "pending":
+			return p, ErrHarnessProvisioning
+		case "error":
+			return p, fmt.Errorf("harness failed to start: %s", instance.GetString("last_error"))
+		}
+	} else {
+		// No harness_instances row yet for this (harness, launch_key) pair —
+		// kick off provisioning (Task 6) in the background rather than
+		// blocking this request on an image pull, and tell the caller to
+		// retry shortly instead of silently proceeding with an empty
+		// dial target.
+		harnessIDCopy, launchKeyCopy := harnessRec.Id, launchKey
+		go func() {
+			if _, perr := hooks.ProvisionHarnessInstance(context.Background(), app, dockerapi.New(), harnessIDCopy, launchKeyCopy); perr != nil {
+				log.Printf("[Profile] background provisioning failed for harness %s: %v", harnessIDCopy, perr)
+			}
+		}()
+		return p, ErrHarnessProvisioning
 	}
-	// Note for the implementer: provisioning a missing instance (§5.1) is
-	// explicitly out of scope for this plan — a missing row here should
-	// surface a clear "harness not provisioned" error, not attempt to
-	// create a container. Wire that error path before shipping; it is not
-	// shown in this draft because provisioning is a separate follow-on
-	// plan per the design spec's §5.1.
 
 	if gs, err := app.FindFirstRecordByFilter("goose_sessions", "chat = {:c}", map[string]any{"c": chatID}); err == nil && gs != nil {
 		p.PinnedInstanceID = gs.GetString("harness_instance")
