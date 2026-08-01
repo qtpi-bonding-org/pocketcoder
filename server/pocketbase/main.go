@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/pocketbase/pocketbase"
@@ -29,6 +30,7 @@ import (
 
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/api"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
@@ -104,6 +106,18 @@ func main() {
 		// E. Scheduler API (per-user CRUD over Goose's schedules, backed by
 		// schedule_owners).
 		api.RegisterSchedulesApi(app, e, coordGetter)
+
+		// F. Harness instance status watcher: subscribes to the Docker
+		// event stream and reconciles harness_instances.status against
+		// real container state for the lifetime of the app. Tied to a
+		// cancel context released on OnTerminate, same lifecycle-bound
+		// goroutine shape as the agent coordinator's shutdown above.
+		watcherCtx, cancelWatcher := context.WithCancel(context.Background())
+		app.OnTerminate().BindFunc(func(_ *core.TerminateEvent) error {
+			cancelWatcher()
+			return nil
+		})
+		go hooks.StartHarnessWatcher(watcherCtx, app, dockerapi.New())
 
 		return e.Next()
 	})
