@@ -80,6 +80,10 @@ void main() {
     await tester.pumpWidget(buildTestable());
     await tester.pump();
 
-    expect(find.text('http://127.0.0.1:8090'), findsOneWidget);
+    // findsWidgets, not findsOneWidget: TerminalTextField's hint text is
+    // coincidentally the same string as the default value, so it's
+    // rendered twice (the field's real EditableText plus its own hint
+    // label) purely because hint == value here, not a real duplicate.
+    expect(find.text('http://127.0.0.1:8090'), findsWidgets);
   });
 }
