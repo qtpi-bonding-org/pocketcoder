@@ -353,3 +353,124 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 		t.Errorf("status = %q, want pending, running, or error (provisioning was at least attempted)", rec.GetString("status"))
 	}
 }
+
+// TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance verifies
+// that a resolved harness_instances row with status="error" is reported via
+// the errHarnessFailed sentinel (not ErrHarnessProvisioning, and not a bare
+// unwrapped error) so callers can distinguish "harness failed to start"
+// from "harness still starting" via errors.Is.
+func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{"cli_id": "failed-harness"})
+	instColl, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		t.Fatal(err)
+	}
+	inst := core.NewRecord(instColl)
+	inst.Set("harness", harness.Id)
+	inst.Set("launch_key", "")
+	inst.Set("container_name", "pocketcoder-failed-"+randomSuffix())
+	inst.Set("secret", "s")
+	inst.Set("status", "error")
+	inst.Set("last_error", "image pull failed")
+	inst.Set("managed", true)
+	if err := app.Save(inst); err != nil {
+		t.Fatal(err)
+	}
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id})
+
+	_, err = buildSessionProfile(app, chat.Id)
+	if !errors.Is(err, errHarnessFailed) {
+		t.Fatalf("expected errHarnessFailed, got %v", err)
+	}
+	if errors.Is(err, ErrHarnessProvisioning) {
+		t.Errorf("errHarnessFailed must not also match ErrHarnessProvisioning: %v", err)
+	}
+}
+
+// TestProfileErrorClassificationForSyncShortCircuit is a table test over
+// the sentinel classification agent.go's HTTP handlers use to decide
+// whether a buildSessionProfile error should short-circuit synchronously
+// (ErrHarnessProvisioning / errHarnessFailed — the two error conditions
+// this task introduces) or fall through unchanged to the pre-existing
+// async RUN_ERROR SSE path (everything else, e.g. a workspace-path
+// rejection that predates this task). Guards against re-widening the
+// pre-check to swallow error types it was never meant to touch.
+func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
+	app := testApp(t)
+
+	// Case 1: no harness_instances row yet -> ErrHarnessProvisioning, which
+	// SHOULD short-circuit synchronously.
+	harness := createTestHarness(t, app, map[string]any{"cli_id": "classify-missing"})
+	provisioningChat := createTestChat(t, app, map[string]any{"harness": harness.Id})
+	{
+		// buildSessionProfile fires the background provisioning goroutine
+		// (Task 6's ProvisionHarnessInstance) as a side effect of resolving
+		// this case's error below. Drain it to a terminal status here,
+		// BEFORE the table runs, the same way
+		// TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing
+		// does — otherwise testApp's t.Cleanup(app.Cleanup) can tear the
+		// app down while that goroutine is still mid-flight, which
+		// panics (observed: nil-pointer dereference in RecordQuery after
+		// Cleanup closes the underlying DB).
+		if _, err := buildSessionProfile(app, provisioningChat.Id); !errors.Is(err, ErrHarnessProvisioning) {
+			t.Fatalf("setup: expected ErrHarnessProvisioning, got %v", err)
+		}
+		deadline := time.Now().Add(2 * time.Second)
+		for time.Now().Before(deadline) {
+			if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h}", map[string]any{"h": harness.Id}); err == nil && r != nil && r.GetString("status") != "pending" {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+
+	// Case 2: harness_instances row with status="error" -> errHarnessFailed,
+	// which SHOULD also short-circuit synchronously.
+	failedHarness := createTestHarness(t, app, map[string]any{"cli_id": "classify-failed"})
+	instColl, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		t.Fatal(err)
+	}
+	inst := core.NewRecord(instColl)
+	inst.Set("harness", failedHarness.Id)
+	inst.Set("launch_key", "")
+	inst.Set("container_name", "pocketcoder-classify-"+randomSuffix())
+	inst.Set("secret", "s")
+	inst.Set("status", "error")
+	inst.Set("last_error", "boom")
+	inst.Set("managed", true)
+	if err := app.Save(inst); err != nil {
+		t.Fatal(err)
+	}
+	failedChat := createTestChat(t, app, map[string]any{"harness": failedHarness.Id})
+
+	// Case 3: a pre-existing, non-provisioning error type (workspace path
+	// outside /workspace) -> should NOT match either sentinel, so it must
+	// keep falling through to StartPrompt / the async SSE path unchanged.
+	rejectedChat := createTestChat(t, app, map[string]any{
+		"workspace_override": []string{"/goose/config"},
+	})
+
+	tests := []struct {
+		name          string
+		chatID        string
+		wantSyncShort bool
+	}{
+		{"missing instance (provisioning)", provisioningChat.Id, true},
+		{"instance status=error (harness failed)", failedChat.Id, true},
+		{"pre-existing workspace rejection", rejectedChat.Id, false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := buildSessionProfile(app, tc.chatID)
+			if err == nil {
+				t.Fatal("expected buildSessionProfile to return an error")
+			}
+			gotSyncShort := errors.Is(err, ErrHarnessProvisioning) || errors.Is(err, errHarnessFailed)
+			if gotSyncShort != tc.wantSyncShort {
+				t.Errorf("err = %v: sync-short-circuit-worthy = %v, want %v", err, gotSyncShort, tc.wantSyncShort)
+			}
+		})
+	}
+}
