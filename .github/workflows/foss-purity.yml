@@ -1,0 +1,58 @@
+name: FOSS Purity Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'client/packages/pocketcoder_flutter/**'
+      - 'client/apps/pocketcoder_foss/**'
+      - 'client/pubspec.lock'
+      - 'client/pubspec.yaml'
+      - 'client/scripts/purity_check.sh'
+      - 'client/scripts/check_license_purity.py'
+  pull_request:
+    paths:
+      - 'client/packages/pocketcoder_flutter/**'
+      - 'client/apps/pocketcoder_foss/**'
+      - 'client/pubspec.lock'
+      - 'client/pubspec.yaml'
+      - 'client/scripts/purity_check.sh'
+      - 'client/scripts/check_license_purity.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: foss-purity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  purity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # client/packages/pocketcoder_flutter depends on several private git
+      # repos under the qtpi-bonding-org org via SSH URLs -- `flutter pub
+      # get` below needs an SSH key with read access to those repos loaded
+      # into the runner's ssh-agent. Add one as a repo secret (e.g.
+      # FLUTTER_DEPS_DEPLOY_KEY) and uncomment this step; until then this
+      # workflow will fail at the "Resolve workspace dependencies" step
+      # with a git auth error, not a purity failure.
+      # - uses: webfactory/ssh-agent@v0.9.0
+      #   with:
+      #     ssh-private-key: ${{ secrets.FLUTTER_DEPS_DEPLOY_KEY }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Resolve workspace dependencies
+        working-directory: client
+        run: flutter pub get
+
+      - name: Run purity check
+        working-directory: client
+        run: |
+          ./scripts/purity_check.sh packages/pocketcoder_flutter
+          ./scripts/purity_check.sh apps/pocketcoder_foss
