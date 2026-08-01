@@ -78,10 +78,12 @@ type dockerProvisioner interface {
 	Start(ctx context.Context, containerName string) error
 }
 
-// findHarnessInstance looks up the harness_instances row for (harness,
+// FindHarnessInstance looks up the harness_instances row for (harness,
 // launchKey) — see ProvisionHarnessInstance for why this can't be a single
-// `harness = {:h} && launch_key = {:k}` filter.
-func findHarnessInstance(app core.App, harnessID, launchKey string) (*core.Record, error) {
+// `harness = {:h} && launch_key = {:k}` filter. Exported so api/profile.go's
+// buildSessionProfile can share this exact lookup instead of maintaining its
+// own copy of the same launch_key-in-Go workaround.
+func FindHarnessInstance(app core.App, harnessID, launchKey string) (*core.Record, error) {
 	candidates, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnessID})
 	if err != nil {
 		return nil, fmt.Errorf("query harness_instances for harness %s: %w", harnessID, err)
@@ -119,7 +121,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// the (harness, launch_key) unique index and erroring out. Query by
 	// harness alone, then match launch_key in Go, exactly like
 	// buildSessionProfile already does.
-	existing, err := findHarnessInstance(app, harnessID, launchKey)
+	existing, err := FindHarnessInstance(app, harnessID, launchKey)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +162,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	if raceHookForTests != nil {
 		// Test-only seam: lets a test deterministically land a concurrent
 		// "winner" row for the same (harness, launch_key) in the gap
-		// between this call's own findHarnessInstance lookup (above, which
+		// between this call's own FindHarnessInstance lookup (above, which
 		// found nothing) and its own Save below — reproducing the
 		// unique-index race the Save-error branch handles, without relying
 		// on real goroutine scheduling. Always nil in production.
@@ -171,12 +173,12 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		// so a concurrent caller provisioning the same pair can win this race
 		// and land its row first — this Save then fails on the unique-index
 		// violation even though a perfectly usable instance now exists. Re-run
-		// the same lookup findHarnessInstance did up front: if the winner's
+		// the same lookup FindHarnessInstance did up front: if the winner's
 		// row is there now, hand it back instead of surfacing a spurious
 		// error to a caller that just lost a benign race. Only propagate the
 		// raw Save error if the row still isn't there — a genuinely different
 		// failure (e.g. a validation error), not a race loss.
-		if winner, lookupErr := findHarnessInstance(app, harnessID, launchKey); lookupErr == nil && winner != nil {
+		if winner, lookupErr := FindHarnessInstance(app, harnessID, launchKey); lookupErr == nil && winner != nil {
 			return winner, nil
 		}
 		return nil, fmt.Errorf("save pending harness_instances row: %w", err)
@@ -227,7 +229,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// URL below, not by the Docker create/start calls themselves, and a
 	// pending row with no port must still count as "one Create call" for
 	// idempotency purposes on a subsequent ProvisionHarnessInstance call —
-	// findHarnessInstance matches this error row and returns it rather than
+	// FindHarnessInstance matches this error row and returns it rather than
 	// attempting a second Create.
 	if launch.Port == 0 {
 		return fail(fmt.Errorf("harness %s's launch_template has no port", harnessID))
