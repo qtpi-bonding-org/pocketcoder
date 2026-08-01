@@ -227,7 +227,7 @@ git commit -m "feat(dockerapi): add minimal Docker Engine API client with Inspec
 
 **Interfaces:**
 - Consumes: `Client` (Task 1).
-- Produces: `func (c *Client) PullImage(ctx context.Context, image string) error`; `type CreateSpec struct{ Image string; Cmd []string; Env []string; VolumeName, VolumeDest, NetworkName string; ExposedPort string }`; `func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (containerID string, err error)`; `func (c *Client) Start(ctx context.Context, containerName string) error`. Consumed by Task 4 (`ProvisionHarnessInstance`).
+- Produces: `func (c *Client) PullImage(ctx context.Context, image string) error`; `type CreateSpec struct{ Image string; Cmd []string; Env []string; VolumeName, VolumeDest, NetworkName string }`; `func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (containerID string, err error)` — sets `HostConfig.RestartPolicy: unless-stopped`, matching every other service in `docker-compose.yml`; `func (c *Client) Start(ctx context.Context, containerName string) error`. Consumed by Task 4 (`ProvisionHarnessInstance`).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -294,6 +294,10 @@ func TestCreateAttachesVolumeAndNetworkInOneCall(t *testing.T) {
 	if _, ok := endpoints["myproject_pocketcoder-agent"]; !ok {
 		t.Error("expected the network attached via NetworkingConfig in the same create call (NETWORKS=0 blocks a follow-up connect)")
 	}
+	restartPolicy := hostConfig["RestartPolicy"].(map[string]any)
+	if restartPolicy["Name"] != "unless-stopped" {
+		t.Errorf("RestartPolicy.Name = %v, want unless-stopped — every other service in docker-compose.yml restarts automatically; a provisioned harness must too, since nothing else brings it back after a host reboot", restartPolicy["Name"])
+	}
 }
 
 func TestStartCallsContainersStartEndpoint(t *testing.T) {
@@ -346,11 +350,10 @@ func (c *Client) PullImage(ctx context.Context, image string) error {
 }
 
 type CreateSpec struct {
-	Image                                     string
-	Cmd                                        []string
-	Env                                        []string
-	VolumeName, VolumeDest, NetworkName        string
-	ExposedPort                                string
+	Image                                string
+	Cmd                                  []string
+	Env                                  []string
+	VolumeName, VolumeDest, NetworkName  string
 }
 
 func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (string, error) {
@@ -360,6 +363,16 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 		"Env":   spec.Env,
 		"HostConfig": map[string]any{
 			"Binds": []string{spec.VolumeName + ":" + spec.VolumeDest},
+			// Every other service in docker-compose.yml runs
+			// `restart: unless-stopped` — a provisioned harness must match,
+			// or a host reboot (an Aeroform box has no SSH step per
+			// CLAUDE.md, so nobody's there to `docker start` it by hand)
+			// silently strands every chat on that harness with no
+			// automated recovery, unlike Goose. The event watcher (Task 8)
+			// only reflects status reactively; it does not restart
+			// anything, so this is the only thing that brings the
+			// container back after a reboot.
+			"RestartPolicy": map[string]any{"Name": "unless-stopped"},
 		},
 		"NetworkingConfig": map[string]any{
 			"EndpointsConfig": map[string]any{
@@ -785,6 +798,11 @@ func TestProvisionHarnessInstanceCreatesAndStartsContainer(t *testing.T) {
 }
 
 func TestProvisionHarnessInstanceIsIdempotent(t *testing.T) {
+	// Deliberately exercises launchKey = "" (the supports_live_config = true
+	// case, i.e. Goose-shaped harnesses) — this is the exact case a naive
+	// `"harness = {:h} && launch_key = {:k}"` filter fails to match on the
+	// second call, per the finding above. A regression here means the fix
+	// didn't take.
 	app := testApp(t)
 	harness := createTestHarness(t, app, map[string]any{"container_image": "x", "launch_template": map[string]any{"cmd": []string{"/adapter"}}})
 	fake := newFakeDockerClient()
@@ -902,10 +920,40 @@ type dockerProvisioner interface {
 	Start(ctx context.Context, containerName string) error
 }
 
+// findHarnessInstance looks up the harness_instances row for (harness,
+// launchKey) — see ProvisionHarnessInstance for why this can't be a single
+// `harness = {:h} && launch_key = {:k}` filter.
+func findHarnessInstance(app core.App, harnessID, launchKey string) (*core.Record, error) {
+	candidates, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnessID})
+	if err != nil {
+		return nil, fmt.Errorf("query harness_instances for harness %s: %w", harnessID, err)
+	}
+	for _, rec := range candidates {
+		if rec.GetString("launch_key") == launchKey {
+			return rec, nil
+		}
+	}
+	return nil, nil
+}
+
 func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerProvisioner, harnessID, launchKey string) (*core.Record, error) {
-	existing, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h} && launch_key = {:k}",
-		map[string]any{"h": harnessID, "k": launchKey})
-	if err == nil && existing != nil {
+	// NOT `"harness = {:h} && launch_key = {:k}"` — confirmed against the
+	// already-landed api/profile.go (buildSessionProfile queries
+	// harness_instances the same way, see its own in-code comment):
+	// PocketBase's filter evaluator does not reliably match an empty-string
+	// `launch_key` inside an `&&` expression, and launch_key = "" is the
+	// COMMON case (every supports_live_config = true harness). A direct
+	// `&&` filter here would fail to find the existing shared instance on
+	// every call after the first, and each failed lookup would attempt to
+	// mint and Create a brand-new container — colliding with the first on
+	// the (harness, launch_key) unique index and erroring out. Query by
+	// harness alone, then match launch_key in Go, exactly like
+	// buildSessionProfile already does.
+	existing, err := findHarnessInstance(app, harnessID, launchKey)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
 		return existing, nil
 	}
 
@@ -927,6 +975,14 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	containerName := "pocketcoder-harness-" + uuid.NewString()[:8]
 	rec.Set("harness", harnessID)
 	rec.Set("launch_key", launchKey)
+	if launchKey != "" {
+		// launch_key IS the harness_models id for a supports_live_config =
+		// false harness (§4.3) — harness_model is otherwise only a
+		// denormalized `expand` convenience, but it's free to set correctly
+		// here and leaving it blank would silently diverge from what the
+		// schema documents the field for.
+		rec.Set("harness_model", launchKey)
+	}
 	rec.Set("container_name", containerName)
 	rec.Set("secret", secret)
 	rec.Set("status", "pending")
@@ -1106,36 +1162,71 @@ Expected: FAIL — `ErrHarnessProvisioning` undefined, or the missing-instance p
 
 - [ ] **Step 3: Wire the missing-instance branch**
 
+**This step's snippet was drafted against a placeholder that Plan 1 actually landed differently** — `profile.go`'s real `buildSessionProfile` (Plan 1 was implemented concurrently with this plan being written) already resolves `harnessRec`/`launchKey` and queries `harness_instances` itself, using the `findHarnessInstance`-style workaround (query by harness alone, match `launch_key` in Go — Task 6 above hit the identical PocketBase filter limitation and needed the same fix) rather than a direct `&&` filter. Before starting, re-read the actual current block in `profile.go` (search for `// Note for the implementer` — that comment marks exactly where this task's code goes) and confirm it still matches the shape below; if it's drifted further, follow the real file, not this snippet.
+
+As landed, the relevant block reads:
+
+```go
+	launchKey := ""
+	if !p.SupportsLiveConfig && hmID != "" {
+		launchKey = hmID
+	}
+
+	// Query harness_instances by harness ID. Due to PocketBase filter limitations with
+	// empty strings in && expressions, we query by harness alone and verify launch_key in code.
+	instances, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnessRec.Id})
+	var instance *core.Record
+	if err == nil && len(instances) > 0 {
+		// Find the instance matching our launch_key
+		for _, inst := range instances {
+			if inst.GetString("launch_key") == launchKey {
+				instance = inst
+				break
+			}
+		}
+	}
+	if instance != nil {
+		p.ResolvedInstanceID = instance.Id
+		p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
+	}
+	// Note for the implementer: provisioning a missing instance (§5.1) is
+	// explicitly out of scope for this plan — a missing row here should
+	// surface a clear "harness not provisioned" error, not attempt to
+	// create a container. Wire that error path before shipping; it is not
+	// shown in this draft because provisioning is a separate follow-on
+	// plan per the design spec's §5.1.
+```
+
 In `profile.go`, add near the top:
 
 ```go
 var ErrHarnessProvisioning = errors.New("harness is being provisioned — retry shortly")
 ```
 
-Replace the comment-only placeholder from Plan 1's Task 9 (the block starting `instance, err := app.FindFirstRecordByFilter("harness_instances", ...)`) with:
+Replace the `if instance != nil { ... }` block and the `// Note for the implementer` comment (leave the `instances`/`instance` lookup above it untouched — it already does the right query) with:
 
 ```go
-instance, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h} && launch_key = {:k}",
-	map[string]any{"h": harnessRec.Id, "k": launchKey})
-if err == nil && instance != nil {
-	p.ResolvedInstanceID = instance.Id
-	p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
-	if instance.GetString("status") == "pending" {
+	if instance != nil {
+		p.ResolvedInstanceID = instance.Id
+		p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
+		switch instance.GetString("status") {
+		case "pending":
+			return p, ErrHarnessProvisioning
+		case "error":
+			return p, fmt.Errorf("harness failed to start: %s", instance.GetString("last_error"))
+		}
+	} else {
+		harnessIDCopy, launchKeyCopy := harnessRec.Id, launchKey
+		go func() {
+			if _, perr := hooks.ProvisionHarnessInstance(context.Background(), app, dockerapi.New(), harnessIDCopy, launchKeyCopy); perr != nil {
+				log.Printf("[Profile] background provisioning failed for harness %s: %v", harnessIDCopy, perr)
+			}
+		}()
 		return p, ErrHarnessProvisioning
 	}
-	if instance.GetString("status") == "error" {
-		return p, fmt.Errorf("harness failed to start: %s", instance.GetString("last_error"))
-	}
-} else {
-	harnessID, launchKeyCopy := harnessRec.Id, launchKey
-	go func() {
-		if _, perr := hooks.ProvisionHarnessInstance(context.Background(), app, dockerapi.New(), harnessID, launchKeyCopy); perr != nil {
-			log.Printf("[Profile] background provisioning failed for harness %s: %v", harnessID, perr)
-		}
-	}()
-	return p, ErrHarnessProvisioning
-}
 ```
+
+(The seeded default-Goose `harness_instances` row — Plan 1's Task 4 — always has `status = "running"` and `managed = false`, so this branch is never reached for the compose-managed default; it only fires for a genuinely new harness catalog row with no instance yet, which is the case this task exists for.)
 
 Update the HTTP handlers in `api/agent.go` that call `buildSessionProfile` (both the `session/prompt` route and the `stream` route's cold-replay branch) to check `errors.Is(err, ErrHarnessProvisioning)` and return a `202`-style "still starting" response instead of the generic `500` they'd otherwise return.
 
@@ -1752,6 +1843,14 @@ git commit -m "docs: add example Dockerfile for a stdio-native harness bundling 
 ## Self-Review
 
 **Revised after independent review (Sonnet).** That review found and this revision fixed: a nil-pointer crash in Task 1's own test (missing `http: srv.Client()`); a missing Go module for `server/harness-adapter` (Task 9 now has an explicit Step 0); a missing `"context"` import; a real deadlock/leak in `bridgeConnection`'s shutdown path (an oversized line, or any other early exit by one bridging goroutine, used to leave the subprocess and OS pipe running forever with nothing tearing it down — fixed with symmetric, idempotent teardown that kills the subprocess and closes the connection from whichever side exits first, plus a regression test); an oversized preallocated buffer unrelated to the actual size-limit fix; a flaky test asserting immediately after firing a background goroutine (now polls); a missing port-validation check; and — the most significant gap — `ProvisionHarnessInstance` never actually rendering `launch_template.env_template` against `provider_keys` or minting the per-instance `secret` the bundled adapter is supposed to enforce, meaning every harness this plan provisions would have gotten no provider API key and no auth at all. All of these are now fixed in Tasks 1, 6, and 9 above.
+
+**Revised again (2026-07-31) after re-grounding against the actual code Plan 1 landed** — this plan was originally drafted concurrently with Plan 1's implementation, and Plan 1 has since merged; four real drift/bug findings from that re-check, all fixed above:
+
+- **Task 6's idempotency lookup used a filter shape PocketBase can't reliably evaluate.** `"harness = {:h} && launch_key = {:k}"` does not consistently match an empty-string `launch_key` inside an `&&` expression — and `launch_key = ""` is the *common* case (every `supports_live_config = true` harness, i.e. anything Goose-shaped). The already-landed `buildSessionProfile` hit this exact limitation and worked around it (query by `harness` alone, match `launch_key` in Go); `ProvisionHarnessInstance` needed the identical fix (`findHarnessInstance`, above) or every call after the first for a shared instance would have failed to find it, attempted to mint and `Create` a second container, and errored out against the `(harness, launch_key)` unique index instead of reusing the existing one. `TestProvisionHarnessInstanceIsIdempotent` already exercises `launchKey = ""`, so it would have caught this once actually run — flagged here because a plan-review pass should catch it before that test is ever executed, not after.
+- **No `RestartPolicy` on provisioned containers.** Every other service in `docker-compose.yml` runs `restart: unless-stopped`; the original `Create()` didn't set one, so a VPS reboot (no SSH step on an Aeroform box — CLAUDE.md) would silently strand every chat on a provisioned harness with nothing bringing it back, unlike Goose. Fixed in Task 2's `Create`.
+- **`ProvisionHarnessInstance` never set `harness_instances.harness_model`**, though the schema (Plan 1, §4.3) documents it as a denormalized `expand` convenience derived from exactly the `launch_key` this function already has on hand. Trivial, now set when `launchKey != ""`.
+- **Task 7's code snippet was drafted against a placeholder Plan 1 didn't land verbatim** — the real `buildSessionProfile` already does the harness/launch_key resolution and query itself (using the same filter workaround as the point above), leaving only a comment marking where provisioning should hook in, not the bare `instance, err := app.FindFirstRecordByFilter(...)` block this task's Step 3 assumed it would be replacing. Step 3 now shows the actual landed code and slots the fix into the real shape.
+- **`CreateSpec.ExposedPort` was declared and never used** anywhere in `Create()` — every harness is reached over the private `pocketcoder-agent` bridge network by container name, matching Goose's own no-published-ports pattern, so there was never a reason for it. Removed rather than left as dead code that implies a capability that doesn't exist.
 
 **One gap left as an accepted, stated limitation, not fixed**: a `harness_instances` row stuck in `status = "error"` (e.g. a transient pull failure) has no automated retry — `ProvisionHarnessInstance`'s idempotency check treats it identically to a healthy row, so `buildSessionProfile` (Task 7) returns the same hard error for that harness on every future chat until an admin manually deletes the row. The design spec's §5.1.1 only requires the failure to be *surfaced*, not retried, so this isn't a spec-coverage gap — but it's a real operational rough edge worth flagging explicitly rather than leaving implicit, and a natural candidate for a small follow-up (e.g. treat an `error` row older than N minutes as eligible for re-provisioning) once a real non-Goose harness is in use.
 
