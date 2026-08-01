@@ -54,8 +54,8 @@ melos:
       description: Run the app in Chrome Incognito mode.
 
     check:purity:
-      run: ./scripts/purity_check.sh pocketcoder_flutter
-      description: Verify that the core package has no proprietary dependencies.
+      run: ./scripts/purity_check.sh packages/pocketcoder_flutter && ./scripts/purity_check.sh apps/pocketcoder_foss
+      description: Verify the FOSS core package and the FOSS app target have no proprietary/unlicensed dependencies.
     
     test:
       run: melos exec -- "flutter test"
