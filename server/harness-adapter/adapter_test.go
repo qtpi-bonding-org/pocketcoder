@@ -1,0 +1,146 @@
+package main
+
+import (
+	"context"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/coder/websocket"
+)
+
+// fakeEchoScript is used as the "harness binary" under test — a tiny shell
+// script that echoes each stdin line back to stdout, standing in for a real
+// ACP agent's stdio behavior for framing-correctness purposes only (this
+// test is about the bridge, not about ACP semantics).
+func TestAdapterRoundTripsOneMessagePerFrame(t *testing.T) {
+	srv := httptest.NewServer(newAdapterHandler(adapterConfig{
+		Cmd: []string{"cat"}, Secret: "s3cr3t", MaxLineBytes: 64 << 20,
+	}))
+	defer srv.Close()
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp?token=s3cr3t"
+	conn, _, err := websocket.Dial(context.Background(), wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	conn.SetReadLimit(64 << 20)
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	msg := `{"jsonrpc":"2.0","method":"ping","id":1}`
+	if err := conn.Write(context.Background(), websocket.MessageText, []byte(msg)); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	_, data, err := conn.Read(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != msg {
+		t.Errorf("got %q, want %q echoed back unmodified", string(data), msg)
+	}
+}
+
+func TestAdapterRejectsWrongToken(t *testing.T) {
+	srv := httptest.NewServer(newAdapterHandler(adapterConfig{Cmd: []string{"cat"}, Secret: "s3cr3t", MaxLineBytes: 64 << 20}))
+	defer srv.Close()
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp?token=wrong"
+	_, _, err := websocket.Dial(context.Background(), wsURL, nil)
+	if err == nil {
+		t.Fatal("expected the upgrade to be rejected with the wrong token")
+	}
+}
+
+func TestAdapterRoundTripsMessageAboveDefaultScannerLimit(t *testing.T) {
+	// 200KB message — well above bufio.Scanner's 64KB default token size,
+	// well within the adapter's required raised limit. This is the
+	// regression test for the "two limits, not one" finding.
+	srv := httptest.NewServer(newAdapterHandler(adapterConfig{Cmd: []string{"cat"}, Secret: "s3cr3t", MaxLineBytes: 64 << 20}))
+	defer srv.Close()
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp?token=s3cr3t"
+	conn, _, err := websocket.Dial(context.Background(), wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	conn.SetReadLimit(64 << 20)
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	big := `{"jsonrpc":"2.0","method":"ping","params":{"blob":"` + strings.Repeat("x", 200*1024) + `"},"id":1}`
+	if err := conn.Write(context.Background(), websocket.MessageText, []byte(big)); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	_, data, err := conn.Read(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data) != len(big) {
+		t.Errorf("got %d bytes back, want %d — message truncated somewhere in the bridge", len(data), len(big))
+	}
+}
+
+func TestAdapterSpawnsFreshSubprocessPerConnection(t *testing.T) {
+	// Two connections against the same adapter must each get their own
+	// subprocess — asserted indirectly here via a script that increments a
+	// counter file on each new invocation; a shared/reused process would
+	// only increment once.
+	srv := httptest.NewServer(newAdapterHandler(adapterConfig{Cmd: []string{"sh", "-c", "echo spawned; cat"}, Secret: "", MaxLineBytes: 64 << 20}))
+	defer srv.Close()
+	dialOne := func() string {
+		wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp"
+		conn, _, err := websocket.Dial(context.Background(), wsURL, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer conn.Close(websocket.StatusNormalClosure, "")
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_, data, err := conn.Read(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	first := dialOne()
+	second := dialOne()
+	if first != "spawned" || second != "spawned" {
+		t.Errorf("expected both connections to see a freshly-spawned process announce itself, got %q and %q", first, second)
+	}
+}
+
+func TestAdapterDoesNotHangOnOversizedMessage(t *testing.T) {
+	// Regression test for the teardown bug: an oversized line used to leave
+	// the subprocess (and its still-open stdout pipe) running forever with
+	// nothing draining it, since only the failing goroutine exited and
+	// nothing killed the process or closed the connection. bridgeConnection
+	// must now return promptly regardless.
+	srv := httptest.NewServer(newAdapterHandler(adapterConfig{Cmd: []string{"cat"}, Secret: "", MaxLineBytes: 1024}))
+	defer srv.Close()
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp"
+	conn, _, err := websocket.Dial(context.Background(), wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	oversized := strings.Repeat("x", 4096) // well above the 1024-byte MaxLineBytes configured above
+	if err := conn.Write(context.Background(), websocket.MessageText, []byte(oversized)); err != nil {
+		t.Fatal(err)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		conn.Read(ctx) // expected to fail/close once teardown runs, not hang
+		close(done)
+	}()
+	select {
+	case <-done:
+		// expected: the connection closes promptly instead of hanging
+	case <-time.After(2 * time.Second):
+		t.Fatal("bridge did not tear down within 2s of an oversized message — the deadlock/leak regression")
+	}
+}
