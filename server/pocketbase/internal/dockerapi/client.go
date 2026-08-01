@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package dockerapi
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -115,10 +116,10 @@ func (c *Client) PullImage(ctx context.Context, image string) error {
 }
 
 type CreateSpec struct {
-	Image                                string
-	Cmd                                  []string
-	Env                                  []string
-	VolumeName, VolumeDest, NetworkName  string
+	Image                               string
+	Cmd                                 []string
+	Env                                 []string
+	VolumeName, VolumeDest, NetworkName string
 }
 
 func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (string, error) {
@@ -185,4 +186,67 @@ func (c *Client) Start(ctx context.Context, containerName string) error {
 		return fmt.Errorf("start container %s: docker API returned %s: %s", containerName, resp.Status, string(body))
 	}
 	return nil
+}
+
+type Event struct {
+	Type, Action, ContainerName string
+}
+
+func (c *Client) Events(ctx context.Context) (<-chan Event, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/events", nil)
+	if err != nil {
+		return nil, err
+	}
+	// Long-lived streaming GET — no client-side timeout for this one call.
+	streamClient := &http.Client{Transport: c.http.Transport}
+	resp, err := streamClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("subscribe to docker events: %w", err)
+	}
+	ch := make(chan Event)
+	go func() {
+		defer resp.Body.Close()
+		defer close(ch)
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			var raw struct {
+				Type   string
+				Action string
+				Actor  struct {
+					Attributes map[string]string
+				}
+			}
+			if err := json.Unmarshal(scanner.Bytes(), &raw); err != nil {
+				continue
+			}
+			select {
+			case ch <- Event{Type: raw.Type, Action: raw.Action, ContainerName: raw.Actor.Attributes["name"]}:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	return ch, nil
+}
+
+type ContainerSummary struct {
+	Names []string
+	State string
+}
+
+func (c *Client) ListAll(ctx context.Context) ([]ContainerSummary, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/containers/json?all=1", nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("list containers: %w", err)
+	}
+	defer resp.Body.Close()
+	var out []ContainerSummary
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, fmt.Errorf("decode list response: %w", err)
+	}
+	return out, nil
 }
