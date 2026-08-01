@@ -1,0 +1,39 @@
+name: pocketcoder_foss
+resolution: workspace
+description: "PocketCoder — sovereign AI coding assistant (FOSS build)"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  pocketcoder_flutter:
+    path: ../../packages/pocketcoder_flutter
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: "../../../assets/logo-1024.png"
+    background_color: "#000000"
+    theme_color: "#00b82a"
+  image_path: "../../../assets/logo-1024.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "../../../assets/logo-1024.png"
+  remove_alpha_ios: true
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
