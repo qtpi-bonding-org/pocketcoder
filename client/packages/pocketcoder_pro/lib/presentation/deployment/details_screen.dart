@@ -44,20 +44,24 @@ class _DetailsView extends StatefulWidget {
 class _DetailsViewState extends State<_DetailsView> {
   InstanceCredentials? _credentials;
   bool _passwordVisible = false;
+  // Captured in initState rather than re-read in dispose() -- by the time
+  // dispose() runs the element tree may already be deactivated, and
+  // context.read() on a deactivated element throws.
+  late final DeploymentCubit _cubit;
 
   @override
   void initState() {
     super.initState();
+    _cubit = context.read<DeploymentCubit>();
     // Start periodic status refresh
-    final cubit = context.read<DeploymentCubit>();
-    cubit.refreshInstanceStatus(widget.instanceId);
+    _cubit.refreshInstanceStatus(widget.instanceId);
     _loadCredentials();
   }
 
   @override
   void dispose() {
     // Stop periodic refresh when leaving
-    context.read<DeploymentCubit>().cancelDeployment();
+    _cubit.cancelDeployment();
     super.dispose();
   }
 
@@ -325,9 +329,15 @@ class _DetailsViewState extends State<_DetailsView> {
     );
   }
 
+  // Unlike _buildInfoRow's short fixed values (region, plan type, etc.),
+  // a generated admin password is long enough to overflow a single
+  // spaceBetween Row -- lay it out like _buildCopyableField instead:
+  // label above, a full-width row below with the value wrapped in
+  // Expanded/ellipsis so it can never blow out the layout regardless of
+  // password length.
   Widget _buildPasswordRow(String label, String value, ColorScheme colors) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -337,15 +347,19 @@ class _DetailsViewState extends State<_DetailsView> {
             fontSize: AppSizes.fontTiny,
           ),
         ),
+        VSpace.x1,
         Row(
           children: [
-            Text(
-              _passwordVisible ? value : '•' * value.length,
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: colors.onSurface,
-                fontSize: AppSizes.fontTiny,
-                fontWeight: AppFonts.heavy,
+            Expanded(
+              child: Text(
+                _passwordVisible ? value : '•' * value.length,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: AppFonts.bodyFamily,
+                  color: colors.onSurface,
+                  fontSize: AppSizes.fontTiny,
+                  fontWeight: AppFonts.heavy,
+                ),
               ),
             ),
             HSpace.x1,
