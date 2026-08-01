@@ -41,6 +41,13 @@ import (
 // dial target.
 var ErrHarnessProvisioning = errors.New("harness is being provisioned — retry shortly")
 
+// errHarnessFailed is the sentinel wrapped into the error returned when a
+// resolved harness_instances row's status is "error" — lets callers tell
+// "harness failed to start" apart from any other buildSessionProfile
+// failure via errors.Is, without matching on the (last_error-dependent)
+// error string.
+var errHarnessFailed = errors.New("harness failed to start")
+
 // stdioMcp is the stored acp_mcp_servers JSON shape (spec §5.1). Only stdio is
 // supported today; http/sse/acp entries are skipped + logged.
 type stdioMcp struct {
@@ -205,7 +212,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		case "pending":
 			return p, ErrHarnessProvisioning
 		case "error":
-			return p, fmt.Errorf("harness failed to start: %s", instance.GetString("last_error"))
+			return p, fmt.Errorf("%w: %s", errHarnessFailed, instance.GetString("last_error"))
 		}
 	} else {
 		// No harness_instances row yet for this (harness, launch_key) pair —
