@@ -144,3 +144,57 @@ func TestAdapterDoesNotHangOnOversizedMessage(t *testing.T) {
 		t.Fatal("bridge did not tear down within 2s of an oversized message — the deadlock/leak regression")
 	}
 }
+
+// TestResolveSecretPrefersFlagOverEnv proves the auth-wiring fix for the
+// "reference Dockerfile never wires the per-instance secret to the
+// adapter" finding: main() must fall back to HARNESS_ADAPTER_SECRET (what
+// a harnesses.launch_template.env_template renders into the container's
+// Env) when --secret isn't passed, but --secret still wins when both are
+// set.
+func TestResolveSecretPrefersFlagOverEnv(t *testing.T) {
+	env := map[string]string{"HARNESS_ADAPTER_SECRET": "from-env"}
+	getenv := func(k string) string { return env[k] }
+
+	if got := resolveSecret("", getenv); got != "from-env" {
+		t.Errorf("resolveSecret(\"\", env-with-secret) = %q, want %q (env fallback)", got, "from-env")
+	}
+	if got := resolveSecret("from-flag", getenv); got != "from-flag" {
+		t.Errorf("resolveSecret(\"from-flag\", env-with-secret) = %q, want %q (flag overrides env)", got, "from-flag")
+	}
+
+	emptyGetenv := func(string) string { return "" }
+	if got := resolveSecret("", emptyGetenv); got != "" {
+		t.Errorf("resolveSecret(\"\", no-env) = %q, want empty (auth disabled, matches today's default behavior)", got)
+	}
+}
+
+// TestAdapterEnforcesAuthUsingEnvResolvedSecret proves the env-sourced
+// secret is not just parsed but actually enforced end-to-end by the
+// adapter's WS auth gate — the same way a container started from the
+// reference Dockerfile with HARNESS_ADAPTER_SECRET set (and no --secret
+// flag) would behave.
+func TestAdapterEnforcesAuthUsingEnvResolvedSecret(t *testing.T) {
+	getenv := func(k string) string {
+		if k == "HARNESS_ADAPTER_SECRET" {
+			return "env-secret"
+		}
+		return ""
+	}
+	resolved := resolveSecret("", getenv) // simulates --secret unset, env var set
+	srv := httptest.NewServer(newAdapterHandler(adapterConfig{Cmd: []string{"cat"}, Secret: resolved, MaxLineBytes: 64 << 20}))
+	defer srv.Close()
+
+	// Wrong/missing token: rejected.
+	wrongURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp?token=wrong"
+	if _, _, err := websocket.Dial(context.Background(), wrongURL, nil); err == nil {
+		t.Fatal("expected the upgrade to be rejected when the token doesn't match the env-resolved secret")
+	}
+
+	// Correct token (the env var's value): accepted.
+	rightURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp?token=env-secret"
+	conn, _, err := websocket.Dial(context.Background(), rightURL, nil)
+	if err != nil {
+		t.Fatalf("expected the upgrade to succeed with the env-resolved secret as the token, got: %v", err)
+	}
+	conn.Close(websocket.StatusNormalClosure, "")
+}
