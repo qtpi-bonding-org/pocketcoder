@@ -23,6 +23,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -110,14 +111,22 @@ func main() {
 		// F. Harness instance status watcher: subscribes to the Docker
 		// event stream and reconciles harness_instances.status against
 		// real container state for the lifetime of the app. Tied to a
-		// cancel context released on OnTerminate, same lifecycle-bound
-		// goroutine shape as the agent coordinator's shutdown above.
+		// cancel context released on OnTerminate, and — like
+		// RegisterAgentApi's coordinator shutdown above — the OnTerminate
+		// handler blocks (bounded by a timeout) until the watcher's own
+		// goroutine confirms it actually stopped, so PocketBase doesn't
+		// tear down the DB out from under an in-flight status Save.
 		watcherCtx, cancelWatcher := context.WithCancel(context.Background())
+		watcherDone := hooks.StartHarnessWatcher(watcherCtx, app, dockerapi.New())
 		app.OnTerminate().BindFunc(func(_ *core.TerminateEvent) error {
 			cancelWatcher()
+			select {
+			case <-watcherDone:
+			case <-time.After(5 * time.Second):
+				log.Println("[HarnessWatcher] timed out waiting for shutdown")
+			}
 			return nil
 		})
-		go hooks.StartHarnessWatcher(watcherCtx, app, dockerapi.New())
 
 		return e.Next()
 	})
