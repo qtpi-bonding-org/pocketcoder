@@ -41,29 +41,42 @@ type eventSource interface {
 // harness_instances.status in sync with real container state for the
 // lifetime of ctx and never touches a managed = false row (the
 // compose-managed default Goose instance).
-func StartHarnessWatcher(ctx context.Context, app core.App, client eventSource) {
-	events, err := client.Events(ctx)
-	if err != nil {
-		log.Printf("[HarnessWatcher] failed to subscribe to docker events: %v", err)
-		return
-	}
+//
+// It returns a "done" channel that is closed once the watcher's loop has
+// fully exited (after observing ctx.Done() or the events channel closing),
+// so a caller tearing down the app on shutdown can wait for any in-flight
+// applyStatus/reconcile Save call to finish before the DB is torn down —
+// mirroring how internal/api/agent.go's OnTerminate handler blocks
+// (bounded by a timeout) until its own goroutine confirms shutdown.
+func StartHarnessWatcher(ctx context.Context, app core.App, client eventSource) <-chan struct{} {
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
 
-	reconcile(ctx, app, client)
-
-	for {
-		select {
-		case ev, ok := <-events:
-			if !ok {
-				return
-			}
-			if ev.Type != "" && ev.Type != "container" {
-				continue
-			}
-			applyStatus(app, ev.ContainerName, dockerEventToStatus(ev.Action))
-		case <-ctx.Done():
+		events, err := client.Events(ctx)
+		if err != nil {
+			log.Printf("[HarnessWatcher] failed to subscribe to docker events: %v", err)
 			return
 		}
-	}
+
+		reconcile(ctx, app, client)
+
+		for {
+			select {
+			case ev, ok := <-events:
+				if !ok {
+					return
+				}
+				if ev.Type != "" && ev.Type != "container" {
+					continue
+				}
+				applyStatus(app, ev.ContainerName, dockerEventToStatus(ev.Action))
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	return done
 }
 
 func dockerEventToStatus(action string) string {
