@@ -21,10 +21,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package hooks
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"strings"
+	"text/template"
 
+	"github.com/google/uuid"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
 )
 
@@ -61,4 +67,199 @@ func ResolveWorkspaceVolumeAndNetwork(ctx context.Context, client inspector) (vo
 		return "", "", fmt.Errorf("no pocketcoder-agent network found on pocketcoder-pocketbase")
 	}
 	return volumeName, networkName, nil
+}
+
+// dockerProvisioner is the subset of *dockerapi.Client ProvisionHarnessInstance
+// needs — satisfied by the real client and by a test double.
+type dockerProvisioner interface {
+	inspector
+	PullImage(ctx context.Context, image string) error
+	Create(ctx context.Context, name string, spec dockerapi.CreateSpec) (string, error)
+	Start(ctx context.Context, containerName string) error
+}
+
+// findHarnessInstance looks up the harness_instances row for (harness,
+// launchKey) — see ProvisionHarnessInstance for why this can't be a single
+// `harness = {:h} && launch_key = {:k}` filter.
+func findHarnessInstance(app core.App, harnessID, launchKey string) (*core.Record, error) {
+	candidates, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnessID})
+	if err != nil {
+		return nil, fmt.Errorf("query harness_instances for harness %s: %w", harnessID, err)
+	}
+	for _, rec := range candidates {
+		if rec.GetString("launch_key") == launchKey {
+			return rec, nil
+		}
+	}
+	return nil, nil
+}
+
+// ProvisionHarnessInstance turns a harnesses catalog row into a running,
+// dialable container — idempotent per (harnessID, launchKey), minting a
+// per-instance secret, rendering launch_template.env_template against
+// provider_keys, pulling the image, and creating+starting the container.
+func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerProvisioner, harnessID, launchKey string) (*core.Record, error) {
+	// NOT `"harness = {:h} && launch_key = {:k}"` — confirmed against the
+	// already-landed api/profile.go (buildSessionProfile queries
+	// harness_instances the same way, see its own in-code comment):
+	// PocketBase's filter evaluator does not reliably match an empty-string
+	// `launch_key` inside an `&&` expression, and launch_key = "" is the
+	// COMMON case (every supports_live_config = true harness). A direct
+	// `&&` filter here would fail to find the existing shared instance on
+	// every call after the first, and each failed lookup would attempt to
+	// mint and Create a brand-new container — colliding with the first on
+	// the (harness, launch_key) unique index and erroring out. Query by
+	// harness alone, then match launch_key in Go, exactly like
+	// buildSessionProfile already does.
+	existing, err := findHarnessInstance(app, harnessID, launchKey)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return existing, nil
+	}
+
+	harness, err := app.FindRecordById("harnesses", harnessID)
+	if err != nil {
+		return nil, fmt.Errorf("look up harness %s: %w", harnessID, err)
+	}
+
+	secret, err := mintSecret()
+	if err != nil {
+		return nil, fmt.Errorf("mint harness instance secret: %w", err)
+	}
+
+	coll, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		return nil, err
+	}
+	rec := core.NewRecord(coll)
+	containerName := "pocketcoder-harness-" + uuid.NewString()[:8]
+	rec.Set("harness", harnessID)
+	rec.Set("launch_key", launchKey)
+	if launchKey != "" {
+		// launch_key IS the harness_models id for a supports_live_config =
+		// false harness (§4.3) — harness_model is otherwise only a
+		// denormalized `expand` convenience, but it's free to set correctly
+		// here and leaving it blank would silently diverge from what the
+		// schema documents the field for.
+		rec.Set("harness_model", launchKey)
+	}
+	rec.Set("container_name", containerName)
+	rec.Set("secret", secret)
+	rec.Set("status", "pending")
+	rec.Set("managed", true)
+	if err := app.Save(rec); err != nil {
+		return nil, fmt.Errorf("save pending harness_instances row: %w", err)
+	}
+	fail := func(err error) (*core.Record, error) {
+		rec.Set("status", "error")
+		rec.Set("last_error", err.Error())
+		app.Save(rec)
+		return rec, nil
+	}
+
+	volumeName, networkName, err := ResolveWorkspaceVolumeAndNetwork(ctx, client)
+	if err != nil {
+		return fail(err)
+	}
+
+	image := harness.GetString("container_image")
+	var launch struct {
+		Cmd         []string          `json:"cmd"`
+		Port        int               `json:"port"`
+		EnvTemplate map[string]string `json:"env_template"`
+	}
+	_ = harness.UnmarshalJSONField("launch_template", &launch)
+
+	env, err := renderEnv(app, launch.EnvTemplate, secret)
+	if err != nil {
+		return fail(fmt.Errorf("render launch_template.env_template: %w", err))
+	}
+
+	if err := client.PullImage(ctx, image); err != nil {
+		return fail(err)
+	}
+
+	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
+		Image: image, Cmd: launch.Cmd, Env: env,
+		VolumeName: volumeName, VolumeDest: "/workspace",
+		NetworkName: networkName,
+	})
+	if err != nil {
+		return fail(err)
+	}
+	if err := client.Start(ctx, containerName); err != nil {
+		return fail(err)
+	}
+
+	// Checked here (after Create+Start, not before) rather than as an
+	// up-front validation: port is only needed to build the ws:// endpoint
+	// URL below, not by the Docker create/start calls themselves, and a
+	// pending row with no port must still count as "one Create call" for
+	// idempotency purposes on a subsequent ProvisionHarnessInstance call —
+	// findHarnessInstance matches this error row and returns it rather than
+	// attempting a second Create.
+	if launch.Port == 0 {
+		return fail(fmt.Errorf("harness %s's launch_template has no port", harnessID))
+	}
+
+	rec.Set("status", "running")
+	rec.Set("acp_endpoint", fmt.Sprintf("ws://%s:%d/acp", containerName, launch.Port))
+	if err := app.Save(rec); err != nil {
+		return nil, fmt.Errorf("save running harness_instances row: %w", err)
+	}
+	return rec, nil
+}
+
+// mintSecret generates the per-instance credential the bundled adapter
+// enforces on its WS upgrade (§5.4.1) — this, not an empty string, is what
+// populates Target.Secret once this row is resolved.
+func mintSecret() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+// renderEnv merges every provider_keys row's env_vars into one lookup map
+// (the same "merge every row" convention gooseconfig.RenderKeysEnv already
+// uses for Goose's own keys.env — deliberately not scoped to one specific
+// provider here, since launch_template doesn't declare which provider(s) a
+// given harness needs ahead of time), adds a reserved "__adapter_secret" key
+// for the minted per-instance secret, and renders each env_template value
+// as a Go text/template against that map — e.g. an entry
+// {"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}"} becomes
+// "ANTHROPIC_API_KEY=sk-..." in the returned KEY=VALUE slice Docker's
+// container-create API expects.
+func renderEnv(app core.App, envTemplate map[string]string, secret string) ([]string, error) {
+	keyRecs, err := app.FindRecordsByFilter("provider_keys", "1=1", "", 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("query provider_keys: %w", err)
+	}
+	values := map[string]string{"__adapter_secret": secret}
+	for _, r := range keyRecs {
+		var vars map[string]string
+		if err := r.UnmarshalJSONField("env_vars", &vars); err != nil {
+			continue
+		}
+		for k, v := range vars {
+			values[k] = v
+		}
+	}
+
+	env := make([]string, 0, len(envTemplate))
+	for name, tmplStr := range envTemplate {
+		tmpl, err := template.New(name).Parse(tmplStr)
+		if err != nil {
+			return nil, fmt.Errorf("parse env_template[%s]: %w", name, err)
+		}
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, values); err != nil {
+			return nil, fmt.Errorf("render env_template[%s]: %w", name, err)
+		}
+		env = append(env, name+"="+buf.String())
+	}
+	return env, nil
 }
