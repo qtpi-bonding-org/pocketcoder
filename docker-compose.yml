@@ -209,7 +209,7 @@ services:
       - POST=1                # Allow POST requests (for restart)
       - EVENTS=1              # Allow streaming events (for Dozzle)
       - INFO=1                # Required for Dozzle to detect Docker version
-      - IMAGES=0              # Disable image operations
+      - IMAGES=1              # Allow image operations (for harness provisioning)
       - NETWORKS=0            # Disable network operations
       - VOLUMES=0             # Disable volume operations
       - BUILD=0               # Disable build operations
@@ -410,6 +410,7 @@ volumes:
   #   name: pocketcoder_pb_backups
   pocketcoder-logs:
   goose_workspace:
+    name: pocketcoder_goose_workspace
   llm_keys:  # Shared LLM API keys (env file written by PocketBase, read by sandbox)
   ntfy-cache:
   ntfy-auth:
@@ -437,6 +438,7 @@ networks:
   # no other PocketBase network, so this is its sole path to/from c1.
   pocketcoder-agent:
     driver: bridge
+    name: pocketcoder-agent
   # Gives Goose model-provider egress without a route to PocketBase services.
   pocketcoder-goose-egress:
     driver: bridge
