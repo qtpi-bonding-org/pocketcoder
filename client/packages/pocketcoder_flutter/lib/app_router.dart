@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
@@ -72,7 +73,11 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const OnboardingScreen(),
+          child: OnboardingScreen(
+            prefill: state.extra is OnboardingPrefill
+                ? state.extra as OnboardingPrefill
+                : null,
+          ),
         ),
       ),
       // ── CHATS pillar ──
