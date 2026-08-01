@@ -1,4 +1,4 @@
-package org.pocketcoder.pocketcoder_foss
+package org.pocketcoder.foss
 
 import io.flutter.embedding.android.FlutterActivity
 
