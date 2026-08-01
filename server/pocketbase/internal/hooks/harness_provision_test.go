@@ -313,7 +313,7 @@ func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T)
 
 // TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace exercises
 // the race two concurrent ProvisionHarnessInstance callers can hit for the
-// same (harness, launch_key): both pass the initial findHarnessInstance
+// same (harness, launch_key): both pass the initial FindHarnessInstance
 // check before either row exists, so the loser's own Save fails on the
 // (harness, launch_key) unique index (idx_harness_instances_pair). Real
 // goroutine scheduling can't reliably land both calls in that exact window

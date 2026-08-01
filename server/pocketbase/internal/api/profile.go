@@ -192,18 +192,12 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		launchKey = hmID
 	}
 
-	// Query harness_instances by harness ID. Due to PocketBase filter limitations with
-	// empty strings in && expressions, we query by harness alone and verify launch_key in code.
-	instances, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnessRec.Id})
-	var instance *core.Record
-	if err == nil && len(instances) > 0 {
-		// Find the instance matching our launch_key
-		for _, inst := range instances {
-			if inst.GetString("launch_key") == launchKey {
-				instance = inst
-				break
-			}
-		}
+	// Shared with hooks.ProvisionHarnessInstance's own lookup — see
+	// hooks.FindHarnessInstance's doc comment for why this can't be a
+	// single `harness = {:h} && launch_key = {:k}` filter.
+	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey)
+	if err != nil {
+		return p, err
 	}
 	if instance != nil {
 		p.ResolvedInstanceID = instance.Id
