@@ -30,6 +30,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -224,6 +225,9 @@ func (c *Client) Events(ctx context.Context) (<-chan Event, error) {
 			case <-ctx.Done():
 				return
 			}
+		}
+		if err := scanner.Err(); err != nil {
+			log.Printf("dockerapi: events stream ended: %v", err)
 		}
 	}()
 	return ch, nil
