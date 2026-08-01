@@ -19,14 +19,51 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package api
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
+
+// testApp spins up a fresh in-memory PocketBase test app with this repo's
+// migrations applied, and registers cleanup.
+func testApp(t *testing.T) core.App {
+	t.Helper()
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(app.Cleanup)
+	return app
+}
+
+// createTestHarness inserts a harnesses row with sane defaults, overridden
+// by whatever fields the caller supplies. Unlike seedTestHarnessAndInstance
+// below, this deliberately does NOT create a harness_instances row — it's
+// for tests exercising the "no instance yet" / provisioning path.
+func createTestHarness(t *testing.T, app core.App, overrides map[string]any) *core.Record {
+	t.Helper()
+	coll, err := app.FindCollectionByNameOrId("harnesses")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := core.NewRecord(coll)
+	rec.Set("name", "Test Harness")
+	rec.Set("cli_id", "test-harness-"+randomSuffix())
+	rec.Set("acp_transport", "websocket")
+	for k, v := range overrides {
+		rec.Set(k, v)
+	}
+	if err := app.Save(rec); err != nil {
+		t.Fatal(err)
+	}
+	return rec
+}
 
 // randomSuffix generates a random string for unique test data.
 func randomSuffix() string {
@@ -264,5 +301,55 @@ func TestBuildSessionProfileRejectsTraversal(t *testing.T) {
 	_, err = buildSessionProfile(app, chat.Id)
 	if err == nil {
 		t.Fatal("expected rejection of a workspace_override containing .. traversal")
+	}
+}
+
+// TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing verifies
+// that when no harness_instances row exists yet for the resolved harness,
+// buildSessionProfile kicks off background provisioning (Task 6) and
+// returns ErrHarnessProvisioning instead of silently proceeding with an
+// empty dial target.
+func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{"cli_id": "new-harness", "container_image": "x"})
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id})
+	// deliberately: no harness_instances row exists yet for this harness
+
+	_, err := buildSessionProfile(app, chat.Id)
+	if !errors.Is(err, ErrHarnessProvisioning) {
+		t.Fatalf("expected ErrHarnessProvisioning, got %v", err)
+	}
+
+	// Provisioning is kicked off in a background goroutine (Task 6's row
+	// creation isn't synchronous with buildSessionProfile's return), so this
+	// polls briefly rather than asserting immediately — a bare synchronous
+	// check here would be flaky, not a faithful test of async behavior.
+	deadline := time.Now().Add(2 * time.Second)
+	var rec *core.Record
+	for time.Now().Before(deadline) {
+		if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h}", map[string]any{"h": harness.Id}); err == nil && r != nil {
+			rec = r
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if rec == nil {
+		t.Fatal("expected a harness_instances row to appear within 2s of triggering background provisioning")
+	}
+	// buildSessionProfile's production wiring hands ProvisionHarnessInstance
+	// the REAL dockerapi.New() client (only Task 6's own tests can inject a
+	// fake docker client) — so outside a live docker-compose network, where
+	// "docker-socket-proxy-write" resolves and self-inspecting
+	// "pocketcoder-pocketbase" succeeds, ResolveWorkspaceVolumeAndNetwork
+	// fails immediately and the row can race straight from "pending" to
+	// "error" before this test's first poll ever observes "pending". What
+	// THIS task is responsible for is that provisioning was triggered at
+	// all (a row exists) and buildSessionProfile reported
+	// ErrHarnessProvisioning — not that the docker calls it kicks off
+	// succeed, which is Task 6/8's concern and depends on real infra.
+	switch rec.GetString("status") {
+	case "pending", "running", "error":
+	default:
+		t.Errorf("status = %q, want pending, running, or error (provisioning was at least attempted)", rec.GetString("status"))
 	}
 }
