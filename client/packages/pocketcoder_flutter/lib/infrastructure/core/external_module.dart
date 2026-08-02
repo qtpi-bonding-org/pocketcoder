@@ -107,11 +107,9 @@ abstract class ExternalModule {
   @lazySingleton
   http.Client get httpClient => http.Client();
 
-  /// Base URL of workers/mcp-oauth-relay (Task 1). No trailing slash.
-  /// TODO(mcp-oauth): replace with the real deployed Worker's custom
-  /// domain once Task 1 Step 4's one-time `wrangler deploy` has run.
+  /// Base URL of workers/mcp-oauth-relay. No trailing slash.
   @Named('mcpOAuthRelayBaseUrl')
   @lazySingleton
   String get mcpOAuthRelayBaseUrl =>
-      'https://pocketcoder-mcp-oauth-relay.workers.dev';
+      'https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev';
 }
