@@ -231,10 +231,15 @@ When `_isReviewerMode` is true:
   selectable, regardless of what `loadPlansAndRegions()` returns.
 - Before calling `deploymentCubit.deploy(...)`, call
   `deploymentService.getExistingInstances()` (already exposed via
-  `IDeploymentService`, `flutter_aeroform/lib/domain/deployment/i_deployment_service.dart:20`)
-  and block the deploy with an inline error if the count is already ≥ 1.
-  This check only runs in reviewer mode — real users are unaffected and
-  keep today's unlimited-instances behavior.
+  `IDeploymentService`, `flutter_aeroform/lib/domain/deployment/i_deployment_service.dart:20`),
+  filter to instances where `planType == 'g6-nanode-1'`, and block the
+  deploy with an inline error if that filtered count is already ≥ 3. The
+  cap counts cheap-tier instances only, not the account's total instance
+  count — the reviewer PAT's own Linode account may carry real,
+  unrelated infrastructure on larger plans, and that must not count
+  against or be affected by this cap. This check only runs in reviewer
+  mode — real users are unaffected and keep today's unlimited-instances
+  behavior.
 
 No new methods needed on `IDeploymentService` — this is entirely new
 logic inside `ConfigScreen`'s existing `_deploy()` method, gated on
@@ -270,9 +275,12 @@ logic inside `ConfigScreen`'s existing `_deploy()` method, gated on
   request body shape, 200/401 handling, and the missing-`access_token`
   edge case.
 - `config_screen_test.dart`: new tests — reviewer-mode credentials lock
-  the plan picker to `g6-nanode-1`, and a mocked `getExistingInstances()`
-  returning 1+ instances blocks the deploy action with a visible error.
-  Non-reviewer credentials leave existing behavior untouched.
+  the plan picker to `g6-nanode-1`; a mocked `getExistingInstances()`
+  returning 3+ `g6-nanode-1` instances blocks the deploy action with a
+  visible error; a mock returning fewer than 3 `g6-nanode-1` instances
+  plus any number of other-plan instances (simulating pre-existing real
+  infra on the account) does NOT block the deploy. Non-reviewer
+  credentials leave existing behavior untouched.
 
 No integration test drives the real Worker route or a real Linode
 account — that's exercised manually, once, before each actual submission
