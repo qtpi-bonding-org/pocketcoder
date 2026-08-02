@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show BuildContext, VoidCallback;
 import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:pocketbase_drift/pocketbase_drift.dart';
@@ -9,6 +10,10 @@ import 'package:pocketcoder_flutter/infrastructure/core/connectivity_override.da
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_error_privserver/flutter_error_privserver.dart';
+import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
+import 'package:pocketcoder_flutter/presentation/errors/error_box_page_builder.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 
 /// Global service locator instance
 
@@ -64,8 +69,15 @@ Future<void> bootstrap() async {
       if (pocketBase.authStore.isValid && userId != null) {
         await billingService.identify(userId);
       }
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('Bootstrap: Warning - billing identify on session restore failed: $e');
+      await getIt<ErrorBoxStorage>().saveError(ErrorEntry(
+        source: 'Bootstrap.billingIdentify',
+        errorType: e.runtimeType.toString(),
+        errorCode: PocketCoderErrorCodeMapper.mapError(e),
+        stackTrace: stack.toString(),
+        timestamp: DateTime.now(),
+      ));
     }
 
     // 2. Register UI flow service (depends on localization/feedback/loading)
@@ -100,8 +112,31 @@ void _registerUiFlowService() {
 
 /// Configure ErrorPrivserver for privacy-preserving error reporting.
 void _configureErrorPrivserver() {
-  // Note: Actual configuration requires repository implementations.
-  // This is a placeholder for where you would wire up your error reporting.
-  // See quanitya example for full implementation with ErrorBoxRepository.
-  debugPrint('ErrorPrivserver: Initialization placeholder');
+  ErrorPrivserver.configure(
+    ErrorPrivserverConfig(
+      storage: getIt<ErrorBoxStorage>(),
+      reporter: (_) async {}, // no-op: no network transmission, see spec §3
+      errorCodeMapper: PocketCoderErrorCodeMapper.mapError,
+      exceptionMapper: (error) => getIt<IExceptionKeyMapper>().map(error),
+      showToast: false, // dead field in this package version (pinned commit 3565d9d4), set explicitly for clarity
+      toastBuilder: const _NoopErrorToastBuilder(),
+      pageBuilder: const PocketCoderErrorBoxPageBuilder(),
+    ),
+  );
+}
+
+/// Satisfies ErrorPrivserverConfig.toastBuilder, which is required by the
+/// constructor but never invoked anywhere in the pinned package version
+/// (commit 3565d9d4) — confirmed by grep, no automatic toast-on-capture
+/// exists. This class exists purely to compile.
+class _NoopErrorToastBuilder extends ErrorToastBuilder {
+  const _NoopErrorToastBuilder();
+
+  @override
+  void show(
+    BuildContext context,
+    String message, {
+    required VoidCallback onDismiss,
+    required VoidCallback onSend,
+  }) {}
 }

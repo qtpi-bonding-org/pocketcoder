@@ -172,7 +172,7 @@ git commit -m "feat(client): register ErrorBoxStorage singleton for error inbox"
 
 **Ordering note:** This task depends on `PocketCoderErrorBoxPageBuilder` existing (Task 4). Implement Task 4 first, then return to this task. The task numbering here reflects the spec's component order, not execution order — a subagent-driven executor should run Task 4 before Task 3's Step 3 below (Steps 1-2, the bootstrap-capture half, have no such dependency and can run in either order).
 
-- [ ] **Step 1: Write the failing test for bootstrap-level capture**
+- [x] **Step 1: Write the failing test for bootstrap-level capture**
 
 ```dart
 // test/app/bootstrap_error_capture_test.dart
@@ -211,12 +211,12 @@ void main() {
 
 (This test exercises the same call shape Step 3 below adds to `bootstrap.dart`, rather than driving the full `bootstrap()` entrypoint, since `bootstrap()` also touches DI/PocketBase/push/billing init that would need extensive mocking unrelated to this feature.)
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter test test/app/bootstrap_error_capture_test.dart`
 Expected: FAIL — `PocketCoderErrorCodeMapper` import resolves (Task 1 done), but this is a self-contained assertion, so it should actually currently PASS once Task 1 lands, since it doesn't touch `bootstrap.dart` at all yet. Treat this as a smoke test confirming the call shape compiles and behaves as expected; the real regression protection is Step 4's manual verification plus this test locking the exact `ErrorEntry` shape used in `bootstrap.dart`.
 
-- [ ] **Step 3: Wire `bootstrap.dart`**
+- [x] **Step 3: Wire `bootstrap.dart`**
 
 In `lib/app/bootstrap.dart`, add imports:
 
@@ -284,12 +284,12 @@ class _NoopErrorToastBuilder extends ErrorToastBuilder {
 
 `_configureErrorPrivserver()`'s call site at `bootstrap.dart:78` and its surrounding `debugPrint`s stay unchanged.
 
-- [ ] **Step 4: Run the full test suite for this file's package**
+- [x] **Step 4: Run the full test suite for this file's package**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter test test/app/bootstrap_error_capture_test.dart && flutter analyze lib/app/bootstrap.dart`
 Expected: test PASSES; `flutter analyze` reports no new errors (it will already have been clean before this change — this catches typos/missing imports in the edit above).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add client/packages/pocketcoder_flutter/lib/app/bootstrap.dart client/packages/pocketcoder_flutter/test/app/bootstrap_error_capture_test.dart
