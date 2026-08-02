@@ -438,9 +438,13 @@ Add to `lib/l10n/app_en.arb` (alongside the other `settings*`/`system*` keys, e.
   "errorsClearAll": "CLEAR ALL",
   "errorsOccurred": "Occurred {count}x",
   "@errorsOccurred": {
-    "placeholders": { "count": {} }
+    "placeholders": {
+      "count": { "type": "int" }
+    }
   },
 ```
+
+(matches the existing parameterized-key pattern, e.g. `llmModelsAvailable`/`@llmModelsAvailable` at `app_en.arb:132-135` — every other parameterized key in this file declares `"type": "int"` on its placeholder, not an empty object.)
 
 Also add `"settingsErrorsRow": "ERROR REPORTS"` is not needed separately — Task 5 reuses `errorsTitle` for both the settings row label and the screen title.
 
@@ -542,7 +546,7 @@ class _ErrorTile extends StatelessWidget {
 }
 ```
 
-Check `pubspec.yaml` for an existing `intl` dependency before using `DateFormat` — `cubit_ui_flow`/Flutter's own l10n tooling pulls it in transitively in most Flutter projects, but confirm with `grep -n "^  intl:" client/packages/pocketcoder_flutter/pubspec.yaml`; if absent, add `intl: ^0.19.0` (match whatever version `flutter_localizations` in this Flutter SDK expects) to `dependencies:` before this step compiles.
+`intl` is already available (pulled in transitively via Flutter's l10n tooling and already imported elsewhere under `lib/l10n/`) — no `pubspec.yaml` change needed for the `DateFormat` import above.
 
 - [ ] **Step 5: Write `PocketCoderErrorBoxPageBuilder`**
 
@@ -588,7 +592,7 @@ git commit -m "feat(client): add Error Inbox screen backed by ErrorBoxPageCubit"
 **Files:**
 - Modify: `client/packages/pocketcoder_flutter/lib/app_router.dart`
 - Modify: `client/packages/pocketcoder_flutter/lib/presentation/settings/settings_screen.dart`
-- Test: `client/packages/pocketcoder_flutter/test/presentation/settings/settings_screen_test.dart` (create if no such file exists yet; if one already exists, add to it instead of creating a duplicate — check with `find client/packages/pocketcoder_flutter/test/presentation/settings -iname '*.dart'` first)
+- Modify: `client/packages/pocketcoder_flutter/test/presentation/settings/settings_screen_test.dart` (already exists — has full `GoRouter`/mock-cubit scaffolding and two existing `testWidgets` cases for LOGOUT; add a new case to it, don't create a separate file)
 
 **Interfaces:**
 - Consumes: `PocketCoderErrorBoxPageBuilder` (Task 4), `ErrorInboxScreen` (Task 4).
@@ -625,7 +629,7 @@ Add a `GoRoute` (near the `configureObservability` route, `app_router.dart:207-2
 
 - [ ] **Step 2: Add the settings row**
 
-In `lib/presentation/settings/settings_screen.dart`, add a row to the `settingsSystemSection` group in `_sections` (`settings_screen.dart:31-35`):
+In `lib/presentation/settings/settings_screen.dart`, add a row to the `settingsSystemSection` group in `_sections` (`settings_screen.dart:32-36`):
 ```dart
       (context.l10n.settingsSystemSection, [
         ('SYSTEM CHECKS', '[DIAGNOSE]', 'configureSystemChecks'),
@@ -634,31 +638,43 @@ In `lib/presentation/settings/settings_screen.dart`, add a row to the `settingsS
         (context.l10n.errorsTitle, '[VIEW]', 'configureErrors'),
       ]),
 ```
-Add a case in `_navigateTo` (`settings_screen.dart:150-171`):
+Add a case in `_navigateTo` (`settings_screen.dart:134-159`):
 ```dart
       case 'configureErrors':
         context.push(AppRoutes.configureErrors);
 ```
 
-- [ ] **Step 3: Write/extend a settings screen navigation test**
+- [ ] **Step 3: Extend the existing settings screen navigation test**
+
+`test/presentation/settings/settings_screen_test.dart` already has `buildTestable()` wiring a real `GoRouter` with mocked `AuthCubit`/`McpCubit` dependencies and two `testWidgets` cases (LOGOUT confirm/cancel). Add a third case to that `main()` block, following the same pattern — register an additional route for the destination and assert the router navigated:
 
 ```dart
-// test/presentation/settings/settings_screen_test.dart
-// (Only the additions below if the file already exists — otherwise this is
-// the whole file; check for existing setup/pump helpers first and reuse
-// them rather than duplicating.)
-import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_flutter/app_router.dart';
+  testWidgets('tapping ERROR REPORTS navigates to /configure/errors',
+      (tester) async {
+    await tester.pumpWidget(buildTestable());
+    await tester.pumpAndSettle();
 
-void main() {
-  test('AppRoutes.configureErrors and RouteNames.configureErrors are defined', () {
-    expect(AppRoutes.configureErrors, '/configure/errors');
-    expect(RouteNames.configureErrors, 'configureErrors');
+    await tester.scrollUntilVisible(
+      find.text('ERROR REPORTS'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ERROR REPORTS'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('errors-placeholder'), findsOneWidget);
   });
-}
 ```
 
-This intentionally stays minimal — a full navigation widget test would need to mock the entire settings screen's cubit tree (`AuthCubit`, `McpCubit`), which is disproportionate to this one-row addition. If an existing `settings_screen_test.dart` already has that scaffolding set up, add a real tap-and-navigate case using it instead of this route-constants check.
+This requires adding a matching route to `buildTestable()`'s router (alongside its existing `/settings` and `/onboarding` routes):
+```dart
+        GoRoute(
+          path: '/configure/errors',
+          builder: (context, state) => const Text('errors-placeholder'),
+        ),
+```
+Use `AppRoutes.configureErrors` (from Task 5 Step 1) as that route's `path` value instead of the literal `'/configure/errors'` string, so the test breaks if the two ever drift apart.
 
 - [ ] **Step 4: Run tests**
 
