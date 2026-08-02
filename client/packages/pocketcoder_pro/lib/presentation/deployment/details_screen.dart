@@ -362,19 +362,21 @@ class _DetailsViewState extends State<_DetailsView> {
                 ),
               ),
             ),
-            HSpace.x1,
-            InkWell(
-              onTap: () =>
+            IconButton(
+              tooltip: _passwordVisible ? 'Hide $label' : 'Show $label',
+              onPressed: () =>
                   setState(() => _passwordVisible = !_passwordVisible),
-              child: Icon(
+              icon: Icon(
                 _passwordVisible ? Icons.visibility_off : Icons.visibility,
                 color: colors.primary,
                 size: 14,
               ),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              padding: EdgeInsets.zero,
             ),
-            HSpace.x1,
-            InkWell(
-              onTap: () {
+            IconButton(
+              tooltip: 'Copy $label',
+              onPressed: () {
                 Clipboard.setData(ClipboardData(text: value));
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -383,7 +385,9 @@ class _DetailsViewState extends State<_DetailsView> {
                   ),
                 );
               },
-              child: Icon(Icons.content_copy, color: colors.primary, size: 14),
+              icon: Icon(Icons.content_copy, color: colors.primary, size: 14),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              padding: EdgeInsets.zero,
             ),
           ],
         ),
