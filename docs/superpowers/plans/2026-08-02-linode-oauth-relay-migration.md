@@ -44,8 +44,15 @@ direct-to-Linode code.
   the prior deploy-entry-point plan's Task 3).
 - Two technical risks are not resolvable by code alone and require one
   manual, real-account verification pass before this plan is considered
-  fully done (Task 11) — every other task's automated tests can pass
-  while these remain open.
+  fully done — every other task's automated tests can pass while these
+  remain open. That verification pass is Task 9 below (this plan's own
+  final task); it also closes out task #11 in the standing project task
+  tracker ("Test Linode OAuth consent flow end-to-end").
+- `workers/mcp-oauth-relay` has no automated test suite today (confirmed:
+  no `test/` directory exists under it). Tasks 2 and 3 ship
+  `buildTokenRequestBody`/`handleRefresh` with curl-smoke-test-only
+  coverage, not CI-enforced regression tests — a future change to this
+  Worker should not assume these paths are protected by CI.
 
 ---
 
@@ -84,9 +91,12 @@ Expected: FAIL — actual value is `https://pocketcoder-mcp-oauth-relay.workers.
 
 - [ ] **Step 3: Fix the constant**
 
-In `external_module.dart`, replace:
+In `external_module.dart`, the real current text (confirm against the
+file — it may carry an additional leading doc-comment line beyond what's
+shown here) is:
 
 ```dart
+  /// Base URL of workers/mcp-oauth-relay (Task 1). No trailing slash.
   /// TODO(mcp-oauth): replace with the real deployed Worker's custom
   /// domain once Task 1 Step 4's one-time `wrangler deploy` has run.
   @Named('mcpOAuthRelayBaseUrl')
@@ -95,9 +105,11 @@ In `external_module.dart`, replace:
       'https://pocketcoder-mcp-oauth-relay.workers.dev';
 ```
 
-with:
+Replace it with (drop the resolved TODO comment; keep the "Base URL of..."
+line since it's still accurate description, not stale):
 
 ```dart
+  /// Base URL of workers/mcp-oauth-relay. No trailing slash.
   @Named('mcpOAuthRelayBaseUrl')
   @lazySingleton
   String get mcpOAuthRelayBaseUrl =>
@@ -480,7 +492,35 @@ after both are done.
   and expects a `pocketcoder://oauth-callback?exchange_code=...&state=...`
   callback (not `?code=...`).
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Rewrite `setUp` and mock scaffolding first**
+
+`linode_oauth_service_test.dart` today has no `MockHttpClient` and
+constructs the service with the *old* 3-arg shape. Confirm against the
+file, then:
+
+- Delete `class MockCloudProviderAPIClient extends Mock implements ICloudProviderAPIClient {}`
+  and its `mockApiClient` variable — no longer a constructor dependency.
+- Add `class MockHttpClient extends Mock implements http.Client {}`
+  (matching the existing convention already used in the sibling file
+  `linode_api_client_test.dart:11`) and a `late MockHttpClient mockHttpClient;`.
+- Change `setUp`'s service construction from
+  `LinodeOAuthService(mockSecureStorage, mockApiClient, testClientId)` to
+  `LinodeOAuthService(mockSecureStorage, 'https://relay.test', mockHttpClient)`,
+  initializing `mockHttpClient = MockHttpClient();` alongside the other
+  mocks.
+- Register a fallback value for `Uri` if not already present
+  (`registerFallbackValue(Uri.parse('https://example.com'))`), needed by
+  `mocktail`'s `any()` matcher on `http.Client.post`'s first positional
+  argument.
+
+Apply the identical rewrite to
+`linode_oauth_service_property_test.dart` — it has its own independent
+`setUp` at lines 68-72 with the same old 3-arg construction, and its own
+now-unused local `MockFlutterWebAuth2` fake class (lines 15-38, already
+dead code today — not instantiated anywhere in that file) which should be
+deleted in the same pass.
+
+- [ ] **Step 2: Write the failing test**
 
 ```dart
 test('authenticate builds the relay authorize URL and claims the exchange code', () async {
@@ -514,17 +554,17 @@ test('authenticate throws on state mismatch', () async {
 });
 ```
 
-(Adjust exact mock setup to match this file's existing `MockHttpClient`/
-`MockISecureStorage` conventions already used elsewhere in this test
-file — these snippets show the required assertions, not the final
-verbatim test code.)
+(These snippets show the required assertions against the `mockHttpClient`/
+`mockSecureStorage` fixtures set up in Step 1 above — adjust exact syntax
+to match this file's other existing test conventions, e.g. matcher
+helpers already in use.)
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 3: Run test to verify it fails**
 
 Run: `cd /Users/aicoder/Documents/flutter_aeroform && flutter test test/infrastructure/auth/linode_oauth_service_test.dart`
 Expected: FAIL — `authenticate()` still builds a direct-to-Linode URL.
 
-- [ ] **Step 3: Rewrite the constructor and `authenticate()`**
+- [ ] **Step 4: Rewrite the constructor and `authenticate()`**
 
 Replace the constructor:
 
@@ -604,14 +644,15 @@ Replace `authenticate()`:
   }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 5: Run test to verify it passes**
 
-Run: `cd /Users/aicoder/Documents/flutter_aeroform && flutter test test/infrastructure/auth/linode_oauth_service_test.dart test/infrastructure/auth/linode_oauth_service_property_test.dart`
-Expected: PASS (Task 6 must land first for `exchangeCode`/`refreshToken`
-to compile against the new flow — if running these tasks separately,
-expect this suite fully green only once Task 6 is also done).
+Run: `cd /Users/aicoder/Documents/flutter_aeroform && flutter test test/infrastructure/auth/linode_oauth_service_test.dart`
+Expected: PASS for the two new tests (Task 6 must land before the
+*property* test file is fully green again — its Properties 3/39 and the
+"code verifier cleared" test still reference the old flow until Task 6's
+Step 6 rewrites them; that's expected and handled there, not here).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add lib/infrastructure/auth/linode_oauth_service.dart test/infrastructure/auth/linode_oauth_service_test.dart test/infrastructure/auth/linode_oauth_service_property_test.dart
@@ -627,7 +668,8 @@ git commit -m "feat(flutter_aeroform): route LinodeOAuthService.authenticate() t
 - Modify: `lib/domain/cloud_provider/i_cloud_provider_api_client.dart`
 - Modify: `lib/infrastructure/cloud_provider/linode_api_client.dart`
 - Modify: `lib/infrastructure/cloud_provider/cloud_provider_errors.dart`
-- Test: `test/infrastructure/auth/linode_oauth_service_test.dart`, `test/infrastructure/cloud_provider/linode_api_client_test.dart`, `test/infrastructure/cloud_provider/linode_api_client_property_test.dart`, `test/integration/golden_path_provision_test.dart`
+- Modify: `pocketcoder/client/packages/pocketcoder_pro/lib/app.dart`
+- Test: `test/infrastructure/auth/linode_oauth_service_test.dart`, `test/infrastructure/auth/linode_oauth_service_property_test.dart`, `test/infrastructure/cloud_provider/linode_api_client_test.dart`, `test/infrastructure/cloud_provider/linode_api_client_property_test.dart`, `test/integration/golden_path_provision_test.dart`
 
 **Interfaces:**
 - Consumes: `POST /refresh` (Task 3).
@@ -685,9 +727,29 @@ test('refreshToken refreshes via the relay /refresh route', () async {
 });
 ```
 
-Delete every `when(() => mockApiClient.exchangeAuthCode(...))`/
-`.refreshAccessToken(...)` stub in this file (they reference methods
-about to be removed from `ICloudProviderAPIClient`).
+The existing `group('getAccessToken')` (confirm exact lines against the
+file — currently around lines 305-360) also references
+`mockApiClient.refreshAccessToken` twice, and **these are not dead stubs
+to delete** — they're the only coverage of `getAccessToken()`'s proactive
+-refresh branch and must be rewritten, not removed:
+
+- `'returns stored access token when not expired'`: has a
+  `verifyNever(() => mockApiClient.refreshAccessToken(any()))` — rewrite
+  as `verifyNever(() => mockHttpClient.post(Uri.parse('https://relay.test/refresh'), headers: any(named: 'headers'), body: any(named: 'body')))`.
+- `'refreshes token when within 5 minutes of expiration'`: stubs
+  `mockApiClient.refreshAccessToken(testRefreshToken)` to return a canned
+  token — rewrite as a `mockHttpClient.post(Uri.parse('https://relay.test/refresh'), ...)`
+  stub returning the new JSON shape (`{access_token, refresh_token,
+  expires_in}`), keeping the same assertions on the result and on storage
+  being updated.
+- `'throws AuthenticationError when not authenticated'`: doesn't touch
+  `mockApiClient` — no change needed.
+
+Everywhere else in this file, delete `when(() =>
+mockApiClient.exchangeAuthCode(...))`/`.refreshAccessToken(...)` stubs
+that aren't part of the `getAccessToken` group above (they reference
+methods about to be removed from `ICloudProviderAPIClient` with no
+remaining assertion depending on them).
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -799,26 +861,67 @@ parameter list change, not necessarily the exact default-value
 expression.)
 
 In `cloud_provider_errors.dart`, delete the `OAuthError` class entirely
-(lines 80-128).
+(the class starts at line 80 — confirm the exact closing brace against
+the file rather than trusting a hardcoded end line, since `wc -l`-style
+counts can be off by one on a file with no trailing newline).
 
-- [ ] **Step 5: Fix every call site the deleted methods/params break**
+- [ ] **Step 5: Rewrite `linode_oauth_service_property_test.dart`'s remaining old-flow tests**
+
+This file was already given the `setUp`/mock rewrite in Task 5 Step 1,
+but three of its tests still assert against the deleted
+`ICloudProviderAPIClient` methods and must be rewritten now that those
+methods are gone (not just have their stubs deleted, since the
+assertions themselves depend on the old flow):
+
+- `'Property 3: Automatic token refresh on near expiration'`: stubs
+  `mockApiClient.refreshAccessToken` and verifies it was called — rewrite
+  to stub `mockHttpClient.post(Uri.parse('https://relay.test/refresh'), ...)`
+  instead, verifying that POST happened.
+- `'Property 39: New tokens replace old tokens in storage'`: same
+  rewrite — stub the relay refresh endpoint instead of `mockApiClient`.
+- `'Property: Code verifier is cleared after successful token exchange'`:
+  stubs `mockApiClient.exchangeAuthCode` — rewrite to stub
+  `mockHttpClient.post(Uri.parse('https://relay.test/claim'), ...)`
+  returning a canned `{access_token, refresh_token, expires_in}` body,
+  keeping the same assertion that `storeCodeVerifier('')` gets called
+  afterward.
+- `'Property: OAuth URL construction includes all required parameters'`:
+  this test manually rebuilds a **direct-to-`login.linode.com`** authorize
+  URL inline and asserts on `client_id`/`redirect_uri` params — it does
+  not call any service method, so there's nothing to "migrate" here; this
+  property no longer describes real behavior at all once `authenticate()`
+  hits the relay instead (Task 5). Delete this test, or replace it with
+  an equivalent assertion against the relay URL shape (`provider=linode`,
+  `code_challenge` present, no `client_id`/`redirect_uri` at all — the
+  Worker adds those server-side) if you want to keep the coverage under
+  the same name.
+
+- [ ] **Step 6: Fix every other call site the deleted methods/params break**
 
 - `test/infrastructure/cloud_provider/linode_api_client_test.dart`: delete
-  the `exchangeAuthCode`/`refreshAccessToken` success test groups
-  (~lines 567-595, 639-665) and the three `OAuthError` failure blocks
-  (~lines 596-634, 666-683).
+  both the `exchangeAuthCode`/`refreshAccessToken` **success** test
+  groups (confirm exact lines against the file — currently ~567-595,
+  639-665) and the three `OAuthError` **failure** blocks (currently
+  ~596-634, 666-683) — the full set of tests for the methods being
+  deleted, not just the failure-path subset.
 - `test/infrastructure/cloud_provider/linode_api_client_property_test.dart`:
-  change `LinodeAPIClient(mockHttpClient, testClientId)` (line ~25) to
-  `LinodeAPIClient(mockHttpClient)`; delete the property test that calls
-  `client.refreshAccessToken(...)` (~line 226).
+  change `LinodeAPIClient(mockHttpClient, testClientId)` (confirm exact
+  line, currently ~25) to `LinodeAPIClient(mockHttpClient)`; delete the
+  property test that calls `client.refreshAccessToken(...)` (confirm
+  exact line, currently ~226).
 - `test/integration/golden_path_provision_test.dart`: both
-  `LinodeAPIClient(...)` construction sites (lines ~104, ~414) drop their
-  second positional clientId argument.
-- `pocketcoder_pro/lib/app.dart:396-399`: remove the now-unreferenced
-  `linodeClientId` GetIt registration in `preRegisterAeroformConfig()`
-  (harmless to leave, but confusing to a future reader — delete it).
+  `LinodeAPIClient(...)` construction sites (confirm exact lines,
+  currently ~104, ~414) drop their second positional clientId argument.
+- `pocketcoder_pro/lib/app.dart`'s `preRegisterAeroformConfig()`: remove
+  **both** now-unreferenced `linodeClientId` sites — the
+  `AppConfig(linodeClientId: AppConfig.kLinodeClientId, ...)` constructor
+  field (earlier in the same function) and the separate GetIt
+  `instanceName: 'linodeClientId'` registration a few lines after it.
+  Both become dead once `LinodeOAuthService`/`LinodeAPIClient` drop their
+  `_clientId` params — confirm both locations against the file rather
+  than assuming only one exists.
 
-- [ ] **Step 6: Run the full test suite to verify everything passes**
+- [ ] **Step 7: Run the full test suite to verify everything passes**
 
 Run: `cd /Users/aicoder/Documents/flutter_aeroform && flutter test`
 Expected: PASS, 0 failures (aside from any pre-existing unrelated
@@ -826,7 +929,7 @@ failures already present before this plan — verify via `git stash` +
 re-run if anything unexpected fails, same discipline used in the prior
 deploy-entry-point plan).
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add lib/ test/
@@ -918,10 +1021,10 @@ git commit -m "chore(client): bump flutter_aeroform to pick up the Linode OAuth 
 
 ---
 
-### Task 9: Manual verification against real Linode — not a code task, but required before this is done
+### Task 9: Manual verification against real Linode — required before this is done
 
-No files change in this task. Follow the design spec's "Verification"
-section exactly:
+No files change in this task **unless** the PKCE fallback below turns out
+to be needed. Follow the design spec's "Verification" section exactly:
 
 - [ ] Step 0 (already run in Task 2 Step 4, re-confirm if not already
       done): direct curl to `login.linode.com/oauth/token` with a JSON
@@ -932,9 +1035,16 @@ section exactly:
       using a real Linode account, with DevTools Network (preserve log)
       open to inspect the `/callback` response's `Location` header
       directly.
-- [ ] If it's `pocketcoder://oauth-callback?error=...`: apply the
-      `usePkceUpstream: false` fallback to `linode`'s `PROVIDERS` entry
-      (Task 2), redeploy, and retry.
+- [ ] If it's `pocketcoder://oauth-callback?error=...`: this is a real
+      code change, not just a retry — edit `workers/mcp-oauth-relay/src/index.js`'s
+      `linode` `PROVIDERS` entry to add `usePkceUpstream: false`, redeploy
+      via the secrets daemon's `deploy_mcp_oauth_relay` action (same
+      mechanism as Task 2 Step 4/Task 3 Step 3 — never `wrangler deploy`
+      directly), re-run Task 2 Step 4's GitHub-regression curl to confirm
+      `usePkceUpstream` defaulting to `true` still leaves GitHub's
+      redirect byte-for-byte unchanged, then commit:
+      `git commit -m "fix(workers): disable PKCE upstream for Linode token exchange"`
+      before retrying the real login.
 - [ ] If it's `?exchange_code=...&state=...`: curl `/claim` with the
       captured values and confirm a real `access_token` comes back.
 - [ ] Using the resulting `refresh_token`, curl `/refresh` and confirm a

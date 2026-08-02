@@ -531,9 +531,12 @@ see Component 4, which deletes and replaces all four.
   1-positional-arg (`http.Client`) plus its existing named
   `bootTimeInstaller` param — every call site passing a second positional
   clientId argument needs that argument dropped (see Testing).
-- `OAuthError` (`lib/infrastructure/cloud_provider/cloud_provider_errors.dart:80-128`)
-  — confirmed via repo-wide grep its only callers are the two methods
-  just deleted and their own tests. Delete the class.
+- `OAuthError` (`lib/infrastructure/cloud_provider/cloud_provider_errors.dart`,
+  the class starting at line 80 — confirm its exact closing brace against
+  the file rather than a hardcoded end line, since `wc -l`-style counts
+  can be off by one on a file with no trailing newline) — confirmed via
+  repo-wide grep its only callers are the two methods just deleted and
+  their own tests. Delete the class.
 - In `linode_oauth_service.dart` itself: `_authUrl` (line 26) and
   `extractCodeFromCallback()` (lines 114-117) are also dead once
   Components 4-5 land — Linode's raw `code` param never reaches this
@@ -551,12 +554,16 @@ see Component 4, which deletes and replaces all four.
   **stub call site** referencing a method that no longer exists on the
   interface — those specific stub lines must be deleted, not the mock
   classes themselves (see Testing for the concrete files/line numbers).
-- `preRegisterAeroformConfig()`'s `linodeClientId` GetIt registration
-  (`pocketcoder_pro/lib/app.dart:396-399`) becomes unreferenced by
-  anything once both `LinodeOAuthService` and `LinodeAPIClient` drop their
-  `_clientId` params. Leaving the registration in place is harmless (nothing
-  reads it, no error), but worth a one-line removal so it isn't left as a
-  mystery for a future reader — not required for correctness.
+- `preRegisterAeroformConfig()` in `pocketcoder_pro/lib/app.dart` has
+  **two** separate `linodeClientId` references — the `AppConfig(linodeClientId:
+  AppConfig.kLinodeClientId, ...)` constructor field earlier in the
+  function, and a separate GetIt `instanceName: 'linodeClientId'`
+  registration a few lines after it (`:396-399`). Both become
+  unreferenced by anything once both `LinodeOAuthService` and
+  `LinodeAPIClient` drop their `_clientId` params. Leaving them in place
+  is harmless (nothing reads them, no error), but worth removing both —
+  not just the one — so neither is left as a mystery for a future reader.
+  Not required for correctness.
 
 ### 7. Regenerate DI wiring and ship the cross-repo change (`flutter_aeroform`, `pocketcoder`)
 
