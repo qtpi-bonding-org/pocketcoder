@@ -5,7 +5,8 @@
 set -eu
 cd "$(dirname "$0")/.."
 
-for name in GITHUB_OAUTH_CLIENT_ID GITHUB_OAUTH_CLIENT_SECRET; do
+for name in GITHUB_OAUTH_CLIENT_ID GITHUB_OAUTH_CLIENT_SECRET \
+            LINODE_OAUTH_CLIENT_ID LINODE_OAUTH_CLIENT_SECRET; do
   eval "value=\$$name"
   if [ -z "$value" ]; then
     echo "Missing required env var: $name" >&2
