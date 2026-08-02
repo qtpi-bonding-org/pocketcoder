@@ -150,6 +150,22 @@ class FcmPushService implements PushService {
   Stream<PushNotificationPayload> get notificationStream => _controller.stream;
 
   @override
+  Future<PushNotificationPayload?> getInitialNotification() async {
+    try {
+      final message = await _fcm?.getInitialMessage();
+      if (message == null) return null;
+      return PushNotificationPayload(
+        title: message.notification?.title ?? 'PocketCoder',
+        body: message.notification?.body ?? '',
+        data: message.data,
+        wasTapped: true,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
   Future<bool> requestPermissions() async {
     if (_fcm == null) return false;
     final settings = await _fcm!.requestPermission();
