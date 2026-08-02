@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'auth_store.dart';
@@ -112,4 +113,9 @@ abstract class ExternalModule {
   @lazySingleton
   String get mcpOAuthRelayBaseUrl =>
       'https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev';
+
+  /// Local-only storage for the on-device error inbox. Never synced or
+  /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.
+  @lazySingleton
+  ErrorBoxStorage get errorBoxStorage => SharedPrefsErrorBoxStorage();
 }
