@@ -107,8 +107,6 @@ import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_dao
     as _i810;
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_repository.dart'
     as _i857;
-import 'package:pocketcoder_flutter/infrastructure/auth/auth_daos.dart'
-    as _i589;
 import 'package:pocketcoder_flutter/infrastructure/auth/auth_repository.dart'
     as _i617;
 import 'package:pocketcoder_flutter/infrastructure/chat/chat_dao.dart' as _i199;
@@ -221,10 +219,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i810.PocoConfigDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i810.PromptDao>(
         () => _i810.PromptDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i589.UserDao>(
-        () => _i589.UserDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i589.SshKeyDao>(
-        () => _i589.SshKeyDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i199.ChatDao>(
         () => _i199.ChatDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i464.SandboxAgentDao>(
@@ -276,8 +270,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i824.PocketBase>(),
           gh<_i520.AuthStoreConfig>(),
           gh<_i558.FlutterSecureStorage>(),
-          gh<_i589.UserDao>(),
-          gh<_i589.SshKeyDao>(),
           gh<_i619.BillingService>(),
         ));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(

@@ -2,30 +2,23 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
-import 'package:pocketcoder_flutter/domain/auth/user.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
-import 'package:pocketcoder_flutter/domain/models/ssh_key.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
-import 'auth_daos.dart';
 
 @LazySingleton(as: IAuthRepository)
 class AuthRepository implements IAuthRepository {
   final PocketBase _pocketBase;
   final AuthStoreConfig _authStoreConfig;
   final FlutterSecureStorage _storage;
-  final UserDao _userDao;
-  final SshKeyDao _sshKeyDao;
   final BillingService _billingService;
 
   AuthRepository(
     this._pocketBase,
     this._authStoreConfig,
     this._storage,
-    this._userDao,
-    this._sshKeyDao,
     this._billingService,
   );
 
@@ -106,34 +99,6 @@ class AuthRepository implements IAuthRepository {
   Future<void> updateBaseUrl(String url) async {
     _pocketBase.baseURL = url;
     await _storage.write(key: 'pb_server_url', value: url);
-  }
-
-  // --- Users ---
-
-  @override
-  Future<List<User>> getUsers() async {
-    return _userDao.getFullList(sort: 'email');
-  }
-
-  // --- SSH Keys ---
-
-  @override
-  Future<List<SshKey>> getSshKeys() async {
-    return _sshKeyDao.getFullList(sort: '-created');
-  }
-
-  @override
-  Future<void> addSshKey(String title, String key) async {
-    await _sshKeyDao.save(null, {
-      'title': title,
-      'key': key,
-      'user': currentUserId,
-    });
-  }
-
-  @override
-  Future<void> deleteSshKey(String id) async {
-    await _sshKeyDao.delete(id);
   }
 
   @override
