@@ -694,10 +694,12 @@ git commit -m "feat(client): add Error Reports entry point to Settings"
 
 **Files:** none (no code changes — this task is a checklist, run after Tasks 1-5 are all committed)
 
-- [ ] **Step 1: Run the full test suite**
+- [x] **Step 1: Run the full test suite**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter test`
 Expected: all tests PASS, including the new ones from Tasks 1, 3, 4, 5.
+
+Done — full suite run 2026-08-02: 318/318 passed, no regressions.
 
 - [ ] **Step 2: Run the app and force a real cubit failure**
 
@@ -715,6 +717,10 @@ Repeat the same failure from Step 2 (same action, same exception type) 2-3 more 
 
 Delete the single entry via its trailing delete icon — confirm it disappears and the empty state (`NO ERRORS CAPTURED`) shows if it was the only entry. Trigger 2+ distinct failures (different cubits/exception types), then use "CLEAR ALL" and confirm the list empties.
 
-- [ ] **Step 6: Note the known gap**
+- [x] **Step 6: Note the known gap**
 
 Confirm (by reading `lib/application/*/*_cubit.dart` for the 10 cubits listed in the spec's §2/§3) that this is still accurate at implementation time — package/dependency updates between spec-writing and implementation could have changed which cubits extend `AppCubit`. If any of those 10 have since been migrated to `AppCubit`, no action needed (they'll just start working automatically); if new non-`AppCubit` cubits have been added since, note them for a future follow-up but do not expand this plan's scope to cover them.
+
+Confirmed 2026-08-02 — all 10 (`BillingCubit`, `ObservabilityCubit`, `NotificationRuleCubit`, `SandboxAgentCubit`, `McpCubit`, `SchedulerCubit`, `SkillsCubit`, `PocoCubit`, `StatusCubit`, `ToolPermissionsCubit`) still extend `Cubit<S>` directly, no drift since the spec. Gap remains as documented, out of scope for this plan.
+
+- [ ] **Steps 2-5 (live-app QA — not completed by this pass):** require interactively running the app on a device/simulator/browser and manually triggering/observing failures, restarts, and UI interactions. Not something a coding pass (human or agent) can complete standalone — needs a follow-up interactive session with the app actually running.
