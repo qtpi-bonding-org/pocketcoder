@@ -51,7 +51,7 @@ class PermissionRelayView extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TerminalButton(
-                        label: 'RESTORE',
+                        label: context.l10n.relayRestore,
                         onTap: () =>
                             context.read<BillingCubit>().restorePurchases(),
                       ),
@@ -69,7 +69,7 @@ class PermissionRelayView extends StatelessWidget {
                       _buildSetupOptions(context, state),
                     VSpace.x3,
                     Text(
-                      'FUNCTIONAL OVERVIEW:',
+                      context.l10n.relayFunctionalOverviewTitle,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: context.colorScheme.onSurface,
@@ -77,7 +77,7 @@ class PermissionRelayView extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.',
+                      context.l10n.relayFunctionalOverviewBody,
                       style: TextStyle(
                         fontSize: AppSizes.fontMini,
                         color: context.colorScheme.onSurface
@@ -117,7 +117,7 @@ class PermissionRelayView extends StatelessWidget {
           ),
           VSpace.x1,
           Text(
-            'REMOTE AUTHORIZATION CAPACITY: UNLIMITED',
+            context.l10n.relayUnlimitedCapacity,
             style: TextStyle(
               fontSize: AppSizes.fontMini,
               color: colors.onSurface.withValues(alpha: 0.7),
@@ -149,7 +149,7 @@ class PermissionRelayView extends StatelessWidget {
         ],
         if (fossPackages.isNotEmpty || paywallPackages.isEmpty) ...[
           BiosSection(
-            title: 'NTFY RELAY',
+            title: context.l10n.relayNtfyTitle,
             child: const _NtfySetupCard(),
           ),
         ],
@@ -177,7 +177,7 @@ class _PackageCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'PERMISSION RELAY',
+                context.l10n.relayPermissionRelayLabel,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   package: 'pocketcoder_flutter',
@@ -233,7 +233,7 @@ class _NtfySetupCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'NTFY RELAY',
+            context.l10n.relayNtfyTitle,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               package: 'pocketcoder_flutter',
@@ -241,7 +241,7 @@ class _NtfySetupCard extends StatelessWidget {
             ),
           ),
           Text(
-            'Connect to your own NTFY server for free, unlimited relays without registration.',
+            context.l10n.relayNtfyDescription,
             style: TextStyle(
               fontSize: AppSizes.fontMini,
               package: 'pocketcoder_flutter',
