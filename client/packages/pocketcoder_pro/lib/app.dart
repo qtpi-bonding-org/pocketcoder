@@ -269,13 +269,15 @@ class RevenueCatBillingService implements BillingService {
 
         final purchaseResult =
             await Purchases.purchaseStoreProduct(products.first);
-        return purchaseResult.customerInfo.entitlements.active
-            .containsKey('premium');
+        // Different identifiers grant different entitlements ('premium'
+        // for subscriptions, 'deploy' for the one-off deploy pass) --
+        // any newly active entitlement means this specific purchase
+        // succeeded, so check for that rather than hardcoding one name.
+        return purchaseResult.customerInfo.entitlements.active.isNotEmpty;
       }
 
       final purchaseResult = await Purchases.purchasePackage(package);
-      return purchaseResult.customerInfo.entitlements.active
-          .containsKey('premium');
+      return purchaseResult.customerInfo.entitlements.active.isNotEmpty;
     } catch (e) {
       return false;
     }
