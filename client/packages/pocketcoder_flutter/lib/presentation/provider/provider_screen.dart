@@ -280,6 +280,7 @@ class ProviderView extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: 'Delete',
             icon: Icon(
               Icons.delete_outline,
               size: 16,

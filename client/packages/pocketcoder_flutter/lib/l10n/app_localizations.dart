@@ -1960,6 +1960,48 @@ abstract class AppLocalizations {
   /// **'ACTIVATE RELAY'**
   String get relayActivate;
 
+  /// No description provided for @relayRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'RESTORE'**
+  String get relayRestore;
+
+  /// No description provided for @relayFunctionalOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FUNCTIONAL OVERVIEW:'**
+  String get relayFunctionalOverviewTitle;
+
+  /// No description provided for @relayFunctionalOverviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.'**
+  String get relayFunctionalOverviewBody;
+
+  /// No description provided for @relayUnlimitedCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'REMOTE AUTHORIZATION CAPACITY: UNLIMITED'**
+  String get relayUnlimitedCapacity;
+
+  /// No description provided for @relayPermissionRelayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PERMISSION RELAY'**
+  String get relayPermissionRelayLabel;
+
+  /// No description provided for @relayNtfyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NTFY RELAY'**
+  String get relayNtfyTitle;
+
+  /// No description provided for @relayNtfyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to your own NTFY server for free, unlimited relays without registration.'**
+  String get relayNtfyDescription;
+
   /// No description provided for @deployTitle.
   ///
   /// In en, this message translates to:

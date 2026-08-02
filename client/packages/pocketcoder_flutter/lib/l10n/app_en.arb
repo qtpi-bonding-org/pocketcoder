@@ -449,6 +449,13 @@
   "relaySubsystemsNominal": "SUBSYSTEMS NOMINAL",
   "relayConfigSection": "RELAY CONFIGURATION",
   "relayActivate": "ACTIVATE RELAY",
+  "relayRestore": "RESTORE",
+  "relayFunctionalOverviewTitle": "FUNCTIONAL OVERVIEW:",
+  "relayFunctionalOverviewBody": "Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.",
+  "relayUnlimitedCapacity": "REMOTE AUTHORIZATION CAPACITY: UNLIMITED",
+  "relayPermissionRelayLabel": "PERMISSION RELAY",
+  "relayNtfyTitle": "NTFY RELAY",
+  "relayNtfyDescription": "Connect to your own NTFY server for free, unlimited relays without registration.",
 
   "deployTitle": "DEPLOY POCKETCODER",
   "deploySelectProvider": "SELECT PROVIDER",
