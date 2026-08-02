@@ -178,10 +178,14 @@ class FcmPushService implements PushService {
   }
 }
 
-// Pass --dart-define=SHIPPING_BUILD=true only for the exact build meant
-// to be uploaded as the real, live App Store release -- never for a
-// TestFlight/local test build. See RevenueCatBillingService.initialize().
-const kIsShippingBuild = bool.fromEnvironment('SHIPPING_BUILD');
+// Pass --dart-define=USE_TEST_STORE=true to activate RevenueCat's Test
+// Store for a given build. Defaults to false, so an ordinary build --
+// including one where .env still happens to have REVENUE_CAT_TEST_KEY
+// sitting in it -- always uses the real per-platform keys unless this
+// is explicitly passed. Forgetting to clean up .env can never silently
+// ship the Test Store in a build meant to be real; only deliberately
+// adding this flag to a specific build invocation can.
+const kUseTestStore = bool.fromEnvironment('USE_TEST_STORE');
 
 class RevenueCatBillingService implements BillingService {
   @override
@@ -200,31 +204,17 @@ class RevenueCatBillingService implements BillingService {
       // REVENUE_CAT_APPLE_KEY=...
       // REVENUE_CAT_GOOGLE_KEY=...
       //
-      // REVENUE_CAT_TEST_KEY (optional) overrides both: RevenueCat's Test
-      // Store simulates the full purchase flow (success/fail/cancel) with
-      // no App Store Connect API key, no real IAP products, and no
-      // sandbox tester needed -- exactly what we want before handing
-      // RevenueCat the .p8. Set explicitly via .env rather than gating on
-      // kDebugMode, since a TestFlight archive is a Release build and
-      // kDebugMode is always false there -- this needs to work in that
-      // build too. Remove REVENUE_CAT_TEST_KEY from .env (leaving the
-      // real per-platform keys) once ready to test against real stores.
-      String? apiKey = dotenv.env['REVENUE_CAT_TEST_KEY'];
-
-      // Safety net for the one build that must never use the Test Store:
-      // pass --dart-define=SHIPPING_BUILD=true only for the literal
-      // build you intend to submit/upload as the real, live App Store
-      // release. If REVENUE_CAT_TEST_KEY is still sitting in .env at
-      // that point, crash immediately and loudly instead of silently
-      // shipping a production build where real customers can never
-      // actually be charged.
-      if (kIsShippingBuild && apiKey != null && apiKey.isNotEmpty) {
-        throw StateError(
-          'REVENUE_CAT_TEST_KEY is still set in .env while building with '
-          '--dart-define=SHIPPING_BUILD=true. Remove it (leaving the real '
-          'REVENUE_CAT_APPLE_KEY/REVENUE_CAT_GOOGLE_KEY in place) before '
-          'building the real App Store submission.',
-        );
+      // REVENUE_CAT_TEST_KEY (optional) is only ever read when this
+      // build was explicitly invoked with --dart-define=USE_TEST_STORE=
+      // true (see kUseTestStore above) -- RevenueCat's Test Store
+      // simulates the full purchase flow (success/fail/cancel) with no
+      // App Store Connect API key, real IAP products, or sandbox tester
+      // needed, exactly what we want before handing RevenueCat the .p8.
+      // Every other build, including one where .env still happens to
+      // have REVENUE_CAT_TEST_KEY sitting in it, uses the real keys.
+      String? apiKey;
+      if (kUseTestStore) {
+        apiKey = dotenv.env['REVENUE_CAT_TEST_KEY'];
       }
 
       if (apiKey == null || apiKey.isEmpty) {
