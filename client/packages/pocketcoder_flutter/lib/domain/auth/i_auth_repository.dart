@@ -1,6 +1,3 @@
-import 'package:pocketcoder_flutter/domain/models/ssh_key.dart';
-import '../auth/user.dart';
-
 abstract class IAuthRepository {
   Stream<bool> get connectionStatus;
 
@@ -15,12 +12,5 @@ abstract class IAuthRepository {
 
   Future<void> updateBaseUrl(String url);
 
-  // --- Users ---
-  Future<List<User>> getUsers();
-
-  // --- SSH Keys ---
-  Future<List<SshKey>> getSshKeys();
-  Future<void> addSshKey(String title, String key);
-  Future<void> deleteSshKey(String id);
   Future<String> getSshKeysForAuthorizedKeys();
 }
