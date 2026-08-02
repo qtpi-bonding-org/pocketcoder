@@ -18,7 +18,7 @@ class FossBillingService implements BillingService {
   }
 
   @override
-  Future<bool> isPremium() async => true;
+  Future<bool> isPro() async => true;
 
   @override
   Future<bool> hasDeployAccess() async => true;

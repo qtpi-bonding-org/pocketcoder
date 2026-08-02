@@ -249,7 +249,7 @@ class RevenueCatBillingService implements BillingService {
   }
 
   @override
-  Future<bool> isPremium() async {
+  Future<bool> isPro() async {
     try {
       if (!await Purchases.isConfigured) return false;
       final customerInfo = await Purchases.getCustomerInfo();

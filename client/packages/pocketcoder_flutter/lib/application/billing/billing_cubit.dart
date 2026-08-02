@@ -14,11 +14,11 @@ class BillingCubit extends Cubit<BillingState> {
     emit(state.copyWith(status: UiFlowStatus.loading));
     try {
       final packages = await _billingService.getAvailablePackages();
-      final isPremium = await _billingService.isPremium();
+      final isPro = await _billingService.isPro();
       emit(state.copyWith(
         status: UiFlowStatus.success,
         packages: packages,
-        isPremium: isPremium,
+        isPro: isPro,
       ));
     } catch (e) {
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
@@ -30,7 +30,7 @@ class BillingCubit extends Cubit<BillingState> {
     try {
       final success = await _billingService.purchase(identifier);
       if (success) {
-        emit(state.copyWith(status: UiFlowStatus.success, isPremium: true));
+        emit(state.copyWith(status: UiFlowStatus.success, isPro: true));
       } else {
         emit(state.copyWith(
             status: UiFlowStatus.failure, error: 'Purchase failed'));
@@ -44,8 +44,8 @@ class BillingCubit extends Cubit<BillingState> {
     emit(state.copyWith(status: UiFlowStatus.loading));
     try {
       await _billingService.restorePurchases();
-      final isPremium = await _billingService.isPremium();
-      emit(state.copyWith(status: UiFlowStatus.success, isPremium: isPremium));
+      final isPro = await _billingService.isPro();
+      emit(state.copyWith(status: UiFlowStatus.success, isPro: isPro));
     } catch (e) {
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
     }
