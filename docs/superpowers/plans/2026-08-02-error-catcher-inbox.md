@@ -29,7 +29,7 @@
 **Interfaces:**
 - Produces: `class PocketCoderErrorCodeMapper { static String mapError(Object error); }` — a pure static function, no DI registration needed (matches how `ErrorCodeMapper.mapError` from the package itself is referenced directly as a function value, not injected).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```dart
 // test/infrastructure/errors/error_code_mapper_test.dart
@@ -66,12 +66,12 @@ void main() {
 
 Check `ChatListException`'s constructor signature first — `lib/domain/exceptions/chat_list_exception.dart:1` declares `class ChatListException implements Exception` (not a `DomainException` subclass like the others). Confirm its constructor takes a single positional `String` before using `ChatListException('x')` verbatim; adjust the test call if it differs (e.g. a named `message:` parameter).
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter test test/infrastructure/errors/error_code_mapper_test.dart`
 Expected: FAIL — `error_code_mapper.dart` doesn't exist yet (import error).
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```dart
 // lib/infrastructure/errors/error_code_mapper.dart
@@ -108,12 +108,12 @@ class PocketCoderErrorCodeMapper {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter test test/infrastructure/errors/error_code_mapper_test.dart`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add client/packages/pocketcoder_flutter/lib/infrastructure/errors/error_code_mapper.dart client/packages/pocketcoder_flutter/test/infrastructure/errors/error_code_mapper_test.dart
