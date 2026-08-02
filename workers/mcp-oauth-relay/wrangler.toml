@@ -12,3 +12,7 @@ id = "bcfefa68ed2c4f45b2d4c4c6e11d3ea5"
 # GITHUB_OAUTH_CLIENT_SECRET — same App. GitHub requires this even with PKCE
 #                              (see the spec's Problem section) — it must
 #                              never be shipped to the app or any user's VPS.
+# LINODE_OAUTH_CLIENT_ID     — from the centrally-registered Linode OAuth App
+# LINODE_OAUTH_CLIENT_SECRET — same App. Linode's app-registration form
+#                              issues one even for a "Public" client type --
+#                              same reasoning as GitHub above applies.
