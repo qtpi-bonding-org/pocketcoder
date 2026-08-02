@@ -178,6 +178,11 @@ class FcmPushService implements PushService {
   }
 }
 
+// Pass --dart-define=SHIPPING_BUILD=true only for the exact build meant
+// to be uploaded as the real, live App Store release -- never for a
+// TestFlight/local test build. See RevenueCatBillingService.initialize().
+const kIsShippingBuild = bool.fromEnvironment('SHIPPING_BUILD');
+
 class RevenueCatBillingService implements BillingService {
   @override
   Future<void> initialize() async {
@@ -205,6 +210,22 @@ class RevenueCatBillingService implements BillingService {
       // build too. Remove REVENUE_CAT_TEST_KEY from .env (leaving the
       // real per-platform keys) once ready to test against real stores.
       String? apiKey = dotenv.env['REVENUE_CAT_TEST_KEY'];
+
+      // Safety net for the one build that must never use the Test Store:
+      // pass --dart-define=SHIPPING_BUILD=true only for the literal
+      // build you intend to submit/upload as the real, live App Store
+      // release. If REVENUE_CAT_TEST_KEY is still sitting in .env at
+      // that point, crash immediately and loudly instead of silently
+      // shipping a production build where real customers can never
+      // actually be charged.
+      if (kIsShippingBuild && apiKey != null && apiKey.isNotEmpty) {
+        throw StateError(
+          'REVENUE_CAT_TEST_KEY is still set in .env while building with '
+          '--dart-define=SHIPPING_BUILD=true. Remove it (leaving the real '
+          'REVENUE_CAT_APPLE_KEY/REVENUE_CAT_GOOGLE_KEY in place) before '
+          'building the real App Store submission.',
+        );
+      }
 
       if (apiKey == null || apiKey.isEmpty) {
         if (Platform.isIOS) {
