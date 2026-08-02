@@ -33,6 +33,7 @@ class SettingsScreen extends StatelessWidget {
         ('SYSTEM CHECKS', '[DIAGNOSE]', 'configureSystemChecks'),
         ('PERMISSION RELAY', '[STATUS]', 'configurePaywall'),
         ('SERVER UPDATE', '[UPDATE]', 'updateServer'),
+        (context.l10n.errorsTitle, '[VIEW]', 'configureErrors'),
       ]),
       (context.l10n.settingsObservabilitySection, [
         ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
@@ -155,6 +156,8 @@ class SettingsScreen extends StatelessWidget {
         context.push(AppRoutes.configureScheduler);
       case 'configureNotifications':
         context.push(AppRoutes.configureNotifications);
+      case 'configureErrors':
+        context.push(AppRoutes.configureErrors);
     }
   }
 }

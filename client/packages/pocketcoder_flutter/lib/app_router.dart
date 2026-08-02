@@ -21,6 +21,7 @@ import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
+import 'package:pocketcoder_flutter/presentation/errors/error_box_page_builder.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -213,6 +214,17 @@ class AppRouter {
           child: const AgentObservabilityScreen(),
         ),
       ),
+      GoRoute(
+        path: AppRoutes.configureErrors,
+        name: RouteNames.configureErrors,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: Builder(
+            builder: (context) => const PocketCoderErrorBoxPageBuilder().build(context),
+          ),
+        ),
+      ),
       // ── DEPLOY pillar ──
       GoRoute(
         path: AppRoutes.deploy,
@@ -294,6 +306,7 @@ class AppRoutes {
   static const String configurePaywall = '/configure/paywall';
   static const String configureObservability = '/configure/observability';
   static const String configureLlm = '/configure/llm';
+  static const String configureErrors = '/configure/errors';
   // Legacy aliases (redirected)
   static const String settings = '/settings';
   static const String aiRegistry = '/settings/ai';
@@ -337,6 +350,7 @@ class RouteNames {
   static const String configurePaywall = 'configurePaywall';
   static const String configureObservability = 'configureObservability';
   static const String configureLlm = 'configureLlm';
+  static const String configureErrors = 'configureErrors';
   // Legacy aliases
   static const String aiRegistry = 'configureAi';
   static const String toolPermissions = 'configureToolPermissions';

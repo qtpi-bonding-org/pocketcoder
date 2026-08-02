@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
@@ -49,6 +50,10 @@ void main() {
           path: '/onboarding',
           name: 'onboarding',
           builder: (context, state) => const SizedBox(),
+        ),
+        GoRoute(
+          path: AppRoutes.configureErrors,
+          builder: (context, state) => const Text('errors-placeholder'),
         ),
       ],
     );
@@ -102,5 +107,22 @@ void main() {
     await tester.pumpAndSettle();
 
     verifyNever(() => authRepo.logout());
+  });
+
+  testWidgets('tapping ERROR REPORTS navigates to /configure/errors',
+      (tester) async {
+    await tester.pumpWidget(buildTestable());
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('ERROR REPORTS'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ERROR REPORTS'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('errors-placeholder'), findsOneWidget);
   });
 }

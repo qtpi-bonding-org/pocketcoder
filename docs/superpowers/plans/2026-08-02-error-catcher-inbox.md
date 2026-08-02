@@ -598,7 +598,7 @@ git commit -m "feat(client): add Error Inbox screen backed by ErrorBoxPageCubit"
 - Consumes: `PocketCoderErrorBoxPageBuilder` (Task 4), `ErrorInboxScreen` (Task 4).
 - Produces: `AppRoutes.configureErrors = '/configure/errors'`, `RouteNames.configureErrors = 'configureErrors'` — terminal additions, nothing downstream depends on these beyond this task.
 
-- [ ] **Step 1: Add the route**
+- [x] **Step 1: Add the route**
 
 In `lib/app_router.dart`, add to `AppRoutes` (near `configureObservability`, `app_router.dart:295`):
 ```dart
@@ -627,7 +627,7 @@ Add a `GoRoute` (near the `configureObservability` route, `app_router.dart:207-2
       ),
 ```
 
-- [ ] **Step 2: Add the settings row**
+- [x] **Step 2: Add the settings row**
 
 In `lib/presentation/settings/settings_screen.dart`, add a row to the `settingsSystemSection` group in `_sections` (`settings_screen.dart:32-36`):
 ```dart
@@ -644,7 +644,7 @@ Add a case in `_navigateTo` (`settings_screen.dart:134-159`):
         context.push(AppRoutes.configureErrors);
 ```
 
-- [ ] **Step 3: Extend the existing settings screen navigation test**
+- [x] **Step 3: Extend the existing settings screen navigation test**
 
 `test/presentation/settings/settings_screen_test.dart` already has `buildTestable()` wiring a real `GoRouter` with mocked `AuthCubit`/`McpCubit` dependencies and two `testWidgets` cases (LOGOUT confirm/cancel). Add a third case to that `main()` block, following the same pattern — register an additional route for the destination and assert the router navigated:
 
@@ -676,12 +676,12 @@ This requires adding a matching route to `buildTestable()`'s router (alongside i
 ```
 Use `AppRoutes.configureErrors` (from Task 5 Step 1) as that route's `path` value instead of the literal `'/configure/errors'` string, so the test breaks if the two ever drift apart.
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter test test/presentation/settings/ && flutter analyze lib/app_router.dart lib/presentation/settings/settings_screen.dart`
 Expected: PASS, no new analyzer errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add client/packages/pocketcoder_flutter/lib/app_router.dart client/packages/pocketcoder_flutter/lib/presentation/settings/settings_screen.dart client/packages/pocketcoder_flutter/test/presentation/settings/settings_screen_test.dart
