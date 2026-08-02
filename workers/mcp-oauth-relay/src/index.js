@@ -52,6 +52,14 @@ const PROVIDERS = {
 		tokenUrl: 'https://github.com/login/oauth/access_token',
 		scope: 'repo read:user',
 	},
+	linode: {
+		displayName: 'Linode',
+		authorizeUrl: 'https://login.linode.com/oauth/authorize',
+		tokenUrl: 'https://login.linode.com/oauth/token',
+		// Matches flutter_aeroform's LinodeOAuthService._requiredScopes --
+		// keep these in sync if that list ever changes.
+		scope: 'linodes:read_write linodes:create images:read_write',
+	},
 };
 
 const EXCHANGE_TTL_SECONDS = 60;
