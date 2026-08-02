@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/auth/user.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/models/ssh_key.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
@@ -17,6 +18,7 @@ class AuthRepository implements IAuthRepository {
   final FlutterSecureStorage _storage;
   final UserDao _userDao;
   final SshKeyDao _sshKeyDao;
+  final BillingService _billingService;
 
   AuthRepository(
     this._pocketBase,
@@ -24,6 +26,7 @@ class AuthRepository implements IAuthRepository {
     this._storage,
     this._userDao,
     this._sshKeyDao,
+    this._billingService,
   );
 
   @override
@@ -42,6 +45,10 @@ class AuthRepository implements IAuthRepository {
             .collection(Collections.users)
             .authWithPassword(email, password);
         await _refireConnectivityCheck();
+        final userId = _pocketBase.authStore.record?.id;
+        if (userId != null) {
+          await _billingService.identify(userId);
+        }
         return true;
       },
       AuthException.new,
@@ -66,6 +73,7 @@ class AuthRepository implements IAuthRepository {
   Future<void> logout() async {
     _pocketBase.authStore.clear();
     await _authStoreConfig.clear();
+    await _billingService.reset();
   }
 
   @override

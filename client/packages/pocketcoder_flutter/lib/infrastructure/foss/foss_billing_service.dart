@@ -8,6 +8,16 @@ class FossBillingService implements BillingService {
   }
 
   @override
+  Future<void> identify(String userId) async {
+    // No-op for FOSS: no billing backend to link.
+  }
+
+  @override
+  Future<void> reset() async {
+    // No-op for FOSS: no billing backend to link.
+  }
+
+  @override
   Future<bool> isPremium() async => true;
 
   @override

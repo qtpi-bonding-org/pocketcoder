@@ -196,6 +196,31 @@ class RevenueCatBillingService implements BillingService {
   }
 
   @override
+  Future<void> identify(String userId) async {
+    try {
+      if (kIsWeb) return;
+      if (!await Purchases.isConfigured) return;
+      // Aliases this device's (possibly anonymous) purchases to the
+      // PocketBase user id -- push-relay's RevenueCat check queries by
+      // that same id, so without this call it can never find them.
+      await Purchases.logIn(userId);
+    } catch (e) {
+      print('[PocketCoder] RevenueCat logIn failed: $e');
+    }
+  }
+
+  @override
+  Future<void> reset() async {
+    try {
+      if (kIsWeb) return;
+      if (!await Purchases.isConfigured) return;
+      await Purchases.logOut();
+    } catch (e) {
+      print('[PocketCoder] RevenueCat logOut failed: $e');
+    }
+  }
+
+  @override
   Future<bool> isPremium() async {
     try {
       if (!await Purchases.isConfigured) return false;

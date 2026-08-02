@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
+import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'bootstrap.config.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/connectivity_override.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
@@ -52,6 +53,20 @@ Future<void> bootstrap() async {
     // Initialize the billing service
     final billingService = getIt<BillingService>();
     await billingService.initialize();
+
+    // If a session persisted from a previous launch, link RevenueCat's
+    // identity now -- AuthRepository.login() won't run again this launch
+    // to do it for us, but server-side entitlement checks are keyed on
+    // this same PocketBase user id either way.
+    try {
+      final pocketBase = getIt<PocketBase>();
+      final userId = pocketBase.authStore.record?.id;
+      if (pocketBase.authStore.isValid && userId != null) {
+        await billingService.identify(userId);
+      }
+    } catch (e) {
+      debugPrint('Bootstrap: Warning - billing identify on session restore failed: $e');
+    }
 
     // 2. Register UI flow service (depends on localization/feedback/loading)
     debugPrint('Bootstrap: Registering UI flow service...');
