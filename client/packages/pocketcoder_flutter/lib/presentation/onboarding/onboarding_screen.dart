@@ -199,7 +199,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           obscureText: true,
                           onSubmitted: (_) => isLoading
                               ? null
-                              : _handleLogin(context.read<AuthCubit>()),
+                              : (_mode == _OnboardingMode.login
+                                  ? _handleLogin(context.read<AuthCubit>())
+                                  : _handleDeploy()),
                         ),
                         VSpace.x2,
                         if (isLoading)
