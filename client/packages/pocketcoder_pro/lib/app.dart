@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dar
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 import 'package:injectable/injectable.dart' show GetItHelper;
 import 'package:flutter_aeroform/flutter_aeroform.module.dart';
@@ -467,7 +468,11 @@ List<RouteBase> get linodeRoutes => [
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const deploy_auth.AuthScreen(),
+          child: deploy_auth.AuthScreen(
+            credentials: state.extra is DeployCredentials
+                ? state.extra as DeployCredentials
+                : null,
+          ),
         ),
       ),
       GoRoute(
@@ -476,7 +481,11 @@ List<RouteBase> get linodeRoutes => [
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const deploy_config.ConfigScreen(),
+          child: deploy_config.ConfigScreen(
+            credentials: state.extra is DeployCredentials
+                ? state.extra as DeployCredentials
+                : null,
+          ),
         ),
       ),
       GoRoute(

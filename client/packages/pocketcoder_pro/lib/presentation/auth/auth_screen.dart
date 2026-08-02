@@ -5,6 +5,7 @@ import 'package:pocketcoder_pro/application/auth/auth_cubit.dart';
 import 'package:pocketcoder_pro/application/auth/auth_message_mapper.dart';
 import 'package:pocketcoder_pro/application/auth/auth_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
@@ -14,19 +15,23 @@ import 'package:get_it/get_it.dart';
 
 /// Authentication screen for Linode OAuth login
 class AuthScreen extends StatelessWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({super.key, this.credentials});
+
+  final DeployCredentials? credentials;
 
   @override
   Widget build(BuildContext context) {
     return UiFlowListener<AuthCubit, AuthState>(
       mapper: GetIt.I<AuthMessageMapper>(),
-      child: const _AuthView(),
+      child: _AuthView(credentials: credentials),
     );
   }
 }
 
 class _AuthView extends StatelessWidget {
-  const _AuthView();
+  const _AuthView({this.credentials});
+
+  final DeployCredentials? credentials;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +42,7 @@ class _AuthView extends StatelessWidget {
       listener: (context, state) {
         // Navigate to ConfigScreen on successful authentication
         if (state.isSuccess && state.isAuthenticated == true) {
-          context.pushNamed(RouteNames.config);
+          context.pushNamed(RouteNames.config, extra: credentials);
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(
