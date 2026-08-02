@@ -131,7 +131,7 @@ git commit -m "feat(client): add PocketCoderErrorCodeMapper for error inbox"
 - Consumes: `SharedPrefsErrorBoxStorage` and `ErrorBoxStorage` from `package:flutter_error_privserver/flutter_error_privserver.dart`.
 - Produces: `getIt<ErrorBoxStorage>()` resolves to a singleton `SharedPrefsErrorBoxStorage` instance, usable from Task 3 (bootstrap config + bootstrap-level capture) and Task 4 (inbox screen reads via `ErrorBoxPageCubit`, which reads storage through `ErrorPrivserverMixin.config`, not DI — so this registration exists purely for Task 3's two use sites).
 
-- [ ] **Step 1: Add the provider**
+- [x] **Step 1: Add the provider**
 
 Add this import and method to `ExternalModule` in `lib/infrastructure/core/external_module.dart` (append to the existing `@module abstract class ExternalModule { ... }` body, alongside `httpClient`/`mcpOAuthRelayBaseUrl`):
 
@@ -146,12 +146,12 @@ import 'package:flutter_error_privserver/flutter_error_privserver.dart';
   ErrorBoxStorage get errorBoxStorage => SharedPrefsErrorBoxStorage();
 ```
 
-- [ ] **Step 2: Regenerate DI registrations**
+- [x] **Step 2: Regenerate DI registrations**
 
 Run: `cd client/packages/pocketcoder_flutter && dart run build_runner build --delete-conflicting-outputs`
 Expected: build succeeds; `lib/app/bootstrap.config.dart` now contains a registration for `ErrorBoxStorage`. Grep to confirm: `grep -n "ErrorBoxStorage" lib/app/bootstrap.config.dart` should show a hit.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add client/packages/pocketcoder_flutter/lib/infrastructure/core/external_module.dart client/packages/pocketcoder_flutter/lib/app/bootstrap.config.dart

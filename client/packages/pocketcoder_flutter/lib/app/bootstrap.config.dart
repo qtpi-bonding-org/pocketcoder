@@ -10,6 +10,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as _i653;
+import 'package:flutter_error_privserver/flutter_error_privserver.dart'
+    as _i145;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:http/http.dart' as _i519;
@@ -189,6 +191,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i992.PocoCubit>(() => _i992.PocoCubit());
     gh.lazySingleton<_i619.AgentCacheDb>(() => _i619.AgentCacheDb());
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
+    gh.lazySingleton<_i145.ErrorBoxStorage>(
+        () => externalModule.errorBoxStorage);
     gh.lazySingleton<String>(
       () => externalModule.mcpOAuthRelayBaseUrl,
       instanceName: 'mcpOAuthRelayBaseUrl',
