@@ -63,7 +63,7 @@ class PermissionRelayView extends StatelessWidget {
                           label: context.l10n.relayCheckingStatus,
                         ),
                       )
-                    else if (state.isPremium)
+                    else if (state.isPro)
                       _buildActiveStatus(context, state)
                     else
                       _buildSetupOptions(context, state),

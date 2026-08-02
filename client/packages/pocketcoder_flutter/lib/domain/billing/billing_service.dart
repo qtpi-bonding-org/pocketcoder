@@ -15,8 +15,8 @@ abstract class BillingService {
   /// doesn't inherit the previous user's linkage.
   Future<void> reset();
 
-  /// Check if the user has an active premium subscription.
-  Future<bool> isPremium();
+  /// Check if the user has an active Pro subscription.
+  Future<bool> isPro();
 
   /// Restore purchases.
   Future<void> restorePurchases();

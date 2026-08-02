@@ -11,7 +11,7 @@ sealed class BillingState with _$BillingState implements IUiFlowState {
   const factory BillingState({
     @Default([]) List<BillingPackage> packages,
     @Default(UiFlowStatus.idle) UiFlowStatus status,
-    @Default(false) bool isPremium,
+    @Default(false) bool isPro,
     Object? error,
   }) = _BillingState;
 
