@@ -86,6 +86,9 @@ export default {
 		if (request.method === 'POST' && url.pathname === '/claim') {
 			return handleClaim(request, env);
 		}
+		if (request.method === 'POST' && url.pathname === '/refresh') {
+			return handleRefresh(request, env);
+		}
 		return json({ status: 'ok', service: 'pocketcoder-mcp-oauth-relay' }, 200);
 	},
 };
@@ -297,6 +300,61 @@ async function handleClaim(request, env) {
 		refresh_token: entry.refreshToken,
 		expires_in: entry.expiresIn,
 		scope: entry.scope,
+	}, 200);
+}
+
+// ---------------------------------------------------------------------------
+// POST /refresh
+// ---------------------------------------------------------------------------
+
+async function handleRefresh(request, env) {
+	let body;
+	try {
+		body = await request.json();
+	} catch (e) {
+		return json({ error: 'invalid_json' }, 400);
+	}
+
+	const providerId = body.provider;
+	const refreshToken = body.refresh_token;
+	if (!providerId || !Object.hasOwn(PROVIDERS, providerId) || !refreshToken) {
+		return json({ error: 'invalid_request' }, 400);
+	}
+
+	const provider = PROVIDERS[providerId];
+	const envPrefix = providerId.toUpperCase();
+	const clientId = env[`${envPrefix}_OAUTH_CLIENT_ID`];
+	const clientSecret = env[`${envPrefix}_OAUTH_CLIENT_SECRET`];
+	if (!clientId || !clientSecret) {
+		return json({ error: 'server_misconfigured' }, 500);
+	}
+
+	const { body: reqBody, contentType } = buildTokenRequestBody(
+		provider.tokenBodyFormat ?? 'json',
+		{ client_id: clientId, client_secret: clientSecret, grant_type: 'refresh_token', refresh_token: refreshToken }
+	);
+
+	let tokenResp;
+	try {
+		tokenResp = await fetch(provider.tokenUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': contentType, Accept: 'application/json' },
+			body: reqBody,
+		});
+	} catch (e) {
+		return json({ error: 'refresh_request_failed' }, 502);
+	}
+
+	const tokenBody = await tokenResp.json().catch(() => null);
+	if (!tokenResp.ok || !tokenBody || tokenBody.error || !tokenBody.access_token) {
+		return json({ error: (tokenBody && tokenBody.error) || 'refresh_rejected' }, 401);
+	}
+
+	return json({
+		access_token: tokenBody.access_token,
+		refresh_token: tokenBody.refresh_token || refreshToken,
+		expires_in: tokenBody.expires_in ?? null,
+		scope: tokenBody.scope ?? null,
 	}, 200);
 }
 
