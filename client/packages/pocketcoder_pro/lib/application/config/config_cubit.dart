@@ -1,7 +1,6 @@
 import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
 import 'package:flutter_aeroform/domain/models/deployment_config.dart';
-import 'package:flutter_aeroform/domain/models/validation_result.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
@@ -32,47 +31,6 @@ class ConfigCubit extends AppCubit<ConfigState> {
     ));
   }
 
-  /// Validates the current configuration
-  ValidationResult validateConfig() {
-    if (state.config == null) {
-      return ValidationResult.invalid('No configuration provided');
-    }
-
-    return _validationService.validateDeploymentConfig(state.config!);
-  }
-
-  /// Loads available plans from the cloud provider
-  Future<void> loadPlans() async {
-    return tryOperation(() async {
-      final accessToken = await _secureStorage.getAccessToken();
-      if (accessToken == null) {
-        throw Exception('Not authenticated');
-      }
-      final plans = await _apiClient.getAvailablePlans(accessToken);
-
-      return state.copyWith(
-        status: UiFlowStatus.success,
-        plans: plans,
-      );
-    });
-  }
-
-  /// Loads available regions from the cloud provider
-  Future<void> loadRegions() async {
-    return tryOperation(() async {
-      final accessToken = await _secureStorage.getAccessToken();
-      if (accessToken == null) {
-        throw Exception('Not authenticated');
-      }
-      final regions = await _apiClient.getAvailableRegions(accessToken);
-
-      return state.copyWith(
-        status: UiFlowStatus.success,
-        regions: regions,
-      );
-    });
-  }
-
   /// Loads both plans and regions
   Future<void> loadPlansAndRegions() async {
     return tryOperation(() async {
@@ -91,10 +49,5 @@ class ConfigCubit extends AppCubit<ConfigState> {
         regions: results[1] as List<Region>,
       );
     });
-  }
-
-  /// Clears the current configuration
-  void clearConfig() {
-    emit(ConfigState.initial());
   }
 }
