@@ -17,7 +17,8 @@ client-side when the reviewer taps "LOGIN VIA LINODE" on `AuthScreen`. On
 match, the app calls a new password-gated Cloudflare Worker route instead
 of running the real Linode OAuth flow. The Worker verifies the password
 against a stored hash and, on success, returns a Linode Personal Access
-Token scoped to `Linodes:Read/Write` only. The app preseeds that token into
+Token scoped to `Linodes:Read/Write` only, on a **dedicated Linode account
+that holds no real infrastructure**. The app preseeds that token into
 secure storage exactly where a real OAuth token would go, then proceeds
 through the existing post-auth flow unchanged. Client-side cost caps
 prevent runaway spend once the bypass is active. The whole mechanism ships
@@ -39,11 +40,26 @@ Web Crypto (`crypto.subtle.digest`) for server-side password hashing.
 - The password is a 20+ character random string, generated once and
   handed to reviewers only via App Store Connect's "Notes for Review"
   field. It is never memorized or typed from memory — always copy-pasted.
+- **The vended PAT lives on a dedicated Linode account created solely for
+  this purpose, holding no other real infrastructure.** `Linodes:Read/Write`
+  is account-wide — it lets its holder list, create, resize, or delete
+  *any* Linode on the token's account, not just ones it created itself.
+  Client-side cost caps (below) only constrain usage that goes through
+  this app's UI; a holder of the raw PAT calling Linode's API directly
+  isn't bound by them. Putting the PAT on an account with nothing else on
+  it is what actually bounds the blast radius of a leaked/brute-forced
+  token — no plan-type or label filtering on the client side is a
+  substitute for this. This account is created once (not per review
+  cycle) and never accumulates real infrastructure.
 - The preseeded token must never cause `LinodeOAuthService.refreshToken()`
   to fire automatically. This holds as long as `storeTokenExpiration` is
   never called for the bypass path — `getAccessToken()`
   (`flutter_aeroform/lib/infrastructure/auth/linode_oauth_service.dart:167-181`)
   only calls `refreshToken()` when `getTokenExpiration()` returns non-null.
+  Once the PAT is revoked post-review, the stored token becomes permanently
+  dead (every Linode call 401s, with no refresh path) until the user logs
+  out — acceptable since this only ever applies to the reviewer's own
+  session, never a real user's.
 - This mechanism must be explicitly disclosed in App Store Connect's
   "Notes for Review" field at submission time — this is what keeps it a
   sanctioned demo mode (Guideline 2.1) rather than an undisclosed hidden
@@ -56,12 +72,43 @@ Web Crypto (`crypto.subtle.digest`) for server-side password hashing.
   duration of an actual review/judging window — generated shortly before
   submission, revoked in Linode's dashboard shortly after. This is an
   operational step, not something any task below implements in code.
+- IAP/paywall interaction is out of scope for this spec.
+  `DeployPickerScreen` gates on `billing.hasDeployAccess()`
+  (`deploy_picker_screen.dart:146`). Official Apple App Review devices run
+  IAP against Apple's StoreKit sandbox automatically, so real App Review
+  should already pass this gate with no charge — no dart-define or
+  `USE_TEST_STORE` flag needed for that path. Shipaton judges installing
+  the live public build would hit a real purchase; resolving that is a
+  separate, already-tracked concern, not part of this spec.
+- This spec **supersedes and obsoletes** the build-time approach recorded
+  earlier in `LINODE_REVIEWER_ACCESS_TODO.md` (`scripts/build-reviewer-ipa.sh`,
+  the `build_pocketcoder_reviewer_ipa` daemon action, and
+  `secrets/linode-reviewer-build.enc.yaml`). The PAT now lives only in
+  `secrets/mcp-oauth-relay.enc.yaml` (see Component 4) and is fetched at
+  runtime, not baked in at build time. Task 6 below removes the obsolete
+  script; the obsolete action and secrets file are the user's own vault
+  cleanup (per the secrets-daemon skill), not an implementation task.
 
 ---
 
 ## Components
 
-### 1. Sentinel check (`packages/pocketcoder_pro/lib/presentation/auth/reviewer_bypass.dart`, new file)
+### 1. Fix the Worker base URL (`client/packages/pocketcoder_flutter/lib/infrastructure/core/external_module.dart`)
+
+**This must land before Component 3 can work at all.**
+`external_module.dart:113-116` currently registers `@Named('mcpOAuthRelayBaseUrl')`
+as `https://pocketcoder-mcp-oauth-relay.workers.dev`, still carrying a
+`TODO(mcp-oauth): replace with the real deployed Worker's...` comment. The
+actually-deployed Worker lives at
+`https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev` (Cloudflare's free
+`workers.dev` routing includes the account subdomain) — recorded as the
+"THIRD CORRECTION" in `LINODE_REVIEWER_ACCESS_TODO.md`. Update the constant
+to the real URL and remove the stale TODO comment. Without this fix, every
+call in Component 3 fails with the same generic network-failure message a
+wrong password would produce — indistinguishable, and undiagnosable from
+inside the app.
+
+### 2. Sentinel check (`client/packages/pocketcoder_pro/lib/presentation/auth/reviewer_bypass.dart`, new file)
 
 A small, isolated file — deliberately separate from `auth_screen.dart` so
 the whole mechanism can be deleted in one file removal plus a few call-site
@@ -77,30 +124,40 @@ import 'package:crypto/crypto.dart';
 /// Connect's "Notes for Review" field.
 const String kReviewerSentinelEmailHash = '<sha256 hex, filled in at setup time>';
 
-bool isReviewerSentinelEmail(String email) {
+bool isReviewerSentinelEmail(String? email) {
+  if (email == null) return false;
   final normalized = email.trim().toLowerCase();
   final hash = sha256.convert(utf8.encode(normalized)).toString();
   return hash == kReviewerSentinelEmailHash;
 }
 ```
 
-`crypto` is already a transitive dependency (used by `flutter_aeroform`'s
-`LinodeOAuthService` for PKCE) — confirm it's a direct dependency of
-`pocketcoder_pro` too before importing it there.
+`isReviewerSentinelEmail` takes a nullable `String?` directly (rather than
+callers doing `credentials != null && isReviewerSentinelEmail(credentials!.email)`)
+specifically so call sites never need the `!` operator, which
+`client/CLAUDE.md` forbids outright.
 
-### 2. `AuthScreen` / `AuthCubit` (`packages/pocketcoder_pro/lib/presentation/auth/auth_screen.dart`, `lib/application/auth/auth_cubit.dart`)
+`crypto` is **not currently a direct dependency of `pocketcoder_pro`**
+(confirmed against its `pubspec.yaml`) — add it there. It's already a
+transitive dependency via `flutter_aeroform` (used for PKCE in
+`LinodeOAuthService`), so this only adds a `pubspec.yaml` line, no new
+package to vet.
+
+### 3. `AuthScreen` / `AuthCubit` (`client/packages/pocketcoder_pro/lib/presentation/auth/auth_screen.dart`, `lib/application/auth/auth_cubit.dart`)
 
 `_AuthView`'s "LOGIN VIA LINODE" `TerminalAction.onTap` becomes:
 
 ```dart
 onTap: state.isLoading
     ? () {}
-    : () => (credentials != null && isReviewerSentinelEmail(credentials!.email))
-        ? authCubit.reviewerBypass(credentials!.password)
+    : () => isReviewerSentinelEmail(credentials?.email)
+        ? authCubit.reviewerBypass(credentials?.password ?? '')
         : authCubit.authenticate(),
 ```
 
-`AuthCubit` gains:
+`AuthCubit` gains a new constructor dependency,
+`IReviewerBypassClient _reviewerBypassClient` (see Component 4), and a new
+method:
 
 ```dart
 Future<void> reviewerBypass(String password) async {
@@ -112,6 +169,11 @@ Future<void> reviewerBypass(String password) async {
     // see Global Constraints: this is what keeps refreshToken() from
     // ever firing against a token that has none.
 
+    // Scopes intentionally omit 'linodes:create' / 'images:read_write' —
+    // this token only ever needs Linodes:Read/Write (confirmed via the
+    // live scope test in LINODE_REVIEWER_ACCESS_TODO.md). validateScopes()
+    // is never actually called anywhere in either repo today, so this has
+    // no runtime effect, but keep it accurate for future readers.
     return state.copyWith(
       status: UiFlowStatus.success,
       token: OAuthToken(
@@ -136,10 +198,7 @@ already produces the existing generic failure state/messaging — no new
 error-handling code needed, and no distinct message that would hint at
 what failed.
 
-`AuthCubit`'s constructor gains one new dependency,
-`IReviewerBypassClient _reviewerBypassClient` (see Component 3).
-
-### 3. `IReviewerBypassClient` / `ReviewerBypassClient` (`packages/pocketcoder_pro/lib/domain/auth/i_reviewer_bypass_client.dart`, `lib/infrastructure/auth/reviewer_bypass_client.dart`, new files)
+### 4. `IReviewerBypassClient` / `ReviewerBypassClient` (`client/packages/pocketcoder_pro/lib/domain/auth/i_reviewer_bypass_client.dart`, `lib/infrastructure/auth/reviewer_bypass_client.dart`, new files)
 
 ```dart
 abstract class IReviewerBypassClient {
@@ -157,20 +216,16 @@ class ReviewerBypassException implements Exception {
 Implementation follows the same shape as
 `pocketcoder_flutter/lib/infrastructure/mcp/mcp_oauth_service.dart`'s
 `http.Client` + `@Named` base-URL-injection pattern — reuses the same
-`mcpOAuthRelayBaseUrl` DI binding already registered in
-`external_module.dart` (the Worker route lives on the same
-`mcp-oauth-relay` deployment):
+`mcpOAuthRelayBaseUrl` DI binding registered in `external_module.dart`
+(fixed in Component 1), since the Worker route lives on the same
+`mcp-oauth-relay` deployment:
 
 ```dart
-@LazySingleton(as: IReviewerBypassClient)
 class ReviewerBypassClient implements IReviewerBypassClient {
   final http.Client _httpClient;
   final String _relayBaseUrl;
 
-  ReviewerBypassClient(
-    this._httpClient,
-    @Named('mcpOAuthRelayBaseUrl') this._relayBaseUrl,
-  );
+  ReviewerBypassClient(this._httpClient, this._relayBaseUrl);
 
   @override
   Future<String> exchangePassword(String password) async {
@@ -192,7 +247,27 @@ class ReviewerBypassClient implements IReviewerBypassClient {
 }
 ```
 
-### 4. Worker route (`workers/mcp-oauth-relay/src/index.js`)
+**DI wiring** — `pocketcoder_pro` has no `injectable` code generation;
+`AuthCubit`/`ConfigCubit`/`DeploymentCubit` are all hand-registered in
+`initializeAeroformDI()` at `client/packages/pocketcoder_pro/lib/app.dart:415`.
+The `@LazySingleton` annotation pattern from other components in this repo
+does not apply here — register manually instead:
+
+```dart
+getIt.registerLazySingleton<IReviewerBypassClient>(
+  () => ReviewerBypassClient(getIt<http.Client>(), getIt<String>(instanceName: 'mcpOAuthRelayBaseUrl')),
+);
+```
+
+placed alongside `pocketcoder_pro`'s other manual registrations in
+`initializeAeroformDI()`, and the existing `AuthCubit` factory registration
+in the same function must be updated to pass the new third constructor
+argument. The `mcpOAuthRelayBaseUrl` binding is registered in
+`pocketcoder_flutter`'s `ExternalModule` and is reachable from the shared
+`GetIt.instance` as long as `bootstrap()` has already run — true for every
+real app entry point, so no ordering change needed.
+
+### 5. Worker route (`workers/mcp-oauth-relay/src/index.js`)
 
 New route, `POST /reviewer/linode-token`:
 
@@ -219,31 +294,81 @@ in the existing `secrets/mcp-oauth-relay.enc.yaml` vault file — no new
 step for the user to do themselves (per the secrets-daemon skill), not an
 implementation task below.
 
-### 5. Cost caps (`packages/pocketcoder_pro/lib/presentation/deployment/config_screen.dart`, `lib/application/deployment/deployment_cubit.dart`)
+### 6. Delete obsolete build-time scaffolding (`scripts/build-reviewer-ipa.sh`)
 
-`ConfigScreen` already receives `DeployCredentials? credentials`
-(sub-project 1+2). It gains a derived `bool get _isReviewerMode =>
-credentials != null && isReviewerSentinelEmail(credentials!.email);`.
+Delete this script — it's superseded by Component 5's runtime approach
+(see Global Constraints). It is a plain repo file (not a secret), safe to
+remove directly. Leave a one-line note in the commit message pointing at
+this spec, since the corresponding `secrets/linode-reviewer-build.enc.yaml`
+vault file and `build_pocketcoder_reviewer_ipa` daemon action are the
+user's own cleanup to do (never touch `actions.json` or vault files
+directly).
 
-When `_isReviewerMode` is true:
+### 7. Cost caps (`client/packages/pocketcoder_pro/lib/presentation/deployment/config_screen.dart`, `lib/application/deployment/deployment_cubit.dart`)
 
-- The plan picker only renders/allows `g6-nanode-1` — no other plan is
-  selectable, regardless of what `loadPlansAndRegions()` returns.
-- Before calling `deploymentCubit.deploy(...)`, call
-  `deploymentService.getExistingInstances()` (already exposed via
-  `IDeploymentService`, `flutter_aeroform/lib/domain/deployment/i_deployment_service.dart:20`),
-  filter to instances where `planType == 'g6-nanode-1'`, and block the
-  deploy with an inline error if that filtered count is already ≥ 3. The
-  cap counts cheap-tier instances only, not the account's total instance
-  count — the reviewer PAT's own Linode account may carry real,
-  unrelated infrastructure on larger plans, and that must not count
-  against or be affected by this cap. This check only runs in reviewer
-  mode — real users are unaffected and keep today's unlimited-instances
-  behavior.
+**Plan lock (`config_screen.dart`)**: `ConfigScreen` already receives
+`DeployCredentials? credentials` (sub-project 1+2). It gains a derived
+`bool get _isReviewerMode => isReviewerSentinelEmail(credentials?.email);`.
+When true, the plan picker only renders/allows `g6-nanode-1` — no other
+plan is selectable, regardless of what `loadPlansAndRegions()` returns.
+This part is pure rendering logic already in scope of `_ConfigViewState`,
+no new dependencies needed.
 
-No new methods needed on `IDeploymentService` — this is entirely new
-logic inside `ConfigScreen`'s existing `_deploy()` method, gated on
-`_isReviewerMode`.
+**Instance cap (`deployment_cubit.dart`)**: `ConfigScreen` has no
+`IDeploymentService` in scope (only `ConfigCubit` and `DeploymentCubit`),
+so the cap check belongs inside `DeploymentCubit.deploy()`, which already
+holds `_deploymentService`, not inside `ConfigScreen`. `deploy()` gains a
+new required parameter:
+
+```dart
+Future<void> deploy(
+  DeploymentConfig config, {
+  required String adminPassword,
+  bool isReviewerMode = false,
+}) async {
+  return tryOperation(() async {
+    if (isReviewerMode) {
+      final existing = await _deploymentService.getExistingInstances();
+      if (existing.length >= 3) {
+        throw DeploymentValidationException(
+          'Reviewer mode instance cap reached (3 instances already exist)',
+        );
+      }
+    }
+
+    // ...existing validateConfig / deploy(...) body, unchanged...
+  }, emitLoading: true);
+}
+```
+
+`getExistingInstances()` (`flutter_aeroform/lib/infrastructure/deployment/deployment_service.dart:238-250`)
+already filters to this app's own PocketCoder-labeled instances — it does
+not see unrelated infrastructure on the account at all. Combined with the
+dedicated reviewer-only Linode account (Global Constraints), there is no
+"real infra on this account" scenario left to filter around, so the cap is
+a plain count with no plan-type filtering: **3 existing PocketCoder-labeled
+instances blocks a 4th**, full stop. (An earlier draft of this cap filtered
+by `planType == 'g6-nanode-1'` to protect hypothetical unrelated
+infrastructure on a shared account — moot now that the account is
+dedicated, and the label filter already made that filtering unnecessary
+even before that change.)
+
+`ConfigScreen._deploy()` passes `isReviewerMode: _isReviewerMode` through
+to `deploymentCubit.deploy(...)`.
+
+**Surfacing the failure**: `ConfigScreen`'s `UiFlowListener` currently
+wraps only `ConfigCubit` (`config_screen.dart:36`) — `DeploymentCubit`
+failures, including this new one, are not currently shown to the user at
+all (a pre-existing gap: even a real `DeploymentValidationException` today
+produces no visible feedback). Wrap `DeploymentCubit` in a nested
+`UiFlowListener<DeploymentCubit, DeploymentState>` alongside the existing
+one so this (and any other `DeploymentCubit` failure) surfaces as the
+same automatic toast/error feedback `cubit_ui_flow` already provides
+elsewhere in this app. This is required infrastructure for the reviewer
+cap to be visible at all, not optional polish.
+
+No new methods needed on `IDeploymentService` — `getExistingInstances()`
+already exists and already does exactly what's needed.
 
 ---
 
@@ -253,34 +378,42 @@ logic inside `ConfigScreen`'s existing `_deploy()` method, gated on
   `AuthCubit`'s existing failure-state path with the same generic message
   a real OAuth failure would show. Never reveals that a bypass path exists
   or was attempted.
-- Network failure calling the Worker: same `tryOperation` failure path,
-  same generic messaging — no special-casing needed.
-- Reviewer mode + instance cap hit: an inline validation-style error in
-  `ConfigScreen`, not a thrown exception — same treatment as any other
-  client-side pre-deploy validation failure already in that screen.
+- Network failure calling the Worker (including if Component 1's URL fix
+  were somehow wrong): same `tryOperation` failure path, same generic
+  messaging — no special-casing needed.
+- Reviewer mode + instance cap hit: `DeploymentValidationException`
+  through `DeploymentCubit`'s existing `tryOperation` failure path,
+  surfaced via the `UiFlowListener` wiring added in Component 7 — same
+  treatment as any other deployment validation failure, not a bespoke
+  error UI.
 
 ## Testing
 
-- `reviewer_bypass_test.dart`: `isReviewerSentinelEmail` returns true for
-  the exact sentinel (any case, with surrounding whitespace) and false for
-  near-misses (wrong case handled correctly since normalization happens
-  before hashing — test a deliberately *wrong* email hashes differently,
-  not that case-sensitivity breaks it) and empty string.
-- `auth_cubit_test.dart`: new tests for `reviewerBypass()` — success path
-  stores only the access token (mock `ISecureStorage`, assert
-  `storeRefreshToken`/`storeTokenExpiration` are never called), emits
-  `isAuthenticated: true`; failure path (mock client throws
-  `ReviewerBypassException`) emits the existing failure state.
-- `reviewer_bypass_client_test.dart`: mocked `http.Client`, asserts the
-  request body shape, 200/401 handling, and the missing-`access_token`
-  edge case.
-- `config_screen_test.dart`: new tests — reviewer-mode credentials lock
-  the plan picker to `g6-nanode-1`; a mocked `getExistingInstances()`
-  returning 3+ `g6-nanode-1` instances blocks the deploy action with a
-  visible error; a mock returning fewer than 3 `g6-nanode-1` instances
-  plus any number of other-plan instances (simulating pre-existing real
-  infra on the account) does NOT block the deploy. Non-reviewer
-  credentials leave existing behavior untouched.
+- `reviewer_bypass_test.dart` (new file): `isReviewerSentinelEmail` returns
+  true for the exact sentinel (any case, with surrounding whitespace) and
+  false for near-misses (test a deliberately *wrong* email hashes
+  differently, not that case-sensitivity breaks it), `null`, and empty
+  string.
+- `auth_cubit_test.dart` (existing file, new test group): tests for
+  `reviewerBypass()` — success path stores only the access token (mock
+  `ISecureStorage`, assert `storeRefreshToken`/`storeTokenExpiration` are
+  never called), emits `isAuthenticated: true`; failure path (mock client
+  throws `ReviewerBypassException`) emits the existing failure state.
+- `reviewer_bypass_client_test.dart` (new file): mocked `http.Client`,
+  asserts the request body shape, 200/401 handling, and the
+  missing-`access_token` edge case.
+- `deployment_cubit_test.dart` (existing file, new test group): `deploy()`
+  with `isReviewerMode: true` and a mocked `getExistingInstances()`
+  returning 3+ instances throws `DeploymentValidationException` without
+  calling `_deploymentService.deploy(...)`; the same call with fewer than
+  3 existing instances proceeds normally. `isReviewerMode: false` (the
+  default) skips the check entirely regardless of instance count —
+  existing behavior for real users is unaffected.
+- `config_screen_test.dart` (new file — no widget tests exist yet for this
+  screen, so this stands up new scaffolding, not an addition to an
+  existing suite): reviewer-mode credentials lock the plan picker to
+  `g6-nanode-1`; non-reviewer credentials leave the existing plan picker
+  behavior untouched.
 
 No integration test drives the real Worker route or a real Linode
 account — that's exercised manually, once, before each actual submission
