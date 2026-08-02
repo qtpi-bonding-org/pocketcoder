@@ -31,7 +31,7 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
   ) : super(DeploymentState.initial());
 
   /// Deploys a new instance with the given configuration
-  Future<void> deploy(DeploymentConfig config) async {
+  Future<void> deploy(DeploymentConfig config, {required String adminPassword}) async {
     return tryOperation(() async {
       // Validate configuration first
       final validation = _deploymentService.validateConfig(config);
@@ -49,7 +49,10 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
       ));
 
       // Perform deployment (includes image check/upload + instance creation)
-      final result = await _deploymentService.deploy(config);
+      final result = await _deploymentService.deploy(
+        config,
+        adminPassword: adminPassword,
+      );
 
       if (result.status == DeploymentStatus.failed) {
         throw DeploymentException(result.errorMessage ?? 'Deployment failed');
