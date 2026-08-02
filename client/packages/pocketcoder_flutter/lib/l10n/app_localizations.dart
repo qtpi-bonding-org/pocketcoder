@@ -2073,6 +2073,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SIGNAL RECEIVED: {title}'**
   String notificationSignalReceived(String title);
+
+  /// No description provided for @errorsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ERROR REPORTS'**
+  String get errorsTitle;
+
+  /// No description provided for @errorsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'NO ERRORS CAPTURED'**
+  String get errorsEmpty;
+
+  /// No description provided for @errorsClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'CLEAR ALL'**
+  String get errorsClearAll;
+
+  /// No description provided for @errorsOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'Occurred {count}x'**
+  String errorsOccurred(int count);
 }
 
 class _AppLocalizationsDelegate
