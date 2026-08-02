@@ -18,6 +18,7 @@ import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
 
@@ -219,7 +220,11 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const DeployPickerScreen(),
+          child: DeployPickerScreen(
+            credentials: state.extra is DeployCredentials
+                ? state.extra as DeployCredentials
+                : null,
+          ),
         ),
       ),
       // ── FILES ──
