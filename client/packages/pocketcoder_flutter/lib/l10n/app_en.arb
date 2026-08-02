@@ -479,5 +479,15 @@
     "placeholders": {
       "title": { "type": "String" }
     }
+  },
+
+  "errorsTitle": "ERROR REPORTS",
+  "errorsEmpty": "NO ERRORS CAPTURED",
+  "errorsClearAll": "CLEAR ALL",
+  "errorsOccurred": "Occurred {count}x",
+  "@errorsOccurred": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
   }
 }
