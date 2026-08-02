@@ -7,6 +7,7 @@ import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
 import 'package:flutter_aeroform/domain/models/app_config.dart';
 import 'package:flutter_aeroform/domain/models/deployment_config.dart';
@@ -15,14 +16,15 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.d
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
 /// Configuration screen for deployment settings
 class ConfigScreen extends StatelessWidget {
-  const ConfigScreen({super.key});
+  const ConfigScreen({super.key, this.credentials});
+
+  final DeployCredentials? credentials;
 
   @override
   Widget build(BuildContext context) {
@@ -32,35 +34,29 @@ class ConfigScreen extends StatelessWidget {
         BlocProvider(create: (_) => GetIt.I<DeploymentCubit>()),
       ],
       child: UiFlowListener<ConfigCubit, ConfigState>(
-        child: const _ConfigView(),
+        child: _ConfigView(credentials: credentials),
       ),
     );
   }
 }
 
 class _ConfigView extends StatefulWidget {
-  const _ConfigView();
+  const _ConfigView({this.credentials});
+
+  final DeployCredentials? credentials;
 
   @override
   State<_ConfigView> createState() => _ConfigViewState();
 }
 
 class _ConfigViewState extends State<_ConfigView> {
-  final _emailController = TextEditingController();
-  final _linodeTokenController = TextEditingController();
+  late final String _adminEmail = widget.credentials?.email ?? '';
+  late final String _adminPassword = widget.credentials?.password ?? '';
 
   @override
   void initState() {
     super.initState();
-    // Load plans and regions on init
     context.read<ConfigCubit>().loadPlansAndRegions();
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _linodeTokenController.dispose();
-    super.dispose();
   }
 
   @override
@@ -69,19 +65,7 @@ class _ConfigViewState extends State<_ConfigView> {
     final configCubit = context.read<ConfigCubit>();
     final deploymentCubit = context.read<DeploymentCubit>();
 
-    return BlocConsumer<ConfigCubit, ConfigState>(
-      listener: (context, state) {
-        // Update controllers when config changes
-        if (state.config != null) {
-          final config = state.config!;
-          if (_emailController.text != config.adminEmail) {
-            _emailController.text = config.adminEmail;
-          }
-          if (_linodeTokenController.text != (config.linodeToken ?? '')) {
-            _linodeTokenController.text = config.linodeToken ?? '';
-          }
-        }
-      },
+    return BlocBuilder<ConfigCubit, ConfigState>(
       builder: (context, configState) {
         return BlocListener<DeploymentCubit, DeploymentState>(
           listener: (context, deploymentState) {
@@ -124,35 +108,9 @@ class _ConfigViewState extends State<_ConfigView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         BiosSection(
-                          title: 'ADMIN CREDENTIALS',
-                          child: Column(
-                            children: [
-                              TerminalTextField(
-                                controller: _emailController,
-                                label: 'ADMIN EMAIL',
-                                hint: 'YOU@DOMAIN.COM',
-                                errorText:
-                                    configState.validationErrors?['adminEmail'],
-                                onChanged: (value) =>
-                                    _updateConfig(configCubit),
-                              ),
-                            ],
-                          ),
-                        ),
-                        VSpace.x2,
-                        BiosSection(
                           title: 'NOTIFICATIONS (OPTIONAL)',
                           child: Column(
                             children: [
-                              TerminalTextField(
-                                controller: _linodeTokenController,
-                                label: 'LINODE TOKEN',
-                                hint: 'FOR NTFY RELAY',
-                                obscureText: true,
-                                onChanged: (value) =>
-                                    _updateConfig(configCubit),
-                              ),
-                              VSpace.x1,
                               Row(
                                 children: [
                                   Expanded(
@@ -354,10 +312,6 @@ class _ConfigViewState extends State<_ConfigView> {
         current.copyWith(
           planType: planType ?? current.planType,
           region: region ?? current.region,
-          adminEmail: _emailController.text,
-          linodeToken: _linodeTokenController.text.isEmpty
-              ? null
-              : _linodeTokenController.text,
         ),
       );
     } else {
@@ -365,10 +319,7 @@ class _ConfigViewState extends State<_ConfigView> {
         DeploymentConfig(
           planType: planType ?? '',
           region: region ?? '',
-          adminEmail: _emailController.text,
-          linodeToken: _linodeTokenController.text.isEmpty
-              ? null
-              : _linodeTokenController.text,
+          adminEmail: _adminEmail,
           ntfyEnabled: cubit.state.config?.ntfyEnabled ?? false,
           imageRelayUrl: AppConfig.kImageRelayUrl,
           nixosImageLabel: AppConfig.kNixosImageLabel,
@@ -380,7 +331,7 @@ class _ConfigViewState extends State<_ConfigView> {
   void _deploy(ConfigCubit configCubit, DeploymentCubit deploymentCubit) {
     final config = configCubit.state.config;
     if (config != null) {
-      deploymentCubit.deploy(config);
+      deploymentCubit.deploy(config, adminPassword: _adminPassword);
     }
   }
 }
