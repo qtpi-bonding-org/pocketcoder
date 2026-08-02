@@ -383,6 +383,12 @@ void preRegisterAeroformConfig() {
   final getIt = GetIt.instance;
 
   getIt.registerSingleton<AppConfig>(
+    // NOTE: linodeClientId stays required here because AppConfig
+    // (flutter_aeroform's own model) still declares it as a required
+    // field -- that's out of scope for this migration (see the
+    // Linode OAuth relay migration plan, Task 6). Nothing reads
+    // AppConfig.linodeClientId anymore now that LinodeOAuthService talks
+    // to the mcp-oauth-relay Worker instead of Linode directly.
     AppConfig(
       linodeClientId: AppConfig.kLinodeClientId,
       linodeRedirectUri: AppConfig.kLinodeRedirectUri,
@@ -393,10 +399,10 @@ void preRegisterAeroformConfig() {
     ),
   );
 
-  getIt.registerSingleton<String>(
-    AppConfig.kLinodeClientId,
-    instanceName: 'linodeClientId',
-  );
+  // The @Named('linodeClientId') GetIt registration is deleted: it has no
+  // remaining consumers now that LinodeOAuthService and LinodeAPIClient
+  // both dropped their clientId constructor params in favor of routing
+  // through the mcp-oauth-relay Worker (this plan's Tasks 5/6).
 }
 
 /// Initializes flutter_aeroform DI and deploy cubits in GetIt.
