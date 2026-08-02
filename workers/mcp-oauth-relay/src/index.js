@@ -59,6 +59,11 @@ const PROVIDERS = {
 		// Matches flutter_aeroform's LinodeOAuthService._requiredScopes --
 		// keep these in sync if that list ever changes.
 		scope: 'linodes:read_write linodes:create images:read_write',
+		// Confirmed via a direct curl during this investigation: Linode's
+		// token endpoint parses form-urlencoded bodies. Whether it also
+		// accepts JSON is untested -- default to the confirmed-working
+		// format.
+		tokenBodyFormat: 'form',
 	},
 };
 
@@ -139,6 +144,11 @@ async function handleAuthorize(url, env) {
 	const state = base64urlEncode(JSON.stringify({ p: providerId, cc: codeChallenge }));
 	const redirectUri = `${url.origin}/callback`;
 
+	// Default to true when absent (GitHub currently relies on PKCE; we don't
+	// want to silently regress it). A provider that explicitly sets
+	// usePkceUpstream: false opts out of upstream-side PKCE params.
+	const usePkceUpstream = provider.usePkceUpstream !== false;
+
 	// Fresh URLSearchParams, .set() on exactly these known keys — never
 	// `new URLSearchParams(url.searchParams)` (that would forward whatever
 	// the caller sent, including anything beyond provider/code_challenge).
@@ -148,11 +158,13 @@ async function handleAuthorize(url, env) {
 	params.set('redirect_uri', redirectUri);
 	params.set('scope', provider.scope);
 	params.set('state', state);
-	params.set('code_challenge', codeChallenge);
-	// Hardcoded server-side, never taken from the client (required change
-	// #3) — /claim only ever computes S256, so accepting a client-supplied
-	// method here would just be a lie about what's actually checked later.
-	params.set('code_challenge_method', 'S256');
+	if (usePkceUpstream) {
+		params.set('code_challenge', codeChallenge);
+		// Hardcoded server-side, never taken from the client (required change
+		// #3) — /claim only ever computes S256, so accepting a client-supplied
+		// method here would just be a lie about what's actually checked later.
+		params.set('code_challenge_method', 'S256');
+	}
 
 	const target = `${provider.authorizeUrl}?${params.toString()}`;
 	return new Response(null, {
@@ -202,20 +214,17 @@ async function handleCallback(url, env) {
 	// (RFC 6749 §4.1.3).
 	const redirectUri = `${url.origin}/callback`;
 
+	const { body: reqBody, contentType } = buildTokenRequestBody(
+		provider.tokenBodyFormat ?? 'json',
+		{ client_id: clientId, client_secret: clientSecret, code, redirect_uri: redirectUri }
+	);
+
 	let tokenResp;
 	try {
 		tokenResp = await fetch(provider.tokenUrl, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Accept: 'application/json',
-			},
-			body: JSON.stringify({
-				client_id: clientId,
-				client_secret: clientSecret,
-				code,
-				redirect_uri: redirectUri,
-			}),
+			headers: { 'Content-Type': contentType, Accept: 'application/json' },
+			body: reqBody,
 		});
 	} catch (e) {
 		console.error('Token exchange request failed:', e.message);
@@ -235,6 +244,8 @@ async function handleCallback(url, env) {
 			codeChallenge: state.cc,
 			accessToken: tokenBody.access_token,
 			refreshToken: tokenBody.refresh_token || null,
+			expiresIn: tokenBody.expires_in ?? null,
+			scope: tokenBody.scope ?? null,
 		}),
 		{ expirationTtl: EXCHANGE_TTL_SECONDS }
 	);
@@ -281,12 +292,27 @@ async function handleClaim(request, env) {
 		return json({ error: 'verifier_mismatch' }, 400);
 	}
 
-	return json({ access_token: entry.accessToken, refresh_token: entry.refreshToken }, 200);
+	return json({
+		access_token: entry.accessToken,
+		refresh_token: entry.refreshToken,
+		expires_in: entry.expiresIn,
+		scope: entry.scope,
+	}, 200);
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function buildTokenRequestBody(format, fields) {
+	if (format === 'form') {
+		return {
+			body: new URLSearchParams(fields).toString(),
+			contentType: 'application/x-www-form-urlencoded',
+		};
+	}
+	return { body: JSON.stringify(fields), contentType: 'application/json' };
+}
 
 function redirectToApp(params) {
 	const target = new URL('pocketcoder://oauth-callback');
