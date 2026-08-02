@@ -994,6 +994,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get relayActivate => 'ACTIVATE RELAY';
 
   @override
+  String get relayRestore => 'RESTORE';
+
+  @override
+  String get relayFunctionalOverviewTitle => 'FUNCTIONAL OVERVIEW:';
+
+  @override
+  String get relayFunctionalOverviewBody =>
+      'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.';
+
+  @override
+  String get relayUnlimitedCapacity =>
+      'REMOTE AUTHORIZATION CAPACITY: UNLIMITED';
+
+  @override
+  String get relayPermissionRelayLabel => 'PERMISSION RELAY';
+
+  @override
+  String get relayNtfyTitle => 'NTFY RELAY';
+
+  @override
+  String get relayNtfyDescription =>
+      'Connect to your own NTFY server for free, unlimited relays without registration.';
+
+  @override
   String get deployTitle => 'DEPLOY POCKETCODER';
 
   @override
