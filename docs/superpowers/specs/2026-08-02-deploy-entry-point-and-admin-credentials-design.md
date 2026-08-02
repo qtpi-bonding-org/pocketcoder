@@ -85,9 +85,10 @@ class DeployCredentials {
 
 ### 3. `DeployPickerScreen` (packages/pocketcoder_flutter/lib/presentation/deployment/deploy_picker_screen.dart)
 
-Accept an optional `DeployCredentials? credentials` constructor param.
-`_onTap` (the provider-card tap handler) forwards it when pushing the
-Linode option's route:
+Accept an optional `DeployCredentials? credentials` constructor param and
+thread it down to `_ProviderCard` (a private widget one level below
+`DeployPickerScreen` itself — its `_onTap` handler is the actual call
+site that pushes the Linode option's route):
 
 ```dart
 context.push(routePath, extra: credentials);
@@ -98,14 +99,22 @@ Router registration (`packages/pocketcoder_flutter/lib/app_router.dart`,
 passes it to the screen constructor, same pattern already used for
 `AppRoutes.onboarding`/`OnboardingPrefill`.
 
-**Must resolve during planning:** today `DeployPickerScreen`'s route
-(`AppRoutes.deploy`) sits inside the authenticated main shell's route
-list. Making it reachable from `OnboardingScreen` (pre-login) means this
-route must be reachable without the auth guard the rest of that shell's
-routes may rely on — confirm during planning whether `go_router`'s
-current redirect logic actually gates this route today, and if so, add
-`AppRoutes.deploy` (and only that route) to whatever allowlist an
-unauthenticated user is permitted to reach.
+**Confirmed non-issue, no change needed:** `app_router.dart`'s `redirect`
+callback only handles a `/` → `/chats` redirect and a few legacy path
+aliases — there is no auth guard anywhere in the router, and no
+`ShellRoute`/nested-route grouping (`PocketCoderShell` is a layout
+widget, not a route guard). `/deploy` is already reachable
+unauthenticated today with zero routing changes.
+
+That said, making it reachable pre-login surfaces a real, separate gap
+worth naming here even though fixing it is out of this spec's scope:
+`DeployPickerScreen` renders inside `PocketCoderShell`, whose nav bar
+(`chats`/`monitor`/`configure` pillars, `pocketcoder_shell.dart:60-84`)
+always shows regardless of auth state. An unauthenticated user landing
+on `/deploy` via the new onboarding toggle could tap "CHATS" or
+"MONITOR" and reach screens that assume a logged-in session. Flagging
+for the implementation plan to decide whether this needs a fix now or a
+follow-up ticket — not resolving it in this design.
 
 ### 4. `AuthScreen` (packages/pocketcoder_pro/lib/presentation/auth/auth_screen.dart)
 
@@ -118,6 +127,17 @@ context.pushNamed(RouteNames.config, extra: credentials);
 
 No other change — this screen doesn't read email/password itself, purely
 a pass-through.
+
+**Route registration**: `AuthScreen` and `ConfigScreen` aren't registered
+in `app_router.dart` at all — they're in `linodeRoutes`
+(`packages/pocketcoder_pro/lib/app.dart:463-518`), a separate list
+injected via `AppRouter.setAdditionalRoutes(linodeRoutes)`. Today those
+`GoRoute` entries build `const deploy_auth.AuthScreen()` and `const
+deploy_config.ConfigScreen()` with no params and never read `state.extra`
+— both need updating to read `state.extra as DeployCredentials?` and
+pass it to their screen's constructor, same pattern as Component 3's
+router change. Without this, the carried credentials are silently
+dropped at both hops and the feature does nothing.
 
 ### 5. `ConfigScreen` (packages/pocketcoder_pro/lib/presentation/deployment/config_screen.dart)
 
@@ -209,7 +229,11 @@ OnboardingScreen (DEPLOY tab: email + password typed)
 - `flutter_aeroform` unit test: `DeploymentService.deploy()` uses the
   passed `adminPassword` verbatim in the generated `toUserData()` output,
   and no longer calls a password generator.
-- Regenerate and re-run existing `ConfigCubit`/`DeploymentCubit` tests
-  after deleting the 4 dead methods and updating the `deploy()` call
-  site — confirm nothing else referenced them (already verified via grep
-  during design, but the real test run is the actual gate).
+- No `ConfigCubit`/`DeploymentCubit` test files exist yet in
+  `pocketcoder_pro/test` (only `details_screen_test.dart` and an
+  SSH-update live test do) — there's nothing existing to re-run for
+  those two cubits specifically. After deleting the 4 dead
+  `ConfigCubit` methods and updating the `deploy()` call site, run
+  `flutter analyze` and the full existing suite to confirm nothing
+  elsewhere referenced them (already verified via grep during design,
+  but a real analyze/test run is the actual gate, not the grep).
