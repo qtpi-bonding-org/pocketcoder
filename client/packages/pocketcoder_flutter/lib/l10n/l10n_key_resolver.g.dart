@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-07-31T00:41:04.856146
+// Generated at: 2026-08-02T07:27:47.443839
 
 import 'app_localizations.dart';
 
@@ -116,6 +116,9 @@ class L10nKeyResolver {
       'error.generic' => _l10n.errorGeneric,
       'error.network' => _l10n.errorNetwork,
       'error.timeout' => _l10n.errorTimeout,
+      'errors.clear.all' => _l10n.errorsClearAll,
+      'errors.empty' => _l10n.errorsEmpty,
+      'errors.title' => _l10n.errorsTitle,
       'file.clear.action' => _l10n.fileClearAction,
       'file.dashboard.action' => _l10n.fileDashboardAction,
       'file.empty' => _l10n.fileEmpty,
@@ -241,9 +244,16 @@ class L10nKeyResolver {
       'relay.active' => _l10n.relayActive,
       'relay.checking.status' => _l10n.relayCheckingStatus,
       'relay.config.section' => _l10n.relayConfigSection,
+      'relay.functional.overview.body' => _l10n.relayFunctionalOverviewBody,
+      'relay.functional.overview.title' => _l10n.relayFunctionalOverviewTitle,
+      'relay.ntfy.description' => _l10n.relayNtfyDescription,
+      'relay.ntfy.title' => _l10n.relayNtfyTitle,
+      'relay.permission.relay.label' => _l10n.relayPermissionRelayLabel,
+      'relay.restore' => _l10n.relayRestore,
       'relay.subsystem' => _l10n.relaySubsystem,
       'relay.subsystems.nominal' => _l10n.relaySubsystemsNominal,
       'relay.title' => _l10n.relayTitle,
+      'relay.unlimited.capacity' => _l10n.relayUnlimitedCapacity,
       'scheduler.add.button' => _l10n.schedulerAddButton,
       'scheduler.add.dialog.title' => _l10n.schedulerAddDialogTitle,
       'scheduler.cron.label' => _l10n.schedulerCronLabel,
@@ -332,6 +342,7 @@ class L10nKeyResolver {
       'agent.config.dialog.title' => _l10n.agentConfigDialogTitle(args?['name'] as String? ?? ''),
       'agent.config.error.prefix' => _l10n.agentConfigErrorPrefix(args?['error'] as String? ?? ''),
       'agent.dialog.title' => _l10n.agentDialogTitle(args?['name'] as String? ?? ''),
+      'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'home.error.prefix' => _l10n.homeErrorPrefix(args?['error'] as String? ?? ''),
       'llm.api.key.dialog.title' => _l10n.llmApiKeyDialogTitle(args?['provider'] as String? ?? ''),
       'llm.enter.credentials' => _l10n.llmEnterCredentials(args?['provider'] as String? ?? ''),
@@ -452,6 +463,10 @@ class L10nKeyResolver {
     'error.generic',
     'error.network',
     'error.timeout',
+    'errors.clear.all',
+    'errors.empty',
+    'errors.occurred',
+    'errors.title',
     'file.clear.action',
     'file.dashboard.action',
     'file.empty',
@@ -593,9 +608,16 @@ class L10nKeyResolver {
     'relay.active',
     'relay.checking.status',
     'relay.config.section',
+    'relay.functional.overview.body',
+    'relay.functional.overview.title',
+    'relay.ntfy.description',
+    'relay.ntfy.title',
+    'relay.permission.relay.label',
+    'relay.restore',
     'relay.subsystem',
     'relay.subsystems.nominal',
     'relay.title',
+    'relay.unlimited.capacity',
     'scheduler.add.button',
     'scheduler.add.dialog.title',
     'scheduler.cron.label',
@@ -782,6 +804,10 @@ class L10nKeyResolver {
     'errorGeneric': 'error.generic',
     'errorNetwork': 'error.network',
     'errorTimeout': 'error.timeout',
+    'errorsClearAll': 'errors.clear.all',
+    'errorsEmpty': 'errors.empty',
+    'errorsOccurred': 'errors.occurred',
+    'errorsTitle': 'errors.title',
     'fileClearAction': 'file.clear.action',
     'fileDashboardAction': 'file.dashboard.action',
     'fileEmpty': 'file.empty',
@@ -923,9 +949,16 @@ class L10nKeyResolver {
     'relayActive': 'relay.active',
     'relayCheckingStatus': 'relay.checking.status',
     'relayConfigSection': 'relay.config.section',
+    'relayFunctionalOverviewBody': 'relay.functional.overview.body',
+    'relayFunctionalOverviewTitle': 'relay.functional.overview.title',
+    'relayNtfyDescription': 'relay.ntfy.description',
+    'relayNtfyTitle': 'relay.ntfy.title',
+    'relayPermissionRelayLabel': 'relay.permission.relay.label',
+    'relayRestore': 'relay.restore',
     'relaySubsystem': 'relay.subsystem',
     'relaySubsystemsNominal': 'relay.subsystems.nominal',
     'relayTitle': 'relay.title',
+    'relayUnlimitedCapacity': 'relay.unlimited.capacity',
     'schedulerAddButton': 'scheduler.add.button',
     'schedulerAddDialogTitle': 'scheduler.add.dialog.title',
     'schedulerCronLabel': 'scheduler.cron.label',
@@ -1109,6 +1142,10 @@ class L10nKeyResolver {
     'error.generic': 'errorGeneric',
     'error.network': 'errorNetwork',
     'error.timeout': 'errorTimeout',
+    'errors.clear.all': 'errorsClearAll',
+    'errors.empty': 'errorsEmpty',
+    'errors.occurred': 'errorsOccurred',
+    'errors.title': 'errorsTitle',
     'file.clear.action': 'fileClearAction',
     'file.dashboard.action': 'fileDashboardAction',
     'file.empty': 'fileEmpty',
@@ -1250,9 +1287,16 @@ class L10nKeyResolver {
     'relay.active': 'relayActive',
     'relay.checking.status': 'relayCheckingStatus',
     'relay.config.section': 'relayConfigSection',
+    'relay.functional.overview.body': 'relayFunctionalOverviewBody',
+    'relay.functional.overview.title': 'relayFunctionalOverviewTitle',
+    'relay.ntfy.description': 'relayNtfyDescription',
+    'relay.ntfy.title': 'relayNtfyTitle',
+    'relay.permission.relay.label': 'relayPermissionRelayLabel',
+    'relay.restore': 'relayRestore',
     'relay.subsystem': 'relaySubsystem',
     'relay.subsystems.nominal': 'relaySubsystemsNominal',
     'relay.title': 'relayTitle',
+    'relay.unlimited.capacity': 'relayUnlimitedCapacity',
     'scheduler.add.button': 'schedulerAddButton',
     'scheduler.add.dialog.title': 'schedulerAddDialogTitle',
     'scheduler.cron.label': 'schedulerCronLabel',
@@ -1443,6 +1487,10 @@ abstract class L10nKeys {
   static const errorGeneric = 'error.generic';
   static const errorNetwork = 'error.network';
   static const errorTimeout = 'error.timeout';
+  static const errorsClearAll = 'errors.clear.all';
+  static const errorsEmpty = 'errors.empty';
+  static (String, Map<String, dynamic>) errorsOccurred(int count) => ('errors.occurred', {'count': count});
+  static const errorsTitle = 'errors.title';
   static const fileClearAction = 'file.clear.action';
   static const fileDashboardAction = 'file.dashboard.action';
   static const fileEmpty = 'file.empty';
@@ -1584,9 +1632,16 @@ abstract class L10nKeys {
   static const relayActive = 'relay.active';
   static const relayCheckingStatus = 'relay.checking.status';
   static const relayConfigSection = 'relay.config.section';
+  static const relayFunctionalOverviewBody = 'relay.functional.overview.body';
+  static const relayFunctionalOverviewTitle = 'relay.functional.overview.title';
+  static const relayNtfyDescription = 'relay.ntfy.description';
+  static const relayNtfyTitle = 'relay.ntfy.title';
+  static const relayPermissionRelayLabel = 'relay.permission.relay.label';
+  static const relayRestore = 'relay.restore';
   static const relaySubsystem = 'relay.subsystem';
   static const relaySubsystemsNominal = 'relay.subsystems.nominal';
   static const relayTitle = 'relay.title';
+  static const relayUnlimitedCapacity = 'relay.unlimited.capacity';
   static const schedulerAddButton = 'scheduler.add.button';
   static const schedulerAddDialogTitle = 'scheduler.add.dialog.title';
   static const schedulerCronLabel = 'scheduler.cron.label';

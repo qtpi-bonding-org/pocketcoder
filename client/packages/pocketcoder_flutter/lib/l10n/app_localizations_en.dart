@@ -1056,4 +1056,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String notificationSignalReceived(String title) {
     return 'SIGNAL RECEIVED: $title';
   }
+
+  @override
+  String get errorsTitle => 'ERROR REPORTS';
+
+  @override
+  String get errorsEmpty => 'NO ERRORS CAPTURED';
+
+  @override
+  String get errorsClearAll => 'CLEAR ALL';
+
+  @override
+  String errorsOccurred(int count) {
+    return 'Occurred ${count}x';
+  }
 }

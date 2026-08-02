@@ -310,7 +310,7 @@ git commit -m "feat(client): configure ErrorPrivserver and capture bootstrap-lev
 - Produces: `class PocketCoderErrorBoxPageBuilder implements ErrorBoxPageBuilder { const PocketCoderErrorBoxPageBuilder(); Widget build(BuildContext context); }` — consumed by Task 3's `configure()` call and by Task 5's route.
 - Produces: `class ErrorInboxScreen extends StatelessWidget` — the widget `PocketCoderErrorBoxPageBuilder.build()` returns, wrapped in its own `BlocProvider<ErrorBoxPageCubit>`.
 
-- [ ] **Step 1: Write the failing widget test**
+- [x] **Step 1: Write the failing widget test**
 
 ```dart
 // test/presentation/errors/error_inbox_screen_test.dart
@@ -423,12 +423,12 @@ class _FakePageBuilder extends ErrorBoxPageBuilder {
 
 Confirm the exact ARB key/string for the empty state before asserting `'NO ERRORS CAPTURED'` literally — Step 3 below defines it as `errorsEmpty` → `"NO ERRORS CAPTURED"`; if you change that string, update this assertion to match.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter test test/presentation/errors/error_inbox_screen_test.dart`
 Expected: FAIL — `error_inbox_screen.dart` doesn't exist yet.
 
-- [ ] **Step 3: Add l10n keys**
+- [x] **Step 3: Add l10n keys**
 
 Add to `lib/l10n/app_en.arb` (alongside the other `settings*`/`system*` keys, e.g. near `systemChecksTitle`/`systemChecksEmpty`):
 
@@ -448,7 +448,7 @@ Add to `lib/l10n/app_en.arb` (alongside the other `settings*`/`system*` keys, e.
 
 Also add `"settingsErrorsRow": "ERROR REPORTS"` is not needed separately — Task 5 reuses `errorsTitle` for both the settings row label and the screen title.
 
-- [ ] **Step 4: Write `ErrorInboxScreen`**
+- [x] **Step 4: Write `ErrorInboxScreen`**
 
 ```dart
 // lib/presentation/errors/error_inbox_screen.dart
@@ -548,7 +548,7 @@ class _ErrorTile extends StatelessWidget {
 
 `intl` is already available (pulled in transitively via Flutter's l10n tooling and already imported elsewhere under `lib/l10n/`) — no `pubspec.yaml` change needed for the `DateFormat` import above.
 
-- [ ] **Step 5: Write `PocketCoderErrorBoxPageBuilder`**
+- [x] **Step 5: Write `PocketCoderErrorBoxPageBuilder`**
 
 ```dart
 // lib/presentation/errors/error_box_page_builder.dart
@@ -570,13 +570,13 @@ class PocketCoderErrorBoxPageBuilder extends ErrorBoxPageBuilder {
 }
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `cd client/packages/pocketcoder_flutter && dart run build_runner build --delete-conflicting-outputs && flutter test test/presentation/errors/error_inbox_screen_test.dart`
 (`build_runner` regenerates `app_localizations.dart`/`l10n_key_resolver.g.dart` from the new ARB keys added in Step 3, which the screen and test both need to compile.)
 Expected: all three test cases PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add client/packages/pocketcoder_flutter/lib/presentation/errors/ client/packages/pocketcoder_flutter/test/presentation/errors/ client/packages/pocketcoder_flutter/lib/l10n/app_en.arb client/packages/pocketcoder_flutter/lib/l10n/app_localizations*.dart client/packages/pocketcoder_flutter/lib/l10n/l10n_key_resolver.g.dart client/packages/pocketcoder_flutter/pubspec.yaml client/packages/pocketcoder_flutter/pubspec.lock
