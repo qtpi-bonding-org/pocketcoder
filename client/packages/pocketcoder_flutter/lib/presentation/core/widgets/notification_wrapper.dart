@@ -21,11 +21,21 @@ class _NotificationWrapperState extends State<NotificationWrapper> {
   @override
   void initState() {
     super.initState();
-    _subscription = GetIt.I<PushService>().notificationStream.listen((payload) {
+    final pushService = GetIt.I<PushService>();
+    _subscription = pushService.notificationStream.listen((payload) {
       if (payload.wasTapped) {
         _navigateFromPayload(payload);
       } else {
         _showInAppNotification(payload);
+      }
+    });
+
+    // A tap that launched the app from fully terminated never reaches
+    // notificationStream (that only carries taps while already
+    // running) -- check separately so a cold-start tap still navigates.
+    pushService.getInitialNotification().then((payload) {
+      if (payload != null && mounted) {
+        _navigateFromPayload(payload);
       }
     });
   }

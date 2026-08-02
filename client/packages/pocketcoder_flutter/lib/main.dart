@@ -16,6 +16,8 @@ class LocalPushService implements PushService {
   Stream<PushNotificationPayload> get notificationStream =>
       const Stream.empty();
   @override
+  Future<PushNotificationPayload?> getInitialNotification() async => null;
+  @override
   Future<bool> requestPermissions() async => true;
 
   @override

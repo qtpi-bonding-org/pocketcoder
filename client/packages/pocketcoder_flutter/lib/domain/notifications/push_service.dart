@@ -10,6 +10,13 @@ abstract class PushService {
   /// Stream of incoming permission relay signals.
   Stream<PushNotificationPayload> get notificationStream;
 
+  /// The notification that launched the app from a fully terminated
+  /// state (not just backgrounded), if any. `notificationStream` only
+  /// ever carries taps that happen while the process is already
+  /// running, so a cold start via notification tap needs this instead.
+  /// Returns null if the app wasn't launched by a notification tap.
+  Future<PushNotificationPayload?> getInitialNotification();
+
   /// Get the push token for the device.
   Future<String?> getToken();
 

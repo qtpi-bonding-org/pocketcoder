@@ -97,6 +97,9 @@ class NtfyPushService implements PushService {
   Stream<PushNotificationPayload> get notificationStream => _controller.stream;
 
   @override
+  Future<PushNotificationPayload?> getInitialNotification() async => null;
+
+  @override
   Future<bool> requestPermissions() async => true;
 
   @override
