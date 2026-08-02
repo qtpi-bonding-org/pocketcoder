@@ -8,13 +8,16 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 
 /// Data-driven deploy picker screen.
 ///
 /// Shows available deploy providers from [IDeployOptionService].
 /// FOSS builds show only Hetzner. Proprietary builds add Linode + Elestio.
 class DeployPickerScreen extends StatelessWidget {
-  const DeployPickerScreen({super.key});
+  const DeployPickerScreen({super.key, this.credentials});
+
+  final DeployCredentials? credentials;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,10 @@ class DeployPickerScreen extends StatelessWidget {
                           (option) => Padding(
                             padding:
                                 EdgeInsets.only(bottom: AppSizes.space),
-                            child: _ProviderCard(option: option),
+                            child: _ProviderCard(
+                              option: option,
+                              credentials: credentials,
+                            ),
                           ),
                         ),
                       ],
@@ -65,8 +71,9 @@ class DeployPickerScreen extends StatelessWidget {
 
 class _ProviderCard extends StatelessWidget {
   final DeployOption option;
+  final DeployCredentials? credentials;
 
-  const _ProviderCard({required this.option});
+  const _ProviderCard({required this.option, this.credentials});
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +156,7 @@ class _ProviderCard extends StatelessWidget {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else if (routePath != null) {
       if (context.mounted) {
-        context.push(routePath);
+        context.push(routePath, extra: credentials);
       }
     }
   }
