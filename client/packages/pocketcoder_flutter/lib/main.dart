@@ -32,7 +32,7 @@ class LocalBillingService implements BillingService {
   @override
   Future<void> reset() async {}
   @override
-  Future<bool> isPremium() async => true;
+  Future<bool> isPro() async => true;
   @override
   Future<bool> hasDeployAccess() async => true;
   @override
