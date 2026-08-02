@@ -19,7 +19,10 @@ import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import '../../app_router.dart';
+
+enum _OnboardingMode { login, deploy }
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, this.prefill});
@@ -31,6 +34,8 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
+  _OnboardingMode _mode = _OnboardingMode.login;
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _urlController = TextEditingController();
@@ -87,6 +92,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  void _handleDeploy() {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      return;
+    }
+    context.pushNamed(
+      RouteNames.deploy,
+      extra: DeployCredentials(email: email, password: password),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -118,10 +135,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               showHeader: false, // Onboarding has its own layout
               actions: [
                 TerminalAction(
-                  label: isLoading ? context.l10n.onboardingProcessing : context.l10n.onboardingLogin,
+                  label: isLoading
+                      ? context.l10n.onboardingProcessing
+                      : (_mode == _OnboardingMode.login ? 'LOGIN' : 'DEPLOY'),
                   onTap: isLoading
                       ? () {}
-                      : () => _handleLogin(context.read<AuthCubit>()),
+                      : (_mode == _OnboardingMode.login
+                          ? () => _handleLogin(context.read<AuthCubit>())
+                          : _handleDeploy),
                 ),
               ],
               body: Center(
@@ -139,13 +160,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         VSpace.x8,
                         PocoWidget(pocoSize: AppSizes.fontLarge),
                         VSpace.x4,
-                        TerminalTextField(
-                          controller: _urlController,
-                          label: context.l10n.onboardingHomeServer,
-                          hint: 'http://127.0.0.1:8090',
+                        SegmentedButton<_OnboardingMode>(
+                          segments: const [
+                            ButtonSegment(
+                              value: _OnboardingMode.login,
+                              label: Text('LOGIN'),
+                            ),
+                            ButtonSegment(
+                              value: _OnboardingMode.deploy,
+                              label: Text('DEPLOY'),
+                            ),
+                          ],
+                          selected: {_mode},
+                          onSelectionChanged: (selected) {
+                            setState(() => _mode = selected.first);
+                          },
                         ),
-                        VSpace.x2,
+                        VSpace.x4,
+                        if (_mode == _OnboardingMode.login) ...[
+                          TerminalTextField(
+                            controller: _urlController,
+                            label: context.l10n.onboardingHomeServer,
+                            hint: 'http://127.0.0.1:8090',
+                          ),
+                          VSpace.x2,
+                        ],
                         TerminalTextField(
+                          key: const Key('deployEmailField'),
                           controller: _emailController,
                           label: context.l10n.onboardingIdentityLabel,
                           hint: context.l10n.onboardingEmailHint,
