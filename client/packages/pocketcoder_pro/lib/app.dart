@@ -194,12 +194,24 @@ class RevenueCatBillingService implements BillingService {
       // 2. Configure with API Key from .env
       // REVENUE_CAT_APPLE_KEY=...
       // REVENUE_CAT_GOOGLE_KEY=...
-      String? apiKey;
+      //
+      // REVENUE_CAT_TEST_KEY (optional) overrides both: RevenueCat's Test
+      // Store simulates the full purchase flow (success/fail/cancel) with
+      // no App Store Connect API key, no real IAP products, and no
+      // sandbox tester needed -- exactly what we want before handing
+      // RevenueCat the .p8. Set explicitly via .env rather than gating on
+      // kDebugMode, since a TestFlight archive is a Release build and
+      // kDebugMode is always false there -- this needs to work in that
+      // build too. Remove REVENUE_CAT_TEST_KEY from .env (leaving the
+      // real per-platform keys) once ready to test against real stores.
+      String? apiKey = dotenv.env['REVENUE_CAT_TEST_KEY'];
 
-      if (Platform.isIOS) {
-        apiKey = dotenv.env['REVENUE_CAT_APPLE_KEY'];
-      } else if (Platform.isAndroid) {
-        apiKey = dotenv.env['REVENUE_CAT_GOOGLE_KEY'];
+      if (apiKey == null || apiKey.isEmpty) {
+        if (Platform.isIOS) {
+          apiKey = dotenv.env['REVENUE_CAT_APPLE_KEY'];
+        } else if (Platform.isAndroid) {
+          apiKey = dotenv.env['REVENUE_CAT_GOOGLE_KEY'];
+        }
       }
 
       if (apiKey != null && apiKey.isNotEmpty) {
@@ -241,8 +253,11 @@ class RevenueCatBillingService implements BillingService {
     try {
       if (!await Purchases.isConfigured) return false;
       final customerInfo = await Purchases.getCustomerInfo();
-      // In PocketCoder, 'premium' is the expected entitlement ID
-      return customerInfo.entitlements.active.containsKey('premium');
+      // 'PocketCoder Pro' is the entitlement identifier actually
+      // configured in the RevenueCat dashboard (matches push-relay's
+      // PREMIUM_LOOKUP_KEY server-side) -- 'premium' was a different,
+      // never-created identifier this would never match.
+      return customerInfo.entitlements.active.containsKey('PocketCoder Pro');
     } catch (e) {
       return false;
     }
@@ -285,8 +300,9 @@ class RevenueCatBillingService implements BillingService {
 
         final purchaseResult =
             await Purchases.purchaseStoreProduct(products.first);
-        // Different identifiers grant different entitlements ('premium'
-        // for subscriptions, 'deploy' for the one-off deploy pass) --
+        // Different identifiers grant different entitlements
+        // ('PocketCoder Pro' for subscriptions, 'deploy' for the
+        // one-off deploy pass) --
         // any newly active entitlement means this specific purchase
         // succeeded, so check for that rather than hardcoding one name.
         return purchaseResult.customerInfo.entitlements.active.isNotEmpty;
