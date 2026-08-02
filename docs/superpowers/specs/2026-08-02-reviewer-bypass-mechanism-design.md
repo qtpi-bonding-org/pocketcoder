@@ -1,5 +1,15 @@
 # Reviewer-Bypass Mechanism — Design
 
+> **SUPERSEDED, not implemented.** Replaced by a much simpler operational
+> approach: a dedicated real Linode account with a spend-capped virtual
+> card, real credentials handed to reviewers via App Store Connect's
+> "Notes for Review" field, real (unmodified) OAuth login — no bypass
+> code, no Worker route, no PAT-vending, no sentinel email, at all. See
+> sub-project 3 in `2026-08-02-apple-review-linode-access-overview.md`
+> for the current design. This document is kept only for the reasoning
+> trail (why the bypass approach was considered and what its actual risks
+> were) — do not implement anything below.
+
 > Sub-project 3 of `2026-08-02-apple-review-linode-access-overview.md`.
 > Depends on sub-project 1+2
 > (`2026-08-02-deploy-entry-point-and-admin-credentials-design.md`), which

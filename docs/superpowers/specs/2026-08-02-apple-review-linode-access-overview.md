@@ -42,42 +42,37 @@ real customer or reviewer — goes through the identical screen. This is
 also a real, standalone UX improvement, independent of anything
 Apple/Shipaton-related.
 
-### 3. The reviewer-bypass mechanism
-Depends on both 1 and 2 existing — needs somewhere to reach the deploy
-flow pre-login, and needs the email/password fields from the new
-account-setup step to hook into. Shape agreed so far:
-- A specific sentinel email value (given to Apple/judges via Review
-  Notes) typed into the account-setup step's Email field triggers the
-  bypass instead of proceeding to real Linode OAuth.
-- Whatever was typed in the Password field gets sent to a new Worker
-  route, `POST /reviewer/linode-token` (on the already-deployed
-  `mcp-oauth-relay`), body `{"password": "..."}`.
-- The Worker hashes the submitted password (SHA-256, constant-time
-  compare) against a stored `REVIEWER_TOKEN_PASSWORD_HASH` secret — never
-  stores the plaintext. On match, returns the real, separately-generated,
-  narrowly-scoped Linode PAT (`LINODE_REVIEWER_PAT`, a Worker secret,
-  never shipped in any build). On mismatch: 401.
-- The app hands that token to a new public method on `flutter_aeroform`
-  (a separate git repo) that preseeds it into `FlutterSecureStorage`
-  exactly where a real OAuth flow would have put it — confirmed safe:
-  neither `flutter_aeroform` nor `pocketcoder_pro` ever calls
-  `refreshToken()` automatically anywhere, so a preseeded token with no
-  refresh token never gets refreshed and breaks nothing.
-- From that point on, `DeploymentService`/`LinodeAPIClient` behave
-  exactly as they would for a real user — same code path, only the
-  token's origin differs.
-- A "REVIEW BUILD"-style visible marker was considered for a
-  build-time-flag version of this design and dropped once we moved to a
-  runtime/password-gated version — reconsider whether any equivalent
-  visible-state indicator is still wanted once this is actually specced.
-- Cleanup after review/judging: delete or disable the Worker route (or
-  just its secrets), revoke the PAT at Linode. Two steps, nothing else
-  lingers — no separate build to worry about, since there's only ever
-  one production binary.
-- Known trade-off, accepted: the instance-count/cost cap can only be
-  enforced client-side in this shape (not Worker-side), mitigated by the
-  PAT's narrow scope, a short expiry matched to the review window, and
-  manual revocation afterward.
+### 3. Reviewer access — dedicated real Linode account (no bypass code)
+**SUPERSEDED the original bypass design** — see
+`2026-08-02-reviewer-bypass-mechanism-design.md`, now marked obsolete at
+the top of that file. A custom sentinel-email/password-gated Worker route
+that vends a scoped PAT turned out to be solving a problem that a much
+simpler operational step sidesteps entirely:
+
+- Create one dedicated Linode account, used for nothing else. Add a real
+  but spend-capped virtual card (a bank-issued capped/single-purpose card
+  works fine — it's a normal card as far as Linode's billing is
+  concerned). Pick the cap comfortably above realistic review-window usage
+  (a few `g6-nanode-1` instances for a couple weeks is a few dollars to
+  low tens of dollars) so a legitimate review session doesn't trip a
+  decline.
+- Hand the account's real email/password to Apple App Review and/or
+  Shipaton judges via App Store Connect's "Notes for Review" field — the
+  standard, Apple-sanctioned demo-account mechanism (Guideline 2.1).
+  Reviewers do the actual, unmodified Linode OAuth flow. No new code in
+  this repo or `flutter_aeroform` at all.
+- **Zero Guideline 2.3.1 exposure** — there is no special/hidden code
+  path to disclose, since nothing in the app behaves differently for a
+  reviewer than for any other user.
+- The card's spend cap is the entire cost-control mechanism — no
+  client-side instance-count cap, no PAT scoping reasoning, no
+  brute-force/rate-limiting surface, no revocation dance.
+- The account is left blank between review windows — Linode is
+  pure pay-for-compute-used, so an account with nothing provisioned costs
+  nothing to just exist. A reviewer's session is a genuine first-time
+  provision; deleting the instance afterward returns the account to
+  costing nothing, indefinitely, with no cleanup step required beyond
+  that deletion.
 
 ## Order of work
 
