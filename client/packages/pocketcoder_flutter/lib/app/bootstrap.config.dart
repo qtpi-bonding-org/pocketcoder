@@ -274,10 +274,7 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i558.FlutterSecureStorage>(),
           gh<_i589.UserDao>(),
           gh<_i589.SshKeyDao>(),
-        ));
-    gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
-          gh<_i199.ChatDao>(),
-          gh<_i50.IAuthRepository>(),
+          gh<_i619.BillingService>(),
         ));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
@@ -327,8 +324,10 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i1031.ProviderCubit>(
         () => _i1031.ProviderCubit(gh<_i422.IProviderRepository>()));
-    gh.factory<_i606.ChatListCubit>(
-        () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
+    gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
+          gh<_i199.ChatDao>(),
+          gh<_i50.IAuthRepository>(),
+        ));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     gh.factory<_i1066.ChatCubit>(
@@ -339,6 +338,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i225.PermissionCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i312.SessionControlsCubit>(
         () => _i312.SessionControlsCubit(gh<_i763.AgentChatRepository>()));
+    gh.factory<_i606.ChatListCubit>(
+        () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
     return this;
   }
 }

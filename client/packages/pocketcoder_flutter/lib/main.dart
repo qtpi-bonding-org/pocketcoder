@@ -26,6 +26,10 @@ class LocalBillingService implements BillingService {
   @override
   Future<void> initialize() async {}
   @override
+  Future<void> identify(String userId) async {}
+  @override
+  Future<void> reset() async {}
+  @override
   Future<bool> isPremium() async => true;
   @override
   Future<bool> hasDeployAccess() async => true;
