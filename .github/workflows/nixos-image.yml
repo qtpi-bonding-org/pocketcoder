@@ -141,7 +141,9 @@ jobs:
           # project name is "pocketcoder" too. Without this pin, CI's
           # checkout directory name deciding the project name would be an
           # implicit coincidence, not a guarantee.
-          docker compose -p pocketcoder build pocketbase goose mcp-gateway
+          docker compose -p pocketcoder --profile harness-images build \
+            pocketbase goose mcp-gateway \
+            claude-code-harness-image codex-harness-image
 
       - name: Save + compress images
         run: |
@@ -149,6 +151,8 @@ jobs:
             pocketcoder-pocketbase:latest \
             pocketcoder-goose:latest \
             pocketcoder-mcp-gateway:latest \
+            pocketcoder-harness-claude-code:0.64.2 \
+            pocketcoder-harness-codex:1.1.9 \
             | gzip > pocketcoder-docker-images.tar.gz
 
       - name: Compute image metadata

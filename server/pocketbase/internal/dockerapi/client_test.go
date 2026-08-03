@@ -20,7 +20,7 @@ func TestInspectParsesMountsAndNetworks(t *testing.T) {
 			},
 			"NetworkSettings": map[string]any{
 				"Networks": map[string]any{
-					"myproject_pocketcoder-agent": map[string]any{},
+					"myproject_pocketcoder-agent":     map[string]any{},
 					"myproject_pocketcoder-dashboard": map[string]any{},
 				},
 			},
@@ -77,6 +77,26 @@ func TestPullImageSurfacesNoSuchImage(t *testing.T) {
 	err := c.PullImage(context.Background(), "nonexistent:latest")
 	if err == nil {
 		t.Fatal("expected an error for a nonexistent image")
+	}
+}
+
+func TestImageExistsDistinguishesLocalImageFromMissingImage(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/images/pocketcoder-harness-codex:1.1.9/json" {
+			w.Write([]byte(`{"Id":"sha256:abc"}`))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	exists, err := c.ImageExists(context.Background(), "pocketcoder-harness-codex:1.1.9")
+	if err != nil || !exists {
+		t.Fatalf("ImageExists(local) = %v, %v; want true, nil", exists, err)
+	}
+	exists, err = c.ImageExists(context.Background(), "missing:latest")
+	if err != nil || exists {
+		t.Fatalf("ImageExists(missing) = %v, %v; want false, nil", exists, err)
 	}
 }
 

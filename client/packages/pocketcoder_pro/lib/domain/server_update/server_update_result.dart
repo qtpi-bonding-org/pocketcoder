@@ -1,5 +1,6 @@
-/// Result of running the update command (`git pull && docker compose build
-/// && docker compose up -d`) on the deployed server over SSH.
+/// Result of running the update command (`git pull && docker compose
+/// --profile harness-images build && docker compose up -d`) on the deployed
+/// server over SSH.
 class ServerUpdateResult {
   final int exitCode;
   final String stdout;

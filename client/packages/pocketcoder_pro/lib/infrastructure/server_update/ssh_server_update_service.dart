@@ -14,7 +14,7 @@ import 'package:pocketcoder_pro/domain/server_update/server_update_result.dart';
 /// mirrors -- `/opt/pocketcoder` is a real git clone with `origin` already
 /// configured (kept, not stripped, specifically so this works).
 const _kUpdateCommand =
-    'cd /opt/pocketcoder && git pull && docker compose build && docker compose up -d';
+    'cd /opt/pocketcoder && git pull && docker compose --profile harness-images build && docker compose up -d';
 
 const _kSshPort = 22;
 
