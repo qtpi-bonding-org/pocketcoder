@@ -1,24 +1,25 @@
-# Example: bundling a stdio-native ACP harness (claude-agent-acp) with the
-# harness-adapter (§5.4 of the multi-harness selection design spec). This
-# is a REFERENCE for populating a harnesses.container_image — not itself
-# built by this repo's own compose file, since harness images are
-# per-catalog-entry, not part of the base deployment.
-FROM node:20-slim AS harness-adapter-build
-WORKDIR /adapter
-COPY server/harness-adapter/ .
-RUN go build -o /usr/local/bin/harness-adapter .  # requires a Go build stage in practice; shown collapsed here for brevity
+# Production image for a stdio-native ACP harness behind PocketCoder's
+# authenticated WebSocket adapter. Build this Dockerfile once per agent,
+# supplying the exact npm package (including version) as ACP_AGENT_PACKAGE.
 
-FROM node:20-slim
-RUN npm install -g @zed-industries/claude-agent-acp
-COPY --from=harness-adapter-build /usr/local/bin/harness-adapter /usr/local/bin/harness-adapter
+FROM golang:1.23-bookworm AS adapter-build
+WORKDIR /src
+COPY server/harness-adapter/go.mod server/harness-adapter/go.sum ./
+RUN go mod download
+COPY server/harness-adapter/*.go ./
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/harness-adapter .
+
+FROM node:22-bookworm-slim
+ARG ACP_AGENT_PACKAGE
+RUN test -n "$ACP_AGENT_PACKAGE" \
+    && npm install --global --omit=dev "$ACP_AGENT_PACKAGE" \
+    && npm cache clean --force
+
+COPY --from=adapter-build /out/harness-adapter /usr/local/bin/harness-adapter
+WORKDIR /workspace
 EXPOSE 3000
-# No --secret flag here on purpose: the per-instance secret
-# hooks.ProvisionHarnessInstance mints is delivered at container-start time
-# via the HARNESS_ADAPTER_SECRET env var, rendered from this harness's
-# harnesses.launch_template.env_template (e.g.
-# {"HARNESS_ADAPTER_SECRET": "{{.__adapter_secret}}"}) into CreateSpec.Env.
-# Docker sets a container's process environment from that Env regardless of
-# exec vs shell ENTRYPOINT form, so exec-form below still sees it — no shell
-# wrapper needed. harness-adapter reads HARNESS_ADAPTER_SECRET itself
-# whenever --secret isn't passed on the command line.
-ENTRYPOINT ["harness-adapter", "--cmd", "claude-agent-acp", "--port", "3000"]
+
+# ProvisionHarnessInstance supplies the agent-specific command as the
+# container Cmd from harnesses.launch_template. Keeping only the adapter in
+# ENTRYPOINT lets one audited image recipe package any stdio ACP agent.
+ENTRYPOINT ["/usr/local/bin/harness-adapter"]

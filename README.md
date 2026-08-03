@@ -28,7 +28,8 @@ The agent core is three containers connected by open protocols:
 | Container | Runs | Role |
 |:---|:---|:---|
 | **c1** | PocketBase (as a Go library) + Go AG-UI server + Go ACP client | The "front door." Auth, chat ownership, the single `chat → Goose-session` mapping, and the **ACP ↔ AG-UI translation** seam. |
-| **c2** | **Goose** in ACP agent-server mode (`goose serve`) | The agent core. Spawns `claude-agent-acp` / `codex-acp` per `GOOSE_PROVIDER`. The **least-trusted** container — where tool execution happens. |
+| **c2** | **Goose** in ACP agent-server mode (`goose serve`) | The default agent harness and sole provider of Goose-only features such as schedules and extensions. |
+| **Peer harnesses** | Claude Agent ACP / Codex ACP, provisioned independently on first selection | Optional agent harness containers routed per chat. Each exposes the same authenticated ACP WebSocket boundary through PocketCoder's stdio adapter. |
 | **c3** | Docker MCP Gateway *(dormant)* | Will host external tools as MCP servers (GitHub, Notion). Disabled by default until attachment is validated. **Cognee memory is no longer part of this — see below.** |
 
 ```
@@ -38,7 +39,7 @@ Mobile (Flutter)
 c1  PocketBase — auth, chat→Goose-session mapping, ACP↔AG-UI translation
    │  ACP over an authenticated WebSocket (coder/acp-go-sdk)
    ▼
-c2  Goose (goose serve) — spawns claude-agent-acp / codex-acp; loads Cognee as a live extension
+c2  Selected harness — Goose by default, or an independently provisioned Claude Code/Codex container
    │  (MCP tools via c3 — dormant)
    ▼
 c3  Docker MCP Gateway — GitHub, Notion  [not yet enabled]
@@ -128,8 +129,8 @@ One `docker-compose.yml`. Core services run by default; the rest are opt-in via 
 | `caddy` | `caddy` | TLS termination / reverse proxy |
 
 ```bash
-docker compose up -d                    # core only
-docker compose --profile agent up -d    # core + agent runtime
+docker compose --profile harness-images build  # includes lazy Claude/Codex images
+docker compose up -d                           # Goose is the default runtime
 ```
 
 ## Testing

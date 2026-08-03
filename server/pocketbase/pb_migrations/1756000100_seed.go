@@ -119,6 +119,48 @@ func init() {
 			return fmt.Errorf("seed goose harness: %w", err)
 		}
 
+		// Peer ACP harnesses are catalog entries, not compose services. Their
+		// images are built during bootstrap and PocketBase creates the actual
+		// container lazily when a user first selects the harness for a chat.
+		seedManagedHarness := func(name, cliID, version, description, image, binary, apiKeyEnv string) error {
+			rec := core.NewRecord(harnessesColl)
+			rec.Set("name", name)
+			rec.Set("cli_id", cliID)
+			rec.Set("version", version)
+			rec.Set("description", description)
+			rec.Set("acp_transport", "stdio")
+			rec.Set("container_image", image)
+			rec.Set("launch_template", map[string]any{
+				"cmd":  []string{"--cmd", binary, "--port", "3000"},
+				"port": 3000,
+				"env_template": map[string]string{
+					apiKeyEnv:                "{{.API_KEY}}",
+					"HARNESS_ADAPTER_SECRET": "{{.__adapter_secret}}",
+				},
+			})
+			rec.Set("supports_live_config", true)
+			rec.Set("supports_goose_extensions", false)
+			rec.Set("single_connection_only", true)
+			if err := app.Save(rec); err != nil {
+				return fmt.Errorf("seed %s harness: %w", cliID, err)
+			}
+			return nil
+		}
+		if err := seedManagedHarness(
+			"Claude Code", "claude-code", "0.64.2",
+			"Claude Agent SDK through the official ACP adapter.",
+			"pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp", "ANTHROPIC_API_KEY",
+		); err != nil {
+			return err
+		}
+		if err := seedManagedHarness(
+			"Codex", "codex", "1.1.9",
+			"OpenAI Codex through the official ACP adapter.",
+			"pocketcoder-harness-codex:1.1.9", "codex-acp", "OPENAI_API_KEY",
+		); err != nil {
+			return err
+		}
+
 		instancesColl, err := app.FindCollectionByNameOrId("harness_instances")
 		if err != nil {
 			return err

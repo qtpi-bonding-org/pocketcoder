@@ -15,7 +15,7 @@ import 'package:pocketcoder_pro/domain/server_update/server_update_result.dart';
 import 'package:pocketcoder_pro/infrastructure/server_update/current_instance_store.dart';
 
 /// User-initiated server update: SSH in as root, run
-/// `git pull && docker compose build && docker compose up -d`, show the
+/// `git pull && docker compose --profile harness-images build && docker compose up -d`, show the
 /// real output. Nothing happens until the user taps UPDATE -- no
 /// background timer, no auto-polling, no silent updates.
 ///
@@ -108,7 +108,8 @@ class _UpdateServerView extends StatelessWidget {
                     children: [
                       Text(
                         'cd /opt/pocketcoder && git pull && '
-                        'docker compose build && docker compose up -d',
+                        'docker compose --profile harness-images build && '
+                        'docker compose up -d',
                         style: TextStyle(
                           fontFamily: AppFonts.bodyFamily,
                           color: colors.onSurface.withValues(alpha: 0.7),
@@ -131,9 +132,8 @@ class _UpdateServerView extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: state.isLoading
-                        ? null
-                        : () => cubit.update(instanceId),
+                    onPressed:
+                        state.isLoading ? null : () => cubit.update(instanceId),
                     child: Text(state.isLoading ? 'UPDATING...' : 'UPDATE'),
                   ),
                 ),

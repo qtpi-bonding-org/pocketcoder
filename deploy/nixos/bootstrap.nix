@@ -184,6 +184,18 @@ EOF
       # successful cache load above makes this a no-op build.
       echo "Starting PocketCoder stack..."
       cd "$INSTALL_DIR"
+
+      # Claude Code and Codex are provisioned lazily by PocketBase, but their
+      # first-party images must already exist locally: their catalog entries
+      # intentionally use local PocketCoder tags rather than a public registry.
+      # The release image cache normally provides them; source deployments and
+      # cache misses build them here once before the stack starts.
+      if ! docker image inspect pocketcoder-harness-claude-code:0.64.2 >/dev/null 2>&1 || \
+         ! docker image inspect pocketcoder-harness-codex:1.1.9 >/dev/null 2>&1; then
+        echo "Building optional ACP harness images..."
+        docker compose --profile harness-images build claude-code-harness-image codex-harness-image
+      fi
+
       docker compose up -d
 
       # --- Mark as initialized ---

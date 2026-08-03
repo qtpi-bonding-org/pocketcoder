@@ -116,6 +116,32 @@ func (c *Client) PullImage(ctx context.Context, image string) error {
 	return nil
 }
 
+// ImageExists reports whether image is already present in the local Docker
+// image store. Dynamically provisioned first-party harness images are built
+// by bootstrap (or loaded from its image cache), so pulling them from a
+// registry would be both unnecessary and guaranteed to fail: PocketCoder
+// does not publish those local image tags to a registry.
+func (c *Client) ImageExists(ctx context.Context, image string) (bool, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/images/"+url.PathEscape(image)+"/json", nil)
+	if err != nil {
+		return false, err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("inspect image %s: %w", image, err)
+	}
+	defer resp.Body.Close()
+	switch {
+	case resp.StatusCode == http.StatusNotFound:
+		return false, nil
+	case resp.StatusCode >= 400:
+		body, _ := io.ReadAll(resp.Body)
+		return false, fmt.Errorf("inspect image %s: docker API returned %s: %s", image, resp.Status, string(body))
+	default:
+		return true, nil
+	}
+}
+
 type CreateSpec struct {
 	Image                               string
 	Cmd                                 []string
