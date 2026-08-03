@@ -110,7 +110,7 @@ func TestSeedCreatesDefaultGooseHarnessInstance(t *testing.T) {
 	}
 }
 
-func TestSeedCreatesManagedClaudeCodeAndCodexHarnessCatalogEntries(t *testing.T) {
+func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
@@ -118,10 +118,11 @@ func TestSeedCreatesManagedClaudeCodeAndCodexHarnessCatalogEntries(t *testing.T)
 	defer app.Cleanup()
 
 	tests := []struct {
-		cliID, version, image, binary, apiKeyEnv string
+		cliID, version, image, command, apiKeyEnv string
 	}{
 		{"claude-code", "0.64.2", "pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp", "ANTHROPIC_API_KEY"},
 		{"codex", "1.1.9", "pocketcoder-harness-codex:1.1.9", "codex-acp", "OPENAI_API_KEY"},
+		{"opencode", "1.18.11", "pocketcoder-harness-opencode:1.18.11", "opencode acp", "OPENCODE_API_KEY"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.cliID, func(t *testing.T) {
@@ -144,8 +145,8 @@ func TestSeedCreatesManagedClaudeCodeAndCodexHarnessCatalogEntries(t *testing.T)
 			if err := rec.UnmarshalJSONField("launch_template", &launch); err != nil {
 				t.Fatal(err)
 			}
-			if len(launch.Cmd) < 2 || launch.Cmd[1] != tc.binary || launch.Port != 3000 {
-				t.Errorf("launch template = %+v, want binary %q on port 3000", launch, tc.binary)
+			if len(launch.Cmd) < 2 || launch.Cmd[1] != tc.command || launch.Port != 3000 {
+				t.Errorf("launch template = %+v, want command %q on port 3000", launch, tc.command)
 			}
 			if launch.EnvTemplate[tc.apiKeyEnv] != "{{.API_KEY}}" || launch.EnvTemplate["HARNESS_ADAPTER_SECRET"] != "{{.__adapter_secret}}" {
 				t.Errorf("env_template = %v, missing API key or adapter secret mapping", launch.EnvTemplate)
