@@ -120,6 +120,15 @@ services:
       args:
         ACP_AGENT_PACKAGE: "@agentclientprotocol/codex-acp@1.1.9"
 
+  opencode-harness-image:
+    profiles: ["harness-images"]
+    image: pocketcoder-harness-opencode:1.18.11
+    build:
+      context: .
+      dockerfile: server/harness-adapter/Dockerfile
+      args:
+        ACP_AGENT_PACKAGE: "opencode-ai@1.18.11"
+
   # 🔌 MCP GATEWAY (MCP Server Gateway)
   mcp-gateway:
     build:
