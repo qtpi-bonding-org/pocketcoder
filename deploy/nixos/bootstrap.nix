@@ -145,8 +145,8 @@ EOF
 
       # --- Try to load pre-built Docker images from R2 cache (optional
       # speed-up) ---
-      # nixos-image.yml's docker-images job pre-builds and caches
-      # pocketbase/goose/mcp-gateway images in the same R2 bucket as the
+      # nixos-image.yml's docker-images job pre-builds and caches the core
+      # services plus optional harness images in the same R2 bucket as the
       # NixOS image itself, tagged to match exactly what `docker compose
       # up -d` below would build on its own (see that job's -p pocketcoder
       # project-name pin). This is purely best-effort: any failure here
@@ -185,15 +185,17 @@ EOF
       echo "Starting PocketCoder stack..."
       cd "$INSTALL_DIR"
 
-      # Claude Code and Codex are provisioned lazily by PocketBase, but their
-      # first-party images must already exist locally: their catalog entries
-      # intentionally use local PocketCoder tags rather than a public registry.
+      # Claude Code, Codex, and OpenCode are provisioned lazily by PocketBase,
+      # but their first-party images must already exist locally: their catalog
+      # entries intentionally use local PocketCoder tags rather than a public
+      # registry.
       # The release image cache normally provides them; source deployments and
       # cache misses build them here once before the stack starts.
       if ! docker image inspect pocketcoder-harness-claude-code:0.64.2 >/dev/null 2>&1 || \
-         ! docker image inspect pocketcoder-harness-codex:1.1.9 >/dev/null 2>&1; then
+         ! docker image inspect pocketcoder-harness-codex:1.1.9 >/dev/null 2>&1 || \
+         ! docker image inspect pocketcoder-harness-opencode:1.18.11 >/dev/null 2>&1; then
         echo "Building optional ACP harness images..."
-        docker compose --profile harness-images build claude-code-harness-image codex-harness-image
+        docker compose --profile harness-images build claude-code-harness-image codex-harness-image opencode-harness-image
       fi
 
       docker compose up -d

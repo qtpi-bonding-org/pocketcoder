@@ -122,7 +122,7 @@ func init() {
 		// Peer ACP harnesses are catalog entries, not compose services. Their
 		// images are built during bootstrap and PocketBase creates the actual
 		// container lazily when a user first selects the harness for a chat.
-		seedManagedHarness := func(name, cliID, version, description, image, binary, apiKeyEnv string) error {
+		seedManagedHarness := func(name, cliID, version, description, image, command, apiKeyEnv string) error {
 			rec := core.NewRecord(harnessesColl)
 			rec.Set("name", name)
 			rec.Set("cli_id", cliID)
@@ -131,7 +131,7 @@ func init() {
 			rec.Set("acp_transport", "stdio")
 			rec.Set("container_image", image)
 			rec.Set("launch_template", map[string]any{
-				"cmd":  []string{"--cmd", binary, "--port", "3000"},
+				"cmd":  []string{"--cmd", command, "--port", "3000"},
 				"port": 3000,
 				"env_template": map[string]string{
 					apiKeyEnv:                "{{.API_KEY}}",
@@ -157,6 +157,13 @@ func init() {
 			"Codex", "codex", "1.1.9",
 			"OpenAI Codex through the official ACP adapter.",
 			"pocketcoder-harness-codex:1.1.9", "codex-acp", "OPENAI_API_KEY",
+		); err != nil {
+			return err
+		}
+		if err := seedManagedHarness(
+			"OpenCode", "opencode", "1.18.11",
+			"OpenCode through its native ACP server.",
+			"pocketcoder-harness-opencode:1.18.11", "opencode acp", "OPENCODE_API_KEY",
 		); err != nil {
 			return err
 		}

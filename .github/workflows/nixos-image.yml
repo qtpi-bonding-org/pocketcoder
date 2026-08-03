@@ -143,7 +143,7 @@ jobs:
           # implicit coincidence, not a guarantee.
           docker compose -p pocketcoder --profile harness-images build \
             pocketbase goose mcp-gateway \
-            claude-code-harness-image codex-harness-image
+            claude-code-harness-image codex-harness-image opencode-harness-image
 
       - name: Save + compress images
         run: |
@@ -153,6 +153,7 @@ jobs:
             pocketcoder-mcp-gateway:latest \
             pocketcoder-harness-claude-code:0.64.2 \
             pocketcoder-harness-codex:1.1.9 \
+            pocketcoder-harness-opencode:1.18.11 \
             | gzip > pocketcoder-docker-images.tar.gz
 
       - name: Compute image metadata
