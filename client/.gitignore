@@ -7,6 +7,7 @@ build/
 **/*.freezed.dart
 **/*.g.dart
 packages/**/pubspec.lock
+.flutter-plugins-dependencies
 
 # Melos
 .melos_plugins_config
