@@ -109,3 +109,51 @@ func TestSeedCreatesDefaultGooseHarnessInstance(t *testing.T) {
 		t.Error("seeded default row's acp_endpoint must be empty (means: use Coordinator.Config defaults)")
 	}
 }
+
+func TestSeedCreatesManagedClaudeCodeAndCodexHarnessCatalogEntries(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	tests := []struct {
+		cliID, version, image, binary, apiKeyEnv string
+	}{
+		{"claude-code", "0.64.2", "pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp", "ANTHROPIC_API_KEY"},
+		{"codex", "1.1.9", "pocketcoder-harness-codex:1.1.9", "codex-acp", "OPENAI_API_KEY"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.cliID, func(t *testing.T) {
+			recs, err := app.FindRecordsByFilter("harnesses", "cli_id = {:cli}", "", 0, 0, map[string]any{"cli": tc.cliID})
+			if err != nil || len(recs) != 1 {
+				t.Fatalf("expected one %s harness, got %d, err %v", tc.cliID, len(recs), err)
+			}
+			rec := recs[0]
+			if rec.GetString("version") != tc.version || rec.GetString("container_image") != tc.image {
+				t.Errorf("version/image = %q/%q, want %q/%q", rec.GetString("version"), rec.GetString("container_image"), tc.version, tc.image)
+			}
+			if rec.GetString("acp_transport") != "stdio" || !rec.GetBool("single_connection_only") || rec.GetBool("supports_goose_extensions") {
+				t.Errorf("unexpected capability flags for %s", tc.cliID)
+			}
+			var launch struct {
+				Cmd         []string          `json:"cmd"`
+				Port        int               `json:"port"`
+				EnvTemplate map[string]string `json:"env_template"`
+			}
+			if err := rec.UnmarshalJSONField("launch_template", &launch); err != nil {
+				t.Fatal(err)
+			}
+			if len(launch.Cmd) < 2 || launch.Cmd[1] != tc.binary || launch.Port != 3000 {
+				t.Errorf("launch template = %+v, want binary %q on port 3000", launch, tc.binary)
+			}
+			if launch.EnvTemplate[tc.apiKeyEnv] != "{{.API_KEY}}" || launch.EnvTemplate["HARNESS_ADAPTER_SECRET"] != "{{.__adapter_secret}}" {
+				t.Errorf("env_template = %v, missing API key or adapter secret mapping", launch.EnvTemplate)
+			}
+			instances, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": rec.Id})
+			if err != nil || len(instances) != 0 {
+				t.Errorf("managed harness should be provisioned lazily; instances=%d err=%v", len(instances), err)
+			}
+		})
+	}
+}

@@ -1,7 +1,7 @@
 import 'server_update_result.dart';
 
 /// Updates the deployed server by SSHing in as root and running
-/// `git pull && docker compose build && docker compose up -d`.
+/// `git pull && docker compose --profile harness-images build && docker compose up -d`.
 ///
 /// Deliberately user-initiated only (a button in the app) -- no background
 /// polling, no silent auto-update. Independent of pocketcoder_flutter's

@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -123,9 +124,11 @@ func createTestProviderKey(t *testing.T, app core.App, overrides map[string]any)
 // fakeDockerClient is a dockerProvisioner test double that records
 // PullImage/Create/Start calls instead of talking to a real Docker socket.
 type fakeDockerClient struct {
-	pullErr   error
-	createErr error
-	startErr  error
+	imageExists bool
+	inspectErr  error
+	pullErr     error
+	createErr   error
+	startErr    error
 
 	pulledImages      []string
 	createdContainers []string
@@ -146,6 +149,10 @@ func (f *fakeDockerClient) Inspect(ctx context.Context, containerName string) (d
 		"test_pocketcoder-agent": {},
 	}
 	return insp, nil
+}
+
+func (f *fakeDockerClient) ImageExists(ctx context.Context, image string) (bool, error) {
+	return f.imageExists, f.inspectErr
 }
 
 func (f *fakeDockerClient) PullImage(ctx context.Context, image string) error {
@@ -216,6 +223,26 @@ func TestProvisionHarnessInstanceCreatesAndStartsContainer(t *testing.T) {
 	}
 }
 
+func TestProvisionHarnessInstanceReusesLocalImageWithoutPulling(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{
+		"container_image": "pocketcoder-harness-claude-code:0.64.2",
+		"launch_template": map[string]any{"cmd": []string{"--cmd", "claude-agent-acp", "--port", "3000"}, "port": 3000},
+	})
+	fake := newFakeDockerClient()
+	fake.imageExists = true
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.GetString("status") != "running" {
+		t.Fatalf("status = %q, want running", rec.GetString("status"))
+	}
+	if len(fake.pulledImages) != 0 {
+		t.Errorf("pulledImages = %v, want no registry pull for a local first-party image", fake.pulledImages)
+	}
+}
+
 func TestProvisionHarnessInstanceIsIdempotent(t *testing.T) {
 	// Deliberately exercises launchKey = "" (the supports_live_config = true
 	// case, i.e. Goose-shaped harnesses) — this is the exact case a naive
@@ -273,14 +300,15 @@ func TestProvisionHarnessInstanceErrorsOnMissingPort(t *testing.T) {
 
 func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T) {
 	app := testApp(t)
-	createTestProviderKey(t, app, map[string]any{"provider": "anthropic", "env_vars": map[string]any{"ANTHROPIC_API_KEY": "sk-test-123"}})
+	createTestProviderKey(t, app, map[string]any{"provider": harnessProviderForTest, "env_vars": map[string]any{"API_KEY": "sk-test-123"}})
 	harness := createTestHarness(t, app, map[string]any{
+		"cli_id":          harnessProviderForTest,
 		"container_image": "example.com/harness:1.0",
 		"launch_template": map[string]any{
 			"cmd":  []string{"/adapter"},
 			"port": 3000,
 			"env_template": map[string]any{
-				"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}",
+				"ANTHROPIC_API_KEY": "{{.API_KEY}}",
 				"ADAPTER_SECRET":    "{{.__adapter_secret}}",
 			},
 		},
@@ -308,6 +336,58 @@ func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T)
 	}
 	if !found["secret"] {
 		t.Errorf("env = %v, want ADAPTER_SECRET matching the row's minted secret", env)
+	}
+}
+
+const harnessProviderForTest = "claude-code-test"
+
+func TestProvisionHarnessInstanceScopesGenericAPIKeyToSelectedHarness(t *testing.T) {
+	app := testApp(t)
+	createTestProviderKey(t, app, map[string]any{"provider": "claude-code-scope-test", "env_vars": map[string]any{"API_KEY": "claude-key"}})
+	createTestProviderKey(t, app, map[string]any{"provider": "codex-scope-test", "env_vars": map[string]any{"API_KEY": "codex-key"}})
+	harness := createTestHarness(t, app, map[string]any{
+		"cli_id":          "codex-scope-test",
+		"container_image": "pocketcoder-harness-codex:1.1.9",
+		"launch_template": map[string]any{
+			"cmd":          []string{"--cmd", "codex-acp", "--port", "3000"},
+			"port":         3000,
+			"env_template": map[string]any{"OPENAI_API_KEY": "{{.API_KEY}}"},
+		},
+	})
+	fake := newFakeDockerClient()
+	_, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fake.lastCreateSpec.Env; len(got) != 1 || got[0] != "OPENAI_API_KEY=codex-key" {
+		t.Errorf("Env = %v, want only the selected Codex harness's API key", got)
+	}
+}
+
+func TestProvisionHarnessInstanceFailsClearlyWhenSelectedHarnessHasNoAPIKey(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{
+		"cli_id":          "codex-without-key",
+		"container_image": "pocketcoder-harness-codex:1.1.9",
+		"launch_template": map[string]any{
+			"cmd":          []string{"--cmd", "codex-acp", "--port", "3000"},
+			"port":         3000,
+			"env_template": map[string]any{"OPENAI_API_KEY": "{{.API_KEY}}"},
+		},
+	})
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.GetString("status") != "error" {
+		t.Fatalf("status = %q, want error", rec.GetString("status"))
+	}
+	if got := rec.GetString("last_error"); !strings.Contains(got, "API_KEY") {
+		t.Errorf("last_error = %q, want a clear missing API_KEY error", got)
+	}
+	if fake.createCallCount != 0 {
+		t.Error("must not create a container with a placeholder or missing credential")
 	}
 }
 

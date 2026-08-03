@@ -3,7 +3,7 @@ config:
   version: ""
   framework: ""
   installCommand: ""
-  buildCommand: "docker compose build"
+  buildCommand: "docker compose --profile harness-images build"
   buildDir: "/"
   runCommand: "docker compose up -d"
   isMonoRepoPackageInRoot: false

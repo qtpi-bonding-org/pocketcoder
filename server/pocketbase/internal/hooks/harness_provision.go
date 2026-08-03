@@ -73,6 +73,7 @@ func ResolveWorkspaceVolumeAndNetwork(ctx context.Context, client inspector) (vo
 // needs — satisfied by the real client and by a test double.
 type dockerProvisioner interface {
 	inspector
+	ImageExists(ctx context.Context, image string) (bool, error)
 	PullImage(ctx context.Context, image string) error
 	Create(ctx context.Context, name string, spec dockerapi.CreateSpec) (string, error)
 	Start(ctx context.Context, containerName string) error
@@ -203,13 +204,19 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	}
 	_ = harness.UnmarshalJSONField("launch_template", &launch)
 
-	env, err := renderEnv(app, launch.EnvTemplate, secret)
+	env, err := renderEnv(app, launch.EnvTemplate, secret, harness.GetString("cli_id"))
 	if err != nil {
 		return fail(fmt.Errorf("render launch_template.env_template: %w", err))
 	}
 
-	if err := client.PullImage(ctx, image); err != nil {
+	local, err := client.ImageExists(ctx, image)
+	if err != nil {
 		return fail(err)
+	}
+	if !local {
+		if err := client.PullImage(ctx, image); err != nil {
+			return fail(err)
+		}
 	}
 
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
@@ -254,18 +261,17 @@ func mintSecret() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-// renderEnv merges every provider_keys row's env_vars into one lookup map
-// (the same "merge every row" convention gooseconfig.RenderKeysEnv already
-// uses for Goose's own keys.env — deliberately not scoped to one specific
-// provider here, since launch_template doesn't declare which provider(s) a
-// given harness needs ahead of time), adds a reserved "__adapter_secret" key
+// renderEnv merges the selected harness's provider_keys env_vars into one
+// lookup map. ProviderKey.provider stores harnesses.cli_id in the Flutter UI;
+// scoping here prevents several harnesses' generic API_KEY entries from
+// overwriting one another. It also adds a reserved "__adapter_secret" key
 // for the minted per-instance secret, and renders each env_template value
 // as a Go text/template against that map — e.g. an entry
 // {"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}"} becomes
 // "ANTHROPIC_API_KEY=sk-..." in the returned KEY=VALUE slice Docker's
 // container-create API expects.
-func renderEnv(app core.App, envTemplate map[string]string, secret string) ([]string, error) {
-	keyRecs, err := app.FindRecordsByFilter("provider_keys", "1=1", "", 0, 0)
+func renderEnv(app core.App, envTemplate map[string]string, secret, provider string) ([]string, error) {
+	keyRecs, err := app.FindRecordsByFilter("provider_keys", "provider = {:provider}", "", 0, 0, map[string]any{"provider": provider})
 	if err != nil {
 		return nil, fmt.Errorf("query provider_keys: %w", err)
 	}
@@ -282,7 +288,7 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string) ([]st
 
 	env := make([]string, 0, len(envTemplate))
 	for name, tmplStr := range envTemplate {
-		tmpl, err := template.New(name).Parse(tmplStr)
+		tmpl, err := template.New(name).Option("missingkey=error").Parse(tmplStr)
 		if err != nil {
 			return nil, fmt.Errorf("parse env_template[%s]: %w", name, err)
 		}

@@ -98,6 +98,28 @@ services:
       retries: 10
       start_period: 20s
 
+  # Build-only images for dynamically provisioned peer harnesses. These
+  # services never run under the normal stack: the inactive profile keeps
+  # them out of `docker compose up`, while bootstrap/CI build and cache the
+  # images so PocketBase can create a container on first harness selection.
+  claude-code-harness-image:
+    profiles: ["harness-images"]
+    image: pocketcoder-harness-claude-code:0.64.2
+    build:
+      context: .
+      dockerfile: server/harness-adapter/Dockerfile
+      args:
+        ACP_AGENT_PACKAGE: "@agentclientprotocol/claude-agent-acp@0.64.2"
+
+  codex-harness-image:
+    profiles: ["harness-images"]
+    image: pocketcoder-harness-codex:1.1.9
+    build:
+      context: .
+      dockerfile: server/harness-adapter/Dockerfile
+      args:
+        ACP_AGENT_PACKAGE: "@agentclientprotocol/codex-acp@1.1.9"
+
   # 🔌 MCP GATEWAY (MCP Server Gateway)
   mcp-gateway:
     build:
