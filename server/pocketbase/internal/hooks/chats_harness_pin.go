@@ -40,7 +40,7 @@ func RegisterChatsHarnessPinHook(app core.App) {
 	app.OnRecordUpdate("chats").BindFunc(func(e *core.RecordEvent) error {
 		orig := e.Record.Original()
 		if orig != nil && orig.GetString("harness") != e.Record.GetString("harness") {
-			hasSession, err := chatHasGooseSession(e.App, e.Record.Id)
+			hasSession, err := chatHasAgentSession(e.App, e.Record.Id)
 			if err != nil {
 				return err
 			}
@@ -61,8 +61,8 @@ func RegisterChatsHarnessPinHook(app core.App) {
 	})
 }
 
-func chatHasGooseSession(app core.App, chatID string) (bool, error) {
-	_, err := app.FindFirstRecordByFilter("goose_sessions", "chat = {:c}", map[string]any{"c": chatID})
+func chatHasAgentSession(app core.App, chatID string) (bool, error) {
+	_, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:c}", map[string]any{"c": chatID})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil

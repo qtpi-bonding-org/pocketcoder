@@ -128,7 +128,7 @@ func TestHarnessInstancesCollectionExists(t *testing.T) {
 	}
 }
 
-func TestGooseSessionsHasHarnessInstance(t *testing.T) {
+func TestAgentSessionsHasHarnessInstance(t *testing.T) {
 	data, err := os.ReadFile("schema.json")
 	if err != nil {
 		t.Fatal(err)
@@ -139,12 +139,12 @@ func TestGooseSessionsHasHarnessInstance(t *testing.T) {
 	}
 	var gs map[string]any
 	for _, c := range collections {
-		if c["name"] == "goose_sessions" {
+		if c["name"] == "agent_sessions" {
 			gs = c
 		}
 	}
 	if gs == nil {
-		t.Fatal("goose_sessions collection not found")
+		t.Fatal("agent_sessions collection not found")
 	}
 	found := false
 	for _, f := range gs["fields"].([]any) {
@@ -153,6 +153,6 @@ func TestGooseSessionsHasHarnessInstance(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("goose_sessions.harness_instance field missing")
+		t.Error("agent_sessions.harness_instance field missing")
 	}
 }

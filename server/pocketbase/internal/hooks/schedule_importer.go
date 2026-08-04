@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // PocketBase has no messages table (services/pocketbase/pb_migrations/
 // 1752000000_prune_legacy_runtime.go) — chat history is replayed live from
 // Goose via session/load (coordinator/run.go's StreamColdReplay), so
-// "importing" a session requires only a chats row + a goose_sessions row
+// "importing" a session requires only a chats row + an agent_sessions row
 // pointing at it. Opening that chat renders its content automatically.
 package hooks
 
@@ -53,23 +53,23 @@ type listScheduleSessionsResponse struct {
 	Sessions []scheduleSessionEntry `json:"sessions"`
 }
 
-// ImportSession creates a chats row + goose_sessions row for a
+// ImportSession creates a chats row + agent_sessions row for a
 // newly-observed Goose session produced by firing the schedule `owner`
 // owns, then notifies the schedule's owner. Both runImportPoll (this
 // file) and api.runScheduleNowAndImport (Task 4, the run-now fast path)
 // call this same function — see the design spec's Component 3.
 //
-// Dedup relies on goose_sessions' unique index on goose_session_id
-// (1748000500_goose_sessions.go) — the existence check plus both writes
+// Dedup relies on agent_sessions' unique index on acp_session_id
+// (1748000500_agent_sessions.go) — the existence check plus both writes
 // run inside one transaction so a losing race (the poller and a run-now
 // fast path importing the same session concurrently) can never leave a
-// dangling chat with no linked goose_sessions row.
+// dangling chat with no linked agent_sessions row.
 func ImportSession(app core.App, owner *core.Record, sessionID string) error {
 	var chatID, userID, displayName string
 	imported := false
 
 	err := app.RunInTransaction(func(txApp core.App) error {
-		existing, _ := txApp.FindFirstRecordByFilter("goose_sessions", "goose_session_id = {:sid}", map[string]any{"sid": sessionID})
+		existing, _ := txApp.FindFirstRecordByFilter("agent_sessions", "acp_session_id = {:sid}", map[string]any{"sid": sessionID})
 		if existing != nil {
 			return nil // already imported — not an error, just nothing to do
 		}
@@ -89,9 +89,9 @@ func ImportSession(app core.App, owner *core.Record, sessionID string) error {
 		}
 		chatID = chat.Id
 
-		sessionsCol, err := txApp.FindCollectionByNameOrId("goose_sessions")
+		sessionsCol, err := txApp.FindCollectionByNameOrId("agent_sessions")
 		if err != nil {
-			return fmt.Errorf("find goose_sessions collection: %w", err)
+			return fmt.Errorf("find agent_sessions collection: %w", err)
 		}
 		session := core.NewRecord(sessionsCol)
 		session.Set("chat", chatID)
@@ -105,9 +105,9 @@ func ImportSession(app core.App, owner *core.Record, sessionID string) error {
 		}
 		session.Set("harness_instance", defaultInstance.Id)
 
-		session.Set("goose_session_id", sessionID)
+		session.Set("acp_session_id", sessionID)
 		if err := txApp.Save(session); err != nil {
-			return fmt.Errorf("create goose_sessions row: %w", err)
+			return fmt.Errorf("create agent_sessions row: %w", err)
 		}
 
 		imported = true

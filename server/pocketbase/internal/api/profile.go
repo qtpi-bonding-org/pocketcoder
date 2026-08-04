@@ -250,7 +250,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		return p, ErrHarnessProvisioning
 	}
 
-	if gs, err := app.FindFirstRecordByFilter("goose_sessions", "chat = {:c}", map[string]any{"c": chatID}); err == nil && gs != nil {
+	if gs, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:c}", map[string]any{"c": chatID}); err == nil && gs != nil {
 		p.PinnedInstanceID = gs.GetString("harness_instance")
 	}
 

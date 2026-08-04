@@ -112,14 +112,14 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			}
 		}
 		runID, err := service.StartPrompt(chatID, prompt,
-			func(context.Context) (string, error) { return gooseSessionForChat(app, chatID, re.Auth.Id) },
+			func(context.Context) (string, error) { return agentSessionForChat(app, chatID, re.Auth.Id) },
 			func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
 			func(ctx context.Context, sessionID string) error {
 				profile, perr := buildSessionProfile(app, chatID)
 				if perr != nil {
 					return perr
 				}
-				err := saveGooseSession(ctx, app, chatID, re.Auth.Id, sessionID, profile.ResolvedInstanceID)
+				err := saveAgentSession(ctx, app, chatID, re.Auth.Id, sessionID, profile.ResolvedInstanceID)
 				if err == nil {
 					app.Logger().Debug("Goose session mapping created", "chat_id", chatID)
 				}
@@ -164,7 +164,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		flusher, _ := re.Response.(http.Flusher)
 
 		if att.ColdReplayNeeded {
-			sessionID, err := gooseSessionForChat(app, chatID, re.Auth.Id)
+			sessionID, err := agentSessionForChat(app, chatID, re.Auth.Id)
 			if err != nil {
 				_ = writeFlush(re.Response, flusher, service.NextSeq(chatID), events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
 			} else if err := service.StreamColdReplay(re.Request.Context(), chatID, sessionID,
@@ -355,14 +355,14 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 	}).Bind(apis.RequireAuth())
 
 	if service != nil {
-		// Best-effort cleanup: a deleted chat's mapped Goose session is
+	// Best-effort cleanup: a deleted chat's mapped Agent session is
 		// deleted too, but a failure never blocks the record delete — the row
 		// is left for a future reconcile sweep (v1 floor, documented).
 		app.OnRecordAfterDeleteSuccess("chats").BindFunc(func(re *core.RecordEvent) error {
 			chatID := re.Record.Id
 			go func() {
 				if err := service.DeleteSession(context.Background(), app, chatID); err != nil {
-					app.Logger().Error("goose session delete failed; left for reconcile", "chat_id", chatID, "error", err)
+					app.Logger().Error("agent session delete failed; left for reconcile", "chat_id", chatID, "error", err)
 				}
 			}()
 			return re.Next()
@@ -411,29 +411,29 @@ func permissionTimeout() time.Duration {
 	return duration
 }
 
-func gooseSessionForChat(app core.App, chatID, userID string) (string, error) {
-	record, err := app.FindFirstRecordByFilter("goose_sessions", "chat = {:chat} && user = {:user}", map[string]any{"chat": chatID, "user": userID})
+func agentSessionForChat(app core.App, chatID, userID string) (string, error) {
+	record, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:chat} && user = {:user}", map[string]any{"chat": chatID, "user": userID})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", nil
 		}
 		return "", err
 	}
-	return record.GetString("goose_session_id"), nil
+	return record.GetString("acp_session_id"), nil
 }
 
-func saveGooseSession(ctx context.Context, app core.App, chatID, userID, sessionID, harnessInstanceID string) error {
-	collection, err := app.FindCollectionByNameOrId("goose_sessions")
+func saveAgentSession(ctx context.Context, app core.App, chatID, userID, sessionID, harnessInstanceID string) error {
+	collection, err := app.FindCollectionByNameOrId("agent_sessions")
 	if err != nil {
 		return err
 	}
 	record := core.NewRecord(collection)
 	record.Set("chat", chatID)
 	record.Set("user", userID)
-	record.Set("goose_session_id", sessionID)
+	record.Set("acp_session_id", sessionID)
 	record.Set("harness_instance", harnessInstanceID)
 	if err := app.Save(record); err != nil {
-		return fmt.Errorf("save Goose session: %w", err)
+		return fmt.Errorf("save Agent session: %w", err)
 	}
 	return nil
 }

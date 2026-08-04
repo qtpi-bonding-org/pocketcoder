@@ -15,7 +15,7 @@ class Collections {
   static const String providerKeys = 'provider_keys';
   static const String prompts = 'prompts';
   static const String pocoConfigs = 'poco_configs';
-  static const String gooseSessions = 'goose_sessions';
+  static const String agentSessions = 'agent_sessions';
   static const String scheduleOwners = 'schedule_owners';
   static const String cogneeConfig = 'cognee_config';
   static const String harnessInstances = 'harness_instances';
@@ -36,7 +36,7 @@ class Collections {
     providerKeys,
     prompts,
     pocoConfigs,
-    gooseSessions,
+    agentSessions,
     scheduleOwners,
     cogneeConfig,
     harnessInstances,
