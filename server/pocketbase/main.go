@@ -85,6 +85,7 @@ func main() {
 		api.RegisterMcpOAuthApi(app, e)
 		api.RegisterProxyApi(app, e)
 		api.RegisterLogsApi(app, e)
+		api.RegisterOllamaApi(app, e)
 		var err error
 		coord, err = api.RegisterAgentApi(app, e)
 		if err != nil {

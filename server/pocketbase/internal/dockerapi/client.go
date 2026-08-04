@@ -143,13 +143,18 @@ func (c *Client) ImageExists(ctx context.Context, image string) (bool, error) {
 }
 
 type CreateSpec struct {
-	Image                               string
-	Cmd                                 []string
-	Env                                 []string
-	VolumeName, VolumeDest, NetworkName string
+	Image                  string
+	Cmd                    []string
+	Env                    []string
+	VolumeName, VolumeDest string
+	NetworkNames           []string
 }
 
 func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (string, error) {
+	endpoints := make(map[string]any, len(spec.NetworkNames))
+	for _, networkName := range spec.NetworkNames {
+		endpoints[networkName] = map[string]any{}
+	}
 	payload := map[string]any{
 		"Image": spec.Image,
 		"Cmd":   spec.Cmd,
@@ -168,9 +173,7 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 			"RestartPolicy": map[string]any{"Name": "unless-stopped"},
 		},
 		"NetworkingConfig": map[string]any{
-			"EndpointsConfig": map[string]any{
-				spec.NetworkName: map[string]any{},
-			},
+			"EndpointsConfig": endpoints,
 		},
 	}
 	buf, err := json.Marshal(payload)

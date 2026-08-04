@@ -124,6 +124,15 @@ func init() {
 		// container lazily when a user first selects the harness for a chat.
 		seedManagedHarness := func(name, cliID, version, description, image, command, apiKeyEnv string) error {
 			rec := core.NewRecord(harnessesColl)
+			envTemplate := map[string]string{
+				apiKeyEnv:                "{{.API_KEY}}",
+				"HARNESS_ADAPTER_SECRET": "{{.__adapter_secret}}",
+			}
+			if cliID == "opencode" {
+				// The peer entrypoint discovers installed models through this
+				// private endpoint and exports OPENCODE_CONFIG_CONTENT.
+				envTemplate["OLLAMA_HOST"] = "{{.__ollama_host}}"
+			}
 			rec.Set("name", name)
 			rec.Set("cli_id", cliID)
 			rec.Set("version", version)
@@ -133,10 +142,7 @@ func init() {
 			rec.Set("launch_template", map[string]any{
 				"cmd":  []string{"--cmd", command, "--port", "3000"},
 				"port": 3000,
-				"env_template": map[string]string{
-					apiKeyEnv:                "{{.API_KEY}}",
-					"HARNESS_ADAPTER_SECRET": "{{.__adapter_secret}}",
-				},
+				"env_template": envTemplate,
 			})
 			rec.Set("supports_live_config", true)
 			rec.Set("supports_goose_extensions", false)

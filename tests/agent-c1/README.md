@@ -22,6 +22,22 @@ export GOOSE_MODEL='MiniMax-M2.5'                        # if applicable
 export AGENT_TEST_EMAIL='agent-test@example.com'
 export AGENT_TEST_PASSWORD='...'
 ./tests/agent-c1/run.sh
+
+### Local Ollama integration
+
+This opt-in test uses the Linux-only private Docker topology, pulls a small
+tool-calling model into the persistent Ollama volume, verifies a native tool
+call, and drives a real Goose ACP turn through the production coordinator.
+It is intentionally excluded from normal CI because it downloads a model and
+performs CPU inference.
+
+```bash
+export GOOSE_SERVER__SECRET_KEY='local-test-secret'
+bash ./tests/agent-c1/ollama-integration.sh
+```
+
+Use `OLLAMA_SMOKE_MODEL` to select another installed/pullable model and
+`OLLAMA_SMOKE_TIMEOUT_SECONDS` to adjust the default five-minute CPU budget.
 ```
 
 The runner starts only the `agent` profile services plus a disposable BATS

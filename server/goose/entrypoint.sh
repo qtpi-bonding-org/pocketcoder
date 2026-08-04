@@ -15,12 +15,15 @@ if [ -r "$GOOSE_KEYS_ENV" ]; then
   set +a
 fi
 
-# The pinned c2 image has only the provider used in the verified spike. Do not
-# silently accept a provider that would cause Goose to spawn an unchecked host
-# binary or fall back to a different tool policy.
+# Keep the accepted provider list explicit: a typo must fail at boot instead of
+# making Goose choose an unintended backend. Ollama is an internal Compose
+# service on the private model network, not a host port or external endpoint.
 case "${GOOSE_PROVIDER:-anthropic}" in
   anthropic)
     : "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is required for GOOSE_PROVIDER=anthropic}"
+    ;;
+  ollama)
+    : "${OLLAMA_HOST:?OLLAMA_HOST is required for GOOSE_PROVIDER=ollama}"
     ;;
   *)
     echo "unsupported GOOSE_PROVIDER: ${GOOSE_PROVIDER}" >&2

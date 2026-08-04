@@ -141,6 +141,9 @@ jobs:
           # project name is "pocketcoder" too. Without this pin, CI's
           # checkout directory name deciding the project name would be an
           # implicit coincidence, not a guarantee.
+          # Ollama is a pre-built upstream image, unlike the app images below;
+          # pull it explicitly so it is included in the same verified cache.
+          docker compose -p pocketcoder pull ollama
           docker compose -p pocketcoder --profile harness-images build \
             pocketbase goose mcp-gateway \
             claude-code-harness-image codex-harness-image opencode-harness-image
@@ -151,6 +154,7 @@ jobs:
             pocketcoder-pocketbase:latest \
             pocketcoder-goose:latest \
             pocketcoder-mcp-gateway:latest \
+            ollama/ollama@sha256:f040603c11a11f125660eaf848170780e43b68973fc270e26f168536031ac258 \
             pocketcoder-harness-claude-code:0.64.2 \
             pocketcoder-harness-codex:1.1.9 \
             pocketcoder-harness-opencode:1.18.11 \
