@@ -54,6 +54,9 @@ services:
       - pocketcoder-pocketbase-sdk
       - pocketcoder-tailscale
       - pocketcoder-agent
+      # Control-plane only: PocketBase proxies Ollama's model catalog and
+      # downloads without gaining a route to Goose or peer harnesses.
+      - pocketcoder-ollama-control
 
   # 🪿 GOOSE C2 (private agent core)
   # Core service -- starts with plain `docker compose up`, same as
@@ -73,6 +76,10 @@ services:
       - GOOSE_MODEL=${GOOSE_MODEL:-MiniMax-M2.5}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - ANTHROPIC_HOST=${ANTHROPIC_HOST:-https://api.minimax.io/anthropic}
+      # Harmless unless GOOSE_PROVIDER=ollama. Keeping the endpoint in Compose
+      # makes the default Linux topology deterministic rather than depending on
+      # a host port or Docker Desktop-specific DNS.
+      - OLLAMA_HOST=http://ollama:11434
       - GOOSE_DISABLE_KEYRING=1
       - GOOSE_PATH_ROOT=/goose
       - GOOSE_TELEMETRY_ENABLED=false
@@ -90,9 +97,38 @@ services:
       - pocketcoder-goose-egress
       - pocketcoder-mcp-gateway
       - pocketcoder-cognee
+      - pocketcoder-model
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:3000/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # 🧠 OLLAMA (always-on local model runtime)
+  #
+  # This is a singleton runtime, not a dynamically provisioned harness. Its
+  # model cache survives restarts in ollama_models; model pulls happen through
+  # Ollama's live API, so PocketBase never restarts it after a download.
+  # It publishes no host port. The model network is inference-only (Goose and
+  # peer harnesses); the separate control network lets PocketBase list/pull
+  # models without joining the Goose ACP boundary.
+  ollama:
+    image: ollama/ollama@sha256:f040603c11a11f125660eaf848170780e43b68973fc270e26f168536031ac258
+    container_name: pocketcoder-ollama
+    environment:
+      - OLLAMA_MODELS=/ollama-models
+    volumes:
+      - ollama_models:/ollama-models
+    networks:
+      - pocketcoder-model
+      - pocketcoder-ollama-control
+    restart: unless-stopped
+    healthcheck:
+      # `ollama list` talks to the local server and succeeds even before a
+      # model is downloaded, which is exactly the desired ready condition.
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -452,6 +488,7 @@ volumes:
   goose_config:      # Goose config.yaml + keys.env, written by PocketBase, read by goose
   cognee_data:        # cognee's embedded SQLite/LanceDB/Kuzu storage
   cognee_config:       # cognee.env, written by PocketBase, read by cognee
+  ollama_models:       # downloaded local models; intentionally not in R2 cache
 
 networks:
   pocketcoder-dashboard:
@@ -483,3 +520,13 @@ networks:
   # addition doesn't touch that boundary. Mirrors pocketcoder-mcp-gateway.
   pocketcoder-cognee:
     driver: bridge
+  # Local inference only: Goose and dynamic peer harnesses can reach Ollama,
+  # but PocketBase cannot reach Goose through this network.
+  pocketcoder-model:
+    driver: bridge
+    name: pocketcoder-model
+  # Model-management control plane only: PocketBase proxies Ollama's catalog
+  # and pull API without being joined to pocketcoder-model.
+  pocketcoder-ollama-control:
+    driver: bridge
+    name: pocketcoder-ollama-control

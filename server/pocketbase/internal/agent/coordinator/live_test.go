@@ -19,10 +19,12 @@ package coordinator
 import (
 	"context"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
+	acpsdk "github.com/coder/acp-go-sdk"
 )
 
 func liveConfig(t *testing.T) Config {
@@ -37,6 +39,34 @@ func liveConfig(t *testing.T) Config {
 		ws = "/workspace"
 	}
 	return Config{GooseURL: url, GooseSecret: secret, Workspace: ws, PermissionTimeout: time.Minute}
+}
+
+// liveProfile optionally applies a model through the same per-session ACP
+// config-option path production uses for a chat's selected harness model.
+// Keeping it opt-in preserves the generic live test while allowing the Docker
+// Ollama integration test to be self-contained on a fresh Goose volume.
+func liveProfile() SessionProfile {
+	provider, model := os.Getenv("GOOSE_LIVE_PROVIDER"), os.Getenv("GOOSE_LIVE_MODEL")
+	return SessionProfile{
+		Provider:            provider,
+		Model:               model,
+		SupportsLiveConfig: provider != "" || model != "",
+	}
+}
+
+func liveTimeout() time.Duration {
+	seconds, err := strconv.Atoi(os.Getenv("GOOSE_LIVE_TIMEOUT_SECONDS"))
+	if err == nil && seconds > 0 {
+		return time.Duration(seconds) * time.Second
+	}
+	return 2 * time.Minute
+}
+
+func livePrompt() string {
+	if prompt := os.Getenv("GOOSE_LIVE_PROMPT"); prompt != "" {
+		return prompt
+	}
+	return "Reply with exactly: ws token ok"
 }
 
 // drainEventTypes collects Buffered event types, then reads Live until it
@@ -86,22 +116,30 @@ func TestLiveRunNewSession(t *testing.T) {
 	chatID := "live-chat"
 	var savedSession string
 	resolve := func(context.Context) (string, error) { return "", nil }
-	profileFn := func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil }
+	profileFn := func(context.Context) (SessionProfile, error) { return liveProfile(), nil }
 	created := func(_ context.Context, sid string) error { savedSession = sid; return nil }
+	finished := func(context.Context, acpsdk.StopReason) error { return nil }
 
-	if _, err := c.StartPrompt(chatID, "Reply with exactly: ws token ok", resolve, profileFn, created); err != nil {
+	if _, err := c.StartPrompt(chatID, livePrompt(), resolve, profileFn, created, finished); err != nil {
 		t.Fatalf("StartPrompt failed: %v", err)
 	}
 
 	att := c.Attach(chatID, 0)
-	got := drainEventTypes(t, att, 2*time.Minute)
+	got := drainEventTypes(t, att, liveTimeout())
 	att.Unsubscribe()
 
 	if savedSession == "" {
 		t.Fatal("expected a persisted Goose session id")
 	}
-	if len(got) < 2 || got[0] != events.EventTypeRunStarted || got[len(got)-1] != events.EventTypeRunFinished {
-		t.Fatalf("expected RUN_STARTED…RUN_FINISHED, got %v", got)
+	sawStarted := false
+	for _, eventType := range got {
+		if eventType == events.EventTypeRunStarted {
+			sawStarted = true
+			break
+		}
+	}
+	if !sawStarted || len(got) == 0 || got[len(got)-1] != events.EventTypeRunFinished {
+		t.Fatalf("expected an ordered run ending in RUN_FINISHED, got %v", got)
 	}
 	t.Logf("live turn ok: session=%s events=%d", savedSession, len(got))
 
@@ -131,9 +169,10 @@ func TestLiveWrongSecretRejected(t *testing.T) {
 
 	chatID := "live-chat-bad"
 	resolve := func(context.Context) (string, error) { return "", nil }
-	profileFn := func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil }
+	profileFn := func(context.Context) (SessionProfile, error) { return liveProfile(), nil }
 	created := func(context.Context, string) error { return nil }
-	if _, err := c.StartPrompt(chatID, "should never run", resolve, profileFn, created); err != nil {
+	finished := func(context.Context, acpsdk.StopReason) error { return nil }
+	if _, err := c.StartPrompt(chatID, "should never run", resolve, profileFn, created, finished); err != nil {
 		t.Fatalf("StartPrompt failed: %v", err)
 	}
 

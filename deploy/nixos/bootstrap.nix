@@ -146,7 +146,7 @@ EOF
       # --- Try to load pre-built Docker images from R2 cache (optional
       # speed-up) ---
       # nixos-image.yml's docker-images job pre-builds and caches the core
-      # services plus optional harness images in the same R2 bucket as the
+      # services plus Ollama and optional harness images in the same R2 bucket as the
       # NixOS image itself, tagged to match exactly what `docker compose
       # up -d` below would build on its own (see that job's -p pocketcoder
       # project-name pin). This is purely best-effort: any failure here
