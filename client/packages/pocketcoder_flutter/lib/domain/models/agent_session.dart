@@ -11,8 +11,8 @@ abstract class AgentSession with _$AgentSession {
     required String chat,
     required String user,
     required String acpSessionId,
-    String? gooseVersion,
-    String? provider,
+    String? harnessVersion,
+    String? modelProvider,
     String? harnessInstance,
   }) = _AgentSession;
 
