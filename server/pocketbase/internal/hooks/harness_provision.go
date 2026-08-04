@@ -40,6 +40,12 @@ type inspector interface {
 	Inspect(ctx context.Context, containerName string) (dockerapi.ContainerInspect, error)
 }
 
+// ModelNetwork is a compose-pinned name rather than a database value. Every
+// dynamically provisioned peer joins it during the initial Docker create call
+// so it can reach the always-on local Ollama service, while the socket proxy
+// still forbids arbitrary post-create network attachment.
+const ModelNetwork = "pocketcoder-model"
+
 // ResolveWorkspaceVolumeAndNetwork finds the real, possibly compose-project-
 // prefixed names of the shared workspace volume and agent network by
 // inspecting PocketBase's own container — belt-and-suspenders behind Task
@@ -222,7 +228,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
 		Image: image, Cmd: launch.Cmd, Env: env,
 		VolumeName: volumeName, VolumeDest: "/workspace",
-		NetworkName: networkName,
+		NetworkNames: []string{networkName, ModelNetwork},
 	})
 	if err != nil {
 		return fail(err)
@@ -275,7 +281,16 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider str
 	if err != nil {
 		return nil, fmt.Errorf("query provider_keys: %w", err)
 	}
-	values := map[string]string{"__adapter_secret": secret}
+	values := map[string]string{
+		"__adapter_secret": secret,
+		"__ollama_host":    "http://ollama:11434",
+	}
+	// Only OpenCode can run with the local Ollama provider and no cloud key.
+	// Keep missing keys fatal for the Claude/Codex harnesses so their existing
+	// provisioning guardrail remains intact.
+	if provider == "opencode" {
+		values["API_KEY"] = ""
+	}
 	for _, r := range keyRecs {
 		var vars map[string]string
 		if err := r.UnmarshalJSONField("env_vars", &vars); err != nil {

@@ -100,7 +100,7 @@ func TestImageExistsDistinguishesLocalImageFromMissingImage(t *testing.T) {
 	}
 }
 
-func TestCreateAttachesVolumeAndNetworkInOneCall(t *testing.T) {
+func TestCreateAttachesVolumeAndNetworksInOneCall(t *testing.T) {
 	var body map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&body)
@@ -111,7 +111,7 @@ func TestCreateAttachesVolumeAndNetworkInOneCall(t *testing.T) {
 	id, err := c.Create(context.Background(), "my-harness", CreateSpec{
 		Image: "example.com/harness:1.0", Cmd: []string{"/adapter"},
 		VolumeName: "myproject_goose_workspace", VolumeDest: "/workspace",
-		NetworkName: "myproject_pocketcoder-agent",
+		NetworkNames: []string{"myproject_pocketcoder-agent", "pocketcoder-model"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -128,6 +128,9 @@ func TestCreateAttachesVolumeAndNetworkInOneCall(t *testing.T) {
 	endpoints := netConfig["EndpointsConfig"].(map[string]any)
 	if _, ok := endpoints["myproject_pocketcoder-agent"]; !ok {
 		t.Error("expected the network attached via NetworkingConfig in the same create call (NETWORKS=0 blocks a follow-up connect)")
+	}
+	if _, ok := endpoints["pocketcoder-model"]; !ok {
+		t.Error("expected the local-model network attached in the same create call")
 	}
 	restartPolicy := hostConfig["RestartPolicy"].(map[string]any)
 	if restartPolicy["Name"] != "unless-stopped" {

@@ -151,6 +151,9 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 			if launch.EnvTemplate[tc.apiKeyEnv] != "{{.API_KEY}}" || launch.EnvTemplate["HARNESS_ADAPTER_SECRET"] != "{{.__adapter_secret}}" {
 				t.Errorf("env_template = %v, missing API key or adapter secret mapping", launch.EnvTemplate)
 			}
+			if tc.cliID == "opencode" && launch.EnvTemplate["OLLAMA_HOST"] != "{{.__ollama_host}}" {
+				t.Errorf("OpenCode env_template = %v, missing private Ollama endpoint", launch.EnvTemplate)
+			}
 			instances, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": rec.Id})
 			if err != nil || len(instances) != 0 {
 				t.Errorf("managed harness should be provisioned lazily; instances=%d err=%v", len(instances), err)

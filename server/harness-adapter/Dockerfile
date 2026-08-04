@@ -16,10 +16,13 @@ RUN test -n "$ACP_AGENT_PACKAGE" \
     && npm cache clean --force
 
 COPY --from=adapter-build /out/harness-adapter /usr/local/bin/harness-adapter
+COPY server/harness-adapter/entrypoint.sh /usr/local/bin/pocketcoder-harness-entrypoint
+COPY server/harness-adapter/opencode-ollama-config.mjs /usr/local/lib/pocketcoder/opencode-ollama-config.mjs
+RUN chmod 0555 /usr/local/bin/pocketcoder-harness-entrypoint
 WORKDIR /workspace
 EXPOSE 3000
 
 # ProvisionHarnessInstance supplies the agent-specific command as the
 # container Cmd from harnesses.launch_template. Keeping only the adapter in
 # ENTRYPOINT lets one audited image recipe package any stdio ACP agent.
-ENTRYPOINT ["/usr/local/bin/harness-adapter"]
+ENTRYPOINT ["/usr/local/bin/pocketcoder-harness-entrypoint"]
