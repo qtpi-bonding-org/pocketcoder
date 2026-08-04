@@ -92,6 +92,10 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	if err != nil {
 		return p, err
 	}
+	userID := chat.GetString("user")
+	if userID == "" {
+		return p, fmt.Errorf("chat %s has no user", chatID)
+	}
 
 	// Chat-level fields are read FIRST, unconditionally — this is the fix
 	// for the early-return bug: they must not depend on a poco_config
@@ -222,7 +226,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	// Shared with hooks.ProvisionHarnessInstance's own lookup — see
 	// hooks.FindHarnessInstance's doc comment for why this can't be a
 	// single `harness = {:h} && launch_key = {:k}` filter.
-	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey)
+	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey, userID)
 	if err != nil {
 		return p, err
 	}
@@ -243,7 +247,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		// dial target.
 		harnessIDCopy, launchKeyCopy := harnessRec.Id, launchKey
 		go func() {
-			if _, perr := hooks.ProvisionHarnessInstance(context.Background(), app, dockerapi.New(), harnessIDCopy, launchKeyCopy); perr != nil {
+			if _, perr := hooks.ProvisionHarnessInstance(context.Background(), app, dockerapi.New(), harnessIDCopy, launchKeyCopy, userID); perr != nil {
 				log.Printf("[Profile] background provisioning failed for harness %s: %v", harnessIDCopy, perr)
 			}
 		}()

@@ -35,7 +35,7 @@ import (
 )
 
 // inspector is the minimal interface ResolveWorkspaceVolumeAndNetwork needs
-// — satisfied by *dockerapi.Client, and by a small test double.
+//  satisfied by *dockerapi.Client, and by a small test double.
 type inspector interface {
 	Inspect(ctx context.Context, containerName string) (dockerapi.ContainerInspect, error)
 }
@@ -46,10 +46,11 @@ type inspector interface {
 // still forbids arbitrary post-create network attachment.
 const ModelNetwork = "pocketcoder-model"
 
+const harnessAuthHomeMount = "/workspace/.pocketcoder_auth"
+
 // ResolveWorkspaceVolumeAndNetwork finds the real, possibly compose-project-
 // prefixed names of the shared workspace volume and agent network by
-// inspecting PocketBase's own container — belt-and-suspenders behind Task
-// 4's pinned compose names (§5.1.2): matches by mount destination and
+// inspecting PocketBase's own container by inspecting the mount destination and
 // network-name suffix, not by guessing a prefix.
 func ResolveWorkspaceVolumeAndNetwork(ctx context.Context, client inspector) (volumeName, networkName string, err error) {
 	insp, err := client.Inspect(ctx, "pocketcoder-pocketbase")
@@ -76,7 +77,7 @@ func ResolveWorkspaceVolumeAndNetwork(ctx context.Context, client inspector) (vo
 }
 
 // dockerProvisioner is the subset of *dockerapi.Client ProvisionHarnessInstance
-// needs — satisfied by the real client and by a test double.
+// needs  satisfied by the real client and by a test double.
 type dockerProvisioner interface {
 	inspector
 	ImageExists(ctx context.Context, image string) (bool, error)
@@ -86,12 +87,12 @@ type dockerProvisioner interface {
 }
 
 // FindHarnessInstance looks up the harness_instances row for (harness,
-// launchKey) — see ProvisionHarnessInstance for why this can't be a single
-// `harness = {:h} && launch_key = {:k}` filter. Exported so api/profile.go's
-// buildSessionProfile can share this exact lookup instead of maintaining its
-// own copy of the same launch_key-in-Go workaround.
-func FindHarnessInstance(app core.App, harnessID, launchKey string) (*core.Record, error) {
-	candidates, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnessID})
+// launchKey) scoped to a user. See ProvisionHarnessInstance for why this can't be a single
+// `harness = {:h} && launch_key = {:k} && user = {:u}` filter. Exported so api/profile.go's
+// buildSessionProfile can share this exact lookup instead of maintaining its own
+// copy of the same launch_key-in-Go workaround.
+func FindHarnessInstance(app core.App, harnessID, launchKey, userID string) (*core.Record, error) {
+	candidates, err := app.FindRecordsByFilter("harness_instances", "harness = {:h} && user = {:u}", "", 0, 0, map[string]any{"h": harnessID, "u": userID})
 	if err != nil {
 		return nil, fmt.Errorf("query harness_instances for harness %s: %w", harnessID, err)
 	}
@@ -104,7 +105,7 @@ func FindHarnessInstance(app core.App, harnessID, launchKey string) (*core.Recor
 }
 
 // raceHookForTests, when non-nil, is invoked by ProvisionHarnessInstance
-// immediately before it saves its own pending harness_instances row —
+// immediately before it saves its own pending harness_instances row
 // solely so a test can deterministically simulate another caller's row
 // landing first for the same (harness, launch_key) pair, reproducing the
 // unique-index race the Save-error branch below handles. Always nil outside
@@ -112,11 +113,14 @@ func FindHarnessInstance(app core.App, harnessID, launchKey string) (*core.Recor
 var raceHookForTests func()
 
 // ProvisionHarnessInstance turns a harnesses catalog row into a running,
-// dialable container — idempotent per (harnessID, launchKey), minting a
+// dialable container idempotent per (harnessID, launchKey, userID), minting a
 // per-instance secret, rendering launch_template.env_template against
 // provider_keys, pulling the image, and creating+starting the container.
-func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerProvisioner, harnessID, launchKey string) (*core.Record, error) {
-	// NOT `"harness = {:h} && launch_key = {:k}"` — confirmed against the
+func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerProvisioner, harnessID, launchKey, userID string) (*core.Record, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("userID is required")
+	}
+	// NOT `"harness = {:h} && launch_key = {:k}"`  confirmed against the
 	// already-landed api/profile.go (buildSessionProfile queries
 	// harness_instances the same way, see its own in-code comment):
 	// PocketBase's filter evaluator does not reliably match an empty-string
@@ -124,11 +128,11 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// COMMON case (every supports_live_config = true harness). A direct
 	// `&&` filter here would fail to find the existing shared instance on
 	// every call after the first, and each failed lookup would attempt to
-	// mint and Create a brand-new container — colliding with the first on
+// mint and Create a brand-new container colliding with the first on
 	// the (harness, launch_key) unique index and erroring out. Query by
 	// harness alone, then match launch_key in Go, exactly like
 	// buildSessionProfile already does.
-	existing, err := FindHarnessInstance(app, harnessID, launchKey)
+	existing, err := FindHarnessInstance(app, harnessID, launchKey, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -151,12 +155,17 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		return nil, err
 	}
 	rec := core.NewRecord(coll)
-	containerName := "pocketcoder-harness-" + uuid.NewString()[:8]
+	userSuffix := userID
+	if len(userSuffix) > 8 {
+		userSuffix = userSuffix[:8]
+	}
+	containerName := "pocketcoder-harness-" + userSuffix + "-" + uuid.NewString()[:8]
 	rec.Set("harness", harnessID)
+	rec.Set("user", userID)
 	rec.Set("launch_key", launchKey)
 	if launchKey != "" {
 		// launch_key IS the harness_models id for a supports_live_config =
-		// false harness (§4.3) — harness_model is otherwise only a
+		// false harness — harness_model is otherwise only a
 		// denormalized `expand` convenience, but it's free to set correctly
 		// here and leaving it blank would silently diverge from what the
 		// schema documents the field for.
@@ -170,22 +179,23 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		// Test-only seam: lets a test deterministically land a concurrent
 		// "winner" row for the same (harness, launch_key) in the gap
 		// between this call's own FindHarnessInstance lookup (above, which
-		// found nothing) and its own Save below — reproducing the
-		// unique-index race the Save-error branch handles, without relying
-		// on real goroutine scheduling. Always nil in production.
+// found nothing) and its own Save below, the same shape of race,
+		// without relying on timing. The assertion is the one that matters
+		// regardless of how the race is induced: the loser must return the
+		// winner's row with a nil error, and must not provision a second container.
 		raceHookForTests()
 	}
 	if err := app.Save(rec); err != nil {
 		// (harness, launch_key) is unique-indexed (idx_harness_instances_pair),
 		// so a concurrent caller provisioning the same pair can win this race
-		// and land its row first — this Save then fails on the unique-index
+// and land its row first, this Save then fails on the unique-index
 		// violation even though a perfectly usable instance now exists. Re-run
 		// the same lookup FindHarnessInstance did up front: if the winner's
 		// row is there now, hand it back instead of surfacing a spurious
 		// error to a caller that just lost a benign race. Only propagate the
-		// raw Save error if the row still isn't there — a genuinely different
+// raw Save error if the row still isn't there, a genuinely different
 		// failure (e.g. a validation error), not a race loss.
-		if winner, lookupErr := FindHarnessInstance(app, harnessID, launchKey); lookupErr == nil && winner != nil {
+		if winner, lookupErr := FindHarnessInstance(app, harnessID, launchKey, userID); lookupErr == nil && winner != nil {
 			return winner, nil
 		}
 		return nil, fmt.Errorf("save pending harness_instances row: %w", err)
@@ -210,7 +220,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	}
 	_ = harness.UnmarshalJSONField("launch_template", &launch)
 
-	env, err := renderEnv(app, launch.EnvTemplate, secret, harness.GetString("cli_id"))
+	env, err := renderEnv(app, launch.EnvTemplate, secret, harness.GetString("cli_id"), userID)
 	if err != nil {
 		return fail(fmt.Errorf("render launch_template.env_template: %w", err))
 	}
@@ -225,10 +235,22 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		}
 	}
 
+	workspaceVolume := fmt.Sprintf("%s_%s_workspace", volumeName, userSuffix)
+	authVolume := fmt.Sprintf("%s_%s_auth_home", volumeName, userSuffix)
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
-		Image: image, Cmd: launch.Cmd, Env: env,
-		VolumeName: volumeName, VolumeDest: "/workspace",
+		Image: image,
+		Cmd:   launch.Cmd,
+		Env:   env,
+		VolumeBinds: []string{
+			workspaceVolume + ":/workspace",
+			authVolume + ":" + harnessAuthHomeMount,
+		},
 		NetworkNames: []string{networkName, ModelNetwork},
+		Labels: map[string]string{
+			"pc_scope":      "user",
+			"pc_scope_id":   userID,
+			"pc_harness_id": harnessID,
+		},
 	})
 	if err != nil {
 		return fail(err)
@@ -241,9 +263,8 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// up-front validation: port is only needed to build the ws:// endpoint
 	// URL below, not by the Docker create/start calls themselves, and a
 	// pending row with no port must still count as "one Create call" for
-	// idempotency purposes on a subsequent ProvisionHarnessInstance call —
-	// FindHarnessInstance matches this error row and returns it rather than
-	// attempting a second Create.
+// a subsequent ProvisionHarnessInstance call; FindHarnessInstance matches this error row and
+	// returns it rather than attempting a second Create.
 	if launch.Port == 0 {
 		return fail(fmt.Errorf("harness %s's launch_template has no port", harnessID))
 	}
@@ -257,7 +278,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 }
 
 // mintSecret generates the per-instance credential the bundled adapter
-// enforces on its WS upgrade (§5.4.1) — this, not an empty string, is what
+// enforces on its WS upgrade (.4.1)  this, not an empty string, is what
 // populates Target.Secret once this row is resolved.
 func mintSecret() (string, error) {
 	b := make([]byte, 32)
@@ -272,12 +293,15 @@ func mintSecret() (string, error) {
 // scoping here prevents several harnesses' generic API_KEY entries from
 // overwriting one another. It also adds a reserved "__adapter_secret" key
 // for the minted per-instance secret, and renders each env_template value
-// as a Go text/template against that map — e.g. an entry
+// as a Go text/template against that map . For example an entry
 // {"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}"} becomes
 // "ANTHROPIC_API_KEY=sk-..." in the returned KEY=VALUE slice Docker's
 // container-create API expects.
-func renderEnv(app core.App, envTemplate map[string]string, secret, provider string) ([]string, error) {
-	keyRecs, err := app.FindRecordsByFilter("provider_keys", "provider = {:provider}", "", 0, 0, map[string]any{"provider": provider})
+func renderEnv(app core.App, envTemplate map[string]string, secret, provider, userID string) ([]string, error) {
+	keyRecs, err := app.FindRecordsByFilter("provider_keys", "provider = {:provider} && user = {:user}", "", 0, 0, map[string]any{
+		"provider": provider,
+		"user":     userID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("query provider_keys: %w", err)
 	}

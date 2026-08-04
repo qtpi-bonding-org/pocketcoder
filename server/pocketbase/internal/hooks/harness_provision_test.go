@@ -89,20 +89,29 @@ func createTestHarness(t *testing.T, app core.App, overrides map[string]any) *co
 	return rec
 }
 
-// createTestProviderKey inserts a provider_keys row (with a fresh owning
-// user, since `user` is required) with sane defaults, overridden by
-// whatever fields the caller supplies.
-func createTestProviderKey(t *testing.T, app core.App, overrides map[string]any) *core.Record {
+// testUser creates a test user in the _pb_users_auth_ collection.
+func testUser(t *testing.T, app core.App, email string) *core.Record {
 	t.Helper()
 	users, err := app.FindCollectionByNameOrId("_pb_users_auth_")
 	if err != nil {
 		t.Fatal(err)
 	}
 	user := core.NewRecord(users)
-	user.SetEmail(fmt.Sprintf("test-provider-key-%s@example.com", uuid.NewString()[:8]))
+	user.SetEmail(email)
 	user.SetPassword("password12345")
 	if err := app.Save(user); err != nil {
 		t.Fatal(err)
+	}
+	return user
+}
+
+// createTestProviderKey inserts a provider_keys row (with a fresh owning
+// user, since `user` is required) with sane defaults, overridden by
+// whatever fields the caller supplies.
+func createTestProviderKey(t *testing.T, app core.App, overrides map[string]any, userID string) *core.Record {
+	t.Helper()
+	if userID == "" {
+		userID = testUser(t, app, fmt.Sprintf("test-provider-key-%s@example.com", uuid.NewString()[:8])).Id
 	}
 
 	coll, err := app.FindCollectionByNameOrId("provider_keys")
@@ -110,7 +119,7 @@ func createTestProviderKey(t *testing.T, app core.App, overrides map[string]any)
 		t.Fatal(err)
 	}
 	rec := core.NewRecord(coll)
-	rec.Set("user", user.Id)
+	rec.Set("user", userID)
 	rec.Set("provider", "anthropic")
 	for k, v := range overrides {
 		rec.Set(k, v)
@@ -203,12 +212,13 @@ func (f *fakeDockerClient) started(name string) bool {
 
 func TestProvisionHarnessInstanceCreatesAndStartsContainer(t *testing.T) {
 	app := testApp(t)
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
 	harness := createTestHarness(t, app, map[string]any{
 		"container_image": "example.com/harness:1.0",
 		"launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000},
 	})
 	fake := newFakeDockerClient() // records Create/Start/PullImage calls; add to a shared test-doubles file in this package
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,13 +235,14 @@ func TestProvisionHarnessInstanceCreatesAndStartsContainer(t *testing.T) {
 
 func TestProvisionHarnessInstanceReusesLocalImageWithoutPulling(t *testing.T) {
 	app := testApp(t)
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
 	harness := createTestHarness(t, app, map[string]any{
 		"container_image": "pocketcoder-harness-claude-code:0.64.2",
 		"launch_template": map[string]any{"cmd": []string{"--cmd", "claude-agent-acp", "--port", "3000"}, "port": 3000},
 	})
 	fake := newFakeDockerClient()
 	fake.imageExists = true
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -250,13 +261,14 @@ func TestProvisionHarnessInstanceIsIdempotent(t *testing.T) {
 	// second call, per the finding above. A regression here means the fix
 	// didn't take.
 	app := testApp(t)
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
 	harness := createTestHarness(t, app, map[string]any{"container_image": "x", "launch_template": map[string]any{"cmd": []string{"/adapter"}}})
 	fake := newFakeDockerClient()
-	rec1, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec1, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rec2, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec2, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -270,10 +282,11 @@ func TestProvisionHarnessInstanceIsIdempotent(t *testing.T) {
 
 func TestProvisionHarnessInstanceSurfacesPullFailure(t *testing.T) {
 	app := testApp(t)
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
 	harness := createTestHarness(t, app, map[string]any{"container_image": "nonexistent:latest", "launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000}})
 	fake := newFakeDockerClient()
 	fake.pullErr = fmt.Errorf("No such image")
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal("ProvisionHarnessInstance itself should not error — the failure surfaces on the row")
 	}
@@ -287,9 +300,10 @@ func TestProvisionHarnessInstanceSurfacesPullFailure(t *testing.T) {
 
 func TestProvisionHarnessInstanceErrorsOnMissingPort(t *testing.T) {
 	app := testApp(t)
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
 	harness := createTestHarness(t, app, map[string]any{"container_image": "x", "launch_template": map[string]any{"cmd": []string{"/adapter"}}}) // no "port"
 	fake := newFakeDockerClient()
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,7 +314,8 @@ func TestProvisionHarnessInstanceErrorsOnMissingPort(t *testing.T) {
 
 func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T) {
 	app := testApp(t)
-	createTestProviderKey(t, app, map[string]any{"provider": harnessProviderForTest, "env_vars": map[string]any{"API_KEY": "sk-test-123"}})
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
+	createTestProviderKey(t, app, map[string]any{"provider": harnessProviderForTest, "env_vars": map[string]any{"API_KEY": "sk-test-123"}}, userID)
 	harness := createTestHarness(t, app, map[string]any{
 		"cli_id":          harnessProviderForTest,
 		"container_image": "example.com/harness:1.0",
@@ -314,7 +329,7 @@ func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T)
 		},
 	})
 	fake := newFakeDockerClient()
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -343,8 +358,9 @@ const harnessProviderForTest = "claude-code-test"
 
 func TestProvisionHarnessInstanceScopesGenericAPIKeyToSelectedHarness(t *testing.T) {
 	app := testApp(t)
-	createTestProviderKey(t, app, map[string]any{"provider": "claude-code-scope-test", "env_vars": map[string]any{"API_KEY": "claude-key"}})
-	createTestProviderKey(t, app, map[string]any{"provider": "codex-scope-test", "env_vars": map[string]any{"API_KEY": "codex-key"}})
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
+	createTestProviderKey(t, app, map[string]any{"provider": "claude-code-scope-test", "env_vars": map[string]any{"API_KEY": "claude-key"}}, userID)
+	createTestProviderKey(t, app, map[string]any{"provider": "codex-scope-test", "env_vars": map[string]any{"API_KEY": "codex-key"}}, userID)
 	harness := createTestHarness(t, app, map[string]any{
 		"cli_id":          "codex-scope-test",
 		"container_image": "pocketcoder-harness-codex:1.1.9",
@@ -355,7 +371,7 @@ func TestProvisionHarnessInstanceScopesGenericAPIKeyToSelectedHarness(t *testing
 		},
 	})
 	fake := newFakeDockerClient()
-	_, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	_, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -366,6 +382,7 @@ func TestProvisionHarnessInstanceScopesGenericAPIKeyToSelectedHarness(t *testing
 
 func TestProvisionHarnessInstanceFailsClearlyWhenSelectedHarnessHasNoAPIKey(t *testing.T) {
 	app := testApp(t)
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
 	harness := createTestHarness(t, app, map[string]any{
 		"cli_id":          "codex-without-key",
 		"container_image": "pocketcoder-harness-codex:1.1.9",
@@ -376,7 +393,7 @@ func TestProvisionHarnessInstanceFailsClearlyWhenSelectedHarnessHasNoAPIKey(t *t
 		},
 	})
 	fake := newFakeDockerClient()
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -406,6 +423,7 @@ func TestProvisionHarnessInstanceFailsClearlyWhenSelectedHarnessHasNoAPIKey(t *t
 // provision a second container.
 func TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace(t *testing.T) {
 	app := testApp(t)
+	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
 	harness := createTestHarness(t, app, map[string]any{
 		"container_image": "example.com/harness:1.0",
 		"launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000},
@@ -419,7 +437,7 @@ func TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace(t *testing
 		// winner, and that inner call must run the real Save path, not
 		// trigger this hook again.
 		raceHookForTests = nil
-		winnerRec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+		winnerRec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 		if err != nil {
 			t.Fatalf("simulated concurrent winner failed: %v", err)
 		}
@@ -427,7 +445,7 @@ func TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace(t *testing
 	}
 	t.Cleanup(func() { raceHookForTests = nil })
 
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "")
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
 	if err != nil {
 		t.Fatalf("expected the loser of the race to return the winner's row, not an error: %v", err)
 	}
