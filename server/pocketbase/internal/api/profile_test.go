@@ -91,7 +91,7 @@ func testUser(t *testing.T, app core.App, email string) *core.Record {
 
 // seedTestHarnessAndInstance creates a harness and its default harness_instance.
 // It uses a unique suffix to avoid conflicts with other tests using the same name.
-func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, supportsLive, supportsGoose, singleConnOnly bool) (*core.Record, *core.Record) {
+func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, supportsLive, supportsGoose, singleConnOnly bool, userID string) (*core.Record, *core.Record) {
 	t.Helper()
 	harnessesColl, err := app.FindCollectionByNameOrId("harnesses")
 	if err != nil {
@@ -125,6 +125,9 @@ func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, 
 	instance.Set("secret", "")
 	instance.Set("status", "running")
 	instance.Set("managed", false)
+	if userID != "" {
+		instance.Set("user", userID)
+	}
 	if err := app.Save(instance); err != nil {
 		t.Fatal(err)
 	}
@@ -190,10 +193,10 @@ func createTestHarnessModel(t *testing.T, app core.App, harness *core.Record) *c
 }
 
 // createTestPocoConfig creates a poco_config record with optional fields.
-func createTestPocoConfig(t *testing.T, app core.App, fields map[string]any) *core.Record {
+func createTestPocoConfig(t *testing.T, app core.App, fields map[string]any, userID string) *core.Record {
 	t.Helper()
 	// Create a test harness and harness_model first
-	harness, _ := seedTestHarnessAndInstance(t, app, "test-harness", true, true, false)
+	harness, _ := seedTestHarnessAndInstance(t, app, "test-harness", true, true, false, userID)
 	hm := createTestHarnessModel(t, app, harness)
 
 	pocoColl, err := app.FindCollectionByNameOrId("poco_configs")
@@ -227,8 +230,9 @@ func TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig(t *testing.T) {
 	}
 	defer app.Cleanup()
 
-	harness, instance := seedTestHarnessAndInstance(t, app, "goose", true, true, false)
-	chat := createTestChat(t, app, map[string]any{"harness": harness.Id})
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
+	harness, instance := seedTestHarnessAndInstance(t, app, "goose", true, true, false, userID)
+	chat := createTestChat(t, app, map[string]any{"user": userID, "harness": harness.Id})
 	// deliberately: no poco_configs row exists, and none is marked is_default
 
 	profile, err := buildSessionProfile(app, chat.Id)
@@ -278,8 +282,10 @@ func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testin
 
 func TestBuildSessionProfileRejectsVirtualOllamaOnUnsupportedHarness(t *testing.T) {
 	app := testApp(t)
-	harness, _ := seedTestHarnessAndInstance(t, app, "codex", true, false, true)
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
+	harness, _ := seedTestHarnessAndInstance(t, app, "codex", true, false, true, userID)
 	chat := createTestChat(t, app, map[string]any{
+		"user":                  userID,
 		"harness":               harness.Id,
 		"ollama_model_override": "qwen2.5:0.5b",
 	})
@@ -301,10 +307,12 @@ func TestBuildSessionProfileWorkspaceOverrideKeepsPocoAdditionalDirectories(t *t
 	}
 	defer app.Cleanup()
 
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
 	poco := createTestPocoConfig(t, app, map[string]any{
 		"workspace_folders": []string{"/workspace/project", "/workspace/tools"},
-	})
+	}, userID)
 	chat := createTestChat(t, app, map[string]any{
+		"user":                userID,
 		"poco_config":        poco.Id,
 		"workspace_override": []string{"/workspace/other"},
 	})
@@ -366,6 +374,7 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 	app := testApp(t)
 	harness := createTestHarness(t, app, map[string]any{"cli_id": "new-harness", "container_image": "x"})
 	chat := createTestChat(t, app, map[string]any{"harness": harness.Id})
+	userID := chat.GetString("user")
 	// deliberately: no harness_instances row exists yet for this harness
 
 	_, err := buildSessionProfile(app, chat.Id)
@@ -380,7 +389,7 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 	deadline := time.Now().Add(2 * time.Second)
 	var rec *core.Record
 	for time.Now().Before(deadline) {
-		if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h}", map[string]any{"h": harness.Id}); err == nil && r != nil {
+		if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h} && user = {:u}", map[string]any{"h": harness.Id, "u": userID}); err == nil && r != nil {
 			rec = r
 			break
 		}
@@ -414,12 +423,14 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 // from "harness still starting" via errors.Is.
 func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testing.T) {
 	app := testApp(t)
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
 	harness := createTestHarness(t, app, map[string]any{"cli_id": "failed-harness"})
 	instColl, err := app.FindCollectionByNameOrId("harness_instances")
 	if err != nil {
 		t.Fatal(err)
 	}
 	inst := core.NewRecord(instColl)
+	inst.Set("user", userID)
 	inst.Set("harness", harness.Id)
 	inst.Set("launch_key", "")
 	inst.Set("container_name", "pocketcoder-failed-"+randomSuffix())
@@ -430,7 +441,10 @@ func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testin
 	if err := app.Save(inst); err != nil {
 		t.Fatal(err)
 	}
-	chat := createTestChat(t, app, map[string]any{"harness": harness.Id})
+	chat := createTestChat(t, app, map[string]any{
+		"harness": harness.Id,
+		"user":    userID,
+	})
 
 	_, err = buildSessionProfile(app, chat.Id)
 	if !errors.Is(err, errHarnessFailed) {
@@ -456,6 +470,7 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 	// SHOULD short-circuit synchronously.
 	harness := createTestHarness(t, app, map[string]any{"cli_id": "classify-missing"})
 	provisioningChat := createTestChat(t, app, map[string]any{"harness": harness.Id})
+	provisioningUserID := provisioningChat.GetString("user")
 	{
 		// buildSessionProfile fires the background provisioning goroutine
 		// (Task 6's ProvisionHarnessInstance) as a side effect of resolving
@@ -471,7 +486,7 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 		}
 		deadline := time.Now().Add(2 * time.Second)
 		for time.Now().Before(deadline) {
-			if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h}", map[string]any{"h": harness.Id}); err == nil && r != nil && r.GetString("status") != "pending" {
+			if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h} && user = {:u}", map[string]any{"h": harness.Id, "u": provisioningUserID}); err == nil && r != nil && r.GetString("status") != "pending" {
 				break
 			}
 			time.Sleep(10 * time.Millisecond)
@@ -481,11 +496,13 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 	// Case 2: harness_instances row with status="error" -> errHarnessFailed,
 	// which SHOULD also short-circuit synchronously.
 	failedHarness := createTestHarness(t, app, map[string]any{"cli_id": "classify-failed"})
+	failedUserID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
 	instColl, err := app.FindCollectionByNameOrId("harness_instances")
 	if err != nil {
 		t.Fatal(err)
 	}
 	inst := core.NewRecord(instColl)
+	inst.Set("user", failedUserID)
 	inst.Set("harness", failedHarness.Id)
 	inst.Set("launch_key", "")
 	inst.Set("container_name", "pocketcoder-classify-"+randomSuffix())
@@ -496,7 +513,10 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 	if err := app.Save(inst); err != nil {
 		t.Fatal(err)
 	}
-	failedChat := createTestChat(t, app, map[string]any{"harness": failedHarness.Id})
+	failedChat := createTestChat(t, app, map[string]any{
+		"harness": failedHarness.Id,
+		"user":    failedUserID,
+	})
 
 	// Case 3: a pre-existing, non-provisioning error type (workspace path
 	// outside /workspace) -> should NOT match either sentinel, so it must
