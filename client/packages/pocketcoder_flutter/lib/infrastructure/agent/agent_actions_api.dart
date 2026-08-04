@@ -46,7 +46,7 @@ class UnknownAgentActionFailure extends AgentActionFailure {
 /// Placeholder sessionId used only to satisfy acp_dart's required
 /// constructor parameter; every `toJson()` result below has this key
 /// stripped before the body is sent — c1 derives the real session from the
-/// chatId path segment, and Flutter never sees `goose_session_id` (spec §12).
+/// chatId path segment, and Flutter never sees `acp_session_id` (spec §12).
 const elidedSessionId = '';
 
 @lazySingleton
