@@ -105,7 +105,10 @@ func main() {
 		// D. Skills API (pure ACP passthrough, no PocketBase storage).
 		api.RegisterSkillsApi(app, e, coordGetter)
 
-		// E. Scheduler API (per-user CRUD over Goose's schedules, backed by
+		// E. Harness auth API (account/API-key mode selection + auth-helper lifecycle).
+		api.RegisterHarnessAuthApi(app, e)
+
+		// F. Scheduler API (per-user CRUD over Goose's schedules, backed by
 		// schedule_owners).
 		api.RegisterSchedulesApi(app, e, coordGetter)
 
