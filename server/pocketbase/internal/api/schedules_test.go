@@ -167,7 +167,7 @@ func TestRunScheduleNowAndImport_ImportsReturnedSession(t *testing.T) {
 	if fc.lastMethod != "_goose/unstable/schedules/run-now" {
 		t.Fatalf("lastMethod = %q, want schedules/run-now", fc.lastMethod)
 	}
-	if _, err := app.FindFirstRecordByFilter("goose_sessions", "goose_session_id = {:sid}", map[string]any{"sid": "session-runnow"}); err != nil {
+	if _, err := app.FindFirstRecordByFilter("agent_sessions", "acp_session_id = {:sid}", map[string]any{"sid": "session-runnow"}); err != nil {
 		t.Fatalf("expected session-runnow to be imported: %v", err)
 	}
 }

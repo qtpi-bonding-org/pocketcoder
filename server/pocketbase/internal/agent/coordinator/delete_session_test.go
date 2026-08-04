@@ -80,8 +80,8 @@ func createTestChatForTest(t *testing.T, app core.App, fields map[string]any) *c
 	return chat
 }
 
-// seedGooseSessionWithInstance creates a goose_sessions row for a chat with the specified Target.
-func seedGooseSessionWithInstance(t *testing.T, app core.App, chatID string, userID string, target Target) {
+// seedAgentSessionWithInstance creates a agent_sessions row for a chat with the specified Target.
+func seedAgentSessionWithInstance(t *testing.T, app core.App, chatID string, userID string, target Target) {
 	t.Helper()
 
 	// First, create a harness and harness_instance with the specified endpoint
@@ -114,15 +114,15 @@ func seedGooseSessionWithInstance(t *testing.T, app core.App, chatID string, use
 		t.Fatal(err)
 	}
 
-	// Create a goose_sessions row with the harness_instance set
-	sessionsColl, err := app.FindCollectionByNameOrId("goose_sessions")
+	// Create an agent_sessions row with the harness_instance set
+	sessionsColl, err := app.FindCollectionByNameOrId("agent_sessions")
 	if err != nil {
 		t.Fatal(err)
 	}
 	session := core.NewRecord(sessionsColl)
 	session.Set("chat", chatID)
 	session.Set("user", userID)
-	session.Set("goose_session_id", "sess-"+randomSuffixForTest())
+	session.Set("acp_session_id", "sess-"+randomSuffixForTest())
 	session.Set("harness_instance", instance.Id)
 	if err := app.Save(session); err != nil {
 		t.Fatal(err)
@@ -158,7 +158,7 @@ func TestDeleteSessionDialsPinnedInstance(t *testing.T) {
 	}
 
 	chat := createTestChatForTest(t, app, nil)
-	seedGooseSessionWithInstance(t, app, chat.Id, chat.GetString("user"), Target{URL: "ws://pinned-instance/acp", Secret: "pinned-secret"})
+	seedAgentSessionWithInstance(t, app, chat.Id, chat.GetString("user"), Target{URL: "ws://pinned-instance/acp", Secret: "pinned-secret"})
 
 	if err := c.DeleteSession(context.Background(), app, chat.Id); err != nil {
 		t.Fatal(err)

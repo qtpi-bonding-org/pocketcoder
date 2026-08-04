@@ -537,7 +537,7 @@ func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingEl
 // (conn.Close(), whether called directly or via a deferred cleanup).
 // wasNew reports whether this call minted a brand-new session (sessionID
 // was empty) — callers need this to decide whether to persist a new
-// goose_sessions row; sessionID's own emptiness can no longer be used for
+// agent_sessions row; sessionID's own emptiness can no longer be used for
 // that check once establishSession owns both branches internally.
 func (c *Coordinator) establishSession(
 	ctx context.Context, client acpsdk.Client, profile SessionProfile, sessionID string,
