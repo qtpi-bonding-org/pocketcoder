@@ -147,6 +147,8 @@ type CreateSpec struct {
 	Cmd                    []string
 	Env                    []string
 	VolumeName, VolumeDest string
+	VolumeBinds            []string
+	Labels                 map[string]string
 	NetworkNames           []string
 }
 
@@ -155,23 +157,26 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 	for _, networkName := range spec.NetworkNames {
 		endpoints[networkName] = map[string]any{}
 	}
+	binds := spec.VolumeBinds
+	if len(binds) == 0 && spec.VolumeName != "" {
+		b := spec.VolumeName + ":" + spec.VolumeDest
+		if spec.VolumeDest != "" {
+			b = spec.VolumeName + ":" + spec.VolumeDest
+		}
+		binds = []string{b}
+	}
+	hostConfig := map[string]any{
+		"Binds":        binds,
+		"RestartPolicy": map[string]any{"Name": "unless-stopped"},
+	}
+	if len(spec.Labels) > 0 {
+		hostConfig["Labels"] = spec.Labels
+	}
 	payload := map[string]any{
 		"Image": spec.Image,
 		"Cmd":   spec.Cmd,
 		"Env":   spec.Env,
-		"HostConfig": map[string]any{
-			"Binds": []string{spec.VolumeName + ":" + spec.VolumeDest},
-			// Every other service in docker-compose.yml runs
-			// `restart: unless-stopped` — a provisioned harness must match,
-			// or a host reboot (an Aeroform box has no SSH step per
-			// CLAUDE.md, so nobody's there to `docker start` it by hand)
-			// silently strands every chat on that harness with no
-			// automated recovery, unlike Goose. The event watcher (Task 8)
-			// only reflects status reactively; it does not restart
-			// anything, so this is the only thing that brings the
-			// container back after a reboot.
-			"RestartPolicy": map[string]any{"Name": "unless-stopped"},
-		},
+		"HostConfig": hostConfig,
 		"NetworkingConfig": map[string]any{
 			"EndpointsConfig": endpoints,
 		},
