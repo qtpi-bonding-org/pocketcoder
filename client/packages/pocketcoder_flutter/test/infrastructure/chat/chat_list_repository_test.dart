@@ -99,7 +99,8 @@ void main() {
     test('defaults title to "New Chat" when none given', () async {
       when(() => auth.currentUserId).thenReturn('user-1');
       when(() => dao.save(any(), any())).thenAnswer(
-        (_) async => const Chat(id: 'chat-1', title: 'New Chat', user: 'user-1'),
+        (_) async =>
+            const Chat(id: 'chat-1', title: 'New Chat', user: 'user-1'),
       );
 
       await repo.createChat();
@@ -150,13 +151,37 @@ void main() {
           })).called(1);
     });
 
-    test('includes workspace_override only when non-null, never as an empty stand-in', () async {
+    test('includes a virtual Ollama tag without a harness_models record',
+        () async {
       when(() => auth.currentUserId).thenReturn('user-1');
       when(() => dao.save(any(), any())).thenAnswer(
         (_) async => const Chat(id: 'chat-1', title: 'My Chat', user: 'user-1'),
       );
 
-      await repo.createChat(title: 'My Chat', workspaceOverride: ['/workspace/proj']);
+      await repo.createChat(
+        title: 'My Chat',
+        harness: 'goose-1',
+        ollamaModelOverride: 'qwen2.5:0.5b',
+      );
+
+      verify(() => dao.save(null, {
+            'title': 'My Chat',
+            'user': 'user-1',
+            'harness': 'goose-1',
+            'ollama_model_override': 'qwen2.5:0.5b',
+          })).called(1);
+    });
+
+    test(
+        'includes workspace_override only when non-null, never as an empty stand-in',
+        () async {
+      when(() => auth.currentUserId).thenReturn('user-1');
+      when(() => dao.save(any(), any())).thenAnswer(
+        (_) async => const Chat(id: 'chat-1', title: 'My Chat', user: 'user-1'),
+      );
+
+      await repo
+          .createChat(title: 'My Chat', workspaceOverride: ['/workspace/proj']);
 
       verify(() => dao.save(null, {
             'title': 'My Chat',
@@ -165,7 +190,9 @@ void main() {
           })).called(1);
     });
 
-    test('omits harness/harnessModelOverride/workspace_override entirely when all null', () async {
+    test(
+        'omits harness/harnessModelOverride/workspace_override entirely when all null',
+        () async {
       when(() => auth.currentUserId).thenReturn('user-1');
       when(() => dao.save(any(), any())).thenAnswer(
         (_) async => const Chat(id: 'chat-1', title: 'My Chat', user: 'user-1'),
@@ -183,7 +210,8 @@ void main() {
   group('ChatListRepository.archiveChat', () {
     test('sets archived true via dao.save', () async {
       when(() => dao.save('chat-1', {'archived': true})).thenAnswer(
-        (_) async => const Chat(id: 'chat-1', title: 'x', user: 'u', archived: true),
+        (_) async =>
+            const Chat(id: 'chat-1', title: 'x', user: 'u', archived: true),
       );
 
       await repo.archiveChat('chat-1');

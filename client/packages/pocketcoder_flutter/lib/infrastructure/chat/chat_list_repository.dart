@@ -39,6 +39,7 @@ class ChatListRepository implements IChatListRepository {
     String? title,
     String? harness,
     String? harnessModelOverride,
+    String? ollamaModelOverride,
     List<String>? workspaceOverride,
   }) {
     return tryMethod(
@@ -50,6 +51,9 @@ class ChatListRepository implements IChatListRepository {
         if (harness != null) data['harness'] = harness;
         if (harnessModelOverride != null) {
           data['harness_model_override'] = harnessModelOverride;
+        }
+        if (ollamaModelOverride != null) {
+          data['ollama_model_override'] = ollamaModelOverride;
         }
         if (workspaceOverride != null) {
           data['workspace_override'] = workspaceOverride;

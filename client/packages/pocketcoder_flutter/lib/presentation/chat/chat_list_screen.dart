@@ -70,6 +70,7 @@ class ChatListView extends StatelessWidget {
                   title: selection.title,
                   harness: selection.harness,
                   harnessModelOverride: selection.harnessModelOverride,
+                  ollamaModelOverride: selection.ollamaModelOverride,
                   workspaceOverride: selection.workspaceOverride,
                 );
               },
