@@ -6,7 +6,9 @@ import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
+import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -109,6 +111,12 @@ class ProviderView extends StatelessWidget {
           title: context.l10n.providerScreenHarnessModelsSection,
           child: _buildHarnessModelList(context, state),
         ),
+
+        if (getIt.isRegistered<OllamaApi>())
+          BiosSection(
+            title: 'LOCAL OLLAMA MODELS',
+            child: _OllamaModelsPanel(api: getIt<OllamaApi>()),
+          ),
 
         // ── PROVIDER KEYS (CRUD) ──
         BiosSection(
@@ -347,6 +355,111 @@ class ProviderView extends StatelessWidget {
   );
 }
 
+class _OllamaModelsPanel extends StatefulWidget {
+  const _OllamaModelsPanel({required this.api});
+
+  final OllamaApi api;
+
+  @override
+  State<_OllamaModelsPanel> createState() => _OllamaModelsPanelState();
+}
+
+class _OllamaModelsPanelState extends State<_OllamaModelsPanel> {
+  final _modelController = TextEditingController();
+  late Future<List<OllamaModel>> _models;
+  String? _status;
+  String? _error;
+  bool _pulling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _models = widget.api.listModels();
+  }
+
+  @override
+  void dispose() {
+    _modelController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pull() async {
+    final model = _modelController.text.trim();
+    if (model.isEmpty || _pulling) return;
+    setState(() {
+      _pulling = true;
+      _status = 'Starting download…';
+      _error = null;
+    });
+    try {
+      await for (final status in widget.api.pull(model)) {
+        if (mounted) setState(() => _status = status);
+      }
+      if (mounted) {
+        setState(() {
+          _models = widget.api.listModels();
+          _status = 'Downloaded $model';
+        });
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _pulling = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FutureBuilder<List<OllamaModel>>(
+          future: _models,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const TerminalLoadingIndicator(label: 'LOADING MODELS');
+            }
+            if (snapshot.hasError) {
+              return TerminalText('OLLAMA UNAVAILABLE', color: colors.error);
+            }
+            final models = snapshot.data ?? const [];
+            if (models.isEmpty) {
+              return TerminalText.mini('NO LOCAL MODELS INSTALLED', alpha: 0.5);
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final model in models)
+                  TerminalText.mini(model.name.toUpperCase(), alpha: 0.8),
+              ],
+            );
+          },
+        ),
+        VSpace.x2,
+        TerminalTextField(
+          controller: _modelController,
+          label: 'MODEL TO DOWNLOAD',
+          hint: 'qwen2.5:0.5b',
+        ),
+        VSpace.x1,
+        TerminalButton(
+          label: _pulling ? 'DOWNLOADING…' : 'DOWNLOAD MODEL',
+          onTap: _pulling ? () {} : _pull,
+        ),
+        if (_status != null) ...[
+          VSpace.x1,
+          TerminalText.mini(_status!.toUpperCase(), alpha: 0.6),
+        ],
+        if (_error != null) ...[
+          VSpace.x1,
+          TerminalText.mini(_error!, color: colors.error),
+        ],
+      ],
+    );
+  }
+}
+
 /// Stateful edit dialog body for a single [ProviderKey].
 ///
 /// Lets the user pick a harness (by `cliId`, which is what
@@ -369,8 +482,7 @@ class _ProviderKeyEditorDialog extends StatefulWidget {
       _ProviderKeyEditorDialogState();
 }
 
-class _ProviderKeyEditorDialogState
-    extends State<_ProviderKeyEditorDialog> {
+class _ProviderKeyEditorDialogState extends State<_ProviderKeyEditorDialog> {
   late final TextEditingController _apiKeyController;
   Harnesse? _selectedHarness;
 
@@ -441,8 +553,7 @@ class _ProviderKeyEditorDialogState
             TerminalText(
               selected == null
                   ? context.l10n.providerScreenAddKey
-                  : context.l10n
-                      .providerScreenAddKeyBody(selected.name),
+                  : context.l10n.providerScreenAddKeyBody(selected.name),
               alpha: 0.7,
             ),
             VSpace.x2,
@@ -583,8 +694,7 @@ class _HarnessPicker extends StatelessWidget {
                               _HarnessOption(
                                 harness: h,
                                 isSelected: selectedHarnessId == h.id,
-                                onTap: () =>
-                                    Navigator.of(dialogContext).pop(h),
+                                onTap: () => Navigator.of(dialogContext).pop(h),
                               ),
                           ],
                         ),
@@ -659,9 +769,7 @@ class _HarnessOption extends StatelessWidget {
           border: Border.all(
             color: colors.onSurface.withValues(alpha: 0.2),
           ),
-          color: isSelected
-              ? colors.primary.withValues(alpha: 0.1)
-              : null,
+          color: isSelected ? colors.primary.withValues(alpha: 0.1) : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

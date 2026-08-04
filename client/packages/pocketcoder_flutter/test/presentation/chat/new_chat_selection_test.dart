@@ -41,7 +41,9 @@ void main() {
       expect(result.map((h) => h.id), ['hm-a']);
     });
 
-    test('excludes a harness_models row whose model id has no matching Model record', () {
+    test(
+        'excludes a harness_models row whose model id has no matching Model record',
+        () {
       final result = selectableModels(
         harnessId: 'h1',
         harnessModels: [hmA],
@@ -61,6 +63,15 @@ void main() {
         providerKeys: const [],
       );
       expect(result, isEmpty);
+    });
+  });
+
+  group('supportsOllamaHarness', () {
+    test('only exposes virtual local models for Goose and OpenCode', () {
+      expect(supportsOllamaHarness('goose'), isTrue);
+      expect(supportsOllamaHarness('opencode'), isTrue);
+      expect(supportsOllamaHarness('codex'), isFalse);
+      expect(supportsOllamaHarness('claude-code'), isFalse);
     });
   });
 
@@ -100,7 +111,8 @@ void main() {
       expect(error, isNotNull);
     });
 
-    test('rejects /workspace/subdir/../.. which escapes via multiple segments', () {
+    test('rejects /workspace/subdir/../.. which escapes via multiple segments',
+        () {
       final error = validateWorkspacePath('/workspace/subdir/../..');
       expect(error, isNotNull);
     });
@@ -125,7 +137,9 @@ void main() {
       expect(error, isNull);
     });
 
-    test('rejects a path that is only a prefix-string match, not a real segment prefix', () {
+    test(
+        'rejects a path that is only a prefix-string match, not a real segment prefix',
+        () {
       // "/workspace-evil" starts with the string "/workspace" but is not
       // "/workspace" or a "/workspace/..." segment — must be rejected.
       expect(validateWorkspacePath('/workspace-evil'), isNotNull);
