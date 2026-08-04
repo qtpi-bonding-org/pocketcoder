@@ -156,3 +156,99 @@ func TestAgentSessionsHasHarnessInstance(t *testing.T) {
 		t.Error("agent_sessions.harness_instance field missing")
 	}
 }
+
+func TestHarnessAuthBindingHasRequiredFields(t *testing.T) {
+	data, err := os.ReadFile("schema.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var collections []map[string]any
+	if err := json.Unmarshal(data, &collections); err != nil {
+		t.Fatal(err)
+	}
+	var bindings map[string]any
+	for _, c := range collections {
+		if c["name"] == "harness_auth_bindings" {
+			bindings = c
+			break
+		}
+	}
+	if bindings == nil {
+		t.Fatal("harness_auth_bindings collection not found")
+	}
+	required := []string{
+		"scope_kind",
+		"scope_id",
+		"harness",
+		"credential_mode",
+		"provider_key",
+		"status",
+		"last_error",
+	}
+	found := map[string]bool{}
+	for _, f := range bindings["fields"].([]any) {
+		found[f.(map[string]any)["name"].(string)] = true
+	}
+	for _, name := range required {
+		if !found[name] {
+			t.Errorf("harness_auth_bindings.%s field missing", name)
+		}
+	}
+	wantUnique := "CREATE UNIQUE INDEX idx_harness_auth_bindings_scope ON harness_auth_bindings (scope_kind, scope_id, harness)"
+	foundUnique := false
+	for _, idx := range bindings["indexes"].([]any) {
+		if idx == wantUnique {
+			foundUnique = true
+		}
+	}
+	if !foundUnique {
+		t.Error("harness_auth_bindings unique scope index missing")
+	}
+}
+
+func TestHarnessAuthAttemptsHasRequiredFields(t *testing.T) {
+	data, err := os.ReadFile("schema.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var collections []map[string]any
+	if err := json.Unmarshal(data, &collections); err != nil {
+		t.Fatal(err)
+	}
+	var attempts map[string]any
+	for _, c := range collections {
+		if c["name"] == "harness_auth_attempts" {
+			attempts = c
+			break
+		}
+	}
+	if attempts == nil {
+		t.Fatal("harness_auth_attempts collection not found")
+	}
+	required := []string{
+		"scope_kind",
+		"scope_id",
+		"harness",
+		"binding",
+		"provider",
+		"status",
+		"last_error",
+		"expires_at",
+	}
+	found := map[string]bool{}
+	for _, f := range attempts["fields"].([]any) {
+		found[f.(map[string]any)["name"].(string)] = true
+	}
+	for _, name := range required {
+		if !found[name] {
+			t.Errorf("harness_auth_attempts.%s field missing", name)
+		}
+	}
+	for _, idx := range attempts["indexes"].([]any) {
+		index := idx.(string)
+		if index == "CREATE INDEX idx_harness_auth_attempts_binding_status ON harness_auth_attempts (binding, status)" {
+			return
+		}
+	}
+	t.Error("harness_auth_attempts index idx_harness_auth_attempts_binding_status missing")
+}
