@@ -11,7 +11,10 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/harness-adapter .
 
 FROM node:22-bookworm-slim
 ARG ACP_AGENT_PACKAGE
-RUN test -n "$ACP_AGENT_PACKAGE" \
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && test -n "$ACP_AGENT_PACKAGE" \
     && npm install --global --omit=dev "$ACP_AGENT_PACKAGE" \
     && npm cache clean --force
 
