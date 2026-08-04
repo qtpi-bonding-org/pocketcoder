@@ -104,7 +104,7 @@ func TestHarnessInstancesCollectionExists(t *testing.T) {
 		m := f.(map[string]any)
 		fields[m["name"].(string)] = m
 	}
-	for _, name := range []string{"harness", "harness_model", "launch_key", "container_name", "acp_endpoint", "secret", "status", "last_error", "managed", "created", "updated"} {
+	for _, name := range []string{"harness", "harness_model", "launch_key", "user", "container_name", "acp_endpoint", "secret", "status", "last_error", "managed", "created", "updated"} {
 		if fields[name] == nil {
 			t.Errorf("harness_instances.%s field missing", name)
 		}
@@ -116,7 +116,7 @@ func TestHarnessInstancesCollectionExists(t *testing.T) {
 	uniqueName := false
 	for _, idx := range hi["indexes"].([]any) {
 		s := idx.(string)
-		if s == "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (harness, launch_key)" {
+		if s == "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (user, harness, launch_key)" {
 			uniquePair = true
 		}
 		if s == "CREATE UNIQUE INDEX idx_harness_instances_name ON harness_instances (container_name)" {

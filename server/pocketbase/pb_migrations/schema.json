@@ -2136,6 +2136,19 @@
       },
       {
         "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_hi_user",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "user",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
         "collectionId": "pc_harness_models",
         "hidden": false,
         "id": "relation_hi_harness_model",
@@ -2260,7 +2273,7 @@
     ],
     "indexes": [
       "CREATE UNIQUE INDEX idx_harness_instances_name ON harness_instances (container_name)",
-      "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (harness, launch_key)"
+      "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (user, harness, launch_key)"
     ],
     "created": "2026-07-29 00:00:00.000Z",
     "updated": "2026-07-29 00:00:00.000Z",
