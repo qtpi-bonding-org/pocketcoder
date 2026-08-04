@@ -20,6 +20,7 @@ abstract class Chat with _$Chat {
     DateTime? updated,
     String? pocoConfig,
     String? harnessModelOverride,
+    String? ollamaModelOverride,
     String? harness,
     dynamic workspaceOverride,
   }) = _Chat;

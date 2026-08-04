@@ -4,8 +4,10 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
+import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_selection.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -19,12 +21,14 @@ class NewChatSelection {
     required this.title,
     this.harness,
     this.harnessModelOverride,
+    this.ollamaModelOverride,
     this.workspaceOverride,
   });
 
   final String title;
   final String? harness;
   final String? harnessModelOverride;
+  final String? ollamaModelOverride;
   final List<String>? workspaceOverride;
 }
 
@@ -46,7 +50,8 @@ class _NewChatDialogState extends State<NewChatDialog> {
   final _providerRepo = getIt<IProviderRepository>();
 
   Harnesse? _selectedHarness;
-  HarnessModel? _selectedHarnessModel;
+  _ModelChoice? _selectedModel;
+  Future<List<OllamaModel>>? _ollamaModels;
   String? _cwdError;
 
   @override
@@ -69,7 +74,8 @@ class _NewChatDialogState extends State<NewChatDialog> {
     Navigator.of(context).pop(NewChatSelection(
       title: title.isEmpty ? 'New Chat' : title,
       harness: _selectedHarness?.id,
-      harnessModelOverride: _selectedHarnessModel?.id,
+      harnessModelOverride: _selectedModel?.harnessModelId,
+      ollamaModelOverride: _selectedModel?.ollamaModel,
       workspaceOverride: cwd.isEmpty ? null : [cwd],
     ));
   }
@@ -106,11 +112,16 @@ class _NewChatDialogState extends State<NewChatDialog> {
                             providerKeys: providerKeys,
                           );
 
-                    return _buildDialog(
-                      context,
-                      harnesses: harnesses,
-                      models: models,
-                      availableModels: availableModels,
+                    return FutureBuilder<List<OllamaModel>>(
+                      future: _ollamaModels,
+                      initialData: const [],
+                      builder: (context, ollamaSnap) => _buildDialog(
+                        context,
+                        harnesses: harnesses,
+                        models: models,
+                        availableModels: availableModels,
+                        ollamaModels: ollamaSnap.data ?? const [],
+                      ),
                     );
                   },
                 );
@@ -127,7 +138,15 @@ class _NewChatDialogState extends State<NewChatDialog> {
     required List<Harnesse> harnesses,
     required List<Model> models,
     required List<HarnessModel> availableModels,
+    required List<OllamaModel> ollamaModels,
   }) {
+    final choices = [
+      for (final hm in availableModels)
+        _ModelChoice.catalog(hm.id, _modelDisplayName(models, hm)),
+      if (_selectedHarness != null &&
+          supportsOllamaHarness(_selectedHarness!.cliId))
+        for (final model in ollamaModels) _ModelChoice.ollama(model.name),
+    ];
     return TerminalDialog(
       title: context.l10n.newChatTitle,
       content: Column(
@@ -148,19 +167,23 @@ class _NewChatDialogState extends State<NewChatDialog> {
             optionLabel: (h) => h.name,
             onSelected: (h) => setState(() {
               _selectedHarness = h;
-              _selectedHarnessModel = null;
+              _selectedModel = null;
+              _ollamaModels = supportsOllamaHarness(h.cliId) &&
+                      getIt.isRegistered<OllamaApi>()
+                  ? getIt<OllamaApi>().listModels()
+                  : null;
             }),
           ),
           VSpace.x2,
-          _PickerField<HarnessModel>(
+          _PickerField<_ModelChoice>(
             label: context.l10n.newChatModelField,
             dialogTitle: context.l10n.newChatSelectModel,
             emptyLabel: context.l10n.newChatSelectModel,
             noOptionsLabel: context.l10n.newChatNoModelsAvailable,
-            options: availableModels,
-            selected: _selectedHarnessModel,
-            optionLabel: (hm) => _modelDisplayName(models, hm),
-            onSelected: (hm) => setState(() => _selectedHarnessModel = hm),
+            options: choices,
+            selected: _selectedModel,
+            optionLabel: (choice) => choice.label,
+            onSelected: (choice) => setState(() => _selectedModel = choice),
           ),
           VSpace.x2,
           TerminalTextField(
@@ -197,6 +220,20 @@ class _NewChatDialogState extends State<NewChatDialog> {
   }
 }
 
+class _ModelChoice {
+  const _ModelChoice.catalog(this.harnessModelId, this.label)
+      : ollamaModel = null;
+
+  const _ModelChoice.ollama(String name)
+      : harnessModelId = null,
+        ollamaModel = name,
+        label = '$name (LOCAL)';
+
+  final String? harnessModelId;
+  final String? ollamaModel;
+  final String label;
+}
+
 /// A tap-to-open picker matching the terminal/BIOS UI's existing convention
 /// (see `_HarnessPicker` in `provider_screen.dart`) — no shared/exported
 /// dropdown widget exists in `design_system/` to reuse, so this mirrors that
@@ -227,9 +264,8 @@ class _PickerField<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
     final selectedValue = selected;
-    final currentLabel = selectedValue == null
-        ? emptyLabel
-        : optionLabel(selectedValue);
+    final currentLabel =
+        selectedValue == null ? emptyLabel : optionLabel(selectedValue);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +277,8 @@ class _PickerField<T> extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.all(AppSizes.space),
             decoration: BoxDecoration(
-              border: Border.all(color: colors.onSurface.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: colors.onSurface.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

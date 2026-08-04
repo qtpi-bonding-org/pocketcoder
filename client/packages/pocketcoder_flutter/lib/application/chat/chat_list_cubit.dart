@@ -47,6 +47,7 @@ class ChatListCubit extends AppCubit<ChatListState> {
     String? title,
     String? harness,
     String? harnessModelOverride,
+    String? ollamaModelOverride,
     List<String>? workspaceOverride,
   }) =>
       tryOperation(() async {
@@ -54,6 +55,7 @@ class ChatListCubit extends AppCubit<ChatListState> {
           title: title,
           harness: harness,
           harnessModelOverride: harnessModelOverride,
+          ollamaModelOverride: ollamaModelOverride,
           workspaceOverride: workspaceOverride,
         );
         return state.copyWith(

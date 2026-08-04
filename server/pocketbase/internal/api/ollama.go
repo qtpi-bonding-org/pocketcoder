@@ -10,12 +10,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
@@ -37,11 +35,6 @@ type ollamaTagsResponse struct {
 
 type ollamaPullRequest struct {
 	Model string `json:"model"`
-}
-
-type ollamaPullEvent struct {
-	Status string `json:"status"`
-	Error  string `json:"error"`
 }
 
 func ollamaURL() string {
@@ -76,101 +69,30 @@ func fetchOllamaTags(ctx context.Context, client *http.Client, baseURL string) (
 	return tags.Models, nil
 }
 
-// syncOllamaModels makes installed local models selectable through the
-// existing realtime models/harness_models catalog. No new schema or per-user
-// data is introduced: an installed model is a host-level capability.
-func syncOllamaModels(app core.App, installed []ollamaModel) error {
-	models, err := app.FindCollectionByNameOrId("models")
+// ollamaModelInstalled checks the runtime's source of truth rather than a
+// PocketBase catalog cache. A deleted model immediately becomes unavailable.
+func ollamaModelInstalled(ctx context.Context, client *http.Client, name string) (bool, error) {
+	models, err := fetchOllamaTags(ctx, client, ollamaURL())
 	if err != nil {
-		return err
+		return false, err
 	}
-	harnessModels, err := app.FindCollectionByNameOrId("harness_models")
-	if err != nil {
-		return err
-	}
-
-	var targets []*core.Record
-	for _, cliID := range []string{"goose", "opencode"} {
-		harness, findErr := app.FindFirstRecordByFilter("harnesses", "cli_id = {:cli}", map[string]any{"cli": cliID})
-		if findErr != nil {
-			return fmt.Errorf("find %s harness: %w", cliID, findErr)
-		}
-		targets = append(targets, harness)
-	}
-
-	for _, installedModel := range installed {
-		if !ollamaModelName.MatchString(installedModel.Name) {
-			continue
-		}
-		model, findErr := app.FindFirstRecordByFilter(
-			"models",
-			"provider = {:provider} && name = {:name}",
-			map[string]any{"provider": "ollama", "name": installedModel.Name},
-		)
-		if findErr != nil {
-			model = core.NewRecord(models)
-			model.Set("name", installedModel.Name)
-			model.Set("display_name", installedModel.Name+" (local)")
-			model.Set("provider", "ollama")
-			model.Set("description", "Installed in PocketCoder's local Ollama runtime.")
-			if err := app.Save(model); err != nil {
-				return fmt.Errorf("save local model %s: %w", installedModel.Name, err)
-			}
-		}
-		for _, harness := range targets {
-			existing, findErr := app.FindRecordsByFilter(
-				"harness_models",
-				"harness = {:harness} && model = {:model}",
-				"",
-				1,
-				0,
-				map[string]any{"harness": harness.Id, "model": model.Id},
-			)
-			if findErr != nil {
-				return fmt.Errorf("find local harness model: %w", findErr)
-			}
-			if len(existing) != 0 {
-				continue
-			}
-			link := core.NewRecord(harnessModels)
-			link.Set("harness", harness.Id)
-			link.Set("model", model.Id)
-			link.Set("harness_model_id", installedModel.Name)
-			if err := app.Save(link); err != nil {
-				return fmt.Errorf("save %s local model link: %w", harness.GetString("cli_id"), err)
-			}
+	for _, model := range models {
+		if model.Name == name {
+			return true, nil
 		}
 	}
-	return nil
+	return false, nil
 }
 
-// RegisterOllamaApi exposes a small authenticated control plane. Model pulls
-// stream Ollama's native NDJSON progress to the caller; once a pull completes,
-// the installed model is synchronized into PocketBase's existing catalog.
-func RegisterOllamaApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+// RegisterOllamaApi exposes a private local-model control plane. Installed
+// tags are virtual choices, never models/harness_models catalog records.
+func RegisterOllamaApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
 	client := ollamaHTTPClient()
 
 	e.Router.GET("/api/pocketcoder/ollama/models", func(re *core.RequestEvent) error {
-		if err := requireAdmin(re); err != nil {
-			return err
-		}
 		models, err := fetchOllamaTags(re.Request.Context(), client, ollamaURL())
 		if err != nil {
 			return re.JSON(http.StatusBadGateway, map[string]string{"error": "Ollama is unavailable"})
-		}
-		return re.JSON(http.StatusOK, map[string]any{"models": models})
-	}).Bind(apis.RequireAuth())
-
-	e.Router.POST("/api/pocketcoder/ollama/refresh", func(re *core.RequestEvent) error {
-		if err := requireAdmin(re); err != nil {
-			return err
-		}
-		models, err := fetchOllamaTags(re.Request.Context(), client, ollamaURL())
-		if err != nil {
-			return re.JSON(http.StatusBadGateway, map[string]string{"error": "Ollama is unavailable"})
-		}
-		if err := syncOllamaModels(app, models); err != nil {
-			return re.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to synchronize local models"})
 		}
 		return re.JSON(http.StatusOK, map[string]any{"models": models})
 	}).Bind(apis.RequireAuth())
@@ -204,7 +126,6 @@ func RegisterOllamaApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		re.Response.WriteHeader(http.StatusOK)
 		scanner := bufio.NewScanner(response.Body)
 		scanner.Buffer(make([]byte, 4096), 1024*1024)
-		completed := false
 		for scanner.Scan() {
 			line := scanner.Bytes()
 			if _, err := re.Response.Write(append(line, '\n')); err != nil {
@@ -213,24 +134,7 @@ func RegisterOllamaApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			if flusher, ok := re.Response.(http.Flusher); ok {
 				flusher.Flush()
 			}
-			var event ollamaPullEvent
-			if json.Unmarshal(line, &event) == nil && event.Status == "success" {
-				completed = true
-			}
 		}
-		if err := scanner.Err(); err != nil {
-			log.Printf("Ollama pull stream for %s ended: %v", input.Model, err)
-		}
-		if completed {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			models, err := fetchOllamaTags(ctx, client, ollamaURL())
-			if err != nil {
-				log.Printf("Ollama pull completed but model refresh failed: %v", err)
-			} else if err := syncOllamaModels(app, models); err != nil {
-				log.Printf("Ollama pull completed but catalog sync failed: %v", err)
-			}
-		}
-		return nil
+		return scanner.Err()
 	}).Bind(apis.RequireAuth())
 }

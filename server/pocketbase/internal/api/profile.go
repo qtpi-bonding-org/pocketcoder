@@ -62,6 +62,15 @@ type stdioMcp struct {
 // share (§6.3) — the same value the coordinator falls back to.
 const workspaceRoot = "/workspace"
 
+func supportsOllamaHarness(harness *core.Record) bool {
+	switch harness.GetString("cli_id") {
+	case "goose", "opencode":
+		return true
+	default:
+		return false
+	}
+}
+
 // validateWorkspacePath validates that a path is within the workspace root.
 func validateWorkspacePath(p string) error {
 	clean := filepath.Clean(p)
@@ -89,6 +98,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	// existing at all.
 	hmID := chat.GetString("harness_model_override")
 	harnessID := chat.GetString("harness")
+	ollamaModel := chat.GetString("ollama_model_override")
 
 	var chatFolders []string
 	_ = chat.UnmarshalJSONField("workspace_override", &chatFolders)
@@ -163,7 +173,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 			return p, err
 		}
 	}
-	if hmID != "" {
+	if ollamaModel == "" && hmID != "" {
 		hm, err := app.FindRecordById("harness_models", hmID)
 		if err == nil {
 			p.Model = hm.GetString("harness_model_id")
@@ -182,13 +192,30 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 			return p, err
 		}
 	}
+	if ollamaModel != "" {
+		if !ollamaModelName.MatchString(ollamaModel) {
+			return p, fmt.Errorf("invalid Ollama model name %q", ollamaModel)
+		}
+		if !supportsOllamaHarness(harnessRec) {
+			return p, fmt.Errorf("harness %q does not support local Ollama models", harnessRec.GetString("cli_id"))
+		}
+		installed, err := ollamaModelInstalled(context.Background(), ollamaHTTPClient(), ollamaModel)
+		if err != nil {
+			return p, fmt.Errorf("check local Ollama model: %w", err)
+		}
+		if !installed {
+			return p, fmt.Errorf("local Ollama model %q is not installed", ollamaModel)
+		}
+		p.Provider = "ollama"
+		p.Model = ollamaModel
+	}
 
 	p.SupportsLiveConfig = harnessRec.GetBool("supports_live_config")
 	p.SupportsGooseExtensions = harnessRec.GetBool("supports_goose_extensions")
 	p.SingleConnectionOnly = harnessRec.GetBool("single_connection_only")
 
 	launchKey := ""
-	if !p.SupportsLiveConfig && hmID != "" {
+	if !p.SupportsLiveConfig && hmID != "" && ollamaModel == "" {
 		launchKey = hmID
 	}
 

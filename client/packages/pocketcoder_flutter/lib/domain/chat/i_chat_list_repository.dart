@@ -7,6 +7,7 @@ abstract class IChatListRepository {
     String? title,
     String? harness,
     String? harnessModelOverride,
+    String? ollamaModelOverride,
     List<String>? workspaceOverride,
   });
   Future<void> archiveChat(String id);

@@ -22,6 +22,9 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -234,6 +237,56 @@ func TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig(t *testing.T) {
 	}
 	if profile.ResolvedInstanceID != instance.Id {
 		t.Errorf("ResolvedInstanceID = %q, want %q — the early-return bug regression", profile.ResolvedInstanceID, instance.Id)
+	}
+}
+
+func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/tags" {
+			t.Fatalf("path = %q, want /api/tags", r.URL.Path)
+		}
+		_, _ = w.Write([]byte(`{"models":[{"name":"qwen2.5:0.5b"}]}`))
+	}))
+	defer server.Close()
+	t.Setenv("OLLAMA_API_URL", server.URL)
+
+	app := testApp(t)
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	chat := createTestChat(t, app, map[string]any{
+		"harness":               harness.Id,
+		"ollama_model_override": "qwen2.5:0.5b",
+	})
+
+	profile, err := buildSessionProfile(app, chat.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if profile.Provider != "ollama" || profile.Model != "qwen2.5:0.5b" {
+		t.Fatalf("profile provider/model = %q/%q, want ollama/qwen2.5:0.5b", profile.Provider, profile.Model)
+	}
+	models, err := app.FindRecordsByFilter("models", "provider = 'ollama'", "", 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(models) != 0 {
+		t.Fatalf("virtual Ollama choice created %d catalog records, want none", len(models))
+	}
+}
+
+func TestBuildSessionProfileRejectsVirtualOllamaOnUnsupportedHarness(t *testing.T) {
+	app := testApp(t)
+	harness, _ := seedTestHarnessAndInstance(t, app, "codex", true, false, true)
+	chat := createTestChat(t, app, map[string]any{
+		"harness":               harness.Id,
+		"ollama_model_override": "qwen2.5:0.5b",
+	})
+
+	_, err := buildSessionProfile(app, chat.Id)
+	if err == nil || !strings.Contains(err.Error(), "does not support local Ollama") {
+		t.Fatalf("err = %v, want unsupported local Ollama harness error", err)
 	}
 }
 

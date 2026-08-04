@@ -145,6 +145,8 @@ import 'package:pocketcoder_flutter/infrastructure/notifications/notification_ru
     as _i821;
 import 'package:pocketcoder_flutter/infrastructure/observability/observability_repository.dart'
     as _i310;
+import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart'
+    as _i810;
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart'
     as _i294;
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_repository.dart'
@@ -250,6 +252,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
+        ));
+    gh.lazySingleton<_i810.OllamaApi>(() => _i810.OllamaApi(
+          gh<_i169.PocketBase>(),
+          gh<_i519.Client>(),
         ));
     gh.lazySingleton<_i209.IFilesRepository>(() => _i369.FilesRepository(
           gh<_i169.PocketBase>(),

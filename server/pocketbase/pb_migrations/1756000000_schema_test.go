@@ -17,7 +17,7 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 
 	expected := map[string][]string{
 		"users":              {"role"},
-		"chats":              {"title", "user", "poco_config", "harness_model_override"},
+		"chats":              {"title", "user", "poco_config", "harness_model_override", "ollama_model_override"},
 		"sandbox_agents":     {"sandbox_agent_id", "delegating_agent_id", "chat"},
 		"ssh_keys":           {"user", "public_key", "fingerprint"},
 		"tool_permissions":   {"tool", "pattern", "action", "poco_config"},

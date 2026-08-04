@@ -27,6 +27,11 @@ List<HarnessModel> selectableModels({
   }).toList();
 }
 
+/// Only these adapters have a tested private-network Ollama configuration.
+/// This intentionally mirrors the backend guard before a virtual tag is shown.
+bool supportsOllamaHarness(String cliId) =>
+    cliId == 'goose' || cliId == 'opencode';
+
 /// Validates that a workspace path is within the /workspace root directory.
 ///
 /// Implements the textual, prefix-based check from the design spec (§5.8):

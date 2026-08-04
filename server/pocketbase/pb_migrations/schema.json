@@ -399,6 +399,20 @@
         "type": "relation"
       },
       {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_chats_ollama_model_override",
+        "max": 0,
+        "min": 0,
+        "name": "ollama_model_override",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
         "cascadeDelete": false,
         "collectionId": "pc_harnesses",
         "hidden": false,
