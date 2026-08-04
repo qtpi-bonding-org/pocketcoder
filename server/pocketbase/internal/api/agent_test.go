@@ -26,9 +26,9 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 )
 
-// TestSaveGooseSessionStampsHarnessInstance verifies that saveGooseSession
-// correctly stamps the harness_instance field on the goose_sessions row.
-func TestSaveGooseSessionStampsHarnessInstance(t *testing.T) {
+// TestSaveAgentSessionStampsHarnessInstance verifies that saveAgentSession
+// correctly stamps the harness_instance field on the agent_sessions row.
+func TestSaveAgentSessionStampsHarnessInstance(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
@@ -67,10 +67,10 @@ func TestSaveGooseSessionStampsHarnessInstance(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := saveGooseSession(context.Background(), app, chat.Id, userID, "session-abc", instance.Id); err != nil {
+	if err := saveAgentSession(context.Background(), app, chat.Id, userID, "session-abc", instance.Id); err != nil {
 		t.Fatal(err)
 	}
-	rec, err := app.FindFirstRecordByFilter("goose_sessions", "chat = {:c}", map[string]any{"c": chat.Id})
+	rec, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:c}", map[string]any{"c": chat.Id})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -39,7 +39,7 @@ func newImporterScheduleOwner(t *testing.T, app core.App, userID, displayName st
 	return rec
 }
 
-func TestImportSession_CreatesChatAndGooseSession(t *testing.T) {
+func TestImportSession_CreatesChatAndAgentSession(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
@@ -53,9 +53,9 @@ func TestImportSession_CreatesChatAndGooseSession(t *testing.T) {
 		t.Fatalf("ImportSession: %v", err)
 	}
 
-	session, err := app.FindFirstRecordByFilter("goose_sessions", "goose_session_id = {:sid}", map[string]any{"sid": "session-abc"})
+	session, err := app.FindFirstRecordByFilter("agent_sessions", "acp_session_id = {:sid}", map[string]any{"sid": "session-abc"})
 	if err != nil {
-		t.Fatalf("expected a goose_sessions row: %v", err)
+		t.Fatalf("expected a agent_sessions row: %v", err)
 	}
 	chat, err := app.FindRecordById("chats", session.GetString("chat"))
 	if err != nil {
@@ -65,7 +65,7 @@ func TestImportSession_CreatesChatAndGooseSession(t *testing.T) {
 		t.Fatalf("chat.user = %q, want %q", chat.GetString("user"), user.Id)
 	}
 	if session.GetString("user") != user.Id {
-		t.Fatalf("goose_sessions.user = %q, want %q", session.GetString("user"), user.Id)
+		t.Fatalf("agent_sessions.user = %q, want %q", session.GetString("user"), user.Id)
 	}
 }
 
@@ -114,7 +114,7 @@ func TestImportFn_ImportsUnseenSessionsAcrossOwners(t *testing.T) {
 
 	runImportPoll(app, coord)
 
-	_, err = app.FindFirstRecordByFilter("goose_sessions", "goose_session_id = {:sid}", map[string]any{"sid": "session-xyz"})
+	_, err = app.FindFirstRecordByFilter("agent_sessions", "acp_session_id = {:sid}", map[string]any{"sid": "session-xyz"})
 	if err != nil {
 		t.Fatalf("expected session-xyz to be imported: %v", err)
 	}
@@ -135,14 +135,14 @@ func TestScheduleImporterStampsDefaultHarnessInstance(t *testing.T) {
 		t.Fatalf("ImportSession: %v", err)
 	}
 
-	// Find the imported goose_sessions row
-	rec, err := app.FindFirstRecordByFilter("goose_sessions", "goose_session_id = {:sid}", map[string]any{"sid": "session-inst-test"})
+	// Find the imported agent_sessions row
+	rec, err := app.FindFirstRecordByFilter("agent_sessions", "acp_session_id = {:sid}", map[string]any{"sid": "session-inst-test"})
 	if err != nil {
-		t.Fatalf("expected a goose_sessions row: %v", err)
+		t.Fatalf("expected a agent_sessions row: %v", err)
 	}
 
 	// Verify harness_instance is populated (should be the default goose instance)
 	if rec.GetString("harness_instance") == "" {
-		t.Error("imported goose_sessions row must have harness_instance set to the default goose instance")
+		t.Error("imported agent_sessions row must have harness_instance set to the default goose instance")
 	}
 }

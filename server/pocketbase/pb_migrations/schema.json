@@ -1825,13 +1825,13 @@
     "system": false
   },
   {
-    "id": "pc_goose_sessions",
+    "id": "pc_agent_sessions",
     "listRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
     "viewRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
     "createRule": null,
     "updateRule": null,
     "deleteRule": null,
-    "name": "goose_sessions",
+    "name": "agent_sessions",
     "type": "base",
     "fields": [
       {
@@ -1880,7 +1880,7 @@
         "id": "text985670943",
         "max": 0,
         "min": 0,
-        "name": "goose_session_id",
+        "name": "acp_session_id",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
@@ -1931,8 +1931,8 @@
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_goose_sessions_chat ON goose_sessions (chat)",
-      "CREATE UNIQUE INDEX idx_goose_sessions_goose_session_id ON goose_sessions (goose_session_id)"
+      "CREATE UNIQUE INDEX idx_agent_sessions_chat ON agent_sessions (chat)",
+      "CREATE UNIQUE INDEX idx_agent_sessions_acp_session_id ON agent_sessions (acp_session_id)"
     ],
     "created": "2026-07-24 05:34:50.103Z",
     "updated": "2026-07-24 05:34:50.103Z",

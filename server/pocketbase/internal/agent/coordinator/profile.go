@@ -44,7 +44,7 @@ type SessionProfile struct {
 
 	Target                  Target
 	ResolvedInstanceID      string // the harness_instances id this chat resolves to right now
-	PinnedInstanceID        string // the harness_instances id goose_sessions.harness_instance already points at (empty if none yet)
+	PinnedInstanceID        string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
 	SupportsLiveConfig      bool
 	SupportsGooseExtensions bool
 	SingleConnectionOnly    bool

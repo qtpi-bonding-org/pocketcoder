@@ -63,15 +63,15 @@ func TestChatsHarnessPinRejectsChangeAfterSessionExists(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create goose session for this chat
-	gooseSessions, err := app.FindCollectionByNameOrId("goose_sessions")
+	// Create agent session for this chat
+	agentSessions, err := app.FindCollectionByNameOrId("agent_sessions")
 	if err != nil {
 		t.Fatal(err)
 	}
-	session := core.NewRecord(gooseSessions)
+	session := core.NewRecord(agentSessions)
 	session.Set("chat", chat.Id)
 	session.Set("user", user.Id)
-	session.Set("goose_session_id", "session-123")
+	session.Set("acp_session_id", "session-123")
 	if err := app.Save(session); err != nil {
 		t.Fatal(err)
 	}

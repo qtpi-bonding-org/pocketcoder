@@ -31,7 +31,7 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 		"provider_keys":      {"user", "provider", "env_vars"},
 		"prompts":            {"name", "body"},
 		"poco_configs":       {"name", "harness_model", "system_prompt"},
-		"goose_sessions":     {"chat", "user", "goose_session_id"},
+		"agent_sessions":     {"chat", "user", "acp_session_id"},
 		"schedule_owners":    {"user", "goose_schedule_id", "display_name"},
 		"cognee_config":      {"llm_provider", "llm_model", "llm_base_url", "llm_api_key"},
 	}
@@ -103,7 +103,7 @@ func TestScheduleOwnersUniqueGooseScheduleId(t *testing.T) {
 	}
 }
 
-func TestGooseSessionsUniqueIndexes(t *testing.T) {
+func TestAgentSessionsUniqueIndexes(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
@@ -118,13 +118,13 @@ func TestGooseSessionsUniqueIndexes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sessCol, err := app.FindCollectionByNameOrId("goose_sessions")
+	sessCol, err := app.FindCollectionByNameOrId("agent_sessions")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	user := core.NewRecord(usersCol)
-	user.SetEmail("goose-user@example.com")
+	user.SetEmail("agent-session-user@example.com")
 	user.SetPassword("password123")
 	if err := app.Save(user); err != nil {
 		t.Fatal(err)
@@ -140,15 +140,15 @@ func TestGooseSessionsUniqueIndexes(t *testing.T) {
 	sess := core.NewRecord(sessCol)
 	sess.Set("chat", chat.Id)
 	sess.Set("user", user.Id)
-	sess.Set("goose_session_id", "gs-1")
+	sess.Set("acp_session_id", "gs-1")
 	if err := app.Save(sess); err != nil {
-		t.Fatalf("save goose_sessions record: %v", err)
+		t.Fatalf("save agent_sessions record: %v", err)
 	}
 
 	dup := core.NewRecord(sessCol)
 	dup.Set("chat", chat.Id)
 	dup.Set("user", user.Id)
-	dup.Set("goose_session_id", "gs-2")
+	dup.Set("acp_session_id", "gs-2")
 	if err := app.Save(dup); err == nil {
 		t.Fatal("expected unique-index violation for duplicate chat")
 	}
