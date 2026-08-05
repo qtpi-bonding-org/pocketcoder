@@ -42,7 +42,7 @@ class McpOAuthService implements IMcpOAuthService {
 
   McpOAuthService(
     this._httpClient,
-    @Named('mcpOAuthRelayBaseUrl') this._relayBaseUrl,
+    @Named('oauthRelayBaseUrl') this._relayBaseUrl,
   );
 
   /// Overridable in tests only — production code always uses the real

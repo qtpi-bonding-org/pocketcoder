@@ -10,7 +10,6 @@
 # never hardcode a real value here).
 #
 # Required:
-#   PUSH_RELAY_URL         e.g. https://pocketcoder-relay.<account>.workers.dev
 #   PN_RELAY_SECRET        shared secret push-relay validates via X-Relay-Secret
 #   REVENUECAT_SECRET_KEY  RevenueCat V2 secret API key (sk_...)
 #   REVENUECAT_PROJECT_ID  RevenueCat project id (proj...)
@@ -25,7 +24,8 @@
 #                          Worker (defaults to 1000, push-relay's default).
 set -eu
 
-: "${PUSH_RELAY_URL:?}"
+PUSH_RELAY_URL="${PUSH_RELAY_URL:-https://push.relay.pocketcoder.org}"
+export PUSH_RELAY_URL
 : "${PN_RELAY_SECRET:?}"
 : "${REVENUECAT_SECRET_KEY:?}"
 : "${REVENUECAT_PROJECT_ID:?}"
