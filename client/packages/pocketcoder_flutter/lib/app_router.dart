@@ -17,6 +17,7 @@ import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dar
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
+import 'package:pocketcoder_flutter/presentation/harness_auth/harness_auth_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
@@ -215,6 +216,15 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.configureHarnessAuth,
+        name: RouteNames.configureHarnessAuth,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const HarnessAuthScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.configureErrors,
         name: RouteNames.configureErrors,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -307,6 +317,7 @@ class AppRoutes {
   static const String configureObservability = '/configure/observability';
   static const String configureLlm = '/configure/llm';
   static const String configureErrors = '/configure/errors';
+  static const String configureHarnessAuth = '/configure/harness-auth';
   // Legacy aliases (redirected)
   static const String settings = '/settings';
   static const String aiRegistry = '/settings/ai';
@@ -351,6 +362,7 @@ class RouteNames {
   static const String configureObservability = 'configureObservability';
   static const String configureLlm = 'configureLlm';
   static const String configureErrors = 'configureErrors';
+  static const String configureHarnessAuth = 'configureHarnessAuth';
   // Legacy aliases
   static const String aiRegistry = 'configureAi';
   static const String toolPermissions = 'configureToolPermissions';

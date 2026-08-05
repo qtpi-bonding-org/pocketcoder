@@ -25,8 +25,9 @@ import (
 )
 
 const (
-	ProviderCodex  = "codex"
-	ProviderClaude = "claude"
+	ProviderCodex      = "codex"
+	ProviderClaude     = "claude"
+	ProviderClaudeCode = "claude-code"
 
 	AttemptStatusStarting  = "starting"
 	AttemptStatusAwaiting  = "awaiting_input"
@@ -52,6 +53,12 @@ type AttemptState struct {
 	LastError string     `json:"lastError,omitempty"`
 }
 
+type AttemptContext struct {
+	AttemptID    string
+	UserID       string
+	HarnessImage string
+}
+
 type unknownProviderError struct {
 	provider string
 }
@@ -67,11 +74,11 @@ func newUnknownProviderError(provider string) error {
 // Authenticator encapsulates the provider-specific helper lifecycle.
 type Authenticator interface {
 	Provider() string
-	Start(context.Context, string) (*AttemptState, error)
-	Poll(context.Context, string) (*AttemptState, error)
-	Submit(context.Context, string, string) (*AttemptState, error)
-	Cancel(context.Context, string) (*AttemptState, error)
-	Disconnect(context.Context, string) (*AttemptState, error)
+	Start(context.Context, AttemptContext) (*AttemptState, error)
+	Poll(context.Context, AttemptContext) (*AttemptState, error)
+	Submit(context.Context, AttemptContext, string) (*AttemptState, error)
+	Cancel(context.Context, AttemptContext) (*AttemptState, error)
+	Disconnect(context.Context, AttemptContext) (*AttemptState, error)
 }
 
 // Runtime dispatches start/poll/submit/cancel/disconnect calls to provider
@@ -85,9 +92,11 @@ func NewRuntime(providers map[string]Authenticator) *Runtime {
 }
 
 func NewDefaultRuntime() *Runtime {
+	claude := NewClaudeAuthenticator()
 	return NewRuntime(map[string]Authenticator{
-		ProviderCodex:  NewCodexAuthenticator(),
-		ProviderClaude: NewClaudeAuthenticator(),
+		ProviderCodex:      NewCodexAuthenticator(),
+		ProviderClaude:     claude,
+		ProviderClaudeCode: claude,
 	})
 }
 
@@ -99,44 +108,44 @@ func (r *Runtime) provider(provider string) (Authenticator, error) {
 	return p, nil
 }
 
-func (r *Runtime) Start(ctx context.Context, provider, attemptID string) (*AttemptState, error) {
+func (r *Runtime) Start(ctx context.Context, provider string, attempt AttemptContext) (*AttemptState, error) {
 	authenticator, err := r.provider(provider)
 	if err != nil {
 		return nil, err
 	}
-	return authenticator.Start(ctx, attemptID)
+	return authenticator.Start(ctx, attempt)
 }
 
-func (r *Runtime) Poll(ctx context.Context, provider, attemptID string) (*AttemptState, error) {
+func (r *Runtime) Poll(ctx context.Context, provider string, attempt AttemptContext) (*AttemptState, error) {
 	authenticator, err := r.provider(provider)
 	if err != nil {
 		return nil, err
 	}
-	return authenticator.Poll(ctx, attemptID)
+	return authenticator.Poll(ctx, attempt)
 }
 
-func (r *Runtime) Submit(ctx context.Context, provider, attemptID, code string) (*AttemptState, error) {
+func (r *Runtime) Submit(ctx context.Context, provider string, attempt AttemptContext, code string) (*AttemptState, error) {
 	authenticator, err := r.provider(provider)
 	if err != nil {
 		return nil, err
 	}
-	return authenticator.Submit(ctx, attemptID, code)
+	return authenticator.Submit(ctx, attempt, code)
 }
 
-func (r *Runtime) Cancel(ctx context.Context, provider, attemptID string) (*AttemptState, error) {
+func (r *Runtime) Cancel(ctx context.Context, provider string, attempt AttemptContext) (*AttemptState, error) {
 	authenticator, err := r.provider(provider)
 	if err != nil {
 		return nil, err
 	}
-	return authenticator.Cancel(ctx, attemptID)
+	return authenticator.Cancel(ctx, attempt)
 }
 
-func (r *Runtime) Disconnect(ctx context.Context, provider, attemptID string) (*AttemptState, error) {
+func (r *Runtime) Disconnect(ctx context.Context, provider string, attempt AttemptContext) (*AttemptState, error) {
 	authenticator, err := r.provider(provider)
 	if err != nil {
 		return nil, err
 	}
-	return authenticator.Disconnect(ctx, attemptID)
+	return authenticator.Disconnect(ctx, attempt)
 }
 
 var ErrAttemptExpired = errors.New("attempt expired")

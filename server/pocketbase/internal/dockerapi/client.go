@@ -27,7 +27,9 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -35,11 +37,14 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const defaultDockerHost = "tcp://docker-socket-proxy-write:2375"
+
+var ErrContainerNotFound = errors.New("container not found")
 
 type Client struct {
 	baseURL string
@@ -76,6 +81,11 @@ type ContainerInspect struct {
 	NetworkSettings struct {
 		Networks map[string]NetworkEndpoint
 	}
+	State struct {
+		Running  bool
+		Status   string
+		ExitCode int `json:"ExitCode"`
+	}
 }
 
 func (c *Client) Inspect(ctx context.Context, containerName string) (ContainerInspect, error) {
@@ -89,6 +99,9 @@ func (c *Client) Inspect(ctx context.Context, containerName string) (ContainerIn
 		return insp, fmt.Errorf("inspect %s: %w", containerName, err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return insp, ErrContainerNotFound
+	}
 	if resp.StatusCode >= 400 {
 		return insp, fmt.Errorf("inspect %s: docker API returned %s", containerName, resp.Status)
 	}
@@ -96,6 +109,82 @@ func (c *Client) Inspect(ctx context.Context, containerName string) (ContainerIn
 		return insp, fmt.Errorf("decode inspect response: %w", err)
 	}
 	return insp, nil
+}
+
+func (c *Client) Logs(ctx context.Context, containerName string, tail int) (string, error) {
+	q := url.Values{
+		"stdout":     []string{"1"},
+		"stderr":     []string{"1"},
+		"follow":     []string{"0"},
+		"timestamps": []string{"0"},
+	}
+	if tail > 0 {
+		q.Set("tail", strconv.Itoa(tail))
+	} else {
+		q.Set("tail", "100")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/containers/"+containerName+"/logs?"+q.Encode(), nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("logs %s: %w", containerName, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return "", ErrContainerNotFound
+	}
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("logs %s: docker API returned %s: %s", containerName, resp.Status, string(body))
+	}
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	if len(raw) == 0 {
+		return "", nil
+	}
+	decoded, err := decodeDockerLogStream(raw)
+	if err != nil {
+		return "", err
+	}
+	return decoded, nil
+}
+
+func decodeDockerLogStream(raw []byte) (string, error) {
+	const frameHeaderLen = 8
+	if len(raw) < frameHeaderLen {
+		return string(raw), nil
+	}
+	if raw[0] == 0 && raw[1] == 0 && raw[2] == 0 && raw[3] == 0 {
+		var out bytes.Buffer
+		r := bytes.NewReader(raw)
+		for {
+			header := make([]byte, frameHeaderLen)
+			if _, err := io.ReadFull(r, header); err != nil {
+				if err == io.EOF || err == io.ErrUnexpectedEOF {
+					break
+				}
+				return "", err
+			}
+			size := int(binary.BigEndian.Uint32(header[4:8]))
+			if size == 0 {
+				continue
+			}
+			payload := make([]byte, size)
+			if _, err := io.ReadFull(r, payload); err != nil {
+				if err == io.ErrUnexpectedEOF || err == io.EOF {
+					break
+				}
+				return "", err
+			}
+			out.Write(payload)
+		}
+		return out.String(), nil
+	}
+	return string(raw), nil
 }
 
 func (c *Client) PullImage(ctx context.Context, image string) error {
@@ -144,12 +233,14 @@ func (c *Client) ImageExists(ctx context.Context, image string) (bool, error) {
 
 type CreateSpec struct {
 	Image                  string
+	Entrypoint             []string
 	Cmd                    []string
 	Env                    []string
 	VolumeName, VolumeDest string
 	VolumeBinds            []string
 	Labels                 map[string]string
 	NetworkNames           []string
+	RestartPolicy          string
 }
 
 func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (string, error) {
@@ -165,17 +256,22 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 		}
 		binds = []string{b}
 	}
+	restartPolicy := spec.RestartPolicy
+	if restartPolicy == "" {
+		restartPolicy = "unless-stopped"
+	}
 	hostConfig := map[string]any{
-		"Binds":        binds,
-		"RestartPolicy": map[string]any{"Name": "unless-stopped"},
+		"Binds":         binds,
+		"RestartPolicy": map[string]any{"Name": restartPolicy},
 	}
 	if len(spec.Labels) > 0 {
 		hostConfig["Labels"] = spec.Labels
 	}
 	payload := map[string]any{
-		"Image": spec.Image,
-		"Cmd":   spec.Cmd,
-		"Env":   spec.Env,
+		"Image":      spec.Image,
+		"Entrypoint": spec.Entrypoint,
+		"Cmd":        spec.Cmd,
+		"Env":        spec.Env,
 		"HostConfig": hostConfig,
 		"NetworkingConfig": map[string]any{
 			"EndpointsConfig": endpoints,
@@ -219,6 +315,34 @@ func (c *Client) Start(ctx context.Context, containerName string) error {
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("start container %s: docker API returned %s: %s", containerName, resp.Status, string(body))
+	}
+	return nil
+}
+
+func (c *Client) Stop(ctx context.Context, containerName string, timeout int) error {
+	q := url.Values{}
+	if timeout > 0 {
+		q.Set("t", strconv.Itoa(timeout))
+	}
+	path := "/containers/" + containerName + "/stop"
+	if encoded := q.Encode(); encoded != "" {
+		path += "?" + encoded
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+path, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("stop container %s: %w", containerName, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrContainerNotFound
+	}
+	if resp.StatusCode >= 400 && resp.StatusCode != http.StatusNotModified {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("stop container %s: docker API returned %s: %s", containerName, resp.Status, string(body))
 	}
 	return nil
 }
