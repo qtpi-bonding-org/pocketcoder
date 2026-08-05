@@ -31,11 +31,11 @@ scoped-token work resurfaces later. Everything else below is dead;
       line 91) assumed `pocketcoder://oauth-callback` would be accepted
       directly; that assumption was wrong. **THIRD CORRECTION** (found via
       the actual `deploy_mcp_oauth_relay` output): the real URL is
-      `https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/callback`
+      `https://oauth.relay.pocketcoder.org/callback`
       — Cloudflare's free `workers.dev` route includes the account
       subdomain (`gp-c53`), it's NOT the bare
-      `pocketcoder-mcp-oauth-relay.workers.dev` originally guessed (that
-      guess matched the existing, also-wrong, `mcpOAuthRelayBaseUrl`
+      `pocketcoder-oauth-relay.gp-c53.workers.dev` originally guessed (that
+      guess matched the existing OAuth relay endpoint configuration
       constant in `external_module.dart` — needs fixing there too when
       task #11 gets implemented). If the OAuth app was registered with
       the bare-domain URL, go fix that registration to the `gp-c53` one.

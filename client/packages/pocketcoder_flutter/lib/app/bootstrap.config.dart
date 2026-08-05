@@ -194,8 +194,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i145.ErrorBoxStorage>(
         () => externalModule.errorBoxStorage);
     gh.lazySingleton<String>(
-      () => externalModule.mcpOAuthRelayBaseUrl,
-      instanceName: 'mcpOAuthRelayBaseUrl',
+      () => externalModule.oauthRelayBaseUrl,
+      instanceName: 'oauthRelayBaseUrl',
     );
     gh.factory<_i1000.SshTerminalCubit>(
         () => _i1000.SshTerminalCubit(gh<_i169.PocketBase>()));
@@ -247,7 +247,7 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
     gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
           gh<_i519.Client>(),
-          gh<String>(instanceName: 'mcpOAuthRelayBaseUrl'),
+          gh<String>(instanceName: 'oauthRelayBaseUrl'),
         ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),

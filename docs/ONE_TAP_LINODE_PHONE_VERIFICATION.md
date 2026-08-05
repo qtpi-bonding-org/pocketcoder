@@ -41,7 +41,7 @@ publish, and record a new image manifest before the production run.
 | Current source identity captured | **Pass** — `a3136b14f`, 2026-08-04T18:58:42Z | **Pending** — record the release/IPA build hash and image manifest hash used |
 | Deploy/login entry point and chosen admin credentials | **Pass** — focused Flutter suite passed (10 tests) on `a3136b14f` | **Pending** — use the values chosen on the phone to log into the new server |
 | Linode OAuth relay reachable and configured | **Pass** — `/` healthy; `/providers` returned GitHub and Linode | **Pending** — real browser consent, callback, claim, and refresh from the phone |
-| Image relay reachable | **Pass** — account-qualified `/health` and `/image-manifest` returned successfully | **Blocked** — publish an image matching the source under test; bare `pocketcoder-image-relay.workers.dev` does not resolve, so verify the app uses the account-qualified relay URL |
+| Image relay reachable | **Pass** — `images.relay.pocketcoder.org/health` and `/image-manifest` returned successfully | **Pending** — verify the production phone build uses the custom relay URL |
 | Push relay reachable | **Pass** — account-qualified root returned healthy | **N/A** for sending/receiving an in-app message; separately test a physical-device push later |
 | New Linode created and booted | Historical real proof exists in `REMAINING_TESTS_STATUS.md` | **Pending** — create a fresh instance from the released phone build and check the resulting PocketBase health endpoint |
 | Phone reaches new server | **Pending** — emulator/device connection is not equivalent | **Pending** — enter or accept the deployed HTTPS address and complete login |

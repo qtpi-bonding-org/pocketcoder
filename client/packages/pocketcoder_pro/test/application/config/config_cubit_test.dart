@@ -19,7 +19,7 @@ DeploymentConfig _testConfig() => DeploymentConfig(
       region: 'us-east',
       adminEmail: 'admin@example.com',
       ntfyEnabled: false,
-      imageRelayUrl: 'https://pocketcoder-image-relay.workers.dev',
+      imageRelayUrl: 'https://images.relay.pocketcoder.org',
       nixosImageLabel: 'pocketcoder-nixos-v1',
     );
 

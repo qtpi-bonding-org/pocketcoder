@@ -1,9 +1,9 @@
-name = "pocketcoder-mcp-oauth-relay"
+name = "pocketcoder-oauth-relay"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
 
 [[kv_namespaces]]
-binding = "MCP_OAUTH_KV"
+binding = "OAUTH_RELAY_KV"
 id = "bcfefa68ed2c4f45b2d4c4c6e11d3ea5"
 
 # Secrets (set via `wrangler secret put`), one client_id/client_secret pair
