@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart';
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'mcp_state.dart';
 
 /// A completed-but-undelivered OAuth grant, kept in memory only until
@@ -27,7 +28,8 @@ class McpCubit extends Cubit<McpState> {
 
   _PendingOAuthDelivery? _pendingOAuthDelivery;
 
-  McpCubit(this._repository, this._oauthService) : super(const McpState.initial());
+  McpCubit(this._repository, this._oauthService)
+      : super(const McpState.initial());
 
   @override
   Future<void> close() {
@@ -43,6 +45,8 @@ class McpCubit extends Cubit<McpState> {
         emit(McpState.loaded(servers));
       },
       onError: (e) {
+        unawaited(pocketCoderDiagnosticCapture.capture(
+            error: e, source: 'McpCubit', operation: 'watchServers'));
         logError('MCP: Failed to watch servers', e);
         emit(McpState.error(e.toString()));
       },
@@ -53,6 +57,8 @@ class McpCubit extends Cubit<McpState> {
     try {
       await _repository.authorizeServer(id, config: config);
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+          error: e, source: 'McpCubit', operation: 'authorize');
       logError('MCP: Failed to authorize server', e);
       emit(McpState.error(e.toString()));
     }
@@ -62,6 +68,8 @@ class McpCubit extends Cubit<McpState> {
     try {
       await _repository.denyServer(id);
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+          error: e, source: 'McpCubit', operation: 'deny');
       logError('MCP: Failed to deny server', e);
       emit(McpState.error(e.toString()));
     }
@@ -83,6 +91,8 @@ class McpCubit extends Cubit<McpState> {
         oauthTokenEnvVar: oauthTokenEnvVar,
       );
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+          error: e, source: 'McpCubit', operation: 'createServer');
       logError('MCP: Failed to create server', e);
       emit(McpState.error(e.toString()));
     }
@@ -117,9 +127,13 @@ class McpCubit extends Cubit<McpState> {
       );
     } on McpOAuthException catch (e) {
       if (e.isCancelled) return; // dismissable, not an error state
+      await pocketCoderDiagnosticCapture.capture(
+          error: e, source: 'McpCubit', operation: 'connectOAuth');
       logError('MCP: OAuth authenticate failed', e);
       emit(McpState.error(e.toString()));
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+          error: e, source: 'McpCubit', operation: 'connectOAuth');
       logError('MCP: OAuth authenticate failed', e);
       emit(McpState.error(e.toString()));
     }
@@ -146,7 +160,11 @@ class McpCubit extends Cubit<McpState> {
     required String accessToken,
     String? refreshToken,
   }) async {
-    const delays = [Duration(seconds: 1), Duration(seconds: 2), Duration(seconds: 4)];
+    const delays = [
+      Duration(seconds: 1),
+      Duration(seconds: 2),
+      Duration(seconds: 4)
+    ];
     for (var attempt = 0; attempt <= delays.length; attempt++) {
       try {
         await _repository.deliverOAuthToken(
@@ -165,6 +183,11 @@ class McpCubit extends Cubit<McpState> {
             refreshToken: refreshToken,
           );
           logError('MCP: OAuth token delivery failed after retries', e);
+          await pocketCoderDiagnosticCapture.capture(
+            error: e,
+            source: 'McpCubit',
+            operation: 'deliverOAuthToken',
+          );
           emit(McpState.error(e.toString()));
           return;
         }

@@ -3,57 +3,75 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:intl/intl.dart';
+import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_cubit.dart';
+import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
 class ErrorInboxScreen extends StatelessWidget {
   const ErrorInboxScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return PocketCoderShell(
-      title: context.l10n.errorsTitle,
-      activePillar: NavPillar.configure,
-      showBack: true,
-      body: BiosFrame(
+    return UiFlowListener<ErrorInboxDiagnosticsCubit,
+        ErrorInboxDiagnosticsState>(
+      showSuccessToasts: true,
+      successMessage: context.l10n.errorsCopied,
+      child: PocketCoderShell(
         title: context.l10n.errorsTitle,
-        child: BlocBuilder<ErrorBoxPageCubit, ErrorBoxPageState>(
-          builder: (context, state) {
-            if (state.unsentErrors.isEmpty) {
-              return Padding(
-                padding: EdgeInsets.all(AppSizes.space * 2),
-                child: TerminalText(
-                  context.l10n.errorsEmpty,
-                  size: TerminalTextSize.small,
-                ),
-              );
-            }
-            return Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(AppSizes.space),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TerminalButton(
-                      label: context.l10n.errorsClearAll,
-                      isPrimary: false,
-                      onTap: () async {
-                        final cubit = context.read<ErrorBoxPageCubit>();
-                        for (final entry in List.of(state.unsentErrors)) {
-                          await cubit.deleteError(entry.id);
-                        }
-                      },
+        activePillar: NavPillar.configure,
+        showBack: true,
+        body: BiosFrame(
+          title: context.l10n.errorsTitle,
+          child: BlocBuilder<ErrorBoxPageCubit, ErrorBoxPageState>(
+            builder: (context, state) {
+              if (state.unsentErrors.isEmpty) {
+                return Padding(
+                  padding: EdgeInsets.all(AppSizes.space * 2),
+                  child: TerminalText(
+                    context.l10n.errorsEmpty,
+                    size: TerminalTextSize.small,
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(AppSizes.space),
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: AppSizes.space,
+                      children: [
+                        TerminalButton(
+                          label: context.l10n.errorsCopyAll,
+                          isPrimary: true,
+                          onTap: () => context
+                              .read<ErrorInboxDiagnosticsCubit>()
+                              .copyReports(state.unsentErrors),
+                        ),
+                        TerminalButton(
+                          label: context.l10n.errorsClearAll,
+                          isPrimary: false,
+                          onTap: () async {
+                            final cubit = context.read<ErrorBoxPageCubit>();
+                            for (final entry in List.of(state.unsentErrors)) {
+                              await cubit.deleteError(entry.id);
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                for (final entry in state.unsentErrors)
-                  _ErrorTile(entry: entry),
-              ],
-            );
-          },
+                  for (final entry in state.unsentErrors)
+                    _ErrorTile(entry: entry),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -76,7 +94,8 @@ class _ErrorTile extends StatelessWidget {
     return Material(
       type: MaterialType.transparency,
       child: ExpansionTile(
-        title: TerminalText(entry.errorData.source, size: TerminalTextSize.small),
+        title:
+            TerminalText(entry.errorData.source, size: TerminalTextSize.small),
         subtitle: TerminalText(
           '${entry.errorData.errorCode} · ${DateFormat.yMd().add_Hm().format(entry.lastOccurred)} · '
           '${context.l10n.errorsOccurred(entry.occurrenceCount)}',
@@ -84,9 +103,23 @@ class _ErrorTile extends StatelessWidget {
         ),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
-          onPressed: () => context.read<ErrorBoxPageCubit>().deleteError(entry.id),
+          onPressed: () =>
+              context.read<ErrorBoxPageCubit>().deleteError(entry.id),
         ),
         children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: TerminalButton(
+                label: context.l10n.errorsCopy,
+                isPrimary: true,
+                onTap: () => context
+                    .read<ErrorInboxDiagnosticsCubit>()
+                    .copyReport(entry.errorData),
+              ),
+            ),
+          ),
           Padding(
             padding: EdgeInsets.all(AppSizes.space),
             child: Align(
