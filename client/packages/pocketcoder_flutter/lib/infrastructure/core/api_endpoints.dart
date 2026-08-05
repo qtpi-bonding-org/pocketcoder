@@ -124,6 +124,34 @@ class ApiEndpoints {
   static const String mcpOAuthStore = '/api/pocketcoder/mcp_oauth/store';
 
   // ===========================================================================
+  // HARNESS AUTH ENDPOINTS
+  // ===========================================================================
+
+  /// POST /api/pocketcoder/harness_auth/status
+  /// Returns current harness auth binding state and active attempt/challenge.
+  static const String harnessAuthStatus = '/api/pocketcoder/harness_auth/status';
+
+  /// POST /api/pocketcoder/harness_auth/start
+  /// Starts a harness auth flow for a specific credential mode.
+  static const String harnessAuthStart = '/api/pocketcoder/harness_auth/start';
+
+  /// POST /api/pocketcoder/harness_auth/poll
+  /// Polls the active auth attempt for the binding and returns latest status.
+  static const String harnessAuthPoll = '/api/pocketcoder/harness_auth/poll';
+
+  /// POST /api/pocketcoder/harness_auth/submit
+  /// Submits a device/browser code for the active attempt.
+  static const String harnessAuthSubmit = '/api/pocketcoder/harness_auth/submit';
+
+  /// POST /api/pocketcoder/harness_auth/cancel
+  /// Cancels the active auth attempt container.
+  static const String harnessAuthCancel = '/api/pocketcoder/harness_auth/cancel';
+
+  /// POST /api/pocketcoder/harness_auth/disconnect
+  /// Clears the active auth binding and stops any auth helper state.
+  static const String harnessAuthDisconnect = '/api/pocketcoder/harness_auth/disconnect';
+
+  // ===========================================================================
   // HELPER METHODS
   // ===========================================================================
 
@@ -146,6 +174,12 @@ class ApiEndpoints {
     schedulesDelete,
     schedulesRunNow,
     mcpOAuthStore,
+    harnessAuthStatus,
+    harnessAuthStart,
+    harnessAuthPoll,
+    harnessAuthSubmit,
+    harnessAuthCancel,
+    harnessAuthDisconnect,
   ];
 
   /// Dynamic endpoints that require parameters

@@ -26,6 +26,7 @@ class SettingsScreen extends StatelessWidget {
       ]),
       (context.l10n.settingsSecuritySection, [
         ('TOOL PERMISSIONS', '[SETUP]', 'configureToolPermissions'),
+        ('HARNESS CONNECTIONS', '[CONFIGURE]', 'configureHarnessAuth'),
         ('MCP MANAGEMENT', '[CONFIGURE]', 'configureMcp'),
         ('SKILLS', '[MANAGE]', 'configureSkills'),
       ]),
@@ -152,6 +153,8 @@ class SettingsScreen extends StatelessWidget {
         context.push(AppRoutes.configureObservability);
       case 'configureLlm':
         context.push(AppRoutes.configureLlm);
+      case 'configureHarnessAuth':
+        context.push(AppRoutes.configureHarnessAuth);
       case 'configureScheduler':
         context.push(AppRoutes.configureScheduler);
       case 'configureNotifications':
