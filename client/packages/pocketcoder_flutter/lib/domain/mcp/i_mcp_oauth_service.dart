@@ -3,7 +3,7 @@
 /// issued one) a refresh token. Ephemeral — never persisted client-side.
 typedef McpOAuthTokenPair = ({String accessToken, String? refreshToken});
 
-/// A provider workers/mcp-oauth-relay currently has configured (both a
+/// A provider workers/oauth-relay currently has configured (both a
 /// PROVIDERS entry and live wrangler secrets) — see
 /// docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md.
 /// `displayName` is human-facing ("GitHub"); `id` is the opaque string
@@ -13,7 +13,7 @@ typedef McpOAuthProvider = ({String id, String displayName});
 /// Client-side half of the MCP OAuth flow (see
 /// docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md, Component
 /// 2, as refined by the provider-discovery addendum). Runs the PKCE
-/// authorize/browser/claim dance against workers/mcp-oauth-relay and hands
+/// authorize/browser/claim dance against workers/oauth-relay and hands
 /// back the resulting token pair. This service is a courier, not a
 /// holder: callers are responsible for delivering the returned token to
 /// this user's own PocketBase (Component 3, via

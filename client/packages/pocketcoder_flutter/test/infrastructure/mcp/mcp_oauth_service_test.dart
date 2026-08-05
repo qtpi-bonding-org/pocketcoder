@@ -12,7 +12,7 @@ class MockHttpClient extends Mock implements http.Client {}
 class FakeUri extends Fake implements Uri {}
 
 /// Builds a Worker-shaped `state` param the way
-/// workers/mcp-oauth-relay/src/index.js's handleAuthorize does, for tests
+/// workers/oauth-relay/src/index.js's handleAuthorize does, for tests
 /// that need to simulate a well-formed provider callback.
 String _encodeStateForTest({required String provider, required String codeChallenge}) {
   final json = jsonEncode({'p': provider, 'cc': codeChallenge});

@@ -165,7 +165,7 @@ class McpOAuthService implements IMcpOAuthService {
   }
 
   /// S256 code_challenge: SHA-256 of the verifier, base64url without
-  /// padding — the same transform workers/mcp-oauth-relay's /claim route
+  /// padding — the same transform workers/oauth-relay's /claim route
   /// re-derives from the verifier the app sends back.
   @visibleForTesting
   static String generateCodeChallenge(String codeVerifier) {
@@ -175,7 +175,7 @@ class McpOAuthService implements IMcpOAuthService {
 
   /// Decodes the `state` param the Worker's GET /authorize route built
   /// (base64url(JSON.stringify({p, cc}))) — see
-  /// workers/mcp-oauth-relay/src/index.js's handleAuthorize. Returns null
+  /// workers/oauth-relay/src/index.js's handleAuthorize. Returns null
   /// on any malformed input rather than throwing, since this is used for
   /// a defense-in-depth equality check, not a required-to-succeed parse.
   @visibleForTesting
