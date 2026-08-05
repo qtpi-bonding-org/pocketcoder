@@ -483,6 +483,9 @@
 
   "errorsTitle": "ERROR REPORTS",
   "errorsEmpty": "NO ERRORS CAPTURED",
+  "errorsCopy": "COPY REPORT",
+  "errorsCopyAll": "COPY ALL",
+  "errorsCopied": "DIAGNOSTIC REPORT COPIED",
   "errorsClearAll": "CLEAR ALL",
   "errorsOccurred": "Occurred {count}x",
   "@errorsOccurred": {

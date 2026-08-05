@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'billing_state.dart';
 
 @injectable
@@ -21,6 +22,11 @@ class BillingCubit extends Cubit<BillingState> {
         isPro: isPro,
       ));
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+        error: e,
+        source: 'BillingCubit',
+        operation: 'loadOfferings',
+      );
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
     }
   }
@@ -36,6 +42,11 @@ class BillingCubit extends Cubit<BillingState> {
             status: UiFlowStatus.failure, error: 'Purchase failed'));
       }
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+        error: e,
+        source: 'BillingCubit',
+        operation: 'purchase',
+      );
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
     }
   }
@@ -47,6 +58,11 @@ class BillingCubit extends Cubit<BillingState> {
       final isPro = await _billingService.isPro();
       emit(state.copyWith(status: UiFlowStatus.success, isPro: isPro));
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+        error: e,
+        source: 'BillingCubit',
+        operation: 'restorePurchases',
+      );
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
     }
   }

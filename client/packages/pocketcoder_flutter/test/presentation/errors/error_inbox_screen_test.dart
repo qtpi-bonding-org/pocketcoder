@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
+import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_inbox_screen.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -52,8 +53,11 @@ void main() {
     when(() => storage.getUnsentErrors()).thenAnswer((_) async => [_entry]);
 
     await tester.pumpWidget(_wrap(
-      BlocProvider(
-        create: (_) => ErrorBoxPageCubit()..loadErrors(),
+      MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => ErrorBoxPageCubit()..loadErrors()),
+          BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
+        ],
         child: const ErrorInboxScreen(),
       ),
     ));
@@ -67,8 +71,11 @@ void main() {
     when(() => storage.getUnsentErrors()).thenAnswer((_) async => []);
 
     await tester.pumpWidget(_wrap(
-      BlocProvider(
-        create: (_) => ErrorBoxPageCubit()..loadErrors(),
+      MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => ErrorBoxPageCubit()..loadErrors()),
+          BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
+        ],
         child: const ErrorInboxScreen(),
       ),
     ));
@@ -82,8 +89,11 @@ void main() {
     when(() => storage.deleteError('e1')).thenAnswer((_) async {});
 
     await tester.pumpWidget(_wrap(
-      BlocProvider(
-        create: (_) => ErrorBoxPageCubit()..loadErrors(),
+      MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => ErrorBoxPageCubit()..loadErrors()),
+          BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
+        ],
         child: const ErrorInboxScreen(),
       ),
     ));

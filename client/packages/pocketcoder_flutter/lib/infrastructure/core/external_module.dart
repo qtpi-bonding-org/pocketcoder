@@ -37,7 +37,7 @@ abstract class ExternalModule {
         schemaJson = await rootBundle.loadString('assets/pb_schema.json');
         logDebug('PocketBaseInit: Schema loaded via direct path');
       } catch (e2) {
-        logWarning('PocketBaseInit: ⚠️ Fallback direct path also failed: $e2');
+        logWarning('PocketBaseInit: ⚠️ Fallback direct path also failed', e2);
       }
     }
 

@@ -21,6 +21,24 @@ Two patterns have emerged for working with autonomous agents, and PocketCoder ai
 
 **Core principles:** scoped for mobile (orchestration, not 500-line diffs on a phone) · human-in-the-loop by default · open protocols instead of bespoke glue · bring-your-own-model (Goose is decoupled from the LLM).
 
+## Mobile-first provisioning
+
+PocketCoder is designed to be more than a phone remote for a VPS that was already prepared through SSH. The intended Pro convenience flow is:
+
+```text
+Phone
+  → provision PocketCoder on a Linode or Elestio VPS
+  → receive a working HTTPS URL automatically
+  → configure the agent and model provider
+  → start work
+  → receive approval requests
+  → approve, deny, deploy, or update from the phone
+```
+
+The deployment also removes a traditionally annoying setup step: the provisioned system can derive a public `sslip.io` hostname from the VPS IP and use Caddy to obtain HTTPS automatically, without asking the user to buy a domain or hand-configure a certificate. Tailscale Funnel provides another automatic HTTPS path when that mode is selected.
+
+This is different from the common mobile-agent pattern where a user must already have a running desktop, CLI session, or VPS and then pair a phone to it. PocketCoder’s open/self-hosted path remains available through [`deploy.sh`](deploy.sh); mobile VPS provisioning is a separate proprietary convenience layer.
+
 ## Architecture
 
 The agent core is three containers connected by open protocols:
@@ -65,6 +83,7 @@ The security model and its honest limits (tool execution currently lives inside 
 |:---|:---|:---|:---|
 | **Cost** | ~$10/mo (VPS only) | Subscription + VPS if headless | ~$10/mo (VPS) |
 | **Approve tool calls from phone** | Built-in, real-time | Not really — watch the screen | No permission gate |
+| **Provision from phone** | Designed for one-tap VPS provisioning | Usually requires an existing machine/session | Usually manual/self-hosted setup |
 | **Laptop required** | No — runs on a VPS | DIY / unofficial | No |
 | **LLM provider** | Any (bring your own key) | Usually one vendor | Any |
 | **Multi-user** | Yes (via PocketBase) | Single session | Single user |

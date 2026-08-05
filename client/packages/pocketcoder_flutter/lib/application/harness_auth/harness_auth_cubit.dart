@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repositor
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 
 import 'harness_auth_state.dart';
 
@@ -41,6 +42,11 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
       );
       _refreshStatuses();
     }, onError: (Object e) {
+      unawaited(pocketCoderDiagnosticCapture.capture(
+        error: e,
+        source: 'HarnessAuthCubit',
+        operation: 'watchHarnesses',
+      ));
       emit(state.copyWith(error: e));
     });
   }
@@ -48,11 +54,16 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   void _loadProviderKeys() {
     _providerKeysSub?.cancel();
     _providerKeysSub = _providerRepository.watchProviderKeys().listen(
-          (providerKeys) => emit(state.copyWith(providerKeys: providerKeys)),
-          onError: (Object e) {
-            emit(state.copyWith(error: e));
-          },
-        );
+      (providerKeys) => emit(state.copyWith(providerKeys: providerKeys)),
+      onError: (Object e) {
+        unawaited(pocketCoderDiagnosticCapture.capture(
+          error: e,
+          source: 'HarnessAuthCubit',
+          operation: 'watchProviderKeys',
+        ));
+        emit(state.copyWith(error: e));
+      },
+    );
   }
 
   Future<void> _setBusy(String harnessId, bool busy) async {
@@ -65,12 +76,18 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
     emit(state.copyWith(busyHarnesses: nextBusy));
   }
 
-  Future<void> _withBusy(String harnessId, Future<void> Function() action) async {
+  Future<void> _withBusy(
+      String harnessId, Future<void> Function() action) async {
     await _setBusy(harnessId, true);
     try {
       await action();
       emit(state.copyWith(clearError: true));
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+        error: e,
+        source: 'HarnessAuthCubit',
+        operation: 'harnessOperation',
+      );
       emit(state.copyWith(error: e));
     } finally {
       await _setBusy(harnessId, false);
@@ -96,6 +113,11 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
       final status = await _authRepository.status(harnessId: harnessId);
       _updateStatus(harnessId, status);
     } catch (e) {
+      await pocketCoderDiagnosticCapture.capture(
+        error: e,
+        source: 'HarnessAuthCubit',
+        operation: 'refreshStatus',
+      );
       emit(state.copyWith(error: e));
     }
   }

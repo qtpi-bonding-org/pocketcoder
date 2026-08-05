@@ -11,6 +11,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
@@ -52,7 +53,12 @@ class ElicitationCubit extends AppCubit<ElicitationState> {
         ));
       },
       onError: (Object e) {
-        logError('🤖 [ElicitationCubit] watch($chatId) error: $e');
+        unawaited(pocketCoderDiagnosticCapture.capture(
+          error: e,
+          source: 'ElicitationCubit',
+          operation: 'watchStream',
+        ));
+        logError('🤖 [ElicitationCubit] watch error', e);
         emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );
@@ -66,12 +72,14 @@ class ElicitationCubit extends AppCubit<ElicitationState> {
     final chatId = _chatId;
     final elicitation = state.elicitation;
     if (chatId == null || elicitation == null) {
-      logWarning('🤖 [ElicitationCubit] submit called with no pending elicitation');
+      logWarning(
+          '🤖 [ElicitationCubit] submit called with no pending elicitation');
       return;
     }
     final elicitationId = elicitation['elicitationId'];
     if (elicitationId is! String) {
-      logWarning('🤖 [ElicitationCubit] submit: pending elicitation missing elicitationId');
+      logWarning(
+          '🤖 [ElicitationCubit] submit: pending elicitation missing elicitationId');
       return;
     }
     await tryOperation(() async {

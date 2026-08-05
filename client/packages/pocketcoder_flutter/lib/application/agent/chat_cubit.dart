@@ -6,6 +6,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_transport.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
@@ -57,11 +58,17 @@ class ChatCubit extends AppCubit<ChatState> {
       (event) {
         if (myGeneration != _generation) return;
         _reducer!.apply(event);
-        emit(state.copyWith(conversation: _reducer!.current, status: UiFlowStatus.success));
+        emit(state.copyWith(
+            conversation: _reducer!.current, status: UiFlowStatus.success));
       },
       onError: (Object e) {
         if (myGeneration != _generation) return;
-        logError('🤖 [ChatCubit] events($chatId) error: $e');
+        unawaited(pocketCoderDiagnosticCapture.capture(
+          error: e,
+          source: 'ChatCubit',
+          operation: 'eventsStream',
+        ));
+        logError('🤖 [ChatCubit] events error', e);
         emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );
@@ -80,7 +87,12 @@ class ChatCubit extends AppCubit<ChatState> {
         delay = _reconnectDelay;
       } catch (e) {
         if (myGeneration != _generation) return;
-        logError('🤖 [ChatCubit] ingest($chatId) error, reconnecting: $e');
+        unawaited(pocketCoderDiagnosticCapture.capture(
+          error: e,
+          source: 'ChatCubit',
+          operation: 'ingestStream',
+        ));
+        logError('🤖 [ChatCubit] ingest error, reconnecting', e);
         consecutiveFailures++;
         // Fires once on crossing the threshold, not on every retry after
         // it, so the error snackbar doesn't spam while backoff continues.
@@ -88,8 +100,9 @@ class ChatCubit extends AppCubit<ChatState> {
           emit(state.copyWith(error: e, status: UiFlowStatus.failure));
         }
         delay = Duration(
-          milliseconds: (delay.inMilliseconds * 2)
-              .clamp(_reconnectDelay.inMilliseconds, _maxReconnectDelay.inMilliseconds),
+          milliseconds: (delay.inMilliseconds * 2).clamp(
+              _reconnectDelay.inMilliseconds,
+              _maxReconnectDelay.inMilliseconds),
         );
       }
       if (myGeneration != _generation) return;
@@ -106,7 +119,9 @@ class ChatCubit extends AppCubit<ChatState> {
     }
     await tryOperation(() async {
       await transport.sendMessage(text);
-      return state.copyWith(status: UiFlowStatus.success, lastOperation: AgentChatOperation.sendPrompt);
+      return state.copyWith(
+          status: UiFlowStatus.success,
+          lastOperation: AgentChatOperation.sendPrompt);
     });
   }
 
@@ -115,7 +130,9 @@ class ChatCubit extends AppCubit<ChatState> {
     if (transport == null) return;
     await tryOperation(() async {
       await transport.cancel();
-      return state.copyWith(status: UiFlowStatus.success, lastOperation: AgentChatOperation.cancel);
+      return state.copyWith(
+          status: UiFlowStatus.success,
+          lastOperation: AgentChatOperation.cancel);
     });
   }
 }
