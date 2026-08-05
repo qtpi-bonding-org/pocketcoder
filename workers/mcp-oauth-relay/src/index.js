@@ -89,7 +89,7 @@ export default {
 		if (request.method === 'POST' && url.pathname === '/refresh') {
 			return handleRefresh(request, env);
 		}
-		return json({ status: 'ok', service: 'pocketcoder-mcp-oauth-relay' }, 200);
+		return json({ status: 'ok', service: 'pocketcoder-oauth-relay' }, 200);
 	},
 };
 
@@ -241,7 +241,7 @@ async function handleCallback(url, env) {
 	}
 
 	const exchangeCode = crypto.randomUUID();
-	await env.MCP_OAUTH_KV.put(
+	await env.OAUTH_RELAY_KV.put(
 		`exchange:${exchangeCode}`,
 		JSON.stringify({
 			codeChallenge: state.cc,
@@ -277,7 +277,7 @@ async function handleClaim(request, env) {
 	}
 
 	const kvKey = `exchange:${exchangeCode}`;
-	const raw = await env.MCP_OAUTH_KV.get(kvKey);
+	const raw = await env.OAUTH_RELAY_KV.get(kvKey);
 	if (!raw) {
 		return json({ error: 'expired_or_already_claimed' }, 404);
 	}
@@ -289,7 +289,7 @@ async function handleClaim(request, env) {
 	// single exchange_code must never be claimable twice, even by a retried
 	// wrong verifier. Fail closed — this check is PKCE's entire purpose in
 	// this flow.
-	await env.MCP_OAUTH_KV.delete(kvKey);
+	await env.OAUTH_RELAY_KV.delete(kvKey);
 
 	if (computedChallenge !== entry.codeChallenge) {
 		return json({ error: 'verifier_mismatch' }, 400);

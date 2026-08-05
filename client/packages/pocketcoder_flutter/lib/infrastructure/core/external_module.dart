@@ -108,11 +108,10 @@ abstract class ExternalModule {
   @lazySingleton
   http.Client get httpClient => http.Client();
 
-  /// Base URL of workers/mcp-oauth-relay. No trailing slash.
-  @Named('mcpOAuthRelayBaseUrl')
+  /// Base URL of the shared OAuth relay. No trailing slash.
+  @Named('oauthRelayBaseUrl')
   @lazySingleton
-  String get mcpOAuthRelayBaseUrl =>
-      'https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev';
+  String get oauthRelayBaseUrl => 'https://oauth.relay.pocketcoder.org';
 
   /// Local-only storage for the on-device error inbox. Never synced or
   /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.

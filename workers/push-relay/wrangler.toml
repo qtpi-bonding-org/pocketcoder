@@ -1,4 +1,4 @@
-name = "pocketcoder-relay"
+name = "pocketcoder-push-relay"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
 

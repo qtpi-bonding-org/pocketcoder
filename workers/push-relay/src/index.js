@@ -30,7 +30,7 @@
 export default {
 	async fetch(request, env) {
 		if (request.method !== 'POST') {
-			return json({ status: 'ok', service: 'pocketcoder-relay' }, 200);
+			return json({ status: 'ok', service: 'pocketcoder-push-relay' }, 200);
 		}
 
 		// Step 1: Validate shared secret
