@@ -32,16 +32,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # client/packages/pocketcoder_flutter depends on several private git
-      # repos under the qtpi-bonding-org org via SSH URLs -- `flutter pub
-      # get` below needs an SSH key with read access to those repos loaded
-      # into the runner's ssh-agent. Add one as a repo secret (e.g.
-      # FLUTTER_DEPS_DEPLOY_KEY) and uncomment this step; until then this
-      # workflow will fail at the "Resolve workspace dependencies" step
-      # with a git auth error, not a purity failure.
-      # - uses: webfactory/ssh-agent@v0.9.0
-      #   with:
-      #     ssh-private-key: ${{ secrets.FLUTTER_DEPS_DEPLOY_KEY }}
+      # The workspace resolves private qtpi-bonding-org packages over SSH.
+      # Keep the key in GitHub Actions secrets; never put it in pubspec files
+      # or the repository. This explicit check turns the previous opaque git
+      # authentication error into an actionable CI failure.
+      - name: Verify Flutter dependency deploy key
+        env:
+          FLUTTER_DEPS_DEPLOY_KEY: ${{ secrets.FLUTTER_DEPS_DEPLOY_KEY }}
+        run: |
+          test -n "$FLUTTER_DEPS_DEPLOY_KEY" || {
+            echo "FLUTTER_DEPS_DEPLOY_KEY is not configured; private Flutter dependencies cannot be resolved." >&2
+            exit 1
+          }
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.FLUTTER_DEPS_DEPLOY_KEY }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -49,7 +55,15 @@ jobs:
 
       - name: Resolve workspace dependencies
         working-directory: client
-        run: flutter pub get
+        run: |
+          set -euo pipefail
+          FOSS_WORKSPACE="$RUNNER_TEMP/pocketcoder-foss-workspace"
+          mkdir -p "$FOSS_WORKSPACE/packages" "$FOSS_WORKSPACE/apps"
+          cp -R packages/pocketcoder_flutter "$FOSS_WORKSPACE/packages/"
+          cp -R apps/pocketcoder_foss "$FOSS_WORKSPACE/apps/"
+          cp pubspec.foss-ci.yaml "$FOSS_WORKSPACE/pubspec.yaml"
+          (cd "$FOSS_WORKSPACE" && flutter pub get)
+          echo "PURITY_CLIENT_DIR=$FOSS_WORKSPACE" >> "$GITHUB_ENV"
 
       - name: Run purity check
         working-directory: client

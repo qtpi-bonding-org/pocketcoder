@@ -8,9 +8,11 @@
   outputs = { self, nixpkgs }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
+    sourceCommit = import ./release-commit.nix;
   in {
     nixosConfigurations.pocketcoder = nixpkgs.lib.nixosSystem {
       inherit system;
+      specialArgs = { inherit sourceCommit; };
       modules = [
         ./configuration.nix
         ./caddy.nix
