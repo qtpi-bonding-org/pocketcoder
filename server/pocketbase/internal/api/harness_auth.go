@@ -197,7 +197,14 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 				_ = app.Save(binding)
 				return re.JSON(500, map[string]string{"error": "Unable to create auth attempt"})
 			}
-			state, err := runtime.Start(context.Background(), provider, attempt.Id)
+			stateCtx, err := runtimeAttemptContext(app, attempt, scopeID)
+			if err != nil {
+				binding.Set("status", bindingStatusError)
+				binding.Set("last_error", err.Error())
+				_ = app.Save(binding)
+				return re.JSON(500, map[string]string{"error": err.Error()})
+			}
+			state, err := runtime.Start(context.Background(), provider, stateCtx)
 			if err != nil {
 				_ = updateHarnessAuthAttempt(app, attempt, harnessauth.AttemptStatusFailed, "Unable to initialize authenticator")
 				binding.Set("status", bindingStatusError)
@@ -249,7 +256,11 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			return re.JSON(404, map[string]string{"error": "No active auth attempt found"})
 		}
 
-		state, err := runtime.Poll(context.Background(), attempt.GetString("provider"), attempt.Id)
+		stateCtx, err := runtimeAttemptContext(app, attempt, scopeID)
+		if err != nil {
+			return re.JSON(500, map[string]string{"error": err.Error()})
+		}
+		state, err := runtime.Poll(context.Background(), attempt.GetString("provider"), stateCtx)
 		if err != nil {
 			if errors.Is(err, harnessauth.ErrAttemptExpired) {
 				attemptStatus := harnessauth.AttemptStatusFailed
@@ -268,6 +279,14 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		binding.Set("last_error", state.LastError)
 		_ = app.Save(binding)
 		response := renderHarnessAuthStatus(app, binding, attempt, scopeKind, scopeID)
+		if state.Challenge != nil {
+			response.Challenge = &harnessAuthChallengeResp{
+				Type:    state.Challenge.Type,
+				Text:    state.Challenge.Text,
+				Target:  state.Challenge.Target,
+				Details: state.Challenge.Details,
+			}
+		}
 		return re.JSON(200, response)
 	}).Bind(apis.RequireAuth())
 
@@ -294,7 +313,11 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		if code == "" {
 			return re.JSON(400, map[string]string{"error": "code is required"})
 		}
-		state, err := runtime.Submit(context.Background(), attempt.GetString("provider"), attempt.Id, code)
+		stateCtx, err := runtimeAttemptContext(app, attempt, scopeID)
+		if err != nil {
+			return re.JSON(500, map[string]string{"error": err.Error()})
+		}
+		state, err := runtime.Submit(context.Background(), attempt.GetString("provider"), stateCtx, code)
 		if err != nil {
 			binding.Set("status", bindingStatusError)
 			binding.Set("last_error", err.Error())
@@ -329,7 +352,11 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		if attempt == nil {
 			return re.JSON(404, map[string]string{"error": "No active auth attempt found"})
 		}
-		state, err := runtime.Cancel(context.Background(), attempt.GetString("provider"), attempt.Id)
+		stateCtx, err := runtimeAttemptContext(app, attempt, scopeID)
+		if err != nil {
+			return re.JSON(500, map[string]string{"error": err.Error()})
+		}
+		state, err := runtime.Cancel(context.Background(), attempt.GetString("provider"), stateCtx)
 		if err != nil {
 			return re.JSON(502, map[string]string{"error": "Auth helper cancel failed"})
 		}
@@ -369,7 +396,11 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			return re.JSON(500, map[string]string{"error": "Internal error"})
 		}
 		if attempt != nil {
-			state, err := runtime.Disconnect(context.Background(), attempt.GetString("provider"), attempt.Id)
+			stateCtx, ctxErr := runtimeAttemptContext(app, attempt, scopeID)
+			if ctxErr != nil {
+				return re.JSON(500, map[string]string{"error": ctxErr.Error()})
+			}
+			state, err := runtime.Disconnect(context.Background(), attempt.GetString("provider"), stateCtx)
 			if err == nil {
 				_ = updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError)
 			}
@@ -528,6 +559,26 @@ func authBindingAndAttemptForRequest(app core.App, scopeKind, scopeID string, in
 		return binding, nil, err
 	}
 	return binding, attempt, nil
+}
+
+func runtimeAttemptContext(app core.App, attempt *core.Record, scopeID string) (harnessauth.AttemptContext, error) {
+	harnessID := attempt.GetString("harness")
+	if harnessID == "" {
+		return harnessauth.AttemptContext{}, fmt.Errorf("attempt is missing harness")
+	}
+	harness, err := app.FindRecordById("harnesses", harnessID)
+	if err != nil {
+		return harnessauth.AttemptContext{}, fmt.Errorf("resolve harness %s: %w", harnessID, err)
+	}
+	image := strings.TrimSpace(harness.GetString("container_image"))
+	if image == "" {
+		return harnessauth.AttemptContext{}, fmt.Errorf("harness %s is missing container_image", harnessID)
+	}
+	return harnessauth.AttemptContext{
+		AttemptID:    attempt.Id,
+		UserID:       scopeID,
+		HarnessImage: image,
+	}, nil
 }
 
 func updateHarnessAuthAttempt(app core.App, attempt *core.Record, status, errorText string) error {

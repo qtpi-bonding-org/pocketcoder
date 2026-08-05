@@ -146,6 +146,7 @@ services:
       dockerfile: server/harness-adapter/Dockerfile
       args:
         ACP_AGENT_PACKAGE: "@agentclientprotocol/claude-agent-acp@0.64.2"
+        AGENT_CLI_PACKAGE: "@anthropic-ai/claude-code@2.1.221"
 
   codex-harness-image:
     profiles: ["harness-images"]
@@ -155,6 +156,7 @@ services:
       dockerfile: server/harness-adapter/Dockerfile
       args:
         ACP_AGENT_PACKAGE: "@agentclientprotocol/codex-acp@1.1.9"
+        AGENT_CLI_PACKAGE: "@openai/codex@0.146.0"
 
   opencode-harness-image:
     profiles: ["harness-images"]
