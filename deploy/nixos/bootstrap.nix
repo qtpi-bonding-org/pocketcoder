@@ -125,6 +125,7 @@ POCKETBASE_SUPERUSER_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
 AGENT_EMAIL=agent@pocketcoder.local
 AGENT_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
 GOOSE_SERVER__SECRET_KEY=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+PN_RELAY_SECRET=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
 EOF
       fi
 

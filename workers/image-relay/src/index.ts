@@ -1,245 +1,52 @@
 /**
  * PocketCoder Image Relay Worker
  *
- * Streams NixOS image from R2 to Linode Images API.
- * Phone sends tiny JSON request — never touches the 300MB image.
+ * Serves the public image manifest. Image provisioning is handled by the
+ * control plane; this worker never receives provider credentials or uploads.
  */
 
 interface Env {
-  IMAGES: R2Bucket;
-  NIXOS_IMAGE_KEY: string;
-  UPLOAD_QUEUE: Queue<UploadQueueMessage>;
+	IMAGES: R2Bucket;
 }
 
-interface UploadQueueMessage {
-  uploadUrl: string;
-}
-
-interface UploadRequest {
-  linodeToken: string;
-  imageLabel?: string;
-  region?: string;
-}
-
-interface StatusRequest {
-  linodeToken: string;
-  label: string;
-}
-
-const LINODE_API = "https://api.linode.com/v4";
-const DEFAULT_LABEL = "pocketcoder-nixos-v1";
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'GET, OPTIONS',
+	'Access-Control-Allow-Headers': 'Content-Type',
 };
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
-    }
+	async fetch(request: Request, env: Env): Promise<Response> {
+		if (request.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
 
-    const url = new URL(request.url);
-
-    if (url.pathname === "/upload-image" && request.method === "POST") {
-      return handleUploadImage(request, env);
-    }
-
-    if (url.pathname === "/image-status" && request.method === "POST") {
-      return handleImageStatus(request, env);
-    }
-
-    if (url.pathname === "/image-manifest" && request.method === "GET") {
-      return handleImageManifest(env);
-    }
-
-    if (url.pathname === "/health") {
-      return json({ status: "ok" });
-    }
-
-    return json({ error: "Not found" }, 404);
-  },
-
-  // The actual R2 -> Linode transfer runs here (queue consumer, up to 15
-  // min per message + automatic retries), not in the HTTP handler's
-  // ctx.waitUntil() -- that has a hard ~30s budget for background work,
-  // nowhere near enough for a multi-hundred-MB upload. Confirmed
-  // empirically: every waitUntil-based attempt left the Linode image at
-  // 0 bytes transferred, regardless of request body format.
-  async queue(batch: MessageBatch<UploadQueueMessage>, env: Env): Promise<void> {
-    for (const message of batch.messages) {
-      try {
-        await streamImageToLinode(env, message.body.uploadUrl);
-        message.ack();
-      } catch (err) {
-        console.error(`Queue message failed: ${err}`);
-        message.retry();
-      }
-    }
-  },
+		const url = new URL(request.url);
+		if (url.pathname === '/image-manifest' && request.method === 'GET') {
+			return handleImageManifest(env);
+		}
+		if (url.pathname === '/health' && request.method === 'GET') {
+			return json({ status: 'ok', service: 'pocketcoder-image-relay' });
+		}
+		return json({ error: 'Not found' }, 404);
+	},
 };
 
-async function handleUploadImage(
-  request: Request,
-  env: Env
-): Promise<Response> {
-  const body = (await request.json()) as UploadRequest;
-  if (!body.linodeToken) {
-    return json({ error: "linodeToken is required" }, 400);
-  }
-
-  const label = body.imageLabel || DEFAULT_LABEL;
-  const region = body.region || "us-east";
-
-  // Check if image already exists. `existed: true` specifically means
-  // "ready to use" -- an image can exist but still be mid-processing
-  // (status creating/pending_upload), which Linode's create-instance API
-  // rejects with 400 "Image is not available yet". Report status either
-  // way so the caller can tell an in-progress image from no image at all,
-  // but don't claim it's usable until Linode says so. Return here either
-  // way (not falling through to re-trigger a redundant upload).
-  const existing = await findImageByLabel(body.linodeToken, label);
-  if (existing) {
-    return json({
-      imageId: existing.id,
-      status: existing.status,
-      existed: existing.status === "available",
-    });
-  }
-
-  // Get image size from R2 for the Linode upload request
-  const obj = await env.IMAGES.head(env.NIXOS_IMAGE_KEY);
-  if (!obj) {
-    return json({ error: "NixOS image not found in R2" }, 404);
-  }
-
-  // Request upload URL from Linode
-  const uploadRes = await fetch(`${LINODE_API}/images/upload`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${body.linodeToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      label,
-      description: "PocketCoder NixOS server image",
-      region,
-      cloud_init: true,
-    }),
-  });
-
-  if (!uploadRes.ok) {
-    const err = await uploadRes.text();
-    return json({ error: `Linode upload request failed: ${err}` }, uploadRes.status);
-  }
-
-  const uploadData = (await uploadRes.json()) as {
-    upload_to: string;
-    image: { id: string; status: string };
-  };
-
-  // Hand the transfer off to the queue consumer -- see the `queue` handler
-  // above for why this doesn't run inline via ctx.waitUntil().
-  await env.UPLOAD_QUEUE.send({ uploadUrl: uploadData.upload_to });
-
-  return json({
-    imageId: uploadData.image.id,
-    status: "uploading",
-    existed: false,
-  });
-}
-
-async function streamImageToLinode(env: Env, uploadUrl: string): Promise<void> {
-  const obj = await env.IMAGES.get(env.NIXOS_IMAGE_KEY);
-  if (!obj) {
-    // Throw (not just log) so the queue consumer's catch block sees this
-    // as a real failure and retries -- a transient R2 read hiccup
-    // shouldn't silently drop the whole upload.
-    throw new Error("Failed to read image from R2");
-  }
-
-  // Linode's upload_to URL behaves like an S3-style presigned PUT: it
-  // needs a known, fixed-length body, not a chunked one. Manually setting
-  // a Content-Length header alongside the raw R2 ReadableStream (a prior
-  // version of this code) wasn't enough -- confirmed empirically: the
-  // resulting image sat at status=pending_upload, size=0MB indefinitely,
-  // while the identical request worked when the body was fully buffered
-  // in memory first. FixedLengthStream is the Workers-native way to get a
-  // real fixed-length body while still streaming (buffering the full
-  // object in memory isn't an option here -- Workers' ~128MB per-request
-  // memory limit is well under this image's real size).
-  const { readable, writable } = new FixedLengthStream(obj.size);
-  const pipeDone = obj.body.pipeTo(writable);
-
-  const res = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": "application/octet-stream" },
-    body: readable,
-  });
-
-  await pipeDone;
-
-  if (!res.ok) {
-    throw new Error(`Linode upload failed: ${res.status} ${await res.text()}`);
-  }
-  console.log("Image upload to Linode completed successfully");
-}
-
-async function handleImageStatus(request: Request, env: Env): Promise<Response> {
-  const body = (await request.json()) as StatusRequest;
-  const { linodeToken: token, label } = body;
-
-  if (!token || !label) {
-    return json({ error: "linodeToken and label are required" }, 400);
-  }
-
-  const image = await findImageByLabel(token, label);
-  if (image) {
-    return json({ exists: true, imageId: image.id, status: image.status });
-  }
-
-  return json({ exists: false });
-}
-
 async function handleImageManifest(env: Env): Promise<Response> {
-  // Read-only, deliberately: this manifest is the single point of
-  // indirection every future deployment trusts for which image to dd
-  // onto its root disk. The Worker has no write route for it at all --
-  // CI writes the object directly to R2 with its own scoped credential
-  // (see .github/workflows/nixos-image.yml). An unauthenticated write
-  // route here would be remote code execution on every future
-  // deployment (the sha256 the manifest carries provides no protection
-  // against a malicious manifest, since the attacker supplies that too).
-  const obj = await env.IMAGES.get("image-manifest.json");
-  if (!obj) {
-    return json({ error: "No manifest published yet" }, 404);
-  }
-  const manifest = await obj.json();
-  return json(manifest);
-}
+	const object = await env.IMAGES.get('image-manifest.json');
+	if (!object) return json({ error: 'Image manifest unavailable' }, 404);
 
-async function findImageByLabel(
-  token: string,
-  label: string
-): Promise<{ id: string; status: string } | null> {
-  const res = await fetch(`${LINODE_API}/images?page=1&page_size=100`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!res.ok) return null;
-
-  const data = (await res.json()) as { data: Array<{ id: string; label: string; status: string }> };
-  const match = data.data.find(
-    (img) => img.id.startsWith("private/") && img.label === label
-  );
-
-  return match ? { id: match.id, status: match.status } : null;
+	return new Response(object.body, {
+		status: 200,
+		headers: {
+			...CORS_HEADERS,
+			'Content-Type': 'application/json',
+			'Cache-Control': 'public, max-age=300',
+		},
+	});
 }
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
-  });
+	return new Response(JSON.stringify(data), {
+		status,
+		headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+	});
 }

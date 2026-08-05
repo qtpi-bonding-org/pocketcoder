@@ -10,7 +10,7 @@
 # never hardcode a real value here).
 #
 # Required:
-#   PN_RELAY_SECRET        shared secret push-relay validates via X-Relay-Secret
+#   PN_RELAY_SECRET        base secret used to derive the per-user relay secret
 #   REVENUECAT_SECRET_KEY  RevenueCat V2 secret API key (sk_...)
 #   REVENUECAT_PROJECT_ID  RevenueCat project id (proj...)
 #   SUPABASE_URL           e.g. https://xxx.supabase.co
@@ -123,7 +123,7 @@ call_push_relay() {
   user_id="$1"
   token="$2"
   curl -s -o /tmp/push-relay-resp.json -w '%{http_code}' -X POST "$PUSH_RELAY_URL" \
-    -H "X-Relay-Secret: ${PN_RELAY_SECRET}" \
+    -H "X-Relay-Secret: ${PN_RELAY_SECRET}-${user_id}" \
     -H "Content-Type: application/json" \
     -d "{\"token\":\"${token}\",\"user_id\":\"${user_id}\",\"service\":\"fcm\",\"title\":\"test\",\"message\":\"test\",\"type\":\"general\"}"
 }
