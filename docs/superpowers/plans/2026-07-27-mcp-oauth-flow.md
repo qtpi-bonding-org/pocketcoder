@@ -17,7 +17,7 @@
 - Go style: GNU AGPL header block (copy verbatim from `server/pocketbase/internal/api/mcp.go`) on every new `.go` file; `log.Printf` with an emoji+bracket subsystem prefix — this plan uses `"🔐 [MCPOAuth]"` for the new Go file (no existing prefix covers OAuth specifically).
 - Flutter conventions (`client/CLAUDE.md`): no `!` operator; repositories/services wrap every public method in `tryMethod` with a typed `DomainException` subclass; DI via `@injectable` (cubits) / `@lazySingleton` (repos+services) — **every single-implementation infrastructure class in `pocketcoder_flutter` still binds through an `I*` interface** (confirmed: `AuthRepository`, `FilesRepository`, etc. all use `@LazySingleton(as: IThing)`; there is no precedent anywhere in `lib/infrastructure/` for a bare `@LazySingleton()` with no interface) — so **Decision 2 (Component 2): `McpOAuthService` gets an `IMcpOAuthService` interface**, matching every neighbor, not a bare concrete class.
 - `pocketcoder_flutter`'s existing `McpCubit` does **not** extend `AppCubit<T>` (it extends plain `Cubit<McpState>`) — this plan's edits to `mcp_cubit.dart` follow that file's own existing pattern, not the generic `client/CLAUDE.md` rule, per the same precedent the 2026-07-23 governance-ui plan already established.
-- **Decision 1 (Component 1 — Worker):** no `POST /start` call. The `code_challenge` is carried **in plaintext inside `state`** as `base64url(JSON.stringify({p: provider, cc: code_challenge}))`, generated client-side and decoded by the Worker only at `/callback` time (when it mints the KV entry). No HMAC signing, no persisted state→challenge mapping, no extra network round trip before redirecting to the provider. This is safe because `code_challenge` is not secret (RFC 7636 §4.2 — only the verifier is secret) and nothing in this flow needs to verify that the Worker itself set `state` (there is no session/CSRF concern to defend against here: the only consumer of the deep-link callback is the OS-level custom-scheme handler on the same device that generated the verifier). `workers/mcp-oauth-relay` therefore needs exactly one KV write (at `/callback`, the exchange-code→token entry, 60s TTL) and one KV read+delete (at `/claim`) — never a write keyed by `state`.
+- **Decision 1 (Component 1 — Worker):** no `POST /start` call. The `code_challenge` is carried **in plaintext inside `state`** as `base64url(JSON.stringify({p: provider, cc: code_challenge}))`, generated client-side and decoded by the Worker only at `/callback` time (when it mints the KV entry). No HMAC signing, no persisted state→challenge mapping, no extra network round trip before redirecting to the provider. This is safe because `code_challenge` is not secret (RFC 7636 §4.2 — only the verifier is secret) and nothing in this flow needs to verify that the Worker itself set `state` (there is no session/CSRF concern to defend against here: the only consumer of the deep-link callback is the OS-level custom-scheme handler on the same device that generated the verifier). `workers/oauth-relay` therefore needs exactly one KV write (at `/callback`, the exchange-code→token entry, 60s TTL) and one KV read+delete (at `/claim`) — never a write keyed by `state`.
 - **Decision 2 (Component 2 — package boundary):** `IMcpOAuthService`/`McpOAuthService` live in `pocketcoder_flutter` (`lib/domain/mcp/i_mcp_oauth_service.dart`, `lib/infrastructure/mcp/mcp_oauth_service.dart`), **not** in `flutter_aeroform`. This is a PocketCoder-domain concern (talks to this user's own PocketBase and this design's own Worker) with nothing to do with aeroform's VPS-provisioning domain, even though it structurally mirrors `LinodeOAuthService`.
 - **Decision 3 (Component 3 — schema):** add exactly two new **optional** `text` fields to `mcp_servers`: `oauth_provider` (empty = plain-secret server, unchanged existing behavior) and `oauth_token_env_var` (the `mcp.env` variable name the access token lands under, e.g. `GITHUB_PERSONAL_ACCESS_TOKEN`). The refresh token, when present, is stored under `"{oauth_token_env_var}_REFRESH_TOKEN"` — a naming *convention* applied in Go code, not a third schema field, since nothing consumes it yet (token refresh is out of scope per the spec).
 - **Decision 4 (UI wiring):** the smallest addition is (a) two more optional fields in the existing "ADD NEW" dialog (`oauth_provider`, `oauth_token_env_var`) so an OAuth-requiring server can be registered at all, and (b) a "CONNECT" button on `McpManagementScreen`'s server card that replaces the config-schema form entirely whenever `server.oauthProvider` is non-empty (an OAuth server has nothing for a human to type). This is Task 6, deliberately last and independently droppable — Tasks 1–5 deliver a fully working flow that a developer could trigger by hand (e.g. via `curl`/a debug button) even before Task 6 lands.
@@ -28,10 +28,10 @@
 ## File Structure
 
 **Cloudflare Worker — new:**
-- `workers/mcp-oauth-relay/src/index.js` — `/callback` + `/claim` routes.
-- `workers/mcp-oauth-relay/wrangler.toml`
-- `workers/mcp-oauth-relay/package.json`
-- `workers/mcp-oauth-relay/.gitignore`
+- `workers/oauth-relay/src/index.js` — `/callback` + `/claim` routes.
+- `workers/oauth-relay/wrangler.toml`
+- `workers/oauth-relay/package.json`
+- `workers/oauth-relay/.gitignore`
 
 **Go — new:**
 - `server/pocketbase/internal/api/mcp_oauth.go` — `RegisterMcpOAuthApi`, `storeOAuthToken`.
@@ -63,10 +63,10 @@
 
 ---
 
-### Task 1: Cloudflare Worker `workers/mcp-oauth-relay`
+### Task 1: Cloudflare Worker `workers/oauth-relay`
 
 **Files:**
-- Create: `workers/mcp-oauth-relay/src/index.js`, `workers/mcp-oauth-relay/wrangler.toml`, `workers/mcp-oauth-relay/package.json`, `workers/mcp-oauth-relay/.gitignore`
+- Create: `workers/oauth-relay/src/index.js`, `workers/oauth-relay/wrangler.toml`, `workers/oauth-relay/package.json`, `workers/oauth-relay/.gitignore`
 
 **Interfaces:**
 - Consumes: nothing (standalone Worker; provider client credentials via `wrangler secret put`).
@@ -78,13 +78,13 @@ No existing Worker in this repo (`push-relay`, `image-relay`) has an automated t
 
 Run:
 ```bash
-mkdir -p workers/mcp-oauth-relay/src
+mkdir -p workers/oauth-relay/src
 ```
 
-Create `workers/mcp-oauth-relay/package.json`:
+Create `workers/oauth-relay/package.json`:
 ```json
 {
-  "name": "pocketcoder-mcp-oauth-relay",
+  "name": "pocketcoder-oauth-relay",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -97,16 +97,16 @@ Create `workers/mcp-oauth-relay/package.json`:
 }
 ```
 
-Create `workers/mcp-oauth-relay/.gitignore`:
+Create `workers/oauth-relay/.gitignore`:
 ```
 node_modules/
 .wrangler/
 .dev.vars
 ```
 
-Create `workers/mcp-oauth-relay/wrangler.toml`:
+Create `workers/oauth-relay/wrangler.toml`:
 ```toml
-name = "pocketcoder-mcp-oauth-relay"
+name = "pocketcoder-oauth-relay"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
 
@@ -124,7 +124,7 @@ id = "REPLACE_WITH_ID_FROM_WRANGLER_KV_NAMESPACE_CREATE"
 
 - [ ] **Step 2: Write `src/index.js`**
 
-Create `workers/mcp-oauth-relay/src/index.js`:
+Create `workers/oauth-relay/src/index.js`:
 ```js
 /**
  * PocketCoder MCP OAuth Relay
@@ -178,7 +178,7 @@ export default {
 		if (request.method === 'POST' && url.pathname === '/claim') {
 			return handleClaim(request, env);
 		}
-		return json({ status: 'ok', service: 'pocketcoder-mcp-oauth-relay' }, 200);
+		return json({ status: 'ok', service: 'pocketcoder-oauth-relay' }, 200);
 	},
 };
 
@@ -356,11 +356,11 @@ function json(data, status = 200) {
 
 Run:
 ```bash
-cd workers/mcp-oauth-relay && npm install
+cd workers/oauth-relay && npm install
 ```
 Expected: `wrangler` installs, exits 0.
 
-Create a local-only `workers/mcp-oauth-relay/.dev.vars` (gitignored by Step 1):
+Create a local-only `workers/oauth-relay/.dev.vars` (gitignored by Step 1):
 ```
 GITHUB_OAUTH_CLIENT_ID=test-client-id
 GITHUB_OAUTH_CLIENT_SECRET=test-client-secret
@@ -368,7 +368,7 @@ GITHUB_OAUTH_CLIENT_SECRET=test-client-secret
 
 Run (background):
 ```bash
-cd workers/mcp-oauth-relay && npx wrangler dev --local --port 8788 &
+cd workers/oauth-relay && npx wrangler dev --local --port 8788 &
 sleep 3
 ```
 
@@ -376,7 +376,7 @@ Run and check each:
 ```bash
 curl -s http://127.0.0.1:8788/
 ```
-Expected: `{"status":"ok","service":"pocketcoder-mcp-oauth-relay"}`
+Expected: `{"status":"ok","service":"pocketcoder-oauth-relay"}`
 
 ```bash
 curl -s -i "http://127.0.0.1:8788/callback?error=access_denied&state=x"
@@ -412,8 +412,8 @@ This is out of scope for this plan's code changes (no code depends on the real v
 - [ ] **Step 5: Commit**
 
 ```bash
-git add workers/mcp-oauth-relay
-git commit -m "feat(mcp-oauth-relay): add Worker brokering PKCE OAuth for locally-run MCP servers"
+git add workers/oauth-relay
+git commit -m "feat(oauth-relay): add Worker brokering PKCE OAuth for locally-run MCP servers"
 ```
 
 ---
@@ -704,7 +704,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // @pocketcoder-core: MCP OAuth Token Intake. Receives the
 // {access_token, refresh_token} pair a client obtained via
-// workers/mcp-oauth-relay's PKCE exchange (see
+// workers/oauth-relay's PKCE exchange (see
 // docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md, Component 3)
 // and writes it into the same mcp_servers.config JSON blob hooks/mcp.go's
 // renderMcpConfig already turns into mcp.env — this is not a new
@@ -866,7 +866,7 @@ git commit -m "feat(mcp-oauth): add token-intake endpoint merging OAuth tokens i
 - Modify: `client/packages/pocketcoder_flutter/lib/infrastructure/core/external_module.dart`
 
 **Interfaces:**
-- Consumes: `flutter_web_auth_2` (already a dependency, `^3.1.2`), `crypto` (already a dependency, `^3.0.3`), `workers/mcp-oauth-relay`'s `/claim` route (Task 1).
+- Consumes: `flutter_web_auth_2` (already a dependency, `^3.1.2`), `crypto` (already a dependency, `^3.0.3`), `workers/oauth-relay`'s `/claim` route (Task 1).
 - Produces: `IMcpOAuthService.authenticate(String provider) -> Future<McpOAuthTokenPair>` where `McpOAuthTokenPair = ({String accessToken, String? refreshToken})`. Task 5's `McpCubit.connectOAuth` is the only consumer.
 
 Structured like `flutter_aeroform`'s `LinodeOAuthService` (PKCE verifier/challenge generation, the same `FlutterWebAuth2.authenticate(url:, callbackUrlScheme:)` call shape, the same `PlatformException(code: 'CANCELED')` handling) but **without** that file's dynamic-import test-mocking hack (`importFlutterWebAuth2`/`MockFlutterWebAuth2`) — this plan instead injects the web-auth call as a plain overridable field, which is simpler and doesn't need a try/catch around an import.
@@ -910,7 +910,7 @@ typedef McpOAuthTokenPair = ({String accessToken, String? refreshToken});
 /// Client-side half of the MCP OAuth flow (see
 /// docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md, Component
 /// 2). Runs the PKCE authorize/browser/claim dance against
-/// workers/mcp-oauth-relay and hands back the resulting token pair. This
+/// workers/oauth-relay and hands back the resulting token pair. This
 /// service is a courier, not a holder: callers are responsible for
 /// delivering the returned token to this user's own PocketBase (Component
 /// 3, via IMcpRepository.deliverOAuthToken) — McpOAuthService never stores
@@ -931,13 +931,13 @@ abstract class IMcpOAuthService {
 
 In `client/packages/pocketcoder_flutter/lib/infrastructure/core/external_module.dart`, add to the `ExternalModule` class (after the existing `httpClient` getter):
 ```dart
-  /// Base URL of workers/mcp-oauth-relay (Task 1). No trailing slash.
+  /// Base URL of workers/oauth-relay (Task 1). No trailing slash.
   /// TODO(mcp-oauth): replace with the real deployed Worker's custom
   /// domain once Task 1 Step 4's one-time `wrangler deploy` has run.
   @Named('mcpOAuthRelayBaseUrl')
   @lazySingleton
   String get mcpOAuthRelayBaseUrl =>
-      'https://pocketcoder-mcp-oauth-relay.workers.dev';
+      'https://pocketcoder-oauth-relay.workers.dev';
 
   /// client_id of the centrally-registered GitHub OAuth App (not secret —
   /// safe to embed, same as Linode's `linodeClientId` in flutter_aeroform).
@@ -1135,7 +1135,7 @@ typedef WebAuthLauncher = Future<String> Function({
 class McpOAuthService implements IMcpOAuthService {
   static const _callbackScheme = 'pocketcoder';
 
-  // Deliberately duplicated (not shared) with workers/mcp-oauth-relay's own
+  // Deliberately duplicated (not shared) with workers/oauth-relay's own
   // PROVIDERS map: the Worker never builds this authorize URL itself
   // (Decision 1 — no /start round trip), so the two registries only need
   // to describe the same OAuth Apps, not share code. Out of scope:
@@ -1248,7 +1248,7 @@ class McpOAuthService implements IMcpOAuthService {
   }
 
   /// S256 code_challenge: SHA-256 of the verifier, base64url without
-  /// padding — the same transform workers/mcp-oauth-relay's /claim route
+  /// padding — the same transform workers/oauth-relay's /claim route
   /// re-derives from the verifier the app sends back.
   @visibleForTesting
   static String generateCodeChallenge(String codeVerifier) {
@@ -1258,7 +1258,7 @@ class McpOAuthService implements IMcpOAuthService {
 
   /// Encodes {p: provider, cc: code_challenge} as base64url(JSON) into the
   /// OAuth `state` param. The Worker only ever decodes this at /callback
-  /// time (see workers/mcp-oauth-relay/src/index.js's parseState).
+  /// time (see workers/oauth-relay/src/index.js's parseState).
   /// Plaintext, not HMAC-signed: code_challenge is not secret (RFC 7636
   /// §4.2) — see this plan's Global Constraints, Decision 1.
   @visibleForTesting
@@ -1289,7 +1289,7 @@ Expected: exits 0; `lib/app/bootstrap.config.dart` now registers `McpOAuthServic
 
 ```bash
 git add client/packages/pocketcoder_flutter/lib/domain/mcp/i_mcp_oauth_service.dart client/packages/pocketcoder_flutter/lib/infrastructure/mcp/mcp_oauth_service.dart client/packages/pocketcoder_flutter/test/infrastructure/mcp/mcp_oauth_service_test.dart client/packages/pocketcoder_flutter/lib/domain/exceptions.dart client/packages/pocketcoder_flutter/lib/infrastructure/core/external_module.dart client/packages/pocketcoder_flutter/lib/app/bootstrap.config.dart
-git commit -m "feat(mcp): add McpOAuthService — PKCE + flutter_web_auth_2 client for workers/mcp-oauth-relay"
+git commit -m "feat(mcp): add McpOAuthService — PKCE + flutter_web_auth_2 client for workers/oauth-relay"
 ```
 
 ---
@@ -1946,7 +1946,7 @@ git commit -m "feat(mcp): add CONNECT/RETRY DELIVERY UI for OAuth-requiring MCP 
 **Interfaces:**
 - Consumes: nothing (infra-only, wraps each worker's own `npm run deploy`).
 - Produces: one command that deploys `push-relay`, `image-relay`, and
-  `mcp-oauth-relay` in sequence.
+  `oauth-relay` in sequence.
 
 `workers/push-relay` and `workers/image-relay` are deliberately kept as
 independent Workers (own `wrangler.toml`, own `package.json`, own
@@ -1992,5 +1992,5 @@ Expected: `bash -n` (syntax check only) exits 0, no output.
 
 ```bash
 git add tooling/scripts/deploy-workers.sh
-git commit -m "chore(workers): add shared deploy script for push-relay/image-relay/mcp-oauth-relay"
+git commit -m "chore(workers): add shared deploy script for push-relay/image-relay/oauth-relay"
 ```

@@ -24,7 +24,7 @@ new OAuth-requiring MCP server provider (Linear, Notion, ...) currently
 requires a **Flutter code change and app release** — a new `_authorizeUrls`
 entry, a new `_scopes` entry, a new `@Named('<provider>OAuthClientId')` DI
 provider wired through `external_module.dart` — even though `client_id`
-itself is not secret and the Worker (`workers/mcp-oauth-relay`) already
+itself is not secret and the Worker (`workers/oauth-relay`) already
 holds the authoritative, secret-adjacent configuration for every provider
 (`PROVIDERS` map: `tokenUrl` today). The Worker is already the single place
 a human registers a new OAuth App; the Flutter client duplicating a subset

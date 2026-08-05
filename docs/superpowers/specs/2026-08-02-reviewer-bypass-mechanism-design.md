@@ -36,7 +36,7 @@ in the normal production app — there is no separate reviewer build.
 
 **Tech Stack:** Flutter/Dart (`pocketcoder_pro`, `flutter_aeroform`'s
 existing `ISecureStorage`/`IOAuthService` contracts), Cloudflare Workers
-(`workers/mcp-oauth-relay`, already deployed — this adds one route to it),
+(`workers/oauth-relay`, already deployed — this adds one route to it),
 Web Crypto (`crypto.subtle.digest`) for server-side password hashing.
 
 ## Global Constraints
@@ -94,7 +94,7 @@ Web Crypto (`crypto.subtle.digest`) for server-side password hashing.
   earlier in `LINODE_REVIEWER_ACCESS_TODO.md` (`scripts/build-reviewer-ipa.sh`,
   the `build_pocketcoder_reviewer_ipa` daemon action, and
   `secrets/linode-reviewer-build.enc.yaml`). The PAT now lives only in
-  `secrets/mcp-oauth-relay.enc.yaml` (see Component 4) and is fetched at
+  `secrets/oauth-relay.enc.yaml` (see Component 4) and is fetched at
   runtime, not baked in at build time. Task 6 below removes the obsolete
   script; the obsolete action and secrets file are the user's own vault
   cleanup (per the secrets-daemon skill), not an implementation task.
@@ -107,10 +107,10 @@ Web Crypto (`crypto.subtle.digest`) for server-side password hashing.
 
 **This must land before Component 3 can work at all.**
 `external_module.dart:113-116` currently registers `@Named('mcpOAuthRelayBaseUrl')`
-as `https://pocketcoder-mcp-oauth-relay.workers.dev`, still carrying a
+as `https://pocketcoder-oauth-relay.workers.dev`, still carrying a
 `TODO(mcp-oauth): replace with the real deployed Worker's...` comment. The
 actually-deployed Worker lives at
-`https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev` (Cloudflare's free
+`https://pocketcoder-oauth-relay.gp-c53.workers.dev` (Cloudflare's free
 `workers.dev` routing includes the account subdomain) — recorded as the
 "THIRD CORRECTION" in `LINODE_REVIEWER_ACCESS_TODO.md`. Update the constant
 to the real URL and remove the stale TODO comment. Without this fix, every
@@ -228,7 +228,7 @@ Implementation follows the same shape as
 `http.Client` + `@Named` base-URL-injection pattern — reuses the same
 `mcpOAuthRelayBaseUrl` DI binding registered in `external_module.dart`
 (fixed in Component 1), since the Worker route lives on the same
-`mcp-oauth-relay` deployment:
+`oauth-relay` deployment:
 
 ```dart
 class ReviewerBypassClient implements IReviewerBypassClient {
@@ -277,7 +277,7 @@ argument. The `mcpOAuthRelayBaseUrl` binding is registered in
 `GetIt.instance` as long as `bootstrap()` has already run — true for every
 real app entry point, so no ordering change needed.
 
-### 5. Worker route (`workers/mcp-oauth-relay/src/index.js`)
+### 5. Worker route (`workers/oauth-relay/src/index.js`)
 
 New route, `POST /reviewer/linode-token`:
 
@@ -298,7 +298,7 @@ New route, `POST /reviewer/linode-token`:
   costs nothing to include.
 
 Both `REVIEWER_TOKEN_PASSWORD_HASH` and `LINODE_REVIEWER_PAT` are new keys
-in the existing `secrets/mcp-oauth-relay.enc.yaml` vault file — no new
+in the existing `secrets/oauth-relay.enc.yaml` vault file — no new
 `actions.json` entry needed, since `set_mcp_oauth_relay_secrets` and
 `deploy_mcp_oauth_relay` already cover this file. This is a vault-editing
 step for the user to do themselves (per the secrets-daemon skill), not an

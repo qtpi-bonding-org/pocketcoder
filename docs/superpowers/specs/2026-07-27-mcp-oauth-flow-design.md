@@ -131,7 +131,7 @@ Worker → app) instead of routing through the gateway's own session.
       │
       ▼
 3. GitHub redirects to:
-   GET https://mcp-oauth-relay.<workers-domain>/callback?code=...&state=...
+   GET https://oauth-relay.<workers-domain>/callback?code=...&state=...
       │
       ▼
 4. Worker (new, sibling to push-relay/image-relay):
@@ -176,7 +176,7 @@ any other MCP server credential.
 
 ## Components
 
-### Component 1 — new Worker: `workers/mcp-oauth-relay`
+### Component 1 — new Worker: `workers/oauth-relay`
 
 Mirrors `workers/push-relay`'s shape (single `fetch` handler,
 `wrangler.toml` + `wrangler secret put` for credentials), plus one KV
@@ -278,12 +278,12 @@ claims about them, rather than relying on paraphrased summaries.
 corresponding code is written:**
 
 - **`docker/mcp-gateway`** — MIT, Copyright (c) 2025 Docker, Inc.
-  `workers/mcp-oauth-relay` follows the *shape* of its CE-mode OAuth flow:
+  `workers/oauth-relay` follows the *shape* of its CE-mode OAuth flow:
   a single fixed HTTPS callback acting as a central broker for many
   machines (`DefaultRedirectURI = "https://mcp.docker.com/oauth/callback"`
   in `pkg/oauth/manager.go`), with routing information carried in the
   OAuth `state` parameter (`cmd/docker-mcp/oauth/auth.go`). No code is
-  copied; add to `workers/mcp-oauth-relay/src/index.ts`:
+  copied; add to `workers/oauth-relay/src/index.ts`:
   `// Central-broker-with-HTTPS-callback shape informed by reading`
   `// docker/mcp-gateway (MIT, Copyright (c) 2025 Docker, Inc.)`
 

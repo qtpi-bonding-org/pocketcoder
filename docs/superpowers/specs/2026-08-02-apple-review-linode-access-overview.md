@@ -18,7 +18,7 @@ Groundwork already done (see `LINODE_REVIEWER_ACCESS_TODO.md` for the
 blow-by-blow): confirmed a Linode Personal Access Token scoped to
 `Linodes: Read/Write` only (no `Account`/`Images`/etc.) is sufficient to
 create a real instance from a standard distribution image — verified
-against the real API, not assumed. `mcp-oauth-relay` now has Linode wired
+against the real API, not assumed. `oauth-relay` now has Linode wired
 in as a second OAuth provider (for the *separate*, pre-existing task #11 —
 real end-user OAuth — not this feature).
 

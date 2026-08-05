@@ -5,7 +5,7 @@ across a few different sittings. See conversation history for the full
 reasoning behind each item.
 
 **SUPERSEDED (2026-08-02):** the PAT-vending/bypass approach below (OAuth
-app registration, `mcp-oauth-relay` Linode provider wiring, the
+app registration, `oauth-relay` Linode provider wiring, the
 scope-test PAT, `build-reviewer-ipa.sh`, `LINODE_REVIEWER_PAT` /
 `REVIEWER_TOKEN_PASSWORD_HASH` secrets) is replaced by a dedicated real
 Linode account with a spend-capped virtual card, whose real credentials
@@ -46,15 +46,15 @@ scoped-token work resurfaces later. Everything else below is dead;
       client_secret even for a "Public" client type — same situation as
       GitHub (which the original spec already knew requires one even
       with PKCE). This client_secret goes into the **existing**
-      `secrets/mcp-oauth-relay.enc.yaml` vault file (same one GitHub's
+      `secrets/oauth-relay.enc.yaml` vault file (same one GitHub's
       already in), as two new keys: `LINODE_OAUTH_CLIENT_ID` and
       `LINODE_OAUTH_CLIENT_SECRET`. **No new actions.json entry needed**
       — `set_mcp_oauth_relay_secrets` and `deploy_mcp_oauth_relay` already
       exist and now handle Linode too:
-      - `workers/mcp-oauth-relay/src/index.js` — added a `linode` entry to
+      - `workers/oauth-relay/src/index.js` — added a `linode` entry to
         `PROVIDERS` (authorizeUrl/tokenUrl/scope, scope matches
         `LinodeOAuthService._requiredScopes`)
-      - `workers/mcp-oauth-relay/scripts/set-secrets.sh` — now loops over
+      - `workers/oauth-relay/scripts/set-secrets.sh` — now loops over
         `LINODE_OAUTH_CLIENT_ID`/`LINODE_OAUTH_CLIENT_SECRET` too
       - `wrangler.toml` comment updated to document both new keys
 - [ ] (LATER, not now) Create the real, longer-lived reviewer-mode PAT

@@ -4,7 +4,7 @@
 
 **Goal:** Make the real "LOGIN VIA LINODE" button work by routing
 `LinodeOAuthService`'s OAuth exchange through the already-deployed
-`mcp-oauth-relay` Worker, the same pattern already proven for GitHub.
+`oauth-relay` Worker, the same pattern already proven for GitHub.
 
 **Architecture:** See
 `docs/superpowers/specs/2026-08-02-linode-oauth-relay-migration-design.md`
@@ -18,7 +18,7 @@ direct-to-Linode code.
 
 **Tech Stack:** Dart/Flutter (`flutter_aeroform`, a separate git repo;
 `pocketcoder_flutter`/`pocketcoder_pro` in this repo), Cloudflare Workers
-(`workers/mcp-oauth-relay`, already deployed), `mocktail` for test doubles.
+(`workers/oauth-relay`, already deployed), `mocktail` for test doubles.
 
 ## Global Constraints
 
@@ -27,7 +27,7 @@ direct-to-Linode code.
   `LinodeAPIClient`, and one new Worker route.
 - The Worker relay's base URL is injected into `LinodeOAuthService` via
   `@Named('mcpOAuthRelayBaseUrl')`, exactly like `linodeClientId` was —
-  `flutter_aeroform` must never hardcode `pocketcoder-mcp-oauth-relay`.
+  `flutter_aeroform` must never hardcode `pocketcoder-oauth-relay`.
 - `exchangeCode(String code)` keeps its exact signature; only its
   semantics change (Linode's raw code → the Worker's opaque
   `exchange_code`). Confirmed via repo-wide grep: its only callers today
@@ -48,7 +48,7 @@ direct-to-Linode code.
   remain open. That verification pass is Task 9 below (this plan's own
   final task); it also closes out task #11 in the standing project task
   tracker ("Test Linode OAuth consent flow end-to-end").
-- `workers/mcp-oauth-relay` has no automated test suite today (confirmed:
+- `workers/oauth-relay` has no automated test suite today (confirmed:
   no `test/` directory exists under it). Tasks 2 and 3 ship
   `buildTokenRequestBody`/`handleRefresh` with curl-smoke-test-only
   coverage, not CI-enforced regression tests — a future change to this
@@ -64,7 +64,7 @@ direct-to-Linode code.
 
 **Interfaces:**
 - Produces: `ExternalModule.mcpOAuthRelayBaseUrl` now returns
-  `'https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev'`. Every later
+  `'https://pocketcoder-oauth-relay.gp-c53.workers.dev'`. Every later
   task in this plan depends on this being correct.
 
 - [ ] **Step 1: Write the failing test**
@@ -78,7 +78,7 @@ void main() {
     final module = ExternalModule();
     expect(
       module.mcpOAuthRelayBaseUrl,
-      'https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev',
+      'https://pocketcoder-oauth-relay.gp-c53.workers.dev',
     );
   });
 }
@@ -87,7 +87,7 @@ void main() {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `cd client/packages/pocketcoder_flutter && flutter test test/infrastructure/core/external_module_test.dart`
-Expected: FAIL — actual value is `https://pocketcoder-mcp-oauth-relay.workers.dev`.
+Expected: FAIL — actual value is `https://pocketcoder-oauth-relay.workers.dev`.
 
 - [ ] **Step 3: Fix the constant**
 
@@ -96,24 +96,24 @@ file — it may carry an additional leading doc-comment line beyond what's
 shown here) is:
 
 ```dart
-  /// Base URL of workers/mcp-oauth-relay (Task 1). No trailing slash.
+  /// Base URL of workers/oauth-relay (Task 1). No trailing slash.
   /// TODO(mcp-oauth): replace with the real deployed Worker's custom
   /// domain once Task 1 Step 4's one-time `wrangler deploy` has run.
   @Named('mcpOAuthRelayBaseUrl')
   @lazySingleton
   String get mcpOAuthRelayBaseUrl =>
-      'https://pocketcoder-mcp-oauth-relay.workers.dev';
+      'https://pocketcoder-oauth-relay.workers.dev';
 ```
 
 Replace it with (drop the resolved TODO comment; keep the "Base URL of..."
 line since it's still accurate description, not stale):
 
 ```dart
-  /// Base URL of workers/mcp-oauth-relay. No trailing slash.
+  /// Base URL of workers/oauth-relay. No trailing slash.
   @Named('mcpOAuthRelayBaseUrl')
   @lazySingleton
   String get mcpOAuthRelayBaseUrl =>
-      'https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev';
+      'https://pocketcoder-oauth-relay.gp-c53.workers.dev';
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -133,8 +133,8 @@ git commit -m "fix(client): point mcpOAuthRelayBaseUrl at the real deployed Work
 ### Task 2: Worker — per-provider token-format flags + expiry/scope passthrough
 
 **Files:**
-- Modify: `workers/mcp-oauth-relay/src/index.js`
-- Test: `workers/mcp-oauth-relay/test/index.test.js` if a test file already
+- Modify: `workers/oauth-relay/src/index.js`
+- Test: `workers/oauth-relay/test/index.test.js` if a test file already
   exists for this Worker — if none exists, this task's verification is
   the curl-based manual check in Step 4 (no local Worker test harness is
   set up in this repo today; do not introduce one as a side effect of
@@ -264,8 +264,8 @@ redirect shape (no `code_challenge` regression) and Linode's does too:
 
 ```bash
 CHALLENGE=$(python3 -c "import secrets,base64; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode().rstrip('='))")
-curl -s -D - -o /dev/null "https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/authorize?provider=github&code_challenge=$CHALLENGE"
-curl -s -D - -o /dev/null "https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/authorize?provider=linode&code_challenge=$CHALLENGE"
+curl -s -D - -o /dev/null "https://pocketcoder-oauth-relay.gp-c53.workers.dev/authorize?provider=github&code_challenge=$CHALLENGE"
+curl -s -D - -o /dev/null "https://pocketcoder-oauth-relay.gp-c53.workers.dev/authorize?provider=linode&code_challenge=$CHALLENGE"
 ```
 
 Expected: both return `302` with a `Location` header containing
@@ -290,8 +290,8 @@ already the default.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add workers/mcp-oauth-relay/src/index.js
-git commit -m "feat(workers): per-provider token-format flags + expiry/scope passthrough on mcp-oauth-relay"
+git add workers/oauth-relay/src/index.js
+git commit -m "feat(workers): per-provider token-format flags + expiry/scope passthrough on oauth-relay"
 ```
 
 ---
@@ -299,7 +299,7 @@ git commit -m "feat(workers): per-provider token-format flags + expiry/scope pas
 ### Task 3: Worker — new `POST /refresh` route
 
 **Files:**
-- Modify: `workers/mcp-oauth-relay/src/index.js`
+- Modify: `workers/oauth-relay/src/index.js`
 
 **Interfaces:**
 - Consumes: `buildTokenRequestBody` (Task 2).
@@ -382,7 +382,7 @@ async function handleRefresh(request, env) {
 Via the secrets daemon's `deploy_mcp_oauth_relay` action, then:
 
 ```bash
-curl -s -X POST https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/refresh \
+curl -s -X POST https://pocketcoder-oauth-relay.gp-c53.workers.dev/refresh \
   -H 'Content-Type: application/json' \
   -d '{"provider":"linode","refresh_token":"not-a-real-token"}'
 ```
@@ -394,8 +394,8 @@ available until Task 11's manual verification.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add workers/mcp-oauth-relay/src/index.js
-git commit -m "feat(workers): add POST /refresh to mcp-oauth-relay for providers whose tokens expire"
+git add workers/oauth-relay/src/index.js
+git commit -m "feat(workers): add POST /refresh to oauth-relay for providers whose tokens expire"
 ```
 
 ---
@@ -656,7 +656,7 @@ Step 6 rewrites them; that's expected and handled there, not here).
 
 ```bash
 git add lib/infrastructure/auth/linode_oauth_service.dart test/infrastructure/auth/linode_oauth_service_test.dart test/infrastructure/auth/linode_oauth_service_property_test.dart
-git commit -m "feat(flutter_aeroform): route LinodeOAuthService.authenticate() through the mcp-oauth-relay Worker"
+git commit -m "feat(flutter_aeroform): route LinodeOAuthService.authenticate() through the oauth-relay Worker"
 ```
 
 ---
@@ -1031,12 +1031,12 @@ to be needed. Follow the design spec's "Verification" section exactly:
       body, confirm whether Linode parses JSON (informational only —
       `tokenBodyFormat: 'form'` stays regardless).
 - [ ] Complete one real login through
-      `https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/authorize?provider=linode&code_challenge=<real PKCE challenge>`
+      `https://pocketcoder-oauth-relay.gp-c53.workers.dev/authorize?provider=linode&code_challenge=<real PKCE challenge>`
       using a real Linode account, with DevTools Network (preserve log)
       open to inspect the `/callback` response's `Location` header
       directly.
 - [ ] If it's `pocketcoder://oauth-callback?error=...`: this is a real
-      code change, not just a retry — edit `workers/mcp-oauth-relay/src/index.js`'s
+      code change, not just a retry — edit `workers/oauth-relay/src/index.js`'s
       `linode` `PROVIDERS` entry to add `usePkceUpstream: false`, redeploy
       via the secrets daemon's `deploy_mcp_oauth_relay` action (same
       mechanism as Task 2 Step 4/Task 3 Step 3 — never `wrangler deploy`

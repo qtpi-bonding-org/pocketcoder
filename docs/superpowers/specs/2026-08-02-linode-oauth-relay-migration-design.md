@@ -7,7 +7,7 @@
 
 **Goal:** Make the real "LOGIN VIA LINODE" button in `AuthScreen` actually
 work, by routing Linode's OAuth exchange through the already-deployed
-`mcp-oauth-relay` Worker instead of talking to Linode directly from the
+`oauth-relay` Worker instead of talking to Linode directly from the
 app — the same pattern this Worker already uses successfully for GitHub.
 
 **Why this is needed, not just "test it":** Four independent problems
@@ -15,9 +15,9 @@ stack up today, not one:
 
 1. **What's actually wired and working**: the Worker's `/authorize` route
    has a real, deployed `linode` provider entry. Confirmed live:
-   `GET https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/authorize?provider=linode&code_challenge=<valid>`
+   `GET https://pocketcoder-oauth-relay.gp-c53.workers.dev/authorize?provider=linode&code_challenge=<valid>`
    returns a 302 to `https://login.linode.com/oauth/authorize` with a real
-   `client_id=2e228314b0e8455ffc7f` and `redirect_uri=https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/callback`.
+   `client_id=2e228314b0e8455ffc7f` and `redirect_uri=https://pocketcoder-oauth-relay.gp-c53.workers.dev/callback`.
    The registered OAuth app's redirect_uri is this HTTPS Worker callback —
    confirmed by Linode not rejecting the `/authorize` redirect the Worker
    builds.
@@ -51,8 +51,8 @@ stack up today, not one:
 4. **Also independent**: the relay base URL this whole migration depends
    on is itself currently wrong. `external_module.dart:113-116`
    (`pocketcoder_flutter`) still registers `@Named('mcpOAuthRelayBaseUrl')`
-   as `https://pocketcoder-mcp-oauth-relay.workers.dev` — dead placeholder
-   text, not the real `https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev`
+   as `https://pocketcoder-oauth-relay.workers.dev` — dead placeholder
+   text, not the real `https://pocketcoder-oauth-relay.gp-c53.workers.dev`
    this spec's own verification curls against. This is the same binding
    `McpOAuthService` (GitHub) already depends on, so GitHub's in-app MCP
    OAuth is *also* broken today for this exact reason — fixed in
@@ -70,7 +70,7 @@ why no refresh route existed before this). `LinodeAPIClient`'s now-dead
 direct-to-Linode OAuth methods are deleted.
 
 **Tech Stack:** Same as the rest of this feature area — Dart/Flutter
-(`flutter_aeroform`), Cloudflare Workers (`workers/mcp-oauth-relay`,
+(`flutter_aeroform`), Cloudflare Workers (`workers/oauth-relay`,
 already deployed).
 
 ## Global Constraints
@@ -82,7 +82,7 @@ already deployed).
   consuming app (`@Named('mcpOAuthRelayBaseUrl')`, resolved from
   `pocketcoder_flutter`'s `ExternalModule`), exactly like `linodeClientId`
   already is today. `flutter_aeroform` must not hardcode or know about
-  `pocketcoder-mcp-oauth-relay` specifically — it stays provider- and
+  `pocketcoder-oauth-relay` specifically — it stays provider- and
   deployment-agnostic, matching how it's already built.
 - `exchangeCode(String code)` (the `IOAuthService` interface method) keeps
   its exact signature — only its semantics change, from "Linode's raw
@@ -130,17 +130,17 @@ already deployed).
 **This must land before anything else in this spec can be tested at
 all.** `external_module.dart:113-116` currently registers
 `@Named('mcpOAuthRelayBaseUrl')` as
-`https://pocketcoder-mcp-oauth-relay.workers.dev` — a dead placeholder,
+`https://pocketcoder-oauth-relay.workers.dev` — a dead placeholder,
 still carrying a `TODO(mcp-oauth): replace with the real deployed
 Worker's...` comment. The real, live URL, confirmed by this
 investigation's own curl tests, is
-`https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev` (Cloudflare's
+`https://pocketcoder-oauth-relay.gp-c53.workers.dev` (Cloudflare's
 free `workers.dev` routing includes the account subdomain). Update the
 constant and remove the stale comment. This also fixes GitHub's in-app
 MCP OAuth, which depends on the same binding and is equally broken today
 for the same reason.
 
-### 2. Worker: per-provider token-request format flags, expiry, and scope (`workers/mcp-oauth-relay/src/index.js`)
+### 2. Worker: per-provider token-request format flags, expiry, and scope (`workers/oauth-relay/src/index.js`)
 
 Add two optional per-provider flags to `PROVIDERS`, read but unused by
 GitHub (defaults preserve its exact current behavior), and set on
@@ -237,7 +237,7 @@ client_secret, code, redirect_uri})` the same way Component 3's
 `handleRefresh` does, so both routes share one code path for this
 decision instead of drifting independently.
 
-### 3. Worker: new `POST /refresh` route (`workers/mcp-oauth-relay/src/index.js`)
+### 3. Worker: new `POST /refresh` route (`workers/oauth-relay/src/index.js`)
 
 ```js
 if (request.method === 'POST' && url.pathname === '/refresh') {
@@ -662,7 +662,7 @@ means JSON is rejected and confirms `tokenBodyFormat: 'form'` must stay.
 **Steps 1-3 — the PKCE-at-exchange question, needs one real login:**
 Complete one real login through the actual deployed Worker using a real
 Linode account: open
-`https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/authorize?provider=linode&code_challenge=<real PKCE challenge>`
+`https://pocketcoder-oauth-relay.gp-c53.workers.dev/authorize?provider=linode&code_challenge=<real PKCE challenge>`
 in a browser, log in and consent. Do not rely on reading the resulting
 `pocketcoder://` redirect off the browser's address bar — most browsers
 do not navigate to an unregistered custom scheme and will not display it
@@ -683,11 +683,11 @@ token exchange failed).
 2. If it's `pocketcoder://oauth-callback?exchange_code=...&state=...`,
    the exchange succeeded. Capture `exchange_code` and the real
    `code_verifier` used to build the original `code_challenge`, then
-   `curl -X POST https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/claim -d '{"exchange_code":"...","code_verifier":"..."}'`
+   `curl -X POST https://pocketcoder-oauth-relay.gp-c53.workers.dev/claim -d '{"exchange_code":"...","code_verifier":"..."}'`
    and confirm a real `access_token` (and, ideally, `expires_in`) comes
    back.
 3. Using the `refresh_token` from step 2's response, `curl -X POST
-   https://pocketcoder-mcp-oauth-relay.gp-c53.workers.dev/refresh -d
+   https://pocketcoder-oauth-relay.gp-c53.workers.dev/refresh -d
    '{"provider":"linode","refresh_token":"..."}'` and confirm a fresh
    `access_token` comes back — this is the one route in this migration
    with zero prior production evidence either way, and has its own

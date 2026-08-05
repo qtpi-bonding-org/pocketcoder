@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove all per-provider hardcoding (authorize URLs, OAuth scopes, `client_id`) from the Flutter client's `McpOAuthService` by moving that knowledge entirely into `workers/mcp-oauth-relay`, which gains two new routes — `GET /providers` (discovery, for UI gating) and `GET /authorize` (server-side authorize-URL construction) — so that adding a new OAuth provider (Linear, Notion, ...) becomes a Worker-only config change + deploy, never a Flutter code change or app release.
+**Goal:** Remove all per-provider hardcoding (authorize URLs, OAuth scopes, `client_id`) from the Flutter client's `McpOAuthService` by moving that knowledge entirely into `workers/oauth-relay`, which gains two new routes — `GET /providers` (discovery, for UI gating) and `GET /authorize` (server-side authorize-URL construction) — so that adding a new OAuth provider (Linear, Notion, ...) becomes a Worker-only config change + deploy, never a Flutter code change or app release.
 
-**Architecture:** `workers/mcp-oauth-relay`'s `PROVIDERS` map gains `displayName`/`authorizeUrl`/`scope` alongside the existing `tokenUrl`. `GET /providers` returns `{id, displayName}` for every provider with live secrets configured. `GET /authorize?provider=X&code_challenge=Y` looks `X` up server-side, builds `state` itself, and 302s straight to the provider's real authorize URL with `client_id`/`scope`/`redirect_uri` filled in — Flutter's `McpOAuthService.authenticate()` now just opens that Worker URL in `FlutterWebAuth2` instead of building a provider-specific URL locally. `McpCubit` exposes a thin passthrough to the new `supportedProviders()` call, and `McpManagementScreen`'s CONNECT button uses it (via `FutureBuilder`, fail-open while loading) to show "not yet configured" for a provider that isn't live yet, instead of launching a browser sheet that would fail after the fact.
+**Architecture:** `workers/oauth-relay`'s `PROVIDERS` map gains `displayName`/`authorizeUrl`/`scope` alongside the existing `tokenUrl`. `GET /providers` returns `{id, displayName}` for every provider with live secrets configured. `GET /authorize?provider=X&code_challenge=Y` looks `X` up server-side, builds `state` itself, and 302s straight to the provider's real authorize URL with `client_id`/`scope`/`redirect_uri` filled in — Flutter's `McpOAuthService.authenticate()` now just opens that Worker URL in `FlutterWebAuth2` instead of building a provider-specific URL locally. `McpCubit` exposes a thin passthrough to the new `supportedProviders()` call, and `McpManagementScreen`'s CONNECT button uses it (via `FutureBuilder`, fail-open while loading) to show "not yet configured" for a provider that isn't live yet, instead of launching a browser sheet that would fail after the fact.
 
 **Tech Stack:** Cloudflare Workers (vanilla JS), Flutter/Dart (`pocketcoder_flutter` — Cubit, Freezed-style records, `@injectable`/`@lazySingleton` DI, `flutter_web_auth_2`, `mocktail`).
 
@@ -25,7 +25,7 @@
 ## File Structure
 
 **Worker — modified:**
-- `workers/mcp-oauth-relay/src/index.js` — `PROVIDERS` map gains `displayName`/`authorizeUrl`/`scope`; new `handleProviders`/`handleAuthorize` functions; `handleCallback`'s provider lookup switches to `Object.hasOwn`; new `base64urlEncode` helper (mirrors the existing `base64urlDecode`).
+- `workers/oauth-relay/src/index.js` — `PROVIDERS` map gains `displayName`/`authorizeUrl`/`scope`; new `handleProviders`/`handleAuthorize` functions; `handleCallback`'s provider lookup switches to `Object.hasOwn`; new `base64urlEncode` helper (mirrors the existing `base64urlDecode`).
 
 **Flutter — modified:**
 - `client/packages/pocketcoder_flutter/lib/domain/mcp/i_mcp_oauth_service.dart` — new `McpOAuthProvider` typedef, new `supportedProviders()` abstract method.
@@ -44,7 +44,7 @@
 ### Task 1: Worker — `GET /providers` + `GET /authorize`
 
 **Files:**
-- Modify: `workers/mcp-oauth-relay/src/index.js`
+- Modify: `workers/oauth-relay/src/index.js`
 
 **Interfaces:**
 - Consumes: nothing new (standalone Worker; provider client credentials remain `wrangler secret put` values, same as the base design).
@@ -52,7 +52,7 @@
 
 This task follows the same no-automated-test-harness convention as the rest of `workers/` (see the base plan's Task 1) — verification is via `wrangler dev --local` + `curl`, run manually against the same `.dev.vars` file the base plan's Task 1 already created (`GITHUB_OAUTH_CLIENT_ID=test-client-id` / `GITHUB_OAUTH_CLIENT_SECRET=test-client-secret`, gitignored).
 
-- [ ] **Step 1: Replace `workers/mcp-oauth-relay/src/index.js` in full**
+- [ ] **Step 1: Replace `workers/oauth-relay/src/index.js` in full**
 
 ```js
 /**
@@ -130,7 +130,7 @@ export default {
 		if (request.method === 'POST' && url.pathname === '/claim') {
 			return handleClaim(request, env);
 		}
-		return json({ status: 'ok', service: 'pocketcoder-mcp-oauth-relay' }, 200);
+		return json({ status: 'ok', service: 'pocketcoder-oauth-relay' }, 200);
 	},
 };
 
@@ -388,7 +388,7 @@ function json(data, status = 200, extraHeaders = {}) {
 
 - [ ] **Step 2: Sanity-check the file parses**
 
-Run (cwd `workers/mcp-oauth-relay`):
+Run (cwd `workers/oauth-relay`):
 ```bash
 node --check src/index.js && echo OK
 ```
@@ -396,7 +396,7 @@ Expected: `OK`.
 
 - [ ] **Step 3: Local verification with `wrangler dev --local`**
 
-Run (background, cwd `workers/mcp-oauth-relay` — `.dev.vars` already exists from the base plan's Task 1 with `GITHUB_OAUTH_CLIENT_ID=test-client-id` / `GITHUB_OAUTH_CLIENT_SECRET=test-client-secret`):
+Run (background, cwd `workers/oauth-relay` — `.dev.vars` already exists from the base plan's Task 1 with `GITHUB_OAUTH_CLIENT_ID=test-client-id` / `GITHUB_OAUTH_CLIENT_SECRET=test-client-secret`):
 ```bash
 npx wrangler dev --local --port 8788 &
 sleep 3
@@ -438,8 +438,8 @@ kill %1
 - [ ] **Step 4: Commit**
 
 ```bash
-git add workers/mcp-oauth-relay/src/index.js
-git commit -m "feat(mcp-oauth-relay): add /providers + /authorize routes, remove per-provider Flutter hardcoding"
+git add workers/oauth-relay/src/index.js
+git commit -m "feat(oauth-relay): add /providers + /authorize routes, remove per-provider Flutter hardcoding"
 ```
 
 ---
@@ -474,7 +474,7 @@ Replace `client/packages/pocketcoder_flutter/lib/domain/mcp/i_mcp_oauth_service.
 /// issued one) a refresh token. Ephemeral — never persisted client-side.
 typedef McpOAuthTokenPair = ({String accessToken, String? refreshToken});
 
-/// A provider workers/mcp-oauth-relay currently has configured (both a
+/// A provider workers/oauth-relay currently has configured (both a
 /// PROVIDERS entry and live wrangler secrets) — see
 /// docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md.
 /// `displayName` is human-facing ("GitHub"); `id` is the opaque string
@@ -484,7 +484,7 @@ typedef McpOAuthProvider = ({String id, String displayName});
 /// Client-side half of the MCP OAuth flow (see
 /// docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md, Component
 /// 2, as refined by the provider-discovery addendum). Runs the PKCE
-/// authorize/browser/claim dance against workers/mcp-oauth-relay and hands
+/// authorize/browser/claim dance against workers/oauth-relay and hands
 /// back the resulting token pair. This service is a courier, not a
 /// holder: callers are responsible for delivering the returned token to
 /// this user's own PocketBase (Component 3, via
@@ -538,7 +538,7 @@ class MockHttpClient extends Mock implements http.Client {}
 class FakeUri extends Fake implements Uri {}
 
 /// Builds a Worker-shaped `state` param the way
-/// workers/mcp-oauth-relay/src/index.js's handleAuthorize does, for tests
+/// workers/oauth-relay/src/index.js's handleAuthorize does, for tests
 /// that need to simulate a well-formed provider callback.
 String _encodeStateForTest({required String provider, required String codeChallenge}) {
   final json = jsonEncode({'p': provider, 'cc': codeChallenge});
@@ -914,7 +914,7 @@ class McpOAuthService implements IMcpOAuthService {
   }
 
   /// S256 code_challenge: SHA-256 of the verifier, base64url without
-  /// padding — the same transform workers/mcp-oauth-relay's /claim route
+  /// padding — the same transform workers/oauth-relay's /claim route
   /// re-derives from the verifier the app sends back.
   @visibleForTesting
   static String generateCodeChallenge(String codeVerifier) {
@@ -924,7 +924,7 @@ class McpOAuthService implements IMcpOAuthService {
 
   /// Decodes the `state` param the Worker's GET /authorize route built
   /// (base64url(JSON.stringify({p, cc}))) — see
-  /// workers/mcp-oauth-relay/src/index.js's handleAuthorize. Returns null
+  /// workers/oauth-relay/src/index.js's handleAuthorize. Returns null
   /// on any malformed input rather than throwing, since this is used for
   /// a defense-in-depth equality check, not a required-to-succeed parse.
   @visibleForTesting

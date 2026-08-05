@@ -8,7 +8,7 @@ verify across the paid/backend surface.
 ## Done — live-tested against the real service (not mocks)
 
 - **Linode OAuth relay + provisioning** — real deploy of
-  `workers/mcp-oauth-relay` (per-provider token flags + `/refresh`
+  `workers/oauth-relay` (per-provider token flags + `/refresh`
   route), a real `LinodeAPIClient` provisioning run (real instance
   created, NixOS image booted, `/api/health` + passwordless SSH
   confirmed, instance torn down cleanly), and a real corrupted-manifest
@@ -25,7 +25,7 @@ verify across the paid/backend surface.
 - **RevenueCat entitlement gating** (push-relay's server-side paid-path
   check) — real unsubscribed-user rejection + real promo-granted
   subscriber pass, against the live deployed Worker.
-- **GitHub OAuth** (mcp-oauth-relay's other provider) — pre-existing,
+- **GitHub OAuth** (oauth-relay's other provider) — pre-existing,
   proven baseline pattern Linode's migration was modeled on.
 - **TestFlight signing/upload** — resolved (confirmed working).
 

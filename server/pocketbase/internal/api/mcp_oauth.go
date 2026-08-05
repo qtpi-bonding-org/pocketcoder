@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // @pocketcoder-core: MCP OAuth Token Intake. Receives the
 // {access_token, refresh_token} pair a client obtained via
-// workers/mcp-oauth-relay's PKCE exchange (see
+// workers/oauth-relay's PKCE exchange (see
 // docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md, Component 3)
 // and writes it into the same mcp_servers.config JSON blob hooks/mcp.go's
 // renderMcpConfig already turns into mcp.env — this is not a new
