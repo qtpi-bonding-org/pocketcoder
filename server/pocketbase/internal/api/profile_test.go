@@ -45,6 +45,28 @@ func testApp(t *testing.T) core.App {
 	return app
 }
 
+// waitForHarnessProvisioning drains the asynchronous provisioning started by
+// buildSessionProfile before the test app is cleaned up. Without this, the
+// background goroutine can continue using PocketBase after app.Cleanup closes
+// its database, producing a nil-pointer panic in PocketBase's record hooks.
+func waitForHarnessProvisioning(t *testing.T, app core.App, harnessID, userID string) *core.Record {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		rec, err := app.FindFirstRecordByFilter(
+			"harness_instances",
+			"harness = {:h} && user = {:u}",
+			map[string]any{"h": harnessID, "u": userID},
+		)
+		if err == nil && rec != nil && rec.GetString("status") != "pending" {
+			return rec
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("harness provisioning did not reach a terminal status within 2s")
+	return nil
+}
+
 // createTestHarness inserts a harnesses row with sane defaults, overridden
 // by whatever fields the caller supplies. Unlike seedTestHarnessAndInstance
 // below, this deliberately does NOT create a harness_instances row — it's
@@ -255,11 +277,27 @@ func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testin
 	t.Setenv("OLLAMA_API_URL", server.URL)
 
 	app := testApp(t)
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
 	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	instances, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		t.Fatal(err)
+	}
+	instance := core.NewRecord(instances)
+	instance.Set("harness", harness.Id)
+	instance.Set("user", userID)
+	instance.Set("launch_key", "")
+	instance.Set("container_name", "pocketcoder-goose-"+randomSuffix())
+	instance.Set("status", "running")
+	instance.Set("managed", false)
+	if err := app.Save(instance); err != nil {
+		t.Fatal(err)
+	}
 	chat := createTestChat(t, app, map[string]any{
+		"user":                  userID,
 		"harness":               harness.Id,
 		"ollama_model_override": "qwen2.5:0.5b",
 	})
@@ -308,11 +346,13 @@ func TestBuildSessionProfileWorkspaceOverrideKeepsPocoAdditionalDirectories(t *t
 	defer app.Cleanup()
 
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
+	harness, _ := seedTestHarnessAndInstance(t, app, "goose", true, true, false, userID)
 	poco := createTestPocoConfig(t, app, map[string]any{
 		"workspace_folders": []string{"/workspace/project", "/workspace/tools"},
 	}, userID)
 	chat := createTestChat(t, app, map[string]any{
-		"user":                userID,
+		"user":               userID,
+		"harness":            harness.Id,
 		"poco_config":        poco.Id,
 		"workspace_override": []string{"/workspace/other"},
 	})
@@ -382,22 +422,9 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 		t.Fatalf("expected ErrHarnessProvisioning, got %v", err)
 	}
 
-	// Provisioning is kicked off in a background goroutine (Task 6's row
-	// creation isn't synchronous with buildSessionProfile's return), so this
-	// polls briefly rather than asserting immediately — a bare synchronous
-	// check here would be flaky, not a faithful test of async behavior.
-	deadline := time.Now().Add(2 * time.Second)
-	var rec *core.Record
-	for time.Now().Before(deadline) {
-		if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h} && user = {:u}", map[string]any{"h": harness.Id, "u": userID}); err == nil && r != nil {
-			rec = r
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	if rec == nil {
-		t.Fatal("expected a harness_instances row to appear within 2s of triggering background provisioning")
-	}
+	// Provisioning is kicked off in a background goroutine. Drain it before
+	// this test's app cleanup can close PocketBase underneath that goroutine.
+	rec := waitForHarnessProvisioning(t, app, harness.Id, userID)
 	// buildSessionProfile's production wiring hands ProvisionHarnessInstance
 	// the REAL dockerapi.New() client (only Task 6's own tests can inject a
 	// fake docker client) — so outside a live docker-compose network, where
@@ -484,13 +511,7 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 		if _, err := buildSessionProfile(app, provisioningChat.Id); !errors.Is(err, ErrHarnessProvisioning) {
 			t.Fatalf("setup: expected ErrHarnessProvisioning, got %v", err)
 		}
-		deadline := time.Now().Add(2 * time.Second)
-		for time.Now().Before(deadline) {
-			if r, err := app.FindFirstRecordByFilter("harness_instances", "harness = {:h} && user = {:u}", map[string]any{"h": harness.Id, "u": provisioningUserID}); err == nil && r != nil && r.GetString("status") != "pending" {
-				break
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
+		waitForHarnessProvisioning(t, app, harness.Id, provisioningUserID)
 	}
 
 	// Case 2: harness_instances row with status="error" -> errHarnessFailed,
