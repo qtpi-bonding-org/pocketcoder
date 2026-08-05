@@ -237,7 +237,7 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
       sftp.close();
 
       terminal.write('*** SFTP: TRANSFER COMPLETE ($offset bytes) ***\r\n');
-      logInfo('[Terminal] SFTP upload complete: $remotePath ($offset bytes)');
+      logInfo('[Terminal] SFTP upload complete ($offset bytes)');
     } catch (e) {
       terminal.write('*** SFTP: TRANSFER FAILED ***\r\n');
       terminal.write('  ERROR: ${e.toString()}\r\n');

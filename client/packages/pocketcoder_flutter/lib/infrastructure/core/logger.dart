@@ -22,7 +22,11 @@ class AppLogger {
   }
 
   static void error(String message, [dynamic error, StackTrace? stack]) {
-    _print('ERROR', message, error);
+    // Exception messages may contain response bodies, credentials, or user
+    // input. Keep the diagnostic record in Privserver; console logging only
+    // exposes the controlled label and exception type.
+    final errorType = error?.runtimeType.toString();
+    _print('ERROR', message, errorType);
     if (stack != null) {
       _print('STACK', '', stack);
     }

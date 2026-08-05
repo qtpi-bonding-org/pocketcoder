@@ -2086,6 +2086,24 @@ abstract class AppLocalizations {
   /// **'NO ERRORS CAPTURED'**
   String get errorsEmpty;
 
+  /// No description provided for @errorsCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'COPY REPORT'**
+  String get errorsCopy;
+
+  /// No description provided for @errorsCopyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'COPY ALL'**
+  String get errorsCopyAll;
+
+  /// No description provided for @errorsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'DIAGNOSTIC REPORT COPIED'**
+  String get errorsCopied;
+
   /// No description provided for @errorsClearAll.
   ///
   /// In en, this message translates to:

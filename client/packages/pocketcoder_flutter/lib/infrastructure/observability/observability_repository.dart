@@ -20,7 +20,7 @@ class ObservabilityRepository implements IObservabilityRepository {
     final controller = StreamController<String>();
     final url = "${_pb.baseURL}${ApiEndpoints.logs(containerName)}";
 
-    logInfo('📈 [Observability] Subscribing to logs: $url');
+    logInfo('📈 [Observability] Subscribing to container log stream');
 
     final subscription = SSEClient.subscribeToSSE(
       method: SSERequestType.GET,

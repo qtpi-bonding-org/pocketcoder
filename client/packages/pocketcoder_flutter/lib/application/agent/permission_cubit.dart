@@ -12,6 +12,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'permission_state.dart';
@@ -51,7 +52,12 @@ class PermissionCubit extends AppCubit<PermissionState> {
         ));
       },
       onError: (Object e) {
-        logError('🤖 [PermissionCubit] watch($chatId) error: $e');
+        unawaited(pocketCoderDiagnosticCapture.capture(
+          error: e,
+          source: 'PermissionCubit',
+          operation: 'watchStream',
+        ));
+        logError('🤖 [PermissionCubit] watch error', e);
         emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );
@@ -64,12 +70,14 @@ class PermissionCubit extends AppCubit<PermissionState> {
     final chatId = _chatId;
     final permission = state.permission;
     if (chatId == null || permission == null) {
-      logWarning('🤖 [PermissionCubit] authorize called with no pending permission');
+      logWarning(
+          '🤖 [PermissionCubit] authorize called with no pending permission');
       return;
     }
     final requestId = permission['requestId'];
     if (requestId is! String) {
-      logWarning('🤖 [PermissionCubit] authorize: pending permission missing requestId');
+      logWarning(
+          '🤖 [PermissionCubit] authorize: pending permission missing requestId');
       return;
     }
     await tryOperation(() async {
@@ -96,7 +104,8 @@ class PermissionCubit extends AppCubit<PermissionState> {
     }
     final requestId = permission['requestId'];
     if (requestId is! String) {
-      logWarning('🤖 [PermissionCubit] deny: pending permission missing requestId');
+      logWarning(
+          '🤖 [PermissionCubit] deny: pending permission missing requestId');
       return;
     }
     await tryOperation(() async {

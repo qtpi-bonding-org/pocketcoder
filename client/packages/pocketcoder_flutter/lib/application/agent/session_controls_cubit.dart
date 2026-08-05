@@ -12,6 +12,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'session_controls_state.dart';
@@ -52,7 +53,12 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
         ));
       },
       onError: (Object e) {
-        logError('🤖 [SessionControlsCubit] watch($chatId) error: $e');
+        unawaited(pocketCoderDiagnosticCapture.capture(
+          error: e,
+          source: 'SessionControlsCubit',
+          operation: 'watchStream',
+        ));
+        logError('🤖 [SessionControlsCubit] watch error', e);
         emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );

@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_box_page_builder.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 
@@ -30,6 +31,7 @@ Future<void> configureDependencies() async {
 ///
 /// Call this once from main() before runApp().
 Future<void> bootstrap() async {
+  installPocketCoderGlobalErrorHandlers();
   debugPrint('Bootstrap: Starting...');
 
   // 0. Load environment variables
@@ -70,14 +72,14 @@ Future<void> bootstrap() async {
         await billingService.identify(userId);
       }
     } catch (e, stack) {
-      debugPrint('Bootstrap: Warning - billing identify on session restore failed: $e');
-      await getIt<ErrorBoxStorage>().saveError(ErrorEntry(
-        source: 'Bootstrap.billingIdentify',
-        errorType: e.runtimeType.toString(),
-        errorCode: PocketCoderErrorCodeMapper.mapError(e),
-        stackTrace: stack.toString(),
-        timestamp: DateTime.now(),
-      ));
+      debugPrint(
+          'Bootstrap: Warning - billing identify on session restore failed: $e');
+      await pocketCoderDiagnosticCapture.capture(
+        error: e,
+        stackTrace: stack,
+        source: 'Bootstrap',
+        operation: 'billingIdentify',
+      );
     }
 
     // 2. Register UI flow service (depends on localization/feedback/loading)
@@ -88,12 +90,19 @@ Future<void> bootstrap() async {
     // 3. Configure ErrorPrivserver for privacy-preserving error reporting
     debugPrint('Bootstrap: Configuring ErrorPrivserver...');
     _configureErrorPrivserver();
+    await pocketCoderDiagnosticCapture.flush();
     debugPrint('Bootstrap: ErrorPrivserver configured');
 
     debugPrint('Bootstrap: Complete');
   } catch (e, stack) {
     debugPrint('Bootstrap: FAILED - $e');
     debugPrint('Bootstrap: Stack trace:\n$stack');
+    await pocketCoderDiagnosticCapture.capture(
+      error: e,
+      stackTrace: stack,
+      source: 'Bootstrap',
+      operation: 'startup',
+    );
     rethrow;
   }
 }
@@ -118,7 +127,8 @@ void _configureErrorPrivserver() {
       reporter: (_) async {}, // no-op: no network transmission, see spec §3
       errorCodeMapper: PocketCoderErrorCodeMapper.mapError,
       exceptionMapper: (error) => getIt<IExceptionKeyMapper>().map(error),
-      showToast: false, // dead field in this package version (pinned commit 3565d9d4), set explicitly for clarity
+      showToast:
+          false, // dead field in this package version (pinned commit 3565d9d4), set explicitly for clarity
       toastBuilder: const _NoopErrorToastBuilder(),
       pageBuilder: const PocketCoderErrorBoxPageBuilder(),
     ),

@@ -28,7 +28,7 @@ class ObservabilityCubit extends Cubit<ObservabilityState> {
         status: UiFlowStatus.success,
       ));
     } catch (e) {
-      logError('📈 [ObservabilityCubit] Failed to refresh stats: $e');
+      logError('📈 [ObservabilityCubit] Failed to refresh stats', e);
       emit(state.copyWith(
         error: e,
         status: UiFlowStatus.failure,
@@ -37,7 +37,7 @@ class ObservabilityCubit extends Cubit<ObservabilityState> {
   }
 
   void startLogStreaming(String containerName) {
-    logInfo('📈 [ObservabilityCubit] Starting log stream for $containerName');
+    logInfo('📈 [ObservabilityCubit] Starting container log stream');
     _logSub?.cancel();
     emit(state.copyWith(
       currentContainer: containerName,
@@ -54,7 +54,7 @@ class ObservabilityCubit extends Cubit<ObservabilityState> {
         emit(state.copyWith(logs: updatedLogs));
       },
       onError: (e) {
-        logError('📈 [ObservabilityCubit] Log stream error: $e');
+        logError('📈 [ObservabilityCubit] Log stream error', e);
         emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );

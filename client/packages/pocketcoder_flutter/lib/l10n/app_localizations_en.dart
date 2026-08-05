@@ -1064,6 +1064,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorsEmpty => 'NO ERRORS CAPTURED';
 
   @override
+  String get errorsCopy => 'COPY REPORT';
+
+  @override
+  String get errorsCopyAll => 'COPY ALL';
+
+  @override
+  String get errorsCopied => 'DIAGNOSTIC REPORT COPIED';
+
+  @override
   String get errorsClearAll => 'CLEAR ALL';
 
   @override

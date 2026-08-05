@@ -29,7 +29,7 @@ class PocoCubit extends Cubit<PocoState> {
 
   void updateMessage(String newMessage,
       {List<(String, int)>? sequence, bool addToHistory = true}) {
-    logDebug('🤖 [PocoCubit] Message: $newMessage');
+    logDebug('🤖 [PocoCubit] Message updated');
     final history =
         addToHistory ? [...state.history, state.message] : state.history;
     emit(state.copyWith(
