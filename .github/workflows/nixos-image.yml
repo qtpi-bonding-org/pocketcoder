@@ -241,10 +241,12 @@ jobs:
           aws s3 cp \
             "s3://pocketcoder-images/pocketcoder-nixos-${SOURCE_COMMIT}.img.gz" \
             s3://pocketcoder-images/pocketcoder-nixos-latest.img.gz \
+            --copy-props none \
             --endpoint-url "$R2_ENDPOINT"
           aws s3 cp \
             "s3://pocketcoder-images/pocketcoder-docker-images-${SOURCE_COMMIT}.tar.gz" \
             s3://pocketcoder-images/pocketcoder-docker-images-latest.tar.gz \
+            --copy-props none \
             --endpoint-url "$R2_ENDPOINT"
 
           # These pointers are updated only after both artifact jobs and the
