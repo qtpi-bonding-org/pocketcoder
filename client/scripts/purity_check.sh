@@ -20,7 +20,9 @@ if [ -z "$TARGET" ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLIENT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# FOSS CI supplies an isolated workspace containing only the FOSS targets.
+# Local use continues to default to the normal client workspace.
+CLIENT_DIR="${PURITY_CLIENT_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 TARGET_DIR="$CLIENT_DIR/$TARGET"
 WORKSPACE_LOCK="$CLIENT_DIR/pubspec.lock"
 

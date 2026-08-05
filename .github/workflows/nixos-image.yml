@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - uses: cachix/install-nix-action@v30
         with:
@@ -29,7 +31,12 @@ jobs:
 
       - name: Build Linode image
         working-directory: deploy/nixos
-        run: nix build .#linode-image --print-build-logs
+        run: |
+          # Embed the exact source revision into bootstrap.nix. The first
+          # boot must clone this revision, never whatever happens to be on
+          # main when a customer deploys later.
+          printf '"%s"\n' "$GITHUB_SHA" > release-commit.nix
+          nix build .#linode-image --print-build-logs
 
       - name: Compress image
         run: gzip -c deploy/nixos/result/nixos.img > pocketcoder-nixos.img.gz
@@ -59,45 +66,30 @@ jobs:
             s3://pocketcoder-images/pocketcoder-nixos-${{ github.sha }}.img.gz \
             --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
-          # Dual-write to the old mutable "-latest" key too. Nothing else
-          # publishes this key any more (the manifest + versioned key above
-          # are now the primary path), but workers/image-relay's retained
-          # legacy CustomImageProvisioningStrategy / /upload-image path
-          # still reads NIXOS_IMAGE_KEY="pocketcoder-nixos-latest.img.gz"
-          # verbatim -- without this it would silently start failing with
-          # "NixOS image not found in R2" once the old object ages out.
-          aws s3 cp pocketcoder-nixos.img.gz \
-            s3://pocketcoder-images/pocketcoder-nixos-latest.img.gz \
-            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
-      - name: Publish manifest
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
+      - name: Write release metadata
         run: |
-          # images.pocketcoder.org is a Cloudflare R2 custom domain in
-          # front of the pocketcoder-images bucket (public reads only --
-          # writes still require the scoped R2 credential this job uses).
-          # pocketcoder.org (not .dev) is the real domain already on
-          # Cloudflare's nameservers; .dev was a placeholder used before
-          # this was set up.
-          cat > manifest.json <<EOF
+          cat > nixos-release-metadata.json <<EOF
           {
+            "sourceCommit": "${{ github.sha }}",
             "url": "https://images.pocketcoder.org/pocketcoder-nixos-${{ github.sha }}.img.gz",
             "sha256": "${{ steps.meta.outputs.sha256 }}",
             "uncompressedBytes": ${{ steps.meta.outputs.uncompressed_bytes }}
           }
           EOF
-          aws s3 cp manifest.json \
-            s3://pocketcoder-images/image-manifest.json \
-            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: nixos-image
           path: pocketcoder-nixos.img.gz
+          retention-days: 30
+
+      - name: Upload release metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: nixos-release-metadata
+          path: nixos-release-metadata.json
           retention-days: 30
 
   release:
@@ -132,9 +124,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Build app-stack images
         run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           # -p pocketcoder pins the image name prefix (pocketcoder-<service>)
           # to match what bootstrap.nix's `docker compose up -d` produces --
           # it always runs from /opt/pocketcoder, so its default Compose
@@ -179,22 +174,89 @@ jobs:
             s3://pocketcoder-images/pocketcoder-docker-images-${{ github.sha }}.tar.gz \
             --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
-          aws s3 cp pocketcoder-docker-images.tar.gz \
-            s3://pocketcoder-images/pocketcoder-docker-images-latest.tar.gz \
-            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
-
-      - name: Publish manifest
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
+      - name: Write release metadata
         run: |
-          cat > docker-images-manifest.json <<EOF
+          cat > docker-images-release-metadata.json <<EOF
           {
+            "sourceCommit": "${{ github.sha }}",
             "url": "https://images.pocketcoder.org/pocketcoder-docker-images-${{ github.sha }}.tar.gz",
             "sha256": "${{ steps.meta.outputs.sha256 }}"
           }
           EOF
+
+      - name: Upload release metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images-release-metadata
+          path: docker-images-release-metadata.json
+          retention-days: 30
+
+  # Promotion is deliberately the only job that updates mutable pointers.
+  # A failed or partial build can publish immutable objects, but it cannot
+  # make them the release used by new deployments.
+  promote:
+    needs: [build, docker-images]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download NixOS metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: nixos-release-metadata
+
+      - name: Download Docker metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images-release-metadata
+
+      - name: Validate and publish coupled release
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          SOURCE_COMMIT: ${{ github.sha }}
+          R2_ENDPOINT: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+        run: |
+          set -euo pipefail
+          test "$(jq -r .sourceCommit nixos-release-metadata.json)" = "$SOURCE_COMMIT"
+          test "$(jq -r .sourceCommit docker-images-release-metadata.json)" = "$SOURCE_COMMIT"
+
+          NIXOS=$(cat nixos-release-metadata.json)
+          DOCKER=$(cat docker-images-release-metadata.json)
+          jq -n \
+            --arg sourceCommit "$SOURCE_COMMIT" \
+            --argjson nixos "$NIXOS" \
+            --argjson dockerImages "$DOCKER" \
+            '{schemaVersion: 1, sourceCommit: $sourceCommit,
+              nixosImage: $nixos, dockerImages: $dockerImages}' \
+            > release-manifest.json
+
+          # Immutable release record first.
+          aws s3 cp release-manifest.json \
+            "s3://pocketcoder-images/release-${SOURCE_COMMIT}.json" \
+            --endpoint-url "$R2_ENDPOINT"
+
+          # Legacy upload-image/bootstrap consumers retain their old object
+          # names, but these mutable aliases are promoted only after both
+          # immutable artifacts have passed validation.
+          aws s3 cp \
+            "s3://pocketcoder-images/pocketcoder-nixos-${SOURCE_COMMIT}.img.gz" \
+            s3://pocketcoder-images/pocketcoder-nixos-latest.img.gz \
+            --endpoint-url "$R2_ENDPOINT"
+          aws s3 cp \
+            "s3://pocketcoder-images/pocketcoder-docker-images-${SOURCE_COMMIT}.tar.gz" \
+            s3://pocketcoder-images/pocketcoder-docker-images-latest.tar.gz \
+            --endpoint-url "$R2_ENDPOINT"
+
+          # These pointers are updated only after both artifact jobs and the
+          # coupled release record are valid.
+          cp nixos-release-metadata.json image-manifest.json
+          cp docker-images-release-metadata.json docker-images-manifest.json
+          aws s3 cp release-manifest.json \
+            s3://pocketcoder-images/release-manifest.json \
+            --endpoint-url "$R2_ENDPOINT"
+          aws s3 cp image-manifest.json \
+            s3://pocketcoder-images/image-manifest.json \
+            --endpoint-url "$R2_ENDPOINT"
           aws s3 cp docker-images-manifest.json \
             s3://pocketcoder-images/docker-images-manifest.json \
-            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+            --endpoint-url "$R2_ENDPOINT"

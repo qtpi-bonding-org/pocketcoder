@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, sourceCommit ? "main", ... }:
 
 {
   systemd.services.pocketcoder-bootstrap = {
@@ -32,7 +32,10 @@
       INSTALL_DIR="/opt/pocketcoder"
       MARKER="$INSTALL_DIR/.initialized"
       POCKETCODER_REPO="https://github.com/qtpi-bonding-org/pocketcoder.git"
-      POCKETCODER_REF="main"
+      # The release image embeds the exact source revision that produced it.
+      # CI writes deploy/nixos/release-commit.nix before building. Development
+      # images use the local default (main).
+      POCKETCODER_REF="${sourceCommit}"
 
       # Skip if already bootstrapped
       if [ -f "$MARKER" ]; then
@@ -138,7 +141,13 @@ EOF
       echo "Cloning PocketCoder repository ($POCKETCODER_REF)..."
       if [ ! -f "$INSTALL_DIR/docker-compose.yml" ]; then
         SRC_DIR=$(mktemp -d)
-        git clone --depth 1 --branch "$POCKETCODER_REF" "$POCKETCODER_REPO" "$SRC_DIR"
+        # `POCKETCODER_REF` is normally a 40-character commit SHA. `git
+        # clone --branch` does not accept raw SHAs, so fetch the exact object
+        # explicitly and detach at it. This also works for the local default
+        # branch used by development images.
+        git clone --depth 1 "$POCKETCODER_REPO" "$SRC_DIR"
+        git -C "$SRC_DIR" fetch --depth 1 origin "$POCKETCODER_REF"
+        git -C "$SRC_DIR" checkout --detach "$POCKETCODER_REF"
         cp -a "$SRC_DIR/." "$INSTALL_DIR/"
         rm -rf "$SRC_DIR"
       fi
@@ -158,8 +167,11 @@ EOF
       if MANIFEST=$(curl -sf --max-time 15 "$DOCKER_CACHE_URL"); then
         CACHE_URL=$(echo "$MANIFEST" | jq -r '.url')
         CACHE_SHA256=$(echo "$MANIFEST" | jq -r '.sha256')
+        CACHE_SOURCE_COMMIT=$(echo "$MANIFEST" | jq -r '.sourceCommit // empty')
         CACHE_FILE=$(mktemp)
-        if curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
+        if [ "$CACHE_SOURCE_COMMIT" != "$POCKETCODER_REF" ]; then
+          echo "Cached Docker image source mismatch (expected $POCKETCODER_REF, got ''${CACHE_SOURCE_COMMIT:-missing}) -- building from source."
+        elif curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
           ACTUAL_SHA256=$(sha256sum "$CACHE_FILE" | cut -d' ' -f1)
           if [ "$ACTUAL_SHA256" = "$CACHE_SHA256" ]; then
             if gunzip -c "$CACHE_FILE" | docker load; then
