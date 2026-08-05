@@ -5,8 +5,8 @@
  * Supabase, and Firebase together into a zero-cost monetization tollbooth.
  *
  * Flow:
- *   PocketBase POST → validate secret → RevenueCat sub check (cached)
- *   → Supabase daily quota → FCM v1 delivery → device buzzes
+ *   PocketBase POST → verify tenant binding (Supabase) → RevenueCat sub
+ *   check (cached) → Supabase daily quota → FCM v1 delivery → device buzzes
  *
  * Expected payload from PocketBase:
  *   {
@@ -33,9 +33,9 @@ export default {
 			return json({ status: 'ok', service: 'pocketcoder-push-relay' }, 200);
 		}
 
-		// Step 1: Validate shared secret
+		// Step 1: Require a per-user secret. The first use binds it to user_id.
 		const secret = request.headers.get('X-Relay-Secret');
-		if (secret !== env.PN_RELAY_SECRET) {
+		if (!secret) {
 			return json({ error: 'Unauthorized' }, 401);
 		}
 
@@ -47,16 +47,17 @@ export default {
 				return json({ error: 'Missing token or service' }, 400);
 			}
 
-			// UnifiedPush: direct passthrough, no subscription/quota checks
-			if (service === 'unifiedpush') {
-				return await sendUnifiedPush(token, title, message, type, chat);
-			}
-
 			if (service !== 'fcm') {
 				return json({ error: `Unknown service: ${service}` }, 400);
 			}
 
+			if (!user_id) {
+				return json({ error: 'user_id is required for fcm' }, 400);
+			}
+
 			// --- FCM path: the monetization tollbooth ---
+			const binding = await checkTenantBinding(secret, user_id, env);
+			if (!binding.ok) return json({ error: binding.error }, binding.status);
 
 			// Step 2: RevenueCat subscription check
 			if (user_id && env.REVENUECAT_SECRET_KEY) {
@@ -85,6 +86,33 @@ export default {
 		}
 	},
 };
+
+async function sha256Hex(value) {
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+	return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkTenantBinding(secret, userId, env) {
+	if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+		return { ok: false, status: 502, error: 'Tenant binding unavailable' };
+	}
+
+	const secretHash = await sha256Hex(secret);
+	const response = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/bind_relay_secret`, {
+		method: 'POST',
+		headers: {
+			apikey: env.SUPABASE_SERVICE_KEY,
+			Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ p_secret_hash: secretHash, p_user_id: userId }),
+	});
+
+	if (!response.ok) return { ok: false, status: 502, error: 'Tenant binding unavailable' };
+	const boundUserId = await response.json();
+	if (boundUserId !== userId) return { ok: false, status: 403, error: 'Relay secret belongs to another user' };
+	return { ok: true };
+}
 
 // ---------------------------------------------------------------------------
 // Step 2: RevenueCat subscription check with Cloudflare Cache API
@@ -365,30 +393,6 @@ async function signJWT(header, claims, privateKeyInput) {
 	);
 
 	return `${signingInput}.${arrayBufferToBase64url(signature)}`;
-}
-
-// ---------------------------------------------------------------------------
-// UnifiedPush passthrough (ntfy-compatible)
-// ---------------------------------------------------------------------------
-
-async function sendUnifiedPush(endpoint, title, message, type, chat) {
-	const clickUrl = chat ? `pocketcoder://chat/${chat}` : 'pocketcoder://';
-
-	const resp = await fetch(endpoint, {
-		method: 'POST',
-		headers: {
-			'Title': title || 'PocketCoder',
-			'Click': clickUrl,
-			'Priority': 'high',
-			...(type && { 'Tags': type }),
-		},
-		body: message || '',
-	});
-
-	return new Response(await resp.text(), {
-		status: resp.status,
-		headers: { 'Content-Type': 'application/json' },
-	});
 }
 
 // ---------------------------------------------------------------------------
