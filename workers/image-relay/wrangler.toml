@@ -5,27 +5,3 @@ compatibility_date = "2024-12-01"
 [[r2_buckets]]
 binding = "IMAGES"
 bucket_name = "pocketcoder-images"
-
-[vars]
-NIXOS_IMAGE_KEY = "pocketcoder-nixos-latest.img.gz"
-
-# The actual R2 -> Linode transfer runs here, not in ctx.waitUntil() on the
-# HTTP handler: waitUntil() has a hard ~30s budget for background work,
-# nowhere near enough for a multi-hundred-MB upload (confirmed empirically
-# -- every waitUntil-based attempt left the Linode image at 0 bytes
-# transferred, regardless of request body format). A queue consumer gets
-# up to 15 minutes per message and automatic retries.
-[[queues.producers]]
-queue = "pocketcoder-image-uploads"
-binding = "UPLOAD_QUEUE"
-
-# Disabled: CustomImageProvisioningStrategy (the streaming-upload path
-# this queue serves) is no longer the default provisioning path -- see
-# docs/superpowers/specs/2026-07-29-linode-boot-time-image-provisioning-design.md,
-# "Strategy 1." Disabling the consumer (not deleting it) prevents a
-# stale enqueued message from retry-looping against an already-dead,
-# single-use upload_to URL and generating pointless billed activity.
-# [[queues.consumers]]
-# queue = "pocketcoder-image-uploads"
-# max_batch_size = 1
-# max_retries = 3

@@ -6,7 +6,6 @@ compatibility_date = "2024-12-01"
 DAILY_PUSH_LIMIT = "1000"
 
 # Secrets (set via `wrangler secret put`):
-# PN_RELAY_SECRET       — shared secret with PocketBase
 # REVENUECAT_SECRET_KEY — RevenueCat V2 secret API key
 # REVENUECAT_PROJECT_ID — RevenueCat project id (e.g. proj1ab2c3d4), required by the V2 API's URL path
 # FCM_PROJECT_ID        — Firebase project id (kept out of source, not just credentials)
