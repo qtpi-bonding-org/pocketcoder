@@ -29,6 +29,7 @@ NC='\033[0m'
 # Initialize flags
 INCLUDE_DOCS=false
 INCLUDE_TESTS=false
+HARDEN_HOST=true
 COMPOSE_FILES=("-f" "docker-compose.yml")
 
 # Parse arguments
@@ -42,6 +43,11 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 echo -e "${BLUE}🦅 PocketCoder: Initializing Bunker Deployment...${NC}"
+
+if [ "$HARDEN_HOST" = true ] && [ "$(uname -s)" = "Linux" ]; then
+    echo -e "${BLUE}🛡️  Applying standard Linux host hardening...${NC}"
+    sudo ./deploy/standard-linux/harden-host.sh --apply
+fi
 
 # 1. SECURE INITIALIZATION (Formerly Genesis)
 # ------------------------------------------
