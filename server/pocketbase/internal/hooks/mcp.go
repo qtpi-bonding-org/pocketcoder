@@ -32,6 +32,15 @@ import (
 const (
 	mcpConfigPath  = "/mcp_config/docker-mcp.yaml"
 	mcpSecretsPath = "/mcp_config/mcp.env"
+
+	// mcpDockerHost is the compose-pinned address of the socket proxy scoped
+	// for mcp-gateway's own use (docker-compose.yml's docker-socket-proxy-mcp
+	// service, NETWORKS=1 for per-session isolation) -- deliberately not the
+	// same proxy PocketBase itself talks to (docker-socket-proxy-write). See
+	// renderMcpConfig's DOCKER_HOST injection below for why this has to be
+	// written into each approved server's catalog entry rather than read
+	// from this process's own env.
+	mcpDockerHost = "tcp://docker-socket-proxy-mcp:2375"
 )
 
 // RegisterMcpHooks registers hooks for MCP server lifecycle management.
@@ -142,6 +151,25 @@ func renderMcpConfig(app core.App) error {
 		catalog.WriteString("    type: server\n")
 		catalog.WriteString(fmt.Sprintf("    image: %s\n", image))
 		catalog.WriteString("    longLived: false\n")
+
+		// docker-mcp v0.43+ launches each approved server's container via a
+		// `docker run` subprocess (pkg/mcp/stdio.go's NewStdioCmdClient) whose
+		// env is built ONLY from this catalog entry's own `env:`/`secrets:`
+		// list (pkg/gateway/clientpool.go's argsAndEnv) -- it does NOT inherit
+		// the mcp-gateway container's real environment, so that container's
+		// own DOCKER_HOST (docker-compose.yml) never reaches this subprocess
+		// and it falls back to the unix socket, failing outright against
+		// docker-socket-proxy-mcp (verified live: image verify/pull succeed
+		// over DOCKER_HOST via the gateway's separate SDK-based client, but
+		// the actual container launch does not). Declaring DOCKER_HOST here,
+		// per server, is what makes that specific subprocess pick it up.
+		// mcpDockerHost, NOT os.Getenv("DOCKER_HOST") -- this hook runs in
+		// the PocketBase process, whose own DOCKER_HOST points at the
+		// write-scoped docker-socket-proxy-write, a different proxy with
+		// different (broader) permissions than the one mcp-gateway is meant
+		// to use. See spikes/mcp-gateway-v0.43-upgrade/README.md.
+		catalog.WriteString("    env:\n")
+		catalog.WriteString(fmt.Sprintf("      - name: DOCKER_HOST\n        value: %s\n", mcpDockerHost))
 
 		configMap := make(map[string]any)
 		if err := record.UnmarshalJSONField("config", &configMap); err == nil && len(configMap) > 0 {
