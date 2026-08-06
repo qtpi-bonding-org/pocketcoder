@@ -40,6 +40,30 @@ import (
 func main() {
 	app := pocketbase.New()
 
+	// PocketBase ships with a built-in rate limiter, but leaves it disabled in
+	// its default settings. Enable conservative production defaults on fresh
+	// and legacy deployments unless rate limiting is already configured. This
+	// protects public auth/API endpoints without requiring a custom Caddy build.
+	app.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
+		if err := e.Next(); err != nil {
+			return err
+		}
+
+		settings := app.Settings()
+		if settings.RateLimits.Enabled {
+			return nil
+		}
+
+		settings.RateLimits.Enabled = true
+		settings.RateLimits.Rules = []core.RateLimitRule{
+			{Label: "*:auth", MaxRequests: 10, Duration: 60},
+			{Label: "*:create", MaxRequests: 20, Duration: 5},
+			{Label: "/api/batch", MaxRequests: 3, Duration: 1},
+			{Label: "/api/", MaxRequests: 300, Duration: 10},
+		}
+		return app.Save(settings)
+	})
+
 	// coord is nil until RegisterAgentApi runs inside OnServe below, and
 	// stays nil if the agent profile isn't configured. Hooks registered
 	// before OnServe (goose config, MCP) capture this getter and dereference

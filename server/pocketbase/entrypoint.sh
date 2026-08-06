@@ -27,7 +27,7 @@ echo "🔍 Checking for database backup..."
 
 # 1. Run Migrations
 echo "📦 Running database migrations..."
-/app/pocketbase migrate up || true
+/app/pocketbase migrate up
 
 # 2. Provision Superuser (Root)
 if [ -n "$POCKETBASE_SUPERUSER_EMAIL" ] && [ -n "$POCKETBASE_SUPERUSER_PASSWORD" ]; then

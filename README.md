@@ -121,11 +121,13 @@ The NixOS VPS image enables Caddy and exposes PocketBase through an automaticall
 
 The VPS firewall exposes only ports 80 and 443 for web traffic, plus port 22 for key-only SSH administration. The automatic hostname depends on the VPS having a stable public IP and on the external `sslip.io` and certificate services being available.
 
+PocketBase's built-in rate limiter is enabled by default for public deployments: authentication attempts are limited to 10 per minute per client, with additional API and batch-request limits. This is abuse protection, not account isolation; use strong unique passwords for every member.
+
 ## Optional Remote Access (Tailscale)
 
 Tailscale is useful when running the Docker deployment yourself or when you want a private Tailnet-only route instead of a public HTTPS hostname.
 
-For a trusted-group deployment, **Private mode is the safer Tailscale setting**: only devices on your Tailnet can reach the server. Funnel mode creates a public HTTPS URL on the internet; use it only when that tradeoff is intentional and keep strong, unique PocketCoder passwords in place.
+For a trusted-group deployment, **Private mode is the recommended Tailscale setting**: only devices on your Tailnet can reach the server. Funnel mode creates a public HTTPS URL on the internet; use it only when that tradeoff is intentional and keep strong, unique PocketCoder passwords in place. The public Caddy/sslip.io route remains supported when phone access without Tailscale is more important.
 
 1. Create a free [Tailscale account](https://tailscale.com) and generate an auth key at [Admin → Keys](https://login.tailscale.com/admin/settings/keys).
 2. Add to your `.env`:
