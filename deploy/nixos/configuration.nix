@@ -73,6 +73,33 @@
     settings = {
       PermitRootLogin = "prohibit-password";
       PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      X11Forwarding = false;
+      AllowAgentForwarding = false;
+      AllowTcpForwarding = false;
+      PermitTunnel = false;
+      MaxAuthTries = 3;
+      LoginGraceTime = 20;
+      ClientAliveInterval = 300;
+      ClientAliveCountMax = 2;
+      UseDNS = false;
+    };
+  };
+
+  # Public SSH is required for owner administration and first-boot recovery,
+  # but password/key-spam should not consume the box indefinitely. This is a
+  # second line of defense; the real credential boundary remains the SSH key.
+  services.fail2ban = {
+    enable = true;
+    maxretry = 5;
+    bantime = "1h";
+    jails = {
+      sshd.settings = {
+        enabled = true;
+        backend = "systemd";
+        mode = "aggressive";
+        maxretry = 5;
+      };
     };
   };
 

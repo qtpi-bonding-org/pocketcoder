@@ -13,6 +13,12 @@ PocketCoder is a solo research project built in the open. It follows an **Alpine
 >
 > Treat this as an architecture experiment you can read and run, not a finished product.
 
+### Who this is for
+
+PocketCoder is intended for a **single self-hosted VPS shared by one person or a small group of trusted friends and family**. It is not designed as a hostile multi-tenant SaaS boundary. People who share a deployment should be trusted with one another's workspace, agent activity, logs, and configured integrations.
+
+The deployment is self-hosted, but model providers and enabled MCP servers may still receive prompts, file contents, or other data when the agent uses them. Review the privacy policies and permissions of every provider or integration before connecting sensitive accounts.
+
 ## Why it exists
 
 Two patterns have emerged for working with autonomous agents, and PocketCoder aims for the secure middle ground:
@@ -36,7 +42,7 @@ Phone
   → approve, deny, deploy, or update from the phone
 ```
 
-The deployment also removes a traditionally annoying setup step: the provisioned system can derive a public `sslip.io` hostname from the VPS IP and use Caddy to obtain HTTPS automatically, without asking the user to buy a domain or hand-configure a certificate. Tailscale Funnel provides another automatic HTTPS path when that mode is selected.
+The deployment also removes a traditionally annoying setup step: the provisioned system can derive a public `sslip.io` hostname from the VPS IP and use Caddy to obtain HTTPS automatically, without asking the user to buy a domain or hand-configure a certificate. This Caddy HTTPS route is the recommended VPS path for the Flutter app. Tailscale is an optional alternative for self-hosted Docker deployments.
 
 This is different from the common mobile-agent pattern where a user must already have a running desktop, CLI session, or VPS and then pair a phone to it. PocketCoder’s open/self-hosted path remains available through [`deploy.sh`](deploy.sh); mobile VPS provisioning is a separate proprietary convenience layer.
 
@@ -87,7 +93,7 @@ The security model and its honest limits (tool execution currently lives inside 
 | **Provision from phone** | Designed for one-tap VPS provisioning | Usually requires an existing machine/session | Usually manual/self-hosted setup |
 | **Laptop required** | No — runs on a VPS | DIY / unofficial | No |
 | **LLM provider** | Any (bring your own key) | Usually one vendor | Any |
-| **Multi-user** | Yes (via PocketBase) | Single session | Single user |
+| **Sharing model** | Trusted users sharing one deployment; not hostile multi-tenant isolation | Single session | Single user |
 | **Data sovereignty** | Fully self-hosted, no telemetry | Routes through a vendor | Self-hosted, but commands via chat apps |
 | **Security posture** | Every action gated by explicit approval | Permission modes, no mobile override | Approval bolted on, if any |
 
@@ -99,6 +105,7 @@ The only prerequisite is **Docker** — everything else is containerized.
    ```bash
    ./deploy.sh
    ```
+   On an Ubuntu/Debian Linux host, this also applies the host baseline by default: key-only SSH, Fail2ban, the host firewall, Docker forwarding rules, and unattended security updates. Keep a second SSH session open while applying host firewall changes.
 2. **Launch the client** on web, iOS, or Android:
    ```bash
    ./client/scripts/run_chrome_incognito.sh   # clean incognito Chrome
@@ -108,15 +115,23 @@ The only prerequisite is **Docker** — everything else is containerized.
 
 **OS:** any Linux with Docker (Ubuntu 22.04+ recommended); also runs on macOS via Docker Desktop for local dev. A 2 GB / 1 vCPU VPS covers the core + agent runtime at idle — active agent workloads spike above that.
 
-## Remote Access (Tailscale)
+## VPS Access (Caddy HTTPS)
 
-Reach PocketCoder from your phone anywhere — no port forwarding, no public IP.
+The NixOS VPS image enables Caddy and exposes PocketBase through an automatically generated HTTPS hostname such as `194-163-45-3.sslip.io`. Caddy terminates TLS and proxies to PocketBase; PocketBase itself is not exposed directly on the public interface. The Flutter app connects to the HTTPS hostname, not to a raw VPS IP address.
+
+The VPS firewall exposes only ports 80 and 443 for web traffic, plus port 22 for key-only SSH administration. The automatic hostname depends on the VPS having a stable public IP and on the external `sslip.io` and certificate services being available.
+
+## Optional Remote Access (Tailscale)
+
+Tailscale is useful when running the Docker deployment yourself or when you want a private Tailnet-only route instead of a public HTTPS hostname.
+
+For a trusted-group deployment, **Private mode is the safer Tailscale setting**: only devices on your Tailnet can reach the server. Funnel mode creates a public HTTPS URL on the internet; use it only when that tradeoff is intentional and keep strong, unique PocketCoder passwords in place.
 
 1. Create a free [Tailscale account](https://tailscale.com) and generate an auth key at [Admin → Keys](https://login.tailscale.com/admin/settings/keys).
 2. Add to your `.env`:
    ```env
    TS_AUTHKEY=tskey-auth-xxxxx
-   TAILSCALE_MODE=funnel
+   TAILSCALE_MODE=private
    ```
 3. Start with the profile and read your URL from the logs:
    ```bash
@@ -127,7 +142,7 @@ Reach PocketCoder from your phone anywhere — no port forwarding, no public IP.
 
 | Mode | Env value | Access | Phone setup |
 |------|-----------|--------|-------------|
-| **Funnel** | `TAILSCALE_MODE=funnel` | Public HTTPS URL | Just open the URL |
+| **Funnel** | `TAILSCALE_MODE=funnel` | Public HTTPS URL | Just open the URL; advanced/public exposure |
 | **Private** | `TAILSCALE_MODE=private` | Tailnet only | Install Tailscale, same account |
 
 Leave `TS_AUTHKEY` blank to authenticate interactively — the login URL prints to the same logs.
