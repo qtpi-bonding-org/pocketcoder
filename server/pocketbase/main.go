@@ -68,6 +68,7 @@ func main() {
 	// 3b. Register Goose Config Hooks (config.yaml + keys.env render + goose
 	// restart + live tool-permission delivery)
 	hooks.RegisterGooseConfigHooks(app)
+	hooks.RegisterAgentFileHooks(app)
 
 	// 3c. Register cognee Config Hooks (cognee.env render + cognee restart)
 	hooks.RegisterCogneeConfigHooks(app)

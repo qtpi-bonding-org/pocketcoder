@@ -120,7 +120,10 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		if poco, err = app.FindRecordById("agent_profiles", pocoID); err != nil {
 			return p, err
 		}
-	} else if poco, err = defaultPocoConfigAPI(app); err != nil {
+		if ownerID := poco.GetString("user"); ownerID != "" && ownerID != userID && !poco.GetBool("is_system") {
+			return p, fmt.Errorf("agent_profile %s does not belong to chat user", pocoID)
+		}
+	} else if poco, err = defaultPocoConfigAPI(app, userID); err != nil {
 		return p, err
 	}
 
@@ -134,6 +137,9 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		}
 		if spID := poco.GetString("system_prompt"); spID != "" {
 			if sp, err := app.FindRecordById("prompts", spID); err == nil {
+				if ownerID := sp.GetString("user"); ownerID != "" && ownerID != userID && !sp.GetBool("is_system") {
+					return p, fmt.Errorf("prompt %s does not belong to chat user", spID)
+				}
 				p.Instructions = sp.GetString("body")
 			}
 		}
@@ -262,7 +268,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	}
 
 	launchKey := ""
-	if !p.SupportsLiveConfig && hmID != "" && ollamaModel == "" {
+	if (harnessRec.GetString("cli_id") == "goose" || !p.SupportsLiveConfig) && hmID != "" && ollamaModel == "" {
 		launchKey = hmID
 	}
 
@@ -309,10 +315,16 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 // package to avoid a hooks→api import; the logic is small and identical.
 // agent_profiles has no created/updated autodate field, so the stable,
 // unique-indexed `name` column is the sort key (matches defaultPocoConfig).
-func defaultPocoConfigAPI(app core.App) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter("agent_profiles", "is_default = true", "name", 0, 0)
+func defaultPocoConfigAPI(app core.App, userID string) (*core.Record, error) {
+	recs, err := app.FindRecordsByFilter("agent_profiles", "is_default = true && user = {:user}", "name", 0, 1, map[string]any{"user": userID})
 	if err != nil {
 		return nil, err
+	}
+	if len(recs) == 0 {
+		recs, err = app.FindRecordsByFilter("agent_profiles", "is_default = true && is_system = true", "name", 0, 1)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if len(recs) == 0 {
 		return nil, nil

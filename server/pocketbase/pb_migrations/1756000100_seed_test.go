@@ -108,6 +108,19 @@ func TestSeedCreatesDefaultGooseHarnessInstance(t *testing.T) {
 	if inst.GetString("acp_endpoint") != "" {
 		t.Error("seeded default row's acp_endpoint must be empty (means: use Coordinator.Config defaults)")
 	}
+	if harnesses[0].GetString("container_image") != "pocketcoder-goose:1.43.0" {
+		t.Errorf("goose container_image = %q, want pocketcoder-goose:1.43.0", harnesses[0].GetString("container_image"))
+	}
+	var launch struct {
+		Port        int               `json:"port"`
+		EnvTemplate map[string]string `json:"env_template"`
+	}
+	if err := harnesses[0].UnmarshalJSONField("launch_template", &launch); err != nil {
+		t.Fatal(err)
+	}
+	if launch.Port != 3000 || launch.EnvTemplate["GOOSE_SERVER__SECRET_KEY"] != "{{.__adapter_secret}}" {
+		t.Errorf("goose launch template = %+v, want port 3000 and per-instance secret", launch)
+	}
 }
 
 func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
