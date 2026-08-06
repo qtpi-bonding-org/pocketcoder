@@ -70,6 +70,7 @@ services:
   # goose is the sole system of record for history; PocketBase never calls it
   # back, so this network carries only c1 -> c2 ACP traffic.
   goose:
+    image: pocketcoder-goose:1.43.0
     build:
       context: server/goose
       dockerfile: Dockerfile

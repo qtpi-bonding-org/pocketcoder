@@ -41,23 +41,12 @@ var gooseConfigDir = "/goose-config"
 // gooseUID/GID own the rendered files so the non-root goose user can read them.
 var gooseUID, gooseGID = 1000, 1000
 
-// RegisterGooseConfigHooks wires CRUD events on the agent-definition
-// collections to a render+restart handler and a live tool-permission
-// delivery call, and runs an initial render on serve startup (no restart —
-// goose may not exist yet). coord returns the coordinator built inside
-// main.go's OnServe handler; it is nil until that handler runs, and stays
-// nil if the agent profile isn't configured — callers must handle nil.
+// RegisterGooseConfigHooks renders only system-level control-plane config on
+// startup. User profiles, prompts, skills, and provider keys belong to the
+// dynamically provisioned per-user harness containers and must never be
+// copied into the shared control-plane Goose container.
 func RegisterGooseConfigHooks(app core.App) {
 	log.Println("🪿 [GooseConfig] Registering Goose config hooks...")
-
-	handler := func(e *core.RecordEvent) error {
-		err := renderAndRestart("[GooseConfig]", func() error { return renderGooseConfig(app) }, GooseContainer, e)
-		return err
-	}
-
-	for _, coll := range []string{"agent_profiles", "provider_keys", "permission_modes", "permission_mode_tools", "harness_models", "prompts"} {
-		registerCrudHooks(app, coll, handler)
-	}
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		if err := renderGooseConfig(app); err != nil {
@@ -76,7 +65,9 @@ func renderGooseConfig(app core.App) error {
 		return fmt.Errorf("mkdir goose config dir: %w", err)
 	}
 
-	keyRecs, err := app.FindRecordsByFilter("provider_keys", "1=1", "", 0, 0)
+	// The compose Goose receives provider credentials from its own compose
+	// environment. There are no system provider_keys records to render here.
+	keyRecs, err := app.FindRecordsByFilter("provider_keys", "1 = 0", "", 0, 0)
 	if err != nil {
 		return fmt.Errorf("query provider_keys: %w", err)
 	}
@@ -118,7 +109,7 @@ func renderGooseConfig(app core.App) error {
 // goose config, applying the spec §5.2 tie-break: is_default=true, deterministic
 // first-on-multiple, nil-on-none.
 func defaultPocoConfig(app core.App) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter("agent_profiles", "is_default = true", "name", 0, 0)
+	recs, err := app.FindRecordsByFilter("agent_profiles", "is_default = true && is_system = true", "name", 0, 0)
 	if err != nil {
 		return nil, fmt.Errorf("query default agent_profiles: %w", err)
 	}
