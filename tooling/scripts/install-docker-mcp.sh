@@ -15,10 +15,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-# Shared docker-mcp plugin installer — used by opencode, sandbox, and mcp-gateway Dockerfiles.
+# docker-mcp plugin installer — used by server/mcp-gateway/Dockerfile only.
+# (OpenCode's harness image installs opencode-ai via npm, not this CLI; the
+# Rust sandbox proxy in dormant/ doesn't use it either — despite what an
+# earlier version of this comment claimed.)
 set -e
 
-VERSION="v0.39.3"
+VERSION="v0.43.3"
 ARCH=$(uname -m)
 
 case $ARCH in
