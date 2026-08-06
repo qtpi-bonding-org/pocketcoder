@@ -54,16 +54,59 @@
     allowedUDPPorts = [
       443   # Caddy HTTP/3
     ];
-    # Docker's own DNAT/FORWARD rules run outside the firewall's INPUT
-    # chain, so `allowedTCPPorts` above can't stop a container from
-    # reaching the Linode instance-metadata endpoint -- and any container
-    # that can (including goose, which runs model-directed code) could read
-    # the same user-data/secrets bootstrap.nix consumes. Docker always
-    # creates a DOCKER-USER chain and guarantees it's consulted before its
-    # own FORWARD rules, so this is the supported hook point for that.
-    extraCommands = ''
-      iptables -C DOCKER-USER -d 169.254.169.254 -j DROP 2>/dev/null || \
-        iptables -I DOCKER-USER -d 169.254.169.254 -j DROP
+  };
+
+  # Docker's DNAT/FORWARD path is separate from the host firewall INPUT
+  # chain. Apply the same public allowlist as standard Linux after Docker has
+  # created DOCKER-USER; this also blocks containers from reaching Linode's
+  # metadata service, which can expose bootstrap credentials.
+  systemd.services.pocketcoder-docker-firewall = {
+    description = "PocketCoder Docker forwarding firewall";
+    after = [ "docker.service" ];
+    wants = [ "docker.service" ];
+    requires = [ "docker.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [ pkgs.iptables ];
+    script = ''
+      set -euo pipefail
+
+      apply_ipv4_rules() {
+        iptables -N POCKETCODER-DOCKER 2>/dev/null || true
+        iptables -F POCKETCODER-DOCKER
+        iptables -A POCKETCODER-DOCKER -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
+        iptables -A POCKETCODER-DOCKER -d 169.254.169.254 -j DROP
+        iptables -A POCKETCODER-DOCKER -s 127.0.0.0/8 -j RETURN
+        iptables -A POCKETCODER-DOCKER -s 10.0.0.0/8 -j RETURN
+        iptables -A POCKETCODER-DOCKER -s 172.16.0.0/12 -j RETURN
+        iptables -A POCKETCODER-DOCKER -s 192.168.0.0/16 -j RETURN
+        iptables -A POCKETCODER-DOCKER -s 100.64.0.0/10 -j RETURN
+        iptables -A POCKETCODER-DOCKER -p tcp -m multiport --dports 80,443 -j RETURN
+        iptables -A POCKETCODER-DOCKER -m conntrack --ctstate NEW -j DROP
+        iptables -A POCKETCODER-DOCKER -j RETURN
+        iptables -C DOCKER-USER -j POCKETCODER-DOCKER 2>/dev/null || \
+          iptables -I DOCKER-USER 1 -j POCKETCODER-DOCKER
+      }
+
+      apply_ipv6_rules() {
+        ip6tables -N POCKETCODER-DOCKER 2>/dev/null || true
+        ip6tables -F POCKETCODER-DOCKER
+        ip6tables -A POCKETCODER-DOCKER -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
+        ip6tables -A POCKETCODER-DOCKER -s ::1/128 -j RETURN
+        ip6tables -A POCKETCODER-DOCKER -s fc00::/7 -j RETURN
+        ip6tables -A POCKETCODER-DOCKER -s fe80::/10 -j RETURN
+        ip6tables -A POCKETCODER-DOCKER -p tcp -m multiport --dports 80,443 -j RETURN
+        ip6tables -A POCKETCODER-DOCKER -m conntrack --ctstate NEW -j DROP
+        ip6tables -A POCKETCODER-DOCKER -j RETURN
+        ip6tables -C DOCKER-USER -j POCKETCODER-DOCKER 2>/dev/null || \
+          ip6tables -I DOCKER-USER 1 -j POCKETCODER-DOCKER
+      }
+
+      apply_ipv4_rules
+      apply_ipv6_rules
     '';
   };
 
