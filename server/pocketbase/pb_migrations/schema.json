@@ -227,7 +227,7 @@
     "id": "pc_chats",
     "listRule": "@request.auth.id != '' \u0026\u0026 (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')",
     "viewRule": "@request.auth.id != '' \u0026\u0026 (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')",
-    "createRule": "@request.auth.id != '' && @request.body.owner = @request.auth.id && @request.body.is_system != true",
+    "createRule": "@request.auth.id != '' && @request.body.user = @request.auth.id && @request.body.is_system != true",
     "updateRule": "user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'",
     "deleteRule": "user = @request.auth.id || @request.auth.role = 'admin'",
     "name": "chats",
@@ -708,11 +708,11 @@
   },
   {
     "id": "pc_permission_modes",
-    "listRule": "@request.auth.id != '' && (owner = @request.auth.id || is_system = true)",
-    "viewRule": "@request.auth.id != '' && (owner = @request.auth.id || is_system = true)",
-    "createRule": "@request.auth.id != '' && @request.body.owner = @request.auth.id && @request.body.is_system != true",
-    "updateRule": "@request.auth.id != '' && (owner = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
-    "deleteRule": "@request.auth.id != '' && (owner = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
+    "listRule": "@request.auth.id != '' && (user = @request.auth.id || is_system = true)",
+    "viewRule": "@request.auth.id != '' && (user = @request.auth.id || is_system = true)",
+    "createRule": "@request.auth.id != '' && @request.body.user = @request.auth.id && @request.body.is_system != true",
+    "updateRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
+    "deleteRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
     "name": "permission_modes",
     "type": "base",
     "fields": [
@@ -774,10 +774,10 @@
         "cascadeDelete": false,
         "collectionId": "_pb_users_auth_",
         "hidden": false,
-        "id": "relation_permission_modes_owner",
+        "id": "relation_permission_modes_user",
         "maxSelect": 1,
         "minSelect": 0,
-        "name": "owner",
+        "name": "user",
         "presentable": false,
         "required": false,
         "system": false,
@@ -803,7 +803,7 @@
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_permission_modes_name_owner ON permission_modes (name, owner)"
+      "CREATE UNIQUE INDEX idx_permission_modes_name_user ON permission_modes (name, user)"
     ],
     "created": "2026-08-06 00:00:00.000Z",
     "updated": "2026-08-06 00:00:00.000Z",
@@ -811,11 +811,11 @@
   },
   {
     "id": "pc_permission_mode_tools",
-    "listRule": "@request.auth.id != '' && (permission_mode.owner = @request.auth.id || permission_mode.is_system = true)",
-    "viewRule": "@request.auth.id != '' && (permission_mode.owner = @request.auth.id || permission_mode.is_system = true)",
-    "createRule": "@request.auth.id != '' && permission_mode.owner = @request.auth.id && permission_mode.is_system != true",
-    "updateRule": "@request.auth.id != '' && permission_mode.owner = @request.auth.id && permission_mode.is_system != true",
-    "deleteRule": "@request.auth.id != '' && permission_mode.owner = @request.auth.id && permission_mode.is_system != true",
+    "listRule": "@request.auth.id != '' && (permission_mode.user = @request.auth.id || permission_mode.is_system = true)",
+    "viewRule": "@request.auth.id != '' && (permission_mode.user = @request.auth.id || permission_mode.is_system = true)",
+    "createRule": "@request.auth.id != '' && permission_mode.user = @request.auth.id && permission_mode.is_system != true",
+    "updateRule": "@request.auth.id != '' && permission_mode.user = @request.auth.id && permission_mode.is_system != true",
+    "deleteRule": "@request.auth.id != '' && permission_mode.user = @request.auth.id && permission_mode.is_system != true",
     "name": "permission_mode_tools",
     "type": "base",
     "fields": [
@@ -1754,11 +1754,11 @@
   },
   {
     "id": "pc_prompts",
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": null,
-    "updateRule": null,
-    "deleteRule": null,
+    "listRule": "@request.auth.id != '' && (user = @request.auth.id || is_system = true)",
+    "viewRule": "@request.auth.id != '' && (user = @request.auth.id || is_system = true)",
+    "createRule": "@request.auth.id != '' && @request.body.user = @request.auth.id && @request.body.is_system != true",
+    "updateRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
+    "deleteRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
     "name": "prompts",
     "type": "base",
     "fields": [
@@ -1803,20 +1803,44 @@
         "required": true,
         "system": false,
         "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_prompts_user",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "user",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "bool_prompts_system",
+        "name": "is_system",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
       }
     ],
-    "indexes": [],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_prompts_name_user ON prompts (name, user)"
+    ],
     "created": "2026-07-24 05:34:49.867Z",
     "updated": "2026-07-24 05:34:49.867Z",
     "system": false
   },
   {
     "id": "pc_agent_profiles",
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": null,
-    "updateRule": null,
-    "deleteRule": null,
+    "listRule": "@request.auth.id != '' && (user = @request.auth.id || is_system = true)",
+    "viewRule": "@request.auth.id != '' && (user = @request.auth.id || is_system = true)",
+    "createRule": "@request.auth.id != '' && @request.body.user = @request.auth.id && @request.body.is_system != true",
+    "updateRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
+    "deleteRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
     "name": "agent_profiles",
     "type": "base",
     "fields": [
@@ -1847,6 +1871,28 @@
         "required": true,
         "system": false,
         "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_agent_profiles_user",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "user",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "bool_agent_profiles_system",
+        "name": "is_system",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
       },
       {
         "cascadeDelete": false,
@@ -1915,16 +1961,131 @@
         "minSelect": 0,
         "name": "permission_mode",
         "presentable": false,
-        "required": true,
+        "required": false,
         "system": false,
         "type": "relation"
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_agent_profiles_name ON agent_profiles (name)"
+      "CREATE UNIQUE INDEX idx_agent_profiles_name_user ON agent_profiles (name, user)"
     ],
     "created": "2026-07-24 05:34:49.873Z",
     "updated": "2026-07-24 05:34:50.164Z",
+    "system": false
+  },
+  {
+    "id": "pc_skills",
+    "listRule": "@request.auth.id != '' && (user = @request.auth.id || is_system = true)",
+    "viewRule": "@request.auth.id != '' && (user = @request.auth.id || is_system = true)",
+    "createRule": "@request.auth.id != '' && @request.body.user = @request.auth.id && @request.body.is_system != true",
+    "updateRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
+    "deleteRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
+    "name": "skills",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_skills_user",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "user",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "bool_skills_system",
+        "name": "is_system",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_skills_name",
+        "max": 64,
+        "min": 1,
+        "name": "name",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_skills_description",
+        "max": 1024,
+        "min": 1,
+        "name": "description",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_skills_content",
+        "max": 0,
+        "min": 1,
+        "name": "content",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "json_skills_metadata",
+        "maxSize": 0,
+        "name": "metadata",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "bool_skills_active",
+        "name": "active",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_skills_name_user ON skills (name, user)"
+    ],
+    "created": "2026-08-06 00:00:00.000Z",
+    "updated": "2026-08-06 00:00:00.000Z",
     "system": false
   },
   {

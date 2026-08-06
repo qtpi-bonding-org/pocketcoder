@@ -254,6 +254,28 @@ func TestProvisionHarnessInstanceReusesLocalImageWithoutPulling(t *testing.T) {
 	}
 }
 
+func TestProvisionGooseUsesPerUserStateVolume(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "test-goose-user-"+uuid.NewString()[:8]+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fake := newFakeDockerClient()
+	if _, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID); err != nil {
+		t.Fatal(err)
+	}
+	foundGooseState := false
+	for _, bind := range fake.lastCreateSpec.VolumeBinds {
+		if strings.HasSuffix(bind, ":/goose") {
+			foundGooseState = true
+		}
+	}
+	if !foundGooseState {
+		t.Fatalf("Goose volume binds = %v, want a per-user /goose state mount", fake.lastCreateSpec.VolumeBinds)
+	}
+}
+
 func TestProvisionHarnessInstanceIsIdempotent(t *testing.T) {
 	// Deliberately exercises launchKey = "" (the supports_live_config = true
 	// case, i.e. Goose-shaped harnesses) — this is the exact case a naive

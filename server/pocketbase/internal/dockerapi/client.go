@@ -302,6 +302,31 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 	return out.Id, nil
 }
 
+// CopyArchive writes a tar archive into a running container using Docker's
+// archive API. This deliberately avoids exec: PocketBase can materialize
+// managed files without gaining a shell in user harnesses.
+func (c *Client) CopyArchive(ctx context.Context, containerName, destination string, archive io.Reader) error {
+	q := url.Values{"path": []string{destination}}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.baseURL+"/containers/"+containerName+"/archive?"+q.Encode(), archive)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/x-tar")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("copy archive to %s: %w", containerName, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrContainerNotFound
+	}
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("copy archive to %s: docker API returned %s: %s", containerName, resp.Status, string(body))
+	}
+	return nil
+}
+
 func (c *Client) Start(ctx context.Context, containerName string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/containers/"+containerName+"/start", nil)
 	if err != nil {

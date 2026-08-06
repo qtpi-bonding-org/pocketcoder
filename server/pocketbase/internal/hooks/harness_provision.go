@@ -35,7 +35,8 @@ import (
 )
 
 // inspector is the minimal interface ResolveWorkspaceVolumeAndNetwork needs
-//  satisfied by *dockerapi.Client, and by a small test double.
+//
+//	satisfied by *dockerapi.Client, and by a small test double.
 type inspector interface {
 	Inspect(ctx context.Context, containerName string) (dockerapi.ContainerInspect, error)
 }
@@ -128,7 +129,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// COMMON case (every supports_live_config = true harness). A direct
 	// `&&` filter here would fail to find the existing shared instance on
 	// every call after the first, and each failed lookup would attempt to
-// mint and Create a brand-new container colliding with the first on
+	// mint and Create a brand-new container colliding with the first on
 	// the (harness, launch_key) unique index and erroring out. Query by
 	// harness alone, then match launch_key in Go, exactly like
 	// buildSessionProfile already does.
@@ -179,7 +180,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		// Test-only seam: lets a test deterministically land a concurrent
 		// "winner" row for the same (harness, launch_key) in the gap
 		// between this call's own FindHarnessInstance lookup (above, which
-// found nothing) and its own Save below, the same shape of race,
+		// found nothing) and its own Save below, the same shape of race,
 		// without relying on timing. The assertion is the one that matters
 		// regardless of how the race is induced: the loser must return the
 		// winner's row with a nil error, and must not provision a second container.
@@ -188,12 +189,12 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	if err := app.Save(rec); err != nil {
 		// (harness, launch_key) is unique-indexed (idx_harness_instances_pair),
 		// so a concurrent caller provisioning the same pair can win this race
-// and land its row first, this Save then fails on the unique-index
+		// and land its row first, this Save then fails on the unique-index
 		// violation even though a perfectly usable instance now exists. Re-run
 		// the same lookup FindHarnessInstance did up front: if the winner's
 		// row is there now, hand it back instead of surfacing a spurious
 		// error to a caller that just lost a benign race. Only propagate the
-// raw Save error if the row still isn't there, a genuinely different
+		// raw Save error if the row still isn't there, a genuinely different
 		// failure (e.g. a validation error), not a race loss.
 		if winner, lookupErr := FindHarnessInstance(app, harnessID, launchKey, userID); lookupErr == nil && winner != nil {
 			return winner, nil
@@ -220,7 +221,16 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	}
 	_ = harness.UnmarshalJSONField("launch_template", &launch)
 
-	env, err := renderEnv(app, launch.EnvTemplate, secret, harness.GetString("cli_id"), userID)
+	providerID, modelID := "", ""
+	if launchKey != "" {
+		if hm, hmErr := app.FindRecordById("harness_models", launchKey); hmErr == nil {
+			modelID = hm.GetString("harness_model_id")
+			if model, modelErr := app.FindRecordById("models", hm.GetString("model")); modelErr == nil {
+				providerID = model.GetString("provider")
+			}
+		}
+	}
+	env, err := renderEnv(app, launch.EnvTemplate, secret, harness.GetString("cli_id"), userID, providerID, modelID)
 	if err != nil {
 		return fail(fmt.Errorf("render launch_template.env_template: %w", err))
 	}
@@ -237,15 +247,24 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 
 	workspaceVolume := fmt.Sprintf("%s_%s_workspace", volumeName, userSuffix)
 	authVolume := fmt.Sprintf("%s_%s_auth_home", volumeName, userSuffix)
+	volumeBinds := []string{
+		workspaceVolume + ":/workspace",
+		authVolume + ":" + harnessAuthHomeMount,
+	}
+	networkNames := []string{networkName, ModelNetwork}
+	if harness.GetString("cli_id") == "goose" {
+		// The Goose image keeps its session/config state under GOOSE_PATH_ROOT.
+		// Reuse the same per-user auth volume so its state is never shared with
+		// the compose control-plane Goose container.
+		volumeBinds = append(volumeBinds, authVolume+":/goose")
+		networkNames = append(networkNames, "pocketcoder-goose-egress", "pocketcoder-mcp-gateway", "pocketcoder-cognee")
+	}
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
-		Image: image,
-		Cmd:   launch.Cmd,
-		Env:   env,
-		VolumeBinds: []string{
-			workspaceVolume + ":/workspace",
-			authVolume + ":" + harnessAuthHomeMount,
-		},
-		NetworkNames: []string{networkName, ModelNetwork},
+		Image:        image,
+		Cmd:          launch.Cmd,
+		Env:          env,
+		VolumeBinds:  volumeBinds,
+		NetworkNames: networkNames,
 		Labels: map[string]string{
 			"pc_scope":      "user",
 			"pc_scope_id":   userID,
@@ -263,7 +282,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// up-front validation: port is only needed to build the ws:// endpoint
 	// URL below, not by the Docker create/start calls themselves, and a
 	// pending row with no port must still count as "one Create call" for
-// a subsequent ProvisionHarnessInstance call; FindHarnessInstance matches this error row and
+	// a subsequent ProvisionHarnessInstance call; FindHarnessInstance matches this error row and
 	// returns it rather than attempting a second Create.
 	if launch.Port == 0 {
 		return fail(fmt.Errorf("harness %s's launch_template has no port", harnessID))
@@ -273,6 +292,11 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	rec.Set("acp_endpoint", fmt.Sprintf("ws://%s:%d/acp", containerName, launch.Port))
 	if err := app.Save(rec); err != nil {
 		return nil, fmt.Errorf("save running harness_instances row: %w", err)
+	}
+	if copier, ok := client.(archiveCopier); ok {
+		if err := MaterializeUserHarnessFiles(ctx, app, copier, rec); err != nil {
+			return fail(err)
+		}
 	}
 	return rec, nil
 }
@@ -297,17 +321,33 @@ func mintSecret() (string, error) {
 // {"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}"} becomes
 // "ANTHROPIC_API_KEY=sk-..." in the returned KEY=VALUE slice Docker's
 // container-create API expects.
-func renderEnv(app core.App, envTemplate map[string]string, secret, provider, userID string) ([]string, error) {
-	keyRecs, err := app.FindRecordsByFilter("provider_keys", "provider = {:provider} && user = {:user}", "", 0, 0, map[string]any{
-		"provider": provider,
-		"user":     userID,
-	})
+func renderEnv(app core.App, envTemplate map[string]string, secret, provider, userID, providerID, modelID string) ([]string, error) {
+	filter := "provider = {:provider} && user = {:user}"
+	params := map[string]any{"provider": provider, "user": userID}
+	if provider == "goose" {
+		// Goose can select Anthropic, Ollama, and other configured providers at
+		// session time. Its per-user container therefore receives that user's
+		// provider environment set rather than a single harness-named key set.
+		filter = "user = {:user}"
+		params = map[string]any{"user": userID}
+	}
+	keyRecs, err := app.FindRecordsByFilter("provider_keys", filter, "", 0, 0, params)
 	if err != nil {
 		return nil, fmt.Errorf("query provider_keys: %w", err)
 	}
 	values := map[string]string{
 		"__adapter_secret": secret,
 		"__ollama_host":    "http://ollama:11434",
+		"__provider":       providerID,
+		"__model":          modelID,
+	}
+	if provider == "goose" {
+		if values["__provider"] == "" {
+			values["__provider"] = "anthropic"
+		}
+		if values["__model"] == "" {
+			values["__model"] = "MiniMax-M2.5"
+		}
 	}
 	// Only OpenCode can run with the local Ollama provider and no cloud key.
 	// Keep missing keys fatal for the Claude/Codex harnesses so their existing
@@ -336,6 +376,20 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 			return nil, fmt.Errorf("render env_template[%s]: %w", name, err)
 		}
 		env = append(env, name+"="+buf.String())
+	}
+	if provider == "goose" {
+		seen := make(map[string]bool, len(env))
+		for _, item := range env {
+			if i := strings.IndexByte(item, '='); i > 0 {
+				seen[item[:i]] = true
+			}
+		}
+		for name, value := range values {
+			if strings.HasPrefix(name, "__") || seen[name] {
+				continue
+			}
+			env = append(env, name+"="+value)
+		}
 	}
 	return env, nil
 }

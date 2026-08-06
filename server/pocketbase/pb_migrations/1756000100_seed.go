@@ -126,7 +126,23 @@ func init() {
 		gooseHarness := core.NewRecord(harnessesColl)
 		gooseHarness.Set("name", "Goose")
 		gooseHarness.Set("cli_id", "goose")
+		gooseHarness.Set("version", "1.43.0")
+		gooseHarness.Set("description", "Goose through its ACP server.")
 		gooseHarness.Set("acp_transport", "websocket")
+		gooseHarness.Set("container_image", "pocketcoder-goose:1.43.0")
+		gooseHarness.Set("launch_template", map[string]any{
+			"cmd":  []string{},
+			"port": 3000,
+			"env_template": map[string]string{
+				"GOOSE_SERVER__SECRET_KEY": "{{.__adapter_secret}}",
+				"GOOSE_PROVIDER":           "{{.__provider}}",
+				"GOOSE_MODEL":              "{{.__model}}",
+				"GOOSE_PATH_ROOT":          "/goose",
+				"GOOSE_DISABLE_KEYRING":    "1",
+				"GOOSE_TELEMETRY_ENABLED":  "false",
+				"OLLAMA_HOST":              "{{.__ollama_host}}",
+			},
+		})
 		gooseHarness.Set("supports_live_config", true)
 		gooseHarness.Set("supports_goose_extensions", true)
 		gooseHarness.Set("single_connection_only", false)
