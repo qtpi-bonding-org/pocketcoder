@@ -167,6 +167,50 @@ services:
       args:
         ACP_AGENT_PACKAGE: "opencode-ai@1.18.11"
 
+  # 🔒 DOCKER SOCKET PROXY - MCP (Security Layer for MCP Gateway)
+  # Separate from docker-socket-proxy-write on purpose: the gateway spawns
+  # arbitrary third-party catalog images and creates/attaches an isolation
+  # network per spawned MCP server container, which needs NETWORKS=1 --
+  # PocketBase's own proxy deliberately keeps NETWORKS=0 since it only ever
+  # restarts/inspects containers it already trusts. Sharing one proxy would
+  # mean widening PocketBase's scope just to satisfy the gateway's, coupling
+  # two different trust domains together.
+  docker-socket-proxy-mcp:
+    image: tecnativa/docker-socket-proxy:0.3
+    container_name: pocketcoder-docker-proxy-mcp
+    environment:
+      - CONTAINERS=1        # Spawn/inspect/stop MCP server containers
+      - POST=1              # Allow POST requests (container/network create)
+      - IMAGES=1            # Pull catalog images
+      - NETWORKS=1          # Create/attach the per-session isolation network
+      - EVENTS=1            # Streaming events
+      - INFO=1              # Docker version info
+      - VOLUMES=0           # Disable volume operations
+      - BUILD=0             # Disable build operations
+      - COMMIT=0            # Disable commit operations
+      - CONFIGS=0           # Disable config operations
+      - DISTRIBUTION=0      # Disable distribution operations
+      - EXEC=0              # Disable exec operations
+      - PLUGINS=0           # Disable plugin operations
+      - SECRETS=0           # Disable secrets operations
+      - SERVICES=0          # Disable services operations
+      - SESSION=0           # Disable session operations
+      - SWARM=0             # Disable swarm operations
+      - SYSTEM=0            # Disable system operations
+      - TASKS=0             # Disable tasks operations
+      - LOG_LEVEL=info
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - pocketcoder-docker-mcp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:2375/info"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   # 🔌 MCP GATEWAY (MCP Server Gateway)
   mcp-gateway:
     build:
@@ -174,17 +218,17 @@ services:
       dockerfile: server/mcp-gateway/Dockerfile
     container_name: pocketcoder-mcp-gateway
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./server/mcp-gateway/config:/root/.docker/mcp
     environment:
       - DOCKER_MCP_IN_CONTAINER=1
+      - DOCKER_HOST=tcp://docker-socket-proxy-mcp:2375
       - LINODE_TOKEN=${LINODE_TOKEN}
       - ENABLE_TF_OPERATIONS=${ENABLE_TF_OPERATIONS}
       - TFE_TOKEN=${TFE_TOKEN}
       - DOCKER_MCP_TELEMETRY_DEBUG=0
     command: ["--port", "8811", "--transport", "streaming", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--secrets", "/root/.docker/mcp/mcp.env", "--enable-all-servers"]
     networks:
-      - pocketcoder-docker
+      - pocketcoder-docker-mcp
       - pocketcoder-tools
       - pocketcoder-mcp-gateway
     restart: unless-stopped
@@ -194,6 +238,9 @@ services:
       timeout: 2s
       retries: 5
       start_period: 10s
+    depends_on:
+      docker-socket-proxy-mcp:
+        condition: service_healthy
 
   # 🧠 COGNEE (Agent Memory MCP Server)
   # Standalone MCP memory server for Goose — knowledge-graph + vector recall,
@@ -496,6 +543,11 @@ networks:
   pocketcoder-dashboard:
     driver: bridge
   pocketcoder-docker:
+    driver: bridge
+  # Dedicated to mcp-gateway <-> its own scoped docker-socket-proxy -- kept
+  # separate from pocketcoder-docker (PocketBase's proxy) so the two proxies'
+  # permission sets never have to be reconciled onto one shared network.
+  pocketcoder-docker-mcp:
     driver: bridge
   pocketcoder-tools:
     driver: bridge
