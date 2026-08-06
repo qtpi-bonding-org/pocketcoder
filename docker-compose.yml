@@ -40,6 +40,10 @@ services:
       - GOOSE_ACP_URL=${GOOSE_ACP_URL:-ws://goose:3000/acp}
       - GOOSE_SERVER__SECRET_KEY=${GOOSE_SERVER__SECRET_KEY:-}
       - GOOSE_WORKSPACE=${GOOSE_WORKSPACE:-/workspace}
+      # Read by RegisterMcpGatewayExtension's one-time config/extensions/add
+      # call to set the Authorization header Goose sends the gateway --
+      # required as of docker-mcp v0.43+ (mandatory HTTP auth by default).
+      - MCP_GATEWAY_AUTH_TOKEN=${MCP_GATEWAY_AUTH_TOKEN}
     command: ["/app/pocketbase", "serve", "--http=0.0.0.0:8090"]
     restart: unless-stopped
     healthcheck:
@@ -218,15 +222,25 @@ services:
       dockerfile: server/mcp-gateway/Dockerfile
     container_name: pocketcoder-mcp-gateway
     volumes:
-      - ./server/mcp-gateway/config:/root/.docker/mcp
+      # docker-mcp v0.43+ requires --catalog/--enable-all-servers paths to
+      # resolve under ~/.docker/mcp/catalogs/ -- an arbitrary bind-mounted
+      # path (the pre-upgrade /root/.docker/mcp) is rejected outright. See
+      # spikes/mcp-gateway-v0.43-upgrade/README.md.
+      - ./server/mcp-gateway/config:/root/.docker/mcp/catalogs
     environment:
       - DOCKER_MCP_IN_CONTAINER=1
       - DOCKER_HOST=tcp://docker-socket-proxy-mcp:2375
+      # Required as of docker-mcp v0.43+: HTTP/streaming transports refuse
+      # unauthenticated requests by default (previously "Authentication
+      # disabled (running in container)"). Every client that talks to this
+      # gateway -- Goose's config/extensions/add headers, and each peer
+      # harness's static MCP-attach config -- must send this same token.
+      - MCP_GATEWAY_AUTH_TOKEN=${MCP_GATEWAY_AUTH_TOKEN}
       - LINODE_TOKEN=${LINODE_TOKEN}
       - ENABLE_TF_OPERATIONS=${ENABLE_TF_OPERATIONS}
       - TFE_TOKEN=${TFE_TOKEN}
       - DOCKER_MCP_TELEMETRY_DEBUG=0
-    command: ["--port", "8811", "--transport", "streaming", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "/root/.docker/mcp/docker-mcp.yaml", "--secrets", "/root/.docker/mcp/mcp.env", "--enable-all-servers"]
+    command: ["--port", "8811", "--transport", "streaming", "--verbose", "--log-calls", "--log", "/var/log/mcp-gateway.log", "--catalog", "docker-mcp.yaml", "--secrets", "/root/.docker/mcp/catalogs/mcp.env", "--enable-all-servers"]
     networks:
       - pocketcoder-docker-mcp
       - pocketcoder-tools
