@@ -18,7 +18,7 @@
 # Shared docker-mcp plugin installer — used by opencode, sandbox, and mcp-gateway Dockerfiles.
 set -e
 
-VERSION="v0.39.3"
+VERSION="v0.43.3"
 ARCH=$(uname -m)
 
 case $ARCH in
