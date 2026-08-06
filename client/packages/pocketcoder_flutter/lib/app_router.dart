@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_login_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_deploy_credentials_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
@@ -18,6 +20,8 @@ import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/harness_auth_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/harness_choice_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/harness_authorization_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
@@ -80,6 +84,61 @@ class AppRouter {
             prefill: state.extra is OnboardingPrefill
                 ? state.extra as OnboardingPrefill
                 : null,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingLogin,
+        name: RouteNames.onboardingLogin,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: OnboardingLoginScreen(
+            prefill: state.extra is OnboardingPrefill
+                ? state.extra as OnboardingPrefill
+                : null,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingDeploy,
+        name: RouteNames.onboardingDeploy,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const OnboardingDeployCredentialsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingHarnessAuth,
+        name: RouteNames.onboardingHarnessAuth,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const HarnessChoiceScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingClaudeAuth,
+        name: RouteNames.onboardingClaudeAuth,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: HarnessAuthorizationScreen(
+            harnessId: state.extra?.toString() ?? '',
+            provider: 'claude-code',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingCodexAuth,
+        name: RouteNames.onboardingCodexAuth,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: HarnessAuthorizationScreen(
+            harnessId: state.extra?.toString() ?? '',
+            provider: 'codex',
           ),
         ),
       ),
@@ -231,7 +290,8 @@ class AppRouter {
           context: context,
           state: state,
           child: Builder(
-            builder: (context) => const PocketCoderErrorBoxPageBuilder().build(context),
+            builder: (context) =>
+                const PocketCoderErrorBoxPageBuilder().build(context),
           ),
         ),
       ),
@@ -301,6 +361,11 @@ class AppRoutes {
   static const String home = '/';
   static const String chat = '/chat';
   static const String onboarding = '/onboarding';
+  static const String onboardingLogin = '/onboarding/login';
+  static const String onboardingDeploy = '/onboarding/deploy';
+  static const String onboardingHarnessAuth = '/onboarding/harness-auth';
+  static const String onboardingClaudeAuth = '/onboarding/harness-auth/claude';
+  static const String onboardingCodexAuth = '/onboarding/harness-auth/codex';
   static const String boot = '/boot';
   static const String files = '/files';
   static const String terminal = '/terminal';
@@ -346,6 +411,11 @@ class RouteNames {
   static const String chat = 'chat';
   static const String settings = 'configure';
   static const String onboarding = 'onboarding';
+  static const String onboardingLogin = 'onboardingLogin';
+  static const String onboardingDeploy = 'onboardingDeploy';
+  static const String onboardingHarnessAuth = 'onboardingHarnessAuth';
+  static const String onboardingClaudeAuth = 'onboardingClaudeAuth';
+  static const String onboardingCodexAuth = 'onboardingCodexAuth';
   static const String boot = 'boot';
   static const String files = 'files';
   static const String terminal = 'terminal';
@@ -396,17 +466,14 @@ class AppNavigation {
       context.push(AppRoutes.configurePaywall);
   static void toTerminal(BuildContext context) =>
       context.push(AppRoutes.terminal);
-  static void toFiles(BuildContext context) =>
-      context.push(AppRoutes.files);
+  static void toFiles(BuildContext context) => context.push(AppRoutes.files);
   static void toFileViewer(BuildContext context, String path) =>
       context.pushNamed(
         RouteNames.fileViewer,
         queryParameters: {'path': path},
       );
-  static void toMonitor(BuildContext context) =>
-      context.go(AppRoutes.monitor);
-  static void toDeploy(BuildContext context) =>
-      context.push(AppRoutes.deploy);
+  static void toMonitor(BuildContext context) => context.go(AppRoutes.monitor);
+  static void toDeploy(BuildContext context) => context.push(AppRoutes.deploy);
 
   // Deployment navigation (Linode flow — only works when proprietary routes registered)
   static void toAuth(BuildContext context) =>

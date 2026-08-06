@@ -54,6 +54,12 @@ class _ProgressViewState extends State<_ProgressView> {
 
     return BlocListener<DeploymentCubit, DeploymentState>(
       listener: (context, state) {
+        if (state.instanceId != null &&
+            !cubit.isMonitoring &&
+            state.deploymentStatus != DeploymentStatus.ready &&
+            state.deploymentStatus != DeploymentStatus.failed) {
+          cubit.monitorDeployment(state.instanceId!);
+        }
         // Navigate to DetailsScreen on deployment completion
         if (state.status == UiFlowStatus.success &&
             state.deploymentStatus == DeploymentStatus.ready &&

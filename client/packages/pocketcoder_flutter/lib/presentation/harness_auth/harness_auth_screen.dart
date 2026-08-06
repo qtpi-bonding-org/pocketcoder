@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
@@ -22,7 +25,9 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 class HarnessAuthScreen extends StatelessWidget {
-  const HarnessAuthScreen({super.key});
+  const HarnessAuthScreen({super.key, this.onboarding = false});
+
+  final bool onboarding;
 
   @override
   Widget build(BuildContext context) {
@@ -34,13 +39,15 @@ class HarnessAuthScreen extends StatelessWidget {
           getIt<IAuthRepository>(),
         ),
       )..watchData(),
-      child: const HarnessAuthView(),
+      child: HarnessAuthView(onboarding: onboarding),
     );
   }
 }
 
 class HarnessAuthView extends StatefulWidget {
-  const HarnessAuthView({super.key});
+  const HarnessAuthView({super.key, this.onboarding = false});
+
+  final bool onboarding;
 
   @override
   State<HarnessAuthView> createState() => _HarnessAuthViewState();
@@ -48,6 +55,7 @@ class HarnessAuthView extends StatefulWidget {
 
 class _HarnessAuthViewState extends State<HarnessAuthView> {
   final Map<String, TextEditingController> _codeControllers = {};
+  bool _openedFirstChat = false;
 
   TextEditingController _codeControllerFor(String harnessId) {
     return _codeControllers.putIfAbsent(
@@ -66,16 +74,61 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HarnessAuthCubit, HarnessAuthState>(
-      builder: (context, state) {
-        return PocketCoderShell(
-          title: 'Harness connections',
-          activePillar: NavPillar.configure,
-          showBack: true,
-          body: _buildBody(context, state),
-        );
-      },
+    return BlocListener<HarnessAuthCubit, HarnessAuthState>(
+      listenWhen: (previous, current) =>
+          widget.onboarding &&
+          !_hasConnected(previous) &&
+          _hasConnected(current),
+      listener: (context, state) => _openFirstChat(context, state),
+      child: BlocBuilder<HarnessAuthCubit, HarnessAuthState>(
+        builder: (context, state) {
+          return PocketCoderShell(
+            title:
+                widget.onboarding ? 'CONNECT A HARNESS' : 'Harness connections',
+            activePillar: NavPillar.configure,
+            showBack: true,
+            body: _buildBody(context, state),
+          );
+        },
+      ),
     );
+  }
+
+  bool _isOnboardingHarness(Harnesse harness) {
+    if (!widget.onboarding) return true;
+    final cli = harness.cliId.trim().toLowerCase();
+    return cli == 'claude-code' || cli == 'codex';
+  }
+
+  bool _hasConnected(HarnessAuthState state) => state.harnesses
+      .where(_isOnboardingHarness)
+      .any((h) => state.statuses[h.id]?.isConnected == true);
+
+  Future<void> _openFirstChat(
+    BuildContext context,
+    HarnessAuthState state,
+  ) async {
+    if (_openedFirstChat) return;
+    _openedFirstChat = true;
+    final connected = state.harnesses
+        .where(_isOnboardingHarness)
+        .firstWhere((h) => state.statuses[h.id]?.isConnected == true);
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final chats = getIt<ChatListCubit>();
+      await chats.createAndOpen(harness: connected.id);
+      final chatId = chats.state.lastCreatedChatId;
+      if (!mounted || chatId == null || chatId.isEmpty) return;
+      router.go('${AppRoutes.chat}/$chatId');
+    } catch (error) {
+      _openedFirstChat = false;
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('Could not open a new chat: $error')),
+        );
+      }
+    }
   }
 
   Widget _buildBody(BuildContext context, HarnessAuthState state) {
@@ -85,10 +138,14 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
       );
     }
 
-    if (state.harnesses.isEmpty) {
+    final harnesses = state.harnesses.where(_isOnboardingHarness).toList();
+
+    if (harnesses.isEmpty) {
       return Center(
         child: TerminalText(
-          'No harnesses were found.',
+          widget.onboarding
+              ? 'Claude Code and Codex are not available on this server.'
+              : 'No harnesses were found.',
           alpha: 0.6,
         ),
       );
@@ -106,7 +163,7 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
               alpha: 0.9,
             ),
           ),
-        for (final harness in state.harnesses)
+        for (final harness in harnesses)
           _HarnessCard(
             harness: harness,
             status: state.statuses[harness.id],
@@ -118,13 +175,14 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
             onStartNone: () => _startNone(context, harness),
             onPoll: () => context.read<HarnessAuthCubit>().poll(harness.id),
             onSubmit: (code) => context.read<HarnessAuthCubit>().submitCode(
-              harnessId: harness.id,
-              code: code,
-            ),
+                  harnessId: harness.id,
+                  code: code,
+                ),
             onCancel: () => context.read<HarnessAuthCubit>().cancel(harness.id),
-            onDisconnect:
-                () => context.read<HarnessAuthCubit>().disconnect(harness.id),
-            onRefresh: () => context.read<HarnessAuthCubit>().refreshHarness(harness.id),
+            onDisconnect: () =>
+                context.read<HarnessAuthCubit>().disconnect(harness.id),
+            onRefresh: () =>
+                context.read<HarnessAuthCubit>().refreshHarness(harness.id),
           ),
       ],
     );
@@ -133,7 +191,8 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
   void _startAccount(BuildContext context, Harnesse harness) {
     final provider = harness.cliId.trim();
     if (provider.isEmpty) {
-      _showError(context, 'This harness does not expose a provider identifier.');
+      _showError(
+          context, 'This harness does not expose a provider identifier.');
       return;
     }
     context.read<HarnessAuthCubit>().startWithAccount(
@@ -144,7 +203,8 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
 
   Future<void> _startApiKey(BuildContext context, Harnesse harness) async {
     final cubit = context.read<HarnessAuthCubit>();
-    final matching = cubit.providerKeysForHarness(harness.cliId.trim().toLowerCase());
+    final matching =
+        cubit.providerKeysForHarness(harness.cliId.trim().toLowerCase());
     if (matching.isEmpty) {
       _showError(context, 'No provider key found for ${harness.cliId}.');
       return;
@@ -258,8 +318,10 @@ class _HarnessCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TerminalText('Status: $statusText', weight: TerminalTextWeight.heavy),
-            if (authStatus.lastError != null && authStatus.lastError!.isNotEmpty) ...[
+            TerminalText('Status: $statusText',
+                weight: TerminalTextWeight.heavy),
+            if (authStatus.lastError != null &&
+                authStatus.lastError!.isNotEmpty) ...[
               VSpace.x1,
               TerminalText(
                 authStatus.lastError!,
@@ -275,8 +337,7 @@ class _HarnessCard extends StatelessWidget {
               TerminalText('Binding: ${authStatus.bindingId}'),
             ],
             VSpace.x2,
-            if (challenge != null)
-              _ChallengePanel(challenge: challenge),
+            if (challenge != null) _ChallengePanel(challenge: challenge),
             if (challenge != null) ...[
               VSpace.x1,
               TerminalTextField(

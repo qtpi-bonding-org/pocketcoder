@@ -292,6 +292,12 @@ abstract class AppLocalizations {
   /// **'BACK'**
   String get actionBack;
 
+  /// No description provided for @actionContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUE'**
+  String get actionContinue;
+
   /// No description provided for @actionChange.
   ///
   /// In en, this message translates to:
@@ -418,6 +424,12 @@ abstract class AppLocalizations {
   /// **'LOGIN'**
   String get onboardingLogin;
 
+  /// No description provided for @onboardingDeploy.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOY'**
+  String get onboardingDeploy;
+
   /// No description provided for @onboardingHomeServer.
   ///
   /// In en, this message translates to:
@@ -453,6 +465,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AUTHENTICATING'**
   String get onboardingAuthenticating;
+
+  /// No description provided for @onboardingSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETCODER SETUP'**
+  String get onboardingSetupTitle;
+
+  /// No description provided for @onboardingConnectOrDeploy.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECT TO AN EXISTING SERVER OR DEPLOY A NEW ONE.'**
+  String get onboardingConnectOrDeploy;
+
+  /// No description provided for @onboardingExistingServer.
+  ///
+  /// In en, this message translates to:
+  /// **'USE AN EXISTING POCKETBASE SERVER'**
+  String get onboardingExistingServer;
+
+  /// No description provided for @onboardingCreateServer.
+  ///
+  /// In en, this message translates to:
+  /// **'CREATE A NEW SERVER'**
+  String get onboardingCreateServer;
+
+  /// No description provided for @onboardingServerLoginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER LOGIN'**
+  String get onboardingServerLoginTitle;
+
+  /// No description provided for @onboardingServerUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER URL'**
+  String get onboardingServerUrl;
+
+  /// No description provided for @onboardingServerUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'https://server.example.com'**
+  String get onboardingServerUrlHint;
+
+  /// No description provided for @onboardingEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'EMAIL'**
+  String get onboardingEmail;
+
+  /// No description provided for @onboardingEmailHintShort.
+  ///
+  /// In en, this message translates to:
+  /// **'admin@example.com'**
+  String get onboardingEmailHintShort;
+
+  /// No description provided for @onboardingPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'PASSWORD'**
+  String get onboardingPassword;
+
+  /// No description provided for @onboardingServerConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECTING...'**
+  String get onboardingServerConnecting;
+
+  /// No description provided for @onboardingRequiredFields.
+  ///
+  /// In en, this message translates to:
+  /// **'ENTER ALL REQUIRED FIELDS'**
+  String get onboardingRequiredFields;
+
+  /// No description provided for @onboardingChooseHarnessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE YOUR HARNESS'**
+  String get onboardingChooseHarnessTitle;
+
+  /// No description provided for @onboardingChooseHarnessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE THE ACCOUNT-BASED AGENT TO CONNECT.'**
+  String get onboardingChooseHarnessBody;
+
+  /// No description provided for @onboardingHarnessNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'HARNESS NOT FOUND'**
+  String get onboardingHarnessNotFound;
+
+  /// No description provided for @onboardingClaudeAccountLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'CLAUDE ACCOUNT LOGIN'**
+  String get onboardingClaudeAccountLogin;
+
+  /// No description provided for @onboardingCodexAccountLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'CHATGPT ACCOUNT LOGIN'**
+  String get onboardingCodexAccountLogin;
+
+  /// No description provided for @onboardingHarnessLoginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} LOGIN'**
+  String onboardingHarnessLoginTitle(String provider);
+
+  /// No description provided for @onboardingConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECTED'**
+  String get onboardingConnected;
+
+  /// No description provided for @onboardingAccountLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'ACCOUNT LOGIN'**
+  String get onboardingAccountLogin;
+
+  /// No description provided for @onboardingAuthorizationCode.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTHORIZATION CODE'**
+  String get onboardingAuthorizationCode;
+
+  /// No description provided for @onboardingAuthorizationCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'paste code'**
+  String get onboardingAuthorizationCodeHint;
+
+  /// No description provided for @onboardingSubmitCode.
+  ///
+  /// In en, this message translates to:
+  /// **'SUBMIT CODE'**
+  String get onboardingSubmitCode;
+
+  /// No description provided for @onboardingOpenAuthorization.
+  ///
+  /// In en, this message translates to:
+  /// **'OPEN AUTHORIZATION'**
+  String get onboardingOpenAuthorization;
+
+  /// No description provided for @onboardingCheckStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'CHECK STATUS'**
+  String get onboardingCheckStatus;
+
+  /// No description provided for @onboardingOpenChatFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open a new chat: {error}'**
+  String onboardingOpenChatFailed(String error);
+
+  /// No description provided for @onboardingDeployTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOY SERVER'**
+  String get onboardingDeployTitle;
+
+  /// No description provided for @onboardingPocketbaseAdminEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETBASE ADMIN EMAIL'**
+  String get onboardingPocketbaseAdminEmail;
+
+  /// No description provided for @onboardingPocketbaseAdminPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETBASE ADMIN PASSWORD'**
+  String get onboardingPocketbaseAdminPassword;
 
   /// No description provided for @homeTitle.
   ///

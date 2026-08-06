@@ -56,8 +56,7 @@ class _BootScreenState extends State<BootScreen> {
         fileContent = await rootBundle.loadString('assets/boot_log.txt');
       } catch (e2) {
         if (!mounted) return;
-        fileContent =
-            '${context.l10n.bootLoadError}\n';
+        fileContent = '${context.l10n.bootLoadError}\n';
       }
     }
 
@@ -131,7 +130,9 @@ class _BootScreenState extends State<BootScreen> {
 
   Future<void> _checkConnection() async {
     if (mounted) {
-      context.read<PocoCubit>().updateMessage(context.l10n.bootCheckingConnection);
+      context
+          .read<PocoCubit>()
+          .updateMessage(context.l10n.bootCheckingConnection);
     }
 
     bool pocketbaseAlive = false;
@@ -160,7 +161,9 @@ class _BootScreenState extends State<BootScreen> {
         if (!mounted) return;
 
         context.read<PocoCubit>().updateMessage(
-              alreadyLoggedIn ? context.l10n.bootWelcomeBack : context.l10n.bootSystemsNominal,
+              alreadyLoggedIn
+                  ? context.l10n.bootWelcomeBack
+                  : context.l10n.bootSystemsNominal,
               sequence: PocoExpressions.happy,
             );
         await Future.delayed(const Duration(seconds: 2));
@@ -168,7 +171,8 @@ class _BootScreenState extends State<BootScreen> {
           if (alreadyLoggedIn) {
             context.goNamed(RouteNames.home);
           } else {
-            context.goNamed(RouteNames.onboarding);
+            // A reachable server needs credentials, not a server choice.
+            context.goNamed(RouteNames.onboardingLogin);
           }
         }
       } else {

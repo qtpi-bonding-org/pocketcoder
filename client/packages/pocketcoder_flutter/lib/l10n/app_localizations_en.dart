@@ -108,6 +108,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionBack => 'BACK';
 
   @override
+  String get actionContinue => 'CONTINUE';
+
+  @override
   String get actionChange => 'CHANGE';
 
   @override
@@ -176,6 +179,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingLogin => 'LOGIN';
 
   @override
+  String get onboardingDeploy => 'DEPLOY';
+
+  @override
   String get onboardingHomeServer => 'HOME SERVER';
 
   @override
@@ -192,6 +198,99 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingAuthenticating => 'AUTHENTICATING';
+
+  @override
+  String get onboardingSetupTitle => 'POCKETCODER SETUP';
+
+  @override
+  String get onboardingConnectOrDeploy =>
+      'CONNECT TO AN EXISTING SERVER OR DEPLOY A NEW ONE.';
+
+  @override
+  String get onboardingExistingServer => 'USE AN EXISTING POCKETBASE SERVER';
+
+  @override
+  String get onboardingCreateServer => 'CREATE A NEW SERVER';
+
+  @override
+  String get onboardingServerLoginTitle => 'SERVER LOGIN';
+
+  @override
+  String get onboardingServerUrl => 'SERVER URL';
+
+  @override
+  String get onboardingServerUrlHint => 'https://server.example.com';
+
+  @override
+  String get onboardingEmail => 'EMAIL';
+
+  @override
+  String get onboardingEmailHintShort => 'admin@example.com';
+
+  @override
+  String get onboardingPassword => 'PASSWORD';
+
+  @override
+  String get onboardingServerConnecting => 'CONNECTING...';
+
+  @override
+  String get onboardingRequiredFields => 'ENTER ALL REQUIRED FIELDS';
+
+  @override
+  String get onboardingChooseHarnessTitle => 'CHOOSE YOUR HARNESS';
+
+  @override
+  String get onboardingChooseHarnessBody =>
+      'CHOOSE THE ACCOUNT-BASED AGENT TO CONNECT.';
+
+  @override
+  String get onboardingHarnessNotFound => 'HARNESS NOT FOUND';
+
+  @override
+  String get onboardingClaudeAccountLogin => 'CLAUDE ACCOUNT LOGIN';
+
+  @override
+  String get onboardingCodexAccountLogin => 'CHATGPT ACCOUNT LOGIN';
+
+  @override
+  String onboardingHarnessLoginTitle(String provider) {
+    return '$provider LOGIN';
+  }
+
+  @override
+  String get onboardingConnected => 'CONNECTED';
+
+  @override
+  String get onboardingAccountLogin => 'ACCOUNT LOGIN';
+
+  @override
+  String get onboardingAuthorizationCode => 'AUTHORIZATION CODE';
+
+  @override
+  String get onboardingAuthorizationCodeHint => 'paste code';
+
+  @override
+  String get onboardingSubmitCode => 'SUBMIT CODE';
+
+  @override
+  String get onboardingOpenAuthorization => 'OPEN AUTHORIZATION';
+
+  @override
+  String get onboardingCheckStatus => 'CHECK STATUS';
+
+  @override
+  String onboardingOpenChatFailed(String error) {
+    return 'Could not open a new chat: $error';
+  }
+
+  @override
+  String get onboardingDeployTitle => 'DEPLOY SERVER';
+
+  @override
+  String get onboardingPocketbaseAdminEmail => 'POCKETBASE ADMIN EMAIL';
+
+  @override
+  String get onboardingPocketbaseAdminPassword => 'POCKETBASE ADMIN PASSWORD';
 
   @override
   String get homeTitle => 'CHATS';

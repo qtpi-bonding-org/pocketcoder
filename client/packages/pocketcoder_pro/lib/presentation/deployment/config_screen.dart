@@ -31,7 +31,10 @@ class ConfigScreen extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => GetIt.I<ConfigCubit>()),
-        BlocProvider(create: (_) => GetIt.I<DeploymentCubit>()),
+        // DeploymentCubit is route-shared so the progress/details pages see
+        // the accepted deployment and its monitor. Using value prevents the
+        // ConfigScreen from closing the app-scoped controller when it pops.
+        BlocProvider.value(value: GetIt.I<DeploymentCubit>()),
       ],
       child: UiFlowListener<ConfigCubit, ConfigState>(
         child: _ConfigView(credentials: credentials),
@@ -52,10 +55,12 @@ class _ConfigView extends StatefulWidget {
 class _ConfigViewState extends State<_ConfigView> {
   late final String _adminEmail = widget.credentials?.email ?? '';
   late final String _adminPassword = widget.credentials?.password ?? '';
+  bool _progressOpened = false;
 
   @override
   void initState() {
     super.initState();
+    context.read<DeploymentCubit>().resetDeployment();
     context.read<ConfigCubit>().loadPlansAndRegions();
   }
 
@@ -70,8 +75,10 @@ class _ConfigViewState extends State<_ConfigView> {
         return BlocListener<DeploymentCubit, DeploymentState>(
           listener: (context, deploymentState) {
             // Navigate to ProgressScreen on deployment start
-            if (deploymentState.status == UiFlowStatus.loading &&
-                deploymentState.deploymentStatus == DeploymentStatus.creating) {
+            if (!_progressOpened &&
+                deploymentState.status == UiFlowStatus.loading &&
+                deploymentState.deploymentStatus != null) {
+              _progressOpened = true;
               context.pushNamed(RouteNames.deploymentProgress);
             }
             // Navigate to DetailsScreen on deployment completion
