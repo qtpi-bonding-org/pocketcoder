@@ -218,6 +218,16 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	p.SupportsGooseExtensions = harnessRec.GetBool("supports_goose_extensions")
 	p.SingleConnectionOnly = harnessRec.GetBool("single_connection_only")
 
+	// Attach the MCP gateway for peer stdio harnesses via session/new -- NOT
+	// Goose, which gets it through a persistent extension instead (see
+	// hooks.McpGatewayHttpServer's doc comment for why the two harness
+	// families use different delivery mechanisms).
+	if harnessRec.GetString("cli_id") != "goose" {
+		if gw := hooks.McpGatewayHttpServer(); gw != nil {
+			p.McpServers = append(p.McpServers, *gw)
+		}
+	}
+
 	launchKey := ""
 	if !p.SupportsLiveConfig && hmID != "" && ollamaModel == "" {
 		launchKey = hmID
