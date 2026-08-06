@@ -8,7 +8,8 @@ PocketCoder is a solo research project built in the open. It follows an **Alpine
 > - ✅ **Backend contract (c1 ↔ c2) is implemented and passes live acceptance** against a real model — authenticated runs, streaming, tool calls, and phone approve/deny all work.
 > - ✅ **The Flutter client's core loop is live**: chat list (home screen), conversation, file browser, MCP/scheduler/skills/tool-permissions/agent-config/notification settings, logout — all wired to real PocketBase-backed data, no stubs.
 > - ✅ **Cognee memory is live**, sharing Goose's own `agent` Compose profile — not gated behind the MCP gateway.
-> - 💤 **Dormant:** the c3 MCP gateway container and the Rust sandbox proxy are retained for future work — see [`dormant/`](dormant/).
+> - ✅ **The c3 MCP gateway container runs by default** (no Compose profile gate) — external MCP servers are approved per-deployment via the `mcp_servers` PocketBase collection.
+> - 💤 **Dormant:** the Rust sandbox proxy is retained for future work — see [`dormant/`](dormant/).
 >
 > Treat this as an architecture experiment you can read and run, not a finished product.
 
@@ -48,7 +49,7 @@ The agent core is three containers connected by open protocols:
 | **c1** | PocketBase (as a Go library) + Go AG-UI server + Go ACP client | The "front door." Auth, chat ownership, the single `chat → Goose-session` mapping, and the **ACP ↔ AG-UI translation** seam. |
 | **c2** | **Goose** in ACP agent-server mode (`goose serve`) | The default agent harness and sole provider of Goose-only features such as schedules and extensions. |
 | **Peer harnesses** | Claude Agent ACP / Codex ACP, provisioned independently on first selection | Optional agent harness containers routed per chat. Each exposes the same authenticated ACP WebSocket boundary through PocketCoder's stdio adapter. |
-| **c3** | Docker MCP Gateway *(dormant)* | Will host external tools as MCP servers (GitHub, Notion). Disabled by default until attachment is validated. **Cognee memory is no longer part of this — see below.** |
+| **c3** | Docker MCP Gateway | Runs by default. Hosts external tools as MCP servers (GitHub, Notion, etc.), approved per-deployment via the `mcp_servers` PocketBase collection. **Cognee memory is no longer part of this — see below.** |
 
 ```
 Mobile (Flutter)
@@ -58,9 +59,9 @@ c1  PocketBase — auth, chat→Goose-session mapping, ACP↔AG-UI translation
    │  ACP over an authenticated WebSocket (coder/acp-go-sdk)
    ▼
 c2  Selected harness — Goose by default, or an independently provisioned Claude Code/Codex container
-   │  (MCP tools via c3 — dormant)
+   │  (MCP tools via c3)
    ▼
-c3  Docker MCP Gateway — GitHub, Notion  [not yet enabled]
+c3  Docker MCP Gateway — GitHub, Notion, etc. (approved per-deployment)
 ```
 
 **Each protocol does one job:**
@@ -69,9 +70,9 @@ c3  Docker MCP Gateway — GitHub, Notion  [not yet enabled]
 |:---|:---|:---|
 | **AG-UI** | c1 ↔ Flutter | Frontend event stream — text streaming, tool-call visibility, approval state |
 | **ACP** | c1 ↔ c2 (and c2 ↔ its spawned harness) | Session, tool calls, permission requests |
-| **MCP** | c3 ↔ c2 | Tool access — GitHub, Notion *(dormant)* |
+| **MCP** | c3 ↔ c2 | Tool access — GitHub, Notion, etc. |
 
-**Cognee memory runs as a Goose extension, not through the MCP gateway.** It shares Goose's own `agent` Compose profile (`docker compose --profile agent up -d` starts both), configured live via the `cognee_config` PocketBase collection → rendered `cognee.env` → mounted into the container. It is enabled by default whenever the agent runtime is, independent of whether `c3` is ever turned on.
+**Cognee memory runs as a Goose extension, not through the MCP gateway.** It shares Goose's own `agent` Compose profile (`docker compose --profile agent up -d` starts both), configured live via the `cognee_config` PocketBase collection → rendered `cognee.env` → mounted into the container. It is enabled by default whenever the agent runtime is, independent of `c3`.
 
 Goose is the **sole system of record** for conversation history (its own SQLite session store). PocketBase stores only authentication and the `chat_id → goose_session_id` mapping — it is not a conversation or approval ledger. The Flutter client keeps a local Drift cache as an offline mirror that Goose refreshes on load.
 
@@ -142,7 +143,7 @@ One `docker-compose.yml`. Core services run by default; the rest are opt-in via 
 | `sqlpage` | *(always)* | Observability dashboard |
 | `goose` | `agent` | c2 — the Goose agent core |
 | `cognee` | `agent` | Agent memory, loaded as a live Goose extension (not via `c3`) |
-| `mcp-gateway` | `c3` | Docker MCP Gateway *(dormant)* |
+| `mcp-gateway` | *(always)* | c3 — Docker MCP Gateway |
 | `ntfy` | `foss` | Self-hosted push notifications |
 | `tailscale` | `tailscale` | Remote access (funnel/private) |
 | `caddy` | `caddy` | TLS termination / reverse proxy |
@@ -180,6 +181,6 @@ The backend is deliberately tiny: PocketBase supplies auth, the database, REST, 
 
 An active research project by a solo developer, built in the open — not a commercial product, no support SLAs. Bug reports are welcome; I move at my own pace.
 
-All PocketCoder code is **AGPLv3**. The agent core (Goose) and PocketBase are OSI-approved open source. The optional memory component (Cognee) now runs by default alongside the agent runtime (`agent` Compose profile) rather than behind the still-dormant `c3` gateway; it remains optional via that same profile, and any non-OSI runtime dependency it introduces is tracked here.
+All PocketCoder code is **AGPLv3**. The agent core (Goose) and PocketBase are OSI-approved open source. The optional memory component (Cognee) now runs by default alongside the agent runtime (`agent` Compose profile) rather than behind the `c3` gateway; it remains optional via that same profile, and any non-OSI runtime dependency it introduces is tracked here.
 
 **Open core:** the client and backend here are open and fully self-hostable — nothing described above requires anything proprietary. The mobile app's one-tap VPS provisioning (OAuth deploy, billing) is a separate, closed-source convenience layer that funds the project; self-hosters skip it entirely by running `deploy.sh` directly.
