@@ -31,6 +31,7 @@ import (
 	"os"
 	"time"
 
+	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
 )
 
@@ -135,7 +136,7 @@ func registerMcpGatewayExtensionOnce(ctx context.Context, coord func() *coordina
 				Type:    "http",
 				Name:    mcpGatewayExtensionName,
 				URL:     mcpGatewayURL,
-				Headers: []httpHeaderParam{},
+				Headers: mcpGatewayAuthHeaders(),
 			},
 		},
 		Enabled: true,
@@ -146,6 +147,54 @@ func registerMcpGatewayExtensionOnce(ctx context.Context, coord func() *coordina
 	}
 	log.Println("✅ [MCPGateway] registered gateway extension")
 	return true
+}
+
+// McpGatewayHttpServer returns the gateway as an ACP McpServer.Http entry,
+// for delivery via session/new|load.McpServers -- the mechanism the three
+// peer stdio ACP harnesses (Claude Code, Codex, OpenCode) all document as
+// "client-provided MCP servers", per each adapter's own README. Goose does
+// NOT receive it this way: it gets a persistent extension instead via
+// RegisterMcpGatewayExtension, since Goose isn't reconnected per-session
+// the same way (docs/superpowers/specs/2026-07-23-mcp-governance-ui-design.md
+// Component 3). Callers (internal/api's buildSessionProfile) must not call
+// this for a Goose session.
+//
+// Returns nil if MCP_GATEWAY_AUTH_TOKEN isn't set yet (bootstrap secrets
+// not rendered) -- a session/new call should omit the entry entirely
+// rather than send one the gateway will reject unauthenticated.
+func McpGatewayHttpServer() *acpsdk.McpServer {
+	token := os.Getenv("MCP_GATEWAY_AUTH_TOKEN")
+	if token == "" {
+		return nil
+	}
+	return &acpsdk.McpServer{
+		Http: &acpsdk.McpServerHttpInline{
+			Type: "http",
+			Name: mcpGatewayExtensionName,
+			Url:  mcpGatewayURL,
+			Headers: []acpsdk.HttpHeader{
+				{Name: "Authorization", Value: "Bearer " + token},
+			},
+		},
+	}
+}
+
+// mcpGatewayAuthHeaders builds the Authorization header docker-mcp v0.43+
+// requires on HTTP/streaming transports by default (previously ran
+// unauthenticated in-container). MCP_GATEWAY_AUTH_TOKEN is generated once
+// in bootstrap.nix alongside the other bootstrap secrets and set on both
+// this container and mcp-gateway's (docker-compose.yml). Empty token means
+// the agent profile's secrets haven't rendered yet — same fail-soft
+// posture as GOOSE_SERVER__SECRET_KEY elsewhere in this file, not a fatal
+// error, so a still-blank .env during early bootstrap doesn't crash
+// registration outright; the gateway will simply reject the add and the
+// bounded retry in RegisterMcpGatewayExtension tries again.
+func mcpGatewayAuthHeaders() []httpHeaderParam {
+	token := os.Getenv("MCP_GATEWAY_AUTH_TOKEN")
+	if token == "" {
+		return []httpHeaderParam{}
+	}
+	return []httpHeaderParam{{Name: "Authorization", Value: "Bearer " + token}}
 }
 
 // addConfigExtensionParams mirrors AddConfigExtensionRequest_unstable
