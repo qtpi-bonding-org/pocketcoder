@@ -17,10 +17,11 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 
 	expected := map[string][]string{
 		"users":                 {"role"},
-		"chats":                 {"title", "user", "poco_config", "harness_model_override", "ollama_model_override"},
+		"chats":                 {"title", "user", "agent_profile", "harness_model_override", "ollama_model_override"},
 		"sandbox_agents":        {"sandbox_agent_id", "delegating_agent_id", "chat"},
 		"ssh_keys":              {"user", "public_key", "fingerprint"},
-		"tool_permissions":      {"tool", "pattern", "action", "poco_config"},
+		"permission_modes":      {"name", "description", "base_session_mode", "owner", "is_system", "is_default"},
+		"permission_mode_tools": {"tool", "pattern", "action", "permission_mode"},
 		"healthchecks":          {"name", "status"},
 		"mcp_servers":           {"name", "status", "config"},
 		"devices":               {"user", "push_token", "push_service"},
@@ -30,7 +31,7 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 		"harness_models":        {"harness", "model", "harness_model_id"},
 		"provider_keys":         {"user", "provider", "env_vars"},
 		"prompts":               {"name", "body"},
-		"poco_configs":          {"name", "harness_model", "system_prompt"},
+		"agent_profiles":        {"name", "harness_model", "system_prompt", "permission_mode"},
 		"agent_sessions":        {"chat", "user", "acp_session_id"},
 		"schedule_owners":       {"user", "goose_schedule_id", "display_name"},
 		"cognee_config":         {"llm_provider", "llm_model", "llm_base_url", "llm_api_key"},

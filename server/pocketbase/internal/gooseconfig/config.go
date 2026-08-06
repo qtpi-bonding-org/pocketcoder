@@ -21,15 +21,15 @@ package gooseconfig
 
 import "gopkg.in/yaml.v3"
 
-// ConfigInput captures the resolved default poco_config fields needed to render
-// a Goose config.yaml. The hook layer fills this from the default poco_config;
+// ConfigInput captures the resolved default agent_profile fields needed to render
+// a Goose config.yaml. The hook layer fills this from the default agent_profile;
 // this package stays pure (no I/O, no PB types).
 //
 // Deliberately does NOT carry tool permissions or extensions: Goose is the
 // sole writer of config.yaml's `extensions` key (via _goose/unstable/
-// config/extensions/add, called by hooks.RegisterMcpGatewayExtension and
-// tools/permissions/set, called by hooks.deliverToolPermissions) — writing
-// either here would clobber whatever Goose itself has written live.
+// config/extensions/add, called by hooks.RegisterMcpGatewayExtension).
+// Permission policy is enforced centrally by the ACP coordinator so peer
+// harnesses and Goose share the same PocketBase decision point.
 type ConfigInput struct {
 	Provider, Model, Mode string
 	// Instructions is intentionally omitted: config.yaml has no documented

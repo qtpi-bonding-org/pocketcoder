@@ -21,9 +21,11 @@ package coordinator
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -356,6 +358,7 @@ type sessionClient struct {
 	events            atomic.Int64
 	maxEvents         int
 	cancel            context.CancelFunc
+	permissionRules   []ToolPermissionRule
 	emitMu            sync.Mutex
 }
 
@@ -409,6 +412,11 @@ func (s *sessionClient) WaitForTerminalExit(context.Context, acpsdk.WaitForTermi
 }
 
 func (s *sessionClient) RequestPermission(ctx context.Context, req acpsdk.RequestPermissionRequest) (acpsdk.RequestPermissionResponse, error) {
+	tool, values := permissionToolIdentity(req.ToolCall)
+	action := SessionProfile{PermissionRules: s.permissionRules}.PermissionDecision(tool, values...)
+	if action == ToolPermissionAllow || action == ToolPermissionDeny {
+		return automaticPermissionResponse(req.Options, action), nil
+	}
 	id := uuid.NewString()
 	options := map[string]struct{}{}
 	for _, o := range req.Options {
@@ -440,6 +448,73 @@ func (s *sessionClient) RequestPermission(ctx context.Context, req acpsdk.Reques
 		s.removePending(id, p)
 		return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Cancelled: &acpsdk.RequestPermissionOutcomeCancelled{Outcome: "cancelled"}}}, nil
 	}
+}
+
+func permissionToolIdentity(call acpsdk.ToolCallUpdate) (string, []string) {
+	values := make([]string, 0, 4)
+	tool := ""
+	for _, key := range []string{"toolName", "tool_name", "name", "tool"} {
+		if v, ok := call.Meta[key].(string); ok && strings.TrimSpace(v) != "" {
+			tool = strings.ToLower(strings.TrimSpace(v))
+			values = append(values, v)
+			break
+		}
+	}
+	if call.Title != nil {
+		values = append(values, *call.Title)
+		if tool == "" {
+			fields := strings.Fields(*call.Title)
+			if len(fields) > 0 {
+				tool = strings.ToLower(fields[0])
+			}
+		}
+	}
+	if call.Kind != nil {
+		values = append(values, string(*call.Kind))
+		if tool == "" {
+			tool = string(*call.Kind)
+		}
+	}
+	if call.RawInput != nil {
+		if raw, err := json.Marshal(call.RawInput); err == nil {
+			values = append(values, string(raw))
+		}
+		if input, ok := call.RawInput.(map[string]any); ok && tool == "" {
+			for _, key := range []string{"toolName", "tool_name", "name", "tool"} {
+				if v, ok := input[key].(string); ok && strings.TrimSpace(v) != "" {
+					tool = strings.ToLower(strings.TrimSpace(v))
+					break
+				}
+			}
+		}
+	}
+	if tool == "" {
+		tool = "*"
+	}
+	return tool, values
+}
+
+func automaticPermissionResponse(options []acpsdk.PermissionOption, action ToolPermissionAction) acpsdk.RequestPermissionResponse {
+	preferred := acpsdk.PermissionOptionKindAllowOnce
+	fallback := acpsdk.PermissionOptionKindAllowAlways
+	if action == ToolPermissionDeny {
+		preferred, fallback = acpsdk.PermissionOptionKindRejectOnce, acpsdk.PermissionOptionKindRejectAlways
+	}
+	for _, option := range options {
+		if option.Kind == preferred {
+			return selectedPermission(option.OptionId)
+		}
+	}
+	for _, option := range options {
+		if option.Kind == fallback {
+			return selectedPermission(option.OptionId)
+		}
+	}
+	return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Cancelled: &acpsdk.RequestPermissionOutcomeCancelled{Outcome: "cancelled"}}}
+}
+
+func selectedPermission(id acpsdk.PermissionOptionId) acpsdk.RequestPermissionResponse {
+	return acpsdk.RequestPermissionResponse{Outcome: acpsdk.RequestPermissionOutcome{Selected: &acpsdk.RequestPermissionOutcomeSelected{Outcome: "selected", OptionId: id}}}
 }
 func (s *sessionClient) removePending(id string, expected *pendingPermission) {
 	s.c.mu.Lock()
@@ -578,7 +653,7 @@ func (c *Coordinator) establishSession(
 	if sessionID == "" {
 		beforeSessionCall()
 		res, err := dialedConn.NewSession(ctx, acpsdk.NewSessionRequest{
-			Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
+			Meta: profile.sessionMeta(), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
 		})
 		if err != nil {
 			dialedConn.Close()
@@ -600,7 +675,7 @@ func (c *Coordinator) establishSession(
 	}
 	beforeSessionCall()
 	res, err := dialedConn.LoadSession(ctx, acpsdk.LoadSessionRequest{
-		SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
+		Meta: profile.sessionMeta(), SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
 	})
 	if err != nil {
 		dialedConn.Close()
@@ -793,7 +868,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	var release func() = func() {} // initialize to no-op; updated after establishSession succeeds
 	teardown := func() {
 		once.Do(func() {
-			release() // call release first when tearing down
+			release()                // call release first when tearing down
 			h.accepting.Store(false) // straggler SessionUpdates now return early
 			c.stopTimers(h)
 			if h.conn != nil {
@@ -844,6 +919,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	h.conn = conn
 	h.sessionID = sessionID
 	sc.sessionID = sessionID
+	sc.permissionRules = profile.PermissionRules
 
 	if wasNew {
 		if err := created(runCtx, sessionID); err != nil {

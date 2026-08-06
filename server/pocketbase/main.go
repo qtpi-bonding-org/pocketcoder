@@ -45,7 +45,7 @@ func main() {
 	// before OnServe (goose config, MCP) capture this getter and dereference
 	// it whenever they fire. For real traffic that's always after OnServe —
 	// but a from-scratch database's migration-time seed writes to
-	// poco_configs/tool_permissions (during app.Bootstrap(), before OnServe)
+	// agent_profiles/permission_mode_tools (during app.Bootstrap(), before OnServe)
 	// can also fire it once with coord still nil; every getter() caller
 	// nil-checks and skips, so this is a harmless no-op, not a bug.
 	var coord *coordinator.Coordinator
@@ -67,7 +67,7 @@ func main() {
 
 	// 3b. Register Goose Config Hooks (config.yaml + keys.env render + goose
 	// restart + live tool-permission delivery)
-	hooks.RegisterGooseConfigHooks(app, coordGetter)
+	hooks.RegisterGooseConfigHooks(app)
 
 	// 3c. Register cognee Config Hooks (cognee.env render + cognee restart)
 	hooks.RegisterCogneeConfigHooks(app)

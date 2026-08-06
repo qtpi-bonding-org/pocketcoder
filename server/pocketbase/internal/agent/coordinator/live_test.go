@@ -48,8 +48,8 @@ func liveConfig(t *testing.T) Config {
 func liveProfile() SessionProfile {
 	provider, model := os.Getenv("GOOSE_LIVE_PROVIDER"), os.Getenv("GOOSE_LIVE_MODEL")
 	return SessionProfile{
-		Provider:            provider,
-		Model:               model,
+		Provider:           provider,
+		Model:              model,
 		SupportsLiveConfig: provider != "" || model != "",
 	}
 }

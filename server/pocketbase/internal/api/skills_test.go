@@ -147,7 +147,7 @@ func TestListSkills_MergesGlobalAndPerProjectCalls(t *testing.T) {
 	}
 	defer app.Cleanup()
 
-	// Two poco_configs with distinct workspace folders, one with none
+	// Two agent_profiles with distinct workspace folders, one with none
 	// (should be skipped — nothing to scope a project call to).
 	harnesses, err := app.FindCollectionByNameOrId("harnesses")
 	if err != nil {
@@ -182,7 +182,7 @@ func TestListSkills_MergesGlobalAndPerProjectCalls(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	poco, err := app.FindCollectionByNameOrId("poco_configs")
+	poco, err := app.FindCollectionByNameOrId("agent_profiles")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,10 +235,10 @@ func TestListSkills_MergesGlobalAndPerProjectCalls(t *testing.T) {
 		t.Fatal("missing global skill")
 	}
 	if _, ok := byPath["/workspace/repo-a/.agents/skills/project-skill"]; !ok {
-		t.Fatal("missing project-scoped skill — the fan-out over poco_configs.workspace_folders did not surface it")
+		t.Fatal("missing project-scoped skill — the fan-out over agent_profiles.workspace_folders did not surface it")
 	}
 	if fc.calls != 2 {
-		t.Fatalf("CallExtension calls = %d, want 2 (one global, one for repo-a; no-folder poco_config must be skipped)", fc.calls)
+		t.Fatalf("CallExtension calls = %d, want 2 (one global, one for repo-a; no-folder agent_profile must be skipped)", fc.calls)
 	}
 }
 

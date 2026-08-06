@@ -73,7 +73,21 @@ func init() {
 			}
 		}
 
-		tpColl, err := app.FindCollectionByNameOrId("tool_permissions")
+		modeColl, err := app.FindCollectionByNameOrId("permission_modes")
+		if err != nil {
+			return err
+		}
+		balanced := core.NewRecord(modeColl)
+		balanced.Set("name", "Balanced")
+		balanced.Set("description", "Ask before tools that can change the workspace.")
+		balanced.Set("base_session_mode", "approve")
+		balanced.Set("is_system", true)
+		balanced.Set("is_default", true)
+		if err := app.Save(balanced); err != nil {
+			return err
+		}
+
+		tpColl, err := app.FindCollectionByNameOrId("permission_mode_tools")
 		if err != nil {
 			return err
 		}
@@ -83,6 +97,7 @@ func init() {
 			rec.Set("pattern", pattern)
 			rec.Set("action", action)
 			rec.Set("active", true)
+			rec.Set("permission_mode", balanced.Id)
 			return app.Save(rec)
 		}
 
@@ -148,8 +163,8 @@ func init() {
 			rec.Set("acp_transport", "stdio")
 			rec.Set("container_image", image)
 			rec.Set("launch_template", map[string]any{
-				"cmd":  []string{"--cmd", command, "--port", "3000"},
-				"port": 3000,
+				"cmd":          []string{"--cmd", command, "--port", "3000"},
+				"port":         3000,
 				"env_template": envTemplate,
 			})
 			rec.Set("supports_live_config", true)

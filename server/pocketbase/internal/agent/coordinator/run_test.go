@@ -409,6 +409,20 @@ func TestRequestPermissionForwardsToolCallID(t *testing.T) {
 	c.waitRunDone(t, "A")
 }
 
+func TestAutomaticPermissionResponseUsesOneShotOption(t *testing.T) {
+	resp := automaticPermissionResponse([]acpsdk.PermissionOption{
+		{OptionId: "allow_always", Kind: acpsdk.PermissionOptionKindAllowAlways},
+		{OptionId: "allow_once", Kind: acpsdk.PermissionOptionKindAllowOnce},
+	}, ToolPermissionAllow)
+	if resp.Outcome.Selected == nil || resp.Outcome.Selected.OptionId != "allow_once" {
+		t.Fatalf("allow response = %#v, want allow_once", resp)
+	}
+	resp = automaticPermissionResponse([]acpsdk.PermissionOption{{OptionId: "reject_once", Kind: acpsdk.PermissionOptionKindRejectOnce}}, ToolPermissionDeny)
+	if resp.Outcome.Selected == nil || resp.Outcome.Selected.OptionId != "reject_once" {
+		t.Fatalf("deny response = %#v, want reject_once", resp)
+	}
+}
+
 // ---- Task 11: cancel triggers + orphan-session compensation ----
 
 // Explicit cancel must propagate to the ACP conn as a Cancel notification
