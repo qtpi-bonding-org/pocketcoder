@@ -10,9 +10,9 @@ import (
 
 // recordingConn is a minimal test fake that records which methods were called.
 type recordingConn struct {
-	calledSystemPromptSet  bool
-	calledSetConfigOption  bool
-	calledSetSessionMode   bool
+	calledSystemPromptSet bool
+	calledSetConfigOption bool
+	calledSetSessionMode  bool
 }
 
 func (r *recordingConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error) {
@@ -81,6 +81,28 @@ func TestSessionProfile_SliceAccessorsNeverNil(t *testing.T) {
 	}
 }
 
+func TestSessionProfilePermissionDecisionUsesSpecificRule(t *testing.T) {
+	p := SessionProfile{PermissionRules: []ToolPermissionRule{
+		{Tool: "*", Pattern: "*", Action: ToolPermissionAsk},
+		{Tool: "bash", Pattern: "*", Action: ToolPermissionAsk},
+		{Tool: "bash", Pattern: "ls *", Action: ToolPermissionAllow},
+	}}
+	if got := p.PermissionDecision("bash", "ls -la"); got != ToolPermissionAllow {
+		t.Fatalf("specific allow = %q, want allow", got)
+	}
+	if got := p.PermissionDecision("bash", "rm -rf /workspace"); got != ToolPermissionAsk {
+		t.Fatalf("broad ask = %q, want ask", got)
+	}
+}
+
+func TestSessionMetaContainsOptionalPromptExtension(t *testing.T) {
+	p := SessionProfile{Instructions: "be concise"}
+	meta := p.sessionMeta()
+	if meta == nil || meta["pocketcoder"].(map[string]any)["systemPrompt"] != "be concise" {
+		t.Fatalf("unexpected session metadata: %#v", meta)
+	}
+}
+
 func TestPerSessionApplierDeliversProviderLive(t *testing.T) {
 	fc := &fakeConn{}
 	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Provider: "anthropic", SupportsLiveConfig: true}, nil)
@@ -106,24 +128,6 @@ func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("expected a configId=model value=claude-opus call, got %+v", fc.setConfigOptionCalls)
-	}
-}
-
-func TestPerSessionApplierDeliversInstructionsViaCustomMethod(t *testing.T) {
-	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Instructions: "You are a terse assistant.", SupportsGooseExtensions: true}, nil)
-	if err != nil {
-		t.Fatalf("Apply: %v", err)
-	}
-	if fc.lastExtensionMethod != "_goose/unstable/session/system-prompt/set" {
-		t.Errorf("expected the system-prompt custom method, got %q", fc.lastExtensionMethod)
-	}
-	params, ok := fc.lastExtensionParams.(systemPromptSetParams)
-	if !ok {
-		t.Fatalf("expected systemPromptSetParams, got %T", fc.lastExtensionParams)
-	}
-	if params.SessionID != "sess-1" || params.SystemPrompt != "You are a terse assistant." {
-		t.Errorf("unexpected params: %+v", params)
 	}
 }
 
@@ -165,18 +169,6 @@ func TestSessionProfileCarriesTargetAndCapabilityFlags(t *testing.T) {
 	}
 	if p.ResolvedInstanceID != p.PinnedInstanceID {
 		t.Error("expected fields to be independently settable and equal in this fixture")
-	}
-}
-
-func TestApplySkipsGooseExtensionsWhenUnsupported(t *testing.T) {
-	conn := &recordingConn{}
-	p := SessionProfile{Instructions: "be helpful", SupportsGooseExtensions: false, SupportsLiveConfig: true}
-	applier := PerSessionApplier{}
-	if err := applier.Apply(context.Background(), conn, "sess1", p, nil); err != nil {
-		t.Fatal(err)
-	}
-	if conn.calledSystemPromptSet {
-		t.Error("must not call the Goose-private system-prompt method when SupportsGooseExtensions is false")
 	}
 }
 

@@ -28,10 +28,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
 
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
 )
@@ -293,11 +293,11 @@ func dialAdmin(re *core.RequestEvent, coord func() *coordinator.Coordinator) (ac
 // listSkills fans out over Goose's real project-scoping mechanism
 // (projectDir, not includeProjectSources — see this plan's Global
 // Constraints) and merges the results, deduplicated by path:
-//   1. One sources/list call with no projectDir — global skills only.
-//   2. One additional call per distinct poco_configs.workspace_folders[0]
-//      — each such call returns that directory's project skills *plus*
-//      the same global skills again (Goose always scans global dirs
-//      regardless of projectDir), which the path-based dedup collapses.
+//  1. One sources/list call with no projectDir — global skills only.
+//  2. One additional call per distinct agent_profiles.workspace_folders[0]
+//     — each such call returns that directory's project skills *plus*
+//     the same global skills again (Goose always scans global dirs
+//     regardless of projectDir), which the path-based dedup collapses.
 func listSkills(ctx context.Context, app core.App, coord func() *coordinator.Coordinator) ([]sourceEntryResp, error) {
 	c := coord()
 	if c == nil {
@@ -315,9 +315,9 @@ func listSkills(ctx context.Context, app core.App, coord func() *coordinator.Coo
 		return nil, fmt.Errorf("list global skills: %w", err)
 	}
 
-	pocoRecs, err := app.FindRecordsByFilter("poco_configs", "1=1", "", 0, 0)
+	pocoRecs, err := app.FindRecordsByFilter("agent_profiles", "1=1", "", 0, 0)
 	if err != nil {
-		return nil, fmt.Errorf("query poco_configs: %w", err)
+		return nil, fmt.Errorf("query agent_profiles: %w", err)
 	}
 	seenDirs := map[string]bool{}
 	for _, poco := range pocoRecs {

@@ -227,7 +227,7 @@
     "id": "pc_chats",
     "listRule": "@request.auth.id != '' \u0026\u0026 (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')",
     "viewRule": "@request.auth.id != '' \u0026\u0026 (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')",
-    "createRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != '' && @request.body.owner = @request.auth.id && @request.body.is_system != true",
     "updateRule": "user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'",
     "deleteRule": "user = @request.auth.id || @request.auth.role = 'admin'",
     "name": "chats",
@@ -374,12 +374,12 @@
       },
       {
         "cascadeDelete": false,
-        "collectionId": "pc_poco_configs",
+        "collectionId": "pc_agent_profiles",
         "hidden": false,
         "id": "relation1773773845",
         "maxSelect": 1,
         "minSelect": 0,
-        "name": "poco_config",
+        "name": "agent_profile",
         "presentable": false,
         "required": false,
         "system": false,
@@ -707,13 +707,116 @@
     "system": false
   },
   {
-    "id": "pc_tool_permissions",
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.role = 'admin'",
-    "updateRule": "@request.auth.role = 'admin'",
-    "deleteRule": "@request.auth.role = 'admin'",
-    "name": "tool_permissions",
+    "id": "pc_permission_modes",
+    "listRule": "@request.auth.id != '' && (owner = @request.auth.id || is_system = true)",
+    "viewRule": "@request.auth.id != '' && (owner = @request.auth.id || is_system = true)",
+    "createRule": "@request.auth.id != '' && @request.body.owner = @request.auth.id && @request.body.is_system != true",
+    "updateRule": "@request.auth.id != '' && (owner = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
+    "deleteRule": "@request.auth.id != '' && (owner = @request.auth.id || @request.auth.role = 'admin') && is_system != true",
+    "name": "permission_modes",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text_permission_modes_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_permission_modes_name",
+        "max": 0,
+        "min": 0,
+        "name": "name",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_permission_modes_description",
+        "max": 0,
+        "min": 0,
+        "name": "description",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "select_permission_modes_base",
+        "maxSelect": 1,
+        "name": "base_session_mode",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "auto",
+          "approve",
+          "smart_approve",
+          "chat"
+        ]
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_permission_modes_owner",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "owner",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "bool_permission_modes_system",
+        "name": "is_system",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "bool_permission_modes_default",
+        "name": "is_default",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_permission_modes_name_owner ON permission_modes (name, owner)"
+    ],
+    "created": "2026-08-06 00:00:00.000Z",
+    "updated": "2026-08-06 00:00:00.000Z",
+    "system": false
+  },
+  {
+    "id": "pc_permission_mode_tools",
+    "listRule": "@request.auth.id != '' && (permission_mode.owner = @request.auth.id || permission_mode.is_system = true)",
+    "viewRule": "@request.auth.id != '' && (permission_mode.owner = @request.auth.id || permission_mode.is_system = true)",
+    "createRule": "@request.auth.id != '' && permission_mode.owner = @request.auth.id && permission_mode.is_system != true",
+    "updateRule": "@request.auth.id != '' && permission_mode.owner = @request.auth.id && permission_mode.is_system != true",
+    "deleteRule": "@request.auth.id != '' && permission_mode.owner = @request.auth.id && permission_mode.is_system != true",
+    "name": "permission_mode_tools",
     "type": "base",
     "fields": [
       {
@@ -783,21 +886,21 @@
         "type": "bool"
       },
       {
-        "cascadeDelete": false,
-        "collectionId": "pc_poco_configs",
+        "cascadeDelete": true,
+        "collectionId": "pc_permission_modes",
         "hidden": false,
         "id": "relation1773773845",
         "maxSelect": 1,
         "minSelect": 0,
-        "name": "poco_config",
+        "name": "permission_mode",
         "presentable": false,
-        "required": false,
+        "required": true,
         "system": false,
         "type": "relation"
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_tool_perms_poco_config_tool_pattern ON tool_permissions (poco_config, tool, pattern)"
+      "CREATE UNIQUE INDEX idx_permission_mode_tools_mode_tool_pattern ON permission_mode_tools (permission_mode, tool, pattern)"
     ],
     "created": "2026-07-24 05:34:49.778Z",
     "updated": "2026-07-24 05:34:50.215Z",
@@ -1708,13 +1811,13 @@
     "system": false
   },
   {
-    "id": "pc_poco_configs",
+    "id": "pc_agent_profiles",
     "listRule": "@request.auth.id != ''",
     "viewRule": "@request.auth.id != ''",
     "createRule": null,
     "updateRule": null,
     "deleteRule": null,
-    "name": "poco_configs",
+    "name": "agent_profiles",
     "type": "base",
     "fields": [
       {
@@ -1804,21 +1907,21 @@
         "hidden": false,
         "id": "select2546616235",
         "maxSelect": 1,
-        "name": "mode",
+        "cascadeDelete": false,
+        "collectionId": "pc_permission_modes",
+        "hidden": false,
+        "id": "relation_permission_mode",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "permission_mode",
         "presentable": false,
-        "required": false,
+        "required": true,
         "system": false,
-        "type": "select",
-        "values": [
-          "auto",
-          "approve",
-          "smart_approve",
-          "chat"
-        ]
+        "type": "relation"
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_poco_configs_name ON poco_configs (name)"
+      "CREATE UNIQUE INDEX idx_agent_profiles_name ON agent_profiles (name)"
     ],
     "created": "2026-07-24 05:34:49.873Z",
     "updated": "2026-07-24 05:34:50.164Z",

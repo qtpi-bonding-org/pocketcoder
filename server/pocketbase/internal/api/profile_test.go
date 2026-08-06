@@ -214,14 +214,14 @@ func createTestHarnessModel(t *testing.T, app core.App, harness *core.Record) *c
 	return hm
 }
 
-// createTestPocoConfig creates a poco_config record with optional fields.
+// createTestPocoConfig creates an agent_profile record with optional fields.
 func createTestPocoConfig(t *testing.T, app core.App, fields map[string]any, userID string) *core.Record {
 	t.Helper()
 	// Create a test harness and harness_model first
 	harness, _ := seedTestHarnessAndInstance(t, app, "test-harness", true, true, false, userID)
 	hm := createTestHarnessModel(t, app, harness)
 
-	pocoColl, err := app.FindCollectionByNameOrId("poco_configs")
+	pocoColl, err := app.FindCollectionByNameOrId("agent_profiles")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -244,7 +244,7 @@ func createTestPocoConfig(t *testing.T, app core.App, fields map[string]any, use
 
 // TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig verifies that
 // chat-level fields (harness, workspace_override) are read BEFORE checking
-// for a poco_config, fixing the early-return bug.
+// for an agent_profile, fixing the early-return bug.
 func TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
@@ -255,7 +255,7 @@ func TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig(t *testing.T) {
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
 	harness, instance := seedTestHarnessAndInstance(t, app, "goose", true, true, false, userID)
 	chat := createTestChat(t, app, map[string]any{"user": userID, "harness": harness.Id})
-	// deliberately: no poco_configs row exists, and none is marked is_default
+	// deliberately: no agent_profiles row exists, and none is marked is_default
 
 	profile, err := buildSessionProfile(app, chat.Id)
 	if err != nil {
@@ -336,7 +336,7 @@ func TestBuildSessionProfileRejectsVirtualOllamaOnUnsupportedHarness(t *testing.
 
 // TestBuildSessionProfileWorkspaceOverrideKeepsPocoAdditionalDirectories
 // verifies that when a chat has workspace_override, it becomes the Cwd,
-// but the poco_config's additional folders are still preserved in
+// but the agent_profile's additional folders are still preserved in
 // AdditionalDirectories (§5.7).
 func TestBuildSessionProfileWorkspaceOverrideKeepsPocoAdditionalDirectories(t *testing.T) {
 	app, err := tests.NewTestApp()
@@ -353,7 +353,7 @@ func TestBuildSessionProfileWorkspaceOverrideKeepsPocoAdditionalDirectories(t *t
 	chat := createTestChat(t, app, map[string]any{
 		"user":               userID,
 		"harness":            harness.Id,
-		"poco_config":        poco.Id,
+		"agent_profile":      poco.Id,
 		"workspace_override": []string{"/workspace/other"},
 	})
 
