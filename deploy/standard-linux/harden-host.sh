@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # PocketCoder standard Linux host hardening.
 #
-# This intentionally targets Ubuntu/Debian VPS hosts only. It is explicit and
-# opt-in because changing a host firewall or SSH policy can strand a machine.
+# This intentionally targets Ubuntu/Debian VPS hosts only. The main deployment
+# invokes it by default because an unhardened host is not a supported release
+# configuration; changing a host firewall or SSH policy can still strand a
+# machine, so keep a second SSH session open while it runs.
 
 set -euo pipefail
 
