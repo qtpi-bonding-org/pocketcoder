@@ -28,8 +28,9 @@ fi
 # Reverse-proxy HTTPS to PocketBase
 tailscale serve --bg --https=443 http://pocketbase:8090
 
-# Enable Funnel if in funnel mode (default)
-if [ "${TAILSCALE_MODE:-funnel}" = "funnel" ]; then
+# Enable Funnel only when explicitly requested. Private Tailnet access is the
+# safe default for a trusted-group deployment.
+if [ "${TAILSCALE_MODE:-private}" = "funnel" ]; then
   tailscale funnel --bg 443
   echo ""
   echo "=============================================="

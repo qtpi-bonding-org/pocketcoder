@@ -15,7 +15,9 @@ services:
 
     volumes:
       - pb_data:/app/pb_data
-      # - pb_backups:/app/pb_backups
+      # Keep database backups in a separate persistent volume so recreating
+      # the PocketBase container does not destroy the recovery copy.
+      - pb_backups:/app/pb_backups
       - pocketcoder-logs:/app/pb_public/logs
       - goose_workspace:/workspace
       - ./server/mcp-gateway/config:/mcp_config
@@ -469,7 +471,7 @@ services:
 
   # 🔗 TAILSCALE (Remote Access Tunnel)
   # To enable: docker compose --profile tailscale up
-  # Modes: TAILSCALE_MODE=funnel (default, public URL) or TAILSCALE_MODE=private (Tailnet only)
+  # Modes: TAILSCALE_MODE=private (default, Tailnet only) or TAILSCALE_MODE=funnel (public URL)
   tailscale:
     image: tailscale/tailscale@sha256:cdf5612ded5be1344f1a704b8c5e53496db97376bb533e5e15f141e48bf60cc0
     container_name: pocketcoder-tailscale
@@ -480,7 +482,7 @@ services:
     environment:
       - TS_AUTHKEY=${TS_AUTHKEY:-}
       - TS_HOSTNAME=${TS_HOSTNAME:-pocketcoder}
-      - TAILSCALE_MODE=${TAILSCALE_MODE:-funnel}
+      - TAILSCALE_MODE=${TAILSCALE_MODE:-private}
     volumes:
       - tailscale_state:/var/lib/tailscale
       - ./deploy/tailscale/entrypoint.sh:/entrypoint.sh:ro
@@ -536,9 +538,7 @@ services:
 
 volumes:
   pb_data:
-  # pb_backups:
-  #   external: true
-  #   name: pocketcoder_pb_backups
+  pb_backups:
   pocketcoder-logs:
   goose_workspace:
     name: pocketcoder_goose_workspace
