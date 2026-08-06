@@ -21,12 +21,50 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package api
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
+
+// resolveImageDigest pins a proposed image reference to a sha256 digest at
+// request time, before a human ever sees/approves it -- so approval means
+// "I reviewed this exact digest," not "I reviewed a tag that could point
+// somewhere else by the time renderMcpConfig (hooks/mcp.go) renders it."
+// docker-mcp v0.43+ also requires this: --verify-signatures (on by default)
+// rejects mutable tags outright, so an unresolved tag would fail at the
+// gateway regardless -- better to fail loudly here, before approval, than
+// let a request quietly reach a state the gateway will refuse to run.
+//
+// Mirrors hooks/mcp.go's renderMcpConfig defaulting (empty image ->
+// mcp/<name>, no tag/digest -> :latest) so a request's resolved image
+// matches what would previously have been rendered.
+func resolveImageDigest(name, image string) (string, error) {
+	if image == "" {
+		image = fmt.Sprintf("mcp/%s", name)
+	}
+	if strings.Contains(image, "@sha256:") {
+		return image, nil // already pinned
+	}
+	if !strings.Contains(image, ":") {
+		image = image + ":latest"
+	}
+
+	digest, err := crane.Digest(image)
+	if err != nil {
+		return "", fmt.Errorf("resolve digest for %s: %w", image, err)
+	}
+
+	repo := image
+	if i := strings.LastIndex(image, ":"); i != -1 {
+		repo = image[:i]
+	}
+	return repo + "@" + digest, nil
+}
 
 // RegisterMcpApi registers the MCP server request endpoint.
 func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
@@ -82,6 +120,12 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			return re.JSON(500, map[string]string{"error": "Internal error"})
 		}
 
+		resolvedImage, err := resolveImageDigest(input.ServerName, input.Image)
+		if err != nil {
+			log.Printf("❌ [MCP] Failed to resolve image digest for %s: %v", input.ServerName, err)
+			return re.JSON(422, map[string]string{"error": "Could not resolve image to a digest: " + err.Error()})
+		}
+
 		// If a record exists (either approved or pending), sync the latest researched metadata
 		if len(existingRecords) > 0 {
 			existing := existingRecords[0]
@@ -89,7 +133,7 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			// Always update these fields to ensure we have the latest research data
 			// (Reason, Image, ConfigSchema, etc.)
 			existing.Set("reason", input.Reason)
-			existing.Set("image", input.Image)
+			existing.Set("image", resolvedImage)
 			existing.Set("config_schema", input.ConfigSchema)
 			existing.Set("requested_by", input.SessionID)
 
@@ -111,7 +155,7 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		record.Set("reason", input.Reason)
 		record.Set("requested_by", input.SessionID)
 		record.Set("catalog", "docker-mcp") // Default catalog
-		record.Set("image", input.Image)
+		record.Set("image", resolvedImage)
 		record.Set("config_schema", input.ConfigSchema)
 
 		if err := app.Save(record); err != nil {
