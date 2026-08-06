@@ -127,6 +127,19 @@ func init() {
 			envTemplate := map[string]string{
 				apiKeyEnv:                "{{.API_KEY}}",
 				"HARNESS_ADAPTER_SECRET": "{{.__adapter_secret}}",
+				// Read by each harness's baked-in static MCP-attach config
+				// (.mcp.json for Claude Code, config.toml for Codex,
+				// OPENCODE_CONFIG_CONTENT for OpenCode) to authenticate to
+				// the gateway -- docker-mcp v0.43+ requires this by default.
+				"MCP_GATEWAY_AUTH_TOKEN": "{{.MCP_GATEWAY_AUTH_TOKEN}}",
+				// entrypoint.sh's per-harness branching used to key off the
+				// container's $1, which is always "--cmd" (main.go parses it
+				// as a named flag, not a positional arg) -- that check could
+				// never actually match "opencode". This is a real,
+				// deliberate literal value (not a Go-template expansion; a
+				// plain string with no {{}} renders as itself), so
+				// entrypoint.sh can branch on it directly and correctly.
+				"POCKETCODER_HARNESS_CLI_ID": cliID,
 			}
 			if cliID == "opencode" {
 				// The peer entrypoint discovers installed models through this

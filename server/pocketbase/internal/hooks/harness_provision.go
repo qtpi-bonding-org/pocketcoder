@@ -26,6 +26,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
 
@@ -308,6 +309,10 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 	values := map[string]string{
 		"__adapter_secret": secret,
 		"__ollama_host":    "http://ollama:11434",
+		// Read by MCP_GATEWAY_AUTH_TOKEN's env_template entry (seeded for
+		// every peer harness, 1756000100_seed.go) so each harness's baked-in
+		// static MCP-attach config can authenticate to the gateway.
+		"MCP_GATEWAY_AUTH_TOKEN": os.Getenv("MCP_GATEWAY_AUTH_TOKEN"),
 	}
 	// Only OpenCode can run with the local Ollama provider and no cloud key.
 	// Keep missing keys fatal for the Claude/Codex harnesses so their existing

@@ -568,3 +568,116 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 		})
 	}
 }
+
+// runningInstanceFor creates a "running" harness_instances row for the given
+// harness, matching the shape buildSessionProfile requires to resolve past
+// the provisioning check.
+func runningInstanceFor(t *testing.T, app core.App, harness *core.Record, userID string) *core.Record {
+	t.Helper()
+	instColl, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		t.Fatal(err)
+	}
+	inst := core.NewRecord(instColl)
+	inst.Set("user", userID)
+	inst.Set("harness", harness.Id)
+	inst.Set("launch_key", "")
+	inst.Set("container_name", "pocketcoder-"+harness.GetString("cli_id")+"-"+randomSuffix())
+	inst.Set("secret", "s")
+	inst.Set("status", "running")
+	inst.Set("managed", true)
+	if err := app.Save(inst); err != nil {
+		t.Fatal(err)
+	}
+	return inst
+}
+
+// TestBuildSessionProfileAttachesMcpGatewayForPeerHarness verifies a peer
+// stdio harness (anything with cli_id != "goose") gets the gateway attached
+// via McpServers -- the session/new delivery mechanism
+// hooks.McpGatewayHttpServer documents, as opposed to Goose's persistent
+// extension (RegisterMcpGatewayExtension).
+func TestBuildSessionProfileAttachesMcpGatewayForPeerHarness(t *testing.T) {
+	t.Setenv("MCP_GATEWAY_AUTH_TOKEN", "test-token-123")
+
+	app := testApp(t)
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'claude-code'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runningInstanceFor(t, app, harness, userID)
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+
+	profile, err := buildSessionProfile(app, chat.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var found bool
+	for _, m := range profile.McpServers {
+		if m.Http != nil && m.Http.Name == "gateway" {
+			found = true
+			if len(m.Http.Headers) != 1 || m.Http.Headers[0].Value != "Bearer test-token-123" {
+				t.Errorf("gateway headers = %+v, want a single Bearer test-token-123 Authorization header", m.Http.Headers)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected profile.McpServers to contain the gateway HTTP entry for a peer harness")
+	}
+}
+
+// TestBuildSessionProfileDoesNotAttachMcpGatewayForGoose verifies Goose
+// sessions never receive the gateway via McpServers -- Goose already gets
+// it through RegisterMcpGatewayExtension's persistent extension instead,
+// and attaching it twice (or via the wrong mechanism) is exactly the
+// double-registration this split is meant to avoid.
+func TestBuildSessionProfileDoesNotAttachMcpGatewayForGoose(t *testing.T) {
+	t.Setenv("MCP_GATEWAY_AUTH_TOKEN", "test-token-123")
+
+	app := testApp(t)
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runningInstanceFor(t, app, harness, userID)
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+
+	profile, err := buildSessionProfile(app, chat.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, m := range profile.McpServers {
+		if m.Http != nil && m.Http.Name == "gateway" {
+			t.Fatal("Goose session must not receive the gateway via McpServers")
+		}
+	}
+}
+
+// TestBuildSessionProfileOmitsMcpGatewayWithoutToken verifies a peer harness
+// session omits the gateway entirely (rather than sending an unauthenticated
+// one the gateway would reject) when MCP_GATEWAY_AUTH_TOKEN isn't set.
+func TestBuildSessionProfileOmitsMcpGatewayWithoutToken(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'claude-code'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runningInstanceFor(t, app, harness, userID)
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+
+	profile, err := buildSessionProfile(app, chat.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, m := range profile.McpServers {
+		if m.Http != nil && m.Http.Name == "gateway" {
+			t.Fatal("expected no gateway entry when MCP_GATEWAY_AUTH_TOKEN is unset")
+		}
+	}
+}

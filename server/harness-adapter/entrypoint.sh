@@ -5,7 +5,12 @@ set -eu
 # integration command. Generate that small fragment at peer start so the
 # model list follows the shared Ollama volume without a host-specific config
 # file. Other ACP agents retain the audited adapter-only path unchanged.
-if [ "${1:-}" = "opencode" ] && [ -z "${OPENCODE_CONFIG_CONTENT:-}" ]; then
+#
+# Was `"${1:-}" = "opencode"` -- main.go parses --cmd/--port as named flags
+# (flag.String), so $1 here is always literally "--cmd", never the harness
+# name; that check could never match. POCKETCODER_HARNESS_CLI_ID (seeded
+# per harness, 1756000100_seed.go) is a real, reliable signal.
+if [ "${POCKETCODER_HARNESS_CLI_ID:-}" = "opencode" ] && [ -z "${OPENCODE_CONFIG_CONTENT:-}" ]; then
   if config=$(node /usr/local/lib/pocketcoder/opencode-ollama-config.mjs); then
     export OPENCODE_CONFIG_CONTENT="$config"
   else
