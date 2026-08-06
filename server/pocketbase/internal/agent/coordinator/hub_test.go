@@ -91,7 +91,7 @@ func TestAttachCursorAheadOfLogGetsOnlyLive(t *testing.T) {
 	h.StartRun("run-1", func() []events.Event { return nil })
 	h.Publish(textEv("a")) // 1
 	h.Publish(textEv("b")) // 2
-	att := h.Attach(2) // caller already saw up to seq 2
+	att := h.Attach(2)     // caller already saw up to seq 2
 	if len(att.Buffered) != 0 {
 		t.Fatalf("buffered = %d, want 0 (cursor up to date)", len(att.Buffered))
 	}

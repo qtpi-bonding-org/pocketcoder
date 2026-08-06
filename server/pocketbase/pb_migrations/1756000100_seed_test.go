@@ -51,14 +51,14 @@ func TestSeedCreatesAdminAgentAndSuperuser(t *testing.T) {
 	}
 }
 
-func TestSeedCreatesTenToolPermissions(t *testing.T) {
+func TestSeedCreatesBalancedPermissionMode(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer app.Cleanup()
 
-	col, err := app.FindCollectionByNameOrId("tool_permissions")
+	col, err := app.FindCollectionByNameOrId("permission_mode_tools")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func TestSeedCreatesTenToolPermissions(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(recs) != 10 {
-		t.Fatalf("expected 10 seeded tool_permissions rows, got %d", len(recs))
+		t.Fatalf("expected 10 seeded permission_mode_tools rows, got %d", len(recs))
 	}
 
 	found := false
@@ -77,7 +77,7 @@ func TestSeedCreatesTenToolPermissions(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("expected a bash/'ls *'/allow row among seeded tool_permissions")
+		t.Error("expected a bash/'ls *'/allow row among seeded permission_mode_tools")
 	}
 }
 

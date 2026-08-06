@@ -21,6 +21,8 @@ package coordinator
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
@@ -34,13 +36,14 @@ type Target struct {
 }
 
 // SessionProfile is the per-session configuration resolved from a chat's
-// agent definition (poco_config). Not every field is deliverable over ACP
+// agent definition (agent_profile). Not every field is deliverable over ACP
 // today — see ProfileApplier.
 type SessionProfile struct {
 	Model, Provider, Instructions, Cwd string
 	AdditionalDirectories              []string
 	McpServers                         []acpsdk.McpServer
 	Mode                               acpsdk.SessionModeId
+	PermissionRules                    []ToolPermissionRule
 
 	Target                  Target
 	ResolvedInstanceID      string // the harness_instances id this chat resolves to right now
@@ -48,6 +51,88 @@ type SessionProfile struct {
 	SupportsLiveConfig      bool
 	SupportsGooseExtensions bool
 	SingleConnectionOnly    bool
+}
+
+// ToolPermissionAction is the PocketBase policy decision for one ACP tool
+// request. The coordinator is the enforcement point for every harness; no
+// harness-specific permission API is authoritative.
+type ToolPermissionAction string
+
+const (
+	ToolPermissionAllow ToolPermissionAction = "allow"
+	ToolPermissionAsk   ToolPermissionAction = "ask"
+	ToolPermissionDeny  ToolPermissionAction = "deny"
+)
+
+type ToolPermissionRule struct {
+	Tool    string
+	Pattern string
+	Action  ToolPermissionAction
+}
+
+// PermissionDecision evaluates the most specific matching PocketBase rule.
+// A rule with an exact tool/pattern wins over a wildcard rule. At equal
+// specificity, deny wins over ask, and ask wins over allow.
+func (p SessionProfile) PermissionDecision(tool string, values ...string) ToolPermissionAction {
+	tool = strings.ToLower(strings.TrimSpace(tool))
+	bestScore := -1
+	decision := ToolPermissionAsk
+	for _, rule := range p.PermissionRules {
+		ruleTool := strings.ToLower(strings.TrimSpace(rule.Tool))
+		if ruleTool != "*" && ruleTool != tool {
+			continue
+		}
+		pattern := strings.TrimSpace(rule.Pattern)
+		if pattern == "" {
+			pattern = "*"
+		}
+		matched := pattern == "*"
+		for _, value := range values {
+			if matched || wildcardMatch(pattern, value) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			continue
+		}
+		score := 0
+		if ruleTool == tool {
+			score += 2
+		}
+		if pattern != "*" {
+			score++
+		}
+		if score < bestScore || (score == bestScore && actionRank(rule.Action) <= actionRank(decision)) {
+			continue
+		}
+		bestScore, decision = score, rule.Action
+	}
+	if decision != ToolPermissionAllow && decision != ToolPermissionDeny {
+		return ToolPermissionAsk
+	}
+	return decision
+}
+
+func actionRank(action ToolPermissionAction) int {
+	switch action {
+	case ToolPermissionDeny:
+		return 3
+	case ToolPermissionAsk:
+		return 2
+	case ToolPermissionAllow:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func wildcardMatch(pattern, value string) bool {
+	if value == "" {
+		return false
+	}
+	ok, err := path.Match(pattern, value)
+	return err == nil && ok
 }
 
 // mcpServers returns the profile's MCP servers as a non-nil slice. Goose's
@@ -70,6 +155,17 @@ func (p SessionProfile) additionalDirectories() []string {
 	return p.AdditionalDirectories
 }
 
+// sessionMeta carries PocketCoder's optional prompt extension through the
+// standard ACP extensibility slot. ACP agents must ignore unknown metadata,
+// so this is an enhancement only; the provider-specific fallback remains a
+// separate capability to verify per pinned harness version.
+func (p SessionProfile) sessionMeta() map[string]any {
+	if strings.TrimSpace(p.Instructions) == "" {
+		return nil
+	}
+	return map[string]any{"pocketcoder": map[string]any{"systemPrompt": p.Instructions}}
+}
+
 // ProfileFunc resolves a SessionProfile for the run currently starting.
 // Injected from internal/api, mirroring the existing ResolveSession closure,
 // so the coordinator stays PocketBase-agnostic.
@@ -82,8 +178,7 @@ type ProfileApplier interface {
 }
 
 // GlobalConfigApplier delivers only what ACP allows post-create today: the
-// session mode. Model/provider/prompt are delivered out-of-band by the
-// render pipeline + restart (spec §4).
+// session mode. Permission enforcement remains in RequestPermission below.
 type GlobalConfigApplier struct{}
 
 func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) error {
@@ -108,22 +203,10 @@ func modeAdvertised(modes *acpsdk.SessionModeState, mode acpsdk.SessionModeId) b
 	return false
 }
 
-// systemPromptSetParams mirrors Goose's SetSessionSystemPromptRequest
-// (goose-sdk-types/src/custom_requests.rs) — no typed Go SDK support
-// exists for this custom method, so the shape is hand-rolled and must be
-// kept in sync with that Rust struct if Goose's wire format changes.
-type systemPromptSetParams struct {
-	SessionID    string `json:"sessionId"`
-	SystemPrompt string `json:"systemPrompt"`
-}
-
-// PerSessionApplier delivers model/provider/instructions live, in addition
-// to mode. Confirmed against Goose v1.43.0 source
-// (spikes/goose-acp-config-surface/README.md items 1-3): provider and
-// model are standard ACP session/set_config_option calls with configId
-// "provider"/"model"; instructions go through Goose's custom
-// _goose/unstable/session/system-prompt/set method via CallExtension,
-// since no typed SDK support exists for it.
+// PerSessionApplier delivers model/provider live, in addition to mode.
+// Provider and model use the standard ACP session/set_config_option method;
+// prompts use the optional ACP _meta extension at session creation/load and
+// are not sent through a harness-private RPC.
 type PerSessionApplier struct{}
 
 func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) error {
@@ -152,14 +235,6 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 			}); err != nil {
 				return fmt.Errorf("apply model: %w", err)
 			}
-		}
-	}
-	if p.SupportsGooseExtensions && p.Instructions != "" {
-		if _, err := conn.CallExtension(ctx, "_goose/unstable/session/system-prompt/set", systemPromptSetParams{
-			SessionID:    sessionID,
-			SystemPrompt: p.Instructions,
-		}); err != nil {
-			return fmt.Errorf("apply instructions: %w", err)
 		}
 	}
 	return nil

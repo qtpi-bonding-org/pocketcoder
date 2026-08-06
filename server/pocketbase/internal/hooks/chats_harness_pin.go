@@ -32,7 +32,7 @@ import (
 // design spec's §5.6/§5.8 invariants. It is NOT the source of truth for
 // either — establishSession's own check (coordinator package) is what
 // actually prevents a mismatched dial, since this hook can only see writes
-// to the chats collection itself (it cannot see a poco_configs.harness_model
+// to the chats collection itself (it cannot see an agent_profiles.harness_model
 // reassignment, for instance). Uses the non-Request hook variants
 // specifically (per hooks/timestamps.go's precedent) so backend app.Save
 // calls — including the agent role's own writes — are not skipped.

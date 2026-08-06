@@ -80,7 +80,7 @@ func validateWorkspacePath(p string) error {
 	return nil
 }
 
-// buildSessionProfile resolves a chat's agent definition (poco_config, or the
+// buildSessionProfile resolves a chat's agent definition (agent_profile, or the
 // default per §5.2) into a coordinator.SessionProfile: model/provider,
 // system prompt, workspace cwd/additional directories, per-chat MCP servers
 // (stdio only), and mode. It also resolves the harness identity and
@@ -98,7 +98,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	}
 
 	// Chat-level fields are read FIRST, unconditionally — this is the fix
-	// for the early-return bug: they must not depend on a poco_config
+	// for the early-return bug: they must not depend on an agent_profile
 	// existing at all.
 	hmID := chat.GetString("harness_model_override")
 	harnessID := chat.GetString("harness")
@@ -113,18 +113,18 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		p.Cwd = chatFolders[0]
 	}
 
-	// Resolve the agent definition: chat's poco_config, else the default (§5.2).
-	pocoID := chat.GetString("poco_config")
+	// Resolve the agent definition: chat's agent_profile, else the default (§5.2).
+	pocoID := chat.GetString("agent_profile")
 	var poco *core.Record
 	if pocoID != "" {
-		if poco, err = app.FindRecordById("poco_configs", pocoID); err != nil {
+		if poco, err = app.FindRecordById("agent_profiles", pocoID); err != nil {
 			return p, err
 		}
 	} else if poco, err = defaultPocoConfigAPI(app); err != nil {
 		return p, err
 	}
 
-	// Default mode if no poco_config
+	// Default mode if no agent_profile
 	p.Mode = acpsdk.SessionModeId("approve")
 	if poco != nil {
 		// Model: chat.harness_model_override wins, else the poco's harness_model.
@@ -137,8 +137,14 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 				p.Instructions = sp.GetString("body")
 			}
 		}
-		if mode := poco.GetString("mode"); mode != "" {
-			p.Mode = acpsdk.SessionModeId(mode)
+		if modeID := poco.GetString("permission_mode"); modeID != "" {
+			mode, modeErr := app.FindRecordById("permission_modes", modeID)
+			if modeErr != nil {
+				return p, fmt.Errorf("resolve agent_profiles.permission_mode=%s: %w", modeID, modeErr)
+			}
+			if baseMode := mode.GetString("base_session_mode"); baseMode != "" {
+				p.Mode = acpsdk.SessionModeId(baseMode)
+			}
 		}
 
 		// workspace_folders (JSON array) -> Cwd (first) + AdditionalDirectories (§5.7).
@@ -165,6 +171,33 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 			}
 			p.McpServers = append(p.McpServers, acpsdk.McpServer{
 				Stdio: &acpsdk.McpServerStdio{Name: m.Name, Command: m.Command, Args: m.Args, Env: env},
+			})
+		}
+	}
+
+	// Permission policy is loaded into the session profile and enforced by the
+	// coordinator's ACP RequestPermission callback. It is intentionally not
+	// pushed into any harness-specific API: all four harnesses must pass the
+	// same PocketBase gate.
+	permissionModeID := ""
+	if poco != nil {
+		permissionModeID = poco.GetString("permission_mode")
+	}
+	if permissionModeID == "" {
+		if mode, modeErr := app.FindFirstRecordByFilter("permission_modes", "is_default = true", nil); modeErr == nil && mode != nil {
+			permissionModeID = mode.Id
+		}
+	}
+	if permissionModeID != "" {
+		rows, rowsErr := app.FindRecordsByFilter("permission_mode_tools", "active = true && permission_mode = {:mode}", "", 0, 0, map[string]any{"mode": permissionModeID})
+		if rowsErr != nil {
+			return p, fmt.Errorf("resolve permission_mode_tools: %w", rowsErr)
+		}
+		p.PermissionRules = make([]coordinator.ToolPermissionRule, 0, len(rows))
+		for _, row := range rows {
+			p.PermissionRules = append(p.PermissionRules, coordinator.ToolPermissionRule{
+				Tool: row.GetString("tool"), Pattern: row.GetString("pattern"),
+				Action: coordinator.ToolPermissionAction(row.GetString("action")),
 			})
 		}
 	}
@@ -274,10 +307,10 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 // defaultPocoConfigAPI mirrors the hook's §5.2 tie-break (is_default=true,
 // deterministic first on multiple, nil on none). Kept separate from the hooks
 // package to avoid a hooks→api import; the logic is small and identical.
-// poco_configs has no created/updated autodate field, so the stable,
+// agent_profiles has no created/updated autodate field, so the stable,
 // unique-indexed `name` column is the sort key (matches defaultPocoConfig).
 func defaultPocoConfigAPI(app core.App) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter("poco_configs", "is_default = true", "name", 0, 0)
+	recs, err := app.FindRecordsByFilter("agent_profiles", "is_default = true", "name", 0, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +318,7 @@ func defaultPocoConfigAPI(app core.App) (*core.Record, error) {
 		return nil, nil
 	}
 	if len(recs) > 1 {
-		log.Printf("[Profile] %d poco_configs marked is_default; using first by name %q", len(recs), recs[0].GetString("name"))
+		log.Printf("[Profile] %d agent_profiles marked is_default; using first by name %q", len(recs), recs[0].GetString("name"))
 	}
 	return recs[0], nil
 }
