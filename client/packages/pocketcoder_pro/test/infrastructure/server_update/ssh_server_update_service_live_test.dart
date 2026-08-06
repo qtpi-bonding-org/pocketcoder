@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
+import 'package:flutter_aeroform/domain/models/deployment_session.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 
 import 'package:pocketcoder_pro/infrastructure/server_update/ssh_server_update_service.dart';
@@ -27,7 +28,8 @@ class _FakeSecureStorage implements ISecureStorage {
   _FakeSecureStorage(this.credentials);
 
   @override
-  Future<InstanceCredentials?> getInstanceCredentials(String instanceId) async =>
+  Future<InstanceCredentials?> getInstanceCredentials(
+          String instanceId) async =>
       credentials;
 
   @override
@@ -39,22 +41,40 @@ class _FakeSecureStorage implements ISecureStorage {
   @override
   Future<String?> getRefreshToken() => throw UnimplementedError();
   @override
-  Future<void> storeTokenExpiration(DateTime expiresAt) => throw UnimplementedError();
+  Future<void> storeTokenExpiration(DateTime expiresAt) =>
+      throw UnimplementedError();
   @override
   Future<DateTime?> getTokenExpiration() => throw UnimplementedError();
   @override
-  Future<void> storeCodeVerifier(String codeVerifier) => throw UnimplementedError();
+  Future<void> storeCodeVerifier(String codeVerifier) =>
+      throw UnimplementedError();
   @override
   Future<String?> getCodeVerifier() => throw UnimplementedError();
   @override
-  Future<void> storeInstanceCredentials(InstanceCredentials c) => throw UnimplementedError();
-  @override
-  Future<void> storeCertificateFingerprint(String instanceId, String fingerprint) =>
+  Future<void> storeInstanceCredentials(InstanceCredentials c) =>
       throw UnimplementedError();
   @override
-  Future<String?> getCertificateFingerprint(String instanceId) => throw UnimplementedError();
+  Future<void> storeCertificateFingerprint(
+          String instanceId, String fingerprint) =>
+      throw UnimplementedError();
+  @override
+  Future<String?> getCertificateFingerprint(String instanceId) =>
+      throw UnimplementedError();
   @override
   Future<void> clearAll() => throw UnimplementedError();
+  @override
+  Future<void> storeDeploymentSession(DeploymentSession session) =>
+      throw UnimplementedError();
+  @override
+  Future<DeploymentSession?> getDeploymentSession() =>
+      throw UnimplementedError();
+  @override
+  Future<void> clearDeploymentSession() => throw UnimplementedError();
+  @override
+  Future<void> clearAuthCredentials() => throw UnimplementedError();
+  @override
+  Future<void> clearInstanceSecrets(String instanceId) =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -70,7 +90,8 @@ void main() {
       final host = Platform.environment['SERVER_UPDATE_TEST_HOST'];
       final keyPath = Platform.environment['SERVER_UPDATE_TEST_KEY_PATH'];
       if (host == null || host.isEmpty || keyPath == null || keyPath.isEmpty) {
-        fail('SERVER_UPDATE_TEST_HOST and SERVER_UPDATE_TEST_KEY_PATH must be set.');
+        fail(
+            'SERVER_UPDATE_TEST_HOST and SERVER_UPDATE_TEST_KEY_PATH must be set.');
       }
 
       final privateKey = await File(keyPath).readAsString();
@@ -118,7 +139,8 @@ void main() {
       // BuildKit's non-TTY rendering over SSH, both observed directly
       // across repeated real runs against a live box.
       expect(result.succeeded, isTrue,
-          reason: 'update command exited ${result.exitCode}:\n${result.stdout}\n${result.stderr}');
+          reason:
+              'update command exited ${result.exitCode}:\n${result.stdout}\n${result.stderr}');
       expect(result.stdout, isNotEmpty);
     },
     timeout: const Timeout(Duration(minutes: 5)),
