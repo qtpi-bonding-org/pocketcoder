@@ -145,11 +145,14 @@ jobs:
 
       - name: Save + compress images
         run: |
+          OLLAMA_IMAGE=$(docker image inspect ollama/ollama:latest \
+            --format '{{index .RepoDigests 0}}')
+          test -n "$OLLAMA_IMAGE"
           docker save \
             pocketcoder-pocketbase:latest \
             pocketcoder-goose:latest \
             pocketcoder-mcp-gateway:latest \
-            ollama/ollama@sha256:f040603c11a11f125660eaf848170780e43b68973fc270e26f168536031ac258 \
+            "$OLLAMA_IMAGE" \
             pocketcoder-harness-claude-code:0.64.2 \
             pocketcoder-harness-codex:1.1.9 \
             pocketcoder-harness-opencode:1.18.11 \

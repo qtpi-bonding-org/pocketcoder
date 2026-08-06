@@ -82,7 +82,7 @@
       LoginGraceTime = 20;
       ClientAliveInterval = 300;
       ClientAliveCountMax = 2;
-      UseDNS = false;
+      UseDns = false;
     };
   };
 
