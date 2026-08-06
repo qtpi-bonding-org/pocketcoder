@@ -132,3 +132,84 @@ None of this was applied to the real `docker-compose.yml`/`hooks/mcp.go` —
 this spike only ran a standalone container against the real config
 directory to observe behavior. `tooling/scripts/install-docker-mcp.sh` in
 this worktree has the version bump for reference; nothing else changed.
+
+## Update: all 4 steps implemented + live end-to-end verification
+
+Everything above this line was written before implementation, as the
+pre-work investigation. The plan's four steps (see
+`docs/superpowers/plans/2026-08-05-mcp-gateway-v0.43-upgrade.md`) have
+since all been implemented and committed on this branch. Digest pinning
+(the "Summary" section's point 4) was resolved in favor of digest
+resolution at approval time (`api/mcp.go`'s `resolveImageDigest`, via
+`google/go-containerregistry`), not `--verify-signatures=false`. Step 4
+(peer-harness attach) turned out to be a one-line-per-callsite Go change
+via ACP's `session/new.mcpServers`, not the originally-planned baked
+static config files per harness — see the design spec's Component 2 for
+the full course-correction writeup.
+
+After implementation, this was verified live against the real compose
+stack (not a standalone container) — approve a server through the actual
+`POST /api/pocketcoder/mcp_request` handler, confirm the hook chain
+re-renders the catalog and restarts the gateway, confirm the gateway
+enables the tool, and call it over the real HTTP transport with the
+Bearer token. That surfaced one more real bug, since fixed:
+
+### Found + fixed: docker-mcp v0.43's tool-launch path ignores `DOCKER_HOST`
+
+`docker-socket-proxy-mcp` (the scoped Docker socket proxy built earlier
+in this spike specifically so mcp-gateway never gets raw `docker.sock`
+access) is wired up via `DOCKER_HOST=tcp://docker-socket-proxy-mcp:2375`
+on the `mcp-gateway` service. Image verification and pulling both
+correctly use it — confirmed live, `Images verified`/`Images pulled`
+succeed. But once the gateway tries to actually *launch* an approved
+server's container, it failed every time with `Cannot connect to the
+Docker daemon at unix:///var/run/docker.sock`, even with `DOCKER_HOST`
+demonstrably set and working for everything else in that same container.
+
+Root cause, found by cloning `docker/mcp-gateway@v0.43.3` and reading the
+source directly: the gateway uses *two different mechanisms* to talk to
+Docker. Catalog/image operations go through a real Docker SDK client
+(`pkg/docker/client.go`, built from `docker/cli`'s `command.Cli`, which
+does read `DOCKER_HOST`). But launching an approved server's actual
+container is done by shelling out to the `docker` CLI binary as a
+subprocess (`pkg/mcp/stdio.go`'s `NewStdioCmdClient`, called from
+`pkg/gateway/clientpool.go`'s `argsAndEnv`), and that subprocess's `env`
+is explicitly built *only* from the approved server's own catalog
+`env:`/`secrets:` entries (`cmd.Env = commandEnv(c.env)`) — it does not
+inherit the gateway container's real process environment at all. So
+`DOCKER_HOST` set at the container level never reaches the one code path
+that actually needs it.
+
+Fix (`hooks/mcp.go`'s `renderMcpConfig`): since that subprocess's env
+comes from each catalog entry's own `env:` list, write `DOCKER_HOST` into
+every approved server's rendered catalog entry as a synthetic `env:`
+value (`mcpDockerHost` constant — `tcp://docker-socket-proxy-mcp:2375`,
+matching `docker-compose.yml`'s `mcp-gateway` service; deliberately not
+read from this process's own `DOCKER_HOST` env var, since PocketBase's own
+`DOCKER_HOST` points at the *write*-scoped proxy, a different proxy with
+broader permissions than the one mcp-gateway should use). Verified live
+after the fix: `time` server's containers launch successfully
+(`Tools discovered: 2 from server time`), a real `tools/call` against
+`get_current_time` returns a correct result end-to-end over the
+authenticated HTTP transport, and `mcp-find` still returns zero matches
+for unapproved names (the original leak-closure still holds).
+
+Caveat: `-e DOCKER_HOST` (no value) also gets added to the *inner* MCP
+tool container's own `docker run` invocation as a side effect of how
+`argsAndEnv` builds both the subprocess env and the forwarded `-e` flags
+from the same list — meaning an approved tool container's own process
+env will contain a `DOCKER_HOST` value pointing at the scoped proxy, even
+though the tool itself has no legitimate reason to talk to Docker. It's
+on the same Docker network as that proxy already (`pocketcoder-docker-mcp`,
+via `--network`), so a compromised tool image with a docker client
+installed could reach the proxy directly regardless of whether this env
+var is present — the proxy's own `CONTAINERS=1`/`NETWORKS=1`/etc. scoping
+is what actually bounds the blast radius, not env var absence. Not fixed
+here since it doesn't change the actual security boundary, but worth
+knowing about.
+
+Not covered by this live pass: the three peer stdio harnesses (Claude
+Code, Codex, OpenCode) receiving the gateway via `session/new.mcpServers`
+was verified only at the Go unit-test level
+(`api/profile_test.go`), not by actually driving one of those harnesses
+against a running gateway and confirming it can call an approved tool.
