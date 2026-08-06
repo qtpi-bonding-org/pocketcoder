@@ -181,7 +181,7 @@ services:
   # mean widening PocketBase's scope just to satisfy the gateway's, coupling
   # two different trust domains together.
   docker-socket-proxy-mcp:
-    image: tecnativa/docker-socket-proxy:0.3
+    image: tecnativa/docker-socket-proxy@sha256:9e4b9e7517a6b660f2cc903a19b257b1852d5b3344794e3ea334ff00ae677ac2
     container_name: pocketcoder-docker-proxy-mcp
     environment:
       - CONTAINERS=1        # Spawn/inspect/stop MCP server containers
@@ -273,7 +273,7 @@ services:
   # `PermissionError: /cognee_data/system` (verified empirically, see
   # spikes/cognee-mcp-transport/). Runs once, exits 0, cognee waits for it.
   cognee-data-init:
-    image: busybox
+    image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
     container_name: pocketcoder-cognee-data-init
     profiles: ["memory"]
     command: ["chown", "-R", "1000:1000", "/cognee_data"]
@@ -281,7 +281,7 @@ services:
       - cognee_data:/cognee_data
 
   cognee:
-    image: cognee/cognee-mcp:main
+    image: cognee/cognee-mcp@sha256:513a4c6730b98287f1ee886376672392faa6644ba2149fc9100474b39332e8ba
     container_name: pocketcoder-cognee
     profiles: ["memory"]
     depends_on:
@@ -332,7 +332,7 @@ services:
   # Currently shared by both PocketBase (restart) and Dozzle (logs)
   # For production: uncomment docker-socket-proxy-read below and update Dozzle config
   docker-socket-proxy-write:
-    image: tecnativa/docker-socket-proxy:0.3
+    image: tecnativa/docker-socket-proxy@sha256:9e4b9e7517a6b660f2cc903a19b257b1852d5b3344794e3ea334ff00ae677ac2
     container_name: pocketcoder-docker-proxy-write
     environment:
       # Enable container operations for PocketBase restart capability
@@ -381,7 +381,7 @@ services:
   # if missing -- never overwrite real data) is enough for ATTACH to
   # succeed with zero rows rather than erroring out.
   sqlpage-data-init:
-    image: busybox
+    image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
     container_name: pocketcoder-sqlpage-data-init
     command:
       - sh
@@ -471,7 +471,7 @@ services:
   # To enable: docker compose --profile tailscale up
   # Modes: TAILSCALE_MODE=funnel (default, public URL) or TAILSCALE_MODE=private (Tailnet only)
   tailscale:
-    image: tailscale/tailscale:latest
+    image: tailscale/tailscale@sha256:cdf5612ded5be1344f1a704b8c5e53496db97376bb533e5e15f141e48bf60cc0
     container_name: pocketcoder-tailscale
     profiles:
       - tailscale
@@ -507,7 +507,7 @@ services:
   # Uses sslip.io for automatic SSL without a domain name.
   # Set CADDY_DOMAIN in .env (e.g. 194-163-45-3.sslip.io)
   caddy:
-    image: caddy:2-alpine
+    image: caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: pocketcoder-caddy
     profiles:
       - caddy
