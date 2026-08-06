@@ -23,6 +23,9 @@ export default {
 		if (url.pathname === '/image-manifest' && request.method === 'GET') {
 			return handleImageManifest(env);
 		}
+		if (url.pathname === '/release-manifest' && request.method === 'GET') {
+			return handleReleaseManifest(env);
+		}
 		if (url.pathname === '/health' && request.method === 'GET') {
 			return json({ status: 'ok', service: 'pocketcoder-image-relay' });
 		}
@@ -33,6 +36,20 @@ export default {
 async function handleImageManifest(env: Env): Promise<Response> {
 	const object = await env.IMAGES.get('image-manifest.json');
 	if (!object) return json({ error: 'Image manifest unavailable' }, 404);
+
+	return new Response(object.body, {
+		status: 200,
+		headers: {
+			...CORS_HEADERS,
+			'Content-Type': 'application/json',
+			'Cache-Control': 'public, max-age=300',
+		},
+	});
+}
+
+async function handleReleaseManifest(env: Env): Promise<Response> {
+	const object = await env.IMAGES.get('release-manifest.json');
+	if (!object) return json({ error: 'Release manifest unavailable' }, 404);
 
 	return new Response(object.body, {
 		status: 200,

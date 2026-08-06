@@ -227,7 +227,8 @@ jobs:
             --argjson nixos "$NIXOS" \
             --argjson dockerImages "$DOCKER" \
             '{schemaVersion: 1, sourceCommit: $sourceCommit,
-              nixosImage: $nixos, dockerImages: $dockerImages}' \
+              nixosImage: $nixos, dockerImages: $dockerImages,
+              standardLinux: {mode: "cloud-init"}}' \
             > release-manifest.json
 
           # Immutable release record first.
