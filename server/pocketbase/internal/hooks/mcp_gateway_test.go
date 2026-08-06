@@ -96,3 +96,22 @@ func TestRegisterMcpGatewayExtension_SkipsWhenAlreadyPresent(t *testing.T) {
 		t.Fatalf("calls = %v, want [list] only (already registered, no add call)", fc.calls)
 	}
 }
+
+func TestMcpGatewayAuthHeaders(t *testing.T) {
+	t.Run("empty token yields no headers", func(t *testing.T) {
+		t.Setenv("MCP_GATEWAY_AUTH_TOKEN", "")
+		got := mcpGatewayAuthHeaders()
+		if len(got) != 0 {
+			t.Fatalf("headers = %v, want empty", got)
+		}
+	})
+
+	t.Run("token yields a Bearer Authorization header", func(t *testing.T) {
+		t.Setenv("MCP_GATEWAY_AUTH_TOKEN", "spike-test-token")
+		got := mcpGatewayAuthHeaders()
+		want := []httpHeaderParam{{Name: "Authorization", Value: "Bearer spike-test-token"}}
+		if len(got) != 1 || got[0] != want[0] {
+			t.Fatalf("headers = %v, want %v", got, want)
+		}
+	})
+}
