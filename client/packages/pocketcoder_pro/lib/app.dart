@@ -5,12 +5,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 import 'package:injectable/injectable.dart' show GetItHelper;
@@ -36,11 +38,16 @@ import 'package:pocketcoder_pro/application/server_update/server_update_message_
 import 'package:pocketcoder_pro/domain/server_update/i_server_update_service.dart';
 import 'package:pocketcoder_pro/infrastructure/server_update/current_instance_store.dart';
 import 'package:pocketcoder_pro/infrastructure/server_update/ssh_server_update_service.dart';
-import 'package:pocketcoder_pro/presentation/auth/auth_screen.dart' as deploy_auth;
-import 'package:pocketcoder_pro/presentation/deployment/config_screen.dart' as deploy_config;
-import 'package:pocketcoder_pro/presentation/deployment/progress_screen.dart' as deploy_progress;
-import 'package:pocketcoder_pro/presentation/deployment/details_screen.dart' as deploy_details;
-import 'package:pocketcoder_pro/presentation/server_update/update_server_screen.dart' as update_server;
+import 'package:pocketcoder_pro/presentation/auth/auth_screen.dart'
+    as deploy_auth;
+import 'package:pocketcoder_pro/presentation/deployment/config_screen.dart'
+    as deploy_config;
+import 'package:pocketcoder_pro/presentation/deployment/progress_screen.dart'
+    as deploy_progress;
+import 'package:pocketcoder_pro/presentation/deployment/details_screen.dart'
+    as deploy_details;
+import 'package:pocketcoder_pro/presentation/server_update/update_server_screen.dart'
+    as update_server;
 
 export 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 export 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
@@ -438,7 +445,7 @@ void initializeAeroformDI() {
     () => CurrentInstanceStore(),
   );
 
-  getIt.registerFactory<DeploymentCubit>(
+  getIt.registerLazySingleton<DeploymentCubit>(
     () => DeploymentCubit(
       getIt<IDeploymentService>(),
       getIt<CurrentInstanceStore>(),
@@ -474,10 +481,13 @@ List<RouteBase> get linodeRoutes => [
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: deploy_auth.AuthScreen(
-            credentials: state.extra is DeployCredentials
-                ? state.extra as DeployCredentials
-                : null,
+          child: BlocProvider(
+            create: (_) => getIt<AuthCubit>(),
+            child: deploy_auth.AuthScreen(
+              credentials: state.extra is DeployCredentials
+                  ? state.extra as DeployCredentials
+                  : null,
+            ),
           ),
         ),
       ),
@@ -500,7 +510,10 @@ List<RouteBase> get linodeRoutes => [
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const deploy_progress.ProgressScreen(),
+          child: BlocProvider.value(
+            value: getIt<DeploymentCubit>(),
+            child: const deploy_progress.ProgressScreen(),
+          ),
         ),
       ),
       GoRoute(
@@ -511,7 +524,10 @@ List<RouteBase> get linodeRoutes => [
           return TerminalTransition.buildPage(
             context: context,
             state: state,
-            child: deploy_details.DetailsScreen(instanceId: instanceId),
+            child: BlocProvider.value(
+              value: getIt<DeploymentCubit>(),
+              child: deploy_details.DetailsScreen(instanceId: instanceId),
+            ),
           );
         },
       ),

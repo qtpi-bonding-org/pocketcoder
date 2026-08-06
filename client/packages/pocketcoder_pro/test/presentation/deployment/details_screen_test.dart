@@ -86,10 +86,10 @@ void main() {
           ),
         ),
         GoRoute(
-          path: '/onboarding',
-          name: 'onboarding',
-          builder: (context, state) =>
-              Text('onboarding:${(state.extra as OnboardingPrefill?)?.email}'),
+          path: '/onboarding/login',
+          name: 'onboardingLogin',
+          builder: (context, state) => Text(
+              'onboarding-login:${(state.extra as OnboardingPrefill?)?.email}'),
         ),
       ],
     );
@@ -136,13 +136,15 @@ void main() {
     expect(copied, contains('correct-horse-battery-staple'));
   });
 
-  testWidgets('LOG IN NOW navigates to onboarding with prefill', (tester) async {
+  testWidgets('LOG IN NOW navigates to PocketBase login with prefill',
+      (tester) async {
     await tester.pumpWidget(buildTestable());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('LOG IN NOW'));
     await tester.pumpAndSettle();
 
-    expect(find.text('onboarding:admin@pocketcoder.local'), findsOneWidget);
+    expect(
+        find.text('onboarding-login:admin@pocketcoder.local'), findsOneWidget);
   });
 }

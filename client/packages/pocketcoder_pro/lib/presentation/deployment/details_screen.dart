@@ -77,7 +77,7 @@ class _DetailsViewState extends State<_DetailsView> {
     final credentials = _credentials;
     if (instance == null || credentials == null) return;
     context.pushNamed(
-      RouteNames.onboarding,
+      RouteNames.onboardingLogin,
       extra: OnboardingPrefill(
         url: instance.httpsUrl,
         email: credentials.adminEmail,
@@ -149,8 +149,8 @@ class _DetailsViewState extends State<_DetailsView> {
                             instance.adminEmail ?? 'N/A', colors),
                         if (_credentials != null) ...[
                           VSpace.x1,
-                          _buildPasswordRow(
-                              'ADMIN PASSWORD', _credentials!.adminPassword, colors),
+                          _buildPasswordRow('ADMIN PASSWORD',
+                              _credentials!.adminPassword, colors),
                         ],
                         VSpace.x1,
                         _buildInfoRow(
