@@ -3,6 +3,14 @@
 See `docs/superpowers/specs/2026-08-05-mcp-gateway-v0.43-upgrade-design.md`
 for the design and rationale; this is just implementation logistics/order.
 
+**Status: all four steps implemented and committed** on
+`spike/mcp-gateway-v0.43-upgrade` (commits `a98f1e97c`, `3f2625551`,
+`0a2b7b3a7`). Step 4 below is left as originally written for the
+historical record of what was planned; see the spec's Component 2 for
+what was actually built instead (a course-correction found mid-
+implementation — no baked config files, one Go-side change covers all
+three peer harnesses via ACP's `session/new`).
+
 ## Step 1 — Gateway upgrade (no new features, closes the security gap)
 
 - Bump `tooling/scripts/install-docker-mcp.sh`'s `VERSION` to `v0.43.3`;

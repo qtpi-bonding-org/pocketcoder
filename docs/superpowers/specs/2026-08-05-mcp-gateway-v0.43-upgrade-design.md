@@ -114,69 +114,65 @@ Concretely:
 
 ## Component 2 — Multi-harness attachment (new — Goose is the only harness with this today)
 
-All four harnesses can reference an **environment variable** for the auth
-token rather than needing it baked into a per-instance-rendered file —
-confirmed for each:
+**Corrected during implementation** (see `spike/mcp-gateway-v0.43-upgrade`
+commit `0a2b7b3a7`): this component originally proposed baking a static
+`.mcp.json`/`config.toml`/`OPENCODE_CONFIG_CONTENT` snippet into each peer
+harness's image, referencing `MCP_GATEWAY_AUTH_TOKEN` by env-var name. That
+would have worked, but it's not how these ACP adapters actually attach MCP
+servers. Checking the real packages before implementing found all three
+peer harnesses explicitly document **client-provided MCP servers over
+ACP's own `session/new`**, not a static file:
 
-| Harness | Mechanism |
-|---|---|
-| Goose | `config/extensions/add` payload's `headers` map — built directly in Go, reads the token from PocketBase's own process env |
-| Claude Code (CLI) | `.mcp.json` supports `${VAR}`/`${VAR:-default}` expansion in `headers`/`url` (works in CLI, not Desktop — irrelevant here, ours is headless) |
-| Codex | `config.toml`'s `[mcp_servers.<name>]` takes `bearer_token_env_var = "MCP_GATEWAY_AUTH_TOKEN"` — no interpolation needed at all |
-| OpenCode | `opencode.json`'s `headers` supports `"Bearer {env:MCP_GATEWAY_AUTH_TOKEN}"` |
+- `claude-agent-acp` README lists "Client MCP servers" as a supported
+  capability.
+- `codex-acp` README: "Client-provided MCP servers over command-based
+  stdio config and HTTP transport."
+- OpenCode's ACP docs: "Sessions are bootstrapped via `session/new`, which
+  can declare the `mcpServers` the agent should connect to."
 
-This means: one secret, delivered as a plain env var, everywhere. The only
-new code is a small **static** (non-secret, checked-in) MCP-attach snippet
-per harness — the same for every deployment, since only the token value
-varies and that's resolved at read time by each CLI's own env-var support.
+PocketCoder's own ACP client code already has the exact hook point this
+needs: `coordinator.SessionProfile.McpServers` /
+`(SessionProfile).mcpServers()`, passed on every `session/new`/`LoadSession`
+call (`coordinator/run.go:580-604`) — currently populated only from
+`poco_configs.acp_mcp_servers` (stdio-only, per-chat custom servers). No
+baked config files, no Dockerfile changes, no per-harness plumbing: **one
+change** in `buildSessionProfile` (`internal/api/profile.go`) covers all
+three harnesses uniformly, since they all speak the same ACP mechanism.
 
-### Delivery mechanism, confirmed against `adapter.go`
+- `hooks.McpGatewayHttpServer()` — new shared helper, returns the gateway
+  as an `acpsdk.McpServer{Http: &acpsdk.McpServerHttpInline{...}}` with the
+  `Authorization: Bearer <token>` header, reading
+  `MCP_GATEWAY_AUTH_TOKEN` from PocketBase's own process env (same source
+  Goose's registration call uses). Returns `nil` if the token isn't set
+  yet, so a session omits the entry rather than sending one the gateway
+  will reject.
+- `buildSessionProfile` appends it to `p.McpServers` for any resolved
+  harness whose `cli_id != "goose"`.
+- **Goose is explicitly excluded** from this path — it keeps its existing
+  persistent-extension mechanism (`RegisterMcpGatewayExtension`,
+  `docs/superpowers/specs/2026-07-23-mcp-governance-ui-design.md`
+  Component 3, now carrying the same auth header). Attaching it via both
+  mechanisms would double-register the gateway for Goose sessions.
 
-`bridgeConnection` spawns each harness's ACP process **fresh per
-connection** (`exec.Command(cfg.Cmd[0], cfg.Cmd[1:]...)`, no `cmd.Env`
-override — full container env is inherited). That means a static config
-file referencing an env var works for every spawn without any
-per-connection registration step, as long as the env var and the config
-file both exist in the container before the first connection arrives.
+### Getting the token into PocketBase's own process (the only place that needs it now)
 
-- **Claude Code**: bake a static `.mcp.json` into
-  `server/harness-adapter/Dockerfile`'s image (the `claude-code-harness`
-  build), with `${MCP_GATEWAY_AUTH_TOKEN}` in the `Authorization` header
-  and `http://mcp-gateway:8811/mcp` as the URL. Harmless to include even on
-  harness types that don't use it if the file is added generically, but
-  simplest to gate it in the `ARG`-driven build the same way
-  `ACP_AGENT_PACKAGE` already differs per harness.
-- **Codex**: same approach — a static `config.toml` fragment with
-  `bearer_token_env_var = "MCP_GATEWAY_AUTH_TOKEN"`, baked into the image
-  at build time, no per-value interpolation needed.
-- **OpenCode**: extend the *existing* `OPENCODE_CONFIG_CONTENT` generation
-  in `opencode-ollama-config.mjs` (currently Ollama-model discovery only)
-  to also emit an `mcp.gateway` block reading
-  `process.env.MCP_GATEWAY_AUTH_TOKEN`. This reuses an established pattern
-  rather than adding a new one — OpenCode already gets its config
-  generated once at container start and exported as an env var consumed by
-  every per-connection spawn.
-- **Goose**: extend the existing one-time `config/extensions/add` call
-  (`docs/superpowers/specs/2026-07-23-mcp-governance-ui-design.md`
-  Component 3) to include `headers: {"Authorization": "Bearer <token>"}` in
-  the payload. Smallest change of the four — one field on an existing call.
+Since attachment for peer harnesses happens in PocketBase's own Go code
+(not inside each harness's container), **no changes to
+`harness_provision.go`'s `renderEnv`/`env_template` machinery are needed
+for this component** — the harness containers themselves never see
+`MCP_GATEWAY_AUTH_TOKEN` at all; only `docker-compose.yml`'s `pocketbase`
+service needs it (already wired in Component 1's auth changes).
 
-### Getting the token into each peer-harness container
-
-`harness_provision.go`'s `renderEnv` already builds a `values` map with two
-reserved keys (`__adapter_secret`, `__ollama_host`) merged in before
-rendering each harness's `launch_template.env_template` against it
-(`harness_provision.go:308-311`). Add a third reserved key,
-`MCP_GATEWAY_AUTH_TOKEN` (read from PocketBase's own process env, same
-source Goose's registration call uses) — then each harness's
-`launch_template.env_template` just needs one new entry:
-`{"MCP_GATEWAY_AUTH_TOKEN": "{{.MCP_GATEWAY_AUTH_TOKEN}}"}`, same shape as
-every existing entry. No new rendering machinery.
-
-**Plan must resolve:** exact `harnesses` seed rows / `launch_template`
-JSON for all three peer harnesses need this new `env_template` entry added
-— confirm the seed migration (`1756000100_seed.go` or wherever
-`harnesses` rows are seeded) at implementation time.
+One incidental, unrelated bugfix landed alongside this: verifying the
+delivery path required reliably telling harnesses apart inside
+`server/harness-adapter/entrypoint.sh`, which turned up a real pre-existing
+bug — its OpenCode-detection check (`"${1:-}" = "opencode"`) could never
+match, since `main.go` parses `--cmd`/`--port` as named flags rather than
+positional args, so `$1` is always literally `"--cmd"`. Fixed by seeding a
+`POCKETCODER_HARNESS_CLI_ID` env var per harness (`1756000100_seed.go`) and
+branching on that instead — unrelated to MCP gateway attachment, but found
+while confirming this component's design against the real container
+environment, and small enough to fix in the same change.
 
 ## Component 3 — Shared installer script blast radius
 
@@ -202,10 +198,14 @@ the same change.
    other bootstrap-generated secrets — never hand-entered, never logged.
 4. Every client (Goose, all three peer harnesses) authenticates to the
    gateway with that same token; `--allow-unauthenticated` is not used.
-5. A peer harness's static MCP-attach config never contains the token
-   value itself — only a reference to the env var name. The token is
-   injected exactly once, as a container env var, via the existing
-   `renderEnv`/`env_template` mechanism.
+5. Peer harnesses never receive `MCP_GATEWAY_AUTH_TOKEN` as a container
+   env var at all — attachment happens entirely in PocketBase's own
+   process via `session/new`'s `mcpServers`, which is also where the token
+   is read. The token exists in exactly one container's environment
+   (`pocketbase`) plus the gateway's own.
+6. Goose and peer harnesses are mutually exclusive attachment paths for
+   the same gateway extension — a harness never receives it via both
+   `RegisterMcpGatewayExtension` and `session/new.mcpServers`.
 
 ## Out of scope
 
