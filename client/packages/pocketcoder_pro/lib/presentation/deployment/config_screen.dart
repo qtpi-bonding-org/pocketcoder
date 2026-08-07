@@ -12,6 +12,7 @@ import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
 import 'package:flutter_aeroform/domain/models/app_config.dart';
 import 'package:flutter_aeroform/domain/models/deployment_config.dart';
 import 'package:flutter_aeroform/domain/models/deployment_result.dart';
+import 'package:flutter_aeroform/domain/models/deployment_progress.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -55,6 +56,9 @@ class _ConfigView extends StatefulWidget {
 class _ConfigViewState extends State<_ConfigView> {
   late final String _adminEmail = widget.credentials?.email ?? '';
   late final String _adminPassword = widget.credentials?.password ?? '';
+  DeploymentBackendKind _selectedBackend = DeploymentBackendKind.nixos;
+  StandardLinuxDistribution _selectedDistribution =
+      StandardLinuxDistribution.debian;
   bool _progressOpened = false;
 
   @override
@@ -173,6 +177,38 @@ class _ConfigViewState extends State<_ConfigView> {
                                 )
                               else
                                 const Text('SCANNING GLOBAL REGIONS...'),
+                            ],
+                          ),
+                        ),
+                        VSpace.x2,
+                        BiosSection(
+                          title: 'OPERATING SYSTEM',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildBackendSelector(
+                                context,
+                                configState.config?.backend ?? _selectedBackend,
+                                (backend) => _updateConfig(
+                                  configCubit,
+                                  backend: backend,
+                                ),
+                              ),
+                              if ((configState.config?.backend ??
+                                      _selectedBackend) ==
+                                  DeploymentBackendKind.standardLinux) ...[
+                                VSpace.x1,
+                                _buildDistributionSelector(
+                                  context,
+                                  configState
+                                          .config?.standardLinuxDistribution ??
+                                      _selectedDistribution,
+                                  (distribution) => _updateConfig(
+                                    configCubit,
+                                    standardLinuxDistribution: distribution,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -312,13 +348,23 @@ class _ConfigViewState extends State<_ConfigView> {
     ConfigCubit cubit, {
     String? planType,
     String? region,
+    DeploymentBackendKind? backend,
+    StandardLinuxDistribution? standardLinuxDistribution,
   }) {
     final current = cubit.state.config;
+    final selectedBackend = backend ?? current?.backend ?? _selectedBackend;
+    final selectedDistribution = standardLinuxDistribution ??
+        current?.standardLinuxDistribution ??
+        _selectedDistribution;
+    _selectedBackend = selectedBackend;
+    _selectedDistribution = selectedDistribution;
     if (current != null) {
       cubit.updateConfig(
         current.copyWith(
           planType: planType ?? current.planType,
           region: region ?? current.region,
+          backend: selectedBackend,
+          standardLinuxDistribution: selectedDistribution,
         ),
       );
     } else {
@@ -330,9 +376,87 @@ class _ConfigViewState extends State<_ConfigView> {
           ntfyEnabled: cubit.state.config?.ntfyEnabled ?? false,
           imageRelayUrl: AppConfig.kImageRelayUrl,
           nixosImageLabel: AppConfig.kNixosImageLabel,
+          backend: selectedBackend,
+          standardLinuxDistribution: selectedDistribution,
         ),
       );
     }
+  }
+
+  Widget _buildBackendSelector(
+    BuildContext context,
+    DeploymentBackendKind selected,
+    ValueChanged<DeploymentBackendKind> onSelected,
+  ) {
+    final colors = context.colorScheme;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'BACKEND',
+            style: TextStyle(
+              fontFamily: AppFonts.bodyFamily,
+              color: colors.onSurface,
+              fontSize: AppSizes.fontTiny,
+            ),
+          ),
+        ),
+        DropdownButton<DeploymentBackendKind>(
+          value: selected,
+          onChanged: (value) {
+            if (value != null) onSelected(value);
+          },
+          items: const [
+            DropdownMenuItem(
+              value: DeploymentBackendKind.nixos,
+              child: Text('NixOS'),
+            ),
+            DropdownMenuItem(
+              value: DeploymentBackendKind.standardLinux,
+              child: Text('Standard Linux'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDistributionSelector(
+    BuildContext context,
+    StandardLinuxDistribution selected,
+    ValueChanged<StandardLinuxDistribution> onSelected,
+  ) {
+    final colors = context.colorScheme;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'DISTRIBUTION',
+            style: TextStyle(
+              fontFamily: AppFonts.bodyFamily,
+              color: colors.onSurface,
+              fontSize: AppSizes.fontTiny,
+            ),
+          ),
+        ),
+        DropdownButton<StandardLinuxDistribution>(
+          value: selected,
+          onChanged: (value) {
+            if (value != null) onSelected(value);
+          },
+          items: const [
+            DropdownMenuItem(
+              value: StandardLinuxDistribution.debian,
+              child: Text('Debian'),
+            ),
+            DropdownMenuItem(
+              value: StandardLinuxDistribution.ubuntu,
+              child: Text('Ubuntu'),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   void _deploy(ConfigCubit configCubit, DeploymentCubit deploymentCubit) {
