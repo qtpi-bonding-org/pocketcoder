@@ -156,14 +156,18 @@ jobs:
           IMAGES=$(docker compose -p pocketcoder config --images \
             | grep -E '^(pocketcoder-(pocketbase|goose|mcp-gateway)(:|$)|pocketcoder-harness-(claude-code|codex|opencode):|ollama/ollama@)')
           test -n "$IMAGES"
+          IMAGE_IDS=""
           while IFS= read -r image; do
             test -n "$image"
-            docker image inspect "$image" >/dev/null
+            image_id=$(docker image inspect "$image" --format '{{.Id}}')
+            test -n "$image_id"
+            IMAGE_IDS="$IMAGE_IDS $image_id"
           done <<EOF
 $IMAGES
 EOF
-          docker save \
-            $IMAGES \
+          # Save local image IDs so digest-pinned references are handled by
+          # Docker consistently across runner versions.
+          docker save $IMAGE_IDS \
             | gzip > pocketcoder-docker-images.tar.gz
 
       - name: Compute image metadata
