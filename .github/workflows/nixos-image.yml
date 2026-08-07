@@ -153,7 +153,7 @@ jobs:
           # mutable `:latest` tags exist locally. Goose is intentionally
           # version-tagged while the locally built app images use the default
           # tag, so hardcoding tags here would drift from docker-compose.yml.
-          IMAGES=$(docker compose -p pocketcoder config --images \
+          IMAGES=$(docker compose -p pocketcoder --profile harness-images config --images \
             | grep -E '^(pocketcoder-(pocketbase|goose|mcp-gateway)(:|$)|pocketcoder-harness-(claude-code|codex|opencode):|ollama/ollama@)')
           test -n "$IMAGES"
           IMAGE_IDS=""
