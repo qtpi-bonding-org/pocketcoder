@@ -147,21 +147,23 @@ jobs:
 
       - name: Save + compress images
         run: |
+          set -euo pipefail
           # Compose pulls Ollama by the digest pinned in docker-compose.yml.
-          # Resolve that exact reference instead of assuming the mutable
-          # `:latest` tag exists locally.
-          OLLAMA_IMAGE=$(docker compose -p pocketcoder config --images \
-            | awk '$1 ~ /^ollama\/ollama@/ { print $1; exit }')
-          test -n "$OLLAMA_IMAGE"
-          docker image inspect "$OLLAMA_IMAGE" >/dev/null
+          # Resolve every required image from Compose instead of assuming
+          # mutable `:latest` tags exist locally. Goose is intentionally
+          # version-tagged while the locally built app images use the default
+          # tag, so hardcoding tags here would drift from docker-compose.yml.
+          IMAGES=$(docker compose -p pocketcoder config --images \
+            | grep -E '^(pocketcoder-(pocketbase|goose|mcp-gateway)(:|$)|pocketcoder-harness-(claude-code|codex|opencode):|ollama/ollama@)')
+          test -n "$IMAGES"
+          while IFS= read -r image; do
+            test -n "$image"
+            docker image inspect "$image" >/dev/null
+          done <<EOF
+$IMAGES
+EOF
           docker save \
-            pocketcoder-pocketbase:latest \
-            pocketcoder-goose:latest \
-            pocketcoder-mcp-gateway:latest \
-            "$OLLAMA_IMAGE" \
-            pocketcoder-harness-claude-code:0.64.2 \
-            pocketcoder-harness-codex:1.1.9 \
-            pocketcoder-harness-opencode:1.18.11 \
+            $IMAGES \
             | gzip > pocketcoder-docker-images.tar.gz
 
       - name: Compute image metadata
