@@ -96,6 +96,15 @@ if [ ! -f "$DOTENV" ] || ! grep -q "AGENT_PASSWORD" "$DOTENV"; then
     echo -e "${GREEN}✅ Secure .env initialized.${NC}"
 fi
 
+# Standard Linux uses native host Caddy, matching the NixOS image. It detects
+# the VPS public IP and obtains the sslip.io certificate without publishing
+# PocketBase directly. Local macOS/Docker development keeps the optional Caddy
+# Compose profile instead.
+if [ "$(uname -s)" = "Linux" ]; then
+    echo -e "${BLUE}🔒 Configuring native Caddy HTTPS...${NC}"
+    sudo ./deploy/standard-linux/setup-caddy.sh
+fi
+
 # Ensure internal SSH keys for Proxy-to-Sandbox communication
 if [ ! -f .ssh_keys/id_rsa ]; then
     echo -e "${BLUE}🔑 Ensuring internal SSH keys...${NC}"
@@ -144,6 +153,11 @@ docker compose "${COMPOSE_FILES[@]}" up -d
 echo -e "\n${GREEN}✅ PocketCoder is LIVE.${NC}"
 echo -e "------------------------------------------------"
 echo -e "🏰 ${BLUE}PocketBase UI:${NC} http://localhost:8090/_/"
+if [ "$(uname -s)" = "Linux" ] && [ -f /etc/pocketcoder/domain.env ]; then
+    # shellcheck disable=SC1091
+    source /etc/pocketcoder/domain.env
+    echo -e "🌐 ${BLUE}PocketCoder HTTPS:${NC} ${PB_URL}"
+fi
 if [ "$INCLUDE_DOCS" = true ]; then
     echo -e "📚 ${BLUE}Docs:${NC}          http://localhost:4321"
 fi

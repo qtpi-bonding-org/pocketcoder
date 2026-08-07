@@ -78,7 +78,7 @@ c3  Docker MCP Gateway — GitHub, Notion, etc. (approved per-deployment)
 | **ACP** | c1 ↔ c2 (and c2 ↔ its spawned harness) | Session, tool calls, permission requests |
 | **MCP** | c3 ↔ c2 | Tool access — GitHub, Notion, etc. |
 
-**Cognee memory runs as a Goose extension, not through the MCP gateway.** It shares Goose's own `agent` Compose profile (`docker compose --profile agent up -d` starts both), configured live via the `cognee_config` PocketBase collection → rendered `cognee.env` → mounted into the container. It is enabled by default whenever the agent runtime is, independent of `c3`.
+**Cognee memory runs as a Goose extension, not through the MCP gateway.** It is optional via the `memory` Compose profile (`docker compose --profile memory up -d`), configured live via the `cognee_config` PocketBase collection → rendered `cognee.env` → mounted into the container. The Goose runtime itself is part of the core stack.
 
 Goose is the **sole system of record** for conversation history (its own SQLite session store). PocketBase stores only authentication and the `chat_id → goose_session_id` mapping — it is not a conversation or approval ledger. The Flutter client keeps a local Drift cache as an offline mirror that Goose refreshes on load.
 
@@ -101,7 +101,7 @@ The security model and its honest limits (tool execution currently lives inside 
 
 The only prerequisite is **Docker** — everything else is containerized.
 
-1. **Deploy the infrastructure.** Generates secure passwords into a local `.env` and prompts for the credentials your chosen Goose provider needs:
+1. **Deploy the infrastructure.** Generates secure passwords into a local `.env`, applies the host baseline, installs native Caddy, derives the VPS's `sslip.io` HTTPS hostname, and prompts for the credentials your chosen Goose provider needs:
    ```bash
    ./deploy.sh
    ```
@@ -117,11 +117,13 @@ The only prerequisite is **Docker** — everything else is containerized.
 
 ## VPS Access (Caddy HTTPS)
 
-The NixOS VPS image enables Caddy and exposes PocketBase through an automatically generated HTTPS hostname such as `194-163-45-3.sslip.io`. Caddy terminates TLS and proxies to PocketBase; PocketBase itself is not exposed directly on the public interface. The Flutter app connects to the HTTPS hostname, not to a raw VPS IP address.
+The NixOS VPS image and the standard Ubuntu/Debian deployment both manage Caddy natively on the host and expose PocketBase through an automatically generated HTTPS hostname such as `194-163-45-3.sslip.io`. Caddy terminates TLS and proxies to PocketBase; PocketBase itself is not exposed directly on the public interface. The Flutter app connects to the HTTPS hostname, not to a raw VPS IP address.
 
 The VPS firewall exposes only ports 80 and 443 for web traffic, plus port 22 for key-only SSH administration. The automatic hostname depends on the VPS having a stable public IP and on the external `sslip.io` and certificate services being available.
 
 PocketBase's built-in rate limiter is enabled by default for public deployments: authentication attempts are limited to 10 per minute per client, with additional API and batch-request limits. This is abuse protection, not account isolation; use strong unique passwords for every member.
+
+The included PocketBase backup volume is an on-host recovery copy, not an off-host disaster backup. VPS loss, disk failure, or provider/account loss can still destroy it; export the volumes to storage you control if you need disaster recovery. Approved MCP OAuth credentials are deployment-global, so trusted household members share the deployment's MCP configuration and credentials.
 
 ## Optional Remote Access (Tailscale)
 
@@ -158,8 +160,8 @@ One `docker-compose.yml`. Core services run by default; the rest are opt-in via 
 | `pocketbase` | *(always)* | c1 — backend, auth, ACP↔AG-UI bridge |
 | `docker-socket-proxy-write` | *(always)* | Scoped Docker API proxy (container restart/logs) |
 | `sqlpage` | *(always)* | Observability dashboard |
-| `goose` | `agent` | c2 — the Goose agent core |
-| `cognee` | `agent` | Agent memory, loaded as a live Goose extension (not via `c3`) |
+| `goose` | *(always)* | c2 — the Goose agent core |
+| `cognee` | `memory` | Optional agent memory, loaded as a live Goose extension (not via `c3`) |
 | `mcp-gateway` | *(always)* | c3 — Docker MCP Gateway |
 | `ntfy` | `foss` | Self-hosted push notifications |
 | `tailscale` | `tailscale` | Remote access (funnel/private) |
@@ -167,7 +169,7 @@ One `docker-compose.yml`. Core services run by default; the rest are opt-in via 
 
 ```bash
 docker compose --profile harness-images build  # includes lazy Claude/Codex images
-docker compose up -d                           # Goose is the default runtime
+docker compose up -d                           # Goose is included in the core stack
 ```
 
 ## Testing
@@ -198,6 +200,6 @@ The backend is deliberately tiny: PocketBase supplies auth, the database, REST, 
 
 An active research project by a solo developer, built in the open — not a commercial product, no support SLAs. Bug reports are welcome; I move at my own pace.
 
-All PocketCoder code is **AGPLv3**. The agent core (Goose) and PocketBase are OSI-approved open source. The optional memory component (Cognee) now runs by default alongside the agent runtime (`agent` Compose profile) rather than behind the `c3` gateway; it remains optional via that same profile, and any non-OSI runtime dependency it introduces is tracked here.
+All PocketCoder code is **AGPLv3**. The agent core (Goose) and PocketBase are OSI-approved open source. The optional memory component (Cognee) runs through the `memory` Compose profile rather than behind the `c3` gateway, and any non-OSI runtime dependency it introduces is tracked here.
 
 **Open core:** the client and backend here are open and fully self-hostable — nothing described above requires anything proprietary. The mobile app's one-tap VPS provisioning (OAuth deploy, billing) is a separate, closed-source convenience layer that funds the project; self-hosters skip it entirely by running `deploy.sh` directly.
