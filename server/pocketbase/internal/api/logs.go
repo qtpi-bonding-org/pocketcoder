@@ -25,12 +25,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
+
+var safeContainerName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
 // RegisterLogsApi registers the native Docker log streaming endpoints.
 func RegisterLogsApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
@@ -47,6 +50,9 @@ func RegisterLogsApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		containerName := re.Request.PathValue("containerName")
 		if containerName == "" {
 			return re.BadRequestError("Container name is required.", nil)
+		}
+		if !safeContainerName.MatchString(containerName) {
+			return re.BadRequestError("Invalid container name.", nil)
 		}
 
 		// Docker API URL via the internal docker-socket-proxy.
@@ -73,7 +79,7 @@ func RegisterLogsApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		// Reader for demuxing Docker's multiplexed log stream.
 		// Each frame starts with an 8-byte header: [streamType, 0, 0, 0, size1, size2, size3, size4]
 		reader := bufio.NewReader(resp.Body)
-		
+
 		for {
 			header := make([]byte, 8)
 			_, err := io.ReadFull(reader, header)
@@ -100,7 +106,7 @@ func RegisterLogsApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 					fmt.Fprintf(re.Response, "data: %s\n\n", trimmed)
 				}
 			}
-			
+
 			// Flush to ensure the client receives the data immediately.
 			if f, ok := re.Response.(http.Flusher); ok {
 				f.Flush()
