@@ -147,9 +147,13 @@ jobs:
 
       - name: Save + compress images
         run: |
-          OLLAMA_IMAGE=$(docker image inspect ollama/ollama:latest \
-            --format '{{index .RepoDigests 0}}')
+          # Compose pulls Ollama by the digest pinned in docker-compose.yml.
+          # Resolve that exact reference instead of assuming the mutable
+          # `:latest` tag exists locally.
+          OLLAMA_IMAGE=$(docker compose -p pocketcoder config --images \
+            | awk '$1 ~ /^ollama\/ollama@/ { print $1; exit }')
           test -n "$OLLAMA_IMAGE"
+          docker image inspect "$OLLAMA_IMAGE" >/dev/null
           docker save \
             pocketcoder-pocketbase:latest \
             pocketcoder-goose:latest \
