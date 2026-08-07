@@ -505,9 +505,9 @@ services:
       start_period: 30s
 
   # 🔒 CADDY (Automatic HTTPS Reverse Proxy)
-  # To enable: docker compose --profile caddy up -d
-  # Uses sslip.io for automatic SSL without a domain name.
-  # Set CADDY_DOMAIN in .env (e.g. 194-163-45-3.sslip.io)
+  # Optional Docker-based proxy for local/self-managed Docker deployments.
+  # The supported standard Linux path uses native host Caddy instead; the
+  # NixOS image also manages Caddy as a native systemd service.
   caddy:
     image: caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: pocketcoder-caddy

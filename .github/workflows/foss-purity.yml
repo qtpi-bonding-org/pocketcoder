@@ -30,7 +30,7 @@ jobs:
   purity:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # The workspace resolves private qtpi-bonding-org packages over SSH.
       # Keep the key in GitHub Actions secrets; never put it in pubspec files
@@ -45,11 +45,11 @@ jobs:
             exit 1
           }
 
-      - uses: webfactory/ssh-agent@v0.9.0
+      - uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387 # v0.9.0
         with:
           ssh-private-key: ${{ secrets.FLUTTER_DEPS_DEPLOY_KEY }}
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
 

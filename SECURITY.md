@@ -63,7 +63,7 @@ Be clear-eyed about the current runtime:
 
 - **Goose executes its own built-in shell and filesystem tools inside c2.** In the current simplified runtime there is *no* separate hardened execution sandbox in the request path — c1 advertises no ACP filesystem/terminal callbacks and has no network route to a sandbox. The approval gate (§2) is what stands between the model and execution, not a second container.
 - **The Rust sandbox proxy and its ACP adapter remain in the repository but are dormant** — future security-hardening work, not part of the c1/c2 path today.
-- **The c3 MCP gateway (and Cognee memory) is disabled by default.** MCP tool attachment through the selected Goose build is not yet validated, so those tools — and the guarantee that their calls also pass through the approval gate — should not be assumed until that work lands.
+- **The c3 MCP gateway runs in the core stack, while Cognee memory is optional.** MCP tool attachment through the selected Goose build is not yet validated, so external MCP tools — and the guarantee that their calls also pass through the approval gate — should not be assumed until that work lands.
 
 The upshot: today's security story is **"every action requires human approval, over an authenticated channel, from a container that holds no credentials"** — a strong gate, but not yet the multi-container reasoning/execution air gap that the dormant sandbox components are intended to eventually provide.
 
@@ -72,6 +72,8 @@ The upshot: today's security story is **"every action requires human approval, o
 - **Compiled binary:** PocketBase runs as a compiled Go binary.
 - **Ephemeral execution:** If the agent thrashes its own container, restart c2 — Goose's session store persists independently (`goose_data` volume), so history survives while transient damage does not.
 - **Separated durable state:** PocketBase state (`pb_data`) and Goose state (`goose_data`) are separate volumes, backed up independently.
+- The included PocketBase backup volume is an on-host recovery copy. It is not an off-host disaster backup: VPS loss, disk failure, or provider/account loss can still destroy it. Administrators who need disaster recovery must export the volumes to storage they control.
+- MCP OAuth credentials are deployment-global by design. Authenticated household members share the approved MCP configuration and its credentials; this is not per-user credential isolation.
 
 ## Summary
 
