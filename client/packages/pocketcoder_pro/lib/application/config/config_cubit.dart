@@ -1,6 +1,6 @@
 import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
-import 'package:flutter_aeroform/domain/models/deployment_config.dart';
+import 'package:flutter_aeroform/domain/models/provision_config.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
@@ -21,8 +21,8 @@ class ConfigCubit extends AppCubit<ConfigState> {
   ) : super(ConfigState.initial());
 
   /// Updates the deployment configuration
-  void updateConfig(DeploymentConfig config) {
-    final validation = _validationService.validateDeploymentConfig(config);
+  void updateConfig(ProvisionConfig config) {
+    final validation = _validationService.validateProvisionConfig(config);
 
     emit(state.copyWith(
       config: config,

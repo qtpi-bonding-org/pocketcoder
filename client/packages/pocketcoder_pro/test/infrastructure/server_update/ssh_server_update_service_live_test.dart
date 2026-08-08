@@ -15,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
-import 'package:flutter_aeroform/domain/models/deployment_session.dart';
+import 'package:flutter_aeroform/domain/models/provision_session.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 
 import 'package:pocketcoder_pro/infrastructure/server_update/ssh_server_update_service.dart';
@@ -63,13 +63,13 @@ class _FakeSecureStorage implements ISecureStorage {
   @override
   Future<void> clearAll() => throw UnimplementedError();
   @override
-  Future<void> storeDeploymentSession(DeploymentSession session) =>
+  Future<void> storeProvisionSession(ProvisionSession session) =>
       throw UnimplementedError();
   @override
-  Future<DeploymentSession?> getDeploymentSession() =>
+  Future<ProvisionSession?> getProvisionSession() =>
       throw UnimplementedError();
   @override
-  Future<void> clearDeploymentSession() => throw UnimplementedError();
+  Future<void> clearProvisionSession() => throw UnimplementedError();
   @override
   Future<void> clearAuthCredentials() => throw UnimplementedError();
   @override

@@ -1,241 +1,167 @@
 import 'dart:async';
 
-import 'package:flutter_aeroform/domain/deployment/i_deployment_service.dart';
-import 'package:flutter_aeroform/domain/models/deployment_config.dart';
-import 'package:flutter_aeroform/domain/models/deployment_result.dart';
-import 'package:flutter_aeroform/domain/models/deployment_progress.dart';
+import 'package:flutter_aeroform/domain/deployment/i_provisioning_service.dart';
+import 'package:flutter_aeroform/domain/models/app_bootstrap.dart';
+import 'package:flutter_aeroform/domain/models/host_spec.dart';
 import 'package:flutter_aeroform/domain/models/instance.dart';
+import 'package:flutter_aeroform/domain/models/provision_config.dart';
+import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-
+import 'package:pocketcoder_pro/domain/deployment/deployment_phase.dart';
+import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/deployment_readiness_service.dart';
 import 'package:pocketcoder_pro/infrastructure/server_update/current_instance_store.dart';
 
 import 'deployment_state.dart';
 
-/// Cubit for managing deployment operations and instance lifecycle
 class DeploymentCubit extends AppCubit<DeploymentState> {
-  static const Duration _statusRefreshInterval = Duration(seconds: 30);
-
-  final IDeploymentService _deploymentService;
-  final CurrentInstanceStore _currentInstanceStore;
-
-  // Monitoring state
-  Timer? _statusRefreshTimer;
-  bool _isMonitoring = false;
-  int _pollingAttempts = 0;
-
   DeploymentCubit(
-    this._deploymentService,
+    this._provisioningService,
     this._currentInstanceStore,
+    this._readinessService,
   ) : super(DeploymentState.initial());
 
-  /// Deploys a new instance with the given configuration
-  Future<void> deploy(DeploymentConfig config,
-      {required String adminPassword}) async {
-    return tryOperation(() async {
-      // Validate configuration first
-      final validation = _deploymentService.validateConfig(config);
+  final IProvisioningService _provisioningService;
+  final CurrentInstanceStore _currentInstanceStore;
+  final DeploymentReadinessService _readinessService;
+  Timer? _statusRefreshTimer;
+  bool _isMonitoring = false;
+
+  Future<void> deploy(
+    ProvisionConfig config, {
+    required HostSpec host,
+    required AppBootstrap appBootstrap,
+  }) async {
+    await tryOperation(() async {
+      final validation = _provisioningService.validateConfig(config);
       if (!validation.isValid) {
         throw DeploymentValidationException(
           validation.errorMessage ?? 'Configuration validation failed',
           validation.fieldErrors,
         );
       }
-
-      // Emit uploading image phase before deployment starts
       emit(state.copyWith(
-        status: UiFlowStatus.success,
-        deploymentStatus: DeploymentStatus.uploadingImage,
+        status: UiFlowStatus.loading,
+        deploymentStatus: OnboardingStage.validating,
+        instance: null,
+        instanceId: null,
       ));
-
-      // Perform deployment (includes image check/upload + instance creation)
-      final result = await _deploymentService.deploy(
+      final result = await _provisioningService.provision(
         config,
-        adminPassword: adminPassword,
-        onProgress: _onDeploymentProgress,
+        host: host,
+        appBootstrap: appBootstrap,
+        onProgress: _onProvisionProgress,
       );
-
-      if (result.status == DeploymentStatus.failed) {
-        throw DeploymentException(result.errorMessage ?? 'Deployment failed');
-      }
-
-      // Persist which instance is "the" deployment so the update feature
-      // can find it later (e.g. from Settings), not just during this
-      // deploy flow's own navigation stack.
       await _currentInstanceStore.save(result.instanceId);
-
-      return state.copyWith(
-        status: UiFlowStatus.success,
+      emit(state.copyWith(
+        status: UiFlowStatus.loading,
         deploymentResult: result,
         instanceId: result.instanceId,
-        deploymentStatus: result.status,
-        deploymentStartedAt: DateTime.now(),
-        pollingAttempts: 0,
-      );
+        hostname: result.hostname,
+        deploymentStatus: OnboardingStage.hostReady,
+      ));
+      unawaited(monitorDeployment(hostname: result.hostname, instanceId: result.instanceId));
+      return state;
     }, emitLoading: true);
   }
 
-  void _onDeploymentProgress(DeploymentProgress progress) {
-    if (progress.isTerminal) {
+  void _onProvisionProgress(ProvisionProgress progress) {
+    final stage = switch (progress.phase) {
+      ProvisionPhase.validating => OnboardingStage.validating,
+      ProvisionPhase.creatingProviderResource => OnboardingStage.creatingServer,
+      ProvisionPhase.preparingHost => OnboardingStage.preparingHost,
+      ProvisionPhase.hostProvisioned => OnboardingStage.hostReady,
+      ProvisionPhase.failed || ProvisionPhase.cancelled => OnboardingStage.failed,
+    };
+    emit(state.copyWith(
+      status: stage == OnboardingStage.failed
+          ? UiFlowStatus.failure
+          : UiFlowStatus.loading,
+      deploymentStatus: stage,
+      instanceId: progress.instanceId ?? state.instanceId,
+      error: progress.errorMessage == null ? state.error : Exception(progress.errorMessage),
+    ));
+  }
+
+  Future<void> monitorDeployment({required String hostname, required String instanceId}) async {
+    if (_isMonitoring) return;
+    _isMonitoring = true;
+    try {
+      await for (final phase in _readinessService.monitor(
+        hostname: hostname,
+        instanceId: instanceId,
+      )) {
+        final stage = switch (phase) {
+          DeploymentPhase.waitingForCaddy => OnboardingStage.securingConnection,
+          DeploymentPhase.installingHost => OnboardingStage.installingHost,
+          DeploymentPhase.fetchingRelease => OnboardingStage.fetchingRelease,
+          DeploymentPhase.loadingImages => OnboardingStage.loadingImages,
+          DeploymentPhase.composeUp => OnboardingStage.startingServices,
+          DeploymentPhase.bootstrapComplete => OnboardingStage.finishingUp,
+          DeploymentPhase.ready => OnboardingStage.ready,
+          DeploymentPhase.failed || DeploymentPhase.timedOut => OnboardingStage.failed,
+        };
+        emit(state.copyWith(
+          status: stage == OnboardingStage.failed
+              ? UiFlowStatus.failure
+              : stage == OnboardingStage.ready
+                  ? UiFlowStatus.success
+                  : UiFlowStatus.loading,
+          deploymentStatus: stage,
+        ));
+      }
+    } finally {
       _isMonitoring = false;
     }
-    final mapped = _mapProgressPhase(progress.phase);
-    emit(state.copyWith(
-      status: progress.isTerminal
-          ? (progress.phase == DeploymentPhase.failed
-              ? UiFlowStatus.failure
-              : UiFlowStatus.success)
-          : UiFlowStatus.loading,
-      deploymentStatus: mapped,
-      instanceId: progress.instanceId ?? state.instanceId,
-      error: progress.errorMessage == null
-          ? state.error
-          : Exception(progress.errorMessage),
-      pollingAttempts: progress.phase == DeploymentPhase.waitingForServer
-          ? state.pollingAttempts + 1
-          : state.pollingAttempts,
-    ));
-
-    if (progress.phase == DeploymentPhase.ready &&
-        progress.instanceId != null) {
-      unawaited(_loadReadyInstance(progress.instanceId!));
-    }
   }
 
-  Future<void> _loadReadyInstance(String instanceId) async {
-    try {
-      final instances = await _deploymentService.getExistingInstances();
-      final instance = instances.firstWhere((item) => item.id == instanceId);
-      emit(state.copyWith(
-        status: UiFlowStatus.success,
-        instance: instance,
-        instanceId: instanceId,
-        deploymentStatus: DeploymentStatus.ready,
-      ));
-    } catch (error) {
-      emit(state.copyWith(status: UiFlowStatus.failure, error: error));
-    }
-  }
-
-  DeploymentStatus _mapProgressPhase(DeploymentPhase phase) {
-    switch (phase) {
-      case DeploymentPhase.idle:
-      case DeploymentPhase.validating:
-        return DeploymentStatus.uploadingImage;
-      case DeploymentPhase.creatingProviderResource:
-        return DeploymentStatus.creating;
-      case DeploymentPhase.preparingHost:
-      case DeploymentPhase.installingApplication:
-      case DeploymentPhase.startingServices:
-      case DeploymentPhase.waitingForServer:
-        return DeploymentStatus.provisioning;
-      case DeploymentPhase.ready:
-        return DeploymentStatus.ready;
-      case DeploymentPhase.failed:
-      case DeploymentPhase.cancelled:
-        return DeploymentStatus.failed;
-    }
-  }
-
-  /// Starts monitoring deployment progress
-  Future<void> monitorDeployment(String instanceId) async {
-    if (_isMonitoring) {
-      return;
-    }
-
-    _isMonitoring = true;
-    _pollingAttempts = 0;
-
-    await _deploymentService.monitorDeployment(
-      instanceId,
-      onProgress: _onDeploymentProgress,
-    );
-  }
-
-  DeploymentStatus _mapToDeploymentStatus(InstanceStatus status) {
-    switch (status) {
-      case InstanceStatus.creating:
-        return DeploymentStatus.creating;
-      case InstanceStatus.provisioning:
-        return DeploymentStatus.provisioning;
-      case InstanceStatus.running:
-        return DeploymentStatus.ready;
-      case InstanceStatus.offline:
-        return DeploymentStatus.failed;
-      case InstanceStatus.failed:
-        return DeploymentStatus.failed;
-    }
-  }
-
-  /// Refreshes the instance status every 30 seconds
   Future<void> refreshInstanceStatus(String instanceId) async {
     _statusRefreshTimer?.cancel();
-
     _statusRefreshTimer = Timer.periodic(
-      _statusRefreshInterval,
+      const Duration(seconds: 30),
       (_) => _refreshStatus(instanceId),
     );
-
-    // Initial refresh
     await _refreshStatus(instanceId);
   }
 
   Future<void> _refreshStatus(String instanceId) async {
     try {
-      final status = await _deploymentService.getInstanceStatus(instanceId);
-
-      // Get instance details
-      final instances = await _deploymentService.getExistingInstances();
-      final instance = instances.firstWhere(
-        (i) => i.id == instanceId,
-        orElse: () => throw Exception('Instance not found'),
-      );
-
-      emit(state.copyWith(
-        instance: instance.copyWith(status: status),
-        deploymentStatus: _mapToDeploymentStatus(status),
-      ));
-    } catch (e) {
-      // Silently fail on status refresh - not critical
+      final status = await _provisioningService.getInstanceStatus(instanceId);
+      final instances = await _provisioningService.getExistingInstances();
+      Instance? instance;
+      for (final item in instances) {
+        if (item.id == instanceId) {
+          instance = item;
+          break;
+        }
+      }
+      if (instance != null) {
+        emit(state.copyWith(instance: instance.copyWith(status: status)));
+      }
+    } on Object {
+      // Provider power state is advisory and must not grant readiness.
     }
   }
 
-  /// Stops all monitoring and status refresh timers
   void cancelDeployment() {
     _isMonitoring = false;
     _statusRefreshTimer?.cancel();
     _statusRefreshTimer = null;
-    _pollingAttempts = 0;
   }
 
-  /// Resets the deployment state
   void resetDeployment() {
     cancelDeployment();
     emit(DeploymentState.initial());
   }
 
-  /// Gets the current monitoring state
   bool get isMonitoring => _isMonitoring;
-  int get currentPollingAttempts => _pollingAttempts;
 }
 
-/// Exception thrown when deployment configuration is invalid
 class DeploymentValidationException implements Exception {
+  const DeploymentValidationException(this.message, [this.fieldErrors]);
   final String message;
   final Map<String, String>? fieldErrors;
-
-  DeploymentValidationException(this.message, [this.fieldErrors]);
-
   @override
-  String toString() => 'DeploymentValidationException: $message';
-}
-
-/// Exception thrown when deployment fails
-class DeploymentException implements Exception {
-  final String message;
-
-  DeploymentException(this.message);
-
-  @override
-  String toString() => 'DeploymentException: $message';
+  String toString() => message;
 }

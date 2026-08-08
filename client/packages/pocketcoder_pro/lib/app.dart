@@ -17,10 +17,11 @@ import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.d
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 import 'package:injectable/injectable.dart' show GetItHelper;
 import 'package:flutter_aeroform/flutter_aeroform.module.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_aeroform/domain/models/app_config.dart';
 import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart';
 import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart';
-import 'package:flutter_aeroform/domain/deployment/i_deployment_service.dart';
+import 'package:flutter_aeroform/domain/deployment/i_provisioning_service.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -32,6 +33,7 @@ import 'package:pocketcoder_pro/application/auth/auth_cubit.dart';
 import 'package:pocketcoder_pro/application/auth/auth_message_mapper.dart';
 import 'package:pocketcoder_pro/application/config/config_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/deployment_readiness_service.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
 import 'package:pocketcoder_pro/application/server_update/server_update_cubit.dart';
 import 'package:pocketcoder_pro/application/server_update/server_update_message_mapper.dart';
@@ -419,7 +421,7 @@ void preRegisterAeroformConfig() {
 void initializeAeroformDI() {
   final getIt = GetIt.instance;
 
-  // Initialize aeroform module (registers IOAuthService, IDeploymentService, etc.)
+  // Initialize aeroform module (registers IOAuthService, IProvisioningService, etc.)
   final aeroformModule = FlutterAeroformPackageModule();
   final gh = GetItHelper(getIt);
   aeroformModule.init(gh);
@@ -447,8 +449,9 @@ void initializeAeroformDI() {
 
   getIt.registerLazySingleton<DeploymentCubit>(
     () => DeploymentCubit(
-      getIt<IDeploymentService>(),
+      getIt<IProvisioningService>(),
       getIt<CurrentInstanceStore>(),
+      DeploymentReadinessService(client: getIt<http.Client>()),
     ),
   );
   getIt.registerFactory<DeploymentMessageMapper>(

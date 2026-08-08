@@ -79,7 +79,7 @@ class _DetailsViewState extends State<_DetailsView> {
     context.pushNamed(
       RouteNames.onboardingLogin,
       extra: OnboardingPrefill(
-        url: instance.httpsUrl,
+        url: 'https://${instance.ipAddress.replaceAll('.', '-')}.sslip.io',
         email: credentials.adminEmail,
         password: credentials.adminPassword,
       ),
@@ -134,7 +134,9 @@ class _DetailsViewState extends State<_DetailsView> {
                             'IP ADDRESS', instance.ipAddress, colors),
                         VSpace.x2,
                         _buildCopyableField(
-                            'HTTPS ENDPOINT', instance.httpsUrl, colors),
+                            'HTTPS ENDPOINT',
+                            'https://${instance.ipAddress.replaceAll('.', '-')}.sslip.io',
+                            colors),
                       ],
                     ],
                   ),
