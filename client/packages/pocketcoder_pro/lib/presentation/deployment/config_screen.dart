@@ -446,7 +446,9 @@ class _ConfigViewState extends State<_ConfigView> {
               reverseProxyPort: 8090,
               hostname: HostnameStrategy.sslipIo,
               acmeEmail: '',
-              staticPaths: {},
+              staticPaths: const {
+                '/_pocketcoder': '/var/lib/pocketcoder/public',
+              },
             );
       final bootstrap = config.backend == ProvisionBackendKind.nixos
           ? StackScriptBootstrap(
