@@ -128,7 +128,12 @@ write_files:
       } > "\$prebuilt_compose"
       missing_images=0
       missing_image_names=""
-      for image in \$("\$compose" -f /opt/pocketcoder/docker-compose.yml -f "\$prebuilt_compose" config --images); do
+      compose_images=\$("\$compose" -f /opt/pocketcoder/docker-compose.yml -f "\$prebuilt_compose" config --images)
+      if [ -z "\$compose_images" ]; then
+        status_error loading_images release_compose_images_empty
+        exit 1
+      fi
+      for image in \$compose_images; do
         if ! docker image inspect "\$image" >/dev/null 2>&1; then
           missing_images=1
           missing_image_names="\$missing_image_names \$image"

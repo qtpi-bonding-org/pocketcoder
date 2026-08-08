@@ -203,15 +203,19 @@ EOF
       } > "$PREBUILT_COMPOSE"
       MISSING_IMAGES=0
       MISSING_IMAGE_NAMES=""
-      while IFS= read -r IMAGE; do
+      COMPOSE_IMAGES=$(docker compose -f "$INSTALL_DIR/docker-compose.yml" -f "$PREBUILT_COMPOSE" config --images)
+      if [ -z "$COMPOSE_IMAGES" ]; then
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_compose_images_empty"
+        exit 1
+      fi
+      for IMAGE in $COMPOSE_IMAGES; do
         if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
           MISSING_IMAGES=1
           MISSING_IMAGE_NAMES="$MISSING_IMAGE_NAMES $IMAGE"
           echo "missing prebuilt image: $IMAGE" >&2
         fi
-      done <<EOF
-$(docker compose -f "$INSTALL_DIR/docker-compose.yml" -f "$PREBUILT_COMPOSE" config --images)
-EOF
+      done
       if [ "$MISSING_IMAGES" -ne 0 ]; then
         pc_status_heartbeat_stop
         _pc_status_write loading_images "missing prebuilt images:''${MISSING_IMAGE_NAMES}" "release_bundle_incomplete"
