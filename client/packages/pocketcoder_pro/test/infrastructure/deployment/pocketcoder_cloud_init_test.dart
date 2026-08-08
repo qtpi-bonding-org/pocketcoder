@@ -9,12 +9,15 @@ void main() {
       rootSshKey: 'ssh-ed25519 AAAA',
     );
 
-    expect(bootstrap.userData, contains('/usr/local/sbin/pocketcoder-bootstrap'));
+    expect(
+        bootstrap.userData, contains('/usr/local/sbin/pocketcoder-bootstrap'));
     expect(bootstrap.userData, contains('git clone'));
     expect(bootstrap.userData, contains("compose='docker compose'"));
     expect(bootstrap.userData, contains('checkout --detach'));
-    expect(bootstrap.userData, contains('release-\$source_commit.json'));
-    expect(bootstrap.userData, contains('pocketcoder-harness-claude-code'));
+    expect(bootstrap.userData, contains('release-manifest.json'));
+    expect(bootstrap.userData, contains('docker load'));
+    expect(bootstrap.userData, contains('up -d --no-build'));
+    expect(bootstrap.userData, isNot(contains(' compose build')));
     expect(bootstrap.userData, contains('{schema:1'));
     expect(bootstrap.userData, contains('base64 -d'));
     expect(bootstrap.userData, isNot(contains('throwaway-password')));
@@ -30,6 +33,7 @@ void main() {
     expect(bootstrap.userData, contains("source_commit='0123456789abcdef'"));
     expect(bootstrap.userData, contains('release-\$source_commit.json'));
     expect(bootstrap.userData, contains('release_bundle_unavailable'));
+    expect(bootstrap.userData, contains('up -d --no-build'));
   });
 
   test('rejects newline injection in bootstrap values', () {
