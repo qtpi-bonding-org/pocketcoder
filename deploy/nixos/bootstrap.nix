@@ -4,16 +4,14 @@
   systemd.services.pocketcoder-bootstrap = {
     description = "PocketCoder first-boot provisioning";
     wantedBy = [ "multi-user.target" ];
-    after = [ "docker.service" "network-online.target" ];
+    after = [ "docker.service" "network-online.target" "caddy.service" ];
     wants = [ "network-online.target" ];
     requires = [ "docker.service" ];
-    before = [ "caddy.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      # Default (90s) kills this mid-`docker compose up -d`, which builds
-      # three images from source (goose is a Rust build) -- leaving the box
-      # half-provisioned and the marker file never written.
+      # Provisioning includes image loading and may take longer than the
+      # default systemd service timeout.
       TimeoutStartSec = "infinity";
     };
     path = with pkgs; [
@@ -42,6 +40,10 @@
         echo "PocketCoder already initialized, skipping bootstrap"
         exit 0
       fi
+
+      source /etc/pocketcoder/status.sh
+      trap 'pc_status_error "$PC_CURRENT_PHASE" "step failed"' ERR
+      pc_status_init
 
       echo "Starting PocketCoder first-boot bootstrap..."
 
@@ -141,6 +143,8 @@ EOF
       # because $INSTALL_DIR already has .env written into it above, and
       # `git clone` refuses to target a non-empty directory.
       echo "Cloning PocketCoder repository ($POCKETCODER_REF)..."
+      pc_status_phase fetching_release
+      pc_status_heartbeat_start
       if [ ! -f "$INSTALL_DIR/docker-compose.yml" ]; then
         SRC_DIR=$(mktemp -d)
         # `POCKETCODER_REF` is normally a 40-character commit SHA. `git
@@ -153,6 +157,7 @@ EOF
         cp -a "$SRC_DIR/." "$INSTALL_DIR/"
         rm -rf "$SRC_DIR"
       fi
+      pc_status_heartbeat_stop
 
       # --- Try to load pre-built Docker images from R2 cache (optional
       # speed-up) ---
@@ -164,39 +169,38 @@ EOF
       # (no manifest published yet, sha256 mismatch, network hiccup) just
       # falls through to `docker compose up -d` building from source, same
       # as it always has -- this step must never fail the bootstrap.
-      echo "Checking for cached Docker images..."
-      DOCKER_CACHE_URL="https://images.pocketcoder.org/docker-images-manifest.json"
-      if MANIFEST=$(curl -sf --max-time 15 "$DOCKER_CACHE_URL"); then
-        CACHE_URL=$(echo "$MANIFEST" | jq -r '.url')
-        CACHE_SHA256=$(echo "$MANIFEST" | jq -r '.sha256')
-        CACHE_SOURCE_COMMIT=$(echo "$MANIFEST" | jq -r '.sourceCommit // empty')
+      pc_status_phase loading_images
+      pc_status_heartbeat_start
+      RELEASE_BASE="''${RELEASE_BASE:-https://images.pocketcoder.org}"
+      RELEASE_URL="$RELEASE_BASE/release-$POCKETCODER_REF.json"
+      LOADED=0
+      if RECORD=$(curl -sf --max-time 15 "$RELEASE_URL"); then
+        CACHE_URL=$(echo "$RECORD" | jq -r '.dockerImages.url // empty')
+        CACHE_SHA256=$(echo "$RECORD" | jq -r '.dockerImages.sha256 // empty')
         CACHE_FILE=$(mktemp)
-        if [ "$CACHE_SOURCE_COMMIT" != "$POCKETCODER_REF" ]; then
-          echo "Cached Docker image source mismatch (expected $POCKETCODER_REF, got ''${CACHE_SOURCE_COMMIT:-missing}) -- building from source."
-        elif curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
+        echo "$RELEASE_URL" > /var/log/pocketcoder-fetch.log
+        if curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
           ACTUAL_SHA256=$(sha256sum "$CACHE_FILE" | cut -d' ' -f1)
-          if [ "$ACTUAL_SHA256" = "$CACHE_SHA256" ]; then
-            if gunzip -c "$CACHE_FILE" | docker load; then
-              echo "Loaded cached Docker images (sha256 verified)."
-            else
-              echo "docker load failed on cached images -- falling back to source build."
-            fi
-          else
-            echo "Cached image sha256 mismatch (expected $CACHE_SHA256, got $ACTUAL_SHA256) -- falling back to source build."
+          if [ "$ACTUAL_SHA256" = "$CACHE_SHA256" ] && gunzip -c "$CACHE_FILE" | docker load; then
+            LOADED=1
           fi
-        else
-          echo "Failed to download cached Docker images -- falling back to source build."
         fi
         rm -f "$CACHE_FILE"
-      else
-        echo "No Docker image cache manifest available -- building from source."
       fi
+      if [ "$LOADED" -ne 1 ] && [ "$POCKETCODER_REF" != "main" ]; then
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_bundle_unavailable"
+        exit 1
+      fi
+      pc_status_heartbeat_stop
 
       # --- Start PocketCoder stack ---
       # Uses any images loaded above as-is; `docker compose` only builds a
       # service whose image isn't already present locally, so a
       # successful cache load above makes this a no-op build.
       echo "Starting PocketCoder stack..."
+      pc_status_phase compose_up
+      pc_status_heartbeat_start
       cd "$INSTALL_DIR"
 
       # Claude Code, Codex, and OpenCode are provisioned lazily by PocketBase,
@@ -213,10 +217,13 @@ EOF
       fi
 
       docker compose up -d
+      pc_status_heartbeat_stop
 
       # --- Mark as initialized ---
+      pc_status_phase bootstrap_complete
       date -Iseconds > "$MARKER"
       echo "PocketCoder bootstrap complete"
     '';
   };
+  environment.etc."pocketcoder/status.sh".source = ./status.sh;
 }

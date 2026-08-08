@@ -23,11 +23,22 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Guard release-commit.nix on the default branch
+        if: github.ref == 'refs/heads/main'
+        run: |
+          test "$(tail -n1 deploy/nixos/release-commit.nix)" = '"main"' || {
+            echo 'release-commit.nix must be "main" on the default branch.'
+            exit 1
+          }
+
       - uses: cachix/install-nix-action@08dcb3a5e62fa31e2da3d490afc4176ef55ecd72 # v30
         with:
           nix_path: nixpkgs=channel:nixos-26.05
           extra_nix_config: |
             experimental-features = nix-command flakes
+
+      - name: NixOS ordering check
+        run: nix build ./deploy/nixos#checks.x86_64-linux.ordering -L
 
       - name: Build Linode image
         working-directory: deploy/nixos
@@ -112,9 +123,8 @@ jobs:
 
   # Pre-builds the app stack's Docker images and caches them in the same R2
   # bucket as the NixOS image, so bootstrap.nix can `docker load` a
-  # pre-built tarball instead of compiling PocketBase (Go) and goose (Rust)
-  # from source on every fresh box -- that from-source build was ~2-3 of
-  # the ~12 minutes a real golden-path deploy took (verified via live
+  # pre-built tarball instead of performing the ~2-3 minute source build on
+  # every fresh box during a ~12 minute golden-path deploy (verified via live
   # timing). Same trigger as the `build` job (manual dispatch or a
   # `v*-nixos` tag) rather than every push, so this doesn't rebuild/upload
   # on every dev commit -- deliberately kept coupled to the NixOS image's

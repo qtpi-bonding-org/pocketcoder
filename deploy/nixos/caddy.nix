@@ -47,8 +47,26 @@
 
       # Write Caddyfile
       cat > /etc/caddy/Caddyfile <<EOF
+      http://$DOMAIN {
+        handle /_pocketcoder/status.json {
+          uri strip_prefix /_pocketcoder
+          root * /var/lib/pocketcoder/public
+          file_server
+        }
+        handle {
+          redir https://{host}{uri} permanent
+        }
+      }
+
       $DOMAIN {
-        reverse_proxy localhost:8090
+        handle /_pocketcoder/status.json {
+          uri strip_prefix /_pocketcoder
+          root * /var/lib/pocketcoder/public
+          file_server
+        }
+        handle {
+          reverse_proxy localhost:8090
+        }
       }
       EOF
 
@@ -88,4 +106,9 @@
       "${pkgs.caddy}/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
     ];
   };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/pocketcoder 0755 root root -"
+    "d /var/lib/pocketcoder/public 0755 root root -"
+  ];
 }

@@ -36,5 +36,8 @@
       # Produces a raw .img suitable for Linode custom images API
       # Upload with: linode-cli image-upload --region us-east result/nixos.img
     };
+
+    checks.${system}.ordering =
+      import ./tests/ordering.nix { inherit pkgs self system; };
   };
 }
