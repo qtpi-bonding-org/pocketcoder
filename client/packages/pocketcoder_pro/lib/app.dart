@@ -503,6 +503,7 @@ void initializeAeroformDI() {
       getIt<IProvisioningService>(),
       getIt<CurrentInstanceStore>(),
       DeploymentReadinessService(client: getIt<http.Client>()),
+      getIt<ISecureStorage>(),
     ),
   );
   getIt.registerFactory<DeploymentMessageMapper>(
