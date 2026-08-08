@@ -6,7 +6,7 @@ import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:flutter_aeroform/domain/models/deployment_result.dart';
+import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -42,8 +42,11 @@ class _ProgressViewState extends State<_ProgressView> {
     // Start monitoring deployment if not already started
     final cubit = context.read<DeploymentCubit>();
     final state = cubit.state;
-    if (state.instanceId != null && !cubit.isMonitoring) {
-      cubit.monitorDeployment(state.instanceId!);
+    if (state.instanceId != null && state.hostname != null && !cubit.isMonitoring) {
+      cubit.monitorDeployment(
+        hostname: state.hostname ?? '',
+        instanceId: state.instanceId ?? '',
+      );
     }
   }
 
@@ -56,17 +59,22 @@ class _ProgressViewState extends State<_ProgressView> {
       listener: (context, state) {
         if (state.instanceId != null &&
             !cubit.isMonitoring &&
-            state.deploymentStatus != DeploymentStatus.ready &&
-            state.deploymentStatus != DeploymentStatus.failed) {
-          cubit.monitorDeployment(state.instanceId!);
+            state.deploymentStatus != OnboardingStage.ready &&
+            state.deploymentStatus != OnboardingStage.failed) {
+          if (state.hostname != null) {
+            cubit.monitorDeployment(
+              hostname: state.hostname ?? '',
+              instanceId: state.instanceId ?? '',
+            );
+          }
         }
         // Navigate to DetailsScreen on deployment completion
         if (state.status == UiFlowStatus.success &&
-            state.deploymentStatus == DeploymentStatus.ready &&
+            state.deploymentStatus == OnboardingStage.ready &&
             state.instance != null) {
           context.pushNamed(
             RouteNames.deploymentDetails,
-            queryParameters: {'instanceId': state.instance!.id},
+            queryParameters: {'instanceId': state.instance?.id ?? ''},
           );
         }
       },
@@ -89,7 +97,10 @@ class _ProgressViewState extends State<_ProgressView> {
                     if (state.instanceId != null) {
                       context
                           .read<DeploymentCubit>()
-                          .monitorDeployment(state.instanceId!);
+                          .monitorDeployment(
+                            hostname: state.hostname ?? '',
+                            instanceId: state.instanceId ?? '',
+                          );
                     }
                   },
                 ),
@@ -179,8 +190,8 @@ class _ProgressViewState extends State<_ProgressView> {
     );
   }
 
-  Widget _buildStatusIndicator(DeploymentStatus? status) {
-    if (status == DeploymentStatus.ready) {
+  Widget _buildStatusIndicator(OnboardingStage? status) {
+    if (status == OnboardingStage.ready) {
       return const Icon(Icons.check_circle_outline,
           color: Colors.green, size: 48);
     }
@@ -203,43 +214,69 @@ class _ProgressViewState extends State<_ProgressView> {
     );
   }
 
-  String _getStatusTitle(DeploymentStatus? status) {
+  String _getStatusTitle(OnboardingStage? status) {
     switch (status) {
-      case DeploymentStatus.uploadingImage:
-        return 'UPLOADING IMAGE';
-      case DeploymentStatus.creating:
+      case OnboardingStage.validating:
+        return 'VALIDATING CONFIGURATION';
+      case OnboardingStage.creatingServer:
         return 'CONSTRUCTING INSTANCE';
-      case DeploymentStatus.provisioning:
-        return 'PROVISIONING SUBSYSTEMS';
-      case DeploymentStatus.ready:
+      case OnboardingStage.preparingHost:
+      case OnboardingStage.hostReady:
+        return 'PREPARING HOST';
+      case OnboardingStage.securingConnection:
+        return 'SECURING CONNECTION';
+      case OnboardingStage.installingHost:
+        return 'INSTALLING HOST';
+      case OnboardingStage.fetchingRelease:
+        return 'FETCHING RELEASE';
+      case OnboardingStage.loadingImages:
+        return 'LOADING IMAGES';
+      case OnboardingStage.startingServices:
+        return 'STARTING SERVICES';
+      case OnboardingStage.finishingUp:
+        return 'FINISHING UP';
+      case OnboardingStage.ready:
         return 'HANDSHAKE SUCCESSFUL';
-      case DeploymentStatus.failed:
+      case OnboardingStage.failed:
         return 'DEPLOYMENT ABORTED';
       case null:
         return 'INITIALIZING STACK';
     }
   }
 
-  String _getStatusDescription(DeploymentStatus? status) {
+  String _getStatusDescription(OnboardingStage? status) {
     switch (status) {
-      case DeploymentStatus.uploadingImage:
-        return 'TRANSFERRING NIXOS IMAGE TO CLOUD PROVIDER.';
-      case DeploymentStatus.creating:
+      case OnboardingStage.validating:
+        return 'CHECKING THE PROVISIONING CONFIGURATION.';
+      case OnboardingStage.creatingServer:
         return 'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.';
-      case DeploymentStatus.provisioning:
-        return 'RUNNING CLOUD-INIT SCRIPTS. BOOTSTRAPPING POCKETBASE AND SANDBOX ENVIRONMENTS.';
-      case DeploymentStatus.ready:
-        return 'POCKETCODER INSTANCE IS FULLY OPERATIONAL AND RESPONDING TO PING.';
-      case DeploymentStatus.failed:
+      case OnboardingStage.preparingHost:
+      case OnboardingStage.hostReady:
+        return 'INSTALLING THE CONTAINER HOST.';
+      case OnboardingStage.securingConnection:
+        return 'WAITING FOR THE NATIVE REVERSE PROXY.';
+      case OnboardingStage.installingHost:
+        return 'INSTALLING THE APPLICATION HOST.';
+      case OnboardingStage.fetchingRelease:
+        return 'FETCHING THE IMMUTABLE RELEASE.';
+      case OnboardingStage.loadingImages:
+        return 'LOADING THE VERIFIED IMAGE BUNDLE.';
+      case OnboardingStage.startingServices:
+        return 'STARTING APPLICATION SERVICES.';
+      case OnboardingStage.finishingUp:
+        return 'FINISHING DEPLOYMENT.';
+      case OnboardingStage.ready:
+        return 'THE SERVER IS FULLY OPERATIONAL.';
+      case OnboardingStage.failed:
         return 'CRITICAL FAILURE DURING RESOURCE ALLOCATION.';
       case null:
         return 'PREPARING DEPLOYMENT MANIFEST.';
     }
   }
 
-  Color _getStatusColor(DeploymentStatus? status, ColorScheme colors) {
-    if (status == DeploymentStatus.ready) return Colors.green;
-    if (status == DeploymentStatus.failed) return colors.error;
+  Color _getStatusColor(OnboardingStage? status, ColorScheme colors) {
+    if (status == OnboardingStage.ready) return Colors.green;
+    if (status == OnboardingStage.failed) return colors.error;
     return colors.primary;
   }
 

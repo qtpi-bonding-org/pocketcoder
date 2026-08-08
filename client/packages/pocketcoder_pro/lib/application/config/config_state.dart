@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
-import 'package:flutter_aeroform/domain/models/deployment_config.dart';
+import 'package:flutter_aeroform/domain/models/provision_config.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 
 part 'config_state.freezed.dart';
@@ -13,7 +13,7 @@ sealed class ConfigState with _$ConfigState implements IUiFlowState {
   const factory ConfigState({
     @Default(UiFlowStatus.idle) UiFlowStatus status,
     Object? error,
-    DeploymentConfig? config,
+    ProvisionConfig? config,
     Map<String, String>? validationErrors,
     List<InstancePlan>? plans,
     List<Region>? regions,

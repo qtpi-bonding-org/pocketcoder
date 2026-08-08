@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart';
-import 'package:flutter_aeroform/domain/models/deployment_config.dart';
+import 'package:flutter_aeroform/domain/models/provision_config.dart';
 import 'package:flutter_aeroform/domain/models/validation_result.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
@@ -14,7 +14,7 @@ class MockCloudProviderAPIClient extends Mock
 
 class MockSecureStorage extends Mock implements ISecureStorage {}
 
-DeploymentConfig _testConfig() => DeploymentConfig(
+ProvisionConfig _testConfig() => ProvisionConfig(
       planType: 'g6-standard-2',
       region: 'us-east',
       adminEmail: 'admin@example.com',
@@ -38,7 +38,7 @@ void main() {
 
   test('updateConfig emits the new config and its validation result', () {
     final config = _testConfig();
-    when(() => validationService.validateDeploymentConfig(config))
+    when(() => validationService.validateProvisionConfig(config))
         .thenReturn(ValidationResult.valid());
 
     cubit.updateConfig(config);

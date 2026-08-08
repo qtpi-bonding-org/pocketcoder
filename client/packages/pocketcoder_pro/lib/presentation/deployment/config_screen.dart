@@ -9,10 +9,11 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
-import 'package:flutter_aeroform/domain/models/app_config.dart';
-import 'package:flutter_aeroform/domain/models/deployment_config.dart';
-import 'package:flutter_aeroform/domain/models/deployment_result.dart';
-import 'package:flutter_aeroform/domain/models/deployment_progress.dart';
+import 'package:flutter_aeroform/domain/models/provision_config.dart';
+import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
+import 'package:flutter_aeroform/domain/models/provision_progress.dart';
+import 'package:flutter_aeroform/domain/models/host_spec.dart';
+import 'package:flutter_aeroform/domain/models/app_bootstrap.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -54,9 +55,7 @@ class _ConfigView extends StatefulWidget {
 }
 
 class _ConfigViewState extends State<_ConfigView> {
-  late final String _adminEmail = widget.credentials?.email ?? '';
-  late final String _adminPassword = widget.credentials?.password ?? '';
-  DeploymentBackendKind _selectedBackend = DeploymentBackendKind.nixos;
+  ProvisionBackendKind _selectedBackend = ProvisionBackendKind.nixos;
   StandardLinuxDistribution _selectedDistribution =
       StandardLinuxDistribution.debian;
   bool _progressOpened = false;
@@ -70,7 +69,6 @@ class _ConfigViewState extends State<_ConfigView> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
     final configCubit = context.read<ConfigCubit>();
     final deploymentCubit = context.read<DeploymentCubit>();
 
@@ -87,7 +85,7 @@ class _ConfigViewState extends State<_ConfigView> {
             }
             // Navigate to DetailsScreen on deployment completion
             if (deploymentState.status == UiFlowStatus.success &&
-                deploymentState.deploymentStatus == DeploymentStatus.ready &&
+                deploymentState.deploymentStatus == OnboardingStage.ready &&
                 deploymentState.instance != null) {
               context.pushNamed(
                 RouteNames.deploymentDetails,
@@ -118,39 +116,7 @@ class _ConfigViewState extends State<_ConfigView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        BiosSection(
-                          title: 'NOTIFICATIONS (OPTIONAL)',
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'ENABLE NTFY RELAY',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.bodyFamily,
-                                        color: colors.onSurface,
-                                        fontSize: AppSizes.fontMini,
-                                      ),
-                                    ),
-                                  ),
-                                  Switch(
-                                    value: configState.config?.ntfyEnabled ??
-                                        false,
-                                    onChanged: (value) {
-                                      final current = configState.config;
-                                      if (current != null) {
-                                        configCubit.updateConfig(
-                                          current.copyWith(ntfyEnabled: value),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                        const SizedBox.shrink(),
                         VSpace.x2,
                         BiosSection(
                           title: 'HARDWARE & GEOGRAPHY',
@@ -196,7 +162,7 @@ class _ConfigViewState extends State<_ConfigView> {
                               ),
                               if ((configState.config?.backend ??
                                       _selectedBackend) ==
-                                  DeploymentBackendKind.standardLinux) ...[
+                                  ProvisionBackendKind.standardLinux) ...[
                                 VSpace.x1,
                                 _buildDistributionSelector(
                                   context,
@@ -348,7 +314,7 @@ class _ConfigViewState extends State<_ConfigView> {
     ConfigCubit cubit, {
     String? planType,
     String? region,
-    DeploymentBackendKind? backend,
+    ProvisionBackendKind? backend,
     StandardLinuxDistribution? standardLinuxDistribution,
   }) {
     final current = cubit.state.config;
@@ -369,13 +335,9 @@ class _ConfigViewState extends State<_ConfigView> {
       );
     } else {
       cubit.updateConfig(
-        DeploymentConfig(
+        ProvisionConfig(
           planType: planType ?? '',
           region: region ?? '',
-          adminEmail: _adminEmail,
-          ntfyEnabled: cubit.state.config?.ntfyEnabled ?? false,
-          imageRelayUrl: AppConfig.kImageRelayUrl,
-          nixosImageLabel: AppConfig.kNixosImageLabel,
           backend: selectedBackend,
           standardLinuxDistribution: selectedDistribution,
         ),
@@ -385,8 +347,8 @@ class _ConfigViewState extends State<_ConfigView> {
 
   Widget _buildBackendSelector(
     BuildContext context,
-    DeploymentBackendKind selected,
-    ValueChanged<DeploymentBackendKind> onSelected,
+    ProvisionBackendKind selected,
+    ValueChanged<ProvisionBackendKind> onSelected,
   ) {
     final colors = context.colorScheme;
     return Row(
@@ -401,18 +363,18 @@ class _ConfigViewState extends State<_ConfigView> {
             ),
           ),
         ),
-        DropdownButton<DeploymentBackendKind>(
+        DropdownButton<ProvisionBackendKind>(
           value: selected,
           onChanged: (value) {
             if (value != null) onSelected(value);
           },
           items: const [
             DropdownMenuItem(
-              value: DeploymentBackendKind.nixos,
+              value: ProvisionBackendKind.nixos,
               child: Text('NixOS'),
             ),
             DropdownMenuItem(
-              value: DeploymentBackendKind.standardLinux,
+              value: ProvisionBackendKind.standardLinux,
               child: Text('Standard Linux'),
             ),
           ],
@@ -462,7 +424,24 @@ class _ConfigViewState extends State<_ConfigView> {
   void _deploy(ConfigCubit configCubit, DeploymentCubit deploymentCubit) {
     final config = configCubit.state.config;
     if (config != null) {
-      deploymentCubit.deploy(config, adminPassword: _adminPassword);
+      final host = config.backend == ProvisionBackendKind.nixos
+          ? const ImageBakedHostSpec(labelPrefix: 'provisioned', authorizedKey: '')
+          : const GeneratedConfigHostSpec(
+              labelPrefix: 'provisioned',
+              authorizedKey: '',
+              reverseProxyPort: 8090,
+              hostname: HostnameStrategy.sslipIo,
+              acmeEmail: '',
+              staticPaths: {},
+            );
+      final bootstrap = config.backend == ProvisionBackendKind.nixos
+          ? const StackScriptBootstrap(
+              stackScriptId: 0,
+              udfData: {},
+              image: ImageArtifact(url: '', sha256: '', uncompressedBytes: 0),
+            )
+          : const CloudInitBootstrap(userData: '#cloud-config\n');
+      deploymentCubit.deploy(config, host: host, appBootstrap: bootstrap);
     }
   }
 }
