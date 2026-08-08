@@ -30,14 +30,14 @@ abstract class ExternalModule {
           .loadString('packages/pocketcoder_flutter/assets/pb_schema.json');
       logDebug('PocketBaseInit: Schema loaded (${schemaJson.length} chars)');
     } catch (e) {
-      logWarning(
-          'PocketBaseInit: ⚠️ Warning - failed to load schema asset (as package): $e');
+          logError(
+          'PocketBaseInit: ⚠️ Warning - failed to load schema asset (as package)', e);
       // Fallback to direct path for local runs
       try {
         schemaJson = await rootBundle.loadString('assets/pb_schema.json');
         logDebug('PocketBaseInit: Schema loaded via direct path');
       } catch (e2) {
-        logWarning('PocketBaseInit: ⚠️ Fallback direct path also failed', e2);
+        logError('PocketBaseInit: ⚠️ Fallback direct path also failed', e2);
       }
     }
 

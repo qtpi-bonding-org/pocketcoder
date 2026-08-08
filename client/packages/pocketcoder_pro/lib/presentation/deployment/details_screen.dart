@@ -9,8 +9,7 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:flutter_aeroform/domain/models/instance.dart';
-import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
-import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -42,7 +41,7 @@ class _DetailsView extends StatefulWidget {
 }
 
 class _DetailsViewState extends State<_DetailsView> {
-  InstanceCredentials? _credentials;
+  PocketCoderCredentials? _pocketCoderCredentials;
   bool _passwordVisible = false;
   // Captured in initState rather than re-read in dispose() -- by the time
   // dispose() runs the element tree may already be deactivated, and
@@ -71,22 +70,24 @@ class _DetailsViewState extends State<_DetailsView> {
   }
 
   Future<void> _loadCredentials() async {
-    final credentials = await GetIt.I<ISecureStorage>()
-        .getInstanceCredentials(widget.instanceId);
+    final pocketCoderCredentials =
+        await GetIt.I<PocketCoderCredentialStore>().get(widget.instanceId);
     if (mounted) {
-      setState(() => _credentials = credentials);
+      setState(() {
+        _pocketCoderCredentials = pocketCoderCredentials;
+      });
     }
   }
 
   void _handleLoginNow(Instance? instance) {
-    final credentials = _credentials;
-    if (instance == null || credentials == null) return;
+    final pocketCoderCredentials = _pocketCoderCredentials;
+    if (instance == null || pocketCoderCredentials == null) return;
     context.pushNamed(
       RouteNames.onboardingLogin,
       extra: OnboardingPrefill(
         url: 'https://${instance.ipAddress.replaceAll('.', '-')}.sslip.io',
-        email: credentials.adminEmail,
-        password: credentials.adminPassword,
+        email: pocketCoderCredentials.adminEmail,
+        password: pocketCoderCredentials.adminPassword,
       ),
     );
   }
@@ -103,7 +104,7 @@ class _DetailsViewState extends State<_DetailsView> {
         return TerminalScaffold(
           title: 'INSTANCE MANIFEST',
           actions: [
-            if (_credentials != null)
+            if (_pocketCoderCredentials != null)
               TerminalAction(
                 label: 'LOG IN NOW',
                 onTap: () => _handleLoginNow(instance),
@@ -153,11 +154,11 @@ class _DetailsViewState extends State<_DetailsView> {
                     children: [
                       if (instance != null) ...[
                         _buildInfoRow('ADMIN IDENTITY',
-                            instance.adminEmail ?? 'N/A', colors),
-                        if (_credentials != null) ...[
+                            _pocketCoderCredentials?.adminEmail ?? 'N/A', colors),
+                        if (_pocketCoderCredentials != null) ...[
                           VSpace.x1,
                           _buildPasswordRow('ADMIN PASSWORD',
-                              _credentials!.adminPassword, colors),
+                              _pocketCoderCredentials!.adminPassword, colors),
                         ],
                         VSpace.x1,
                         _buildInfoRow(

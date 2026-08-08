@@ -14,6 +14,7 @@ import 'package:pocketcoder_pro/domain/deployment/deployment_phase.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/deployment_readiness_service.dart';
 import 'package:pocketcoder_pro/infrastructure/server_update/current_instance_store.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
 
 import 'deployment_state.dart';
 
@@ -23,12 +24,14 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
     this._currentInstanceStore,
     this._readinessService,
     this._secureStorage,
+    this._credentialStore,
   ) : super(DeploymentState.initial());
 
   final IProvisioningService _provisioningService;
   final CurrentInstanceStore _currentInstanceStore;
   final DeploymentReadinessService _readinessService;
   final ISecureStorage _secureStorage;
+  final PocketCoderCredentialStore _credentialStore;
   Timer? _statusRefreshTimer;
   bool _isMonitoring = false;
 
@@ -37,6 +40,7 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
     required HostSpec host,
     required AppBootstrap appBootstrap,
     InstanceCredentials? instanceCredentials,
+    PocketCoderCredentials? pocketCoderCredentials,
   }) async {
     await tryOperation(() async {
       final validation = _provisioningService.validateConfig(config);
@@ -63,6 +67,13 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
         await _secureStorage.storeInstanceCredentials(
           instanceCredentials.copyWith(instanceId: result.instanceId),
         );
+      }
+      if (pocketCoderCredentials != null) {
+        await _credentialStore.store(PocketCoderCredentials(
+          instanceId: result.instanceId,
+          adminEmail: pocketCoderCredentials.adminEmail,
+          adminPassword: pocketCoderCredentials.adminPassword,
+        ));
       }
       emit(state.copyWith(
         status: UiFlowStatus.loading,

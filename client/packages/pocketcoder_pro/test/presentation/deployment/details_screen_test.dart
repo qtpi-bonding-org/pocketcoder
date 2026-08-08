@@ -19,23 +19,26 @@ import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_pro/presentation/deployment/details_screen.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
 
 class MockDeploymentCubit extends Mock implements DeploymentCubit {}
 
 class MockSecureStorage extends Mock implements ISecureStorage {}
+class MockPocketCoderCredentialStore extends Mock
+    implements PocketCoderCredentialStore {}
 
 void main() {
   late MockDeploymentCubit cubit;
   late MockSecureStorage secureStorage;
   late Instance instance;
   late InstanceCredentials credentials;
+  late MockPocketCoderCredentialStore credentialStore;
 
   setUp(() {
     instance = Instance(
       id: 'inst-1',
       label: 'pocketcoder-inst-1',
       ipAddress: '1.2.3.4',
-      adminEmail: 'admin@pocketcoder.local',
       status: InstanceStatus.running,
       region: 'us-east',
       planType: 'nanode',
@@ -47,9 +50,7 @@ void main() {
     // constructor field, so nothing to pass in above.
     credentials = const InstanceCredentials(
       instanceId: 'inst-1',
-      adminPassword: 'correct-horse-battery-staple',
       rootSshPrivateKey: 'not-used-here',
-      adminEmail: 'admin@pocketcoder.local',
     );
 
     cubit = MockDeploymentCubit();
@@ -63,8 +64,16 @@ void main() {
     secureStorage = MockSecureStorage();
     when(() => secureStorage.getInstanceCredentials('inst-1'))
         .thenAnswer((_) async => credentials);
+    credentialStore = MockPocketCoderCredentialStore();
+    when(() => credentialStore.get('inst-1')).thenAnswer((_) async =>
+        const PocketCoderCredentials(
+          instanceId: 'inst-1',
+          adminEmail: 'admin@pocketcoder.local',
+          adminPassword: 'correct-horse-battery-staple',
+        ));
 
     GetIt.I.registerFactory<ISecureStorage>(() => secureStorage);
+    GetIt.I.registerFactory<PocketCoderCredentialStore>(() => credentialStore);
     GetIt.I.registerFactory<DeploymentMessageMapper>(
         () => DeploymentMessageMapper());
   });
@@ -107,7 +116,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('correct-horse-battery-staple'), findsNothing);
-    expect(find.text('•' * credentials.adminPassword.length), findsOneWidget);
+    expect(
+      find.text('•' * 'correct-horse-battery-staple'.length),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byIcon(Icons.visibility));
     await tester.pump();

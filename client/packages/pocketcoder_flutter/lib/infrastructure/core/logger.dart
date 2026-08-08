@@ -9,7 +9,7 @@ class AppLogger {
 
   static void debug(String message, [Map<String, Object?>? data]) {
     if (kDebugMode) {
-      _print('DEBUG', message, data);
+      _print('DEBUG', message, redact(data));
     }
   }
 
@@ -41,7 +41,10 @@ class AppLogger {
       final value = entry.value?.toString() ?? '';
       result[entry.key] = secretKeys.any(key.contains)
           ? '[REDACTED]'
-          : value.replaceAll(RegExp(r'(code|token|password|secret)=([^&\s]+)', caseSensitive: false), r'\1=[REDACTED]');
+          : value.replaceAllMapped(
+              RegExp(r'(code|token|password|secret)=([^&\s]+)', caseSensitive: false),
+              (match) => '${match.group(1)}=[REDACTED]',
+            );
     }
     return result;
   }

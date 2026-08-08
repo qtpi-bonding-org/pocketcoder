@@ -19,6 +19,7 @@ import 'package:flutter_aeroform/domain/models/app_bootstrap.dart';
 import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
 import 'package:flutter_aeroform/domain/security/i_ssh_key_generator.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_cloud_init.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -472,8 +473,11 @@ class _ConfigViewState extends State<_ConfigView> {
         appBootstrap: bootstrap,
         instanceCredentials: InstanceCredentials(
           instanceId: '',
-          adminPassword: credentials.password,
           rootSshPrivateKey: keyPair.privateKey,
+        ),
+        pocketCoderCredentials: PocketCoderCredentials(
+          instanceId: '',
+          adminPassword: credentials.password,
           adminEmail: credentials.email,
         ),
       );
