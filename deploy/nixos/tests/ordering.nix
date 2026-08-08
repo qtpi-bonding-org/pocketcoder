@@ -4,6 +4,9 @@ pkgs.testers.runNixOSTest {
   name = "pocketcoder-caddy-ordering";
 
   nodes.machine = { ... }: {
+    # bootstrap.nix receives this from the real flake's specialArgs. Supply
+    # the development default explicitly in the standalone ordering test.
+    _module.args.sourceCommit = "main";
     imports = [ ../caddy.nix ../bootstrap.nix ];
     systemd.services.detect-public-ip.script = pkgs.lib.mkForce ''
       mkdir -p /etc/caddy /etc/pocketcoder
