@@ -118,10 +118,20 @@ write_files:
       prebuilt_compose="/opt/pocketcoder/docker-compose.prebuilt.yml"
       {
         echo 'services:'
-        "\$compose" -f /opt/pocketcoder/docker-compose.yml config --format json \
-          | jq -r '.services | to_entries[] | select(.value.image? and (.value.image | contains("@sha256:"))) | "\(.key)\t\(.value.image)"' \
-          | while IFS="\$(printf '\\t')" read -r service image; do
-              digest=\$(printf '%s' "\$image" | sed 's/.*@sha256://')
+        awk '
+          /^  [A-Za-z0-9_.-]+:[[:space:]]*(#.*)?$/ {
+            service = \$1
+            sub(/:$/, "", service)
+            next
+          }
+          /^    image:[[:space:]]+[^[:space:]]+@sha256:/ {
+            image = \$2
+            digest = image
+            sub(/.*@sha256:/, "", digest)
+            printf "%s\\t%s\\n", service, digest
+          }
+        ' /opt/pocketcoder/docker-compose.yml \
+          | while IFS="\$(printf '\\t')" read -r service digest; do
               alias="pocketcoder-bundle-\$(printf '%s' "\$digest" | cut -c1-16)"
               printf '  %s:\\n    image: %s\\n' "\$service" "\$alias"
             done

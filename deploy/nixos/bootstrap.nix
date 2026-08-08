@@ -42,7 +42,7 @@
       fi
 
       source /etc/pocketcoder/status.sh
-      trap 'pc_status_error "$PC_CURRENT_PHASE" "step failed"' ERR
+      trap 'pc_status_error "$PC_CURRENT_PHASE" "step failed at line ${BASH_LINENO[0]}"' ERR
       pc_status_init
 
       echo "Starting PocketCoder first-boot bootstrap..."
@@ -193,10 +193,20 @@ EOF
       PREBUILT_COMPOSE="$INSTALL_DIR/docker-compose.prebuilt.yml"
       {
         echo 'services:'
-        docker compose -f "$INSTALL_DIR/docker-compose.yml" config --format json \
-          | jq -r '.services | to_entries[] | select(.value.image? and (.value.image | contains("@sha256:"))) | "\(.key)\t\(.value.image)"' \
-          | while IFS="$(printf '\\t')" read -r SERVICE IMAGE; do
-              DIGEST=$(printf '%s' "$IMAGE" | sed 's/.*@sha256://')
+        awk '
+          /^  [A-Za-z0-9_.-]+:[[:space:]]*(#.*)?$/ {
+            service = $1
+            sub(/:$/, "", service)
+            next
+          }
+          /^    image:[[:space:]]+[^[:space:]]+@sha256:/ {
+            image = $2
+            digest = image
+            sub(/.*@sha256:/, "", digest)
+            printf "%s\\t%s\\n", service, digest
+          }
+        ' "$INSTALL_DIR/docker-compose.yml" \
+          | while IFS="$(printf '\\t')" read -r SERVICE DIGEST; do
               ALIAS="pocketcoder-bundle-$(printf '%s' "$DIGEST" | cut -c1-16)"
               printf '  %s:\n    image: %s\n' "$SERVICE" "$ALIAS"
             done
