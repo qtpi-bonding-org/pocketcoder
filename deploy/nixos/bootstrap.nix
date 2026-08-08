@@ -203,7 +203,7 @@ $(docker compose -f "$INSTALL_DIR/docker-compose.yml" config --images)
 EOF
       if [ "$MISSING_IMAGES" -ne 0 ]; then
         pc_status_heartbeat_stop
-        _pc_status_write loading_images "missing prebuilt images:${MISSING_IMAGE_NAMES}" "release_bundle_incomplete"
+        _pc_status_write loading_images "missing prebuilt images:''${MISSING_IMAGE_NAMES}" "release_bundle_incomplete"
         exit 1
       fi
       pc_status_heartbeat_stop
