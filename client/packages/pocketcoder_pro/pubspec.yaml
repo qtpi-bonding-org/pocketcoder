@@ -27,7 +27,7 @@ dependencies:
   flutter_aeroform:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
-      ref: "provision-boundary-plan-a-fix"
+      ref: "provision-boundary-plan-a-fix-2"
   http: ^1.2.0
   flutter_secure_storage: ^10.0.0
   pocketbase: ^0.23.2
