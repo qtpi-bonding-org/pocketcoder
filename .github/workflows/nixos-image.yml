@@ -172,7 +172,14 @@ jobs:
               docker pull "$image"
             fi
             docker image inspect "$image" >/dev/null
-            IMAGE_REFS="$IMAGE_REFS $image"
+            if printf '%s' "$image" | grep -q '@sha256:'; then
+              digest=$(printf '%s' "$image" | sed 's/.*@sha256://')
+              alias="pocketcoder-bundle-$(printf '%s' "$digest" | cut -c1-16)"
+              docker tag "$image" "$alias"
+              IMAGE_REFS="$IMAGE_REFS $alias"
+            else
+              IMAGE_REFS="$IMAGE_REFS $image"
+            fi
           done <<EOF
           $IMAGES
           EOF
