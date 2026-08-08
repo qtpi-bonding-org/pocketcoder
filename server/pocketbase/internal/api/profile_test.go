@@ -30,6 +30,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/pocoprompt"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
 
@@ -217,9 +218,8 @@ func createTestHarnessModel(t *testing.T, app core.App, harness *core.Record) *c
 // createTestPocoConfig creates an agent_profile record with optional fields.
 func createTestPocoConfig(t *testing.T, app core.App, fields map[string]any, userID string) *core.Record {
 	t.Helper()
-	// Create a test harness and harness_model first
-	harness, _ := seedTestHarnessAndInstance(t, app, "test-harness", true, true, false, userID)
-	hm := createTestHarnessModel(t, app, harness)
+	// Create a test harness first; agent profiles are harness-independent.
+	seedTestHarnessAndInstance(t, app, "test-harness", true, true, false, userID)
 
 	pocoColl, err := app.FindCollectionByNameOrId("agent_profiles")
 	if err != nil {
@@ -228,7 +228,6 @@ func createTestPocoConfig(t *testing.T, app core.App, fields map[string]any, use
 	poco := core.NewRecord(pocoColl)
 	poco.Set("name", "test-poco-"+randomSuffix())
 	poco.Set("is_default", false)
-	poco.Set("harness_model", hm.Id) // Set the required harness_model
 
 	if fields != nil {
 		for k, v := range fields {
@@ -263,6 +262,9 @@ func TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig(t *testing.T) {
 	}
 	if profile.ResolvedInstanceID != instance.Id {
 		t.Errorf("ResolvedInstanceID = %q, want %q — the early-return bug regression", profile.ResolvedInstanceID, instance.Id)
+	}
+	if profile.Instructions != pocoprompt.Default {
+		t.Error("profile without an explicit prompt must use Poco's built-in prompt")
 	}
 }
 

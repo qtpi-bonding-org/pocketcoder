@@ -29,6 +29,7 @@ import (
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/pocoprompt"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
 )
@@ -86,7 +87,7 @@ func validateWorkspacePath(p string) error {
 // (stdio only), and mode. It also resolves the harness identity and
 // harness_instances row, and validates workspace paths.
 func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfile, error) {
-	var p coordinator.SessionProfile
+	p := coordinator.SessionProfile{Instructions: pocoprompt.Default}
 
 	chat, err := app.FindRecordById("chats", chatID)
 	if err != nil {
@@ -130,17 +131,14 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	// Default mode if no agent_profile
 	p.Mode = acpsdk.SessionModeId("approve")
 	if poco != nil {
-		// Model: chat.harness_model_override wins, else the poco's harness_model.
-		// (Per-chat model is INERT today — spec §4.1 — but resolved for forward-compat.)
-		if hmID == "" {
-			hmID = poco.GetString("harness_model")
-		}
 		if spID := poco.GetString("system_prompt"); spID != "" {
 			if sp, err := app.FindRecordById("prompts", spID); err == nil {
 				if ownerID := sp.GetString("user"); ownerID != "" && ownerID != userID && !sp.GetBool("is_system") {
 					return p, fmt.Errorf("prompt %s does not belong to chat user", spID)
 				}
-				p.Instructions = sp.GetString("body")
+				if body := strings.TrimSpace(sp.GetString("body")); body != "" {
+					p.Instructions = body
+				}
 			}
 		}
 		if modeID := poco.GetString("permission_mode"); modeID != "" {

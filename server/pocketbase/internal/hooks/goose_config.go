@@ -136,20 +136,6 @@ func configInputFor(app core.App, def *core.Record) (gooseconfig.ConfigInput, er
 		in.Mode = mode.GetString("base_session_mode")
 	}
 
-	if hmID := def.GetString("harness_model"); hmID != "" {
-		hm, err := app.FindRecordById("harness_models", hmID)
-		if err != nil {
-			return in, fmt.Errorf("resolve agent_profiles.harness_model=%s: %w", hmID, err)
-		}
-		in.Model = hm.GetString("harness_model_id")
-		if mID := hm.GetString("model"); mID != "" {
-			m, err := app.FindRecordById("models", mID)
-			if err != nil {
-				return in, fmt.Errorf("resolve harness_models.model=%s: %w", mID, err)
-			}
-			in.Provider = m.GetString("provider")
-		}
-	}
 	return in, nil
 }
 

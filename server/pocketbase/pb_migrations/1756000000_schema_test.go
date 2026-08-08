@@ -31,7 +31,7 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 		"harness_models":        {"harness", "model", "harness_model_id"},
 		"provider_keys":         {"user", "provider", "env_vars"},
 		"prompts":               {"name", "body", "user", "is_system"},
-		"agent_profiles":        {"name", "user", "is_system", "harness_model", "system_prompt", "permission_mode"},
+		"agent_profiles":        {"name", "user", "is_system", "system_prompt", "permission_mode"},
 		"skills":                {"user", "is_system", "name", "description", "content", "metadata", "active"},
 		"agent_sessions":        {"chat", "user", "acp_session_id"},
 		"schedule_owners":       {"user", "goose_schedule_id", "display_name"},

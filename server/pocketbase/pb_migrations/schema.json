@@ -1896,19 +1896,6 @@
       },
       {
         "cascadeDelete": false,
-        "collectionId": "pc_harness_models",
-        "hidden": false,
-        "id": "relation2228688879",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "harness_model",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "cascadeDelete": false,
         "collectionId": "pc_prompts",
         "hidden": false,
         "id": "relation1919015417",
