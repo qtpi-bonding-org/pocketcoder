@@ -20,10 +20,20 @@ echo "=== run $RUN_ID ==="
 
 ZIP="/tmp/pocketcoder-ci-run.zip"
 LOGDIR="/tmp/pocketcoder-ci-log"
-curl -sfL -H "$AUTH" "$API/runs/$RUN_ID/logs" -o "$ZIP"
+JOBS_JSON=$(curl --http1.1 -sS -f -H "$AUTH" "$API/runs/$RUN_ID/jobs?per_page=100")
+JOB_ID=$(printf '%s' "$JOBS_JSON" | jq -r '.jobs[] | select(.name == "build") | .id' | head -1)
+if [ -n "$JOB_ID" ]; then
+  curl --http1.1 -sS -fL -H "$AUTH" "$API/jobs/$JOB_ID/logs" -o "$ZIP"
+else
+  curl --http1.1 -sS -fL -H "$AUTH" "$API/runs/$RUN_ID/logs" -o "$ZIP"
+fi
 
-rm -rf "$LOGDIR"
-mkdir -p "$LOGDIR"
-cd "$LOGDIR"
-unzip -q "$ZIP"
-cat ./*/*.txt 2>/dev/null || cat ./*.txt
+if unzip -tq "$ZIP" >/dev/null 2>&1; then
+  rm -rf "$LOGDIR"
+  mkdir -p "$LOGDIR"
+  cd "$LOGDIR"
+  unzip -q "$ZIP"
+  cat ./*/*.txt 2>/dev/null || cat ./*.txt
+else
+  cat "$ZIP"
+fi
