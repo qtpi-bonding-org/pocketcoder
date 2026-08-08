@@ -27,7 +27,7 @@ dependencies:
   flutter_aeroform:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
-      ref: "160604cfa27c"
+      ref: "0c9d1ea48937f1ecfabad57212ee5c80e7caec96"
   http: ^1.2.0
   flutter_secure_storage: ^10.0.0
   pocketbase: ^0.23.2
