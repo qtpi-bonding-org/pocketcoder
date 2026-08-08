@@ -178,7 +178,7 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
         });
       }
     } catch (e) {
-      logWarning('⚠️ [Terminal] Failed to sync SSH key', e);
+      logError('⚠️ [Terminal] Failed to sync SSH key', e);
       // Don't fail the connection if key sync fails
     }
   }
@@ -241,7 +241,7 @@ class SshTerminalCubit extends AppCubit<SshTerminalState> {
     } catch (e) {
       terminal.write('*** SFTP: TRANSFER FAILED ***\r\n');
       terminal.write('  ERROR: ${e.toString()}\r\n');
-      logWarning('[Terminal] SFTP upload failed', e);
+      logError('[Terminal] SFTP upload failed', e);
     } finally {
       emit(state.copyWith(isUploading: false, uploadFileName: null));
     }

@@ -17,10 +17,6 @@ class MockSecureStorage extends Mock implements ISecureStorage {}
 ProvisionConfig _testConfig() => ProvisionConfig(
       planType: 'g6-standard-2',
       region: 'us-east',
-      adminEmail: 'admin@example.com',
-      ntfyEnabled: false,
-      imageRelayUrl: 'https://images.relay.pocketcoder.org',
-      nixosImageLabel: 'pocketcoder-nixos-v1',
     );
 
 void main() {

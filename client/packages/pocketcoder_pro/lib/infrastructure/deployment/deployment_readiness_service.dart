@@ -64,6 +64,7 @@ class DeploymentReadinessService {
             }
             if (doc.error != null && doc.runId == adoptedRunId) {
               yield DeploymentPhase.failed;
+              return;
             }
           }
         }

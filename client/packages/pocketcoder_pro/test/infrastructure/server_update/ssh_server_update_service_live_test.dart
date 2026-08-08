@@ -54,13 +54,6 @@ class _FakeSecureStorage implements ISecureStorage {
   Future<void> storeInstanceCredentials(InstanceCredentials c) =>
       throw UnimplementedError();
   @override
-  Future<void> storeCertificateFingerprint(
-          String instanceId, String fingerprint) =>
-      throw UnimplementedError();
-  @override
-  Future<String?> getCertificateFingerprint(String instanceId) =>
-      throw UnimplementedError();
-  @override
   Future<void> clearAll() => throw UnimplementedError();
   @override
   Future<void> storeProvisionSession(ProvisionSession session) =>
@@ -69,7 +62,8 @@ class _FakeSecureStorage implements ISecureStorage {
   Future<ProvisionSession?> getProvisionSession() =>
       throw UnimplementedError();
   @override
-  Future<void> clearProvisionSession() => throw UnimplementedError();
+  Future<void> clearProvisionSession(String sessionId) =>
+      throw UnimplementedError();
   @override
   Future<void> clearAuthCredentials() => throw UnimplementedError();
   @override
@@ -99,9 +93,7 @@ void main() {
 
       final credentials = InstanceCredentials(
         instanceId: instanceId,
-        adminPassword: 'unused-in-this-test',
         rootSshPrivateKey: privateKey,
-        adminEmail: 'unused-in-this-test@pocketcoder.local',
       );
 
       final pocketBase = PocketBase('https://$host');

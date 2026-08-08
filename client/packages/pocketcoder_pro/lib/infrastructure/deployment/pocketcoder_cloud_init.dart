@@ -26,6 +26,14 @@ write_files:
     content: |
       #!/bin/sh
       set -eu
+      status_file=/var/lib/pocketcoder/public/status.json
+      status() {
+        phase="\$1"
+        tmp="\$status_file.tmp.\$\$"
+        printf '{"schema_version":1,"run_id":"bootstrap","phase":"%s","heartbeat_at":"%s"}\n' "\$phase" "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "\$tmp"
+        mv "\$tmp" "\$status_file"
+      }
+      status installing_host
       install -d -m 0755 /opt/pocketcoder
       install -d -m 0700 /root/.ssh
       printf '%s' '$env' | base64 -d > /opt/pocketcoder/.env
@@ -35,15 +43,20 @@ write_files:
       printf '%s\\n' "\$root_ssh_key" > /root/.ssh/authorized_keys
       chmod 0600 /root/.ssh/authorized_keys
       sed -i '/^root_ssh_key=/d' /opt/pocketcoder/.env
+      status fetching_release
       git clone --depth 1 https://github.com/qtpi-bonding-org/pocketcoder.git /opt/pocketcoder/repo
       cp -a /opt/pocketcoder/repo/. /opt/pocketcoder/
       rm -rf /opt/pocketcoder/repo
       cd /opt/pocketcoder
+      status loading_images
       if docker compose version >/dev/null 2>&1; then
+        status compose_up
         docker compose up -d
       else
+        status compose_up
         docker-compose up -d
       fi
+      status bootstrap_complete
 runcmd:
   - /usr/local/sbin/pocketcoder-bootstrap
 ''');

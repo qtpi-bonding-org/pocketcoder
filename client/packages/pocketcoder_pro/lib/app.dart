@@ -26,6 +26,7 @@ import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:pocketbase/pocketbase.dart';
 
@@ -40,6 +41,7 @@ import 'package:pocketcoder_pro/application/server_update/server_update_message_
 import 'package:pocketcoder_pro/domain/server_update/i_server_update_service.dart';
 import 'package:pocketcoder_pro/infrastructure/server_update/current_instance_store.dart';
 import 'package:pocketcoder_pro/infrastructure/server_update/ssh_server_update_service.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
 import 'package:pocketcoder_pro/presentation/auth/auth_screen.dart'
     as deploy_auth;
 import 'package:pocketcoder_pro/presentation/deployment/config_screen.dart'
@@ -504,6 +506,7 @@ void initializeAeroformDI() {
       getIt<CurrentInstanceStore>(),
       DeploymentReadinessService(client: getIt<http.Client>()),
       getIt<ISecureStorage>(),
+      PocketCoderCredentialStore(getIt<FlutterSecureStorage>()),
     ),
   );
   getIt.registerFactory<DeploymentMessageMapper>(
