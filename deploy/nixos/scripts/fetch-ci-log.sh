@@ -38,7 +38,7 @@ if unzip -tq "$ZIP" >/dev/null 2>&1; then
   mkdir -p "$LOGDIR"
   cd "$LOGDIR"
   unzip -q "$ZIP"
-  cat ./*/*.txt 2>/dev/null || cat ./*.txt
+  (cat ./*/*.txt 2>/dev/null || cat ./*.txt) | tail -300
 else
-  cat "$ZIP"
+  tail -300 "$ZIP"
 fi
