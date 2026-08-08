@@ -367,8 +367,9 @@ class RevenueCatBillingService implements BillingService {
         final products = await Purchases.getProducts([identifier]);
         if (products.isEmpty) return false;
 
-        final purchaseResult =
-            await Purchases.purchaseStoreProduct(products.first);
+        final purchaseResult = await Purchases.purchase(
+          PurchaseParams.storeProduct(products.first),
+        );
         // Different identifiers grant different entitlements
         // ('PocketCoder Pro' for subscriptions, 'deploy' for the
         // one-off deploy pass) --
@@ -377,7 +378,9 @@ class RevenueCatBillingService implements BillingService {
         return purchaseResult.customerInfo.entitlements.active.isNotEmpty;
       }
 
-      final purchaseResult = await Purchases.purchasePackage(package);
+      final purchaseResult = await Purchases.purchase(
+        PurchaseParams.package(package),
+      );
       return purchaseResult.customerInfo.entitlements.active.isNotEmpty;
     } catch (e) {
       return false;
