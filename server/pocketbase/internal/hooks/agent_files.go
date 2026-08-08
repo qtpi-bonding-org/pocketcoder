@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/pocoprompt"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
 )
 
@@ -30,6 +31,7 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 	}
 	userID := instance.GetString("user")
 	files := map[string]string{}
+	body := pocoprompt.Default
 
 	skills, err := app.FindRecordsByFilter("skills", "active = true && (user = {:user} || is_system = true)", "name", 0, 0, map[string]any{"user": userID})
 	if err != nil {
@@ -65,12 +67,14 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 			if ownerID := prompt.GetString("user"); ownerID != "" && ownerID != userID && !prompt.GetBool("is_system") {
 				return fmt.Errorf("prompt %s does not belong to user", promptID)
 			}
-			body := prompt.GetString("body")
-			files["AGENTS.md"] = body
-			files["CLAUDE.md"] = body
-			files[".goosehints"] = body
+			if promptBody := strings.TrimSpace(prompt.GetString("body")); promptBody != "" {
+				body = promptBody
+			}
 		}
 	}
+	files["AGENTS.md"] = body
+	files["CLAUDE.md"] = body
+	files[".goosehints"] = body
 
 	archive, err := tarArchive(files)
 	if err != nil {

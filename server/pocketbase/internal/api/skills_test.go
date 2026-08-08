@@ -160,42 +160,18 @@ func TestListSkills_MergesGlobalAndPerProjectCalls(t *testing.T) {
 	if err := app.Save(harnessRec); err != nil {
 		t.Fatal(err)
 	}
-	models, err := app.FindCollectionByNameOrId("models")
-	if err != nil {
-		t.Fatal(err)
-	}
-	modelRec := core.NewRecord(models)
-	modelRec.Set("name", "test-model")
-	modelRec.Set("provider", "anthropic")
-	if err := app.Save(modelRec); err != nil {
-		t.Fatal(err)
-	}
-	harnessModels, err := app.FindCollectionByNameOrId("harness_models")
-	if err != nil {
-		t.Fatal(err)
-	}
-	harnessModelRec := core.NewRecord(harnessModels)
-	harnessModelRec.Set("harness", harnessRec.Id)
-	harnessModelRec.Set("model", modelRec.Id)
-	harnessModelRec.Set("harness_model_id", "test-model")
-	if err := app.Save(harnessModelRec); err != nil {
-		t.Fatal(err)
-	}
-
 	poco, err := app.FindCollectionByNameOrId("agent_profiles")
 	if err != nil {
 		t.Fatal(err)
 	}
 	withFolder := core.NewRecord(poco)
 	withFolder.Set("name", "repo-a")
-	withFolder.Set("harness_model", harnessModelRec.Id)
 	withFolder.Set("workspace_folders", []string{"/workspace/repo-a"})
 	if err := app.Save(withFolder); err != nil {
 		t.Fatal(err)
 	}
 	noFolder := core.NewRecord(poco)
 	noFolder.Set("name", "no-folder")
-	noFolder.Set("harness_model", harnessModelRec.Id)
 	if err := app.Save(noFolder); err != nil {
 		t.Fatal(err)
 	}
