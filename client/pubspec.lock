@@ -500,8 +500,8 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: "852fc88"
-      resolved-ref: "852fc88a29d28a159e8818813511e54a4651506e"
+      ref: "a496e84"
+      resolved-ref: "a496e844de59964a345090be8b4b53d6a599f39d"
       url: "git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git"
     source: git
     version: "0.1.4"
