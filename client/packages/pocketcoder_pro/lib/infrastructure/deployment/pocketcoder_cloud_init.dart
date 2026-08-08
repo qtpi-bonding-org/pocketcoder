@@ -26,6 +26,7 @@ write_files:
     content: |
       #!/bin/sh
       set -eu
+      install -d -m 0755 /var/lib/pocketcoder/public
       status_file=/var/lib/pocketcoder/public/status.json
       status() {
         phase="\$1"
