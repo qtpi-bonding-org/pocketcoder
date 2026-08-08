@@ -18,7 +18,9 @@ pkgs.testers.runNixOSTest {
           root * /var/lib/pocketcoder/public
           file_server
         }
-        handle { respond "no backend" 502 }
+        handle {
+          respond "no backend" 502
+        }
       }
       EOF
     '';
