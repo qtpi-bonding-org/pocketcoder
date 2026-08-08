@@ -190,6 +190,20 @@ EOF
         pc_status_error loading_images "release_bundle_unavailable"
         exit 1
       fi
+      MISSING_IMAGES=0
+      while IFS= read -r IMAGE; do
+        if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+          MISSING_IMAGES=1
+          echo "missing prebuilt image: $IMAGE" >&2
+        fi
+      done <<EOF
+$(docker compose -f "$INSTALL_DIR/docker-compose.yml" config --images)
+EOF
+      if [ "$MISSING_IMAGES" -ne 0 ]; then
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_bundle_incomplete"
+        exit 1
+      fi
       pc_status_heartbeat_stop
 
       # --- Start PocketCoder stack without building on the VPS. ---
