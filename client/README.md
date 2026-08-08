@@ -4,13 +4,18 @@ The official mobile client for PocketCoder—your local-first, privacy-focused A
 
 ## 🚀 Overview
 
-PocketCoder Mobile is a thin client designed to connect to your personal PocketCoder backend. It provides a terminal-grade interface for interacting with your AI agent, managing sessions, and overseeing automated tasks from your phone or tablet.
+PocketCoder Mobile is a Flutter client designed to connect to your personal
+PocketCoder backend. The workspace provides a shared FOSS core plus two app
+targets: the Pro shell (`apps/pocketcoder`) and the FOSS/F-Droid-compatible app
+(`apps/pocketcoder_foss`).
 
 ### Core Philosophy
 - **Local-First**: Your data stays on your infrastructure.
 - **Privacy-Centric**: Anonymous error reporting and secure credential storage.
-- **FOSS Core**: The base application logic is fully open-source (MPL-2.0).
-- **Pro Features**: Optional proprietary enhancements (Firebase Push, RevenueCat) for the App Store version.
+- **FOSS Core**: Shared application logic and the FOSS app target are kept free
+  of proprietary integrations.
+- **Pro Features**: The Pro shell adds Firebase push, RevenueCat billing, and
+  deployment integrations.
 
 ## ✨ Features
 
@@ -30,7 +35,7 @@ PocketCoder Mobile is a thin client designed to connect to your personal PocketC
 
 ## 🛠️ Development
 
-This project is a monorepo managed by [Melos](https://melos.invertase.dev).
+This project is a workspace managed by [Melos](https://melos.invertase.dev).
 
 ### Architecture
 1. **`packages/pocketcoder_flutter`**: The core FOSS-pure logic and UI components.
@@ -42,14 +47,17 @@ This project is a monorepo managed by [Melos](https://melos.invertase.dev).
 # 1. Install Melos
 dart pub global activate melos
 
-# 2. Bootstrap workspace
+# 2. From client/, bootstrap the workspace
+flutter pub get
 melos bootstrap
 
 # 3. Generate code
 melos run build_gen
 
-# 4. Run the app
-cd apps/pocketcoder && flutter run
+# 4. Run an app target
+melos run run_app       # Pro
+melos run run_foss      # FOSS/F-Droid-compatible target
+melos run run_incognito # Pro in Chrome Incognito
 ```
 
 ### Purity Check
@@ -58,10 +66,14 @@ To ensure the core package remains FOSS-pure (no proprietary SDK leaks):
 melos run check:purity
 ```
 
+Build the FOSS Android target independently with `melos run build_foss`.
+It excludes the Pro push, billing, and deployment integrations.
+
 ## 🛡️ License
 
-The PocketCoder core application (`pocketcoder_flutter`) is licensed under **MPL-2.0**.
-See the [LICENSE](LICENSE) file for details.
+The shared FOSS core (`pocketcoder_flutter`) and FOSS app target are covered by
+the client workspace's licensing terms. See [LICENSE](LICENSE) and
+[README_MONOREPO.md](README_MONOREPO.md) for the workspace rules.
 
 ---
 Built with 💚 by the [QtPi Bonding Org](https://github.com/qtpi-bonding-org).

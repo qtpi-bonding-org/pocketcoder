@@ -24,7 +24,7 @@
 
 set -uo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TARGET_FILE="$REPO_ROOT/CODEBASE.md"
 TAG="@pocketcoder-core"
 
