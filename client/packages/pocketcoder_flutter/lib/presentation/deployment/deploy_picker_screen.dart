@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 /// Data-driven deploy picker screen.
 ///
@@ -48,8 +50,7 @@ class DeployPickerScreen extends StatelessWidget {
                         VSpace.x3,
                         ...options.map(
                           (option) => Padding(
-                            padding:
-                                EdgeInsets.only(bottom: AppSizes.space),
+                            padding: EdgeInsets.only(bottom: AppSizes.space),
                             child: _ProviderCard(
                               option: option,
                               credentials: credentials,
@@ -141,21 +142,40 @@ class _ProviderCard extends StatelessWidget {
   }
 
   Future<void> _onTap(BuildContext context) async {
-    if (option.requiresPurchase) {
+    OnboardingLogger.event('deployment provider selected', {
+      'provider': option.name,
+      'requires_purchase': option.requiresPurchase,
+      'route': option.routePath ?? 'external',
+    });
+    // Keep the real purchase gate in release builds, but allow local debug
+    // builds to exercise the provider OAuth/deployment path without a live
+    // RevenueCat purchase.
+    if (option.requiresPurchase && !kDebugMode) {
       final billing = GetIt.I<BillingService>();
       final hasAccess = await billing.hasDeployAccess();
       if (!hasAccess) {
         final purchased = await billing.purchase('pocketcoder_deploy_24h');
-        if (!purchased) return;
+        if (!purchased) {
+          OnboardingLogger.event('deployment provider access declined', {
+            'provider': option.name,
+          });
+          return;
+        }
       }
     }
 
     final url = option.url;
     final routePath = option.routePath;
     if (url != null) {
+      OnboardingLogger.event('opening external deployment provider', {
+        'provider': option.name,
+      });
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else if (routePath != null) {
       if (context.mounted) {
+        OnboardingLogger.event('opening deployment provider route', {
+          'provider': option.name,
+        });
         context.push(routePath, extra: credentials);
       }
     }

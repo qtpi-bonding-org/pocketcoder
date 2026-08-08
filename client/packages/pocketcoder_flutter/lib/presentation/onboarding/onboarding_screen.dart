@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_login_screen.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 /// Entry point for the one-time server setup funnel.
 ///
@@ -55,9 +56,11 @@ class OnboardingScreen extends StatelessWidget {
                       child: _OnboardingChoice(
                         label: context.l10n.onboardingLogin,
                         description: context.l10n.onboardingExistingServer,
-                        onTap: () => context.pushNamed(
-                          RouteNames.onboardingLogin,
-                        ),
+                        onTap: () {
+                          OnboardingLogger.event('onboarding choice selected',
+                              {'choice': 'login'});
+                          context.pushNamed(RouteNames.onboardingLogin);
+                        },
                       ),
                     ),
                     HSpace.x2,
@@ -65,9 +68,11 @@ class OnboardingScreen extends StatelessWidget {
                       child: _OnboardingChoice(
                         label: context.l10n.onboardingDeploy,
                         description: context.l10n.onboardingCreateServer,
-                        onTap: () => context.pushNamed(
-                          RouteNames.onboardingDeploy,
-                        ),
+                        onTap: () {
+                          OnboardingLogger.event('onboarding choice selected',
+                              {'choice': 'deploy'});
+                          context.pushNamed(RouteNames.onboardingDeploy);
+                        },
                       ),
                     ),
                   ],

@@ -3,6 +3,7 @@ import 'package:flutter_aeroform/domain/models/oauth_token.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 import 'auth_state.dart';
 
@@ -18,7 +19,8 @@ class AuthCubit extends AppCubit<AuthState> {
 
   /// Initiates OAuth authentication flow
   Future<void> authenticate() async {
-    return tryOperation(() async {
+    OnboardingLogger.event('Linode OAuth started');
+    await tryOperation(() async {
       await _authService.authenticate();
 
       // Get the access token to confirm successful authentication
@@ -39,6 +41,13 @@ class AuthCubit extends AppCubit<AuthState> {
         isAuthenticated: true,
       );
     }, emitLoading: true);
+    if (state.isSuccess && state.isAuthenticated == true) {
+      OnboardingLogger.event('Linode OAuth succeeded');
+    } else if (state.isFailure) {
+      OnboardingLogger.event('Linode OAuth failed', {
+        'error': state.error?.toString() ?? 'unknown',
+      });
+    }
   }
 
   /// Logs out the user by clearing all stored tokens
@@ -62,7 +71,8 @@ class AuthCubit extends AppCubit<AuthState> {
           final token = OAuthToken(
             accessToken: accessToken,
             refreshToken: refreshToken ?? '',
-            expiresAt: expiresAt ?? DateTime.now().add(const Duration(hours: 1)),
+            expiresAt:
+                expiresAt ?? DateTime.now().add(const Duration(hours: 1)),
             scopes: _authService.requiredScopes,
           );
 

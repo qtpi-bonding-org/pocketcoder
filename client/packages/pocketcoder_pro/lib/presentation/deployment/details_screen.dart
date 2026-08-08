@@ -53,6 +53,11 @@ class _DetailsViewState extends State<_DetailsView> {
   void initState() {
     super.initState();
     _cubit = context.read<DeploymentCubit>();
+    // Cubit state is in-memory only. Hydrate the instance when Details is
+    // opened from a restored/deep-linked instance ID.
+    if (_cubit.state.instance?.id != widget.instanceId) {
+      _cubit.loadInstance(widget.instanceId);
+    }
     // Start periodic status refresh
     _cubit.refreshInstanceStatus(widget.instanceId);
     _loadCredentials();
@@ -318,13 +323,18 @@ class _DetailsViewState extends State<_DetailsView> {
             fontSize: AppSizes.fontTiny,
           ),
         ),
-        Text(
-          value.toUpperCase(),
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            color: colors.onSurface,
-            fontSize: AppSizes.fontTiny,
-            fontWeight: AppFonts.heavy,
+        HSpace.x2,
+        Flexible(
+          child: Text(
+            value.toUpperCase(),
+            textAlign: TextAlign.right,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: AppFonts.bodyFamily,
+              color: colors.onSurface,
+              fontSize: AppSizes.fontTiny,
+              fontWeight: AppFonts.heavy,
+            ),
           ),
         ),
       ],

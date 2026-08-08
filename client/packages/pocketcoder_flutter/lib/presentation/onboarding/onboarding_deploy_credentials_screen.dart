@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 class OnboardingDeployCredentialsScreen extends StatefulWidget {
   const OnboardingDeployCredentialsScreen({super.key});
@@ -31,11 +32,15 @@ class _OnboardingDeployCredentialsScreenState
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
+      OnboardingLogger.event('deployment credentials validation failed');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.onboardingRequiredFields)),
       );
       return;
     }
+    OnboardingLogger.event('deployment credentials accepted', {
+      'email_domain': email.contains('@') ? email.split('@').last : 'invalid',
+    });
     context.pushNamed(
       RouteNames.deploy,
       extra: DeployCredentials(email: email, password: password),
@@ -48,7 +53,8 @@ class _OnboardingDeployCredentialsScreenState
       title: context.l10n.onboardingDeployTitle,
       actions: [
         TerminalAction(
-            label: context.l10n.actionBack, onTap: () => context.pop()),
+            label: context.l10n.actionBack,
+            onTap: () => AppNavigation.back(context)),
         TerminalAction(label: context.l10n.actionContinue, onTap: _continue),
       ],
       body: Center(

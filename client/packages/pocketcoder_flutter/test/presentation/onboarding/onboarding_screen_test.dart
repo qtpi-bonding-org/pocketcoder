@@ -114,4 +114,43 @@ void main() {
     expect(captured!.email, 'admin@example.com');
     expect(captured!.password, 'chosen-password');
   });
+
+  testWidgets(
+      'BACK does not throw when login screen is the router root '
+      '(reachable server, not authenticated boots straight here)',
+      (tester) async {
+    // Boot reaches this screen via context.goNamed (a stack replace), so
+    // there is no previous route to pop back to.
+    final router = GoRouter(
+      initialLocation: AppRoutes.onboardingLogin,
+      routes: [
+        GoRoute(
+          name: RouteNames.onboardingLogin,
+          path: AppRoutes.onboardingLogin,
+          builder: (_, __) => const OnboardingLoginScreen(),
+        ),
+        GoRoute(
+          name: RouteNames.onboarding,
+          path: AppRoutes.onboarding,
+          builder: (_, __) => const Scaffold(body: Text('SERVER CHOICE')),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MultiBlocProvider(
+      providers: [BlocProvider<PocoCubit>(create: (_) => PocoCubit())],
+      child: MaterialApp.router(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    ));
+    await tester.pump();
+
+    await tester.tap(find.text('BACK'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+  });
 }

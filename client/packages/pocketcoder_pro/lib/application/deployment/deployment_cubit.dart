@@ -125,6 +125,16 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
     await _refreshStatus(instanceId);
   }
 
+  Future<void> loadInstance(String instanceId) async {
+    final instances = await _provisioningService.getExistingInstances();
+    for (final instance in instances) {
+      if (instance.id == instanceId) {
+        emit(state.copyWith(instance: instance, instanceId: instanceId));
+        return;
+      }
+    }
+  }
+
   Future<void> _refreshStatus(String instanceId) async {
     try {
       final status = await _provisioningService.getInstanceStatus(instanceId);
