@@ -47,7 +47,7 @@
 
       # Write Caddyfile
       cat > /etc/caddy/Caddyfile <<EOF
-      http://$DOMAIN {
+      :80 {
         handle /_pocketcoder/status.json {
           uri strip_prefix /_pocketcoder
           root * /var/lib/pocketcoder/public
