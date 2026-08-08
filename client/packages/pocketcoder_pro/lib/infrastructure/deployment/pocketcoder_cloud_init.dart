@@ -115,6 +115,17 @@ write_files:
         status_error loading_images release_bundle_unavailable
         exit 1
       fi
+      missing_images=0
+      for image in \$("\$compose" config --images); do
+        if ! docker image inspect "\$image" >/dev/null 2>&1; then
+          missing_images=1
+          printf 'missing prebuilt image: %s\\n' "\$image" >&2
+        fi
+      done
+      if [ "\$missing_images" -ne 0 ]; then
+        status_error loading_images release_bundle_incomplete
+        exit 1
+      fi
       status compose_up
       heartbeat_start
       "\$compose" up -d --no-build
