@@ -19,12 +19,11 @@ fi
 RUN_STATUS=$(printf '%s' "$RUNS_JSON" | jq -r '.workflow_runs[0].status // "unknown"')
 RUN_CONCLUSION=$(printf '%s' "$RUNS_JSON" | jq -r '.workflow_runs[0].conclusion // "pending"')
 echo "=== run $RUN_ID status=$RUN_STATUS conclusion=$RUN_CONCLUSION ==="
+JOBS_JSON=$(curl --http1.1 -sS -f -H "$AUTH" "$API/runs/$RUN_ID/jobs?per_page=100")
+printf '%s' "$JOBS_JSON" | jq -r '.jobs[] | "job=\(.name) status=\(.status) conclusion=\(.conclusion // "pending")"'
 if [ "$RUN_STATUS" != "completed" ]; then
   exit 0
 fi
-
-JOBS_JSON=$(curl --http1.1 -sS -f -H "$AUTH" "$API/runs/$RUN_ID/jobs?per_page=100")
-printf '%s' "$JOBS_JSON" | jq -r '.jobs[] | "job=\(.name) status=\(.status) conclusion=\(.conclusion // "pending")"'
 
 for JOB_NAME in docker-images promote; do
   JOB_ID=$(printf '%s' "$JOBS_JSON" | jq -r --arg name "$JOB_NAME" '.jobs[] | select(.name == $name) | .id' | head -1)

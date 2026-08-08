@@ -148,9 +148,9 @@ jobs:
           # project name is "pocketcoder" too. Without this pin, CI's
           # checkout directory name deciding the project name would be an
           # implicit coincidence, not a guarantee.
-          # Ollama is a pre-built upstream image, unlike the app images below;
-          # pull it explicitly so it is included in the same verified cache.
-          docker compose -p pocketcoder pull ollama
+          # The app images below are built locally. External Compose images
+          # are pulled during the bundle step so a fresh VPS needs no registry
+          # access and no image build.
           docker compose -p pocketcoder --profile harness-images build \
             pocketbase goose mcp-gateway \
             claude-code-harness-image codex-harness-image opencode-harness-image
@@ -158,19 +158,19 @@ jobs:
       - name: Save + compress images
         run: |
           set -euo pipefail
-          # Compose pulls Ollama by the digest pinned in docker-compose.yml.
-          # Resolve every required image from Compose instead of assuming
-          # mutable `:latest` tags exist locally. Goose is intentionally
-          # version-tagged while the locally built app images use the default
-          # tag, so hardcoding tags here would drift from docker-compose.yml.
-          IMAGES=$(docker compose -p pocketcoder --profile harness-images config --images \
-            | grep -E '^(pocketcoder-(pocketbase|goose|mcp-gateway)(:|$)|pocketcoder-harness-(claude-code|codex|opencode):|ollama/ollama@)')
+          # Resolve every required image from the effective Compose graph so
+          # the VPS can start with `--no-build` and without registry access.
+          IMAGES=$(docker compose -p pocketcoder --profile harness-images config --images)
           test -n "$IMAGES"
           echo "Images included in release bundle:"
           printf '%s\n' "$IMAGES"
           IMAGE_REFS=""
           while IFS= read -r image; do
             test -n "$image"
+            if ! docker image inspect "$image" >/dev/null 2>&1; then
+              echo "Pulling external image: $image"
+              docker pull "$image"
+            fi
             docker image inspect "$image" >/dev/null
             IMAGE_REFS="$IMAGE_REFS $image"
           done <<EOF
