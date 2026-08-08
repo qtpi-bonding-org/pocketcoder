@@ -11,9 +11,25 @@ void main() {
 
     expect(bootstrap.userData, contains('/usr/local/sbin/pocketcoder-bootstrap'));
     expect(bootstrap.userData, contains('git clone'));
-    expect(bootstrap.userData, contains('docker compose up -d'));
+    expect(bootstrap.userData, contains("compose='docker compose'"));
+    expect(bootstrap.userData, contains('checkout --detach'));
+    expect(bootstrap.userData, contains('release-\$source_commit.json'));
+    expect(bootstrap.userData, contains('pocketcoder-harness-claude-code'));
+    expect(bootstrap.userData, contains('{schema:1'));
     expect(bootstrap.userData, contains('base64 -d'));
     expect(bootstrap.userData, isNot(contains('throwaway-password')));
+  });
+
+  test('pins the checkout and release bundle to the supplied commit', () {
+    final bootstrap = PocketCoderCloudInit.build(
+      adminEmail: 'admin@example.test',
+      adminPassword: 'password',
+      rootSshKey: 'ssh-ed25519 AAAA',
+      sourceCommit: '0123456789abcdef',
+    );
+    expect(bootstrap.userData, contains("source_commit='0123456789abcdef'"));
+    expect(bootstrap.userData, contains('release-\$source_commit.json'));
+    expect(bootstrap.userData, contains('release_bundle_unavailable'));
   });
 
   test('rejects newline injection in bootstrap values', () {

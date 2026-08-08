@@ -62,8 +62,14 @@ IP_DASHED=${PUBLIC_IP//./-}
 DOMAIN="${IP_DASHED}.sslip.io"
 
 install -d -m 0755 /etc/caddy /etc/pocketcoder
+install -d -m 0755 /var/lib/pocketcoder/public
 cat > /etc/caddy/Caddyfile <<EOF
 ${DOMAIN} {
+  handle /_pocketcoder/status.json* {
+    uri strip_prefix /_pocketcoder
+    root * /var/lib/pocketcoder/public
+    file_server
+  }
   reverse_proxy 127.0.0.1:8090
 }
 EOF

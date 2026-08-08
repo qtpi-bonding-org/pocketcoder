@@ -7,8 +7,9 @@ class PocketCoderCloudInit {
     required String adminEmail,
     required String adminPassword,
     required String rootSshKey,
+    String sourceCommit = 'main',
   }) {
-    for (final value in [adminEmail, adminPassword, rootSshKey]) {
+    for (final value in [adminEmail, adminPassword, rootSshKey, sourceCommit]) {
       if (value.contains('\n') || value.contains('\r')) {
         throw const FormatException('Bootstrap values cannot contain newlines');
       }
@@ -28,12 +29,36 @@ write_files:
       set -eu
       install -d -m 0755 /var/lib/pocketcoder/public
       status_file=/var/lib/pocketcoder/public/status.json
+      run_id=\$(cat /proc/sys/kernel/random/uuid)
+      source_commit='${sourceCommit}'
+      current_phase=installing_host
+      heartbeat_pid=
       status() {
-        phase="\$1"
+        current_phase="\$1"
+        detail="\${2:-}"
+        error="\${3:-}"
         tmp="\$status_file.tmp.\$\$"
-        printf '{"schema_version":1,"run_id":"bootstrap","phase":"%s","heartbeat_at":"%s"}\n' "\$phase" "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "\$tmp"
+        jq -cn --arg runId "\$run_id" --arg phase "\$current_phase" \\
+          --arg detail "\$detail" --arg sourceCommit "\$source_commit" \\
+          --arg updatedAt "\$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg error "\$error" \\
+          '{schema:1,runId:\$runId,phase:\$phase,detail:(if \$detail == "" then null else \$detail end),sourceCommit:\$sourceCommit,updatedAt:\$updatedAt,error:(if \$error == "" then null else \$error end)}' > "\$tmp"
         mv "\$tmp" "\$status_file"
       }
+      status_error() {
+        status "\$1" failed "\$2"
+      }
+      heartbeat_start() {
+        (while :; do sleep 60; status "\$current_phase" working; done) &
+        heartbeat_pid=\$!
+      }
+      heartbeat_stop() {
+        if [ -n "\$heartbeat_pid" ]; then
+          kill "\$heartbeat_pid" 2>/dev/null || true
+          wait "\$heartbeat_pid" 2>/dev/null || true
+          heartbeat_pid=
+        fi
+      }
+      trap 'rc=\$?; heartbeat_stop; if [ "\$rc" -ne 0 ]; then status_error "\$current_phase" bootstrap_failed; fi; exit "\$rc"' EXIT
       status installing_host
       install -d -m 0755 /opt/pocketcoder
       install -d -m 0700 /root/.ssh
@@ -45,18 +70,51 @@ write_files:
       chmod 0600 /root/.ssh/authorized_keys
       sed -i '/^root_ssh_key=/d' /opt/pocketcoder/.env
       status fetching_release
+      heartbeat_start
       git clone --depth 1 https://github.com/qtpi-bonding-org/pocketcoder.git /opt/pocketcoder/repo
+      git -C /opt/pocketcoder/repo fetch --depth 1 origin "\$source_commit"
+      git -C /opt/pocketcoder/repo checkout --detach "\$source_commit"
+      heartbeat_stop
       cp -a /opt/pocketcoder/repo/. /opt/pocketcoder/
       rm -rf /opt/pocketcoder/repo
       cd /opt/pocketcoder
-      status loading_images
       if docker compose version >/dev/null 2>&1; then
-        status compose_up
-        docker compose up -d
+        compose='docker compose'
       else
-        status compose_up
-        docker-compose up -d
+        compose='docker-compose'
       fi
+      status loading_images
+      heartbeat_start
+      release_base="\${RELEASE_BASE:-https://images.pocketcoder.org}"
+      release_url="\$release_base/release-\$source_commit.json"
+      loaded=0
+      if record=\$(curl -sf --max-time 15 "\$release_url"); then
+        cache_url=\$(printf '%s' "\$record" | jq -r '.dockerImages.url // empty')
+        cache_sha256=\$(printf '%s' "\$record" | jq -r '.dockerImages.sha256 // empty')
+        cache_file=\$(mktemp)
+        printf '%s\\n' "\$release_url" > /var/log/pocketcoder-fetch.log
+        if curl -sf --max-time 180 -o "\$cache_file" "\$cache_url"; then
+          actual_sha256=\$(sha256sum "\$cache_file" | cut -d' ' -f1)
+          if [ "\$actual_sha256" = "\$cache_sha256" ] && gunzip -c "\$cache_file" | docker load; then
+            loaded=1
+          fi
+        fi
+        rm -f "\$cache_file"
+      fi
+      heartbeat_stop
+      if [ "\$loaded" -ne 1 ] && [ "\$source_commit" != "main" ]; then
+        status_error loading_images release_bundle_unavailable
+        exit 1
+      fi
+      status compose_up
+      heartbeat_start
+      if ! docker image inspect pocketcoder-harness-claude-code:0.64.2 >/dev/null 2>&1 || \\
+         ! docker image inspect pocketcoder-harness-codex:1.1.9 >/dev/null 2>&1 || \\
+         ! docker image inspect pocketcoder-harness-opencode:1.18.11 >/dev/null 2>&1; then
+        "\$compose" --profile harness-images build claude-code-harness-image codex-harness-image opencode-harness-image
+      fi
+      "\$compose" up -d
+      heartbeat_stop
       status bootstrap_complete
 runcmd:
   - /usr/local/sbin/pocketcoder-bootstrap
