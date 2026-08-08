@@ -166,18 +166,21 @@ jobs:
           IMAGES=$(docker compose -p pocketcoder --profile harness-images config --images \
             | grep -E '^(pocketcoder-(pocketbase|goose|mcp-gateway)(:|$)|pocketcoder-harness-(claude-code|codex|opencode):|ollama/ollama@)')
           test -n "$IMAGES"
-          IMAGE_IDS=""
+          echo "Images included in release bundle:"
+          printf '%s\n' "$IMAGES"
+          IMAGE_REFS=""
           while IFS= read -r image; do
             test -n "$image"
-            image_id=$(docker image inspect "$image" --format '{{.Id}}')
-            test -n "$image_id"
-            IMAGE_IDS="$IMAGE_IDS $image_id"
+            docker image inspect "$image" >/dev/null
+            IMAGE_REFS="$IMAGE_REFS $image"
           done <<EOF
           $IMAGES
           EOF
-          # Save local image IDs so digest-pinned references are handled by
-          # Docker consistently across runner versions.
-          docker save $IMAGE_IDS \
+          # Save the repository references, not only image IDs. Docker load
+          # restores the Compose tags only when the archive contains those
+          # references; ID-only archives can load as <none>, which makes
+          # `docker compose up --no-build` reject an otherwise valid bundle.
+          docker save $IMAGE_REFS \
             | gzip > pocketcoder-docker-images.tar.gz
 
       - name: Compute image metadata
