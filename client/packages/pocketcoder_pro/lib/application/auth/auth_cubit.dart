@@ -1,5 +1,7 @@
 import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart';
 import 'package:flutter_aeroform/domain/models/oauth_token.dart';
+import 'package:flutter_aeroform/domain/cloud_provider/cloud_provider_registry.dart';
+import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
@@ -16,6 +18,15 @@ class AuthCubit extends AppCubit<AuthState> {
     this._authService,
     this._secureStorage,
   ) : super(AuthState.initial());
+
+  AuthCubit.fromRegistry(
+    CloudProviderRegistry registry,
+    ISecureStorage secureStorage, {
+    CloudProviderKind provider = CloudProviderKind.linode,
+  }) : this(
+          registry.oauthServiceFor(provider),
+          secureStorage,
+        );
 
   /// Initiates OAuth authentication flow
   Future<void> authenticate() async {

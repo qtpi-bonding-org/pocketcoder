@@ -20,6 +20,7 @@ import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
 import 'package:flutter_aeroform/domain/security/i_ssh_key_generator.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_cloud_init.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/selected_cloud_provider.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -27,6 +28,9 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:get_it/get_it.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+
+const _pocketCoderReleaseRef =
+    String.fromEnvironment('POCKETCODER_RELEASE_REF', defaultValue: 'main');
 
 /// Configuration screen for deployment settings
 class ConfigScreen extends StatelessWidget {
@@ -437,15 +441,15 @@ class _ConfigViewState extends State<_ConfigView> {
       final keyPair = await GetIt.I<ISshKeyGenerator>().generate();
       final host = config.backend == ProvisionBackendKind.nixos
           ? ImageBakedHostSpec(
-              labelPrefix: 'provisioned',
+              labelPrefix: pocketCoderHostLabelPrefix,
               authorizedKey: keyPair.publicKey,
             )
           : GeneratedConfigHostSpec(
-              labelPrefix: 'provisioned',
+              labelPrefix: pocketCoderHostLabelPrefix,
               authorizedKey: keyPair.publicKey,
               reverseProxyPort: 8090,
               hostname: HostnameStrategy.sslipIo,
-              acmeEmail: '',
+              acmeEmail: credentials.email,
               staticPaths: const {
                 '/_pocketcoder': '/var/lib/pocketcoder/public',
               },
@@ -468,6 +472,7 @@ class _ConfigViewState extends State<_ConfigView> {
               adminEmail: credentials.email,
               adminPassword: credentials.password,
               rootSshKey: keyPair.publicKey,
+              sourceCommit: _pocketCoderReleaseRef,
             );
       await deploymentCubit.deploy(
         config,

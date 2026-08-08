@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_aeroform/domain/cloud_provider/cloud_provider_registry.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/selected_cloud_provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
@@ -19,8 +21,6 @@ import 'package:injectable/injectable.dart' show GetItHelper;
 import 'package:flutter_aeroform/flutter_aeroform.module.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_aeroform/domain/models/app_config.dart';
-import 'package:flutter_aeroform/domain/auth/i_oauth_service.dart';
-import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart';
 import 'package:flutter_aeroform/domain/deployment/i_provisioning_service.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
@@ -482,7 +482,7 @@ void initializeAeroformDI() {
   // Register deploy cubits as factories
   getIt.registerFactory<AuthCubit>(
     () => AuthCubit(
-      getIt<IOAuthService>(),
+      getIt<CloudProviderRegistry>().oauthServiceFor(selectedCloudProvider),
       getIt<ISecureStorage>(),
     ),
   );
@@ -491,7 +491,7 @@ void initializeAeroformDI() {
   getIt.registerFactory<ConfigCubit>(
     () => ConfigCubit(
       getIt<IValidationService>(),
-      getIt<ICloudProviderAPIClient>(),
+      getIt<CloudProviderRegistry>().apiClientFor(selectedCloudProvider),
       getIt<ISecureStorage>(),
     ),
   );

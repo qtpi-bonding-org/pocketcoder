@@ -1,4 +1,5 @@
 import 'package:flutter_aeroform/domain/cloud_provider/i_cloud_provider_api_client.dart';
+import 'package:flutter_aeroform/domain/cloud_provider/cloud_provider_registry.dart';
 import 'package:flutter_aeroform/domain/models/cloud_provider.dart';
 import 'package:flutter_aeroform/domain/models/provision_config.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
@@ -19,6 +20,17 @@ class ConfigCubit extends AppCubit<ConfigState> {
     this._apiClient,
     this._secureStorage,
   ) : super(ConfigState.initial());
+
+  ConfigCubit.fromRegistry(
+    IValidationService validationService,
+    CloudProviderRegistry registry,
+    ISecureStorage secureStorage, {
+    CloudProviderKind provider = CloudProviderKind.linode,
+  }) : this(
+          validationService,
+          registry.apiClientFor(provider),
+          secureStorage,
+        );
 
   /// Updates the deployment configuration
   void updateConfig(ProvisionConfig config) {

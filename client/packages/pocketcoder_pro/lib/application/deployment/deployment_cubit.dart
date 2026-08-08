@@ -15,6 +15,7 @@ import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/deployment_readiness_service.dart';
 import 'package:pocketcoder_pro/infrastructure/server_update/current_instance_store.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/selected_cloud_provider.dart';
 
 import 'deployment_state.dart';
 
@@ -119,18 +120,7 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
         hostname: hostname,
         instanceId: instanceId,
       )) {
-        final stage = switch (phase) {
-          DeploymentPhase.waitingForCaddy => OnboardingStage.securingConnection,
-          DeploymentPhase.installingHost => OnboardingStage.installingHost,
-          DeploymentPhase.fetchingRelease => OnboardingStage.fetchingRelease,
-          DeploymentPhase.loadingImages => OnboardingStage.loadingImages,
-          DeploymentPhase.composeUp => OnboardingStage.startingServices,
-          DeploymentPhase.bootstrapComplete => OnboardingStage.finishingUp,
-          DeploymentPhase.ready => OnboardingStage.ready,
-          DeploymentPhase.failed ||
-          DeploymentPhase.timedOut =>
-            OnboardingStage.failed,
-        };
+        final stage = phase.toOnboardingStage();
         emit(state.copyWith(
           status: stage == OnboardingStage.failed
               ? UiFlowStatus.failure
@@ -155,7 +145,10 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
   }
 
   Future<void> loadInstance(String instanceId) async {
-    final instances = await _provisioningService.getExistingInstances();
+    final instances = await _provisioningService.getExistingInstances(
+      labelPrefix: pocketCoderHostLabelPrefix,
+      provider: selectedCloudProvider,
+    );
     for (final instance in instances) {
       if (instance.id == instanceId) {
         emit(state.copyWith(instance: instance, instanceId: instanceId));
@@ -166,8 +159,14 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
 
   Future<void> _refreshStatus(String instanceId) async {
     try {
-      final status = await _provisioningService.getInstanceStatus(instanceId);
-      final instances = await _provisioningService.getExistingInstances();
+      final status = await _provisioningService.getInstanceStatus(
+        instanceId,
+        provider: selectedCloudProvider,
+      );
+      final instances = await _provisioningService.getExistingInstances(
+        labelPrefix: pocketCoderHostLabelPrefix,
+        provider: selectedCloudProvider,
+      );
       Instance? instance;
       for (final item in instances) {
         if (item.id == instanceId) {
