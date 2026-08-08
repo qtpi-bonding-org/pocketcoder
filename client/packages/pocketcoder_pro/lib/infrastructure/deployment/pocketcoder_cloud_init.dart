@@ -71,6 +71,18 @@ write_files:
       sed -i '/^root_ssh_key=/d' /opt/pocketcoder/.env
       status fetching_release
       heartbeat_start
+      release_base="\${RELEASE_BASE:-https://images.pocketcoder.org}"
+      if [ "\$source_commit" = main ]; then
+        release_url="\$release_base/release-manifest.json"
+      else
+        release_url="\$release_base/release-\$source_commit.json"
+      fi
+      release_record=\$(curl -sf --max-time 15 "\$release_url")
+      resolved_commit=\$(printf '%s' "\$release_record" | jq -r '.sourceCommit // empty')
+      test -n "\$resolved_commit"
+      if [ "\$source_commit" = main ]; then
+        source_commit="\$resolved_commit"
+      fi
       git clone --depth 1 https://github.com/qtpi-bonding-org/pocketcoder.git /opt/pocketcoder/repo
       git -C /opt/pocketcoder/repo fetch --depth 1 origin "\$source_commit"
       git -C /opt/pocketcoder/repo checkout --detach "\$source_commit"
@@ -85,35 +97,27 @@ write_files:
       fi
       status loading_images
       heartbeat_start
-      release_base="\${RELEASE_BASE:-https://images.pocketcoder.org}"
-      release_url="\$release_base/release-\$source_commit.json"
       loaded=0
-      if record=\$(curl -sf --max-time 15 "\$release_url"); then
-        cache_url=\$(printf '%s' "\$record" | jq -r '.dockerImages.url // empty')
-        cache_sha256=\$(printf '%s' "\$record" | jq -r '.dockerImages.sha256 // empty')
-        cache_file=\$(mktemp)
-        printf '%s\\n' "\$release_url" > /var/log/pocketcoder-fetch.log
-        if curl -sf --max-time 180 -o "\$cache_file" "\$cache_url"; then
-          actual_sha256=\$(sha256sum "\$cache_file" | cut -d' ' -f1)
-          if [ "\$actual_sha256" = "\$cache_sha256" ] && gunzip -c "\$cache_file" | docker load; then
-            loaded=1
-          fi
+      cache_url=\$(printf '%s' "\$release_record" | jq -r '.dockerImages.url // empty')
+      cache_sha256=\$(printf '%s' "\$release_record" | jq -r '.dockerImages.sha256 // empty')
+      cache_file=\$(mktemp)
+      printf '%s\\n' "\$release_url" > /var/log/pocketcoder-fetch.log
+      if [ -n "\$cache_url" ] && [ -n "\$cache_sha256" ] && \\
+         curl -sf --max-time 180 -o "\$cache_file" "\$cache_url"; then
+        actual_sha256=\$(sha256sum "\$cache_file" | cut -d' ' -f1)
+        if [ "\$actual_sha256" = "\$cache_sha256" ] && gunzip -c "\$cache_file" | docker load; then
+          loaded=1
         fi
-        rm -f "\$cache_file"
       fi
+      rm -f "\$cache_file"
       heartbeat_stop
-      if [ "\$loaded" -ne 1 ] && [ "\$source_commit" != "main" ]; then
+      if [ "\$loaded" -ne 1 ]; then
         status_error loading_images release_bundle_unavailable
         exit 1
       fi
       status compose_up
       heartbeat_start
-      if ! docker image inspect pocketcoder-harness-claude-code:0.64.2 >/dev/null 2>&1 || \\
-         ! docker image inspect pocketcoder-harness-codex:1.1.9 >/dev/null 2>&1 || \\
-         ! docker image inspect pocketcoder-harness-opencode:1.18.11 >/dev/null 2>&1; then
-        "\$compose" --profile harness-images build claude-code-harness-image codex-harness-image opencode-harness-image
-      fi
-      "\$compose" up -d
+      "\$compose" up -d --no-build
       heartbeat_stop
       status bootstrap_complete
 runcmd:
