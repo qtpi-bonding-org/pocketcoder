@@ -57,7 +57,7 @@ class DeploymentReadinessService {
             if (adoptedRunId.isEmpty || adoptedRunId != doc.runId) {
               adoptedRunId = doc.runId;
             }
-            final phase = DeploymentPhaseWire.fromWireName(doc.phase);
+            final phase = DeploymentPhaseX.fromWireName(doc.phase);
             if (phase.index >= lastPhase.index) {
               lastPhase = phase;
               yield phase;
