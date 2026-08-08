@@ -116,29 +116,22 @@ write_files:
         exit 1
       fi
       prebuilt_compose="/opt/pocketcoder/docker-compose.prebuilt.yml"
-      {
-        echo 'services:'
-        awk '
-          /^  [A-Za-z0-9_.-]+:[[:space:]]*(#.*)?$/ {
-            service = \$1
-            sub(/:$/, "", service)
-            next
-          }
-          /^    image:[[:space:]]+[^[:space:]]+@sha256:/ {
-            image = \$2
-            digest = image
-            sub(/.*@sha256:/, "", digest)
-            printf "%s\\t%s\\n", service, digest
-          }
-        ' /opt/pocketcoder/docker-compose.yml \
-          | while IFS="\$(printf '\\t')" read -r service digest; do
-              alias="pocketcoder-bundle-\$(printf '%s' "\$digest" | cut -c1-16)"
-              printf '  %s:\\n    image: %s\\n' "\$service" "\$alias"
-            done
-      } > "\$prebuilt_compose"
+      awk '
+        /^    image:[[:space:]]+[^[:space:]]+@sha256:/ {
+          image = \$2
+          digest = image
+          sub(/.*@sha256:/, "", digest)
+          printf "    image: pocketcoder-bundle-%s\\n", substr(digest, 1, 16)
+          next
+        }
+        { print }
+      ' /opt/pocketcoder/docker-compose.yml > "\$prebuilt_compose"
       missing_images=0
       missing_image_names=""
-      compose_images=\$("\$compose" -f /opt/pocketcoder/docker-compose.yml -f "\$prebuilt_compose" config --images)
+      if ! compose_images=\$("\$compose" -f "\$prebuilt_compose" config --images); then
+        status_error loading_images release_compose_config_failed
+        exit 1
+      fi
       if [ -z "\$compose_images" ]; then
         status_error loading_images release_compose_images_empty
         exit 1
@@ -156,7 +149,7 @@ write_files:
       fi
       status compose_up
       heartbeat_start
-      "\$compose" -f /opt/pocketcoder/docker-compose.yml -f "\$prebuilt_compose" up -d --no-build
+      "\$compose" -f "\$prebuilt_compose" up -d --no-build
       heartbeat_stop
       status bootstrap_complete
 runcmd:
