@@ -42,7 +42,7 @@
       fi
 
       source /etc/pocketcoder/status.sh
-      trap 'pc_status_error "$PC_CURRENT_PHASE" "step failed at line ${BASH_LINENO[0]}"' ERR
+      trap 'pc_status_error "$PC_CURRENT_PHASE" "step failed at line ''${BASH_LINENO[0]}"' ERR
       pc_status_init
 
       echo "Starting PocketCoder first-boot bootstrap..."
