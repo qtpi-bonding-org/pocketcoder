@@ -191,29 +191,23 @@ EOF
         exit 1
       fi
       PREBUILT_COMPOSE="$INSTALL_DIR/docker-compose.prebuilt.yml"
-      {
-        echo 'services:'
-        awk '
-          /^  [A-Za-z0-9_.-]+:[[:space:]]*(#.*)?$/ {
-            service = $1
-            sub(/:$/, "", service)
-            next
-          }
-          /^    image:[[:space:]]+[^[:space:]]+@sha256:/ {
-            image = $2
-            digest = image
-            sub(/.*@sha256:/, "", digest)
-            printf "%s\\t%s\\n", service, digest
-          }
-        ' "$INSTALL_DIR/docker-compose.yml" \
-          | while IFS="$(printf '\\t')" read -r SERVICE DIGEST; do
-              ALIAS="pocketcoder-bundle-$(printf '%s' "$DIGEST" | cut -c1-16)"
-              printf '  %s:\n    image: %s\n' "$SERVICE" "$ALIAS"
-            done
-      } > "$PREBUILT_COMPOSE"
+      awk '
+        /^    image:[[:space:]]+[^[:space:]]+@sha256:/ {
+          image = $2
+          digest = image
+          sub(/.*@sha256:/, "", digest)
+          printf "    image: pocketcoder-bundle-%s\\n", substr(digest, 1, 16)
+          next
+        }
+        { print }
+      ' "$INSTALL_DIR/docker-compose.yml" > "$PREBUILT_COMPOSE"
       MISSING_IMAGES=0
       MISSING_IMAGE_NAMES=""
-      COMPOSE_IMAGES=$(docker compose -f "$INSTALL_DIR/docker-compose.yml" -f "$PREBUILT_COMPOSE" config --images)
+      if ! COMPOSE_IMAGES=$(docker compose -f "$PREBUILT_COMPOSE" config --images); then
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_compose_config_failed"
+        exit 1
+      fi
       if [ -z "$COMPOSE_IMAGES" ]; then
         pc_status_heartbeat_stop
         pc_status_error loading_images "release_compose_images_empty"
@@ -243,7 +237,7 @@ EOF
       # but their first-party images must already exist locally: their catalog
       # entries intentionally use local PocketCoder tags rather than a public
       # registry.
-      docker compose -f docker-compose.yml -f docker-compose.prebuilt.yml up -d --no-build
+      docker compose -f docker-compose.prebuilt.yml up -d --no-build
       pc_status_heartbeat_stop
 
       # --- Mark as initialized ---
