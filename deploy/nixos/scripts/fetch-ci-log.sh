@@ -16,7 +16,12 @@ if [ -z "$RUN_ID" ]; then
   printf '%s\n' "$RUNS_JSON" >&2
   exit 1
 fi
-echo "=== run $RUN_ID ==="
+RUN_STATUS=$(printf '%s' "$RUNS_JSON" | jq -r '.workflow_runs[0].status // "unknown"')
+RUN_CONCLUSION=$(printf '%s' "$RUNS_JSON" | jq -r '.workflow_runs[0].conclusion // "pending"')
+echo "=== run $RUN_ID status=$RUN_STATUS conclusion=$RUN_CONCLUSION ==="
+if [ "$RUN_STATUS" != "completed" ]; then
+  exit 0
+fi
 
 ZIP="/tmp/pocketcoder-ci-run.zip"
 LOGDIR="/tmp/pocketcoder-ci-log"
