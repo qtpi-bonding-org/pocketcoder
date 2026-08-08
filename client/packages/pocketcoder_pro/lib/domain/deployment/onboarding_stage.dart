@@ -12,3 +12,7 @@ enum OnboardingStage {
   ready,
   failed,
 }
+
+extension OnboardingStageX on OnboardingStage {
+  String get wireName => name;
+}
