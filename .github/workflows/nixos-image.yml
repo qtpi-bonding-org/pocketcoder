@@ -173,8 +173,8 @@ jobs:
             test -n "$image_id"
             IMAGE_IDS="$IMAGE_IDS $image_id"
           done <<EOF
-$IMAGES
-EOF
+          $IMAGES
+          EOF
           # Save local image IDs so digest-pinned references are handled by
           # Docker consistently across runner versions.
           docker save $IMAGE_IDS \
