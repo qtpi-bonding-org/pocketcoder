@@ -23,22 +23,27 @@ if [ "$RUN_STATUS" != "completed" ]; then
   exit 0
 fi
 
-ZIP="/tmp/pocketcoder-ci-run.zip"
-LOGDIR="/tmp/pocketcoder-ci-log"
 JOBS_JSON=$(curl --http1.1 -sS -f -H "$AUTH" "$API/runs/$RUN_ID/jobs?per_page=100")
-JOB_ID=$(printf '%s' "$JOBS_JSON" | jq -r '.jobs[] | select(.name == "build") | .id' | head -1)
-if [ -n "$JOB_ID" ]; then
-  curl --http1.1 -sS -fL -H "$AUTH" "$API/jobs/$JOB_ID/logs" -o "$ZIP"
-else
-  curl --http1.1 -sS -fL -H "$AUTH" "$API/runs/$RUN_ID/logs" -o "$ZIP"
-fi
+printf '%s' "$JOBS_JSON" | jq -r '.jobs[] | "job=\(.name) status=\(.status) conclusion=\(.conclusion // "pending")"'
 
-if unzip -tq "$ZIP" >/dev/null 2>&1; then
-  rm -rf "$LOGDIR"
-  mkdir -p "$LOGDIR"
-  cd "$LOGDIR"
-  unzip -q "$ZIP"
-  (cat ./*/*.txt 2>/dev/null || cat ./*.txt) | tail -300
-else
-  tail -300 "$ZIP"
-fi
+for JOB_NAME in docker-images promote; do
+  JOB_ID=$(printf '%s' "$JOBS_JSON" | jq -r --arg name "$JOB_NAME" '.jobs[] | select(.name == $name) | .id' | head -1)
+  if [ -z "$JOB_ID" ]; then
+    echo "=== $JOB_NAME job not found ==="
+    continue
+  fi
+
+  ZIP="/tmp/pocketcoder-ci-$JOB_NAME.zip"
+  LOGDIR="/tmp/pocketcoder-ci-$JOB_NAME-log"
+  curl --http1.1 -sS -fL -H "$AUTH" "$API/jobs/$JOB_ID/logs" -o "$ZIP"
+  echo "=== $JOB_NAME log tail ==="
+  if unzip -tq "$ZIP" >/dev/null 2>&1; then
+    rm -rf "$LOGDIR"
+    mkdir -p "$LOGDIR"
+    cd "$LOGDIR"
+    unzip -q "$ZIP"
+    (cat ./*/*.txt 2>/dev/null || cat ./*.txt) | tail -300
+  else
+    tail -300 "$ZIP"
+  fi
+done
