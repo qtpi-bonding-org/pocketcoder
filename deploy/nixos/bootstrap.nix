@@ -159,45 +159,40 @@ EOF
       fi
       pc_status_heartbeat_stop
 
-      # --- Try to load pre-built Docker images from R2 cache (optional
-      # speed-up) ---
-      # nixos-image.yml's docker-images job pre-builds and caches the core
-      # services plus Ollama and optional harness images in the same R2 bucket as the
-      # NixOS image itself, tagged to match exactly what `docker compose
-      # up -d` below would build on its own (see that job's -p pocketcoder
-      # project-name pin). This is purely best-effort: any failure here
-      # (no manifest published yet, sha256 mismatch, network hiccup) just
-      # falls through to `docker compose up -d` building from source, same
-      # as it always has -- this step must never fail the bootstrap.
+      # --- Load the pre-built Docker image bundle from the coupled release. ---
+      # The CI docker-images job publishes the exact bundle for this source
+      # revision. A missing or invalid bundle is fatal: provisioning must
+      # never turn into an unplanned source build on a user's VPS.
       pc_status_phase loading_images
       pc_status_heartbeat_start
       RELEASE_BASE="''${RELEASE_BASE:-https://images.pocketcoder.org}"
-      RELEASE_URL="$RELEASE_BASE/release-$POCKETCODER_REF.json"
-      LOADED=0
-      if RECORD=$(curl -sf --max-time 15 "$RELEASE_URL"); then
-        CACHE_URL=$(echo "$RECORD" | jq -r '.dockerImages.url // empty')
-        CACHE_SHA256=$(echo "$RECORD" | jq -r '.dockerImages.sha256 // empty')
-        CACHE_FILE=$(mktemp)
-        echo "$RELEASE_URL" > /var/log/pocketcoder-fetch.log
-        if curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
-          ACTUAL_SHA256=$(sha256sum "$CACHE_FILE" | cut -d' ' -f1)
-          if [ "$ACTUAL_SHA256" = "$CACHE_SHA256" ] && gunzip -c "$CACHE_FILE" | docker load; then
-            LOADED=1
-          fi
-        fi
-        rm -f "$CACHE_FILE"
+      if [ "$POCKETCODER_REF" = "main" ]; then
+        RELEASE_URL="$RELEASE_BASE/release-manifest.json"
+      else
+        RELEASE_URL="$RELEASE_BASE/release-$POCKETCODER_REF.json"
       fi
-      if [ "$LOADED" -ne 1 ] && [ "$POCKETCODER_REF" != "main" ]; then
+      LOADED=0
+      RECORD=$(curl -sf --max-time 15 "$RELEASE_URL")
+      CACHE_URL=$(echo "$RECORD" | jq -r '.dockerImages.url // empty')
+      CACHE_SHA256=$(echo "$RECORD" | jq -r '.dockerImages.sha256 // empty')
+      CACHE_FILE=$(mktemp)
+      echo "$RELEASE_URL" > /var/log/pocketcoder-fetch.log
+      if [ -n "$CACHE_URL" ] && [ -n "$CACHE_SHA256" ] && \
+         curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
+        ACTUAL_SHA256=$(sha256sum "$CACHE_FILE" | cut -d' ' -f1)
+        if [ "$ACTUAL_SHA256" = "$CACHE_SHA256" ] && gunzip -c "$CACHE_FILE" | docker load; then
+          LOADED=1
+        fi
+      fi
+      rm -f "$CACHE_FILE"
+      if [ "$LOADED" -ne 1 ]; then
         pc_status_heartbeat_stop
         pc_status_error loading_images "release_bundle_unavailable"
         exit 1
       fi
       pc_status_heartbeat_stop
 
-      # --- Start PocketCoder stack ---
-      # Uses any images loaded above as-is; `docker compose` only builds a
-      # service whose image isn't already present locally, so a
-      # successful cache load above makes this a no-op build.
+      # --- Start PocketCoder stack without building on the VPS. ---
       echo "Starting PocketCoder stack..."
       pc_status_phase compose_up
       pc_status_heartbeat_start
@@ -207,16 +202,7 @@ EOF
       # but their first-party images must already exist locally: their catalog
       # entries intentionally use local PocketCoder tags rather than a public
       # registry.
-      # The release image cache normally provides them; source deployments and
-      # cache misses build them here once before the stack starts.
-      if ! docker image inspect pocketcoder-harness-claude-code:0.64.2 >/dev/null 2>&1 || \
-         ! docker image inspect pocketcoder-harness-codex:1.1.9 >/dev/null 2>&1 || \
-         ! docker image inspect pocketcoder-harness-opencode:1.18.11 >/dev/null 2>&1; then
-        echo "Building optional ACP harness images..."
-        docker compose --profile harness-images build claude-code-harness-image codex-harness-image opencode-harness-image
-      fi
-
-      docker compose up -d
+      docker compose up -d --no-build
       pc_status_heartbeat_stop
 
       # --- Mark as initialized ---
