@@ -190,6 +190,17 @@ EOF
         pc_status_error loading_images "release_bundle_unavailable"
         exit 1
       fi
+      PREBUILT_COMPOSE="$INSTALL_DIR/docker-compose.prebuilt.yml"
+      {
+        echo 'services:'
+        docker compose -f "$INSTALL_DIR/docker-compose.yml" config --format json \
+          | jq -r '.services | to_entries[] | select(.value.image? and (.value.image | contains("@sha256:"))) | "\(.key)\t\(.value.image)"' \
+          | while IFS="$(printf '\\t')" read -r SERVICE IMAGE; do
+              DIGEST=$(printf '%s' "$IMAGE" | sed 's/.*@sha256://')
+              ALIAS="pocketcoder-bundle-$(printf '%s' "$DIGEST" | cut -c1-16)"
+              printf '  %s:\n    image: %s\n' "$SERVICE" "$ALIAS"
+            done
+      } > "$PREBUILT_COMPOSE"
       MISSING_IMAGES=0
       MISSING_IMAGE_NAMES=""
       while IFS= read -r IMAGE; do
@@ -199,7 +210,7 @@ EOF
           echo "missing prebuilt image: $IMAGE" >&2
         fi
       done <<EOF
-$(docker compose -f "$INSTALL_DIR/docker-compose.yml" config --images)
+$(docker compose -f "$INSTALL_DIR/docker-compose.yml" -f "$PREBUILT_COMPOSE" config --images)
 EOF
       if [ "$MISSING_IMAGES" -ne 0 ]; then
         pc_status_heartbeat_stop
@@ -218,7 +229,7 @@ EOF
       # but their first-party images must already exist locally: their catalog
       # entries intentionally use local PocketCoder tags rather than a public
       # registry.
-      docker compose up -d --no-build
+      docker compose -f docker-compose.yml -f docker-compose.prebuilt.yml up -d --no-build
       pc_status_heartbeat_stop
 
       # --- Mark as initialized ---

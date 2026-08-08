@@ -115,20 +115,33 @@ write_files:
         status_error loading_images release_bundle_unavailable
         exit 1
       fi
+      prebuilt_compose="/opt/pocketcoder/docker-compose.prebuilt.yml"
+      {
+        echo 'services:'
+        "\$compose" -f /opt/pocketcoder/docker-compose.yml config --format json \
+          | jq -r '.services | to_entries[] | select(.value.image? and (.value.image | contains("@sha256:"))) | "\(.key)\t\(.value.image)"' \
+          | while IFS="\$(printf '\\t')" read -r service image; do
+              digest=\$(printf '%s' "\$image" | sed 's/.*@sha256://')
+              alias="pocketcoder-bundle-\$(printf '%s' "\$digest" | cut -c1-16)"
+              printf '  %s:\\n    image: %s\\n' "\$service" "\$alias"
+            done
+      } > "\$prebuilt_compose"
       missing_images=0
-      for image in \$("\$compose" config --images); do
+      missing_image_names=""
+      for image in \$("\$compose" -f /opt/pocketcoder/docker-compose.yml -f "\$prebuilt_compose" config --images); do
         if ! docker image inspect "\$image" >/dev/null 2>&1; then
           missing_images=1
+          missing_image_names="\$missing_image_names \$image"
           printf 'missing prebuilt image: %s\\n' "\$image" >&2
         fi
       done
       if [ "\$missing_images" -ne 0 ]; then
-        status_error loading_images release_bundle_incomplete
+        status_error loading_images "release_bundle_incomplete:\$missing_image_names"
         exit 1
       fi
       status compose_up
       heartbeat_start
-      "\$compose" up -d --no-build
+      "\$compose" -f /opt/pocketcoder/docker-compose.yml -f "\$prebuilt_compose" up -d --no-build
       heartbeat_stop
       status bootstrap_complete
 runcmd:
