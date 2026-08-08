@@ -25,12 +25,20 @@ This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It
     melos bootstrap
     ```
 
+The workspace contains both `apps/pocketcoder` (the Pro shell) and
+`apps/pocketcoder_foss` (the FOSS/F-Droid-compatible target). Shared feature code lives in
+`packages/pocketcoder_flutter`.
+
 ## 🛠️ Essential Commands
 
 | Command | Description |
 | --- | --- |
 | `melos run check:purity` | **Critical**: Verifies the core package has no proprietary leaks. |
-| `melos run build:app` | Build the Mobile Android APK. |
+| `melos run run_app` | Run the Pro app. |
+| `melos run run_foss` | Run the FOSS/F-Droid-compatible app. |
+| `melos run run_incognito` | Run the Pro app in Chrome Incognito. |
+| `melos run build_app` | Build the Pro Android debug APK. |
+| `melos run build_foss` | Build the FOSS/F-Droid-compatible Android debug APK. |
 | `melos run test` | Run tests across all packages. |
 | `melos run fix` | Apply `dart fix` to all packages in the workspace. |
 

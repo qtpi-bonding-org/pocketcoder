@@ -1,6 +1,6 @@
 # PocketCoder
 
-**A sovereign, mobile-first coding agent you own end to end.** Message an AI agent from your phone, watch it work, and approve every consequential action before it runs — all on your own VPS, with your own model key, no chat-app bridge in the middle.
+**A sovereign, mobile-first coding agent you run on your own infrastructure.** Use local models through Ollama or a hosted provider, receive private notifications through ntfy, and approve consequential actions from your phone before they run — without routing commands through a chat app.
 
 PocketCoder is a solo research project built in the open. It follows an **Alpine Linux** philosophy — a tiny original surface area standing on FOSS "giant's shoulders" rather than hand-rolled glue: **PocketBase** for state and auth, **Goose** as the agent core, and open agent protocols (**ACP**, **AG-UI**, **MCP**) for everything in between.
 
@@ -17,7 +17,12 @@ PocketCoder is a solo research project built in the open. It follows an **Alpine
 
 PocketCoder is intended for a **single self-hosted VPS shared by one person or a small group of trusted friends and family**. It is not designed as a hostile multi-tenant SaaS boundary. People who share a deployment should be trusted with one another's workspace, agent activity, logs, and configured integrations.
 
-The deployment is self-hosted, but model providers and enabled MCP servers may still receive prompts, file contents, or other data when the agent uses them. Review the privacy policies and permissions of every provider or integration before connecting sensitive accounts.
+The default architecture supports a fully self-hosted path: PocketCoder, Goose,
+Ollama, and optional ntfy all run in your Compose deployment. If you choose a
+hosted model provider or enable external MCP servers, those services may receive
+prompts, file contents, or other data when the agent uses them. Review the
+privacy policies and permissions of every provider or integration before
+connecting sensitive accounts.
 
 ## Why it exists
 
@@ -26,7 +31,7 @@ Two patterns have emerged for working with autonomous agents, and PocketCoder ai
 - **Mission-control on the go.** Tools like Google Antigravity showed that a lot of agent work is *reviewing plans and approving executions*, not typing syntax. That subset fits a phone perfectly — assign tasks, review plans, approve deployments while away from your keyboard.
 - **A safe alternative to chat-bridge agents.** Tools like OpenClaw let you message a personal agent to do real work, but route system commands through unauthenticated chat apps — a documented security nightmare. PocketCoder gives you the same convenience inside a proper authenticated app where **every tool call is gated by an explicit, human-inspectable approval** before it executes.
 
-**Core principles:** scoped for mobile (orchestration, not 500-line diffs on a phone) · human-in-the-loop by default · open protocols instead of bespoke glue · bring-your-own-model (Goose is decoupled from the LLM).
+**Core principles:** scoped for mobile (orchestration, not 500-line diffs on a phone) · human-in-the-loop by default · open protocols instead of bespoke glue · local-first when desired, provider-independent when useful.
 
 ## Mobile-first provisioning
 
@@ -92,14 +97,17 @@ The security model and its honest limits (tool execution currently lives inside 
 | **Approve tool calls from phone** | Built-in, real-time | Not really — watch the screen | No permission gate |
 | **Provision from phone** | Designed for one-tap VPS provisioning | Usually requires an existing machine/session | Usually manual/self-hosted setup |
 | **Laptop required** | No — runs on a VPS | DIY / unofficial | No |
-| **LLM provider** | Any (bring your own key) | Usually one vendor | Any |
+| **LLM provider** | Ollama locally or any hosted provider | Usually one vendor | Any |
 | **Sharing model** | Trusted users sharing one deployment; not hostile multi-tenant isolation | Single session | Single user |
 | **Data sovereignty** | Fully self-hosted, no telemetry | Routes through a vendor | Self-hosted, but commands via chat apps |
 | **Security posture** | Every action gated by explicit approval | Permission modes, no mobile override | Approval bolted on, if any |
 
 ## Quick Start
 
-The only prerequisite is **Docker** — everything else is containerized.
+For a self-hosted deployment, the prerequisite is **Docker Compose v2**. The
+Flutter development client additionally requires the Flutter/Dart SDK. The
+Cloudflare Workers are optional infrastructure for the hosted OAuth, push, and
+image-manifest services.
 
 1. **Deploy the infrastructure.** Generates secure passwords into a local `.env`, applies the host baseline, installs native Caddy, derives the VPS's `sslip.io` HTTPS hostname, and prompts for the credentials your chosen Goose provider needs:
    ```bash
@@ -112,6 +120,16 @@ The only prerequisite is **Docker** — everything else is containerized.
    ./client/scripts/run_ios.sh                # iOS Simulator
    ./client/scripts/run_android.sh            # Android device/emulator
    ```
+
+   These scripts run the Pro `apps/pocketcoder` target. For the FOSS target,
+   run `cd client && melos run run_foss`.
+
+For a local Docker-only setup, copy `.env.template` to `.env`, replace the
+placeholder passwords and `GOOSE_SERVER__SECRET_KEY`, then run
+`docker compose up -d`. Configure Ollama in the app for local inference, or add
+credentials for a hosted model provider. PocketBase is available at
+`http://127.0.0.1:8090`; point the client at that URL through its existing-server
+onboarding screen.
 
 **OS:** any Linux with Docker (Ubuntu 22.04+ recommended); also runs on macOS via Docker Desktop for local dev. A 2 GB / 1 vCPU VPS covers the core + agent runtime at idle — active agent workloads spike above that.
 
@@ -153,24 +171,94 @@ Leave `TS_AUTHKEY` blank to authenticate interactively — the login URL prints 
 
 ## Services & Profiles
 
-One `docker-compose.yml`. Core services run by default; the rest are opt-in via profiles.
+`docker-compose.yml` is the complete local stack. Core services run by default;
+the rest are opt-in via profiles.
 
 | Service | Profile | Role |
 |:---|:---|:---|
 | `pocketbase` | *(always)* | c1 — backend, auth, ACP↔AG-UI bridge |
-| `docker-socket-proxy-write` | *(always)* | Scoped Docker API proxy (container restart/logs) |
-| `sqlpage` | *(always)* | Observability dashboard |
-| `goose` | *(always)* | c2 — the Goose agent core |
-| `cognee` | `memory` | Optional agent memory, loaded as a live Goose extension (not via `c3`) |
+| `goose` | *(always)* | c2 — the Goose agent core and session store |
+| `ollama` | *(always)* | Local-model runtime; no model is downloaded automatically |
 | `mcp-gateway` | *(always)* | c3 — Docker MCP Gateway |
+| `docker-socket-proxy-mcp` | *(always)* | Scoped Docker API for MCP server containers |
+| `docker-socket-proxy-write` | *(always)* | Scoped Docker API for PocketBase operations |
+| `sqlpage` | *(always)* | Observability dashboard |
+| `sqlpage-data-init` | *(always)* | Initializes dashboard SQLite files |
+| `cognee` | `memory` | Optional agent memory, loaded as a live Goose extension (not via `c3`) |
+| `cognee-data-init` | `memory` | Initializes the Cognee data volume |
 | `ntfy` | `foss` | Self-hosted push notifications |
 | `tailscale` | `tailscale` | Remote access (funnel/private) |
-| `caddy` | `caddy` | TLS termination / reverse proxy |
+| `caddy` | `caddy` | Containerized TLS termination for local Docker deployments |
+| `*-harness-image` | `harness-images` | Build-only Claude, Codex, and OpenCode ACP images |
 
 ```bash
-docker compose --profile harness-images build  # includes lazy Claude/Codex images
-docker compose up -d                           # Goose is included in the core stack
+docker compose up -d
+docker compose --profile memory up -d          # add Cognee memory
+docker compose --profile foss up -d            # add self-hosted ntfy
+docker compose --profile tailscale up -d       # add Tailscale access
+docker compose --profile caddy up -d           # local Docker TLS route
+docker compose --profile harness-images build  # prebuild Claude/Codex/OpenCode images
 ```
+
+On Linux, `deploy.sh` configures native host Caddy instead of the `caddy`
+Compose profile. Do not enable both on the same host because they compete for
+ports 80 and 443.
+
+## Flutter client
+
+The [`client/`](client/) workspace contains a shared FOSS core, the Pro app
+shell, and a separate FOSS app target:
+
+| Target | Purpose | Melos command |
+|:---|:---|:---|
+| `apps/pocketcoder` | Pro app with push, billing, and deployment integrations | `melos run run_app` |
+| `apps/pocketcoder_foss` | FOSS/F-Droid-compatible app without proprietary integrations | `melos run run_foss` |
+
+From `client/`:
+
+```bash
+dart pub global activate melos
+flutter pub get
+melos bootstrap
+melos run build_gen
+melos run run_incognito       # Pro app in Chrome Incognito
+melos run build_app           # Pro Android debug APK
+melos run build_foss          # FOSS/F-Droid-compatible Android debug APK
+melos run check:purity
+melos run test
+```
+
+When no server URL is saved, the app defaults to `http://127.0.0.1:8090`.
+For a VPS, enter the HTTPS URL printed by deployment (or the Tailscale URL)
+through the existing-server onboarding flow.
+
+The FOSS target can be compiled independently for Android and is intended to
+remain suitable for F-Droid distribution; the Pro target adds push, billing,
+and deployment integrations.
+
+## Cloudflare Workers
+
+The [`workers/`](workers/) directory contains three independent Wrangler
+projects. They are not part of Docker Compose and are only needed for the
+corresponding hosted/Pro features:
+
+| Worker | Purpose | Resources |
+|:---|:---|:---|
+| `oauth-relay` | PKCE OAuth broker for GitHub and Linode; keeps client secrets server-side | KV namespace and provider OAuth secrets |
+| `push-relay` | Authenticated FCM delivery with tenant binding, subscription checks, and quotas | Supabase RPCs, RevenueCat, and FCM secrets |
+| `image-relay` | Public image and release manifests | R2 bucket `pocketcoder-images` |
+
+Each worker has its own `package.json` and `wrangler.toml`. Deploy one with
+`cd workers/<name> && npm install && npm run deploy`, or deploy all three after
+configuring their bindings and secrets with:
+
+```bash
+./tooling/scripts/deploy-workers.sh
+```
+
+The push relay's live-service checks are under
+`workers/push-relay/scripts/`; its Supabase schema is
+[`workers/push-relay/scripts/supabase-schema.sql`](workers/push-relay/scripts/supabase-schema.sql).
 
 ## Testing
 
@@ -180,7 +268,9 @@ The acceptance suite drives a real c1 (PocketBase) → c2 (Goose) turn against a
 tests/agent-c1/run.sh
 ```
 
-It brings up the `agent` profile via `docker-compose.agent-test.yml` and runs the bats suite in an isolated container. See [`docs/agent-testing-strategy.md`](docs/agent-testing-strategy.md).
+It overlays `docker-compose.agent-test.yml`, starts the active c1/c2/c3
+services, and runs the `agent-c1-test` Bats runner in an isolated container.
+See [`docs/agent-testing-strategy.md`](docs/agent-testing-strategy.md).
 
 ## Codebase
 
@@ -188,11 +278,11 @@ It brings up the `agent` profile via `docker-compose.agent-test.yml` and runs th
 
 | Language | LoC | Component |
 | :--- | ---: | :--- |
-| Go | 6,697 | c1: PocketBase + ACP client + AG-UI server |
-| Dart | 47,306 | Flutter client (non-generated) |
-| **Core code** | **~54,003** | Go + Dart — product code |
-| Tests | 12,242 | not code — Go 1,999 · Dart 2,505 · Bash 7,738 |
-| Tooling | 5,156 | not code — Bash scripts / infra |
+| Go | 10056 | c1: PocketBase + ACP client + AG-UI server |
+| Dart | 54822 | Flutter client (non-generated) |
+| **Core code** | **~64878** | Go + Dart — product code |
+| Tests | 23684 | not code — Go 7036 · Dart 8600 · Bash 8048 |
+| Tooling | 6534 | not code — Bash scripts / infra |
 
 The backend is deliberately tiny: PocketBase supplies auth, the database, REST, and realtime *as a library*, so c1 is just the ACP client, the AG-UI bridge, and a handful of hooks. Lean glue over battle-tested building blocks is the whole thesis.
 
@@ -200,6 +290,12 @@ The backend is deliberately tiny: PocketBase supplies auth, the database, REST, 
 
 An active research project by a solo developer, built in the open — not a commercial product, no support SLAs. Bug reports are welcome; I move at my own pace.
 
-All PocketCoder code is **AGPLv3**. The agent core (Goose) and PocketBase are OSI-approved open source. The optional memory component (Cognee) runs through the `memory` Compose profile rather than behind the `c3` gateway, and any non-OSI runtime dependency it introduces is tracked here.
+The repository's backend and infrastructure are **AGPLv3**. The Flutter
+workspace's FOSS core is separately marked **MPL-2.0** in
+[`client/LICENSE`](client/LICENSE); third-party runtime components retain their
+own licenses. The agent core (Goose) and PocketBase are OSI-approved open
+source. The optional memory component (Cognee) runs through the `memory`
+Compose profile rather than behind the `c3` gateway, and any non-OSI runtime
+dependency it introduces is tracked here.
 
 **Open core:** the client and backend here are open and fully self-hostable — nothing described above requires anything proprietary. The mobile app's one-tap VPS provisioning (OAuth deploy, billing) is a separate, closed-source convenience layer that funds the project; self-hosters skip it entirely by running `deploy.sh` directly.
