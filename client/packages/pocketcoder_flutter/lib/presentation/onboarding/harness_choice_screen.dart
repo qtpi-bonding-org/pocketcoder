@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 class HarnessChoiceScreen extends StatelessWidget {
   const HarnessChoiceScreen({super.key});
@@ -86,7 +87,13 @@ class _HarnessChoiceCard extends StatelessWidget {
         : RouteNames.onboardingClaudeAuth;
 
     return InkWell(
-      onTap: () => context.pushNamed(route, extra: harness.id),
+      onTap: () {
+        OnboardingLogger.event('harness selected', {
+          'harness': harness.id,
+          'cli': cli,
+        });
+        context.pushNamed(route, extra: harness.id);
+      },
       child: TerminalCard(
         child: Row(
           children: [

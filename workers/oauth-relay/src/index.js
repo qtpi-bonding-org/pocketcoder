@@ -64,6 +64,11 @@ const PROVIDERS = {
 		// accepts JSON is untested -- default to the confirmed-working
 		// format.
 		tokenBodyFormat: 'form',
+		// Linode accepts the authorization request without upstream PKCE, but
+		// its token exchange rejects the code when a challenge is supplied and
+		// the relay cannot provide the app's verifier. The app-to-relay PKCE
+		// check remains enforced by POST /claim.
+		usePkceUpstream: false,
 	},
 };
 
@@ -236,7 +241,15 @@ async function handleCallback(url, env) {
 
 	const tokenBody = await tokenResp.json().catch(() => null);
 	if (!tokenResp.ok || !tokenBody || tokenBody.error || !tokenBody.access_token) {
-		console.error('Token exchange rejected:', tokenResp.status, JSON.stringify(tokenBody));
+		// Never log the authorization code, request body, client credentials, or
+		// token response. These fields are enough to diagnose provider failures
+		// without putting OAuth credentials in Worker logs.
+		console.error('Token exchange rejected:', JSON.stringify({
+			provider: state.p,
+			status: tokenResp.status,
+			error: typeof tokenBody?.error === 'string' ? tokenBody.error : null,
+			hasAccessToken: Boolean(tokenBody?.access_token),
+		}));
 		return redirectToApp({ error: (tokenBody && tokenBody.error) || 'token_exchange_rejected' });
 	}
 

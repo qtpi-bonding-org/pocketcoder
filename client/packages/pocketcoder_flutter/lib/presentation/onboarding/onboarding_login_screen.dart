@@ -14,6 +14,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import '../../app_router.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 class OnboardingLoginScreen extends StatefulWidget {
   const OnboardingLoginScreen({super.key, this.prefill});
@@ -67,6 +68,12 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       );
       return;
     }
+    OnboardingLogger.event('existing server login submitted', {
+      'server_host': Uri.tryParse(url)?.host ?? 'invalid',
+      'email_domain': _emailController.text.contains('@')
+          ? _emailController.text.trim().split('@').last
+          : 'invalid',
+    });
     try {
       await getIt<IAuthRepository>().updateBaseUrl(url);
       await cubit.login(
@@ -89,6 +96,8 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       child: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state.status == UiFlowStatus.success) {
+            OnboardingLogger.event(
+                'existing server connected; opening harness choice');
             context.read<PocoCubit>().setExpression(PocoExpressions.happy);
             context.goNamed(RouteNames.onboardingHarnessAuth);
           }
@@ -100,7 +109,13 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
               title: context.l10n.onboardingServerLoginTitle,
               actions: [
                 TerminalAction(
-                    label: context.l10n.actionBack, onTap: () => context.pop()),
+                  label: context.l10n.actionBack,
+                  onTap: () => AppNavigation.back(context),
+                ),
+                TerminalAction(
+                  label: context.l10n.onboardingDeploy,
+                  onTap: () => context.pushNamed(RouteNames.onboardingDeploy),
+                ),
                 TerminalAction(
                   label: loading
                       ? context.l10n.onboardingServerConnecting

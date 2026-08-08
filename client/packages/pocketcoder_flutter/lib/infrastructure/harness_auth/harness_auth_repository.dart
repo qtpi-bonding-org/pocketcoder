@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_exception.d
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 class HarnessAuthRepository implements IHarnessAuthRepository {
   HarnessAuthRepository(this._pb, this._authRepo);
@@ -102,6 +103,7 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
     required String path,
     required Map<String, dynamic> body,
   }) {
+    OnboardingLogger.event('harness auth request started', {'endpoint': path});
     return tryMethod(
       () async {
         final scopeID = _authRepo.currentUserId;
@@ -116,7 +118,13 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
         );
 
         if (response is Map<String, dynamic>) {
-          return HarnessAuthStatus.fromJson(response);
+          final status = HarnessAuthStatus.fromJson(response);
+          OnboardingLogger.event('harness auth response received', {
+            'endpoint': path,
+            'status': status.status,
+            'has_challenge': status.challenge != null,
+          });
+          return status;
         }
 
         throw HarnessAuthException('Unexpected response from auth endpoint');

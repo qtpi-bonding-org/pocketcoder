@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import "package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart";
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 part 'auth_cubit.freezed.dart';
 
@@ -36,13 +37,22 @@ class AuthCubit extends AppCubit<AuthState> {
   AuthCubit(this._authRepository) : super(AuthState.initial());
 
   Future<void> login(String email, String password) async {
-    return tryOperation(() async {
+    OnboardingLogger.event('server login started', {
+      'email_domain': email.contains('@') ? email.split('@').last : 'invalid',
+    });
+    await tryOperation(() async {
       final success = await _authRepository.login(email, password);
       if (!success) {
         throw 'ACCESS DENIED. CHECK CREDENTIALS.';
       }
+      OnboardingLogger.event('server login succeeded');
       return createSuccessState();
     });
+    if (state.isFailure) {
+      OnboardingLogger.event('server login failed', {
+        'error': state.error?.toString() ?? 'unknown',
+      });
+    }
   }
 
   Future<void> logout() async {

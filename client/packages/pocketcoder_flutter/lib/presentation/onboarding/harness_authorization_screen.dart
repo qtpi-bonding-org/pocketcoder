@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -82,13 +83,33 @@ class _HarnessAuthorizationViewState extends State<_HarnessAuthorizationView> {
       listener: (context, state) {
         final status = state.statuses[widget.harnessId];
         if (status?.isConnected == true) {
+          OnboardingLogger.event('harness authorization connected', {
+            'harness': widget.harnessId,
+            'provider': widget.provider,
+          });
           _pollTimer?.cancel();
           _openFirstChat();
-        } else if (widget.provider == 'codex' && status?.isConnecting == true) {
-          _pollTimer ??= Timer.periodic(
-            const Duration(seconds: 4),
-            (_) => context.read<HarnessAuthCubit>().poll(widget.harnessId),
-          );
+        } else if (status?.isConnecting == true) {
+          OnboardingLogger.event('harness polling scheduled', {
+            'harness': widget.harnessId,
+            'provider': widget.provider,
+          });
+          _pollTimer ??= Timer(const Duration(seconds: 1), () {
+            void pollNow() {
+              final cubit = context.read<HarnessAuthCubit>();
+              if (cubit.state.isBusy) return;
+              OnboardingLogger.event('harness polling tick', {
+                'harness': widget.harnessId,
+                'provider': widget.provider,
+              });
+              cubit.poll(widget.harnessId);
+            }
+
+            _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+              if (mounted) pollNow();
+            });
+            if (mounted) pollNow();
+          });
         }
       },
       child: BlocBuilder<HarnessAuthCubit, HarnessAuthState>(
@@ -162,6 +183,15 @@ class _HarnessAuthorizationViewState extends State<_HarnessAuthorizationView> {
                       style: TextStyle(color: context.colorScheme.error)),
                   VSpace.x2,
                 ],
+                if (current.isConnecting) ...[
+                  TerminalText(
+                    widget.provider == 'codex'
+                        ? 'CODEX AUTHENTICATION IS RUNNING. CHECKING DEVICE STATUS...'
+                        : 'WAITING FOR AUTHORIZATION...',
+                    alpha: 0.7,
+                  ),
+                  VSpace.x2,
+                ],
                 if (challenge != null) ...[
                   _Challenge(challenge: challenge),
                   VSpace.x2,
@@ -183,14 +213,11 @@ class _HarnessAuthorizationViewState extends State<_HarnessAuthorizationView> {
                   TerminalButton(
                     label: context.l10n.onboardingAccountLogin,
                     isLoading: busy,
-                    onTap: () =>
-                        context.read<HarnessAuthCubit>().startWithAccount(
-                              harnessId: widget.harnessId,
-                              provider: widget.provider,
-                            ),
+                    onTap: () => _startAccountLogin(context),
                   ),
                 ],
-                if (current.isConnecting && widget.provider == 'codex') ...[
+                if (current.isConnecting &&
+                    (widget.provider == 'codex' || challenge == null)) ...[
                   VSpace.x2,
                   TerminalButton(
                     label: context.l10n.onboardingCheckStatus,
@@ -198,6 +225,14 @@ class _HarnessAuthorizationViewState extends State<_HarnessAuthorizationView> {
                     isLoading: busy,
                     onTap: () =>
                         context.read<HarnessAuthCubit>().poll(widget.harnessId),
+                  ),
+                ],
+                if (current.status == 'error') ...[
+                  VSpace.x2,
+                  TerminalButton(
+                    label: context.l10n.onboardingAccountLogin,
+                    isLoading: busy,
+                    onTap: () => _startAccountLogin(context),
                   ),
                 ],
               ],
@@ -210,7 +245,12 @@ class _HarnessAuthorizationViewState extends State<_HarnessAuthorizationView> {
 
   Future<void> _submit(BuildContext context) async {
     final code = _codeController.text.trim();
-    if (code.isEmpty) return;
+    if (code.isEmpty) {
+      OnboardingLogger.event('harness authorization code validation failed', {
+        'harness': widget.harnessId,
+      });
+      return;
+    }
     await context.read<HarnessAuthCubit>().submitCode(
           harnessId: widget.harnessId,
           code: code,
@@ -218,17 +258,38 @@ class _HarnessAuthorizationViewState extends State<_HarnessAuthorizationView> {
     _codeController.clear();
   }
 
+  Future<void> _startAccountLogin(BuildContext context) async {
+    OnboardingLogger.event('harness account login tapped', {
+      'harness': widget.harnessId,
+      'provider': widget.provider,
+    });
+    await context.read<HarnessAuthCubit>().startWithAccount(
+          harnessId: widget.harnessId,
+          provider: widget.provider,
+        );
+  }
+
   Future<void> _openFirstChat() async {
     if (_openedChat) return;
     _openedChat = true;
+    OnboardingLogger.event('harness connected; creating first chat', {
+      'harness': widget.harnessId,
+    });
     try {
       final chats = getIt<ChatListCubit>();
       await chats.createAndOpen(harness: widget.harnessId);
       final chatId = chats.state.lastCreatedChatId;
       if (!mounted || chatId == null || chatId.isEmpty) return;
+      OnboardingLogger.event('first chat created; entering chat', {
+        'harness': widget.harnessId,
+      });
       context.go('${AppRoutes.chat}/$chatId');
     } catch (error) {
       _openedChat = false;
+      OnboardingLogger.event('first chat creation failed', {
+        'harness': widget.harnessId,
+        'error': error.toString(),
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -256,8 +317,13 @@ class _Challenge extends StatelessWidget {
           VSpace.x2,
           TerminalButton(
             label: context.l10n.onboardingOpenAuthorization,
-            onTap: () => launchUrl(Uri.tryParse(target) ?? Uri(),
-                mode: LaunchMode.externalApplication),
+            onTap: () {
+              OnboardingLogger.event('authorization challenge opened', {
+                'type': challenge.type,
+              });
+              launchUrl(Uri.tryParse(target) ?? Uri(),
+                  mode: LaunchMode.externalApplication);
+            },
           ),
           VSpace.x1,
           SelectableText(target),

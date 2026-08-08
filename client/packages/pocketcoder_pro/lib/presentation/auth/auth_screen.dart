@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:get_it/get_it.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 /// Authentication screen for Linode OAuth login
 class AuthScreen extends StatelessWidget {
@@ -28,10 +29,17 @@ class AuthScreen extends StatelessWidget {
   }
 }
 
-class _AuthView extends StatelessWidget {
+class _AuthView extends StatefulWidget {
   const _AuthView({this.credentials});
 
   final DeployCredentials? credentials;
+
+  @override
+  State<_AuthView> createState() => _AuthViewState();
+}
+
+class _AuthViewState extends State<_AuthView> {
+  bool _navigationCompleted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +50,12 @@ class _AuthView extends StatelessWidget {
       listener: (context, state) {
         // Navigate to ConfigScreen on successful authentication
         if (state.isSuccess && state.isAuthenticated == true) {
-          context.pushNamed(RouteNames.config, extra: credentials);
+          OnboardingLogger.event(
+              'Linode auth screen connected; opening deployment config');
+          if (!_navigationCompleted && mounted) {
+            _navigationCompleted = true;
+            context.pushNamed(RouteNames.config, extra: widget.credentials);
+          }
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(
@@ -56,7 +69,7 @@ class _AuthView extends StatelessWidget {
               ),
               TerminalAction(
                 label: 'BACK',
-                onTap: () => context.pop(),
+                onTap: () => AppNavigation.back(context),
               ),
             ],
             body: Center(

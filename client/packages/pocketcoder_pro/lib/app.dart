@@ -78,12 +78,20 @@ class FcmPushService implements PushService {
       return;
     }
 
-    // 2. Request Permissions
-    NotificationSettings settings = await _fcm!.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    // 2. Request Permissions. Push is optional infrastructure and must never
+    // prevent the rest of the app from booting (for example, before iOS has
+    // delivered the APNs token to Firebase).
+    late final NotificationSettings settings;
+    try {
+      settings = await _fcm!.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } catch (error) {
+      print('[PocketCoder] FCM permission setup failed: $error');
+      return;
+    }
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       // Background message handler is usually set in main.dart or bootstrap
@@ -109,14 +117,48 @@ class FcmPushService implements PushService {
         ));
       });
 
-      // 3. Register Token with Backend
-      final token = await _fcm!.getToken();
-      if (token != null) {
-        await _registerDevice(token);
-      }
+      // 3. Register Token with Backend. On Apple platforms the APNs token is
+      // not guaranteed to exist immediately after permission is granted, and
+      // Firebase rejects getToken() until it does. Do this asynchronously so
+      // app startup is never blocked by push registration.
+      unawaited(_registerMessagingToken());
 
       // 4. Handle Token Refresh
-      _fcm!.onTokenRefresh.listen(_registerDevice);
+      _fcm!.onTokenRefresh.listen(
+        _registerDevice,
+        onError: (Object error, StackTrace stack) {
+          print('[PocketCoder] FCM token refresh failed: $error');
+        },
+      );
+    }
+  }
+
+  Future<void> _registerMessagingToken() async {
+    try {
+      if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
+        String? apnsToken;
+        for (var attempt = 0; attempt < 5; attempt++) {
+          apnsToken = await _fcm!.getAPNSToken();
+          if (apnsToken != null && apnsToken.isNotEmpty) break;
+          if (attempt < 4) {
+            await Future<void>.delayed(const Duration(seconds: 1));
+          }
+        }
+        if (apnsToken == null || apnsToken.isEmpty) {
+          print('[PocketCoder] APNs token is not available yet; '
+              'deferring FCM registration.');
+          return;
+        }
+      }
+
+      final token = await _fcm!.getToken();
+      if (token != null && token.isNotEmpty) {
+        await _registerDevice(token);
+      }
+    } catch (error) {
+      // A missing APNs token, missing simulator capability, or a transient
+      // Firebase failure should not become an unhandled bootstrap exception.
+      print('[PocketCoder] FCM token registration deferred: $error');
     }
   }
 
@@ -150,8 +192,14 @@ class FcmPushService implements PushService {
   @override
   Future<String?> getToken() async {
     try {
-      return await _fcm?.getToken();
+      if (_fcm == null) return null;
+      if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
+        final apnsToken = await _fcm!.getAPNSToken();
+        if (apnsToken == null || apnsToken.isEmpty) return null;
+      }
+      return await _fcm!.getToken();
     } catch (e) {
+      print('[PocketCoder] FCM token lookup failed: $e');
       return null;
     }
   }
@@ -520,7 +568,10 @@ List<RouteBase> get linodeRoutes => [
         ),
       ),
       GoRoute(
-        path: '${AppRoutes.deploymentDetails}?instanceId',
+        // Query parameters are supplied through state.uri.queryParameters;
+        // they must not be embedded in the route path or go_router encodes
+        // the '?' as part of the URL path.
+        path: AppRoutes.deploymentDetails,
         name: RouteNames.deploymentDetails,
         pageBuilder: (context, state) {
           final instanceId = state.uri.queryParameters['instanceId'] ?? '';
@@ -535,7 +586,7 @@ List<RouteBase> get linodeRoutes => [
         },
       ),
       GoRoute(
-        path: '${AppRoutes.updateServer}?instanceId',
+        path: AppRoutes.updateServer,
         name: RouteNames.updateServer,
         pageBuilder: (context, state) {
           // Query param absent (e.g. reached from Settings, not right

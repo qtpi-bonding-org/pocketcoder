@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 import 'harness_auth_state.dart';
 
@@ -25,6 +26,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   StreamSubscription<List<ProviderKey>>? _providerKeysSub;
 
   void watchData() {
+    OnboardingLogger.event('harness auth data loading');
     emit(state.copyWith(isLoading: true, clearError: true));
     _loadHarnesses();
     _loadProviderKeys();
@@ -40,6 +42,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
           clearError: true,
         ),
       );
+      OnboardingLogger.event(
+          'harness list loaded', {'count': harnesses.length});
       _refreshStatuses();
     }, onError: (Object e) {
       unawaited(pocketCoderDiagnosticCapture.capture(
@@ -48,6 +52,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
         operation: 'watchHarnesses',
       ));
       emit(state.copyWith(error: e));
+      OnboardingLogger.event('harness list failed', {'error': e.toString()});
     });
   }
 
@@ -62,6 +67,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
           operation: 'watchProviderKeys',
         ));
         emit(state.copyWith(error: e));
+        OnboardingLogger.event(
+            'provider key list failed', {'error': e.toString()});
       },
     );
   }
@@ -89,6 +96,10 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
         operation: 'harnessOperation',
       );
       emit(state.copyWith(error: e));
+      OnboardingLogger.event('harness auth operation failed', {
+        'harness': harnessId,
+        'error': e.toString(),
+      });
     } finally {
       await _setBusy(harnessId, false);
     }
@@ -98,6 +109,12 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
     final next = Map<String, HarnessAuthStatus>.from(state.statuses);
     next[harnessId] = status;
     emit(state.copyWith(statuses: next, clearError: true));
+    OnboardingLogger.event('harness auth status', {
+      'harness': harnessId,
+      'status': status.status,
+      'provider': status.attempt?.provider ?? '-',
+      'has_challenge': status.challenge != null,
+    });
   }
 
   Future<void> _refreshStatuses() async {
@@ -123,6 +140,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   }
 
   Future<void> refreshHarness(String harnessId) async {
+    OnboardingLogger.event(
+        'harness status refresh requested', {'harness': harnessId});
     final snapshot = state.statuses[harnessId];
     return _withBusy(
       harnessId,
@@ -139,6 +158,10 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
     required String harnessId,
     required String provider,
   }) async {
+    OnboardingLogger.event('harness account login requested', {
+      'harness': harnessId,
+      'provider': provider,
+    });
     return _withBusy(
       harnessId,
       () => _authRepository
@@ -155,6 +178,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
     required String harnessId,
     required String providerKey,
   }) async {
+    OnboardingLogger.event(
+        'harness api key login requested', {'harness': harnessId});
     return _withBusy(
       harnessId,
       () => _authRepository
@@ -168,6 +193,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   }
 
   Future<void> startWithNone(String harnessId) async {
+    OnboardingLogger.event(
+        'harness anonymous login requested', {'harness': harnessId});
     return _withBusy(
       harnessId,
       () => _authRepository
@@ -177,6 +204,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   }
 
   Future<void> poll(String harnessId) async {
+    OnboardingLogger.event(
+        'harness auth poll requested', {'harness': harnessId});
     final snapshot = state.statuses[harnessId];
     await _withBusy(
       harnessId,
@@ -190,6 +219,10 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
     required String harnessId,
     required String code,
   }) async {
+    OnboardingLogger.event('harness authorization code submitted', {
+      'harness': harnessId,
+      'code_length': code.length,
+    });
     final snapshot = state.statuses[harnessId];
     final attemptId = snapshot?.attempt?.id;
     await _withBusy(
@@ -201,6 +234,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   }
 
   Future<void> cancel(String harnessId) async {
+    OnboardingLogger.event(
+        'harness auth cancellation requested', {'harness': harnessId});
     final snapshot = state.statuses[harnessId];
     await _withBusy(
       harnessId,
@@ -214,6 +249,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   }
 
   Future<void> disconnect(String harnessId) async {
+    OnboardingLogger.event(
+        'harness disconnect requested', {'harness': harnessId});
     await _withBusy(
       harnessId,
       () => _authRepository

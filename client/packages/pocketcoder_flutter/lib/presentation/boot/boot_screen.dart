@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import '../../app_router.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 class BootScreen extends StatefulWidget {
   const BootScreen({super.key});
@@ -129,6 +130,7 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   Future<void> _checkConnection() async {
+    OnboardingLogger.event('boot connection check started');
     if (mounted) {
       context
           .read<PocoCubit>()
@@ -136,15 +138,18 @@ class _BootScreenState extends State<BootScreen> {
     }
 
     bool pocketbaseAlive = false;
+
     try {
-      pocketbaseAlive =
-          await getIt<IStatusRepository>().checkPocketBaseHealth();
+      pocketbaseAlive = await getIt<IStatusRepository>()
+          .checkPocketBaseHealth()
+          .timeout(const Duration(seconds: 8));
     } catch (_) {
       pocketbaseAlive = false;
     }
 
     if (mounted) {
       if (pocketbaseAlive) {
+        OnboardingLogger.event('PocketBase reachable; opening server session');
         // Now check if we're already logged in
         final authRepo = getIt<IAuthRepository>();
         bool alreadyLoggedIn = authRepo.isAuthenticated;
