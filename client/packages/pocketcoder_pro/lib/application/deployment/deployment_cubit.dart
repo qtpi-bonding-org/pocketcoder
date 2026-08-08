@@ -4,6 +4,8 @@ import 'package:flutter_aeroform/domain/deployment/i_provisioning_service.dart';
 import 'package:flutter_aeroform/domain/models/app_bootstrap.dart';
 import 'package:flutter_aeroform/domain/models/host_spec.dart';
 import 'package:flutter_aeroform/domain/models/instance.dart';
+import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
+import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/models/provision_config.dart';
 import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
@@ -20,11 +22,13 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
     this._provisioningService,
     this._currentInstanceStore,
     this._readinessService,
+    this._secureStorage,
   ) : super(DeploymentState.initial());
 
   final IProvisioningService _provisioningService;
   final CurrentInstanceStore _currentInstanceStore;
   final DeploymentReadinessService _readinessService;
+  final ISecureStorage _secureStorage;
   Timer? _statusRefreshTimer;
   bool _isMonitoring = false;
 
@@ -32,6 +36,7 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
     ProvisionConfig config, {
     required HostSpec host,
     required AppBootstrap appBootstrap,
+    InstanceCredentials? instanceCredentials,
   }) async {
     await tryOperation(() async {
       final validation = _provisioningService.validateConfig(config);
@@ -54,6 +59,11 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
         onProgress: _onProvisionProgress,
       );
       await _currentInstanceStore.save(result.instanceId);
+      if (instanceCredentials != null) {
+        await _secureStorage.storeInstanceCredentials(
+          instanceCredentials.copyWith(instanceId: result.instanceId),
+        );
+      }
       emit(state.copyWith(
         status: UiFlowStatus.loading,
         deploymentResult: result,
@@ -61,7 +71,8 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
         hostname: result.hostname,
         deploymentStatus: OnboardingStage.hostReady,
       ));
-      unawaited(monitorDeployment(hostname: result.hostname, instanceId: result.instanceId));
+      unawaited(monitorDeployment(
+          hostname: result.hostname, instanceId: result.instanceId));
       return state;
     }, emitLoading: true);
   }
@@ -72,7 +83,9 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
       ProvisionPhase.creatingProviderResource => OnboardingStage.creatingServer,
       ProvisionPhase.preparingHost => OnboardingStage.preparingHost,
       ProvisionPhase.hostProvisioned => OnboardingStage.hostReady,
-      ProvisionPhase.failed || ProvisionPhase.cancelled => OnboardingStage.failed,
+      ProvisionPhase.failed ||
+      ProvisionPhase.cancelled =>
+        OnboardingStage.failed,
     };
     emit(state.copyWith(
       status: stage == OnboardingStage.failed
@@ -80,11 +93,14 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
           : UiFlowStatus.loading,
       deploymentStatus: stage,
       instanceId: progress.instanceId ?? state.instanceId,
-      error: progress.errorMessage == null ? state.error : Exception(progress.errorMessage),
+      error: progress.errorMessage == null
+          ? state.error
+          : Exception(progress.errorMessage),
     ));
   }
 
-  Future<void> monitorDeployment({required String hostname, required String instanceId}) async {
+  Future<void> monitorDeployment(
+      {required String hostname, required String instanceId}) async {
     if (_isMonitoring) return;
     _isMonitoring = true;
     try {
@@ -100,7 +116,9 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
           DeploymentPhase.composeUp => OnboardingStage.startingServices,
           DeploymentPhase.bootstrapComplete => OnboardingStage.finishingUp,
           DeploymentPhase.ready => OnboardingStage.ready,
-          DeploymentPhase.failed || DeploymentPhase.timedOut => OnboardingStage.failed,
+          DeploymentPhase.failed ||
+          DeploymentPhase.timedOut =>
+            OnboardingStage.failed,
         };
         emit(state.copyWith(
           status: stage == OnboardingStage.failed

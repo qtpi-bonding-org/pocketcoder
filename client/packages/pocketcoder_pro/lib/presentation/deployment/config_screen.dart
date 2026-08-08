@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +16,9 @@ import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:flutter_aeroform/domain/models/host_spec.dart';
 import 'package:flutter_aeroform/domain/models/app_bootstrap.dart';
+import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
+import 'package:flutter_aeroform/domain/security/i_ssh_key_generator.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_cloud_init.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -421,27 +426,57 @@ class _ConfigViewState extends State<_ConfigView> {
     );
   }
 
-  void _deploy(ConfigCubit configCubit, DeploymentCubit deploymentCubit) {
+  Future<void> _deploy(
+    ConfigCubit configCubit,
+    DeploymentCubit deploymentCubit,
+  ) async {
     final config = configCubit.state.config;
-    if (config != null) {
+    final credentials = widget.credentials;
+    if (config != null && credentials != null) {
+      final keyPair = await GetIt.I<ISshKeyGenerator>().generate();
       final host = config.backend == ProvisionBackendKind.nixos
-          ? const ImageBakedHostSpec(labelPrefix: 'provisioned', authorizedKey: '')
-          : const GeneratedConfigHostSpec(
+          ? ImageBakedHostSpec(
               labelPrefix: 'provisioned',
-              authorizedKey: '',
+              authorizedKey: keyPair.publicKey,
+            )
+          : GeneratedConfigHostSpec(
+              labelPrefix: 'provisioned',
+              authorizedKey: keyPair.publicKey,
               reverseProxyPort: 8090,
               hostname: HostnameStrategy.sslipIo,
               acmeEmail: '',
               staticPaths: {},
             );
       final bootstrap = config.backend == ProvisionBackendKind.nixos
-          ? const StackScriptBootstrap(
-              stackScriptId: 0,
-              udfData: {},
-              image: ImageArtifact(url: '', sha256: '', uncompressedBytes: 0),
+          ? StackScriptBootstrap(
+              stackScriptId: 2174743,
+              udfData: {
+                'ADMIN_USER_DATA': base64Encode(utf8.encode([
+                  'POCKETBASE_ADMIN_EMAIL=${credentials.email}',
+                  'POCKETBASE_ADMIN_PASSWORD=${credentials.password}',
+                  'NTFY_ENABLED=false',
+                  'root_ssh_key=${keyPair.publicKey}',
+                ].join('\n'))),
+              },
+              image: const ImageArtifact(
+                  url: '', sha256: '', uncompressedBytes: 0),
             )
-          : const CloudInitBootstrap(userData: '#cloud-config\n');
-      deploymentCubit.deploy(config, host: host, appBootstrap: bootstrap);
+          : PocketCoderCloudInit.build(
+              adminEmail: credentials.email,
+              adminPassword: credentials.password,
+              rootSshKey: keyPair.publicKey,
+            );
+      await deploymentCubit.deploy(
+        config,
+        host: host,
+        appBootstrap: bootstrap,
+        instanceCredentials: InstanceCredentials(
+          instanceId: '',
+          adminPassword: credentials.password,
+          rootSshPrivateKey: keyPair.privateKey,
+          adminEmail: credentials.email,
+        ),
+      );
     }
   }
 }
