@@ -1,7 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart' show BuildContext, VoidCallback;
 import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:pocketbase_drift/pocketbase_drift.dart';
@@ -13,7 +12,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
-import 'package:pocketcoder_flutter/presentation/errors/error_box_page_builder.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 
 /// Global service locator instance
@@ -124,29 +122,9 @@ void _configureErrorPrivserver() {
   ErrorPrivserver.configure(
     ErrorPrivserverConfig(
       storage: getIt<ErrorBoxStorage>(),
-      reporter: (_) async {}, // no-op: no network transmission, see spec §3
+      reporter: (_) async => false, // no-op: no network transmission, see spec §3
       errorCodeMapper: PocketCoderErrorCodeMapper.mapError,
       exceptionMapper: (error) => getIt<IExceptionKeyMapper>().map(error),
-      showToast:
-          false, // dead field in this package version (pinned commit 3565d9d4), set explicitly for clarity
-      toastBuilder: const _NoopErrorToastBuilder(),
-      pageBuilder: const PocketCoderErrorBoxPageBuilder(),
     ),
   );
-}
-
-/// Satisfies ErrorPrivserverConfig.toastBuilder, which is required by the
-/// constructor but never invoked anywhere in the pinned package version
-/// (commit 3565d9d4) — confirmed by grep, no automatic toast-on-capture
-/// exists. This class exists purely to compile.
-class _NoopErrorToastBuilder extends ErrorToastBuilder {
-  const _NoopErrorToastBuilder();
-
-  @override
-  void show(
-    BuildContext context,
-    String message, {
-    required VoidCallback onDismiss,
-    required VoidCallback onSend,
-  }) {}
 }

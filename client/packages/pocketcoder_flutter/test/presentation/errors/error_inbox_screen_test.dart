@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_cubit.dart';
+import 'package:pocketcoder_flutter/application/errors/error_inbox_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_inbox_screen.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -40,12 +41,9 @@ void main() {
     storage = MockErrorBoxStorage();
     ErrorPrivserver.configure(ErrorPrivserverConfig(
       storage: storage,
-      reporter: (_) async {},
+      reporter: (_) async => false,
       errorCodeMapper: (_) => 'ERR_TEST',
       exceptionMapper: (_) => null,
-      showToast: false,
-      toastBuilder: _FakeToastBuilder(),
-      pageBuilder: _FakePageBuilder(),
     ));
   });
 
@@ -55,7 +53,7 @@ void main() {
     await tester.pumpWidget(_wrap(
       MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => ErrorBoxPageCubit()..loadErrors()),
+          BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
           BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
         ],
         child: const ErrorInboxScreen(),
@@ -73,7 +71,7 @@ void main() {
     await tester.pumpWidget(_wrap(
       MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => ErrorBoxPageCubit()..loadErrors()),
+          BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
           BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
         ],
         child: const ErrorInboxScreen(),
@@ -91,7 +89,7 @@ void main() {
     await tester.pumpWidget(_wrap(
       MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => ErrorBoxPageCubit()..loadErrors()),
+          BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
           BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
         ],
         child: const ErrorInboxScreen(),
@@ -104,15 +102,4 @@ void main() {
 
     verify(() => storage.deleteError('e1')).called(1);
   });
-}
-
-class _FakeToastBuilder extends ErrorToastBuilder {
-  @override
-  void show(BuildContext context, String message,
-      {required VoidCallback onDismiss, required VoidCallback onSend}) {}
-}
-
-class _FakePageBuilder extends ErrorBoxPageBuilder {
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
 }

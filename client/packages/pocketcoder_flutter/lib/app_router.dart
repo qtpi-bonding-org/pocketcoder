@@ -289,10 +289,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: Builder(
-            builder: (context) =>
-                const PocketCoderErrorBoxPageBuilder().build(context),
-          ),
+          child: const PocketCoderErrorBoxPageBuilder(),
         ),
       ),
       // ── DEPLOY pillar ──

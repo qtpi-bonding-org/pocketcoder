@@ -1,5 +1,5 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -7,17 +7,6 @@ import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dar
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_report.dart';
 
 class _MockStorage extends Mock implements ErrorBoxStorage {}
-
-class _ToastBuilder extends ErrorToastBuilder {
-  @override
-  void show(BuildContext context, String message,
-      {required VoidCallback onDismiss, required VoidCallback onSend}) {}
-}
-
-class _PageBuilder extends ErrorBoxPageBuilder {
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
 
 void main() {
   setUpAll(() {
@@ -39,12 +28,9 @@ void main() {
     storage = _MockStorage();
     config = ErrorPrivserverConfig(
       storage: storage,
-      reporter: (_) async {},
+      reporter: (_) async => false,
       errorCodeMapper: (_) => 'ERR_TEST',
       exceptionMapper: (_) => const MessageKey.error('error.generic'),
-      showToast: false,
-      toastBuilder: _ToastBuilder(),
-      pageBuilder: _PageBuilder(),
     );
   });
 

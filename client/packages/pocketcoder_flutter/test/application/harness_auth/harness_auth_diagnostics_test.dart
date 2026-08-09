@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -11,17 +10,6 @@ class _MockStorage extends Mock implements ErrorBoxStorage {}
 class _MockProviderRepository extends Mock implements IProviderRepository {}
 
 class _MockAuthRepository extends Mock implements IHarnessAuthRepository {}
-
-class _ToastBuilder extends ErrorToastBuilder {
-  @override
-  void show(BuildContext context, String message,
-      {required VoidCallback onDismiss, required VoidCallback onSend}) {}
-}
-
-class _PageBuilder extends ErrorBoxPageBuilder {
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
 
 void main() {
   late _MockStorage storage;
@@ -48,12 +36,9 @@ void main() {
     when(() => storage.saveError(any())).thenAnswer((_) async {});
     ErrorPrivserver.configure(ErrorPrivserverConfig(
       storage: storage,
-      reporter: (_) async {},
+      reporter: (_) async => false,
       errorCodeMapper: (_) => 'ERR_TEST',
       exceptionMapper: (_) => null,
-      showToast: false,
-      toastBuilder: _ToastBuilder(),
-      pageBuilder: _PageBuilder(),
     ));
     cubit = HarnessAuthCubit(
       providerRepository: providerRepository,

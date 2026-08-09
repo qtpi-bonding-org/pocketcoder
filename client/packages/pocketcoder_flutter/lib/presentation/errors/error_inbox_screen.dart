@@ -5,6 +5,7 @@ import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:intl/intl.dart';
 import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_cubit.dart';
 import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_state.dart';
+import 'package:pocketcoder_flutter/application/errors/error_inbox_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -27,9 +28,9 @@ class ErrorInboxScreen extends StatelessWidget {
         showBack: true,
         body: BiosFrame(
           title: context.l10n.errorsTitle,
-          child: BlocBuilder<ErrorBoxPageCubit, ErrorBoxPageState>(
+          child: BlocBuilder<ErrorInboxCubit, ErrorInboxState>(
             builder: (context, state) {
-              if (state.unsentErrors.isEmpty) {
+              if (state.errors.isEmpty) {
                 return Padding(
                   padding: EdgeInsets.all(AppSizes.space * 2),
                   child: TerminalText(
@@ -51,14 +52,14 @@ class ErrorInboxScreen extends StatelessWidget {
                           isPrimary: true,
                           onTap: () => context
                               .read<ErrorInboxDiagnosticsCubit>()
-                              .copyReports(state.unsentErrors),
+                              .copyReports(state.errors),
                         ),
                         TerminalButton(
                           label: context.l10n.errorsClearAll,
                           isPrimary: false,
                           onTap: () async {
-                            final cubit = context.read<ErrorBoxPageCubit>();
-                            for (final entry in List.of(state.unsentErrors)) {
+                            final cubit = context.read<ErrorInboxCubit>();
+                            for (final entry in List.of(state.errors)) {
                               await cubit.deleteError(entry.id);
                             }
                           },
@@ -66,7 +67,7 @@ class ErrorInboxScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  for (final entry in state.unsentErrors)
+                  for (final entry in state.errors)
                     _ErrorTile(entry: entry),
                 ],
               );
@@ -104,7 +105,7 @@ class _ErrorTile extends StatelessWidget {
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
           onPressed: () =>
-              context.read<ErrorBoxPageCubit>().deleteError(entry.id),
+              context.read<ErrorInboxCubit>().deleteError(entry.id),
         ),
         children: [
           Padding(
