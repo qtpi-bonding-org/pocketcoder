@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
-import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart';
 import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
@@ -10,11 +8,11 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'adapters/permission_relay_adapter.dart';
 
 class PermissionRelayScreen extends StatelessWidget {
   const PermissionRelayScreen({super.key});
@@ -23,20 +21,28 @@ class PermissionRelayScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<BillingCubit>()..loadOfferings(),
-      child: const PermissionRelayView(),
+      child: const PermissionRelayAdapter(),
     );
   }
 }
 
 class PermissionRelayView extends StatelessWidget {
-  const PermissionRelayView({super.key});
+  const PermissionRelayView({
+    super.key,
+    required this.state,
+    required this.onRestore,
+    required this.onPurchase,
+    required this.onConfigure,
+  });
+
+  final BillingState state;
+  final VoidCallback onRestore;
+  final Future<void> Function(String identifier) onPurchase;
+  final VoidCallback onConfigure;
 
   @override
   Widget build(BuildContext context) {
-    return UiFlowListener<BillingCubit, BillingState>(
-      child: BlocBuilder<BillingCubit, BillingState>(
-        builder: (context, state) {
-          return PocketCoderShell(
+    return PocketCoderShell(
             title: context.l10n.relayTitle,
             activePillar: NavPillar.configure,
             showBack: true,
@@ -52,8 +58,7 @@ class PermissionRelayView extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: TerminalButton(
                         label: context.l10n.relayRestore,
-                        onTap: () =>
-                            context.read<BillingCubit>().restorePurchases(),
+                        onTap: onRestore,
                       ),
                     ),
                     VSpace.x2,
@@ -65,8 +70,8 @@ class PermissionRelayView extends StatelessWidget {
                       )
                     else if (state.isPro)
                       _buildActiveStatus(context, state)
-                    else
-                      _buildSetupOptions(context, state),
+                      else
+                        _buildSetupOptions(context, state),
                     VSpace.x3,
                     Text(
                       context.l10n.relayFunctionalOverviewTitle,
@@ -89,9 +94,6 @@ class PermissionRelayView extends StatelessWidget {
                 ),
               ),
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -141,8 +143,9 @@ class PermissionRelayView extends StatelessWidget {
           BiosSection(
             title: context.l10n.relayConfigSection,
             child: Column(
-              children:
-                  paywallPackages.map((pkg) => _PackageCard(pkg: pkg)).toList(),
+              children: paywallPackages
+                  .map((pkg) => _PackageCard(pkg: pkg, onPurchase: onPurchase))
+                  .toList(),
             ),
           ),
           VSpace.x1,
@@ -150,7 +153,7 @@ class PermissionRelayView extends StatelessWidget {
         if (fossPackages.isNotEmpty || paywallPackages.isEmpty) ...[
           BiosSection(
             title: context.l10n.relayNtfyTitle,
-            child: const _NtfySetupCard(),
+            child: _NtfySetupCard(onConfigure: onConfigure),
           ),
         ],
       ],
@@ -161,7 +164,9 @@ class PermissionRelayView extends StatelessWidget {
 class _PackageCard extends StatelessWidget {
   final BillingPackage pkg;
 
-  const _PackageCard({required this.pkg});
+  const _PackageCard({required this.pkg, required this.onPurchase});
+
+  final Future<void> Function(String identifier) onPurchase;
 
   @override
   Widget build(BuildContext context) {
@@ -206,8 +211,7 @@ class _PackageCard extends StatelessWidget {
             width: double.infinity,
             child: TerminalButton(
               label: context.l10n.relayActivate,
-              onTap: () =>
-                  context.read<BillingCubit>().purchase(pkg.identifier),
+              onTap: () => onPurchase(pkg.identifier),
             ),
           ),
         ],
@@ -217,7 +221,9 @@ class _PackageCard extends StatelessWidget {
 }
 
 class _NtfySetupCard extends StatelessWidget {
-  const _NtfySetupCard();
+  const _NtfySetupCard({required this.onConfigure});
+
+  final VoidCallback onConfigure;
 
   @override
   Widget build(BuildContext context) {
@@ -253,9 +259,7 @@ class _NtfySetupCard extends StatelessWidget {
             child: TerminalButton(
               label: context.l10n.actionConfigure,
               isPrimary: false,
-              onTap: () {
-                GetIt.I<PushService>().configure();
-              },
+              onTap: onConfigure,
             ),
           ),
         ],
