@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
@@ -13,6 +12,7 @@ import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
 import 'package:pocketcoder_flutter/domain/models/schedule.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'adapters/scheduler_adapter.dart';
 
 class SchedulerScreen extends StatelessWidget {
   const SchedulerScreen({super.key});
@@ -21,15 +21,32 @@ class SchedulerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<SchedulerCubit>()..loadSchedules(),
-      child: UiFlowListener<SchedulerCubit, SchedulerState>(
-        child: const _SchedulerView(),
-      ),
+      child: const SchedulerAdapter(),
     );
   }
 }
 
-class _SchedulerView extends StatelessWidget {
-  const _SchedulerView();
+class SchedulerView extends StatelessWidget {
+  const SchedulerView({
+    super.key,
+    required this.state,
+    required this.onPause,
+    required this.onUnpause,
+    required this.onRunNow,
+    required this.onDelete,
+    required this.onRename,
+    required this.onUpdateCron,
+    required this.onCreate,
+  });
+
+  final SchedulerState state;
+  final ValueChanged<String> onPause;
+  final ValueChanged<String> onUnpause;
+  final ValueChanged<String> onRunNow;
+  final ValueChanged<String> onDelete;
+  final Future<void> Function({required String id, required String displayName}) onRename;
+  final Future<void> Function({required String id, required String cron}) onUpdateCron;
+  final Future<void> Function({required String displayName, required String cron, required String prompt}) onCreate;
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +56,8 @@ class _SchedulerView extends StatelessWidget {
       showBack: true,
       body: BiosFrame(
         title: context.l10n.schedulerRegistryTitle,
-        child: BlocBuilder<SchedulerCubit, SchedulerState>(
-          builder: (context, state) {
+        child: Builder(
+          builder: (context) {
             final colors = context.colorScheme;
             return state.maybeWhen(
               loaded: (schedules) => ListView(
@@ -78,7 +95,6 @@ class _SchedulerView extends StatelessWidget {
   }
 
   Widget _buildScheduleItem(BuildContext context, Schedule schedule) {
-    final cubit = context.read<SchedulerCubit>();
     return TerminalCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,8 +125,8 @@ class _SchedulerView extends StatelessWidget {
                       : context.l10n.schedulerPauseButton,
                   isPrimary: false,
                   onTap: () => schedule.paused
-                      ? cubit.unpauseSchedule(schedule.id)
-                      : cubit.pauseSchedule(schedule.id),
+                      ? onUnpause(schedule.id)
+                      : onPause(schedule.id),
                 ),
               ),
               HSpace.x2,
@@ -118,7 +134,7 @@ class _SchedulerView extends StatelessWidget {
                 child: TerminalButton(
                   label: context.l10n.schedulerRunNowButton,
                   isPrimary: false,
-                  onTap: () => cubit.runNow(schedule.id),
+                  onTap: () => onRunNow(schedule.id),
                 ),
               ),
             ],
@@ -137,7 +153,7 @@ class _SchedulerView extends StatelessWidget {
               TerminalButton(
                 label: context.l10n.schedulerDeleteButton,
                 color: context.colorScheme.error,
-                onTap: () => cubit.deleteSchedule(schedule.id),
+                onTap: () => onDelete(schedule.id),
               ),
             ],
           ),
@@ -148,7 +164,6 @@ class _SchedulerView extends StatelessWidget {
 
   void _showEditScheduleDialog(BuildContext context, Schedule schedule) {
     final colors = Theme.of(context).colorScheme;
-    final cubit = context.read<SchedulerCubit>();
     final nameController = TextEditingController(text: schedule.displayName);
     final cronController = TextEditingController(text: schedule.cron);
 
@@ -192,10 +207,10 @@ class _SchedulerView extends StatelessWidget {
                 return;
               }
               if (name != schedule.displayName) {
-                cubit.renameSchedule(id: schedule.id, displayName: name);
+                onRename(id: schedule.id, displayName: name);
               }
               if (cron != schedule.cron) {
-                cubit.updateCron(id: schedule.id, cron: cron);
+                onUpdateCron(id: schedule.id, cron: cron);
               }
               Navigator.of(dialogContext).pop();
             },
@@ -213,7 +228,6 @@ class _SchedulerView extends StatelessWidget {
 
   void _showAddScheduleDialog(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final cubit = context.read<SchedulerCubit>();
     final nameController = TextEditingController();
     final cronController = TextEditingController();
     final promptController = TextEditingController();
@@ -265,7 +279,7 @@ class _SchedulerView extends StatelessWidget {
               if (name.isEmpty || cron.isEmpty || prompt.isEmpty) {
                 return;
               }
-              cubit.createSchedule(displayName: name, cron: cron, prompt: prompt);
+              onCreate(displayName: name, cron: cron, prompt: prompt);
               Navigator.of(dialogContext).pop();
             },
             style: OutlinedButton.styleFrom(
