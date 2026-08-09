@@ -4,7 +4,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
@@ -14,6 +13,7 @@ import 'package:pocketcoder_flutter/application/tool_permissions/tool_permission
 import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_state.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'adapters/tool_permissions_adapter.dart';
 
 class ToolPermissionsScreen extends StatelessWidget {
   const ToolPermissionsScreen({super.key});
@@ -22,15 +22,24 @@ class ToolPermissionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<ToolPermissionsCubit>()..watchRules(),
-      child: UiFlowListener<ToolPermissionsCubit, ToolPermissionsState>(
-        child: const _ToolPermissionsView(),
-      ),
+      child: const ToolPermissionsAdapter(),
     );
   }
 }
 
-class _ToolPermissionsView extends StatelessWidget {
-  const _ToolPermissionsView();
+class ToolPermissionsView extends StatelessWidget {
+  const ToolPermissionsView({
+    super.key,
+    required this.state,
+    required this.onSetActive,
+    required this.onUpdateAction,
+    required this.onCreateRule,
+  });
+
+  final ToolPermissionsState state;
+  final Future<void> Function(String id, bool active) onSetActive;
+  final Future<void> Function(String id, String action) onUpdateAction;
+  final Future<void> Function(String tool, String action) onCreateRule;
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +49,8 @@ class _ToolPermissionsView extends StatelessWidget {
       showBack: true,
       body: BiosFrame(
         title: context.l10n.toolPermissionsRulesRegistry,
-        child: BlocBuilder<ToolPermissionsCubit, ToolPermissionsState>(
-          builder: (context, state) {
+        child: Builder(
+          builder: (context) {
             final colors = context.colorScheme;
             return state.maybeWhen(
               loaded: (rules) {
@@ -111,9 +120,7 @@ class _ToolPermissionsView extends StatelessWidget {
               ),
               Switch(
                 value: isActive,
-                onChanged: (value) => context
-                    .read<ToolPermissionsCubit>()
-                    .setActive(rule.id, value),
+                onChanged: (value) => onSetActive(rule.id, value),
               ),
             ],
           ),
@@ -132,9 +139,7 @@ class _ToolPermissionsView extends StatelessWidget {
           child: TerminalButton(
             label: label,
             isPrimary: rule.action == action,
-            onTap: () => context
-                .read<ToolPermissionsCubit>()
-                .updateAction(rule.id, value),
+            onTap: () => onUpdateAction(rule.id, value),
           ),
         ),
       );
@@ -154,7 +159,6 @@ class _ToolPermissionsView extends StatelessWidget {
 
   void _showAddRuleDialog(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final cubit = context.read<ToolPermissionsCubit>();
     final toolController = TextEditingController();
     String selectedAction = 'allow';
 
@@ -212,7 +216,7 @@ class _ToolPermissionsView extends StatelessWidget {
               onPressed: () {
                 final tool = toolController.text.trim();
                 if (tool.isEmpty) return;
-                cubit.createRule(tool: tool, action: selectedAction);
+                onCreateRule(tool, selectedAction);
                 Navigator.of(dialogContext).pop();
               },
               style: OutlinedButton.styleFrom(
