@@ -1,6 +1,7 @@
 services:
   # 🏰 POCKETBASE CORE (Backend Only)
   pocketbase:
+    image: pocketcoder-pocketbase:latest
     build:
       context: .
       dockerfile: server/pocketbase/Dockerfile
@@ -220,6 +221,7 @@ services:
 
   # 🔌 MCP GATEWAY (MCP Server Gateway)
   mcp-gateway:
+    image: pocketcoder-mcp-gateway:latest
     build:
       context: .
       dockerfile: server/mcp-gateway/Dockerfile
