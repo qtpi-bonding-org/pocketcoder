@@ -1,36 +1,39 @@
 // lib/presentation/errors/error_inbox_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:intl/intl.dart';
-import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_cubit.dart';
-import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_state.dart';
-import 'package:pocketcoder_flutter/application/errors/error_inbox_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
 class ErrorInboxScreen extends StatelessWidget {
-  const ErrorInboxScreen({super.key});
+  const ErrorInboxScreen({
+    super.key,
+    required this.errors,
+    required this.onCopyAll,
+    required this.onClearAll,
+    required this.onCopy,
+    required this.onDelete,
+  });
+
+  final List<ErrorBoxEntry> errors;
+  final VoidCallback onCopyAll;
+  final VoidCallback onClearAll;
+  final Future<void> Function(ErrorEntry) onCopy;
+  final Future<void> Function(String id) onDelete;
 
   @override
   Widget build(BuildContext context) {
-    return UiFlowListener<ErrorInboxDiagnosticsCubit,
-        ErrorInboxDiagnosticsState>(
-      showSuccessToasts: true,
-      successMessage: context.l10n.errorsCopied,
-      child: PocketCoderShell(
+    return PocketCoderShell(
         title: context.l10n.errorsTitle,
         activePillar: NavPillar.configure,
         showBack: true,
         body: BiosFrame(
           title: context.l10n.errorsTitle,
-          child: BlocBuilder<ErrorInboxCubit, ErrorInboxState>(
-            builder: (context, state) {
-              if (state.errors.isEmpty) {
+          child: Builder(builder: (context) {
+              if (errors.isEmpty) {
                 return Padding(
                   padding: EdgeInsets.all(AppSizes.space * 2),
                   child: TerminalText(
@@ -50,39 +53,36 @@ class ErrorInboxScreen extends StatelessWidget {
                         TerminalButton(
                           label: context.l10n.errorsCopyAll,
                           isPrimary: true,
-                          onTap: () => context
-                              .read<ErrorInboxDiagnosticsCubit>()
-                              .copyReports(state.errors),
+                          onTap: onCopyAll,
                         ),
                         TerminalButton(
                           label: context.l10n.errorsClearAll,
                           isPrimary: false,
-                          onTap: () async {
-                            final cubit = context.read<ErrorInboxCubit>();
-                            for (final entry in List.of(state.errors)) {
-                              await cubit.deleteError(entry.id);
-                            }
-                          },
+                          onTap: onClearAll,
                         ),
                       ],
                     ),
                   ),
-                  for (final entry in state.errors)
-                    _ErrorTile(entry: entry),
+                  for (final entry in errors)
+                    _ErrorTile(entry: entry, onCopy: onCopy, onDelete: onDelete),
                 ],
               );
-            },
-          ),
+            }),
         ),
-      ),
-    );
+      );
   }
 }
 
 class _ErrorTile extends StatelessWidget {
   final ErrorBoxEntry entry;
+  final Future<void> Function(ErrorEntry) onCopy;
+  final Future<void> Function(String id) onDelete;
 
-  const _ErrorTile({required this.entry});
+  const _ErrorTile({
+    required this.entry,
+    required this.onCopy,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -104,8 +104,7 @@ class _ErrorTile extends StatelessWidget {
         ),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
-          onPressed: () =>
-              context.read<ErrorInboxCubit>().deleteError(entry.id),
+          onPressed: () => onDelete(entry.id),
         ),
         children: [
           Padding(
@@ -115,9 +114,7 @@ class _ErrorTile extends StatelessWidget {
               child: TerminalButton(
                 label: context.l10n.errorsCopy,
                 isPrimary: true,
-                onTap: () => context
-                    .read<ErrorInboxDiagnosticsCubit>()
-                    .copyReport(entry.errorData),
+                onTap: () => onCopy(entry.errorData),
               ),
             ),
           ),

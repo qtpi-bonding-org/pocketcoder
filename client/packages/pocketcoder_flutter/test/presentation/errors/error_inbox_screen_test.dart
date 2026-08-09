@@ -4,9 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
-import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_cubit.dart';
 import 'package:pocketcoder_flutter/application/errors/error_inbox_cubit.dart';
-import 'package:pocketcoder_flutter/presentation/errors/error_inbox_screen.dart';
+import 'package:pocketcoder_flutter/presentation/errors/adapters/error_inbox_adapter.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
@@ -54,9 +53,8 @@ void main() {
       MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
-          BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
         ],
-        child: const ErrorInboxScreen(),
+        child: const ErrorInboxAdapter(),
       ),
     ));
     await tester.pumpAndSettle();
@@ -72,9 +70,8 @@ void main() {
       MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
-          BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
         ],
-        child: const ErrorInboxScreen(),
+        child: const ErrorInboxAdapter(),
       ),
     ));
     await tester.pumpAndSettle();
@@ -90,9 +87,8 @@ void main() {
       MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
-          BlocProvider(create: (_) => ErrorInboxDiagnosticsCubit()),
         ],
-        child: const ErrorInboxScreen(),
+        child: const ErrorInboxAdapter(),
       ),
     ));
     await tester.pumpAndSettle();
