@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart';
 import 'package:pocketcoder_flutter/application/files/file_browser_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/file_entry.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'adapters/file_browser_adapter.dart';
 
 /// Browses the shared workspace, one directory at a time.
 ///
@@ -21,16 +19,21 @@ class FileBrowserScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return UiFlowListener<FileBrowserCubit, FileBrowserState>(
-      child: _FileBrowserView(onOpenFile: onOpenFile),
-    );
+    return FileBrowserAdapter(onOpenFile: onOpenFile);
   }
 }
 
-class _FileBrowserView extends StatelessWidget {
+class FileBrowserView extends StatelessWidget {
   final void Function(BuildContext context, String path) onOpenFile;
+  final ValueChanged<String> onNavigateInto;
+  final FileBrowserState state;
 
-  const _FileBrowserView({required this.onOpenFile});
+  const FileBrowserView({
+    super.key,
+    required this.onOpenFile,
+    required this.onNavigateInto,
+    required this.state,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +41,7 @@ class _FileBrowserView extends StatelessWidget {
       title: context.l10n.filesTitle,
       activePillar: NavPillar.chats,
       showBack: true,
-      body: BlocBuilder<FileBrowserCubit, FileBrowserState>(
-        builder: (context, state) {
+      body: Builder(builder: (context) {
           if (state.isLoading) {
             return const Center(child: TerminalLoadingIndicator());
           }
@@ -60,8 +62,7 @@ class _FileBrowserView extends StatelessWidget {
               ...state.entries.map((entry) => _entryRow(context, state, entry)),
             ],
           );
-        },
-      ),
+        }),
     );
   }
 
@@ -71,7 +72,7 @@ class _FileBrowserView extends StatelessWidget {
       title: TerminalText(entry.name),
       onTap: () {
         if (entry.isDir) {
-          context.read<FileBrowserCubit>().navigateInto(entry.name);
+          onNavigateInto(entry.name);
         } else {
           final fullPath = state.path.isEmpty ? entry.name : '${state.path}/${entry.name}';
           onOpenFile(context, fullPath);
