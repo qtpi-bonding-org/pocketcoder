@@ -233,7 +233,7 @@ EOF
         "$INSTALL_DIR/docker-compose.yml" "$PREBUILT_COMPOSE"
       MISSING_IMAGES=0
       MISSING_IMAGE_NAMES=""
-      if ! COMPOSE_IMAGES=$(docker compose -f "$PREBUILT_COMPOSE" config --images); then
+      if ! COMPOSE_IMAGES=$(${pkgs.bash}/bin/bash "$INSTALL_DIR/deploy/scripts/list-prebuilt-images.sh" "$PREBUILT_COMPOSE"); then
         pc_status_heartbeat_stop
         pc_status_error loading_images "release_compose_config_failed"
         exit 1

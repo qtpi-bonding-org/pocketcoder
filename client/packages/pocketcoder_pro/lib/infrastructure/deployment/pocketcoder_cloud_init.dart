@@ -149,7 +149,7 @@ write_files:
         /opt/pocketcoder/docker-compose.yml "\$prebuilt_compose"
       missing_images=0
       missing_image_names=""
-      if ! compose_images=\$("\$compose" -f "\$prebuilt_compose" config --images); then
+      if ! compose_images=\$(sh /opt/pocketcoder/deploy/scripts/list-prebuilt-images.sh "\$prebuilt_compose"); then
         status_error loading_images release_compose_config_failed
         exit 1
       fi
