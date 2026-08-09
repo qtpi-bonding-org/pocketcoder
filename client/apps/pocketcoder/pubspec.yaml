@@ -35,6 +35,18 @@ dependencies:
     path: ../../packages/pocketcoder_flutter
   pocketcoder_pro:
     path: ../../packages/pocketcoder_pro
+  flutter_widgetsystem:
+    path: ../../../../flutter_widgetsystem
+  widgetbook: ^3.25.0
+  flutter_bloc: ^8.1.3
+  cubit_ui_flow:
+    git:
+      url: https://github.com/qtpi-bonding-org/flutter_cubit_ui_flow.git
+      ref: 1d31dce6ab6753a58c230586660b301daf851ec6
+  flutter_aeroform:
+    git:
+      url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
+      ref: "0421fc3"
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

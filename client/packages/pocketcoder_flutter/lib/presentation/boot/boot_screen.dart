@@ -6,10 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
+import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
+import 'boot_view.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import '../../app_router.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
@@ -198,69 +197,15 @@ class _BootScreenState extends State<BootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: ScanlineWidget(
-        child: Stack(
-          children: [
-            AnimatedOpacity(
-              duration: const Duration(seconds: 1),
-              opacity: _logsDimmed ? 0.2 : 1.0,
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: EdgeInsets.all(AppSizes.space * 2),
-                itemCount: _logs.length,
-                itemBuilder: (context, index) {
-                  final logEntry = _logs[index];
-                  Color? textColor = colors.primary;
-
-                  // Simple log level coloring
-                  if (logEntry.startsWith('[!]') ||
-                      logEntry.contains('ERROR')) {
-                    textColor = colors.error;
-                  } else if (logEntry.startsWith('[sys]')) {
-                    textColor = colors.tertiary;
-                  } else if (logEntry.startsWith('[net]')) {
-                    textColor = colors.secondary;
-                  }
-
-                  return Text(
-                    logEntry,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: textColor,
-                    ),
-                  );
-                },
-              ),
-            ),
-            if (_pocoVisible)
-              Center(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 500),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      StreamBuilder<PocoState>(
-                        initialData: context.read<PocoCubit>().state,
-                        stream: context.read<PocoCubit>().stream,
-                        builder: (context, snapshot) {
-                          final state =
-                              snapshot.data ?? context.read<PocoCubit>().state;
-                          return PocoWidget(
-                            message: ValueNotifier(state.message),
-                            sequence: state.sequence,
-                            history: state.history,
-                            pocoSize: AppSizes.fontBig,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
+    return StreamBuilder<PocoState>(
+      initialData: context.read<PocoCubit>().state,
+      stream: context.read<PocoCubit>().stream,
+      builder: (context, snapshot) => BootView(
+        logs: _logs,
+        logsDimmed: _logsDimmed,
+        pocoVisible: _pocoVisible,
+        pocoState: snapshot.data ?? context.read<PocoCubit>().state,
+        scrollController: _scrollController,
       ),
     );
   }
