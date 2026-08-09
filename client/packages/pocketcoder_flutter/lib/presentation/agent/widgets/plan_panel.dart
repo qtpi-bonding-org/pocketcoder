@@ -5,31 +5,19 @@
 // for plan entries in the current contract; the agent pushes a new plan
 // snapshot via the reduced state.
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
-import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 class PlanPanel extends StatelessWidget {
-  const PlanPanel({super.key});
+  const PlanPanel({super.key, required this.plan});
+  final Map<String, dynamic>? plan;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChatCubit, ChatState>(
-      builder: (context, state) {
-        final plan = state.conversation.sessionState.plan;
-        if (plan == null) return const SizedBox.shrink();
-
-        final entries = (plan['entries'] as List?)
-                ?.whereType<Map>()
-                .map((e) => Map<String, dynamic>.from(e))
-                .toList() ??
-            const <Map<String, dynamic>>[];
-        if (entries.isEmpty) return const SizedBox.shrink();
-
-        return _buildPanel(context, entries);
-      },
-    );
+    final value = plan;
+    if (value == null) return const SizedBox.shrink();
+    final entries = (value['entries'] as List?)?.whereType<Map>().map((e) => Map<String,dynamic>.from(e)).toList() ?? const <Map<String,dynamic>>[];
+    if (entries.isEmpty) return const SizedBox.shrink();
+    return _buildPanel(context, entries);
   }
 
   Widget _buildPanel(

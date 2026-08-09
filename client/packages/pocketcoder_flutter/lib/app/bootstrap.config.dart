@@ -193,10 +193,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
     gh.lazySingleton<_i145.ErrorBoxStorage>(
         () => externalModule.errorBoxStorage);
-    gh.lazySingleton<String>(
-      () => externalModule.oauthRelayBaseUrl,
-      instanceName: 'oauthRelayBaseUrl',
-    );
     gh.factory<_i1000.SshTerminalCubit>(
         () => _i1000.SshTerminalCubit(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i300.AgentActionsApi>(
@@ -210,6 +206,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i165.ISkillsRepository>(
         () => _i675.SkillsRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
+    gh.lazySingleton<String>(
+      () => externalModule.oauthRelayBaseUrl,
+      instanceName: 'oauthRelayBaseUrl',
+    );
     gh.lazySingleton<_i653.ILoadingService>(() => _i976.AppLoadingService());
     gh.lazySingleton<_i470.ISchedulerRepository>(
         () => _i715.SchedulerRepository(gh<_i169.PocketBase>()));
@@ -245,10 +245,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i398.ToolPermissionDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
-    gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
-          gh<_i519.Client>(),
-          gh<String>(instanceName: 'oauthRelayBaseUrl'),
-        ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
@@ -282,13 +278,15 @@ extension GetItInjectableX on _i174.GetIt {
           pocketBase: gh<_i169.PocketBase>(),
           httpClient: gh<_i519.Client>(),
         ));
-    gh.factory<_i67.SkillsCubit>(
-        () => _i67.SkillsCubit(gh<_i165.ISkillsRepository>()));
     gh.lazySingleton<_i630.IAgentConfigRepository>(
         () => _i857.AgentConfigRepository(
               gh<_i810.PocoConfigDao>(),
               gh<_i810.PromptDao>(),
             ));
+    gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
+          gh<_i519.Client>(),
+          gh<String>(instanceName: 'oauthRelayBaseUrl'),
+        ));
     gh.factory<_i506.StatusCubit>(
         () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i190.IStatusRepository>(
@@ -313,6 +311,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
     gh.factory<_i490.SchedulerCubit>(
         () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
+    gh.factory<_i67.SkillsCubit>(() => _i67.SkillsCubit(
+          gh<_i165.ISkillsRepository>(),
+          gh<_i630.IAgentConfigRepository>(),
+        ));
     gh.factory<_i655.SandboxAgentCubit>(
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
     gh.factory<_i110.FileBrowserCubit>(

@@ -1175,6 +1175,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorsClearAll => 'CLEAR ALL';
 
   @override
+  String get harnessAuthChallengeTargetCopied => 'CHALLENGE TARGET COPIED';
+
+  @override
   String errorsOccurred(int count) {
     return 'Occurred ${count}x';
   }

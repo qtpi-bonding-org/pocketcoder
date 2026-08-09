@@ -524,6 +524,7 @@
   "errorsCopyAll": "COPY ALL",
   "errorsCopied": "DIAGNOSTIC REPORT COPIED",
   "errorsClearAll": "CLEAR ALL",
+  "harnessAuthChallengeTargetCopied": "CHALLENGE TARGET COPIED",
   "errorsOccurred": "Occurred {count}x",
   "@errorsOccurred": {
     "placeholders": {

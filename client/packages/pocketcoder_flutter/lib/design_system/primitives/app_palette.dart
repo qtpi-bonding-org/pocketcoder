@@ -32,8 +32,14 @@ class AppPalette {
     name: 'PocketCoder Terminal',
   );
 
-  /// Automatic dark mode via luminance inversion
-  static IColorPalette get dark => primary.symmetricPalette;
+  /// The alternate palette slot, currently the same phosphor look as
+  /// [primary].
+  ///
+  /// This used to be `primary.symmetricPalette` — a luminance inversion that
+  /// produced a white-background "CRT", which is not a look PocketCoder ships.
+  /// A genuine alternate (e.g. amber-on-cream) should be hand-authored here as
+  /// an explicit colour map and contrast-checked, not derived by inversion.
+  static IColorPalette get alternate => primary;
 }
 
 /// Extension for semantic color access

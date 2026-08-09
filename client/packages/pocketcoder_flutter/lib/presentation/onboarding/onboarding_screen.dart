@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -7,6 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_widget.dart';
+import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_login_screen.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
@@ -43,7 +45,20 @@ class OnboardingScreen extends StatelessWidget {
                   fontSize: AppSizes.fontTiny,
                 ),
                 VSpace.x6,
-                PocoWidget(pocoSize: AppSizes.fontLarge),
+                StreamBuilder<PocoState>(
+                  initialData: context.read<PocoCubit>().state,
+                  stream: context.read<PocoCubit>().stream,
+                  builder: (context, snapshot) {
+                    final state =
+                        snapshot.data ?? context.read<PocoCubit>().state;
+                    return PocoWidget(
+                      message: ValueNotifier(state.message),
+                      sequence: state.sequence,
+                      history: state.history,
+                      pocoSize: AppSizes.fontLarge,
+                    );
+                  },
+                ),
                 VSpace.x4,
                 TerminalText(
                   context.l10n.onboardingConnectOrDeploy,

@@ -4,8 +4,10 @@ import 'package:pocketcoder_flutter/application/skills/skills_cubit.dart';
 import 'package:pocketcoder_flutter/application/skills/skills_state.dart';
 import 'package:pocketcoder_flutter/domain/models/skill.dart';
 import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart';
+import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart';
 
 class MockSkillsRepository extends Mock implements ISkillsRepository {}
+class MockAgentConfigRepository extends Mock implements IAgentConfigRepository {}
 
 const _skill = Skill(
   name: 'my-skill',
@@ -17,16 +19,18 @@ const _skill = Skill(
 
 void main() {
   late MockSkillsRepository repo;
+  late MockAgentConfigRepository configRepo;
   SkillsCubit? lastCubit;
 
   SkillsCubit buildCubit() {
-    final cubit = SkillsCubit(repo);
+    final cubit = SkillsCubit(repo, configRepo);
     lastCubit = cubit;
     return cubit;
   }
 
   setUp(() {
     repo = MockSkillsRepository();
+    configRepo = MockAgentConfigRepository();
   });
 
   tearDown(() async {

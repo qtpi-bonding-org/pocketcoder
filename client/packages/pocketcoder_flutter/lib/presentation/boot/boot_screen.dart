@@ -241,7 +241,20 @@ class _BootScreenState extends State<BootScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      PocoWidget(pocoSize: AppSizes.fontBig),
+                      StreamBuilder<PocoState>(
+                        initialData: context.read<PocoCubit>().state,
+                        stream: context.read<PocoCubit>().stream,
+                        builder: (context, snapshot) {
+                          final state =
+                              snapshot.data ?? context.read<PocoCubit>().state;
+                          return PocoWidget(
+                            message: ValueNotifier(state.message),
+                            sequence: state.sequence,
+                            history: state.history,
+                            pocoSize: AppSizes.fontBig,
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),

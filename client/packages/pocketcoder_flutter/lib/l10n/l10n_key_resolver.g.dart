@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-02T07:27:47.443839
+// Generated at: 2026-08-09T10:17:21.281644
 
 import 'app_localizations.dart';
 
@@ -34,6 +34,7 @@ class L10nKeyResolver {
       'action.change' => _l10n.actionChange,
       'action.close' => _l10n.actionClose,
       'action.configure' => _l10n.actionConfigure,
+      'action.continue' => _l10n.actionContinue,
       'action.create' => _l10n.actionCreate,
       'action.deny' => _l10n.actionDeny,
       'action.refresh' => _l10n.actionRefresh,
@@ -117,6 +118,9 @@ class L10nKeyResolver {
       'error.network' => _l10n.errorNetwork,
       'error.timeout' => _l10n.errorTimeout,
       'errors.clear.all' => _l10n.errorsClearAll,
+      'errors.copied' => _l10n.errorsCopied,
+      'errors.copy' => _l10n.errorsCopy,
+      'errors.copy.all' => _l10n.errorsCopyAll,
       'errors.empty' => _l10n.errorsEmpty,
       'errors.title' => _l10n.errorsTitle,
       'file.clear.action' => _l10n.fileClearAction,
@@ -130,6 +134,7 @@ class L10nKeyResolver {
       'files.empty' => _l10n.filesEmpty,
       'files.title' => _l10n.filesTitle,
       'files.too.large.to.preview' => _l10n.filesTooLargeToPreview,
+      'harness.auth.challenge.target.copied' => _l10n.harnessAuthChallengeTargetCopied,
       'home.loading.chats' => _l10n.homeLoadingChats,
       'home.new.chat' => _l10n.homeNewChat,
       'home.no.chats' => _l10n.homeNoChats,
@@ -209,16 +214,44 @@ class L10nKeyResolver {
       'observability.title' => _l10n.observabilityTitle,
       'observability.tokens' => _l10n.observabilityTokens,
       'onboarding.access.denied' => _l10n.onboardingAccessDenied,
+      'onboarding.account.login' => _l10n.onboardingAccountLogin,
       'onboarding.authenticating' => _l10n.onboardingAuthenticating,
+      'onboarding.authorization.code' => _l10n.onboardingAuthorizationCode,
+      'onboarding.authorization.code.hint' => _l10n.onboardingAuthorizationCodeHint,
+      'onboarding.check.status' => _l10n.onboardingCheckStatus,
+      'onboarding.choose.harness.body' => _l10n.onboardingChooseHarnessBody,
+      'onboarding.choose.harness.title' => _l10n.onboardingChooseHarnessTitle,
+      'onboarding.claude.account.login' => _l10n.onboardingClaudeAccountLogin,
+      'onboarding.codex.account.login' => _l10n.onboardingCodexAccountLogin,
+      'onboarding.connect.or.deploy' => _l10n.onboardingConnectOrDeploy,
+      'onboarding.connected' => _l10n.onboardingConnected,
+      'onboarding.create.server' => _l10n.onboardingCreateServer,
+      'onboarding.deploy' => _l10n.onboardingDeploy,
+      'onboarding.deploy.title' => _l10n.onboardingDeployTitle,
+      'onboarding.email' => _l10n.onboardingEmail,
       'onboarding.email.hint' => _l10n.onboardingEmailHint,
+      'onboarding.email.hint.short' => _l10n.onboardingEmailHintShort,
+      'onboarding.existing.server' => _l10n.onboardingExistingServer,
+      'onboarding.harness.not.found' => _l10n.onboardingHarnessNotFound,
       'onboarding.home.server' => _l10n.onboardingHomeServer,
       'onboarding.identity.label' => _l10n.onboardingIdentityLabel,
       'onboarding.login' => _l10n.onboardingLogin,
+      'onboarding.open.authorization' => _l10n.onboardingOpenAuthorization,
       'onboarding.passphrase.label' => _l10n.onboardingPassphraseLabel,
+      'onboarding.password' => _l10n.onboardingPassword,
       'onboarding.password.hint' => _l10n.onboardingPasswordHint,
+      'onboarding.pocketbase.admin.email' => _l10n.onboardingPocketbaseAdminEmail,
+      'onboarding.pocketbase.admin.password' => _l10n.onboardingPocketbaseAdminPassword,
       'onboarding.poco.challenge.message' => _l10n.onboardingPocoChallengeMessage,
       'onboarding.poco.welcome' => _l10n.onboardingPocoWelcome,
       'onboarding.processing' => _l10n.onboardingProcessing,
+      'onboarding.required.fields' => _l10n.onboardingRequiredFields,
+      'onboarding.server.connecting' => _l10n.onboardingServerConnecting,
+      'onboarding.server.login.title' => _l10n.onboardingServerLoginTitle,
+      'onboarding.server.url' => _l10n.onboardingServerUrl,
+      'onboarding.server.url.hint' => _l10n.onboardingServerUrlHint,
+      'onboarding.setup.title' => _l10n.onboardingSetupTitle,
+      'onboarding.submit.code' => _l10n.onboardingSubmitCode,
       'onboarding.title' => _l10n.onboardingTitle,
       'permission.error' => _l10n.permissionError,
       'permission.fetch.failed' => _l10n.permissionFetchFailed,
@@ -355,6 +388,8 @@ class L10nKeyResolver {
       'mcp.purpose.label' => _l10n.mcpPurposeLabel(args?['reason'] as String? ?? ''),
       'mcp.update.config.dialog.title' => _l10n.mcpUpdateConfigDialogTitle(args?['name'] as String? ?? ''),
       'notification.signal.received' => _l10n.notificationSignalReceived(args?['title'] as String? ?? ''),
+      'onboarding.harness.login.title' => _l10n.onboardingHarnessLoginTitle(args?['provider'] as String? ?? ''),
+      'onboarding.open.chat.failed' => _l10n.onboardingOpenChatFailed(args?['error'] as String? ?? ''),
       'permission.requesting.label' => _l10n.permissionRequestingLabel(args?['source'] as String? ?? ''),
       'provider.screen.add.key.body' => _l10n.providerScreenAddKeyBody(args?['provider'] as String? ?? ''),
       'provider.screen.add.key.title' => _l10n.providerScreenAddKeyTitle(args?['provider'] as String? ?? ''),
@@ -377,6 +412,7 @@ class L10nKeyResolver {
     'action.change',
     'action.close',
     'action.configure',
+    'action.continue',
     'action.create',
     'action.deny',
     'action.refresh',
@@ -464,6 +500,9 @@ class L10nKeyResolver {
     'error.network',
     'error.timeout',
     'errors.clear.all',
+    'errors.copied',
+    'errors.copy',
+    'errors.copy.all',
     'errors.empty',
     'errors.occurred',
     'errors.title',
@@ -478,6 +517,7 @@ class L10nKeyResolver {
     'files.empty',
     'files.title',
     'files.too.large.to.preview',
+    'harness.auth.challenge.target.copied',
     'home.error.prefix',
     'home.loading.chats',
     'home.new.chat',
@@ -569,16 +609,46 @@ class L10nKeyResolver {
     'observability.title',
     'observability.tokens',
     'onboarding.access.denied',
+    'onboarding.account.login',
     'onboarding.authenticating',
+    'onboarding.authorization.code',
+    'onboarding.authorization.code.hint',
+    'onboarding.check.status',
+    'onboarding.choose.harness.body',
+    'onboarding.choose.harness.title',
+    'onboarding.claude.account.login',
+    'onboarding.codex.account.login',
+    'onboarding.connect.or.deploy',
+    'onboarding.connected',
+    'onboarding.create.server',
+    'onboarding.deploy',
+    'onboarding.deploy.title',
+    'onboarding.email',
     'onboarding.email.hint',
+    'onboarding.email.hint.short',
+    'onboarding.existing.server',
+    'onboarding.harness.login.title',
+    'onboarding.harness.not.found',
     'onboarding.home.server',
     'onboarding.identity.label',
     'onboarding.login',
+    'onboarding.open.authorization',
+    'onboarding.open.chat.failed',
     'onboarding.passphrase.label',
+    'onboarding.password',
     'onboarding.password.hint',
+    'onboarding.pocketbase.admin.email',
+    'onboarding.pocketbase.admin.password',
     'onboarding.poco.challenge.message',
     'onboarding.poco.welcome',
     'onboarding.processing',
+    'onboarding.required.fields',
+    'onboarding.server.connecting',
+    'onboarding.server.login.title',
+    'onboarding.server.url',
+    'onboarding.server.url.hint',
+    'onboarding.setup.title',
+    'onboarding.submit.code',
     'onboarding.title',
     'permission.error',
     'permission.fetch.failed',
@@ -718,6 +788,7 @@ class L10nKeyResolver {
     'actionChange': 'action.change',
     'actionClose': 'action.close',
     'actionConfigure': 'action.configure',
+    'actionContinue': 'action.continue',
     'actionCreate': 'action.create',
     'actionDeny': 'action.deny',
     'actionRefresh': 'action.refresh',
@@ -805,6 +876,9 @@ class L10nKeyResolver {
     'errorNetwork': 'error.network',
     'errorTimeout': 'error.timeout',
     'errorsClearAll': 'errors.clear.all',
+    'errorsCopied': 'errors.copied',
+    'errorsCopy': 'errors.copy',
+    'errorsCopyAll': 'errors.copy.all',
     'errorsEmpty': 'errors.empty',
     'errorsOccurred': 'errors.occurred',
     'errorsTitle': 'errors.title',
@@ -819,6 +893,7 @@ class L10nKeyResolver {
     'filesEmpty': 'files.empty',
     'filesTitle': 'files.title',
     'filesTooLargeToPreview': 'files.too.large.to.preview',
+    'harnessAuthChallengeTargetCopied': 'harness.auth.challenge.target.copied',
     'homeErrorPrefix': 'home.error.prefix',
     'homeLoadingChats': 'home.loading.chats',
     'homeNewChat': 'home.new.chat',
@@ -910,16 +985,46 @@ class L10nKeyResolver {
     'observabilityTitle': 'observability.title',
     'observabilityTokens': 'observability.tokens',
     'onboardingAccessDenied': 'onboarding.access.denied',
+    'onboardingAccountLogin': 'onboarding.account.login',
     'onboardingAuthenticating': 'onboarding.authenticating',
+    'onboardingAuthorizationCode': 'onboarding.authorization.code',
+    'onboardingAuthorizationCodeHint': 'onboarding.authorization.code.hint',
+    'onboardingCheckStatus': 'onboarding.check.status',
+    'onboardingChooseHarnessBody': 'onboarding.choose.harness.body',
+    'onboardingChooseHarnessTitle': 'onboarding.choose.harness.title',
+    'onboardingClaudeAccountLogin': 'onboarding.claude.account.login',
+    'onboardingCodexAccountLogin': 'onboarding.codex.account.login',
+    'onboardingConnectOrDeploy': 'onboarding.connect.or.deploy',
+    'onboardingConnected': 'onboarding.connected',
+    'onboardingCreateServer': 'onboarding.create.server',
+    'onboardingDeploy': 'onboarding.deploy',
+    'onboardingDeployTitle': 'onboarding.deploy.title',
+    'onboardingEmail': 'onboarding.email',
     'onboardingEmailHint': 'onboarding.email.hint',
+    'onboardingEmailHintShort': 'onboarding.email.hint.short',
+    'onboardingExistingServer': 'onboarding.existing.server',
+    'onboardingHarnessLoginTitle': 'onboarding.harness.login.title',
+    'onboardingHarnessNotFound': 'onboarding.harness.not.found',
     'onboardingHomeServer': 'onboarding.home.server',
     'onboardingIdentityLabel': 'onboarding.identity.label',
     'onboardingLogin': 'onboarding.login',
+    'onboardingOpenAuthorization': 'onboarding.open.authorization',
+    'onboardingOpenChatFailed': 'onboarding.open.chat.failed',
     'onboardingPassphraseLabel': 'onboarding.passphrase.label',
+    'onboardingPassword': 'onboarding.password',
     'onboardingPasswordHint': 'onboarding.password.hint',
+    'onboardingPocketbaseAdminEmail': 'onboarding.pocketbase.admin.email',
+    'onboardingPocketbaseAdminPassword': 'onboarding.pocketbase.admin.password',
     'onboardingPocoChallengeMessage': 'onboarding.poco.challenge.message',
     'onboardingPocoWelcome': 'onboarding.poco.welcome',
     'onboardingProcessing': 'onboarding.processing',
+    'onboardingRequiredFields': 'onboarding.required.fields',
+    'onboardingServerConnecting': 'onboarding.server.connecting',
+    'onboardingServerLoginTitle': 'onboarding.server.login.title',
+    'onboardingServerUrl': 'onboarding.server.url',
+    'onboardingServerUrlHint': 'onboarding.server.url.hint',
+    'onboardingSetupTitle': 'onboarding.setup.title',
+    'onboardingSubmitCode': 'onboarding.submit.code',
     'onboardingTitle': 'onboarding.title',
     'permissionError': 'permission.error',
     'permissionFetchFailed': 'permission.fetch.failed',
@@ -1056,6 +1161,7 @@ class L10nKeyResolver {
     'action.change': 'actionChange',
     'action.close': 'actionClose',
     'action.configure': 'actionConfigure',
+    'action.continue': 'actionContinue',
     'action.create': 'actionCreate',
     'action.deny': 'actionDeny',
     'action.refresh': 'actionRefresh',
@@ -1143,6 +1249,9 @@ class L10nKeyResolver {
     'error.network': 'errorNetwork',
     'error.timeout': 'errorTimeout',
     'errors.clear.all': 'errorsClearAll',
+    'errors.copied': 'errorsCopied',
+    'errors.copy': 'errorsCopy',
+    'errors.copy.all': 'errorsCopyAll',
     'errors.empty': 'errorsEmpty',
     'errors.occurred': 'errorsOccurred',
     'errors.title': 'errorsTitle',
@@ -1157,6 +1266,7 @@ class L10nKeyResolver {
     'files.empty': 'filesEmpty',
     'files.title': 'filesTitle',
     'files.too.large.to.preview': 'filesTooLargeToPreview',
+    'harness.auth.challenge.target.copied': 'harnessAuthChallengeTargetCopied',
     'home.error.prefix': 'homeErrorPrefix',
     'home.loading.chats': 'homeLoadingChats',
     'home.new.chat': 'homeNewChat',
@@ -1248,16 +1358,46 @@ class L10nKeyResolver {
     'observability.title': 'observabilityTitle',
     'observability.tokens': 'observabilityTokens',
     'onboarding.access.denied': 'onboardingAccessDenied',
+    'onboarding.account.login': 'onboardingAccountLogin',
     'onboarding.authenticating': 'onboardingAuthenticating',
+    'onboarding.authorization.code': 'onboardingAuthorizationCode',
+    'onboarding.authorization.code.hint': 'onboardingAuthorizationCodeHint',
+    'onboarding.check.status': 'onboardingCheckStatus',
+    'onboarding.choose.harness.body': 'onboardingChooseHarnessBody',
+    'onboarding.choose.harness.title': 'onboardingChooseHarnessTitle',
+    'onboarding.claude.account.login': 'onboardingClaudeAccountLogin',
+    'onboarding.codex.account.login': 'onboardingCodexAccountLogin',
+    'onboarding.connect.or.deploy': 'onboardingConnectOrDeploy',
+    'onboarding.connected': 'onboardingConnected',
+    'onboarding.create.server': 'onboardingCreateServer',
+    'onboarding.deploy': 'onboardingDeploy',
+    'onboarding.deploy.title': 'onboardingDeployTitle',
+    'onboarding.email': 'onboardingEmail',
     'onboarding.email.hint': 'onboardingEmailHint',
+    'onboarding.email.hint.short': 'onboardingEmailHintShort',
+    'onboarding.existing.server': 'onboardingExistingServer',
+    'onboarding.harness.login.title': 'onboardingHarnessLoginTitle',
+    'onboarding.harness.not.found': 'onboardingHarnessNotFound',
     'onboarding.home.server': 'onboardingHomeServer',
     'onboarding.identity.label': 'onboardingIdentityLabel',
     'onboarding.login': 'onboardingLogin',
+    'onboarding.open.authorization': 'onboardingOpenAuthorization',
+    'onboarding.open.chat.failed': 'onboardingOpenChatFailed',
     'onboarding.passphrase.label': 'onboardingPassphraseLabel',
+    'onboarding.password': 'onboardingPassword',
     'onboarding.password.hint': 'onboardingPasswordHint',
+    'onboarding.pocketbase.admin.email': 'onboardingPocketbaseAdminEmail',
+    'onboarding.pocketbase.admin.password': 'onboardingPocketbaseAdminPassword',
     'onboarding.poco.challenge.message': 'onboardingPocoChallengeMessage',
     'onboarding.poco.welcome': 'onboardingPocoWelcome',
     'onboarding.processing': 'onboardingProcessing',
+    'onboarding.required.fields': 'onboardingRequiredFields',
+    'onboarding.server.connecting': 'onboardingServerConnecting',
+    'onboarding.server.login.title': 'onboardingServerLoginTitle',
+    'onboarding.server.url': 'onboardingServerUrl',
+    'onboarding.server.url.hint': 'onboardingServerUrlHint',
+    'onboarding.setup.title': 'onboardingSetupTitle',
+    'onboarding.submit.code': 'onboardingSubmitCode',
     'onboarding.title': 'onboardingTitle',
     'permission.error': 'permissionError',
     'permission.fetch.failed': 'permissionFetchFailed',
@@ -1401,6 +1541,7 @@ abstract class L10nKeys {
   static const actionChange = 'action.change';
   static const actionClose = 'action.close';
   static const actionConfigure = 'action.configure';
+  static const actionContinue = 'action.continue';
   static const actionCreate = 'action.create';
   static const actionDeny = 'action.deny';
   static const actionRefresh = 'action.refresh';
@@ -1488,6 +1629,9 @@ abstract class L10nKeys {
   static const errorNetwork = 'error.network';
   static const errorTimeout = 'error.timeout';
   static const errorsClearAll = 'errors.clear.all';
+  static const errorsCopied = 'errors.copied';
+  static const errorsCopy = 'errors.copy';
+  static const errorsCopyAll = 'errors.copy.all';
   static const errorsEmpty = 'errors.empty';
   static (String, Map<String, dynamic>) errorsOccurred(int count) => ('errors.occurred', {'count': count});
   static const errorsTitle = 'errors.title';
@@ -1502,6 +1646,7 @@ abstract class L10nKeys {
   static const filesEmpty = 'files.empty';
   static const filesTitle = 'files.title';
   static const filesTooLargeToPreview = 'files.too.large.to.preview';
+  static const harnessAuthChallengeTargetCopied = 'harness.auth.challenge.target.copied';
   static (String, Map<String, dynamic>) homeErrorPrefix(String error) => ('home.error.prefix', {'error': error});
   static const homeLoadingChats = 'home.loading.chats';
   static const homeNewChat = 'home.new.chat';
@@ -1593,16 +1738,46 @@ abstract class L10nKeys {
   static const observabilityTitle = 'observability.title';
   static const observabilityTokens = 'observability.tokens';
   static const onboardingAccessDenied = 'onboarding.access.denied';
+  static const onboardingAccountLogin = 'onboarding.account.login';
   static const onboardingAuthenticating = 'onboarding.authenticating';
+  static const onboardingAuthorizationCode = 'onboarding.authorization.code';
+  static const onboardingAuthorizationCodeHint = 'onboarding.authorization.code.hint';
+  static const onboardingCheckStatus = 'onboarding.check.status';
+  static const onboardingChooseHarnessBody = 'onboarding.choose.harness.body';
+  static const onboardingChooseHarnessTitle = 'onboarding.choose.harness.title';
+  static const onboardingClaudeAccountLogin = 'onboarding.claude.account.login';
+  static const onboardingCodexAccountLogin = 'onboarding.codex.account.login';
+  static const onboardingConnectOrDeploy = 'onboarding.connect.or.deploy';
+  static const onboardingConnected = 'onboarding.connected';
+  static const onboardingCreateServer = 'onboarding.create.server';
+  static const onboardingDeploy = 'onboarding.deploy';
+  static const onboardingDeployTitle = 'onboarding.deploy.title';
+  static const onboardingEmail = 'onboarding.email';
   static const onboardingEmailHint = 'onboarding.email.hint';
+  static const onboardingEmailHintShort = 'onboarding.email.hint.short';
+  static const onboardingExistingServer = 'onboarding.existing.server';
+  static (String, Map<String, dynamic>) onboardingHarnessLoginTitle(String provider) => ('onboarding.harness.login.title', {'provider': provider});
+  static const onboardingHarnessNotFound = 'onboarding.harness.not.found';
   static const onboardingHomeServer = 'onboarding.home.server';
   static const onboardingIdentityLabel = 'onboarding.identity.label';
   static const onboardingLogin = 'onboarding.login';
+  static const onboardingOpenAuthorization = 'onboarding.open.authorization';
+  static (String, Map<String, dynamic>) onboardingOpenChatFailed(String error) => ('onboarding.open.chat.failed', {'error': error});
   static const onboardingPassphraseLabel = 'onboarding.passphrase.label';
+  static const onboardingPassword = 'onboarding.password';
   static const onboardingPasswordHint = 'onboarding.password.hint';
+  static const onboardingPocketbaseAdminEmail = 'onboarding.pocketbase.admin.email';
+  static const onboardingPocketbaseAdminPassword = 'onboarding.pocketbase.admin.password';
   static const onboardingPocoChallengeMessage = 'onboarding.poco.challenge.message';
   static const onboardingPocoWelcome = 'onboarding.poco.welcome';
   static const onboardingProcessing = 'onboarding.processing';
+  static const onboardingRequiredFields = 'onboarding.required.fields';
+  static const onboardingServerConnecting = 'onboarding.server.connecting';
+  static const onboardingServerLoginTitle = 'onboarding.server.login.title';
+  static const onboardingServerUrl = 'onboarding.server.url';
+  static const onboardingServerUrlHint = 'onboarding.server.url.hint';
+  static const onboardingSetupTitle = 'onboarding.setup.title';
+  static const onboardingSubmitCode = 'onboarding.submit.code';
   static const onboardingTitle = 'onboarding.title';
   static const permissionError = 'permission.error';
   static const permissionFetchFailed = 'permission.fetch.failed';
