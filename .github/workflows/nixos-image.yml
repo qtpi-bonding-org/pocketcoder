@@ -139,6 +139,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Validate prebuilt Compose YAML
+        run: |
+          set -euo pipefail
+          tmp_dir=$(mktemp -d)
+          trap 'rm -rf "$tmp_dir"' EXIT
+          sh deploy/scripts/resolve-prebuilt-compose.sh \
+            docker-compose.yml "$tmp_dir/docker-compose.prebuilt.yml"
+          test "$(grep -c '^    image: pocketcoder-bundle-' \
+            "$tmp_dir/docker-compose.prebuilt.yml")" -gt 0
+          ! grep -F '\\n' "$tmp_dir/docker-compose.prebuilt.yml"
+          docker compose -f "$tmp_dir/docker-compose.prebuilt.yml" config --images
+
       - name: Build app-stack images
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"

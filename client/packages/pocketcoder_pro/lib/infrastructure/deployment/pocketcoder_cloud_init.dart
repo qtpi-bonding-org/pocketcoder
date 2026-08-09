@@ -142,16 +142,8 @@ write_files:
         exit 1
       fi
       prebuilt_compose="/opt/pocketcoder/docker-compose.prebuilt.yml"
-      awk '
-        /^    image:[[:space:]]+[^[:space:]]+@sha256:/ {
-          image = \$2
-          digest = image
-          sub(/.*@sha256:/, "", digest)
-          printf "    image: pocketcoder-bundle-%s\n", substr(digest, 1, 16)
-          next
-        }
-        { print }
-      ' /opt/pocketcoder/docker-compose.yml > "\$prebuilt_compose"
+      sh /opt/pocketcoder/deploy/scripts/resolve-prebuilt-compose.sh \\
+        /opt/pocketcoder/docker-compose.yml "\$prebuilt_compose"
       missing_images=0
       missing_image_names=""
       if ! compose_images=\$("\$compose" -f "\$prebuilt_compose" config --images); then
