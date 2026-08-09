@@ -5,11 +5,11 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/application/system/health_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/health_state.dart';
 import "package:pocketcoder_flutter/domain/models/healthcheck.dart";
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'adapters/system_checks_adapter.dart';
 
 class SystemChecksScreen extends StatelessWidget {
   const SystemChecksScreen({super.key});
@@ -18,15 +18,20 @@ class SystemChecksScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<HealthCubit>()..watchHealth(),
-      child: UiFlowListener<HealthCubit, HealthState>(
-        child: const _SystemChecksView(),
-      ),
+      child: const SystemChecksAdapter(),
     );
   }
 }
 
-class _SystemChecksView extends StatelessWidget {
-  const _SystemChecksView();
+class SystemChecksView extends StatelessWidget {
+  const SystemChecksView({
+    super.key,
+    required this.state,
+    required this.onRefresh,
+  });
+
+  final HealthState state;
+  final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +41,8 @@ class _SystemChecksView extends StatelessWidget {
       showBack: true,
       body: BiosFrame(
         title: context.l10n.systemChecksDiagnostics,
-        child: BlocBuilder<HealthCubit, HealthState>(
-          builder: (context, state) {
+        child: Builder(
+          builder: (context) {
             return Column(
               children: [
                 // Inline REFRESH button
@@ -47,7 +52,7 @@ class _SystemChecksView extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: TerminalButton(
                       label: context.l10n.actionRefresh,
-                      onTap: () => context.read<HealthCubit>().refresh(),
+                      onTap: onRefresh,
                     ),
                   ),
                 ),
