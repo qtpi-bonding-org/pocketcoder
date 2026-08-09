@@ -24,12 +24,12 @@ dependencies:
   # Custom Libraries
   cubit_ui_flow:
     git: 
-      url: git@github.com:qtpi-bonding-org/flutter_cubit_ui_flow.git
+      url: https://github.com/qtpi-bonding-org/flutter_cubit_ui_flow.git
       ref: 1d31dce6ab6753a58c230586660b301daf851ec6
   flutter_error_privserver:
     git:
       url: git@github.com:qtpi-bonding-org/flutter_error_privserver.git
-      ref: 3565d9d47f24bee06bc88314b51a7df04ee3f78e
+      ref: dadb08a
   flutter_color_palette:
     git: git@github.com:qtpi-bonding-org/flutter_color_palette.git
   flutter_widgetsystem:
