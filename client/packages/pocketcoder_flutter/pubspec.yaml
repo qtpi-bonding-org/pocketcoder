@@ -25,7 +25,7 @@ dependencies:
   cubit_ui_flow:
     git: 
       url: git@github.com:qtpi-bonding-org/flutter_cubit_ui_flow.git
-      ref: 9422fa6
+      ref: 1d31dce6ab6753a58c230586660b301daf851ec6
   flutter_error_privserver:
     git:
       url: git@github.com:qtpi-bonding-org/flutter_error_privserver.git
