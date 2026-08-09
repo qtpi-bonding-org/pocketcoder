@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -9,37 +8,34 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_i
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
+import 'adapters/monitor_adapter.dart';
 
-class MonitorScreen extends StatefulWidget {
+class MonitorScreen extends StatelessWidget {
   const MonitorScreen({super.key});
 
   @override
-  State<MonitorScreen> createState() => _MonitorScreenState();
+  Widget build(BuildContext context) => const MonitorAdapter();
 }
 
-class _MonitorScreenState extends State<MonitorScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ObservabilityCubit>().refreshStats();
-    });
-  }
+class MonitorView extends StatelessWidget {
+  const MonitorView({
+    super.key,
+    required this.state,
+    required this.onRefresh,
+  });
+
+  final ObservabilityState state;
+  final VoidCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ObservabilityCubit, ObservabilityState>(
-      builder: (context, state) {
-        return PocketCoderShell(
-          title: context.l10n.monitorTitle,
-          activePillar: NavPillar.monitor,
-          showBack: false,
-          body: _buildBody(context, state),
-        );
-      },
+    return PocketCoderShell(
+      title: context.l10n.monitorTitle,
+      activePillar: NavPillar.monitor,
+      showBack: false,
+      body: _buildBody(context, state),
     );
   }
 
@@ -57,7 +53,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
             child: TerminalButton(
               label: context.l10n.actionRefresh,
               isLoading: state.isLoading,
-              onTap: () => context.read<ObservabilityCubit>().refreshStats(),
+              onTap: onRefresh,
             ),
           ),
           VSpace.x2,
