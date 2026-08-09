@@ -21,7 +21,7 @@ dependencies:
   cubit_ui_flow:
     git:
       url: git@github.com:qtpi-bonding-org/flutter_cubit_ui_flow.git
-      ref: 737f24b
+      ref: 9422fa6
   freezed_annotation: ^3.0.0
   json_annotation: ^4.8.1
   flutter_aeroform:

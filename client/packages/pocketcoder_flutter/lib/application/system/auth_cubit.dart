@@ -14,6 +14,7 @@ sealed class AuthState with _$AuthState implements IUiFlowState {
   const factory AuthState({
     @Default(UiFlowStatus.idle) UiFlowStatus status,
     Object? error,
+    String? savedUrl,
   }) = _AuthState;
 
   factory AuthState.initial() => const AuthState();
@@ -36,11 +37,24 @@ class AuthCubit extends AppCubit<AuthState> {
 
   AuthCubit(this._authRepository) : super(AuthState.initial());
 
-  Future<void> login(String email, String password) async {
+  Future<void> restoreSavedUrl() async {
+    String? savedUrl;
+    try {
+      savedUrl = await _authRepository.getSavedBaseUrl();
+    } catch (_) {
+      return;
+    }
+    if (savedUrl != null && !isClosed) {
+      emit(state.copyWith(savedUrl: savedUrl));
+    }
+  }
+
+  Future<void> login(String url, String email, String password) async {
     OnboardingLogger.event('server login started', {
       'email_domain': email.contains('@') ? email.split('@').last : 'invalid',
     });
     await tryOperation(() async {
+      await _authRepository.updateBaseUrl(url);
       final success = await _authRepository.login(email, password);
       if (!success) {
         throw 'ACCESS DENIED. CHECK CREDENTIALS.';
