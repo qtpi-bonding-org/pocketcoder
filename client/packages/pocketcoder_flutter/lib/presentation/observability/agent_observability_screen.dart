@@ -1,24 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
+import 'adapters/agent_observability_adapter.dart';
 
 class AgentObservabilityScreen extends StatelessWidget {
   const AgentObservabilityScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return UiFlowListener<ObservabilityCubit, ObservabilityState>(
-      child: BlocBuilder<ObservabilityCubit, ObservabilityState>(
-        builder: (context, state) {
-          return PocketCoderShell(
+    return const AgentObservabilityAdapter();
+  }
+}
+
+class AgentObservabilityView extends StatelessWidget {
+  const AgentObservabilityView({
+    super.key,
+    required this.state,
+    required this.onRefresh,
+    required this.onSelectContainer,
+  });
+
+  final ObservabilityState state;
+  final VoidCallback onRefresh;
+  final ValueChanged<String?> onSelectContainer;
+
+  @override
+  Widget build(BuildContext context) {
+    return PocketCoderShell(
             title: context.l10n.observabilityTitle,
             activePillar: NavPillar.configure,
             showBack: true,
@@ -35,8 +48,7 @@ class AgentObservabilityScreen extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: TerminalButton(
                       label: context.l10n.actionRefresh,
-                      onTap: () =>
-                          context.read<ObservabilityCubit>().refreshStats(),
+                      onTap: onRefresh,
                     ),
                   ),
                 ),
@@ -59,30 +71,35 @@ class AgentObservabilityScreen extends StatelessWidget {
                                 'pocketbase',
                                 'pocketcoder-pocketbase',
                                 state.currentContainer,
+                                onSelectContainer,
                               ),
                               _buildContainerTile(
                                 context,
                                 'goose',
                                 'pocketcoder-goose',
                                 state.currentContainer,
+                                onSelectContainer,
                               ),
                               _buildContainerTile(
                                 context,
                                 'mcp-gateway',
                                 'pocketcoder-mcp-gateway',
                                 state.currentContainer,
+                                onSelectContainer,
                               ),
                               _buildContainerTile(
                                 context,
                                 'cognee',
                                 'pocketcoder-cognee',
                                 state.currentContainer,
+                                onSelectContainer,
                               ),
                               _buildContainerTile(
                                 context,
                                 'sqlpage',
                                 'pocketcoder-sqlpage',
                                 state.currentContainer,
+                                onSelectContainer,
                               ),
                             ],
                           ),
@@ -103,9 +120,6 @@ class AgentObservabilityScreen extends StatelessWidget {
                 ),
               ],
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -135,18 +149,13 @@ class AgentObservabilityScreen extends StatelessWidget {
     String label,
     String containerId,
     String? current,
+    ValueChanged<String?> onSelect,
   ) {
     final colors = context.colorScheme;
     final isSelected = current == containerId;
 
     return InkWell(
-      onTap: () {
-        if (isSelected) {
-          context.read<ObservabilityCubit>().stopLogStreaming();
-        } else {
-          context.read<ObservabilityCubit>().startLogStreaming(containerId);
-        }
-      },
+      onTap: () => onSelect(isSelected ? null : containerId),
       child: Container(
         margin: EdgeInsets.only(bottom: AppSizes.space),
         padding: EdgeInsets.all(AppSizes.space),
