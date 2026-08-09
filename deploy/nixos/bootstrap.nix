@@ -224,7 +224,7 @@ EOF
           image = $2
           digest = image
           sub(/.*@sha256:/, "", digest)
-          printf "    image: pocketcoder-bundle-%s\\n", substr(digest, 1, 16)
+          printf "    image: pocketcoder-bundle-%s\n", substr(digest, 1, 16)
           next
         }
         { print }
