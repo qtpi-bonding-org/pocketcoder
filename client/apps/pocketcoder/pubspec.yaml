@@ -47,6 +47,14 @@ dependencies:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
       ref: "0421fc3"
+  ag_ui_widgets_flutter:
+    git:
+      url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
+      ref: 79e2e5c4729e615609f694e4b400ea4de81f89ef
+  flutter_error_privserver:
+    git:
+      url: git@github.com:qtpi-bonding-org/flutter_error_privserver.git
+      ref: dadb08a
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

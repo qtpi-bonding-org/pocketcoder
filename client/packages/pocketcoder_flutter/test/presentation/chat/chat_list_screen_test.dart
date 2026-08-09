@@ -10,7 +10,7 @@ import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
+import 'package:pocketcoder_flutter/presentation/chat/adapters/chat_list_adapter.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 
 class MockChatListRepository extends Mock implements IChatListRepository {}
@@ -24,7 +24,7 @@ Widget _wrap(ChatListCubit cubit) {
     supportedLocales: AppLocalizations.supportedLocales,
     home: BlocProvider<ChatListCubit>.value(
       value: cubit,
-      child: const ChatListView(),
+      child: const ChatListAdapter(),
     ),
   );
 }
@@ -59,7 +59,8 @@ void main() {
     cubit.emit(cubit.state.copyWith(
       status: UiFlowStatus.success,
       chats: const [
-        Chat(id: 'chat-1', title: 'Hello World', user: 'u', preview: 'hi there'),
+        Chat(
+            id: 'chat-1', title: 'Hello World', user: 'u', preview: 'hi there'),
       ],
     ));
 
@@ -90,10 +91,12 @@ void main() {
     verify(() => repo.archiveChat('chat-1')).called(1);
   });
 
-  testWidgets('tapping + NEW CHAT opens NewChatDialog instead of creating immediately',
+  testWidgets(
+      'tapping + NEW CHAT opens NewChatDialog instead of creating immediately',
       (tester) async {
     final cubit = ChatListCubit(repo);
-    cubit.emit(cubit.state.copyWith(status: UiFlowStatus.success, chats: const []));
+    cubit.emit(
+        cubit.state.copyWith(status: UiFlowStatus.success, chats: const []));
 
     await tester.pumpWidget(_wrap(cubit));
     await tester.pumpAndSettle();
