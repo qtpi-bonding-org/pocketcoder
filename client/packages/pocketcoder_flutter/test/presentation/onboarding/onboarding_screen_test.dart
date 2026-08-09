@@ -16,6 +16,7 @@ import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_deploy_cr
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_login_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_value_widget.dart';
 
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
@@ -56,6 +57,16 @@ void main() {
     expect(find.text('LOGIN'), findsOneWidget);
     expect(find.text('DEPLOY'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
+  });
+
+  testWidgets('login adapter renders the challenge and form without a server',
+      (tester) async {
+    await tester.pumpWidget(buildTestable(const OnboardingLoginScreen()));
+    await tester.pump();
+
+    expect(find.byType(PocoValueWidget), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(3));
+    expect(find.text('LOGIN'), findsOneWidget);
   });
 
   testWidgets('prefilled login page shows server credentials', (tester) async {
