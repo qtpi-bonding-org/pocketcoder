@@ -319,10 +319,10 @@ packages:
     dependency: transitive
     description:
       name: dartssh2
-      sha256: bb242396c1d90f05c261b5eb8338cc67167e803c0948b0207029339cc568a66c
+      sha256: ce7347d76fd7115994f3785b3b7b7c61e957641faa01a2ce066699609f2b45be
       url: "https://pub.dev"
     source: hosted
-    version: "2.13.0"
+    version: "2.22.5"
   dbus:
     dependency: transitive
     description:
@@ -500,8 +500,8 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: "a496e84"
-      resolved-ref: "a496e844de59964a345090be8b4b53d6a599f39d"
+      ref: "0421fc3"
+      resolved-ref: "0421fc31febec7ffa9fef3c4faabdd5784cb5a04"
       url: "git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git"
     source: git
     version: "0.1.4"
@@ -826,14 +826,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
-  js:
-    dependency: transitive
-    description:
-      name: js
-      sha256: "53385261521cc4a0c4658fd0ad07a7d14591cf8fc33abbceae306ddb974888dc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.2"
   json_annotation:
     dependency: transitive
     description:
@@ -1127,10 +1119,10 @@ packages:
     dependency: transitive
     description:
       name: pointycastle
-      sha256: "4be0097fcf3fd3e8449e53730c631200ebc7b88016acecab2b0da2f0149222fe"
+      sha256: "92aa3841d083cc4b0f4709b5c74fd6409a3e6ba833ffc7dc6a8fee096366acf5"
       url: "https://pub.dev"
     source: hosted
-    version: "3.9.1"
+    version: "4.0.0"
   pool:
     dependency: transitive
     description:

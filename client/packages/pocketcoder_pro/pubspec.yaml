@@ -27,11 +27,11 @@ dependencies:
   flutter_aeroform:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
-      ref: "a496e84"
+      ref: "0421fc3"
   http: ^1.2.0
   flutter_secure_storage: ^10.0.0
   pocketbase: ^0.23.2
-  dartssh2: ^2.13.0
+  dartssh2: ^2.22.5
   shared_preferences: ^2.3.0
 
   # Proprietary SDKs (Gated here)
