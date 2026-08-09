@@ -34,6 +34,7 @@
       # CI writes deploy/nixos/release-commit.nix before building. Development
       # images use the local default (main).
       POCKETCODER_REF="${sourceCommit}"
+      export PC_SOURCE_COMMIT="$POCKETCODER_REF"
 
       # Skip if already bootstrapped
       if [ -f "$MARKER" ]; then
@@ -172,18 +173,44 @@ EOF
         RELEASE_URL="$RELEASE_BASE/release-$POCKETCODER_REF.json"
       fi
       LOADED=0
-      RECORD=$(curl -sf --max-time 15 "$RELEASE_URL")
+      pc_status_phase loading_images fetching_manifest
+      if ! RECORD=$(curl -sf --max-time 15 "$RELEASE_URL"); then
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_manifest_unavailable"
+        exit 1
+      fi
       CACHE_URL=$(echo "$RECORD" | jq -r '.dockerImages.url // empty')
       CACHE_SHA256=$(echo "$RECORD" | jq -r '.dockerImages.sha256 // empty')
       CACHE_FILE=$(mktemp)
       echo "$RELEASE_URL" > /var/log/pocketcoder-fetch.log
-      if [ -n "$CACHE_URL" ] && [ -n "$CACHE_SHA256" ] && \
-         curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
-        ACTUAL_SHA256=$(sha256sum "$CACHE_FILE" | cut -d' ' -f1)
-        if [ "$ACTUAL_SHA256" = "$CACHE_SHA256" ] && gunzip -c "$CACHE_FILE" | docker load; then
-          LOADED=1
-        fi
+      if [ -z "$CACHE_URL" ] || [ -z "$CACHE_SHA256" ]; then
+        rm -f "$CACHE_FILE"
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_bundle_metadata_invalid"
+        exit 1
       fi
+      pc_status_phase loading_images downloading_bundle
+      if ! curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
+        rm -f "$CACHE_FILE"
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_bundle_download_failed"
+        exit 1
+      fi
+      ACTUAL_SHA256=$(sha256sum "$CACHE_FILE" | cut -d' ' -f1)
+      if [ "$ACTUAL_SHA256" != "$CACHE_SHA256" ]; then
+        rm -f "$CACHE_FILE"
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_bundle_checksum_mismatch"
+        exit 1
+      fi
+      pc_status_phase loading_images loading_bundle
+      if ! gunzip -c "$CACHE_FILE" | docker load; then
+        rm -f "$CACHE_FILE"
+        pc_status_heartbeat_stop
+        pc_status_error loading_images "release_bundle_load_failed"
+        exit 1
+      fi
+      LOADED=1
       rm -f "$CACHE_FILE"
       if [ "$LOADED" -ne 1 ]; then
         pc_status_heartbeat_stop

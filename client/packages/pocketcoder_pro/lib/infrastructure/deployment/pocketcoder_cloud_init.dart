@@ -77,7 +77,12 @@ write_files:
       else
         release_url="\$release_base/release-\$source_commit.json"
       fi
-      release_record=\$(curl -sf --max-time 15 "\$release_url")
+      status fetching_release
+      if ! release_record=\$(curl -sf --max-time 15 "\$release_url"); then
+        heartbeat_stop
+        status_error fetching_release release_manifest_unavailable
+        exit 1
+      fi
       resolved_commit=\$(printf '%s' "\$release_record" | jq -r '.sourceCommit // empty')
       test -n "\$resolved_commit"
       if [ "\$source_commit" = main ]; then
@@ -102,13 +107,34 @@ write_files:
       cache_sha256=\$(printf '%s' "\$release_record" | jq -r '.dockerImages.sha256 // empty')
       cache_file=\$(mktemp)
       printf '%s\\n' "\$release_url" > /var/log/pocketcoder-fetch.log
-      if [ -n "\$cache_url" ] && [ -n "\$cache_sha256" ] && \\
-         curl -sf --max-time 180 -o "\$cache_file" "\$cache_url"; then
-        actual_sha256=\$(sha256sum "\$cache_file" | cut -d' ' -f1)
-        if [ "\$actual_sha256" = "\$cache_sha256" ] && gunzip -c "\$cache_file" | docker load; then
-          loaded=1
-        fi
+      if [ -z "\$cache_url" ] || [ -z "\$cache_sha256" ]; then
+        rm -f "\$cache_file"
+        heartbeat_stop
+        status_error loading_images release_bundle_metadata_invalid
+        exit 1
       fi
+      status downloading_bundle
+      if ! curl -sf --max-time 180 -o "\$cache_file" "\$cache_url"; then
+        rm -f "\$cache_file"
+        heartbeat_stop
+        status_error downloading_bundle release_bundle_download_failed
+        exit 1
+      fi
+      actual_sha256=\$(sha256sum "\$cache_file" | cut -d' ' -f1)
+      if [ "\$actual_sha256" != "\$cache_sha256" ]; then
+        rm -f "\$cache_file"
+        heartbeat_stop
+        status_error loading_images release_bundle_checksum_mismatch
+        exit 1
+      fi
+      status loading_bundle
+      if ! gunzip -c "\$cache_file" | docker load; then
+        rm -f "\$cache_file"
+        heartbeat_stop
+        status_error loading_bundle release_bundle_load_failed
+        exit 1
+      fi
+      loaded=1
       rm -f "\$cache_file"
       heartbeat_stop
       if [ "\$loaded" -ne 1 ]; then
