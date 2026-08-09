@@ -114,7 +114,10 @@ write_files:
         exit 1
       fi
       status downloading_bundle
-      if ! curl -sf --max-time 180 -o "\$cache_file" "\$cache_url"; then
+      # The coupled Docker bundle is several gigabytes. Allow a slow but
+      # healthy Linode connection enough time to finish downloading it; this
+      # path must never fall back to building images on the VPS.
+      if ! curl -sf --max-time 1200 -o "\$cache_file" "\$cache_url"; then
         rm -f "\$cache_file"
         heartbeat_stop
         status_error downloading_bundle release_bundle_download_failed
