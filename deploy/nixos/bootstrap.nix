@@ -21,6 +21,7 @@
       coreutils   # base64, date, cut, chmod, mkdir
       gnused      # sed -i
       gnugrep     # grep
+      gawk        # compose-file image tag rewriting
       gzip        # gunzip -c (Docker image cache)
       config.virtualisation.docker.package
     ];
