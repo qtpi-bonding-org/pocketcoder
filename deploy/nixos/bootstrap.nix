@@ -219,16 +219,8 @@ EOF
         exit 1
       fi
       PREBUILT_COMPOSE="$INSTALL_DIR/docker-compose.prebuilt.yml"
-      awk '
-        /^    image:[[:space:]]+[^[:space:]]+@sha256:/ {
-          image = $2
-          digest = image
-          sub(/.*@sha256:/, "", digest)
-          printf "    image: pocketcoder-bundle-%s\n", substr(digest, 1, 16)
-          next
-        }
-        { print }
-      ' "$INSTALL_DIR/docker-compose.yml" > "$PREBUILT_COMPOSE"
+      sh "$INSTALL_DIR/deploy/scripts/resolve-prebuilt-compose.sh" \
+        "$INSTALL_DIR/docker-compose.yml" "$PREBUILT_COMPOSE"
       MISSING_IMAGES=0
       MISSING_IMAGE_NAMES=""
       if ! COMPOSE_IMAGES=$(docker compose -f "$PREBUILT_COMPOSE" config --images); then
