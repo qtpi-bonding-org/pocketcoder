@@ -11,6 +11,7 @@ abstract class IAuthRepository {
   String? get currentUserRole;
 
   Future<void> updateBaseUrl(String url);
+  Future<String?> getSavedBaseUrl();
 
   Future<String> getSshKeysForAuthorizedKeys();
 }

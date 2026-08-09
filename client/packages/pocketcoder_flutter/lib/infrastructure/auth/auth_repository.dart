@@ -102,6 +102,9 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
+  Future<String?> getSavedBaseUrl() => _storage.read(key: 'pb_server_url');
+
+  @override
   Future<String> getSshKeysForAuthorizedKeys() async {
     return tryMethod(
       () async {
