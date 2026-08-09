@@ -75,6 +75,12 @@
         # Consumed once -- don't leave the admin password sitting in
         # plaintext on disk any longer than necessary.
         shred -u "$BOOTSTRAP_ENV_FILE" 2>/dev/null || rm -f "$BOOTSTRAP_ENV_FILE"
+      elif [ -f "$INSTALL_DIR/.env" ]; then
+        # A power-cycle can interrupt bootstrap after the one-shot env file
+        # has been consumed. Resume from the protected application env rather
+        # than falling back to metadata or losing the deployment entirely.
+        echo "Resuming bootstrap from existing $INSTALL_DIR/.env..."
+        chmod 600 "$INSTALL_DIR/.env"
       else
         echo "Fetching user-data from Linode metadata service (legacy custom-image path)..."
         USER_DATA=""
@@ -107,16 +113,17 @@
 
       # Set root SSH key if provided (required -- see fail-closed check below)
       ROOT_SSH_KEY=$(grep '^root_ssh_key=' "$INSTALL_DIR/.env" | cut -d= -f2- || true)
-      if [ -z "$ROOT_SSH_KEY" ]; then
+      if [ -z "$ROOT_SSH_KEY" ] && [ ! -s /root/.ssh/authorized_keys ]; then
         echo "ERROR: user-data had no root_ssh_key. Refusing to start the stack" >&2
         echo "with no way to reach it." >&2
         exit 1
       fi
       mkdir -m 700 -p /root/.ssh
-      install -m 600 /dev/null /root/.ssh/authorized_keys
-      grep -qxF "$ROOT_SSH_KEY" /root/.ssh/authorized_keys 2>/dev/null || \
+      if [ -n "$ROOT_SSH_KEY" ]; then
+        install -m 600 /dev/null /root/.ssh/authorized_keys
         echo "$ROOT_SSH_KEY" >> /root/.ssh/authorized_keys
-      sed -i '/^root_ssh_key=/d' "$INSTALL_DIR/.env"
+        sed -i '/^root_ssh_key=/d' "$INSTALL_DIR/.env"
+      fi
 
       # --- Fill in secrets docker-compose.yml needs that Aeroform doesn't
       # generate client-side (PocketBase superuser/agent accounts, the
