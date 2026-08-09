@@ -2296,6 +2296,12 @@ abstract class AppLocalizations {
   /// **'CLEAR ALL'**
   String get errorsClearAll;
 
+  /// No description provided for @harnessAuthChallengeTargetCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'CHALLENGE TARGET COPIED'**
+  String get harnessAuthChallengeTargetCopied;
+
   /// No description provided for @errorsOccurred.
   ///
   /// In en, this message translates to:

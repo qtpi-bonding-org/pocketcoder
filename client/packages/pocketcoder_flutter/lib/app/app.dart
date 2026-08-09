@@ -22,8 +22,6 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // In a real app, use ListenableBuilder or BlocBuilder on ThemeService
-    // For simplicity in template, retrieving directly or assuming singleton
     final themeService = getIt<ThemeService>();
 
     return ListenableBuilder(
@@ -49,6 +47,11 @@ class App extends StatelessWidget {
               title: 'PocketCoder',
               routerConfig: AppRouter.router,
               scaffoldMessengerKey: AppRouter.messengerKey,
+              // PocketCoder ships one look, so both slots resolve to the same
+              // terminal theme today and toggling [ThemeService] is a visual
+              // no-op. The wiring is deliberately left intact: authoring a
+              // real light palette later means pointing AppTheme.lightTheme at
+              // it, with no changes here or at any call site.
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode:

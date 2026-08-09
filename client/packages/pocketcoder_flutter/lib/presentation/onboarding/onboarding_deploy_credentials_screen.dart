@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
@@ -33,9 +34,7 @@ class _OnboardingDeployCredentialsScreenState
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
       OnboardingLogger.event('deployment credentials validation failed');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.onboardingRequiredFields)),
-      );
+      VimToast.show(context, context.l10n.onboardingRequiredFields);
       return;
     }
     OnboardingLogger.event('deployment credentials accepted', {

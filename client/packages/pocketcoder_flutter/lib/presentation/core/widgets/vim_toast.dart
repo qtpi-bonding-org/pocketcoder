@@ -11,6 +11,40 @@ class VimToast extends StatelessWidget {
     this.color,
   });
 
+  /// Shows [message] as a terminal toast on the nearest [ScaffoldMessenger].
+  ///
+  /// Always use this instead of `showSnackBar(SnackBar(...))` — a bare
+  /// [SnackBar] renders Material's grey rounded surface in Roboto, which is
+  /// jarringly off-theme against the phosphor CRT chrome.
+  static void show(
+    BuildContext context,
+    String message, {
+    Color? color,
+  }) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    showOn(messenger, message, color: color);
+  }
+
+  /// Variant for callers that captured a messenger before an `await`, so they
+  /// never touch a [BuildContext] across an async gap.
+  static void showOn(
+    ScaffoldMessengerState messenger,
+    String message, {
+    Color? color,
+  }) {
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: VimToast(message: message, color: color),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;

@@ -76,18 +76,29 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
 
 /// App theme implementation
 class AppTheme {
-  /// Light theme
-  static ThemeData get lightTheme => _buildTheme(AppPalette.primary);
+  /// The one PocketCoder look: phosphor green on deep black.
+  ///
+  /// A CRT terminal has a single appearance, so both [lightTheme] and
+  /// [darkTheme] resolve here and the app pins `ThemeMode.dark`. The two
+  /// getters are kept as separate entry points so a genuine light theme can
+  /// later be authored by pointing [lightTheme] at its own palette — no
+  /// rewiring of `MaterialApp` or call sites required.
+  static ThemeData get terminalTheme =>
+      _buildTheme(AppPalette.primary, brightness: Brightness.dark);
 
-  /// Dark theme
-  static ThemeData get darkTheme => _buildTheme(AppPalette.dark);
+  /// Currently identical to [terminalTheme]. See the note above before
+  /// changing this: it is the designated hook for a future light palette.
+  static ThemeData get lightTheme => terminalTheme;
 
-  static ThemeData _buildTheme(IColorPalette palette) {
-    final isDark = palette == AppPalette.dark;
+  static ThemeData get darkTheme => terminalTheme;
 
+  static ThemeData _buildTheme(
+    IColorPalette palette, {
+    required Brightness brightness,
+  }) {
     return ThemeData(
       useMaterial3: true,
-      brightness: isDark ? Brightness.dark : Brightness.light,
+      brightness: brightness,
       extensions: [
         TerminalColors(
           glow: palette.vividGreen.withValues(alpha: 0.1),
@@ -106,7 +117,7 @@ class AppTheme {
         package: 'pocketcoder_flutter',
       ),
       colorScheme: ColorScheme(
-        brightness: isDark ? Brightness.dark : Brightness.light,
+        brightness: brightness,
         primary: palette.vividGreen,
         onPrimary: palette.backgroundPrimary,
         secondary: palette.phosphorGreen,

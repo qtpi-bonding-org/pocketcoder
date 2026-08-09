@@ -8,7 +8,7 @@ class ThemeService extends ChangeNotifier {
   bool _isDarkMode = false;
 
   IColorPalette get currentPalette =>
-      _isDarkMode ? AppPalette.dark : AppPalette.primary;
+      _isDarkMode ? AppPalette.primary : AppPalette.alternate;
 
   bool get isDarkMode => _isDarkMode;
 
