@@ -5,13 +5,9 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/poco_value_widget.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_login_view.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 import '../../../app_router.dart';
 
@@ -19,14 +15,12 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
   OnboardingLoginAdapter({super.key, this.prefill});
 
   final OnboardingPrefill? prefill;
-  final _urlController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _url = ValueNotifier<String>('');
+  final _email = ValueNotifier<String>('');
+  final _password = ValueNotifier<String>('');
   final _pocoMessage = ValueNotifier<String>('');
-  final _pocoSequence = ValueNotifier<List<(String, int)>>(
-    const <(String, int)>[],
-  );
-  final _pocoHistory = ValueNotifier<List<String>>(const <String>[]);
+  final _pocoSequence = ValueNotifier<List<(String, int)>>(const []);
+  final List<String> _pocoHistory = const [];
 
   static UiFlowStatus selectStatus(AuthState state) => state.status;
 
@@ -41,19 +35,31 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
 
     return ValueListenableBuilder<UiFlowStatus>(
       valueListenable: status,
-      builder: (context, status, _) => _buildScaffold(context, status),
+      builder: (context, status, _) => OnboardingLoginView(
+        initialUrl: _url.value,
+        initialEmail: _email.value,
+        initialPassword: _password.value,
+        status: status,
+        pocoMessage: _pocoMessage.value,
+        pocoSequence: _pocoSequence.value,
+        pocoHistory: _pocoHistory,
+        onBack: () => AppNavigation.back(context),
+        onDeploy: () => context.pushNamed(RouteNames.onboardingDeploy),
+        onLogin: (url, email, password) =>
+            _login(context, url, email, password),
+      ),
     );
   }
 
   void _initialize(BuildContext context) {
     if (_pocoMessage.value.isNotEmpty) return;
-    _urlController.text = prefill?.url ?? 'http://127.0.0.1:8090';
-    _emailController.text = prefill?.email ?? '';
-    _passwordController.text = prefill?.password ?? '';
+    _url.value = prefill?.url ?? 'http://127.0.0.1:8090';
+    _email.value = prefill?.email ?? '';
+    _password.value = prefill?.password ?? '';
     _pocoMessage.value = context.l10n.onboardingPocoChallengeMessage;
     _pocoSequence.value = PocoExpressions.scanning;
     final savedUrl = context.read<AuthCubit>().state.savedUrl;
-    if (prefill == null && savedUrl != null) _urlController.text = savedUrl;
+    if (prefill == null && savedUrl != null) _url.value = savedUrl;
   }
 
   void _handleAuthStatus(BuildContext context) {
@@ -75,10 +81,12 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     }
   }
 
-  Future<void> _login(BuildContext context) async {
-    final url = _urlController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+  Future<void> _login(
+    BuildContext context,
+    String url,
+    String email,
+    String password,
+  ) async {
     if (url.isEmpty || email.isEmpty || password.isEmpty) {
       VimToast.show(context, context.l10n.onboardingRequiredFields);
       return;
@@ -97,79 +105,13 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     }
   }
 
-  Widget _buildScaffold(BuildContext context, UiFlowStatus status) {
-    final loading = status == UiFlowStatus.loading;
-    return TerminalScaffold(
-      title: context.l10n.onboardingServerLoginTitle,
-      actions: [
-        TerminalAction(
-          label: context.l10n.actionBack,
-          onTap: () => AppNavigation.back(context),
-        ),
-        TerminalAction(
-          label: context.l10n.onboardingDeploy,
-          onTap: () => context.pushNamed(RouteNames.onboardingDeploy),
-        ),
-        TerminalAction(
-          label: loading
-              ? context.l10n.onboardingServerConnecting
-              : context.l10n.onboardingLogin,
-          onTap: loading ? () {} : () => _login(context),
-        ),
-      ],
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-            child: Column(
-              children: [
-                PocoValueWidget(
-                  message: _pocoMessage,
-                  sequence: _pocoSequence,
-                  history: _pocoHistory,
-                  pocoSize: AppSizes.fontLarge,
-                ),
-                VSpace.x4,
-                TerminalTextField(
-                  controller: _urlController,
-                  label: context.l10n.onboardingServerUrl,
-                  hint: context.l10n.onboardingServerUrlHint,
-                ),
-                VSpace.x2,
-                TerminalTextField(
-                  controller: _emailController,
-                  label: context.l10n.onboardingEmail,
-                  hint: context.l10n.onboardingEmailHintShort,
-                ),
-                VSpace.x2,
-                TerminalTextField(
-                  controller: _passwordController,
-                  label: context.l10n.onboardingPassword,
-                  obscureText: true,
-                  onSubmitted: (_) => loading ? null : _login(context),
-                ),
-                if (loading) ...[
-                  VSpace.x2,
-                  TerminalLoadingIndicator(
-                      label: context.l10n.onboardingAuthenticating),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   void disposeAdapter() {
-    super.disposeAdapter();
-    _urlController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _url.dispose();
+    _email.dispose();
+    _password.dispose();
     _pocoMessage.dispose();
     _pocoSequence.dispose();
-    _pocoHistory.dispose();
+    super.disposeAdapter();
   }
 }

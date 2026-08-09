@@ -14,6 +14,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.d
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/harness_authorization_view.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HarnessAuthorizationAdapter
     extends CubitAdapter<HarnessAuthCubit, HarnessAuthState> {
@@ -48,7 +49,9 @@ class HarnessAuthorizationAdapter
       try {
         await chats.createAndOpen(harness: harnessId);
         final chatId = chats.state.lastCreatedChatId;
-        if (!listenerContext.mounted || chatId == null || chatId.isEmpty) return;
+        if (!listenerContext.mounted || chatId == null || chatId.isEmpty) {
+          return;
+        }
         OnboardingLogger.event('first chat created; entering chat', {
           'harness': harnessId,
         });
@@ -108,6 +111,17 @@ class HarnessAuthorizationAdapter
               harnessId: harnessId,
               provider: provider,
             ),
+            onOpenChallenge: (challenge) {
+              final target = challenge.target;
+              if (target == null || target.isEmpty) return;
+              OnboardingLogger.event('authorization challenge opened', {
+                'type': challenge.type,
+              });
+              launchUrl(
+                Uri.tryParse(target) ?? Uri(),
+                mode: LaunchMode.externalApplication,
+              );
+            },
           ),
         ),
       ),

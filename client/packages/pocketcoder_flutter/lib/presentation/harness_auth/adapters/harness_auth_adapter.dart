@@ -8,7 +8,6 @@ import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
@@ -37,46 +36,47 @@ class HarnessAuthAdapter
       },
       child: ValueListenableBuilder<HarnessAuthState>(
         valueListenable: state,
-        builder: (context, value, _) => PocketCoderShell(
-          title: onboarding ? 'CONNECT A HARNESS' : 'Harness connections',
-          activePillar: NavPillar.configure,
-          showBack: true,
-          body: HarnessAuthView(
-            onboarding: onboarding,
-            harnesses: value.harnesses,
-            providerKeys: value.providerKeys,
-            statuses: value.statuses,
-            error: value.error,
-            isLoading: value.isLoading,
-            isHarnessBusy: value.isHarnessBusy,
-            onStartAccount: (h) {
-              final provider = h.cliId.trim();
-              if (provider.isEmpty) {
-                _showError(context, 'This harness does not expose a provider identifier.');
-              } else {
-                cubit.startWithAccount(harnessId: h.id, provider: provider);
-              }
-            },
-            onStartApiKey: (h) => _startApiKey(context, cubit, h),
-            onStartNone: (h) => cubit.startWithNone(h.id),
-            onPoll: (h) => cubit.poll(h.id),
-            onSubmit: (h, code) => cubit.submitCode(harnessId: h.id, code: code),
-            onCancel: (h) => cubit.cancel(h.id),
-            onDisconnect: (h) => cubit.disconnect(h.id),
-            onRefresh: (h) => cubit.refreshHarness(h.id),
-          ),
+        builder: (context, value, _) => HarnessAuthScreenView(
+          onboarding: onboarding,
+          harnesses: value.harnesses,
+          providerKeys: value.providerKeys,
+          statuses: value.statuses,
+          error: value.error,
+          isLoading: value.isLoading,
+          isHarnessBusy: value.isHarnessBusy,
+          onStartAccount: (h) {
+            final provider = h.cliId.trim();
+            if (provider.isEmpty) {
+              _showError(context,
+                  'This harness does not expose a provider identifier.');
+            } else {
+              cubit.startWithAccount(harnessId: h.id, provider: provider);
+            }
+          },
+          onStartApiKey: (h) => _startApiKey(context, cubit, h),
+          onStartNone: (h) => cubit.startWithNone(h.id),
+          onPoll: (h) => cubit.poll(h.id),
+          onSubmit: (h, code) => cubit.submitCode(harnessId: h.id, code: code),
+          onCancel: (h) => cubit.cancel(h.id),
+          onDisconnect: (h) => cubit.disconnect(h.id),
+          onRefresh: (h) => cubit.refreshHarness(h.id),
         ),
       ),
     );
   }
 
   bool _hasConnected(HarnessAuthState state) => state.harnesses
-      .where((h) => !onboarding || ['claude-code', 'codex'].contains(h.cliId.trim().toLowerCase()))
+      .where((h) =>
+          !onboarding ||
+          ['claude-code', 'codex'].contains(h.cliId.trim().toLowerCase()))
       .any((h) => state.statuses[h.id]?.isConnected == true);
 
-  Future<void> _openFirstChat(BuildContext context, HarnessAuthState state) async {
+  Future<void> _openFirstChat(
+      BuildContext context, HarnessAuthState state) async {
     final connected = state.harnesses
-        .where((h) => !onboarding || ['claude-code', 'codex'].contains(h.cliId.trim().toLowerCase()))
+        .where((h) =>
+            !onboarding ||
+            ['claude-code', 'codex'].contains(h.cliId.trim().toLowerCase()))
         .firstWhere((h) => state.statuses[h.id]?.isConnected == true);
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -89,7 +89,8 @@ class HarnessAuthAdapter
       router.go('${AppRoutes.chat}/$chatId');
     } catch (error) {
       if (context.mounted) {
-        VimToast.showOn(messenger, l10n.onboardingOpenChatFailed(error.toString()));
+        VimToast.showOn(
+            messenger, l10n.onboardingOpenChatFailed(error.toString()));
       }
     }
   }
@@ -99,7 +100,8 @@ class HarnessAuthAdapter
     HarnessAuthCubit cubit,
     Harnesse harness,
   ) async {
-    final matching = cubit.providerKeysForHarness(harness.cliId.trim().toLowerCase());
+    final matching =
+        cubit.providerKeysForHarness(harness.cliId.trim().toLowerCase());
     if (matching.isEmpty) {
       _showError(context, 'No provider key found for ${harness.cliId}.');
       return;
