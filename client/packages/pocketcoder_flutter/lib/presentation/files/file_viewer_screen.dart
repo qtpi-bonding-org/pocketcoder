@@ -2,107 +2,77 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocketcoder_flutter/application/files/file_viewer_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'adapters/file_viewer_adapter.dart';
 
 const _imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
-const _maxPreviewBytes = 10 * 1024 * 1024; // 10 MB
+const _maxPreviewBytes = 10 * 1024 * 1024;
 
-class FileViewerScreen extends StatefulWidget {
+class FileViewerScreen extends StatelessWidget {
+  const FileViewerScreen({super.key, required this.path, required this.repository});
+
   final String path;
   final IFilesRepository repository;
 
-  const FileViewerScreen({super.key, required this.path, required this.repository});
-
   @override
-  State<FileViewerScreen> createState() => _FileViewerScreenState();
+  Widget build(BuildContext context) => BlocProvider(
+        create: (_) => FileViewerCubit(repository)..load(path),
+        child: FileViewerAdapter(path: path),
+      );
 }
 
-class _FileViewerScreenState extends State<FileViewerScreen> {
-  bool _loading = true;
-  Uint8List? _bytes;
-  Object? _error;
+class FileViewerView extends StatelessWidget {
+  const FileViewerView({
+    super.key,
+    required this.path,
+    required this.loading,
+    required this.bytes,
+    required this.error,
+  });
 
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final bytes = await widget.repository.readFile(widget.path);
-      if (!mounted) return;
-      setState(() {
-        _bytes = Uint8List.fromList(bytes);
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e;
-        _loading = false;
-      });
-    }
-  }
-
-  bool get _isImage {
-    final lower = widget.path.toLowerCase();
-    return _imageExtensions.any(lower.endsWith);
-  }
+  final String path;
+  final bool loading;
+  final Uint8List? bytes;
+  final Object? error;
 
   @override
   Widget build(BuildContext context) {
+    final body = _buildBody(context);
     return PocketCoderShell(
-      title: widget.path,
+      title: path,
       activePillar: NavPillar.chats,
       showBack: true,
-      body: _buildBody(context),
+      body: body,
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    if (_loading) {
-      return const Center(child: TerminalLoadingIndicator());
+    if (loading) return const Center(child: TerminalLoadingIndicator());
+    if (error != null) return Center(child: TerminalText('ERROR: $error', alpha: 0.8));
+    final value = bytes;
+    if (value == null) return const SizedBox.shrink();
+    if (_imageExtensions.any(path.toLowerCase().endsWith)) {
+      return Center(child: Image.memory(value));
     }
-    final error = _error;
-    if (error != null) {
-      return Center(
-        child: TerminalText('ERROR: $error', alpha: 0.8),
-      );
-    }
-    final bytes = _bytes;
-    if (bytes == null) {
-      return const SizedBox.shrink();
-    }
-    if (_isImage) {
-      return Center(child: Image.memory(bytes));
-    }
-    if (bytes.length > _maxPreviewBytes) {
-      return Center(
-        child: TerminalText(context.l10n.filesTooLargeToPreview, alpha: 0.5),
-      );
+    if (value.length > _maxPreviewBytes) {
+      return Center(child: TerminalText(context.l10n.filesTooLargeToPreview, alpha: 0.5));
     }
     try {
-      final text = utf8.decode(bytes);
       return SingleChildScrollView(
         padding: EdgeInsets.all(AppSizes.space * 2),
         child: SelectableText(
-          text,
-          style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontMini,
-            package: 'pocketcoder_flutter',
-          ),
+          utf8.decode(value),
+          style: TextStyle(fontFamily: AppFonts.bodyFamily, fontSize: AppSizes.fontMini, package: 'pocketcoder_flutter'),
         ),
       );
     } on FormatException {
-      return Center(
-        child: TerminalText(context.l10n.filesCantPreviewType, alpha: 0.5),
-      );
+      return Center(child: TerminalText(context.l10n.filesCantPreviewType, alpha: 0.5));
     }
   }
 }

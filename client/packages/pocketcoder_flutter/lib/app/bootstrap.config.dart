@@ -34,6 +34,8 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart'
     as _i606;
 import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart'
     as _i110;
+import 'package:pocketcoder_flutter/application/files/file_viewer_cubit.dart'
+    as _i90;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart'
     as _i921;
@@ -319,6 +321,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
     gh.factory<_i110.FileBrowserCubit>(
         () => _i110.FileBrowserCubit(gh<_i209.IFilesRepository>()));
+    gh.factory<_i90.FileViewerCubit>(
+        () => _i90.FileViewerCubit(gh<_i209.IFilesRepository>()));
     gh.factory<_i464.AuthCubit>(
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i763.AgentChatRepository>(() => _i763.AgentChatRepository(
