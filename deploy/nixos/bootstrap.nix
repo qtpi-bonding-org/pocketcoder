@@ -229,7 +229,7 @@ EOF
         exit 1
       fi
       PREBUILT_COMPOSE="$INSTALL_DIR/docker-compose.prebuilt.yml"
-      sh "$INSTALL_DIR/deploy/scripts/resolve-prebuilt-compose.sh" \
+      bash "$INSTALL_DIR/deploy/scripts/resolve-prebuilt-compose.sh" \
         "$INSTALL_DIR/docker-compose.yml" "$PREBUILT_COMPOSE"
       MISSING_IMAGES=0
       MISSING_IMAGE_NAMES=""
