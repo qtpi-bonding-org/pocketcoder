@@ -69,6 +69,21 @@ write_files:
       printf '%s\\n' "\$root_ssh_key" > /root/.ssh/authorized_keys
       chmod 0600 /root/.ssh/authorized_keys
       sed -i '/^root_ssh_key=/d' /opt/pocketcoder/.env
+      # Fill secrets required by docker-compose that the client bootstrap
+      # does not generate. Keep these host-local and random; they are not
+      # application credentials supplied by the user.
+      if ! grep -q '^POCKETBASE_SUPERUSER_EMAIL=' /opt/pocketcoder/.env; then
+        cat >> /opt/pocketcoder/.env <<EOF
+POCKETBASE_SUPERUSER_EMAIL=superuser@pocketcoder.local
+POCKETBASE_SUPERUSER_PASSWORD=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+AGENT_EMAIL=agent@pocketcoder.local
+AGENT_PASSWORD=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+GOOSE_ACP_URL=ws://goose:3000/acp
+GOOSE_SERVER__SECRET_KEY=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+PN_RELAY_SECRET=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+MCP_GATEWAY_AUTH_TOKEN=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
+EOF
+      fi
       status fetching_release
       heartbeat_start
       release_base="\${RELEASE_BASE:-https://images.pocketcoder.org}"
