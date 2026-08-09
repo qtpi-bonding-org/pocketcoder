@@ -191,7 +191,10 @@ EOF
         exit 1
       fi
       pc_status_phase loading_images downloading_bundle
-      if ! curl -sf --max-time 180 -o "$CACHE_FILE" "$CACHE_URL"; then
+      # The coupled Docker bundle is several gigabytes. Allow a slow but
+      # healthy Linode connection enough time to finish downloading it; this
+      # path must never fall back to building images on the VPS.
+      if ! curl -sf --max-time 1200 -o "$CACHE_FILE" "$CACHE_URL"; then
         rm -f "$CACHE_FILE"
         pc_status_heartbeat_stop
         pc_status_error loading_images "release_bundle_download_failed"
