@@ -16,4 +16,24 @@ else
   exit 1
 fi
 
-awk '$1 == "image:" { print $2 }' "$compose_file" | sort -u
+awk '
+  function flush_service() {
+    if (service != "" && !profiled && image != "") {
+      print image
+    }
+  }
+  # Compose v1 includes profile-only services in `config`, unlike Compose v2.
+  # Track the whole service block so an image seen before its profiles stanza
+  # is still excluded.
+  /^  [A-Za-z0-9_-]+:[[:space:]]*$/ {
+    flush_service()
+    service = $1
+    sub(/:$/, "", service)
+    image = ""
+    profiled = 0
+    next
+  }
+  service != "" && $1 == "image:" { image = $2 }
+  service != "" && $1 == "profiles:" { profiled = 1 }
+  END { flush_service() }
+' "$compose_file" | sort -u
