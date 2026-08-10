@@ -84,7 +84,7 @@ ignored again
     final parser = PocoCodeSectionParser();
     final sourcePaths = [
       '../../../deploy/nixos/configuration.nix',
-      '../../../deploy/nixos/bootstrap.nix',
+      '../../../deploy/nixos/bootstrap.sh',
       '../../../docker-compose.yml',
     ];
 

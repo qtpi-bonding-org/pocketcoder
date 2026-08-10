@@ -26,6 +26,9 @@ services:
       - llm_keys:/llm_keys
       - goose_config:/goose-config
       - cognee_config:/cognee-config
+      - ${POCKETCODER_RELEASE_STATE_DIR:-./.runtime/release}:/var/lib/pocketcoder/release:ro
+      - ${POCKETCODER_ARTIFACT_DIR:-./.runtime/artifacts}:/artifacts
+      - ./deploy/release/harnesses.json:/etc/pocketcoder/harnesses.json:ro
     environment:
       - POCKETBASE_SUPERUSER_EMAIL=${POCKETBASE_SUPERUSER_EMAIL}
       - POCKETBASE_SUPERUSER_PASSWORD=${POCKETBASE_SUPERUSER_PASSWORD}
@@ -33,6 +36,10 @@ services:
       - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD}
       - AGENT_EMAIL=${AGENT_EMAIL}
       - AGENT_PASSWORD=${AGENT_PASSWORD}
+      - POCKETCODER_RELEASE=${POCKETCODER_RELEASE:-development}
+      - POCKETCODER_RELEASE_POINTER=/var/lib/pocketcoder/release/current.json
+      - POCKETCODER_ARTIFACT_DIR=/artifacts
+      - POCKETCODER_HARNESS_CATALOG=/etc/pocketcoder/harnesses.json
       - PN_PROVIDER=${PN_PROVIDER}
       - PN_URL=${PN_URL}
       - PN_RELAY_SECRET=${PN_RELAY_SECRET}
@@ -117,7 +124,7 @@ services:
   # POCO:END compose-agent
 
   # POCO:BEGIN compose-local-model
-  # 🧠 OLLAMA (always-on local model runtime)
+  # 🧠 OLLAMA (optional local model runtime)
   #
   # This is a singleton runtime, not a dynamically provisioned harness. Its
   # model cache survives restarts in ollama_models; model pulls happen through
@@ -126,6 +133,7 @@ services:
   # peer harnesses); the separate control network lets PocketBase list/pull
   # models without joining the Goose ACP boundary.
   ollama:
+    profiles: ["local-models"]
     image: ollama/ollama@sha256:f040603c11a11f125660eaf848170780e43b68973fc270e26f168536031ac258
     container_name: pocketcoder-ollama
     environment:
