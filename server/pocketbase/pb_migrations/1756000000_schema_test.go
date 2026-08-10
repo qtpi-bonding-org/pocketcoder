@@ -34,7 +34,7 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 		"agent_profiles":        {"name", "user", "is_system", "system_prompt", "permission_mode"},
 		"skills":                {"user", "is_system", "name", "description", "content", "metadata", "active"},
 		"agent_sessions":        {"chat", "user", "acp_session_id"},
-		"schedule_owners":       {"user", "goose_schedule_id", "display_name"},
+		"schedule_owners":       {"user", "display_name", "cron", "prompt", "paused", "last_run"},
 		"cognee_config":         {"llm_provider", "llm_model", "llm_base_url", "llm_api_key"},
 		"harness_auth_bindings": {"scope_kind", "scope_id", "harness", "credential_mode", "status", "provider_key"},
 		"harness_auth_attempts": {"scope_kind", "scope_id", "harness", "binding", "provider", "status", "expires_at"},
@@ -65,45 +65,6 @@ func TestDeadCollectionsDoNotExist(t *testing.T) {
 		if _, err := app.FindCollectionByNameOrId(name); err == nil {
 			t.Errorf("collection %q should not exist but was found", name)
 		}
-	}
-}
-
-func TestScheduleOwnersUniqueGooseScheduleId(t *testing.T) {
-	app, err := tests.NewTestApp()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer app.Cleanup()
-
-	col, err := app.FindCollectionByNameOrId("schedule_owners")
-	if err != nil {
-		t.Fatal(err)
-	}
-	usersCol, err := app.FindCollectionByNameOrId("_pb_users_auth_")
-	if err != nil {
-		t.Fatal(err)
-	}
-	user := core.NewRecord(usersCol)
-	user.SetEmail("scheduler-owner@example.com")
-	user.SetPassword("password123")
-	if err := app.Save(user); err != nil {
-		t.Fatal(err)
-	}
-
-	rec := core.NewRecord(col)
-	rec.Set("user", user.Id)
-	rec.Set("goose_schedule_id", "abc123")
-	rec.Set("display_name", "My Schedule")
-	if err := app.Save(rec); err != nil {
-		t.Fatalf("save schedule_owners record: %v", err)
-	}
-
-	dup := core.NewRecord(col)
-	dup.Set("user", user.Id)
-	dup.Set("goose_schedule_id", "abc123")
-	dup.Set("display_name", "Duplicate")
-	if err := app.Save(dup); err == nil {
-		t.Fatal("expected unique-index violation for duplicate goose_schedule_id")
 	}
 }
 

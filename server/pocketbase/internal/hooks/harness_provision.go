@@ -251,13 +251,13 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		workspaceVolume + ":/workspace",
 		authVolume + ":" + harnessAuthHomeMount,
 	}
-	networkNames := []string{networkName, ModelNetwork}
+	networkNames := []string{networkName, ModelNetwork, "pocketcoder-mcp-gateway", "pocketcoder-cognee"}
 	if harness.GetString("cli_id") == "goose" {
 		// The Goose image keeps its session/config state under GOOSE_PATH_ROOT.
 		// Reuse the same per-user auth volume so its state is never shared with
 		// the compose control-plane Goose container.
 		volumeBinds = append(volumeBinds, authVolume+":/goose")
-		networkNames = append(networkNames, "pocketcoder-goose-egress", "pocketcoder-mcp-gateway", "pocketcoder-cognee")
+		networkNames = append(networkNames, "pocketcoder-goose-egress")
 	}
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
 		Image:        image,
@@ -312,10 +312,11 @@ func mintSecret() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-// renderEnv merges the selected harness's provider_keys env_vars into one
-// lookup map. ProviderKey.provider stores harnesses.cli_id in the Flutter UI;
-// scoping here prevents several harnesses' generic API_KEY entries from
-// overwriting one another. It also adds a reserved "__adapter_secret" key
+// renderEnv merges provider_keys according to the catalog harness's
+// provider_scope. ProviderKey.provider stores harnesses.cli_id in the Flutter
+// UI; provider-locked harnesses receive only their own keys, while
+// multi-provider harnesses receive the user's complete key set. It also adds
+// a reserved "__adapter_secret" key
 // for the minted per-instance secret, and renders each env_template value
 // as a Go text/template against that map . For example an entry
 // {"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}"} becomes
@@ -324,10 +325,11 @@ func mintSecret() (string, error) {
 func renderEnv(app core.App, envTemplate map[string]string, secret, provider, userID, providerID, modelID string) ([]string, error) {
 	filter := "provider = {:provider} && user = {:user}"
 	params := map[string]any{"provider": provider, "user": userID}
-	if provider == "goose" {
-		// Goose can select Anthropic, Ollama, and other configured providers at
-		// session time. Its per-user container therefore receives that user's
-		// provider environment set rather than a single harness-named key set.
+	providerScopeAny := false
+	if harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:provider}", map[string]any{"provider": provider}); err == nil && harness.GetString("provider_scope") == "any" {
+		// Multi-provider harnesses need the user's complete provider set;
+		// provider-locked harnesses receive only their own credentials.
+		providerScopeAny = true
 		filter = "user = {:user}"
 		params = map[string]any{"user": userID}
 	}
@@ -377,7 +379,7 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 		}
 		env = append(env, name+"="+buf.String())
 	}
-	if provider == "goose" {
+	if providerScopeAny {
 		seen := make(map[string]bool, len(env))
 		for _, item := range env {
 			if i := strings.IndexByte(item, '='); i > 0 {

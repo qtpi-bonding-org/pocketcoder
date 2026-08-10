@@ -130,7 +130,6 @@ func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, 
 	harness.Set("cli_id", cliID)
 	harness.Set("acp_transport", "websocket")
 	harness.Set("supports_live_config", supportsLive)
-	harness.Set("supports_goose_extensions", supportsGoose)
 	harness.Set("single_connection_only", singleConnOnly)
 	if err := app.Save(harness); err != nil {
 		t.Fatal(err)
@@ -630,12 +629,9 @@ func TestBuildSessionProfileAttachesMcpGatewayForPeerHarness(t *testing.T) {
 	}
 }
 
-// TestBuildSessionProfileDoesNotAttachMcpGatewayForGoose verifies Goose
-// sessions never receive the gateway via McpServers -- Goose already gets
-// it through RegisterMcpGatewayExtension's persistent extension instead,
-// and attaching it twice (or via the wrong mechanism) is exactly the
-// double-registration this split is meant to avoid.
-func TestBuildSessionProfileDoesNotAttachMcpGatewayForGoose(t *testing.T) {
+// TestBuildSessionProfileAttachesMcpGatewayForGoose verifies Goose receives
+// the gateway through the same standard ACP session path as every peer.
+func TestBuildSessionProfileAttachesMcpGatewayForGoose(t *testing.T) {
 	t.Setenv("MCP_GATEWAY_AUTH_TOKEN", "test-token-123")
 
 	app := testApp(t)
@@ -654,9 +650,10 @@ func TestBuildSessionProfileDoesNotAttachMcpGatewayForGoose(t *testing.T) {
 
 	for _, m := range profile.McpServers {
 		if m.Http != nil && m.Http.Name == "gateway" {
-			t.Fatal("Goose session must not receive the gateway via McpServers")
+			return
 		}
 	}
+	t.Fatal("expected Goose session to receive the gateway via McpServers")
 }
 
 // TestBuildSessionProfileOmitsMcpGatewayWithoutToken verifies a peer harness

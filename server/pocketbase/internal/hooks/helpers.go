@@ -26,9 +26,6 @@ import (
 )
 
 const (
-	// GooseContainer is the Goose agent container that consumes the rendered
-	// /goose-config/config.yaml + keys.env (plan 2026-07-19-… Task 4).
-	GooseContainer   = "pocketcoder-goose"
 	GatewayContainer = "pocketcoder-mcp-gateway"
 	CogneeContainer  = "pocketcoder-cognee"
 )

@@ -29,8 +29,8 @@ import (
 )
 
 // Target identifies the harness_instances row a session should dial —
-// empty means "use Coordinator.Config's compose-managed defaults" (the
-// convention harness_instances.acp_endpoint/.secret already use).
+// Empty targets are invalid for production runs. They are retained as a
+// zero-value for profile construction and test doubles only.
 type Target struct {
 	URL, Secret string
 }
@@ -45,12 +45,11 @@ type SessionProfile struct {
 	Mode                               acpsdk.SessionModeId
 	PermissionRules                    []ToolPermissionRule
 
-	Target                  Target
-	ResolvedInstanceID      string // the harness_instances id this chat resolves to right now
-	PinnedInstanceID        string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
-	SupportsLiveConfig      bool
-	SupportsGooseExtensions bool
-	SingleConnectionOnly    bool
+	Target               Target
+	ResolvedInstanceID   string // the harness_instances id this chat resolves to right now
+	PinnedInstanceID     string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
+	SupportsLiveConfig   bool
+	SingleConnectionOnly bool
 }
 
 // ToolPermissionAction is the PocketBase policy decision for one ACP tool
@@ -243,9 +242,7 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 // selectApplier always returns PerSessionApplier — the branching that used
 // to matter (whether Goose advertised per-session config at all) now lives
 // inside PerSessionApplier.Apply itself, gated on the resolved harness's
-// own capability flags carried on profile, not on the ACP InitializeResponse
-// (which cannot express a Goose-private capability like
-// SupportsGooseExtensions in the first place).
+// own capability flags carried on profile.
 func selectApplier(profile SessionProfile) ProfileApplier {
 	return PerSessionApplier{}
 }

@@ -1480,8 +1480,22 @@
       },
       {
         "hidden": false,
-        "id": "bool_harnesses_supports_goose_extensions",
-        "name": "supports_goose_extensions",
+        "id": "select_harnesses_provider_scope",
+        "maxSelect": 1,
+        "name": "provider_scope",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "select",
+        "values": [
+          "any",
+          "self"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "bool_harnesses_supports_ollama",
+        "name": "supports_ollama",
         "presentable": false,
         "required": false,
         "system": false,
@@ -2229,20 +2243,6 @@
       {
         "autogeneratePattern": "",
         "hidden": false,
-        "id": "text1060437932",
-        "max": 0,
-        "min": 0,
-        "name": "goose_schedule_id",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
         "id": "text3578368839",
         "max": 0,
         "min": 0,
@@ -2253,10 +2253,60 @@
         "required": true,
         "system": false,
         "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_schedule_cron",
+        "max": 0,
+        "min": 0,
+        "name": "cron",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_schedule_prompt",
+        "max": 0,
+        "min": 0,
+        "name": "prompt",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "bool_schedule_paused",
+        "name": "paused",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_schedule_last_run",
+        "max": 0,
+        "min": 0,
+        "name": "last_run",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_schedule_owners_goose_schedule_id ON schedule_owners (goose_schedule_id)"
     ],
     "created": "2026-07-24 05:34:50.291Z",
     "updated": "2026-07-24 05:34:50.291Z",
@@ -2500,6 +2550,20 @@
         "required": false,
         "system": false,
         "type": "bool"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hi_last_used",
+        "max": 0,
+        "min": 0,
+        "name": "last_used",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
       },
       {
         "hidden": false,

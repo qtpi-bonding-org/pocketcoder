@@ -25,6 +25,7 @@ import (
 	"log"
 	"path/filepath"
 	"strings"
+	"time"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/pocketbase/pocketbase/core"
@@ -64,12 +65,7 @@ type stdioMcp struct {
 const workspaceRoot = "/workspace"
 
 func supportsOllamaHarness(harness *core.Record) bool {
-	switch harness.GetString("cli_id") {
-	case "goose", "opencode":
-		return true
-	default:
-		return false
-	}
+	return harness.GetBool("supports_ollama")
 }
 
 // validateWorkspacePath validates that a path is within the workspace root.
@@ -252,17 +248,16 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	}
 
 	p.SupportsLiveConfig = harnessRec.GetBool("supports_live_config")
-	p.SupportsGooseExtensions = harnessRec.GetBool("supports_goose_extensions")
 	p.SingleConnectionOnly = harnessRec.GetBool("single_connection_only")
 
-	// Attach the MCP gateway for peer stdio harnesses via session/new -- NOT
-	// Goose, which gets it through a persistent extension instead (see
-	// hooks.McpGatewayHttpServer's doc comment for why the two harness
-	// families use different delivery mechanisms).
-	if harnessRec.GetString("cli_id") != "goose" {
-		if gw := hooks.McpGatewayHttpServer(); gw != nil {
-			p.McpServers = append(p.McpServers, *gw)
-		}
+	// All harnesses receive PocketBase-owned MCP services through the standard
+	// ACP session/new request. This keeps the harness boundary identical and
+	// allows Goose to be provisioned lazily like its peers.
+	if gw := hooks.McpGatewayHttpServer(); gw != nil {
+		p.McpServers = append(p.McpServers, *gw)
+	}
+	if memory := hooks.CogneeMcpServer(); memory != nil {
+		p.McpServers = append(p.McpServers, *memory)
 	}
 
 	launchKey := ""
@@ -278,6 +273,10 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		return p, err
 	}
 	if instance != nil {
+		if instance.GetBool("managed") {
+			instance.Set("last_used", time.Now().UTC().Format(time.RFC3339))
+			_ = app.Save(instance)
+		}
 		p.ResolvedInstanceID = instance.Id
 		p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
 		switch instance.GetString("status") {

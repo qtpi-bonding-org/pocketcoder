@@ -81,7 +81,7 @@ func TestSeedCreatesBalancedPermissionMode(t *testing.T) {
 	}
 }
 
-func TestSeedCreatesDefaultGooseHarnessInstance(t *testing.T) {
+func TestSeedDoesNotCreateAComposeHarnessInstance(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
@@ -94,19 +94,8 @@ func TestSeedCreatesDefaultGooseHarnessInstance(t *testing.T) {
 	}
 
 	instances, err := app.FindRecordsByFilter("harness_instances", "harness = {:h}", "", 0, 0, map[string]any{"h": harnesses[0].Id})
-	if err != nil || len(instances) != 1 {
-		t.Fatalf("expected exactly one seeded goose harness_instance, got %d, err %v", len(instances), err)
-	}
-
-	inst := instances[0]
-	if inst.GetBool("managed") {
-		t.Error("seeded default goose harness_instances row must have managed = false")
-	}
-	if inst.GetString("container_name") != "pocketcoder-goose" {
-		t.Errorf("container_name = %q, want pocketcoder-goose", inst.GetString("container_name"))
-	}
-	if inst.GetString("acp_endpoint") != "" {
-		t.Error("seeded default row's acp_endpoint must be empty (means: use Coordinator.Config defaults)")
+	if err != nil || len(instances) != 0 {
+		t.Fatalf("expected no seeded goose harness_instances rows, got %d, err %v", len(instances), err)
 	}
 	if harnesses[0].GetString("container_image") != "pocketcoder-goose:1.43.0" {
 		t.Errorf("goose container_image = %q, want pocketcoder-goose:1.43.0", harnesses[0].GetString("container_image"))
@@ -147,7 +136,7 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 			if rec.GetString("version") != tc.version || rec.GetString("container_image") != tc.image {
 				t.Errorf("version/image = %q/%q, want %q/%q", rec.GetString("version"), rec.GetString("container_image"), tc.version, tc.image)
 			}
-			if rec.GetString("acp_transport") != "stdio" || !rec.GetBool("single_connection_only") || rec.GetBool("supports_goose_extensions") {
+			if rec.GetString("acp_transport") != "stdio" || !rec.GetBool("single_connection_only") {
 				t.Errorf("unexpected capability flags for %s", tc.cliID)
 			}
 			var launch struct {
