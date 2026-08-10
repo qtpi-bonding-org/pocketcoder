@@ -1,5 +1,7 @@
 #!/bin/sh
-# Dispatches the "Build NixOS Image" GitHub Actions workflow against main.
+# Dispatches an immutable candidate build against main. Public promotion is a
+# separate workflow operation and is deliberately unavailable through this
+# daemon action.
 # Reads GH_TOKEN from the environment (injected
 # by the secrets-daemon via `sops exec-env` -- never read from a file here,
 # never echoed).
@@ -9,6 +11,6 @@ curl -sf -X POST \
   -H "Authorization: Bearer $GH_TOKEN" \
   -H "Accept: application/vnd.github+json" \
   "https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions/workflows/nixos-image.yml/dispatches" \
-  -d '{"ref":"main"}'
+  -d '{"ref":"main","inputs":{"operation":"build_candidate"}}'
 
-echo "dispatched"
+echo "candidate build dispatched"
