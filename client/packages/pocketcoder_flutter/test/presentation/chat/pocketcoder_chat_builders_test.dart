@@ -18,7 +18,8 @@ import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 
 void main() {
-  Widget host(BuildContext context, StackedChatBuilders builders, Conversation conversation) {
+  Widget host(BuildContext context, StackedChatBuilders builders,
+      Conversation conversation) {
     return AgUiChat(
       conversation: conversation,
       currentUserId: 'user',
@@ -44,7 +45,8 @@ void main() {
         home: Scaffold(body: body),
       );
 
-  testWidgets('roleHeaderBuilder renders COMMANDER for the current user', (tester) async {
+  testWidgets('roleHeaderBuilder renders COMMANDER for the current user',
+      (tester) async {
     late StackedChatBuilders builders;
     await tester.pumpWidget(wrap(
       Builder(builder: (context) {
@@ -57,7 +59,13 @@ void main() {
           context,
           builders,
           const Conversation(timeline: [
-            TimelineItem.text(id: 'm1', kind: ChatMessageKind.text, role: 'user', text: 'hi'),
+            TimelineItem.text(
+              id: 'm1',
+              kind: ChatMessageKind.text,
+              role: 'user',
+              text: 'hi',
+              order: OrderKey(1),
+            ),
           ]),
         );
       }),
@@ -66,7 +74,8 @@ void main() {
     expect(find.text('COMMANDER'), findsOneWidget);
   });
 
-  testWidgets('permissionCardBuilder renders pocketcoder\'s own PermissionCard', (tester) async {
+  testWidgets('permissionCardBuilder renders pocketcoder\'s own PermissionCard',
+      (tester) async {
     late StackedChatBuilders builders;
     await tester.pumpWidget(wrap(
       Builder(builder: (context) {
@@ -79,7 +88,12 @@ void main() {
           context,
           builders,
           const Conversation(timeline: [
-            TimelineItem.permissionRequest(requestId: 'p1', toolTitle: 'bash', options: []),
+            TimelineItem.permissionRequest(
+              requestId: 'p1',
+              toolTitle: 'bash',
+              options: [],
+              order: OrderKey(1),
+            ),
           ]),
         );
       }),
@@ -89,7 +103,9 @@ void main() {
     expect(find.byType(ElicitationCard), findsNothing);
   });
 
-  testWidgets('elicitationCardBuilder renders pocketcoder\'s own ElicitationCard', (tester) async {
+  testWidgets(
+      'elicitationCardBuilder renders pocketcoder\'s own ElicitationCard',
+      (tester) async {
     late StackedChatBuilders builders;
     await tester.pumpWidget(wrap(
       Builder(builder: (context) {
@@ -102,7 +118,12 @@ void main() {
           context,
           builders,
           const Conversation(timeline: [
-            TimelineItem.elicitationRequest(requestId: 'e1', message: 'hi', mode: 'form'),
+            TimelineItem.elicitationRequest(
+              requestId: 'e1',
+              message: 'hi',
+              mode: 'form',
+              order: OrderKey(1),
+            ),
           ]),
         );
       }),
