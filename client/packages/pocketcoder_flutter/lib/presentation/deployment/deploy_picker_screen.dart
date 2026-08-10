@@ -14,15 +14,20 @@ class DeployPickerScreen extends StatelessWidget {
     super.key,
     this.credentials,
     required this.deployOptionService,
+    required this.onEnsureDeployAccess,
   });
 
   final DeployCredentials? credentials;
   final IDeployOptionService deployOptionService;
+  final Future<bool> Function(String productId) onEnsureDeployAccess;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
         create: (_) => DeployPickerCubit(deployOptionService),
-        child: DeployPickerAdapter(credentials: credentials),
+        child: DeployPickerAdapter(
+          credentials: credentials,
+          onEnsureDeployAccess: onEnsureDeployAccess,
+        ),
       );
 }
 

@@ -5,15 +5,25 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
+import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
+import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
 class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
-  const ChatListAdapter({super.key});
+  const ChatListAdapter({
+    super.key,
+    required this.providerRepository,
+    required this.loadOllamaModels,
+  });
+
+  final IProviderRepository providerRepository;
+  final Future<List<OllamaModel>> Function() loadOllamaModels;
 
   static ChatListState _selectState(ChatListState state) => state;
-  static String? _selectCreatedChat(ChatListState state) => state.lastCreatedChatId;
+  static String? _selectCreatedChat(ChatListState state) =>
+      state.lastCreatedChatId;
 
   @override
   Widget buildAdapter(
@@ -37,7 +47,10 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
           onNewChat: () async {
             final selection = await showDialog<NewChatSelection>(
               context: context,
-              builder: (_) => const NewChatDialog(),
+              builder: (_) => NewChatDialog(
+                providerRepository: providerRepository,
+                loadOllamaModels: loadOllamaModels,
+              ),
             );
             if (selection == null) return;
             await cubit.createAndOpen(

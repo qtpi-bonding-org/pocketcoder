@@ -5,6 +5,8 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -30,7 +32,10 @@ class ChatListScreen extends StatelessWidget {
       create: (_) => getIt<ChatListCubit>()
         ..watchChats()
         ..checkEmptyAndMaybeAutoCreate(),
-      child: const ChatListAdapter(),
+      child: ChatListAdapter(
+        providerRepository: getIt<IProviderRepository>(),
+        loadOllamaModels: getIt<OllamaApi>().listModels,
+      ),
     );
   }
 }
@@ -54,28 +59,28 @@ class ChatListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-          title: context.l10n.navChats,
-          activePillar: NavPillar.chats,
-          extraHeaderActions: [
-            TerminalAction(
-              label: context.l10n.chatListNewChat,
-              onTap: onNewChat,
+      title: context.l10n.navChats,
+      activePillar: NavPillar.chats,
+      extraHeaderActions: [
+        TerminalAction(
+          label: context.l10n.chatListNewChat,
+          onTap: onNewChat,
+        ),
+      ],
+      body: state.chats.isEmpty
+          ? const Center(child: TerminalLoadingIndicator())
+          : ListView.builder(
+              itemCount: state.chats.length,
+              itemBuilder: (context, index) {
+                final chat = state.chats[index];
+                return _ChatListTile(
+                  chat: chat,
+                  onOpen: onOpen,
+                  onArchive: onArchive,
+                  onDelete: onDelete,
+                );
+              },
             ),
-          ],
-          body: state.chats.isEmpty
-              ? const Center(child: TerminalLoadingIndicator())
-              : ListView.builder(
-                  itemCount: state.chats.length,
-                  itemBuilder: (context, index) {
-                    final chat = state.chats[index];
-                    return _ChatListTile(
-                      chat: chat,
-                      onOpen: onOpen,
-                      onArchive: onArchive,
-                      onDelete: onDelete,
-                    );
-                  },
-                ),
     );
   }
 }

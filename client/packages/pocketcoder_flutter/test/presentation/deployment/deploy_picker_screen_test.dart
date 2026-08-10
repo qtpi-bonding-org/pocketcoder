@@ -16,11 +16,7 @@ class FakeDeployOptionService implements IDeployOptionService {
           name: 'Linode (Akamai)',
           description: 'One-tap deploy via OAuth. 24h access included.',
           routePath: '/auth',
-          // false, not the real option's true: this test verifies
-          // credential forwarding, not the billing gate, and
-          // requiresPurchase: true would call GetIt.I<BillingService>()
-          // inside _onTap, which nothing in this test registers.
-          requiresPurchase: false,
+          requiresPurchase: true,
         ),
       ];
 }
@@ -50,6 +46,7 @@ void main() {
               password: 'test-pass',
             ),
             deployOptionService: FakeDeployOptionService(),
+            onEnsureDeployAccess: (_) async => true,
           ),
         ),
         GoRoute(

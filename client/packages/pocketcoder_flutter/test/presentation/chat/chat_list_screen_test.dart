@@ -17,14 +17,17 @@ class MockChatListRepository extends Mock implements IChatListRepository {}
 
 class MockProviderRepository extends Mock implements IProviderRepository {}
 
-Widget _wrap(ChatListCubit cubit) {
+Widget _wrap(ChatListCubit cubit, IProviderRepository providerRepository) {
   return MaterialApp(
     theme: AppTheme.lightTheme,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: BlocProvider<ChatListCubit>.value(
       value: cubit,
-      child: const ChatListAdapter(),
+      child: ChatListAdapter(
+        providerRepository: providerRepository,
+        loadOllamaModels: () async => const [],
+      ),
     ),
   );
 }
@@ -64,7 +67,7 @@ void main() {
       ],
     ));
 
-    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpWidget(_wrap(cubit, providerRepo));
     await tester.pumpAndSettle();
 
     expect(find.text('Hello World'), findsOneWidget);
@@ -80,7 +83,7 @@ void main() {
       chats: const [Chat(id: 'chat-1', title: 'Hello World', user: 'u')],
     ));
 
-    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpWidget(_wrap(cubit, providerRepo));
     await tester.pumpAndSettle();
 
     await tester.longPress(find.text('Hello World'));
@@ -98,7 +101,7 @@ void main() {
     cubit.emit(
         cubit.state.copyWith(status: UiFlowStatus.success, chats: const []));
 
-    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpWidget(_wrap(cubit, providerRepo));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('[ + NEW CHAT ]'));
