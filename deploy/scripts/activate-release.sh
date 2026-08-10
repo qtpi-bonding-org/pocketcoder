@@ -8,6 +8,7 @@ release_state=${4:?release state directory is required}
 artifact_dir=${5:?artifact directory is required}
 run_id=${6:?provisioning run ID is required}
 status_file=${7:?provisioning status file is required}
+phase_log=${POCKETCODER_PHASE_LOG:-/var/log/pocketcoder-bootstrap-phases.log}
 shift 7
 
 if [ "$#" -eq 0 ]; then
@@ -39,6 +40,11 @@ write_status() {
       error:(if $error == "" then null else $error end)}' > "$status_tmp"
   chmod 0644 "$status_tmp"
   mv -f "$status_tmp" "$status_file"
+  if [ -w "$phase_log" ]; then
+    printf '%s phase=%s detail=%s sourceCommit=%s error=%s\n' \
+      "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$phase" "$detail" "$release" "$error" \
+      >> "$phase_log"
+  fi
 }
 
 on_exit() {

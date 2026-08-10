@@ -6,6 +6,7 @@ catalog_file=${2:?harness catalog file is required}
 artifact_dir=${3:?artifact staging directory is required}
 run_id=${4:?provisioning run ID is required}
 status_file=${5:?status file is required}
+phase_log=${POCKETCODER_PHASE_LOG:-/var/log/pocketcoder-bootstrap-phases.log}
 shift 5
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -43,6 +44,11 @@ write_status() {
     > "$status_tmp"
   chmod 0644 "$status_tmp"
   mv -f "$status_tmp" "$status_file"
+  if [ -w "$phase_log" ]; then
+    printf '%s phase=%s detail=%s sourceCommit=%s error=%s\n' \
+      "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$phase" "$detail" "$release" "$error" \
+      >> "$phase_log"
+  fi
 }
 
 fail_artifact() {

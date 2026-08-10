@@ -6,6 +6,7 @@ bootstrap_config=/var/lib/pocketcoder/config/bootstrap.json
 release_state=/var/lib/pocketcoder/release
 artifact_dir=/var/lib/pocketcoder/artifacts
 status_file=/var/lib/pocketcoder/public/status.json
+phase_log=/var/log/pocketcoder-bootstrap-phases.log
 run_id=$(cat /proc/sys/kernel/random/uuid)
 source_commit=unknown
 current_phase=installing_host
@@ -27,6 +28,9 @@ status() {
       error:(if $error == "" then null else $error end)}' > "$status_tmp"
   chmod 0644 "$status_tmp"
   mv -f "$status_tmp" "$status_file"
+  printf '%s phase=%s detail=%s sourceCommit=%s error=%s\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$current_phase" "$detail" \
+    "$source_commit" "$error" >> "$phase_log"
 }
 
 fail_bootstrap() {
@@ -65,6 +69,9 @@ trap 'exit 1' HUP INT TERM
 install -d -m 0755 /var/lib/pocketcoder/public /var/lib/pocketcoder/release/manifests
 install -d -m 0700 /var/lib/pocketcoder/config /var/lib/pocketcoder/artifacts
 install -d -m 0755 /opt/pocketcoder/releases
+install -d -m 0755 "$(dirname -- "$phase_log")"
+touch "$phase_log"
+chmod 0644 "$phase_log"
 status installing_host
 
 # POCO:BEGIN bootstrap-owner-config
