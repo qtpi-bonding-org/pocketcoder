@@ -40,6 +40,7 @@ void main() {
     expect(shell, contains('.deployment.url'));
     expect(shell, contains('release-manifest.json'));
     expect(shell, contains('activate-release.sh'));
+    expect(shell, contains('pocketcoder-bootstrap-phases.log'));
     expect(
       _decodedWriteFile(
         bootstrap.userData,
