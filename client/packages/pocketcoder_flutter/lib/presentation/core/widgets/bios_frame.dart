@@ -20,7 +20,7 @@ class BiosFrame extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
-          width: 500,
+          width: AppSizes.contentMaxWidth,
           constraints: BoxConstraints(
               maxWidth: constraints.maxWidth - AppSizes.space * 4),
           child: Stack(

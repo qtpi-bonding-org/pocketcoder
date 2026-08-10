@@ -35,6 +35,9 @@ class AppSizes {
   static double get inputHeight => space * 7; // 56
   static double get appBarHeight => space * 7; // 56
   static double get bottomBarHeight => space * 10; // 80
+  static double get contentMaxWidth => 500;
+  static double get pickerHeight => 300;
+  static double get progressIndicatorSize => space * 1.5; // 12
 
   // --- Border ---
   static double get borderWidth => UiScaler.instance.px(1.0);

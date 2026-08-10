@@ -79,7 +79,7 @@ class ChatPickerField<T> extends StatelessWidget {
         title: dialogTitle,
         content: SizedBox(
           width: double.maxFinite,
-          height: 300,
+          height: AppSizes.pickerHeight,
           child: options.isEmpty
               ? Center(
                   child: TerminalText(

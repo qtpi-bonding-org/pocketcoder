@@ -122,11 +122,12 @@ class _NewChatDialogState extends State<NewChatDialog> {
     required List<HarnessModel> availableModels,
     required List<OllamaModel> ollamaModels,
   }) {
+    final selectedHarness = _selectedHarness;
     final choices = [
       for (final hm in availableModels)
         _ModelChoice.catalog(hm.id, _modelDisplayName(models, hm)),
-      if (_selectedHarness != null &&
-          supportsOllamaHarness(_selectedHarness!.cliId))
+      if (selectedHarness != null &&
+          supportsOllamaHarness(selectedHarness.cliId))
         for (final model in ollamaModels) _ModelChoice.ollama(model.name),
     ];
     return TerminalDialog(

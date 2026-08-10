@@ -13,8 +13,8 @@ import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart';
-import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_list_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 
 class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
