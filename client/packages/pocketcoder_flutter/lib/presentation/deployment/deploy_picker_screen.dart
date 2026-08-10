@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/deployment/deploy_picker_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
@@ -11,19 +10,28 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'adapters/deploy_picker_adapter.dart';
 
 class DeployPickerScreen extends StatelessWidget {
-  const DeployPickerScreen({super.key, this.credentials});
+  const DeployPickerScreen({
+    super.key,
+    this.credentials,
+    required this.deployOptionService,
+  });
 
   final DeployCredentials? credentials;
+  final IDeployOptionService deployOptionService;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-        create: (_) => DeployPickerCubit(getIt<IDeployOptionService>()),
+        create: (_) => DeployPickerCubit(deployOptionService),
         child: DeployPickerAdapter(credentials: credentials),
       );
 }
 
 class DeployPickerView extends StatelessWidget {
-  const DeployPickerView({super.key, required this.options, this.credentials, required this.onSelected});
+  const DeployPickerView(
+      {super.key,
+      required this.options,
+      this.credentials,
+      required this.onSelected});
 
   final List<DeployOption> options;
   final DeployCredentials? credentials;
@@ -46,11 +54,14 @@ class DeployPickerView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TerminalText(context.l10n.deployChooseProvider, alpha: 0.7),
+                      TerminalText(context.l10n.deployChooseProvider,
+                          alpha: 0.7),
                       VSpace.x3,
                       ...options.map((option) => Padding(
                             padding: EdgeInsets.only(bottom: AppSizes.space),
-                            child: _ProviderCard(option: option, onTap: () => onSelected(option)),
+                            child: _ProviderCard(
+                                option: option,
+                                onTap: () => onSelected(option)),
                           )),
                     ],
                   ),
@@ -75,16 +86,39 @@ class _ProviderCard extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.all(AppSizes.space * 1.5),
-        decoration: BoxDecoration(border: Border.all(color: colors.onSurface.withValues(alpha: 0.2))),
+        decoration: BoxDecoration(
+            border: Border.all(color: colors.onSurface.withValues(alpha: 0.2))),
         child: Row(children: [
-          Icon(option.routePath != null ? Icons.cloud_outlined : Icons.open_in_new, color: colors.primary, size: 24),
+          Icon(
+              option.routePath != null
+                  ? Icons.cloud_outlined
+                  : Icons.open_in_new,
+              color: colors.primary,
+              size: 24),
           HSpace.x2,
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(option.name.toUpperCase(), style: TextStyle(fontFamily: AppFonts.headerFamily, color: colors.onSurface, fontSize: AppSizes.fontStandard, fontWeight: AppFonts.heavy)),
-            VSpace.x1,
-            TerminalText.tiny(option.description.toUpperCase(), alpha: 0.6),
-          ])),
-          if (option.requiresPurchase) Container(padding: EdgeInsets.symmetric(horizontal: AppSizes.space, vertical: AppSizes.space * .5), decoration: BoxDecoration(border: Border.all(color: colors.primary)), child: TerminalText(context.l10n.deployProBadge, size: TerminalTextSize.tiny, weight: TerminalTextWeight.heavy, color: colors.primary)),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(option.name.toUpperCase(),
+                    style: TextStyle(
+                        fontFamily: AppFonts.headerFamily,
+                        color: colors.onSurface,
+                        fontSize: AppSizes.fontStandard,
+                        fontWeight: AppFonts.heavy)),
+                VSpace.x1,
+                TerminalText.tiny(option.description.toUpperCase(), alpha: 0.6),
+              ])),
+          if (option.requiresPurchase)
+            Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.space, vertical: AppSizes.space * .5),
+                decoration:
+                    BoxDecoration(border: Border.all(color: colors.primary)),
+                child: TerminalText(context.l10n.deployProBadge,
+                    size: TerminalTextSize.tiny,
+                    weight: TerminalTextWeight.heavy,
+                    color: colors.primary)),
         ]),
       ),
     );

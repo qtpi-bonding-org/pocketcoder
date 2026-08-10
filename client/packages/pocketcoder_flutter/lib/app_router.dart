@@ -33,6 +33,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
 
 /// App routing configuration.
 class AppRouter {
@@ -303,6 +304,7 @@ class AppRouter {
             credentials: state.extra is DeployCredentials
                 ? state.extra as DeployCredentials
                 : null,
+            deployOptionService: getIt<IDeployOptionService>(),
           ),
         ),
       ),
