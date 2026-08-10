@@ -45,8 +45,8 @@ class TerminalButton extends StatelessWidget {
           children: [
             if (isLoading) ...[
               SizedBox(
-                width: 12,
-                height: 12,
+                width: AppSizes.progressIndicatorSize,
+                height: AppSizes.progressIndicatorSize,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(textColor),

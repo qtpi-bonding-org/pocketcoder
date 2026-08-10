@@ -84,12 +84,17 @@ String _formatRelativeTime(BuildContext context, DateTime? time) {
   if (time == null) return '';
 
   final diff = DateTime.now().difference(time);
-  if (diff.inMinutes < 1) return context.l10n.chatListTimestampNow;
-  if (diff.inHours < 1)
+  if (diff.inMinutes < 1) {
+    return context.l10n.chatListTimestampNow;
+  }
+  if (diff.inHours < 1) {
     return context.l10n.chatListTimestampMinutesAgo(diff.inMinutes);
-  if (diff.inDays < 1)
+  }
+  if (diff.inDays < 1) {
     return context.l10n.chatListTimestampHoursAgo(diff.inHours);
-  if (diff.inDays < 7)
+  }
+  if (diff.inDays < 7) {
     return context.l10n.chatListTimestampDaysAgo(diff.inDays);
+  }
   return '${time.year}-${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')}';
 }
