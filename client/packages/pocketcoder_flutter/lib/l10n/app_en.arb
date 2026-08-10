@@ -137,8 +137,29 @@
   "newChatSelectHarness": "SELECT HARNESS",
   "newChatSelectModel": "SELECT MODEL",
   "newChatNoModelsAvailable": "No models available for this harness",
+  "newChatWorkspaceErrorEmpty": "Path cannot be empty",
+  "newChatWorkspaceErrorInvalid": "Path must be /workspace or a subdirectory of it",
   "chatListArchive": "ARCHIVE",
   "chatListDelete": "DELETE",
+  "chatListTimestampNow": "now",
+  "chatListTimestampMinutesAgo": "{count}m ago",
+  "@chatListTimestampMinutesAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "chatListTimestampHoursAgo": "{count}h ago",
+  "@chatListTimestampHoursAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "chatListTimestampDaysAgo": "{count}d ago",
+  "@chatListTimestampDaysAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "chatFilesAction": "FILES",
   "chatNewCapabilityRequest": "[!] NEW CAPABILITY REQUEST RECEIVED",
   "chatThinking": "THINKING",

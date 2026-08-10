@@ -355,10 +355,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newChatNoModelsAvailable => 'No models available for this harness';
 
   @override
+  String get newChatWorkspaceErrorEmpty => 'Path cannot be empty';
+
+  @override
+  String get newChatWorkspaceErrorInvalid =>
+      'Path must be /workspace or a subdirectory of it';
+
+  @override
   String get chatListArchive => 'ARCHIVE';
 
   @override
   String get chatListDelete => 'DELETE';
+
+  @override
+  String get chatListTimestampNow => 'now';
+
+  @override
+  String chatListTimestampMinutesAgo(int count) {
+    return '${count}m ago';
+  }
+
+  @override
+  String chatListTimestampHoursAgo(int count) {
+    return '${count}h ago';
+  }
+
+  @override
+  String chatListTimestampDaysAgo(int count) {
+    return '${count}d ago';
+  }
 
   @override
   String get chatFilesAction => 'FILES';
