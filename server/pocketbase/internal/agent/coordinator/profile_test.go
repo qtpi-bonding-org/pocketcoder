@@ -75,7 +75,7 @@ func TestSessionProfile_SliceAccessorsNeverNil(t *testing.T) {
 	}
 
 	server := acpsdk.McpServer{Stdio: &acpsdk.McpServerStdio{Name: "x"}}
-	p2 := SessionProfile{McpServers: []acpsdk.McpServer{server}, AdditionalDirectories: []string{"/d"}}
+	p2 := SessionProfile{McpServers: []acpsdk.McpServer{server}, AdditionalDirectories: []string{"/d"}, SupportsAdditionalDirectories: true}
 	if len(p2.mcpServers()) != 1 || len(p2.additionalDirectories()) != 1 {
 		t.Fatal("accessors must pass through populated slices unchanged")
 	}

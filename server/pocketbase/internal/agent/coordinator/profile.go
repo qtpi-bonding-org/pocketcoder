@@ -45,11 +45,13 @@ type SessionProfile struct {
 	Mode                               acpsdk.SessionModeId
 	PermissionRules                    []ToolPermissionRule
 
-	Target               Target
-	ResolvedInstanceID   string // the harness_instances id this chat resolves to right now
-	PinnedInstanceID     string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
-	SupportsLiveConfig   bool
-	SingleConnectionOnly bool
+	Target                        Target
+	ResolvedInstanceID            string // the harness_instances id this chat resolves to right now
+	PinnedInstanceID              string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
+	SupportsLiveConfig            bool
+	SingleConnectionOnly          bool
+	SupportsSessionDelete         bool
+	SupportsAdditionalDirectories bool
 }
 
 // ToolPermissionAction is the PocketBase policy decision for one ACP tool
@@ -148,7 +150,7 @@ func (p SessionProfile) mcpServers() []acpsdk.McpServer {
 // additionalDirectories returns the profile's extra directories as a non-nil
 // slice, for the same Goose-contract reason as mcpServers.
 func (p SessionProfile) additionalDirectories() []string {
-	if p.AdditionalDirectories == nil {
+	if !p.SupportsAdditionalDirectories || p.AdditionalDirectories == nil {
 		return []string{}
 	}
 	return p.AdditionalDirectories

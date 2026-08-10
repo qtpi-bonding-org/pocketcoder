@@ -1509,6 +1509,24 @@
         "required": false,
         "system": false,
         "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "bool_harnesses_supports_session_delete",
+        "name": "supports_session_delete",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "bool_harnesses_supports_additional_directories",
+        "name": "supports_additional_directories",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
       }
     ],
     "indexes": [

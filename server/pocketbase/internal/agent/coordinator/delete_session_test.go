@@ -94,6 +94,7 @@ func seedAgentSessionWithInstance(t *testing.T, app core.App, chatID string, use
 	harness.Set("name", "test-harness")
 	harness.Set("cli_id", "test-harness-"+randomSuffixForTest())
 	harness.Set("acp_transport", "websocket")
+	harness.Set("supports_session_delete", true)
 	if err := app.Save(harness); err != nil {
 		t.Fatal(err)
 	}

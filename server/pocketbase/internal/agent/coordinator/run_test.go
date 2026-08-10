@@ -488,10 +488,11 @@ func TestResolvedProfileReachesNewSessionAndMode(t *testing.T) {
 	f.newSession = "s-new"
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	profile := SessionProfile{
-		Cwd:                   "/repo",
-		AdditionalDirectories: []string{"/repo/extra"},
-		McpServers:            []acpsdk.McpServer{{Stdio: &acpsdk.McpServerStdio{Name: "fs", Command: "mcp-fs"}}},
-		Mode:                  acpsdk.SessionModeId("auto"),
+		Cwd:                           "/repo",
+		AdditionalDirectories:         []string{"/repo/extra"},
+		SupportsAdditionalDirectories: true,
+		McpServers:                    []acpsdk.McpServer{{Stdio: &acpsdk.McpServerStdio{Name: "fs", Command: "mcp-fs"}}},
+		Mode:                          acpsdk.SessionModeId("auto"),
 	}
 	c.StartPrompt("A", "hi",
 		func(context.Context) (string, error) { return "", nil }, // unmapped -> session/new

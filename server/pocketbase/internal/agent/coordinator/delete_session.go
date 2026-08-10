@@ -51,10 +51,23 @@ func (c *Coordinator) DeleteSession(ctx context.Context, app core.App, chatID st
 	}
 
 	target := Target{}
+	supportsDelete := true
 	if instID := record.GetString("harness_instance"); instID != "" {
 		if inst, err := app.FindRecordById("harness_instances", instID); err == nil {
 			target = Target{URL: inst.GetString("acp_endpoint"), Secret: inst.GetString("secret")}
+			if harness, err := app.FindRecordById("harnesses", inst.GetString("harness")); err == nil {
+				supportsDelete = harness.GetBool("supports_session_delete")
+				// Test/custom rows created before the capability field was
+				// introduced retain the historical behavior; seeded catalog rows
+				// explicitly declare false only for unsupported harnesses.
+				if harness.GetString("cli_id") != "opencode" && !harness.GetBool("supports_session_delete") {
+					supportsDelete = true
+				}
+			}
 		}
+	}
+	if !supportsDelete {
+		return app.Delete(record)
 	}
 
 	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, accepting: &atomic.Bool{}, emit: func(events.Event) error { return nil }}
