@@ -635,6 +635,61 @@ final _chatAndFileScreens = <WidgetbookNode>[
           onElicitationRespond: (_, __) {},
           onFiles: () {},
         ),
+    'thinking': () => ChatView(
+          chatId: 'chat-1',
+          conversation: const ag_ui.Conversation(timeline: [
+            ag_ui.TimelineItem.text(
+              id: 'message-1',
+              kind: ag_ui.ChatMessageKind.text,
+              role: 'user',
+              text: 'Can you check the deployment logs?',
+            ),
+            ag_ui.TimelineItem.text(
+              id: 'reasoning-1',
+              kind: ag_ui.ChatMessageKind.reasoning,
+              role: 'assistant',
+              text: 'Reviewing the latest deployment events and service health.',
+            ),
+          ]),
+          title: 'Deployment review',
+          isLoading: true,
+          isRunning: true,
+          modes: const {'currentModeId': 'code', 'availableModes': []},
+          config: const {},
+          onOpen: (_) {},
+          onSendPrompt: (_) {},
+          onCancel: () {},
+          onSelectMode: (_) {},
+          onSetOption: (_) {},
+          onPermissionOptionSelected: (
+            _, {
+            String? optionId,
+            bool cancelled = false,
+          }) {},
+          onElicitationRespond: (_, __) {},
+          onFiles: () {},
+        ),
+    'empty': () => ChatView(
+          chatId: 'new',
+          conversation: const ag_ui.Conversation(),
+          title: 'New chat',
+          isLoading: false,
+          isRunning: false,
+          modes: const {'currentModeId': 'code', 'availableModes': []},
+          config: const {},
+          onOpen: (_) {},
+          onSendPrompt: (_) {},
+          onCancel: () {},
+          onSelectMode: (_) {},
+          onSetOption: (_) {},
+          onPermissionOptionSelected: (
+            _, {
+            String? optionId,
+            bool cancelled = false,
+          }) {},
+          onElicitationRespond: (_, __) {},
+          onFiles: () {},
+        ),
   }),
   _screen('FileBrowserScreen', {
     'workspace files': () => FileBrowserView(

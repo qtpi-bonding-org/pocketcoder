@@ -221,6 +221,26 @@ class _SimpleInput extends StatelessWidget {
           cursorColor: terminalColors.attention,
           decoration: const InputDecoration(border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero, filled: false),
         )),
+        IconButton(
+          onPressed: enabled ? onSubmitted : null,
+          tooltip: 'Send',
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: BoxConstraints(
+            minWidth: AppSizes.buttonHeight,
+            minHeight: AppSizes.buttonHeight,
+          ),
+          icon: Text(
+            '>',
+            style: TextStyle(
+              color: enabled ? terminalColors.attention : colors.onSurface.withValues(alpha: 0.3),
+              fontFamily: AppFonts.bodyFamily,
+              package: 'pocketcoder_flutter',
+              fontSize: AppSizes.fontStandard,
+              fontWeight: AppFonts.heavy,
+            ),
+          ),
+        ),
       ]),
     );
   }
