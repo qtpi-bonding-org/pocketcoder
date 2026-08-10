@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_aeroform/domain/models/app_bootstrap.dart';
 import 'package:flutter_aeroform/domain/models/host_spec.dart';
 import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
@@ -22,6 +23,7 @@ import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_cloud_init
 import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/config_view.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/selected_cloud_provider.dart';
+import 'package:pocketcoder_pro/domain/deployment/harness_catalog.dart';
 
 const _pocketCoderReleaseRef =
     String.fromEnvironment('POCKETCODER_RELEASE_REF', defaultValue: 'main');
@@ -82,14 +84,19 @@ class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
               backend: value.config?.backend ?? ProvisionBackendKind.nixos,
               distribution: value.config?.standardLinuxDistribution ??
                   StandardLinuxDistribution.debian,
-              onPlanSelected: (plan) => _updateConfig(configCubit, planType: plan),
-              onRegionSelected: (region) => _updateConfig(configCubit, region: region),
+              harnesses: DeploymentHarnessCatalog.bundled.harnesses,
+              selectedHarnesses: value.selectedHarnesses,
+              onPlanSelected: (plan) =>
+                  _updateConfig(configCubit, planType: plan),
+              onRegionSelected: (region) =>
+                  _updateConfig(configCubit, region: region),
               onBackendSelected: (backend) =>
                   _updateConfig(configCubit, backend: backend),
               onDistributionSelected: (distribution) => _updateConfig(
                 configCubit,
                 standardLinuxDistribution: distribution,
               ),
+              onHarnessesSelected: configCubit.updateSelectedHarnesses,
               onDeploy: () => _deploy(configCubit, deploymentCubit),
             ),
           ),
@@ -120,6 +127,10 @@ class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
             acmeEmail: deployCredentials.email,
             staticPaths: const {'/_pocketcoder': '/var/lib/pocketcoder/public'},
           );
+    final standardLinuxStageZero = config.backend ==
+            ProvisionBackendKind.standardLinux
+        ? await rootBundle.loadString(PocketCoderCloudInit.stageZeroAssetPath)
+        : null;
     final bootstrap = config.backend == ProvisionBackendKind.nixos
         ? StackScriptBootstrap(
             stackScriptId: 2174743,
@@ -129,15 +140,21 @@ class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
                 'POCKETBASE_ADMIN_PASSWORD=${deployCredentials.password}',
                 'NTFY_ENABLED=false',
                 'root_ssh_key=${keyPair.publicKey}',
+                'POCKETCODER_SELECTED_HARNESSES=${configCubit.state.selectedHarnesses.join(',')}',
+                'POCKETCODER_RELEASE_STATE_DIR=/var/lib/pocketcoder/release',
+                'POCKETCODER_ARTIFACT_DIR=/var/lib/pocketcoder/artifacts',
               ].join('\n'))),
             },
-            image: const ImageArtifact(url: '', sha256: '', uncompressedBytes: 0),
+            image:
+                const ImageArtifact(url: '', sha256: '', uncompressedBytes: 0),
           )
         : PocketCoderCloudInit.build(
+            stageZeroScript: standardLinuxStageZero!,
             adminEmail: deployCredentials.email,
             adminPassword: deployCredentials.password,
             rootSshKey: keyPair.publicKey,
             sourceCommit: _pocketCoderReleaseRef,
+            selectedHarnesses: configCubit.state.selectedHarnesses,
           );
     await deploymentCubit.deploy(
       config,

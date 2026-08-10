@@ -22,7 +22,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/pocketbase/pocketbase"
@@ -34,6 +36,7 @@ import (
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/releaseidentity"
 	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
 )
 
@@ -97,6 +100,16 @@ func main() {
 	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
+		release := os.Getenv("POCKETCODER_RELEASE")
+		if release != "" && release != "development" {
+			catalogPath := os.Getenv("POCKETCODER_HARNESS_CATALOG")
+			if catalogPath == "" {
+				catalogPath = "/etc/pocketcoder/harnesses.json"
+			}
+			if err := releaseidentity.SyncHarnessImages(app, catalogPath, release); err != nil {
+				return fmt.Errorf("sync release harness catalog: %w", err)
+			}
+		}
 
 		// A. Register Custom API Endpoints
 		api.RegisterSSHApi(app, e)

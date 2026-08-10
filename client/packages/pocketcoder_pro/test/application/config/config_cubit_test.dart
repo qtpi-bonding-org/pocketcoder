@@ -42,4 +42,24 @@ void main() {
     expect(cubit.state.config, config);
     expect(cubit.state.isValid, isTrue);
   });
+
+  test('starts with Goose and canonicalizes harness multi-selection', () {
+    expect(cubit.state.selectedHarnesses, ['goose']);
+
+    cubit.updateSelectedHarnesses(['codex', 'goose']);
+
+    expect(cubit.state.selectedHarnesses, ['goose', 'codex']);
+  });
+
+  test('rejects empty, duplicate, and unknown harness selections', () {
+    expect(() => cubit.updateSelectedHarnesses([]), throwsFormatException);
+    expect(
+      () => cubit.updateSelectedHarnesses(['goose', 'goose']),
+      throwsFormatException,
+    );
+    expect(
+      () => cubit.updateSelectedHarnesses(['unknown']),
+      throwsFormatException,
+    );
+  });
 }

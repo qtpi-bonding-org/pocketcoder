@@ -4,7 +4,7 @@ import 'package:pocketcoder_pro/infrastructure/deployment/poco_code_section_pars
 
 enum ProvisioningSourceFile {
   hostConfiguration('deploy/nixos/configuration.nix'),
-  hostBootstrap('deploy/nixos/bootstrap.nix'),
+  hostBootstrap('deploy/nixos/bootstrap.sh'),
   dockerCompose('docker-compose.yml');
 
   const ProvisioningSourceFile(this.path);

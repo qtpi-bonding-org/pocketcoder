@@ -46,3 +46,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.4
+
+flutter:
+  assets:
+    - assets/deployment/standard_linux_stage_zero.sh

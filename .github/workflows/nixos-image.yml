@@ -80,14 +80,11 @@ jobs:
 
       - name: Write release metadata
         run: |
-          cat > nixos-release-metadata.json <<EOF
-          {
-            "sourceCommit": "${{ github.sha }}",
-            "url": "https://images.pocketcoder.org/pocketcoder-nixos-${{ github.sha }}.img.gz",
-            "sha256": "${{ steps.meta.outputs.sha256 }}",
-            "uncompressedBytes": ${{ steps.meta.outputs.uncompressed_bytes }}
-          }
-          EOF
+          sh deploy/scripts/write-artifact-metadata.sh \
+            nixos-release-metadata.json \
+            "https://images.pocketcoder.org/pocketcoder-nixos-${{ github.sha }}.img.gz" \
+            pocketcoder-nixos.img.gz \
+            "${{ steps.meta.outputs.uncompressed_bytes }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -121,95 +118,23 @@ jobs:
           files: pocketcoder-nixos.img.gz
           generate_release_notes: true
 
-  # Pre-builds the app stack's Docker images and caches them in the same R2
-  # bucket as the NixOS image, so bootstrap.nix can `docker load` a
-  # pre-built tarball instead of performing the ~2-3 minute source build on
-  # every fresh box during a ~12 minute golden-path deploy (verified via live
-  # timing). Same trigger as the `build` job (manual dispatch or a
-  # `v*-nixos` tag) rather than every push, so this doesn't rebuild/upload
-  # on every dev commit -- deliberately kept coupled to the NixOS image's
-  # own release cadence so the two artifacts never drift out of sync.
-  # bootstrap.nix falls back to building from source if this cache is
-  # missing, stale, or fails to verify, so skipping this job (or landing
-  # code between tags) never breaks a deploy -- it just makes it slower.
-  docker-images:
+  # Publishes the runtime snapshot, core, independently selectable harnesses,
+  # and optional local-model runtime. Promotion remains coupled to the NixOS
+  # image so every public manifest names one complete release.
+  release-artifacts:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 1
 
-      - name: Validate prebuilt Compose YAML
+      - name: Validate release contract and deployment snapshot
         run: |
           set -euo pipefail
-          tmp_dir=$(mktemp -d)
-          trap 'rm -rf "$tmp_dir"' EXIT
-          sh deploy/scripts/resolve-prebuilt-compose.sh \
-            docker-compose.yml "$tmp_dir/docker-compose.prebuilt.yml"
-          test "$(grep -c '^    image: pocketcoder-bundle-' \
-            "$tmp_dir/docker-compose.prebuilt.yml")" -gt 0
-          ! grep -F '\\n' "$tmp_dir/docker-compose.prebuilt.yml"
-          docker compose -f "$tmp_dir/docker-compose.prebuilt.yml" config --images
+          deploy/release/tests/release-contract-test.sh
 
-      - name: Build app-stack images
-        run: |
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          # -p pocketcoder pins the image name prefix (pocketcoder-<service>)
-          # to match what bootstrap.nix's `docker compose up -d` produces --
-          # it always runs from /opt/pocketcoder, so its default Compose
-          # project name is "pocketcoder" too. Without this pin, CI's
-          # checkout directory name deciding the project name would be an
-          # implicit coincidence, not a guarantee.
-          # The app images below are built locally. External Compose images
-          # are pulled during the bundle step so a fresh VPS needs no registry
-          # access and no image build.
-          docker compose -p pocketcoder --profile harness-images build \
-            pocketbase goose mcp-gateway \
-            claude-code-harness-image codex-harness-image opencode-harness-image
-
-      - name: Save + compress images
-        run: |
-          set -euo pipefail
-          # Resolve every required image from the effective Compose graph so
-          # the VPS can start with `--no-build` and without registry access.
-          IMAGES=$(docker compose -p pocketcoder --profile harness-images config --images)
-          test -n "$IMAGES"
-          echo "Images included in release bundle:"
-          printf '%s\n' "$IMAGES"
-          IMAGE_REFS=""
-          while IFS= read -r image; do
-            test -n "$image"
-            if ! docker image inspect "$image" >/dev/null 2>&1; then
-              echo "Pulling external image: $image"
-              docker pull "$image"
-            fi
-            docker image inspect "$image" >/dev/null
-            if printf '%s' "$image" | grep -q '@sha256:'; then
-              digest=$(printf '%s' "$image" | sed 's/.*@sha256://')
-              alias="pocketcoder-bundle-$(printf '%s' "$digest" | cut -c1-16)"
-              docker tag "$image" "$alias"
-              IMAGE_REFS="$IMAGE_REFS $alias"
-            else
-              IMAGE_REFS="$IMAGE_REFS $image"
-            fi
-          done <<EOF
-          $IMAGES
-          EOF
-          # Save the repository references, not only image IDs. Docker load
-          # restores the Compose tags only when the archive contains those
-          # references; ID-only archives can load as <none>, which makes
-          # `docker compose up --no-build` reject an otherwise valid bundle.
-          docker save $IMAGE_REFS \
-            | gzip > pocketcoder-docker-images.tar.gz
-
-      - name: Compute image metadata
-        id: meta
-        run: |
-          SHA256=$(sha256sum pocketcoder-docker-images.tar.gz | cut -d' ' -f1)
-          SIZE=$(stat -c%s pocketcoder-docker-images.tar.gz)
-          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
-          echo "Docker image cache sha256: $SHA256"
-          echo "Compressed size: $SIZE bytes ($((SIZE / 1024 / 1024)) MiB)"
+      - name: Build split release artifacts and metadata
+        run: deploy/ci/build-release-artifacts.sh "$GITHUB_SHA"
 
       - name: Upload to R2
         env:
@@ -217,43 +142,39 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
         run: |
-          aws s3 cp pocketcoder-docker-images.tar.gz \
-            s3://pocketcoder-images/pocketcoder-docker-images-${{ github.sha }}.tar.gz \
-            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
-
-      - name: Write release metadata
-        run: |
-          cat > docker-images-release-metadata.json <<EOF
-          {
-            "sourceCommit": "${{ github.sha }}",
-            "url": "https://images.pocketcoder.org/pocketcoder-docker-images-${{ github.sha }}.tar.gz",
-            "sha256": "${{ steps.meta.outputs.sha256 }}"
-          }
-          EOF
+          for artifact in artifacts/*.tar.gz; do
+            aws s3 cp "$artifact" \
+              "s3://pocketcoder-images/$(basename "$artifact")" \
+              --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          done
 
       - name: Upload release metadata
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: docker-images-release-metadata
-          path: docker-images-release-metadata.json
+          name: release-artifacts-metadata
+          path: release-artifacts-metadata.json
           retention-days: 30
 
   # Promotion is deliberately the only job that updates mutable pointers.
   # A failed or partial build can publish immutable objects, but it cannot
   # make them the release used by new deployments.
   promote:
-    needs: [build, docker-images]
+    needs: [build, release-artifacts]
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 1
+
       - name: Download NixOS metadata
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: nixos-release-metadata
 
-      - name: Download Docker metadata
+      - name: Download release artifact metadata
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: docker-images-release-metadata
+          name: release-artifacts-metadata
 
       - name: Validate and publish coupled release
         env:
@@ -262,51 +183,4 @@ jobs:
           AWS_DEFAULT_REGION: auto
           SOURCE_COMMIT: ${{ github.sha }}
           R2_ENDPOINT: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
-        run: |
-          set -euo pipefail
-          test "$(jq -r .sourceCommit nixos-release-metadata.json)" = "$SOURCE_COMMIT"
-          test "$(jq -r .sourceCommit docker-images-release-metadata.json)" = "$SOURCE_COMMIT"
-
-          NIXOS=$(cat nixos-release-metadata.json)
-          DOCKER=$(cat docker-images-release-metadata.json)
-          jq -n \
-            --arg sourceCommit "$SOURCE_COMMIT" \
-            --argjson nixos "$NIXOS" \
-            --argjson dockerImages "$DOCKER" \
-            '{schemaVersion: 1, sourceCommit: $sourceCommit,
-              nixosImage: $nixos, dockerImages: $dockerImages,
-              standardLinux: {mode: "cloud-init"}}' \
-            > release-manifest.json
-
-          # Immutable release record first.
-          aws s3 cp release-manifest.json \
-            "s3://pocketcoder-images/release-${SOURCE_COMMIT}.json" \
-            --endpoint-url "$R2_ENDPOINT"
-
-          # Legacy upload-image/bootstrap consumers retain their old object
-          # names, but these mutable aliases are promoted only after both
-          # immutable artifacts have passed validation.
-          aws s3 cp \
-            "s3://pocketcoder-images/pocketcoder-nixos-${SOURCE_COMMIT}.img.gz" \
-            s3://pocketcoder-images/pocketcoder-nixos-latest.img.gz \
-            --copy-props none \
-            --endpoint-url "$R2_ENDPOINT"
-          aws s3 cp \
-            "s3://pocketcoder-images/pocketcoder-docker-images-${SOURCE_COMMIT}.tar.gz" \
-            s3://pocketcoder-images/pocketcoder-docker-images-latest.tar.gz \
-            --copy-props none \
-            --endpoint-url "$R2_ENDPOINT"
-
-          # These pointers are updated only after both artifact jobs and the
-          # coupled release record are valid.
-          cp nixos-release-metadata.json image-manifest.json
-          cp docker-images-release-metadata.json docker-images-manifest.json
-          aws s3 cp release-manifest.json \
-            s3://pocketcoder-images/release-manifest.json \
-            --endpoint-url "$R2_ENDPOINT"
-          aws s3 cp image-manifest.json \
-            s3://pocketcoder-images/image-manifest.json \
-            --endpoint-url "$R2_ENDPOINT"
-          aws s3 cp docker-images-manifest.json \
-            s3://pocketcoder-images/docker-images-manifest.json \
-            --endpoint-url "$R2_ENDPOINT"
+        run: deploy/ci/promote-release.sh "$SOURCE_COMMIT"

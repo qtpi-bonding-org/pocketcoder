@@ -21,7 +21,7 @@ class _SourceClient extends http.BaseClient {
 networking.firewall.enable = true;
 # POCO:END vps-public-firewall
 ''',
-      'bootstrap.nix' => '''
+      'bootstrap.sh' => '''
 # POCO:BEGIN bootstrap-release-source
 git checkout --detach sourceCommit
 # POCO:END bootstrap-release-source

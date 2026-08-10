@@ -63,6 +63,7 @@ import 'package:pocketcoder_flutter/presentation/skills/widgets/skills_view.dart
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
+import 'package:pocketcoder_pro/domain/deployment/harness_catalog.dart';
 import 'package:pocketcoder_pro/domain/deployment/server_status_document.dart';
 import 'package:pocketcoder_pro/domain/server_update/server_update_result.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
@@ -650,7 +651,8 @@ final _chatAndFileScreens = <WidgetbookNode>[
               id: 'reasoning-1',
               kind: ag_ui.ChatMessageKind.reasoning,
               role: 'assistant',
-              text: 'Reviewing the latest deployment events and service health.',
+              text:
+                  'Reviewing the latest deployment events and service health.',
             ),
           ]),
           title: 'Deployment review',
@@ -767,10 +769,13 @@ final _proScreens = <WidgetbookNode>[
           isValid: true,
           backend: ProvisionBackendKind.standardLinux,
           distribution: StandardLinuxDistribution.ubuntu,
+          harnesses: DeploymentHarnessCatalog.bundled.harnesses,
+          selectedHarnesses: const ['goose', 'codex'],
           onPlanSelected: (_) {},
           onRegionSelected: (_) {},
           onBackendSelected: (_) {},
           onDistributionSelected: (_) {},
+          onHarnessesSelected: (_) {},
           onDeploy: () {},
         ),
     'loading registry': () => ConfigView(
@@ -781,10 +786,13 @@ final _proScreens = <WidgetbookNode>[
           isValid: false,
           backend: ProvisionBackendKind.standardLinux,
           distribution: StandardLinuxDistribution.ubuntu,
+          harnesses: DeploymentHarnessCatalog.bundled.harnesses,
+          selectedHarnesses: const ['goose'],
           onPlanSelected: (_) {},
           onRegionSelected: (_) {},
           onBackendSelected: (_) {},
           onDistributionSelected: (_) {},
+          onHarnessesSelected: (_) {},
           onDeploy: () {},
         ),
   }),

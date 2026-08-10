@@ -26,6 +26,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
 
@@ -266,6 +267,8 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		VolumeBinds:  volumeBinds,
 		NetworkNames: networkNames,
 		Labels: map[string]string{
+			"pc_managed":    "pocketcoder",
+			"pc_release":    os.Getenv("POCKETCODER_RELEASE"),
 			"pc_scope":      "user",
 			"pc_scope_id":   userID,
 			"pc_harness_id": harnessID,

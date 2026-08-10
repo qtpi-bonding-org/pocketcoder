@@ -6,6 +6,7 @@ import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
 import 'package:flutter_aeroform/domain/validation/i_validation_service.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_pro/domain/deployment/harness_catalog.dart';
 
 import 'config_state.dart';
 
@@ -43,6 +44,13 @@ class ConfigCubit extends AppCubit<ConfigState> {
     ));
   }
 
+  void updateSelectedHarnesses(Iterable<String> selectedHarnesses) {
+    final canonical = DeploymentHarnessCatalog.bundled.canonicalize(
+      selectedHarnesses,
+    );
+    emit(state.copyWith(selectedHarnesses: canonical));
+  }
+
   /// Loads both plans and regions
   Future<void> loadPlansAndRegions() async {
     return tryOperation(() async {
@@ -50,8 +58,10 @@ class ConfigCubit extends AppCubit<ConfigState> {
       if (accessToken == null) {
         throw Exception('Not authenticated');
       }
-      final Future<List<InstancePlan>> plansFuture = _apiClient.getAvailablePlans(accessToken);
-      final Future<List<Region>> regionsFuture = _apiClient.getAvailableRegions(accessToken);
+      final Future<List<InstancePlan>> plansFuture =
+          _apiClient.getAvailablePlans(accessToken);
+      final Future<List<Region>> regionsFuture =
+          _apiClient.getAvailableRegions(accessToken);
 
       final results = await Future.wait([plansFuture, regionsFuture]);
 
