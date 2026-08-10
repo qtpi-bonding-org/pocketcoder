@@ -144,7 +144,8 @@ func init() {
 			},
 		})
 		gooseHarness.Set("supports_live_config", true)
-		gooseHarness.Set("supports_goose_extensions", true)
+		gooseHarness.Set("provider_scope", "any")
+		gooseHarness.Set("supports_ollama", true)
 		gooseHarness.Set("single_connection_only", false)
 		if err := app.Save(gooseHarness); err != nil {
 			return fmt.Errorf("seed goose harness: %w", err)
@@ -184,7 +185,12 @@ func init() {
 				"env_template": envTemplate,
 			})
 			rec.Set("supports_live_config", true)
-			rec.Set("supports_goose_extensions", false)
+			providerScope := "self"
+			if cliID == "opencode" {
+				providerScope = "any"
+			}
+			rec.Set("provider_scope", providerScope)
+			rec.Set("supports_ollama", cliID == "opencode")
 			rec.Set("single_connection_only", true)
 			if err := app.Save(rec); err != nil {
 				return fmt.Errorf("seed %s harness: %w", cliID, err)
@@ -211,22 +217,6 @@ func init() {
 			"pocketcoder-harness-opencode:1.18.11", "opencode acp", "OPENCODE_API_KEY",
 		); err != nil {
 			return err
-		}
-
-		instancesColl, err := app.FindCollectionByNameOrId("harness_instances")
-		if err != nil {
-			return err
-		}
-		gooseInstance := core.NewRecord(instancesColl)
-		gooseInstance.Set("harness", gooseHarness.Id)
-		gooseInstance.Set("launch_key", "")
-		gooseInstance.Set("container_name", "pocketcoder-goose")
-		gooseInstance.Set("acp_endpoint", "")
-		gooseInstance.Set("secret", "")
-		gooseInstance.Set("status", "running")
-		gooseInstance.Set("managed", false)
-		if err := app.Save(gooseInstance); err != nil {
-			return fmt.Errorf("seed goose harness_instance: %w", err)
 		}
 
 		return nil

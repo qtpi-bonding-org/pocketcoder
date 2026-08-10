@@ -437,3 +437,26 @@ func (c *Client) ListAll(ctx context.Context) ([]ContainerSummary, error) {
 	}
 	return out, nil
 }
+
+// Remove deletes a managed container after it has stopped. The socket proxy
+// permits this narrow lifecycle operation for PocketCoder-owned containers.
+func (c *Client) Remove(ctx context.Context, containerName string) error {
+	q := url.Values{"force": {"1"}}
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.baseURL+"/containers/"+url.PathEscape(containerName)+"?"+q.Encode(), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("remove %s: %w", containerName, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrContainerNotFound
+	}
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("remove %s: docker API returned %s: %s", containerName, resp.Status, string(body))
+	}
+	return nil
+}

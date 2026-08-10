@@ -89,16 +89,10 @@ func main() {
 	// The interface receives MCP status updates via PocketBase realtime subscriptions.
 	hooks.RegisterMcpHooks(app)
 
-	// 3b. Register Goose Config Hooks (config.yaml + keys.env render + goose
-	// restart + live tool-permission delivery)
-	hooks.RegisterGooseConfigHooks(app)
 	hooks.RegisterAgentFileHooks(app)
 
 	// 3c. Register cognee Config Hooks (cognee.env render + cognee restart)
 	hooks.RegisterCogneeConfigHooks(app)
-
-	// 3d. Register Schedule Import Hooks (Goose-native scheduler → chat feed)
-	hooks.RegisterScheduleImportHooks(app, coordGetter)
 
 	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
@@ -119,15 +113,8 @@ func main() {
 		filesystem.RegisterFilesApi(app, e)
 		hooks.RegisterPushApi(app, e)
 
-		// C. One-time MCP gateway extension registration (idempotent,
-		// retried with backoff — see RegisterMcpGatewayExtension).
-		go hooks.RegisterMcpGatewayExtension(coordGetter)
-
-		// C2. One-time cognee extension registration (idempotent, retried
-		// with backoff — see RegisterCogneeExtension).
-		go hooks.RegisterCogneeExtension(coordGetter)
-
-		// D. Skills API (pure ACP passthrough, no PocketBase storage).
+		// C. Skills API remains a compatibility surface; its canonical data is
+		// PocketBase-owned and materialized into each harness volume.
 		api.RegisterSkillsApi(app, e, coordGetter)
 
 		// E. Harness auth API (account/API-key mode selection + auth-helper lifecycle).
@@ -147,6 +134,7 @@ func main() {
 		// tear down the DB out from under an in-flight status Save.
 		watcherCtx, cancelWatcher := context.WithCancel(context.Background())
 		watcherDone := hooks.StartHarnessWatcher(watcherCtx, app, dockerapi.New())
+		hooks.RegisterHarnessLifecycle(app, dockerapi.New())
 		app.OnTerminate().BindFunc(func(_ *core.TerminateEvent) error {
 			cancelWatcher()
 			select {

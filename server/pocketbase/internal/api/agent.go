@@ -52,10 +52,14 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) (*coordina
 // integration/local runs can inject a fake Goose without touching the
 // production entry point.
 func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coordinator.DialFunc) (*coordinator.Coordinator, error) {
+	workspace := os.Getenv("GOOSE_WORKSPACE")
+	if workspace == "" {
+		workspace = "/workspace"
+	}
 	service, configErr := coordinator.New(coordinator.Config{
 		GooseURL:          os.Getenv("GOOSE_ACP_URL"),
 		GooseSecret:       os.Getenv("GOOSE_SERVER__SECRET_KEY"),
-		Workspace:         os.Getenv("GOOSE_WORKSPACE"),
+		Workspace:         workspace,
 		PermissionTimeout: permissionTimeout(),
 		Dial:              dial,
 	})
@@ -355,7 +359,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 	}).Bind(apis.RequireAuth())
 
 	if service != nil {
-	// Best-effort cleanup: a deleted chat's mapped Agent session is
+		// Best-effort cleanup: a deleted chat's mapped Agent session is
 		// deleted too, but a failure never blocks the record delete — the row
 		// is left for a future reconcile sweep (v1 floor, documented).
 		app.OnRecordAfterDeleteSuccess("chats").BindFunc(func(re *core.RecordEvent) error {

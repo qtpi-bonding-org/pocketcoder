@@ -40,9 +40,6 @@ services:
       # the /acp upgrade as of v1.39; c1 sends it as ?token=). Required --
       # goose refuses to serve without it, and the PocketBase agent route
       # stays disabled if it's unset.
-      - GOOSE_ACP_URL=${GOOSE_ACP_URL:-ws://goose:3000/acp}
-      - GOOSE_SERVER__SECRET_KEY=${GOOSE_SERVER__SECRET_KEY:-}
-      - GOOSE_WORKSPACE=${GOOSE_WORKSPACE:-/workspace}
       # Read by RegisterMcpGatewayExtension's one-time config/extensions/add
       # call to set the Authorization header Goose sends the gateway --
       # required as of docker-mcp v0.43+ (mandatory HTTP auth by default).
@@ -73,6 +70,7 @@ services:
   # goose is the sole system of record for history; PocketBase never calls it
   # back, so this network carries only c1 -> c2 ACP traffic.
   goose:
+    profiles: ["harness-images"]
     image: pocketcoder-goose:1.43.0
     build:
       context: server/goose
