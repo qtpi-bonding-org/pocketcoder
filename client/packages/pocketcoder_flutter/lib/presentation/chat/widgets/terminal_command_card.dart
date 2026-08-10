@@ -1,0 +1,173 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+
+/// A read-only terminal transcript for a command Poco ran.
+///
+/// The command and lifecycle status are always visible. Output is deliberately
+/// collapsed so a large tool result does not bury the conversation.
+class TerminalCommandCard extends StatefulWidget {
+  const TerminalCommandCard({
+    super.key,
+    required this.command,
+    required this.status,
+    required this.outputLabel,
+    this.output,
+    this.diffs = const [],
+  });
+
+  final String command;
+  final TerminalStatus status;
+  final String outputLabel;
+  final String? output;
+  final List<dynamic> diffs;
+
+  @override
+  State<TerminalCommandCard> createState() => _TerminalCommandCardState();
+}
+
+class _TerminalCommandCardState extends State<TerminalCommandCard> {
+  bool _outputExpanded = false;
+
+  bool get _hasOutput =>
+      (widget.output?.isNotEmpty ?? false) || widget.diffs.isNotEmpty;
+
+  String _prettyOutput(String value) {
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is! List) return value;
+      final textBlocks = <String>[];
+      for (final block in decoded) {
+        if (block is! Map ||
+            block['type'] != 'text' ||
+            block['text'] is! String) {
+          return value;
+        }
+        textBlocks.add(block['text'] as String);
+      }
+      return textBlocks.join('\n');
+    } on FormatException {
+      return value;
+    }
+  }
+
+  String _diffOutput(dynamic diff) {
+    if (diff is! Map) return '';
+    final path = diff['path'] as String? ?? '';
+    final oldText = diff['oldText'] as String? ?? '';
+    final newText = diff['newText'] as String? ?? '';
+    final oldLines = oldText.isEmpty
+        ? const <String>[]
+        : oldText.split('\n').map((line) => '- $line');
+    final newLines = newText.isEmpty
+        ? const <String>[]
+        : newText.split('\n').map((line) => '+ $line');
+    return [path, ...oldLines, ...newLines].join('\n');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final terminalColors = context.terminalColors;
+    final output =
+        widget.output == null ? '' : _prettyOutput(widget.output ?? '');
+    final diffOutput = widget.diffs
+        .map(_diffOutput)
+        .where((value) => value.isNotEmpty)
+        .join('\n\n');
+    final combinedOutput =
+        [output, diffOutput].where((value) => value.isNotEmpty).join('\n\n');
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppSizes.space),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(
+          color: terminalColors.attention.withValues(alpha: 0.3),
+          width: AppSizes.borderWidth,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TerminalStatusGlyph(status: widget.status),
+              HSpace.x1,
+              Expanded(
+                child: Text(
+                  '\$ ${widget.command}',
+                  style: TextStyle(
+                    color: terminalColors.attention,
+                    fontFamily: AppFonts.bodyFamily,
+                    fontSize: AppSizes.fontSmall,
+                    fontWeight: AppFonts.heavy,
+                    height: 1.4,
+                    package: 'pocketcoder_flutter',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_hasOutput) ...[
+            VSpace.x1,
+            Semantics(
+              button: true,
+              label: widget.outputLabel,
+              child: InkWell(
+                onTap: () => setState(() => _outputExpanded = !_outputExpanded),
+                child: Row(
+                  children: [
+                    Text(
+                      _outputExpanded ? '▾' : '▸',
+                      style: TextStyle(
+                        color: terminalColors.attention,
+                        fontFamily: AppFonts.bodyFamily,
+                        fontSize: AppSizes.fontSmall,
+                        fontWeight: AppFonts.heavy,
+                      ),
+                    ),
+                    HSpace.x1,
+                    Text(
+                      widget.outputLabel,
+                      style: TextStyle(
+                        color: colors.onSurface.withValues(alpha: 0.7),
+                        fontFamily: AppFonts.bodyFamily,
+                        fontSize: AppSizes.fontTiny,
+                        fontWeight: AppFonts.heavy,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (_outputExpanded && combinedOutput.isNotEmpty) ...[
+            VSpace.x1,
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: AppSizes.commandOutputMaxHeight,
+              ),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  combinedOutput,
+                  style: TextStyle(
+                    color: colors.onSurface.withValues(alpha: 0.75),
+                    fontFamily: AppFonts.bodyFamily,
+                    fontSize: AppSizes.fontMini,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

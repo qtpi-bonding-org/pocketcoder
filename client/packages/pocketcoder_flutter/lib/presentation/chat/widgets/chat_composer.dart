@@ -28,7 +28,7 @@ class ChatComposer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isLoading) ...[
-              TerminalLoadingIndicator(label: context.l10n.chatThinking),
+              const TerminalLoadingIndicator(),
               VSpace.x1,
             ],
             TerminalInput(

@@ -165,6 +165,7 @@
   "chatThinking": "THINKING",
   "chatThinkingLive": "THINKING...",
   "chatThought": "THOUGHT",
+  "chatCommandOutput": "OUTPUT",
   "chatSessionAction": "SESSION",
   "chatSendTooltip": "Send",
   "chatCommanderRole": "COMMANDER",

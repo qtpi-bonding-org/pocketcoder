@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
@@ -44,6 +45,35 @@ void main() {
   testWidgets('disables input and send action while loading', (tester) async {
     final controller = TextEditingController();
     await tester.pumpWidget(_wrap(
+      MediaQuery(
+        data: const MediaQueryData(
+          textScaler: TextScaler.linear(2),
+        ),
+        child: ChatComposer(
+          controller: controller,
+          enabled: false,
+          isLoading: true,
+          onSubmitted: () {},
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TerminalStatusGlyph), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
+    expect(
+        tester.widget<IconButton>(find.byType(IconButton)).onPressed, isNull);
+    controller.dispose();
+  });
+
+  testWidgets('fits a narrow mobile viewport while loading', (tester) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = TextEditingController();
+    await tester.pumpWidget(_wrap(
       ChatComposer(
         controller: controller,
         enabled: false,
@@ -51,12 +81,9 @@ void main() {
         onSubmitted: () {},
       ),
     ));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    expect(find.text('[ THINKING ]'), findsOneWidget);
-    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
-    expect(
-        tester.widget<IconButton>(find.byType(IconButton)).onPressed, isNull);
+    expect(tester.takeException(), isNull);
     controller.dispose();
   });
 }

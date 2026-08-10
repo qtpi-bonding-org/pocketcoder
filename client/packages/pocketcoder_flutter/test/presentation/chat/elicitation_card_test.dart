@@ -120,7 +120,23 @@ void main() {
         await tester.pumpWidget(_wrap(
           BlocProvider<ElicitationCubit>.value(
             value: cubit,
-            child: const ElicitationCard(item: item),
+            child: ElicitationCard(
+              item: item,
+              onRespond: (requestId, response) {
+                final action = response['action'] as String?;
+                final content = response['content'];
+                final elicitationResponse = switch (action) {
+                  'accept' => ElicitationResponse.accept(
+                      content is Map
+                          ? Map<String, dynamic>.from(content)
+                          : const <String, dynamic>{},
+                    ),
+                  'decline' => const ElicitationResponse.decline(),
+                  _ => const ElicitationResponse.cancel(),
+                };
+                cubit.submit(elicitationResponse);
+              },
+            ),
           ),
         ));
         await _settle(tester);
@@ -146,8 +162,8 @@ void main() {
 
         expect(repo.respondElicitationCalls, hasLength(1));
         expect(repo.respondElicitationCalls.single['elicitationId'], 'elic-1');
-        final resp = repo.respondElicitationCalls.single['resp']
-            as ElicitationResponse;
+        final resp =
+            repo.respondElicitationCalls.single['resp'] as ElicitationResponse;
         expect(resp.toJson(), {
           'action': 'accept',
           'content': {'color': 'blue'},
@@ -161,7 +177,10 @@ void main() {
         await tester.pumpWidget(_wrap(
           BlocProvider<ElicitationCubit>.value(
             value: cubit,
-            child: const ElicitationCard(item: item),
+            child: ElicitationCard(
+              item: item,
+              onRespond: (_, __) {},
+            ),
           ),
         ));
         await _settle(tester);
@@ -187,7 +206,10 @@ void main() {
         await tester.pumpWidget(_wrap(
           BlocProvider<ElicitationCubit>.value(
             value: cubit,
-            child: const ElicitationCard(item: nextItem),
+            child: ElicitationCard(
+              item: nextItem,
+              onRespond: (_, __) {},
+            ),
           ),
         ));
         await _settle(tester);

@@ -116,7 +116,14 @@ void main() {
         await tester.pumpWidget(_wrap(
           BlocProvider<PermissionCubit>.value(
             value: cubit,
-            child: const PermissionCard(
+            child: PermissionCard(
+              onSelect: (requestId, {optionId, cancelled = false}) {
+                if (cancelled || optionId == null) {
+                  cubit.deny();
+                } else {
+                  cubit.authorize(optionId);
+                }
+              },
               item: PermissionRequestTimelineItem(
                 requestId: 'req-1',
                 toolTitle: 'run shell',
@@ -164,7 +171,14 @@ void main() {
       await tester.pumpWidget(_wrap(
         BlocProvider<PermissionCubit>.value(
           value: cubit,
-          child: const PermissionCard(
+          child: PermissionCard(
+            onSelect: (requestId, {optionId, cancelled = false}) {
+              if (cancelled || optionId == null) {
+                cubit.deny();
+              } else {
+                cubit.authorize(optionId);
+              }
+            },
             item: PermissionRequestTimelineItem(
               requestId: 'req-2',
               options: [

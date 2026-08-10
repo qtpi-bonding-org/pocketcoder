@@ -40,8 +40,12 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_view.dart';
 import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_view.dart';
-import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
+import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_list_view.dart';
+import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
+import 'package:pocketcoder_flutter/presentation/chat/elicitation_card.dart';
+import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_inbox_screen.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
@@ -693,6 +697,95 @@ final _chatAndFileScreens = <WidgetbookNode>[
           }) {},
           onElicitationRespond: (_, __) {},
           onFiles: () {},
+        ),
+  }),
+  _screen('TerminalCommandCard', {
+    'completed with collapsed output': () => _localizedApp(
+          Scaffold(
+            body: Padding(
+              padding: EdgeInsets.all(AppSizes.space * 2),
+              child: Builder(
+                builder: (context) => TerminalCommandCard(
+                  command: 'flutter test test/presentation/chat',
+                  status: TerminalStatus.success,
+                  outputLabel: context.l10n.chatCommandOutput,
+                  output: 'All tests passed!',
+                ),
+              ),
+            ),
+          ),
+        ),
+    'running': () => _localizedApp(
+          Scaffold(
+            body: Padding(
+              padding: EdgeInsets.all(AppSizes.space * 2),
+              child: Builder(
+                builder: (context) => TerminalCommandCard(
+                  command: 'flutter test test/presentation/chat',
+                  status: TerminalStatus.running,
+                  outputLabel: context.l10n.chatCommandOutput,
+                ),
+              ),
+            ),
+          ),
+        ),
+    'failed': () => _localizedApp(
+          Scaffold(
+            body: Padding(
+              padding: EdgeInsets.all(AppSizes.space * 2),
+              child: Builder(
+                builder: (context) => TerminalCommandCard(
+                  command: 'flutter test test/presentation/chat',
+                  status: TerminalStatus.failure,
+                  outputLabel: context.l10n.chatCommandOutput,
+                  output: 'Test process exited with code 1.',
+                ),
+              ),
+            ),
+          ),
+        ),
+  }),
+  _screen('PermissionCard', {
+    'pending approval': () => _localizedApp(
+          Scaffold(
+            body: PermissionCard(
+              item: const ag_ui.PermissionRequestTimelineItem(
+                requestId: 'permission-1',
+                toolTitle: 'run shell command',
+                options: [
+                  ag_ui.PermissionOption(
+                    optionId: 'allow-once',
+                    label: 'Allow once',
+                    kind: 'allow_once',
+                  ),
+                ],
+              ),
+              onSelect: (_, {optionId, cancelled = false}) {},
+            ),
+          ),
+        ),
+  }),
+  _screen('ElicitationCard', {
+    'form request': () => _localizedApp(
+          Scaffold(
+            body: ElicitationCard(
+              item: const ag_ui.ElicitationRequestTimelineItem(
+                requestId: 'elicitation-1',
+                message: 'Tell Poco how to configure the service.',
+                mode: 'form',
+                schema: {
+                  'type': 'object',
+                  'properties': {
+                    'environment': {
+                      'type': 'string',
+                      'title': 'Environment',
+                    },
+                  },
+                },
+              ),
+              onRespond: (_, __) {},
+            ),
+          ),
         ),
   }),
   _screen('FileBrowserScreen', {

@@ -1,24 +1,22 @@
-// ElicitationCard: renders the pending SessionState.elicitation's
-// requestedSchema as a flat form, now rendered inline in the message
-// timeline (Builders.customMessageBuilder for metadata['kind'] ==
-// 'elicitation') instead of as a standalone banner below the list.
-// Renamed from presentation/agent/elicitation_form.dart's ElicitationForm --
-// internals unchanged. Nested schema objects (oneOf, anyOf, arrays of
-// objects) remain out of scope, same as before; URL-mode elicitations
-// (mode == 'url') are also out of scope for this migration -- see the
-// implementation plan's Global Constraints.
+// ElicitationCard renders a pending ACP form inline in the message timeline.
+// It is Cubit-free: the adapter owns submission side effects and supplies the
+// serialized response callback.
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 class ElicitationCard extends StatefulWidget {
-  const ElicitationCard({super.key, required this.item});
+  const ElicitationCard({
+    super.key,
+    required this.item,
+    required this.onRespond,
+  });
 
   final ElicitationRequestTimelineItem item;
+  final void Function(String requestId, Map<String, dynamic> response)
+      onRespond;
 
   @override
   State<ElicitationCard> createState() => _ElicitationCardState();
@@ -310,6 +308,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
       c.clear();
     }
     _boolValues.clear();
-    context.read<ElicitationCubit>().submit(resp);
+    widget.onRespond(widget.item.requestId, resp.toJson());
   }
 }
