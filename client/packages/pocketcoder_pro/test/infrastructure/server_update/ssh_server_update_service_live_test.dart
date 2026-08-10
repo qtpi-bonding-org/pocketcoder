@@ -59,8 +59,7 @@ class _FakeSecureStorage implements ISecureStorage {
   Future<void> storeProvisionSession(ProvisionSession session) =>
       throw UnimplementedError();
   @override
-  Future<ProvisionSession?> getProvisionSession() =>
-      throw UnimplementedError();
+  Future<ProvisionSession?> getProvisionSession() => throw UnimplementedError();
   @override
   Future<void> clearProvisionSession(String sessionId) =>
       throw UnimplementedError();
@@ -121,15 +120,10 @@ void main() {
         print(result.stderr);
       }
 
-      // exitCode is the ONLY reliable success signal here (the shell
-      // command is `... && docker compose up -d`, so a nonzero exit means
-      // some step failed). Docker's own progress-line formatting is not
-      // stable to assert on: which lines appear (build summaries,
-      // "Container ... Started") depends on whether anything actually
-      // changed since the last run (this command is correctly idempotent
-      // -- a no-op run when nothing changed prints neither) and on
-      // BuildKit's non-TTY rendering over SSH, both observed directly
-      // across repeated real runs against a live box.
+      // exitCode is the only reliable success signal here: a nonzero exit
+      // means manifest verification, artifact installation, or Compose
+      // activation failed. Output is intentionally not asserted because an
+      // idempotent run may only report that the current release is installed.
       expect(result.succeeded, isTrue,
           reason:
               'update command exited ${result.exitCode}:\n${result.stdout}\n${result.stderr}');

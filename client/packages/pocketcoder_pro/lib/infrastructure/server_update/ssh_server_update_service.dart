@@ -9,12 +9,15 @@ import 'package:pocketcoder_pro/domain/server_update/i_server_update_service.dar
 import 'package:pocketcoder_pro/domain/server_update/server_update_exception.dart';
 import 'package:pocketcoder_pro/domain/server_update/server_update_result.dart';
 
-/// The exact update sequence, run non-interactively as root over SSH.
-/// See deploy/nixos/bootstrap.nix for the matching first-boot clone this
-/// mirrors -- `/opt/pocketcoder` is a real git clone with `origin` already
-/// configured (kept, not stripped, specifically so this works).
+/// Runs the packaged, verified release updater. The fallback migrates servers
+/// installed before release artifacts existed by updating their old git clone
+/// once, then handing control to the same packaged updater.
 const _kUpdateCommand =
-    'cd /opt/pocketcoder && git pull && docker compose --profile harness-images build && docker compose up -d';
+    'if [ -x /opt/pocketcoder/current/deploy/scripts/update-release.sh ]; '
+    'then /opt/pocketcoder/current/deploy/scripts/update-release.sh; '
+    'elif [ -d /opt/pocketcoder/.git ]; then cd /opt/pocketcoder && '
+    'git pull --ff-only && deploy/scripts/update-release.sh; '
+    'else echo "PocketCoder updater was not found" >&2; exit 1; fi';
 
 const _kSshPort = 22;
 

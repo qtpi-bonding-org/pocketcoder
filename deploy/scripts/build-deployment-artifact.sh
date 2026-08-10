@@ -22,6 +22,7 @@ for file in \
   install-release-images.sh \
   prepare-runtime-env.sh \
   resolve-release-artifacts.sh \
+  update-release.sh \
   validate-release-contract.sh
 do
   install -m 0755 "$script_dir/$file" "$stage/deploy/scripts/$file"

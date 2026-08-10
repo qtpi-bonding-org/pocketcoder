@@ -8,9 +8,8 @@ import 'package:pocketcoder_pro/infrastructure/server_update/current_instance_st
 
 import 'adapters/update_server_adapter.dart';
 
-/// User-initiated server update: SSH in as root, run
-/// `git pull && docker compose --profile harness-images build && docker compose up -d`, show the
-/// real output. Nothing happens until the user taps UPDATE -- no
+/// User-initiated server update: SSH in as root, run the verified release
+/// updater, and show its real output. Nothing happens until the user taps UPDATE -- no
 /// background timer, no auto-polling, no silent updates.
 class UpdateServerScreen extends StatelessWidget {
   final String? instanceId;

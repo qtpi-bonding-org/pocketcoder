@@ -1,4 +1,4 @@
-/// Thrown when the server update (git pull + docker compose rebuild) can't
+/// Thrown when the verified server update can't
 /// even be attempted -- no stored root credentials for this instance, or no
 /// known server URL to derive the SSH host from. Distinct from the command
 /// itself running but failing (see [ServerUpdateResult.succeeded]), which is
