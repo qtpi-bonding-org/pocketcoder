@@ -401,6 +401,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatThought => 'THOUGHT';
 
   @override
+  String get chatCommandOutput => 'OUTPUT';
+
+  @override
   String get chatSessionAction => 'SESSION';
 
   @override

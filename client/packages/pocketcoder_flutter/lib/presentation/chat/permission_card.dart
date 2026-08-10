@@ -1,22 +1,17 @@
-// PermissionCard: the human-in-the-loop gatekeeper surface, now rendered
-// inline in the message timeline (Builders.customMessageBuilder for
-// metadata['kind'] == 'permission') instead of as a standalone banner below
-// the list. Renamed from presentation/core/widgets/permission_prompt.dart's
-// PermissionPrompt -- internals unchanged, it already reads 100% of its
-// data from PermissionCubit (the CustomMessage passed to
-// customMessageBuilder is just a "render here" position marker, see
-// PermissionTimelineItem in domain/agent/conversation.dart).
+// PermissionCard is the human-in-the-loop gatekeeper surface rendered inline
+// in the message timeline. It is deliberately Cubit-free: the adapter owns
+// permission side effects and supplies this view's callback.
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 class PermissionCard extends StatelessWidget {
-  const PermissionCard({super.key, required this.item});
+  const PermissionCard({super.key, required this.item, required this.onSelect});
 
   final PermissionRequestTimelineItem item;
+  final void Function(String requestId, {String? optionId, bool cancelled})
+      onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -115,14 +110,14 @@ class PermissionCard extends StatelessWidget {
                     label: context.l10n.actionDeny,
                     isPrimary: false,
                     color: terminalColors.danger,
-                    onTap: () => context.read<PermissionCubit>().deny(),
+                    onTap: () => onSelect(requestId, cancelled: true),
                   ),
                 ),
                 HSpace.x2,
                 Expanded(
                   child: TerminalButton(
                     label: context.l10n.actionAuthorize,
-                    onTap: () => context.read<PermissionCubit>().authorize(''),
+                    onTap: () => onSelect(requestId, optionId: ''),
                   ),
                 ),
               ],
@@ -143,9 +138,10 @@ class PermissionCard extends StatelessWidget {
                   ),
                   TerminalButton(
                     label: context.l10n.actionAuthorize,
-                    onTap: () => context
-                        .read<PermissionCubit>()
-                        .authorize(option.optionId),
+                    onTap: () => onSelect(
+                      requestId,
+                      optionId: option.optionId,
+                    ),
                   ),
                 ],
               ),
@@ -156,7 +152,7 @@ class PermissionCard extends StatelessWidget {
             label: context.l10n.actionDeny,
             isPrimary: false,
             color: terminalColors.danger,
-            onTap: () => context.read<PermissionCubit>().deny(),
+            onTap: () => onSelect(requestId, cancelled: true),
           ),
         ],
       ),

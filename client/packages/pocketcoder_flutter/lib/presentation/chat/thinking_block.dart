@@ -1,14 +1,10 @@
-// ThinkingBlock: renders one reasoning ("thinking") entry in the chat
-// timeline as a collapsible pill followed by a small Poco avatar --
-// collapsed by default, expanded automatically only while it's the newest
-// reasoning entry in the conversation (still streaming or just finished).
-// Older ones collapse the moment a newer one arrives, mirroring how
-// Claude's own app keeps only the latest "Thought for Xs" open. Tapping the
-// header always toggles it regardless of "latest" status.
+// ThinkingBlock renders one reasoning entry in the chat timeline as a
+// terminal-style status row with expandable text. It opens automatically
+// only while it is the newest reasoning entry; older entries collapse when a
+// newer one arrives. Tapping the status row always toggles it.
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/poco_animator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 class ThinkingBlock extends StatefulWidget {
   final String text;
@@ -51,27 +47,21 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
             padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.5),
             child: Row(
               children: [
-                Icon(
-                  _expanded
-                      ? Icons.keyboard_arrow_down
-                      : Icons.keyboard_arrow_right,
-                  size: 16,
-                  color: terminalColors.warning,
-                ),
-                Icon(Icons.smart_toy_outlined,
-                    size: 14, color: terminalColors.warning),
-                HSpace.x1,
                 Text(
-                  widget.isStreaming
-                      ? context.l10n.chatThinkingLive
-                      : context.l10n.chatThought,
+                  _expanded ? '▾' : '▸',
                   style: TextStyle(
                     color: terminalColors.warning,
                     fontFamily: AppFonts.bodyFamily,
-                    fontSize: AppSizes.fontTiny,
+                    fontSize: AppSizes.fontSmall,
                     fontWeight: AppFonts.heavy,
-                    letterSpacing: 2,
                   ),
+                ),
+                HSpace.x1,
+                TerminalStatusGlyph(
+                  status: widget.isStreaming
+                      ? TerminalStatus.running
+                      : TerminalStatus.success,
+                  fontSize: AppSizes.fontSmall,
                 ),
               ],
             ),
@@ -91,15 +81,6 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
               ),
             ),
           ),
-        Padding(
-          padding: EdgeInsets.only(bottom: AppSizes.space),
-          child: PocoAnimator(
-            fontSize: AppSizes.fontLarge,
-            sequence: widget.isStreaming
-                ? PocoExpressions.thinking
-                : PocoExpressions.happy,
-          ),
-        ),
       ],
     );
   }

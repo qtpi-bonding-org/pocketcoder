@@ -99,7 +99,7 @@ class _TerminalInputState extends State<TerminalInput> {
               // and a wider cursor width.
               cursorColor: _cursorVisible && widget.enabled
                   ? terminalColors.attention
-                  : Colors.transparent,
+                  : colors.surface.withValues(alpha: 0),
               cursorWidth: 10,
               cursorHeight: AppSizes.fontStandard,
               decoration: const InputDecoration(

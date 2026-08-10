@@ -838,6 +838,12 @@ abstract class AppLocalizations {
   /// **'THOUGHT'**
   String get chatThought;
 
+  /// No description provided for @chatCommandOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'OUTPUT'**
+  String get chatCommandOutput;
+
   /// No description provided for @chatSessionAction.
   ///
   /// In en, this message translates to:

@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dar
 import 'package:pocketcoder_flutter/application/agent/session_controls_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
@@ -71,7 +72,20 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                   cubit.authorize(optionId);
                 }
               },
-              onElicitationRespond: (_, __) {},
+              onElicitationRespond: (requestId, response) {
+                final action = response['action'] as String?;
+                final content = response['content'];
+                final elicitationResponse = switch (action) {
+                  'accept' => ElicitationResponse.accept(
+                      content is Map
+                          ? Map<String, dynamic>.from(content)
+                          : const <String, dynamic>{},
+                    ),
+                  'decline' => const ElicitationResponse.decline(),
+                  _ => const ElicitationResponse.cancel(),
+                };
+                context.read<ElicitationCubit>().submit(elicitationResponse);
+              },
               onFiles: () => AppNavigation.toFiles(context),
             );
           },

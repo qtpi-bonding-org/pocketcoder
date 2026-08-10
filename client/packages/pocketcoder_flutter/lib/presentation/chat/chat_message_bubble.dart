@@ -1,4 +1,4 @@
-// Author-id constants and the shared COMMANDER/POCO/THINKING role-header
+// Author-id constants and the shared COMMANDER/POCO/THINKING role header
 // used by both completed and streaming chat messages. The actual message
 // rendering is now driven by flutter_chat_core's Chat widget plus the
 // pocketcoder-specific style/padding glue in chat_screen.dart, so this
@@ -12,10 +12,10 @@ const kUserAuthorId = 'user';
 /// authorId used for every agent-authored message.
 const kAgentAuthorId = 'assistant';
 
-/// Renders pocketcoder's COMMANDER/POCO/THINKING label row: an icon + small
-/// uppercase label whose color/text depend on who's speaking and whether
-/// this is a reasoning aside. Passed as `StackedChatStyle.roleHeaderBuilder`
-/// so both completed and streaming messages get identical header treatment.
+/// Renders pocketcoder's COMMANDER/POCO/THINKING terminal label row. The
+/// uppercase label color depends on who's speaking and whether this is a
+/// reasoning aside. Passed as `StackedChatStyle.roleHeaderBuilder` so both
+/// completed and streaming messages get identical header treatment.
 Widget pocketcoderRoleHeader(
   BuildContext context, {
   required String role,
@@ -39,12 +39,6 @@ Widget pocketcoderRoleHeader(
     padding: EdgeInsets.only(bottom: AppSizes.space),
     child: Row(
       children: [
-        Icon(
-          isSentByMe ? Icons.person_outline : Icons.smart_toy_outlined,
-          size: 14,
-          color: accent,
-        ),
-        HSpace.x1,
         Text(
           label,
           style: TextStyle(
