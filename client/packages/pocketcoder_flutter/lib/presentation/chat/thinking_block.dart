@@ -52,11 +52,14 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
             child: Row(
               children: [
                 Icon(
-                  _expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                  _expanded
+                      ? Icons.keyboard_arrow_down
+                      : Icons.keyboard_arrow_right,
                   size: 16,
                   color: terminalColors.warning,
                 ),
-                Icon(Icons.smart_toy_outlined, size: 14, color: terminalColors.warning),
+                Icon(Icons.smart_toy_outlined,
+                    size: 14, color: terminalColors.warning),
                 HSpace.x1,
                 Text(
                   widget.isStreaming
@@ -92,7 +95,9 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
           padding: EdgeInsets.only(bottom: AppSizes.space),
           child: PocoAnimator(
             fontSize: AppSizes.fontLarge,
-            sequence: widget.isStreaming ? PocoExpressions.thinking : PocoExpressions.happy,
+            sequence: widget.isStreaming
+                ? PocoExpressions.thinking
+                : PocoExpressions.happy,
           ),
         ),
       ],

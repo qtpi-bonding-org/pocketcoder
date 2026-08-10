@@ -1,4 +1,5 @@
-import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart' as ag_ui_widgets;
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
+    as ag_ui_widgets;
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -6,8 +7,8 @@ import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dar
 import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
+import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 
 class ChatView extends StatefulWidget {
@@ -124,22 +125,27 @@ class _ChatViewState extends State<ChatView> {
       activePillar: NavPillar.chats,
       showBack: true,
       extraHeaderActions: [
-        TerminalAction(label: context.l10n.chatFilesAction, onTap: widget.onFiles),
         TerminalAction(
-          label: 'SESSION',
+            label: context.l10n.chatFilesAction, onTap: widget.onFiles),
+        TerminalAction(
+          label: context.l10n.chatSessionAction,
           isActive: _sessionPanelExpanded,
-          onTap: () => setState(() => _sessionPanelExpanded = !_sessionPanelExpanded),
+          onTap: () =>
+              setState(() => _sessionPanelExpanded = !_sessionPanelExpanded),
         ),
         if (widget.isRunning)
-          TerminalAction(label: 'CANCEL', onTap: widget.onCancel),
+          TerminalAction(
+              label: context.l10n.actionCancel, onTap: widget.onCancel),
       ],
       padding: EdgeInsets.zero,
       body: Column(
         children: [
           if (_sessionPanelExpanded) ...[
             PlanPanel(plan: widget.conversation.sessionState.plan),
-            ModeSwitcher(modes: widget.modes, onSelectMode: widget.onSelectMode),
-            ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
+            ModeSwitcher(
+                modes: widget.modes, onSelectMode: widget.onSelectMode),
+            ConfigPicker(
+                config: widget.config, onSetOption: widget.onSetOption),
           ],
           Expanded(
             child: Stack(
@@ -148,29 +154,19 @@ class _ChatViewState extends State<ChatView> {
                   conversation: widget.conversation,
                   currentUserId: 'user',
                   onSendMessage: widget.onSendPrompt,
-                  theme: ag_ui_widgets.ChatTheme.fromThemeData(Theme.of(context)),
+                  theme:
+                      ag_ui_widgets.ChatTheme.fromThemeData(Theme.of(context)),
                   textMessageBuilder: builders.textMessageBuilder,
                   textStreamMessageBuilder: builders.textStreamMessageBuilder,
                   toolCallBuilder: builders.toolCallBuilder,
                   permissionBuilder: builders.permissionBuilder,
                   elicitationBuilder: builders.elicitationBuilder,
                   toolRequestBuilder: builders.toolRequestBuilder,
-                  composerBuilder: (context) => Padding(
-                    padding: EdgeInsets.all(AppSizes.space),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.isLoading) ...[
-                          TerminalLoadingIndicator(label: context.l10n.chatThinking),
-                          VSpace.x1,
-                        ],
-                        _SimpleInput(
-                          controller: _inputController,
-                          enabled: !widget.isLoading && widget.chatId != null,
-                          onSubmitted: _submit,
-                        ),
-                      ],
-                    ),
+                  composerBuilder: (context) => ChatComposer(
+                    controller: _inputController,
+                    enabled: !widget.isLoading && widget.chatId != null,
+                    isLoading: widget.isLoading,
+                    onSubmitted: _submit,
                   ),
                 ),
                 if (widget.conversation.timeline.isEmpty)
@@ -179,7 +175,8 @@ class _ChatViewState extends State<ChatView> {
                       child: Text(
                         context.l10n.chatSessionTitle,
                         style: TextStyle(
-                          color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+                          color: context.colorScheme.onSurface
+                              .withValues(alpha: 0.3),
                           fontSize: AppSizes.fontStandard,
                           fontStyle: FontStyle.italic,
                         ),
@@ -191,57 +188,6 @@ class _ChatViewState extends State<ChatView> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SimpleInput extends StatelessWidget {
-  const _SimpleInput({required this.controller, required this.enabled, required this.onSubmitted});
-  final TextEditingController controller;
-  final bool enabled;
-  final VoidCallback onSubmitted;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(top: BorderSide(color: colors.onSurface.withValues(alpha: 0.2), width: AppSizes.borderWidth)),
-      ),
-      child: Row(children: [
-        Text('\$ ', style: TextStyle(color: enabled ? terminalColors.attention : colors.onSurface.withValues(alpha: 0.3), fontFamily: AppFonts.bodyFamily, package: 'pocketcoder_flutter', fontSize: AppSizes.fontStandard, fontWeight: AppFonts.heavy)),
-        Expanded(child: TextField(
-          enabled: enabled,
-          controller: controller,
-          onSubmitted: (_) => onSubmitted(),
-          style: TextStyle(color: terminalColors.attention, fontFamily: AppFonts.bodyFamily, package: 'pocketcoder_flutter', fontSize: AppSizes.fontStandard),
-          cursorColor: terminalColors.attention,
-          decoration: const InputDecoration(border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero, filled: false),
-        )),
-        IconButton(
-          onPressed: enabled ? onSubmitted : null,
-          tooltip: 'Send',
-          visualDensity: VisualDensity.compact,
-          padding: EdgeInsets.zero,
-          constraints: BoxConstraints(
-            minWidth: AppSizes.buttonHeight,
-            minHeight: AppSizes.buttonHeight,
-          ),
-          icon: Text(
-            '>',
-            style: TextStyle(
-              color: enabled ? terminalColors.attention : colors.onSurface.withValues(alpha: 0.3),
-              fontFamily: AppFonts.bodyFamily,
-              package: 'pocketcoder_flutter',
-              fontSize: AppSizes.fontStandard,
-              fontWeight: AppFonts.heavy,
-            ),
-          ),
-        ),
-      ]),
     );
   }
 }

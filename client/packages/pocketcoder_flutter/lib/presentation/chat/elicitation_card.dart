@@ -69,7 +69,8 @@ class _ElicitationCardState extends State<ElicitationCard> {
   @override
   Widget build(BuildContext context) {
     final message = widget.item.message;
-    final properties = widget.item.schema?['properties'] as Map<String, dynamic>?;
+    final properties =
+        widget.item.schema?['properties'] as Map<String, dynamic>?;
     return _buildForm(context, message, properties);
   }
 
@@ -108,7 +109,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
               HSpace.x2,
               Expanded(
                 child: Text(
-                  'ELICITATION REQUEST',
+                  context.l10n.chatElicitationRequest,
                   style: TextStyle(
                     color: terminalColors.attention,
                     fontSize: AppSizes.fontTiny,
@@ -153,7 +154,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
           ],
           if (fields.isEmpty)
             Text(
-              '(no fields requested)',
+              context.l10n.chatNoFieldsRequested,
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.4),
                 fontSize: AppSizes.fontMini,
@@ -165,7 +166,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             children: [
               Expanded(
                 child: TerminalButton(
-                  label: 'DECLINE',
+                  label: context.l10n.chatDecline,
                   isPrimary: false,
                   color: terminalColors.danger,
                   onTap: () => _submit(context, ElicitationResponse.decline()),
@@ -174,7 +175,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
               HSpace.x2,
               Expanded(
                 child: TerminalButton(
-                  label: 'CANCEL',
+                  label: context.l10n.actionCancel,
                   isPrimary: false,
                   onTap: () => _submit(context, ElicitationResponse.cancel()),
                 ),
@@ -182,7 +183,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
               HSpace.x2,
               Expanded(
                 child: TerminalButton(
-                  label: 'SUBMIT',
+                  label: context.l10n.chatSubmit,
                   onTap: () => _submit(
                     context,
                     ElicitationResponse.accept(_collectValues(properties)),

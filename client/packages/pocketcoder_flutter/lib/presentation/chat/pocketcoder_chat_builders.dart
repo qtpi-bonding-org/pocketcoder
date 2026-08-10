@@ -32,8 +32,10 @@ import 'thinking_block.dart';
 /// client-executed-tool feature yet.
 StackedChatBuilders pocketcoderChatBuilders(
   BuildContext context, {
-  required void Function(String requestId, {String? optionId, bool cancelled}) onPermissionOptionSelected,
-  required void Function(String requestId, Map<String, dynamic> response) onElicitationRespond,
+  required void Function(String requestId, {String? optionId, bool cancelled})
+      onPermissionOptionSelected,
+  required void Function(String requestId, Map<String, dynamic> response)
+      onElicitationRespond,
   String? latestReasoningId,
 }) {
   final colors = context.colorScheme;
@@ -56,7 +58,8 @@ StackedChatBuilders pocketcoderChatBuilders(
       height: 1.4,
     ),
     roleHeaderBuilder: pocketcoderRoleHeader,
-    padding: EdgeInsets.symmetric(horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
+    padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
     cardBorderColor: terminalColors.attention.withValues(alpha: 0.3),
     diffAddedColor: terminalColors.attention,
     diffRemovedColor: terminalColors.danger,
@@ -77,11 +80,13 @@ StackedChatBuilders pocketcoderChatBuilders(
 /// avatar, instead of the generic full-width bubble every other message
 /// kind still gets via the inherited [StackedChatBuilders] behavior.
 class _PocketcoderChatBuilders extends StackedChatBuilders {
-  _PocketcoderChatBuilders(super.style, super.callbacks, this.latestReasoningId);
+  _PocketcoderChatBuilders(
+      super.style, super.callbacks, this.latestReasoningId);
 
   final String? latestReasoningId;
 
-  bool _isReasoning(chat_core.Message message) => message.metadata?['kind'] == 'reasoning';
+  bool _isReasoning(chat_core.Message message) =>
+      message.metadata?['kind'] == 'reasoning';
 
   @override
   chat_core.TextMessageBuilder get textMessageBuilder =>
@@ -100,16 +105,21 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
 
   @override
   TextStreamCardBuilder get textStreamMessageBuilder =>
-      (context, message, index, {required isSentByMe, groupStatus, required streamState}) {
+      (context, message, index,
+          {required isSentByMe, groupStatus, required streamState}) {
         if (_isReasoning(message)) {
           return ThinkingBlock(
             key: ValueKey(message.id),
-            text: streamState is StreamStateStreaming ? streamState.accumulatedText : '',
+            text: streamState is StreamStateStreaming
+                ? streamState.accumulatedText
+                : '',
             isLatest: message.id == latestReasoningId,
             isStreaming: true,
           );
         }
         return super.textStreamMessageBuilder(context, message, index,
-            isSentByMe: isSentByMe, groupStatus: groupStatus, streamState: streamState);
+            isSentByMe: isSentByMe,
+            groupStatus: groupStatus,
+            streamState: streamState);
       };
 }

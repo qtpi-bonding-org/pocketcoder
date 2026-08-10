@@ -376,6 +376,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatThought => 'THOUGHT';
 
   @override
+  String get chatSessionAction => 'SESSION';
+
+  @override
+  String get chatSendTooltip => 'Send';
+
+  @override
+  String get chatCommanderRole => 'COMMANDER';
+
+  @override
+  String get chatThinkingRole => 'THINKING';
+
+  @override
+  String get chatPocoRole => 'POCO';
+
+  @override
+  String get chatElicitationRequest => 'ELICITATION REQUEST';
+
+  @override
+  String get chatDecline => 'DECLINE';
+
+  @override
+  String get chatSubmit => 'SUBMIT';
+
+  @override
+  String get chatNoFieldsRequested => '(no fields requested)';
+
+  @override
   String get filesTitle => 'FILES';
 
   @override

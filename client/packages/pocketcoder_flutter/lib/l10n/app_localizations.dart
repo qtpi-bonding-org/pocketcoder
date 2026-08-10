@@ -802,6 +802,60 @@ abstract class AppLocalizations {
   /// **'THOUGHT'**
   String get chatThought;
 
+  /// No description provided for @chatSessionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'SESSION'**
+  String get chatSessionAction;
+
+  /// No description provided for @chatSendTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get chatSendTooltip;
+
+  /// No description provided for @chatCommanderRole.
+  ///
+  /// In en, this message translates to:
+  /// **'COMMANDER'**
+  String get chatCommanderRole;
+
+  /// No description provided for @chatThinkingRole.
+  ///
+  /// In en, this message translates to:
+  /// **'THINKING'**
+  String get chatThinkingRole;
+
+  /// No description provided for @chatPocoRole.
+  ///
+  /// In en, this message translates to:
+  /// **'POCO'**
+  String get chatPocoRole;
+
+  /// No description provided for @chatElicitationRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'ELICITATION REQUEST'**
+  String get chatElicitationRequest;
+
+  /// No description provided for @chatDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'DECLINE'**
+  String get chatDecline;
+
+  /// No description provided for @chatSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'SUBMIT'**
+  String get chatSubmit;
+
+  /// No description provided for @chatNoFieldsRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'(no fields requested)'**
+  String get chatNoFieldsRequested;
+
   /// No description provided for @filesTitle.
   ///
   /// In en, this message translates to:

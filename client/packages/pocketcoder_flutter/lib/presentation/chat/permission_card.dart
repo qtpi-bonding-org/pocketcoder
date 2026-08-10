@@ -23,7 +23,8 @@ class PermissionCard extends StatelessWidget {
     return _build(context, item);
   }
 
-  Widget _build(BuildContext context, PermissionRequestTimelineItem permission) {
+  Widget _build(
+      BuildContext context, PermissionRequestTimelineItem permission) {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
 
@@ -121,8 +122,7 @@ class PermissionCard extends StatelessWidget {
                 Expanded(
                   child: TerminalButton(
                     label: context.l10n.actionAuthorize,
-                    onTap: () =>
-                        context.read<PermissionCubit>().authorize(''),
+                    onTap: () => context.read<PermissionCubit>().authorize(''),
                   ),
                 ),
               ],
