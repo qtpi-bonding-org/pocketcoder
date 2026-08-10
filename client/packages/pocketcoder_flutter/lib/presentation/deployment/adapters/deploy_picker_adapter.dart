@@ -9,8 +9,10 @@ import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class DeployPickerAdapter extends CubitAdapter<DeployPickerCubit, DeployPickerState> {
-  const DeployPickerAdapter({super.key, this.credentials, required this.onEnsureDeployAccess});
+class DeployPickerAdapter
+    extends CubitAdapter<DeployPickerCubit, DeployPickerState> {
+  const DeployPickerAdapter(
+      {super.key, this.credentials, required this.onEnsureDeployAccess});
 
   final DeployCredentials? credentials;
 
@@ -21,7 +23,8 @@ class DeployPickerAdapter extends CubitAdapter<DeployPickerCubit, DeployPickerSt
   final Future<bool> Function(String productId) onEnsureDeployAccess;
 
   @override
-  Widget buildAdapter(BuildContext context, CubitAdapterState<DeployPickerCubit, DeployPickerState> adapter) {
+  Widget buildAdapter(BuildContext context,
+      CubitAdapterState<DeployPickerCubit, DeployPickerState> adapter) {
     final state = adapter.cubitField((value) => value);
     return ValueListenableBuilder<DeployPickerState>(
       valueListenable: state,
@@ -34,12 +37,18 @@ class DeployPickerAdapter extends CubitAdapter<DeployPickerCubit, DeployPickerSt
   }
 
   Future<void> _select(BuildContext context, DeployOption option) async {
-    OnboardingLogger.event('deployment provider selected', {'provider': option.name, 'requires_purchase': option.requiresPurchase, 'route': option.routePath ?? 'external'});
+    if (!option.isAvailable) return;
+    OnboardingLogger.event('deployment provider selected', {
+      'provider': option.name,
+      'requires_purchase': option.requiresPurchase,
+      'route': option.routePath ?? 'external'
+    });
     if (option.requiresPurchase && !kDebugMode) {
       if (!await onEnsureDeployAccess('pocketcoder_deploy_24h')) return;
     }
     if (option.url != null) {
-      await launchUrl(Uri.parse(option.url!), mode: LaunchMode.externalApplication);
+      await launchUrl(Uri.parse(option.url!),
+          mode: LaunchMode.externalApplication);
     } else if (option.routePath != null && context.mounted) {
       context.push(option.routePath!, extra: credentials);
     }

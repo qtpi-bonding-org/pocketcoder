@@ -35,6 +35,7 @@ import 'package:pocketcoder_pro/application/auth/auth_message_mapper.dart';
 import 'package:pocketcoder_pro/application/config/config_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/deployment_readiness_service.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
 import 'package:pocketcoder_pro/application/server_update/server_update_cubit.dart';
 import 'package:pocketcoder_pro/application/server_update/server_update_message_mapper.dart';
@@ -412,7 +413,7 @@ class RevenueCatBillingService implements BillingService {
   }
 }
 
-/// Proprietary deploy option service — adds Linode + Elestio to the picker.
+/// Proprietary deploy option service.
 class ProDeployOptionService implements IDeployOptionService {
   @override
   List<DeployOption> getAvailableProviders() => const [
@@ -426,15 +427,11 @@ class ProDeployOptionService implements IDeployOptionService {
         DeployOption(
           id: 'elestio',
           name: 'Elestio',
-          description: 'Managed hosting. Deploy with one click.',
-          url: 'https://elest.io/open-source/pocketcoder',
+          description: 'Managed hosting integration is not supported yet.',
+          availability: DeployOptionAvailability.comingSoon,
         ),
-        DeployOption(
-          id: 'hetzner',
-          name: 'Hetzner Cloud',
-          description: 'Self-host on your own VPS. Affordable, EU-based.',
-          url: 'https://hetzner.cloud/?ref=yourReferralCode',
-        ),
+        // Hetzner is intentionally hidden until its deployment path is
+        // implemented and supported end to end.
       ];
 }
 
@@ -508,6 +505,9 @@ void initializeAeroformDI() {
       getIt<ISecureStorage>(),
       PocketCoderCredentialStore(getIt<FlutterSecureStorage>()),
     ),
+  );
+  getIt.registerLazySingleton<GithubProvisioningSourceService>(
+    () => GithubProvisioningSourceService(client: getIt<http.Client>()),
   );
   getIt.registerFactory<DeploymentMessageMapper>(
     () => DeploymentMessageMapper(),

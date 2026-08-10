@@ -52,6 +52,7 @@
       umask 077
       mkdir -p "$INSTALL_DIR"
 
+      # POCO:BEGIN bootstrap-owner-config
       # --- Read admin config: boot-time-pull disk file, or (legacy
       # CustomImageProvisioningStrategy) Linode metadata service ---
       #
@@ -124,7 +125,9 @@
         echo "$ROOT_SSH_KEY" >> /root/.ssh/authorized_keys
         sed -i '/^root_ssh_key=/d' "$INSTALL_DIR/.env"
       fi
+      # POCO:END bootstrap-owner-config
 
+      # POCO:BEGIN bootstrap-local-secrets
       # --- Fill in secrets docker-compose.yml needs that Aeroform doesn't
       # generate client-side (PocketBase superuser/agent accounts, the
       # c1<->c2 ACP handshake secret). Client-supplied values (admin email
@@ -140,7 +143,9 @@ PN_RELAY_SECRET=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
 MCP_GATEWAY_AUTH_TOKEN=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
 EOF
       fi
+      # POCO:END bootstrap-local-secrets
 
+      # POCO:BEGIN bootstrap-release-source
       # --- Clone PocketCoder repo ---
       # Keeps .git (unlike earlier versions of this script, which stripped
       # it) so /opt/pocketcoder is a real, working clone with `origin`
@@ -167,7 +172,9 @@ EOF
         rm -rf "$SRC_DIR"
       fi
       pc_status_heartbeat_stop
+      # POCO:END bootstrap-release-source
 
+      # POCO:BEGIN bootstrap-verified-images
       # --- Load the pre-built Docker image bundle from the coupled release. ---
       # The CI docker-images job publishes the exact bundle for this source
       # revision. A missing or invalid bundle is fatal: provisioning must
@@ -256,7 +263,9 @@ EOF
         exit 1
       fi
       pc_status_heartbeat_stop
+      # POCO:END bootstrap-verified-images
 
+      # POCO:BEGIN bootstrap-compose-start
       # --- Start PocketCoder stack without building on the VPS. ---
       echo "Starting PocketCoder stack..."
       pc_status_phase compose_up
@@ -274,6 +283,7 @@ EOF
       pc_status_phase bootstrap_complete
       date -Iseconds > "$MARKER"
       echo "PocketCoder bootstrap complete"
+      # POCO:END bootstrap-compose-start
     '';
   };
   environment.etc."pocketcoder/status.sh".source = ./status.sh;

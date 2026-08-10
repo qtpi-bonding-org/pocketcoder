@@ -1129,6 +1129,220 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deployProBadge => 'PRO';
 
   @override
+  String get deployComingSoon => 'COMING SOON';
+
+  @override
+  String deploymentSyncAttempt(int attempt) {
+    return 'SYNC ATTEMPT: $attempt';
+  }
+
+  @override
+  String get deploymentCurrentOperation => 'CURRENT OPERATION';
+
+  @override
+  String get deploymentSourceCommit => 'SOURCE COMMIT';
+
+  @override
+  String get deploymentRunId => 'DEPLOYMENT RUN';
+
+  @override
+  String get deploymentStatusSchema => 'STATUS SCHEMA';
+
+  @override
+  String get deploymentLastSignal => 'LAST SERVER SIGNAL';
+
+  @override
+  String get deploymentErrorCode => 'SERVER ERROR CODE';
+
+  @override
+  String get pocoProvisioningTourTitle => 'POCO VPS TOUR';
+
+  @override
+  String get pocoProvisioningWaitingForSource =>
+      'I am waiting for your VPS to report its exact source commit. Once it does, I can show you the code actually being installed.';
+
+  @override
+  String get pocoProvisioningLoadingSource =>
+      'I found the exact release commit. I am fetching its public provisioning code so we can inspect it together.';
+
+  @override
+  String get pocoProvisioningSourceUnavailable =>
+      'The deployment is still running, but I could not load its annotated source right now. This lesson is optional and never blocks your VPS.';
+
+  @override
+  String get pocoProvisioningPrevious => 'PREVIOUS';
+
+  @override
+  String get pocoProvisioningNext => 'NEXT';
+
+  @override
+  String get pocoProvisioningShowFull => 'SHOW FULL SECTION';
+
+  @override
+  String get pocoProvisioningShowConcise => 'SHOW CONCISE VIEW';
+
+  @override
+  String get pocoLessonVpsStorageTitle => 'Your VPS disk';
+
+  @override
+  String get pocoLessonVpsStorageExplanation =>
+      'The release image is only the starting shape of the server. This tells NixOS to expand its filesystem so PocketCoder can use the full disk you rented.';
+
+  @override
+  String get pocoLessonPublicFirewallTitle => 'The public firewall';
+
+  @override
+  String get pocoLessonPublicFirewallExplanation =>
+      'A firewall is a guest list for network traffic. This VPS exposes only SSH and web traffic; everything else is refused by default.';
+
+  @override
+  String get pocoLessonContainerFirewallTitle => 'The container firewall';
+
+  @override
+  String get pocoLessonContainerFirewallExplanation =>
+      'Docker has its own traffic path, so the host firewall alone is not enough. These rules apply the same boundaries to containers and block access to cloud metadata credentials.';
+
+  @override
+  String get pocoLessonSshTitle => 'Key-only administration';
+
+  @override
+  String get pocoLessonSshExplanation =>
+      'SSH is the emergency and administration door to your VPS. PocketCoder disables password login, requires your cryptographic key, and temporarily bans repeated guessing attempts.';
+
+  @override
+  String get pocoLessonDockerTitle => 'The container engine';
+
+  @override
+  String get pocoLessonDockerExplanation =>
+      'Docker runs each PocketCoder component in a defined container. NixOS manages the Docker engine itself, while Compose describes what Docker should run.';
+
+  @override
+  String get pocoLessonOwnerConfigTitle => 'Receiving your configuration';
+
+  @override
+  String get pocoLessonOwnerConfigExplanation =>
+      'Your VPS receives its owner settings once, stores them in a protected file, installs your SSH key, and removes the temporary copy used during first boot.';
+
+  @override
+  String get pocoLessonLocalSecretsTitle => 'Host-local secrets';
+
+  @override
+  String get pocoLessonLocalSecretsExplanation =>
+      'Internal services need private handshake secrets. The VPS creates random values locally instead of sending those secrets through the app or committing them to GitHub.';
+
+  @override
+  String get pocoLessonReleaseSourceTitle => 'The exact release source';
+
+  @override
+  String get pocoLessonReleaseSourceExplanation =>
+      'The server checks out the precise Git commit embedded in the release. That makes the code on your VPS inspectable and keeps later updates tied to a real repository.';
+
+  @override
+  String get pocoLessonVerifiedImagesTitle => 'Verified container images';
+
+  @override
+  String get pocoLessonVerifiedImagesExplanation =>
+      'The VPS downloads prebuilt container images and checks their SHA-256 fingerprint before loading them. A missing, incomplete, or modified bundle stops deployment instead of silently building something different.';
+
+  @override
+  String get pocoLessonComposeStartTitle => 'Starting the stack';
+
+  @override
+  String get pocoLessonComposeStartExplanation =>
+      'Docker Compose starts the verified images in the background without rebuilding them. PocketCoder then writes a completion marker, while the app independently waits for a real health response.';
+
+  @override
+  String get pocoLessonPocketbaseTitle => 'The application core';
+
+  @override
+  String get pocoLessonPocketbaseExplanation =>
+      'PocketBase is the control plane and application database. Its port is bound only to the VPS itself, so public requests must pass through the encrypted reverse proxy.';
+
+  @override
+  String get pocoLessonAgentTitle => 'The private coding agent';
+
+  @override
+  String get pocoLessonAgentExplanation =>
+      'Goose is the coding-agent process. It has no public host port and talks to PocketBase over a private, authenticated network created just for that relationship.';
+
+  @override
+  String get pocoLessonLocalModelTitle => 'Local model runtime';
+
+  @override
+  String get pocoLessonLocalModelExplanation =>
+      'Ollama can run models on your own VPS. Its model files survive restarts, and its private networks separate inference traffic from model-management traffic.';
+
+  @override
+  String get pocoLessonHarnessImagesTitle => 'On-demand coding harnesses';
+
+  @override
+  String get pocoLessonHarnessImagesExplanation =>
+      'These entries define images for supported coding tools. They are prepared during release creation but do not run until you choose that harness inside PocketCoder.';
+
+  @override
+  String get pocoLessonMcpSandboxTitle => 'Controlled tool access';
+
+  @override
+  String get pocoLessonMcpSandboxExplanation =>
+      'The MCP gateway gives agents tools, but it reaches Docker through a restricted proxy. The allowlist grants only the operations that tool containers actually need.';
+
+  @override
+  String get pocoLessonMemoryTitle => 'Optional agent memory';
+
+  @override
+  String get pocoLessonMemoryExplanation =>
+      'Cognee is an optional memory service. Its initialization step fixes storage ownership first, and its private network lets the agent reach memory without exposing it publicly.';
+
+  @override
+  String get pocoLessonPocketbaseDockerAccessTitle => 'Limited Docker control';
+
+  @override
+  String get pocoLessonPocketbaseDockerAccessExplanation =>
+      'PocketBase sometimes needs to inspect or restart trusted containers. This second socket proxy gives it a smaller permission set than the tool gateway receives.';
+
+  @override
+  String get pocoLessonDashboardTitle => 'Your local dashboard';
+
+  @override
+  String get pocoLessonDashboardExplanation =>
+      'SQLPage reads operational databases through read-only mounts and turns them into a private dashboard. An initialization step makes optional data sources safe to query before they exist.';
+
+  @override
+  String get pocoLessonNotificationsTitle => 'Optional notifications';
+
+  @override
+  String get pocoLessonNotificationsExplanation =>
+      'Ntfy can provide a notification server that you own. It is behind an optional Compose profile, so it runs only when you deliberately enable it.';
+
+  @override
+  String get pocoLessonPrivateAccessTitle => 'Private remote access';
+
+  @override
+  String get pocoLessonPrivateAccessExplanation =>
+      'Tailscale can connect the VPS to your private network without opening another public application port. Its identity is stored in a persistent volume.';
+
+  @override
+  String get pocoLessonLocalCaddyTitle => 'Alternative HTTPS proxy';
+
+  @override
+  String get pocoLessonLocalCaddyExplanation =>
+      'Self-managed Docker installations can run Caddy as a container for automatic HTTPS. The supported NixOS VPS uses native host Caddy instead, so this profile stays off there.';
+
+  @override
+  String get pocoLessonVolumesTitle => 'Persistent data';
+
+  @override
+  String get pocoLessonVolumesExplanation =>
+      'Containers are replaceable; volumes are the durable storage underneath them. Databases, workspaces, credentials, backups, and downloaded models live here across restarts and upgrades.';
+
+  @override
+  String get pocoLessonNetworksTitle => 'Private service networks';
+
+  @override
+  String get pocoLessonNetworksExplanation =>
+      'Compose uses several small networks instead of one flat network. Each connection represents a specific trust relationship, limiting which services can reach one another.';
+
+  @override
   String get permissionSignoffTitle => 'COMMANDER\'S SIGNOFF';
 
   @override

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'package:pocketcoder_pro/domain/deployment/deployment_phase.dart';
+import 'package:pocketcoder_pro/domain/deployment/deployment_readiness_update.dart';
 import 'package:pocketcoder_pro/domain/deployment/server_status_document.dart';
 
 class DeploymentReadinessService {
@@ -16,7 +17,7 @@ class DeploymentReadinessService {
   final http.Client _client;
   final DateTime Function() _now;
 
-  Stream<DeploymentPhase> monitor({
+  Stream<DeploymentReadinessUpdate> monitor({
     required String hostname,
     required String instanceId,
   }) async* {
@@ -24,9 +25,13 @@ class DeploymentReadinessService {
     var adoptedRunId = '';
     var fallback = false;
     var lastPhase = DeploymentPhase.waitingForCaddy;
+    ServerStatusDocument? lastStatusDocument;
     var firstPoll = true;
+    var pollingAttempt = 0;
 
     while (_now().difference(started) < const Duration(minutes: 30)) {
+      pollingAttempt += 1;
+      var emittedThisAttempt = false;
       if (!fallback) {
         http.Response? statusResponse;
         try {
@@ -54,16 +59,26 @@ class DeploymentReadinessService {
         } else if (statusResponse?.statusCode == 200) {
           final doc = ServerStatusDocument.tryParse(statusResponse?.body ?? '');
           if (doc != null) {
+            lastStatusDocument = doc;
             if (adoptedRunId.isEmpty || adoptedRunId != doc.runId) {
               adoptedRunId = doc.runId;
             }
             final phase = DeploymentPhaseX.fromWireName(doc.phase);
             if (phase.index >= lastPhase.index) {
               lastPhase = phase;
-              yield phase;
             }
+            yield DeploymentReadinessUpdate(
+              phase: lastPhase,
+              pollingAttempt: pollingAttempt,
+              statusDocument: doc,
+            );
+            emittedThisAttempt = true;
             if (doc.error != null && doc.runId == adoptedRunId) {
-              yield DeploymentPhase.failed;
+              yield DeploymentReadinessUpdate(
+                phase: DeploymentPhase.failed,
+                pollingAttempt: pollingAttempt,
+                statusDocument: doc,
+              );
               return;
             }
           }
@@ -73,11 +88,23 @@ class DeploymentReadinessService {
       try {
         final health = await _client.get(Uri.https(hostname, '/api/health'));
         if (health.statusCode == 200) {
-          yield DeploymentPhase.ready;
+          yield DeploymentReadinessUpdate(
+            phase: DeploymentPhase.ready,
+            pollingAttempt: pollingAttempt,
+            statusDocument: lastStatusDocument,
+          );
           return;
         }
       } on Object {
         // The next status poll or the budget will decide the terminal state.
+      }
+
+      if (!emittedThisAttempt) {
+        yield DeploymentReadinessUpdate(
+          phase: lastPhase,
+          pollingAttempt: pollingAttempt,
+          statusDocument: lastStatusDocument,
+        );
       }
 
       if (!firstPoll) {
@@ -85,6 +112,10 @@ class DeploymentReadinessService {
       }
       firstPoll = false;
     }
-    yield DeploymentPhase.timedOut;
+    yield DeploymentReadinessUpdate(
+      phase: DeploymentPhase.timedOut,
+      pollingAttempt: pollingAttempt,
+      statusDocument: lastStatusDocument,
+    );
   }
 }

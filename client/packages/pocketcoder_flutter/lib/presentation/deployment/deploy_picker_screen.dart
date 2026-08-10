@@ -86,45 +86,68 @@ class _ProviderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(AppSizes.space * 1.5),
-        decoration: BoxDecoration(
-            border: Border.all(color: colors.onSurface.withValues(alpha: 0.2))),
-        child: Row(children: [
-          Icon(
-              option.routePath != null
-                  ? Icons.cloud_outlined
-                  : Icons.open_in_new,
-              color: colors.primary,
-              size: 24),
-          HSpace.x2,
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(option.name.toUpperCase(),
-                    style: TextStyle(
-                        fontFamily: AppFonts.headerFamily,
-                        color: colors.onSurface,
-                        fontSize: AppSizes.fontStandard,
-                        fontWeight: AppFonts.heavy)),
-                VSpace.x1,
-                TerminalText.tiny(option.description.toUpperCase(), alpha: 0.6),
-              ])),
-          if (option.requiresPurchase)
-            Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: AppSizes.space, vertical: AppSizes.space * .5),
-                decoration:
-                    BoxDecoration(border: Border.all(color: colors.primary)),
-                child: TerminalText(context.l10n.deployProBadge,
-                    size: TerminalTextSize.tiny,
-                    weight: TerminalTextWeight.heavy,
-                    color: colors.primary)),
-        ]),
+    final isAvailable = option.isAvailable;
+    return Semantics(
+      enabled: isAvailable,
+      button: true,
+      child: Opacity(
+        opacity: isAvailable ? 1 : 0.42,
+        child: InkWell(
+          onTap: isAvailable ? onTap : null,
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(AppSizes.space * 1.5),
+            decoration: BoxDecoration(
+                border:
+                    Border.all(color: colors.onSurface.withValues(alpha: 0.2))),
+            child: Row(children: [
+              Icon(
+                  option.routePath != null
+                      ? Icons.cloud_outlined
+                      : Icons.open_in_new,
+                  color: colors.primary,
+                  size: 24),
+              HSpace.x2,
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(option.name.toUpperCase(),
+                        style: TextStyle(
+                            fontFamily: AppFonts.headerFamily,
+                            color: colors.onSurface,
+                            fontSize: AppSizes.fontStandard,
+                            fontWeight: AppFonts.heavy)),
+                    VSpace.x1,
+                    TerminalText.tiny(option.description.toUpperCase(),
+                        alpha: 0.6),
+                  ])),
+              if (option.requiresPurchase)
+                Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: AppSizes.space,
+                        vertical: AppSizes.space * .5),
+                    decoration: BoxDecoration(
+                        border: Border.all(color: colors.primary)),
+                    child: TerminalText(context.l10n.deployProBadge,
+                        size: TerminalTextSize.tiny,
+                        weight: TerminalTextWeight.heavy,
+                        color: colors.primary)),
+              if (option.availability == DeployOptionAvailability.comingSoon)
+                Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: AppSizes.space,
+                        vertical: AppSizes.space * .5),
+                    decoration: BoxDecoration(
+                        border: Border.all(
+                            color: colors.onSurface.withValues(alpha: 0.5))),
+                    child: TerminalText(context.l10n.deployComingSoon,
+                        size: TerminalTextSize.tiny,
+                        weight: TerminalTextWeight.heavy,
+                        color: colors.onSurface)),
+            ]),
+          ),
+        ),
       ),
     );
   }

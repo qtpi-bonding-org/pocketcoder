@@ -25,6 +25,7 @@
   boot.kernelParams = [ "console=ttyS0,115200n8" ];
   boot.loader.timeout = 10;
 
+  # POCO:BEGIN vps-storage
   # Root filesystem (Linode provides a single disk). autoResize is
   # required for boot-time-pull provisioning: dd-ing this image onto a
   # bigger raw disk does not grow the filesystem on its own -- without
@@ -37,12 +38,14 @@
     fsType = "ext4";
     autoResize = true;
   };
+  # POCO:END vps-storage
 
   # --- Networking ---
   networking.hostName = "pocketcoder";
   networking.useDHCP = false;
   networking.interfaces.eth0.useDHCP = true;
 
+  # POCO:BEGIN vps-public-firewall
   # Firewall: only expose what's needed
   networking.firewall = {
     enable = true;
@@ -55,7 +58,9 @@
       443   # Caddy HTTP/3
     ];
   };
+  # POCO:END vps-public-firewall
 
+  # POCO:BEGIN vps-container-firewall
   # Docker's DNAT/FORWARD path is separate from the host firewall INPUT
   # chain. Apply the same public allowlist as standard Linux after Docker has
   # created DOCKER-USER; this also blocks containers from reaching Linode's
@@ -109,8 +114,10 @@
       apply_ipv6_rules
     '';
   };
+  # POCO:END vps-container-firewall
 
   # --- SSH ---
+  # POCO:BEGIN vps-key-only-ssh
   services.openssh = {
     enable = true;
     settings = {
@@ -145,12 +152,15 @@
       };
     };
   };
+  # POCO:END vps-key-only-ssh
 
   # --- Docker ---
+  # POCO:BEGIN vps-docker-engine
   virtualisation.docker = {
     enable = true;
     logDriver = "journald";
   };
+  # POCO:END vps-docker-engine
 
   # --- System packages ---
   environment.systemPackages = with pkgs; [

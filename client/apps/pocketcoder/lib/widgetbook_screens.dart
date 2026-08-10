@@ -63,12 +63,14 @@ import 'package:pocketcoder_flutter/presentation/skills/widgets/skills_view.dart
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
+import 'package:pocketcoder_pro/domain/deployment/server_status_document.dart';
 import 'package:pocketcoder_pro/domain/server_update/server_update_result.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_credentials.dart';
 import 'package:pocketcoder_pro/presentation/auth/widgets/auth_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/config_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/details_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/progress_view.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_lesson_card.dart';
 import 'package:pocketcoder_pro/presentation/server_update/widgets/update_server_view.dart';
 import 'package:widgetbook/widgetbook.dart';
 
@@ -791,6 +793,16 @@ final _proScreens = <WidgetbookNode>[
           status: UiFlowStatus.loading,
           deploymentStatus: OnboardingStage.installingHost,
           pollingAttempts: 8,
+          serverStatusDocument: ServerStatusDocument(
+            schema: 1,
+            runId: 'widgetbook-run',
+            phase: 'installing_host',
+            detail: 'configuring key-only SSH',
+            sourceCommit: 'abcdef1234567',
+            updatedAt: DateTime.utc(2026, 8, 9, 12, 30),
+            raw: const {},
+          ),
+          provisioningTour: const SizedBox.shrink(),
           instance: null,
           error: null,
           onAbort: () {},
@@ -800,11 +812,18 @@ final _proScreens = <WidgetbookNode>[
           status: UiFlowStatus.failure,
           deploymentStatus: OnboardingStage.failed,
           pollingAttempts: 20,
+          serverStatusDocument: null,
+          provisioningTour: const SizedBox.shrink(),
           instance: null,
           error: 'Host provisioning timed out',
           onAbort: () {},
           onRetry: () {},
         ),
+  }),
+  _screen('ProvisioningLessonCard', {
+    'collapsed important code': () => const _ProvisioningLessonCardPreview(),
+    'expanded full code': () =>
+        const _ProvisioningLessonCardPreview(initiallyExpanded: true),
   }),
   _screen('DetailsScreen', {
     'running instance': () => DetailsView(
@@ -847,6 +866,90 @@ final _proScreens = <WidgetbookNode>[
           onDismiss: () {},
         ),
   }),
+];
+
+class _ProvisioningLessonCardPreview extends StatefulWidget {
+  const _ProvisioningLessonCardPreview({this.initiallyExpanded = false});
+
+  final bool initiallyExpanded;
+
+  @override
+  State<_ProvisioningLessonCardPreview> createState() =>
+      _ProvisioningLessonCardPreviewState();
+}
+
+class _ProvisioningLessonCardPreviewState
+    extends State<_ProvisioningLessonCardPreview> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(AppSizes.space * 2),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: ProvisioningLessonCard(
+              title: 'Installing the NixOS image safely',
+              explanation:
+                  'We check the destination and the download before allowing the new operating system to take over your VPS.',
+              importantCode: '''[ -b /dev/sdb ] || exit 1
+TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
+[ "\$TARGET_BYTES" -ge "\$IMAGE_UNCOMPRESSED_BYTES" ] || exit 1''',
+              codeBlocks: _installerLessonBlocks,
+              lessonNumber: 1,
+              lessonCount: 10,
+              expanded: _expanded,
+              onExpandedChanged: (value) => setState(() => _expanded = value),
+              onPrevious: null,
+              onNext: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+const _installerLessonBlocks = [
+  ProvisioningLessonCodeBlock(
+    title: 'Installer inputs',
+    sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:2',
+    code: '''# <UDF name="IMAGE_URL" label="NixOS image URL" />
+# <UDF name="IMAGE_SHA256" label="Expected sha256 of the gzip" />
+# <UDF name="IMAGE_UNCOMPRESSED_BYTES" label="Expected uncompressed size in bytes" />
+set -euo pipefail''',
+  ),
+  ProvisioningLessonCodeBlock(
+    title: 'Disk safety check',
+    sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:10',
+    code: '''[ -b /dev/sdb ] || { echo "FATAL: /dev/sdb not found"; exit 1; }
+TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
+[ "\$TARGET_BYTES" -ge "\$IMAGE_UNCOMPRESSED_BYTES" ] || exit 1''',
+  ),
+  ProvisioningLessonCodeBlock(
+    title: 'Stream the image',
+    sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:25',
+    code: '''curl -fsSL "\$IMAGE_URL" \\
+  | tee /tmp/sumpipe \\
+  | gunzip \\
+  | dd of=/dev/sdb bs=16M conv=fsync status=progress''',
+  ),
+  ProvisioningLessonCodeBlock(
+    title: 'Verify the checksum',
+    sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:34',
+    code: '''read -r ACTUAL_SHA _ < /tmp/sum
+if [ "\$ACTUAL_SHA" = "\$IMAGE_SHA256" ]; then
+  echo "Image verified"
+fi''',
+  ),
 ];
 
 const _harnesses = [
