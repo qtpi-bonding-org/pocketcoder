@@ -205,11 +205,58 @@ func (c *Client) PullImage(ctx context.Context, image string) error {
 	return nil
 }
 
+// LoadImage streams a compressed docker-save archive into Docker. The normal
+// API client has a short timeout for control operations; image loading is
+// bounded by the caller's context instead because large archives can take
+// several minutes to import.
+func (c *Client) LoadImage(ctx context.Context, archive io.Reader) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/images/load?quiet=1", archive)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/x-tar")
+	streamClient := &http.Client{
+		Transport:     c.http.Transport,
+		CheckRedirect: c.http.CheckRedirect,
+		Jar:           c.http.Jar,
+	}
+	resp, err := streamClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("load image archive: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("load image archive: docker API returned %s: %s", resp.Status, string(body))
+	}
+	decoder := json.NewDecoder(resp.Body)
+	for {
+		var message struct {
+			Error       string `json:"error"`
+			ErrorDetail struct {
+				Message string `json:"message"`
+			} `json:"errorDetail"`
+		}
+		if err := decoder.Decode(&message); err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return fmt.Errorf("decode docker image load response: %w", err)
+		}
+		if message.ErrorDetail.Message != "" {
+			return fmt.Errorf("docker image load failed: %s", message.ErrorDetail.Message)
+		}
+		if message.Error != "" {
+			return fmt.Errorf("docker image load failed: %s", message.Error)
+		}
+	}
+}
+
 // ImageExists reports whether image is already present in the local Docker
-// image store. Dynamically provisioned first-party harness images are built
-// by bootstrap (or loaded from its image cache), so pulling them from a
-// registry would be both unnecessary and guaranteed to fail: PocketCoder
-// does not publish those local image tags to a registry.
+// image store. First-party harness images are loaded from verified release
+// artifacts, so pulling their commit tags from a registry would be both
+// unnecessary and guaranteed to fail: PocketCoder does not publish those
+// local image tags to a registry.
 func (c *Client) ImageExists(ctx context.Context, image string) (bool, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/images/"+url.PathEscape(image)+"/json", nil)
 	if err != nil {

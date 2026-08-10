@@ -26,6 +26,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/template"
@@ -33,6 +34,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-automaton/pocketcoder/backend/internal/releaseartifact"
 )
 
 // inspector is the minimal interface ResolveWorkspaceVolumeAndNetwork needs
@@ -84,8 +86,13 @@ type dockerProvisioner interface {
 	inspector
 	ImageExists(ctx context.Context, image string) (bool, error)
 	PullImage(ctx context.Context, image string) error
+	LoadImage(ctx context.Context, archive io.Reader) error
 	Create(ctx context.Context, name string, spec dockerapi.CreateSpec) (string, error)
 	Start(ctx context.Context, containerName string) error
+}
+
+var ensureReleaseHarnessImage = func(ctx context.Context, client dockerProvisioner, harnessID, image string) error {
+	return releaseartifact.EnsureHarnessImage(ctx, client, harnessID, image)
 }
 
 // FindHarnessInstance looks up the harness_instances row for (harness,
@@ -117,7 +124,7 @@ var raceHookForTests func()
 // ProvisionHarnessInstance turns a harnesses catalog row into a running,
 // dialable container idempotent per (harnessID, launchKey, userID), minting a
 // per-instance secret, rendering launch_template.env_template against
-// provider_keys, pulling the image, and creating+starting the container.
+// provider_keys, ensuring the release image, and creating+starting the container.
 func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerProvisioner, harnessID, launchKey, userID string) (*core.Record, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("userID is required")
@@ -241,7 +248,11 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		return fail(err)
 	}
 	if !local {
-		if err := client.PullImage(ctx, image); err != nil {
+		if releaseartifact.ManagedReleaseImage(image, os.Getenv("POCKETCODER_RELEASE")) {
+			if err := ensureReleaseHarnessImage(ctx, client, harness.GetString("cli_id"), image); err != nil {
+				return fail(err)
+			}
+		} else if err := client.PullImage(ctx, image); err != nil {
 			return fail(err)
 		}
 	}
