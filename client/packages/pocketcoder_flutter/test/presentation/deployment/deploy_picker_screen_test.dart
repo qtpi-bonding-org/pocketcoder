@@ -27,7 +27,8 @@ class FakeDeployOptionService implements IDeployOptionService {
 
 void main() {
   setUp(() {
-    GetIt.I.registerFactory<IDeployOptionService>(() => FakeDeployOptionService());
+    GetIt.I
+        .registerFactory<IDeployOptionService>(() => FakeDeployOptionService());
   });
 
   tearDown(() {
@@ -43,11 +44,12 @@ void main() {
       routes: [
         GoRoute(
           path: '/deploy',
-          builder: (context, state) => const DeployPickerScreen(
+          builder: (context, state) => DeployPickerScreen(
             credentials: DeployCredentials(
               email: 'reviewer@example.com',
               password: 'test-pass',
             ),
+            deployOptionService: FakeDeployOptionService(),
           ),
         ),
         GoRoute(
