@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_pro/application/config/config_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:flutter_aeroform/domain/security/i_ssh_key_generator.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'adapters/config_adapter.dart';
 
@@ -23,7 +24,10 @@ class ConfigScreen extends StatelessWidget {
           value: getIt<DeploymentCubit>()..resetDeployment(),
         ),
       ],
-      child: ConfigAdapter(credentials: credentials),
+      child: ConfigAdapter(
+        credentials: credentials,
+        sshKeyGenerator: getIt<ISshKeyGenerator>(),
+      ),
     );
   }
 }

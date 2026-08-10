@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
@@ -7,7 +6,6 @@ import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
-import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_selection.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -38,7 +36,14 @@ class NewChatSelection {
 /// [IProviderRepository] streams (already built for [ProviderScreen]) rather
 /// than adding new PocketBase-facing surface.
 class NewChatDialog extends StatefulWidget {
-  const NewChatDialog({super.key});
+  const NewChatDialog({
+    super.key,
+    required this.providerRepository,
+    required this.loadOllamaModels,
+  });
+
+  final IProviderRepository providerRepository;
+  final Future<List<OllamaModel>> Function() loadOllamaModels;
 
   @override
   State<NewChatDialog> createState() => _NewChatDialogState();
@@ -47,8 +52,6 @@ class NewChatDialog extends StatefulWidget {
 class _NewChatDialogState extends State<NewChatDialog> {
   final _titleController = TextEditingController();
   final _cwdController = TextEditingController();
-  final _providerRepo = getIt<IProviderRepository>();
-
   Harnesse? _selectedHarness;
   _ModelChoice? _selectedModel;
   Future<List<OllamaModel>>? _ollamaModels;
@@ -83,22 +86,22 @@ class _NewChatDialogState extends State<NewChatDialog> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Harnesse>>(
-      stream: _providerRepo.watchHarnesses(),
+      stream: widget.providerRepository.watchHarnesses(),
       initialData: const [],
       builder: (context, harnessSnap) {
         final harnesses = harnessSnap.data ?? const [];
         return StreamBuilder<List<Model>>(
-          stream: _providerRepo.watchModels(),
+          stream: widget.providerRepository.watchModels(),
           initialData: const [],
           builder: (context, modelSnap) {
             final models = modelSnap.data ?? const [];
             return StreamBuilder<List<HarnessModel>>(
-              stream: _providerRepo.watchHarnessModels(),
+              stream: widget.providerRepository.watchHarnessModels(),
               initialData: const [],
               builder: (context, hmSnap) {
                 final harnessModels = hmSnap.data ?? const [];
                 return StreamBuilder<List<ProviderKey>>(
-                  stream: _providerRepo.watchProviderKeys(),
+                  stream: widget.providerRepository.watchProviderKeys(),
                   initialData: const [],
                   builder: (context, keySnap) {
                     final providerKeys = keySnap.data ?? const [];
@@ -168,9 +171,8 @@ class _NewChatDialogState extends State<NewChatDialog> {
             onSelected: (h) => setState(() {
               _selectedHarness = h;
               _selectedModel = null;
-              _ollamaModels = supportsOllamaHarness(h.cliId) &&
-                      getIt.isRegistered<OllamaApi>()
-                  ? getIt<OllamaApi>().listModels()
+              _ollamaModels = supportsOllamaHarness(h.cliId)
+                  ? widget.loadOllamaModels()
                   : null;
             }),
           ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
@@ -34,8 +33,6 @@ void main() {
   setUp(() {
     providerRepo = MockProviderRepository();
     ollamaApi = MockOllamaApi();
-    getIt.registerSingleton<IProviderRepository>(providerRepo);
-    getIt.registerSingleton<OllamaApi>(ollamaApi);
     when(() => providerRepo.watchHarnesses())
         .thenAnswer((_) => Stream.value(const [harness1]));
     when(() => providerRepo.watchModels())
@@ -49,10 +46,10 @@ void main() {
     );
   });
 
-  tearDown(() {
-    getIt.unregister<IProviderRepository>();
-    getIt.unregister<OllamaApi>();
-  });
+  NewChatDialog dialog() => NewChatDialog(
+        providerRepository: providerRepo,
+        loadOllamaModels: ollamaApi.listModels,
+      );
 
   Future<NewChatSelection?> pumpAndOpen(WidgetTester tester) async {
     NewChatSelection? result;
@@ -65,7 +62,7 @@ void main() {
           onPressed: () async {
             result = await showDialog<NewChatSelection>(
               context: context,
-              builder: (_) => const NewChatDialog(),
+              builder: (_) => dialog(),
             );
           },
           child: const Text('open'),
@@ -108,7 +105,7 @@ void main() {
           onPressed: () {
             resultFuture = showDialog<NewChatSelection>(
               context: context,
-              builder: (_) => const NewChatDialog(),
+              builder: (_) => dialog(),
             );
           },
           child: const Text('open'),
@@ -150,7 +147,7 @@ void main() {
           onPressed: () {
             resultFuture = showDialog<NewChatSelection>(
               context: context,
-              builder: (_) => const NewChatDialog(),
+              builder: (_) => dialog(),
             );
           },
           child: const Text('open'),

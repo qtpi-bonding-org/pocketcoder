@@ -11,7 +11,6 @@ import 'package:flutter_aeroform/domain/security/i_ssh_key_generator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
-import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_pro/application/config/config_cubit.dart';
@@ -28,9 +27,14 @@ const _pocketCoderReleaseRef =
     String.fromEnvironment('POCKETCODER_RELEASE_REF', defaultValue: 'main');
 
 class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
-  const ConfigAdapter({super.key, this.credentials});
+  const ConfigAdapter({
+    super.key,
+    this.credentials,
+    required this.sshKeyGenerator,
+  });
 
   final DeployCredentials? credentials;
+  final ISshKeyGenerator sshKeyGenerator;
 
   static ConfigState _selectState(ConfigState state) => state;
 
@@ -102,7 +106,7 @@ class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
     final deployCredentials = credentials;
     if (config == null || deployCredentials == null) return;
 
-    final keyPair = await getIt<ISshKeyGenerator>().generate();
+    final keyPair = await sshKeyGenerator.generate();
     final host = config.backend == ProvisionBackendKind.nixos
         ? ImageBakedHostSpec(
             labelPrefix: pocketCoderHostLabelPrefix,

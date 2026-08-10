@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart';
 import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -21,7 +22,7 @@ class PermissionRelayScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<BillingCubit>()..loadOfferings(),
-      child: const PermissionRelayAdapter(),
+      child: PermissionRelayAdapter(onConfigure: getIt<PushService>().configure),
     );
   }
 }
