@@ -88,6 +88,9 @@ audit/
 docs/
 !website/src/content/docs/
 !website/src/content/docs/**
+spikes/
+tooling/spikes/
+.mcp.json
 **/CLAUDE.md
 *.swp
 *.swo
