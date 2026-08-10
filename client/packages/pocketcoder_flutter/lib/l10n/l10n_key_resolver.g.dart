@@ -97,6 +97,7 @@ class L10nKeyResolver {
       'chat.list.error' => _l10n.chatListError,
       'chat.list.new.chat' => _l10n.chatListNewChat,
       'chat.list.no.messages' => _l10n.chatListNoMessages,
+      'chat.list.timestamp.now' => _l10n.chatListTimestampNow,
       'chat.message.sent' => _l10n.chatMessageSent,
       'chat.model.default' => _l10n.chatModelDefault,
       'chat.model.label' => _l10n.chatModelLabel,
@@ -216,6 +217,8 @@ class L10nKeyResolver {
       'new.chat.select.model' => _l10n.newChatSelectModel,
       'new.chat.title' => _l10n.newChatTitle,
       'new.chat.title.field' => _l10n.newChatTitleField,
+      'new.chat.workspace.error.empty' => _l10n.newChatWorkspaceErrorEmpty,
+      'new.chat.workspace.error.invalid' => _l10n.newChatWorkspaceErrorInvalid,
       'notification.settings.chat.reply.label' => _l10n.notificationSettingsChatReplyLabel,
       'notification.settings.schedule.label' => _l10n.notificationSettingsScheduleLabel,
       'notification.settings.screen.title' => _l10n.notificationSettingsScreenTitle,
@@ -445,6 +448,9 @@ class L10nKeyResolver {
       'agent.config.dialog.title' => _l10n.agentConfigDialogTitle(args?['name'] as String? ?? ''),
       'agent.config.error.prefix' => _l10n.agentConfigErrorPrefix(args?['error'] as String? ?? ''),
       'agent.dialog.title' => _l10n.agentDialogTitle(args?['name'] as String? ?? ''),
+       'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
+       'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
+       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
       'deployment.sync.attempt' => _l10n.deploymentSyncAttempt(args?['attempt'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'home.error.prefix' => _l10n.homeErrorPrefix(args?['error'] as String? ?? ''),
@@ -550,6 +556,10 @@ class L10nKeyResolver {
     'chat.list.error',
     'chat.list.new.chat',
     'chat.list.no.messages',
+    'chat.list.timestamp.days.ago',
+    'chat.list.timestamp.hours.ago',
+    'chat.list.timestamp.minutes.ago',
+    'chat.list.timestamp.now',
     'chat.message.sent',
     'chat.model.default',
     'chat.model.label',
@@ -682,6 +692,8 @@ class L10nKeyResolver {
     'new.chat.select.model',
     'new.chat.title',
     'new.chat.title.field',
+    'new.chat.workspace.error.empty',
+    'new.chat.workspace.error.invalid',
     'notification.settings.chat.reply.label',
     'notification.settings.schedule.label',
     'notification.settings.screen.title',
@@ -997,6 +1009,10 @@ class L10nKeyResolver {
     'chatListError': 'chat.list.error',
     'chatListNewChat': 'chat.list.new.chat',
     'chatListNoMessages': 'chat.list.no.messages',
+    'chatListTimestampDaysAgo': 'chat.list.timestamp.days.ago',
+    'chatListTimestampHoursAgo': 'chat.list.timestamp.hours.ago',
+    'chatListTimestampMinutesAgo': 'chat.list.timestamp.minutes.ago',
+    'chatListTimestampNow': 'chat.list.timestamp.now',
     'chatMessageSent': 'chat.message.sent',
     'chatModelDefault': 'chat.model.default',
     'chatModelLabel': 'chat.model.label',
@@ -1129,6 +1145,8 @@ class L10nKeyResolver {
     'newChatSelectModel': 'new.chat.select.model',
     'newChatTitle': 'new.chat.title',
     'newChatTitleField': 'new.chat.title.field',
+    'newChatWorkspaceErrorEmpty': 'new.chat.workspace.error.empty',
+    'newChatWorkspaceErrorInvalid': 'new.chat.workspace.error.invalid',
     'notificationSettingsChatReplyLabel': 'notification.settings.chat.reply.label',
     'notificationSettingsScheduleLabel': 'notification.settings.schedule.label',
     'notificationSettingsScreenTitle': 'notification.settings.screen.title',
@@ -1441,6 +1459,10 @@ class L10nKeyResolver {
     'chat.list.error': 'chatListError',
     'chat.list.new.chat': 'chatListNewChat',
     'chat.list.no.messages': 'chatListNoMessages',
+    'chat.list.timestamp.days.ago': 'chatListTimestampDaysAgo',
+    'chat.list.timestamp.hours.ago': 'chatListTimestampHoursAgo',
+    'chat.list.timestamp.minutes.ago': 'chatListTimestampMinutesAgo',
+    'chat.list.timestamp.now': 'chatListTimestampNow',
     'chat.message.sent': 'chatMessageSent',
     'chat.model.default': 'chatModelDefault',
     'chat.model.label': 'chatModelLabel',
@@ -1573,6 +1595,8 @@ class L10nKeyResolver {
     'new.chat.select.model': 'newChatSelectModel',
     'new.chat.title': 'newChatTitle',
     'new.chat.title.field': 'newChatTitleField',
+    'new.chat.workspace.error.empty': 'newChatWorkspaceErrorEmpty',
+    'new.chat.workspace.error.invalid': 'newChatWorkspaceErrorInvalid',
     'notification.settings.chat.reply.label': 'notificationSettingsChatReplyLabel',
     'notification.settings.schedule.label': 'notificationSettingsScheduleLabel',
     'notification.settings.screen.title': 'notificationSettingsScreenTitle',
@@ -1892,6 +1916,10 @@ abstract class L10nKeys {
   static const chatListError = 'chat.list.error';
   static const chatListNewChat = 'chat.list.new.chat';
   static const chatListNoMessages = 'chat.list.no.messages';
+  static (String, Map<String, dynamic>) chatListTimestampDaysAgo(int count) => ('chat.list.timestamp.days.ago', {'count': count});
+  static (String, Map<String, dynamic>) chatListTimestampHoursAgo(int count) => ('chat.list.timestamp.hours.ago', {'count': count});
+  static (String, Map<String, dynamic>) chatListTimestampMinutesAgo(int count) => ('chat.list.timestamp.minutes.ago', {'count': count});
+  static const chatListTimestampNow = 'chat.list.timestamp.now';
   static const chatMessageSent = 'chat.message.sent';
   static const chatModelDefault = 'chat.model.default';
   static const chatModelLabel = 'chat.model.label';
@@ -2024,6 +2052,8 @@ abstract class L10nKeys {
   static const newChatSelectModel = 'new.chat.select.model';
   static const newChatTitle = 'new.chat.title';
   static const newChatTitleField = 'new.chat.title.field';
+  static const newChatWorkspaceErrorEmpty = 'new.chat.workspace.error.empty';
+  static const newChatWorkspaceErrorInvalid = 'new.chat.workspace.error.invalid';
   static const notificationSettingsChatReplyLabel = 'notification.settings.chat.reply.label';
   static const notificationSettingsScheduleLabel = 'notification.settings.schedule.label';
   static const notificationSettingsScreenTitle = 'notification.settings.screen.title';

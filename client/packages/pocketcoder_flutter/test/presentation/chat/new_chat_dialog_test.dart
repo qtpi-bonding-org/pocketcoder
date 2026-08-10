@@ -1,25 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
-import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
-import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 
-class MockProviderRepository extends Mock implements IProviderRepository {}
-
-class MockOllamaApi extends Mock implements OllamaApi {}
-
 void main() {
-  late MockProviderRepository providerRepo;
-  late MockOllamaApi ollamaApi;
-
   const harness1 = Harnesse(
       id: 'h1',
       name: 'Goose',
@@ -29,26 +19,14 @@ void main() {
   const hm1 = HarnessModel(
       id: 'hm-1', harness: 'h1', model: 'model-1', harnessModelId: 'claude-3');
   const key1 = ProviderKey(id: 'k1', user: 'u', provider: 'anthropic');
+  const ollamaModel1 = OllamaModel(name: 'qwen2.5:0.5b', size: 1);
 
-  setUp(() {
-    providerRepo = MockProviderRepository();
-    ollamaApi = MockOllamaApi();
-    when(() => providerRepo.watchHarnesses())
-        .thenAnswer((_) => Stream.value(const [harness1]));
-    when(() => providerRepo.watchModels())
-        .thenAnswer((_) => Stream.value(const [model1]));
-    when(() => providerRepo.watchHarnessModels())
-        .thenAnswer((_) => Stream.value(const [hm1]));
-    when(() => providerRepo.watchProviderKeys())
-        .thenAnswer((_) => Stream.value(const [key1]));
-    when(() => ollamaApi.listModels()).thenAnswer(
-      (_) async => const [OllamaModel(name: 'qwen2.5:0.5b', size: 1)],
-    );
-  });
-
-  NewChatDialog dialog() => NewChatDialog(
-        providerRepository: providerRepo,
-        loadOllamaModels: ollamaApi.listModels,
+  NewChatDialog dialog() => const NewChatDialog(
+        harnesses: [harness1],
+        models: [model1],
+        harnessModels: [hm1],
+        providerKeys: [key1],
+        ollamaModels: [ollamaModel1],
       );
 
   Future<NewChatSelection?> pumpAndOpen(WidgetTester tester) async {

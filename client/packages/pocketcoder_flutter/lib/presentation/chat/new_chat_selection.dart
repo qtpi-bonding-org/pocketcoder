@@ -32,6 +32,11 @@ List<HarnessModel> selectableModels({
 bool supportsOllamaHarness(String cliId) =>
     cliId == 'goose' || cliId == 'opencode';
 
+enum WorkspacePathValidationError {
+  empty,
+  outsideWorkspace,
+}
+
 /// Validates that a workspace path is within the /workspace root directory.
 ///
 /// Implements the textual, prefix-based check from the design spec (§5.8):
@@ -42,9 +47,12 @@ bool supportsOllamaHarness(String cliId) =>
 /// This is a client-side fast-fail nicety — the server-side check in
 /// buildSessionProfile (backend) is the actual guarantee. Returns null if valid,
 /// or a descriptive error message if validation fails.
-String? validateWorkspacePath(String path, {String root = '/workspace'}) {
+WorkspacePathValidationError? validateWorkspacePath(
+  String path, {
+  String root = '/workspace',
+}) {
   if (path.isEmpty) {
-    return 'Path cannot be empty';
+    return WorkspacePathValidationError.empty;
   }
 
   // Normalize the path: resolves . and .., removes trailing slashes.
@@ -57,5 +65,5 @@ String? validateWorkspacePath(String path, {String root = '/workspace'}) {
   final withSlash = root.endsWith('/') ? root : '$root/';
   if (normalized.startsWith(withSlash)) return null;
 
-  return 'Path must be $root or a subdirectory of it';
+  return WorkspacePathValidationError.outsideWorkspace;
 }

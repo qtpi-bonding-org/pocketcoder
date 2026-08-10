@@ -5,11 +5,10 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
-import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_selection.dart';
+import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_picker_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 
 /// The selection a confirmed [NewChatDialog] returns — `null` fields mean
@@ -38,12 +37,18 @@ class NewChatSelection {
 class NewChatDialog extends StatefulWidget {
   const NewChatDialog({
     super.key,
-    required this.providerRepository,
-    required this.loadOllamaModels,
+    required this.harnesses,
+    required this.models,
+    required this.harnessModels,
+    required this.providerKeys,
+    required this.ollamaModels,
   });
 
-  final IProviderRepository providerRepository;
-  final Future<List<OllamaModel>> Function() loadOllamaModels;
+  final List<Harnesse> harnesses;
+  final List<Model> models;
+  final List<HarnessModel> harnessModels;
+  final List<ProviderKey> providerKeys;
+  final List<OllamaModel> ollamaModels;
 
   @override
   State<NewChatDialog> createState() => _NewChatDialogState();
@@ -54,7 +59,6 @@ class _NewChatDialogState extends State<NewChatDialog> {
   final _cwdController = TextEditingController();
   Harnesse? _selectedHarness;
   _ModelChoice? _selectedModel;
-  Future<List<OllamaModel>>? _ollamaModels;
   String? _cwdError;
 
   @override
@@ -69,13 +73,20 @@ class _NewChatDialogState extends State<NewChatDialog> {
     if (cwd.isNotEmpty) {
       final error = validateWorkspacePath(cwd);
       if (error != null) {
-        setState(() => _cwdError = error);
+        setState(() {
+          _cwdError = switch (error) {
+            WorkspacePathValidationError.empty =>
+              context.l10n.newChatWorkspaceErrorEmpty,
+            WorkspacePathValidationError.outsideWorkspace =>
+              context.l10n.newChatWorkspaceErrorInvalid,
+          };
+        });
         return;
       }
     }
     final title = _titleController.text.trim();
     Navigator.of(context).pop(NewChatSelection(
-      title: title.isEmpty ? 'New Chat' : title,
+      title: title.isEmpty ? context.l10n.newChatTitle : title,
       harness: _selectedHarness?.id,
       harnessModelOverride: _selectedModel?.harnessModelId,
       ollamaModelOverride: _selectedModel?.ollamaModel,
@@ -85,54 +96,22 @@ class _NewChatDialogState extends State<NewChatDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Harnesse>>(
-      stream: widget.providerRepository.watchHarnesses(),
-      initialData: const [],
-      builder: (context, harnessSnap) {
-        final harnesses = harnessSnap.data ?? const [];
-        return StreamBuilder<List<Model>>(
-          stream: widget.providerRepository.watchModels(),
-          initialData: const [],
-          builder: (context, modelSnap) {
-            final models = modelSnap.data ?? const [];
-            return StreamBuilder<List<HarnessModel>>(
-              stream: widget.providerRepository.watchHarnessModels(),
-              initialData: const [],
-              builder: (context, hmSnap) {
-                final harnessModels = hmSnap.data ?? const [];
-                return StreamBuilder<List<ProviderKey>>(
-                  stream: widget.providerRepository.watchProviderKeys(),
-                  initialData: const [],
-                  builder: (context, keySnap) {
-                    final providerKeys = keySnap.data ?? const [];
-                    final selectedHarness = _selectedHarness;
-                    final availableModels = selectedHarness == null
-                        ? const <HarnessModel>[]
-                        : selectableModels(
-                            harnessId: selectedHarness.id,
-                            harnessModels: harnessModels,
-                            models: models,
-                            providerKeys: providerKeys,
-                          );
+    final selectedHarness = _selectedHarness;
+    final availableModels = selectedHarness == null
+        ? const <HarnessModel>[]
+        : selectableModels(
+            harnessId: selectedHarness.id,
+            harnessModels: widget.harnessModels,
+            models: widget.models,
+            providerKeys: widget.providerKeys,
+          );
 
-                    return FutureBuilder<List<OllamaModel>>(
-                      future: _ollamaModels,
-                      initialData: const [],
-                      builder: (context, ollamaSnap) => _buildDialog(
-                        context,
-                        harnesses: harnesses,
-                        models: models,
-                        availableModels: availableModels,
-                        ollamaModels: ollamaSnap.data ?? const [],
-                      ),
-                    );
-                  },
-                );
-              },
-            );
-          },
-        );
-      },
+    return _buildDialog(
+      context,
+      harnesses: widget.harnesses,
+      models: widget.models,
+      availableModels: availableModels,
+      ollamaModels: widget.ollamaModels,
     );
   }
 
@@ -161,7 +140,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
             label: context.l10n.newChatTitleField,
           ),
           VSpace.x2,
-          _PickerField<Harnesse>(
+          ChatPickerField<Harnesse>(
             label: context.l10n.newChatHarnessField,
             dialogTitle: context.l10n.newChatSelectHarness,
             emptyLabel: context.l10n.newChatSelectHarness,
@@ -171,13 +150,10 @@ class _NewChatDialogState extends State<NewChatDialog> {
             onSelected: (h) => setState(() {
               _selectedHarness = h;
               _selectedModel = null;
-              _ollamaModels = supportsOllamaHarness(h.cliId)
-                  ? widget.loadOllamaModels()
-                  : null;
             }),
           ),
           VSpace.x2,
-          _PickerField<_ModelChoice>(
+          ChatPickerField<_ModelChoice>(
             label: context.l10n.newChatModelField,
             dialogTitle: context.l10n.newChatSelectModel,
             emptyLabel: context.l10n.newChatSelectModel,
@@ -234,110 +210,4 @@ class _ModelChoice {
   final String? harnessModelId;
   final String? ollamaModel;
   final String label;
-}
-
-/// A tap-to-open picker matching the terminal/BIOS UI's existing convention
-/// (see `_HarnessPicker` in `provider_screen.dart`) — no shared/exported
-/// dropdown widget exists in `design_system/` to reuse, so this mirrors that
-/// same InkWell-opens-a-list-`TerminalDialog` pattern generically.
-class _PickerField<T> extends StatelessWidget {
-  const _PickerField({
-    required this.label,
-    required this.dialogTitle,
-    required this.emptyLabel,
-    required this.options,
-    required this.selected,
-    required this.optionLabel,
-    required this.onSelected,
-    this.noOptionsLabel,
-    super.key,
-  });
-
-  final String label;
-  final String dialogTitle;
-  final String emptyLabel;
-  final String? noOptionsLabel;
-  final List<T> options;
-  final T? selected;
-  final String Function(T) optionLabel;
-  final ValueChanged<T> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final selectedValue = selected;
-    final currentLabel =
-        selectedValue == null ? emptyLabel : optionLabel(selectedValue);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TerminalText.tiny(label.toUpperCase(), color: colors.onSurface),
-        VSpace.x1,
-        InkWell(
-          onTap: () => _openPicker(context),
-          child: Container(
-            padding: EdgeInsets.all(AppSizes.space),
-            decoration: BoxDecoration(
-              border:
-                  Border.all(color: colors.onSurface.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: TerminalText(
-                    currentLabel,
-                    color: colors.onSurface,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(Icons.arrow_drop_down, color: colors.onSurface),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _openPicker(BuildContext context) async {
-    final picked = await showDialog<T>(
-      context: context,
-      builder: (dialogContext) => TerminalDialog(
-        title: dialogTitle,
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 300,
-          child: options.isEmpty
-              ? Center(
-                  child: TerminalText(
-                    noOptionsLabel ?? emptyLabel,
-                    alpha: 0.5,
-                  ),
-                )
-              : ListView(
-                  children: [
-                    for (final option in options)
-                      InkWell(
-                        onTap: () => Navigator.of(dialogContext).pop(option),
-                        child: Padding(
-                          padding: EdgeInsets.all(AppSizes.space),
-                          child: TerminalText(optionLabel(option)),
-                        ),
-                      ),
-                  ],
-                ),
-        ),
-        actions: [
-          TerminalButton(
-            label: context.l10n.newChatCancel,
-            isPrimary: false,
-            onTap: () => Navigator.of(dialogContext).pop(),
-          ),
-        ],
-      ),
-    );
-    if (picked != null) onSelected(picked);
-  }
 }

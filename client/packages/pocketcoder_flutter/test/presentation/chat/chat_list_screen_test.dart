@@ -43,13 +43,13 @@ void main() {
     providerRepo = MockProviderRepository();
     getIt.registerSingleton<IProviderRepository>(providerRepo);
     when(() => providerRepo.watchHarnesses())
-        .thenAnswer((_) => const Stream.empty());
+        .thenAnswer((_) => Stream.value(const []));
     when(() => providerRepo.watchModels())
-        .thenAnswer((_) => const Stream.empty());
+        .thenAnswer((_) => Stream.value(const []));
     when(() => providerRepo.watchHarnessModels())
-        .thenAnswer((_) => const Stream.empty());
+        .thenAnswer((_) => Stream.value(const []));
     when(() => providerRepo.watchProviderKeys())
-        .thenAnswer((_) => const Stream.empty());
+        .thenAnswer((_) => Stream.value(const []));
   });
 
   tearDown(() {

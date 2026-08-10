@@ -760,6 +760,18 @@ abstract class AppLocalizations {
   /// **'No models available for this harness'**
   String get newChatNoModelsAvailable;
 
+  /// No description provided for @newChatWorkspaceErrorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Path cannot be empty'**
+  String get newChatWorkspaceErrorEmpty;
+
+  /// No description provided for @newChatWorkspaceErrorInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Path must be /workspace or a subdirectory of it'**
+  String get newChatWorkspaceErrorInvalid;
+
   /// No description provided for @chatListArchive.
   ///
   /// In en, this message translates to:
@@ -771,6 +783,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'DELETE'**
   String get chatListDelete;
+
+  /// No description provided for @chatListTimestampNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get chatListTimestampNow;
+
+  /// No description provided for @chatListTimestampMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String chatListTimestampMinutesAgo(int count);
+
+  /// No description provided for @chatListTimestampHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String chatListTimestampHoursAgo(int count);
+
+  /// No description provided for @chatListTimestampDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String chatListTimestampDaysAgo(int count);
 
   /// No description provided for @chatFilesAction.
   ///
