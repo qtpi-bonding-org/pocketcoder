@@ -85,6 +85,7 @@ out.json
 audit-status/
 audit/
 .worktrees/
+.agent/
 docs/
 !website/src/content/docs/
 !website/src/content/docs/**
