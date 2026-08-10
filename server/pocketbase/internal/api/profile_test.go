@@ -130,6 +130,7 @@ func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, 
 	harness.Set("cli_id", cliID)
 	harness.Set("acp_transport", "websocket")
 	harness.Set("supports_live_config", supportsLive)
+	harness.Set("supports_additional_directories", true)
 	harness.Set("single_connection_only", singleConnOnly)
 	if err := app.Save(harness); err != nil {
 		t.Fatal(err)

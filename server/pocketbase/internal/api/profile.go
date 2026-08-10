@@ -249,6 +249,8 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 
 	p.SupportsLiveConfig = harnessRec.GetBool("supports_live_config")
 	p.SingleConnectionOnly = harnessRec.GetBool("single_connection_only")
+	p.SupportsSessionDelete = harnessRec.GetBool("supports_session_delete")
+	p.SupportsAdditionalDirectories = harnessRec.GetBool("supports_additional_directories")
 
 	// All harnesses receive PocketBase-owned MCP services through the standard
 	// ACP session/new request. This keeps the harness boundary identical and

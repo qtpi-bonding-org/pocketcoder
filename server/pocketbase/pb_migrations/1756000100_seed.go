@@ -147,6 +147,8 @@ func init() {
 		gooseHarness.Set("provider_scope", "any")
 		gooseHarness.Set("supports_ollama", true)
 		gooseHarness.Set("single_connection_only", false)
+		gooseHarness.Set("supports_session_delete", true)
+		gooseHarness.Set("supports_additional_directories", true)
 		if err := app.Save(gooseHarness); err != nil {
 			return fmt.Errorf("seed goose harness: %w", err)
 		}
@@ -192,6 +194,8 @@ func init() {
 			rec.Set("provider_scope", providerScope)
 			rec.Set("supports_ollama", cliID == "opencode")
 			rec.Set("single_connection_only", true)
+			rec.Set("supports_session_delete", cliID != "opencode")
+			rec.Set("supports_additional_directories", cliID != "opencode")
 			if err := app.Save(rec); err != nil {
 				return fmt.Errorf("seed %s harness: %w", cliID, err)
 			}

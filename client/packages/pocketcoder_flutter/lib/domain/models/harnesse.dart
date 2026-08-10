@@ -14,10 +14,13 @@ abstract class Harnesse with _$Harnesse {
     String? description,
     @JsonKey(unknownEnumValue: HarnesseAcpTransport.unknown) required HarnesseAcpTransport acpTransport,
     String? containerImage,
-    dynamic launchTemplate,
-    bool? supportsLiveConfig,
-    bool? supportsGooseExtensions,
-    bool? singleConnectionOnly,
+	    dynamic launchTemplate,
+	    bool? supportsLiveConfig,
+	    bool? supportsOllama,
+	    String? providerScope,
+	    bool? singleConnectionOnly,
+	    bool? supportsSessionDelete,
+	    bool? supportsAdditionalDirectories,
   }) = _Harnesse;
 
   factory Harnesse.fromRecord(RecordModel record) =>
