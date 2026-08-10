@@ -4,6 +4,19 @@ name: Build NixOS Image
 
 on:
   workflow_dispatch:
+    inputs:
+      operation:
+        description: Build an immutable candidate or promote one already built
+        required: true
+        default: build_candidate
+        type: choice
+        options:
+          - build_candidate
+          - promote_candidate
+      release_sha:
+        description: Exact candidate commit to promote
+        required: false
+        type: string
   push:
     tags:
       - 'v*-nixos'
@@ -12,11 +25,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: nixos-image
+  group: nixos-image-${{ github.event.inputs.operation || 'build_candidate' }}
   cancel-in-progress: true
 
 jobs:
   build:
+    if: github.event_name == 'push' || inputs.operation == 'build_candidate'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -43,9 +57,9 @@ jobs:
       - name: Build Linode image
         working-directory: deploy/nixos
         run: |
-          # Embed the exact source revision into bootstrap.nix. The first
-          # boot must clone this revision, never whatever happens to be on
-          # main when a customer deploys later.
+          # Embed the exact source revision into bootstrap.nix. First boot
+          # resolves the coupled immutable release for this revision, never
+          # whatever happens to be on main when a customer deploys later.
           printf '"%s"\n' "$GITHUB_SHA" > release-commit.nix
           nix build .#linode-image --print-build-logs
 
@@ -119,9 +133,10 @@ jobs:
           generate_release_notes: true
 
   # Publishes the runtime snapshot, core, independently selectable harnesses,
-  # and optional local-model runtime. Promotion remains coupled to the NixOS
-  # image so every public manifest names one complete release.
+  # and optional local-model runtime. The candidate job couples these to the
+  # NixOS image so every candidate manifest names one complete release.
   release-artifacts:
+    if: github.event_name == 'push' || inputs.operation == 'build_candidate'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -155,10 +170,9 @@ jobs:
           path: release-artifacts-metadata.json
           retention-days: 30
 
-  # Promotion is deliberately the only job that updates mutable pointers.
-  # A failed or partial build can publish immutable objects, but it cannot
-  # make them the release used by new deployments.
-  promote:
+  # Assemble and publish the immutable candidate after both the NixOS image
+  # and split Docker artifacts exist. This job cannot move public pointers.
+  candidate:
     needs: [build, release-artifacts]
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
@@ -176,11 +190,41 @@ jobs:
         with:
           name: release-artifacts-metadata
 
-      - name: Validate and publish coupled release
+      - name: Validate and publish immutable candidate
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
           SOURCE_COMMIT: ${{ github.sha }}
+          R2_ENDPOINT: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+        run: deploy/ci/publish-release-candidate.sh "$SOURCE_COMMIT"
+
+  # Promotion is the only operation allowed to update mutable discovery
+  # pointers. It consumes a previously built candidate by exact commit and
+  # never rebuilds or substitutes artifacts.
+  promote:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'promote_candidate'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - name: Validate promotion input
+        env:
+          SOURCE_COMMIT: ${{ inputs.release_sha }}
+        run: |
+          case "$SOURCE_COMMIT" in
+            *[!0-9a-f]*|'') exit 1 ;;
+          esac
+          test "${#SOURCE_COMMIT}" -eq 40
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 1
+          ref: ${{ inputs.release_sha }}
+
+      - name: Promote immutable candidate
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          SOURCE_COMMIT: ${{ inputs.release_sha }}
           R2_ENDPOINT: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
         run: deploy/ci/promote-release.sh "$SOURCE_COMMIT"

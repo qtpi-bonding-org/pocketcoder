@@ -13,6 +13,7 @@ deployment_builder="$repo_root/deploy/scripts/build-deployment-artifact.sh"
 metadata_writer="$repo_root/deploy/scripts/write-artifact-metadata.sh"
 image_installer="$repo_root/deploy/scripts/install-release-images.sh"
 release_activator="$repo_root/deploy/scripts/activate-release.sh"
+release_updater="$repo_root/deploy/scripts/update-release.sh"
 release=0123456789abcdef0123456789abcdef01234567
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -80,6 +81,8 @@ grep -q '^\./deploy/scripts/activate-release.sh$' "$tmp_dir/deployment-files.txt
   fail "shared release activator is missing"
 grep -q '^\./deploy/scripts/prepare-runtime-env.sh$' "$tmp_dir/deployment-files.txt" ||
   fail "shared runtime preparation is missing"
+grep -q '^\./deploy/scripts/update-release.sh$' "$tmp_dir/deployment-files.txt" ||
+  fail "verified release updater is missing"
 ! grep -q '^\./deploy/scripts/build-' "$tmp_dir/deployment-files.txt" ||
   fail "CI build scripts leaked into the runtime artifact"
 grep -q '^\./server/sqlpage/dashboard/index.sql$' "$tmp_dir/deployment-files.txt" ||
@@ -139,6 +142,8 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 case "$url" in
+  */release-manifest.json|*/release-*.json) cp "$FAKE_UPDATE_MANIFEST" "$output" ;;
+  */deployment.tar.gz) cp "$FAKE_DEPLOYMENT_ARCHIVE" "$output" ;;
   */core.tar.gz) cp "$FAKE_CORE_ARCHIVE" "$output" ;;
   */goose.tar.gz) cp "$FAKE_GOOSE_ARCHIVE" "$output" ;;
   *) exit 1 ;;
@@ -227,5 +232,50 @@ grep -q 'up -d --no-build --remove-orphans' "$tmp_dir/docker.log" ||
 jq -e '.phase == "bootstrap_complete" and .error == null' \
   "$tmp_dir/status/activation.json" >/dev/null ||
   fail "activation did not publish completion status"
+
+# Exercise an update from discovery through immutable manifest verification,
+# deployment extraction, image loading, and the atomic current-release switch.
+if command -v sha256sum >/dev/null 2>&1; then
+  deployment_sha=$(sha256sum "$tmp_dir/deployment.tar.gz" | cut -d' ' -f1)
+else
+  deployment_sha=$(shasum -a 256 "$tmp_dir/deployment.tar.gz" | cut -d' ' -f1)
+fi
+deployment_bytes=$(wc -c < "$tmp_dir/deployment.tar.gz" | tr -d ' ')
+deployment_expanded=$(gzip -dc "$tmp_dir/deployment.tar.gz" | wc -c | tr -d ' ')
+jq --arg deploymentSha "$deployment_sha" \
+  --argjson deploymentBytes "$deployment_bytes" \
+  --argjson deploymentExpanded "$deployment_expanded" '
+    .deployment.url = "https://fixtures.test/deployment.tar.gz" |
+    .deployment.sha256 = $deploymentSha |
+    .deployment.bytes = $deploymentBytes |
+    .deployment.expandedBytes = $deploymentExpanded
+  ' "$tmp_dir/install-manifest.json" > "$tmp_dir/update-manifest.json"
+update_env="$tmp_dir/update-runtime.env"
+cat > "$update_env" <<EOF
+POCKETBASE_ADMIN_EMAIL=owner@example.test
+POCKETBASE_ADMIN_PASSWORD=retain-this-password
+POCKETCODER_SELECTED_HARNESSES=goose
+EOF
+: > "$tmp_dir/docker.log"
+PATH="$fake_bin:$PATH" \
+FAKE_UPDATE_MANIFEST="$tmp_dir/update-manifest.json" \
+FAKE_DEPLOYMENT_ARCHIVE="$tmp_dir/deployment.tar.gz" \
+FAKE_CORE_ARCHIVE="$tmp_dir/core.tar.gz" \
+FAKE_GOOSE_ARCHIVE="$tmp_dir/goose.tar.gz" \
+FAKE_DOCKER_LOG="$tmp_dir/docker.log" \
+RELEASE_BASE=https://fixtures.test \
+POCKETCODER_RELEASES_DIR="$tmp_dir/update-releases" \
+POCKETCODER_RELEASE_STATE_DIR="$tmp_dir/update-state" \
+POCKETCODER_ARTIFACT_DIR="$tmp_dir/update-artifacts" \
+POCKETCODER_STATUS_FILE="$tmp_dir/update-status/status.json" \
+POCKETCODER_CURRENT_LINK="$tmp_dir/update-current" \
+POCKETCODER_RUNTIME_ENV="$update_env" \
+  "$release_updater"
+test "$(readlink "$tmp_dir/update-current")" = \
+  "$tmp_dir/update-releases/$release" || fail "updater did not switch releases"
+grep -q '^POCKETBASE_ADMIN_PASSWORD=retain-this-password$' "$update_env" ||
+  fail "updater changed owner credentials"
+grep -q 'up -d --no-build --remove-orphans' "$tmp_dir/docker.log" ||
+  fail "updater did not recreate prebuilt containers"
 
 echo "release contract tests passed"

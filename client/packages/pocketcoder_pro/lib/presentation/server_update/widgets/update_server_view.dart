@@ -38,9 +38,8 @@ class UpdateServerView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'cd /opt/pocketcoder && git pull && '
-                    'docker compose --profile harness-images build && '
-                    'docker compose up -d',
+                    'VERIFY RELEASE → DOWNLOAD PREBUILT IMAGES → '
+                    'REPLACE MANAGED CONTAINERS',
                     style: TextStyle(
                       fontFamily: AppFonts.bodyFamily,
                       color: colors.onSurface.withValues(alpha: 0.7),
@@ -49,7 +48,8 @@ class UpdateServerView extends StatelessWidget {
                   ),
                   VSpace.x1,
                   Text(
-                    'RUNS OVER SSH AS ROOT. NOTHING HAPPENS UNTIL YOU TAP UPDATE.',
+                    'YOUR WORKSPACES, AUTH DATA, AND SERVER CONFIGURATION ARE PRESERVED. '
+                    'NOTHING HAPPENS UNTIL YOU TAP UPDATE.',
                     style: TextStyle(
                       fontFamily: AppFonts.bodyFamily,
                       color: colors.onSurface.withValues(alpha: 0.5),
