@@ -1,12 +1,47 @@
 package dockerapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
+
+func TestLoadImageStreamsArchiveAndAcceptsDockerStatus(t *testing.T) {
+	payload := []byte("compressed-image-archive")
+	var received []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/images/load" || r.URL.Query().Get("quiet") != "1" {
+			t.Fatalf("unexpected load URL %s", r.URL.String())
+		}
+		received, _ = io.ReadAll(r.Body)
+		_, _ = w.Write([]byte("{\"stream\":\"Loaded image\"}\n"))
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	if err := c.LoadImage(context.Background(), bytes.NewReader(payload)); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(received, payload) {
+		t.Fatalf("received payload %q, want %q", received, payload)
+	}
+}
+
+func TestLoadImageSurfacesDockerStreamError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"errorDetail":{"message":"invalid tar"},"error":"invalid tar"}`))
+	}))
+	defer srv.Close()
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	err := c.LoadImage(context.Background(), bytes.NewReader([]byte("bad")))
+	if err == nil || !strings.Contains(err.Error(), "invalid tar") {
+		t.Fatalf("error = %v, want Docker stream error", err)
+	}
+}
 
 func TestInspectParsesMountsAndNetworks(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

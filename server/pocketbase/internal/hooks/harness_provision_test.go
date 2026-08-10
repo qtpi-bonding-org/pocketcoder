@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -172,6 +173,14 @@ func (f *fakeDockerClient) PullImage(ctx context.Context, image string) error {
 	return nil
 }
 
+func (f *fakeDockerClient) LoadImage(_ context.Context, archive io.Reader) error {
+	_, err := io.Copy(io.Discard, archive)
+	if err == nil {
+		f.imageExists = true
+	}
+	return err
+}
+
 func (f *fakeDockerClient) Create(ctx context.Context, name string, spec dockerapi.CreateSpec) (string, error) {
 	f.createCallCount++
 	f.lastCreateSpec = spec
@@ -251,6 +260,45 @@ func TestProvisionHarnessInstanceReusesLocalImageWithoutPulling(t *testing.T) {
 	}
 	if len(fake.pulledImages) != 0 {
 		t.Errorf("pulledImages = %v, want no registry pull for a local first-party image", fake.pulledImages)
+	}
+}
+
+func TestProvisionHarnessInstanceLoadsMissingManagedReleaseArtifact(t *testing.T) {
+	const release = "0123456789abcdef0123456789abcdef01234567"
+	t.Setenv("POCKETCODER_RELEASE", release)
+	app := testApp(t)
+	userID := testUser(t, app, "test-managed-image-"+uuid.NewString()[:8]+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	harness.Set("container_image", "pocketcoder-harness-codex:"+release)
+	harness.Set("launch_template", map[string]any{"cmd": []string{"/adapter"}, "port": 3000})
+	if err := app.Save(harness); err != nil {
+		t.Fatal(err)
+	}
+	fake := newFakeDockerClient()
+	called := false
+	original := ensureReleaseHarnessImage
+	ensureReleaseHarnessImage = func(_ context.Context, _ dockerProvisioner, harnessID, image string) error {
+		called = true
+		if harnessID != "codex" || image != "pocketcoder-harness-codex:"+release {
+			t.Fatalf("artifact request = %s/%s", harnessID, image)
+		}
+		fake.imageExists = true
+		return nil
+	}
+	t.Cleanup(func() { ensureReleaseHarnessImage = original })
+
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !called || rec.GetString("status") != "running" {
+		t.Fatalf("artifact called/status = %v/%q", called, rec.GetString("status"))
+	}
+	if len(fake.pulledImages) != 0 {
+		t.Fatalf("managed release image used registry fallback: %v", fake.pulledImages)
 	}
 }
 
