@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
 import 'adapters/progress_adapter.dart';
 
 /// Progress screen showing deployment status.
@@ -18,15 +19,19 @@ class ProgressScreen extends StatelessWidget {
         if (state.instanceId != null &&
             state.hostname != null &&
             !cubit.isMonitoring) {
+          final hostname = state.hostname;
+          final instanceId = state.instanceId;
+          if (hostname == null || instanceId == null) return cubit;
           cubit.monitorDeployment(
-            hostname: state.hostname!,
-            instanceId: state.instanceId!,
+            hostname: hostname,
+            instanceId: instanceId,
           );
         }
         return cubit;
       },
       child: ProgressAdapter(
         mapper: GetIt.I<DeploymentMessageMapper>(),
+        sourceService: GetIt.I<GithubProvisioningSourceService>(),
       ),
     );
   }

@@ -1,7 +1,6 @@
 /// Interface for providing available deploy options.
 ///
-/// FOSS builds return only free providers (Hetzner referral link).
-/// Proprietary builds add paid providers (Linode, Elestio).
+/// Each build returns the providers it can currently expose to the user.
 abstract class IDeployOptionService {
   List<DeployOption> getAvailableProviders();
 }
@@ -21,6 +20,9 @@ class DeployOption {
   /// Whether this option requires an IAP purchase first.
   final bool requiresPurchase;
 
+  /// Unavailable options stay visible for roadmap context, but cannot launch.
+  final DeployOptionAvailability availability;
+
   const DeployOption({
     required this.id,
     required this.name,
@@ -28,5 +30,10 @@ class DeployOption {
     this.url,
     this.routePath,
     this.requiresPurchase = false,
+    this.availability = DeployOptionAvailability.available,
   });
+
+  bool get isAvailable => availability == DeployOptionAvailability.available;
 }
+
+enum DeployOptionAvailability { available, comingSoon }

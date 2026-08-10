@@ -116,11 +116,11 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
     if (_isMonitoring) return;
     _isMonitoring = true;
     try {
-      await for (final phase in _readinessService.monitor(
+      await for (final update in _readinessService.monitor(
         hostname: hostname,
         instanceId: instanceId,
       )) {
-        final stage = phase.toOnboardingStage();
+        final stage = update.phase.toOnboardingStage();
         emit(state.copyWith(
           status: stage == OnboardingStage.failed
               ? UiFlowStatus.failure
@@ -128,6 +128,9 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
                   ? UiFlowStatus.success
                   : UiFlowStatus.loading,
           deploymentStatus: stage,
+          pollingAttempts: update.pollingAttempt,
+          serverStatusDocument:
+              update.statusDocument ?? state.serverStatusDocument,
         ));
       }
     } finally {

@@ -2212,6 +2212,378 @@ abstract class AppLocalizations {
   /// **'PRO'**
   String get deployProBadge;
 
+  /// No description provided for @deployComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'COMING SOON'**
+  String get deployComingSoon;
+
+  /// No description provided for @deploymentSyncAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'SYNC ATTEMPT: {attempt}'**
+  String deploymentSyncAttempt(int attempt);
+
+  /// No description provided for @deploymentCurrentOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT OPERATION'**
+  String get deploymentCurrentOperation;
+
+  /// No description provided for @deploymentSourceCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'SOURCE COMMIT'**
+  String get deploymentSourceCommit;
+
+  /// No description provided for @deploymentRunId.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOYMENT RUN'**
+  String get deploymentRunId;
+
+  /// No description provided for @deploymentStatusSchema.
+  ///
+  /// In en, this message translates to:
+  /// **'STATUS SCHEMA'**
+  String get deploymentStatusSchema;
+
+  /// No description provided for @deploymentLastSignal.
+  ///
+  /// In en, this message translates to:
+  /// **'LAST SERVER SIGNAL'**
+  String get deploymentLastSignal;
+
+  /// No description provided for @deploymentErrorCode.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER ERROR CODE'**
+  String get deploymentErrorCode;
+
+  /// No description provided for @pocoProvisioningTourTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'POCO VPS TOUR'**
+  String get pocoProvisioningTourTitle;
+
+  /// No description provided for @pocoProvisioningWaitingForSource.
+  ///
+  /// In en, this message translates to:
+  /// **'I am waiting for your VPS to report its exact source commit. Once it does, I can show you the code actually being installed.'**
+  String get pocoProvisioningWaitingForSource;
+
+  /// No description provided for @pocoProvisioningLoadingSource.
+  ///
+  /// In en, this message translates to:
+  /// **'I found the exact release commit. I am fetching its public provisioning code so we can inspect it together.'**
+  String get pocoProvisioningLoadingSource;
+
+  /// No description provided for @pocoProvisioningSourceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The deployment is still running, but I could not load its annotated source right now. This lesson is optional and never blocks your VPS.'**
+  String get pocoProvisioningSourceUnavailable;
+
+  /// No description provided for @pocoProvisioningPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'PREVIOUS'**
+  String get pocoProvisioningPrevious;
+
+  /// No description provided for @pocoProvisioningNext.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT'**
+  String get pocoProvisioningNext;
+
+  /// No description provided for @pocoProvisioningShowFull.
+  ///
+  /// In en, this message translates to:
+  /// **'SHOW FULL SECTION'**
+  String get pocoProvisioningShowFull;
+
+  /// No description provided for @pocoProvisioningShowConcise.
+  ///
+  /// In en, this message translates to:
+  /// **'SHOW CONCISE VIEW'**
+  String get pocoProvisioningShowConcise;
+
+  /// No description provided for @pocoLessonVpsStorageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your VPS disk'**
+  String get pocoLessonVpsStorageTitle;
+
+  /// No description provided for @pocoLessonVpsStorageExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The release image is only the starting shape of the server. This tells NixOS to expand its filesystem so PocketCoder can use the full disk you rented.'**
+  String get pocoLessonVpsStorageExplanation;
+
+  /// No description provided for @pocoLessonPublicFirewallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The public firewall'**
+  String get pocoLessonPublicFirewallTitle;
+
+  /// No description provided for @pocoLessonPublicFirewallExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'A firewall is a guest list for network traffic. This VPS exposes only SSH and web traffic; everything else is refused by default.'**
+  String get pocoLessonPublicFirewallExplanation;
+
+  /// No description provided for @pocoLessonContainerFirewallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The container firewall'**
+  String get pocoLessonContainerFirewallTitle;
+
+  /// No description provided for @pocoLessonContainerFirewallExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Docker has its own traffic path, so the host firewall alone is not enough. These rules apply the same boundaries to containers and block access to cloud metadata credentials.'**
+  String get pocoLessonContainerFirewallExplanation;
+
+  /// No description provided for @pocoLessonSshTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Key-only administration'**
+  String get pocoLessonSshTitle;
+
+  /// No description provided for @pocoLessonSshExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH is the emergency and administration door to your VPS. PocketCoder disables password login, requires your cryptographic key, and temporarily bans repeated guessing attempts.'**
+  String get pocoLessonSshExplanation;
+
+  /// No description provided for @pocoLessonDockerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The container engine'**
+  String get pocoLessonDockerTitle;
+
+  /// No description provided for @pocoLessonDockerExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Docker runs each PocketCoder component in a defined container. NixOS manages the Docker engine itself, while Compose describes what Docker should run.'**
+  String get pocoLessonDockerExplanation;
+
+  /// No description provided for @pocoLessonOwnerConfigTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving your configuration'**
+  String get pocoLessonOwnerConfigTitle;
+
+  /// No description provided for @pocoLessonOwnerConfigExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your VPS receives its owner settings once, stores them in a protected file, installs your SSH key, and removes the temporary copy used during first boot.'**
+  String get pocoLessonOwnerConfigExplanation;
+
+  /// No description provided for @pocoLessonLocalSecretsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Host-local secrets'**
+  String get pocoLessonLocalSecretsTitle;
+
+  /// No description provided for @pocoLessonLocalSecretsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal services need private handshake secrets. The VPS creates random values locally instead of sending those secrets through the app or committing them to GitHub.'**
+  String get pocoLessonLocalSecretsExplanation;
+
+  /// No description provided for @pocoLessonReleaseSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The exact release source'**
+  String get pocoLessonReleaseSourceTitle;
+
+  /// No description provided for @pocoLessonReleaseSourceExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The server checks out the precise Git commit embedded in the release. That makes the code on your VPS inspectable and keeps later updates tied to a real repository.'**
+  String get pocoLessonReleaseSourceExplanation;
+
+  /// No description provided for @pocoLessonVerifiedImagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified container images'**
+  String get pocoLessonVerifiedImagesTitle;
+
+  /// No description provided for @pocoLessonVerifiedImagesExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The VPS downloads prebuilt container images and checks their SHA-256 fingerprint before loading them. A missing, incomplete, or modified bundle stops deployment instead of silently building something different.'**
+  String get pocoLessonVerifiedImagesExplanation;
+
+  /// No description provided for @pocoLessonComposeStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting the stack'**
+  String get pocoLessonComposeStartTitle;
+
+  /// No description provided for @pocoLessonComposeStartExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Docker Compose starts the verified images in the background without rebuilding them. PocketCoder then writes a completion marker, while the app independently waits for a real health response.'**
+  String get pocoLessonComposeStartExplanation;
+
+  /// No description provided for @pocoLessonPocketbaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The application core'**
+  String get pocoLessonPocketbaseTitle;
+
+  /// No description provided for @pocoLessonPocketbaseExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'PocketBase is the control plane and application database. Its port is bound only to the VPS itself, so public requests must pass through the encrypted reverse proxy.'**
+  String get pocoLessonPocketbaseExplanation;
+
+  /// No description provided for @pocoLessonAgentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The private coding agent'**
+  String get pocoLessonAgentTitle;
+
+  /// No description provided for @pocoLessonAgentExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Goose is the coding-agent process. It has no public host port and talks to PocketBase over a private, authenticated network created just for that relationship.'**
+  String get pocoLessonAgentExplanation;
+
+  /// No description provided for @pocoLessonLocalModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local model runtime'**
+  String get pocoLessonLocalModelTitle;
+
+  /// No description provided for @pocoLessonLocalModelExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama can run models on your own VPS. Its model files survive restarts, and its private networks separate inference traffic from model-management traffic.'**
+  String get pocoLessonLocalModelExplanation;
+
+  /// No description provided for @pocoLessonHarnessImagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On-demand coding harnesses'**
+  String get pocoLessonHarnessImagesTitle;
+
+  /// No description provided for @pocoLessonHarnessImagesExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These entries define images for supported coding tools. They are prepared during release creation but do not run until you choose that harness inside PocketCoder.'**
+  String get pocoLessonHarnessImagesExplanation;
+
+  /// No description provided for @pocoLessonMcpSandboxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Controlled tool access'**
+  String get pocoLessonMcpSandboxTitle;
+
+  /// No description provided for @pocoLessonMcpSandboxExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The MCP gateway gives agents tools, but it reaches Docker through a restricted proxy. The allowlist grants only the operations that tool containers actually need.'**
+  String get pocoLessonMcpSandboxExplanation;
+
+  /// No description provided for @pocoLessonMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional agent memory'**
+  String get pocoLessonMemoryTitle;
+
+  /// No description provided for @pocoLessonMemoryExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Cognee is an optional memory service. Its initialization step fixes storage ownership first, and its private network lets the agent reach memory without exposing it publicly.'**
+  String get pocoLessonMemoryExplanation;
+
+  /// No description provided for @pocoLessonPocketbaseDockerAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Limited Docker control'**
+  String get pocoLessonPocketbaseDockerAccessTitle;
+
+  /// No description provided for @pocoLessonPocketbaseDockerAccessExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'PocketBase sometimes needs to inspect or restart trusted containers. This second socket proxy gives it a smaller permission set than the tool gateway receives.'**
+  String get pocoLessonPocketbaseDockerAccessExplanation;
+
+  /// No description provided for @pocoLessonDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your local dashboard'**
+  String get pocoLessonDashboardTitle;
+
+  /// No description provided for @pocoLessonDashboardExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'SQLPage reads operational databases through read-only mounts and turns them into a private dashboard. An initialization step makes optional data sources safe to query before they exist.'**
+  String get pocoLessonDashboardExplanation;
+
+  /// No description provided for @pocoLessonNotificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional notifications'**
+  String get pocoLessonNotificationsTitle;
+
+  /// No description provided for @pocoLessonNotificationsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Ntfy can provide a notification server that you own. It is behind an optional Compose profile, so it runs only when you deliberately enable it.'**
+  String get pocoLessonNotificationsExplanation;
+
+  /// No description provided for @pocoLessonPrivateAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Private remote access'**
+  String get pocoLessonPrivateAccessTitle;
+
+  /// No description provided for @pocoLessonPrivateAccessExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Tailscale can connect the VPS to your private network without opening another public application port. Its identity is stored in a persistent volume.'**
+  String get pocoLessonPrivateAccessExplanation;
+
+  /// No description provided for @pocoLessonLocalCaddyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alternative HTTPS proxy'**
+  String get pocoLessonLocalCaddyTitle;
+
+  /// No description provided for @pocoLessonLocalCaddyExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-managed Docker installations can run Caddy as a container for automatic HTTPS. The supported NixOS VPS uses native host Caddy instead, so this profile stays off there.'**
+  String get pocoLessonLocalCaddyExplanation;
+
+  /// No description provided for @pocoLessonVolumesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Persistent data'**
+  String get pocoLessonVolumesTitle;
+
+  /// No description provided for @pocoLessonVolumesExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Containers are replaceable; volumes are the durable storage underneath them. Databases, workspaces, credentials, backups, and downloaded models live here across restarts and upgrades.'**
+  String get pocoLessonVolumesExplanation;
+
+  /// No description provided for @pocoLessonNetworksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Private service networks'**
+  String get pocoLessonNetworksTitle;
+
+  /// No description provided for @pocoLessonNetworksExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Compose uses several small networks instead of one flat network. Each connection represents a specific trust relationship, limiting which services can reach one another.'**
+  String get pocoLessonNetworksExplanation;
+
   /// No description provided for @permissionSignoffTitle.
   ///
   /// In en, this message translates to:

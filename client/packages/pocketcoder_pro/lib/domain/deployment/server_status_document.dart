@@ -1,15 +1,16 @@
 import 'dart:convert';
 
 class ServerStatusDocument {
-  const ServerStatusDocument({
+  ServerStatusDocument({
     required this.schema,
     required this.runId,
     required this.phase,
     required this.updatedAt,
+    required Map<String, Object?> raw,
     this.detail,
     this.sourceCommit,
     this.error,
-  });
+  }) : raw = Map<String, Object?>.unmodifiable(raw);
 
   final int schema;
   final String runId;
@@ -18,6 +19,10 @@ class ServerStatusDocument {
   final String? sourceCommit;
   final DateTime updatedAt;
   final String? error;
+
+  /// The complete status payload, retained so newer server fields are not
+  /// discarded by an older client that does not understand them yet.
+  final Map<String, Object?> raw;
 
   static ServerStatusDocument? tryParse(String body) {
     try {
@@ -35,6 +40,7 @@ class ServerStatusDocument {
         detail: value['detail']?.toString(),
         sourceCommit: value['sourceCommit']?.toString(),
         error: value['error']?.toString(),
+        raw: Map<String, Object?>.from(value),
       );
     } on Object {
       return null;

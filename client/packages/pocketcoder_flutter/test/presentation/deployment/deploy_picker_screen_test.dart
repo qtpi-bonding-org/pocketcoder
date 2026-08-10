@@ -18,6 +18,12 @@ class FakeDeployOptionService implements IDeployOptionService {
           routePath: '/auth',
           requiresPurchase: true,
         ),
+        DeployOption(
+          id: 'elestio',
+          name: 'Elestio',
+          description: 'Managed hosting integration is not supported yet.',
+          availability: DeployOptionAvailability.comingSoon,
+        ),
       ];
 }
 
@@ -74,5 +80,46 @@ void main() {
     expect(capturedRoute, '/auth');
     expect(capturedExtra, isA<DeployCredentials>());
     expect((capturedExtra as DeployCredentials).email, 'reviewer@example.com');
+  });
+
+  testWidgets('shows coming-soon providers dimmed and disables selection',
+      (tester) async {
+    var selectionChecks = 0;
+    final router = GoRouter(
+      initialLocation: '/deploy',
+      routes: [
+        GoRoute(
+          path: '/deploy',
+          builder: (context, state) => DeployPickerScreen(
+            deployOptionService: FakeDeployOptionService(),
+            onEnsureDeployAccess: (_) async {
+              selectionChecks += 1;
+              return true;
+            },
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: router,
+    ));
+    await tester.pump();
+
+    expect(find.text('COMING SOON'), findsOneWidget);
+    final opacity = tester.widget<Opacity>(
+      find.ancestor(
+        of: find.textContaining('ELESTIO'),
+        matching: find.byType(Opacity),
+      ),
+    );
+    expect(opacity.opacity, 0.42);
+
+    await tester.tap(find.textContaining('ELESTIO'));
+    await tester.pump();
+    expect(selectionChecks, 0);
   });
 }

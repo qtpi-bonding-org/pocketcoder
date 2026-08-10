@@ -17,8 +17,8 @@ void main() {
       components.map((component) => component.name).toSet(),
       _screenInventory,
     );
-    expect(components, hasLength(30));
-    expect(stories, hasLength(52));
+    expect(components, hasLength(31));
+    expect(stories, hasLength(54));
 
     for (final story in stories) {
       await tester.pumpWidget(Builder(builder: story.builder));
@@ -85,6 +85,7 @@ const _screenInventory = {
   'AuthScreen',
   'ConfigScreen',
   'ProgressScreen',
+  'ProvisioningLessonCard',
   'DetailsScreen',
   'UpdateServerScreen',
 };

@@ -1,4 +1,5 @@
 services:
+  # POCO:BEGIN compose-pocketbase
   # 🏰 POCKETBASE CORE (Backend Only)
   pocketbase:
     image: pocketcoder-pocketbase:latest
@@ -61,7 +62,9 @@ services:
       # Control-plane only: PocketBase proxies Ollama's model catalog and
       # downloads without gaining a route to Goose or peer harnesses.
       - pocketcoder-ollama-control
+  # POCO:END compose-pocketbase
 
+  # POCO:BEGIN compose-agent
   # 🪿 GOOSE C2 (private agent core)
   # Core service -- starts with plain `docker compose up`, same as
   # PocketBase and mcp-gateway. It never publishes a host port; it shares
@@ -111,7 +114,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
+  # POCO:END compose-agent
 
+  # POCO:BEGIN compose-local-model
   # 🧠 OLLAMA (always-on local model runtime)
   #
   # This is a singleton runtime, not a dynamically provisioned harness. Its
@@ -139,7 +144,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
+  # POCO:END compose-local-model
 
+  # POCO:BEGIN compose-harness-images
   # Build-only images for dynamically provisioned peer harnesses. These
   # services never run under the normal stack: the inactive profile keeps
   # them out of `docker compose up`, while bootstrap/CI build and cache the
@@ -172,7 +179,9 @@ services:
       dockerfile: server/harness-adapter/Dockerfile
       args:
         ACP_AGENT_PACKAGE: "opencode-ai@1.18.11"
+  # POCO:END compose-harness-images
 
+  # POCO:BEGIN compose-mcp-sandbox
   # 🔒 DOCKER SOCKET PROXY - MCP (Security Layer for MCP Gateway)
   # Separate from docker-socket-proxy-write on purpose: the gateway spawns
   # arbitrary third-party catalog images and creates/attaches an isolation
@@ -258,7 +267,9 @@ services:
     depends_on:
       docker-socket-proxy-mcp:
         condition: service_healthy
+  # POCO:END compose-mcp-sandbox
 
+  # POCO:BEGIN compose-memory
   # 🧠 COGNEE (Agent Memory MCP Server)
   # Standalone MCP memory server for Goose — knowledge-graph + vector recall,
   # embedded storage (SQLite + LanceDB), no external DB services. Registered
@@ -329,7 +340,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+  # POCO:END compose-memory
 
+  # POCO:BEGIN compose-pocketbase-docker-access
   # 🔒 DOCKER SOCKET PROXY - WRITE (Security Layer for PocketBase)
   # Currently shared by both PocketBase (restart) and Dozzle (logs)
   # For production: uncomment docker-socket-proxy-read below and update Dozzle config
@@ -369,7 +382,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+  # POCO:END compose-pocketbase-docker-access
 
+  # POCO:BEGIN compose-dashboard
   # 📈 SQLPAGE data init — on_connect.sql ATTACHes goose's and cognee's
   # SQLite files in `immutable=1` mode (see comment below), which refuses
   # to open a file that doesn't exist yet. goose only creates sessions.db
@@ -439,7 +454,9 @@ services:
         condition: service_healthy
       sqlpage-data-init:
         condition: service_completed_successfully
+  # POCO:END compose-dashboard
 
+  # POCO:BEGIN compose-notifications
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
   ntfy:
@@ -468,7 +485,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+  # POCO:END compose-notifications
 
+  # POCO:BEGIN compose-private-access
   # 🔗 TAILSCALE (Remote Access Tunnel)
   # To enable: docker compose --profile tailscale up
   # Modes: TAILSCALE_MODE=private (default, Tailnet only) or TAILSCALE_MODE=funnel (public URL)
@@ -503,7 +522,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+  # POCO:END compose-private-access
 
+  # POCO:BEGIN compose-local-caddy
   # 🔒 CADDY (Automatic HTTPS Reverse Proxy)
   # Optional Docker-based proxy for local/self-managed Docker deployments.
   # The supported standard Linux path uses native host Caddy instead; the
@@ -535,7 +556,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+  # POCO:END compose-local-caddy
 
+# POCO:BEGIN compose-persistent-volumes
 volumes:
   pb_data:
   pb_backups:
@@ -553,7 +576,9 @@ volumes:
   cognee_data:        # cognee's embedded SQLite/LanceDB/Kuzu storage
   cognee_config:       # cognee.env, written by PocketBase, read by cognee
   ollama_models:       # downloaded local models; intentionally not in R2 cache
+# POCO:END compose-persistent-volumes
 
+# POCO:BEGIN compose-private-networks
 networks:
   pocketcoder-dashboard:
     driver: bridge
@@ -599,3 +624,4 @@ networks:
   pocketcoder-ollama-control:
     driver: bridge
     name: pocketcoder-ollama-control
+# POCO:END compose-private-networks

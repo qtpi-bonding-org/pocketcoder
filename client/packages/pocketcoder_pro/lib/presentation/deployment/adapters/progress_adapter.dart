@@ -9,11 +9,18 @@ import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/progress_view.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_tour_panel.dart';
+import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
 
 class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
-  const ProgressAdapter({super.key, required this.mapper});
+  const ProgressAdapter({
+    super.key,
+    required this.mapper,
+    required this.sourceService,
+  });
 
   final DeploymentMessageMapper mapper;
+  final GithubProvisioningSourceService sourceService;
 
   static DeploymentState _selectState(DeploymentState state) => state;
 
@@ -54,6 +61,12 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
           status: value.status,
           deploymentStatus: value.deploymentStatus,
           pollingAttempts: value.pollingAttempts,
+          serverStatusDocument: value.serverStatusDocument,
+          provisioningTour: ProvisioningTourPanel(
+            stage: value.deploymentStatus,
+            sourceCommit: value.serverStatusDocument?.sourceCommit,
+            sourceService: sourceService,
+          ),
           instance: value.instance,
           error: value.error,
           onAbort: () {
