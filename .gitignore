@@ -93,6 +93,7 @@ spikes/
 tooling/spikes/
 .mcp.json
 **/CLAUDE.md
+**/AGENTS.md
 *.swp
 *.swo
 server/pocketbase/backend/
