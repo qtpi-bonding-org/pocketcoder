@@ -18,7 +18,7 @@ void main() {
       _screenInventory,
     );
     expect(components, hasLength(30));
-    expect(stories, hasLength(50));
+    expect(stories, hasLength(52));
 
     for (final story in stories) {
       await tester.pumpWidget(Builder(builder: story.builder));
