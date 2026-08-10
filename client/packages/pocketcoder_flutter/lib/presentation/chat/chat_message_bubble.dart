@@ -29,7 +29,11 @@ Widget pocketcoderRoleHeader(
       : isSentByMe
           ? terminalColors.user
           : colors.primary;
-  final label = isSentByMe ? 'COMMANDER' : (isReasoning ? 'THINKING' : 'POCO');
+  final label = isSentByMe
+      ? context.l10n.chatCommanderRole
+      : (isReasoning
+          ? context.l10n.chatThinkingRole
+          : context.l10n.chatPocoRole);
 
   return Padding(
     padding: EdgeInsets.only(bottom: AppSizes.space),

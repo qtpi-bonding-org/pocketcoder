@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-09T10:17:21.281644
+// Generated at: 2026-08-10T10:27:05.325138
 
 import 'app_localizations.dart';
 
@@ -85,7 +85,10 @@ class L10nKeyResolver {
       'boot.poco.intro' => _l10n.bootPocoIntro,
       'boot.systems.nominal' => _l10n.bootSystemsNominal,
       'boot.welcome.back' => _l10n.bootWelcomeBack,
+      'chat.commander.role' => _l10n.chatCommanderRole,
       'chat.created' => _l10n.chatCreated,
+      'chat.decline' => _l10n.chatDecline,
+      'chat.elicitation.request' => _l10n.chatElicitationRequest,
       'chat.error' => _l10n.chatError,
       'chat.fetch.failed' => _l10n.chatFetchFailed,
       'chat.files.action' => _l10n.chatFilesAction,
@@ -99,19 +102,32 @@ class L10nKeyResolver {
       'chat.model.label' => _l10n.chatModelLabel,
       'chat.model.per.chat' => _l10n.chatModelPerChat,
       'chat.new.capability.request' => _l10n.chatNewCapabilityRequest,
+      'chat.no.fields.requested' => _l10n.chatNoFieldsRequested,
       'chat.not.found' => _l10n.chatNotFound,
+      'chat.poco.role' => _l10n.chatPocoRole,
       'chat.select.model.title' => _l10n.chatSelectModelTitle,
       'chat.send.failed' => _l10n.chatSendFailed,
+      'chat.send.tooltip' => _l10n.chatSendTooltip,
+      'chat.session.action' => _l10n.chatSessionAction,
       'chat.session.title' => _l10n.chatSessionTitle,
+      'chat.submit' => _l10n.chatSubmit,
       'chat.terminal.action' => _l10n.chatTerminalAction,
       'chat.thinking' => _l10n.chatThinking,
       'chat.thinking.live' => _l10n.chatThinkingLive,
+      'chat.thinking.role' => _l10n.chatThinkingRole,
       'chat.thought' => _l10n.chatThought,
       'chat.use.global.default' => _l10n.chatUseGlobalDefault,
       'deploy.choose.provider' => _l10n.deployChooseProvider,
+      'deploy.coming.soon' => _l10n.deployComingSoon,
       'deploy.pro.badge' => _l10n.deployProBadge,
       'deploy.select.provider' => _l10n.deploySelectProvider,
       'deploy.title' => _l10n.deployTitle,
+      'deployment.current.operation' => _l10n.deploymentCurrentOperation,
+      'deployment.error.code' => _l10n.deploymentErrorCode,
+      'deployment.last.signal' => _l10n.deploymentLastSignal,
+      'deployment.run.id' => _l10n.deploymentRunId,
+      'deployment.source.commit' => _l10n.deploymentSourceCommit,
+      'deployment.status.schema' => _l10n.deploymentStatusSchema,
       'error.auth.failed' => _l10n.errorAuthFailed,
       'error.auth.unauthorized' => _l10n.errorAuthUnauthorized,
       'error.generic' => _l10n.errorGeneric,
@@ -258,6 +274,60 @@ class L10nKeyResolver {
       'permission.patterns.label' => _l10n.permissionPatternsLabel,
       'permission.signoff.title' => _l10n.permissionSignoffTitle,
       'permission.update.failed' => _l10n.permissionUpdateFailed,
+      'poco.lesson.agent.explanation' => _l10n.pocoLessonAgentExplanation,
+      'poco.lesson.agent.title' => _l10n.pocoLessonAgentTitle,
+      'poco.lesson.compose.start.explanation' => _l10n.pocoLessonComposeStartExplanation,
+      'poco.lesson.compose.start.title' => _l10n.pocoLessonComposeStartTitle,
+      'poco.lesson.container.firewall.explanation' => _l10n.pocoLessonContainerFirewallExplanation,
+      'poco.lesson.container.firewall.title' => _l10n.pocoLessonContainerFirewallTitle,
+      'poco.lesson.dashboard.explanation' => _l10n.pocoLessonDashboardExplanation,
+      'poco.lesson.dashboard.title' => _l10n.pocoLessonDashboardTitle,
+      'poco.lesson.docker.explanation' => _l10n.pocoLessonDockerExplanation,
+      'poco.lesson.docker.title' => _l10n.pocoLessonDockerTitle,
+      'poco.lesson.harness.images.explanation' => _l10n.pocoLessonHarnessImagesExplanation,
+      'poco.lesson.harness.images.title' => _l10n.pocoLessonHarnessImagesTitle,
+      'poco.lesson.local.caddy.explanation' => _l10n.pocoLessonLocalCaddyExplanation,
+      'poco.lesson.local.caddy.title' => _l10n.pocoLessonLocalCaddyTitle,
+      'poco.lesson.local.model.explanation' => _l10n.pocoLessonLocalModelExplanation,
+      'poco.lesson.local.model.title' => _l10n.pocoLessonLocalModelTitle,
+      'poco.lesson.local.secrets.explanation' => _l10n.pocoLessonLocalSecretsExplanation,
+      'poco.lesson.local.secrets.title' => _l10n.pocoLessonLocalSecretsTitle,
+      'poco.lesson.mcp.sandbox.explanation' => _l10n.pocoLessonMcpSandboxExplanation,
+      'poco.lesson.mcp.sandbox.title' => _l10n.pocoLessonMcpSandboxTitle,
+      'poco.lesson.memory.explanation' => _l10n.pocoLessonMemoryExplanation,
+      'poco.lesson.memory.title' => _l10n.pocoLessonMemoryTitle,
+      'poco.lesson.networks.explanation' => _l10n.pocoLessonNetworksExplanation,
+      'poco.lesson.networks.title' => _l10n.pocoLessonNetworksTitle,
+      'poco.lesson.notifications.explanation' => _l10n.pocoLessonNotificationsExplanation,
+      'poco.lesson.notifications.title' => _l10n.pocoLessonNotificationsTitle,
+      'poco.lesson.owner.config.explanation' => _l10n.pocoLessonOwnerConfigExplanation,
+      'poco.lesson.owner.config.title' => _l10n.pocoLessonOwnerConfigTitle,
+      'poco.lesson.pocketbase.docker.access.explanation' => _l10n.pocoLessonPocketbaseDockerAccessExplanation,
+      'poco.lesson.pocketbase.docker.access.title' => _l10n.pocoLessonPocketbaseDockerAccessTitle,
+      'poco.lesson.pocketbase.explanation' => _l10n.pocoLessonPocketbaseExplanation,
+      'poco.lesson.pocketbase.title' => _l10n.pocoLessonPocketbaseTitle,
+      'poco.lesson.private.access.explanation' => _l10n.pocoLessonPrivateAccessExplanation,
+      'poco.lesson.private.access.title' => _l10n.pocoLessonPrivateAccessTitle,
+      'poco.lesson.public.firewall.explanation' => _l10n.pocoLessonPublicFirewallExplanation,
+      'poco.lesson.public.firewall.title' => _l10n.pocoLessonPublicFirewallTitle,
+      'poco.lesson.release.source.explanation' => _l10n.pocoLessonReleaseSourceExplanation,
+      'poco.lesson.release.source.title' => _l10n.pocoLessonReleaseSourceTitle,
+      'poco.lesson.ssh.explanation' => _l10n.pocoLessonSshExplanation,
+      'poco.lesson.ssh.title' => _l10n.pocoLessonSshTitle,
+      'poco.lesson.verified.images.explanation' => _l10n.pocoLessonVerifiedImagesExplanation,
+      'poco.lesson.verified.images.title' => _l10n.pocoLessonVerifiedImagesTitle,
+      'poco.lesson.volumes.explanation' => _l10n.pocoLessonVolumesExplanation,
+      'poco.lesson.volumes.title' => _l10n.pocoLessonVolumesTitle,
+      'poco.lesson.vps.storage.explanation' => _l10n.pocoLessonVpsStorageExplanation,
+      'poco.lesson.vps.storage.title' => _l10n.pocoLessonVpsStorageTitle,
+      'poco.provisioning.loading.source' => _l10n.pocoProvisioningLoadingSource,
+      'poco.provisioning.next' => _l10n.pocoProvisioningNext,
+      'poco.provisioning.previous' => _l10n.pocoProvisioningPrevious,
+      'poco.provisioning.show.concise' => _l10n.pocoProvisioningShowConcise,
+      'poco.provisioning.show.full' => _l10n.pocoProvisioningShowFull,
+      'poco.provisioning.source.unavailable' => _l10n.pocoProvisioningSourceUnavailable,
+      'poco.provisioning.tour.title' => _l10n.pocoProvisioningTourTitle,
+      'poco.provisioning.waiting.for.source' => _l10n.pocoProvisioningWaitingForSource,
       'provider.screen.add.key' => _l10n.providerScreenAddKey,
       'provider.screen.api.keys.section' => _l10n.providerScreenApiKeysSection,
       'provider.screen.default.badge' => _l10n.providerScreenDefaultBadge,
@@ -375,6 +445,7 @@ class L10nKeyResolver {
       'agent.config.dialog.title' => _l10n.agentConfigDialogTitle(args?['name'] as String? ?? ''),
       'agent.config.error.prefix' => _l10n.agentConfigErrorPrefix(args?['error'] as String? ?? ''),
       'agent.dialog.title' => _l10n.agentDialogTitle(args?['name'] as String? ?? ''),
+      'deployment.sync.attempt' => _l10n.deploymentSyncAttempt(args?['attempt'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'home.error.prefix' => _l10n.homeErrorPrefix(args?['error'] as String? ?? ''),
       'llm.api.key.dialog.title' => _l10n.llmApiKeyDialogTitle(args?['provider'] as String? ?? ''),
@@ -467,7 +538,10 @@ class L10nKeyResolver {
     'boot.poco.intro',
     'boot.systems.nominal',
     'boot.welcome.back',
+    'chat.commander.role',
     'chat.created',
+    'chat.decline',
+    'chat.elicitation.request',
     'chat.error',
     'chat.fetch.failed',
     'chat.files.action',
@@ -481,19 +555,33 @@ class L10nKeyResolver {
     'chat.model.label',
     'chat.model.per.chat',
     'chat.new.capability.request',
+    'chat.no.fields.requested',
     'chat.not.found',
+    'chat.poco.role',
     'chat.select.model.title',
     'chat.send.failed',
+    'chat.send.tooltip',
+    'chat.session.action',
     'chat.session.title',
+    'chat.submit',
     'chat.terminal.action',
     'chat.thinking',
     'chat.thinking.live',
+    'chat.thinking.role',
     'chat.thought',
     'chat.use.global.default',
     'deploy.choose.provider',
+    'deploy.coming.soon',
     'deploy.pro.badge',
     'deploy.select.provider',
     'deploy.title',
+    'deployment.current.operation',
+    'deployment.error.code',
+    'deployment.last.signal',
+    'deployment.run.id',
+    'deployment.source.commit',
+    'deployment.status.schema',
+    'deployment.sync.attempt',
     'error.auth.failed',
     'error.auth.unauthorized',
     'error.generic',
@@ -656,6 +744,60 @@ class L10nKeyResolver {
     'permission.requesting.label',
     'permission.signoff.title',
     'permission.update.failed',
+    'poco.lesson.agent.explanation',
+    'poco.lesson.agent.title',
+    'poco.lesson.compose.start.explanation',
+    'poco.lesson.compose.start.title',
+    'poco.lesson.container.firewall.explanation',
+    'poco.lesson.container.firewall.title',
+    'poco.lesson.dashboard.explanation',
+    'poco.lesson.dashboard.title',
+    'poco.lesson.docker.explanation',
+    'poco.lesson.docker.title',
+    'poco.lesson.harness.images.explanation',
+    'poco.lesson.harness.images.title',
+    'poco.lesson.local.caddy.explanation',
+    'poco.lesson.local.caddy.title',
+    'poco.lesson.local.model.explanation',
+    'poco.lesson.local.model.title',
+    'poco.lesson.local.secrets.explanation',
+    'poco.lesson.local.secrets.title',
+    'poco.lesson.mcp.sandbox.explanation',
+    'poco.lesson.mcp.sandbox.title',
+    'poco.lesson.memory.explanation',
+    'poco.lesson.memory.title',
+    'poco.lesson.networks.explanation',
+    'poco.lesson.networks.title',
+    'poco.lesson.notifications.explanation',
+    'poco.lesson.notifications.title',
+    'poco.lesson.owner.config.explanation',
+    'poco.lesson.owner.config.title',
+    'poco.lesson.pocketbase.docker.access.explanation',
+    'poco.lesson.pocketbase.docker.access.title',
+    'poco.lesson.pocketbase.explanation',
+    'poco.lesson.pocketbase.title',
+    'poco.lesson.private.access.explanation',
+    'poco.lesson.private.access.title',
+    'poco.lesson.public.firewall.explanation',
+    'poco.lesson.public.firewall.title',
+    'poco.lesson.release.source.explanation',
+    'poco.lesson.release.source.title',
+    'poco.lesson.ssh.explanation',
+    'poco.lesson.ssh.title',
+    'poco.lesson.verified.images.explanation',
+    'poco.lesson.verified.images.title',
+    'poco.lesson.volumes.explanation',
+    'poco.lesson.volumes.title',
+    'poco.lesson.vps.storage.explanation',
+    'poco.lesson.vps.storage.title',
+    'poco.provisioning.loading.source',
+    'poco.provisioning.next',
+    'poco.provisioning.previous',
+    'poco.provisioning.show.concise',
+    'poco.provisioning.show.full',
+    'poco.provisioning.source.unavailable',
+    'poco.provisioning.tour.title',
+    'poco.provisioning.waiting.for.source',
     'provider.screen.add.key',
     'provider.screen.add.key.body',
     'provider.screen.add.key.title',
@@ -843,7 +985,10 @@ class L10nKeyResolver {
     'bootPocoIntro': 'boot.poco.intro',
     'bootSystemsNominal': 'boot.systems.nominal',
     'bootWelcomeBack': 'boot.welcome.back',
+    'chatCommanderRole': 'chat.commander.role',
     'chatCreated': 'chat.created',
+    'chatDecline': 'chat.decline',
+    'chatElicitationRequest': 'chat.elicitation.request',
     'chatError': 'chat.error',
     'chatFetchFailed': 'chat.fetch.failed',
     'chatFilesAction': 'chat.files.action',
@@ -857,19 +1002,33 @@ class L10nKeyResolver {
     'chatModelLabel': 'chat.model.label',
     'chatModelPerChat': 'chat.model.per.chat',
     'chatNewCapabilityRequest': 'chat.new.capability.request',
+    'chatNoFieldsRequested': 'chat.no.fields.requested',
     'chatNotFound': 'chat.not.found',
+    'chatPocoRole': 'chat.poco.role',
     'chatSelectModelTitle': 'chat.select.model.title',
     'chatSendFailed': 'chat.send.failed',
+    'chatSendTooltip': 'chat.send.tooltip',
+    'chatSessionAction': 'chat.session.action',
     'chatSessionTitle': 'chat.session.title',
+    'chatSubmit': 'chat.submit',
     'chatTerminalAction': 'chat.terminal.action',
     'chatThinking': 'chat.thinking',
     'chatThinkingLive': 'chat.thinking.live',
+    'chatThinkingRole': 'chat.thinking.role',
     'chatThought': 'chat.thought',
     'chatUseGlobalDefault': 'chat.use.global.default',
     'deployChooseProvider': 'deploy.choose.provider',
+    'deployComingSoon': 'deploy.coming.soon',
     'deployProBadge': 'deploy.pro.badge',
     'deploySelectProvider': 'deploy.select.provider',
     'deployTitle': 'deploy.title',
+    'deploymentCurrentOperation': 'deployment.current.operation',
+    'deploymentErrorCode': 'deployment.error.code',
+    'deploymentLastSignal': 'deployment.last.signal',
+    'deploymentRunId': 'deployment.run.id',
+    'deploymentSourceCommit': 'deployment.source.commit',
+    'deploymentStatusSchema': 'deployment.status.schema',
+    'deploymentSyncAttempt': 'deployment.sync.attempt',
     'errorAuthFailed': 'error.auth.failed',
     'errorAuthUnauthorized': 'error.auth.unauthorized',
     'errorGeneric': 'error.generic',
@@ -1032,6 +1191,60 @@ class L10nKeyResolver {
     'permissionRequestingLabel': 'permission.requesting.label',
     'permissionSignoffTitle': 'permission.signoff.title',
     'permissionUpdateFailed': 'permission.update.failed',
+    'pocoLessonAgentExplanation': 'poco.lesson.agent.explanation',
+    'pocoLessonAgentTitle': 'poco.lesson.agent.title',
+    'pocoLessonComposeStartExplanation': 'poco.lesson.compose.start.explanation',
+    'pocoLessonComposeStartTitle': 'poco.lesson.compose.start.title',
+    'pocoLessonContainerFirewallExplanation': 'poco.lesson.container.firewall.explanation',
+    'pocoLessonContainerFirewallTitle': 'poco.lesson.container.firewall.title',
+    'pocoLessonDashboardExplanation': 'poco.lesson.dashboard.explanation',
+    'pocoLessonDashboardTitle': 'poco.lesson.dashboard.title',
+    'pocoLessonDockerExplanation': 'poco.lesson.docker.explanation',
+    'pocoLessonDockerTitle': 'poco.lesson.docker.title',
+    'pocoLessonHarnessImagesExplanation': 'poco.lesson.harness.images.explanation',
+    'pocoLessonHarnessImagesTitle': 'poco.lesson.harness.images.title',
+    'pocoLessonLocalCaddyExplanation': 'poco.lesson.local.caddy.explanation',
+    'pocoLessonLocalCaddyTitle': 'poco.lesson.local.caddy.title',
+    'pocoLessonLocalModelExplanation': 'poco.lesson.local.model.explanation',
+    'pocoLessonLocalModelTitle': 'poco.lesson.local.model.title',
+    'pocoLessonLocalSecretsExplanation': 'poco.lesson.local.secrets.explanation',
+    'pocoLessonLocalSecretsTitle': 'poco.lesson.local.secrets.title',
+    'pocoLessonMcpSandboxExplanation': 'poco.lesson.mcp.sandbox.explanation',
+    'pocoLessonMcpSandboxTitle': 'poco.lesson.mcp.sandbox.title',
+    'pocoLessonMemoryExplanation': 'poco.lesson.memory.explanation',
+    'pocoLessonMemoryTitle': 'poco.lesson.memory.title',
+    'pocoLessonNetworksExplanation': 'poco.lesson.networks.explanation',
+    'pocoLessonNetworksTitle': 'poco.lesson.networks.title',
+    'pocoLessonNotificationsExplanation': 'poco.lesson.notifications.explanation',
+    'pocoLessonNotificationsTitle': 'poco.lesson.notifications.title',
+    'pocoLessonOwnerConfigExplanation': 'poco.lesson.owner.config.explanation',
+    'pocoLessonOwnerConfigTitle': 'poco.lesson.owner.config.title',
+    'pocoLessonPocketbaseDockerAccessExplanation': 'poco.lesson.pocketbase.docker.access.explanation',
+    'pocoLessonPocketbaseDockerAccessTitle': 'poco.lesson.pocketbase.docker.access.title',
+    'pocoLessonPocketbaseExplanation': 'poco.lesson.pocketbase.explanation',
+    'pocoLessonPocketbaseTitle': 'poco.lesson.pocketbase.title',
+    'pocoLessonPrivateAccessExplanation': 'poco.lesson.private.access.explanation',
+    'pocoLessonPrivateAccessTitle': 'poco.lesson.private.access.title',
+    'pocoLessonPublicFirewallExplanation': 'poco.lesson.public.firewall.explanation',
+    'pocoLessonPublicFirewallTitle': 'poco.lesson.public.firewall.title',
+    'pocoLessonReleaseSourceExplanation': 'poco.lesson.release.source.explanation',
+    'pocoLessonReleaseSourceTitle': 'poco.lesson.release.source.title',
+    'pocoLessonSshExplanation': 'poco.lesson.ssh.explanation',
+    'pocoLessonSshTitle': 'poco.lesson.ssh.title',
+    'pocoLessonVerifiedImagesExplanation': 'poco.lesson.verified.images.explanation',
+    'pocoLessonVerifiedImagesTitle': 'poco.lesson.verified.images.title',
+    'pocoLessonVolumesExplanation': 'poco.lesson.volumes.explanation',
+    'pocoLessonVolumesTitle': 'poco.lesson.volumes.title',
+    'pocoLessonVpsStorageExplanation': 'poco.lesson.vps.storage.explanation',
+    'pocoLessonVpsStorageTitle': 'poco.lesson.vps.storage.title',
+    'pocoProvisioningLoadingSource': 'poco.provisioning.loading.source',
+    'pocoProvisioningNext': 'poco.provisioning.next',
+    'pocoProvisioningPrevious': 'poco.provisioning.previous',
+    'pocoProvisioningShowConcise': 'poco.provisioning.show.concise',
+    'pocoProvisioningShowFull': 'poco.provisioning.show.full',
+    'pocoProvisioningSourceUnavailable': 'poco.provisioning.source.unavailable',
+    'pocoProvisioningTourTitle': 'poco.provisioning.tour.title',
+    'pocoProvisioningWaitingForSource': 'poco.provisioning.waiting.for.source',
     'providerScreenAddKey': 'provider.screen.add.key',
     'providerScreenAddKeyBody': 'provider.screen.add.key.body',
     'providerScreenAddKeyTitle': 'provider.screen.add.key.title',
@@ -1216,7 +1429,10 @@ class L10nKeyResolver {
     'boot.poco.intro': 'bootPocoIntro',
     'boot.systems.nominal': 'bootSystemsNominal',
     'boot.welcome.back': 'bootWelcomeBack',
+    'chat.commander.role': 'chatCommanderRole',
     'chat.created': 'chatCreated',
+    'chat.decline': 'chatDecline',
+    'chat.elicitation.request': 'chatElicitationRequest',
     'chat.error': 'chatError',
     'chat.fetch.failed': 'chatFetchFailed',
     'chat.files.action': 'chatFilesAction',
@@ -1230,19 +1446,33 @@ class L10nKeyResolver {
     'chat.model.label': 'chatModelLabel',
     'chat.model.per.chat': 'chatModelPerChat',
     'chat.new.capability.request': 'chatNewCapabilityRequest',
+    'chat.no.fields.requested': 'chatNoFieldsRequested',
     'chat.not.found': 'chatNotFound',
+    'chat.poco.role': 'chatPocoRole',
     'chat.select.model.title': 'chatSelectModelTitle',
     'chat.send.failed': 'chatSendFailed',
+    'chat.send.tooltip': 'chatSendTooltip',
+    'chat.session.action': 'chatSessionAction',
     'chat.session.title': 'chatSessionTitle',
+    'chat.submit': 'chatSubmit',
     'chat.terminal.action': 'chatTerminalAction',
     'chat.thinking': 'chatThinking',
     'chat.thinking.live': 'chatThinkingLive',
+    'chat.thinking.role': 'chatThinkingRole',
     'chat.thought': 'chatThought',
     'chat.use.global.default': 'chatUseGlobalDefault',
     'deploy.choose.provider': 'deployChooseProvider',
+    'deploy.coming.soon': 'deployComingSoon',
     'deploy.pro.badge': 'deployProBadge',
     'deploy.select.provider': 'deploySelectProvider',
     'deploy.title': 'deployTitle',
+    'deployment.current.operation': 'deploymentCurrentOperation',
+    'deployment.error.code': 'deploymentErrorCode',
+    'deployment.last.signal': 'deploymentLastSignal',
+    'deployment.run.id': 'deploymentRunId',
+    'deployment.source.commit': 'deploymentSourceCommit',
+    'deployment.status.schema': 'deploymentStatusSchema',
+    'deployment.sync.attempt': 'deploymentSyncAttempt',
     'error.auth.failed': 'errorAuthFailed',
     'error.auth.unauthorized': 'errorAuthUnauthorized',
     'error.generic': 'errorGeneric',
@@ -1405,6 +1635,60 @@ class L10nKeyResolver {
     'permission.requesting.label': 'permissionRequestingLabel',
     'permission.signoff.title': 'permissionSignoffTitle',
     'permission.update.failed': 'permissionUpdateFailed',
+    'poco.lesson.agent.explanation': 'pocoLessonAgentExplanation',
+    'poco.lesson.agent.title': 'pocoLessonAgentTitle',
+    'poco.lesson.compose.start.explanation': 'pocoLessonComposeStartExplanation',
+    'poco.lesson.compose.start.title': 'pocoLessonComposeStartTitle',
+    'poco.lesson.container.firewall.explanation': 'pocoLessonContainerFirewallExplanation',
+    'poco.lesson.container.firewall.title': 'pocoLessonContainerFirewallTitle',
+    'poco.lesson.dashboard.explanation': 'pocoLessonDashboardExplanation',
+    'poco.lesson.dashboard.title': 'pocoLessonDashboardTitle',
+    'poco.lesson.docker.explanation': 'pocoLessonDockerExplanation',
+    'poco.lesson.docker.title': 'pocoLessonDockerTitle',
+    'poco.lesson.harness.images.explanation': 'pocoLessonHarnessImagesExplanation',
+    'poco.lesson.harness.images.title': 'pocoLessonHarnessImagesTitle',
+    'poco.lesson.local.caddy.explanation': 'pocoLessonLocalCaddyExplanation',
+    'poco.lesson.local.caddy.title': 'pocoLessonLocalCaddyTitle',
+    'poco.lesson.local.model.explanation': 'pocoLessonLocalModelExplanation',
+    'poco.lesson.local.model.title': 'pocoLessonLocalModelTitle',
+    'poco.lesson.local.secrets.explanation': 'pocoLessonLocalSecretsExplanation',
+    'poco.lesson.local.secrets.title': 'pocoLessonLocalSecretsTitle',
+    'poco.lesson.mcp.sandbox.explanation': 'pocoLessonMcpSandboxExplanation',
+    'poco.lesson.mcp.sandbox.title': 'pocoLessonMcpSandboxTitle',
+    'poco.lesson.memory.explanation': 'pocoLessonMemoryExplanation',
+    'poco.lesson.memory.title': 'pocoLessonMemoryTitle',
+    'poco.lesson.networks.explanation': 'pocoLessonNetworksExplanation',
+    'poco.lesson.networks.title': 'pocoLessonNetworksTitle',
+    'poco.lesson.notifications.explanation': 'pocoLessonNotificationsExplanation',
+    'poco.lesson.notifications.title': 'pocoLessonNotificationsTitle',
+    'poco.lesson.owner.config.explanation': 'pocoLessonOwnerConfigExplanation',
+    'poco.lesson.owner.config.title': 'pocoLessonOwnerConfigTitle',
+    'poco.lesson.pocketbase.docker.access.explanation': 'pocoLessonPocketbaseDockerAccessExplanation',
+    'poco.lesson.pocketbase.docker.access.title': 'pocoLessonPocketbaseDockerAccessTitle',
+    'poco.lesson.pocketbase.explanation': 'pocoLessonPocketbaseExplanation',
+    'poco.lesson.pocketbase.title': 'pocoLessonPocketbaseTitle',
+    'poco.lesson.private.access.explanation': 'pocoLessonPrivateAccessExplanation',
+    'poco.lesson.private.access.title': 'pocoLessonPrivateAccessTitle',
+    'poco.lesson.public.firewall.explanation': 'pocoLessonPublicFirewallExplanation',
+    'poco.lesson.public.firewall.title': 'pocoLessonPublicFirewallTitle',
+    'poco.lesson.release.source.explanation': 'pocoLessonReleaseSourceExplanation',
+    'poco.lesson.release.source.title': 'pocoLessonReleaseSourceTitle',
+    'poco.lesson.ssh.explanation': 'pocoLessonSshExplanation',
+    'poco.lesson.ssh.title': 'pocoLessonSshTitle',
+    'poco.lesson.verified.images.explanation': 'pocoLessonVerifiedImagesExplanation',
+    'poco.lesson.verified.images.title': 'pocoLessonVerifiedImagesTitle',
+    'poco.lesson.volumes.explanation': 'pocoLessonVolumesExplanation',
+    'poco.lesson.volumes.title': 'pocoLessonVolumesTitle',
+    'poco.lesson.vps.storage.explanation': 'pocoLessonVpsStorageExplanation',
+    'poco.lesson.vps.storage.title': 'pocoLessonVpsStorageTitle',
+    'poco.provisioning.loading.source': 'pocoProvisioningLoadingSource',
+    'poco.provisioning.next': 'pocoProvisioningNext',
+    'poco.provisioning.previous': 'pocoProvisioningPrevious',
+    'poco.provisioning.show.concise': 'pocoProvisioningShowConcise',
+    'poco.provisioning.show.full': 'pocoProvisioningShowFull',
+    'poco.provisioning.source.unavailable': 'pocoProvisioningSourceUnavailable',
+    'poco.provisioning.tour.title': 'pocoProvisioningTourTitle',
+    'poco.provisioning.waiting.for.source': 'pocoProvisioningWaitingForSource',
     'provider.screen.add.key': 'providerScreenAddKey',
     'provider.screen.add.key.body': 'providerScreenAddKeyBody',
     'provider.screen.add.key.title': 'providerScreenAddKeyTitle',
@@ -1596,7 +1880,10 @@ abstract class L10nKeys {
   static const bootPocoIntro = 'boot.poco.intro';
   static const bootSystemsNominal = 'boot.systems.nominal';
   static const bootWelcomeBack = 'boot.welcome.back';
+  static const chatCommanderRole = 'chat.commander.role';
   static const chatCreated = 'chat.created';
+  static const chatDecline = 'chat.decline';
+  static const chatElicitationRequest = 'chat.elicitation.request';
   static const chatError = 'chat.error';
   static const chatFetchFailed = 'chat.fetch.failed';
   static const chatFilesAction = 'chat.files.action';
@@ -1610,19 +1897,33 @@ abstract class L10nKeys {
   static const chatModelLabel = 'chat.model.label';
   static const chatModelPerChat = 'chat.model.per.chat';
   static const chatNewCapabilityRequest = 'chat.new.capability.request';
+  static const chatNoFieldsRequested = 'chat.no.fields.requested';
   static const chatNotFound = 'chat.not.found';
+  static const chatPocoRole = 'chat.poco.role';
   static const chatSelectModelTitle = 'chat.select.model.title';
   static const chatSendFailed = 'chat.send.failed';
+  static const chatSendTooltip = 'chat.send.tooltip';
+  static const chatSessionAction = 'chat.session.action';
   static const chatSessionTitle = 'chat.session.title';
+  static const chatSubmit = 'chat.submit';
   static const chatTerminalAction = 'chat.terminal.action';
   static const chatThinking = 'chat.thinking';
   static const chatThinkingLive = 'chat.thinking.live';
+  static const chatThinkingRole = 'chat.thinking.role';
   static const chatThought = 'chat.thought';
   static const chatUseGlobalDefault = 'chat.use.global.default';
   static const deployChooseProvider = 'deploy.choose.provider';
+  static const deployComingSoon = 'deploy.coming.soon';
   static const deployProBadge = 'deploy.pro.badge';
   static const deploySelectProvider = 'deploy.select.provider';
   static const deployTitle = 'deploy.title';
+  static const deploymentCurrentOperation = 'deployment.current.operation';
+  static const deploymentErrorCode = 'deployment.error.code';
+  static const deploymentLastSignal = 'deployment.last.signal';
+  static const deploymentRunId = 'deployment.run.id';
+  static const deploymentSourceCommit = 'deployment.source.commit';
+  static const deploymentStatusSchema = 'deployment.status.schema';
+  static (String, Map<String, dynamic>) deploymentSyncAttempt(int attempt) => ('deployment.sync.attempt', {'attempt': attempt});
   static const errorAuthFailed = 'error.auth.failed';
   static const errorAuthUnauthorized = 'error.auth.unauthorized';
   static const errorGeneric = 'error.generic';
@@ -1785,6 +2086,60 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) permissionRequestingLabel(String source) => ('permission.requesting.label', {'source': source});
   static const permissionSignoffTitle = 'permission.signoff.title';
   static const permissionUpdateFailed = 'permission.update.failed';
+  static const pocoLessonAgentExplanation = 'poco.lesson.agent.explanation';
+  static const pocoLessonAgentTitle = 'poco.lesson.agent.title';
+  static const pocoLessonComposeStartExplanation = 'poco.lesson.compose.start.explanation';
+  static const pocoLessonComposeStartTitle = 'poco.lesson.compose.start.title';
+  static const pocoLessonContainerFirewallExplanation = 'poco.lesson.container.firewall.explanation';
+  static const pocoLessonContainerFirewallTitle = 'poco.lesson.container.firewall.title';
+  static const pocoLessonDashboardExplanation = 'poco.lesson.dashboard.explanation';
+  static const pocoLessonDashboardTitle = 'poco.lesson.dashboard.title';
+  static const pocoLessonDockerExplanation = 'poco.lesson.docker.explanation';
+  static const pocoLessonDockerTitle = 'poco.lesson.docker.title';
+  static const pocoLessonHarnessImagesExplanation = 'poco.lesson.harness.images.explanation';
+  static const pocoLessonHarnessImagesTitle = 'poco.lesson.harness.images.title';
+  static const pocoLessonLocalCaddyExplanation = 'poco.lesson.local.caddy.explanation';
+  static const pocoLessonLocalCaddyTitle = 'poco.lesson.local.caddy.title';
+  static const pocoLessonLocalModelExplanation = 'poco.lesson.local.model.explanation';
+  static const pocoLessonLocalModelTitle = 'poco.lesson.local.model.title';
+  static const pocoLessonLocalSecretsExplanation = 'poco.lesson.local.secrets.explanation';
+  static const pocoLessonLocalSecretsTitle = 'poco.lesson.local.secrets.title';
+  static const pocoLessonMcpSandboxExplanation = 'poco.lesson.mcp.sandbox.explanation';
+  static const pocoLessonMcpSandboxTitle = 'poco.lesson.mcp.sandbox.title';
+  static const pocoLessonMemoryExplanation = 'poco.lesson.memory.explanation';
+  static const pocoLessonMemoryTitle = 'poco.lesson.memory.title';
+  static const pocoLessonNetworksExplanation = 'poco.lesson.networks.explanation';
+  static const pocoLessonNetworksTitle = 'poco.lesson.networks.title';
+  static const pocoLessonNotificationsExplanation = 'poco.lesson.notifications.explanation';
+  static const pocoLessonNotificationsTitle = 'poco.lesson.notifications.title';
+  static const pocoLessonOwnerConfigExplanation = 'poco.lesson.owner.config.explanation';
+  static const pocoLessonOwnerConfigTitle = 'poco.lesson.owner.config.title';
+  static const pocoLessonPocketbaseDockerAccessExplanation = 'poco.lesson.pocketbase.docker.access.explanation';
+  static const pocoLessonPocketbaseDockerAccessTitle = 'poco.lesson.pocketbase.docker.access.title';
+  static const pocoLessonPocketbaseExplanation = 'poco.lesson.pocketbase.explanation';
+  static const pocoLessonPocketbaseTitle = 'poco.lesson.pocketbase.title';
+  static const pocoLessonPrivateAccessExplanation = 'poco.lesson.private.access.explanation';
+  static const pocoLessonPrivateAccessTitle = 'poco.lesson.private.access.title';
+  static const pocoLessonPublicFirewallExplanation = 'poco.lesson.public.firewall.explanation';
+  static const pocoLessonPublicFirewallTitle = 'poco.lesson.public.firewall.title';
+  static const pocoLessonReleaseSourceExplanation = 'poco.lesson.release.source.explanation';
+  static const pocoLessonReleaseSourceTitle = 'poco.lesson.release.source.title';
+  static const pocoLessonSshExplanation = 'poco.lesson.ssh.explanation';
+  static const pocoLessonSshTitle = 'poco.lesson.ssh.title';
+  static const pocoLessonVerifiedImagesExplanation = 'poco.lesson.verified.images.explanation';
+  static const pocoLessonVerifiedImagesTitle = 'poco.lesson.verified.images.title';
+  static const pocoLessonVolumesExplanation = 'poco.lesson.volumes.explanation';
+  static const pocoLessonVolumesTitle = 'poco.lesson.volumes.title';
+  static const pocoLessonVpsStorageExplanation = 'poco.lesson.vps.storage.explanation';
+  static const pocoLessonVpsStorageTitle = 'poco.lesson.vps.storage.title';
+  static const pocoProvisioningLoadingSource = 'poco.provisioning.loading.source';
+  static const pocoProvisioningNext = 'poco.provisioning.next';
+  static const pocoProvisioningPrevious = 'poco.provisioning.previous';
+  static const pocoProvisioningShowConcise = 'poco.provisioning.show.concise';
+  static const pocoProvisioningShowFull = 'poco.provisioning.show.full';
+  static const pocoProvisioningSourceUnavailable = 'poco.provisioning.source.unavailable';
+  static const pocoProvisioningTourTitle = 'poco.provisioning.tour.title';
+  static const pocoProvisioningWaitingForSource = 'poco.provisioning.waiting.for.source';
   static const providerScreenAddKey = 'provider.screen.add.key';
   static (String, Map<String, dynamic>) providerScreenAddKeyBody(String provider) => ('provider.screen.add.key.body', {'provider': provider});
   static (String, Map<String, dynamic>) providerScreenAddKeyTitle(String provider) => ('provider.screen.add.key.title', {'provider': provider});

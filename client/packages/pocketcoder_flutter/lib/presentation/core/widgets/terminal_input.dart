@@ -7,6 +7,8 @@ class TerminalInput extends StatefulWidget {
   final VoidCallback onSubmitted;
   final String prompt;
   final bool enabled;
+  final bool showSendButton;
+  final String? sendTooltip;
 
   const TerminalInput({
     super.key,
@@ -14,6 +16,8 @@ class TerminalInput extends StatefulWidget {
     required this.onSubmitted,
     this.prompt = '%',
     this.enabled = true,
+    this.showSendButton = false,
+    this.sendTooltip,
   });
 
   @override
@@ -58,13 +62,21 @@ class _TerminalInputState extends State<TerminalInput> {
       ),
       decoration: BoxDecoration(
         color: colors.surface,
+        border: Border(
+          top: BorderSide(
+            color: colors.onSurface.withValues(alpha: 0.2),
+            width: AppSizes.borderWidth,
+          ),
+        ),
       ),
       child: Row(
         children: [
           Text(
             '${widget.prompt} ',
             style: TextStyle(
-              color: widget.enabled ? terminalColors.attention : colors.onSurface.withValues(alpha: 0.3),
+              color: widget.enabled
+                  ? terminalColors.attention
+                  : colors.onSurface.withValues(alpha: 0.3),
               fontFamily: AppFonts.bodyFamily,
               package: 'pocketcoder_flutter',
               fontSize: AppSizes.fontStandard,
@@ -100,6 +112,29 @@ class _TerminalInputState extends State<TerminalInput> {
               ),
             ),
           ),
+          if (widget.showSendButton)
+            IconButton(
+              onPressed: widget.enabled ? widget.onSubmitted : null,
+              tooltip: widget.sendTooltip ?? context.l10n.chatSendTooltip,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(
+                minWidth: AppSizes.buttonHeight,
+                minHeight: AppSizes.buttonHeight,
+              ),
+              icon: Text(
+                '>',
+                style: TextStyle(
+                  color: widget.enabled
+                      ? terminalColors.attention
+                      : colors.onSurface.withValues(alpha: 0.3),
+                  fontFamily: AppFonts.bodyFamily,
+                  package: 'pocketcoder_flutter',
+                  fontSize: AppSizes.fontStandard,
+                  fontWeight: AppFonts.heavy,
+                ),
+              ),
+            ),
         ],
       ),
     );

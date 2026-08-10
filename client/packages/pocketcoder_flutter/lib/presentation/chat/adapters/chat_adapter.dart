@@ -31,7 +31,8 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
     return UiFlowListener<ChatCubit, ChatState>(
       listener: (context, value) {
         if (value.error != null) {
-          VimToast.show(context, '${value.error}', color: context.colorScheme.error);
+          VimToast.show(context, '${value.error}',
+              color: context.colorScheme.error);
         }
       },
       child: ValueListenableBuilder<ChatState>(
@@ -44,9 +45,11 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
             return ChatView(
               chatId: chatId,
               conversation: value.conversation,
-              title: value.conversation.sessionState.title ?? context.l10n.chatSessionTitle,
+              title: value.conversation.sessionState.title ??
+                  context.l10n.chatSessionTitle,
               isLoading: value.isLoading,
-              isRunning: value.isLoading || value.lastOperation == AgentChatOperation.sendPrompt,
+              isRunning: value.isLoading ||
+                  value.lastOperation == AgentChatOperation.sendPrompt,
               modes: controlsValue.modes,
               config: controlsValue.config,
               onOpen: (id) {
@@ -59,7 +62,8 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
               onCancel: chatCubit.cancel,
               onSelectMode: controls.selectMode,
               onSetOption: controls.setOption,
-              onPermissionOptionSelected: (requestId, {optionId, cancelled = false}) {
+              onPermissionOptionSelected: (requestId,
+                  {optionId, cancelled = false}) {
                 final cubit = context.read<PermissionCubit>();
                 if (cancelled || optionId == null) {
                   cubit.deny();
