@@ -84,6 +84,13 @@ tobedeleted/
 out.json
 audit-status/
 audit/
+.worktrees/
+docs/
+!website/src/content/docs/
+!website/src/content/docs/**
+**/CLAUDE.md
+*.swp
+*.swo
 server/pocketbase/backend/
 server/pocketbase/.gocache/
 server/pocketbase/pocketcoder
