@@ -1,6 +1,10 @@
 { config, pkgs, ... }:
 
+let
+  caddyTemplate = ../../client/packages/pocketcoder_pro/assets/deployment/Caddyfile.template;
+in
 {
+
   # --- IP detection + Caddyfile generation ---
   systemd.services.detect-public-ip = {
     description = "Detect public IP and generate Caddyfile with sslip.io domain";
@@ -12,7 +16,7 @@
       Type = "oneshot";
       RemainAfterExit = true;
     };
-    path = with pkgs; [ curl coreutils ];
+    path = with pkgs; [ curl coreutils gnused ];
     script = ''
       set -euo pipefail
 
@@ -45,30 +49,13 @@
 
       echo "sslip.io domain: $DOMAIN"
 
-      # Write Caddyfile
-      cat > /etc/caddy/Caddyfile <<EOF
-      :80 {
-        handle /_pocketcoder/status.json {
-          uri strip_prefix /_pocketcoder
-          root * /var/lib/pocketcoder/public
-          file_server
-        }
-        handle {
-          redir https://{host}{uri} permanent
-        }
-      }
-
-      $DOMAIN {
-        handle /_pocketcoder/status.json {
-          uri strip_prefix /_pocketcoder
-          root * /var/lib/pocketcoder/public
-          file_server
-        }
-        handle {
-          reverse_proxy localhost:8090
-        }
-      }
-      EOF
+      sed \
+        -e 's|{{CADDY_GLOBAL_OPTIONS}}||g' \
+        -e "s|{{DOMAIN}}|$DOMAIN|g" \
+        -e 's|{{STATUS_ROOT}}|/var/lib/pocketcoder/public|g' \
+        -e 's|{{UPSTREAM}}|127.0.0.1:8090|g' \
+        ${caddyTemplate} \
+        > /etc/caddy/Caddyfile
 
       # Write domain env for PocketCoder services
       cat > /etc/pocketcoder/domain.env <<EOF

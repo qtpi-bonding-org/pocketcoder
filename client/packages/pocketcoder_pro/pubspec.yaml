@@ -27,7 +27,7 @@ dependencies:
   flutter_aeroform:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
-      ref: "0421fc3"
+      ref: "c6e2ca9"
   http: ^1.2.0
   flutter_secure_storage: ^10.0.0
   pocketbase: ^0.23.2
@@ -49,4 +49,5 @@ dev_dependencies:
 
 flutter:
   assets:
+    - assets/deployment/Caddyfile.template
     - assets/deployment/standard_linux_bootstrap.sh

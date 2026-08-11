@@ -80,7 +80,7 @@ dependencies:
   ag_ui_widgets_flutter:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
-      ref: b609355484e1d2bef8689199ef35b6dfd92e80da
+      ref: 79e2e5c4729e615609f694e4b400ea4de81f89ef
 dependency_overrides:
   webcrypto:
     git:

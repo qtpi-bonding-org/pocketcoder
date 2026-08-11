@@ -1,0 +1,21 @@
+{{CADDY_GLOBAL_OPTIONS}}:80 {
+  handle /_pocketcoder/status.json* {
+    uri strip_prefix /_pocketcoder
+    root * {{STATUS_ROOT}}
+    file_server
+  }
+  handle {
+    redir https://{host}{uri} permanent
+  }
+}
+
+{{DOMAIN}} {
+  handle /_pocketcoder/status.json* {
+    uri strip_prefix /_pocketcoder
+    root * {{STATUS_ROOT}}
+    file_server
+  }
+  handle {
+    reverse_proxy {{UPSTREAM}}
+  }
+}
