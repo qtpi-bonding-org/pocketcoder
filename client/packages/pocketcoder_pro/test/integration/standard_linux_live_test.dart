@@ -84,6 +84,9 @@ Future<void> _scenario({
   final key =
       '${Directory.systemTemp.path}/pocketcoder-standard-$pid-${name.replaceAll('-', '')}';
   final publicKeyFile = File('$key.pub');
+  final timingFile = File(
+    '${Directory.systemTemp.path}/pocketcoder-standard-live-$pid-$name.timing.json',
+  );
   final keygen = await Process.run('ssh-keygen', [
     '-q',
     '-t',
@@ -226,6 +229,29 @@ test "$(find /var/lib/pocketcoder/artifacts -type f | wc -l | tr -d ' ')" -eq 0
             isNot(contains('pocketcoder-harness-$harness:$candidate')));
       }
     }
+    final verified = DateTime.now().toUtc();
+    final hostCreated = times['host_created'];
+    final httpsHealth = times['https_health'];
+    await timingFile.writeAsString(jsonEncode({
+      'scenario': name,
+      'harnesses': harnesses,
+      'startedAt': started.toIso8601String(),
+      'hostCreatedAt': hostCreated?.toIso8601String(),
+      'httpsHealthAt': httpsHealth?.toIso8601String(),
+      'verifiedAt': verified.toIso8601String(),
+      'durationsMilliseconds': {
+        if (hostCreated != null)
+          'hostProvisioning': hostCreated.difference(started).inMilliseconds,
+        if (hostCreated != null && httpsHealth != null)
+          'bootstrapAfterHost':
+              httpsHealth.difference(hostCreated).inMilliseconds,
+        if (httpsHealth != null)
+          'verificationAfterHealth':
+              verified.difference(httpsHealth).inMilliseconds,
+        'total': verified.difference(started).inMilliseconds,
+      },
+    }));
+    print('LIVE $name timing_file=${timingFile.path}');
   } finally {
     final ownedId = instanceId;
     if (ownedId != null &&
