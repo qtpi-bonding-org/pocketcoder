@@ -33,13 +33,11 @@
   # regardless of the real disk size (docs/superpowers/specs/
   # 2026-07-29-linode-boot-time-image-provisioning-design.md, "NixOS
   # image change required").
-  # POCO:IMPORTANT:BEGIN
   fileSystems."/" = {
     device = "/dev/sda";
     fsType = "ext4";
     autoResize = true;
   };
-  # POCO:IMPORTANT:END
   # POCO:END vps-storage
 
   # --- Networking ---
@@ -49,7 +47,6 @@
 
   # POCO:BEGIN vps-public-firewall
   # Firewall: only expose what's needed
-  # POCO:IMPORTANT:BEGIN
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [
@@ -61,7 +58,6 @@
       443   # Caddy HTTP/3
     ];
   };
-  # POCO:IMPORTANT:END
   # POCO:END vps-public-firewall
 
   # POCO:BEGIN vps-container-firewall
@@ -86,7 +82,6 @@
       apply_ipv4_rules() {
         iptables -N POCKETCODER-DOCKER 2>/dev/null || true
         iptables -F POCKETCODER-DOCKER
-        # POCO:IMPORTANT:BEGIN
         iptables -A POCKETCODER-DOCKER -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
         iptables -A POCKETCODER-DOCKER -d 169.254.169.254 -j DROP
         iptables -A POCKETCODER-DOCKER -s 127.0.0.0/8 -j RETURN
@@ -99,7 +94,6 @@
         iptables -A POCKETCODER-DOCKER -j RETURN
         iptables -C DOCKER-USER -j POCKETCODER-DOCKER 2>/dev/null || \
           iptables -I DOCKER-USER 1 -j POCKETCODER-DOCKER
-        # POCO:IMPORTANT:END
       }
 
       apply_ipv6_rules() {
@@ -124,7 +118,6 @@
 
   # --- SSH ---
   # POCO:BEGIN vps-key-only-ssh
-  # POCO:IMPORTANT:BEGIN
   services.openssh = {
     enable = true;
     settings = {
@@ -142,7 +135,6 @@
       UseDns = false;
     };
   };
-  # POCO:IMPORTANT:END
 
   # Public SSH is required for owner administration and first-boot recovery,
   # but password/key-spam should not consume the box indefinitely. This is a
@@ -164,12 +156,10 @@
 
   # --- Docker ---
   # POCO:BEGIN vps-docker-engine
-  # POCO:IMPORTANT:BEGIN
   virtualisation.docker = {
     enable = true;
     logDriver = "journald";
   };
-  # POCO:IMPORTANT:END
   # POCO:END vps-docker-engine
 
   # --- System packages ---

@@ -9,16 +9,16 @@ class ProvisioningLessonCodeBlock {
     required this.title,
     required this.sourceLabel,
     required this.code,
-    required this.importantCode,
+    required this.previewCode,
   });
 
   final String title;
   final String sourceLabel;
   final String code;
-  final String importantCode;
+  final String previewCode;
 }
 
-/// A single provisioning lesson: one important excerpt by default, with every
+/// A single walkthrough briefing: a concise code preview by default, with the
 /// complete source block available on demand.
 class ProvisioningLessonCard extends StatelessWidget {
   const ProvisioningLessonCard({
@@ -86,8 +86,8 @@ class ProvisioningLessonCard extends StatelessWidget {
             ]
           else
             for (var index = 0; index < blocks.length; index += 1) ...[
-              _ImportantCodeView(
-                code: blocks[index].importantCode,
+              _PreviewCodeView(
+                code: blocks[index].previewCode,
                 sourceLabel: blocks[index].sourceLabel,
               ),
               if (index < blocks.length - 1) VSpace.x2,
@@ -112,8 +112,8 @@ class ProvisioningLessonCard extends StatelessWidget {
                 ),
                 label: Text(
                   expanded
-                      ? context.l10n.pocoProvisioningShowConcise
-                      : '${context.l10n.pocoProvisioningShowFull} (${blocks.length})',
+                      ? context.l10n.walkthroughActionShowConciseCode
+                      : '${context.l10n.walkthroughActionShowFullCode} (${blocks.length})',
                 ),
               ),
               TextButton(
@@ -128,8 +128,8 @@ class ProvisioningLessonCard extends StatelessWidget {
   }
 }
 
-class _ImportantCodeView extends StatelessWidget {
-  const _ImportantCodeView({
+class _PreviewCodeView extends StatelessWidget {
+  const _PreviewCodeView({
     required this.code,
     required this.sourceLabel,
   });

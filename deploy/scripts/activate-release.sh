@@ -72,14 +72,12 @@ mv -f "$manifest_tmp" "$manifest_cache"
 # POCO:BEGIN bootstrap-verified-images
 # Load only the core and explicitly selected harness archives. Each archive is
 # size-checked and checksum-verified before Docker is allowed to read it.
-# POCO:IMPORTANT:BEGIN
 write_status loading_images resolving:selected-harnesses
 if ! "$script_dir/install-release-images.sh" \
   "$manifest_cache" "$catalog" "$artifact_dir" "$run_id" "$status_file" "$@"; then
   failure_reported=1
   exit 1
 fi
-# POCO:IMPORTANT:END
 # POCO:END bootstrap-verified-images
 
 # POCO:BEGIN bootstrap-compose-start
@@ -101,7 +99,6 @@ else
   mv -fh "$current_link_tmp" "$current_link"
 fi
 
-# POCO:IMPORTANT:BEGIN
 write_status compose_up
 if docker compose version >/dev/null 2>&1; then
   docker compose --project-name pocketcoder --env-file "$runtime_env" \
@@ -110,7 +107,6 @@ else
   docker-compose --project-name pocketcoder --env-file "$runtime_env" \
     -f "$compose_file" up -d --no-build --remove-orphans
 fi
-# POCO:IMPORTANT:END
 
 # A candidate is not active merely because Docker accepted `compose up`.
 # Keep the durable release pointer on the previous version until the matching

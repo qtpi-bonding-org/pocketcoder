@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_lesson_card.dart';
 
 void main() {
-  testWidgets('shows an important excerpt and expands every complete block',
+  testWidgets('shows a concise preview and expands every complete block',
       (tester) async {
     var expanded = false;
 
@@ -23,13 +23,13 @@ void main() {
                     title: 'Check the disk',
                     sourceLabel: 'installer.sh:10',
                     code: 'blockdev --getsize64 /dev/sdb',
-                    importantCode: 'test -b /dev/sdb',
+                    previewCode: 'test -b /dev/sdb',
                   ),
                   ProvisioningLessonCodeBlock(
                     title: 'Verify the image',
                     sourceLabel: 'installer.sh:34',
                     code: 'sha256sum /tmp/image',
-                    importantCode: 'test -f /tmp/image',
+                    previewCode: 'test -f /tmp/image',
                   ),
                 ],
                 lessonNumber: 1,
@@ -50,15 +50,15 @@ void main() {
     expect(find.text('test -b /dev/sdb'), findsOneWidget);
     expect(find.text('test -f /tmp/image'), findsOneWidget);
     expect(find.text('blockdev --getsize64 /dev/sdb'), findsNothing);
-    expect(find.text('SHOW FULL SECTION (2)'), findsOneWidget);
+    expect(find.text('SHOW FULL CODE (2)'), findsOneWidget);
 
-    await tester.tap(find.text('SHOW FULL SECTION (2)'));
+    await tester.tap(find.text('SHOW FULL CODE (2)'));
     await tester.pump();
 
     expect(find.text('blockdev --getsize64 /dev/sdb'), findsOneWidget);
     expect(find.text('sha256sum /tmp/image'), findsOneWidget);
     expect(find.text('installer.sh:10'), findsOneWidget);
     expect(find.text('installer.sh:34'), findsOneWidget);
-    expect(find.text('SHOW CONCISE VIEW'), findsOneWidget);
+    expect(find.text('SHOW CONCISE CODE'), findsOneWidget);
   });
 }

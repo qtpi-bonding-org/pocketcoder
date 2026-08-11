@@ -26,9 +26,7 @@ void main() {
     final sections = PocoCodeSectionParser().parse('''
 ignored
 # POCO:BEGIN firewall
-# POCO:IMPORTANT:BEGIN
 networking.firewall.enable = true;
-# POCO:IMPORTANT:END
 # POCO:END firewall
 ignored again
 ''');
@@ -36,9 +34,9 @@ ignored again
     expect(sections, hasLength(1));
     expect(sections.single.id, 'firewall');
     expect(sections.single.code, 'networking.firewall.enable = true;');
-    expect(sections.single.importantCode, 'networking.firewall.enable = true;');
+    expect(sections.single.previewCode, 'networking.firewall.enable = true;');
     expect(sections.single.startLine, 3);
-    expect(sections.single.endLine, 5);
+    expect(sections.single.endLine, 3);
   });
 
   test('rejects mismatched and unfinished sections', () {
@@ -50,6 +48,62 @@ ignored again
     );
     expect(
       () => PocoCodeSectionParser().parse('# POCO:BEGIN one\nvalue'),
+      throwsFormatException,
+    );
+  });
+
+  test('removes source comments while preserving hashes inside strings', () {
+    final sections = PocoCodeSectionParser().parse('''
+# POCO:BEGIN sample
+# This comment is not displayable code.
+url: "https://example.test/#fragment" # A YAML comment.
+command: 'echo # still part of the string' # A shell-style comment.
+unquoted: value # Another YAML comment.
+enabled: true # Legacy preview markers are ignored.
+# POCO:END sample
+''');
+
+    expect(
+      sections.single.code,
+      '''url: "https://example.test/#fragment"
+command: 'echo # still part of the string'
+unquoted: value
+enabled: true''',
+    );
+    expect(
+      sections.single.previewCode,
+      '''url: "https://example.test/#fragment"
+command: 'echo # still part of the string'
+unquoted: value
+enabled: true''',
+    );
+  });
+
+  test('uses the first cleaned code lines for the concise preview', () {
+    final sections = PocoCodeSectionParser(previewLineCount: 2).parse('''
+# POCO:BEGIN sample
+# Ignore this comment.
+first: one
+
+second: two # Ignore this comment too.
+third: three
+# POCO:END sample
+''');
+
+    expect(sections.single.previewCode, 'first: one\nsecond: two');
+    expect(
+      sections.single.code,
+      'first: one\n\nsecond: two\nthird: three',
+    );
+  });
+
+  test('rejects a section that contains only comments', () {
+    expect(
+      () => PocoCodeSectionParser().parse('''
+# POCO:BEGIN sample
+# The marker is valid, but there is no code to show.
+# POCO:END sample
+'''),
       throwsFormatException,
     );
   });
@@ -119,6 +173,7 @@ ignored again
 
     for (final path in sourcePaths) {
       final source = await File(path).readAsString();
+      expect(source, isNot(contains('POCO:IMPORTANT')), reason: path);
       final sections = parser.parse(source);
       expect(sections, isNotEmpty, reason: path);
       expect(
@@ -127,9 +182,18 @@ ignored again
         reason: path,
       );
       expect(
-        sections.every((section) => section.importantCode.trim().isNotEmpty),
+        sections.every((section) => section.previewCode.trim().isNotEmpty),
         isTrue,
-        reason: '$path needs a concise excerpt',
+        reason: '$path needs a concise preview',
+      );
+      expect(
+        sections.every(
+          (section) => section.code
+              .split('\n')
+              .every((line) => !RegExp(r'^\s*#').hasMatch(line)),
+        ),
+        isTrue,
+        reason: '$path must not display source comment lines',
       );
     }
   });
