@@ -114,6 +114,16 @@ class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
     if (config == null || deployCredentials == null) return;
 
     final keyPair = await sshKeyGenerator.generate();
+    final standardLinuxBootstrap = config.backend ==
+            ProvisionBackendKind.standardLinux
+        ? await rootBundle.loadString(PocketCoderCloudInit.bootstrapAssetPath)
+        : null;
+    final standardLinuxCaddyfileTemplate =
+        config.backend == ProvisionBackendKind.standardLinux
+            ? await rootBundle.loadString(
+                PocketCoderCloudInit.caddyfileTemplateAssetPath,
+              )
+            : null;
     final host = config.backend == ProvisionBackendKind.nixos
         ? ImageBakedHostSpec(
             labelPrefix: pocketCoderHostLabelPrefix,
@@ -126,11 +136,8 @@ class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
             hostname: HostnameStrategy.sslipIo,
             acmeEmail: deployCredentials.email,
             staticPaths: const {'/_pocketcoder': '/var/lib/pocketcoder/public'},
+            caddyfileTemplate: standardLinuxCaddyfileTemplate,
           );
-    final standardLinuxBootstrap = config.backend ==
-            ProvisionBackendKind.standardLinux
-        ? await rootBundle.loadString(PocketCoderCloudInit.bootstrapAssetPath)
-        : null;
     final bootstrap = config.backend == ProvisionBackendKind.nixos
         ? StackScriptBootstrap(
             stackScriptId: 2174743,

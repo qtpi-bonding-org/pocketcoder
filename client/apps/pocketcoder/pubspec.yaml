@@ -46,11 +46,11 @@ dependencies:
   flutter_aeroform:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
-      ref: "0421fc3"
+      ref: "c6e2ca9"
   ag_ui_widgets_flutter:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
-      ref: b609355484e1d2bef8689199ef35b6dfd92e80da
+      ref: 79e2e5c4729e615609f694e4b400ea4de81f89ef
   flutter_error_privserver:
     git:
       url: git@github.com:qtpi-bonding-org/flutter_error_privserver.git

@@ -45,11 +45,11 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: b609355484e1d2bef8689199ef35b6dfd92e80da
-      resolved-ref: b609355484e1d2bef8689199ef35b6dfd92e80da
+      ref: "79e2e5c4729e615609f694e4b400ea4de81f89ef"
+      resolved-ref: "79e2e5c4729e615609f694e4b400ea4de81f89ef"
       url: "https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git"
     source: git
-    version: "0.5.1"
+    version: "0.4.0"
   analyzer:
     dependency: transitive
     description:
@@ -516,8 +516,8 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: "0421fc3"
-      resolved-ref: "0421fc31febec7ffa9fef3c4faabdd5784cb5a04"
+      ref: c6e2ca9
+      resolved-ref: c6e2ca92299203dca47052792db8d38e742d012f
       url: "git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git"
     source: git
     version: "0.1.4"

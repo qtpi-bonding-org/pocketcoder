@@ -11,6 +11,8 @@ import 'package:pocketcoder_pro/domain/deployment/harness_catalog.dart';
 class PocketCoderCloudInit {
   static const bootstrapAssetPath =
       'packages/pocketcoder_pro/assets/deployment/standard_linux_bootstrap.sh';
+  static const caddyfileTemplateAssetPath =
+      'packages/pocketcoder_pro/assets/deployment/Caddyfile.template';
 
   static final _releaseCommit = RegExp(r'^[0-9a-f]{40}$');
 
