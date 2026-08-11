@@ -2674,6 +2674,882 @@ abstract class AppLocalizations {
   /// **'Compose uses several small networks instead of one flat network. Each connection represents a specific trust relationship, limiting which services can reach one another.'**
   String get pocoLessonNetworksExplanation;
 
+  /// No description provided for @onboardingNoServerLookingPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for a PocketCoder server...'**
+  String get onboardingNoServerLookingPoco;
+
+  /// No description provided for @onboardingNoServerPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'I couldn\'t reach a PocketCoder server from here. Do you already have one, or should I get you set up?'**
+  String get onboardingNoServerPoco;
+
+  /// No description provided for @onboardingNoServerChipExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'I HAVE A SERVER'**
+  String get onboardingNoServerChipExisting;
+
+  /// No description provided for @onboardingNoServerChipNew.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'M NEW'**
+  String get onboardingNoServerChipNew;
+
+  /// No description provided for @onboardingSignInPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome. We’ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you’ll use to sign in when it’s ready.'**
+  String get onboardingSignInPoco;
+
+  /// No description provided for @onboardingSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SET UP YOUR SIGN-IN'**
+  String get onboardingSignInTitle;
+
+  /// No description provided for @onboardingProviderPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.'**
+  String get onboardingProviderPoco;
+
+  /// No description provided for @onboardingProviderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE A SERVER PROVIDER'**
+  String get onboardingProviderTitle;
+
+  /// No description provided for @onboardingProviderChipLinode.
+  ///
+  /// In en, this message translates to:
+  /// **'LINODE'**
+  String get onboardingProviderChipLinode;
+
+  /// No description provided for @onboardingProviderChipElestioComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'ELESTIO — COMING SOON'**
+  String get onboardingProviderChipElestioComingSoon;
+
+  /// No description provided for @onboardingTrialPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Your server provider account and server are yours, and the provider bills you directly.\n\nPocketCoder Pro includes a {trialDuration} free trial. It lets you provision servers and receive notifications from your agents. When it ends, your server keeps running exactly as it is; you just won’t receive agent notifications or be able to provision more servers.\n\nYour server provider may offer its own trial or credit as well.'**
+  String onboardingTrialPoco(String trialDuration);
+
+  /// No description provided for @onboardingTrialChipStart.
+  ///
+  /// In en, this message translates to:
+  /// **'START FREE TRIAL'**
+  String get onboardingTrialChipStart;
+
+  /// No description provided for @onboardingTrialChipNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'NOT NOW'**
+  String get onboardingTrialChipNotNow;
+
+  /// No description provided for @onboardingProviderAuthorizationPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect or create your server provider account. The next page will let you sign in or make one.\n\nWhen you authorize PocketCoder, it will provision a server and deploy PocketCoder on your behalf.'**
+  String get onboardingProviderAuthorizationPoco;
+
+  /// No description provided for @onboardingProviderAuthorizationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECT YOUR SERVER PROVIDER'**
+  String get onboardingProviderAuthorizationTitle;
+
+  /// No description provided for @onboardingProviderAuthorizationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUE WITH {providerName}'**
+  String onboardingProviderAuthorizationAction(String providerName);
+
+  /// No description provided for @onboardingIntentPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Before we choose your server, what kind of PocketCoder setup are you planning?\n\nA cloud model runs through an online AI account. A local model runs on your own server.'**
+  String get onboardingIntentPoco;
+
+  /// No description provided for @onboardingIntentChipCloudModels.
+  ///
+  /// In en, this message translates to:
+  /// **'USE CLOUD MODELS'**
+  String get onboardingIntentChipCloudModels;
+
+  /// No description provided for @onboardingIntentChipLocalModels.
+  ///
+  /// In en, this message translates to:
+  /// **'RUN A LOCAL MODEL'**
+  String get onboardingIntentChipLocalModels;
+
+  /// No description provided for @onboardingPlanPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Here are the server sizes available from {providerName}.\n\nThe highlighted option is the minimum I recommend for the setup you chose. You can select a larger server at any time.'**
+  String onboardingPlanPoco(String providerName);
+
+  /// No description provided for @onboardingPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE YOUR SERVER SIZE'**
+  String get onboardingPlanTitle;
+
+  /// No description provided for @onboardingRegionConsentPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'I can find server regions near you, if you want.\n\nYour location stays on this phone. I only use it to sort the available regions by distance.'**
+  String get onboardingRegionConsentPoco;
+
+  /// No description provided for @onboardingRegionConsentChipUseLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'USE MY LOCATION'**
+  String get onboardingRegionConsentChipUseLocation;
+
+  /// No description provided for @onboardingRegionConsentChipChooseMyself.
+  ///
+  /// In en, this message translates to:
+  /// **'I’LL CHOOSE MYSELF'**
+  String get onboardingRegionConsentChipChooseMyself;
+
+  /// No description provided for @onboardingRegionPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'A region is the city where your server—and its data—will live. Choose one close to you, or to people who will use PocketCoder most.'**
+  String get onboardingRegionPoco;
+
+  /// No description provided for @onboardingRegionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE YOUR SERVER REGION'**
+  String get onboardingRegionTitle;
+
+  /// No description provided for @onboardingHarnessPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you’ll connect any required accounts after your server is ready.'**
+  String get onboardingHarnessPoco;
+
+  /// No description provided for @onboardingHarnessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE CODING AGENTS'**
+  String get onboardingHarnessTitle;
+
+  /// No description provided for @onboardingOsPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.'**
+  String get onboardingOsPoco;
+
+  /// No description provided for @onboardingOsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE LINUX SYSTEM'**
+  String get onboardingOsTitle;
+
+  /// No description provided for @onboardingOsNixosLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'NIXOS — RECOMMENDED'**
+  String get onboardingOsNixosLabel;
+
+  /// No description provided for @onboardingOsNixosDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeatable server setup, easier to recreate and roll back if a system change goes wrong. Estimated about {minutes} min.'**
+  String onboardingOsNixosDescription(int minutes);
+
+  /// No description provided for @onboardingOsDebianLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DEBIAN'**
+  String get onboardingOsDebianLabel;
+
+  /// No description provided for @onboardingOsDebianDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Debian server configured with setup scripts. Faster to set up: about {minutes} min.'**
+  String onboardingOsDebianDescription(int minutes);
+
+  /// No description provided for @onboardingReviewPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Your server is ready to be provisioned.\n\nPocketCoder will create it in your {providerName} account, then install the coding agents you selected. Your provider bills you directly.'**
+  String onboardingReviewPoco(String providerName);
+
+  /// No description provided for @onboardingReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'REVIEW YOUR SERVER'**
+  String get onboardingReviewTitle;
+
+  /// No description provided for @onboardingReviewActionProvision.
+  ///
+  /// In en, this message translates to:
+  /// **'PROVISION SERVER'**
+  String get onboardingReviewActionProvision;
+
+  /// No description provided for @onboardingProvisioningPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI’ll show you what we’re building, one piece at a time.'**
+  String get onboardingProvisioningPoco;
+
+  /// No description provided for @onboardingOrientationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'INITIATIVE ORIENTATION'**
+  String get onboardingOrientationTitle;
+
+  /// No description provided for @onboardingOrientationActionSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'SKIP ORIENTATION'**
+  String get onboardingOrientationActionSkip;
+
+  /// No description provided for @onboardingOrientationActionContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUE ORIENTATION'**
+  String get onboardingOrientationActionContinue;
+
+  /// No description provided for @onboardingDockerIntroEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'INTRODUCTION'**
+  String get onboardingDockerIntroEyebrow;
+
+  /// No description provided for @onboardingDockerIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DOCKER AND CONTAINERS'**
+  String get onboardingDockerIntroTitle;
+
+  /// No description provided for @onboardingDockerIntroPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'PocketCoder is made of software components, such as its dashboard and coding agents. Docker runs each component in its own separate container on your server.'**
+  String get onboardingDockerIntroPoco;
+
+  /// No description provided for @onboardingDockerIntroActionStart.
+  ///
+  /// In en, this message translates to:
+  /// **'START WALKTHROUGH'**
+  String get onboardingDockerIntroActionStart;
+
+  /// No description provided for @onboardingDockerIntroChipComponent.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS A COMPONENT?'**
+  String get onboardingDockerIntroChipComponent;
+
+  /// No description provided for @onboardingDockerIntroChipContainer.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS A CONTAINER?'**
+  String get onboardingDockerIntroChipContainer;
+
+  /// No description provided for @onboardingDockerIntroChipSavedData.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS SAVED DATA?'**
+  String get onboardingDockerIntroChipSavedData;
+
+  /// No description provided for @onboardingDockerIntroChipConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT ARE CONNECTIONS?'**
+  String get onboardingDockerIntroChipConnections;
+
+  /// No description provided for @onboardingReadyPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Your PocketCoder server is ready.\n\nWelcome to the PocketCoder Initiative, Commander.\n\nYour server is online at its new HTTPS address. Your selected coding harnesses are ready.'**
+  String get onboardingReadyPoco;
+
+  /// No description provided for @onboardingReadyActionLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'LOG IN TO POCKETCODER'**
+  String get onboardingReadyActionLogin;
+
+  /// No description provided for @onboardingFailureConnectionPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'I couldn’t confirm that PocketCoder finished setting up.\n\nYour server is still available in your {providerName} account.'**
+  String onboardingFailureConnectionPoco(String providerName);
+
+  /// No description provided for @onboardingFailureActionRetryConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY CONNECTION'**
+  String get onboardingFailureActionRetryConnection;
+
+  /// No description provided for @onboardingFailureActionViewServerDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'VIEW SERVER DETAILS'**
+  String get onboardingFailureActionViewServerDetails;
+
+  /// No description provided for @onboardingFailureCreatePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'The server could not be created.\n\nNothing was deployed. Check your server provider connection, then try again.'**
+  String get onboardingFailureCreatePoco;
+
+  /// No description provided for @onboardingFailureActionBackToSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'BACK TO SETUP'**
+  String get onboardingFailureActionBackToSetup;
+
+  /// No description provided for @onboardingFailureActionTechnicalDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'SHOW TECHNICAL DETAILS'**
+  String get onboardingFailureActionTechnicalDetails;
+
+  /// No description provided for @walkthroughHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'{os} SERVER SETUP · WALKTHROUGH {current} / {total}'**
+  String walkthroughHeader(String os, int current, int total);
+
+  /// No description provided for @walkthroughProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'WALKTHROUGH {current}/{total} · BRIEFING {briefing}'**
+  String walkthroughProgress(int current, int total, String briefing);
+
+  /// No description provided for @walkthroughActionShowFullCode.
+  ///
+  /// In en, this message translates to:
+  /// **'SHOW FULL CODE'**
+  String get walkthroughActionShowFullCode;
+
+  /// No description provided for @walkthroughActionShowConciseCode.
+  ///
+  /// In en, this message translates to:
+  /// **'SHOW CONCISE CODE'**
+  String get walkthroughActionShowConciseCode;
+
+  /// No description provided for @walkthroughCaddyAddressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR HTTPS ADDRESS'**
+  String get walkthroughCaddyAddressTitle;
+
+  /// No description provided for @walkthroughCaddyAddressPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'First, the server finds its public IP address and turns it into an HTTPS address using sslip.io. PocketCoder saves that address so the mobile app knows where to sign in.'**
+  String get walkthroughCaddyAddressPoco;
+
+  /// No description provided for @walkthroughCaddyAddressChipIpAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS AN IP ADDRESS?'**
+  String get walkthroughCaddyAddressChipIpAddress;
+
+  /// No description provided for @walkthroughCaddyAddressChipHttps.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS HTTPS?'**
+  String get walkthroughCaddyAddressChipHttps;
+
+  /// No description provided for @walkthroughCaddyAddressChipSslip.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS SSLIP.IO?'**
+  String get walkthroughCaddyAddressChipSslip;
+
+  /// No description provided for @walkthroughCaddyWebEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'THE SECURE WEB ENTRY'**
+  String get walkthroughCaddyWebEntryTitle;
+
+  /// No description provided for @walkthroughCaddyWebEntryPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder’s deployment status, and passes app requests to PocketBase without exposing PocketBase’s own port.'**
+  String get walkthroughCaddyWebEntryPoco;
+
+  /// No description provided for @walkthroughCaddyWebEntryChipCaddy.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS CADDY?'**
+  String get walkthroughCaddyWebEntryChipCaddy;
+
+  /// No description provided for @walkthroughCaddyWebEntryChipPrivatePort.
+  ///
+  /// In en, this message translates to:
+  /// **'WHY IS POCKETBASE\'S PORT PRIVATE?'**
+  String get walkthroughCaddyWebEntryChipPrivatePort;
+
+  /// No description provided for @walkthroughNixosStorageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR SERVER DISK'**
+  String get walkthroughNixosStorageTitle;
+
+  /// No description provided for @walkthroughNixosStoragePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'This tells NixOS where PocketCoder’s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.'**
+  String get walkthroughNixosStoragePoco;
+
+  /// No description provided for @walkthroughNixosNetworkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NETWORK BOUNDARIES'**
+  String get walkthroughNixosNetworkTitle;
+
+  /// No description provided for @walkthroughNixosNetworkPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'These rules open the three standard entry ports to your server: HTTP and HTTPS for the PocketCoder website, and SSH for secure remote access. Since PocketCoder runs inside Docker, it needs its own specific rules without opening extra entry ports to the internet.'**
+  String get walkthroughNixosNetworkPoco;
+
+  /// No description provided for @walkthroughNixosNetworkChipPorts.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT ARE HTTP, HTTPS, AND SSH?'**
+  String get walkthroughNixosNetworkChipPorts;
+
+  /// No description provided for @walkthroughNixosNetworkChipDockerRules.
+  ///
+  /// In en, this message translates to:
+  /// **'WHY DOES DOCKER NEED ITS OWN RULES?'**
+  String get walkthroughNixosNetworkChipDockerRules;
+
+  /// No description provided for @walkthroughNixosNetworkChipIpVersions.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT ARE IPv4 AND IPv6?'**
+  String get walkthroughNixosNetworkChipIpVersions;
+
+  /// No description provided for @walkthroughNixosSshTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'KEY-ONLY SSH'**
+  String get walkthroughNixosSshTitle;
+
+  /// No description provided for @walkthroughNixosSshPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH is the secure way to administer a server from another device—even a phone. We accept only your SSH key—not passwords—and temporarily block repeated failed attempts.'**
+  String get walkthroughNixosSshPoco;
+
+  /// No description provided for @walkthroughNixosDockerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DOCKER'**
+  String get walkthroughNixosDockerTitle;
+
+  /// No description provided for @walkthroughNixosDockerPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'This turns on Docker, the system that runs PocketCoder’s containers. It sends their logs to NixOS’s built-in system log, so there is one place to check what happened.'**
+  String get walkthroughNixosDockerPoco;
+
+  /// No description provided for @walkthroughServerKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR SERVER KEY'**
+  String get walkthroughServerKeyTitle;
+
+  /// No description provided for @walkthroughServerKeyPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Before PocketCoder starts, this installs your public SSH key on the server. The mobile app keeps the matching private SSH key securely on your phone: the public key is the lock, and the private key is the key that opens it.'**
+  String get walkthroughServerKeyPoco;
+
+  /// No description provided for @walkthroughServerKeyChipPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS A PRIVATE SSH KEY?'**
+  String get walkthroughServerKeyChipPrivate;
+
+  /// No description provided for @walkthroughServerKeyChipPublic.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS A PUBLIC SSH KEY?'**
+  String get walkthroughServerKeyChipPublic;
+
+  /// No description provided for @walkthroughServerKeyChipSsh.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS SSH?'**
+  String get walkthroughServerKeyChipSsh;
+
+  /// No description provided for @walkthroughVerifiedVersionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'VERIFIED POCKETCODER VERSION'**
+  String get walkthroughVerifiedVersionTitle;
+
+  /// No description provided for @walkthroughVerifiedVersionPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'This downloads the exact PocketCoder version for your server, verifies it, then installs it.'**
+  String get walkthroughVerifiedVersionPoco;
+
+  /// No description provided for @walkthroughVerifiedVersionChipVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'HOW IS THE VERSION VERIFIED?'**
+  String get walkthroughVerifiedVersionChipVerification;
+
+  /// No description provided for @walkthroughVerifiedVersionChipDownloadFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT HAPPENS IF THE DOWNLOAD FAILS?'**
+  String get walkthroughVerifiedVersionChipDownloadFailure;
+
+  /// No description provided for @walkthroughVerifiedVersionChipUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'CAN I UPDATE LATER?'**
+  String get walkthroughVerifiedVersionChipUpdates;
+
+  /// No description provided for @walkthroughStartPocketCoderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'START POCKETCODER'**
+  String get walkthroughStartPocketCoderTitle;
+
+  /// No description provided for @walkthroughStartPocketCoderPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'This starts the verified PocketCoder version with only the coding harnesses you chose.'**
+  String get walkthroughStartPocketCoderPoco;
+
+  /// No description provided for @walkthroughStartPocketCoderChipWhatStarts.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT STARTS AFTER THIS?'**
+  String get walkthroughStartPocketCoderChipWhatStarts;
+
+  /// No description provided for @walkthroughStartPocketCoderChipAddHarness.
+  ///
+  /// In en, this message translates to:
+  /// **'CAN I ADD A HARNESS LATER?'**
+  String get walkthroughStartPocketCoderChipAddHarness;
+
+  /// No description provided for @walkthroughNixosDockerRulesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DOCKER FIREWALL RULES'**
+  String get walkthroughNixosDockerRulesTitle;
+
+  /// No description provided for @walkthroughNixosDockerRulesPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Docker needs its own rules because it manages a separate path for container traffic. These rules keep the same boundaries without opening extra entry ports.'**
+  String get walkthroughNixosDockerRulesPoco;
+
+  /// No description provided for @walkthroughRuntimeSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'LOCAL SETTINGS'**
+  String get walkthroughRuntimeSettingsTitle;
+
+  /// No description provided for @walkthroughRuntimeSettingsPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'This prepares PocketCoder’s local settings file and locks it so only its administrator—you—can read it. It creates the internal credentials PocketCoder needs to run.'**
+  String get walkthroughRuntimeSettingsPoco;
+
+  /// No description provided for @walkthroughRuntimeSettingsChipLocalSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT ARE LOCAL SETTINGS?'**
+  String get walkthroughRuntimeSettingsChipLocalSettings;
+
+  /// No description provided for @walkthroughRuntimeVersionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RUNNING VERSION'**
+  String get walkthroughRuntimeVersionTitle;
+
+  /// No description provided for @walkthroughRuntimeVersionPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'PocketCoder records the version it is running in the same protected settings file.'**
+  String get walkthroughRuntimeVersionPoco;
+
+  /// No description provided for @walkthroughActivationPrepareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PREPARE THE RELEASE'**
+  String get walkthroughActivationPrepareTitle;
+
+  /// No description provided for @walkthroughActivationPreparePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'This checks that the release files match the verified PocketCoder version and prepares them for installation. It also sets up status reporting for the PocketCoder deployment.'**
+  String get walkthroughActivationPreparePoco;
+
+  /// No description provided for @walkthroughActivationSelectedSoftwareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECTED SOFTWARE'**
+  String get walkthroughActivationSelectedSoftwareTitle;
+
+  /// No description provided for @walkthroughActivationSelectedSoftwarePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Next, the server loads PocketCoder and only the coding agents you chose. It checks each software component before Docker runs it.'**
+  String get walkthroughActivationSelectedSoftwarePoco;
+
+  /// No description provided for @walkthroughActivationSwitchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MAKE IT ACTIVE'**
+  String get walkthroughActivationSwitchTitle;
+
+  /// No description provided for @walkthroughActivationSwitchPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'This makes the new PocketCoder version active and starts its containers. It uses prebuilt software for faster setup and consistent versioning.'**
+  String get walkthroughActivationSwitchPoco;
+
+  /// No description provided for @walkthroughActivationHealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHECK THE DEPLOYMENT'**
+  String get walkthroughActivationHealthTitle;
+
+  /// No description provided for @walkthroughActivationHealthPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Before calling the deployment complete, PocketCoder checks that its core and optional services are healthy. Only then does it record this version as active.'**
+  String get walkthroughActivationHealthPoco;
+
+  /// No description provided for @walkthroughDebianSetupStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SETUP STATUS'**
+  String get walkthroughDebianSetupStatusTitle;
+
+  /// No description provided for @walkthroughDebianSetupStatusPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'This setup script keeps PocketCoder’s deployment status up to date as it runs. If something fails, it records where and cleans up temporary files so it can be checked or safely retried.'**
+  String get walkthroughDebianSetupStatusPoco;
+
+  /// No description provided for @walkthroughDebianSetupStatusChipStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'HOW IS DEPLOYMENT STATUS SHOWN?'**
+  String get walkthroughDebianSetupStatusChipStatus;
+
+  /// No description provided for @walkthroughDebianSetupStatusChipFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT HAPPENS IF SETUP FAILS?'**
+  String get walkthroughDebianSetupStatusChipFailure;
+
+  /// No description provided for @walkthroughServicesComposeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'THE DOCKER BLUEPRINT'**
+  String get walkthroughServicesComposeTitle;
+
+  /// No description provided for @walkthroughServicesComposePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Docker Compose is PocketCoder’s blueprint. It keeps your data when we update the software, and gives each component only the connections it needs.'**
+  String get walkthroughServicesComposePoco;
+
+  /// No description provided for @walkthroughServicesComposeChipDockerCompose.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS DOCKER COMPOSE?'**
+  String get walkthroughServicesComposeChipDockerCompose;
+
+  /// No description provided for @walkthroughServicesComposeChipSavedData.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS SAVED DATA?'**
+  String get walkthroughServicesComposeChipSavedData;
+
+  /// No description provided for @walkthroughServicesComposeChipPrivateConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT ARE PRIVATE CONNECTIONS?'**
+  String get walkthroughServicesComposeChipPrivateConnections;
+
+  /// No description provided for @walkthroughServicesPocketBaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETBASE'**
+  String get walkthroughServicesPocketBaseTitle;
+
+  /// No description provided for @walkthroughServicesPocketBasePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'PocketBase keeps the information PocketCoder needs to run: your sign-in, skills, prompts, agent connections, and API keys. That information stays on your server, and you reach it through the HTTPS address Caddy just set up.'**
+  String get walkthroughServicesPocketBasePoco;
+
+  /// No description provided for @walkthroughServicesPocketBaseChipKeeps.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT DOES POCKETBASE KEEP?'**
+  String get walkthroughServicesPocketBaseChipKeeps;
+
+  /// No description provided for @walkthroughServicesPocketBaseChipSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'HOW DO I SIGN IN SECURELY?'**
+  String get walkthroughServicesPocketBaseChipSignIn;
+
+  /// No description provided for @walkthroughServicesPocketBaseChipUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT HAPPENS WHEN POCKETCODER UPDATES?'**
+  String get walkthroughServicesPocketBaseChipUpdates;
+
+  /// No description provided for @walkthroughServicesHarnessesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CODING HARNESSES'**
+  String get walkthroughServicesHarnessesTitle;
+
+  /// No description provided for @walkthroughServicesHarnessesPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'PocketCoder prepares the coding harnesses you selected: {selectedHarnesses}. Each gets its own container, saved workspace, and only the private connections it needs.'**
+  String walkthroughServicesHarnessesPoco(String selectedHarnesses);
+
+  /// No description provided for @walkthroughServicesHarnessesChipHarness.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS A CODING HARNESS?'**
+  String get walkthroughServicesHarnessesChipHarness;
+
+  /// No description provided for @walkthroughServicesHarnessesChipWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS A SAVED WORKSPACE?'**
+  String get walkthroughServicesHarnessesChipWorkspace;
+
+  /// No description provided for @walkthroughServicesHarnessesChipAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'CAN I ADD A HARNESS LATER?'**
+  String get walkthroughServicesHarnessesChipAdd;
+
+  /// No description provided for @walkthroughServicesToolsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TOOL CONNECTIONS'**
+  String get walkthroughServicesToolsTitle;
+
+  /// No description provided for @walkthroughServicesToolsPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'The MCP Gateway is a controlled connection point for extra tools your coding harnesses can use. Its separate Docker proxy grants only the permissions those tools need, while blocking more sensitive actions such as accessing saved data or secrets.'**
+  String get walkthroughServicesToolsPoco;
+
+  /// No description provided for @walkthroughServicesToolsChipMcp.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS MCP?'**
+  String get walkthroughServicesToolsChipMcp;
+
+  /// No description provided for @walkthroughServicesToolsChipHarnessTools.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT TOOLS CAN A HARNESS USE?'**
+  String get walkthroughServicesToolsChipHarnessTools;
+
+  /// No description provided for @walkthroughServicesToolsChipProxy.
+  ///
+  /// In en, this message translates to:
+  /// **'WHY DOES THIS HAVE A SEPARATE PROXY?'**
+  String get walkthroughServicesToolsChipProxy;
+
+  /// No description provided for @walkthroughServicesOllamaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'LOCAL MODELS'**
+  String get walkthroughServicesOllamaTitle;
+
+  /// No description provided for @walkthroughServicesOllamaPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama is ready to run AI models directly on your server. It appears because you chose a local-model setup; when you later choose a model, PocketCoder downloads it and keeps it as saved data.'**
+  String get walkthroughServicesOllamaPoco;
+
+  /// No description provided for @walkthroughServicesOllamaChipLocalModel.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT IS A LOCAL MODEL?'**
+  String get walkthroughServicesOllamaChipLocalModel;
+
+  /// No description provided for @walkthroughServicesOllamaChipDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'WHEN IS A MODEL DOWNLOADED?'**
+  String get walkthroughServicesOllamaChipDownload;
+
+  /// No description provided for @walkthroughServicesOllamaChipGpu.
+  ///
+  /// In en, this message translates to:
+  /// **'DOES THIS USE MY SERVER\'S GPU?'**
+  String get walkthroughServicesOllamaChipGpu;
+
+  /// No description provided for @walkthroughServicesCogneeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'LONG-TERM MEMORY'**
+  String get walkthroughServicesCogneeTitle;
+
+  /// No description provided for @walkthroughServicesCogneeBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'COMING SOON'**
+  String get walkthroughServicesCogneeBadge;
+
+  /// No description provided for @walkthroughServicesCogneePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Cognee will help PocketCoder build long-term memory from your work. It is not included in this setup yet, so there is nothing more to configure today.'**
+  String get walkthroughServicesCogneePoco;
+
+  /// No description provided for @walkthroughServicesSqlPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER DASHBOARD'**
+  String get walkthroughServicesSqlPageTitle;
+
+  /// No description provided for @walkthroughServicesSqlPagePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'SQLPage is PocketCoder’s built-in dashboard for showing what is happening on your server. It starts after PocketBase is ready and uses saved PocketCoder data to build those pages.'**
+  String get walkthroughServicesSqlPagePoco;
+
+  /// No description provided for @walkthroughServicesSqlPageChipContents.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT CAN THIS DASHBOARD SHOW?'**
+  String get walkthroughServicesSqlPageChipContents;
+
+  /// No description provided for @walkthroughServicesSqlPageChipStartOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'WHY DOES IT START AFTER POCKETBASE?'**
+  String get walkthroughServicesSqlPageChipStartOrder;
+
   /// No description provided for @permissionSignoffTitle.
   ///
   /// In en, this message translates to:

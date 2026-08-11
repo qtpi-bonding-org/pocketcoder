@@ -1395,6 +1395,528 @@ class AppLocalizationsEn extends AppLocalizations {
       'Compose uses several small networks instead of one flat network. Each connection represents a specific trust relationship, limiting which services can reach one another.';
 
   @override
+  String get onboardingNoServerLookingPoco =>
+      'Looking for a PocketCoder server...';
+
+  @override
+  String get onboardingNoServerPoco =>
+      'I couldn\'t reach a PocketCoder server from here. Do you already have one, or should I get you set up?';
+
+  @override
+  String get onboardingNoServerChipExisting => 'I HAVE A SERVER';
+
+  @override
+  String get onboardingNoServerChipNew => 'I\'M NEW';
+
+  @override
+  String get onboardingSignInPoco =>
+      'Welcome. We’ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you’ll use to sign in when it’s ready.';
+
+  @override
+  String get onboardingSignInTitle => 'SET UP YOUR SIGN-IN';
+
+  @override
+  String get onboardingProviderPoco =>
+      'Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.';
+
+  @override
+  String get onboardingProviderTitle => 'CHOOSE A SERVER PROVIDER';
+
+  @override
+  String get onboardingProviderChipLinode => 'LINODE';
+
+  @override
+  String get onboardingProviderChipElestioComingSoon => 'ELESTIO — COMING SOON';
+
+  @override
+  String onboardingTrialPoco(String trialDuration) {
+    return 'Your server provider account and server are yours, and the provider bills you directly.\n\nPocketCoder Pro includes a $trialDuration free trial. It lets you provision servers and receive notifications from your agents. When it ends, your server keeps running exactly as it is; you just won’t receive agent notifications or be able to provision more servers.\n\nYour server provider may offer its own trial or credit as well.';
+  }
+
+  @override
+  String get onboardingTrialChipStart => 'START FREE TRIAL';
+
+  @override
+  String get onboardingTrialChipNotNow => 'NOT NOW';
+
+  @override
+  String get onboardingProviderAuthorizationPoco =>
+      'Connect or create your server provider account. The next page will let you sign in or make one.\n\nWhen you authorize PocketCoder, it will provision a server and deploy PocketCoder on your behalf.';
+
+  @override
+  String get onboardingProviderAuthorizationTitle =>
+      'CONNECT YOUR SERVER PROVIDER';
+
+  @override
+  String onboardingProviderAuthorizationAction(String providerName) {
+    return 'CONTINUE WITH $providerName';
+  }
+
+  @override
+  String get onboardingIntentPoco =>
+      'Before we choose your server, what kind of PocketCoder setup are you planning?\n\nA cloud model runs through an online AI account. A local model runs on your own server.';
+
+  @override
+  String get onboardingIntentChipCloudModels => 'USE CLOUD MODELS';
+
+  @override
+  String get onboardingIntentChipLocalModels => 'RUN A LOCAL MODEL';
+
+  @override
+  String onboardingPlanPoco(String providerName) {
+    return 'Here are the server sizes available from $providerName.\n\nThe highlighted option is the minimum I recommend for the setup you chose. You can select a larger server at any time.';
+  }
+
+  @override
+  String get onboardingPlanTitle => 'CHOOSE YOUR SERVER SIZE';
+
+  @override
+  String get onboardingRegionConsentPoco =>
+      'I can find server regions near you, if you want.\n\nYour location stays on this phone. I only use it to sort the available regions by distance.';
+
+  @override
+  String get onboardingRegionConsentChipUseLocation => 'USE MY LOCATION';
+
+  @override
+  String get onboardingRegionConsentChipChooseMyself => 'I’LL CHOOSE MYSELF';
+
+  @override
+  String get onboardingRegionPoco =>
+      'A region is the city where your server—and its data—will live. Choose one close to you, or to people who will use PocketCoder most.';
+
+  @override
+  String get onboardingRegionTitle => 'CHOOSE YOUR SERVER REGION';
+
+  @override
+  String get onboardingHarnessPoco =>
+      'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you’ll connect any required accounts after your server is ready.';
+
+  @override
+  String get onboardingHarnessTitle => 'CHOOSE CODING AGENTS';
+
+  @override
+  String get onboardingOsPoco =>
+      'Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.';
+
+  @override
+  String get onboardingOsTitle => 'CHOOSE LINUX SYSTEM';
+
+  @override
+  String get onboardingOsNixosLabel => 'NIXOS — RECOMMENDED';
+
+  @override
+  String onboardingOsNixosDescription(int minutes) {
+    return 'Repeatable server setup, easier to recreate and roll back if a system change goes wrong. Estimated about $minutes min.';
+  }
+
+  @override
+  String get onboardingOsDebianLabel => 'DEBIAN';
+
+  @override
+  String onboardingOsDebianDescription(int minutes) {
+    return 'Debian server configured with setup scripts. Faster to set up: about $minutes min.';
+  }
+
+  @override
+  String onboardingReviewPoco(String providerName) {
+    return 'Your server is ready to be provisioned.\n\nPocketCoder will create it in your $providerName account, then install the coding agents you selected. Your provider bills you directly.';
+  }
+
+  @override
+  String get onboardingReviewTitle => 'REVIEW YOUR SERVER';
+
+  @override
+  String get onboardingReviewActionProvision => 'PROVISION SERVER';
+
+  @override
+  String get onboardingProvisioningPoco =>
+      'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI’ll show you what we’re building, one piece at a time.';
+
+  @override
+  String get onboardingOrientationTitle => 'INITIATIVE ORIENTATION';
+
+  @override
+  String get onboardingOrientationActionSkip => 'SKIP ORIENTATION';
+
+  @override
+  String get onboardingOrientationActionContinue => 'CONTINUE ORIENTATION';
+
+  @override
+  String get onboardingDockerIntroEyebrow => 'INTRODUCTION';
+
+  @override
+  String get onboardingDockerIntroTitle => 'DOCKER AND CONTAINERS';
+
+  @override
+  String get onboardingDockerIntroPoco =>
+      'PocketCoder is made of software components, such as its dashboard and coding agents. Docker runs each component in its own separate container on your server.';
+
+  @override
+  String get onboardingDockerIntroActionStart => 'START WALKTHROUGH';
+
+  @override
+  String get onboardingDockerIntroChipComponent => 'WHAT IS A COMPONENT?';
+
+  @override
+  String get onboardingDockerIntroChipContainer => 'WHAT IS A CONTAINER?';
+
+  @override
+  String get onboardingDockerIntroChipSavedData => 'WHAT IS SAVED DATA?';
+
+  @override
+  String get onboardingDockerIntroChipConnections => 'WHAT ARE CONNECTIONS?';
+
+  @override
+  String get onboardingReadyPoco =>
+      'Your PocketCoder server is ready.\n\nWelcome to the PocketCoder Initiative, Commander.\n\nYour server is online at its new HTTPS address. Your selected coding harnesses are ready.';
+
+  @override
+  String get onboardingReadyActionLogin => 'LOG IN TO POCKETCODER';
+
+  @override
+  String onboardingFailureConnectionPoco(String providerName) {
+    return 'I couldn’t confirm that PocketCoder finished setting up.\n\nYour server is still available in your $providerName account.';
+  }
+
+  @override
+  String get onboardingFailureActionRetryConnection => 'RETRY CONNECTION';
+
+  @override
+  String get onboardingFailureActionViewServerDetails => 'VIEW SERVER DETAILS';
+
+  @override
+  String get onboardingFailureCreatePoco =>
+      'The server could not be created.\n\nNothing was deployed. Check your server provider connection, then try again.';
+
+  @override
+  String get onboardingFailureActionBackToSetup => 'BACK TO SETUP';
+
+  @override
+  String get onboardingFailureActionTechnicalDetails =>
+      'SHOW TECHNICAL DETAILS';
+
+  @override
+  String walkthroughHeader(String os, int current, int total) {
+    return '$os SERVER SETUP · WALKTHROUGH $current / $total';
+  }
+
+  @override
+  String walkthroughProgress(int current, int total, String briefing) {
+    return 'WALKTHROUGH $current/$total · BRIEFING $briefing';
+  }
+
+  @override
+  String get walkthroughActionShowFullCode => 'SHOW FULL CODE';
+
+  @override
+  String get walkthroughActionShowConciseCode => 'SHOW CONCISE CODE';
+
+  @override
+  String get walkthroughCaddyAddressTitle => 'YOUR HTTPS ADDRESS';
+
+  @override
+  String get walkthroughCaddyAddressPoco =>
+      'First, the server finds its public IP address and turns it into an HTTPS address using sslip.io. PocketCoder saves that address so the mobile app knows where to sign in.';
+
+  @override
+  String get walkthroughCaddyAddressChipIpAddress => 'WHAT IS AN IP ADDRESS?';
+
+  @override
+  String get walkthroughCaddyAddressChipHttps => 'WHAT IS HTTPS?';
+
+  @override
+  String get walkthroughCaddyAddressChipSslip => 'WHAT IS SSLIP.IO?';
+
+  @override
+  String get walkthroughCaddyWebEntryTitle => 'THE SECURE WEB ENTRY';
+
+  @override
+  String get walkthroughCaddyWebEntryPoco =>
+      'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder’s deployment status, and passes app requests to PocketBase without exposing PocketBase’s own port.';
+
+  @override
+  String get walkthroughCaddyWebEntryChipCaddy => 'WHAT IS CADDY?';
+
+  @override
+  String get walkthroughCaddyWebEntryChipPrivatePort =>
+      'WHY IS POCKETBASE\'S PORT PRIVATE?';
+
+  @override
+  String get walkthroughNixosStorageTitle => 'YOUR SERVER DISK';
+
+  @override
+  String get walkthroughNixosStoragePoco =>
+      'This tells NixOS where PocketCoder’s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.';
+
+  @override
+  String get walkthroughNixosNetworkTitle => 'NETWORK BOUNDARIES';
+
+  @override
+  String get walkthroughNixosNetworkPoco =>
+      'These rules open the three standard entry ports to your server: HTTP and HTTPS for the PocketCoder website, and SSH for secure remote access. Since PocketCoder runs inside Docker, it needs its own specific rules without opening extra entry ports to the internet.';
+
+  @override
+  String get walkthroughNixosNetworkChipPorts =>
+      'WHAT ARE HTTP, HTTPS, AND SSH?';
+
+  @override
+  String get walkthroughNixosNetworkChipDockerRules =>
+      'WHY DOES DOCKER NEED ITS OWN RULES?';
+
+  @override
+  String get walkthroughNixosNetworkChipIpVersions => 'WHAT ARE IPv4 AND IPv6?';
+
+  @override
+  String get walkthroughNixosSshTitle => 'KEY-ONLY SSH';
+
+  @override
+  String get walkthroughNixosSshPoco =>
+      'SSH is the secure way to administer a server from another device—even a phone. We accept only your SSH key—not passwords—and temporarily block repeated failed attempts.';
+
+  @override
+  String get walkthroughNixosDockerTitle => 'DOCKER';
+
+  @override
+  String get walkthroughNixosDockerPoco =>
+      'This turns on Docker, the system that runs PocketCoder’s containers. It sends their logs to NixOS’s built-in system log, so there is one place to check what happened.';
+
+  @override
+  String get walkthroughServerKeyTitle => 'YOUR SERVER KEY';
+
+  @override
+  String get walkthroughServerKeyPoco =>
+      'Before PocketCoder starts, this installs your public SSH key on the server. The mobile app keeps the matching private SSH key securely on your phone: the public key is the lock, and the private key is the key that opens it.';
+
+  @override
+  String get walkthroughServerKeyChipPrivate => 'WHAT IS A PRIVATE SSH KEY?';
+
+  @override
+  String get walkthroughServerKeyChipPublic => 'WHAT IS A PUBLIC SSH KEY?';
+
+  @override
+  String get walkthroughServerKeyChipSsh => 'WHAT IS SSH?';
+
+  @override
+  String get walkthroughVerifiedVersionTitle => 'VERIFIED POCKETCODER VERSION';
+
+  @override
+  String get walkthroughVerifiedVersionPoco =>
+      'This downloads the exact PocketCoder version for your server, verifies it, then installs it.';
+
+  @override
+  String get walkthroughVerifiedVersionChipVerification =>
+      'HOW IS THE VERSION VERIFIED?';
+
+  @override
+  String get walkthroughVerifiedVersionChipDownloadFailure =>
+      'WHAT HAPPENS IF THE DOWNLOAD FAILS?';
+
+  @override
+  String get walkthroughVerifiedVersionChipUpdates => 'CAN I UPDATE LATER?';
+
+  @override
+  String get walkthroughStartPocketCoderTitle => 'START POCKETCODER';
+
+  @override
+  String get walkthroughStartPocketCoderPoco =>
+      'This starts the verified PocketCoder version with only the coding harnesses you chose.';
+
+  @override
+  String get walkthroughStartPocketCoderChipWhatStarts =>
+      'WHAT STARTS AFTER THIS?';
+
+  @override
+  String get walkthroughStartPocketCoderChipAddHarness =>
+      'CAN I ADD A HARNESS LATER?';
+
+  @override
+  String get walkthroughNixosDockerRulesTitle => 'DOCKER FIREWALL RULES';
+
+  @override
+  String get walkthroughNixosDockerRulesPoco =>
+      'Docker needs its own rules because it manages a separate path for container traffic. These rules keep the same boundaries without opening extra entry ports.';
+
+  @override
+  String get walkthroughRuntimeSettingsTitle => 'LOCAL SETTINGS';
+
+  @override
+  String get walkthroughRuntimeSettingsPoco =>
+      'This prepares PocketCoder’s local settings file and locks it so only its administrator—you—can read it. It creates the internal credentials PocketCoder needs to run.';
+
+  @override
+  String get walkthroughRuntimeSettingsChipLocalSettings =>
+      'WHAT ARE LOCAL SETTINGS?';
+
+  @override
+  String get walkthroughRuntimeVersionTitle => 'RUNNING VERSION';
+
+  @override
+  String get walkthroughRuntimeVersionPoco =>
+      'PocketCoder records the version it is running in the same protected settings file.';
+
+  @override
+  String get walkthroughActivationPrepareTitle => 'PREPARE THE RELEASE';
+
+  @override
+  String get walkthroughActivationPreparePoco =>
+      'This checks that the release files match the verified PocketCoder version and prepares them for installation. It also sets up status reporting for the PocketCoder deployment.';
+
+  @override
+  String get walkthroughActivationSelectedSoftwareTitle => 'SELECTED SOFTWARE';
+
+  @override
+  String get walkthroughActivationSelectedSoftwarePoco =>
+      'Next, the server loads PocketCoder and only the coding agents you chose. It checks each software component before Docker runs it.';
+
+  @override
+  String get walkthroughActivationSwitchTitle => 'MAKE IT ACTIVE';
+
+  @override
+  String get walkthroughActivationSwitchPoco =>
+      'This makes the new PocketCoder version active and starts its containers. It uses prebuilt software for faster setup and consistent versioning.';
+
+  @override
+  String get walkthroughActivationHealthTitle => 'CHECK THE DEPLOYMENT';
+
+  @override
+  String get walkthroughActivationHealthPoco =>
+      'Before calling the deployment complete, PocketCoder checks that its core and optional services are healthy. Only then does it record this version as active.';
+
+  @override
+  String get walkthroughDebianSetupStatusTitle => 'SETUP STATUS';
+
+  @override
+  String get walkthroughDebianSetupStatusPoco =>
+      'This setup script keeps PocketCoder’s deployment status up to date as it runs. If something fails, it records where and cleans up temporary files so it can be checked or safely retried.';
+
+  @override
+  String get walkthroughDebianSetupStatusChipStatus =>
+      'HOW IS DEPLOYMENT STATUS SHOWN?';
+
+  @override
+  String get walkthroughDebianSetupStatusChipFailure =>
+      'WHAT HAPPENS IF SETUP FAILS?';
+
+  @override
+  String get walkthroughServicesComposeTitle => 'THE DOCKER BLUEPRINT';
+
+  @override
+  String get walkthroughServicesComposePoco =>
+      'Docker Compose is PocketCoder’s blueprint. It keeps your data when we update the software, and gives each component only the connections it needs.';
+
+  @override
+  String get walkthroughServicesComposeChipDockerCompose =>
+      'WHAT IS DOCKER COMPOSE?';
+
+  @override
+  String get walkthroughServicesComposeChipSavedData => 'WHAT IS SAVED DATA?';
+
+  @override
+  String get walkthroughServicesComposeChipPrivateConnections =>
+      'WHAT ARE PRIVATE CONNECTIONS?';
+
+  @override
+  String get walkthroughServicesPocketBaseTitle => 'POCKETBASE';
+
+  @override
+  String get walkthroughServicesPocketBasePoco =>
+      'PocketBase keeps the information PocketCoder needs to run: your sign-in, skills, prompts, agent connections, and API keys. That information stays on your server, and you reach it through the HTTPS address Caddy just set up.';
+
+  @override
+  String get walkthroughServicesPocketBaseChipKeeps =>
+      'WHAT DOES POCKETBASE KEEP?';
+
+  @override
+  String get walkthroughServicesPocketBaseChipSignIn =>
+      'HOW DO I SIGN IN SECURELY?';
+
+  @override
+  String get walkthroughServicesPocketBaseChipUpdates =>
+      'WHAT HAPPENS WHEN POCKETCODER UPDATES?';
+
+  @override
+  String get walkthroughServicesHarnessesTitle => 'CODING HARNESSES';
+
+  @override
+  String walkthroughServicesHarnessesPoco(String selectedHarnesses) {
+    return 'PocketCoder prepares the coding harnesses you selected: $selectedHarnesses. Each gets its own container, saved workspace, and only the private connections it needs.';
+  }
+
+  @override
+  String get walkthroughServicesHarnessesChipHarness =>
+      'WHAT IS A CODING HARNESS?';
+
+  @override
+  String get walkthroughServicesHarnessesChipWorkspace =>
+      'WHAT IS A SAVED WORKSPACE?';
+
+  @override
+  String get walkthroughServicesHarnessesChipAdd =>
+      'CAN I ADD A HARNESS LATER?';
+
+  @override
+  String get walkthroughServicesToolsTitle => 'TOOL CONNECTIONS';
+
+  @override
+  String get walkthroughServicesToolsPoco =>
+      'The MCP Gateway is a controlled connection point for extra tools your coding harnesses can use. Its separate Docker proxy grants only the permissions those tools need, while blocking more sensitive actions such as accessing saved data or secrets.';
+
+  @override
+  String get walkthroughServicesToolsChipMcp => 'WHAT IS MCP?';
+
+  @override
+  String get walkthroughServicesToolsChipHarnessTools =>
+      'WHAT TOOLS CAN A HARNESS USE?';
+
+  @override
+  String get walkthroughServicesToolsChipProxy =>
+      'WHY DOES THIS HAVE A SEPARATE PROXY?';
+
+  @override
+  String get walkthroughServicesOllamaTitle => 'LOCAL MODELS';
+
+  @override
+  String get walkthroughServicesOllamaPoco =>
+      'Ollama is ready to run AI models directly on your server. It appears because you chose a local-model setup; when you later choose a model, PocketCoder downloads it and keeps it as saved data.';
+
+  @override
+  String get walkthroughServicesOllamaChipLocalModel =>
+      'WHAT IS A LOCAL MODEL?';
+
+  @override
+  String get walkthroughServicesOllamaChipDownload =>
+      'WHEN IS A MODEL DOWNLOADED?';
+
+  @override
+  String get walkthroughServicesOllamaChipGpu =>
+      'DOES THIS USE MY SERVER\'S GPU?';
+
+  @override
+  String get walkthroughServicesCogneeTitle => 'LONG-TERM MEMORY';
+
+  @override
+  String get walkthroughServicesCogneeBadge => 'COMING SOON';
+
+  @override
+  String get walkthroughServicesCogneePoco =>
+      'Cognee will help PocketCoder build long-term memory from your work. It is not included in this setup yet, so there is nothing more to configure today.';
+
+  @override
+  String get walkthroughServicesSqlPageTitle => 'SERVER DASHBOARD';
+
+  @override
+  String get walkthroughServicesSqlPagePoco =>
+      'SQLPage is PocketCoder’s built-in dashboard for showing what is happening on your server. It starts after PocketBase is ready and uses saved PocketCoder data to build those pages.';
+
+  @override
+  String get walkthroughServicesSqlPageChipContents =>
+      'WHAT CAN THIS DASHBOARD SHOW?';
+
+  @override
+  String get walkthroughServicesSqlPageChipStartOrder =>
+      'WHY DOES IT START AFTER POCKETBASE?';
+
+  @override
   String get permissionSignoffTitle => 'COMMANDER\'S SIGNOFF';
 
   @override
