@@ -164,7 +164,7 @@ class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
               title: _lessonTitle(context, part.section.id),
               sourceLabel: '${part.sourceFile.path}:${part.section.startLine}',
               code: part.section.code,
-              importantCode: part.section.importantCode,
+              previewCode: part.section.previewCode,
             ),
           )
           .toList(growable: false),
