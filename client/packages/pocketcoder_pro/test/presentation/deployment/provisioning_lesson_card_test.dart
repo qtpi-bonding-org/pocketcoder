@@ -18,17 +18,18 @@ void main() {
               builder: (context, setState) => ProvisioningLessonCard(
                 title: 'Safe image installation',
                 explanation: 'I verify the disk and image before installation.',
-                importantCode: 'test -b /dev/sdb',
                 codeBlocks: const [
                   ProvisioningLessonCodeBlock(
                     title: 'Check the disk',
                     sourceLabel: 'installer.sh:10',
                     code: 'blockdev --getsize64 /dev/sdb',
+                    importantCode: 'test -b /dev/sdb',
                   ),
                   ProvisioningLessonCodeBlock(
                     title: 'Verify the image',
                     sourceLabel: 'installer.sh:34',
                     code: 'sha256sum /tmp/image',
+                    importantCode: 'test -f /tmp/image',
                   ),
                 ],
                 lessonNumber: 1,
@@ -47,6 +48,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('test -b /dev/sdb'), findsOneWidget);
+    expect(find.text('test -f /tmp/image'), findsOneWidget);
     expect(find.text('blockdev --getsize64 /dev/sdb'), findsNothing);
     expect(find.text('SHOW FULL SECTION (2)'), findsOneWidget);
 

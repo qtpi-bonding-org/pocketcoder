@@ -78,12 +78,14 @@ status installing_host
 # The app delivers owner credentials inside cloud-init, while Aeroform handles
 # the host packages and firewall. The SSH key is moved into OpenSSH's protected
 # file and removed from the application environment before containers start.
+# POCO:IMPORTANT:BEGIN
 install -d -m 0700 /root/.ssh
 root_ssh_key=$(sed -n 's/^root_ssh_key=//p' "$runtime_env")
 test -n "$root_ssh_key"
 printf '%s\n' "$root_ssh_key" > /root/.ssh/authorized_keys
 chmod 0600 /root/.ssh/authorized_keys
 sed -i '/^root_ssh_key=/d' "$runtime_env"
+# POCO:IMPORTANT:END
 # POCO:END bootstrap-owner-config
 
 # POCO:BEGIN bootstrap-release-source
@@ -159,6 +161,7 @@ available_blocks=$(df -Pk "$artifact_dir" | awk 'NR == 2 {print $4}')
 if [ -z "$available_blocks" ] || [ "$available_blocks" -lt "$required_blocks" ]; then
   fail_bootstrap fetching_release release_artifact_disk_headroom_insufficient
 fi
+# POCO:IMPORTANT:BEGIN
 status fetching_release downloading:deployment
 if ! curl -fL --retry 3 --retry-delay 2 --max-time 1200 \
   -o "$deployment_file" "$deployment_url"; then
@@ -173,6 +176,7 @@ fi
 if tar -tzf "$deployment_file" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
   fail_bootstrap fetching_release deployment_artifact_path_invalid
 fi
+# POCO:IMPORTANT:END
 
 release_dir="/opt/pocketcoder/releases/$resolved_commit"
 release_stage="$release_dir.stage.$$"

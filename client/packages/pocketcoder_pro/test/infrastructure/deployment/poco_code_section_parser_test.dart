@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/poco_code_section_parser.dart';
@@ -25,7 +26,9 @@ void main() {
     final sections = PocoCodeSectionParser().parse('''
 ignored
 # POCO:BEGIN firewall
+# POCO:IMPORTANT:BEGIN
 networking.firewall.enable = true;
+# POCO:IMPORTANT:END
 # POCO:END firewall
 ignored again
 ''');
@@ -33,8 +36,9 @@ ignored again
     expect(sections, hasLength(1));
     expect(sections.single.id, 'firewall');
     expect(sections.single.code, 'networking.firewall.enable = true;');
+    expect(sections.single.importantCode, 'networking.firewall.enable = true;');
     expect(sections.single.startLine, 3);
-    expect(sections.single.endLine, 3);
+    expect(sections.single.endLine, 5);
   });
 
   test('rejects mismatched and unfinished sections', () {
@@ -66,6 +70,28 @@ ignored again
     );
   });
 
+  test('selects host-specific sources before the shared release sources', () {
+    expect(
+      provisioningSourceFilesFor(ProvisionBackendKind.nixos),
+      [
+        ProvisioningSourceFile.hostConfiguration,
+        ProvisioningSourceFile.hostBootstrap,
+        ProvisioningSourceFile.runtimeEnvironment,
+        ProvisioningSourceFile.releaseActivation,
+        ProvisioningSourceFile.dockerCompose,
+      ],
+    );
+    expect(
+      provisioningSourceFilesFor(ProvisionBackendKind.standardLinux),
+      [
+        ProvisioningSourceFile.standardLinuxBootstrap,
+        ProvisioningSourceFile.runtimeEnvironment,
+        ProvisioningSourceFile.releaseActivation,
+        ProvisioningSourceFile.dockerCompose,
+      ],
+    );
+  });
+
   test('rejects a source ref that could alter the GitHub path', () async {
     final service = GithubProvisioningSourceService(
       client: _RecordingClient(),
@@ -85,6 +111,9 @@ ignored again
     final sourcePaths = [
       '../../../deploy/nixos/configuration.nix',
       '../../../deploy/nixos/bootstrap.sh',
+      'assets/deployment/standard_linux_bootstrap.sh',
+      '../../../deploy/scripts/prepare-runtime-env.sh',
+      '../../../deploy/scripts/activate-release.sh',
       '../../../docker-compose.yml',
     ];
 
@@ -96,6 +125,11 @@ ignored again
         sections.every((section) => section.code.trim().isNotEmpty),
         isTrue,
         reason: path,
+      );
+      expect(
+        sections.every((section) => section.importantCode.trim().isNotEmpty),
+        isTrue,
+        reason: '$path needs a concise excerpt',
       );
     }
   });

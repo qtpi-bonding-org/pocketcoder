@@ -46,9 +46,11 @@ append_default POCKETCODER_ARTIFACT_DIR /var/lib/pocketcoder/artifacts
 # POCO:BEGIN bootstrap-local-secrets
 # Release identity is the only generated value that changes during an update.
 # Owner credentials and service secrets above are retained exactly as they are.
+# POCO:IMPORTANT:BEGIN
 runtime_tmp="$runtime_env.tmp.$$"
 sed '/^POCKETCODER_RELEASE=/d' "$runtime_env" > "$runtime_tmp"
 printf 'POCKETCODER_RELEASE=%s\n' "$release" >> "$runtime_tmp"
 chmod 0600 "$runtime_tmp"
 mv -f "$runtime_tmp" "$runtime_env"
+# POCO:IMPORTANT:END
 # POCO:END bootstrap-local-secrets

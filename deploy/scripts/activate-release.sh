@@ -72,12 +72,14 @@ mv -f "$manifest_tmp" "$manifest_cache"
 # POCO:BEGIN bootstrap-verified-images
 # Load only the core and explicitly selected harness archives. Each archive is
 # size-checked and checksum-verified before Docker is allowed to read it.
+# POCO:IMPORTANT:BEGIN
 write_status loading_images resolving:selected-harnesses
 if ! "$script_dir/install-release-images.sh" \
   "$manifest_cache" "$catalog" "$artifact_dir" "$run_id" "$status_file" "$@"; then
   failure_reported=1
   exit 1
 fi
+# POCO:IMPORTANT:END
 # POCO:END bootstrap-verified-images
 
 # POCO:BEGIN bootstrap-compose-start
@@ -90,8 +92,16 @@ if [ -e "$current_link" ] && [ ! -L "$current_link" ]; then
   exit 1
 fi
 ln -s "$release_dir" "$current_link_tmp"
-mv -f "$current_link_tmp" "$current_link"
+# GNU mv needs -T and BSD mv needs -h to replace a symlink-to-directory
+# itself instead of moving the temporary link *inside* its target directory.
+# Both forms still perform a single atomic rename on their respective hosts.
+if mv -Tf "$current_link_tmp" "$current_link" 2>/dev/null; then
+  :
+else
+  mv -fh "$current_link_tmp" "$current_link"
+fi
 
+# POCO:IMPORTANT:BEGIN
 write_status compose_up
 if docker compose version >/dev/null 2>&1; then
   docker compose --project-name pocketcoder --env-file "$runtime_env" \
@@ -99,6 +109,59 @@ if docker compose version >/dev/null 2>&1; then
 else
   docker-compose --project-name pocketcoder --env-file "$runtime_env" \
     -f "$compose_file" up -d --no-build --remove-orphans
+fi
+# POCO:IMPORTANT:END
+
+# A candidate is not active merely because Docker accepted `compose up`.
+# Keep the durable release pointer on the previous version until the matching
+# PocketBase process has completed startup and answers its local health route.
+current_phase=finishing_up
+write_status finishing_up waiting:core-health
+if [ "${POCKETCODER_SKIP_HEALTHCHECK:-0}" != 1 ]; then
+  health_url=${POCKETCODER_HEALTH_URL:-http://127.0.0.1:8090/api/health}
+  health_attempts=${POCKETCODER_HEALTH_ATTEMPTS:-90}
+  health_interval=${POCKETCODER_HEALTH_INTERVAL_SECONDS:-2}
+  healthy=0
+  attempt=1
+  while [ "$attempt" -le "$health_attempts" ]; do
+    if curl -fsS --max-time 5 "$health_url" >/dev/null 2>&1; then
+      healthy=1
+      break
+    fi
+    sleep "$health_interval"
+    attempt=$((attempt + 1))
+  done
+  if [ "$healthy" -ne 1 ]; then
+    echo "PocketCoder core did not become healthy" >&2
+    exit 1
+  fi
+fi
+
+if [ "${POCKETCODER_ENABLE_OLLAMA:-0}" = 1 ]; then
+  write_status finishing_up starting:ollama
+  if docker compose version >/dev/null 2>&1; then
+    docker compose --project-name pocketcoder --env-file "$runtime_env" \
+      -f "$compose_file" --profile local-models up -d --no-build ollama
+  else
+    docker-compose --project-name pocketcoder --env-file "$runtime_env" \
+      -f "$compose_file" --profile local-models up -d --no-build ollama
+  fi
+  if [ "${POCKETCODER_SKIP_HEALTHCHECK:-0}" != 1 ]; then
+    ollama_healthy=0
+    attempt=1
+    while [ "$attempt" -le "$health_attempts" ]; do
+      if [ "$(docker inspect --format '{{.State.Health.Status}}' pocketcoder-ollama 2>/dev/null || true)" = healthy ]; then
+        ollama_healthy=1
+        break
+      fi
+      sleep "$health_interval"
+      attempt=$((attempt + 1))
+    done
+    if [ "$ollama_healthy" -ne 1 ]; then
+      echo "Ollama did not become healthy" >&2
+      exit 1
+    fi
+  fi
 fi
 
 pointer_tmp="$release_state/current.json.tmp.$$"

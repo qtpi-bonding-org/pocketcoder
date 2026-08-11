@@ -56,6 +56,7 @@ class DeploymentCubit extends AppCubit<DeploymentState> {
         deploymentStatus: OnboardingStage.validating,
         instance: null,
         instanceId: null,
+        backend: config.backend,
       ));
       final result = await _provisioningService.provision(
         config,

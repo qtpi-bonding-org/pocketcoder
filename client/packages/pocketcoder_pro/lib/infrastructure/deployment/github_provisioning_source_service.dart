@@ -1,15 +1,35 @@
 import 'package:http/http.dart' as http;
+import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:pocketcoder_pro/domain/deployment/poco_code_section.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/poco_code_section_parser.dart';
 
 enum ProvisioningSourceFile {
   hostConfiguration('deploy/nixos/configuration.nix'),
   hostBootstrap('deploy/nixos/bootstrap.sh'),
+  standardLinuxBootstrap(
+    'client/packages/pocketcoder_pro/assets/deployment/standard_linux_bootstrap.sh',
+  ),
+  runtimeEnvironment('deploy/scripts/prepare-runtime-env.sh'),
+  releaseActivation('deploy/scripts/activate-release.sh'),
   dockerCompose('docker-compose.yml');
 
   const ProvisioningSourceFile(this.path);
   final String path;
 }
+
+List<ProvisioningSourceFile> provisioningSourceFilesFor(
+  ProvisionBackendKind backend,
+) =>
+    [
+      if (backend == ProvisionBackendKind.nixos) ...[
+        ProvisioningSourceFile.hostConfiguration,
+        ProvisioningSourceFile.hostBootstrap,
+      ] else
+        ProvisioningSourceFile.standardLinuxBootstrap,
+      ProvisioningSourceFile.runtimeEnvironment,
+      ProvisioningSourceFile.releaseActivation,
+      ProvisioningSourceFile.dockerCompose,
+    ];
 
 /// Loads the inspectable provisioning source for the exact deployed release.
 class GithubProvisioningSourceService {
