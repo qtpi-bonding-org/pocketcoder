@@ -1231,10 +1231,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pocoProvisioningNext => 'NEXT';
 
   @override
-  String get pocoProvisioningShowFull => 'SHOW FULL SECTION';
+  String get pocoProvisioningShowFull => 'SHOW FULL SNIPPET';
 
   @override
-  String get pocoProvisioningShowConcise => 'SHOW CONCISE VIEW';
+  String get pocoProvisioningShowConcise => 'SHOW PREVIEW';
 
   @override
   String get pocoLessonVpsStorageTitle => 'Your VPS disk';

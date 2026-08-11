@@ -76,6 +76,7 @@ import 'package:pocketcoder_pro/presentation/deployment/widgets/config_view.dart
 import 'package:pocketcoder_pro/presentation/deployment/widgets/details_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/progress_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_lesson_card.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_snippet.dart';
 import 'package:pocketcoder_pro/presentation/server_update/widgets/update_server_view.dart';
 import 'package:widgetbook/widgetbook.dart';
 
@@ -967,6 +968,11 @@ final _proScreens = <WidgetbookNode>[
     'expanded full code': () =>
         const _ProvisioningLessonCardPreview(initiallyExpanded: true),
   }),
+  _screen('ProvisioningSnippet', {
+    'preview': () => const _ProvisioningSnippetPreview(),
+    'expanded': () =>
+        const _ProvisioningSnippetPreview(initiallyExpanded: true),
+  }),
   _screen('DetailsScreen', {
     'running instance': () => DetailsView(
           instance: Instance(
@@ -1051,6 +1057,50 @@ class _ProvisioningLessonCardPreviewState
               onNext: () {},
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProvisioningSnippetPreview extends StatefulWidget {
+  const _ProvisioningSnippetPreview({this.initiallyExpanded = false});
+
+  final bool initiallyExpanded;
+
+  @override
+  State<_ProvisioningSnippetPreview> createState() =>
+      _ProvisioningSnippetPreviewState();
+}
+
+class _ProvisioningSnippetPreviewState
+    extends State<_ProvisioningSnippetPreview> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(AppSizes.space * 2),
+        child: ProvisioningSnippet(
+          previewCode: '''services.caddy = {
+  ports = [ "80:80" ];
+};''',
+          expandedCode: '''services.caddy = {
+  image = "caddy:2.9";
+  ports = [ "80:80", "443:443" ];
+  networks = [ "public" ];
+  volumes = [ "./Caddyfile:/etc/caddy/Caddyfile:ro" ];
+};''',
+          sourceLabel: 'docker-compose.yml:18-25',
+          expanded: _expanded,
+          onExpandedChanged: (value) => setState(() => _expanded = value),
         ),
       ),
     );
