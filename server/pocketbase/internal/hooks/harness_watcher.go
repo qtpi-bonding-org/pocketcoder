@@ -83,7 +83,7 @@ func dockerEventToStatus(action string) string {
 	switch action {
 	case "start":
 		return "running"
-	case "die", "stop", "kill":
+	case "die", "stop", "kill", "destroy":
 		return "stopped"
 	default:
 		return ""
@@ -123,10 +123,7 @@ func reconcile(ctx context.Context, app core.App, client eventSource) {
 	}
 	for _, inst := range instances {
 		name := inst.GetString("container_name")
-		wantRunning, seen := running[name]
-		if !seen {
-			continue // absent from the sweep entirely — leave as-is, a future event will correct it
-		}
+		wantRunning := running[name]
 		status := "stopped"
 		if wantRunning {
 			status = "running"

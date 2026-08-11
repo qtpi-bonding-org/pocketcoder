@@ -119,6 +119,23 @@ func TestWatcherUpdatesStatusOnDieAndStart(t *testing.T) {
 	waitForStatus(t, app, inst.Id, "stopped")
 	fake.emit(dockerapi.Event{Action: "start", ContainerName: "h1"})
 	waitForStatus(t, app, inst.Id, "running")
+	fake.emit(dockerapi.Event{Action: "destroy", ContainerName: "h1"})
+	waitForStatus(t, app, inst.Id, "stopped")
+}
+
+func TestWatcherReconciliationMarksAbsentManagedRowsStopped(t *testing.T) {
+	app := testApp(t)
+	inst := createTestHarnessInstance(t, app, map[string]any{
+		"container_name": "removed-during-update",
+		"status":         "running",
+		"managed":        true,
+	})
+	fake := newFakeEventClient()
+	fake.listAllResult = nil
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go StartHarnessWatcher(ctx, app, fake)
+	waitForStatus(t, app, inst.Id, "stopped")
 }
 
 func TestWatcherReconciliationSweepSkipsUnmanagedRows(t *testing.T) {

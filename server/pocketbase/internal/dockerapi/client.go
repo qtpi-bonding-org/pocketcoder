@@ -77,7 +77,11 @@ type Mount struct {
 type NetworkEndpoint struct{}
 
 type ContainerInspect struct {
-	Mounts          []Mount
+	Mounts []Mount
+	Config struct {
+		Image  string
+		Labels map[string]string
+	}
 	NetworkSettings struct {
 		Networks map[string]NetworkEndpoint
 	}
@@ -287,13 +291,18 @@ type CreateSpec struct {
 	VolumeBinds            []string
 	Labels                 map[string]string
 	NetworkNames           []string
+	NetworkAliases         map[string][]string
 	RestartPolicy          string
 }
 
 func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (string, error) {
 	endpoints := make(map[string]any, len(spec.NetworkNames))
 	for _, networkName := range spec.NetworkNames {
-		endpoints[networkName] = map[string]any{}
+		endpoint := map[string]any{}
+		if aliases := spec.NetworkAliases[networkName]; len(aliases) > 0 {
+			endpoint["Aliases"] = aliases
+		}
+		endpoints[networkName] = endpoint
 	}
 	binds := spec.VolumeBinds
 	if len(binds) == 0 && spec.VolumeName != "" {
@@ -311,9 +320,6 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 		"Binds":         binds,
 		"RestartPolicy": map[string]any{"Name": restartPolicy},
 	}
-	if len(spec.Labels) > 0 {
-		hostConfig["Labels"] = spec.Labels
-	}
 	payload := map[string]any{
 		"Image":      spec.Image,
 		"Entrypoint": spec.Entrypoint,
@@ -323,6 +329,12 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 		"NetworkingConfig": map[string]any{
 			"EndpointsConfig": endpoints,
 		},
+	}
+	if len(spec.Labels) > 0 {
+		// Container labels are part of Docker's Config object, not HostConfig.
+		// Keeping them at the top level is what makes pc_managed/pc_release
+		// visible to the host updater's narrowly scoped container filters.
+		payload["Labels"] = spec.Labels
 	}
 	buf, err := json.Marshal(payload)
 	if err != nil {

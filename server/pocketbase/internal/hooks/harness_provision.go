@@ -146,7 +146,19 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		return nil, err
 	}
 	if existing != nil {
-		return existing, nil
+		// Updates deliberately remove release-managed harness containers while
+		// preserving their named workspace/auth volumes. The Docker watcher marks
+		// the corresponding row stopped (including when the container is absent
+		// during startup reconciliation). Drop that stale row here so the next
+		// chat recreates the harness against the active release immediately rather
+		// than returning a dead ACP endpoint for the lifecycle grace period.
+		if status := existing.GetString("status"); status == "stopped" {
+			if err := app.Delete(existing); err != nil {
+				return nil, fmt.Errorf("delete stale harness instance: %w", err)
+			}
+		} else {
+			return existing, nil
+		}
 	}
 
 	harness, err := app.FindRecordById("harnesses", harnessID)

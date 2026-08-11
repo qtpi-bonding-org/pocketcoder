@@ -350,6 +350,42 @@ func TestProvisionHarnessInstanceIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestProvisionHarnessInstanceRecreatesStoppedReleaseContainer(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "test-stopped-harness-"+uuid.NewString()[:8]+"@example.com").Id
+	harness := createTestHarness(t, app, map[string]any{
+		"container_image": "example.com/harness:2.0",
+		"launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000},
+	})
+	instances, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stale := core.NewRecord(instances)
+	stale.Set("harness", harness.Id)
+	stale.Set("user", userID)
+	stale.Set("launch_key", "")
+	stale.Set("container_name", "old-release-container")
+	stale.Set("secret", "old-secret")
+	stale.Set("status", "stopped")
+	stale.Set("managed", true)
+	if err := app.Save(stale); err != nil {
+		t.Fatal(err)
+	}
+
+	fake := newFakeDockerClient()
+	replacement, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if replacement.Id == stale.Id || replacement.GetString("container_name") == "old-release-container" {
+		t.Fatal("stopped release container row was reused instead of recreated")
+	}
+	if replacement.GetString("status") != "running" || fake.createCallCount != 1 {
+		t.Fatalf("replacement status/create calls = %q/%d", replacement.GetString("status"), fake.createCallCount)
+	}
+}
+
 func TestProvisionHarnessInstanceSurfacesPullFailure(t *testing.T) {
 	app := testApp(t)
 	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id

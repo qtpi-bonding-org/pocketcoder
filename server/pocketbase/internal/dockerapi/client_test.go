@@ -146,7 +146,9 @@ func TestCreateAttachesVolumeAndNetworksInOneCall(t *testing.T) {
 	id, err := c.Create(context.Background(), "my-harness", CreateSpec{
 		Image: "example.com/harness:1.0", Cmd: []string{"/adapter"},
 		VolumeName: "myproject_goose_workspace", VolumeDest: "/workspace",
-		NetworkNames: []string{"myproject_pocketcoder-agent", "pocketcoder-model"},
+		NetworkNames:   []string{"myproject_pocketcoder-agent", "pocketcoder-model"},
+		NetworkAliases: map[string][]string{"pocketcoder-model": {"ollama"}},
+		Labels:         map[string]string{"pc_managed": "pocketcoder"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -159,6 +161,10 @@ func TestCreateAttachesVolumeAndNetworksInOneCall(t *testing.T) {
 	if len(binds) != 1 || binds[0] != "myproject_goose_workspace:/workspace" {
 		t.Errorf("Binds = %v, want [myproject_goose_workspace:/workspace]", binds)
 	}
+	labels := body["Labels"].(map[string]any)
+	if labels["pc_managed"] != "pocketcoder" {
+		t.Errorf("Labels = %v, want top-level pc_managed label", labels)
+	}
 	netConfig := body["NetworkingConfig"].(map[string]any)
 	endpoints := netConfig["EndpointsConfig"].(map[string]any)
 	if _, ok := endpoints["myproject_pocketcoder-agent"]; !ok {
@@ -166,6 +172,11 @@ func TestCreateAttachesVolumeAndNetworksInOneCall(t *testing.T) {
 	}
 	if _, ok := endpoints["pocketcoder-model"]; !ok {
 		t.Error("expected the local-model network attached in the same create call")
+	}
+	modelEndpoint := endpoints["pocketcoder-model"].(map[string]any)
+	aliases := modelEndpoint["Aliases"].([]any)
+	if len(aliases) != 1 || aliases[0] != "ollama" {
+		t.Errorf("pocketcoder-model aliases = %v, want [ollama]", aliases)
 	}
 	restartPolicy := hostConfig["RestartPolicy"].(map[string]any)
 	if restartPolicy["Name"] != "unless-stopped" {

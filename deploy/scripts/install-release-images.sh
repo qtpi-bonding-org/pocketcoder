@@ -63,6 +63,10 @@ install -d -m 0700 "$artifact_dir"
 "$script_dir/resolve-release-artifacts.sh" \
   "$manifest_file" "$catalog_file" "$@" \
   | jq -c '.[] | select(.kind != "deployment")' > "$resolved_file"
+if [ "${POCKETCODER_INCLUDE_OLLAMA:-0}" = 1 ]; then
+  jq -c '{kind:"optional",id:"ollama",artifact:.optional.ollama}' \
+    "$manifest_file" >> "$resolved_file"
+fi
 
 while IFS= read -r selected; do
   artifact_id=$(printf '%s' "$selected" | jq -r '.id')
@@ -70,6 +74,19 @@ while IFS= read -r selected; do
   expected_sha256=$(printf '%s' "$selected" | jq -r '.artifact.sha256')
   expected_bytes=$(printf '%s' "$selected" | jq -r '.artifact.bytes')
   expanded_bytes=$(printf '%s' "$selected" | jq -r '.artifact.expandedBytes')
+
+  all_present=1
+  for image in $(printf '%s' "$selected" | jq -r '.artifact.images[]'); do
+    if ! docker image inspect "$image" >/dev/null 2>&1; then
+      all_present=0
+      break
+    fi
+  done
+  if [ "$all_present" -eq 1 ]; then
+    write_status loading_images "cached:$artifact_id"
+    continue
+  fi
+
   required_blocks=$(((expected_bytes + expanded_bytes + reserve_bytes + 1023) / 1024))
   available_blocks=$(df -Pk "$artifact_dir" | awk 'NR == 2 {print $4}')
   if [ -z "$available_blocks" ] || [ "$available_blocks" -lt "$required_blocks" ]; then

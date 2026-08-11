@@ -19,8 +19,11 @@ install -d "$stage/deploy/scripts" "$stage/deploy/release"
 
 for file in \
   activate-release.sh \
+  cleanup-old-releases.sh \
+  discover-release-harnesses.sh \
   install-release-images.sh \
   prepare-runtime-env.sh \
+  remove-managed-release-containers.sh \
   resolve-release-artifacts.sh \
   update-release.sh \
   validate-release-contract.sh
