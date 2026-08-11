@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_aeroform/domain/models/provision_result.dart';
 import 'package:flutter_aeroform/domain/models/instance.dart';
+import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/domain/deployment/server_status_document.dart';
@@ -23,6 +24,7 @@ sealed class DeploymentState with _$DeploymentState implements IUiFlowState {
     ServerStatusDocument? serverStatusDocument,
     String? instanceId,
     String? hostname,
+    ProvisionBackendKind? backend,
   }) = _DeploymentState;
 
   factory DeploymentState.initial() => const DeploymentState();

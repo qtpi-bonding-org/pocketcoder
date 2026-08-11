@@ -49,4 +49,4 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/deployment/standard_linux_stage_zero.sh
+    - assets/deployment/standard_linux_bootstrap.sh

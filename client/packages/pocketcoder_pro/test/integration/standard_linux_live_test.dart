@@ -98,9 +98,9 @@ Future<void> _scenario({
   final email =
       'pocketcoder-$name-${started.millisecondsSinceEpoch}@example.com';
   final script =
-      File('assets/deployment/standard_linux_stage_zero.sh').readAsStringSync();
+      File('assets/deployment/standard_linux_bootstrap.sh').readAsStringSync();
   final bootstrap = PocketCoderCloudInit.build(
-    stageZeroScript: script,
+    bootstrapScript: script,
     adminEmail: email,
     adminPassword: 'throwaway-live-password',
     rootSshKey: publicKey,

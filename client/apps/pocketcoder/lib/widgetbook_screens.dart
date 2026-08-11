@@ -908,9 +908,6 @@ class _ProvisioningLessonCardPreviewState
               title: 'Installing the NixOS image safely',
               explanation:
                   'We check the destination and the download before allowing the new operating system to take over your VPS.',
-              importantCode: '''[ -b /dev/sdb ] || exit 1
-TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
-[ "\$TARGET_BYTES" -ge "\$IMAGE_UNCOMPRESSED_BYTES" ] || exit 1''',
               codeBlocks: _installerLessonBlocks,
               lessonNumber: 1,
               lessonCount: 10,
@@ -934,11 +931,15 @@ const _installerLessonBlocks = [
 # <UDF name="IMAGE_SHA256" label="Expected sha256 of the gzip" />
 # <UDF name="IMAGE_UNCOMPRESSED_BYTES" label="Expected uncompressed size in bytes" />
 set -euo pipefail''',
+    importantCode: 'set -euo pipefail',
   ),
   ProvisioningLessonCodeBlock(
     title: 'Disk safety check',
     sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:10',
     code: '''[ -b /dev/sdb ] || { echo "FATAL: /dev/sdb not found"; exit 1; }
+TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
+[ "\$TARGET_BYTES" -ge "\$IMAGE_UNCOMPRESSED_BYTES" ] || exit 1''',
+    importantCode: '''[ -b /dev/sdb ] || exit 1
 TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
 [ "\$TARGET_BYTES" -ge "\$IMAGE_UNCOMPRESSED_BYTES" ] || exit 1''',
   ),
@@ -949,6 +950,9 @@ TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
   | tee /tmp/sumpipe \\
   | gunzip \\
   | dd of=/dev/sdb bs=16M conv=fsync status=progress''',
+    importantCode: '''curl -fsSL "\$IMAGE_URL" \\
+  | gunzip \\
+  | dd of=/dev/sdb bs=16M conv=fsync status=progress''',
   ),
   ProvisioningLessonCodeBlock(
     title: 'Verify the checksum',
@@ -957,6 +961,7 @@ TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
 if [ "\$ACTUAL_SHA" = "\$IMAGE_SHA256" ]; then
   echo "Image verified"
 fi''',
+    importantCode: '[ "\$ACTUAL_SHA" = "\$IMAGE_SHA256" ]',
   ),
 ];
 

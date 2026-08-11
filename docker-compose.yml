@@ -1,6 +1,7 @@
 services:
   # POCO:BEGIN compose-pocketbase
   # 🏰 POCKETBASE CORE (Backend Only)
+  # POCO:IMPORTANT:BEGIN
   pocketbase:
     image: pocketcoder-pocketbase:latest
     build:
@@ -20,6 +21,7 @@ services:
       # Keep database backups in a separate persistent volume so recreating
       # the PocketBase container does not destroy the recovery copy.
       - pb_backups:/app/pb_backups
+  # POCO:IMPORTANT:END
       - pocketcoder-logs:/app/pb_public/logs
       - goose_workspace:/workspace
       - ./server/mcp-gateway/config:/mcp_config
@@ -79,6 +81,7 @@ services:
   # PocketBase (authenticated WS) plus its own model-provider egress network.
   # goose is the sole system of record for history; PocketBase never calls it
   # back, so this network carries only c1 -> c2 ACP traffic.
+  # POCO:IMPORTANT:BEGIN
   goose:
     profiles: ["harness-images"]
     image: pocketcoder-goose:1.43.0
@@ -114,6 +117,7 @@ services:
       - pocketcoder-mcp-gateway
       - pocketcoder-cognee
       - pocketcoder-model
+  # POCO:IMPORTANT:END
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:3000/status"]
@@ -132,10 +136,15 @@ services:
   # It publishes no host port. The model network is inference-only (Goose and
   # peer harnesses); the separate control network lets PocketBase list/pull
   # models without joining the Goose ACP boundary.
+  # POCO:IMPORTANT:BEGIN
   ollama:
     profiles: ["local-models"]
     image: ollama/ollama@sha256:f040603c11a11f125660eaf848170780e43b68973fc270e26f168536031ac258
     container_name: pocketcoder-ollama
+    labels:
+      pc_managed: pocketcoder
+      pc_release: ${POCKETCODER_RELEASE:-development}
+      pc_capability: ollama
     environment:
       - OLLAMA_MODELS=/ollama-models
     volumes:
@@ -143,6 +152,7 @@ services:
     networks:
       - pocketcoder-model
       - pocketcoder-ollama-control
+  # POCO:IMPORTANT:END
     restart: unless-stopped
     healthcheck:
       # `ollama list` talks to the local server and succeeds even before a
@@ -159,6 +169,7 @@ services:
   # services never run under the normal stack: the inactive profile keeps
   # them out of `docker compose up`, while bootstrap/CI build and cache the
   # images so PocketBase can create a container on first harness selection.
+  # POCO:IMPORTANT:BEGIN
   claude-code-harness-image:
     profiles: ["harness-images"]
     image: pocketcoder-harness-claude-code:0.64.2
@@ -187,6 +198,7 @@ services:
       dockerfile: server/harness-adapter/Dockerfile
       args:
         ACP_AGENT_PACKAGE: "opencode-ai@1.18.11"
+  # POCO:IMPORTANT:END
   # POCO:END compose-harness-images
 
   # POCO:BEGIN compose-mcp-sandbox
@@ -202,6 +214,7 @@ services:
     image: tecnativa/docker-socket-proxy@sha256:9e4b9e7517a6b660f2cc903a19b257b1852d5b3344794e3ea334ff00ae677ac2
     container_name: pocketcoder-docker-proxy-mcp
     environment:
+      # POCO:IMPORTANT:BEGIN
       - CONTAINERS=1        # Spawn/inspect/stop MCP server containers
       - POST=1              # Allow POST requests (container/network create)
       - IMAGES=1            # Pull catalog images
@@ -210,6 +223,7 @@ services:
       - INFO=1              # Docker version info
       - VOLUMES=0           # Disable volume operations
       - BUILD=0             # Disable build operations
+      # POCO:IMPORTANT:END
       - COMMIT=0            # Disable commit operations
       - CONFIGS=0           # Disable config operations
       - DISTRIBUTION=0      # Disable distribution operations
@@ -294,6 +308,7 @@ services:
   # `PermissionError: /cognee_data/system` (verified empirically, see
   # spikes/cognee-mcp-transport/). Runs once, exits 0, cognee waits for it.
   cognee-data-init:
+    # POCO:IMPORTANT:BEGIN
     image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
     container_name: pocketcoder-cognee-data-init
     profiles: ["memory"]
@@ -337,6 +352,7 @@ services:
       - cognee_config:/cognee-config
     networks:
       - pocketcoder-cognee
+    # POCO:IMPORTANT:END
     restart: unless-stopped
     healthcheck:
       # No curl/wget in this image, and cognee-mcp exposes no plain /health
@@ -358,6 +374,7 @@ services:
     image: tecnativa/docker-socket-proxy@sha256:9e4b9e7517a6b660f2cc903a19b257b1852d5b3344794e3ea334ff00ae677ac2
     container_name: pocketcoder-docker-proxy-write
     environment:
+      # POCO:IMPORTANT:BEGIN
       # Enable container operations for PocketBase restart capability
       - CONTAINERS=1          # Allow container operations (list, inspect, restart)
       - POST=1                # Allow POST requests (for restart)
@@ -371,6 +388,7 @@ services:
       - CONFIGS=0             # Disable config operations
       - DISTRIBUTION=0        # Disable distribution operations
       - EXEC=0                # Disable exec operations
+      # POCO:IMPORTANT:END
       - PLUGINS=0             # Disable plugin operations
       - SECRETS=0             # Disable secrets operations
       - SERVICES=0            # Disable services operations
@@ -428,6 +446,7 @@ services:
       - SQLPAGE_ENVIRONMENT=production
       - SQLPAGE_SITE_PREFIX=/api/pocketcoder/proxy/observability/
     volumes:
+      # POCO:IMPORTANT:BEGIN
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
       - ./server/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
       # Config actually lives under dashboard/config/ (sqlpage.json,
@@ -447,6 +466,7 @@ services:
       # read-only access).
       - goose_data:/goose_data:ro
       - cognee_data:/cognee_data:ro
+      # POCO:IMPORTANT:END
     networks:
       - pocketcoder-dashboard
       - pocketcoder-tailscale
@@ -468,6 +488,7 @@ services:
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
   ntfy:
+    # POCO:IMPORTANT:BEGIN
     image: binwiederhier/ntfy:v2.11.0
     container_name: pocketcoder-ntfy
     profiles:
@@ -486,6 +507,7 @@ services:
     #   - "2586:80"
     networks:
       - pocketcoder-pocketbase-sdk
+    # POCO:IMPORTANT:END
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:80/v1/health"]
@@ -500,6 +522,7 @@ services:
   # To enable: docker compose --profile tailscale up
   # Modes: TAILSCALE_MODE=private (default, Tailnet only) or TAILSCALE_MODE=funnel (public URL)
   tailscale:
+    # POCO:IMPORTANT:BEGIN
     image: tailscale/tailscale@sha256:cdf5612ded5be1344f1a704b8c5e53496db97376bb533e5e15f141e48bf60cc0
     container_name: pocketcoder-tailscale
     profiles:
@@ -523,6 +546,7 @@ services:
         condition: service_healthy
     networks:
       - pocketcoder-tailscale
+    # POCO:IMPORTANT:END
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "tailscale", "status", "--json"]
@@ -538,6 +562,7 @@ services:
   # The supported standard Linux path uses native host Caddy instead; the
   # NixOS image also manages Caddy as a native systemd service.
   caddy:
+    # POCO:IMPORTANT:BEGIN
     image: caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: pocketcoder-caddy
     profiles:
@@ -557,6 +582,7 @@ services:
         condition: service_healthy
     networks:
       - pocketcoder-dashboard
+    # POCO:IMPORTANT:END
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:80"]
@@ -567,6 +593,7 @@ services:
   # POCO:END compose-local-caddy
 
 # POCO:BEGIN compose-persistent-volumes
+# POCO:IMPORTANT:BEGIN
 volumes:
   pb_data:
   pb_backups:
@@ -584,6 +611,7 @@ volumes:
   cognee_data:        # cognee's embedded SQLite/LanceDB/Kuzu storage
   cognee_config:       # cognee.env, written by PocketBase, read by cognee
   ollama_models:       # downloaded local models; intentionally not in R2 cache
+# POCO:IMPORTANT:END
 # POCO:END compose-persistent-volumes
 
 # POCO:BEGIN compose-private-networks
@@ -606,6 +634,7 @@ networks:
   # Private ACP network shared only by PocketBase (c1) and Goose (c2). Goose is
   # reached over an authenticated WebSocket; it publishes no host port and joins
   # no other PocketBase network, so this is its sole path to/from c1.
+  # POCO:IMPORTANT:BEGIN
   pocketcoder-agent:
     driver: bridge
     name: pocketcoder-agent
@@ -632,4 +661,5 @@ networks:
   pocketcoder-ollama-control:
     driver: bridge
     name: pocketcoder-ollama-control
+  # POCO:IMPORTANT:END
 # POCO:END compose-private-networks

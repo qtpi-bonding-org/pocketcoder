@@ -127,9 +127,9 @@ class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
             acmeEmail: deployCredentials.email,
             staticPaths: const {'/_pocketcoder': '/var/lib/pocketcoder/public'},
           );
-    final standardLinuxStageZero = config.backend ==
+    final standardLinuxBootstrap = config.backend ==
             ProvisionBackendKind.standardLinux
-        ? await rootBundle.loadString(PocketCoderCloudInit.stageZeroAssetPath)
+        ? await rootBundle.loadString(PocketCoderCloudInit.bootstrapAssetPath)
         : null;
     final bootstrap = config.backend == ProvisionBackendKind.nixos
         ? StackScriptBootstrap(
@@ -149,7 +149,7 @@ class ConfigAdapter extends CubitAdapter<ConfigCubit, ConfigState> {
                 const ImageArtifact(url: '', sha256: '', uncompressedBytes: 0),
           )
         : PocketCoderCloudInit.build(
-            stageZeroScript: standardLinuxStageZero!,
+            bootstrapScript: standardLinuxBootstrap!,
             adminEmail: deployCredentials.email,
             adminPassword: deployCredentials.password,
             rootSshKey: keyPair.publicKey,

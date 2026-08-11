@@ -11,6 +11,7 @@ import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/progress_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_tour_panel.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
+import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 
 class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
   const ProgressAdapter({
@@ -66,6 +67,7 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
             stage: value.deploymentStatus,
             sourceCommit: value.serverStatusDocument?.sourceCommit,
             sourceService: sourceService,
+            backend: value.backend ?? ProvisionBackendKind.nixos,
           ),
           instance: value.instance,
           error: value.error,

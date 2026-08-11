@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/pocketcoder_cloud_init.dart';
 
-final _stageZeroScript = File(
-  'assets/deployment/standard_linux_stage_zero.sh',
+final _bootstrapScript = File(
+  'assets/deployment/standard_linux_bootstrap.sh',
 ).readAsStringSync();
 
 String _decodedWriteFile(String userData, String path) {
@@ -21,7 +21,7 @@ String _decodedWriteFile(String userData, String path) {
 void main() {
   test('emits a real cloud-init bootstrap for the application stack', () {
     final bootstrap = PocketCoderCloudInit.build(
-      stageZeroScript: _stageZeroScript,
+      bootstrapScript: _bootstrapScript,
       adminEmail: 'admin@example.test',
       adminPassword: 'throwaway-password',
       rootSshKey: 'ssh-ed25519 AAAA',
@@ -56,7 +56,7 @@ void main() {
 
   test('pins the deployment snapshot and artifacts to the supplied commit', () {
     final bootstrap = PocketCoderCloudInit.build(
-      stageZeroScript: _stageZeroScript,
+      bootstrapScript: _bootstrapScript,
       adminEmail: 'admin@example.test',
       adminPassword: 'password',
       rootSshKey: 'ssh-ed25519 AAAA',
@@ -76,7 +76,7 @@ void main() {
 
   test('serializes selected harnesses in canonical catalog order', () {
     final bootstrap = PocketCoderCloudInit.build(
-      stageZeroScript: _stageZeroScript,
+      bootstrapScript: _bootstrapScript,
       adminEmail: 'admin@example.test',
       adminPassword: 'password',
       rootSshKey: 'ssh-ed25519 AAAA',
@@ -100,7 +100,7 @@ void main() {
   test('rejects invalid selected harness sets before provisioning', () {
     expect(
       () => PocketCoderCloudInit.build(
-        stageZeroScript: _stageZeroScript,
+        bootstrapScript: _bootstrapScript,
         adminEmail: 'admin@example.test',
         adminPassword: 'password',
         rootSshKey: 'ssh-ed25519 AAAA',
@@ -110,7 +110,7 @@ void main() {
     );
     expect(
       () => PocketCoderCloudInit.build(
-        stageZeroScript: _stageZeroScript,
+        bootstrapScript: _bootstrapScript,
         adminEmail: 'admin@example.test',
         adminPassword: 'password',
         rootSshKey: 'ssh-ed25519 AAAA',
@@ -123,7 +123,7 @@ void main() {
   test('rejects newline injection in bootstrap values', () {
     expect(
       () => PocketCoderCloudInit.build(
-        stageZeroScript: _stageZeroScript,
+        bootstrapScript: _bootstrapScript,
         adminEmail: 'admin@example.test\nINJECTED=true',
         adminPassword: 'password',
         rootSshKey: 'ssh-ed25519 AAAA',
@@ -134,7 +134,7 @@ void main() {
 
   test('emits syntactically valid POSIX shell', () {
     final bootstrap = PocketCoderCloudInit.build(
-      stageZeroScript: _stageZeroScript,
+      bootstrapScript: _bootstrapScript,
       adminEmail: 'admin@example.test',
       adminPassword: 'password',
       rootSshKey: 'ssh-ed25519 AAAA',

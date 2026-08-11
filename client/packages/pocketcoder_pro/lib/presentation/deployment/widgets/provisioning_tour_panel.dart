@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -14,11 +15,13 @@ class ProvisioningTourPanel extends StatefulWidget {
     required this.stage,
     required this.sourceCommit,
     required this.sourceService,
+    required this.backend,
   });
 
   final OnboardingStage? stage;
   final String? sourceCommit;
   final GithubProvisioningSourceService sourceService;
+  final ProvisionBackendKind backend;
 
   @override
   State<ProvisioningTourPanel> createState() => _ProvisioningTourPanelState();
@@ -27,6 +30,7 @@ class ProvisioningTourPanel extends StatefulWidget {
 class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
   Future<List<_LoadedLesson>>? _lessons;
   String? _loadedCommit;
+  ProvisionBackendKind? _loadedBackend;
   String? _selectedId;
   bool _showFullCode = false;
 
@@ -44,47 +48,64 @@ class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
       _selectedId = _preferredLessonId(widget.stage);
       _showFullCode = false;
     }
-    if (oldWidget.sourceCommit != widget.sourceCommit) _loadSource();
+    if (oldWidget.sourceCommit != widget.sourceCommit ||
+        oldWidget.backend != widget.backend) {
+      _loadSource();
+    }
   }
 
   void _loadSource() {
     final commit = widget.sourceCommit ?? '';
     if (!widget.sourceService.isImmutableCommit(commit)) {
       _loadedCommit = null;
+      _loadedBackend = null;
       _lessons = null;
       return;
     }
-    if (_loadedCommit == commit) return;
+    if (_loadedCommit == commit && _loadedBackend == widget.backend) return;
     _loadedCommit = commit;
-    _lessons = _fetchLessons(commit);
+    _loadedBackend = widget.backend;
+    _lessons = _fetchLessons(commit, widget.backend);
   }
 
-  Future<List<_LoadedLesson>> _fetchLessons(String commit) async {
+  Future<List<_LoadedLesson>> _fetchLessons(
+    String commit,
+    ProvisionBackendKind backend,
+  ) async {
     final byId = <String, (PocoCodeSection, ProvisioningSourceFile)>{};
+    final sourceFiles = provisioningSourceFilesFor(backend);
     final sectionGroups = await Future.wait(
-      ProvisioningSourceFile.values.map(
+      sourceFiles.map(
         (file) => widget.sourceService.fetchSections(
           sourceCommit: commit,
           file: file,
         ),
       ),
     );
-    for (var index = 0;
-        index < ProvisioningSourceFile.values.length;
-        index += 1) {
-      final file = ProvisioningSourceFile.values[index];
+    for (var index = 0; index < sourceFiles.length; index += 1) {
+      final file = sourceFiles[index];
       final sections = sectionGroups[index];
       for (final section in sections) {
         byId[section.id] = (section, file);
       }
     }
-    return _lessonOrder
-        .map((id) {
-          final value = byId[id];
-          if (value == null) return null;
+    return _lessonDefinitions
+        .map((definition) {
+          final parts = definition.sectionIds
+              .map((id) {
+                final value = byId[id];
+                if (value == null) return null;
+                return _LoadedLessonPart(
+                  section: value.$1,
+                  sourceFile: value.$2,
+                );
+              })
+              .whereType<_LoadedLessonPart>()
+              .toList(growable: false);
+          if (parts.isEmpty) return null;
           return _LoadedLesson(
-            section: value.$1,
-            sourceFile: value.$2,
+            definition: definition,
+            parts: parts,
           );
         })
         .whereType<_LoadedLesson>()
@@ -131,20 +152,22 @@ class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
 
   Widget _buildLesson(BuildContext context, List<_LoadedLesson> lessons) {
     var index =
-        lessons.indexWhere((lesson) => lesson.section.id == _selectedId);
+        lessons.indexWhere((lesson) => lesson.definition.id == _selectedId);
     if (index < 0) index = 0;
     final lesson = lessons[index];
     return ProvisioningLessonCard(
-      title: _lessonTitle(context, lesson.section.id),
-      explanation: _lessonExplanation(context, lesson.section.id),
-      importantCode: _importantCode(lesson.section.code),
-      codeBlocks: [
-        ProvisioningLessonCodeBlock(
-          title: _lessonTitle(context, lesson.section.id),
-          sourceLabel: '${lesson.sourceFile.path}:${lesson.section.startLine}',
-          code: lesson.section.code,
-        ),
-      ],
+      title: _lessonTitle(context, lesson.copyId),
+      explanation: _lessonExplanation(context, lesson.copyId),
+      codeBlocks: lesson.parts
+          .map(
+            (part) => ProvisioningLessonCodeBlock(
+              title: _lessonTitle(context, part.section.id),
+              sourceLabel: '${part.sourceFile.path}:${part.section.startLine}',
+              code: part.section.code,
+              importantCode: part.section.importantCode,
+            ),
+          )
+          .toList(growable: false),
       lessonNumber: index + 1,
       lessonCount: lessons.length,
       expanded: _showFullCode,
@@ -152,55 +175,120 @@ class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
       onPrevious: index == 0
           ? null
           : () => setState(() {
-                _selectedId = lessons[index - 1].section.id;
+                _selectedId = lessons[index - 1].definition.id;
                 _showFullCode = false;
               }),
       onNext: index == lessons.length - 1
           ? null
           : () => setState(() {
-                _selectedId = lessons[index + 1].section.id;
+                _selectedId = lessons[index + 1].definition.id;
                 _showFullCode = false;
               }),
     );
   }
-
-  String _importantCode(String code) {
-    final lines = code.split('\n');
-    if (lines.length <= 18) return code;
-    return lines.take(18).join('\n');
-  }
 }
 
 class _LoadedLesson {
-  const _LoadedLesson({required this.section, required this.sourceFile});
+  const _LoadedLesson({required this.definition, required this.parts});
+
+  final _LessonDefinition definition;
+  final List<_LoadedLessonPart> parts;
+
+  String get copyId {
+    if (parts.any((part) => part.section.id == definition.copyId)) {
+      return definition.copyId;
+    }
+    return parts.first.section.id;
+  }
+}
+
+class _LoadedLessonPart {
+  const _LoadedLessonPart({required this.section, required this.sourceFile});
+
   final PocoCodeSection section;
   final ProvisioningSourceFile sourceFile;
 }
 
-const _lessonOrder = [
-  'vps-storage',
-  'vps-public-firewall',
-  'vps-container-firewall',
-  'vps-key-only-ssh',
-  'vps-docker-engine',
-  'bootstrap-owner-config',
-  'bootstrap-local-secrets',
-  'bootstrap-release-source',
-  'bootstrap-verified-images',
-  'bootstrap-compose-start',
-  'compose-pocketbase',
-  'compose-agent',
-  'compose-local-model',
-  'compose-harness-images',
-  'compose-mcp-sandbox',
-  'compose-memory',
-  'compose-pocketbase-docker-access',
-  'compose-dashboard',
-  'compose-notifications',
-  'compose-private-access',
-  'compose-local-caddy',
-  'compose-persistent-volumes',
-  'compose-private-networks',
+class _LessonDefinition {
+  const _LessonDefinition({
+    required this.id,
+    required this.copyId,
+    required this.sectionIds,
+  });
+
+  final String id;
+  final String copyId;
+  final List<String> sectionIds;
+}
+
+const _lessonDefinitions = [
+  _LessonDefinition(
+    id: 'host-boundaries',
+    copyId: 'vps-public-firewall',
+    sectionIds: [
+      'vps-storage',
+      'vps-public-firewall',
+      'vps-container-firewall',
+      'vps-key-only-ssh',
+    ],
+  ),
+  _LessonDefinition(
+    id: 'host-runtime',
+    copyId: 'vps-docker-engine',
+    sectionIds: [
+      'vps-docker-engine',
+      'bootstrap-owner-config',
+      'bootstrap-local-secrets',
+    ],
+  ),
+  _LessonDefinition(
+    id: 'verified-release',
+    copyId: 'bootstrap-release-source',
+    sectionIds: [
+      'bootstrap-release-source',
+      'bootstrap-verified-images',
+      'bootstrap-compose-start',
+    ],
+  ),
+  _LessonDefinition(
+    id: 'core-and-agent',
+    copyId: 'compose-pocketbase',
+    sectionIds: ['compose-pocketbase', 'compose-agent'],
+  ),
+  _LessonDefinition(
+    id: 'optional-runtimes',
+    copyId: 'compose-local-model',
+    sectionIds: ['compose-local-model', 'compose-harness-images'],
+  ),
+  _LessonDefinition(
+    id: 'tool-sandbox',
+    copyId: 'compose-mcp-sandbox',
+    sectionIds: ['compose-mcp-sandbox'],
+  ),
+  _LessonDefinition(
+    id: 'scoped-control',
+    copyId: 'compose-memory',
+    sectionIds: ['compose-memory', 'compose-pocketbase-docker-access'],
+  ),
+  _LessonDefinition(
+    id: 'private-interfaces',
+    copyId: 'compose-dashboard',
+    sectionIds: [
+      'compose-dashboard',
+      'compose-notifications',
+      'compose-private-access',
+    ],
+  ),
+  _LessonDefinition(
+    id: 'durable-edge',
+    copyId: 'compose-local-caddy',
+    sectionIds: ['compose-local-caddy', 'compose-persistent-volumes'],
+  ),
+  _LessonDefinition(
+    id: 'private-networks',
+    copyId: 'compose-private-networks',
+    sectionIds: ['compose-private-networks'],
+  ),
 ];
 
 String? _preferredLessonId(OnboardingStage? stage) => switch (stage) {
@@ -209,14 +297,15 @@ String? _preferredLessonId(OnboardingStage? stage) => switch (stage) {
       OnboardingStage.preparingHost ||
       OnboardingStage.hostReady ||
       OnboardingStage.securingConnection =>
-        'vps-public-firewall',
-      OnboardingStage.installingHost => 'vps-key-only-ssh',
-      OnboardingStage.fetchingRelease => 'bootstrap-release-source',
-      OnboardingStage.loadingImages => 'bootstrap-verified-images',
-      OnboardingStage.startingServices => 'compose-pocketbase',
+        'host-boundaries',
+      OnboardingStage.installingHost => 'host-runtime',
+      OnboardingStage.fetchingRelease ||
+      OnboardingStage.loadingImages =>
+        'verified-release',
+      OnboardingStage.startingServices => 'core-and-agent',
       OnboardingStage.finishingUp ||
       OnboardingStage.ready =>
-        'compose-private-networks',
+        'private-networks',
       OnboardingStage.failed || null => null,
     };
 

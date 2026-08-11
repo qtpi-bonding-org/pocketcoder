@@ -9,11 +9,13 @@ class ProvisioningLessonCodeBlock {
     required this.title,
     required this.sourceLabel,
     required this.code,
+    required this.importantCode,
   });
 
   final String title;
   final String sourceLabel;
   final String code;
+  final String importantCode;
 }
 
 /// A single provisioning lesson: one important excerpt by default, with every
@@ -23,7 +25,6 @@ class ProvisioningLessonCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.explanation,
-    required this.importantCode,
     required this.codeBlocks,
     required this.lessonNumber,
     required this.lessonCount,
@@ -35,7 +36,6 @@ class ProvisioningLessonCard extends StatelessWidget {
 
   final String title;
   final String explanation;
-  final String importantCode;
   final List<ProvisioningLessonCodeBlock> codeBlocks;
   final int lessonNumber;
   final int lessonCount;
@@ -47,78 +47,83 @@ class ProvisioningLessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final blocks = codeBlocks;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PocoBubble(
-          message: explanation,
-          sequence: PocoExpressions.thinking,
-          pocoSize: AppSizes.fontLarge,
-        ),
-        VSpace.x3,
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TerminalText(
-                title.toUpperCase(),
-                weight: TerminalTextWeight.heavy,
-              ),
-            ),
-            HSpace.x2,
-            TerminalText.tiny(
-              '$lessonNumber / $lessonCount',
-              alpha: 0.6,
-            ),
-          ],
-        ),
-        VSpace.x2,
-        if (expanded)
-          for (var index = 0; index < blocks.length; index += 1) ...[
-            _CodeBlockView(
-              block: blocks[index],
-              partNumber: index + 1,
-              partCount: blocks.length,
-              maxHeight: 320,
-            ),
-            if (index < blocks.length - 1) VSpace.x2,
-          ]
-        else
-          _ImportantCodeView(
-            code: importantCode,
-            sourceLabel: blocks.isEmpty ? null : blocks.first.sourceLabel,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PocoBubble(
+            message: explanation,
+            sequence: PocoExpressions.thinking,
+            pocoSize: AppSizes.fontLarge,
           ),
-        VSpace.x2,
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: AppSizes.space,
-          runSpacing: AppSizes.space,
-          children: [
-            TextButton(
-              onPressed: onPrevious,
-              child: Text(context.l10n.pocoProvisioningPrevious),
-            ),
-            TextButton.icon(
-              onPressed:
-                  blocks.isEmpty ? null : () => onExpandedChanged(!expanded),
-              icon: Icon(
-                expanded ? Icons.unfold_less : Icons.unfold_more,
-                size: AppSizes.fontStandard,
+          VSpace.x3,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TerminalText(
+                  title.toUpperCase(),
+                  weight: TerminalTextWeight.heavy,
+                ),
               ),
-              label: Text(
-                expanded
-                    ? context.l10n.pocoProvisioningShowConcise
-                    : '${context.l10n.pocoProvisioningShowFull} (${blocks.length})',
+              HSpace.x2,
+              TerminalText.tiny(
+                '$lessonNumber / $lessonCount',
+                alpha: 0.6,
               ),
-            ),
-            TextButton(
-              onPressed: onNext,
-              child: Text(context.l10n.pocoProvisioningNext),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+          VSpace.x2,
+          if (expanded)
+            for (var index = 0; index < blocks.length; index += 1) ...[
+              _CodeBlockView(
+                block: blocks[index],
+                partNumber: index + 1,
+                partCount: blocks.length,
+                maxHeight: 320,
+              ),
+              if (index < blocks.length - 1) VSpace.x2,
+            ]
+          else
+            for (var index = 0; index < blocks.length; index += 1) ...[
+              _ImportantCodeView(
+                code: blocks[index].importantCode,
+                sourceLabel: blocks[index].sourceLabel,
+              ),
+              if (index < blocks.length - 1) VSpace.x2,
+            ],
+          VSpace.x2,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSizes.space,
+            runSpacing: AppSizes.space,
+            children: [
+              TextButton(
+                onPressed: onPrevious,
+                child: Text(context.l10n.pocoProvisioningPrevious),
+              ),
+              TextButton.icon(
+                onPressed:
+                    blocks.isEmpty ? null : () => onExpandedChanged(!expanded),
+                icon: Icon(
+                  expanded ? Icons.unfold_less : Icons.unfold_more,
+                  size: AppSizes.fontStandard,
+                ),
+                label: Text(
+                  expanded
+                      ? context.l10n.pocoProvisioningShowConcise
+                      : '${context.l10n.pocoProvisioningShowFull} (${blocks.length})',
+                ),
+              ),
+              TextButton(
+                onPressed: onNext,
+                child: Text(context.l10n.pocoProvisioningNext),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

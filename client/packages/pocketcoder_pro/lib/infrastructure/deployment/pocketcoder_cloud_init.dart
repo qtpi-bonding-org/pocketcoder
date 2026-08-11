@@ -3,19 +3,19 @@ import 'dart:convert';
 import 'package:flutter_aeroform/domain/models/app_bootstrap.dart';
 import 'package:pocketcoder_pro/domain/deployment/harness_catalog.dart';
 
-/// Packages the static Standard Linux stage-zero asset as cloud-init data.
+/// Packages the static Standard Linux bootstrap asset as cloud-init data.
 ///
 /// Shell behavior belongs in the asset, not in Dart. Deployment-specific data
 /// is delivered in separate base64-encoded files so it is never interpolated
 /// into executable shell source.
 class PocketCoderCloudInit {
-  static const stageZeroAssetPath =
-      'packages/pocketcoder_pro/assets/deployment/standard_linux_stage_zero.sh';
+  static const bootstrapAssetPath =
+      'packages/pocketcoder_pro/assets/deployment/standard_linux_bootstrap.sh';
 
   static final _releaseCommit = RegExp(r'^[0-9a-f]{40}$');
 
   static CloudInitBootstrap build({
-    required String stageZeroScript,
+    required String bootstrapScript,
     required String adminEmail,
     required String adminPassword,
     required String rootSshKey,
@@ -32,9 +32,9 @@ class PocketCoderCloudInit {
         'Release reference must be main or a 40-character lowercase commit',
       );
     }
-    if (stageZeroScript.trim().isEmpty ||
-        !stageZeroScript.startsWith('#!/bin/sh')) {
-      throw const FormatException('Standard Linux stage zero is invalid');
+    if (bootstrapScript.trim().isEmpty ||
+        !bootstrapScript.startsWith('#!/bin/sh')) {
+      throw const FormatException('Standard Linux bootstrap script is invalid');
     }
 
     final catalog = DeploymentHarnessCatalog.bundled;
@@ -61,7 +61,7 @@ write_files:
   - path: /usr/local/sbin/pocketcoder-bootstrap
     permissions: '0700'
     encoding: b64
-    content: ${base64Encode(utf8.encode(stageZeroScript))}
+    content: ${base64Encode(utf8.encode(bootstrapScript))}
   - path: /var/lib/pocketcoder/config/runtime.env
     permissions: '0600'
     encoding: b64

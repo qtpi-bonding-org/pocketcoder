@@ -56,6 +56,7 @@ else
   printf '%s' "$USER_DATA" | base64 -d > "$RUNTIME_ENV"
 fi
 
+# POCO:IMPORTANT:BEGIN
 ROOT_SSH_KEY=$(sed -n 's/^root_ssh_key=//p' "$RUNTIME_ENV")
 if [ -z "$ROOT_SSH_KEY" ] && [ ! -s /root/.ssh/authorized_keys ]; then
   echo "No root SSH key was delivered; refusing an unreachable deployment" >&2
@@ -67,6 +68,7 @@ if [ -n "$ROOT_SSH_KEY" ]; then
   chmod 600 /root/.ssh/authorized_keys
   sed -i '/^root_ssh_key=/d' "$RUNTIME_ENV"
 fi
+# POCO:IMPORTANT:END
 # POCO:END bootstrap-owner-config
 
 # POCO:BEGIN bootstrap-release-source
@@ -116,6 +118,7 @@ if [ -z "$AVAILABLE_BLOCKS" ] || [ "$AVAILABLE_BLOCKS" -lt "$REQUIRED_BLOCKS" ];
   pc_status_error fetching_release release_artifact_disk_headroom_insufficient
   exit 1
 fi
+# POCO:IMPORTANT:BEGIN
 pc_status_phase fetching_release downloading:deployment
 curl -fL --retry 3 --retry-delay 2 --max-time 1200 \
   -o "$DEPLOYMENT_FILE" "$DEPLOYMENT_URL"
@@ -125,6 +128,7 @@ if tar -tzf "$DEPLOYMENT_FILE" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
   pc_status_error fetching_release deployment_artifact_path_invalid
   exit 1
 fi
+# POCO:IMPORTANT:END
 
 RELEASE_DIR="$RELEASES_DIR/$RESOLVED_COMMIT"
 RELEASE_STAGE="$RELEASE_DIR.stage.$$"
