@@ -78,6 +78,13 @@ func writeReleaseState(t *testing.T, root, artifactURL string, payload []byte, c
 			},
 		},
 	}
+	manifest.Optional.Ollama = artifact{
+		URL:           artifactURL,
+		SHA256:        checksum,
+		Bytes:         int64(len(payload)),
+		ExpandedBytes: int64(len(payload)),
+		Images:        []string{"pocketcoder-ollama:" + testRelease},
+	}
 	writeJSON := func(path string, value any) {
 		data, err := json.Marshal(value)
 		if err != nil {
@@ -161,6 +168,35 @@ func TestEnsureHarnessImageRejectsChecksumBeforeDockerLoad(t *testing.T) {
 	}
 	if docker.calls() != 0 {
 		t.Fatal("checksum mismatch reached Docker load")
+	}
+}
+
+func TestEnsureOptionalOllamaImageUsesVerifiedReleaseArtifact(t *testing.T) {
+	payload := []byte("compressed ollama image archive")
+	digest := sha256.Sum256(payload)
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(payload)
+	}))
+	defer server.Close()
+
+	root := t.TempDir()
+	artifactDir := filepath.Join(root, "artifacts")
+	if err := os.MkdirAll(artifactDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	pointer := writeReleaseState(t, root, server.URL+"/ollama.tar.gz", payload, hex.EncodeToString(digest[:]))
+	docker := &fakeDockerLoader{}
+	loader := testLoader(t, pointer, artifactDir, server.Client())
+	image := "pocketcoder-ollama:" + testRelease
+
+	if err := loader.EnsureOptionalImage(context.Background(), docker, "ollama", image); err != nil {
+		t.Fatal(err)
+	}
+	if docker.calls() != 1 || string(docker.payload) != string(payload) {
+		t.Fatalf("Docker load calls/payload = %d/%q", docker.calls(), docker.payload)
+	}
+	if err := loader.EnsureOptionalImage(context.Background(), docker, "cognee", image); err == nil {
+		t.Fatal("deferred Cognee capability was unexpectedly accepted")
 	}
 }
 

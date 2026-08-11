@@ -135,6 +135,14 @@ func EnsureHarnessImage(ctx context.Context, docker DockerLoader, harnessID, ima
 	return defaultLoader.EnsureHarnessImage(ctx, docker, harnessID, image)
 }
 
+// EnsureOptionalImage installs a release-pinned optional runtime without
+// making it part of the default bootstrap artifact set. Optional IDs are a
+// closed manifest contract; today Ollama is the only supported capability.
+func EnsureOptionalImage(ctx context.Context, docker DockerLoader, optionalID, image string) error {
+	defaultOnce.Do(func() { defaultLoader = New(ConfigFromEnvironment()) })
+	return defaultLoader.EnsureOptionalImage(ctx, docker, optionalID, image)
+}
+
 func (l *Loader) EnsureHarnessImage(ctx context.Context, docker DockerLoader, harnessID, image string) error {
 	if !harnessIDPattern.MatchString(harnessID) {
 		return fmt.Errorf("invalid harness artifact ID %q", harnessID)
@@ -155,11 +163,34 @@ func (l *Loader) EnsureHarnessImage(ctx context.Context, docker DockerLoader, ha
 		if local {
 			return nil
 		}
-		return l.install(ctx, docker, harnessID, image)
+		return l.installHarness(ctx, docker, harnessID, image)
 	})
 }
 
-func (l *Loader) install(ctx context.Context, docker DockerLoader, harnessID, image string) error {
+func (l *Loader) EnsureOptionalImage(ctx context.Context, docker DockerLoader, optionalID, image string) error {
+	if optionalID != "ollama" {
+		return fmt.Errorf("unknown optional release artifact %q", optionalID)
+	}
+	if !releasePattern.MatchString(l.config.ExpectedRelease) {
+		return fmt.Errorf("invalid active release identity %q", l.config.ExpectedRelease)
+	}
+	if image != "pocketcoder-ollama:"+l.config.ExpectedRelease {
+		return fmt.Errorf("optional image %q does not belong to active release", image)
+	}
+	flightKey := l.config.ExpectedRelease + ":optional:" + optionalID + ":" + image
+	return l.flights.Do(ctx, flightKey, func() error {
+		local, err := docker.ImageExists(ctx, image)
+		if err != nil {
+			return fmt.Errorf("inspect optional release image %s: %w", image, err)
+		}
+		if local {
+			return nil
+		}
+		return l.installOptional(ctx, docker, optionalID, image)
+	})
+}
+
+func (l *Loader) installHarness(ctx context.Context, docker DockerLoader, harnessID, image string) error {
 	pointer, manifest, err := l.loadReleaseState()
 	if err != nil {
 		return err
@@ -174,6 +205,25 @@ func (l *Loader) install(ctx context.Context, docker DockerLoader, harnessID, im
 	if err := validateHarnessArtifact(selected, image); err != nil {
 		return fmt.Errorf("invalid %s harness artifact: %w", harnessID, err)
 	}
+	return l.installArtifact(ctx, docker, "harness "+harnessID, selected, image)
+}
+
+func (l *Loader) installOptional(ctx context.Context, docker DockerLoader, optionalID, image string) error {
+	pointer, manifest, err := l.loadReleaseState()
+	if err != nil {
+		return err
+	}
+	if pointer.Release != l.config.ExpectedRelease || manifest.Release != l.config.ExpectedRelease {
+		return fmt.Errorf("release state does not match active release %s", l.config.ExpectedRelease)
+	}
+	selected := manifest.Optional.Ollama
+	if err := validateHarnessArtifact(selected, image); err != nil {
+		return fmt.Errorf("invalid optional %s artifact: %w", optionalID, err)
+	}
+	return l.installArtifact(ctx, docker, "optional "+optionalID, selected, image)
+}
+
+func (l *Loader) installArtifact(ctx context.Context, docker DockerLoader, artifactLabel string, selected artifact, image string) error {
 
 	if err := os.MkdirAll(l.config.ArtifactDir, 0o700); err != nil {
 		return fmt.Errorf("create artifact directory: %w", err)
@@ -184,9 +234,9 @@ func (l *Loader) install(ctx context.Context, docker DockerLoader, harnessID, im
 	}
 	required := uint64(selected.Bytes) + uint64(selected.ExpandedBytes) + uint64(l.config.ReserveBytes)
 	if available < required {
-		return fmt.Errorf("insufficient disk space for harness %s artifact", harnessID)
+		return fmt.Errorf("insufficient disk space for %s artifact", artifactLabel)
 	}
-	temp, err := os.CreateTemp(l.config.ArtifactDir, "."+manifest.Release+"-"+harnessID+"-*.part")
+	temp, err := os.CreateTemp(l.config.ArtifactDir, "."+l.config.ExpectedRelease+"-artifact-*.part")
 	if err != nil {
 		return fmt.Errorf("create artifact staging file: %w", err)
 	}
@@ -223,29 +273,29 @@ func (l *Loader) install(ctx context.Context, docker DockerLoader, harnessID, im
 	}
 	resp, err := downloadClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("download harness %s artifact: %w", harnessID, err)
+		return fmt.Errorf("download %s artifact: %w", artifactLabel, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("download harness %s artifact: server returned %s", harnessID, resp.Status)
+		return fmt.Errorf("download %s artifact: server returned %s", artifactLabel, resp.Status)
 	}
 	if resp.Request.URL.Scheme != "https" {
-		return fmt.Errorf("download harness %s artifact redirected outside HTTPS", harnessID)
+		return fmt.Errorf("download %s artifact redirected outside HTTPS", artifactLabel)
 	}
 	if resp.ContentLength >= 0 && resp.ContentLength != selected.Bytes {
-		return fmt.Errorf("harness %s artifact size header mismatch", harnessID)
+		return fmt.Errorf("%s artifact size header mismatch", artifactLabel)
 	}
 
 	hasher := sha256.New()
 	written, err := io.Copy(io.MultiWriter(temp, hasher), io.LimitReader(resp.Body, selected.Bytes+1))
 	if err != nil {
-		return fmt.Errorf("download harness %s artifact body: %w", harnessID, err)
+		return fmt.Errorf("download %s artifact body: %w", artifactLabel, err)
 	}
 	if written != selected.Bytes {
-		return fmt.Errorf("harness %s artifact size mismatch", harnessID)
+		return fmt.Errorf("%s artifact size mismatch", artifactLabel)
 	}
 	if actual := hex.EncodeToString(hasher.Sum(nil)); actual != selected.SHA256 {
-		return fmt.Errorf("harness %s artifact checksum mismatch", harnessID)
+		return fmt.Errorf("%s artifact checksum mismatch", artifactLabel)
 	}
 	if err := temp.Sync(); err != nil {
 		return fmt.Errorf("sync harness artifact: %w", err)
@@ -254,7 +304,7 @@ func (l *Loader) install(ctx context.Context, docker DockerLoader, harnessID, im
 		return fmt.Errorf("rewind harness artifact: %w", err)
 	}
 	if err := docker.LoadImage(operationCtx, temp); err != nil {
-		return fmt.Errorf("load harness %s artifact: %w", harnessID, err)
+		return fmt.Errorf("load %s artifact: %w", artifactLabel, err)
 	}
 	local, err := docker.ImageExists(operationCtx, image)
 	if err != nil {
