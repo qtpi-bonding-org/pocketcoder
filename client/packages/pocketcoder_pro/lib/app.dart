@@ -37,6 +37,7 @@ import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/deployment_readiness_service.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
+import 'package:pocketcoder_pro/application/walkthrough/walkthrough_cubit.dart';
 import 'package:pocketcoder_pro/application/server_update/server_update_cubit.dart';
 import 'package:pocketcoder_pro/application/server_update/server_update_message_mapper.dart';
 import 'package:pocketcoder_pro/domain/server_update/i_server_update_service.dart';
@@ -509,6 +510,9 @@ void initializeAeroformDI() {
   getIt.registerLazySingleton<GithubProvisioningSourceService>(
     () => GithubProvisioningSourceService(client: getIt<http.Client>()),
   );
+  // Walkthrough navigation is intentionally independent of deployment status.
+  // Keeping it alive across route changes makes Skip Orientation resumable.
+  getIt.registerLazySingleton<WalkthroughCubit>(() => WalkthroughCubit());
   getIt.registerFactory<DeploymentMessageMapper>(
     () => DeploymentMessageMapper(),
   );

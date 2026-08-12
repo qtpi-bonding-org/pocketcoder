@@ -34,8 +34,8 @@ class PocoCodeSectionParser {
         continue;
       }
 
-      final markerKind = sectionMatch?.group(1);
-      final markerId = sectionMatch?.group(2) ?? '';
+      final markerKind = sectionMatch.group(1);
+      final markerId = sectionMatch.group(2) ?? '';
       if (markerKind == 'BEGIN') {
         if (activeId != null) {
           throw FormatException(

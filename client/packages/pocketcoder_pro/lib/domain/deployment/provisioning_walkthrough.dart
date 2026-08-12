@@ -1,0 +1,54 @@
+import 'package:flutter_aeroform/domain/models/provision_progress.dart';
+
+/// A source-backed walkthrough is one provisioning file shown to the owner.
+///
+/// The source sections are resolved later, after the deployed immutable commit
+/// is known. Keeping this outline separate from deployment status means a
+/// walkthrough can be read at the owner's pace.
+class ProvisioningWalkthrough {
+  ProvisioningWalkthrough({
+    required this.id,
+    required this.briefings,
+  })  : assert(id != ''),
+        assert(briefings.length > 0);
+
+  final String id;
+  final List<ProvisioningBriefing> briefings;
+}
+
+/// One meaningful explanation within a [ProvisioningWalkthrough].
+class ProvisioningBriefing {
+  ProvisioningBriefing({
+    required this.id,
+    required this.sectionIds,
+  })  : assert(id != ''),
+        assert(sectionIds.length > 0);
+
+  final String id;
+
+  /// Annotated source sections that provide the code snippets for this
+  /// briefing. A briefing may draw from more than one section in the same
+  /// walkthrough file.
+  final List<String> sectionIds;
+}
+
+/// Immutable content identity for a walkthrough session.
+///
+/// The content is reset only when either the deployed source commit or target
+/// operating-system backend changes. Deployment progress changes do not appear
+/// here and therefore cannot reset reading progress.
+class ProvisioningWalkthroughContent {
+  ProvisioningWalkthroughContent({
+    required this.sourceCommit,
+    required this.backend,
+    required this.walkthroughs,
+  })  : assert(sourceCommit != ''),
+        assert(walkthroughs.length > 0);
+
+  final String sourceCommit;
+  final ProvisionBackendKind backend;
+  final List<ProvisioningWalkthrough> walkthroughs;
+
+  bool hasSameIdentityAs(ProvisioningWalkthroughContent other) =>
+      sourceCommit == other.sourceCommit && backend == other.backend;
+}
