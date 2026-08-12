@@ -7,6 +7,8 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/billing/adapters/pro_paywall_adapter.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -112,6 +114,13 @@ class _ProOffer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        AsciiLogo(
+          text: AppAscii.pocketCoderProLogo,
+          color: context.colorScheme.primary,
+          fontSize: AppSizes.fontTiny,
+          alignment: Alignment.center,
+        ),
+        VSpace.x3,
         TerminalText(
           context.l10n.proUnlockCommand,
           size: TerminalTextSize.base,

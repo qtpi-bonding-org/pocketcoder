@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/billing/pro_paywall_screen.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 
 void main() {
   const package = BillingPackage(
@@ -44,6 +45,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('7 DAYS FREE'), findsOneWidget);
+    expect(find.text(AppAscii.pocketCoderProLogo), findsOneWidget);
     expect(find.text(r'THEN $9.99 / MONTH'), findsOneWidget);
     expect(
       find.text('PROVISION AND DEPLOY POCKETCODER SERVERS'),
@@ -65,7 +67,9 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('START 7-DAY FREE TRIAL'));
     await tester.tap(find.text('START 7-DAY FREE TRIAL'));
+    await tester.ensureVisible(find.text('RESTORE PURCHASES'));
     await tester.tap(find.text('RESTORE PURCHASES'));
     await tester.ensureVisible(find.text('CONFIGURE SELF-HOSTED PUSH'));
     await tester.tap(find.text('CONFIGURE SELF-HOSTED PUSH'));
