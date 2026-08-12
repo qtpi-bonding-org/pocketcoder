@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
@@ -64,7 +65,7 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
           deploymentStatus: value.deploymentStatus,
           pollingAttempts: value.pollingAttempts,
           serverStatusDocument: value.serverStatusDocument,
-          progressPane: _progressPane(value),
+          progressPane: _progressPane(context, value),
           provisioningTour: WalkthroughPanel(
             stage: value.deploymentStatus,
             sourceCommit: value.serverStatusDocument?.sourceCommit,
@@ -88,7 +89,10 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
     );
   }
 
-  PocketCoderProgressPane _progressPane(DeploymentState value) {
+  PocketCoderProgressPane _progressPane(
+    BuildContext context,
+    DeploymentState value,
+  ) {
     final stage = value.deploymentStatus;
     final failed =
         value.status == UiFlowStatus.failure || stage == OnboardingStage.failed;
@@ -117,34 +121,53 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
               RegExp(r'([a-z])([A-Z])'),
               (match) => '${match.group(1)} ${match.group(2)}',
             ) ??
-            'INITIALIZING');
+            context.l10n.pocketCoderProgressInitializing);
+
+    final provisionState = failed && isProvisioning
+        ? PocketCoderProgressPhaseState.failed
+        : isProvisioning
+            ? PocketCoderProgressPhaseState.running
+            : PocketCoderProgressPhaseState.complete;
+    final deployState = failed && isDeploying
+        ? PocketCoderProgressPhaseState.failed
+        : complete
+            ? PocketCoderProgressPhaseState.complete
+            : isDeploying
+                ? PocketCoderProgressPhaseState.running
+                : PocketCoderProgressPhaseState.waiting;
+    String progressText(PocketCoderProgressPhaseState state) => switch (state) {
+          PocketCoderProgressPhaseState.waiting =>
+            context.l10n.pocketCoderProgressWaiting,
+          PocketCoderProgressPhaseState.running =>
+            context.l10n.pocketCoderProgressActive,
+          PocketCoderProgressPhaseState.complete =>
+            context.l10n.pocketCoderProgressComplete,
+          PocketCoderProgressPhaseState.failed =>
+            context.l10n.pocketCoderProgressFailed,
+        };
 
     return PocketCoderProgressPane(
       provision: PocketCoderProgressPhase(
-        label: 'PROVISION SERVER',
+        label: context.l10n.pocketCoderProgressProvisionServer,
         progress: isProvisioning ? _phaseProgress(stage, provisionStages) : 1,
         currentStep: isProvisioning
             ? currentStep
-            : (failed ? 'PROVISION FAILED' : 'SERVER CREATED'),
-        state: failed && isProvisioning
-            ? PocketCoderProgressPhaseState.failed
-            : isProvisioning
-                ? PocketCoderProgressPhaseState.running
-                : PocketCoderProgressPhaseState.complete,
+            : (failed
+                ? context.l10n.pocketCoderProgressFailed
+                : context.l10n.pocketCoderProgressComplete),
+        state: provisionState,
+        progressText: progressText(provisionState),
       ),
       deploy: PocketCoderProgressPhase(
-        label: 'DEPLOY POCKETCODER',
+        label: context.l10n.pocketCoderProgressDeployPocketCoder,
         progress: isDeploying ? _phaseProgress(stage, deployStages) : 0,
         currentStep: isDeploying
             ? currentStep
-            : (complete ? 'DEPLOYMENT COMPLETE' : 'WAITING FOR SERVER'),
-        state: failed && isDeploying
-            ? PocketCoderProgressPhaseState.failed
-            : complete
-                ? PocketCoderProgressPhaseState.complete
-                : isDeploying
-                    ? PocketCoderProgressPhaseState.running
-                    : PocketCoderProgressPhaseState.waiting,
+            : (complete
+                ? context.l10n.pocketCoderProgressComplete
+                : context.l10n.pocketCoderProgressWaiting),
+        state: deployState,
+        progressText: progressText(deployState),
       ),
     );
   }
