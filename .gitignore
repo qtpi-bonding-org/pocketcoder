@@ -46,6 +46,7 @@ proposals/test_*
 skills/test_*
 
 # Docs & Other
+*.md
 docs/.astro/
 docs/src/.astro/
 docs/src/content/docs/reference/*.md
