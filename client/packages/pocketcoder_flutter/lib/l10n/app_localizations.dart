@@ -1312,6 +1312,18 @@ abstract class AppLocalizations {
   /// **'TASK ERRORS'**
   String get notificationSettingsTaskErrorLabel;
 
+  /// No description provided for @notificationSettingsPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'I can notify you when an agent needs approval or finishes a task, even when PocketCoder is not open. Your phone will ask for permission before I enable alerts on this device.'**
+  String get notificationSettingsPoco;
+
+  /// No description provided for @notificationSettingsEnableDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'ENABLE ON THIS DEVICE'**
+  String get notificationSettingsEnableDevice;
+
   /// No description provided for @skillsTitle.
   ///
   /// In en, this message translates to:
@@ -2308,6 +2320,12 @@ abstract class AppLocalizations {
   /// **'RESTORE PURCHASES'**
   String get proRestore;
 
+  /// No description provided for @proNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'NOT NOW'**
+  String get proNotNow;
+
   /// No description provided for @proTerms.
   ///
   /// In en, this message translates to:
@@ -2488,6 +2506,30 @@ abstract class AppLocalizations {
   /// **'FAULT DETECTED: {error}'**
   String deploymentFaultDetected(String error);
 
+  /// No description provided for @deploymentFaultGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.'**
+  String get deploymentFaultGeneric;
+
+  /// No description provided for @deploymentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.'**
+  String get deploymentFailed;
+
+  /// No description provided for @deploymentReady.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER READY AT {ipAddress}.'**
+  String deploymentReady(String ipAddress);
+
+  /// No description provided for @deploymentInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER SETUP STARTED.'**
+  String get deploymentInProgress;
+
   /// No description provided for @deploymentStatusValidating.
   ///
   /// In en, this message translates to:
@@ -2623,7 +2665,7 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentDescriptionFailed.
   ///
   /// In en, this message translates to:
-  /// **'CRITICAL FAILURE DURING RESOURCE ALLOCATION.'**
+  /// **'SETUP STOPPED BEFORE COMPLETION. NO LATER STEP WILL CONTINUE.'**
   String get deploymentDescriptionFailed;
 
   /// No description provided for @deploymentDescriptionInitializing.
@@ -2744,7 +2786,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'COPY {label}'**
-  String deploymentCopyLabel(Object label);
+  String deploymentCopyLabel(String label);
 
   /// No description provided for @deploymentManifestConfiguration.
   ///
@@ -2763,6 +2805,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'DEPLOY INSTANCE'**
   String get deploymentActionDeployInstance;
+
+  /// No description provided for @deploymentActionProvisionServer.
+  ///
+  /// In en, this message translates to:
+  /// **'PROVISION SERVER'**
+  String get deploymentActionProvisionServer;
 
   /// No description provided for @deploymentSystemParameters.
   ///
@@ -2859,6 +2907,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ubuntu'**
   String get deploymentUbuntu;
+
+  /// No description provided for @deploymentSetupTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE YOUR SETUP'**
+  String get deploymentSetupTypeTitle;
+
+  /// No description provided for @deploymentServerSizeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE YOUR SERVER SIZE'**
+  String get deploymentServerSizeTitle;
+
+  /// No description provided for @deploymentServerRegionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE YOUR SERVER REGION'**
+  String get deploymentServerRegionTitle;
+
+  /// No description provided for @deploymentCodingAgentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE CODING AGENTS'**
+  String get deploymentCodingAgentsTitle;
+
+  /// No description provided for @deploymentLinuxSystemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE LINUX SYSTEM'**
+  String get deploymentLinuxSystemTitle;
+
+  /// No description provided for @deploymentReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'REVIEW YOUR SERVER'**
+  String get deploymentReviewTitle;
+
+  /// No description provided for @deploymentWorkloadPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Before we choose your server, what kind of PocketCoder setup are you planning?\n\nA cloud model runs through an online AI account. A local model runs on your own server.'**
+  String get deploymentWorkloadPoco;
+
+  /// No description provided for @deploymentWorkloadCloudReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud models run inference through your online AI account. Your server mainly needs room for PocketCoder, your agents, and your projects.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.'**
+  String get deploymentWorkloadCloudReply;
+
+  /// No description provided for @deploymentWorkloadLocalReply.
+  ///
+  /// In en, this message translates to:
+  /// **'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.'**
+  String get deploymentWorkloadLocalReply;
+
+  /// No description provided for @deploymentUseCloudModels.
+  ///
+  /// In en, this message translates to:
+  /// **'USE CLOUD MODELS'**
+  String get deploymentUseCloudModels;
+
+  /// No description provided for @deploymentRunLocalModel.
+  ///
+  /// In en, this message translates to:
+  /// **'RUN A LOCAL MODEL'**
+  String get deploymentRunLocalModel;
+
+  /// No description provided for @deploymentPlanPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Here are the server sizes available from Linode.\n\nThe highlighted option is the minimum I recommend for the setup you chose. You can select a larger server.'**
+  String get deploymentPlanPoco;
+
+  /// No description provided for @deploymentRegionPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where your server will live. A nearby region will usually respond faster, but you can use any available Linode region.'**
+  String get deploymentRegionPoco;
+
+  /// No description provided for @deploymentHarnessPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Now choose which coding agents to have ready on your server.\n\nThis installs their software. You’ll connect any required accounts after your server is ready.'**
+  String get deploymentHarnessPoco;
+
+  /// No description provided for @deploymentLinuxPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.'**
+  String get deploymentLinuxPoco;
+
+  /// No description provided for @deploymentReviewPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Your server is ready to be provisioned.\n\nPocketCoder will create it in your Linode account, then install the coding agents you selected. Linode will bill you directly for the server.'**
+  String get deploymentReviewPoco;
+
+  /// No description provided for @deploymentNoSuitablePlans.
+  ///
+  /// In en, this message translates to:
+  /// **'NO SUITABLE SERVER SIZES ARE AVAILABLE FOR THIS SETUP.'**
+  String get deploymentNoSuitablePlans;
+
+  /// No description provided for @deploymentRecommendedMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'RECOMMENDED MINIMUM'**
+  String get deploymentRecommendedMinimum;
+
+  /// No description provided for @deploymentRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'RECOMMENDED'**
+  String get deploymentRecommended;
+
+  /// No description provided for @deploymentGpuBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'GPU'**
+  String get deploymentGpuBadge;
+
+  /// No description provided for @deploymentDefaultAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'READY BY DEFAULT'**
+  String get deploymentDefaultAgent;
+
+  /// No description provided for @deploymentPlanSpecs.
+  ///
+  /// In en, this message translates to:
+  /// **'{vcpus} CPU · {memory} RAM · {diskGb} GB DISK'**
+  String deploymentPlanSpecs(int vcpus, String memory, int diskGb);
+
+  /// No description provided for @deploymentMemoryGb.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} GB'**
+  String deploymentMemoryGb(int value);
+
+  /// No description provided for @deploymentMemoryMb.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} MB'**
+  String deploymentMemoryMb(int value);
+
+  /// No description provided for @deploymentNixosDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A repeatable server setup that is easier to recreate and roll back if a system change goes wrong.'**
+  String get deploymentNixosDescription;
+
+  /// No description provided for @deploymentDebianDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A Debian server configured with setup scripts. Faster to set up.'**
+  String get deploymentDebianDescription;
+
+  /// No description provided for @deploymentProvisioningSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'PROVISIONING SUMMARY'**
+  String get deploymentProvisioningSummary;
+
+  /// No description provided for @deploymentServerProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER PROVIDER'**
+  String get deploymentServerProvider;
+
+  /// No description provided for @deploymentProviderLinode.
+  ///
+  /// In en, this message translates to:
+  /// **'LINODE'**
+  String get deploymentProviderLinode;
 
   /// No description provided for @walkthroughLabel.
   ///
@@ -2961,6 +3183,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The deployment is still running, but I could not load its annotated source right now. This lesson is optional and never blocks your VPS.'**
   String get pocoProvisioningSourceUnavailable;
+
+  /// No description provided for @pocoProvisioningFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The setup stopped, so I stopped the walkthrough too. Go back to review the configuration, then we can try again.'**
+  String get pocoProvisioningFailed;
 
   /// No description provided for @pocoProvisioningPrevious.
   ///
@@ -3325,8 +3553,8 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingTrialPoco.
   ///
   /// In en, this message translates to:
-  /// **'Your server provider account and server are yours, and the provider bills you directly.\n\nPocketCoder Pro includes a {trialDuration} free trial. It lets you provision servers and receive notifications from your agents. When it ends, your server keeps running exactly as it is; you just won’t receive agent notifications or be able to provision more servers.\n\nYour server provider may offer its own trial or credit as well.'**
-  String onboardingTrialPoco(String trialDuration);
+  /// **'Your server provider account and server are yours, and the provider bills you directly.\n\nPocketCoder Pro includes a {trialDuration}-day free trial. It lets you provision servers and receive notifications from your agents. When it ends, your server keeps running exactly as it is; you just won’t receive agent notifications or be able to provision more servers.\n\nYour server provider may offer its own trial or credit as well.'**
+  String onboardingTrialPoco(int trialDuration);
 
   /// No description provided for @onboardingTrialChipStart.
   ///
@@ -3357,6 +3585,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CONTINUE WITH {providerName}'**
   String onboardingProviderAuthorizationAction(String providerName);
+
+  /// No description provided for @onboardingProviderAuthorizationWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'WAITING FOR PROVIDER SIGN-IN'**
+  String get onboardingProviderAuthorizationWaiting;
+
+  /// No description provided for @onboardingProviderAuthorizationError.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECTION STOPPED'**
+  String get onboardingProviderAuthorizationError;
+
+  /// No description provided for @onboardingProviderAuthorizationCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'The provider sign-in was cancelled. Nothing was provisioned.'**
+  String get onboardingProviderAuthorizationCancelled;
+
+  /// No description provided for @onboardingProviderAuthorizationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'I could not connect to the server provider. Check your connection and try again.'**
+  String get onboardingProviderAuthorizationFailed;
 
   /// No description provided for @onboardingIntentPoco.
   ///

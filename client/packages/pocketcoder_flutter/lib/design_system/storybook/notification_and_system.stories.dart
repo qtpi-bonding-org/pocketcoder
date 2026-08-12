@@ -28,6 +28,7 @@ Widget notificationSettingsLoaded(BuildContext context) => _localized(
           'task_error': false,
         }),
         onChanged: (_, __) async {},
+        onEnableDevice: () async => true,
       ),
     );
 

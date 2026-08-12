@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class FakeDeployOptionService implements IDeployOptionService {
   @override
@@ -75,7 +76,7 @@ void main() {
     ));
     await tester.pump();
 
-    expect(find.byType(TerminalFooter), findsNothing);
+    expect(find.byType(TerminalFooter), findsOneWidget);
 
     await tester.tap(find.textContaining('LINODE'));
     await tester.pumpAndSettle();
@@ -112,14 +113,13 @@ void main() {
     ));
     await tester.pump();
 
-    expect(find.text('COMING SOON'), findsOneWidget);
-    final opacity = tester.widget<Opacity>(
-      find.ancestor(
-        of: find.textContaining('ELESTIO'),
-        matching: find.byType(Opacity),
+    final unavailable = tester.widget<TerminalText>(
+      find.byWidgetPredicate(
+        (widget) => widget is TerminalText && widget.text.contains('ELESTIO'),
       ),
     );
-    expect(opacity.opacity, 0.42);
+    expect(unavailable.text, contains('COMING SOON'));
+    expect(unavailable.alpha, 0.42);
 
     await tester.tap(find.textContaining('ELESTIO'));
     await tester.pump();

@@ -15,11 +15,38 @@ import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
 
-class MockNotificationRuleCubit extends Mock
-    implements NotificationRuleCubit {}
+class MockNotificationRuleCubit extends Mock implements NotificationRuleCubit {}
+
+class FakePushService implements PushService {
+  @override
+  Future<void> configure() async {}
+
+  @override
+  Future<PushNotificationPayload?> getInitialNotification() async => null;
+
+  @override
+  Future<String?> getToken() async => null;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Stream<PushNotificationPayload> get notificationStream =>
+      const Stream.empty();
+
+  @override
+  Future<bool> requestPermissions() async => true;
+
+  @override
+  Future<void> syncAuthenticatedDevice() async {}
+
+  @override
+  Future<void> unregisterAuthenticatedDevice() async {}
+}
 
 Widget _wrap() {
   return MaterialApp(
@@ -54,6 +81,7 @@ void main() {
     // the mock into getIt instead of wrapping the screen in an external
     // BlocProvider.value, which would conflict with the screen's own.
     getIt.registerFactory<NotificationRuleCubit>(() => cubit);
+    getIt.registerSingleton<PushService>(FakePushService());
   });
 
   tearDown(() {
@@ -63,8 +91,7 @@ void main() {
   testWidgets(
       'renders four switches with default-on values when the rules map is empty',
       (tester) async {
-    when(() => cubit.state)
-        .thenReturn(const NotificationRuleState.loaded({}));
+    when(() => cubit.state).thenReturn(const NotificationRuleState.loaded({}));
 
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
@@ -97,14 +124,14 @@ void main() {
     expect(switches, findsNWidgets(4));
     expect(tester.widget<Switch>(switches.at(0)).value, isFalse); // chat_reply
     expect(tester.widget<Switch>(switches.at(1)).value, isTrue); // schedule
-    expect(tester.widget<Switch>(switches.at(2)).value, isTrue); // task_complete
+    expect(
+        tester.widget<Switch>(switches.at(2)).value, isTrue); // task_complete
     expect(tester.widget<Switch>(switches.at(3)).value, isFalse); // task_error
   });
 
   testWidgets('tapping a switch calls cubit.setTypeEnabled with the right args',
       (tester) async {
-    when(() => cubit.state)
-        .thenReturn(const NotificationRuleState.loaded({}));
+    when(() => cubit.state).thenReturn(const NotificationRuleState.loaded({}));
 
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();

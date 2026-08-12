@@ -4,9 +4,12 @@ import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'adapters/notification_settings_adapter.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
@@ -15,7 +18,9 @@ class NotificationSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocProvider(
         create: (_) => getIt<NotificationRuleCubit>()..watchRules(),
-        child: const NotificationSettingsAdapter(),
+        child: NotificationSettingsAdapter(
+          onEnableDevice: getIt<PushService>().requestPermissions,
+        ),
       );
 }
 
@@ -24,6 +29,7 @@ class NotificationSettingsView extends StatelessWidget {
     super.key,
     required this.state,
     required this.onChanged,
+    required this.onEnableDevice,
   });
 
   static const List<(String, String)> types = [
@@ -35,6 +41,7 @@ class NotificationSettingsView extends StatelessWidget {
 
   final NotificationRuleState state;
   final Future<void> Function(String type, bool enabled) onChanged;
+  final Future<bool> Function() onEnableDevice;
 
   String _labelFor(BuildContext context, String key) => switch (key) {
         'chatReply' => context.l10n.notificationSettingsChatReplyLabel,
@@ -55,6 +62,16 @@ class NotificationSettingsView extends StatelessWidget {
         child: state.maybeWhen(
           loaded: (rules) => ListView(
             children: [
+              PocoBubble(
+                message: context.l10n.notificationSettingsPoco,
+                pocoSize: AppSizes.fontLarge,
+              ),
+              VSpace.x3,
+              TerminalButton(
+                label: context.l10n.notificationSettingsEnableDevice,
+                onTap: onEnableDevice,
+              ),
+              VSpace.x3,
               BiosSection(
                 title: context.l10n.notificationSettingsScreenTitle,
                 child: Column(

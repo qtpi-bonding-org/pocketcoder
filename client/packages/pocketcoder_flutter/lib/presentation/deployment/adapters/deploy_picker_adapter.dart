@@ -28,7 +28,6 @@ class DeployPickerAdapter
       valueListenable: state,
       builder: (context, value, _) => DeployPickerView(
         options: value.options,
-        credentials: credentials,
         onSelected: (option) => _select(context, option),
       ),
     );

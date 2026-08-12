@@ -19,6 +19,10 @@ class LocalPushService implements PushService {
   Future<PushNotificationPayload?> getInitialNotification() async => null;
   @override
   Future<bool> requestPermissions() async => true;
+  @override
+  Future<void> syncAuthenticatedDevice() async {}
+  @override
+  Future<void> unregisterAuthenticatedDevice() async {}
 
   @override
   Future<void> configure() async {}

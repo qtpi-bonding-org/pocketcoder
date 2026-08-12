@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -47,6 +48,7 @@ class ProPaywallView extends StatelessWidget {
     required this.onRestore,
     required this.onConfigureSelfHostedPush,
     this.showNavigation = true,
+    this.isOnboarding = false,
   });
 
   final BillingState state;
@@ -54,6 +56,7 @@ class ProPaywallView extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onConfigureSelfHostedPush;
   final bool showNavigation;
+  final bool isOnboarding;
 
   @override
   Widget build(BuildContext context) {
@@ -61,13 +64,30 @@ class ProPaywallView extends StatelessWidget {
       title: context.l10n.proTitle,
       activePillar: NavPillar.configure,
       showBack: true,
+      backLabel: isOnboarding ? context.l10n.proNotNow : null,
       showNavigation: showNavigation,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-          child: BiosFrame(
-            title: context.l10n.proPlanTitle,
-            child: _buildContent(context),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+            child: Column(
+              children: [
+                if (isOnboarding && state.package?.freeTrialDays != null) ...[
+                  PocoBubble(
+                    message: context.l10n.onboardingTrialPoco(
+                      state.package?.freeTrialDays ?? 0,
+                    ),
+                    pocoSize: AppSizes.fontLarge,
+                  ),
+                  VSpace.x3,
+                ],
+                BiosFrame(
+                  title: context.l10n.proPlanTitle,
+                  child: _buildContent(context),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -85,6 +105,7 @@ class ProPaywallView extends StatelessWidget {
       return _UnavailableProOffer(
         onRestore: onRestore,
         onConfigureSelfHostedPush: onConfigureSelfHostedPush,
+        showSelfHostedOption: !isOnboarding,
       );
     }
 
@@ -93,6 +114,7 @@ class ProPaywallView extends StatelessWidget {
       onPurchase: onPurchase,
       onRestore: onRestore,
       onConfigureSelfHostedPush: onConfigureSelfHostedPush,
+      showSelfHostedOption: !isOnboarding,
     );
   }
 }
@@ -103,12 +125,14 @@ class _ProOffer extends StatelessWidget {
     required this.onPurchase,
     required this.onRestore,
     required this.onConfigureSelfHostedPush,
+    required this.showSelfHostedOption,
   });
 
   final BillingPackage package;
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
   final VoidCallback onConfigureSelfHostedPush;
+  final bool showSelfHostedOption;
 
   @override
   Widget build(BuildContext context) {
@@ -174,8 +198,10 @@ class _ProOffer extends StatelessWidget {
           textAlign: TextAlign.center,
           height: 1.4,
         ),
-        VSpace.x3,
-        _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
+        if (showSelfHostedOption) ...[
+          VSpace.x3,
+          _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
+        ],
       ],
     );
   }
@@ -247,10 +273,12 @@ class _UnavailableProOffer extends StatelessWidget {
   const _UnavailableProOffer({
     required this.onRestore,
     required this.onConfigureSelfHostedPush,
+    required this.showSelfHostedOption,
   });
 
   final VoidCallback onRestore;
   final VoidCallback onConfigureSelfHostedPush;
+  final bool showSelfHostedOption;
 
   @override
   Widget build(BuildContext context) {
@@ -269,8 +297,10 @@ class _UnavailableProOffer extends StatelessWidget {
           onTap: onRestore,
           isPrimary: false,
         ),
-        VSpace.x3,
-        _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
+        if (showSelfHostedOption) ...[
+          VSpace.x3,
+          _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
+        ],
       ],
     );
   }

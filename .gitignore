@@ -4,6 +4,9 @@ bun.lockb
 
 # EnvironmentVariables
 .env
+*.jks
+*.keystore
+key.properties
 .env.*
 !.env.template
 
