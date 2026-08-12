@@ -281,19 +281,21 @@ void main() {
       if (token == null || token.isEmpty)
         fail('LINODE_TOKEN must be injected by secrets-daemon');
       final liveToken = token;
-      await _scenario(
-        name: 'goose-only',
-        harnesses: const ['goose'],
-        token: liveToken,
-      );
-      await _scenario(
-        name: 'peer-pair',
-        harnesses: const ['claude-code', 'codex'],
-        token: liveToken,
-      );
+      await Future.wait([
+        _scenario(
+          name: 'goose-only',
+          harnesses: const ['goose'],
+          token: liveToken,
+        ),
+        _scenario(
+          name: 'peer-pair',
+          harnesses: const ['claude-code', 'codex'],
+          token: liveToken,
+        ),
+      ]);
     },
     skip:
         live ? false : 'Set AEROFORM_LIVE_TEST=1 to run the billed live test.',
-    timeout: const Timeout(Duration(minutes: 40)),
+    timeout: const Timeout(Duration(minutes: 20)),
   );
 }
