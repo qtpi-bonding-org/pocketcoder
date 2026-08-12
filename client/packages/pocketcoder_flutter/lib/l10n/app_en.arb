@@ -530,6 +530,31 @@
   "deployChooseProvider": "CHOOSE WHERE TO DEPLOY YOUR INSTANCE",
   "deployProBadge": "PRO",
   "deployComingSoon": "COMING SOON",
+  "pocketCoderProgressProvisionServer": "PROVISION SERVER",
+  "pocketCoderProgressDeployPocketCoder": "DEPLOY POCKETCODER",
+  "pocketCoderProgressWaiting": "WAITING",
+  "pocketCoderProgressActive": "ACTIVE",
+  "pocketCoderProgressComplete": "DONE",
+  "pocketCoderProgressFailed": "FAILED",
+  "pocketCoderProgressInitializing": "INITIALIZING",
+  "walkthroughLabel": "WALKTHROUGH {current} / {total}",
+  "@walkthroughLabel": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "briefLabel": "BRIEF {current} / {total}",
+  "@briefLabel": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "walkthroughAskPoco": "ASK POCO",
+  "walkthroughBriefDivider": "BRIEF",
+  "walkthroughTransitionProvisioning": "Let’s follow this next part of the server setup together.",
+  "walkthroughTransitionDeployment": "Now we’ll follow the verified release onto the host.",
   "deploymentSyncAttempt": "SYNC ATTEMPT: {attempt}",
   "@deploymentSyncAttempt": {
     "placeholders": {

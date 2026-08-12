@@ -34,4 +34,35 @@ void main() {
     expect(find.text('100%'), findsOneWidget);
     expect(find.text('40%'), findsOneWidget);
   });
+
+  testWidgets('can show lifecycle text instead of percentage precision',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: PocketCoderProgressPane(
+            provision: const PocketCoderProgressPhase(
+              label: 'Provision Server',
+              progress: 0.8,
+              progressText: 'ACTIVE',
+              currentStep: 'Securing connection',
+              state: PocketCoderProgressPhaseState.running,
+            ),
+            deploy: const PocketCoderProgressPhase(
+              label: 'Deploy PocketCoder',
+              progress: 0,
+              progressText: 'WAITING',
+              currentStep: 'Waiting for server',
+              state: PocketCoderProgressPhaseState.waiting,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('ACTIVE'), findsOneWidget);
+    expect(find.text('WAITING'), findsOneWidget);
+    expect(find.text('80%'), findsNothing);
+  });
 }

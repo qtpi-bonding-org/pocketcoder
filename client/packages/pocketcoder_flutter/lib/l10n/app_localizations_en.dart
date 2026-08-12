@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -1187,6 +1188,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deployComingSoon => 'COMING SOON';
 
   @override
+  String get pocketCoderProgressProvisionServer => 'PROVISION SERVER';
+
+  @override
+  String get pocketCoderProgressDeployPocketCoder => 'DEPLOY POCKETCODER';
+
+  @override
+  String get pocketCoderProgressWaiting => 'WAITING';
+
+  @override
+  String get pocketCoderProgressActive => 'ACTIVE';
+
+  @override
+  String get pocketCoderProgressComplete => 'DONE';
+
+  @override
+  String get pocketCoderProgressFailed => 'FAILED';
+
+  @override
+  String get pocketCoderProgressInitializing => 'INITIALIZING';
+
+  @override
+  String walkthroughLabel(int current, int total) {
+    return 'WALKTHROUGH $current / $total';
+  }
+
+  @override
+  String briefLabel(int current, int total) {
+    return 'BRIEF $current / $total';
+  }
+
+  @override
+  String get walkthroughAskPoco => 'ASK POCO';
+
+  @override
+  String get walkthroughBriefDivider => 'BRIEF';
+
+  @override
+  String get walkthroughTransitionProvisioning =>
+      'Let’s follow this next part of the server setup together.';
+
+  @override
+  String get walkthroughTransitionDeployment =>
+      'Now we’ll follow the verified release onto the host.';
+
+  @override
   String deploymentSyncAttempt(int attempt) {
     return 'SYNC ATTEMPT: $attempt';
   }
@@ -1605,7 +1651,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkthroughProgress(
-      int current, int total, String briefing, Object brief) {
+    int current,
+    int total,
+    String briefing,
+    Object brief,
+  ) {
     return 'WALKTHROUGH $current/$total · BRIEF $brief';
   }
 

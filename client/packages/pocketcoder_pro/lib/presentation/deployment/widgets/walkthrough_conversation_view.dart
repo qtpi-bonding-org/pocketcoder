@@ -17,6 +17,13 @@ class WalkthroughConversationEntry {
   final List<(String, int)> sequence;
 }
 
+class WalkthroughFaqPrompt {
+  const WalkthroughFaqPrompt({required this.question, required this.answer});
+
+  final String question;
+  final String answer;
+}
+
 /// The guided, local conversation surface used during server orientation.
 ///
 /// The adapter supplies the entries, snippet, suggestions, and callbacks. It
@@ -30,6 +37,8 @@ class WalkthroughConversationView extends StatelessWidget {
     required this.snippet,
     required this.suggestions,
     required this.onSuggestionSelected,
+    this.faqPrompts = const [],
+    this.onFaqSelected,
     this.walkthroughBoundary,
     this.showBriefDivider = false,
     this.onPrevious,
@@ -42,6 +51,8 @@ class WalkthroughConversationView extends StatelessWidget {
   final Widget snippet;
   final List<String> suggestions;
   final ValueChanged<String> onSuggestionSelected;
+  final List<WalkthroughFaqPrompt> faqPrompts;
+  final ValueChanged<WalkthroughFaqPrompt>? onFaqSelected;
   final WalkthroughConversationBoundary? walkthroughBoundary;
   final bool showBriefDivider;
   final VoidCallback? onPrevious;
@@ -78,14 +89,21 @@ class WalkthroughConversationView extends StatelessWidget {
             VSpace.x2,
           ],
           snippet,
-          if (suggestions.isNotEmpty) ...[
+          if (suggestions.isNotEmpty || faqPrompts.isNotEmpty) ...[
             VSpace.x3,
-            TerminalText.tiny('ASK POCO', alpha: 0.65),
+            TerminalText.tiny(context.l10n.walkthroughAskPoco, alpha: 0.65),
             VSpace.x1,
             for (final suggestion in suggestions) ...[
               TerminalPromptSuggestion(
                 label: suggestion,
                 onSelected: () => onSuggestionSelected(suggestion),
+              ),
+              VSpace.x1,
+            ],
+            for (final prompt in faqPrompts) ...[
+              TerminalPromptSuggestion(
+                label: prompt.question,
+                onSelected: () => onFaqSelected?.call(prompt),
               ),
               VSpace.x1,
             ],
@@ -158,7 +176,10 @@ class WalkthroughBriefDivider extends StatelessWidget {
           ),
         ),
         HSpace.x2,
-        TerminalText.tiny('BRIEF', alpha: 0.55),
+        TerminalText.tiny(
+          context.l10n.walkthroughBriefDivider,
+          alpha: 0.55,
+        ),
         HSpace.x2,
         Expanded(
           child: Divider(
