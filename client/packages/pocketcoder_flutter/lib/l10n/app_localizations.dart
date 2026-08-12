@@ -62,7 +62,7 @@ import 'app_localizations_en.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -85,11 +85,11 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en')];
@@ -2314,6 +2314,84 @@ abstract class AppLocalizations {
   /// **'COMING SOON'**
   String get deployComingSoon;
 
+  /// No description provided for @pocketCoderProgressProvisionServer.
+  ///
+  /// In en, this message translates to:
+  /// **'PROVISION SERVER'**
+  String get pocketCoderProgressProvisionServer;
+
+  /// No description provided for @pocketCoderProgressDeployPocketCoder.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOY POCKETCODER'**
+  String get pocketCoderProgressDeployPocketCoder;
+
+  /// No description provided for @pocketCoderProgressWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'WAITING'**
+  String get pocketCoderProgressWaiting;
+
+  /// No description provided for @pocketCoderProgressActive.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE'**
+  String get pocketCoderProgressActive;
+
+  /// No description provided for @pocketCoderProgressComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'DONE'**
+  String get pocketCoderProgressComplete;
+
+  /// No description provided for @pocketCoderProgressFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'FAILED'**
+  String get pocketCoderProgressFailed;
+
+  /// No description provided for @pocketCoderProgressInitializing.
+  ///
+  /// In en, this message translates to:
+  /// **'INITIALIZING'**
+  String get pocketCoderProgressInitializing;
+
+  /// No description provided for @walkthroughLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'WALKTHROUGH {current} / {total}'**
+  String walkthroughLabel(int current, int total);
+
+  /// No description provided for @briefLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'BRIEF {current} / {total}'**
+  String briefLabel(int current, int total);
+
+  /// No description provided for @walkthroughAskPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'ASK POCO'**
+  String get walkthroughAskPoco;
+
+  /// No description provided for @walkthroughBriefDivider.
+  ///
+  /// In en, this message translates to:
+  /// **'BRIEF'**
+  String get walkthroughBriefDivider;
+
+  /// No description provided for @walkthroughTransitionProvisioning.
+  ///
+  /// In en, this message translates to:
+  /// **'Let’s follow this next part of the server setup together.'**
+  String get walkthroughTransitionProvisioning;
+
+  /// No description provided for @walkthroughTransitionDeployment.
+  ///
+  /// In en, this message translates to:
+  /// **'Now we’ll follow the verified release onto the host.'**
+  String get walkthroughTransitionDeployment;
+
   /// No description provided for @deploymentSyncAttempt.
   ///
   /// In en, this message translates to:
@@ -3033,7 +3111,11 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'WALKTHROUGH {current}/{total} · BRIEF {brief}'**
   String walkthroughProgress(
-      int current, int total, String briefing, Object brief);
+    int current,
+    int total,
+    String briefing,
+    Object brief,
+  );
 
   /// No description provided for @walkthroughActionShowFullCode.
   ///
@@ -3679,8 +3761,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }
