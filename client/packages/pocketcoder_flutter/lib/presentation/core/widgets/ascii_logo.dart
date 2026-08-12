@@ -5,12 +5,14 @@ class AsciiLogo extends StatelessWidget {
   final String text;
   final Color? color;
   final double? fontSize;
+  final Alignment alignment;
 
   const AsciiLogo({
     super.key,
     required this.text,
     this.color,
     this.fontSize,
+    this.alignment = Alignment.centerLeft,
   });
 
   @override
@@ -22,7 +24,7 @@ class AsciiLogo extends StatelessWidget {
 
     return FittedBox(
       fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
+      alignment: alignment,
       child: Text(
         text,
         style: TextStyle(

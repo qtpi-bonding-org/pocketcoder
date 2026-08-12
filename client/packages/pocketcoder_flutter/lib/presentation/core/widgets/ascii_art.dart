@@ -31,6 +31,13 @@ enum PocoArmor {
 }
 
 class AppAscii {
+  static const String pocketCoderProLogo = r'''
+ ______   ______    ______
+/\  == \ /\  == \  /\  __ \
+\ \  _-/ \ \  __<  \ \ \/\ \
+ \ \_\    \ \_\ \_\ \ \_____\
+  \/_/     \/_/ /_/  \/_____/ ''';
+
   static const String pocketCoderLogo = r'''
  ______   ______     ______     __  __     ______     ______  
 /\  == \ /\  __ \   /\  ___\   /\ \/ /    /\  ___\   /\__  _\ 
