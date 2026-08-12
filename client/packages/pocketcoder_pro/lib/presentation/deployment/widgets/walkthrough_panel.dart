@@ -6,6 +6,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/domain/deployment/poco_code_section.dart';
+import 'package:pocketcoder_pro/domain/deployment/walkthrough.dart';
+import 'package:pocketcoder_pro/application/walkthrough/walkthrough_state.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_conversation_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_snippet.dart';
@@ -17,12 +19,22 @@ class WalkthroughPanel extends StatefulWidget {
     required this.sourceCommit,
     required this.sourceService,
     required this.backend,
+    required this.walkthroughState,
+    required this.onBriefSelected,
+    required this.onBriefExpanded,
+    required this.onFaqTurn,
+    required this.onSourceChanged,
   });
 
   final OnboardingStage? stage;
   final String? sourceCommit;
   final GithubProvisioningSourceService sourceService;
   final ProvisionBackendKind backend;
+  final WalkthroughState walkthroughState;
+  final ValueChanged<String> onBriefSelected;
+  final void Function(String briefId, bool expanded) onBriefExpanded;
+  final void Function(String walkthroughId, WalkthroughFaqTurn turn) onFaqTurn;
+  final VoidCallback onSourceChanged;
 
   @override
   State<WalkthroughPanel> createState() => _WalkthroughPanelState();
@@ -32,14 +44,10 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
   Future<List<_LoadedLesson>>? _lessons;
   String? _loadedCommit;
   ProvisionBackendKind? _loadedBackend;
-  String? _selectedId;
-  bool _showFullCode = false;
-  final _faqHistory = <String, List<WalkthroughConversationEntry>>{};
 
   @override
   void initState() {
     super.initState();
-    _selectedId = _preferredLessonId(widget.stage);
     _loadSource();
   }
 
@@ -48,9 +56,7 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sourceCommit != widget.sourceCommit ||
         oldWidget.backend != widget.backend) {
-      _selectedId = _preferredLessonId(widget.stage);
-      _showFullCode = false;
-      _faqHistory.clear();
+      widget.onSourceChanged();
       _loadSource();
     }
   }
@@ -151,19 +157,36 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
 
   Widget _buildLesson(BuildContext context, List<_LoadedLesson> lessons) {
     final groups = _groupLessons(lessons);
+    final selectedId = widget.walkthroughState.selectedBriefId;
+    final fallbackId = _preferredLessonId(widget.stage);
     var groupIndex = groups.indexWhere(
       (group) => group.lessons.any(
-        (lesson) => lesson.definition.id == _selectedId,
+        (lesson) => lesson.definition.id == (selectedId ?? fallbackId),
       ),
     );
     if (groupIndex < 0) groupIndex = 0;
     final group = groups[groupIndex];
     var briefIndex = group.lessons.indexWhere(
-      (lesson) => lesson.definition.id == _selectedId,
+      (lesson) => lesson.definition.id == (selectedId ?? fallbackId),
     );
     if (briefIndex < 0) briefIndex = 0;
     final lesson = group.lessons[briefIndex];
-    final history = _faqHistory[group.id] ?? const [];
+    final history = widget.walkthroughState.faqHistory[group.id]
+            ?.expand(
+              (turn) => [
+                WalkthroughConversationEntry(
+                  speaker: TerminalConversationSpeaker.user,
+                  message: turn.question,
+                ),
+                WalkthroughConversationEntry(
+                  speaker: TerminalConversationSpeaker.poco,
+                  message: turn.answer,
+                  sequence: PocoExpressions.happy,
+                ),
+              ],
+            )
+            .toList(growable: false) ??
+        const <WalkthroughConversationEntry>[];
     final entries = <WalkthroughConversationEntry>[
       WalkthroughConversationEntry(
         speaker: TerminalConversationSpeaker.poco,
@@ -185,9 +208,10 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
               previewCode: part.section.previewCode,
               expandedCode: part.section.code,
               sourceLabel: '${part.sourceFile.path}:${part.section.startLine}',
-              expanded: _showFullCode,
+              expanded: widget.walkthroughState.expandedBriefIds
+                  .contains(part.section.id),
               onExpandedChanged: (value) =>
-                  setState(() => _showFullCode = value),
+                  widget.onBriefExpanded(part.section.id, value),
             ),
             if (part != lesson.parts.last) VSpace.x2,
           ],
@@ -196,20 +220,15 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
       suggestions: const [],
       onSuggestionSelected: (_) {},
       faqPrompts: _faqPrompts(context, lesson.copyId),
-      onFaqSelected: (prompt) => setState(() {
-        final conversation = _faqHistory.putIfAbsent(group.id, () => []);
-        conversation.addAll([
-          WalkthroughConversationEntry(
-            speaker: TerminalConversationSpeaker.user,
-            message: prompt.question,
+      onFaqSelected: (prompt) {
+        widget.onFaqTurn(
+          group.id,
+          WalkthroughFaqTurn(
+            question: prompt.question,
+            answer: prompt.answer,
           ),
-          WalkthroughConversationEntry(
-            speaker: TerminalConversationSpeaker.poco,
-            message: prompt.answer,
-            sequence: PocoExpressions.happy,
-          ),
-        ]);
-      }),
+        );
+      },
       walkthroughBoundary: groupIndex == 0
           ? null
           : WalkthroughConversationBoundary(
@@ -221,16 +240,18 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
       onPrevious: briefIndex == 0
           ? null
           : () => setState(() {
-                _selectedId = group.lessons[briefIndex - 1].definition.id;
-                _showFullCode = false;
+                _selectBrief(group.lessons[briefIndex - 1].definition.id);
               }),
       onNext: briefIndex == group.lessons.length - 1
           ? null
           : () => setState(() {
-                _selectedId = group.lessons[briefIndex + 1].definition.id;
-                _showFullCode = false;
+                _selectBrief(group.lessons[briefIndex + 1].definition.id);
               }),
     );
+  }
+
+  void _selectBrief(String id) {
+    widget.onBriefSelected(id);
   }
 
   List<_WalkthroughGroup> _groupLessons(List<_LoadedLesson> lessons) {
@@ -385,6 +406,11 @@ class _LessonDefinition {
 
 const _lessonDefinitions = [
   _LessonDefinition(
+    id: 'native-caddy',
+    copyId: 'caddy-address',
+    sectionIds: ['caddy-address', 'caddy-web-entry'],
+  ),
+  _LessonDefinition(
     id: 'host-boundaries',
     copyId: 'vps-public-firewall',
     sectionIds: [
@@ -400,6 +426,7 @@ const _lessonDefinitions = [
     sectionIds: [
       'vps-docker-engine',
       'bootstrap-owner-config',
+      'bootstrap-runtime-settings',
       'bootstrap-local-secrets',
     ],
   ),
@@ -408,6 +435,7 @@ const _lessonDefinitions = [
     copyId: 'bootstrap-release-source',
     sectionIds: [
       'bootstrap-release-source',
+      'bootstrap-activation-prepare',
       'bootstrap-verified-images',
       'bootstrap-compose-start',
     ],
@@ -472,14 +500,20 @@ String? _preferredLessonId(OnboardingStage? stage) => switch (stage) {
     };
 
 String _lessonTitle(BuildContext context, String id) => switch (id) {
+      'caddy-address' => context.l10n.walkthroughCaddyAddressTitle,
+      'caddy-web-entry' => context.l10n.walkthroughCaddyWebEntryTitle,
       'vps-storage' => context.l10n.pocoLessonVpsStorageTitle,
       'vps-public-firewall' => context.l10n.pocoLessonPublicFirewallTitle,
       'vps-container-firewall' => context.l10n.pocoLessonContainerFirewallTitle,
       'vps-key-only-ssh' => context.l10n.pocoLessonSshTitle,
       'vps-docker-engine' => context.l10n.pocoLessonDockerTitle,
       'bootstrap-owner-config' => context.l10n.pocoLessonOwnerConfigTitle,
+      'bootstrap-runtime-settings' =>
+        context.l10n.walkthroughRuntimeSettingsTitle,
       'bootstrap-local-secrets' => context.l10n.pocoLessonLocalSecretsTitle,
       'bootstrap-release-source' => context.l10n.pocoLessonReleaseSourceTitle,
+      'bootstrap-activation-prepare' =>
+        context.l10n.walkthroughActivationPrepareTitle,
       'bootstrap-verified-images' => context.l10n.pocoLessonVerifiedImagesTitle,
       'bootstrap-compose-start' => context.l10n.pocoLessonComposeStartTitle,
       'compose-pocketbase' => context.l10n.pocoLessonPocketbaseTitle,
@@ -500,6 +534,8 @@ String _lessonTitle(BuildContext context, String id) => switch (id) {
     };
 
 String _lessonExplanation(BuildContext context, String id) => switch (id) {
+      'caddy-address' => context.l10n.walkthroughCaddyAddressPoco,
+      'caddy-web-entry' => context.l10n.walkthroughCaddyWebEntryPoco,
       'vps-storage' => context.l10n.pocoLessonVpsStorageExplanation,
       'vps-public-firewall' => context.l10n.pocoLessonPublicFirewallExplanation,
       'vps-container-firewall' =>
@@ -507,10 +543,14 @@ String _lessonExplanation(BuildContext context, String id) => switch (id) {
       'vps-key-only-ssh' => context.l10n.pocoLessonSshExplanation,
       'vps-docker-engine' => context.l10n.pocoLessonDockerExplanation,
       'bootstrap-owner-config' => context.l10n.pocoLessonOwnerConfigExplanation,
+      'bootstrap-runtime-settings' =>
+        context.l10n.walkthroughRuntimeSettingsPoco,
       'bootstrap-local-secrets' =>
         context.l10n.pocoLessonLocalSecretsExplanation,
       'bootstrap-release-source' =>
         context.l10n.pocoLessonReleaseSourceExplanation,
+      'bootstrap-activation-prepare' =>
+        context.l10n.walkthroughActivationPreparePoco,
       'bootstrap-verified-images' =>
         context.l10n.pocoLessonVerifiedImagesExplanation,
       'bootstrap-compose-start' =>

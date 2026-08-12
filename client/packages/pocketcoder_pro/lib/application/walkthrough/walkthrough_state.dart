@@ -11,6 +11,9 @@ class WalkthroughState {
     required this.isSkipped,
     required this.isComplete,
     required this.completedBriefIds,
+    required this.selectedBriefId,
+    required this.expandedBriefIds,
+    required this.faqHistory,
   });
 
   const WalkthroughState.initial()
@@ -20,7 +23,10 @@ class WalkthroughState {
         isCodeExpanded = false,
         isSkipped = false,
         isComplete = false,
-        completedBriefIds = const {};
+        completedBriefIds = const {},
+        selectedBriefId = null,
+        expandedBriefIds = const {},
+        faqHistory = const {};
 
   factory WalkthroughState.loaded(WalkthroughContent content) =>
       WalkthroughState._(
@@ -31,6 +37,9 @@ class WalkthroughState {
         isSkipped: false,
         isComplete: false,
         completedBriefIds: const {},
+        selectedBriefId: null,
+        expandedBriefIds: const {},
+        faqHistory: const {},
       );
 
   final WalkthroughContent? content;
@@ -40,6 +49,9 @@ class WalkthroughState {
   final bool isSkipped;
   final bool isComplete;
   final Set<String> completedBriefIds;
+  final String? selectedBriefId;
+  final Set<String> expandedBriefIds;
+  final Map<String, List<WalkthroughFaqTurn>> faqHistory;
 
   bool get hasContent => content != null;
 
@@ -83,6 +95,9 @@ class WalkthroughState {
     bool? isSkipped,
     bool? isComplete,
     Set<String>? completedBriefIds,
+    String? selectedBriefId,
+    Set<String>? expandedBriefIds,
+    Map<String, List<WalkthroughFaqTurn>>? faqHistory,
   }) =>
       WalkthroughState._(
         content: content,
@@ -93,6 +108,13 @@ class WalkthroughState {
         isComplete: isComplete ?? this.isComplete,
         completedBriefIds: Set.unmodifiable(
           completedBriefIds ?? this.completedBriefIds,
+        ),
+        selectedBriefId: selectedBriefId ?? this.selectedBriefId,
+        expandedBriefIds: Set.unmodifiable(
+          expandedBriefIds ?? this.expandedBriefIds,
+        ),
+        faqHistory: Map.unmodifiable(
+          faqHistory ?? this.faqHistory,
         ),
       );
 }

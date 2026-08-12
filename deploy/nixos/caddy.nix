@@ -5,6 +5,7 @@ let
 in
 {
 
+  # POCO:BEGIN caddy-address
   # --- IP detection + Caddyfile generation ---
   systemd.services.detect-public-ip = {
     description = "Detect public IP and generate Caddyfile with sslip.io domain";
@@ -65,7 +66,9 @@ in
       EOF
     '';
   };
+  # POCO:END caddy-address
 
+  # POCO:BEGIN caddy-web-entry
   # --- Caddy reverse proxy ---
   # Enable Caddy but override ExecStart to use our runtime-generated Caddyfile.
   # We can't use services.caddy.configFile because the Caddyfile doesn't exist
@@ -98,4 +101,5 @@ in
     "d /var/lib/pocketcoder 0755 root root -"
     "d /var/lib/pocketcoder/public 0755 root root -"
   ];
+  # POCO:END caddy-web-entry
 }
