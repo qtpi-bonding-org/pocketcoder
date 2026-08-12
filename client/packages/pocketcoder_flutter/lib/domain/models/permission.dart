@@ -58,8 +58,10 @@ enum PermissionAcpStatus {
   @JsonValue('pending')
   pending,
   @JsonValue('allow_once')
+  // ignore: constant_identifier_names
   allow_once,
   @JsonValue('allow_always')
+  // ignore: constant_identifier_names
   allow_always,
   @JsonValue('deny')
   deny,

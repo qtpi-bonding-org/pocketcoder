@@ -6,8 +6,6 @@ environment:
 
 workspace:
   - packages/pocketcoder_flutter
-  - packages/pocketcoder_pro
-  - apps/pocketcoder
   - apps/pocketcoder_foss
 
 dev_dependencies:
@@ -28,11 +26,6 @@ melos:
       packageFilters:
         dependsOn: build_runner
 
-    build_app:
-      run: |
-        cd apps/pocketcoder && flutter build apk --debug
-      description: Build the PocketCoder Mobile app.
-
     build_foss:
       run: |
         cd apps/pocketcoder_foss && flutter build apk --debug
@@ -42,16 +35,6 @@ melos:
       run: |
         cd apps/pocketcoder_foss && flutter run
       description: Run the PocketCoder FOSS app.
-
-    run_app:
-      run: |
-        cd apps/pocketcoder && flutter run
-      description: Run the PocketCoder Mobile app.
-
-    run_incognito:
-      run: |
-        cd apps/pocketcoder && flutter run -d chrome --web-browser-flag="--incognito"
-      description: Run the app in Chrome Incognito mode.
 
     check:purity:
       run: ./scripts/purity_check.sh packages/pocketcoder_flutter && ./scripts/purity_check.sh apps/pocketcoder_foss

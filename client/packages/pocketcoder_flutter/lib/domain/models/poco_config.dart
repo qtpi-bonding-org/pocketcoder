@@ -30,6 +30,7 @@ enum PocoConfigMode {
   @JsonValue('approve')
   approve,
   @JsonValue('smart_approve')
+  // ignore: constant_identifier_names
   smart_approve,
   @JsonValue('chat')
   chat,

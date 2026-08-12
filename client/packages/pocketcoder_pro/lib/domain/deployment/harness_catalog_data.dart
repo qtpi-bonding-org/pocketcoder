@@ -1,4 +1,0 @@
-// GENERATED FILE. DO NOT EDIT.
-// Source: deploy/release/harnesses.json
-const bundledHarnessCatalogJson =
-    r'''{"schemaVersion":1,"defaultHarness":"goose","harnesses":[{"id":"goose","composeService":"goose","imageRepository":"pocketcoder-harness-goose"},{"id":"claude-code","composeService":"claude-code-harness-image","imageRepository":"pocketcoder-harness-claude-code"},{"id":"codex","composeService":"codex-harness-image","imageRepository":"pocketcoder-harness-codex"},{"id":"opencode","composeService":"opencode-harness-image","imageRepository":"pocketcoder-harness-opencode"}]}''';

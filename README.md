@@ -106,7 +106,7 @@ The security model and its honest limits (tool execution currently lives inside 
 
 For a self-hosted deployment, the prerequisite is **Docker Compose v2**. The
 Flutter development client additionally requires the Flutter/Dart SDK. The
-Cloudflare Workers are optional infrastructure for the hosted OAuth, push, and
+Cloudflare Workers are optional infrastructure for hosted OAuth and
 image-manifest services.
 
 1. **Deploy the infrastructure.** Generates secure passwords into a local `.env`, applies the host baseline, installs native Caddy, derives the VPS's `sslip.io` HTTPS hostname, and prompts for the credentials your chosen Goose provider needs:
@@ -121,8 +121,7 @@ image-manifest services.
    ./client/scripts/run_android.sh            # Android device/emulator
    ```
 
-   These scripts run the Pro `apps/pocketcoder` target. For the FOSS target,
-   run `cd client && melos run run_foss`.
+   These scripts run the public `apps/pocketcoder_foss` target.
 
 For a local Docker-only setup, copy `.env.template` to `.env`, replace the
 placeholder passwords and `GOOSE_SERVER__SECRET_KEY`, then run
@@ -206,12 +205,11 @@ ports 80 and 443.
 
 ## Flutter client
 
-The [`client/`](client/) workspace contains a shared FOSS core, the Pro app
-shell, and a separate FOSS app target:
+The [`client/`](client/) workspace contains the reusable PocketCoder client and
+the public FOSS app target:
 
 | Target | Purpose | Melos command |
 |:---|:---|:---|
-| `apps/pocketcoder` | Pro app with push, billing, and deployment integrations | `melos run run_app` |
 | `apps/pocketcoder_foss` | FOSS/F-Droid-compatible app without proprietary integrations | `melos run run_foss` |
 
 From `client/`:
@@ -221,8 +219,6 @@ dart pub global activate melos
 flutter pub get
 melos bootstrap
 melos run build_gen
-melos run run_incognito       # Pro app in Chrome Incognito
-melos run build_app           # Pro Android debug APK
 melos run build_foss          # FOSS/F-Droid-compatible Android debug APK
 melos run check:purity
 melos run test
@@ -233,32 +229,32 @@ For a VPS, enter the HTTPS URL printed by deployment (or the Tailscale URL)
 through the existing-server onboarding flow.
 
 The FOSS target can be compiled independently for Android and is intended to
-remain suitable for F-Droid distribution; the Pro target adds push, billing,
-and deployment integrations.
+remain suitable for F-Droid distribution. The separate private PocketCoder Pro
+repository consumes this workspace as a pinned Git submodule.
+
+Every script and template executed on a user's VPS is kept in this public
+repository. Managed clients may orchestrate those files, but the deployed
+bootstrap, host configuration, release activation, and update behavior remain
+inspectable at the exact source commit reported by the deployment.
 
 ## Cloudflare Workers
 
-The [`workers/`](workers/) directory contains three independent Wrangler
+The [`workers/`](workers/) directory contains two independent Wrangler
 projects. They are not part of Docker Compose and are only needed for the
-corresponding hosted/Pro features:
+corresponding hosted features:
 
 | Worker | Purpose | Resources |
 |:---|:---|:---|
 | `oauth-relay` | PKCE OAuth broker for GitHub and Linode; keeps client secrets server-side | KV namespace and provider OAuth secrets |
-| `push-relay` | Authenticated FCM delivery with tenant binding, subscription checks, and quotas | Supabase RPCs, RevenueCat, and FCM secrets |
 | `image-relay` | Public image and release manifests | R2 bucket `pocketcoder-images` |
 
 Each worker has its own `package.json` and `wrangler.toml`. Deploy one with
-`cd workers/<name> && npm install && npm run deploy`, or deploy all three after
+`cd workers/<name> && npm install && npm run deploy`, or deploy both after
 configuring their bindings and secrets with:
 
 ```bash
 ./tooling/scripts/deploy-workers.sh
 ```
-
-The push relay's live-service checks are under
-`workers/push-relay/scripts/`; its Supabase schema is
-[`workers/push-relay/scripts/supabase-schema.sql`](workers/push-relay/scripts/supabase-schema.sql).
 
 ## Testing
 
@@ -290,12 +286,14 @@ The backend is deliberately tiny: PocketBase supplies auth, the database, REST, 
 
 An active research project by a solo developer, built in the open — not a commercial product, no support SLAs. Bug reports are welcome; I move at my own pace.
 
-The repository's backend and infrastructure are **AGPLv3**. The Flutter
-workspace's FOSS core is separately marked **MPL-2.0** in
-[`client/LICENSE`](client/LICENSE); third-party runtime components retain their
-own licenses. The agent core (Goose) and PocketBase are OSI-approved open
+PocketCoder is licensed as a whole under **AGPL-3.0-or-later**, including the
+Flutter client, backend, and self-hosting infrastructure. Third-party runtime
+components retain their own licenses. The agent core (Goose) and PocketBase are OSI-approved open
 source. The optional memory component (Cognee) runs through the `memory`
 Compose profile rather than behind the `c3` gateway, and any non-OSI runtime
 dependency it introduces is tracked here.
 
-**Open core:** the client and backend here are open and fully self-hostable — nothing described above requires anything proprietary. The mobile app's one-tap VPS provisioning (OAuth deploy, billing) is a separate, closed-source convenience layer that funds the project; self-hosters skip it entirely by running `deploy.sh` directly.
+The client and backend here are free software and fully self-hostable. The
+separate PocketCoder Pro distribution adds managed one-tap VPS provisioning,
+commercial billing, app-store integrations, and hosted push convenience;
+self-hosters skip it entirely by running `deploy.sh` directly.

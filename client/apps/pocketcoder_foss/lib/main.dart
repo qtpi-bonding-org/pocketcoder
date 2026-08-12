@@ -11,10 +11,9 @@ import 'package:pocketcoder_flutter/infrastructure/foss/foss_deploy_option_servi
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // FOSS build: no proprietary push/billing/deploy providers, and no
-  // Aeroform/Linode provisioning wiring at all (FossDeployOptionService
-  // only ever returns an external URL, never an in-app route, so nothing
-  // here needs flutter_aeroform).
+  // FOSS build: use the open push, billing, and deployment providers.
+  // FossDeployOptionService opens the inspectable self-hosting flow rather
+  // than routing to a managed in-app provisioner.
   getIt.registerSingleton<PushService>(NtfyPushService());
   getIt.registerSingleton<BillingService>(FossBillingService());
   getIt.registerSingleton<IDeployOptionService>(FossDeployOptionService());

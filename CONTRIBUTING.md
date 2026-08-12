@@ -13,9 +13,10 @@ Thanks for checking out PocketCoder! I'm building this as a way to explore how w
 1.  **Open Issues**: If you find a bug or have a suggestion, please open an issue! As a solo dev, I might not get to it immediately, but I do read them all.
 2.  **Discussions**: Share how you're using PocketCoder or what you'd like to see next.
 3.  **Pull Requests**:
-    *   I'm happy to look at PRs, but please keep them small and focused.
+    *   Documentation and test-only pull requests are welcome when they are small and focused.
+    *   Code contributions require a separate contributor agreement with Qtpi Bonding LLC before they can be accepted. This preserves the ability to distribute PocketCoder under both the AGPL and commercial app-store terms.
     *   Large, sweeping refactors are hard for me to review alone.
-    *   Ensure all tests pass (`./test/run_all_tests.sh`).
+    *   Ensure all tests pass (`./tests/run-tests.sh`).
 
 ## 🛠 Development Flow
 
@@ -30,4 +31,6 @@ If you discover a security vulnerability, please do NOT open a public issue. Ins
 
 ## 📜 License
 
-By contributing to PocketCoder, you agree that your contributions will be licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
+Accepted public contributions are licensed under **AGPL-3.0-or-later**. Code
+contributions additionally require the contributor agreement described above;
+opening a pull request by itself does not transfer or relicense your copyright.

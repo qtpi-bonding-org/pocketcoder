@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 
 let
-  caddyTemplate = ../../client/packages/pocketcoder_pro/assets/deployment/Caddyfile.template;
+  caddyTemplate = ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
 in
 {
 

@@ -2,6 +2,7 @@ name: pocketcoder_foss
 resolution: workspace
 description: "PocketCoder — sovereign AI coding assistant (FOSS build)"
 publish_to: 'none'
+license: AGPL-3.0-or-later
 version: 1.0.0+1
 
 environment:

@@ -59,10 +59,9 @@ Future<void> bootstrap() async {
     final billingService = getIt<BillingService>();
     await billingService.initialize();
 
-    // If a session persisted from a previous launch, link RevenueCat's
-    // identity now -- AuthRepository.login() won't run again this launch
-    // to do it for us, but server-side entitlement checks are keyed on
-    // this same PocketBase user id either way.
+    // If a session persisted from a previous launch, restore the billing
+    // provider's identity now. AuthRepository.login() will not run again
+    // during this launch.
     try {
       final pocketBase = getIt<PocketBase>();
       final userId = pocketBase.authStore.record?.id;
@@ -122,7 +121,8 @@ void _configureErrorPrivserver() {
   ErrorPrivserver.configure(
     ErrorPrivserverConfig(
       storage: getIt<ErrorBoxStorage>(),
-      reporter: (_) async => false, // no-op: no network transmission, see spec §3
+      reporter: (_) async =>
+          false, // no-op: no network transmission, see spec §3
       errorCodeMapper: PocketCoderErrorCodeMapper.mapError,
       exceptionMapper: (error) => getIt<IExceptionKeyMapper>().map(error),
     ),

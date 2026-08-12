@@ -3,7 +3,7 @@ resolution: workspace
 description: "Core logic and UI for the PocketCoder Flutter application."
 publish_to: 'none'
 version: 1.0.0+1
-license: MPL-2.0
+license: AGPL-3.0-or-later
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -28,16 +28,15 @@ dependencies:
       ref: 1d31dce6ab6753a58c230586660b301daf851ec6
   flutter_error_privserver:
     git:
-      url: git@github.com:qtpi-bonding-org/flutter_error_privserver.git
+      url: https://github.com/qtpi-bonding-org/flutter_error_privserver.git
       ref: dadb08a
   flutter_color_palette:
-    git: git@github.com:qtpi-bonding-org/flutter_color_palette.git
-  flutter_widgetsystem:
-    path: /Users/aicoder/Documents/flutter_widgetsystem
+    git: https://github.com/qtpi-bonding-org/flutter_color_palette.git
+  widgetbook: ^3.25.0
   widgetbook_annotation: ^3.11.0
   l10n_key_resolver:
     git:
-      url: git@github.com:qtpi-bonding-org/dart_l10n_key_resolver.git
+      url: https://github.com/qtpi-bonding-org/dart_l10n_key_resolver.git
       ref: d7a30dfc7922a9903c07dcb0ae15e8a6d606ea6b
 
   # Navigation
@@ -108,6 +107,8 @@ flutter:
   assets:
     - assets/pb_schema.json
     - assets/boot_log.txt
+    - assets/deployment/Caddyfile.template
+    - assets/deployment/standard_linux_bootstrap.sh
 
   fonts:
     - family: Share Tech Mono

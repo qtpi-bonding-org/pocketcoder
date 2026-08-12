@@ -6,18 +6,12 @@ carries a recognized free/open-source license.
 Exists because the old purity_check.sh only grepped one package's own
 pubspec.yaml/imports for three hardcoded proprietary package-name strings --
 which caught nothing pulled in transitively, and nothing whose license was
-simply missing (e.g. flutter_aeroform, a private git dependency with no
-LICENSE file at all, i.e. all-rights-reserved by default under copyright
-law).
+simply missing (which is all-rights-reserved by default under copyright law).
 
 Note: `dart pub deps --json` in a Dart pub workspace returns the ENTIRE
-workspace's graph, not a graph scoped to one member -- confirmed by running
-it from both packages/pocketcoder_flutter and apps/pocketcoder and getting
-byte-identical output including packages only pocketcoder_pro depends on.
-So this script computes its own reachability closure from <target-dir>'s
-own `dependencies` edges rather than trusting the graph's per-package
-"kind" field, which cannot distinguish one workspace member's closure from
-another's.
+workspace's graph, not a graph scoped to one member. This script therefore
+computes its own reachability closure from <target-dir>'s dependencies rather
+than trusting the graph's per-package "kind" field.
 """
 import glob
 import json
@@ -56,10 +50,7 @@ SDK_PACKAGES = {
 # that pocketcoder_flutter genuinely depends on but haven't had a real
 # LICENSE file added yet (tracked as a TODO, not silently ignored -- see
 # the NOTE lines main() prints for these). This is a NAMED list, not an
-# org-wide bypass: flutter_aeroform lives in the same GitHub org and is
-# deliberately NOT on this list, since it's proprietary by design and must
-# still be caught if it's ever pulled into a FOSS target's dependency
-# graph. Only add a package here after confirming with a human that it's
+# org-wide bypass. Only add a package here after confirming with a human that it's
 # actually meant to be free and just hasn't been licensed yet -- not as a
 # way to silence a real finding.
 PENDING_LICENSE_ALLOWLIST = {
@@ -82,8 +73,7 @@ def _find_license_in(directory):
 
 
 def _repo_basename_from_git_url(url):
-    # e.g. "git@github.com:qtpi-bonding-org/flutter_cubit_ui_flow.git" or
-    # "https://github.com/org/repo.git" -- the pub cache's git checkout
+    # e.g. "https://github.com/org/repo.git" -- the pub cache's git checkout
     # directory is named after the REPO, not the pub package name (e.g.
     # package "cubit_ui_flow" is cached under "flutter_cubit_ui_flow-<sha>/",
     # confirmed against this machine's real ~/.pub-cache/git/).

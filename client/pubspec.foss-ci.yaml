@@ -4,8 +4,8 @@ publish_to: none
 environment:
   sdk: '>=3.5.0 <4.0.0'
 
-# FOSS CI intentionally excludes pocketcoder_pro and the proprietary app.
-# Keep this workspace in sync with the targets checked by foss-purity.yml.
+# Minimal CI workspace. Keep this in sync with the targets checked by
+# foss-purity.yml.
 workspace:
   - packages/pocketcoder_flutter
   - apps/pocketcoder_foss

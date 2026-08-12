@@ -2,4 +2,4 @@
 
 # Run Flutter on Chrome in Incognito mode from the app shell
 # This is useful for testing onboarding and auth flows without session persistence
-cd apps/pocketcoder && flutter run -d chrome --web-browser-flag="--incognito"
+cd apps/pocketcoder_foss && flutter run -d chrome --web-browser-flag="--incognito"
