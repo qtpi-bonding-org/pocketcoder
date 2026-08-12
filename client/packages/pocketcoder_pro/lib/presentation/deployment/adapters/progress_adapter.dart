@@ -9,6 +9,7 @@ import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
+import 'package:pocketcoder_pro/domain/deployment/server_status_document.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/progress_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/pocketcoder_progress_pane.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_panel.dart';
@@ -149,7 +150,11 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
     return PocketCoderProgressPane(
       provision: PocketCoderProgressPhase(
         label: context.l10n.pocketCoderProgressProvisionServer,
-        progress: isProvisioning ? _phaseProgress(stage, provisionStages) : 1,
+        progress: _phaseValue(
+          value.serverStatusDocument,
+          phase: 'provision',
+          fallback: isProvisioning ? _phaseProgress(stage, provisionStages) : 1,
+        ),
         currentStep: isProvisioning
             ? currentStep
             : (failed
@@ -160,7 +165,11 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
       ),
       deploy: PocketCoderProgressPhase(
         label: context.l10n.pocketCoderProgressDeployPocketCoder,
-        progress: isDeploying ? _phaseProgress(stage, deployStages) : 0,
+        progress: _phaseValue(
+          value.serverStatusDocument,
+          phase: 'deploy',
+          fallback: isDeploying ? _phaseProgress(stage, deployStages) : 0,
+        ),
         currentStep: isDeploying
             ? currentStep
             : (complete
@@ -177,4 +186,11 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
     if (index < 0) return 0;
     return (index + 1) / phases.length;
   }
+
+  double _phaseValue(
+    ServerStatusDocument? document, {
+    required String phase,
+    required double fallback,
+  }) =>
+      document?.progressFor(phase) ?? fallback;
 }
