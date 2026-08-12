@@ -112,7 +112,6 @@ void main() {
           'color': {'type': 'string', 'title': 'Color'},
         },
       },
-      order: OrderKey(1),
     );
 
     testWidgets(
@@ -203,7 +202,6 @@ void main() {
               'color': {'type': 'string', 'title': 'Color'},
             },
           },
-          order: OrderKey(2),
         );
         await tester.pumpWidget(_wrap(
           BlocProvider<ElicitationCubit>.value(

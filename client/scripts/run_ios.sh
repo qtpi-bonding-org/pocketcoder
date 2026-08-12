@@ -2,4 +2,4 @@
 
 # Run Flutter on the iOS simulator from the app shell
 # Note: Ensure an iOS simulator is running (e.g. via 'open -a Simulator')
-cd apps/pocketcoder && flutter run -d iPhone
+cd apps/pocketcoder_foss && flutter run -d iPhone
