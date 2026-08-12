@@ -127,14 +127,19 @@ final directories = <_widgetbook.WidgetbookNode>[
       _widgetbook.WidgetbookFolder(
         name: 'chat',
         children: [
-          _widgetbook.WidgetbookComponent(
-            name: 'ChatListView',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'sample chats',
-                builder:
-                    _pocketcoder_flutter_design_system_storybook_notification_and_system_stories
-                        .chatListSample,
+          _widgetbook.WidgetbookFolder(
+            name: 'widgets',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'ChatListView',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'sample chats',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_notification_and_system_stories
+                            .chatListSample,
+                  )
+                ],
               )
             ],
           )

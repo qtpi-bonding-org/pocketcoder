@@ -4,8 +4,12 @@
 .pub-cache/
 .pub/
 build/
+# Runtime generated sources for the public package are tracked so it is
+# consumable from a clean checkout. Other generated sources remain local.
 **/*.freezed.dart
 **/*.g.dart
+!packages/pocketcoder_flutter/lib/**/*.freezed.dart
+!packages/pocketcoder_flutter/lib/**/*.g.dart
 packages/**/pubspec.lock
 .flutter-plugins-dependencies
 
