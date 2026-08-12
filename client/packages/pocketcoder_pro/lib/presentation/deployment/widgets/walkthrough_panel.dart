@@ -34,6 +34,7 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
   ProvisionBackendKind? _loadedBackend;
   String? _selectedId;
   bool _showFullCode = false;
+  final _faqHistory = <String, List<WalkthroughConversationEntry>>{};
 
   @override
   void initState() {
@@ -45,12 +46,11 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
   @override
   void didUpdateWidget(covariant WalkthroughPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.stage != widget.stage) {
-      _selectedId = _preferredLessonId(widget.stage);
-      _showFullCode = false;
-    }
     if (oldWidget.sourceCommit != widget.sourceCommit ||
         oldWidget.backend != widget.backend) {
+      _selectedId = _preferredLessonId(widget.stage);
+      _showFullCode = false;
+      _faqHistory.clear();
       _loadSource();
     }
   }
@@ -150,21 +150,33 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
   }
 
   Widget _buildLesson(BuildContext context, List<_LoadedLesson> lessons) {
-    var index =
-        lessons.indexWhere((lesson) => lesson.definition.id == _selectedId);
-    if (index < 0) index = 0;
-    final lesson = lessons[index];
+    final groups = _groupLessons(lessons);
+    var groupIndex = groups.indexWhere(
+      (group) => group.lessons.any(
+        (lesson) => lesson.definition.id == _selectedId,
+      ),
+    );
+    if (groupIndex < 0) groupIndex = 0;
+    final group = groups[groupIndex];
+    var briefIndex = group.lessons.indexWhere(
+      (lesson) => lesson.definition.id == _selectedId,
+    );
+    if (briefIndex < 0) briefIndex = 0;
+    final lesson = group.lessons[briefIndex];
+    final history = _faqHistory[group.id] ?? const [];
+    final entries = <WalkthroughConversationEntry>[
+      WalkthroughConversationEntry(
+        speaker: TerminalConversationSpeaker.poco,
+        message: _lessonExplanation(context, lesson.copyId),
+        sequence: PocoExpressions.thinking,
+      ),
+      ...history,
+    ];
     return WalkthroughConversationView(
       progressLabel:
-          '${context.l10n.walkthroughLabel(1, 1)} · ${context.l10n.briefLabel(index + 1, lessons.length)}',
+          '${context.l10n.walkthroughLabel(groupIndex + 1, groups.length)} · ${context.l10n.briefLabel(briefIndex + 1, group.lessons.length)}',
       briefTitle: _lessonTitle(context, lesson.copyId),
-      entries: [
-        WalkthroughConversationEntry(
-          speaker: TerminalConversationSpeaker.poco,
-          message: _lessonExplanation(context, lesson.copyId),
-          sequence: PocoExpressions.thinking,
-        ),
-      ],
+      entries: entries,
       snippet: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -183,21 +195,147 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
       ),
       suggestions: const [],
       onSuggestionSelected: (_) {},
-      showBriefDivider: index > 0,
-      onPrevious: index == 0
+      faqPrompts: _faqPrompts(context, lesson.copyId),
+      onFaqSelected: (prompt) => setState(() {
+        final conversation = _faqHistory.putIfAbsent(group.id, () => []);
+        conversation.addAll([
+          WalkthroughConversationEntry(
+            speaker: TerminalConversationSpeaker.user,
+            message: prompt.question,
+          ),
+          WalkthroughConversationEntry(
+            speaker: TerminalConversationSpeaker.poco,
+            message: prompt.answer,
+            sequence: PocoExpressions.happy,
+          ),
+        ]);
+      }),
+      walkthroughBoundary: groupIndex == 0
+          ? null
+          : WalkthroughConversationBoundary(
+              label:
+                  '${context.l10n.walkthroughLabel(groupIndex + 1, groups.length)} · ${group.title}',
+              message: _transitionMessage(context),
+            ),
+      showBriefDivider: briefIndex > 0,
+      onPrevious: briefIndex == 0
           ? null
           : () => setState(() {
-                _selectedId = lessons[index - 1].definition.id;
+                _selectedId = group.lessons[briefIndex - 1].definition.id;
                 _showFullCode = false;
               }),
-      onNext: index == lessons.length - 1
+      onNext: briefIndex == group.lessons.length - 1
           ? null
           : () => setState(() {
-                _selectedId = lessons[index + 1].definition.id;
+                _selectedId = group.lessons[briefIndex + 1].definition.id;
                 _showFullCode = false;
               }),
     );
   }
+
+  List<_WalkthroughGroup> _groupLessons(List<_LoadedLesson> lessons) {
+    final groups = <String, List<_LoadedLesson>>{};
+    for (final lesson in lessons) {
+      final source = lesson.parts.first.sourceFile;
+      groups.putIfAbsent(source.path, () => []).add(lesson);
+    }
+    return groups.entries
+        .map(
+          (entry) => _WalkthroughGroup(
+            id: entry.key,
+            title: entry.key.split('/').last.toUpperCase(),
+            lessons: List.unmodifiable(entry.value),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  String _transitionMessage(BuildContext context) => switch (widget.stage) {
+        OnboardingStage.installingHost ||
+        OnboardingStage.fetchingRelease ||
+        OnboardingStage.loadingImages ||
+        OnboardingStage.startingServices ||
+        OnboardingStage.finishingUp ||
+        OnboardingStage.ready =>
+          context.l10n.walkthroughTransitionDeployment,
+        _ => context.l10n.walkthroughTransitionProvisioning,
+      };
+
+  List<WalkthroughFaqPrompt> _faqPrompts(BuildContext context, String id) =>
+      switch (id) {
+        'vps-public-firewall' => [
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughNixosNetworkChipPorts,
+              answer: context.l10n.walkthroughNixosNetworkPoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughNixosNetworkChipDockerRules,
+              answer: context.l10n.walkthroughNixosDockerRulesPoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughNixosNetworkChipIpVersions,
+              answer: context.l10n.walkthroughNixosNetworkPoco,
+            ),
+          ],
+        'vps-key-only-ssh' => [
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughServerKeyChipPrivate,
+              answer: context.l10n.walkthroughServerKeyPoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughServerKeyChipPublic,
+              answer: context.l10n.walkthroughServerKeyPoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughServerKeyChipSsh,
+              answer: context.l10n.walkthroughNixosSshPoco,
+            ),
+          ],
+        'bootstrap-release-source' => [
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughVerifiedVersionChipVerification,
+              answer: context.l10n.walkthroughVerifiedVersionPoco,
+            ),
+            WalkthroughFaqPrompt(
+              question:
+                  context.l10n.walkthroughVerifiedVersionChipDownloadFailure,
+              answer: context.l10n.walkthroughVerifiedVersionPoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughVerifiedVersionChipUpdates,
+              answer: context.l10n.walkthroughVerifiedVersionPoco,
+            ),
+          ],
+        'compose-pocketbase' => [
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughServicesPocketBaseChipKeeps,
+              answer: context.l10n.walkthroughServicesPocketBasePoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughServicesPocketBaseChipSignIn,
+              answer: context.l10n.walkthroughServicesPocketBasePoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughServicesPocketBaseChipUpdates,
+              answer: context.l10n.walkthroughServicesPocketBasePoco,
+            ),
+          ],
+        'compose-local-caddy' => [
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughCaddyAddressChipIpAddress,
+              answer: context.l10n.walkthroughCaddyAddressPoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughCaddyAddressChipHttps,
+              answer: context.l10n.walkthroughCaddyAddressPoco,
+            ),
+            WalkthroughFaqPrompt(
+              question: context.l10n.walkthroughCaddyAddressChipSslip,
+              answer: context.l10n.walkthroughCaddyAddressPoco,
+            ),
+          ],
+        _ => const [],
+      };
 }
 
 class _LoadedLesson {
@@ -219,6 +357,18 @@ class _LoadedLessonPart {
 
   final PocoCodeSection section;
   final ProvisioningSourceFile sourceFile;
+}
+
+class _WalkthroughGroup {
+  const _WalkthroughGroup({
+    required this.id,
+    required this.title,
+    required this.lessons,
+  });
+
+  final String id;
+  final String title;
+  final List<_LoadedLesson> lessons;
 }
 
 class _LessonDefinition {

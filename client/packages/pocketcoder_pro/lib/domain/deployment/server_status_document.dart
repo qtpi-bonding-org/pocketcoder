@@ -24,6 +24,20 @@ class ServerStatusDocument {
   /// discarded by an older client that does not understand them yet.
   final Map<String, Object?> raw;
 
+  /// Reads an optional backend-owned phase progress value without assigning
+  /// meaning to a missing field. Older deployments expose lifecycle phases
+  /// only, so callers must retain their stage-based fallback in that case.
+  double? progressFor(String phase) {
+    final progress = raw['progress'];
+    final candidate = progress is Map<String, Object?>
+        ? progress[phase]
+        : raw['${phase}Progress'];
+    if (candidate is! num) return null;
+    final value = candidate.toDouble();
+    if (value < 0 || value > 1) return null;
+    return value;
+  }
+
   static ServerStatusDocument? tryParse(String body) {
     try {
       final value = jsonDecode(body);
