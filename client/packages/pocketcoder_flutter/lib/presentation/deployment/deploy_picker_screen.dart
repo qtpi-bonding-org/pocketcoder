@@ -14,19 +14,19 @@ class DeployPickerScreen extends StatelessWidget {
     super.key,
     this.credentials,
     required this.deployOptionService,
-    required this.onEnsureDeployAccess,
+    required this.onHasProAccess,
   });
 
   final DeployCredentials? credentials;
   final IDeployOptionService deployOptionService;
-  final Future<bool> Function(String productId) onEnsureDeployAccess;
+  final Future<bool> Function() onHasProAccess;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
         create: (_) => DeployPickerCubit(deployOptionService),
         child: DeployPickerAdapter(
           credentials: credentials,
-          onEnsureDeployAccess: onEnsureDeployAccess,
+          onHasProAccess: onHasProAccess,
         ),
       );
 }
@@ -122,7 +122,7 @@ class _ProviderCard extends StatelessWidget {
                     TerminalText.tiny(option.description.toUpperCase(),
                         alpha: 0.6),
                   ])),
-              if (option.requiresPurchase)
+              if (option.requiresPro)
                 Container(
                     padding: EdgeInsets.symmetric(
                         horizontal: AppSizes.space,

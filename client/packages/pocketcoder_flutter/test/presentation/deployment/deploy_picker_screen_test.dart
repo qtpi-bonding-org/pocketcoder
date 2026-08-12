@@ -16,7 +16,7 @@ class FakeDeployOptionService implements IDeployOptionService {
           name: 'Linode (Akamai)',
           description: 'One-tap deploy via OAuth. 24h access included.',
           routePath: '/auth',
-          requiresPurchase: true,
+          requiresPro: true,
         ),
         DeployOption(
           id: 'elestio',
@@ -52,7 +52,7 @@ void main() {
               password: 'test-pass',
             ),
             deployOptionService: FakeDeployOptionService(),
-            onEnsureDeployAccess: (_) async => true,
+            onHasProAccess: () async => true,
           ),
         ),
         GoRoute(
@@ -92,7 +92,7 @@ void main() {
           path: '/deploy',
           builder: (context, state) => DeployPickerScreen(
             deployOptionService: FakeDeployOptionService(),
-            onEnsureDeployAccess: (_) async {
+            onHasProAccess: () async {
               selectionChecks += 1;
               return true;
             },

@@ -510,20 +510,65 @@
   "observabilityBackend": "BACKEND",
   "observabilitySelectContainer": ">> SELECT CONTAINER FOR LOG STREAM",
 
-  "relayTitle": "PERMISSION RELAY",
-  "relaySubsystem": "RELAY SUBSYSTEM",
-  "relayCheckingStatus": "CHECKING RELAY STATUS...",
-  "relayActive": ">>> RELAY ACTIVE <<<",
-  "relaySubsystemsNominal": "SUBSYSTEMS NOMINAL",
-  "relayConfigSection": "RELAY CONFIGURATION",
-  "relayActivate": "ACTIVATE RELAY",
-  "relayRestore": "RESTORE",
-  "relayFunctionalOverviewTitle": "FUNCTIONAL OVERVIEW:",
-  "relayFunctionalOverviewBody": "Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.",
-  "relayUnlimitedCapacity": "REMOTE AUTHORIZATION CAPACITY: UNLIMITED",
-  "relayPermissionRelayLabel": "PERMISSION RELAY",
-  "relayNtfyTitle": "NTFY RELAY",
-  "relayNtfyDescription": "Connect to your own NTFY server for free, unlimited relays without registration.",
+  "proTitle": "POCKETCODER PRO",
+  "proPlanTitle": "UNLOCK ALL SYSTEMS",
+  "proCheckingStatus": "CHECKING PRO STATUS...",
+  "proUnlockCommand": "$ unlock --all",
+  "proSummary": "ONE SUBSCRIPTION. EVERY POCKETCODER PRO CAPABILITY.",
+  "proFeatureReady": "[OK]",
+  "proFeatureDeploy": "PROVISION AND DEPLOY POCKETCODER SERVERS",
+  "proFeaturePush": "RECEIVE HOSTED AGENT NOTIFICATIONS",
+  "proFeatureConsole": "USE PRO CONSOLE CONTROLS AS THEY SHIP",
+  "proTrialDuration": "{days} DAYS FREE",
+  "@proTrialDuration": {
+    "placeholders": {"days": {"type": "int"}}
+  },
+  "proPrice": "{price}",
+  "@proPrice": {
+    "placeholders": {"price": {"type": "String"}}
+  },
+  "proPriceAfterTrial": "THEN {price}",
+  "@proPriceAfterTrial": {
+    "placeholders": {"price": {"type": "String"}}
+  },
+  "proPricePerWeek": "{price} / WEEK",
+  "@proPricePerWeek": {
+    "placeholders": {"price": {"type": "String"}}
+  },
+  "proPricePerMonth": "{price} / MONTH",
+  "@proPricePerMonth": {
+    "placeholders": {"price": {"type": "String"}}
+  },
+  "proPricePerYear": "{price} / YEAR",
+  "@proPricePerYear": {
+    "placeholders": {"price": {"type": "String"}}
+  },
+  "proStartTrial": "START {days}-DAY FREE TRIAL",
+  "@proStartTrial": {
+    "placeholders": {"days": {"type": "int"}}
+  },
+  "proSubscribe": "UNLOCK POCKETCODER PRO",
+  "proRestore": "RESTORE PURCHASES",
+  "proTerms": "SUBSCRIPTION RENEWS AT {price} UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.",
+  "@proTerms": {
+    "placeholders": {"price": {"type": "String"}}
+  },
+  "proTrialTerms": "FREE FOR {days} DAYS, THEN {price} UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.",
+  "@proTrialTerms": {
+    "placeholders": {
+      "days": {"type": "int"},
+      "price": {"type": "String"}
+    }
+  },
+  "proActive": "> ENTITLEMENT: ACTIVE",
+  "proActiveBody": "POCKETCODER PRO IS ACTIVE. DEPLOYMENT AND HOSTED NOTIFICATIONS ARE UNLOCKED.",
+  "proUnavailable": "> OFFERING: UNAVAILABLE",
+  "proUnavailableBody": "THE APP STORE COULD NOT RETURN THE POCKETCODER PRO SUBSCRIPTION. CHECK YOUR CONNECTION OR RESTORE AN EXISTING PURCHASE.",
+  "proSelfHostedPushTitle": "SELF-HOSTED NOTIFICATIONS",
+  "proSelfHostedPushBody": "YOU CAN CONNECT YOUR OWN NTFY OR UNIFIEDPUSH DISTRIBUTOR WITHOUT POCKETCODER PRO.",
+  "proConfigureSelfHostedPush": "CONFIGURE SELF-HOSTED PUSH",
+  "proSettingsLabel": "POCKETCODER PRO",
+  "proSettingsStatus": "[STATUS]",
 
   "deployTitle": "DEPLOY POCKETCODER",
   "deploySelectProvider": "SELECT PROVIDER",

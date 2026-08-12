@@ -2200,89 +2200,179 @@ abstract class AppLocalizations {
   /// **'>> SELECT CONTAINER FOR LOG STREAM'**
   String get observabilitySelectContainer;
 
-  /// No description provided for @relayTitle.
+  /// No description provided for @proTitle.
   ///
   /// In en, this message translates to:
-  /// **'PERMISSION RELAY'**
-  String get relayTitle;
+  /// **'POCKETCODER PRO'**
+  String get proTitle;
 
-  /// No description provided for @relaySubsystem.
+  /// No description provided for @proPlanTitle.
   ///
   /// In en, this message translates to:
-  /// **'RELAY SUBSYSTEM'**
-  String get relaySubsystem;
+  /// **'UNLOCK ALL SYSTEMS'**
+  String get proPlanTitle;
 
-  /// No description provided for @relayCheckingStatus.
+  /// No description provided for @proCheckingStatus.
   ///
   /// In en, this message translates to:
-  /// **'CHECKING RELAY STATUS...'**
-  String get relayCheckingStatus;
+  /// **'CHECKING PRO STATUS...'**
+  String get proCheckingStatus;
 
-  /// No description provided for @relayActive.
+  /// No description provided for @proUnlockCommand.
   ///
   /// In en, this message translates to:
-  /// **'>>> RELAY ACTIVE <<<'**
-  String get relayActive;
+  /// **'\$ unlock --all'**
+  String get proUnlockCommand;
 
-  /// No description provided for @relaySubsystemsNominal.
+  /// No description provided for @proSummary.
   ///
   /// In en, this message translates to:
-  /// **'SUBSYSTEMS NOMINAL'**
-  String get relaySubsystemsNominal;
+  /// **'ONE SUBSCRIPTION. EVERY POCKETCODER PRO CAPABILITY.'**
+  String get proSummary;
 
-  /// No description provided for @relayConfigSection.
+  /// No description provided for @proFeatureReady.
   ///
   /// In en, this message translates to:
-  /// **'RELAY CONFIGURATION'**
-  String get relayConfigSection;
+  /// **'[OK]'**
+  String get proFeatureReady;
 
-  /// No description provided for @relayActivate.
+  /// No description provided for @proFeatureDeploy.
   ///
   /// In en, this message translates to:
-  /// **'ACTIVATE RELAY'**
-  String get relayActivate;
+  /// **'PROVISION AND DEPLOY POCKETCODER SERVERS'**
+  String get proFeatureDeploy;
 
-  /// No description provided for @relayRestore.
+  /// No description provided for @proFeaturePush.
   ///
   /// In en, this message translates to:
-  /// **'RESTORE'**
-  String get relayRestore;
+  /// **'RECEIVE HOSTED AGENT NOTIFICATIONS'**
+  String get proFeaturePush;
 
-  /// No description provided for @relayFunctionalOverviewTitle.
+  /// No description provided for @proFeatureConsole.
   ///
   /// In en, this message translates to:
-  /// **'FUNCTIONAL OVERVIEW:'**
-  String get relayFunctionalOverviewTitle;
+  /// **'USE PRO CONSOLE CONTROLS AS THEY SHIP'**
+  String get proFeatureConsole;
 
-  /// No description provided for @relayFunctionalOverviewBody.
+  /// No description provided for @proTrialDuration.
   ///
   /// In en, this message translates to:
-  /// **'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.'**
-  String get relayFunctionalOverviewBody;
+  /// **'{days} DAYS FREE'**
+  String proTrialDuration(int days);
 
-  /// No description provided for @relayUnlimitedCapacity.
+  /// No description provided for @proPrice.
   ///
   /// In en, this message translates to:
-  /// **'REMOTE AUTHORIZATION CAPACITY: UNLIMITED'**
-  String get relayUnlimitedCapacity;
+  /// **'{price}'**
+  String proPrice(String price);
 
-  /// No description provided for @relayPermissionRelayLabel.
+  /// No description provided for @proPriceAfterTrial.
   ///
   /// In en, this message translates to:
-  /// **'PERMISSION RELAY'**
-  String get relayPermissionRelayLabel;
+  /// **'THEN {price}'**
+  String proPriceAfterTrial(String price);
 
-  /// No description provided for @relayNtfyTitle.
+  /// No description provided for @proPricePerWeek.
   ///
   /// In en, this message translates to:
-  /// **'NTFY RELAY'**
-  String get relayNtfyTitle;
+  /// **'{price} / WEEK'**
+  String proPricePerWeek(String price);
 
-  /// No description provided for @relayNtfyDescription.
+  /// No description provided for @proPricePerMonth.
   ///
   /// In en, this message translates to:
-  /// **'Connect to your own NTFY server for free, unlimited relays without registration.'**
-  String get relayNtfyDescription;
+  /// **'{price} / MONTH'**
+  String proPricePerMonth(String price);
+
+  /// No description provided for @proPricePerYear.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} / YEAR'**
+  String proPricePerYear(String price);
+
+  /// No description provided for @proStartTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'START {days}-DAY FREE TRIAL'**
+  String proStartTrial(int days);
+
+  /// No description provided for @proSubscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'UNLOCK POCKETCODER PRO'**
+  String get proSubscribe;
+
+  /// No description provided for @proRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'RESTORE PURCHASES'**
+  String get proRestore;
+
+  /// No description provided for @proTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'SUBSCRIPTION RENEWS AT {price} UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.'**
+  String proTerms(String price);
+
+  /// No description provided for @proTrialTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE FOR {days} DAYS, THEN {price} UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.'**
+  String proTrialTerms(int days, String price);
+
+  /// No description provided for @proActive.
+  ///
+  /// In en, this message translates to:
+  /// **'> ENTITLEMENT: ACTIVE'**
+  String get proActive;
+
+  /// No description provided for @proActiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETCODER PRO IS ACTIVE. DEPLOYMENT AND HOSTED NOTIFICATIONS ARE UNLOCKED.'**
+  String get proActiveBody;
+
+  /// No description provided for @proUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'> OFFERING: UNAVAILABLE'**
+  String get proUnavailable;
+
+  /// No description provided for @proUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'THE APP STORE COULD NOT RETURN THE POCKETCODER PRO SUBSCRIPTION. CHECK YOUR CONNECTION OR RESTORE AN EXISTING PURCHASE.'**
+  String get proUnavailableBody;
+
+  /// No description provided for @proSelfHostedPushTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SELF-HOSTED NOTIFICATIONS'**
+  String get proSelfHostedPushTitle;
+
+  /// No description provided for @proSelfHostedPushBody.
+  ///
+  /// In en, this message translates to:
+  /// **'YOU CAN CONNECT YOUR OWN NTFY OR UNIFIEDPUSH DISTRIBUTOR WITHOUT POCKETCODER PRO.'**
+  String get proSelfHostedPushBody;
+
+  /// No description provided for @proConfigureSelfHostedPush.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIGURE SELF-HOSTED PUSH'**
+  String get proConfigureSelfHostedPush;
+
+  /// No description provided for @proSettingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETCODER PRO'**
+  String get proSettingsLabel;
+
+  /// No description provided for @proSettingsStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'[STATUS]'**
+  String get proSettingsStatus;
 
   /// No description provided for @deployTitle.
   ///

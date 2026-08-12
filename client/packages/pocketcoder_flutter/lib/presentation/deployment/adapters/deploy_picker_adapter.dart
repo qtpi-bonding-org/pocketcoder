@@ -1,9 +1,10 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/deployment/deploy_picker_cubit.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/presentation/billing/pro_paywall_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
@@ -12,15 +13,12 @@ import 'package:url_launcher/url_launcher.dart';
 class DeployPickerAdapter
     extends CubitAdapter<DeployPickerCubit, DeployPickerState> {
   const DeployPickerAdapter(
-      {super.key, this.credentials, required this.onEnsureDeployAccess});
+      {super.key, this.credentials, required this.onHasProAccess});
 
   final DeployCredentials? credentials;
 
-  /// Returns whether the user has (or just gained) deploy access for
-  /// [productId]. Injected so production supplies the real BillingService
-  /// and Widgetbook supplies a fake, without either resolving GetIt inside
-  /// this Adapter.
-  final Future<bool> Function(String productId) onEnsureDeployAccess;
+  /// Reads the current Pro entitlement without resolving billing from a view.
+  final Future<bool> Function() onHasProAccess;
 
   @override
   Widget buildAdapter(BuildContext context,
@@ -40,11 +38,16 @@ class DeployPickerAdapter
     if (!option.isAvailable) return;
     OnboardingLogger.event('deployment provider selected', {
       'provider': option.name,
-      'requires_purchase': option.requiresPurchase,
+      'requires_pro': option.requiresPro,
       'route': option.routePath ?? 'external'
     });
-    if (option.requiresPurchase && !kDebugMode) {
-      if (!await onEnsureDeployAccess('pocketcoder_deploy_24h')) return;
+    if (option.requiresPro && !await onHasProAccess()) {
+      if (!context.mounted) return;
+      final unlocked = await context.push<bool>(
+        AppRoutes.configurePaywall,
+        extra: const ProPaywallRouteArguments(returnOnUnlock: true),
+      );
+      if (unlocked != true) return;
     }
     if (option.url != null) {
       await launchUrl(Uri.parse(option.url!),

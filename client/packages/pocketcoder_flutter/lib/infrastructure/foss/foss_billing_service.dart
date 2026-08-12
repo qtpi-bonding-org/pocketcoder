@@ -18,26 +18,14 @@ class FossBillingService implements BillingService {
   }
 
   @override
-  Future<bool> isPro() async => true;
-
-  @override
-  Future<bool> hasDeployAccess() async => true;
+  Future<bool> hasProAccess() async => true;
 
   @override
   Future<void> restorePurchases() async {}
 
   @override
-  Future<bool> purchase(String identifier) async => true;
+  Future<bool> purchasePro(String identifier) async => true;
 
   @override
-  Future<List<BillingPackage>> getAvailablePackages() async {
-    return [
-      const BillingPackage(
-        identifier: 'foss_premium',
-        title: 'FOSS Premium',
-        description: 'Free as in speech and beer.',
-        priceString: r'$0.00',
-      ),
-    ];
-  }
+  Future<BillingPackage?> getProPackage() async => null;
 }

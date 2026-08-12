@@ -17,8 +17,8 @@ class DeployOption {
   /// In-app route path (e.g. '/auth' for Linode OAuth flow).
   final String? routePath;
 
-  /// Whether this option requires an IAP purchase first.
-  final bool requiresPurchase;
+  /// Whether this option requires an active PocketCoder Pro entitlement.
+  final bool requiresPro;
 
   /// Unavailable options stay visible for roadmap context, but cannot launch.
   final DeployOptionAvailability availability;
@@ -29,7 +29,7 @@ class DeployOption {
     required this.description,
     this.url,
     this.routePath,
-    this.requiresPurchase = false,
+    this.requiresPro = false,
     this.availability = DeployOptionAvailability.available,
   });
 

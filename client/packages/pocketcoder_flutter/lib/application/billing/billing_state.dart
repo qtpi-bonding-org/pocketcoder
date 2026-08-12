@@ -9,7 +9,7 @@ sealed class BillingState with _$BillingState implements IUiFlowState {
   const BillingState._();
 
   const factory BillingState({
-    @Default([]) List<BillingPackage> packages,
+    BillingPackage? package,
     @Default(UiFlowStatus.idle) UiFlowStatus status,
     @Default(false) bool isPro,
     Object? error,
