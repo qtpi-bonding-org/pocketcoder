@@ -39,6 +39,7 @@ class AppSizes {
   static double get pickerHeight => 300;
   static double get progressIndicatorSize => space * 1.5; // 12
   static double get commandOutputMaxHeight => 240;
+  static double get progressBarHeight => UiScaler.instance.px(4.0);
   static double get provisioningSnippetPreviewMaxHeight => 176;
   static double get provisioningSnippetMaxHeight => 320;
 

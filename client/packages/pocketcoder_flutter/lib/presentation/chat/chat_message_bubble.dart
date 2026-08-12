@@ -5,6 +5,7 @@
 // file no longer hosts any message-bubble widgets.
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 
 /// authorId used for every user-authored message.
 const kUserAuthorId = 'user';
@@ -39,16 +40,7 @@ Widget pocketcoderRoleHeader(
     padding: EdgeInsets.only(bottom: AppSizes.space),
     child: Row(
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: accent,
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontTiny,
-            fontWeight: AppFonts.heavy,
-            letterSpacing: 2,
-          ),
-        ),
+        TerminalRoleLabel(label: label, color: accent),
       ],
     ),
   );

@@ -46,6 +46,7 @@ import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
 import 'package:pocketcoder_flutter/presentation/chat/elicitation_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_inbox_screen.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
@@ -75,8 +76,10 @@ import 'package:pocketcoder_pro/presentation/auth/widgets/auth_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/config_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/details_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/progress_view.dart';
-import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_lesson_card.dart';
-import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_snippet.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/pocketcoder_progress_pane.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_brief.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_snippet.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_conversation_view.dart';
 import 'package:pocketcoder_pro/presentation/server_update/widgets/update_server_view.dart';
 import 'package:widgetbook/widgetbook.dart';
 
@@ -963,15 +966,23 @@ final _proScreens = <WidgetbookNode>[
           onRetry: () {},
         ),
   }),
-  _screen('ProvisioningLessonCard', {
-    'collapsed important code': () => const _ProvisioningLessonCardPreview(),
+  _screen('WalkthroughBrief', {
+    'collapsed snippet': () => const _WalkthroughBriefPreview(),
     'expanded full code': () =>
-        const _ProvisioningLessonCardPreview(initiallyExpanded: true),
+        const _WalkthroughBriefPreview(initiallyExpanded: true),
   }),
-  _screen('ProvisioningSnippet', {
-    'preview': () => const _ProvisioningSnippetPreview(),
-    'expanded': () =>
-        const _ProvisioningSnippetPreview(initiallyExpanded: true),
+  _screen('WalkthroughSnippet', {
+    'preview': () => const _WalkthroughSnippetPreview(),
+    'expanded': () => const _WalkthroughSnippetPreview(initiallyExpanded: true),
+  }),
+  _screen('WalkthroughConversation', {
+    'guided pseudo-chat': () => const _WalkthroughConversationPreview(),
+  }),
+  _screen('PocketCoderProgressPane', {
+    'provisioning': () => const _PocketCoderProgressPanePreview(),
+    'deployment complete': () => const _PocketCoderProgressPanePreview(
+          deploymentComplete: true,
+        ),
   }),
   _screen('DetailsScreen', {
     'running instance': () => DetailsView(
@@ -1016,18 +1027,17 @@ final _proScreens = <WidgetbookNode>[
   }),
 ];
 
-class _ProvisioningLessonCardPreview extends StatefulWidget {
-  const _ProvisioningLessonCardPreview({this.initiallyExpanded = false});
+class _WalkthroughBriefPreview extends StatefulWidget {
+  const _WalkthroughBriefPreview({this.initiallyExpanded = false});
 
   final bool initiallyExpanded;
 
   @override
-  State<_ProvisioningLessonCardPreview> createState() =>
-      _ProvisioningLessonCardPreviewState();
+  State<_WalkthroughBriefPreview> createState() =>
+      _WalkthroughBriefPreviewState();
 }
 
-class _ProvisioningLessonCardPreviewState
-    extends State<_ProvisioningLessonCardPreview> {
+class _WalkthroughBriefPreviewState extends State<_WalkthroughBriefPreview> {
   late bool _expanded;
 
   @override
@@ -1044,13 +1054,13 @@ class _ProvisioningLessonCardPreviewState
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
-            child: ProvisioningLessonCard(
+            child: WalkthroughBrief(
               title: 'Installing the NixOS image safely',
               explanation:
                   'We check the destination and the download before allowing the new operating system to take over your VPS.',
               codeBlocks: _installerLessonBlocks,
-              lessonNumber: 1,
-              lessonCount: 10,
+              briefNumber: 1,
+              briefCount: 10,
               expanded: _expanded,
               onExpandedChanged: (value) => setState(() => _expanded = value),
               onPrevious: null,
@@ -1063,18 +1073,18 @@ class _ProvisioningLessonCardPreviewState
   }
 }
 
-class _ProvisioningSnippetPreview extends StatefulWidget {
-  const _ProvisioningSnippetPreview({this.initiallyExpanded = false});
+class _WalkthroughSnippetPreview extends StatefulWidget {
+  const _WalkthroughSnippetPreview({this.initiallyExpanded = false});
 
   final bool initiallyExpanded;
 
   @override
-  State<_ProvisioningSnippetPreview> createState() =>
-      _ProvisioningSnippetPreviewState();
+  State<_WalkthroughSnippetPreview> createState() =>
+      _WalkthroughSnippetPreviewState();
 }
 
-class _ProvisioningSnippetPreviewState
-    extends State<_ProvisioningSnippetPreview> {
+class _WalkthroughSnippetPreviewState
+    extends State<_WalkthroughSnippetPreview> {
   late bool _expanded;
 
   @override
@@ -1088,7 +1098,7 @@ class _ProvisioningSnippetPreviewState
     return Scaffold(
       body: SingleChildScrollView(
         padding: EdgeInsets.all(AppSizes.space * 2),
-        child: ProvisioningSnippet(
+        child: WalkthroughSnippet(
           previewCode: '''services.caddy = {
   ports = [ "80:80" ];
 };''',
@@ -1107,45 +1117,124 @@ class _ProvisioningSnippetPreviewState
   }
 }
 
+class _WalkthroughConversationPreview extends StatelessWidget {
+  const _WalkthroughConversationPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: WalkthroughConversationView(
+        progressLabel:
+            'INITIATIVE ORIENTATION · WALKTHROUGH 01 / 05 · BRIEF 02 / 04',
+        briefTitle: 'Network boundaries',
+        walkthroughBoundary: const WalkthroughConversationBoundary(
+          label: 'WALKTHROUGH 01 / 05 · PROVISIONING',
+          message: 'Let’s start with the boundaries around your server.',
+        ),
+        showBriefDivider: true,
+        entries: const [
+          WalkthroughConversationEntry(
+            speaker: TerminalConversationSpeaker.poco,
+            message:
+                'These rules open the standard entry ports for PocketCoder while keeping container traffic private.',
+          ),
+        ],
+        snippet: WalkthroughSnippet(
+          previewCode: 'networking.firewall.allowedTCPPorts = [ 22 80 443 ];',
+          expandedCode:
+              'networking.firewall.allowedTCPPorts = [ 22 80 443 ];\nnetworking.firewall.enable = true;',
+          sourceLabel: 'configuration.nix:42–58',
+          expanded: false,
+          onExpandedChanged: _ignoreBool,
+        ),
+        suggestions: const [
+          'What are these ports?',
+          'Why does Docker need rules?',
+          'Can I change them later?',
+        ],
+        onSuggestionSelected: _ignoreString,
+      ),
+    );
+  }
+
+  static void _ignore() {}
+
+  static void _ignoreBool(bool value) {}
+
+  static void _ignoreString(String value) {}
+}
+
+class _PocketCoderProgressPanePreview extends StatelessWidget {
+  const _PocketCoderProgressPanePreview({this.deploymentComplete = false});
+
+  final bool deploymentComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: PocketCoderProgressPane(
+          provision: const PocketCoderProgressPhase(
+            label: 'Provision Server',
+            progress: 1,
+            currentStep: 'Server created · connection secured',
+            state: PocketCoderProgressPhaseState.complete,
+          ),
+          deploy: PocketCoderProgressPhase(
+            label: 'Deploy PocketCoder',
+            progress: deploymentComplete ? 1 : 0.4,
+            currentStep: deploymentComplete
+                ? 'Deployment healthy'
+                : 'Fetching verified release',
+            state: deploymentComplete
+                ? PocketCoderProgressPhaseState.complete
+                : PocketCoderProgressPhaseState.running,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 const _installerLessonBlocks = [
-  ProvisioningLessonCodeBlock(
+  WalkthroughSnippetBlock(
     title: 'Installer inputs',
     sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:2',
     code: '''# <UDF name="IMAGE_URL" label="NixOS image URL" />
 # <UDF name="IMAGE_SHA256" label="Expected sha256 of the gzip" />
 # <UDF name="IMAGE_UNCOMPRESSED_BYTES" label="Expected uncompressed size in bytes" />
 set -euo pipefail''',
-    importantCode: 'set -euo pipefail',
+    previewCode: 'set -euo pipefail',
   ),
-  ProvisioningLessonCodeBlock(
+  WalkthroughSnippetBlock(
     title: 'Disk safety check',
     sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:10',
     code: '''[ -b /dev/sdb ] || { echo "FATAL: /dev/sdb not found"; exit 1; }
 TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
 [ "\$TARGET_BYTES" -ge "\$IMAGE_UNCOMPRESSED_BYTES" ] || exit 1''',
-    importantCode: '''[ -b /dev/sdb ] || exit 1
+    previewCode: '''[ -b /dev/sdb ] || exit 1
 TARGET_BYTES=\$(blockdev --getsize64 /dev/sdb)
 [ "\$TARGET_BYTES" -ge "\$IMAGE_UNCOMPRESSED_BYTES" ] || exit 1''',
   ),
-  ProvisioningLessonCodeBlock(
+  WalkthroughSnippetBlock(
     title: 'Stream the image',
     sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:25',
     code: '''curl -fsSL "\$IMAGE_URL" \\
   | tee /tmp/sumpipe \\
   | gunzip \\
   | dd of=/dev/sdb bs=16M conv=fsync status=progress''',
-    importantCode: '''curl -fsSL "\$IMAGE_URL" \\
+    previewCode: '''curl -fsSL "\$IMAGE_URL" \\
   | gunzip \\
   | dd of=/dev/sdb bs=16M conv=fsync status=progress''',
   ),
-  ProvisioningLessonCodeBlock(
+  WalkthroughSnippetBlock(
     title: 'Verify the checksum',
     sourceLabel: 'deploy/nixos/stackscripts/pocketcoder-image-installer.sh:34',
     code: '''read -r ACTUAL_SHA _ < /tmp/sum
 if [ "\$ACTUAL_SHA" = "\$IMAGE_SHA256" ]; then
   echo "Image verified"
 fi''',
-    importantCode: '[ "\$ACTUAL_SHA" = "\$IMAGE_SHA256" ]',
+    previewCode: '[ "\$ACTUAL_SHA" = "\$IMAGE_SHA256" ]',
   ),
 ];
 

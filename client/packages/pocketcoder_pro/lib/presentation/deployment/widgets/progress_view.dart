@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_aeroform/domain/models/instance.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/domain/deployment/server_status_document.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/pocketcoder_progress_pane.dart';
 
 /// Pure presentation widget for the deployment progress screen.
 class ProgressView extends StatelessWidget {
@@ -17,6 +16,7 @@ class ProgressView extends StatelessWidget {
     required this.deploymentStatus,
     required this.pollingAttempts,
     required this.serverStatusDocument,
+    required this.progressPane,
     required this.provisioningTour,
     required this.instance,
     required this.error,
@@ -28,6 +28,7 @@ class ProgressView extends StatelessWidget {
   final OnboardingStage? deploymentStatus;
   final int pollingAttempts;
   final ServerStatusDocument? serverStatusDocument;
+  final PocketCoderProgressPane progressPane;
   final Widget provisioningTour;
   final Instance? instance;
   final Object? error;
@@ -55,123 +56,116 @@ class ProgressView extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 600),
             child: Column(
               children: [
-                BiosFrame(
-                  title: 'TELEMETRY STREAM',
-                  child: Padding(
-                    padding: EdgeInsets.all(AppSizes.space * 2),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildStatusIndicator(deploymentStatus),
-                        VSpace.x3,
-                        Text(
-                          _getStatusTitle(deploymentStatus),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: AppFonts.headerFamily,
-                            color: _getStatusColor(deploymentStatus, colors),
-                            fontSize: AppSizes.fontBig,
-                            fontWeight: AppFonts.heavy,
-                          ),
+                progressPane,
+                VSpace.x3,
+                Padding(
+                  padding: EdgeInsets.all(AppSizes.space * 2),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _getStatusTitle(deploymentStatus),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AppFonts.headerFamily,
+                          color: _getStatusColor(deploymentStatus, colors),
+                          fontSize: AppSizes.fontBig,
+                          fontWeight: AppFonts.heavy,
                         ),
-                        VSpace.x2,
+                      ),
+                      VSpace.x2,
+                      Text(
+                        _getStatusDescription(deploymentStatus),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AppFonts.bodyFamily,
+                          color: colors.onSurface.withValues(alpha: 0.7),
+                          fontSize: AppSizes.fontSmall,
+                        ),
+                      ),
+                      VSpace.x4,
+                      if (pollingAttempts > 0) ...[
                         Text(
-                          _getStatusDescription(deploymentStatus),
-                          textAlign: TextAlign.center,
+                          context.l10n.deploymentSyncAttempt(pollingAttempts),
                           style: TextStyle(
                             fontFamily: AppFonts.bodyFamily,
-                            color: colors.onSurface.withValues(alpha: 0.7),
-                            fontSize: AppSizes.fontSmall,
+                            color: colors.primary,
+                            fontSize: AppSizes.fontTiny,
                           ),
                         ),
+                        VSpace.x1,
+                      ],
+                      VSpace.x4,
+                      if (currentServerStatus?.detail?.isNotEmpty ?? false) ...[
+                        _buildInfoRow(
+                          context.l10n.deploymentCurrentOperation,
+                          currentServerStatus?.detail ?? '',
+                          colors,
+                        ),
+                        VSpace.x1,
+                      ],
+                      if (currentServerStatus != null) ...[
+                        _buildInfoRow(
+                          context.l10n.deploymentSourceCommit,
+                          currentServerStatus.sourceCommit ?? 'UNKNOWN',
+                          colors,
+                        ),
+                        VSpace.x1,
+                        _buildInfoRow(
+                          context.l10n.deploymentRunId,
+                          currentServerStatus.runId,
+                          colors,
+                        ),
+                        VSpace.x1,
+                        _buildInfoRow(
+                          context.l10n.deploymentStatusSchema,
+                          currentServerStatus.schema.toString(),
+                          colors,
+                        ),
+                        VSpace.x1,
+                        _buildInfoRow(
+                          context.l10n.deploymentLastSignal,
+                          currentServerStatus.updatedAt
+                              .toUtc()
+                              .toIso8601String(),
+                          colors,
+                        ),
+                        if (currentServerStatus.error?.isNotEmpty ?? false) ...[
+                          VSpace.x1,
+                          _buildInfoRow(
+                            context.l10n.deploymentErrorCode,
+                            currentServerStatus.error ?? '',
+                            colors,
+                          ),
+                        ],
+                        VSpace.x2,
+                      ],
+                      if (currentInstance != null) ...[
+                        _buildInfoRow(
+                            'NETWORK IP', currentInstance.ipAddress, colors),
+                        VSpace.x1,
+                        _buildInfoRow(
+                            'GEO GRID', currentInstance.region, colors),
+                      ],
+                      if (status == UiFlowStatus.failure) ...[
                         VSpace.x4,
-                        if (pollingAttempts > 0) ...[
-                          Text(
-                            context.l10n.deploymentSyncAttempt(pollingAttempts),
+                        Container(
+                          padding: EdgeInsets.all(AppSizes.space),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: colors.error),
+                            color: colors.error.withValues(alpha: 0.1),
+                          ),
+                          child: Text(
+                            'FAULT DETECTED: ${error.toString().toUpperCase()}',
                             style: TextStyle(
+                              color: colors.error,
                               fontFamily: AppFonts.bodyFamily,
-                              color: colors.primary,
                               fontSize: AppSizes.fontTiny,
                             ),
                           ),
-                          VSpace.x1,
-                        ],
-                        if (status == UiFlowStatus.loading)
-                          _buildProgressBar(colors),
-                        VSpace.x4,
-                        if (currentServerStatus?.detail?.isNotEmpty ??
-                            false) ...[
-                          _buildInfoRow(
-                            context.l10n.deploymentCurrentOperation,
-                            currentServerStatus?.detail ?? '',
-                            colors,
-                          ),
-                          VSpace.x1,
-                        ],
-                        if (currentServerStatus != null) ...[
-                          _buildInfoRow(
-                            context.l10n.deploymentSourceCommit,
-                            currentServerStatus.sourceCommit ?? 'UNKNOWN',
-                            colors,
-                          ),
-                          VSpace.x1,
-                          _buildInfoRow(
-                            context.l10n.deploymentRunId,
-                            currentServerStatus.runId,
-                            colors,
-                          ),
-                          VSpace.x1,
-                          _buildInfoRow(
-                            context.l10n.deploymentStatusSchema,
-                            currentServerStatus.schema.toString(),
-                            colors,
-                          ),
-                          VSpace.x1,
-                          _buildInfoRow(
-                            context.l10n.deploymentLastSignal,
-                            currentServerStatus.updatedAt
-                                .toUtc()
-                                .toIso8601String(),
-                            colors,
-                          ),
-                          if (currentServerStatus.error?.isNotEmpty ??
-                              false) ...[
-                            VSpace.x1,
-                            _buildInfoRow(
-                              context.l10n.deploymentErrorCode,
-                              currentServerStatus.error ?? '',
-                              colors,
-                            ),
-                          ],
-                          VSpace.x2,
-                        ],
-                        if (currentInstance != null) ...[
-                          _buildInfoRow(
-                              'NETWORK IP', currentInstance.ipAddress, colors),
-                          VSpace.x1,
-                          _buildInfoRow(
-                              'GEO GRID', currentInstance.region, colors),
-                        ],
-                        if (status == UiFlowStatus.failure) ...[
-                          VSpace.x4,
-                          Container(
-                            padding: EdgeInsets.all(AppSizes.space),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: colors.error),
-                              color: colors.error.withValues(alpha: 0.1),
-                            ),
-                            child: Text(
-                              'FAULT DETECTED: ${error.toString().toUpperCase()}',
-                              style: TextStyle(
-                                color: colors.error,
-                                fontFamily: AppFonts.bodyFamily,
-                                fontSize: AppSizes.fontTiny,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
                 VSpace.x3,
@@ -181,22 +175,6 @@ class ProgressView extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatusIndicator(OnboardingStage? status) {
-    if (status == OnboardingStage.ready) {
-      return const Icon(Icons.check_circle_outline,
-          color: Colors.green, size: 48);
-    }
-    return const TerminalLoadingIndicator(label: '');
-  }
-
-  Widget _buildProgressBar(ColorScheme colors) {
-    return LinearProgressIndicator(
-      minHeight: 4,
-      color: colors.primary,
-      backgroundColor: colors.primary.withValues(alpha: 0.1),
     );
   }
 

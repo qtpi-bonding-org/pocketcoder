@@ -1210,7 +1210,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentErrorCode => 'SERVER ERROR CODE';
 
   @override
-  String get pocoProvisioningTourTitle => 'POCO VPS TOUR';
+  String get pocoProvisioningTourTitle => 'POCO WALKTHROUGH';
 
   @override
   String get pocoProvisioningWaitingForSource =>
@@ -1604,8 +1604,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String walkthroughProgress(int current, int total, String briefing) {
-    return 'WALKTHROUGH $current/$total · BRIEFING $briefing';
+  String walkthroughProgress(
+      int current, int total, String briefing, Object brief) {
+    return 'WALKTHROUGH $current/$total · BRIEF $brief';
   }
 
   @override

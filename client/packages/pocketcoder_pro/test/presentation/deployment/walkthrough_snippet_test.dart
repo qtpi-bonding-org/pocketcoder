@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_snippet.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_snippet.dart';
 
 void main() {
   testWidgets('reveals only the complete snippet for the concept',
@@ -15,7 +15,7 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: StatefulBuilder(
-              builder: (context, setState) => ProvisioningSnippet(
+              builder: (context, setState) => WalkthroughSnippet(
                 previewCode: 'public = true;',
                 expandedCode: 'public = true;\nprivate = false;',
                 sourceLabel: 'configuration.nix:42-58',

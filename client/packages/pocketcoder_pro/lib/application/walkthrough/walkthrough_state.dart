@@ -1,49 +1,55 @@
 import 'package:flutter/foundation.dart';
-import 'package:pocketcoder_pro/domain/deployment/provisioning_walkthrough.dart';
+import 'package:pocketcoder_pro/domain/deployment/walkthrough.dart';
 
 @immutable
 class WalkthroughState {
   const WalkthroughState._({
     required this.content,
     required this.walkthroughIndex,
-    required this.briefingIndex,
+    required this.briefIndex,
     required this.isCodeExpanded,
     required this.isSkipped,
     required this.isComplete,
-    required this.completedBriefingIds,
+    required this.completedBriefIds,
   });
 
   const WalkthroughState.initial()
       : content = null,
         walkthroughIndex = 0,
-        briefingIndex = 0,
+        briefIndex = 0,
         isCodeExpanded = false,
         isSkipped = false,
         isComplete = false,
-        completedBriefingIds = const {};
+        completedBriefIds = const {};
 
-  factory WalkthroughState.loaded(ProvisioningWalkthroughContent content) =>
+  factory WalkthroughState.loaded(WalkthroughContent content) =>
       WalkthroughState._(
         content: content,
         walkthroughIndex: 0,
-        briefingIndex: 0,
+        briefIndex: 0,
         isCodeExpanded: false,
         isSkipped: false,
         isComplete: false,
-        completedBriefingIds: const {},
+        completedBriefIds: const {},
       );
 
-  final ProvisioningWalkthroughContent? content;
+  final WalkthroughContent? content;
   final int walkthroughIndex;
-  final int briefingIndex;
+  final int briefIndex;
   final bool isCodeExpanded;
   final bool isSkipped;
   final bool isComplete;
-  final Set<String> completedBriefingIds;
+  final Set<String> completedBriefIds;
 
   bool get hasContent => content != null;
 
-  ProvisioningWalkthrough? get currentWalkthrough {
+  int get walkthroughCount => content?.walkthroughs.length ?? 0;
+
+  int get currentWalkthroughNumber => hasContent ? walkthroughIndex + 1 : 0;
+
+  bool get isAtWalkthroughStart => hasContent && briefIndex == 0;
+
+  Walkthrough? get currentWalkthrough {
     final currentContent = content;
     if (currentContent == null ||
         walkthroughIndex < 0 ||
@@ -53,40 +59,40 @@ class WalkthroughState {
     return currentContent.walkthroughs[walkthroughIndex];
   }
 
-  ProvisioningBriefing? get currentBriefing {
+  WalkthroughBrief? get currentBrief {
     final walkthrough = currentWalkthrough;
     if (walkthrough == null ||
-        briefingIndex < 0 ||
-        briefingIndex >= walkthrough.briefings.length) {
+        briefIndex < 0 ||
+        briefIndex >= walkthrough.briefs.length) {
       return null;
     }
-    return walkthrough.briefings[briefingIndex];
+    return walkthrough.briefs[briefIndex];
   }
 
-  String? get currentBriefingId {
+  String? get currentBriefId {
     final walkthrough = currentWalkthrough;
-    final briefing = currentBriefing;
-    if (walkthrough == null || briefing == null) return null;
-    return '${walkthrough.id}/${briefing.id}';
+    final brief = currentBrief;
+    if (walkthrough == null || brief == null) return null;
+    return '${walkthrough.id}/${brief.id}';
   }
 
   WalkthroughState copyWith({
     int? walkthroughIndex,
-    int? briefingIndex,
+    int? briefIndex,
     bool? isCodeExpanded,
     bool? isSkipped,
     bool? isComplete,
-    Set<String>? completedBriefingIds,
+    Set<String>? completedBriefIds,
   }) =>
       WalkthroughState._(
         content: content,
         walkthroughIndex: walkthroughIndex ?? this.walkthroughIndex,
-        briefingIndex: briefingIndex ?? this.briefingIndex,
+        briefIndex: briefIndex ?? this.briefIndex,
         isCodeExpanded: isCodeExpanded ?? this.isCodeExpanded,
         isSkipped: isSkipped ?? this.isSkipped,
         isComplete: isComplete ?? this.isComplete,
-        completedBriefingIds: Set.unmodifiable(
-          completedBriefingIds ?? this.completedBriefingIds,
+        completedBriefIds: Set.unmodifiable(
+          completedBriefIds ?? this.completedBriefIds,
         ),
       );
 }

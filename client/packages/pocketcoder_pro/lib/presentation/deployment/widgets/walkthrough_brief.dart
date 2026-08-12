@@ -4,8 +4,8 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
-class ProvisioningLessonCodeBlock {
-  const ProvisioningLessonCodeBlock({
+class WalkthroughSnippetBlock {
+  const WalkthroughSnippetBlock({
     required this.title,
     required this.sourceLabel,
     required this.code,
@@ -18,16 +18,16 @@ class ProvisioningLessonCodeBlock {
   final String previewCode;
 }
 
-/// A single walkthrough briefing: a concise code preview by default, with the
+/// A single walkthrough brief: a concise code preview by default, with the
 /// complete source block available on demand.
-class ProvisioningLessonCard extends StatelessWidget {
-  const ProvisioningLessonCard({
+class WalkthroughBrief extends StatelessWidget {
+  const WalkthroughBrief({
     super.key,
     required this.title,
     required this.explanation,
     required this.codeBlocks,
-    required this.lessonNumber,
-    required this.lessonCount,
+    required this.briefNumber,
+    required this.briefCount,
     required this.expanded,
     required this.onExpandedChanged,
     this.onPrevious,
@@ -36,9 +36,9 @@ class ProvisioningLessonCard extends StatelessWidget {
 
   final String title;
   final String explanation;
-  final List<ProvisioningLessonCodeBlock> codeBlocks;
-  final int lessonNumber;
-  final int lessonCount;
+  final List<WalkthroughSnippetBlock> codeBlocks;
+  final int briefNumber;
+  final int briefCount;
   final bool expanded;
   final ValueChanged<bool> onExpandedChanged;
   final VoidCallback? onPrevious;
@@ -68,7 +68,7 @@ class ProvisioningLessonCard extends StatelessWidget {
               ),
               HSpace.x2,
               TerminalText.tiny(
-                '$lessonNumber / $lessonCount',
+                '$briefNumber / $briefCount',
                 alpha: 0.6,
               ),
             ],
@@ -157,7 +157,7 @@ class _CodeBlockView extends StatelessWidget {
     required this.maxHeight,
   });
 
-  final ProvisioningLessonCodeBlock block;
+  final WalkthroughSnippetBlock block;
   final int partNumber;
   final int partCount;
   final double maxHeight;

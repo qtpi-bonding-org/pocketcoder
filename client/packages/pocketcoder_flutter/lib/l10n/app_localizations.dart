@@ -2359,7 +2359,7 @@ abstract class AppLocalizations {
   /// No description provided for @pocoProvisioningTourTitle.
   ///
   /// In en, this message translates to:
-  /// **'POCO VPS TOUR'**
+  /// **'POCO WALKTHROUGH'**
   String get pocoProvisioningTourTitle;
 
   /// No description provided for @pocoProvisioningWaitingForSource.
@@ -2395,13 +2395,13 @@ abstract class AppLocalizations {
   /// No description provided for @pocoProvisioningShowFull.
   ///
   /// In en, this message translates to:
-  /// **'SHOW FULL SECTION'**
+  /// **'SHOW FULL SNIPPET'**
   String get pocoProvisioningShowFull;
 
   /// No description provided for @pocoProvisioningShowConcise.
   ///
   /// In en, this message translates to:
-  /// **'SHOW CONCISE VIEW'**
+  /// **'SHOW PREVIEW'**
   String get pocoProvisioningShowConcise;
 
   /// No description provided for @pocoLessonVpsStorageTitle.
@@ -3031,8 +3031,9 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughProgress.
   ///
   /// In en, this message translates to:
-  /// **'WALKTHROUGH {current}/{total} · BRIEFING {briefing}'**
-  String walkthroughProgress(int current, int total, String briefing);
+  /// **'WALKTHROUGH {current}/{total} · BRIEF {brief}'**
+  String walkthroughProgress(
+      int current, int total, String briefing, Object brief);
 
   /// No description provided for @walkthroughActionShowFullCode.
   ///

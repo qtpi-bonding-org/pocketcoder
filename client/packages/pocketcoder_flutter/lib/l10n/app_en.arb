@@ -542,7 +542,7 @@
   "deploymentStatusSchema": "STATUS SCHEMA",
   "deploymentLastSignal": "LAST SERVER SIGNAL",
   "deploymentErrorCode": "SERVER ERROR CODE",
-  "pocoProvisioningTourTitle": "POCO VPS TOUR",
+  "pocoProvisioningTourTitle": "POCO WALKTHROUGH",
   "pocoProvisioningWaitingForSource": "I am waiting for your VPS to report its exact source commit. Once it does, I can show you the code actually being installed.",
   "pocoProvisioningLoadingSource": "I found the exact release commit. I am fetching its public provisioning code so we can inspect it together.",
   "pocoProvisioningSourceUnavailable": "The deployment is still running, but I could not load its annotated source right now. This lesson is optional and never blocks your VPS.",
@@ -683,7 +683,7 @@
       "total": {"type": "int"}
     }
   },
-  "walkthroughProgress": "WALKTHROUGH {current}/{total} · BRIEFING {briefing}",
+  "walkthroughProgress": "WALKTHROUGH {current}/{total} · BRIEF {brief}",
   "@walkthroughProgress": {
     "placeholders": {
       "current": {"type": "int"},
