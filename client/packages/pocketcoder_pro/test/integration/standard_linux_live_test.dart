@@ -102,6 +102,8 @@ Future<void> _scenario({
       'pocketcoder-$name-${started.millisecondsSinceEpoch}@example.com';
   final script =
       File('assets/deployment/standard_linux_bootstrap.sh').readAsStringSync();
+  final caddyfileTemplate =
+      File('assets/deployment/Caddyfile.template').readAsStringSync();
   final bootstrap = PocketCoderCloudInit.build(
     bootstrapScript: script,
     adminEmail: email,
@@ -133,6 +135,7 @@ Future<void> _scenario({
     hostname: HostnameStrategy.sslipIo,
     acmeEmail: email,
     staticPaths: const {'/_pocketcoder': '/var/lib/pocketcoder/public'},
+    caddyfileTemplate: caddyfileTemplate,
   );
   final config = ProvisionConfig(
     planType: 'g6-standard-1',
