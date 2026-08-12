@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$BillingState {
-  List<BillingPackage> get packages;
+  BillingPackage? get package;
   UiFlowStatus get status;
   bool get isPro;
   Object? get error;
@@ -32,23 +32,19 @@ mixin _$BillingState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is BillingState &&
-            const DeepCollectionEquality().equals(other.packages, packages) &&
+            (identical(other.package, package) || other.package == package) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.isPro, isPro) || other.isPro == isPro) &&
             const DeepCollectionEquality().equals(other.error, error));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(packages),
-      status,
-      isPro,
+  int get hashCode => Object.hash(runtimeType, package, status, isPro,
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'BillingState(packages: $packages, status: $status, isPro: $isPro, error: $error)';
+    return 'BillingState(package: $package, status: $status, isPro: $isPro, error: $error)';
   }
 }
 
@@ -59,7 +55,7 @@ abstract mixin class $BillingStateCopyWith<$Res> {
       _$BillingStateCopyWithImpl;
   @useResult
   $Res call(
-      {List<BillingPackage> packages,
+      {BillingPackage? package,
       UiFlowStatus status,
       bool isPro,
       Object? error});
@@ -77,16 +73,16 @@ class _$BillingStateCopyWithImpl<$Res> implements $BillingStateCopyWith<$Res> {
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? packages = null,
+    Object? package = freezed,
     Object? status = null,
     Object? isPro = null,
     Object? error = freezed,
   }) {
     return _then(_self.copyWith(
-      packages: null == packages
-          ? _self.packages
-          : packages // ignore: cast_nullable_to_non_nullable
-              as List<BillingPackage>,
+      package: freezed == package
+          ? _self.package
+          : package // ignore: cast_nullable_to_non_nullable
+              as BillingPackage?,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -191,15 +187,15 @@ extension BillingStatePatterns on BillingState {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(List<BillingPackage> packages, UiFlowStatus status,
-            bool isPro, Object? error)?
+    TResult Function(BillingPackage? package, UiFlowStatus status, bool isPro,
+            Object? error)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _BillingState() when $default != null:
-        return $default(_that.packages, _that.status, _that.isPro, _that.error);
+        return $default(_that.package, _that.status, _that.isPro, _that.error);
       case _:
         return orElse();
     }
@@ -220,14 +216,14 @@ extension BillingStatePatterns on BillingState {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(List<BillingPackage> packages, UiFlowStatus status,
-            bool isPro, Object? error)
+    TResult Function(BillingPackage? package, UiFlowStatus status, bool isPro,
+            Object? error)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _BillingState():
-        return $default(_that.packages, _that.status, _that.isPro, _that.error);
+        return $default(_that.package, _that.status, _that.isPro, _that.error);
     }
   }
 
@@ -245,14 +241,14 @@ extension BillingStatePatterns on BillingState {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(List<BillingPackage> packages, UiFlowStatus status,
-            bool isPro, Object? error)?
+    TResult? Function(BillingPackage? package, UiFlowStatus status, bool isPro,
+            Object? error)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _BillingState() when $default != null:
-        return $default(_that.packages, _that.status, _that.isPro, _that.error);
+        return $default(_that.package, _that.status, _that.isPro, _that.error);
       case _:
         return null;
     }
@@ -263,22 +259,14 @@ extension BillingStatePatterns on BillingState {
 
 class _BillingState extends BillingState {
   const _BillingState(
-      {final List<BillingPackage> packages = const [],
+      {this.package,
       this.status = UiFlowStatus.idle,
       this.isPro = false,
       this.error})
-      : _packages = packages,
-        super._();
+      : super._();
 
-  final List<BillingPackage> _packages;
   @override
-  @JsonKey()
-  List<BillingPackage> get packages {
-    if (_packages is EqualUnmodifiableListView) return _packages;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_packages);
-  }
-
+  final BillingPackage? package;
   @override
   @JsonKey()
   final UiFlowStatus status;
@@ -301,23 +289,19 @@ class _BillingState extends BillingState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _BillingState &&
-            const DeepCollectionEquality().equals(other._packages, _packages) &&
+            (identical(other.package, package) || other.package == package) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.isPro, isPro) || other.isPro == isPro) &&
             const DeepCollectionEquality().equals(other.error, error));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(_packages),
-      status,
-      isPro,
+  int get hashCode => Object.hash(runtimeType, package, status, isPro,
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'BillingState(packages: $packages, status: $status, isPro: $isPro, error: $error)';
+    return 'BillingState(package: $package, status: $status, isPro: $isPro, error: $error)';
   }
 }
 
@@ -330,7 +314,7 @@ abstract mixin class _$BillingStateCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {List<BillingPackage> packages,
+      {BillingPackage? package,
       UiFlowStatus status,
       bool isPro,
       Object? error});
@@ -349,16 +333,16 @@ class __$BillingStateCopyWithImpl<$Res>
   @override
   @pragma('vm:prefer-inline')
   $Res call({
-    Object? packages = null,
+    Object? package = freezed,
     Object? status = null,
     Object? isPro = null,
     Object? error = freezed,
   }) {
     return _then(_BillingState(
-      packages: null == packages
-          ? _self._packages
-          : packages // ignore: cast_nullable_to_non_nullable
-              as List<BillingPackage>,
+      package: freezed == package
+          ? _self.package
+          : package // ignore: cast_nullable_to_non_nullable
+              as BillingPackage?,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable

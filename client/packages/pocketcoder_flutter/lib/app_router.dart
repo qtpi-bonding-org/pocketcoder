@@ -16,7 +16,7 @@ import 'package:pocketcoder_flutter/presentation/notifications/notification_sett
 import 'package:pocketcoder_flutter/presentation/skills/skills_screen.dart';
 import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
-import 'package:pocketcoder_flutter/presentation/billing/permission_relay_screen.dart';
+import 'package:pocketcoder_flutter/presentation/billing/pro_paywall_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/harness_auth_screen.dart';
@@ -252,11 +252,18 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.configurePaywall,
         name: RouteNames.configurePaywall,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const PermissionRelayScreen(),
-        ),
+        pageBuilder: (context, state) {
+          final arguments = state.extra is ProPaywallRouteArguments
+              ? state.extra as ProPaywallRouteArguments
+              : const ProPaywallRouteArguments();
+          return TerminalTransition.buildPage(
+            context: context,
+            state: state,
+            child: ProPaywallScreen(
+              returnOnUnlock: arguments.returnOnUnlock,
+            ),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.configureLlm,
@@ -306,11 +313,7 @@ class AppRouter {
                 ? state.extra as DeployCredentials
                 : null,
             deployOptionService: getIt<IDeployOptionService>(),
-            onEnsureDeployAccess: (productId) async {
-              final billing = getIt<BillingService>();
-              return await billing.hasDeployAccess() ||
-                  await billing.purchase(productId);
-            },
+            onHasProAccess: getIt<BillingService>().hasProAccess,
           ),
         ),
       ),

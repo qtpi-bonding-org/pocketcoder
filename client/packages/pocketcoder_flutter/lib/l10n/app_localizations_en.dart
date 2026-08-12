@@ -1127,49 +1127,113 @@ class AppLocalizationsEn extends AppLocalizations {
       '>> SELECT CONTAINER FOR LOG STREAM';
 
   @override
-  String get relayTitle => 'PERMISSION RELAY';
+  String get proTitle => 'POCKETCODER PRO';
 
   @override
-  String get relaySubsystem => 'RELAY SUBSYSTEM';
+  String get proPlanTitle => 'UNLOCK ALL SYSTEMS';
 
   @override
-  String get relayCheckingStatus => 'CHECKING RELAY STATUS...';
+  String get proCheckingStatus => 'CHECKING PRO STATUS...';
 
   @override
-  String get relayActive => '>>> RELAY ACTIVE <<<';
+  String get proUnlockCommand => '\$ unlock --all';
 
   @override
-  String get relaySubsystemsNominal => 'SUBSYSTEMS NOMINAL';
+  String get proSummary =>
+      'ONE SUBSCRIPTION. EVERY POCKETCODER PRO CAPABILITY.';
 
   @override
-  String get relayConfigSection => 'RELAY CONFIGURATION';
+  String get proFeatureReady => '[OK]';
 
   @override
-  String get relayActivate => 'ACTIVATE RELAY';
+  String get proFeatureDeploy => 'PROVISION AND DEPLOY POCKETCODER SERVERS';
 
   @override
-  String get relayRestore => 'RESTORE';
+  String get proFeaturePush => 'RECEIVE HOSTED AGENT NOTIFICATIONS';
 
   @override
-  String get relayFunctionalOverviewTitle => 'FUNCTIONAL OVERVIEW:';
+  String get proFeatureConsole => 'USE PRO CONSOLE CONTROLS AS THEY SHIP';
 
   @override
-  String get relayFunctionalOverviewBody =>
-      'Permission Relays send agent intents to your device for remote authorization when you are away from the terminal.';
+  String proTrialDuration(int days) {
+    return '$days DAYS FREE';
+  }
 
   @override
-  String get relayUnlimitedCapacity =>
-      'REMOTE AUTHORIZATION CAPACITY: UNLIMITED';
+  String proPrice(String price) {
+    return '$price';
+  }
 
   @override
-  String get relayPermissionRelayLabel => 'PERMISSION RELAY';
+  String proPriceAfterTrial(String price) {
+    return 'THEN $price';
+  }
 
   @override
-  String get relayNtfyTitle => 'NTFY RELAY';
+  String proPricePerWeek(String price) {
+    return '$price / WEEK';
+  }
 
   @override
-  String get relayNtfyDescription =>
-      'Connect to your own NTFY server for free, unlimited relays without registration.';
+  String proPricePerMonth(String price) {
+    return '$price / MONTH';
+  }
+
+  @override
+  String proPricePerYear(String price) {
+    return '$price / YEAR';
+  }
+
+  @override
+  String proStartTrial(int days) {
+    return 'START $days-DAY FREE TRIAL';
+  }
+
+  @override
+  String get proSubscribe => 'UNLOCK POCKETCODER PRO';
+
+  @override
+  String get proRestore => 'RESTORE PURCHASES';
+
+  @override
+  String proTerms(String price) {
+    return 'SUBSCRIPTION RENEWS AT $price UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.';
+  }
+
+  @override
+  String proTrialTerms(int days, String price) {
+    return 'FREE FOR $days DAYS, THEN $price UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.';
+  }
+
+  @override
+  String get proActive => '> ENTITLEMENT: ACTIVE';
+
+  @override
+  String get proActiveBody =>
+      'POCKETCODER PRO IS ACTIVE. DEPLOYMENT AND HOSTED NOTIFICATIONS ARE UNLOCKED.';
+
+  @override
+  String get proUnavailable => '> OFFERING: UNAVAILABLE';
+
+  @override
+  String get proUnavailableBody =>
+      'THE APP STORE COULD NOT RETURN THE POCKETCODER PRO SUBSCRIPTION. CHECK YOUR CONNECTION OR RESTORE AN EXISTING PURCHASE.';
+
+  @override
+  String get proSelfHostedPushTitle => 'SELF-HOSTED NOTIFICATIONS';
+
+  @override
+  String get proSelfHostedPushBody =>
+      'YOU CAN CONNECT YOUR OWN NTFY OR UNIFIEDPUSH DISTRIBUTOR WITHOUT POCKETCODER PRO.';
+
+  @override
+  String get proConfigureSelfHostedPush => 'CONFIGURE SELF-HOSTED PUSH';
+
+  @override
+  String get proSettingsLabel => 'POCKETCODER PRO';
+
+  @override
+  String get proSettingsStatus => '[STATUS]';
 
   @override
   String get deployTitle => 'DEPLOY POCKETCODER';

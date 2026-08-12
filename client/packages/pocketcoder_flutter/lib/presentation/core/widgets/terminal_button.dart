@@ -54,14 +54,18 @@ class TerminalButton extends StatelessWidget {
               ),
               HSpace.x2,
             ],
-            Text(
-              label.toUpperCase(),
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: textColor,
-                fontSize: AppSizes.fontTiny,
-                fontWeight: AppFonts.heavy,
-                package: 'pocketcoder_flutter',
+            Flexible(
+              child: Text(
+                label.toUpperCase(),
+                textAlign: TextAlign.center,
+                softWrap: true,
+                style: TextStyle(
+                  fontFamily: AppFonts.bodyFamily,
+                  color: textColor,
+                  fontSize: AppSizes.fontTiny,
+                  fontWeight: AppFonts.heavy,
+                  package: 'pocketcoder_flutter',
+                ),
               ),
             ),
           ],

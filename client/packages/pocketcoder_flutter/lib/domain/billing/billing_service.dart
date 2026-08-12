@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+const pocketCoderProEntitlement = 'PocketCoder Pro';
+
 abstract class BillingService {
   /// Initialize the billing service.
   Future<void> initialize();
@@ -15,35 +17,49 @@ abstract class BillingService {
   /// doesn't inherit the previous user's linkage.
   Future<void> reset();
 
-  /// Check if the user has an active Pro subscription.
-  Future<bool> isPro();
+  /// Check whether the single PocketCoder Pro entitlement is active.
+  ///
+  /// An active store trial and a paid subscription both grant this same
+  /// entitlement. Callers should gate Pro capabilities on this method rather
+  /// than on individual product identifiers.
+  Future<bool> hasProAccess();
 
   /// Restore purchases.
   Future<void> restorePurchases();
 
-  /// Purchase a package or subscription.
-  Future<bool> purchase(String identifier);
+  /// Purchase the Pro package represented by [identifier].
+  Future<bool> purchasePro(String identifier);
 
-  /// Check if the user has deploy button access.
-  Future<bool> hasDeployAccess();
-
-  /// Fetch available offerings.
-  Future<List<BillingPackage>> getAvailablePackages();
+  /// Fetch the single Pro package offered for this platform.
+  Future<BillingPackage?> getProPackage();
 }
+
+enum BillingPeriod { week, month, year, unknown }
 
 class BillingPackage extends Equatable {
   final String identifier;
   final String title;
   final String description;
   final String priceString;
+  final BillingPeriod billingPeriod;
+  final int? freeTrialDays;
 
   const BillingPackage({
     required this.identifier,
     required this.title,
     required this.description,
     required this.priceString,
+    this.billingPeriod = BillingPeriod.unknown,
+    this.freeTrialDays,
   });
 
   @override
-  List<Object?> get props => [identifier, title, description, priceString];
+  List<Object?> get props => [
+        identifier,
+        title,
+        description,
+        priceString,
+        billingPeriod,
+        freeTrialDays,
+      ];
 }

@@ -22,6 +22,8 @@ import 'package:pocketcoder_flutter/design_system/storybook/plan_panel.stories.d
     as _pocketcoder_flutter_design_system_storybook_plan_panel_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/poco_value_widget.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_poco_value_widget_stories;
+import 'package:pocketcoder_flutter/design_system/storybook/pro_paywall.stories.dart'
+    as _pocketcoder_flutter_design_system_storybook_pro_paywall_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/provider_widgets.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_provider_widgets_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/settings_view.stories.dart'
@@ -120,6 +122,40 @@ final directories = <_widgetbook.WidgetbookNode>[
                   ),
                 ],
               )
+            ],
+          )
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
+        name: 'billing',
+        children: [
+          _widgetbook.WidgetbookComponent(
+            name: 'ProPaywallView',
+            useCases: [
+              _widgetbook.WidgetbookUseCase(
+                name: '7-day trial',
+                builder:
+                    _pocketcoder_flutter_design_system_storybook_pro_paywall_stories
+                        .proPaywallTrial,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'active',
+                builder:
+                    _pocketcoder_flutter_design_system_storybook_pro_paywall_stories
+                        .proPaywallActive,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'loading',
+                builder:
+                    _pocketcoder_flutter_design_system_storybook_pro_paywall_stories
+                        .proPaywallLoading,
+              ),
+              _widgetbook.WidgetbookUseCase(
+                name: 'store unavailable',
+                builder:
+                    _pocketcoder_flutter_design_system_storybook_pro_paywall_stories
+                        .proPaywallUnavailable,
+              ),
             ],
           )
         ],

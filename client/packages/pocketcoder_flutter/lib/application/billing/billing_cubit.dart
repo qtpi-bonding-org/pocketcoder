@@ -11,15 +11,16 @@ class BillingCubit extends Cubit<BillingState> {
 
   BillingCubit(this._billingService) : super(const BillingState());
 
-  Future<void> loadOfferings() async {
+  Future<void> loadOffering() async {
     emit(state.copyWith(status: UiFlowStatus.loading));
     try {
-      final packages = await _billingService.getAvailablePackages();
-      final isPro = await _billingService.isPro();
+      final package = await _billingService.getProPackage();
+      final isPro = await _billingService.hasProAccess();
       emit(state.copyWith(
         status: UiFlowStatus.success,
-        packages: packages,
+        package: package,
         isPro: isPro,
+        error: null,
       ));
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(
@@ -31,16 +32,20 @@ class BillingCubit extends Cubit<BillingState> {
     }
   }
 
-  Future<void> purchase(String identifier) async {
+  Future<bool> purchasePro(String identifier) async {
     emit(state.copyWith(status: UiFlowStatus.loading));
     try {
-      final success = await _billingService.purchase(identifier);
+      final success = await _billingService.purchasePro(identifier);
       if (success) {
-        emit(state.copyWith(status: UiFlowStatus.success, isPro: true));
-      } else {
         emit(state.copyWith(
-            status: UiFlowStatus.failure, error: 'Purchase failed'));
+          status: UiFlowStatus.success,
+          isPro: true,
+          error: null,
+        ));
+      } else {
+        emit(state.copyWith(status: UiFlowStatus.success, error: null));
       }
+      return success;
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(
         error: e,
@@ -48,6 +53,7 @@ class BillingCubit extends Cubit<BillingState> {
         operation: 'purchase',
       );
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
+      return false;
     }
   }
 
@@ -55,8 +61,12 @@ class BillingCubit extends Cubit<BillingState> {
     emit(state.copyWith(status: UiFlowStatus.loading));
     try {
       await _billingService.restorePurchases();
-      final isPro = await _billingService.isPro();
-      emit(state.copyWith(status: UiFlowStatus.success, isPro: isPro));
+      final isPro = await _billingService.hasProAccess();
+      emit(state.copyWith(
+        status: UiFlowStatus.success,
+        isPro: isPro,
+        error: null,
+      ));
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(
         error: e,

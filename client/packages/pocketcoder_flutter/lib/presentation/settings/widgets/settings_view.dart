@@ -16,34 +16,57 @@ class SettingsView extends StatelessWidget {
   final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
 
-  List<(String, List<(String, String, String)>)> _sections(BuildContext context) {
+  List<(String, List<(String, String, String)>)> _sections(
+      BuildContext context) {
     return [
-      (context.l10n.settingsAiAgentsSection, [
-        ('LLM MANAGEMENT', '[KEYS]', 'configureLlm'),
-        ('AGENT REGISTRY', '[MODELS]', 'configureAi'),
-      ]),
-      (context.l10n.settingsSecuritySection, [
-        ('TOOL PERMISSIONS', '[SETUP]', 'configureToolPermissions'),
-        ('HARNESS CONNECTIONS', '[CONFIGURE]', 'configureHarnessAuth'),
-        ('MCP MANAGEMENT', '[CONFIGURE]', 'configureMcp'),
-        ('SKILLS', '[MANAGE]', 'configureSkills'),
-      ]),
-      (context.l10n.settingsSystemSection, [
-        ('SYSTEM CHECKS', '[DIAGNOSE]', 'configureSystemChecks'),
-        ('PERMISSION RELAY', '[STATUS]', 'configurePaywall'),
-        ('SERVER UPDATE', '[UPDATE]', 'updateServer'),
-        (context.l10n.errorsTitle, '[VIEW]', 'configureErrors'),
-      ]),
-      (context.l10n.settingsObservabilitySection, [
-        ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
-      ]),
-      (context.l10n.settingsAutomationSection, [
-        ('SCHEDULER', '[MANAGE]', 'configureScheduler'),
-      ]),
-      (context.l10n.settingsAccountSection, [
-        ('NOTIFICATIONS', '[CONFIGURE]', 'configureNotifications'),
-        ('LOGOUT', '[SIGN OUT]', 'logout'),
-      ]),
+      (
+        context.l10n.settingsAiAgentsSection,
+        [
+          ('LLM MANAGEMENT', '[KEYS]', 'configureLlm'),
+          ('AGENT REGISTRY', '[MODELS]', 'configureAi'),
+        ]
+      ),
+      (
+        context.l10n.settingsSecuritySection,
+        [
+          ('TOOL PERMISSIONS', '[SETUP]', 'configureToolPermissions'),
+          ('HARNESS CONNECTIONS', '[CONFIGURE]', 'configureHarnessAuth'),
+          ('MCP MANAGEMENT', '[CONFIGURE]', 'configureMcp'),
+          ('SKILLS', '[MANAGE]', 'configureSkills'),
+        ]
+      ),
+      (
+        context.l10n.settingsSystemSection,
+        [
+          ('SYSTEM CHECKS', '[DIAGNOSE]', 'configureSystemChecks'),
+          (
+            context.l10n.proSettingsLabel,
+            context.l10n.proSettingsStatus,
+            'configurePaywall',
+          ),
+          ('SERVER UPDATE', '[UPDATE]', 'updateServer'),
+          (context.l10n.errorsTitle, '[VIEW]', 'configureErrors'),
+        ]
+      ),
+      (
+        context.l10n.settingsObservabilitySection,
+        [
+          ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
+        ]
+      ),
+      (
+        context.l10n.settingsAutomationSection,
+        [
+          ('SCHEDULER', '[MANAGE]', 'configureScheduler'),
+        ]
+      ),
+      (
+        context.l10n.settingsAccountSection,
+        [
+          ('NOTIFICATIONS', '[CONFIGURE]', 'configureNotifications'),
+          ('LOGOUT', '[SIGN OUT]', 'logout'),
+        ]
+      ),
     ];
   }
 

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-12T04:40:47.914044
+// Generated at: 2026-08-12T06:46:01.335002
 
 import 'app_localizations.dart';
 
@@ -454,6 +454,26 @@ class L10nKeyResolver {
       'poco.provisioning.source.unavailable' => _l10n.pocoProvisioningSourceUnavailable,
       'poco.provisioning.tour.title' => _l10n.pocoProvisioningTourTitle,
       'poco.provisioning.waiting.for.source' => _l10n.pocoProvisioningWaitingForSource,
+      'pro.active' => _l10n.proActive,
+      'pro.active.body' => _l10n.proActiveBody,
+      'pro.checking.status' => _l10n.proCheckingStatus,
+      'pro.configure.self.hosted.push' => _l10n.proConfigureSelfHostedPush,
+      'pro.feature.console' => _l10n.proFeatureConsole,
+      'pro.feature.deploy' => _l10n.proFeatureDeploy,
+      'pro.feature.push' => _l10n.proFeaturePush,
+      'pro.feature.ready' => _l10n.proFeatureReady,
+      'pro.plan.title' => _l10n.proPlanTitle,
+      'pro.restore' => _l10n.proRestore,
+      'pro.self.hosted.push.body' => _l10n.proSelfHostedPushBody,
+      'pro.self.hosted.push.title' => _l10n.proSelfHostedPushTitle,
+      'pro.settings.label' => _l10n.proSettingsLabel,
+      'pro.settings.status' => _l10n.proSettingsStatus,
+      'pro.subscribe' => _l10n.proSubscribe,
+      'pro.summary' => _l10n.proSummary,
+      'pro.title' => _l10n.proTitle,
+      'pro.unavailable' => _l10n.proUnavailable,
+      'pro.unavailable.body' => _l10n.proUnavailableBody,
+      'pro.unlock.command' => _l10n.proUnlockCommand,
       'provider.screen.add.key' => _l10n.providerScreenAddKey,
       'provider.screen.api.keys.section' => _l10n.providerScreenApiKeysSection,
       'provider.screen.default.badge' => _l10n.providerScreenDefaultBadge,
@@ -469,20 +489,6 @@ class L10nKeyResolver {
       'question.incoming.title' => _l10n.questionIncomingTitle,
       'question.poco.asking' => _l10n.questionPocoAsking,
       'question.send.reply' => _l10n.questionSendReply,
-      'relay.activate' => _l10n.relayActivate,
-      'relay.active' => _l10n.relayActive,
-      'relay.checking.status' => _l10n.relayCheckingStatus,
-      'relay.config.section' => _l10n.relayConfigSection,
-      'relay.functional.overview.body' => _l10n.relayFunctionalOverviewBody,
-      'relay.functional.overview.title' => _l10n.relayFunctionalOverviewTitle,
-      'relay.ntfy.description' => _l10n.relayNtfyDescription,
-      'relay.ntfy.title' => _l10n.relayNtfyTitle,
-      'relay.permission.relay.label' => _l10n.relayPermissionRelayLabel,
-      'relay.restore' => _l10n.relayRestore,
-      'relay.subsystem' => _l10n.relaySubsystem,
-      'relay.subsystems.nominal' => _l10n.relaySubsystemsNominal,
-      'relay.title' => _l10n.relayTitle,
-      'relay.unlimited.capacity' => _l10n.relayUnlimitedCapacity,
       'scheduler.add.button' => _l10n.schedulerAddButton,
       'scheduler.add.dialog.title' => _l10n.schedulerAddDialogTitle,
       'scheduler.cron.label' => _l10n.schedulerCronLabel,
@@ -693,6 +699,15 @@ class L10nKeyResolver {
       'onboarding.review.poco' => _l10n.onboardingReviewPoco(args?['providerName'] as String? ?? ''),
       'onboarding.trial.poco' => _l10n.onboardingTrialPoco(args?['trialDuration'] as String? ?? ''),
       'permission.requesting.label' => _l10n.permissionRequestingLabel(args?['source'] as String? ?? ''),
+      'pro.price' => _l10n.proPrice(args?['price'] as String? ?? ''),
+      'pro.price.after.trial' => _l10n.proPriceAfterTrial(args?['price'] as String? ?? ''),
+      'pro.price.per.month' => _l10n.proPricePerMonth(args?['price'] as String? ?? ''),
+      'pro.price.per.week' => _l10n.proPricePerWeek(args?['price'] as String? ?? ''),
+      'pro.price.per.year' => _l10n.proPricePerYear(args?['price'] as String? ?? ''),
+      'pro.start.trial' => _l10n.proStartTrial(args?['days'] as int? ?? 0),
+      'pro.terms' => _l10n.proTerms(args?['price'] as String? ?? ''),
+      'pro.trial.duration' => _l10n.proTrialDuration(args?['days'] as int? ?? 0),
+      'pro.trial.terms' => _l10n.proTrialTerms(args?['days'] as int? ?? 0, args?['price'] as String? ?? ''),
       'provider.screen.add.key.body' => _l10n.providerScreenAddKeyBody(args?['provider'] as String? ?? ''),
       'provider.screen.add.key.title' => _l10n.providerScreenAddKeyTitle(args?['provider'] as String? ?? ''),
       'provider.screen.error.prefix' => _l10n.providerScreenErrorPrefix(args?['error'] as String? ?? ''),
@@ -1174,6 +1189,35 @@ class L10nKeyResolver {
     'poco.provisioning.source.unavailable',
     'poco.provisioning.tour.title',
     'poco.provisioning.waiting.for.source',
+    'pro.active',
+    'pro.active.body',
+    'pro.checking.status',
+    'pro.configure.self.hosted.push',
+    'pro.feature.console',
+    'pro.feature.deploy',
+    'pro.feature.push',
+    'pro.feature.ready',
+    'pro.plan.title',
+    'pro.price',
+    'pro.price.after.trial',
+    'pro.price.per.month',
+    'pro.price.per.week',
+    'pro.price.per.year',
+    'pro.restore',
+    'pro.self.hosted.push.body',
+    'pro.self.hosted.push.title',
+    'pro.settings.label',
+    'pro.settings.status',
+    'pro.start.trial',
+    'pro.subscribe',
+    'pro.summary',
+    'pro.terms',
+    'pro.title',
+    'pro.trial.duration',
+    'pro.trial.terms',
+    'pro.unavailable',
+    'pro.unavailable.body',
+    'pro.unlock.command',
     'provider.screen.add.key',
     'provider.screen.add.key.body',
     'provider.screen.add.key.title',
@@ -1192,20 +1236,6 @@ class L10nKeyResolver {
     'question.incoming.title',
     'question.poco.asking',
     'question.send.reply',
-    'relay.activate',
-    'relay.active',
-    'relay.checking.status',
-    'relay.config.section',
-    'relay.functional.overview.body',
-    'relay.functional.overview.title',
-    'relay.ntfy.description',
-    'relay.ntfy.title',
-    'relay.permission.relay.label',
-    'relay.restore',
-    'relay.subsystem',
-    'relay.subsystems.nominal',
-    'relay.title',
-    'relay.unlimited.capacity',
     'scheduler.add.button',
     'scheduler.add.dialog.title',
     'scheduler.cron.label',
@@ -1856,6 +1886,35 @@ class L10nKeyResolver {
     'pocoProvisioningSourceUnavailable': 'poco.provisioning.source.unavailable',
     'pocoProvisioningTourTitle': 'poco.provisioning.tour.title',
     'pocoProvisioningWaitingForSource': 'poco.provisioning.waiting.for.source',
+    'proActive': 'pro.active',
+    'proActiveBody': 'pro.active.body',
+    'proCheckingStatus': 'pro.checking.status',
+    'proConfigureSelfHostedPush': 'pro.configure.self.hosted.push',
+    'proFeatureConsole': 'pro.feature.console',
+    'proFeatureDeploy': 'pro.feature.deploy',
+    'proFeaturePush': 'pro.feature.push',
+    'proFeatureReady': 'pro.feature.ready',
+    'proPlanTitle': 'pro.plan.title',
+    'proPrice': 'pro.price',
+    'proPriceAfterTrial': 'pro.price.after.trial',
+    'proPricePerMonth': 'pro.price.per.month',
+    'proPricePerWeek': 'pro.price.per.week',
+    'proPricePerYear': 'pro.price.per.year',
+    'proRestore': 'pro.restore',
+    'proSelfHostedPushBody': 'pro.self.hosted.push.body',
+    'proSelfHostedPushTitle': 'pro.self.hosted.push.title',
+    'proSettingsLabel': 'pro.settings.label',
+    'proSettingsStatus': 'pro.settings.status',
+    'proStartTrial': 'pro.start.trial',
+    'proSubscribe': 'pro.subscribe',
+    'proSummary': 'pro.summary',
+    'proTerms': 'pro.terms',
+    'proTitle': 'pro.title',
+    'proTrialDuration': 'pro.trial.duration',
+    'proTrialTerms': 'pro.trial.terms',
+    'proUnavailable': 'pro.unavailable',
+    'proUnavailableBody': 'pro.unavailable.body',
+    'proUnlockCommand': 'pro.unlock.command',
     'providerScreenAddKey': 'provider.screen.add.key',
     'providerScreenAddKeyBody': 'provider.screen.add.key.body',
     'providerScreenAddKeyTitle': 'provider.screen.add.key.title',
@@ -1874,20 +1933,6 @@ class L10nKeyResolver {
     'questionIncomingTitle': 'question.incoming.title',
     'questionPocoAsking': 'question.poco.asking',
     'questionSendReply': 'question.send.reply',
-    'relayActivate': 'relay.activate',
-    'relayActive': 'relay.active',
-    'relayCheckingStatus': 'relay.checking.status',
-    'relayConfigSection': 'relay.config.section',
-    'relayFunctionalOverviewBody': 'relay.functional.overview.body',
-    'relayFunctionalOverviewTitle': 'relay.functional.overview.title',
-    'relayNtfyDescription': 'relay.ntfy.description',
-    'relayNtfyTitle': 'relay.ntfy.title',
-    'relayPermissionRelayLabel': 'relay.permission.relay.label',
-    'relayRestore': 'relay.restore',
-    'relaySubsystem': 'relay.subsystem',
-    'relaySubsystemsNominal': 'relay.subsystems.nominal',
-    'relayTitle': 'relay.title',
-    'relayUnlimitedCapacity': 'relay.unlimited.capacity',
     'schedulerAddButton': 'scheduler.add.button',
     'schedulerAddDialogTitle': 'scheduler.add.dialog.title',
     'schedulerCronLabel': 'scheduler.cron.label',
@@ -2535,6 +2580,35 @@ class L10nKeyResolver {
     'poco.provisioning.source.unavailable': 'pocoProvisioningSourceUnavailable',
     'poco.provisioning.tour.title': 'pocoProvisioningTourTitle',
     'poco.provisioning.waiting.for.source': 'pocoProvisioningWaitingForSource',
+    'pro.active': 'proActive',
+    'pro.active.body': 'proActiveBody',
+    'pro.checking.status': 'proCheckingStatus',
+    'pro.configure.self.hosted.push': 'proConfigureSelfHostedPush',
+    'pro.feature.console': 'proFeatureConsole',
+    'pro.feature.deploy': 'proFeatureDeploy',
+    'pro.feature.push': 'proFeaturePush',
+    'pro.feature.ready': 'proFeatureReady',
+    'pro.plan.title': 'proPlanTitle',
+    'pro.price': 'proPrice',
+    'pro.price.after.trial': 'proPriceAfterTrial',
+    'pro.price.per.month': 'proPricePerMonth',
+    'pro.price.per.week': 'proPricePerWeek',
+    'pro.price.per.year': 'proPricePerYear',
+    'pro.restore': 'proRestore',
+    'pro.self.hosted.push.body': 'proSelfHostedPushBody',
+    'pro.self.hosted.push.title': 'proSelfHostedPushTitle',
+    'pro.settings.label': 'proSettingsLabel',
+    'pro.settings.status': 'proSettingsStatus',
+    'pro.start.trial': 'proStartTrial',
+    'pro.subscribe': 'proSubscribe',
+    'pro.summary': 'proSummary',
+    'pro.terms': 'proTerms',
+    'pro.title': 'proTitle',
+    'pro.trial.duration': 'proTrialDuration',
+    'pro.trial.terms': 'proTrialTerms',
+    'pro.unavailable': 'proUnavailable',
+    'pro.unavailable.body': 'proUnavailableBody',
+    'pro.unlock.command': 'proUnlockCommand',
     'provider.screen.add.key': 'providerScreenAddKey',
     'provider.screen.add.key.body': 'providerScreenAddKeyBody',
     'provider.screen.add.key.title': 'providerScreenAddKeyTitle',
@@ -2553,20 +2627,6 @@ class L10nKeyResolver {
     'question.incoming.title': 'questionIncomingTitle',
     'question.poco.asking': 'questionPocoAsking',
     'question.send.reply': 'questionSendReply',
-    'relay.activate': 'relayActivate',
-    'relay.active': 'relayActive',
-    'relay.checking.status': 'relayCheckingStatus',
-    'relay.config.section': 'relayConfigSection',
-    'relay.functional.overview.body': 'relayFunctionalOverviewBody',
-    'relay.functional.overview.title': 'relayFunctionalOverviewTitle',
-    'relay.ntfy.description': 'relayNtfyDescription',
-    'relay.ntfy.title': 'relayNtfyTitle',
-    'relay.permission.relay.label': 'relayPermissionRelayLabel',
-    'relay.restore': 'relayRestore',
-    'relay.subsystem': 'relaySubsystem',
-    'relay.subsystems.nominal': 'relaySubsystemsNominal',
-    'relay.title': 'relayTitle',
-    'relay.unlimited.capacity': 'relayUnlimitedCapacity',
     'scheduler.add.button': 'schedulerAddButton',
     'scheduler.add.dialog.title': 'schedulerAddDialogTitle',
     'scheduler.cron.label': 'schedulerCronLabel',
@@ -3221,6 +3281,35 @@ abstract class L10nKeys {
   static const pocoProvisioningSourceUnavailable = 'poco.provisioning.source.unavailable';
   static const pocoProvisioningTourTitle = 'poco.provisioning.tour.title';
   static const pocoProvisioningWaitingForSource = 'poco.provisioning.waiting.for.source';
+  static const proActive = 'pro.active';
+  static const proActiveBody = 'pro.active.body';
+  static const proCheckingStatus = 'pro.checking.status';
+  static const proConfigureSelfHostedPush = 'pro.configure.self.hosted.push';
+  static const proFeatureConsole = 'pro.feature.console';
+  static const proFeatureDeploy = 'pro.feature.deploy';
+  static const proFeaturePush = 'pro.feature.push';
+  static const proFeatureReady = 'pro.feature.ready';
+  static const proPlanTitle = 'pro.plan.title';
+  static (String, Map<String, dynamic>) proPrice(String price) => ('pro.price', {'price': price});
+  static (String, Map<String, dynamic>) proPriceAfterTrial(String price) => ('pro.price.after.trial', {'price': price});
+  static (String, Map<String, dynamic>) proPricePerMonth(String price) => ('pro.price.per.month', {'price': price});
+  static (String, Map<String, dynamic>) proPricePerWeek(String price) => ('pro.price.per.week', {'price': price});
+  static (String, Map<String, dynamic>) proPricePerYear(String price) => ('pro.price.per.year', {'price': price});
+  static const proRestore = 'pro.restore';
+  static const proSelfHostedPushBody = 'pro.self.hosted.push.body';
+  static const proSelfHostedPushTitle = 'pro.self.hosted.push.title';
+  static const proSettingsLabel = 'pro.settings.label';
+  static const proSettingsStatus = 'pro.settings.status';
+  static (String, Map<String, dynamic>) proStartTrial(int days) => ('pro.start.trial', {'days': days});
+  static const proSubscribe = 'pro.subscribe';
+  static const proSummary = 'pro.summary';
+  static (String, Map<String, dynamic>) proTerms(String price) => ('pro.terms', {'price': price});
+  static const proTitle = 'pro.title';
+  static (String, Map<String, dynamic>) proTrialDuration(int days) => ('pro.trial.duration', {'days': days});
+  static (String, Map<String, dynamic>) proTrialTerms(int days, String price) => ('pro.trial.terms', {'days': days, 'price': price});
+  static const proUnavailable = 'pro.unavailable';
+  static const proUnavailableBody = 'pro.unavailable.body';
+  static const proUnlockCommand = 'pro.unlock.command';
   static const providerScreenAddKey = 'provider.screen.add.key';
   static (String, Map<String, dynamic>) providerScreenAddKeyBody(String provider) => ('provider.screen.add.key.body', {'provider': provider});
   static (String, Map<String, dynamic>) providerScreenAddKeyTitle(String provider) => ('provider.screen.add.key.title', {'provider': provider});
@@ -3239,20 +3328,6 @@ abstract class L10nKeys {
   static const questionIncomingTitle = 'question.incoming.title';
   static const questionPocoAsking = 'question.poco.asking';
   static const questionSendReply = 'question.send.reply';
-  static const relayActivate = 'relay.activate';
-  static const relayActive = 'relay.active';
-  static const relayCheckingStatus = 'relay.checking.status';
-  static const relayConfigSection = 'relay.config.section';
-  static const relayFunctionalOverviewBody = 'relay.functional.overview.body';
-  static const relayFunctionalOverviewTitle = 'relay.functional.overview.title';
-  static const relayNtfyDescription = 'relay.ntfy.description';
-  static const relayNtfyTitle = 'relay.ntfy.title';
-  static const relayPermissionRelayLabel = 'relay.permission.relay.label';
-  static const relayRestore = 'relay.restore';
-  static const relaySubsystem = 'relay.subsystem';
-  static const relaySubsystemsNominal = 'relay.subsystems.nominal';
-  static const relayTitle = 'relay.title';
-  static const relayUnlimitedCapacity = 'relay.unlimited.capacity';
   static const schedulerAddButton = 'scheduler.add.button';
   static const schedulerAddDialogTitle = 'scheduler.add.dialog.title';
   static const schedulerCronLabel = 'scheduler.cron.label';
