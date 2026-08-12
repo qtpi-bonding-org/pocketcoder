@@ -296,6 +296,9 @@ void main() {
     },
     skip:
         live ? false : 'Set AEROFORM_LIVE_TEST=1 to run the billed live test.',
-    timeout: const Timeout(Duration(minutes: 20)),
+    // Both scenarios run concurrently. Each owns a 20-minute readiness
+    // window after its host is created; leave a bounded margin for host
+    // creation and per-scenario cleanup so the outer test cannot preempt it.
+    timeout: const Timeout(Duration(minutes: 25)),
   );
 }
