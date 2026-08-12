@@ -8,7 +8,6 @@ import 'bootstrap.config.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/connectivity_override.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
@@ -31,14 +30,6 @@ Future<void> configureDependencies() async {
 Future<void> bootstrap() async {
   installPocketCoderGlobalErrorHandlers();
   debugPrint('Bootstrap: Starting...');
-
-  // 0. Load environment variables
-  try {
-    await dotenv.load(fileName: ".env");
-    debugPrint('Bootstrap: .env loaded');
-  } catch (e) {
-    debugPrint('Bootstrap: Warning - No .env file found: $e');
-  }
 
   // Fix for Chrome Incognito offline detection bug in connectivity_plus
   if (kIsWeb) {
