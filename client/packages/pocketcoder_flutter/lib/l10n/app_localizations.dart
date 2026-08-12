@@ -421,7 +421,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingLogin.
   ///
   /// In en, this message translates to:
-  /// **'LOGIN'**
+  /// **'CONNECT'**
   String get onboardingLogin;
 
   /// No description provided for @onboardingDeploy.

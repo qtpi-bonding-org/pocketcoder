@@ -176,7 +176,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingProcessing => 'PROCESSING...';
 
   @override
-  String get onboardingLogin => 'LOGIN';
+  String get onboardingLogin => 'CONNECT';
 
   @override
   String get onboardingDeploy => 'DEPLOY';

@@ -17,6 +17,7 @@ class PocketCoderShell extends StatelessWidget {
   final NavPillar activePillar;
   final Widget body;
   final bool showBack;
+  final bool showNavigation;
   final bool configureBadge;
   final EdgeInsets? padding;
 
@@ -29,6 +30,7 @@ class PocketCoderShell extends StatelessWidget {
     required this.activePillar,
     required this.body,
     this.showBack = false,
+    this.showNavigation = true,
     this.configureBadge = false,
     this.padding,
     this.extraHeaderActions,
@@ -49,7 +51,7 @@ class PocketCoderShell extends StatelessWidget {
       title: title,
       padding: padding,
       headerActions: headerActions.isNotEmpty ? headerActions : null,
-      actions: _buildPillarActions(context),
+      actions: showNavigation ? _buildPillarActions(context) : null,
       body: body,
     );
   }

@@ -46,12 +46,14 @@ class ProPaywallView extends StatelessWidget {
     required this.onPurchase,
     required this.onRestore,
     required this.onConfigureSelfHostedPush,
+    this.showNavigation = true,
   });
 
   final BillingState state;
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
   final VoidCallback onConfigureSelfHostedPush;
+  final bool showNavigation;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,7 @@ class ProPaywallView extends StatelessWidget {
       title: context.l10n.proTitle,
       activePillar: NavPillar.configure,
       showBack: true,
+      showNavigation: showNavigation,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),

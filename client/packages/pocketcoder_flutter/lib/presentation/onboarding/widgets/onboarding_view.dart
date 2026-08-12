@@ -47,13 +47,11 @@ class OnboardingView extends StatelessWidget {
                     Expanded(
                         child: _Choice(
                             label: context.l10n.onboardingLogin,
-                            description: context.l10n.onboardingExistingServer,
                             onTap: onLogin)),
                     HSpace.x2,
                     Expanded(
                         child: _Choice(
                             label: context.l10n.onboardingDeploy,
-                            description: context.l10n.onboardingCreateServer,
                             onTap: onDeploy)),
                   ]),
                 ],
@@ -65,10 +63,8 @@ class OnboardingView extends StatelessWidget {
 }
 
 class _Choice extends StatelessWidget {
-  const _Choice(
-      {required this.label, required this.description, required this.onTap});
+  const _Choice({required this.label, required this.onTap});
   final String label;
-  final String description;
   final VoidCallback onTap;
 
   @override
@@ -80,16 +76,13 @@ class _Choice extends StatelessWidget {
         padding: EdgeInsets.all(AppSizes.space * 1.5),
         decoration: BoxDecoration(
             border: Border.all(color: colors.primary.withValues(alpha: 0.7))),
-        child: Column(children: [
-          Text(label,
-              style: TextStyle(
-                  color: colors.primary,
-                  fontFamily: AppFonts.headerFamily,
-                  fontSize: AppSizes.fontStandard,
-                  fontWeight: AppFonts.heavy)),
-          VSpace.x1,
-          TerminalText.tiny(description, alpha: 0.6),
-        ]),
+        child: Text(label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: colors.primary,
+                fontFamily: AppFonts.headerFamily,
+                fontSize: AppSizes.fontStandard,
+                fontWeight: AppFonts.heavy)),
       ),
     );
   }

@@ -67,7 +67,7 @@
   "onboardingPocoWelcome": "Identity verified! Welcome home. I knew it was you—just had to make sure the Cloud wasn't spoofing your signature.",
   "onboardingAccessDenied": "ACCESS DENIED.",
   "onboardingProcessing": "PROCESSING...",
-  "onboardingLogin": "LOGIN",
+  "onboardingLogin": "CONNECT",
   "onboardingDeploy": "DEPLOY",
   "onboardingHomeServer": "HOME SERVER",
   "onboardingIdentityLabel": "IDENTITY",

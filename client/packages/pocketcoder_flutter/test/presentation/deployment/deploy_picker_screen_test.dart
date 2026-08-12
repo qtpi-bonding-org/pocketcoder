@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.da
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 
 class FakeDeployOptionService implements IDeployOptionService {
   @override
@@ -73,6 +74,8 @@ void main() {
       routerConfig: router,
     ));
     await tester.pump();
+
+    expect(find.byType(TerminalFooter), findsNothing);
 
     await tester.tap(find.textContaining('LINODE'));
     await tester.pumpAndSettle();
