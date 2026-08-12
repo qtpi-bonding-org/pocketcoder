@@ -713,7 +713,7 @@
     "placeholders": {
       "current": {"type": "int"},
       "total": {"type": "int"},
-      "briefing": {"type": "String"}
+      "brief": {"type": "String"}
     }
   },
   "walkthroughActionShowFullCode": "SHOW FULL CODE",

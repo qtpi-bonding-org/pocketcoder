@@ -18,7 +18,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class HarnessAuthorizationAdapter
     extends CubitAdapter<HarnessAuthCubit, HarnessAuthState> {
-  const HarnessAuthorizationAdapter({
+  HarnessAuthorizationAdapter({
     super.key,
     required this.harnessId,
     required this.provider,
@@ -26,6 +26,8 @@ class HarnessAuthorizationAdapter
 
   final String harnessId;
   final String provider;
+  final _pollTimer = ValueNotifier<Timer?>(null);
+  final _openedChat = ValueNotifier<bool>(false);
 
   static HarnessAuthState _selectState(HarnessAuthState state) => state;
 
@@ -37,12 +39,9 @@ class HarnessAuthorizationAdapter
     final state = adapter.cubitField(_selectState);
     final cubit = context.read<HarnessAuthCubit>();
     final chats = context.read<ChatListCubit>();
-    var openedChat = false;
-    Timer? pollTimer;
-
     Future<void> openFirstChat(BuildContext listenerContext) async {
-      if (openedChat) return;
-      openedChat = true;
+      if (_openedChat.value) return;
+      _openedChat.value = true;
       OnboardingLogger.event('harness connected; creating first chat', {
         'harness': harnessId,
       });
@@ -57,7 +56,7 @@ class HarnessAuthorizationAdapter
         });
         listenerContext.go('${AppRoutes.chat}/$chatId');
       } catch (error) {
-        openedChat = false;
+        _openedChat.value = false;
         OnboardingLogger.event('first chat creation failed', {
           'harness': harnessId,
           'error': error.toString(),
@@ -82,8 +81,8 @@ class HarnessAuthorizationAdapter
           });
           unawaited(openFirstChat(listenerContext));
         } else if (status?.isConnecting == true) {
-          pollTimer ??= Timer(const Duration(seconds: 1), () {
-            pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+          _pollTimer.value ??= Timer(const Duration(seconds: 1), () {
+            _pollTimer.value = Timer.periodic(const Duration(seconds: 4), (_) {
               if (!cubit.state.isBusy) unawaited(cubit.poll(harnessId));
             });
             if (!cubit.state.isBusy) unawaited(cubit.poll(harnessId));
@@ -126,5 +125,13 @@ class HarnessAuthorizationAdapter
         ),
       ),
     );
+  }
+
+  @override
+  void disposeAdapter() {
+    _pollTimer.value?.cancel();
+    _pollTimer.dispose();
+    _openedChat.dispose();
+    super.disposeAdapter();
   }
 }

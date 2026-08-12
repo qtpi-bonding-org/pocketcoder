@@ -80,7 +80,7 @@ class _HarnessAuthorizationViewState extends State<HarnessAuthorizationView> {
     final challenge = current.challenge;
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
+        constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
         child: SingleChildScrollView(
           padding: EdgeInsets.all(AppSizes.space * 2),
           child: TerminalCard(
@@ -98,8 +98,8 @@ class _HarnessAuthorizationViewState extends State<HarnessAuthorizationView> {
                         fontWeight: AppFonts.heavy),
                   ),
                   VSpace.x2,
-                  if (current.lastError != null) ...[
-                    Text(current.lastError!,
+                  if (current.lastError case final error?) ...[
+                    Text(error,
                         style: TextStyle(color: context.colorScheme.error)),
                     VSpace.x2,
                   ],
@@ -180,9 +180,9 @@ class _Challenge extends StatelessWidget {
         VSpace.x1,
         SelectableText(target),
       ],
-      if (challenge.details != null && challenge.details!.isNotEmpty) ...[
+      if (challenge.details case final details? when details.isNotEmpty) ...[
         VSpace.x1,
-        TerminalText(challenge.details!, alpha: 0.7)
+        TerminalText(details, alpha: 0.7)
       ],
     ]);
   }

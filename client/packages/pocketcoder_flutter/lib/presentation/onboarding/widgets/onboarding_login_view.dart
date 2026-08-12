@@ -79,7 +79,7 @@ class _OnboardingLoginViewState extends State<OnboardingLoginView> {
       ],
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
+          constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
             child: Column(
