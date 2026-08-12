@@ -31,6 +31,7 @@ random_secret() {
   od -An -N24 -tx1 /dev/urandom | tr -d ' \n'
 }
 
+# POCO:BEGIN bootstrap-runtime-settings
 chmod 0600 "$runtime_env"
 append_default POCKETBASE_SUPERUSER_EMAIL superuser@pocketcoder.local
 append_default POCKETBASE_SUPERUSER_PASSWORD "$(random_secret)"
@@ -42,6 +43,7 @@ append_default MCP_GATEWAY_AUTH_TOKEN "$(random_secret)"
 append_default POCKETCODER_SELECTED_HARNESSES goose
 append_default POCKETCODER_RELEASE_STATE_DIR /var/lib/pocketcoder/release
 append_default POCKETCODER_ARTIFACT_DIR /var/lib/pocketcoder/artifacts
+# POCO:END bootstrap-runtime-settings
 
 # POCO:BEGIN bootstrap-local-secrets
 # Release identity is the only generated value that changes during an update.

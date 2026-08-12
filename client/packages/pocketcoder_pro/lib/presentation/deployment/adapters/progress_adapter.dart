@@ -8,6 +8,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.d
 import 'package:pocketcoder_pro/application/deployment/deployment_cubit.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper.dart';
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
+import 'package:pocketcoder_pro/application/walkthrough/walkthrough_cubit.dart';
+import 'package:pocketcoder_pro/application/walkthrough/walkthrough_state.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/progress_view.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/pocketcoder_progress_pane.dart';
@@ -34,6 +36,7 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
   ) {
     final state = adapter.cubitField(_selectState);
     final cubit = context.read<DeploymentCubit>();
+    final walkthroughCubit = context.read<WalkthroughCubit>();
 
     return UiFlowListener<DeploymentCubit, DeploymentState>(
       mapper: mapper,
@@ -60,30 +63,40 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
       },
       child: ValueListenableBuilder<DeploymentState>(
         valueListenable: state,
-        builder: (context, value, _) => ProgressView(
-          status: value.status,
-          deploymentStatus: value.deploymentStatus,
-          pollingAttempts: value.pollingAttempts,
-          serverStatusDocument: value.serverStatusDocument,
-          progressPane: _progressPane(context, value),
-          provisioningTour: WalkthroughPanel(
-            stage: value.deploymentStatus,
-            sourceCommit: value.serverStatusDocument?.sourceCommit,
-            sourceService: sourceService,
-            backend: value.backend ?? ProvisionBackendKind.nixos,
+        builder: (context, value, _) => StreamBuilder<WalkthroughState>(
+          initialData: walkthroughCubit.state,
+          stream: walkthroughCubit.stream,
+          builder: (context, walkthroughSnapshot) => ProgressView(
+            status: value.status,
+            deploymentStatus: value.deploymentStatus,
+            pollingAttempts: value.pollingAttempts,
+            serverStatusDocument: value.serverStatusDocument,
+            progressPane: _progressPane(context, value),
+            provisioningTour: WalkthroughPanel(
+              stage: value.deploymentStatus,
+              sourceCommit: value.serverStatusDocument?.sourceCommit,
+              sourceService: sourceService,
+              backend: value.backend ?? ProvisionBackendKind.nixos,
+              walkthroughState:
+                  walkthroughSnapshot.data ?? walkthroughCubit.state,
+              onBriefSelected: walkthroughCubit.selectBriefForPresentation,
+              onBriefExpanded: walkthroughCubit.setBriefExpanded,
+              onFaqTurn: walkthroughCubit.addFaqTurn,
+              onSourceChanged: walkthroughCubit.reset,
+            ),
+            instance: value.instance,
+            error: value.error,
+            onAbort: () {
+              cubit.cancelDeployment();
+              context.pop();
+            },
+            onRetry: value.instanceId == null
+                ? null
+                : () => cubit.monitorDeployment(
+                      hostname: value.hostname ?? '',
+                      instanceId: value.instanceId ?? '',
+                    ),
           ),
-          instance: value.instance,
-          error: value.error,
-          onAbort: () {
-            cubit.cancelDeployment();
-            context.pop();
-          },
-          onRetry: value.instanceId == null
-              ? null
-              : () => cubit.monitorDeployment(
-                    hostname: value.hostname ?? '',
-                    instanceId: value.instanceId ?? '',
-                  ),
         ),
       ),
     );

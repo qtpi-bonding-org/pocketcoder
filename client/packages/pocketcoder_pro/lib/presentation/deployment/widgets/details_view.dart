@@ -37,13 +37,20 @@ class _DetailsViewState extends State<DetailsView> {
     final colors = context.colorScheme;
     final instance = widget.instance;
     return TerminalScaffold(
-      title: 'INSTANCE MANIFEST',
+      title: context.l10n.deploymentInstanceManifest,
       actions: [
         if (widget.credentials != null)
-          TerminalAction(label: 'LOG IN NOW', onTap: widget.onLogin),
-        TerminalAction(label: 'REFRESH', onTap: widget.onRefresh),
-        TerminalAction(label: 'UPDATE', onTap: widget.onUpdate),
-        TerminalAction(label: 'DISMISS', onTap: widget.onDismiss),
+          TerminalAction(
+              label: context.l10n.deploymentActionLoginNow,
+              onTap: widget.onLogin),
+        TerminalAction(
+            label: context.l10n.deploymentActionRefresh,
+            onTap: widget.onRefresh),
+        TerminalAction(
+            label: context.l10n.deploymentActionUpdate, onTap: widget.onUpdate),
+        TerminalAction(
+            label: context.l10n.deploymentActionDismiss,
+            onTap: widget.onDismiss),
       ],
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(vertical: AppSizes.space),
@@ -51,13 +58,14 @@ class _DetailsViewState extends State<DetailsView> {
           _statusBanner(instance, colors),
           VSpace.x2,
           _outputSection(
-            title: 'CONNECTION PARAMETERS',
+            title: context.l10n.deploymentConnectionParameters,
             child: Column(children: [
               if (instance != null) ...[
-                _copyableField('IP ADDRESS', instance.ipAddress, colors),
+                _copyableField(context.l10n.deploymentIpAddress,
+                    instance.ipAddress, colors),
                 VSpace.x2,
                 _copyableField(
-                    'HTTPS ENDPOINT',
+                    context.l10n.deploymentHttpsEndpoint,
                     'https://${instance.ipAddress.replaceAll('.', '-')}.sslip.io',
                     colors),
               ],
@@ -65,24 +73,25 @@ class _DetailsViewState extends State<DetailsView> {
           ),
           VSpace.x2,
           _outputSection(
-            title: 'METADATA REGISTRY',
+            title: context.l10n.deploymentMetadataRegistry,
             child: Column(children: [
               if (instance != null) ...[
-                _infoRow('ADMIN IDENTITY',
+                _infoRow(context.l10n.deploymentAdminIdentity,
                     widget.credentials?.adminEmail ?? 'N/A', colors),
                 if (widget.credentials != null) ...[
                   VSpace.x1,
-                  _passwordRow('ADMIN PASSWORD',
+                  _passwordRow(context.l10n.deploymentAdminPassword,
                       widget.credentials!.adminPassword, colors),
                 ],
                 VSpace.x1,
-                _infoRow(
-                    'PROVISIONED', _formatDateTime(instance.created), colors),
+                _infoRow(context.l10n.deploymentProvisioned,
+                    _formatDateTime(instance.created), colors),
                 VSpace.x1,
-                _infoRow('CLOUD REGION', instance.region.toUpperCase(), colors),
+                _infoRow(context.l10n.deploymentCloudRegion,
+                    instance.region.toUpperCase(), colors),
                 VSpace.x1,
-                _infoRow(
-                    'HARDWARE PLAN', instance.planType.toUpperCase(), colors),
+                _infoRow(context.l10n.deploymentHardwarePlan,
+                    instance.planType.toUpperCase(), colors),
               ],
             ]),
           ),
@@ -97,7 +106,7 @@ class _DetailsViewState extends State<DetailsView> {
               HSpace.x2,
               Expanded(
                   child: Text(
-                'SECURITY NOTICE: CREDENTIALS ARE STORED IN LOCAL SECURE ENCLAVE. PASSPHRASE RETAINS ENCRYPTION AT REST.',
+                context.l10n.deploymentSecurityNotice,
                 style: TextStyle(
                     fontFamily: AppFonts.bodyFamily,
                     color: colors.onSurface.withValues(alpha: 0.7),
@@ -152,7 +161,7 @@ class _DetailsViewState extends State<DetailsView> {
             height: 8,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         HSpace.x2,
-        Text('STATUS: ${status.name.toUpperCase()}',
+        Text(context.l10n.deploymentStatusPrefix(status.name.toUpperCase()),
             style: TextStyle(
                 fontFamily: AppFonts.bodyFamily,
                 color: color,
@@ -160,7 +169,7 @@ class _DetailsViewState extends State<DetailsView> {
                 fontSize: AppSizes.fontStandard)),
         const Spacer(),
         if (status == InstanceStatus.running)
-          Text('[SECURE]',
+          Text(context.l10n.deploymentSecure,
               style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
                   color: color,
@@ -250,7 +259,7 @@ class _DetailsViewState extends State<DetailsView> {
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 padding: EdgeInsets.zero),
             IconButton(
-                tooltip: 'Copy $label',
+                tooltip: context.l10n.deploymentCopyLabel(label),
                 onPressed: () => _copy(label, value, colors),
                 icon: Icon(Icons.content_copy, color: colors.primary, size: 14),
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
@@ -262,7 +271,7 @@ class _DetailsViewState extends State<DetailsView> {
   void _copy(String label, String value, ColorScheme colors) {
     Clipboard.setData(ClipboardData(text: value));
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('$label COPIED TO BUFFER'),
+        content: Text(context.l10n.deploymentCopiedToBuffer(label)),
         backgroundColor: colors.primary));
   }
 

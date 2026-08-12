@@ -57,6 +57,7 @@ on_exit() {
 trap on_exit EXIT
 trap 'exit 1' HUP INT TERM
 
+# POCO:BEGIN bootstrap-activation-prepare
 test "$(jq -r '.release // empty' "$release_dir/release.json")" = "$release"
 "$script_dir/validate-release-contract.sh" "$manifest_candidate" "$catalog"
 "$script_dir/prepare-runtime-env.sh" "$runtime_env" "$release"
@@ -68,6 +69,7 @@ manifest_tmp="$manifest_cache.tmp.$$"
 cp "$manifest_candidate" "$manifest_tmp"
 chmod 0644 "$manifest_tmp"
 mv -f "$manifest_tmp" "$manifest_cache"
+# POCO:END bootstrap-activation-prepare
 
 # POCO:BEGIN bootstrap-verified-images
 # Load only the core and explicitly selected harness archives. Each archive is

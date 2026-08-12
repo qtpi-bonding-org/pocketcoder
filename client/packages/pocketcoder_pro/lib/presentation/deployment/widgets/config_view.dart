@@ -54,12 +54,13 @@ class ConfigView extends StatefulWidget {
 class _ConfigViewState extends State<ConfigView> {
   @override
   Widget build(BuildContext context) => TerminalScaffold(
-        title: 'MANIFEST CONFIGURATION',
+        title: context.l10n.deploymentManifestConfiguration,
         actions: [
           TerminalAction(
-              label: 'BACK', onTap: () => Navigator.of(context).pop()),
+              label: context.l10n.deploymentActionBack,
+              onTap: () => Navigator.of(context).pop()),
           TerminalAction(
-            label: 'DEPLOY INSTANCE',
+            label: context.l10n.deploymentActionDeployInstance,
             onTap: widget.isValid == true ? widget.onDeploy : () {},
           ),
         ],
@@ -67,34 +68,34 @@ class _ConfigViewState extends State<ConfigView> {
           padding: EdgeInsets.symmetric(vertical: AppSizes.space),
           child: Column(children: [
             BiosFrame(
-              title: 'SYSTEM PARAMETERS',
+              title: context.l10n.deploymentSystemParameters,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox.shrink(),
                   VSpace.x2,
                   BiosSection(
-                    title: 'HARDWARE & GEOGRAPHY',
+                    title: context.l10n.deploymentHardwareGeography,
                     child: Column(children: [
                       if (widget.plans != null)
                         _buildPlanSelector(context, widget.plans!)
                       else
-                        const Text('INITIALIZING HW REGISTRY...'),
+                        Text(context.l10n.deploymentInitializingHardware),
                       VSpace.x2,
                       if (widget.regions != null)
                         _buildRegionSelector(context, widget.regions!)
                       else
-                        const Text('SCANNING GLOBAL REGIONS...'),
+                        Text(context.l10n.deploymentScanningRegions),
                     ]),
                   ),
                   VSpace.x2,
                   BiosSection(
-                    title: 'CODING HARNESSES',
+                    title: context.l10n.deploymentCodingHarnesses,
                     child: _buildHarnessSelector(context),
                   ),
                   VSpace.x2,
                   BiosSection(
-                    title: 'OPERATING SYSTEM',
+                    title: context.l10n.deploymentOperatingSystem,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -117,7 +118,7 @@ class _ConfigViewState extends State<ConfigView> {
   Widget _buildPlanSelector(BuildContext context, List<InstancePlan> plans) {
     final colors = context.colorScheme;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('INSTANCE PLAN',
+      Text(context.l10n.deploymentInstancePlan,
           style: TextStyle(
               fontFamily: AppFonts.bodyFamily,
               color: colors.onSurface,
@@ -145,7 +146,9 @@ class _ConfigViewState extends State<ConfigView> {
                               color:
                                   selected ? colors.primary : colors.onSurface,
                               fontSize: AppSizes.fontMini))),
-                  Text('\$${plan.monthlyPriceUSD.toStringAsFixed(2)}/MO',
+                  Text(
+                      context.l10n.deploymentMonthlyPrice(
+                          plan.monthlyPriceUSD.toStringAsFixed(2)),
                       style: TextStyle(
                           fontFamily: AppFonts.bodyFamily,
                           color: colors.primary,
@@ -163,7 +166,7 @@ class _ConfigViewState extends State<ConfigView> {
   Widget _buildRegionSelector(BuildContext context, List<Region> regions) {
     final colors = context.colorScheme;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('DEPLOYMENT REGION',
+      Text(context.l10n.deploymentRegion,
           style: TextStyle(
               fontFamily: AppFonts.bodyFamily,
               color: colors.onSurface,
@@ -201,7 +204,7 @@ class _ConfigViewState extends State<ConfigView> {
     final colors = context.colorScheme;
     return Row(children: [
       Expanded(
-          child: Text('BACKEND',
+          child: Text(context.l10n.deploymentBackend,
               style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
                   color: colors.onSurface,
@@ -211,12 +214,13 @@ class _ConfigViewState extends State<ConfigView> {
         onChanged: (value) {
           if (value != null) widget.onBackendSelected(value);
         },
-        items: const [
+        items: [
           DropdownMenuItem(
-              value: ProvisionBackendKind.nixos, child: Text('NixOS')),
+              value: ProvisionBackendKind.nixos,
+              child: Text(context.l10n.deploymentNixos)),
           DropdownMenuItem(
               value: ProvisionBackendKind.standardLinux,
-              child: Text('Standard Linux')),
+              child: Text(context.l10n.deploymentStandardLinux)),
         ],
       ),
     ]);
@@ -226,7 +230,7 @@ class _ConfigViewState extends State<ConfigView> {
     final colors = context.colorScheme;
     return Row(children: [
       Expanded(
-          child: Text('DISTRIBUTION',
+          child: Text(context.l10n.deploymentDistribution,
               style: TextStyle(
                   fontFamily: AppFonts.bodyFamily,
                   color: colors.onSurface,
@@ -236,11 +240,13 @@ class _ConfigViewState extends State<ConfigView> {
         onChanged: (value) {
           if (value != null) widget.onDistributionSelected(value);
         },
-        items: const [
+        items: [
           DropdownMenuItem(
-              value: StandardLinuxDistribution.debian, child: Text('Debian')),
+              value: StandardLinuxDistribution.debian,
+              child: Text(context.l10n.deploymentDebian)),
           DropdownMenuItem(
-              value: StandardLinuxDistribution.ubuntu, child: Text('Ubuntu')),
+              value: StandardLinuxDistribution.ubuntu,
+              child: Text(context.l10n.deploymentUbuntu)),
         ],
       ),
     ]);
@@ -253,7 +259,7 @@ class _ConfigViewState extends State<ConfigView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Choose what is downloaded onto your VPS. Goose is ready by default; you can select more than one.',
+          context.l10n.deploymentHarnessSelectionDescription,
           style: TextStyle(
             fontFamily: AppFonts.bodyFamily,
             color: colors.onSurface.withValues(alpha: 0.72),

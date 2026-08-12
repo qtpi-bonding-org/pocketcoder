@@ -1208,6 +1208,233 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pocketCoderProgressInitializing => 'INITIALIZING';
 
   @override
+  String get deploymentScreenTitle => 'DEPLOYMENT IN PROGRESS';
+
+  @override
+  String get deploymentActionAbort => 'ABORT';
+
+  @override
+  String get deploymentActionRetryScan => 'RETRY SCAN';
+
+  @override
+  String get deploymentUnknown => 'UNKNOWN';
+
+  @override
+  String get deploymentNetworkIp => 'NETWORK IP';
+
+  @override
+  String get deploymentGeoGrid => 'GEO GRID';
+
+  @override
+  String deploymentFaultDetected(String error) {
+    return 'FAULT DETECTED: $error';
+  }
+
+  @override
+  String get deploymentStatusValidating => 'VALIDATING CONFIGURATION';
+
+  @override
+  String get deploymentStatusConstructing => 'CONSTRUCTING INSTANCE';
+
+  @override
+  String get deploymentStatusPreparingHost => 'PREPARING HOST';
+
+  @override
+  String get deploymentStatusSecuring => 'SECURING CONNECTION';
+
+  @override
+  String get deploymentStatusInstalling => 'INSTALLING HOST';
+
+  @override
+  String get deploymentStatusFetching => 'FETCHING RELEASE';
+
+  @override
+  String get deploymentStatusLoadingImages => 'LOADING IMAGES';
+
+  @override
+  String get deploymentStatusStarting => 'STARTING SERVICES';
+
+  @override
+  String get deploymentStatusFinishing => 'FINISHING UP';
+
+  @override
+  String get deploymentStatusReady => 'HANDSHAKE SUCCESSFUL';
+
+  @override
+  String get deploymentStatusFailed => 'DEPLOYMENT ABORTED';
+
+  @override
+  String get deploymentStatusInitializing => 'INITIALIZING STACK';
+
+  @override
+  String get deploymentDescriptionValidating =>
+      'CHECKING THE PROVISIONING CONFIGURATION.';
+
+  @override
+  String get deploymentDescriptionConstructing =>
+      'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.';
+
+  @override
+  String get deploymentDescriptionPreparingHost =>
+      'INSTALLING THE CONTAINER HOST.';
+
+  @override
+  String get deploymentDescriptionSecuring =>
+      'WAITING FOR THE NATIVE REVERSE PROXY.';
+
+  @override
+  String get deploymentDescriptionInstalling =>
+      'INSTALLING THE APPLICATION HOST.';
+
+  @override
+  String get deploymentDescriptionFetching => 'FETCHING THE IMMUTABLE RELEASE.';
+
+  @override
+  String get deploymentDescriptionLoadingImages =>
+      'LOADING THE VERIFIED IMAGE BUNDLE.';
+
+  @override
+  String get deploymentDescriptionStarting => 'STARTING APPLICATION SERVICES.';
+
+  @override
+  String get deploymentDescriptionFinishing => 'FINISHING DEPLOYMENT.';
+
+  @override
+  String get deploymentDescriptionReady => 'THE SERVER IS FULLY OPERATIONAL.';
+
+  @override
+  String get deploymentDescriptionFailed =>
+      'CRITICAL FAILURE DURING RESOURCE ALLOCATION.';
+
+  @override
+  String get deploymentDescriptionInitializing =>
+      'PREPARING DEPLOYMENT MANIFEST.';
+
+  @override
+  String deploymentStatusPrefix(String status) {
+    return 'STATUS: $status';
+  }
+
+  @override
+  String get deploymentSecure => '[SECURE]';
+
+  @override
+  String get deploymentConnectionParameters => 'CONNECTION PARAMETERS';
+
+  @override
+  String get deploymentMetadataRegistry => 'METADATA REGISTRY';
+
+  @override
+  String get deploymentActionLoginNow => 'LOG IN NOW';
+
+  @override
+  String get deploymentActionRefresh => 'REFRESH';
+
+  @override
+  String get deploymentActionUpdate => 'UPDATE';
+
+  @override
+  String get deploymentActionDismiss => 'DISMISS';
+
+  @override
+  String get deploymentInstanceManifest => 'INSTANCE MANIFEST';
+
+  @override
+  String get deploymentIpAddress => 'IP ADDRESS';
+
+  @override
+  String get deploymentHttpsEndpoint => 'HTTPS ENDPOINT';
+
+  @override
+  String get deploymentAdminIdentity => 'ADMIN IDENTITY';
+
+  @override
+  String get deploymentAdminPassword => 'ADMIN PASSWORD';
+
+  @override
+  String get deploymentProvisioned => 'PROVISIONED';
+
+  @override
+  String get deploymentCloudRegion => 'CLOUD REGION';
+
+  @override
+  String get deploymentHardwarePlan => 'HARDWARE PLAN';
+
+  @override
+  String get deploymentSecurityNotice =>
+      'SECURITY NOTICE: CREDENTIALS ARE STORED IN LOCAL SECURE ENCLAVE. PASSPHRASE RETAINS ENCRYPTION AT REST.';
+
+  @override
+  String deploymentCopiedToBuffer(String label) {
+    return '$label COPIED TO BUFFER';
+  }
+
+  @override
+  String deploymentCopyLabel(Object label) {
+    return 'COPY $label';
+  }
+
+  @override
+  String get deploymentManifestConfiguration => 'MANIFEST CONFIGURATION';
+
+  @override
+  String get deploymentActionBack => 'BACK';
+
+  @override
+  String get deploymentActionDeployInstance => 'DEPLOY INSTANCE';
+
+  @override
+  String get deploymentSystemParameters => 'SYSTEM PARAMETERS';
+
+  @override
+  String get deploymentHardwareGeography => 'HARDWARE & GEOGRAPHY';
+
+  @override
+  String get deploymentInitializingHardware => 'INITIALIZING HW REGISTRY...';
+
+  @override
+  String get deploymentScanningRegions => 'SCANNING GLOBAL REGIONS...';
+
+  @override
+  String get deploymentCodingHarnesses => 'CODING HARNESSES';
+
+  @override
+  String get deploymentHarnessSelectionDescription =>
+      'Choose what is downloaded onto your VPS. Goose is ready by default; you can select more than one.';
+
+  @override
+  String get deploymentOperatingSystem => 'OPERATING SYSTEM';
+
+  @override
+  String get deploymentInstancePlan => 'INSTANCE PLAN';
+
+  @override
+  String deploymentMonthlyPrice(String price) {
+    return '$price/MO';
+  }
+
+  @override
+  String get deploymentRegion => 'DEPLOYMENT REGION';
+
+  @override
+  String get deploymentBackend => 'BACKEND';
+
+  @override
+  String get deploymentDistribution => 'DISTRIBUTION';
+
+  @override
+  String get deploymentNixos => 'NixOS';
+
+  @override
+  String get deploymentStandardLinux => 'Standard Linux';
+
+  @override
+  String get deploymentDebian => 'Debian';
+
+  @override
+  String get deploymentUbuntu => 'Ubuntu';
+
+  @override
   String walkthroughLabel(int current, int total) {
     return 'WALKTHROUGH $current / $total';
   }

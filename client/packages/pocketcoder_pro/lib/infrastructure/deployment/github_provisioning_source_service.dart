@@ -6,6 +6,7 @@ import 'package:pocketcoder_pro/infrastructure/deployment/poco_code_section_pars
 enum ProvisioningSourceFile {
   hostConfiguration('deploy/nixos/configuration.nix'),
   hostBootstrap('deploy/nixos/bootstrap.sh'),
+  nativeCaddy('deploy/nixos/caddy.nix'),
   standardLinuxBootstrap(
     'client/packages/pocketcoder_pro/assets/deployment/standard_linux_bootstrap.sh',
   ),
@@ -24,6 +25,7 @@ List<ProvisioningSourceFile> provisioningSourceFilesFor(
       if (backend == ProvisionBackendKind.nixos) ...[
         ProvisioningSourceFile.hostConfiguration,
         ProvisioningSourceFile.hostBootstrap,
+        ProvisioningSourceFile.nativeCaddy,
       ] else
         ProvisioningSourceFile.standardLinuxBootstrap,
       ProvisioningSourceFile.runtimeEnvironment,

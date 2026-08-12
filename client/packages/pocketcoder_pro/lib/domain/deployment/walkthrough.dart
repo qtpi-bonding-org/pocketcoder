@@ -52,3 +52,14 @@ class WalkthroughContent {
   bool hasSameIdentityAs(WalkthroughContent other) =>
       sourceCommit == other.sourceCommit && backend == other.backend;
 }
+
+/// A prepared local question and response appended to a walkthrough session.
+class WalkthroughFaqTurn {
+  const WalkthroughFaqTurn({
+    required this.question,
+    required this.answer,
+  });
+
+  final String question;
+  final String answer;
+}

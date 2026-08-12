@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_pro/domain/deployment/harness_catalog.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/config_view.dart';
 
@@ -14,6 +15,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: StatefulBuilder(
           builder: (context, setState) => ConfigView(
             plans: null,

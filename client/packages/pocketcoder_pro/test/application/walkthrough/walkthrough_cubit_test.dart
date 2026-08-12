@@ -142,4 +142,26 @@ void main() {
 
     cubit.close();
   });
+
+  test('stores presentation expansion and FAQ history in the Cubit', () {
+    final cubit = WalkthroughCubit()..loadContent(firstContent);
+
+    cubit.selectBriefForPresentation('network');
+    cubit.setBriefExpanded('vps-network', true);
+    cubit.addFaqTurn(
+      'nixos-configuration',
+      const WalkthroughFaqTurn(
+        question: 'WHY?',
+        answer: 'Because the boundary is deliberate.',
+      ),
+    );
+
+    expect(cubit.state.selectedBriefId, 'network');
+    expect(cubit.state.expandedBriefIds, contains('vps-network'));
+    expect(cubit.state.faqHistory['nixos-configuration'], hasLength(1));
+    expect(cubit.state.faqHistory['nixos-configuration']?.single.answer,
+        'Because the boundary is deliberate.');
+
+    cubit.close();
+  });
 }

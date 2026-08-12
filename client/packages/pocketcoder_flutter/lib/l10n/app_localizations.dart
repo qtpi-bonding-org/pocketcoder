@@ -2356,6 +2356,420 @@ abstract class AppLocalizations {
   /// **'INITIALIZING'**
   String get pocketCoderProgressInitializing;
 
+  /// No description provided for @deploymentScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOYMENT IN PROGRESS'**
+  String get deploymentScreenTitle;
+
+  /// No description provided for @deploymentActionAbort.
+  ///
+  /// In en, this message translates to:
+  /// **'ABORT'**
+  String get deploymentActionAbort;
+
+  /// No description provided for @deploymentActionRetryScan.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY SCAN'**
+  String get deploymentActionRetryScan;
+
+  /// No description provided for @deploymentUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'UNKNOWN'**
+  String get deploymentUnknown;
+
+  /// No description provided for @deploymentNetworkIp.
+  ///
+  /// In en, this message translates to:
+  /// **'NETWORK IP'**
+  String get deploymentNetworkIp;
+
+  /// No description provided for @deploymentGeoGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'GEO GRID'**
+  String get deploymentGeoGrid;
+
+  /// No description provided for @deploymentFaultDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'FAULT DETECTED: {error}'**
+  String deploymentFaultDetected(String error);
+
+  /// No description provided for @deploymentStatusValidating.
+  ///
+  /// In en, this message translates to:
+  /// **'VALIDATING CONFIGURATION'**
+  String get deploymentStatusValidating;
+
+  /// No description provided for @deploymentStatusConstructing.
+  ///
+  /// In en, this message translates to:
+  /// **'CONSTRUCTING INSTANCE'**
+  String get deploymentStatusConstructing;
+
+  /// No description provided for @deploymentStatusPreparingHost.
+  ///
+  /// In en, this message translates to:
+  /// **'PREPARING HOST'**
+  String get deploymentStatusPreparingHost;
+
+  /// No description provided for @deploymentStatusSecuring.
+  ///
+  /// In en, this message translates to:
+  /// **'SECURING CONNECTION'**
+  String get deploymentStatusSecuring;
+
+  /// No description provided for @deploymentStatusInstalling.
+  ///
+  /// In en, this message translates to:
+  /// **'INSTALLING HOST'**
+  String get deploymentStatusInstalling;
+
+  /// No description provided for @deploymentStatusFetching.
+  ///
+  /// In en, this message translates to:
+  /// **'FETCHING RELEASE'**
+  String get deploymentStatusFetching;
+
+  /// No description provided for @deploymentStatusLoadingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'LOADING IMAGES'**
+  String get deploymentStatusLoadingImages;
+
+  /// No description provided for @deploymentStatusStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'STARTING SERVICES'**
+  String get deploymentStatusStarting;
+
+  /// No description provided for @deploymentStatusFinishing.
+  ///
+  /// In en, this message translates to:
+  /// **'FINISHING UP'**
+  String get deploymentStatusFinishing;
+
+  /// No description provided for @deploymentStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'HANDSHAKE SUCCESSFUL'**
+  String get deploymentStatusReady;
+
+  /// No description provided for @deploymentStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOYMENT ABORTED'**
+  String get deploymentStatusFailed;
+
+  /// No description provided for @deploymentStatusInitializing.
+  ///
+  /// In en, this message translates to:
+  /// **'INITIALIZING STACK'**
+  String get deploymentStatusInitializing;
+
+  /// No description provided for @deploymentDescriptionValidating.
+  ///
+  /// In en, this message translates to:
+  /// **'CHECKING THE PROVISIONING CONFIGURATION.'**
+  String get deploymentDescriptionValidating;
+
+  /// No description provided for @deploymentDescriptionConstructing.
+  ///
+  /// In en, this message translates to:
+  /// **'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.'**
+  String get deploymentDescriptionConstructing;
+
+  /// No description provided for @deploymentDescriptionPreparingHost.
+  ///
+  /// In en, this message translates to:
+  /// **'INSTALLING THE CONTAINER HOST.'**
+  String get deploymentDescriptionPreparingHost;
+
+  /// No description provided for @deploymentDescriptionSecuring.
+  ///
+  /// In en, this message translates to:
+  /// **'WAITING FOR THE NATIVE REVERSE PROXY.'**
+  String get deploymentDescriptionSecuring;
+
+  /// No description provided for @deploymentDescriptionInstalling.
+  ///
+  /// In en, this message translates to:
+  /// **'INSTALLING THE APPLICATION HOST.'**
+  String get deploymentDescriptionInstalling;
+
+  /// No description provided for @deploymentDescriptionFetching.
+  ///
+  /// In en, this message translates to:
+  /// **'FETCHING THE IMMUTABLE RELEASE.'**
+  String get deploymentDescriptionFetching;
+
+  /// No description provided for @deploymentDescriptionLoadingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'LOADING THE VERIFIED IMAGE BUNDLE.'**
+  String get deploymentDescriptionLoadingImages;
+
+  /// No description provided for @deploymentDescriptionStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'STARTING APPLICATION SERVICES.'**
+  String get deploymentDescriptionStarting;
+
+  /// No description provided for @deploymentDescriptionFinishing.
+  ///
+  /// In en, this message translates to:
+  /// **'FINISHING DEPLOYMENT.'**
+  String get deploymentDescriptionFinishing;
+
+  /// No description provided for @deploymentDescriptionReady.
+  ///
+  /// In en, this message translates to:
+  /// **'THE SERVER IS FULLY OPERATIONAL.'**
+  String get deploymentDescriptionReady;
+
+  /// No description provided for @deploymentDescriptionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'CRITICAL FAILURE DURING RESOURCE ALLOCATION.'**
+  String get deploymentDescriptionFailed;
+
+  /// No description provided for @deploymentDescriptionInitializing.
+  ///
+  /// In en, this message translates to:
+  /// **'PREPARING DEPLOYMENT MANIFEST.'**
+  String get deploymentDescriptionInitializing;
+
+  /// No description provided for @deploymentStatusPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'STATUS: {status}'**
+  String deploymentStatusPrefix(String status);
+
+  /// No description provided for @deploymentSecure.
+  ///
+  /// In en, this message translates to:
+  /// **'[SECURE]'**
+  String get deploymentSecure;
+
+  /// No description provided for @deploymentConnectionParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECTION PARAMETERS'**
+  String get deploymentConnectionParameters;
+
+  /// No description provided for @deploymentMetadataRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'METADATA REGISTRY'**
+  String get deploymentMetadataRegistry;
+
+  /// No description provided for @deploymentActionLoginNow.
+  ///
+  /// In en, this message translates to:
+  /// **'LOG IN NOW'**
+  String get deploymentActionLoginNow;
+
+  /// No description provided for @deploymentActionRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'REFRESH'**
+  String get deploymentActionRefresh;
+
+  /// No description provided for @deploymentActionUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'UPDATE'**
+  String get deploymentActionUpdate;
+
+  /// No description provided for @deploymentActionDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'DISMISS'**
+  String get deploymentActionDismiss;
+
+  /// No description provided for @deploymentInstanceManifest.
+  ///
+  /// In en, this message translates to:
+  /// **'INSTANCE MANIFEST'**
+  String get deploymentInstanceManifest;
+
+  /// No description provided for @deploymentIpAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'IP ADDRESS'**
+  String get deploymentIpAddress;
+
+  /// No description provided for @deploymentHttpsEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTPS ENDPOINT'**
+  String get deploymentHttpsEndpoint;
+
+  /// No description provided for @deploymentAdminIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'ADMIN IDENTITY'**
+  String get deploymentAdminIdentity;
+
+  /// No description provided for @deploymentAdminPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'ADMIN PASSWORD'**
+  String get deploymentAdminPassword;
+
+  /// No description provided for @deploymentProvisioned.
+  ///
+  /// In en, this message translates to:
+  /// **'PROVISIONED'**
+  String get deploymentProvisioned;
+
+  /// No description provided for @deploymentCloudRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'CLOUD REGION'**
+  String get deploymentCloudRegion;
+
+  /// No description provided for @deploymentHardwarePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'HARDWARE PLAN'**
+  String get deploymentHardwarePlan;
+
+  /// No description provided for @deploymentSecurityNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'SECURITY NOTICE: CREDENTIALS ARE STORED IN LOCAL SECURE ENCLAVE. PASSPHRASE RETAINS ENCRYPTION AT REST.'**
+  String get deploymentSecurityNotice;
+
+  /// No description provided for @deploymentCopiedToBuffer.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} COPIED TO BUFFER'**
+  String deploymentCopiedToBuffer(String label);
+
+  /// No description provided for @deploymentCopyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'COPY {label}'**
+  String deploymentCopyLabel(Object label);
+
+  /// No description provided for @deploymentManifestConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'MANIFEST CONFIGURATION'**
+  String get deploymentManifestConfiguration;
+
+  /// No description provided for @deploymentActionBack.
+  ///
+  /// In en, this message translates to:
+  /// **'BACK'**
+  String get deploymentActionBack;
+
+  /// No description provided for @deploymentActionDeployInstance.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOY INSTANCE'**
+  String get deploymentActionDeployInstance;
+
+  /// No description provided for @deploymentSystemParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'SYSTEM PARAMETERS'**
+  String get deploymentSystemParameters;
+
+  /// No description provided for @deploymentHardwareGeography.
+  ///
+  /// In en, this message translates to:
+  /// **'HARDWARE & GEOGRAPHY'**
+  String get deploymentHardwareGeography;
+
+  /// No description provided for @deploymentInitializingHardware.
+  ///
+  /// In en, this message translates to:
+  /// **'INITIALIZING HW REGISTRY...'**
+  String get deploymentInitializingHardware;
+
+  /// No description provided for @deploymentScanningRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'SCANNING GLOBAL REGIONS...'**
+  String get deploymentScanningRegions;
+
+  /// No description provided for @deploymentCodingHarnesses.
+  ///
+  /// In en, this message translates to:
+  /// **'CODING HARNESSES'**
+  String get deploymentCodingHarnesses;
+
+  /// No description provided for @deploymentHarnessSelectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what is downloaded onto your VPS. Goose is ready by default; you can select more than one.'**
+  String get deploymentHarnessSelectionDescription;
+
+  /// No description provided for @deploymentOperatingSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'OPERATING SYSTEM'**
+  String get deploymentOperatingSystem;
+
+  /// No description provided for @deploymentInstancePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'INSTANCE PLAN'**
+  String get deploymentInstancePlan;
+
+  /// No description provided for @deploymentMonthlyPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'{price}/MO'**
+  String deploymentMonthlyPrice(String price);
+
+  /// No description provided for @deploymentRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'DEPLOYMENT REGION'**
+  String get deploymentRegion;
+
+  /// No description provided for @deploymentBackend.
+  ///
+  /// In en, this message translates to:
+  /// **'BACKEND'**
+  String get deploymentBackend;
+
+  /// No description provided for @deploymentDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'DISTRIBUTION'**
+  String get deploymentDistribution;
+
+  /// No description provided for @deploymentNixos.
+  ///
+  /// In en, this message translates to:
+  /// **'NixOS'**
+  String get deploymentNixos;
+
+  /// No description provided for @deploymentStandardLinux.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard Linux'**
+  String get deploymentStandardLinux;
+
+  /// No description provided for @deploymentDebian.
+  ///
+  /// In en, this message translates to:
+  /// **'Debian'**
+  String get deploymentDebian;
+
+  /// No description provided for @deploymentUbuntu.
+  ///
+  /// In en, this message translates to:
+  /// **'Ubuntu'**
+  String get deploymentUbuntu;
+
   /// No description provided for @walkthroughLabel.
   ///
   /// In en, this message translates to:

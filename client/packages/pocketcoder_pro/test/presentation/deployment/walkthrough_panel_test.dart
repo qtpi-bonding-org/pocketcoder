@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
+import 'package:pocketcoder_pro/application/walkthrough/walkthrough_state.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_panel.dart';
 
@@ -37,17 +38,31 @@ curl immutable-release
 # POCO:END bootstrap-release-source
 ''',
       final value when value.endsWith('/prepare-runtime-env.sh') => '''
+# POCO:BEGIN bootstrap-runtime-settings
+append default settings
+# POCO:END bootstrap-runtime-settings
 # POCO:BEGIN bootstrap-local-secrets
 chmod 0600 runtime.env
 # POCO:END bootstrap-local-secrets
 ''',
       final value when value.endsWith('/activate-release.sh') => '''
+# POCO:BEGIN bootstrap-activation-prepare
+validate and cache release
+# POCO:END bootstrap-activation-prepare
 # POCO:BEGIN bootstrap-verified-images
 sha256sum image.tar
 # POCO:END bootstrap-verified-images
 # POCO:BEGIN bootstrap-compose-start
 docker compose up -d
 # POCO:END bootstrap-compose-start
+''',
+      final value when value.endsWith('/caddy.nix') => '''
+# POCO:BEGIN caddy-address
+detect public address
+# POCO:END caddy-address
+# POCO:BEGIN caddy-web-entry
+proxy HTTPS traffic
+# POCO:END caddy-web-entry
 ''',
       _ => '''
 # POCO:BEGIN compose-pocketbase
@@ -75,6 +90,11 @@ void main() {
           sourceCommit: 'abcdef1234567',
           sourceService: GithubProvisioningSourceService(client: client),
           backend: ProvisionBackendKind.nixos,
+          walkthroughState: const WalkthroughState.initial(),
+          onBriefSelected: (_) {},
+          onBriefExpanded: (_, __) {},
+          onFaqTurn: (_, __) {},
+          onSourceChanged: () {},
         ),
       ),
     ));
@@ -87,7 +107,7 @@ void main() {
       client.requestedPaths,
       everyElement(contains('/abcdef1234567/')),
     );
-    expect(client.requestedPaths, hasLength(5));
+    expect(client.requestedPaths, hasLength(6));
   });
 
   testWidgets(
@@ -105,6 +125,11 @@ void main() {
           sourceCommit: 'abcdef1234567',
           sourceService: GithubProvisioningSourceService(client: client),
           backend: ProvisionBackendKind.standardLinux,
+          walkthroughState: const WalkthroughState.initial(),
+          onBriefSelected: (_) {},
+          onBriefExpanded: (_, __) {},
+          onFaqTurn: (_, __) {},
+          onSourceChanged: () {},
         ),
       ),
     ));

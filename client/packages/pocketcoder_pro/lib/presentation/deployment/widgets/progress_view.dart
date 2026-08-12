@@ -43,11 +43,13 @@ class ProgressView extends StatelessWidget {
     final retry = onRetry;
 
     return TerminalScaffold(
-      title: 'DEPLOYMENT IN PROGRESS',
+      title: context.l10n.deploymentScreenTitle,
       actions: [
-        TerminalAction(label: 'ABORT', onTap: onAbort),
+        TerminalAction(
+            label: context.l10n.deploymentActionAbort, onTap: onAbort),
         if (status == UiFlowStatus.failure && retry != null)
-          TerminalAction(label: 'RETRY SCAN', onTap: retry),
+          TerminalAction(
+              label: context.l10n.deploymentActionRetryScan, onTap: retry),
       ],
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(vertical: AppSizes.space),
@@ -64,7 +66,7 @@ class ProgressView extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _getStatusTitle(deploymentStatus),
+                        _getStatusTitle(context, deploymentStatus),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: AppFonts.headerFamily,
@@ -75,7 +77,7 @@ class ProgressView extends StatelessWidget {
                       ),
                       VSpace.x2,
                       Text(
-                        _getStatusDescription(deploymentStatus),
+                        _getStatusDescription(context, deploymentStatus),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: AppFonts.bodyFamily,
@@ -107,7 +109,8 @@ class ProgressView extends StatelessWidget {
                       if (currentServerStatus != null) ...[
                         _buildInfoRow(
                           context.l10n.deploymentSourceCommit,
-                          currentServerStatus.sourceCommit ?? 'UNKNOWN',
+                          currentServerStatus.sourceCommit ??
+                              context.l10n.deploymentUnknown,
                           colors,
                         ),
                         VSpace.x1,
@@ -141,11 +144,11 @@ class ProgressView extends StatelessWidget {
                         VSpace.x2,
                       ],
                       if (currentInstance != null) ...[
-                        _buildInfoRow(
-                            'NETWORK IP', currentInstance.ipAddress, colors),
+                        _buildInfoRow(context.l10n.deploymentNetworkIp,
+                            currentInstance.ipAddress, colors),
                         VSpace.x1,
-                        _buildInfoRow(
-                            'GEO GRID', currentInstance.region, colors),
+                        _buildInfoRow(context.l10n.deploymentGeoGrid,
+                            currentInstance.region, colors),
                       ],
                       if (status == UiFlowStatus.failure) ...[
                         VSpace.x4,
@@ -156,7 +159,8 @@ class ProgressView extends StatelessWidget {
                             color: colors.error.withValues(alpha: 0.1),
                           ),
                           child: Text(
-                            'FAULT DETECTED: ${error.toString().toUpperCase()}',
+                            context.l10n.deploymentFaultDetected(
+                                error.toString().toUpperCase()),
                             style: TextStyle(
                               color: colors.error,
                               fontFamily: AppFonts.bodyFamily,
@@ -178,63 +182,63 @@ class ProgressView extends StatelessWidget {
     );
   }
 
-  String _getStatusTitle(OnboardingStage? status) {
+  String _getStatusTitle(BuildContext context, OnboardingStage? status) {
     switch (status) {
       case OnboardingStage.validating:
-        return 'VALIDATING CONFIGURATION';
+        return context.l10n.deploymentStatusValidating;
       case OnboardingStage.creatingServer:
-        return 'CONSTRUCTING INSTANCE';
+        return context.l10n.deploymentStatusConstructing;
       case OnboardingStage.preparingHost:
       case OnboardingStage.hostReady:
-        return 'PREPARING HOST';
+        return context.l10n.deploymentStatusPreparingHost;
       case OnboardingStage.securingConnection:
-        return 'SECURING CONNECTION';
+        return context.l10n.deploymentStatusSecuring;
       case OnboardingStage.installingHost:
-        return 'INSTALLING HOST';
+        return context.l10n.deploymentStatusInstalling;
       case OnboardingStage.fetchingRelease:
-        return 'FETCHING RELEASE';
+        return context.l10n.deploymentStatusFetching;
       case OnboardingStage.loadingImages:
-        return 'LOADING IMAGES';
+        return context.l10n.deploymentStatusLoadingImages;
       case OnboardingStage.startingServices:
-        return 'STARTING SERVICES';
+        return context.l10n.deploymentStatusStarting;
       case OnboardingStage.finishingUp:
-        return 'FINISHING UP';
+        return context.l10n.deploymentStatusFinishing;
       case OnboardingStage.ready:
-        return 'HANDSHAKE SUCCESSFUL';
+        return context.l10n.deploymentStatusReady;
       case OnboardingStage.failed:
-        return 'DEPLOYMENT ABORTED';
+        return context.l10n.deploymentStatusFailed;
       case null:
-        return 'INITIALIZING STACK';
+        return context.l10n.deploymentStatusInitializing;
     }
   }
 
-  String _getStatusDescription(OnboardingStage? status) {
+  String _getStatusDescription(BuildContext context, OnboardingStage? status) {
     switch (status) {
       case OnboardingStage.validating:
-        return 'CHECKING THE PROVISIONING CONFIGURATION.';
+        return context.l10n.deploymentDescriptionValidating;
       case OnboardingStage.creatingServer:
-        return 'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.';
+        return context.l10n.deploymentDescriptionConstructing;
       case OnboardingStage.preparingHost:
       case OnboardingStage.hostReady:
-        return 'INSTALLING THE CONTAINER HOST.';
+        return context.l10n.deploymentDescriptionPreparingHost;
       case OnboardingStage.securingConnection:
-        return 'WAITING FOR THE NATIVE REVERSE PROXY.';
+        return context.l10n.deploymentDescriptionSecuring;
       case OnboardingStage.installingHost:
-        return 'INSTALLING THE APPLICATION HOST.';
+        return context.l10n.deploymentDescriptionInstalling;
       case OnboardingStage.fetchingRelease:
-        return 'FETCHING THE IMMUTABLE RELEASE.';
+        return context.l10n.deploymentDescriptionFetching;
       case OnboardingStage.loadingImages:
-        return 'LOADING THE VERIFIED IMAGE BUNDLE.';
+        return context.l10n.deploymentDescriptionLoadingImages;
       case OnboardingStage.startingServices:
-        return 'STARTING APPLICATION SERVICES.';
+        return context.l10n.deploymentDescriptionStarting;
       case OnboardingStage.finishingUp:
-        return 'FINISHING DEPLOYMENT.';
+        return context.l10n.deploymentDescriptionFinishing;
       case OnboardingStage.ready:
-        return 'THE SERVER IS FULLY OPERATIONAL.';
+        return context.l10n.deploymentDescriptionReady;
       case OnboardingStage.failed:
-        return 'CRITICAL FAILURE DURING RESOURCE ALLOCATION.';
+        return context.l10n.deploymentDescriptionFailed;
       case null:
-        return 'PREPARING DEPLOYMENT MANIFEST.';
+        return context.l10n.deploymentDescriptionInitializing;
     }
   }
 

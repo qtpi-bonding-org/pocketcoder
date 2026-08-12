@@ -24,6 +24,34 @@ class WalkthroughCubit extends Cubit<WalkthroughState> {
     emit(state.copyWith(isCodeExpanded: expanded));
   }
 
+  void selectBriefForPresentation(String briefId) {
+    if (!state.hasContent || state.isSkipped) return;
+    emit(state.copyWith(selectedBriefId: briefId));
+  }
+
+  void setBriefExpanded(String briefId, bool expanded) {
+    if (!state.hasContent || state.isSkipped) return;
+    final expandedBriefs = {...state.expandedBriefIds};
+    if (expanded) {
+      expandedBriefs.add(briefId);
+    } else {
+      expandedBriefs.remove(briefId);
+    }
+    emit(state.copyWith(expandedBriefIds: expandedBriefs));
+  }
+
+  void addFaqTurn(String walkthroughId, WalkthroughFaqTurn turn) {
+    if (!state.hasContent || state.isSkipped) return;
+    final history = <String, List<WalkthroughFaqTurn>>{
+      ...state.faqHistory,
+      walkthroughId: [
+        ...(state.faqHistory[walkthroughId] ?? const []),
+        turn,
+      ],
+    };
+    emit(state.copyWith(faqHistory: history));
+  }
+
   void nextBrief() {
     final currentContent = state.content;
     final currentWalkthrough = state.currentWalkthrough;
