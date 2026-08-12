@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-10T10:27:05.325138
+// Generated at: 2026-08-11T22:44:11.752617
 
 import 'app_localizations.dart';
 
@@ -85,6 +85,7 @@ class L10nKeyResolver {
       'boot.poco.intro' => _l10n.bootPocoIntro,
       'boot.systems.nominal' => _l10n.bootSystemsNominal,
       'boot.welcome.back' => _l10n.bootWelcomeBack,
+      'chat.command.output' => _l10n.chatCommandOutput,
       'chat.commander.role' => _l10n.chatCommanderRole,
       'chat.created' => _l10n.chatCreated,
       'chat.decline' => _l10n.chatDecline,
@@ -247,36 +248,93 @@ class L10nKeyResolver {
       'onboarding.create.server' => _l10n.onboardingCreateServer,
       'onboarding.deploy' => _l10n.onboardingDeploy,
       'onboarding.deploy.title' => _l10n.onboardingDeployTitle,
+      'onboarding.docker.intro.action.start' => _l10n.onboardingDockerIntroActionStart,
+      'onboarding.docker.intro.chip.component' => _l10n.onboardingDockerIntroChipComponent,
+      'onboarding.docker.intro.chip.connections' => _l10n.onboardingDockerIntroChipConnections,
+      'onboarding.docker.intro.chip.container' => _l10n.onboardingDockerIntroChipContainer,
+      'onboarding.docker.intro.chip.saved.data' => _l10n.onboardingDockerIntroChipSavedData,
+      'onboarding.docker.intro.eyebrow' => _l10n.onboardingDockerIntroEyebrow,
+      'onboarding.docker.intro.poco' => _l10n.onboardingDockerIntroPoco,
+      'onboarding.docker.intro.title' => _l10n.onboardingDockerIntroTitle,
       'onboarding.email' => _l10n.onboardingEmail,
       'onboarding.email.hint' => _l10n.onboardingEmailHint,
       'onboarding.email.hint.short' => _l10n.onboardingEmailHintShort,
       'onboarding.existing.server' => _l10n.onboardingExistingServer,
+      'onboarding.failure.action.back.to.setup' => _l10n.onboardingFailureActionBackToSetup,
+      'onboarding.failure.action.retry.connection' => _l10n.onboardingFailureActionRetryConnection,
+      'onboarding.failure.action.technical.details' => _l10n.onboardingFailureActionTechnicalDetails,
+      'onboarding.failure.action.view.server.details' => _l10n.onboardingFailureActionViewServerDetails,
+      'onboarding.failure.create.poco' => _l10n.onboardingFailureCreatePoco,
       'onboarding.harness.not.found' => _l10n.onboardingHarnessNotFound,
+      'onboarding.harness.poco' => _l10n.onboardingHarnessPoco,
+      'onboarding.harness.title' => _l10n.onboardingHarnessTitle,
       'onboarding.home.server' => _l10n.onboardingHomeServer,
       'onboarding.identity.label' => _l10n.onboardingIdentityLabel,
+      'onboarding.intent.chip.cloud.models' => _l10n.onboardingIntentChipCloudModels,
+      'onboarding.intent.chip.local.models' => _l10n.onboardingIntentChipLocalModels,
+      'onboarding.intent.poco' => _l10n.onboardingIntentPoco,
       'onboarding.login' => _l10n.onboardingLogin,
+      'onboarding.no.server.chip.existing' => _l10n.onboardingNoServerChipExisting,
+      'onboarding.no.server.chip.new' => _l10n.onboardingNoServerChipNew,
+      'onboarding.no.server.looking.poco' => _l10n.onboardingNoServerLookingPoco,
+      'onboarding.no.server.poco' => _l10n.onboardingNoServerPoco,
       'onboarding.open.authorization' => _l10n.onboardingOpenAuthorization,
+      'onboarding.orientation.action.continue' => _l10n.onboardingOrientationActionContinue,
+      'onboarding.orientation.action.skip' => _l10n.onboardingOrientationActionSkip,
+      'onboarding.orientation.title' => _l10n.onboardingOrientationTitle,
+      'onboarding.os.debian.label' => _l10n.onboardingOsDebianLabel,
+      'onboarding.os.nixos.label' => _l10n.onboardingOsNixosLabel,
+      'onboarding.os.poco' => _l10n.onboardingOsPoco,
+      'onboarding.os.title' => _l10n.onboardingOsTitle,
       'onboarding.passphrase.label' => _l10n.onboardingPassphraseLabel,
       'onboarding.password' => _l10n.onboardingPassword,
       'onboarding.password.hint' => _l10n.onboardingPasswordHint,
+      'onboarding.plan.title' => _l10n.onboardingPlanTitle,
       'onboarding.pocketbase.admin.email' => _l10n.onboardingPocketbaseAdminEmail,
       'onboarding.pocketbase.admin.password' => _l10n.onboardingPocketbaseAdminPassword,
       'onboarding.poco.challenge.message' => _l10n.onboardingPocoChallengeMessage,
       'onboarding.poco.welcome' => _l10n.onboardingPocoWelcome,
       'onboarding.processing' => _l10n.onboardingProcessing,
+      'onboarding.provider.authorization.poco' => _l10n.onboardingProviderAuthorizationPoco,
+      'onboarding.provider.authorization.title' => _l10n.onboardingProviderAuthorizationTitle,
+      'onboarding.provider.chip.elestio.coming.soon' => _l10n.onboardingProviderChipElestioComingSoon,
+      'onboarding.provider.chip.linode' => _l10n.onboardingProviderChipLinode,
+      'onboarding.provider.poco' => _l10n.onboardingProviderPoco,
+      'onboarding.provider.title' => _l10n.onboardingProviderTitle,
+      'onboarding.provisioning.poco' => _l10n.onboardingProvisioningPoco,
+      'onboarding.ready.action.login' => _l10n.onboardingReadyActionLogin,
+      'onboarding.ready.poco' => _l10n.onboardingReadyPoco,
+      'onboarding.region.consent.chip.choose.myself' => _l10n.onboardingRegionConsentChipChooseMyself,
+      'onboarding.region.consent.chip.use.location' => _l10n.onboardingRegionConsentChipUseLocation,
+      'onboarding.region.consent.poco' => _l10n.onboardingRegionConsentPoco,
+      'onboarding.region.poco' => _l10n.onboardingRegionPoco,
+      'onboarding.region.title' => _l10n.onboardingRegionTitle,
       'onboarding.required.fields' => _l10n.onboardingRequiredFields,
+      'onboarding.review.action.provision' => _l10n.onboardingReviewActionProvision,
+      'onboarding.review.title' => _l10n.onboardingReviewTitle,
       'onboarding.server.connecting' => _l10n.onboardingServerConnecting,
       'onboarding.server.login.title' => _l10n.onboardingServerLoginTitle,
       'onboarding.server.url' => _l10n.onboardingServerUrl,
       'onboarding.server.url.hint' => _l10n.onboardingServerUrlHint,
       'onboarding.setup.title' => _l10n.onboardingSetupTitle,
+      'onboarding.sign.in.poco' => _l10n.onboardingSignInPoco,
+      'onboarding.sign.in.title' => _l10n.onboardingSignInTitle,
       'onboarding.submit.code' => _l10n.onboardingSubmitCode,
       'onboarding.title' => _l10n.onboardingTitle,
+      'onboarding.trial.chip.not.now' => _l10n.onboardingTrialChipNotNow,
+      'onboarding.trial.chip.start' => _l10n.onboardingTrialChipStart,
       'permission.error' => _l10n.permissionError,
       'permission.fetch.failed' => _l10n.permissionFetchFailed,
       'permission.patterns.label' => _l10n.permissionPatternsLabel,
       'permission.signoff.title' => _l10n.permissionSignoffTitle,
       'permission.update.failed' => _l10n.permissionUpdateFailed,
+      'pocket.coder.progress.active' => _l10n.pocketCoderProgressActive,
+      'pocket.coder.progress.complete' => _l10n.pocketCoderProgressComplete,
+      'pocket.coder.progress.deploy.pocket.coder' => _l10n.pocketCoderProgressDeployPocketCoder,
+      'pocket.coder.progress.failed' => _l10n.pocketCoderProgressFailed,
+      'pocket.coder.progress.initializing' => _l10n.pocketCoderProgressInitializing,
+      'pocket.coder.progress.provision.server' => _l10n.pocketCoderProgressProvisionServer,
+      'pocket.coder.progress.waiting' => _l10n.pocketCoderProgressWaiting,
       'poco.lesson.agent.explanation' => _l10n.pocoLessonAgentExplanation,
       'poco.lesson.agent.title' => _l10n.pocoLessonAgentTitle,
       'poco.lesson.compose.start.explanation' => _l10n.pocoLessonComposeStartExplanation,
@@ -442,15 +500,106 @@ class L10nKeyResolver {
       'tool.permissions.tool.label' => _l10n.toolPermissionsToolLabel,
       'tool.permissions.tool.name.label' => _l10n.toolPermissionsToolNameLabel,
       'tool.permissions.update.failed' => _l10n.toolPermissionsUpdateFailed,
+      'walkthrough.action.show.concise.code' => _l10n.walkthroughActionShowConciseCode,
+      'walkthrough.action.show.full.code' => _l10n.walkthroughActionShowFullCode,
+      'walkthrough.activation.health.poco' => _l10n.walkthroughActivationHealthPoco,
+      'walkthrough.activation.health.title' => _l10n.walkthroughActivationHealthTitle,
+      'walkthrough.activation.prepare.poco' => _l10n.walkthroughActivationPreparePoco,
+      'walkthrough.activation.prepare.title' => _l10n.walkthroughActivationPrepareTitle,
+      'walkthrough.activation.selected.software.poco' => _l10n.walkthroughActivationSelectedSoftwarePoco,
+      'walkthrough.activation.selected.software.title' => _l10n.walkthroughActivationSelectedSoftwareTitle,
+      'walkthrough.activation.switch.poco' => _l10n.walkthroughActivationSwitchPoco,
+      'walkthrough.activation.switch.title' => _l10n.walkthroughActivationSwitchTitle,
+      'walkthrough.ask.poco' => _l10n.walkthroughAskPoco,
+      'walkthrough.brief.divider' => _l10n.walkthroughBriefDivider,
+      'walkthrough.caddy.address.chip.https' => _l10n.walkthroughCaddyAddressChipHttps,
+      'walkthrough.caddy.address.chip.ip.address' => _l10n.walkthroughCaddyAddressChipIpAddress,
+      'walkthrough.caddy.address.chip.sslip' => _l10n.walkthroughCaddyAddressChipSslip,
+      'walkthrough.caddy.address.poco' => _l10n.walkthroughCaddyAddressPoco,
+      'walkthrough.caddy.address.title' => _l10n.walkthroughCaddyAddressTitle,
+      'walkthrough.caddy.web.entry.chip.caddy' => _l10n.walkthroughCaddyWebEntryChipCaddy,
+      'walkthrough.caddy.web.entry.chip.private.port' => _l10n.walkthroughCaddyWebEntryChipPrivatePort,
+      'walkthrough.caddy.web.entry.poco' => _l10n.walkthroughCaddyWebEntryPoco,
+      'walkthrough.caddy.web.entry.title' => _l10n.walkthroughCaddyWebEntryTitle,
+      'walkthrough.debian.setup.status.chip.failure' => _l10n.walkthroughDebianSetupStatusChipFailure,
+      'walkthrough.debian.setup.status.chip.status' => _l10n.walkthroughDebianSetupStatusChipStatus,
+      'walkthrough.debian.setup.status.poco' => _l10n.walkthroughDebianSetupStatusPoco,
+      'walkthrough.debian.setup.status.title' => _l10n.walkthroughDebianSetupStatusTitle,
+      'walkthrough.nixos.docker.poco' => _l10n.walkthroughNixosDockerPoco,
+      'walkthrough.nixos.docker.rules.poco' => _l10n.walkthroughNixosDockerRulesPoco,
+      'walkthrough.nixos.docker.rules.title' => _l10n.walkthroughNixosDockerRulesTitle,
+      'walkthrough.nixos.docker.title' => _l10n.walkthroughNixosDockerTitle,
+      'walkthrough.nixos.network.chip.docker.rules' => _l10n.walkthroughNixosNetworkChipDockerRules,
+      'walkthrough.nixos.network.chip.ip.versions' => _l10n.walkthroughNixosNetworkChipIpVersions,
+      'walkthrough.nixos.network.chip.ports' => _l10n.walkthroughNixosNetworkChipPorts,
+      'walkthrough.nixos.network.poco' => _l10n.walkthroughNixosNetworkPoco,
+      'walkthrough.nixos.network.title' => _l10n.walkthroughNixosNetworkTitle,
+      'walkthrough.nixos.ssh.poco' => _l10n.walkthroughNixosSshPoco,
+      'walkthrough.nixos.ssh.title' => _l10n.walkthroughNixosSshTitle,
+      'walkthrough.nixos.storage.poco' => _l10n.walkthroughNixosStoragePoco,
+      'walkthrough.nixos.storage.title' => _l10n.walkthroughNixosStorageTitle,
+      'walkthrough.runtime.settings.chip.local.settings' => _l10n.walkthroughRuntimeSettingsChipLocalSettings,
+      'walkthrough.runtime.settings.poco' => _l10n.walkthroughRuntimeSettingsPoco,
+      'walkthrough.runtime.settings.title' => _l10n.walkthroughRuntimeSettingsTitle,
+      'walkthrough.runtime.version.poco' => _l10n.walkthroughRuntimeVersionPoco,
+      'walkthrough.runtime.version.title' => _l10n.walkthroughRuntimeVersionTitle,
+      'walkthrough.server.key.chip.private' => _l10n.walkthroughServerKeyChipPrivate,
+      'walkthrough.server.key.chip.public' => _l10n.walkthroughServerKeyChipPublic,
+      'walkthrough.server.key.chip.ssh' => _l10n.walkthroughServerKeyChipSsh,
+      'walkthrough.server.key.poco' => _l10n.walkthroughServerKeyPoco,
+      'walkthrough.server.key.title' => _l10n.walkthroughServerKeyTitle,
+      'walkthrough.services.cognee.badge' => _l10n.walkthroughServicesCogneeBadge,
+      'walkthrough.services.cognee.poco' => _l10n.walkthroughServicesCogneePoco,
+      'walkthrough.services.cognee.title' => _l10n.walkthroughServicesCogneeTitle,
+      'walkthrough.services.compose.chip.docker.compose' => _l10n.walkthroughServicesComposeChipDockerCompose,
+      'walkthrough.services.compose.chip.private.connections' => _l10n.walkthroughServicesComposeChipPrivateConnections,
+      'walkthrough.services.compose.chip.saved.data' => _l10n.walkthroughServicesComposeChipSavedData,
+      'walkthrough.services.compose.poco' => _l10n.walkthroughServicesComposePoco,
+      'walkthrough.services.compose.title' => _l10n.walkthroughServicesComposeTitle,
+      'walkthrough.services.harnesses.chip.add' => _l10n.walkthroughServicesHarnessesChipAdd,
+      'walkthrough.services.harnesses.chip.harness' => _l10n.walkthroughServicesHarnessesChipHarness,
+      'walkthrough.services.harnesses.chip.workspace' => _l10n.walkthroughServicesHarnessesChipWorkspace,
+      'walkthrough.services.harnesses.title' => _l10n.walkthroughServicesHarnessesTitle,
+      'walkthrough.services.ollama.chip.download' => _l10n.walkthroughServicesOllamaChipDownload,
+      'walkthrough.services.ollama.chip.gpu' => _l10n.walkthroughServicesOllamaChipGpu,
+      'walkthrough.services.ollama.chip.local.model' => _l10n.walkthroughServicesOllamaChipLocalModel,
+      'walkthrough.services.ollama.poco' => _l10n.walkthroughServicesOllamaPoco,
+      'walkthrough.services.ollama.title' => _l10n.walkthroughServicesOllamaTitle,
+      'walkthrough.services.pocket.base.chip.keeps' => _l10n.walkthroughServicesPocketBaseChipKeeps,
+      'walkthrough.services.pocket.base.chip.sign.in' => _l10n.walkthroughServicesPocketBaseChipSignIn,
+      'walkthrough.services.pocket.base.chip.updates' => _l10n.walkthroughServicesPocketBaseChipUpdates,
+      'walkthrough.services.pocket.base.poco' => _l10n.walkthroughServicesPocketBasePoco,
+      'walkthrough.services.pocket.base.title' => _l10n.walkthroughServicesPocketBaseTitle,
+      'walkthrough.services.sql.page.chip.contents' => _l10n.walkthroughServicesSqlPageChipContents,
+      'walkthrough.services.sql.page.chip.start.order' => _l10n.walkthroughServicesSqlPageChipStartOrder,
+      'walkthrough.services.sql.page.poco' => _l10n.walkthroughServicesSqlPagePoco,
+      'walkthrough.services.sql.page.title' => _l10n.walkthroughServicesSqlPageTitle,
+      'walkthrough.services.tools.chip.harness.tools' => _l10n.walkthroughServicesToolsChipHarnessTools,
+      'walkthrough.services.tools.chip.mcp' => _l10n.walkthroughServicesToolsChipMcp,
+      'walkthrough.services.tools.chip.proxy' => _l10n.walkthroughServicesToolsChipProxy,
+      'walkthrough.services.tools.poco' => _l10n.walkthroughServicesToolsPoco,
+      'walkthrough.services.tools.title' => _l10n.walkthroughServicesToolsTitle,
+      'walkthrough.start.pocket.coder.chip.add.harness' => _l10n.walkthroughStartPocketCoderChipAddHarness,
+      'walkthrough.start.pocket.coder.chip.what.starts' => _l10n.walkthroughStartPocketCoderChipWhatStarts,
+      'walkthrough.start.pocket.coder.poco' => _l10n.walkthroughStartPocketCoderPoco,
+      'walkthrough.start.pocket.coder.title' => _l10n.walkthroughStartPocketCoderTitle,
+      'walkthrough.transition.deployment' => _l10n.walkthroughTransitionDeployment,
+      'walkthrough.transition.provisioning' => _l10n.walkthroughTransitionProvisioning,
+      'walkthrough.verified.version.chip.download.failure' => _l10n.walkthroughVerifiedVersionChipDownloadFailure,
+      'walkthrough.verified.version.chip.updates' => _l10n.walkthroughVerifiedVersionChipUpdates,
+      'walkthrough.verified.version.chip.verification' => _l10n.walkthroughVerifiedVersionChipVerification,
+      'walkthrough.verified.version.poco' => _l10n.walkthroughVerifiedVersionPoco,
+      'walkthrough.verified.version.title' => _l10n.walkthroughVerifiedVersionTitle,
 
       // Parameterized keys
       'agent.config.delete.confirm.body' => _l10n.agentConfigDeleteConfirmBody(args?['name'] as String? ?? ''),
       'agent.config.dialog.title' => _l10n.agentConfigDialogTitle(args?['name'] as String? ?? ''),
       'agent.config.error.prefix' => _l10n.agentConfigErrorPrefix(args?['error'] as String? ?? ''),
       'agent.dialog.title' => _l10n.agentDialogTitle(args?['name'] as String? ?? ''),
-       'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
-       'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
-       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
+      'brief.label' => _l10n.briefLabel(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
+      'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
+      'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
+      'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
       'deployment.sync.attempt' => _l10n.deploymentSyncAttempt(args?['attempt'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'home.error.prefix' => _l10n.homeErrorPrefix(args?['error'] as String? ?? ''),
@@ -465,8 +614,15 @@ class L10nKeyResolver {
       'mcp.purpose.label' => _l10n.mcpPurposeLabel(args?['reason'] as String? ?? ''),
       'mcp.update.config.dialog.title' => _l10n.mcpUpdateConfigDialogTitle(args?['name'] as String? ?? ''),
       'notification.signal.received' => _l10n.notificationSignalReceived(args?['title'] as String? ?? ''),
+      'onboarding.failure.connection.poco' => _l10n.onboardingFailureConnectionPoco(args?['providerName'] as String? ?? ''),
       'onboarding.harness.login.title' => _l10n.onboardingHarnessLoginTitle(args?['provider'] as String? ?? ''),
       'onboarding.open.chat.failed' => _l10n.onboardingOpenChatFailed(args?['error'] as String? ?? ''),
+      'onboarding.os.debian.description' => _l10n.onboardingOsDebianDescription(args?['minutes'] as int? ?? 0),
+      'onboarding.os.nixos.description' => _l10n.onboardingOsNixosDescription(args?['minutes'] as int? ?? 0),
+      'onboarding.plan.poco' => _l10n.onboardingPlanPoco(args?['providerName'] as String? ?? ''),
+      'onboarding.provider.authorization.action' => _l10n.onboardingProviderAuthorizationAction(args?['providerName'] as String? ?? ''),
+      'onboarding.review.poco' => _l10n.onboardingReviewPoco(args?['providerName'] as String? ?? ''),
+      'onboarding.trial.poco' => _l10n.onboardingTrialPoco(args?['trialDuration'] as String? ?? ''),
       'permission.requesting.label' => _l10n.permissionRequestingLabel(args?['source'] as String? ?? ''),
       'provider.screen.add.key.body' => _l10n.providerScreenAddKeyBody(args?['provider'] as String? ?? ''),
       'provider.screen.add.key.title' => _l10n.providerScreenAddKeyTitle(args?['provider'] as String? ?? ''),
@@ -474,6 +630,10 @@ class L10nKeyResolver {
       'scheduler.edit.dialog.title' => _l10n.schedulerEditDialogTitle(args?['name'] as String? ?? ''),
       'skills.edit.dialog.title' => _l10n.skillsEditDialogTitle(args?['name'] as String? ?? ''),
       'terminal.ssh.link' => _l10n.terminalSshLink(args?['host'] as String? ?? '', args?['port'] as String? ?? ''),
+      'walkthrough.header' => _l10n.walkthroughHeader(args?['os'] as String? ?? '', args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
+      'walkthrough.label' => _l10n.walkthroughLabel(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
+      'walkthrough.progress' => _l10n.walkthroughProgress(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0, args?['briefing'] as String? ?? ''),
+      'walkthrough.services.harnesses.poco' => _l10n.walkthroughServicesHarnessesPoco(args?['selectedHarnesses'] as String? ?? ''),
 
       _ => null,
     };
@@ -544,6 +704,8 @@ class L10nKeyResolver {
     'boot.poco.intro',
     'boot.systems.nominal',
     'boot.welcome.back',
+    'brief.label',
+    'chat.command.output',
     'chat.commander.role',
     'chat.created',
     'chat.decline',
@@ -723,39 +885,103 @@ class L10nKeyResolver {
     'onboarding.create.server',
     'onboarding.deploy',
     'onboarding.deploy.title',
+    'onboarding.docker.intro.action.start',
+    'onboarding.docker.intro.chip.component',
+    'onboarding.docker.intro.chip.connections',
+    'onboarding.docker.intro.chip.container',
+    'onboarding.docker.intro.chip.saved.data',
+    'onboarding.docker.intro.eyebrow',
+    'onboarding.docker.intro.poco',
+    'onboarding.docker.intro.title',
     'onboarding.email',
     'onboarding.email.hint',
     'onboarding.email.hint.short',
     'onboarding.existing.server',
+    'onboarding.failure.action.back.to.setup',
+    'onboarding.failure.action.retry.connection',
+    'onboarding.failure.action.technical.details',
+    'onboarding.failure.action.view.server.details',
+    'onboarding.failure.connection.poco',
+    'onboarding.failure.create.poco',
     'onboarding.harness.login.title',
     'onboarding.harness.not.found',
+    'onboarding.harness.poco',
+    'onboarding.harness.title',
     'onboarding.home.server',
     'onboarding.identity.label',
+    'onboarding.intent.chip.cloud.models',
+    'onboarding.intent.chip.local.models',
+    'onboarding.intent.poco',
     'onboarding.login',
+    'onboarding.no.server.chip.existing',
+    'onboarding.no.server.chip.new',
+    'onboarding.no.server.looking.poco',
+    'onboarding.no.server.poco',
     'onboarding.open.authorization',
     'onboarding.open.chat.failed',
+    'onboarding.orientation.action.continue',
+    'onboarding.orientation.action.skip',
+    'onboarding.orientation.title',
+    'onboarding.os.debian.description',
+    'onboarding.os.debian.label',
+    'onboarding.os.nixos.description',
+    'onboarding.os.nixos.label',
+    'onboarding.os.poco',
+    'onboarding.os.title',
     'onboarding.passphrase.label',
     'onboarding.password',
     'onboarding.password.hint',
+    'onboarding.plan.poco',
+    'onboarding.plan.title',
     'onboarding.pocketbase.admin.email',
     'onboarding.pocketbase.admin.password',
     'onboarding.poco.challenge.message',
     'onboarding.poco.welcome',
     'onboarding.processing',
+    'onboarding.provider.authorization.action',
+    'onboarding.provider.authorization.poco',
+    'onboarding.provider.authorization.title',
+    'onboarding.provider.chip.elestio.coming.soon',
+    'onboarding.provider.chip.linode',
+    'onboarding.provider.poco',
+    'onboarding.provider.title',
+    'onboarding.provisioning.poco',
+    'onboarding.ready.action.login',
+    'onboarding.ready.poco',
+    'onboarding.region.consent.chip.choose.myself',
+    'onboarding.region.consent.chip.use.location',
+    'onboarding.region.consent.poco',
+    'onboarding.region.poco',
+    'onboarding.region.title',
     'onboarding.required.fields',
+    'onboarding.review.action.provision',
+    'onboarding.review.poco',
+    'onboarding.review.title',
     'onboarding.server.connecting',
     'onboarding.server.login.title',
     'onboarding.server.url',
     'onboarding.server.url.hint',
     'onboarding.setup.title',
+    'onboarding.sign.in.poco',
+    'onboarding.sign.in.title',
     'onboarding.submit.code',
     'onboarding.title',
+    'onboarding.trial.chip.not.now',
+    'onboarding.trial.chip.start',
+    'onboarding.trial.poco',
     'permission.error',
     'permission.fetch.failed',
     'permission.patterns.label',
     'permission.requesting.label',
     'permission.signoff.title',
     'permission.update.failed',
+    'pocket.coder.progress.active',
+    'pocket.coder.progress.complete',
+    'pocket.coder.progress.deploy.pocket.coder',
+    'pocket.coder.progress.failed',
+    'pocket.coder.progress.initializing',
+    'pocket.coder.progress.provision.server',
+    'pocket.coder.progress.waiting',
     'poco.lesson.agent.explanation',
     'poco.lesson.agent.title',
     'poco.lesson.compose.start.explanation',
@@ -927,6 +1153,100 @@ class L10nKeyResolver {
     'tool.permissions.tool.label',
     'tool.permissions.tool.name.label',
     'tool.permissions.update.failed',
+    'walkthrough.action.show.concise.code',
+    'walkthrough.action.show.full.code',
+    'walkthrough.activation.health.poco',
+    'walkthrough.activation.health.title',
+    'walkthrough.activation.prepare.poco',
+    'walkthrough.activation.prepare.title',
+    'walkthrough.activation.selected.software.poco',
+    'walkthrough.activation.selected.software.title',
+    'walkthrough.activation.switch.poco',
+    'walkthrough.activation.switch.title',
+    'walkthrough.ask.poco',
+    'walkthrough.brief.divider',
+    'walkthrough.caddy.address.chip.https',
+    'walkthrough.caddy.address.chip.ip.address',
+    'walkthrough.caddy.address.chip.sslip',
+    'walkthrough.caddy.address.poco',
+    'walkthrough.caddy.address.title',
+    'walkthrough.caddy.web.entry.chip.caddy',
+    'walkthrough.caddy.web.entry.chip.private.port',
+    'walkthrough.caddy.web.entry.poco',
+    'walkthrough.caddy.web.entry.title',
+    'walkthrough.debian.setup.status.chip.failure',
+    'walkthrough.debian.setup.status.chip.status',
+    'walkthrough.debian.setup.status.poco',
+    'walkthrough.debian.setup.status.title',
+    'walkthrough.header',
+    'walkthrough.label',
+    'walkthrough.nixos.docker.poco',
+    'walkthrough.nixos.docker.rules.poco',
+    'walkthrough.nixos.docker.rules.title',
+    'walkthrough.nixos.docker.title',
+    'walkthrough.nixos.network.chip.docker.rules',
+    'walkthrough.nixos.network.chip.ip.versions',
+    'walkthrough.nixos.network.chip.ports',
+    'walkthrough.nixos.network.poco',
+    'walkthrough.nixos.network.title',
+    'walkthrough.nixos.ssh.poco',
+    'walkthrough.nixos.ssh.title',
+    'walkthrough.nixos.storage.poco',
+    'walkthrough.nixos.storage.title',
+    'walkthrough.progress',
+    'walkthrough.runtime.settings.chip.local.settings',
+    'walkthrough.runtime.settings.poco',
+    'walkthrough.runtime.settings.title',
+    'walkthrough.runtime.version.poco',
+    'walkthrough.runtime.version.title',
+    'walkthrough.server.key.chip.private',
+    'walkthrough.server.key.chip.public',
+    'walkthrough.server.key.chip.ssh',
+    'walkthrough.server.key.poco',
+    'walkthrough.server.key.title',
+    'walkthrough.services.cognee.badge',
+    'walkthrough.services.cognee.poco',
+    'walkthrough.services.cognee.title',
+    'walkthrough.services.compose.chip.docker.compose',
+    'walkthrough.services.compose.chip.private.connections',
+    'walkthrough.services.compose.chip.saved.data',
+    'walkthrough.services.compose.poco',
+    'walkthrough.services.compose.title',
+    'walkthrough.services.harnesses.chip.add',
+    'walkthrough.services.harnesses.chip.harness',
+    'walkthrough.services.harnesses.chip.workspace',
+    'walkthrough.services.harnesses.poco',
+    'walkthrough.services.harnesses.title',
+    'walkthrough.services.ollama.chip.download',
+    'walkthrough.services.ollama.chip.gpu',
+    'walkthrough.services.ollama.chip.local.model',
+    'walkthrough.services.ollama.poco',
+    'walkthrough.services.ollama.title',
+    'walkthrough.services.pocket.base.chip.keeps',
+    'walkthrough.services.pocket.base.chip.sign.in',
+    'walkthrough.services.pocket.base.chip.updates',
+    'walkthrough.services.pocket.base.poco',
+    'walkthrough.services.pocket.base.title',
+    'walkthrough.services.sql.page.chip.contents',
+    'walkthrough.services.sql.page.chip.start.order',
+    'walkthrough.services.sql.page.poco',
+    'walkthrough.services.sql.page.title',
+    'walkthrough.services.tools.chip.harness.tools',
+    'walkthrough.services.tools.chip.mcp',
+    'walkthrough.services.tools.chip.proxy',
+    'walkthrough.services.tools.poco',
+    'walkthrough.services.tools.title',
+    'walkthrough.start.pocket.coder.chip.add.harness',
+    'walkthrough.start.pocket.coder.chip.what.starts',
+    'walkthrough.start.pocket.coder.poco',
+    'walkthrough.start.pocket.coder.title',
+    'walkthrough.transition.deployment',
+    'walkthrough.transition.provisioning',
+    'walkthrough.verified.version.chip.download.failure',
+    'walkthrough.verified.version.chip.updates',
+    'walkthrough.verified.version.chip.verification',
+    'walkthrough.verified.version.poco',
+    'walkthrough.verified.version.title',
   };
 
   /// Checks if a key is known to this resolver.
@@ -997,6 +1317,8 @@ class L10nKeyResolver {
     'bootPocoIntro': 'boot.poco.intro',
     'bootSystemsNominal': 'boot.systems.nominal',
     'bootWelcomeBack': 'boot.welcome.back',
+    'briefLabel': 'brief.label',
+    'chatCommandOutput': 'chat.command.output',
     'chatCommanderRole': 'chat.commander.role',
     'chatCreated': 'chat.created',
     'chatDecline': 'chat.decline',
@@ -1176,39 +1498,103 @@ class L10nKeyResolver {
     'onboardingCreateServer': 'onboarding.create.server',
     'onboardingDeploy': 'onboarding.deploy',
     'onboardingDeployTitle': 'onboarding.deploy.title',
+    'onboardingDockerIntroActionStart': 'onboarding.docker.intro.action.start',
+    'onboardingDockerIntroChipComponent': 'onboarding.docker.intro.chip.component',
+    'onboardingDockerIntroChipConnections': 'onboarding.docker.intro.chip.connections',
+    'onboardingDockerIntroChipContainer': 'onboarding.docker.intro.chip.container',
+    'onboardingDockerIntroChipSavedData': 'onboarding.docker.intro.chip.saved.data',
+    'onboardingDockerIntroEyebrow': 'onboarding.docker.intro.eyebrow',
+    'onboardingDockerIntroPoco': 'onboarding.docker.intro.poco',
+    'onboardingDockerIntroTitle': 'onboarding.docker.intro.title',
     'onboardingEmail': 'onboarding.email',
     'onboardingEmailHint': 'onboarding.email.hint',
     'onboardingEmailHintShort': 'onboarding.email.hint.short',
     'onboardingExistingServer': 'onboarding.existing.server',
+    'onboardingFailureActionBackToSetup': 'onboarding.failure.action.back.to.setup',
+    'onboardingFailureActionRetryConnection': 'onboarding.failure.action.retry.connection',
+    'onboardingFailureActionTechnicalDetails': 'onboarding.failure.action.technical.details',
+    'onboardingFailureActionViewServerDetails': 'onboarding.failure.action.view.server.details',
+    'onboardingFailureConnectionPoco': 'onboarding.failure.connection.poco',
+    'onboardingFailureCreatePoco': 'onboarding.failure.create.poco',
     'onboardingHarnessLoginTitle': 'onboarding.harness.login.title',
     'onboardingHarnessNotFound': 'onboarding.harness.not.found',
+    'onboardingHarnessPoco': 'onboarding.harness.poco',
+    'onboardingHarnessTitle': 'onboarding.harness.title',
     'onboardingHomeServer': 'onboarding.home.server',
     'onboardingIdentityLabel': 'onboarding.identity.label',
+    'onboardingIntentChipCloudModels': 'onboarding.intent.chip.cloud.models',
+    'onboardingIntentChipLocalModels': 'onboarding.intent.chip.local.models',
+    'onboardingIntentPoco': 'onboarding.intent.poco',
     'onboardingLogin': 'onboarding.login',
+    'onboardingNoServerChipExisting': 'onboarding.no.server.chip.existing',
+    'onboardingNoServerChipNew': 'onboarding.no.server.chip.new',
+    'onboardingNoServerLookingPoco': 'onboarding.no.server.looking.poco',
+    'onboardingNoServerPoco': 'onboarding.no.server.poco',
     'onboardingOpenAuthorization': 'onboarding.open.authorization',
     'onboardingOpenChatFailed': 'onboarding.open.chat.failed',
+    'onboardingOrientationActionContinue': 'onboarding.orientation.action.continue',
+    'onboardingOrientationActionSkip': 'onboarding.orientation.action.skip',
+    'onboardingOrientationTitle': 'onboarding.orientation.title',
+    'onboardingOsDebianDescription': 'onboarding.os.debian.description',
+    'onboardingOsDebianLabel': 'onboarding.os.debian.label',
+    'onboardingOsNixosDescription': 'onboarding.os.nixos.description',
+    'onboardingOsNixosLabel': 'onboarding.os.nixos.label',
+    'onboardingOsPoco': 'onboarding.os.poco',
+    'onboardingOsTitle': 'onboarding.os.title',
     'onboardingPassphraseLabel': 'onboarding.passphrase.label',
     'onboardingPassword': 'onboarding.password',
     'onboardingPasswordHint': 'onboarding.password.hint',
+    'onboardingPlanPoco': 'onboarding.plan.poco',
+    'onboardingPlanTitle': 'onboarding.plan.title',
     'onboardingPocketbaseAdminEmail': 'onboarding.pocketbase.admin.email',
     'onboardingPocketbaseAdminPassword': 'onboarding.pocketbase.admin.password',
     'onboardingPocoChallengeMessage': 'onboarding.poco.challenge.message',
     'onboardingPocoWelcome': 'onboarding.poco.welcome',
     'onboardingProcessing': 'onboarding.processing',
+    'onboardingProviderAuthorizationAction': 'onboarding.provider.authorization.action',
+    'onboardingProviderAuthorizationPoco': 'onboarding.provider.authorization.poco',
+    'onboardingProviderAuthorizationTitle': 'onboarding.provider.authorization.title',
+    'onboardingProviderChipElestioComingSoon': 'onboarding.provider.chip.elestio.coming.soon',
+    'onboardingProviderChipLinode': 'onboarding.provider.chip.linode',
+    'onboardingProviderPoco': 'onboarding.provider.poco',
+    'onboardingProviderTitle': 'onboarding.provider.title',
+    'onboardingProvisioningPoco': 'onboarding.provisioning.poco',
+    'onboardingReadyActionLogin': 'onboarding.ready.action.login',
+    'onboardingReadyPoco': 'onboarding.ready.poco',
+    'onboardingRegionConsentChipChooseMyself': 'onboarding.region.consent.chip.choose.myself',
+    'onboardingRegionConsentChipUseLocation': 'onboarding.region.consent.chip.use.location',
+    'onboardingRegionConsentPoco': 'onboarding.region.consent.poco',
+    'onboardingRegionPoco': 'onboarding.region.poco',
+    'onboardingRegionTitle': 'onboarding.region.title',
     'onboardingRequiredFields': 'onboarding.required.fields',
+    'onboardingReviewActionProvision': 'onboarding.review.action.provision',
+    'onboardingReviewPoco': 'onboarding.review.poco',
+    'onboardingReviewTitle': 'onboarding.review.title',
     'onboardingServerConnecting': 'onboarding.server.connecting',
     'onboardingServerLoginTitle': 'onboarding.server.login.title',
     'onboardingServerUrl': 'onboarding.server.url',
     'onboardingServerUrlHint': 'onboarding.server.url.hint',
     'onboardingSetupTitle': 'onboarding.setup.title',
+    'onboardingSignInPoco': 'onboarding.sign.in.poco',
+    'onboardingSignInTitle': 'onboarding.sign.in.title',
     'onboardingSubmitCode': 'onboarding.submit.code',
     'onboardingTitle': 'onboarding.title',
+    'onboardingTrialChipNotNow': 'onboarding.trial.chip.not.now',
+    'onboardingTrialChipStart': 'onboarding.trial.chip.start',
+    'onboardingTrialPoco': 'onboarding.trial.poco',
     'permissionError': 'permission.error',
     'permissionFetchFailed': 'permission.fetch.failed',
     'permissionPatternsLabel': 'permission.patterns.label',
     'permissionRequestingLabel': 'permission.requesting.label',
     'permissionSignoffTitle': 'permission.signoff.title',
     'permissionUpdateFailed': 'permission.update.failed',
+    'pocketCoderProgressActive': 'pocket.coder.progress.active',
+    'pocketCoderProgressComplete': 'pocket.coder.progress.complete',
+    'pocketCoderProgressDeployPocketCoder': 'pocket.coder.progress.deploy.pocket.coder',
+    'pocketCoderProgressFailed': 'pocket.coder.progress.failed',
+    'pocketCoderProgressInitializing': 'pocket.coder.progress.initializing',
+    'pocketCoderProgressProvisionServer': 'pocket.coder.progress.provision.server',
+    'pocketCoderProgressWaiting': 'pocket.coder.progress.waiting',
     'pocoLessonAgentExplanation': 'poco.lesson.agent.explanation',
     'pocoLessonAgentTitle': 'poco.lesson.agent.title',
     'pocoLessonComposeStartExplanation': 'poco.lesson.compose.start.explanation',
@@ -1380,6 +1766,100 @@ class L10nKeyResolver {
     'toolPermissionsToolLabel': 'tool.permissions.tool.label',
     'toolPermissionsToolNameLabel': 'tool.permissions.tool.name.label',
     'toolPermissionsUpdateFailed': 'tool.permissions.update.failed',
+    'walkthroughActionShowConciseCode': 'walkthrough.action.show.concise.code',
+    'walkthroughActionShowFullCode': 'walkthrough.action.show.full.code',
+    'walkthroughActivationHealthPoco': 'walkthrough.activation.health.poco',
+    'walkthroughActivationHealthTitle': 'walkthrough.activation.health.title',
+    'walkthroughActivationPreparePoco': 'walkthrough.activation.prepare.poco',
+    'walkthroughActivationPrepareTitle': 'walkthrough.activation.prepare.title',
+    'walkthroughActivationSelectedSoftwarePoco': 'walkthrough.activation.selected.software.poco',
+    'walkthroughActivationSelectedSoftwareTitle': 'walkthrough.activation.selected.software.title',
+    'walkthroughActivationSwitchPoco': 'walkthrough.activation.switch.poco',
+    'walkthroughActivationSwitchTitle': 'walkthrough.activation.switch.title',
+    'walkthroughAskPoco': 'walkthrough.ask.poco',
+    'walkthroughBriefDivider': 'walkthrough.brief.divider',
+    'walkthroughCaddyAddressChipHttps': 'walkthrough.caddy.address.chip.https',
+    'walkthroughCaddyAddressChipIpAddress': 'walkthrough.caddy.address.chip.ip.address',
+    'walkthroughCaddyAddressChipSslip': 'walkthrough.caddy.address.chip.sslip',
+    'walkthroughCaddyAddressPoco': 'walkthrough.caddy.address.poco',
+    'walkthroughCaddyAddressTitle': 'walkthrough.caddy.address.title',
+    'walkthroughCaddyWebEntryChipCaddy': 'walkthrough.caddy.web.entry.chip.caddy',
+    'walkthroughCaddyWebEntryChipPrivatePort': 'walkthrough.caddy.web.entry.chip.private.port',
+    'walkthroughCaddyWebEntryPoco': 'walkthrough.caddy.web.entry.poco',
+    'walkthroughCaddyWebEntryTitle': 'walkthrough.caddy.web.entry.title',
+    'walkthroughDebianSetupStatusChipFailure': 'walkthrough.debian.setup.status.chip.failure',
+    'walkthroughDebianSetupStatusChipStatus': 'walkthrough.debian.setup.status.chip.status',
+    'walkthroughDebianSetupStatusPoco': 'walkthrough.debian.setup.status.poco',
+    'walkthroughDebianSetupStatusTitle': 'walkthrough.debian.setup.status.title',
+    'walkthroughHeader': 'walkthrough.header',
+    'walkthroughLabel': 'walkthrough.label',
+    'walkthroughNixosDockerPoco': 'walkthrough.nixos.docker.poco',
+    'walkthroughNixosDockerRulesPoco': 'walkthrough.nixos.docker.rules.poco',
+    'walkthroughNixosDockerRulesTitle': 'walkthrough.nixos.docker.rules.title',
+    'walkthroughNixosDockerTitle': 'walkthrough.nixos.docker.title',
+    'walkthroughNixosNetworkChipDockerRules': 'walkthrough.nixos.network.chip.docker.rules',
+    'walkthroughNixosNetworkChipIpVersions': 'walkthrough.nixos.network.chip.ip.versions',
+    'walkthroughNixosNetworkChipPorts': 'walkthrough.nixos.network.chip.ports',
+    'walkthroughNixosNetworkPoco': 'walkthrough.nixos.network.poco',
+    'walkthroughNixosNetworkTitle': 'walkthrough.nixos.network.title',
+    'walkthroughNixosSshPoco': 'walkthrough.nixos.ssh.poco',
+    'walkthroughNixosSshTitle': 'walkthrough.nixos.ssh.title',
+    'walkthroughNixosStoragePoco': 'walkthrough.nixos.storage.poco',
+    'walkthroughNixosStorageTitle': 'walkthrough.nixos.storage.title',
+    'walkthroughProgress': 'walkthrough.progress',
+    'walkthroughRuntimeSettingsChipLocalSettings': 'walkthrough.runtime.settings.chip.local.settings',
+    'walkthroughRuntimeSettingsPoco': 'walkthrough.runtime.settings.poco',
+    'walkthroughRuntimeSettingsTitle': 'walkthrough.runtime.settings.title',
+    'walkthroughRuntimeVersionPoco': 'walkthrough.runtime.version.poco',
+    'walkthroughRuntimeVersionTitle': 'walkthrough.runtime.version.title',
+    'walkthroughServerKeyChipPrivate': 'walkthrough.server.key.chip.private',
+    'walkthroughServerKeyChipPublic': 'walkthrough.server.key.chip.public',
+    'walkthroughServerKeyChipSsh': 'walkthrough.server.key.chip.ssh',
+    'walkthroughServerKeyPoco': 'walkthrough.server.key.poco',
+    'walkthroughServerKeyTitle': 'walkthrough.server.key.title',
+    'walkthroughServicesCogneeBadge': 'walkthrough.services.cognee.badge',
+    'walkthroughServicesCogneePoco': 'walkthrough.services.cognee.poco',
+    'walkthroughServicesCogneeTitle': 'walkthrough.services.cognee.title',
+    'walkthroughServicesComposeChipDockerCompose': 'walkthrough.services.compose.chip.docker.compose',
+    'walkthroughServicesComposeChipPrivateConnections': 'walkthrough.services.compose.chip.private.connections',
+    'walkthroughServicesComposeChipSavedData': 'walkthrough.services.compose.chip.saved.data',
+    'walkthroughServicesComposePoco': 'walkthrough.services.compose.poco',
+    'walkthroughServicesComposeTitle': 'walkthrough.services.compose.title',
+    'walkthroughServicesHarnessesChipAdd': 'walkthrough.services.harnesses.chip.add',
+    'walkthroughServicesHarnessesChipHarness': 'walkthrough.services.harnesses.chip.harness',
+    'walkthroughServicesHarnessesChipWorkspace': 'walkthrough.services.harnesses.chip.workspace',
+    'walkthroughServicesHarnessesPoco': 'walkthrough.services.harnesses.poco',
+    'walkthroughServicesHarnessesTitle': 'walkthrough.services.harnesses.title',
+    'walkthroughServicesOllamaChipDownload': 'walkthrough.services.ollama.chip.download',
+    'walkthroughServicesOllamaChipGpu': 'walkthrough.services.ollama.chip.gpu',
+    'walkthroughServicesOllamaChipLocalModel': 'walkthrough.services.ollama.chip.local.model',
+    'walkthroughServicesOllamaPoco': 'walkthrough.services.ollama.poco',
+    'walkthroughServicesOllamaTitle': 'walkthrough.services.ollama.title',
+    'walkthroughServicesPocketBaseChipKeeps': 'walkthrough.services.pocket.base.chip.keeps',
+    'walkthroughServicesPocketBaseChipSignIn': 'walkthrough.services.pocket.base.chip.sign.in',
+    'walkthroughServicesPocketBaseChipUpdates': 'walkthrough.services.pocket.base.chip.updates',
+    'walkthroughServicesPocketBasePoco': 'walkthrough.services.pocket.base.poco',
+    'walkthroughServicesPocketBaseTitle': 'walkthrough.services.pocket.base.title',
+    'walkthroughServicesSqlPageChipContents': 'walkthrough.services.sql.page.chip.contents',
+    'walkthroughServicesSqlPageChipStartOrder': 'walkthrough.services.sql.page.chip.start.order',
+    'walkthroughServicesSqlPagePoco': 'walkthrough.services.sql.page.poco',
+    'walkthroughServicesSqlPageTitle': 'walkthrough.services.sql.page.title',
+    'walkthroughServicesToolsChipHarnessTools': 'walkthrough.services.tools.chip.harness.tools',
+    'walkthroughServicesToolsChipMcp': 'walkthrough.services.tools.chip.mcp',
+    'walkthroughServicesToolsChipProxy': 'walkthrough.services.tools.chip.proxy',
+    'walkthroughServicesToolsPoco': 'walkthrough.services.tools.poco',
+    'walkthroughServicesToolsTitle': 'walkthrough.services.tools.title',
+    'walkthroughStartPocketCoderChipAddHarness': 'walkthrough.start.pocket.coder.chip.add.harness',
+    'walkthroughStartPocketCoderChipWhatStarts': 'walkthrough.start.pocket.coder.chip.what.starts',
+    'walkthroughStartPocketCoderPoco': 'walkthrough.start.pocket.coder.poco',
+    'walkthroughStartPocketCoderTitle': 'walkthrough.start.pocket.coder.title',
+    'walkthroughTransitionDeployment': 'walkthrough.transition.deployment',
+    'walkthroughTransitionProvisioning': 'walkthrough.transition.provisioning',
+    'walkthroughVerifiedVersionChipDownloadFailure': 'walkthrough.verified.version.chip.download.failure',
+    'walkthroughVerifiedVersionChipUpdates': 'walkthrough.verified.version.chip.updates',
+    'walkthroughVerifiedVersionChipVerification': 'walkthrough.verified.version.chip.verification',
+    'walkthroughVerifiedVersionPoco': 'walkthrough.verified.version.poco',
+    'walkthroughVerifiedVersionTitle': 'walkthrough.verified.version.title',
   };
 
   /// Maps dot-notation keys to ARB camelCase keys.
@@ -1447,6 +1927,8 @@ class L10nKeyResolver {
     'boot.poco.intro': 'bootPocoIntro',
     'boot.systems.nominal': 'bootSystemsNominal',
     'boot.welcome.back': 'bootWelcomeBack',
+    'brief.label': 'briefLabel',
+    'chat.command.output': 'chatCommandOutput',
     'chat.commander.role': 'chatCommanderRole',
     'chat.created': 'chatCreated',
     'chat.decline': 'chatDecline',
@@ -1626,39 +2108,103 @@ class L10nKeyResolver {
     'onboarding.create.server': 'onboardingCreateServer',
     'onboarding.deploy': 'onboardingDeploy',
     'onboarding.deploy.title': 'onboardingDeployTitle',
+    'onboarding.docker.intro.action.start': 'onboardingDockerIntroActionStart',
+    'onboarding.docker.intro.chip.component': 'onboardingDockerIntroChipComponent',
+    'onboarding.docker.intro.chip.connections': 'onboardingDockerIntroChipConnections',
+    'onboarding.docker.intro.chip.container': 'onboardingDockerIntroChipContainer',
+    'onboarding.docker.intro.chip.saved.data': 'onboardingDockerIntroChipSavedData',
+    'onboarding.docker.intro.eyebrow': 'onboardingDockerIntroEyebrow',
+    'onboarding.docker.intro.poco': 'onboardingDockerIntroPoco',
+    'onboarding.docker.intro.title': 'onboardingDockerIntroTitle',
     'onboarding.email': 'onboardingEmail',
     'onboarding.email.hint': 'onboardingEmailHint',
     'onboarding.email.hint.short': 'onboardingEmailHintShort',
     'onboarding.existing.server': 'onboardingExistingServer',
+    'onboarding.failure.action.back.to.setup': 'onboardingFailureActionBackToSetup',
+    'onboarding.failure.action.retry.connection': 'onboardingFailureActionRetryConnection',
+    'onboarding.failure.action.technical.details': 'onboardingFailureActionTechnicalDetails',
+    'onboarding.failure.action.view.server.details': 'onboardingFailureActionViewServerDetails',
+    'onboarding.failure.connection.poco': 'onboardingFailureConnectionPoco',
+    'onboarding.failure.create.poco': 'onboardingFailureCreatePoco',
     'onboarding.harness.login.title': 'onboardingHarnessLoginTitle',
     'onboarding.harness.not.found': 'onboardingHarnessNotFound',
+    'onboarding.harness.poco': 'onboardingHarnessPoco',
+    'onboarding.harness.title': 'onboardingHarnessTitle',
     'onboarding.home.server': 'onboardingHomeServer',
     'onboarding.identity.label': 'onboardingIdentityLabel',
+    'onboarding.intent.chip.cloud.models': 'onboardingIntentChipCloudModels',
+    'onboarding.intent.chip.local.models': 'onboardingIntentChipLocalModels',
+    'onboarding.intent.poco': 'onboardingIntentPoco',
     'onboarding.login': 'onboardingLogin',
+    'onboarding.no.server.chip.existing': 'onboardingNoServerChipExisting',
+    'onboarding.no.server.chip.new': 'onboardingNoServerChipNew',
+    'onboarding.no.server.looking.poco': 'onboardingNoServerLookingPoco',
+    'onboarding.no.server.poco': 'onboardingNoServerPoco',
     'onboarding.open.authorization': 'onboardingOpenAuthorization',
     'onboarding.open.chat.failed': 'onboardingOpenChatFailed',
+    'onboarding.orientation.action.continue': 'onboardingOrientationActionContinue',
+    'onboarding.orientation.action.skip': 'onboardingOrientationActionSkip',
+    'onboarding.orientation.title': 'onboardingOrientationTitle',
+    'onboarding.os.debian.description': 'onboardingOsDebianDescription',
+    'onboarding.os.debian.label': 'onboardingOsDebianLabel',
+    'onboarding.os.nixos.description': 'onboardingOsNixosDescription',
+    'onboarding.os.nixos.label': 'onboardingOsNixosLabel',
+    'onboarding.os.poco': 'onboardingOsPoco',
+    'onboarding.os.title': 'onboardingOsTitle',
     'onboarding.passphrase.label': 'onboardingPassphraseLabel',
     'onboarding.password': 'onboardingPassword',
     'onboarding.password.hint': 'onboardingPasswordHint',
+    'onboarding.plan.poco': 'onboardingPlanPoco',
+    'onboarding.plan.title': 'onboardingPlanTitle',
     'onboarding.pocketbase.admin.email': 'onboardingPocketbaseAdminEmail',
     'onboarding.pocketbase.admin.password': 'onboardingPocketbaseAdminPassword',
     'onboarding.poco.challenge.message': 'onboardingPocoChallengeMessage',
     'onboarding.poco.welcome': 'onboardingPocoWelcome',
     'onboarding.processing': 'onboardingProcessing',
+    'onboarding.provider.authorization.action': 'onboardingProviderAuthorizationAction',
+    'onboarding.provider.authorization.poco': 'onboardingProviderAuthorizationPoco',
+    'onboarding.provider.authorization.title': 'onboardingProviderAuthorizationTitle',
+    'onboarding.provider.chip.elestio.coming.soon': 'onboardingProviderChipElestioComingSoon',
+    'onboarding.provider.chip.linode': 'onboardingProviderChipLinode',
+    'onboarding.provider.poco': 'onboardingProviderPoco',
+    'onboarding.provider.title': 'onboardingProviderTitle',
+    'onboarding.provisioning.poco': 'onboardingProvisioningPoco',
+    'onboarding.ready.action.login': 'onboardingReadyActionLogin',
+    'onboarding.ready.poco': 'onboardingReadyPoco',
+    'onboarding.region.consent.chip.choose.myself': 'onboardingRegionConsentChipChooseMyself',
+    'onboarding.region.consent.chip.use.location': 'onboardingRegionConsentChipUseLocation',
+    'onboarding.region.consent.poco': 'onboardingRegionConsentPoco',
+    'onboarding.region.poco': 'onboardingRegionPoco',
+    'onboarding.region.title': 'onboardingRegionTitle',
     'onboarding.required.fields': 'onboardingRequiredFields',
+    'onboarding.review.action.provision': 'onboardingReviewActionProvision',
+    'onboarding.review.poco': 'onboardingReviewPoco',
+    'onboarding.review.title': 'onboardingReviewTitle',
     'onboarding.server.connecting': 'onboardingServerConnecting',
     'onboarding.server.login.title': 'onboardingServerLoginTitle',
     'onboarding.server.url': 'onboardingServerUrl',
     'onboarding.server.url.hint': 'onboardingServerUrlHint',
     'onboarding.setup.title': 'onboardingSetupTitle',
+    'onboarding.sign.in.poco': 'onboardingSignInPoco',
+    'onboarding.sign.in.title': 'onboardingSignInTitle',
     'onboarding.submit.code': 'onboardingSubmitCode',
     'onboarding.title': 'onboardingTitle',
+    'onboarding.trial.chip.not.now': 'onboardingTrialChipNotNow',
+    'onboarding.trial.chip.start': 'onboardingTrialChipStart',
+    'onboarding.trial.poco': 'onboardingTrialPoco',
     'permission.error': 'permissionError',
     'permission.fetch.failed': 'permissionFetchFailed',
     'permission.patterns.label': 'permissionPatternsLabel',
     'permission.requesting.label': 'permissionRequestingLabel',
     'permission.signoff.title': 'permissionSignoffTitle',
     'permission.update.failed': 'permissionUpdateFailed',
+    'pocket.coder.progress.active': 'pocketCoderProgressActive',
+    'pocket.coder.progress.complete': 'pocketCoderProgressComplete',
+    'pocket.coder.progress.deploy.pocket.coder': 'pocketCoderProgressDeployPocketCoder',
+    'pocket.coder.progress.failed': 'pocketCoderProgressFailed',
+    'pocket.coder.progress.initializing': 'pocketCoderProgressInitializing',
+    'pocket.coder.progress.provision.server': 'pocketCoderProgressProvisionServer',
+    'pocket.coder.progress.waiting': 'pocketCoderProgressWaiting',
     'poco.lesson.agent.explanation': 'pocoLessonAgentExplanation',
     'poco.lesson.agent.title': 'pocoLessonAgentTitle',
     'poco.lesson.compose.start.explanation': 'pocoLessonComposeStartExplanation',
@@ -1830,6 +2376,100 @@ class L10nKeyResolver {
     'tool.permissions.tool.label': 'toolPermissionsToolLabel',
     'tool.permissions.tool.name.label': 'toolPermissionsToolNameLabel',
     'tool.permissions.update.failed': 'toolPermissionsUpdateFailed',
+    'walkthrough.action.show.concise.code': 'walkthroughActionShowConciseCode',
+    'walkthrough.action.show.full.code': 'walkthroughActionShowFullCode',
+    'walkthrough.activation.health.poco': 'walkthroughActivationHealthPoco',
+    'walkthrough.activation.health.title': 'walkthroughActivationHealthTitle',
+    'walkthrough.activation.prepare.poco': 'walkthroughActivationPreparePoco',
+    'walkthrough.activation.prepare.title': 'walkthroughActivationPrepareTitle',
+    'walkthrough.activation.selected.software.poco': 'walkthroughActivationSelectedSoftwarePoco',
+    'walkthrough.activation.selected.software.title': 'walkthroughActivationSelectedSoftwareTitle',
+    'walkthrough.activation.switch.poco': 'walkthroughActivationSwitchPoco',
+    'walkthrough.activation.switch.title': 'walkthroughActivationSwitchTitle',
+    'walkthrough.ask.poco': 'walkthroughAskPoco',
+    'walkthrough.brief.divider': 'walkthroughBriefDivider',
+    'walkthrough.caddy.address.chip.https': 'walkthroughCaddyAddressChipHttps',
+    'walkthrough.caddy.address.chip.ip.address': 'walkthroughCaddyAddressChipIpAddress',
+    'walkthrough.caddy.address.chip.sslip': 'walkthroughCaddyAddressChipSslip',
+    'walkthrough.caddy.address.poco': 'walkthroughCaddyAddressPoco',
+    'walkthrough.caddy.address.title': 'walkthroughCaddyAddressTitle',
+    'walkthrough.caddy.web.entry.chip.caddy': 'walkthroughCaddyWebEntryChipCaddy',
+    'walkthrough.caddy.web.entry.chip.private.port': 'walkthroughCaddyWebEntryChipPrivatePort',
+    'walkthrough.caddy.web.entry.poco': 'walkthroughCaddyWebEntryPoco',
+    'walkthrough.caddy.web.entry.title': 'walkthroughCaddyWebEntryTitle',
+    'walkthrough.debian.setup.status.chip.failure': 'walkthroughDebianSetupStatusChipFailure',
+    'walkthrough.debian.setup.status.chip.status': 'walkthroughDebianSetupStatusChipStatus',
+    'walkthrough.debian.setup.status.poco': 'walkthroughDebianSetupStatusPoco',
+    'walkthrough.debian.setup.status.title': 'walkthroughDebianSetupStatusTitle',
+    'walkthrough.header': 'walkthroughHeader',
+    'walkthrough.label': 'walkthroughLabel',
+    'walkthrough.nixos.docker.poco': 'walkthroughNixosDockerPoco',
+    'walkthrough.nixos.docker.rules.poco': 'walkthroughNixosDockerRulesPoco',
+    'walkthrough.nixos.docker.rules.title': 'walkthroughNixosDockerRulesTitle',
+    'walkthrough.nixos.docker.title': 'walkthroughNixosDockerTitle',
+    'walkthrough.nixos.network.chip.docker.rules': 'walkthroughNixosNetworkChipDockerRules',
+    'walkthrough.nixos.network.chip.ip.versions': 'walkthroughNixosNetworkChipIpVersions',
+    'walkthrough.nixos.network.chip.ports': 'walkthroughNixosNetworkChipPorts',
+    'walkthrough.nixos.network.poco': 'walkthroughNixosNetworkPoco',
+    'walkthrough.nixos.network.title': 'walkthroughNixosNetworkTitle',
+    'walkthrough.nixos.ssh.poco': 'walkthroughNixosSshPoco',
+    'walkthrough.nixos.ssh.title': 'walkthroughNixosSshTitle',
+    'walkthrough.nixos.storage.poco': 'walkthroughNixosStoragePoco',
+    'walkthrough.nixos.storage.title': 'walkthroughNixosStorageTitle',
+    'walkthrough.progress': 'walkthroughProgress',
+    'walkthrough.runtime.settings.chip.local.settings': 'walkthroughRuntimeSettingsChipLocalSettings',
+    'walkthrough.runtime.settings.poco': 'walkthroughRuntimeSettingsPoco',
+    'walkthrough.runtime.settings.title': 'walkthroughRuntimeSettingsTitle',
+    'walkthrough.runtime.version.poco': 'walkthroughRuntimeVersionPoco',
+    'walkthrough.runtime.version.title': 'walkthroughRuntimeVersionTitle',
+    'walkthrough.server.key.chip.private': 'walkthroughServerKeyChipPrivate',
+    'walkthrough.server.key.chip.public': 'walkthroughServerKeyChipPublic',
+    'walkthrough.server.key.chip.ssh': 'walkthroughServerKeyChipSsh',
+    'walkthrough.server.key.poco': 'walkthroughServerKeyPoco',
+    'walkthrough.server.key.title': 'walkthroughServerKeyTitle',
+    'walkthrough.services.cognee.badge': 'walkthroughServicesCogneeBadge',
+    'walkthrough.services.cognee.poco': 'walkthroughServicesCogneePoco',
+    'walkthrough.services.cognee.title': 'walkthroughServicesCogneeTitle',
+    'walkthrough.services.compose.chip.docker.compose': 'walkthroughServicesComposeChipDockerCompose',
+    'walkthrough.services.compose.chip.private.connections': 'walkthroughServicesComposeChipPrivateConnections',
+    'walkthrough.services.compose.chip.saved.data': 'walkthroughServicesComposeChipSavedData',
+    'walkthrough.services.compose.poco': 'walkthroughServicesComposePoco',
+    'walkthrough.services.compose.title': 'walkthroughServicesComposeTitle',
+    'walkthrough.services.harnesses.chip.add': 'walkthroughServicesHarnessesChipAdd',
+    'walkthrough.services.harnesses.chip.harness': 'walkthroughServicesHarnessesChipHarness',
+    'walkthrough.services.harnesses.chip.workspace': 'walkthroughServicesHarnessesChipWorkspace',
+    'walkthrough.services.harnesses.poco': 'walkthroughServicesHarnessesPoco',
+    'walkthrough.services.harnesses.title': 'walkthroughServicesHarnessesTitle',
+    'walkthrough.services.ollama.chip.download': 'walkthroughServicesOllamaChipDownload',
+    'walkthrough.services.ollama.chip.gpu': 'walkthroughServicesOllamaChipGpu',
+    'walkthrough.services.ollama.chip.local.model': 'walkthroughServicesOllamaChipLocalModel',
+    'walkthrough.services.ollama.poco': 'walkthroughServicesOllamaPoco',
+    'walkthrough.services.ollama.title': 'walkthroughServicesOllamaTitle',
+    'walkthrough.services.pocket.base.chip.keeps': 'walkthroughServicesPocketBaseChipKeeps',
+    'walkthrough.services.pocket.base.chip.sign.in': 'walkthroughServicesPocketBaseChipSignIn',
+    'walkthrough.services.pocket.base.chip.updates': 'walkthroughServicesPocketBaseChipUpdates',
+    'walkthrough.services.pocket.base.poco': 'walkthroughServicesPocketBasePoco',
+    'walkthrough.services.pocket.base.title': 'walkthroughServicesPocketBaseTitle',
+    'walkthrough.services.sql.page.chip.contents': 'walkthroughServicesSqlPageChipContents',
+    'walkthrough.services.sql.page.chip.start.order': 'walkthroughServicesSqlPageChipStartOrder',
+    'walkthrough.services.sql.page.poco': 'walkthroughServicesSqlPagePoco',
+    'walkthrough.services.sql.page.title': 'walkthroughServicesSqlPageTitle',
+    'walkthrough.services.tools.chip.harness.tools': 'walkthroughServicesToolsChipHarnessTools',
+    'walkthrough.services.tools.chip.mcp': 'walkthroughServicesToolsChipMcp',
+    'walkthrough.services.tools.chip.proxy': 'walkthroughServicesToolsChipProxy',
+    'walkthrough.services.tools.poco': 'walkthroughServicesToolsPoco',
+    'walkthrough.services.tools.title': 'walkthroughServicesToolsTitle',
+    'walkthrough.start.pocket.coder.chip.add.harness': 'walkthroughStartPocketCoderChipAddHarness',
+    'walkthrough.start.pocket.coder.chip.what.starts': 'walkthroughStartPocketCoderChipWhatStarts',
+    'walkthrough.start.pocket.coder.poco': 'walkthroughStartPocketCoderPoco',
+    'walkthrough.start.pocket.coder.title': 'walkthroughStartPocketCoderTitle',
+    'walkthrough.transition.deployment': 'walkthroughTransitionDeployment',
+    'walkthrough.transition.provisioning': 'walkthroughTransitionProvisioning',
+    'walkthrough.verified.version.chip.download.failure': 'walkthroughVerifiedVersionChipDownloadFailure',
+    'walkthrough.verified.version.chip.updates': 'walkthroughVerifiedVersionChipUpdates',
+    'walkthrough.verified.version.chip.verification': 'walkthroughVerifiedVersionChipVerification',
+    'walkthrough.verified.version.poco': 'walkthroughVerifiedVersionPoco',
+    'walkthrough.verified.version.title': 'walkthroughVerifiedVersionTitle',
   };
 }
 
@@ -1904,6 +2544,8 @@ abstract class L10nKeys {
   static const bootPocoIntro = 'boot.poco.intro';
   static const bootSystemsNominal = 'boot.systems.nominal';
   static const bootWelcomeBack = 'boot.welcome.back';
+  static (String, Map<String, dynamic>) briefLabel(int current, int total) => ('brief.label', {'current': current, 'total': total});
+  static const chatCommandOutput = 'chat.command.output';
   static const chatCommanderRole = 'chat.commander.role';
   static const chatCreated = 'chat.created';
   static const chatDecline = 'chat.decline';
@@ -2083,39 +2725,103 @@ abstract class L10nKeys {
   static const onboardingCreateServer = 'onboarding.create.server';
   static const onboardingDeploy = 'onboarding.deploy';
   static const onboardingDeployTitle = 'onboarding.deploy.title';
+  static const onboardingDockerIntroActionStart = 'onboarding.docker.intro.action.start';
+  static const onboardingDockerIntroChipComponent = 'onboarding.docker.intro.chip.component';
+  static const onboardingDockerIntroChipConnections = 'onboarding.docker.intro.chip.connections';
+  static const onboardingDockerIntroChipContainer = 'onboarding.docker.intro.chip.container';
+  static const onboardingDockerIntroChipSavedData = 'onboarding.docker.intro.chip.saved.data';
+  static const onboardingDockerIntroEyebrow = 'onboarding.docker.intro.eyebrow';
+  static const onboardingDockerIntroPoco = 'onboarding.docker.intro.poco';
+  static const onboardingDockerIntroTitle = 'onboarding.docker.intro.title';
   static const onboardingEmail = 'onboarding.email';
   static const onboardingEmailHint = 'onboarding.email.hint';
   static const onboardingEmailHintShort = 'onboarding.email.hint.short';
   static const onboardingExistingServer = 'onboarding.existing.server';
+  static const onboardingFailureActionBackToSetup = 'onboarding.failure.action.back.to.setup';
+  static const onboardingFailureActionRetryConnection = 'onboarding.failure.action.retry.connection';
+  static const onboardingFailureActionTechnicalDetails = 'onboarding.failure.action.technical.details';
+  static const onboardingFailureActionViewServerDetails = 'onboarding.failure.action.view.server.details';
+  static (String, Map<String, dynamic>) onboardingFailureConnectionPoco(String providerName) => ('onboarding.failure.connection.poco', {'providerName': providerName});
+  static const onboardingFailureCreatePoco = 'onboarding.failure.create.poco';
   static (String, Map<String, dynamic>) onboardingHarnessLoginTitle(String provider) => ('onboarding.harness.login.title', {'provider': provider});
   static const onboardingHarnessNotFound = 'onboarding.harness.not.found';
+  static const onboardingHarnessPoco = 'onboarding.harness.poco';
+  static const onboardingHarnessTitle = 'onboarding.harness.title';
   static const onboardingHomeServer = 'onboarding.home.server';
   static const onboardingIdentityLabel = 'onboarding.identity.label';
+  static const onboardingIntentChipCloudModels = 'onboarding.intent.chip.cloud.models';
+  static const onboardingIntentChipLocalModels = 'onboarding.intent.chip.local.models';
+  static const onboardingIntentPoco = 'onboarding.intent.poco';
   static const onboardingLogin = 'onboarding.login';
+  static const onboardingNoServerChipExisting = 'onboarding.no.server.chip.existing';
+  static const onboardingNoServerChipNew = 'onboarding.no.server.chip.new';
+  static const onboardingNoServerLookingPoco = 'onboarding.no.server.looking.poco';
+  static const onboardingNoServerPoco = 'onboarding.no.server.poco';
   static const onboardingOpenAuthorization = 'onboarding.open.authorization';
   static (String, Map<String, dynamic>) onboardingOpenChatFailed(String error) => ('onboarding.open.chat.failed', {'error': error});
+  static const onboardingOrientationActionContinue = 'onboarding.orientation.action.continue';
+  static const onboardingOrientationActionSkip = 'onboarding.orientation.action.skip';
+  static const onboardingOrientationTitle = 'onboarding.orientation.title';
+  static (String, Map<String, dynamic>) onboardingOsDebianDescription(int minutes) => ('onboarding.os.debian.description', {'minutes': minutes});
+  static const onboardingOsDebianLabel = 'onboarding.os.debian.label';
+  static (String, Map<String, dynamic>) onboardingOsNixosDescription(int minutes) => ('onboarding.os.nixos.description', {'minutes': minutes});
+  static const onboardingOsNixosLabel = 'onboarding.os.nixos.label';
+  static const onboardingOsPoco = 'onboarding.os.poco';
+  static const onboardingOsTitle = 'onboarding.os.title';
   static const onboardingPassphraseLabel = 'onboarding.passphrase.label';
   static const onboardingPassword = 'onboarding.password';
   static const onboardingPasswordHint = 'onboarding.password.hint';
+  static (String, Map<String, dynamic>) onboardingPlanPoco(String providerName) => ('onboarding.plan.poco', {'providerName': providerName});
+  static const onboardingPlanTitle = 'onboarding.plan.title';
   static const onboardingPocketbaseAdminEmail = 'onboarding.pocketbase.admin.email';
   static const onboardingPocketbaseAdminPassword = 'onboarding.pocketbase.admin.password';
   static const onboardingPocoChallengeMessage = 'onboarding.poco.challenge.message';
   static const onboardingPocoWelcome = 'onboarding.poco.welcome';
   static const onboardingProcessing = 'onboarding.processing';
+  static (String, Map<String, dynamic>) onboardingProviderAuthorizationAction(String providerName) => ('onboarding.provider.authorization.action', {'providerName': providerName});
+  static const onboardingProviderAuthorizationPoco = 'onboarding.provider.authorization.poco';
+  static const onboardingProviderAuthorizationTitle = 'onboarding.provider.authorization.title';
+  static const onboardingProviderChipElestioComingSoon = 'onboarding.provider.chip.elestio.coming.soon';
+  static const onboardingProviderChipLinode = 'onboarding.provider.chip.linode';
+  static const onboardingProviderPoco = 'onboarding.provider.poco';
+  static const onboardingProviderTitle = 'onboarding.provider.title';
+  static const onboardingProvisioningPoco = 'onboarding.provisioning.poco';
+  static const onboardingReadyActionLogin = 'onboarding.ready.action.login';
+  static const onboardingReadyPoco = 'onboarding.ready.poco';
+  static const onboardingRegionConsentChipChooseMyself = 'onboarding.region.consent.chip.choose.myself';
+  static const onboardingRegionConsentChipUseLocation = 'onboarding.region.consent.chip.use.location';
+  static const onboardingRegionConsentPoco = 'onboarding.region.consent.poco';
+  static const onboardingRegionPoco = 'onboarding.region.poco';
+  static const onboardingRegionTitle = 'onboarding.region.title';
   static const onboardingRequiredFields = 'onboarding.required.fields';
+  static const onboardingReviewActionProvision = 'onboarding.review.action.provision';
+  static (String, Map<String, dynamic>) onboardingReviewPoco(String providerName) => ('onboarding.review.poco', {'providerName': providerName});
+  static const onboardingReviewTitle = 'onboarding.review.title';
   static const onboardingServerConnecting = 'onboarding.server.connecting';
   static const onboardingServerLoginTitle = 'onboarding.server.login.title';
   static const onboardingServerUrl = 'onboarding.server.url';
   static const onboardingServerUrlHint = 'onboarding.server.url.hint';
   static const onboardingSetupTitle = 'onboarding.setup.title';
+  static const onboardingSignInPoco = 'onboarding.sign.in.poco';
+  static const onboardingSignInTitle = 'onboarding.sign.in.title';
   static const onboardingSubmitCode = 'onboarding.submit.code';
   static const onboardingTitle = 'onboarding.title';
+  static const onboardingTrialChipNotNow = 'onboarding.trial.chip.not.now';
+  static const onboardingTrialChipStart = 'onboarding.trial.chip.start';
+  static (String, Map<String, dynamic>) onboardingTrialPoco(String trialDuration) => ('onboarding.trial.poco', {'trialDuration': trialDuration});
   static const permissionError = 'permission.error';
   static const permissionFetchFailed = 'permission.fetch.failed';
   static const permissionPatternsLabel = 'permission.patterns.label';
   static (String, Map<String, dynamic>) permissionRequestingLabel(String source) => ('permission.requesting.label', {'source': source});
   static const permissionSignoffTitle = 'permission.signoff.title';
   static const permissionUpdateFailed = 'permission.update.failed';
+  static const pocketCoderProgressActive = 'pocket.coder.progress.active';
+  static const pocketCoderProgressComplete = 'pocket.coder.progress.complete';
+  static const pocketCoderProgressDeployPocketCoder = 'pocket.coder.progress.deploy.pocket.coder';
+  static const pocketCoderProgressFailed = 'pocket.coder.progress.failed';
+  static const pocketCoderProgressInitializing = 'pocket.coder.progress.initializing';
+  static const pocketCoderProgressProvisionServer = 'pocket.coder.progress.provision.server';
+  static const pocketCoderProgressWaiting = 'pocket.coder.progress.waiting';
   static const pocoLessonAgentExplanation = 'poco.lesson.agent.explanation';
   static const pocoLessonAgentTitle = 'poco.lesson.agent.title';
   static const pocoLessonComposeStartExplanation = 'poco.lesson.compose.start.explanation';
@@ -2287,4 +2993,98 @@ abstract class L10nKeys {
   static const toolPermissionsToolLabel = 'tool.permissions.tool.label';
   static const toolPermissionsToolNameLabel = 'tool.permissions.tool.name.label';
   static const toolPermissionsUpdateFailed = 'tool.permissions.update.failed';
+  static const walkthroughActionShowConciseCode = 'walkthrough.action.show.concise.code';
+  static const walkthroughActionShowFullCode = 'walkthrough.action.show.full.code';
+  static const walkthroughActivationHealthPoco = 'walkthrough.activation.health.poco';
+  static const walkthroughActivationHealthTitle = 'walkthrough.activation.health.title';
+  static const walkthroughActivationPreparePoco = 'walkthrough.activation.prepare.poco';
+  static const walkthroughActivationPrepareTitle = 'walkthrough.activation.prepare.title';
+  static const walkthroughActivationSelectedSoftwarePoco = 'walkthrough.activation.selected.software.poco';
+  static const walkthroughActivationSelectedSoftwareTitle = 'walkthrough.activation.selected.software.title';
+  static const walkthroughActivationSwitchPoco = 'walkthrough.activation.switch.poco';
+  static const walkthroughActivationSwitchTitle = 'walkthrough.activation.switch.title';
+  static const walkthroughAskPoco = 'walkthrough.ask.poco';
+  static const walkthroughBriefDivider = 'walkthrough.brief.divider';
+  static const walkthroughCaddyAddressChipHttps = 'walkthrough.caddy.address.chip.https';
+  static const walkthroughCaddyAddressChipIpAddress = 'walkthrough.caddy.address.chip.ip.address';
+  static const walkthroughCaddyAddressChipSslip = 'walkthrough.caddy.address.chip.sslip';
+  static const walkthroughCaddyAddressPoco = 'walkthrough.caddy.address.poco';
+  static const walkthroughCaddyAddressTitle = 'walkthrough.caddy.address.title';
+  static const walkthroughCaddyWebEntryChipCaddy = 'walkthrough.caddy.web.entry.chip.caddy';
+  static const walkthroughCaddyWebEntryChipPrivatePort = 'walkthrough.caddy.web.entry.chip.private.port';
+  static const walkthroughCaddyWebEntryPoco = 'walkthrough.caddy.web.entry.poco';
+  static const walkthroughCaddyWebEntryTitle = 'walkthrough.caddy.web.entry.title';
+  static const walkthroughDebianSetupStatusChipFailure = 'walkthrough.debian.setup.status.chip.failure';
+  static const walkthroughDebianSetupStatusChipStatus = 'walkthrough.debian.setup.status.chip.status';
+  static const walkthroughDebianSetupStatusPoco = 'walkthrough.debian.setup.status.poco';
+  static const walkthroughDebianSetupStatusTitle = 'walkthrough.debian.setup.status.title';
+  static (String, Map<String, dynamic>) walkthroughHeader(String os, int current, int total) => ('walkthrough.header', {'os': os, 'current': current, 'total': total});
+  static (String, Map<String, dynamic>) walkthroughLabel(int current, int total) => ('walkthrough.label', {'current': current, 'total': total});
+  static const walkthroughNixosDockerPoco = 'walkthrough.nixos.docker.poco';
+  static const walkthroughNixosDockerRulesPoco = 'walkthrough.nixos.docker.rules.poco';
+  static const walkthroughNixosDockerRulesTitle = 'walkthrough.nixos.docker.rules.title';
+  static const walkthroughNixosDockerTitle = 'walkthrough.nixos.docker.title';
+  static const walkthroughNixosNetworkChipDockerRules = 'walkthrough.nixos.network.chip.docker.rules';
+  static const walkthroughNixosNetworkChipIpVersions = 'walkthrough.nixos.network.chip.ip.versions';
+  static const walkthroughNixosNetworkChipPorts = 'walkthrough.nixos.network.chip.ports';
+  static const walkthroughNixosNetworkPoco = 'walkthrough.nixos.network.poco';
+  static const walkthroughNixosNetworkTitle = 'walkthrough.nixos.network.title';
+  static const walkthroughNixosSshPoco = 'walkthrough.nixos.ssh.poco';
+  static const walkthroughNixosSshTitle = 'walkthrough.nixos.ssh.title';
+  static const walkthroughNixosStoragePoco = 'walkthrough.nixos.storage.poco';
+  static const walkthroughNixosStorageTitle = 'walkthrough.nixos.storage.title';
+  static (String, Map<String, dynamic>) walkthroughProgress(int current, int total, String briefing) => ('walkthrough.progress', {'current': current, 'total': total, 'briefing': briefing});
+  static const walkthroughRuntimeSettingsChipLocalSettings = 'walkthrough.runtime.settings.chip.local.settings';
+  static const walkthroughRuntimeSettingsPoco = 'walkthrough.runtime.settings.poco';
+  static const walkthroughRuntimeSettingsTitle = 'walkthrough.runtime.settings.title';
+  static const walkthroughRuntimeVersionPoco = 'walkthrough.runtime.version.poco';
+  static const walkthroughRuntimeVersionTitle = 'walkthrough.runtime.version.title';
+  static const walkthroughServerKeyChipPrivate = 'walkthrough.server.key.chip.private';
+  static const walkthroughServerKeyChipPublic = 'walkthrough.server.key.chip.public';
+  static const walkthroughServerKeyChipSsh = 'walkthrough.server.key.chip.ssh';
+  static const walkthroughServerKeyPoco = 'walkthrough.server.key.poco';
+  static const walkthroughServerKeyTitle = 'walkthrough.server.key.title';
+  static const walkthroughServicesCogneeBadge = 'walkthrough.services.cognee.badge';
+  static const walkthroughServicesCogneePoco = 'walkthrough.services.cognee.poco';
+  static const walkthroughServicesCogneeTitle = 'walkthrough.services.cognee.title';
+  static const walkthroughServicesComposeChipDockerCompose = 'walkthrough.services.compose.chip.docker.compose';
+  static const walkthroughServicesComposeChipPrivateConnections = 'walkthrough.services.compose.chip.private.connections';
+  static const walkthroughServicesComposeChipSavedData = 'walkthrough.services.compose.chip.saved.data';
+  static const walkthroughServicesComposePoco = 'walkthrough.services.compose.poco';
+  static const walkthroughServicesComposeTitle = 'walkthrough.services.compose.title';
+  static const walkthroughServicesHarnessesChipAdd = 'walkthrough.services.harnesses.chip.add';
+  static const walkthroughServicesHarnessesChipHarness = 'walkthrough.services.harnesses.chip.harness';
+  static const walkthroughServicesHarnessesChipWorkspace = 'walkthrough.services.harnesses.chip.workspace';
+  static (String, Map<String, dynamic>) walkthroughServicesHarnessesPoco(String selectedHarnesses) => ('walkthrough.services.harnesses.poco', {'selectedHarnesses': selectedHarnesses});
+  static const walkthroughServicesHarnessesTitle = 'walkthrough.services.harnesses.title';
+  static const walkthroughServicesOllamaChipDownload = 'walkthrough.services.ollama.chip.download';
+  static const walkthroughServicesOllamaChipGpu = 'walkthrough.services.ollama.chip.gpu';
+  static const walkthroughServicesOllamaChipLocalModel = 'walkthrough.services.ollama.chip.local.model';
+  static const walkthroughServicesOllamaPoco = 'walkthrough.services.ollama.poco';
+  static const walkthroughServicesOllamaTitle = 'walkthrough.services.ollama.title';
+  static const walkthroughServicesPocketBaseChipKeeps = 'walkthrough.services.pocket.base.chip.keeps';
+  static const walkthroughServicesPocketBaseChipSignIn = 'walkthrough.services.pocket.base.chip.sign.in';
+  static const walkthroughServicesPocketBaseChipUpdates = 'walkthrough.services.pocket.base.chip.updates';
+  static const walkthroughServicesPocketBasePoco = 'walkthrough.services.pocket.base.poco';
+  static const walkthroughServicesPocketBaseTitle = 'walkthrough.services.pocket.base.title';
+  static const walkthroughServicesSqlPageChipContents = 'walkthrough.services.sql.page.chip.contents';
+  static const walkthroughServicesSqlPageChipStartOrder = 'walkthrough.services.sql.page.chip.start.order';
+  static const walkthroughServicesSqlPagePoco = 'walkthrough.services.sql.page.poco';
+  static const walkthroughServicesSqlPageTitle = 'walkthrough.services.sql.page.title';
+  static const walkthroughServicesToolsChipHarnessTools = 'walkthrough.services.tools.chip.harness.tools';
+  static const walkthroughServicesToolsChipMcp = 'walkthrough.services.tools.chip.mcp';
+  static const walkthroughServicesToolsChipProxy = 'walkthrough.services.tools.chip.proxy';
+  static const walkthroughServicesToolsPoco = 'walkthrough.services.tools.poco';
+  static const walkthroughServicesToolsTitle = 'walkthrough.services.tools.title';
+  static const walkthroughStartPocketCoderChipAddHarness = 'walkthrough.start.pocket.coder.chip.add.harness';
+  static const walkthroughStartPocketCoderChipWhatStarts = 'walkthrough.start.pocket.coder.chip.what.starts';
+  static const walkthroughStartPocketCoderPoco = 'walkthrough.start.pocket.coder.poco';
+  static const walkthroughStartPocketCoderTitle = 'walkthrough.start.pocket.coder.title';
+  static const walkthroughTransitionDeployment = 'walkthrough.transition.deployment';
+  static const walkthroughTransitionProvisioning = 'walkthrough.transition.provisioning';
+  static const walkthroughVerifiedVersionChipDownloadFailure = 'walkthrough.verified.version.chip.download.failure';
+  static const walkthroughVerifiedVersionChipUpdates = 'walkthrough.verified.version.chip.updates';
+  static const walkthroughVerifiedVersionChipVerification = 'walkthrough.verified.version.chip.verification';
+  static const walkthroughVerifiedVersionPoco = 'walkthrough.verified.version.poco';
+  static const walkthroughVerifiedVersionTitle = 'walkthrough.verified.version.title';
 }

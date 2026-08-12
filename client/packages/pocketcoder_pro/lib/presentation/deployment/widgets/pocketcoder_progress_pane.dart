@@ -16,12 +16,14 @@ class PocketCoderProgressPhase {
     required this.progress,
     required this.currentStep,
     required this.state,
+    this.progressText,
   });
 
   final String label;
   final double progress;
   final String currentStep;
   final PocketCoderProgressPhaseState state;
+  final String? progressText;
 }
 
 /// Compact CLI-style status pane for the two real PocketCoder phases.
@@ -101,7 +103,7 @@ class _PocketCoderProgressPhaseView extends StatelessWidget {
               ),
             ),
             TerminalText.tiny(
-              '${(progress * 100).round()}%',
+              phase.progressText ?? '${(progress * 100).round()}%',
               alpha: phase.state == PocketCoderProgressPhaseState.waiting
                   ? 0.45
                   : 0.8,

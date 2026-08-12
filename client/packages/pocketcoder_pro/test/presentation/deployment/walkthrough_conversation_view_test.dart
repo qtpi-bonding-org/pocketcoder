@@ -74,4 +74,73 @@ void main() {
     );
     expect(find.text('BRIEF'), findsOneWidget);
   });
+
+  testWidgets('renders and selects prepared FAQ prompts', (tester) async {
+    WalkthroughFaqPrompt? selected;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: WalkthroughConversationView(
+            progressLabel: 'WALKTHROUGH 01 / 03 · BRIEF 01 / 02',
+            briefTitle: 'Verified release',
+            entries: const [],
+            snippet: const SizedBox.shrink(),
+            suggestions: const [],
+            onSuggestionSelected: (_) {},
+            faqPrompts: const [
+              WalkthroughFaqPrompt(
+                question: 'What does verified mean?',
+                answer: 'The release matches its expected fingerprint.',
+              ),
+            ],
+            onFaqSelected: (prompt) => selected = prompt,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('> WHAT DOES VERIFIED MEAN?'));
+    expect(selected?.answer, 'The release matches its expected fingerprint.');
+  });
+
+  testWidgets('wraps long conversation content on a narrow mobile layout',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: WalkthroughConversationView(
+            progressLabel: 'WALKTHROUGH 05 / 05 · BRIEF 04 / 04',
+            briefTitle:
+                'A deliberately long brief title that must remain readable',
+            entries: const [
+              WalkthroughConversationEntry(
+                speaker: TerminalConversationSpeaker.poco,
+                message:
+                    'This is a long explanation that should wrap naturally on a phone without creating horizontal overflow or clipping the Poco bubble.',
+              ),
+            ],
+            snippet: const SizedBox(
+              height: 420,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text('a very long source line that can scroll safely'),
+              ),
+            ),
+            suggestions: const [],
+            onSuggestionSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
 }

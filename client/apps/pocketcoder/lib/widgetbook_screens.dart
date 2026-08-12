@@ -948,6 +948,22 @@ final _proScreens = <WidgetbookNode>[
             updatedAt: DateTime.utc(2026, 8, 9, 12, 30),
             raw: const {},
           ),
+          progressPane: const PocketCoderProgressPane(
+            provision: PocketCoderProgressPhase(
+              label: 'PROVISION SERVER',
+              progress: 0.8,
+              progressText: 'ACTIVE',
+              currentStep: 'Securing connection',
+              state: PocketCoderProgressPhaseState.running,
+            ),
+            deploy: PocketCoderProgressPhase(
+              label: 'DEPLOY POCKETCODER',
+              progress: 0,
+              progressText: 'WAITING',
+              currentStep: 'Waiting for server',
+              state: PocketCoderProgressPhaseState.waiting,
+            ),
+          ),
           provisioningTour: const SizedBox.shrink(),
           instance: null,
           error: null,
@@ -959,11 +975,62 @@ final _proScreens = <WidgetbookNode>[
           deploymentStatus: OnboardingStage.failed,
           pollingAttempts: 20,
           serverStatusDocument: null,
+          progressPane: const PocketCoderProgressPane(
+            provision: PocketCoderProgressPhase(
+              label: 'PROVISION SERVER',
+              progress: 1,
+              progressText: 'DONE',
+              currentStep: 'Server created',
+              state: PocketCoderProgressPhaseState.complete,
+            ),
+            deploy: PocketCoderProgressPhase(
+              label: 'DEPLOY POCKETCODER',
+              progress: 0,
+              progressText: 'FAILED',
+              currentStep: 'Deployment failed',
+              state: PocketCoderProgressPhaseState.failed,
+            ),
+          ),
           provisioningTour: const SizedBox.shrink(),
           instance: null,
           error: 'Host provisioning timed out',
           onAbort: () {},
           onRetry: () {},
+        ),
+    'full deployment ui': () => ProgressView(
+          status: UiFlowStatus.loading,
+          deploymentStatus: OnboardingStage.fetchingRelease,
+          pollingAttempts: 4,
+          serverStatusDocument: ServerStatusDocument(
+            schema: 1,
+            runId: 'widgetbook-full-run',
+            phase: 'fetching_release',
+            detail: 'fetching verified release',
+            sourceCommit: 'abcdef1234567',
+            updatedAt: DateTime.utc(2026, 8, 9, 12, 30),
+            raw: const {},
+          ),
+          progressPane: const PocketCoderProgressPane(
+            provision: PocketCoderProgressPhase(
+              label: 'PROVISION SERVER',
+              progress: 1,
+              progressText: 'DONE',
+              currentStep: 'Server created',
+              state: PocketCoderProgressPhaseState.complete,
+            ),
+            deploy: PocketCoderProgressPhase(
+              label: 'DEPLOY POCKETCODER',
+              progress: 0.4,
+              progressText: 'ACTIVE',
+              currentStep: 'Fetching verified release',
+              state: PocketCoderProgressPhaseState.running,
+            ),
+          ),
+          provisioningTour: const _FullDeploymentWalkthroughPreview(),
+          instance: null,
+          error: null,
+          onAbort: () {},
+          onRetry: null,
         ),
   }),
   _screen('WalkthroughBrief', {
@@ -1153,7 +1220,73 @@ class _WalkthroughConversationPreview extends StatelessWidget {
           'Can I change them later?',
         ],
         onSuggestionSelected: _ignoreString,
+        faqPrompts: const [
+          WalkthroughFaqPrompt(
+            question: 'Why does Docker need rules?',
+            answer:
+                'Docker keeps container traffic private from the public internet.',
+          ),
+          WalkthroughFaqPrompt(
+            question: 'Can I change them later?',
+            answer:
+                'Yes. PocketCoder keeps these settings in your deployment configuration.',
+          ),
+        ],
+        onFaqSelected: _ignoreFaq,
       ),
+    );
+  }
+
+  static void _ignoreBool(bool value) {}
+
+  static void _ignoreString(String value) {}
+
+  static void _ignoreFaq(WalkthroughFaqPrompt prompt) {}
+}
+
+class _FullDeploymentWalkthroughPreview extends StatelessWidget {
+  const _FullDeploymentWalkthroughPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return WalkthroughConversationView(
+      progressLabel:
+          '${context.l10n.walkthroughLabel(2, 5)} · ${context.l10n.briefLabel(2, 4)}',
+      briefTitle: 'Verified release',
+      walkthroughBoundary: WalkthroughConversationBoundary(
+        label: context.l10n.walkthroughLabel(2, 5),
+        message: context.l10n.walkthroughTransitionDeployment,
+      ),
+      entries: const [
+        WalkthroughConversationEntry(
+          speaker: TerminalConversationSpeaker.poco,
+          message:
+              'The server is fetching the exact release selected for this deployment.',
+        ),
+        WalkthroughConversationEntry(
+          speaker: TerminalConversationSpeaker.user,
+          message: 'Show me what is being verified.',
+        ),
+      ],
+      snippet: const WalkthroughSnippet(
+        previewCode: 'sha256sum pocketcoder-release.tar.gz',
+        expandedCode:
+            'sha256sum pocketcoder-release.tar.gz\nexpected=verified-release-sha256\ntest "\$actual" = "\$expected"',
+        sourceLabel: 'activate-release.sh:18-23',
+        expanded: false,
+        onExpandedChanged: _ignoreBool,
+      ),
+      suggestions: const [],
+      faqPrompts: const [
+        WalkthroughFaqPrompt(
+          question: 'What does verified mean?',
+          answer: 'The downloaded release matches its expected fingerprint.',
+        ),
+      ],
+      onSuggestionSelected: _ignoreString,
+      onFaqSelected: _ignoreFaq,
+      onPrevious: _ignore,
+      onNext: _ignore,
     );
   }
 
@@ -1162,6 +1295,8 @@ class _WalkthroughConversationPreview extends StatelessWidget {
   static void _ignoreBool(bool value) {}
 
   static void _ignoreString(String value) {}
+
+  static void _ignoreFaq(WalkthroughFaqPrompt prompt) {}
 }
 
 class _PocketCoderProgressPanePreview extends StatelessWidget {

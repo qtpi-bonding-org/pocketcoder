@@ -156,7 +156,7 @@ class _WalkthroughPanelState extends State<WalkthroughPanel> {
     final lesson = lessons[index];
     return WalkthroughConversationView(
       progressLabel:
-          'WALKTHROUGH 01 / 01 · BRIEF ${index + 1} / ${lessons.length}',
+          '${context.l10n.walkthroughLabel(1, 1)} · ${context.l10n.briefLabel(index + 1, lessons.length)}',
       briefTitle: _lessonTitle(context, lesson.copyId),
       entries: [
         WalkthroughConversationEntry(
