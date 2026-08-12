@@ -12,6 +12,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 class NtfyPushService implements PushService {
   final _controller = StreamController<PushNotificationPayload>.broadcast();
   static const String instance = "pocketcoder_relay";
+  String? _endpoint;
 
   @override
   Future<void> initialize() async {
@@ -37,6 +38,7 @@ class NtfyPushService implements PushService {
 
   void _onNewEndpoint(PushEndpoint endpoint, String instanceId) {
     if (instanceId != instance) return;
+    _endpoint = endpoint.url;
     _registerDevice(endpoint.url);
   }
 
@@ -101,6 +103,29 @@ class NtfyPushService implements PushService {
 
   @override
   Future<bool> requestPermissions() async => true;
+
+  @override
+  Future<void> syncAuthenticatedDevice() async {
+    final endpoint = _endpoint;
+    if (endpoint != null && endpoint.isNotEmpty) {
+      await _registerDevice(endpoint);
+      return;
+    }
+    await UnifiedPush.register(instance: instance);
+  }
+
+  @override
+  Future<void> unregisterAuthenticatedDevice() async {
+    final endpoint = _endpoint;
+    if (endpoint == null || endpoint.isEmpty) return;
+    try {
+      await GetIt.I<IDeviceRepository>().unregisterDevice(endpoint);
+    } catch (error) {
+      // Best effort: logout must remain available if the deployment is down.
+      // ignore: avoid_print
+      print('[PocketCoder] UnifiedPush device cleanup deferred: $error');
+    }
+  }
 
   @override
   Future<void> configure() async {

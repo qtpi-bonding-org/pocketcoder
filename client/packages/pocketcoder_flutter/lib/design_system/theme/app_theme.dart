@@ -7,6 +7,7 @@ import '../primitives/app_sizes.dart';
 export '../primitives/app_palette.dart';
 export '../primitives/app_fonts.dart';
 export '../primitives/app_sizes.dart';
+export '../primitives/app_motion.dart';
 export '../primitives/spacers.dart';
 
 /// Extension for terminal-specific colors that don't fit into standard ColorScheme.
@@ -58,7 +59,8 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
     return TerminalColors(
       glow: Color.lerp(glow, other.glow, t) ?? glow,
       scanline: Color.lerp(scanline, other.scanline, t) ?? scanline,
-      scanlineOpacity: lerpDouble(scanlineOpacity, other.scanlineOpacity, t) ?? scanlineOpacity,
+      scanlineOpacity: lerpDouble(scanlineOpacity, other.scanlineOpacity, t) ??
+          scanlineOpacity,
       user: Color.lerp(user, other.user, t) ?? user,
       danger: Color.lerp(danger, other.danger, t) ?? danger,
       attention: Color.lerp(attention, other.attention, t) ?? attention,
@@ -200,7 +202,8 @@ extension AppThemeExtension on BuildContext {
   AppLocalizations get l10n {
     final l10n = AppLocalizations.of(this);
     if (l10n == null) {
-      throw StateError('AppLocalizations not found. Ensure localization delegates are configured.');
+      throw StateError(
+          'AppLocalizations not found. Ensure localization delegates are configured.');
     }
     return l10n;
   }

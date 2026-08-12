@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-12T06:46:01.335002
+// Generated at: 2026-08-12T13:50:19.580826
 
 import 'app_localizations.dart';
 
@@ -24,7 +24,7 @@ class L10nKeyResolver {
   ///
   /// For parameterized messages, pass the arguments map.
   String? resolve(String key, {Map<String, dynamic>? args}) {
-    return (switch (key) {
+    return switch (key) {
       // Simple keys (no parameters)
       'action.add' => _l10n.actionAdd,
       'action.add.new' => _l10n.actionAddNew,
@@ -129,6 +129,7 @@ class L10nKeyResolver {
       'deployment.action.deploy.instance' => _l10n.deploymentActionDeployInstance,
       'deployment.action.dismiss' => _l10n.deploymentActionDismiss,
       'deployment.action.login.now' => _l10n.deploymentActionLoginNow,
+      'deployment.action.provision.server' => _l10n.deploymentActionProvisionServer,
       'deployment.action.refresh' => _l10n.deploymentActionRefresh,
       'deployment.action.retry.scan' => _l10n.deploymentActionRetryScan,
       'deployment.action.update' => _l10n.deploymentActionUpdate,
@@ -136,11 +137,13 @@ class L10nKeyResolver {
       'deployment.admin.password' => _l10n.deploymentAdminPassword,
       'deployment.backend' => _l10n.deploymentBackend,
       'deployment.cloud.region' => _l10n.deploymentCloudRegion,
+      'deployment.coding.agents.title' => _l10n.deploymentCodingAgentsTitle,
       'deployment.coding.harnesses' => _l10n.deploymentCodingHarnesses,
       'deployment.connection.parameters' => _l10n.deploymentConnectionParameters,
-      'deployment.copy.label' => _l10n.deploymentCopyLabel,
       'deployment.current.operation' => _l10n.deploymentCurrentOperation,
       'deployment.debian' => _l10n.deploymentDebian,
+      'deployment.debian.description' => _l10n.deploymentDebianDescription,
+      'deployment.default.agent' => _l10n.deploymentDefaultAgent,
       'deployment.description.constructing' => _l10n.deploymentDescriptionConstructing,
       'deployment.description.failed' => _l10n.deploymentDescriptionFailed,
       'deployment.description.fetching' => _l10n.deploymentDescriptionFetching,
@@ -155,28 +158,50 @@ class L10nKeyResolver {
       'deployment.description.validating' => _l10n.deploymentDescriptionValidating,
       'deployment.distribution' => _l10n.deploymentDistribution,
       'deployment.error.code' => _l10n.deploymentErrorCode,
+      'deployment.failed' => _l10n.deploymentFailed,
+      'deployment.fault.generic' => _l10n.deploymentFaultGeneric,
       'deployment.geo.grid' => _l10n.deploymentGeoGrid,
+      'deployment.gpu.badge' => _l10n.deploymentGpuBadge,
       'deployment.hardware.geography' => _l10n.deploymentHardwareGeography,
       'deployment.hardware.plan' => _l10n.deploymentHardwarePlan,
+      'deployment.harness.poco' => _l10n.deploymentHarnessPoco,
       'deployment.harness.selection.description' => _l10n.deploymentHarnessSelectionDescription,
       'deployment.https.endpoint' => _l10n.deploymentHttpsEndpoint,
+      'deployment.in.progress' => _l10n.deploymentInProgress,
       'deployment.initializing.hardware' => _l10n.deploymentInitializingHardware,
       'deployment.instance.manifest' => _l10n.deploymentInstanceManifest,
       'deployment.instance.plan' => _l10n.deploymentInstancePlan,
       'deployment.ip.address' => _l10n.deploymentIpAddress,
       'deployment.last.signal' => _l10n.deploymentLastSignal,
+      'deployment.linux.poco' => _l10n.deploymentLinuxPoco,
+      'deployment.linux.system.title' => _l10n.deploymentLinuxSystemTitle,
       'deployment.manifest.configuration' => _l10n.deploymentManifestConfiguration,
       'deployment.metadata.registry' => _l10n.deploymentMetadataRegistry,
       'deployment.network.ip' => _l10n.deploymentNetworkIp,
       'deployment.nixos' => _l10n.deploymentNixos,
+      'deployment.nixos.description' => _l10n.deploymentNixosDescription,
+      'deployment.no.suitable.plans' => _l10n.deploymentNoSuitablePlans,
       'deployment.operating.system' => _l10n.deploymentOperatingSystem,
+      'deployment.plan.poco' => _l10n.deploymentPlanPoco,
+      'deployment.provider.linode' => _l10n.deploymentProviderLinode,
       'deployment.provisioned' => _l10n.deploymentProvisioned,
+      'deployment.provisioning.summary' => _l10n.deploymentProvisioningSummary,
+      'deployment.recommended' => _l10n.deploymentRecommended,
+      'deployment.recommended.minimum' => _l10n.deploymentRecommendedMinimum,
       'deployment.region' => _l10n.deploymentRegion,
+      'deployment.region.poco' => _l10n.deploymentRegionPoco,
+      'deployment.review.poco' => _l10n.deploymentReviewPoco,
+      'deployment.review.title' => _l10n.deploymentReviewTitle,
       'deployment.run.id' => _l10n.deploymentRunId,
+      'deployment.run.local.model' => _l10n.deploymentRunLocalModel,
       'deployment.scanning.regions' => _l10n.deploymentScanningRegions,
       'deployment.screen.title' => _l10n.deploymentScreenTitle,
       'deployment.secure' => _l10n.deploymentSecure,
       'deployment.security.notice' => _l10n.deploymentSecurityNotice,
+      'deployment.server.provider' => _l10n.deploymentServerProvider,
+      'deployment.server.region.title' => _l10n.deploymentServerRegionTitle,
+      'deployment.server.size.title' => _l10n.deploymentServerSizeTitle,
+      'deployment.setup.type.title' => _l10n.deploymentSetupTypeTitle,
       'deployment.source.commit' => _l10n.deploymentSourceCommit,
       'deployment.standard.linux' => _l10n.deploymentStandardLinux,
       'deployment.status.constructing' => _l10n.deploymentStatusConstructing,
@@ -195,6 +220,10 @@ class L10nKeyResolver {
       'deployment.system.parameters' => _l10n.deploymentSystemParameters,
       'deployment.ubuntu' => _l10n.deploymentUbuntu,
       'deployment.unknown' => _l10n.deploymentUnknown,
+      'deployment.use.cloud.models' => _l10n.deploymentUseCloudModels,
+      'deployment.workload.cloud.reply' => _l10n.deploymentWorkloadCloudReply,
+      'deployment.workload.local.reply' => _l10n.deploymentWorkloadLocalReply,
+      'deployment.workload.poco' => _l10n.deploymentWorkloadPoco,
       'error.auth.failed' => _l10n.errorAuthFailed,
       'error.auth.unauthorized' => _l10n.errorAuthUnauthorized,
       'error.generic' => _l10n.errorGeneric,
@@ -286,6 +315,8 @@ class L10nKeyResolver {
       'new.chat.workspace.error.empty' => _l10n.newChatWorkspaceErrorEmpty,
       'new.chat.workspace.error.invalid' => _l10n.newChatWorkspaceErrorInvalid,
       'notification.settings.chat.reply.label' => _l10n.notificationSettingsChatReplyLabel,
+      'notification.settings.enable.device' => _l10n.notificationSettingsEnableDevice,
+      'notification.settings.poco' => _l10n.notificationSettingsPoco,
       'notification.settings.schedule.label' => _l10n.notificationSettingsScheduleLabel,
       'notification.settings.screen.title' => _l10n.notificationSettingsScreenTitle,
       'notification.settings.task.complete.label' => _l10n.notificationSettingsTaskCompleteLabel,
@@ -360,8 +391,12 @@ class L10nKeyResolver {
       'onboarding.poco.challenge.message' => _l10n.onboardingPocoChallengeMessage,
       'onboarding.poco.welcome' => _l10n.onboardingPocoWelcome,
       'onboarding.processing' => _l10n.onboardingProcessing,
+      'onboarding.provider.authorization.cancelled' => _l10n.onboardingProviderAuthorizationCancelled,
+      'onboarding.provider.authorization.error' => _l10n.onboardingProviderAuthorizationError,
+      'onboarding.provider.authorization.failed' => _l10n.onboardingProviderAuthorizationFailed,
       'onboarding.provider.authorization.poco' => _l10n.onboardingProviderAuthorizationPoco,
       'onboarding.provider.authorization.title' => _l10n.onboardingProviderAuthorizationTitle,
+      'onboarding.provider.authorization.waiting' => _l10n.onboardingProviderAuthorizationWaiting,
       'onboarding.provider.chip.elestio.coming.soon' => _l10n.onboardingProviderChipElestioComingSoon,
       'onboarding.provider.chip.linode' => _l10n.onboardingProviderChipLinode,
       'onboarding.provider.poco' => _l10n.onboardingProviderPoco,
@@ -446,6 +481,7 @@ class L10nKeyResolver {
       'poco.lesson.volumes.title' => _l10n.pocoLessonVolumesTitle,
       'poco.lesson.vps.storage.explanation' => _l10n.pocoLessonVpsStorageExplanation,
       'poco.lesson.vps.storage.title' => _l10n.pocoLessonVpsStorageTitle,
+      'poco.provisioning.failed' => _l10n.pocoProvisioningFailed,
       'poco.provisioning.loading.source' => _l10n.pocoProvisioningLoadingSource,
       'poco.provisioning.next' => _l10n.pocoProvisioningNext,
       'poco.provisioning.previous' => _l10n.pocoProvisioningPrevious,
@@ -462,6 +498,7 @@ class L10nKeyResolver {
       'pro.feature.deploy' => _l10n.proFeatureDeploy,
       'pro.feature.push' => _l10n.proFeaturePush,
       'pro.feature.ready' => _l10n.proFeatureReady,
+      'pro.not.now' => _l10n.proNotNow,
       'pro.plan.title' => _l10n.proPlanTitle,
       'pro.restore' => _l10n.proRestore,
       'pro.self.hosted.push.body' => _l10n.proSelfHostedPushBody,
@@ -672,8 +709,13 @@ class L10nKeyResolver {
       'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
       'deployment.copied.to.buffer' => _l10n.deploymentCopiedToBuffer(args?['label'] as String? ?? ''),
+      'deployment.copy.label' => _l10n.deploymentCopyLabel(args?['label'] as String? ?? ''),
       'deployment.fault.detected' => _l10n.deploymentFaultDetected(args?['error'] as String? ?? ''),
+      'deployment.memory.gb' => _l10n.deploymentMemoryGb(args?['value'] as int? ?? 0),
+      'deployment.memory.mb' => _l10n.deploymentMemoryMb(args?['value'] as int? ?? 0),
       'deployment.monthly.price' => _l10n.deploymentMonthlyPrice(args?['price'] as String? ?? ''),
+      'deployment.plan.specs' => _l10n.deploymentPlanSpecs(args?['vcpus'] as int? ?? 0, args?['memory'] as String? ?? '', args?['diskGb'] as int? ?? 0),
+      'deployment.ready' => _l10n.deploymentReady(args?['ipAddress'] as String? ?? ''),
       'deployment.status.prefix' => _l10n.deploymentStatusPrefix(args?['status'] as String? ?? ''),
       'deployment.sync.attempt' => _l10n.deploymentSyncAttempt(args?['attempt'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
@@ -697,7 +739,7 @@ class L10nKeyResolver {
       'onboarding.plan.poco' => _l10n.onboardingPlanPoco(args?['providerName'] as String? ?? ''),
       'onboarding.provider.authorization.action' => _l10n.onboardingProviderAuthorizationAction(args?['providerName'] as String? ?? ''),
       'onboarding.review.poco' => _l10n.onboardingReviewPoco(args?['providerName'] as String? ?? ''),
-      'onboarding.trial.poco' => _l10n.onboardingTrialPoco(args?['trialDuration'] as String? ?? ''),
+      'onboarding.trial.poco' => _l10n.onboardingTrialPoco(args?['trialDuration'] as int? ?? 0),
       'permission.requesting.label' => _l10n.permissionRequestingLabel(args?['source'] as String? ?? ''),
       'pro.price' => _l10n.proPrice(args?['price'] as String? ?? ''),
       'pro.price.after.trial' => _l10n.proPriceAfterTrial(args?['price'] as String? ?? ''),
@@ -720,7 +762,7 @@ class L10nKeyResolver {
       'walkthrough.services.harnesses.poco' => _l10n.walkthroughServicesHarnessesPoco(args?['selectedHarnesses'] as String? ?? ''),
 
       _ => null,
-    }) as String?;
+    };
   }
 
   /// Set of all known keys (for validation/debugging).
@@ -836,6 +878,7 @@ class L10nKeyResolver {
     'deployment.action.deploy.instance',
     'deployment.action.dismiss',
     'deployment.action.login.now',
+    'deployment.action.provision.server',
     'deployment.action.refresh',
     'deployment.action.retry.scan',
     'deployment.action.update',
@@ -843,12 +886,15 @@ class L10nKeyResolver {
     'deployment.admin.password',
     'deployment.backend',
     'deployment.cloud.region',
+    'deployment.coding.agents.title',
     'deployment.coding.harnesses',
     'deployment.connection.parameters',
     'deployment.copied.to.buffer',
     'deployment.copy.label',
     'deployment.current.operation',
     'deployment.debian',
+    'deployment.debian.description',
+    'deployment.default.agent',
     'deployment.description.constructing',
     'deployment.description.failed',
     'deployment.description.fetching',
@@ -863,30 +909,56 @@ class L10nKeyResolver {
     'deployment.description.validating',
     'deployment.distribution',
     'deployment.error.code',
+    'deployment.failed',
     'deployment.fault.detected',
+    'deployment.fault.generic',
     'deployment.geo.grid',
+    'deployment.gpu.badge',
     'deployment.hardware.geography',
     'deployment.hardware.plan',
+    'deployment.harness.poco',
     'deployment.harness.selection.description',
     'deployment.https.endpoint',
+    'deployment.in.progress',
     'deployment.initializing.hardware',
     'deployment.instance.manifest',
     'deployment.instance.plan',
     'deployment.ip.address',
     'deployment.last.signal',
+    'deployment.linux.poco',
+    'deployment.linux.system.title',
     'deployment.manifest.configuration',
+    'deployment.memory.gb',
+    'deployment.memory.mb',
     'deployment.metadata.registry',
     'deployment.monthly.price',
     'deployment.network.ip',
     'deployment.nixos',
+    'deployment.nixos.description',
+    'deployment.no.suitable.plans',
     'deployment.operating.system',
+    'deployment.plan.poco',
+    'deployment.plan.specs',
+    'deployment.provider.linode',
     'deployment.provisioned',
+    'deployment.provisioning.summary',
+    'deployment.ready',
+    'deployment.recommended',
+    'deployment.recommended.minimum',
     'deployment.region',
+    'deployment.region.poco',
+    'deployment.review.poco',
+    'deployment.review.title',
     'deployment.run.id',
+    'deployment.run.local.model',
     'deployment.scanning.regions',
     'deployment.screen.title',
     'deployment.secure',
     'deployment.security.notice',
+    'deployment.server.provider',
+    'deployment.server.region.title',
+    'deployment.server.size.title',
+    'deployment.setup.type.title',
     'deployment.source.commit',
     'deployment.standard.linux',
     'deployment.status.constructing',
@@ -907,6 +979,10 @@ class L10nKeyResolver {
     'deployment.system.parameters',
     'deployment.ubuntu',
     'deployment.unknown',
+    'deployment.use.cloud.models',
+    'deployment.workload.cloud.reply',
+    'deployment.workload.local.reply',
+    'deployment.workload.poco',
     'error.auth.failed',
     'error.auth.unauthorized',
     'error.generic',
@@ -1010,6 +1086,8 @@ class L10nKeyResolver {
     'new.chat.workspace.error.empty',
     'new.chat.workspace.error.invalid',
     'notification.settings.chat.reply.label',
+    'notification.settings.enable.device',
+    'notification.settings.poco',
     'notification.settings.schedule.label',
     'notification.settings.screen.title',
     'notification.settings.task.complete.label',
@@ -1092,8 +1170,12 @@ class L10nKeyResolver {
     'onboarding.poco.welcome',
     'onboarding.processing',
     'onboarding.provider.authorization.action',
+    'onboarding.provider.authorization.cancelled',
+    'onboarding.provider.authorization.error',
+    'onboarding.provider.authorization.failed',
     'onboarding.provider.authorization.poco',
     'onboarding.provider.authorization.title',
+    'onboarding.provider.authorization.waiting',
     'onboarding.provider.chip.elestio.coming.soon',
     'onboarding.provider.chip.linode',
     'onboarding.provider.poco',
@@ -1181,6 +1263,7 @@ class L10nKeyResolver {
     'poco.lesson.volumes.title',
     'poco.lesson.vps.storage.explanation',
     'poco.lesson.vps.storage.title',
+    'poco.provisioning.failed',
     'poco.provisioning.loading.source',
     'poco.provisioning.next',
     'poco.provisioning.previous',
@@ -1197,6 +1280,7 @@ class L10nKeyResolver {
     'pro.feature.deploy',
     'pro.feature.push',
     'pro.feature.ready',
+    'pro.not.now',
     'pro.plan.title',
     'pro.price',
     'pro.price.after.trial',
@@ -1533,6 +1617,7 @@ class L10nKeyResolver {
     'deploymentActionDeployInstance': 'deployment.action.deploy.instance',
     'deploymentActionDismiss': 'deployment.action.dismiss',
     'deploymentActionLoginNow': 'deployment.action.login.now',
+    'deploymentActionProvisionServer': 'deployment.action.provision.server',
     'deploymentActionRefresh': 'deployment.action.refresh',
     'deploymentActionRetryScan': 'deployment.action.retry.scan',
     'deploymentActionUpdate': 'deployment.action.update',
@@ -1540,12 +1625,15 @@ class L10nKeyResolver {
     'deploymentAdminPassword': 'deployment.admin.password',
     'deploymentBackend': 'deployment.backend',
     'deploymentCloudRegion': 'deployment.cloud.region',
+    'deploymentCodingAgentsTitle': 'deployment.coding.agents.title',
     'deploymentCodingHarnesses': 'deployment.coding.harnesses',
     'deploymentConnectionParameters': 'deployment.connection.parameters',
     'deploymentCopiedToBuffer': 'deployment.copied.to.buffer',
     'deploymentCopyLabel': 'deployment.copy.label',
     'deploymentCurrentOperation': 'deployment.current.operation',
     'deploymentDebian': 'deployment.debian',
+    'deploymentDebianDescription': 'deployment.debian.description',
+    'deploymentDefaultAgent': 'deployment.default.agent',
     'deploymentDescriptionConstructing': 'deployment.description.constructing',
     'deploymentDescriptionFailed': 'deployment.description.failed',
     'deploymentDescriptionFetching': 'deployment.description.fetching',
@@ -1560,30 +1648,56 @@ class L10nKeyResolver {
     'deploymentDescriptionValidating': 'deployment.description.validating',
     'deploymentDistribution': 'deployment.distribution',
     'deploymentErrorCode': 'deployment.error.code',
+    'deploymentFailed': 'deployment.failed',
     'deploymentFaultDetected': 'deployment.fault.detected',
+    'deploymentFaultGeneric': 'deployment.fault.generic',
     'deploymentGeoGrid': 'deployment.geo.grid',
+    'deploymentGpuBadge': 'deployment.gpu.badge',
     'deploymentHardwareGeography': 'deployment.hardware.geography',
     'deploymentHardwarePlan': 'deployment.hardware.plan',
+    'deploymentHarnessPoco': 'deployment.harness.poco',
     'deploymentHarnessSelectionDescription': 'deployment.harness.selection.description',
     'deploymentHttpsEndpoint': 'deployment.https.endpoint',
+    'deploymentInProgress': 'deployment.in.progress',
     'deploymentInitializingHardware': 'deployment.initializing.hardware',
     'deploymentInstanceManifest': 'deployment.instance.manifest',
     'deploymentInstancePlan': 'deployment.instance.plan',
     'deploymentIpAddress': 'deployment.ip.address',
     'deploymentLastSignal': 'deployment.last.signal',
+    'deploymentLinuxPoco': 'deployment.linux.poco',
+    'deploymentLinuxSystemTitle': 'deployment.linux.system.title',
     'deploymentManifestConfiguration': 'deployment.manifest.configuration',
+    'deploymentMemoryGb': 'deployment.memory.gb',
+    'deploymentMemoryMb': 'deployment.memory.mb',
     'deploymentMetadataRegistry': 'deployment.metadata.registry',
     'deploymentMonthlyPrice': 'deployment.monthly.price',
     'deploymentNetworkIp': 'deployment.network.ip',
     'deploymentNixos': 'deployment.nixos',
+    'deploymentNixosDescription': 'deployment.nixos.description',
+    'deploymentNoSuitablePlans': 'deployment.no.suitable.plans',
     'deploymentOperatingSystem': 'deployment.operating.system',
+    'deploymentPlanPoco': 'deployment.plan.poco',
+    'deploymentPlanSpecs': 'deployment.plan.specs',
+    'deploymentProviderLinode': 'deployment.provider.linode',
     'deploymentProvisioned': 'deployment.provisioned',
+    'deploymentProvisioningSummary': 'deployment.provisioning.summary',
+    'deploymentReady': 'deployment.ready',
+    'deploymentRecommended': 'deployment.recommended',
+    'deploymentRecommendedMinimum': 'deployment.recommended.minimum',
     'deploymentRegion': 'deployment.region',
+    'deploymentRegionPoco': 'deployment.region.poco',
+    'deploymentReviewPoco': 'deployment.review.poco',
+    'deploymentReviewTitle': 'deployment.review.title',
     'deploymentRunId': 'deployment.run.id',
+    'deploymentRunLocalModel': 'deployment.run.local.model',
     'deploymentScanningRegions': 'deployment.scanning.regions',
     'deploymentScreenTitle': 'deployment.screen.title',
     'deploymentSecure': 'deployment.secure',
     'deploymentSecurityNotice': 'deployment.security.notice',
+    'deploymentServerProvider': 'deployment.server.provider',
+    'deploymentServerRegionTitle': 'deployment.server.region.title',
+    'deploymentServerSizeTitle': 'deployment.server.size.title',
+    'deploymentSetupTypeTitle': 'deployment.setup.type.title',
     'deploymentSourceCommit': 'deployment.source.commit',
     'deploymentStandardLinux': 'deployment.standard.linux',
     'deploymentStatusConstructing': 'deployment.status.constructing',
@@ -1604,6 +1718,10 @@ class L10nKeyResolver {
     'deploymentSystemParameters': 'deployment.system.parameters',
     'deploymentUbuntu': 'deployment.ubuntu',
     'deploymentUnknown': 'deployment.unknown',
+    'deploymentUseCloudModels': 'deployment.use.cloud.models',
+    'deploymentWorkloadCloudReply': 'deployment.workload.cloud.reply',
+    'deploymentWorkloadLocalReply': 'deployment.workload.local.reply',
+    'deploymentWorkloadPoco': 'deployment.workload.poco',
     'errorAuthFailed': 'error.auth.failed',
     'errorAuthUnauthorized': 'error.auth.unauthorized',
     'errorGeneric': 'error.generic',
@@ -1707,6 +1825,8 @@ class L10nKeyResolver {
     'newChatWorkspaceErrorEmpty': 'new.chat.workspace.error.empty',
     'newChatWorkspaceErrorInvalid': 'new.chat.workspace.error.invalid',
     'notificationSettingsChatReplyLabel': 'notification.settings.chat.reply.label',
+    'notificationSettingsEnableDevice': 'notification.settings.enable.device',
+    'notificationSettingsPoco': 'notification.settings.poco',
     'notificationSettingsScheduleLabel': 'notification.settings.schedule.label',
     'notificationSettingsScreenTitle': 'notification.settings.screen.title',
     'notificationSettingsTaskCompleteLabel': 'notification.settings.task.complete.label',
@@ -1789,8 +1909,12 @@ class L10nKeyResolver {
     'onboardingPocoWelcome': 'onboarding.poco.welcome',
     'onboardingProcessing': 'onboarding.processing',
     'onboardingProviderAuthorizationAction': 'onboarding.provider.authorization.action',
+    'onboardingProviderAuthorizationCancelled': 'onboarding.provider.authorization.cancelled',
+    'onboardingProviderAuthorizationError': 'onboarding.provider.authorization.error',
+    'onboardingProviderAuthorizationFailed': 'onboarding.provider.authorization.failed',
     'onboardingProviderAuthorizationPoco': 'onboarding.provider.authorization.poco',
     'onboardingProviderAuthorizationTitle': 'onboarding.provider.authorization.title',
+    'onboardingProviderAuthorizationWaiting': 'onboarding.provider.authorization.waiting',
     'onboardingProviderChipElestioComingSoon': 'onboarding.provider.chip.elestio.coming.soon',
     'onboardingProviderChipLinode': 'onboarding.provider.chip.linode',
     'onboardingProviderPoco': 'onboarding.provider.poco',
@@ -1878,6 +2002,7 @@ class L10nKeyResolver {
     'pocoLessonVolumesTitle': 'poco.lesson.volumes.title',
     'pocoLessonVpsStorageExplanation': 'poco.lesson.vps.storage.explanation',
     'pocoLessonVpsStorageTitle': 'poco.lesson.vps.storage.title',
+    'pocoProvisioningFailed': 'poco.provisioning.failed',
     'pocoProvisioningLoadingSource': 'poco.provisioning.loading.source',
     'pocoProvisioningNext': 'poco.provisioning.next',
     'pocoProvisioningPrevious': 'poco.provisioning.previous',
@@ -1894,6 +2019,7 @@ class L10nKeyResolver {
     'proFeatureDeploy': 'pro.feature.deploy',
     'proFeaturePush': 'pro.feature.push',
     'proFeatureReady': 'pro.feature.ready',
+    'proNotNow': 'pro.not.now',
     'proPlanTitle': 'pro.plan.title',
     'proPrice': 'pro.price',
     'proPriceAfterTrial': 'pro.price.after.trial',
@@ -2227,6 +2353,7 @@ class L10nKeyResolver {
     'deployment.action.deploy.instance': 'deploymentActionDeployInstance',
     'deployment.action.dismiss': 'deploymentActionDismiss',
     'deployment.action.login.now': 'deploymentActionLoginNow',
+    'deployment.action.provision.server': 'deploymentActionProvisionServer',
     'deployment.action.refresh': 'deploymentActionRefresh',
     'deployment.action.retry.scan': 'deploymentActionRetryScan',
     'deployment.action.update': 'deploymentActionUpdate',
@@ -2234,12 +2361,15 @@ class L10nKeyResolver {
     'deployment.admin.password': 'deploymentAdminPassword',
     'deployment.backend': 'deploymentBackend',
     'deployment.cloud.region': 'deploymentCloudRegion',
+    'deployment.coding.agents.title': 'deploymentCodingAgentsTitle',
     'deployment.coding.harnesses': 'deploymentCodingHarnesses',
     'deployment.connection.parameters': 'deploymentConnectionParameters',
     'deployment.copied.to.buffer': 'deploymentCopiedToBuffer',
     'deployment.copy.label': 'deploymentCopyLabel',
     'deployment.current.operation': 'deploymentCurrentOperation',
     'deployment.debian': 'deploymentDebian',
+    'deployment.debian.description': 'deploymentDebianDescription',
+    'deployment.default.agent': 'deploymentDefaultAgent',
     'deployment.description.constructing': 'deploymentDescriptionConstructing',
     'deployment.description.failed': 'deploymentDescriptionFailed',
     'deployment.description.fetching': 'deploymentDescriptionFetching',
@@ -2254,30 +2384,56 @@ class L10nKeyResolver {
     'deployment.description.validating': 'deploymentDescriptionValidating',
     'deployment.distribution': 'deploymentDistribution',
     'deployment.error.code': 'deploymentErrorCode',
+    'deployment.failed': 'deploymentFailed',
     'deployment.fault.detected': 'deploymentFaultDetected',
+    'deployment.fault.generic': 'deploymentFaultGeneric',
     'deployment.geo.grid': 'deploymentGeoGrid',
+    'deployment.gpu.badge': 'deploymentGpuBadge',
     'deployment.hardware.geography': 'deploymentHardwareGeography',
     'deployment.hardware.plan': 'deploymentHardwarePlan',
+    'deployment.harness.poco': 'deploymentHarnessPoco',
     'deployment.harness.selection.description': 'deploymentHarnessSelectionDescription',
     'deployment.https.endpoint': 'deploymentHttpsEndpoint',
+    'deployment.in.progress': 'deploymentInProgress',
     'deployment.initializing.hardware': 'deploymentInitializingHardware',
     'deployment.instance.manifest': 'deploymentInstanceManifest',
     'deployment.instance.plan': 'deploymentInstancePlan',
     'deployment.ip.address': 'deploymentIpAddress',
     'deployment.last.signal': 'deploymentLastSignal',
+    'deployment.linux.poco': 'deploymentLinuxPoco',
+    'deployment.linux.system.title': 'deploymentLinuxSystemTitle',
     'deployment.manifest.configuration': 'deploymentManifestConfiguration',
+    'deployment.memory.gb': 'deploymentMemoryGb',
+    'deployment.memory.mb': 'deploymentMemoryMb',
     'deployment.metadata.registry': 'deploymentMetadataRegistry',
     'deployment.monthly.price': 'deploymentMonthlyPrice',
     'deployment.network.ip': 'deploymentNetworkIp',
     'deployment.nixos': 'deploymentNixos',
+    'deployment.nixos.description': 'deploymentNixosDescription',
+    'deployment.no.suitable.plans': 'deploymentNoSuitablePlans',
     'deployment.operating.system': 'deploymentOperatingSystem',
+    'deployment.plan.poco': 'deploymentPlanPoco',
+    'deployment.plan.specs': 'deploymentPlanSpecs',
+    'deployment.provider.linode': 'deploymentProviderLinode',
     'deployment.provisioned': 'deploymentProvisioned',
+    'deployment.provisioning.summary': 'deploymentProvisioningSummary',
+    'deployment.ready': 'deploymentReady',
+    'deployment.recommended': 'deploymentRecommended',
+    'deployment.recommended.minimum': 'deploymentRecommendedMinimum',
     'deployment.region': 'deploymentRegion',
+    'deployment.region.poco': 'deploymentRegionPoco',
+    'deployment.review.poco': 'deploymentReviewPoco',
+    'deployment.review.title': 'deploymentReviewTitle',
     'deployment.run.id': 'deploymentRunId',
+    'deployment.run.local.model': 'deploymentRunLocalModel',
     'deployment.scanning.regions': 'deploymentScanningRegions',
     'deployment.screen.title': 'deploymentScreenTitle',
     'deployment.secure': 'deploymentSecure',
     'deployment.security.notice': 'deploymentSecurityNotice',
+    'deployment.server.provider': 'deploymentServerProvider',
+    'deployment.server.region.title': 'deploymentServerRegionTitle',
+    'deployment.server.size.title': 'deploymentServerSizeTitle',
+    'deployment.setup.type.title': 'deploymentSetupTypeTitle',
     'deployment.source.commit': 'deploymentSourceCommit',
     'deployment.standard.linux': 'deploymentStandardLinux',
     'deployment.status.constructing': 'deploymentStatusConstructing',
@@ -2298,6 +2454,10 @@ class L10nKeyResolver {
     'deployment.system.parameters': 'deploymentSystemParameters',
     'deployment.ubuntu': 'deploymentUbuntu',
     'deployment.unknown': 'deploymentUnknown',
+    'deployment.use.cloud.models': 'deploymentUseCloudModels',
+    'deployment.workload.cloud.reply': 'deploymentWorkloadCloudReply',
+    'deployment.workload.local.reply': 'deploymentWorkloadLocalReply',
+    'deployment.workload.poco': 'deploymentWorkloadPoco',
     'error.auth.failed': 'errorAuthFailed',
     'error.auth.unauthorized': 'errorAuthUnauthorized',
     'error.generic': 'errorGeneric',
@@ -2401,6 +2561,8 @@ class L10nKeyResolver {
     'new.chat.workspace.error.empty': 'newChatWorkspaceErrorEmpty',
     'new.chat.workspace.error.invalid': 'newChatWorkspaceErrorInvalid',
     'notification.settings.chat.reply.label': 'notificationSettingsChatReplyLabel',
+    'notification.settings.enable.device': 'notificationSettingsEnableDevice',
+    'notification.settings.poco': 'notificationSettingsPoco',
     'notification.settings.schedule.label': 'notificationSettingsScheduleLabel',
     'notification.settings.screen.title': 'notificationSettingsScreenTitle',
     'notification.settings.task.complete.label': 'notificationSettingsTaskCompleteLabel',
@@ -2483,8 +2645,12 @@ class L10nKeyResolver {
     'onboarding.poco.welcome': 'onboardingPocoWelcome',
     'onboarding.processing': 'onboardingProcessing',
     'onboarding.provider.authorization.action': 'onboardingProviderAuthorizationAction',
+    'onboarding.provider.authorization.cancelled': 'onboardingProviderAuthorizationCancelled',
+    'onboarding.provider.authorization.error': 'onboardingProviderAuthorizationError',
+    'onboarding.provider.authorization.failed': 'onboardingProviderAuthorizationFailed',
     'onboarding.provider.authorization.poco': 'onboardingProviderAuthorizationPoco',
     'onboarding.provider.authorization.title': 'onboardingProviderAuthorizationTitle',
+    'onboarding.provider.authorization.waiting': 'onboardingProviderAuthorizationWaiting',
     'onboarding.provider.chip.elestio.coming.soon': 'onboardingProviderChipElestioComingSoon',
     'onboarding.provider.chip.linode': 'onboardingProviderChipLinode',
     'onboarding.provider.poco': 'onboardingProviderPoco',
@@ -2572,6 +2738,7 @@ class L10nKeyResolver {
     'poco.lesson.volumes.title': 'pocoLessonVolumesTitle',
     'poco.lesson.vps.storage.explanation': 'pocoLessonVpsStorageExplanation',
     'poco.lesson.vps.storage.title': 'pocoLessonVpsStorageTitle',
+    'poco.provisioning.failed': 'pocoProvisioningFailed',
     'poco.provisioning.loading.source': 'pocoProvisioningLoadingSource',
     'poco.provisioning.next': 'pocoProvisioningNext',
     'poco.provisioning.previous': 'pocoProvisioningPrevious',
@@ -2588,6 +2755,7 @@ class L10nKeyResolver {
     'pro.feature.deploy': 'proFeatureDeploy',
     'pro.feature.push': 'proFeaturePush',
     'pro.feature.ready': 'proFeatureReady',
+    'pro.not.now': 'proNotNow',
     'pro.plan.title': 'proPlanTitle',
     'pro.price': 'proPrice',
     'pro.price.after.trial': 'proPriceAfterTrial',
@@ -2928,6 +3096,7 @@ abstract class L10nKeys {
   static const deploymentActionDeployInstance = 'deployment.action.deploy.instance';
   static const deploymentActionDismiss = 'deployment.action.dismiss';
   static const deploymentActionLoginNow = 'deployment.action.login.now';
+  static const deploymentActionProvisionServer = 'deployment.action.provision.server';
   static const deploymentActionRefresh = 'deployment.action.refresh';
   static const deploymentActionRetryScan = 'deployment.action.retry.scan';
   static const deploymentActionUpdate = 'deployment.action.update';
@@ -2935,12 +3104,15 @@ abstract class L10nKeys {
   static const deploymentAdminPassword = 'deployment.admin.password';
   static const deploymentBackend = 'deployment.backend';
   static const deploymentCloudRegion = 'deployment.cloud.region';
+  static const deploymentCodingAgentsTitle = 'deployment.coding.agents.title';
   static const deploymentCodingHarnesses = 'deployment.coding.harnesses';
   static const deploymentConnectionParameters = 'deployment.connection.parameters';
   static (String, Map<String, dynamic>) deploymentCopiedToBuffer(String label) => ('deployment.copied.to.buffer', {'label': label});
-  static const deploymentCopyLabel = 'deployment.copy.label';
+  static (String, Map<String, dynamic>) deploymentCopyLabel(String label) => ('deployment.copy.label', {'label': label});
   static const deploymentCurrentOperation = 'deployment.current.operation';
   static const deploymentDebian = 'deployment.debian';
+  static const deploymentDebianDescription = 'deployment.debian.description';
+  static const deploymentDefaultAgent = 'deployment.default.agent';
   static const deploymentDescriptionConstructing = 'deployment.description.constructing';
   static const deploymentDescriptionFailed = 'deployment.description.failed';
   static const deploymentDescriptionFetching = 'deployment.description.fetching';
@@ -2955,30 +3127,56 @@ abstract class L10nKeys {
   static const deploymentDescriptionValidating = 'deployment.description.validating';
   static const deploymentDistribution = 'deployment.distribution';
   static const deploymentErrorCode = 'deployment.error.code';
+  static const deploymentFailed = 'deployment.failed';
   static (String, Map<String, dynamic>) deploymentFaultDetected(String error) => ('deployment.fault.detected', {'error': error});
+  static const deploymentFaultGeneric = 'deployment.fault.generic';
   static const deploymentGeoGrid = 'deployment.geo.grid';
+  static const deploymentGpuBadge = 'deployment.gpu.badge';
   static const deploymentHardwareGeography = 'deployment.hardware.geography';
   static const deploymentHardwarePlan = 'deployment.hardware.plan';
+  static const deploymentHarnessPoco = 'deployment.harness.poco';
   static const deploymentHarnessSelectionDescription = 'deployment.harness.selection.description';
   static const deploymentHttpsEndpoint = 'deployment.https.endpoint';
+  static const deploymentInProgress = 'deployment.in.progress';
   static const deploymentInitializingHardware = 'deployment.initializing.hardware';
   static const deploymentInstanceManifest = 'deployment.instance.manifest';
   static const deploymentInstancePlan = 'deployment.instance.plan';
   static const deploymentIpAddress = 'deployment.ip.address';
   static const deploymentLastSignal = 'deployment.last.signal';
+  static const deploymentLinuxPoco = 'deployment.linux.poco';
+  static const deploymentLinuxSystemTitle = 'deployment.linux.system.title';
   static const deploymentManifestConfiguration = 'deployment.manifest.configuration';
+  static (String, Map<String, dynamic>) deploymentMemoryGb(int value) => ('deployment.memory.gb', {'value': value});
+  static (String, Map<String, dynamic>) deploymentMemoryMb(int value) => ('deployment.memory.mb', {'value': value});
   static const deploymentMetadataRegistry = 'deployment.metadata.registry';
   static (String, Map<String, dynamic>) deploymentMonthlyPrice(String price) => ('deployment.monthly.price', {'price': price});
   static const deploymentNetworkIp = 'deployment.network.ip';
   static const deploymentNixos = 'deployment.nixos';
+  static const deploymentNixosDescription = 'deployment.nixos.description';
+  static const deploymentNoSuitablePlans = 'deployment.no.suitable.plans';
   static const deploymentOperatingSystem = 'deployment.operating.system';
+  static const deploymentPlanPoco = 'deployment.plan.poco';
+  static (String, Map<String, dynamic>) deploymentPlanSpecs(int vcpus, String memory, int diskGb) => ('deployment.plan.specs', {'vcpus': vcpus, 'memory': memory, 'diskGb': diskGb});
+  static const deploymentProviderLinode = 'deployment.provider.linode';
   static const deploymentProvisioned = 'deployment.provisioned';
+  static const deploymentProvisioningSummary = 'deployment.provisioning.summary';
+  static (String, Map<String, dynamic>) deploymentReady(String ipAddress) => ('deployment.ready', {'ipAddress': ipAddress});
+  static const deploymentRecommended = 'deployment.recommended';
+  static const deploymentRecommendedMinimum = 'deployment.recommended.minimum';
   static const deploymentRegion = 'deployment.region';
+  static const deploymentRegionPoco = 'deployment.region.poco';
+  static const deploymentReviewPoco = 'deployment.review.poco';
+  static const deploymentReviewTitle = 'deployment.review.title';
   static const deploymentRunId = 'deployment.run.id';
+  static const deploymentRunLocalModel = 'deployment.run.local.model';
   static const deploymentScanningRegions = 'deployment.scanning.regions';
   static const deploymentScreenTitle = 'deployment.screen.title';
   static const deploymentSecure = 'deployment.secure';
   static const deploymentSecurityNotice = 'deployment.security.notice';
+  static const deploymentServerProvider = 'deployment.server.provider';
+  static const deploymentServerRegionTitle = 'deployment.server.region.title';
+  static const deploymentServerSizeTitle = 'deployment.server.size.title';
+  static const deploymentSetupTypeTitle = 'deployment.setup.type.title';
   static const deploymentSourceCommit = 'deployment.source.commit';
   static const deploymentStandardLinux = 'deployment.standard.linux';
   static const deploymentStatusConstructing = 'deployment.status.constructing';
@@ -2999,6 +3197,10 @@ abstract class L10nKeys {
   static const deploymentSystemParameters = 'deployment.system.parameters';
   static const deploymentUbuntu = 'deployment.ubuntu';
   static const deploymentUnknown = 'deployment.unknown';
+  static const deploymentUseCloudModels = 'deployment.use.cloud.models';
+  static const deploymentWorkloadCloudReply = 'deployment.workload.cloud.reply';
+  static const deploymentWorkloadLocalReply = 'deployment.workload.local.reply';
+  static const deploymentWorkloadPoco = 'deployment.workload.poco';
   static const errorAuthFailed = 'error.auth.failed';
   static const errorAuthUnauthorized = 'error.auth.unauthorized';
   static const errorGeneric = 'error.generic';
@@ -3102,6 +3304,8 @@ abstract class L10nKeys {
   static const newChatWorkspaceErrorEmpty = 'new.chat.workspace.error.empty';
   static const newChatWorkspaceErrorInvalid = 'new.chat.workspace.error.invalid';
   static const notificationSettingsChatReplyLabel = 'notification.settings.chat.reply.label';
+  static const notificationSettingsEnableDevice = 'notification.settings.enable.device';
+  static const notificationSettingsPoco = 'notification.settings.poco';
   static const notificationSettingsScheduleLabel = 'notification.settings.schedule.label';
   static const notificationSettingsScreenTitle = 'notification.settings.screen.title';
   static const notificationSettingsTaskCompleteLabel = 'notification.settings.task.complete.label';
@@ -3184,8 +3388,12 @@ abstract class L10nKeys {
   static const onboardingPocoWelcome = 'onboarding.poco.welcome';
   static const onboardingProcessing = 'onboarding.processing';
   static (String, Map<String, dynamic>) onboardingProviderAuthorizationAction(String providerName) => ('onboarding.provider.authorization.action', {'providerName': providerName});
+  static const onboardingProviderAuthorizationCancelled = 'onboarding.provider.authorization.cancelled';
+  static const onboardingProviderAuthorizationError = 'onboarding.provider.authorization.error';
+  static const onboardingProviderAuthorizationFailed = 'onboarding.provider.authorization.failed';
   static const onboardingProviderAuthorizationPoco = 'onboarding.provider.authorization.poco';
   static const onboardingProviderAuthorizationTitle = 'onboarding.provider.authorization.title';
+  static const onboardingProviderAuthorizationWaiting = 'onboarding.provider.authorization.waiting';
   static const onboardingProviderChipElestioComingSoon = 'onboarding.provider.chip.elestio.coming.soon';
   static const onboardingProviderChipLinode = 'onboarding.provider.chip.linode';
   static const onboardingProviderPoco = 'onboarding.provider.poco';
@@ -3213,7 +3421,7 @@ abstract class L10nKeys {
   static const onboardingTitle = 'onboarding.title';
   static const onboardingTrialChipNotNow = 'onboarding.trial.chip.not.now';
   static const onboardingTrialChipStart = 'onboarding.trial.chip.start';
-  static (String, Map<String, dynamic>) onboardingTrialPoco(String trialDuration) => ('onboarding.trial.poco', {'trialDuration': trialDuration});
+  static (String, Map<String, dynamic>) onboardingTrialPoco(int trialDuration) => ('onboarding.trial.poco', {'trialDuration': trialDuration});
   static const permissionError = 'permission.error';
   static const permissionFetchFailed = 'permission.fetch.failed';
   static const permissionPatternsLabel = 'permission.patterns.label';
@@ -3273,6 +3481,7 @@ abstract class L10nKeys {
   static const pocoLessonVolumesTitle = 'poco.lesson.volumes.title';
   static const pocoLessonVpsStorageExplanation = 'poco.lesson.vps.storage.explanation';
   static const pocoLessonVpsStorageTitle = 'poco.lesson.vps.storage.title';
+  static const pocoProvisioningFailed = 'poco.provisioning.failed';
   static const pocoProvisioningLoadingSource = 'poco.provisioning.loading.source';
   static const pocoProvisioningNext = 'poco.provisioning.next';
   static const pocoProvisioningPrevious = 'poco.provisioning.previous';
@@ -3289,6 +3498,7 @@ abstract class L10nKeys {
   static const proFeatureDeploy = 'pro.feature.deploy';
   static const proFeaturePush = 'pro.feature.push';
   static const proFeatureReady = 'pro.feature.ready';
+  static const proNotNow = 'pro.not.now';
   static const proPlanTitle = 'pro.plan.title';
   static (String, Map<String, dynamic>) proPrice(String price) => ('pro.price', {'price': price});
   static (String, Map<String, dynamic>) proPriceAfterTrial(String price) => ('pro.price.after.trial', {'price': price});

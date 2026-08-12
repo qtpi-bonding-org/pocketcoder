@@ -1,11 +1,21 @@
 import 'package:equatable/equatable.dart';
 
 abstract class PushService {
-  /// Initialize the push service.
+  /// Initialize provider listeners without prompting the user.
   Future<void> initialize();
 
   /// Request user authorization for permission relays.
   Future<bool> requestPermissions();
+
+  /// Registers the current device against the authenticated PocketBase user
+  /// when notification permission and a provider token are available.
+  Future<void> syncAuthenticatedDevice();
+
+  /// Deactivates the current device on the authenticated deployment.
+  ///
+  /// Call before clearing PocketBase authentication so the repository can
+  /// still identify the device owner.
+  Future<void> unregisterAuthenticatedDevice();
 
   /// Stream of incoming permission relay signals.
   Stream<PushNotificationPayload> get notificationStream;

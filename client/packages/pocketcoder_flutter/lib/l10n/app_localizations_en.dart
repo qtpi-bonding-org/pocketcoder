@@ -660,6 +660,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationSettingsTaskErrorLabel => 'TASK ERRORS';
 
   @override
+  String get notificationSettingsPoco =>
+      'I can notify you when an agent needs approval or finishes a task, even when PocketCoder is not open. Your phone will ask for permission before I enable alerts on this device.';
+
+  @override
+  String get notificationSettingsEnableDevice => 'ENABLE ON THIS DEVICE';
+
+  @override
   String get skillsTitle => 'SKILLS';
 
   @override
@@ -1196,6 +1203,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proRestore => 'RESTORE PURCHASES';
 
   @override
+  String get proNotNow => 'NOT NOW';
+
+  @override
   String proTerms(String price) {
     return 'SUBSCRIPTION RENEWS AT $price UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.';
   }
@@ -1295,6 +1305,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get deploymentFaultGeneric =>
+      'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
+
+  @override
+  String get deploymentFailed =>
+      'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
+
+  @override
+  String deploymentReady(String ipAddress) {
+    return 'SERVER READY AT $ipAddress.';
+  }
+
+  @override
+  String get deploymentInProgress => 'SERVER SETUP STARTED.';
+
+  @override
   String get deploymentStatusValidating => 'VALIDATING CONFIGURATION';
 
   @override
@@ -1368,7 +1394,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentDescriptionFailed =>
-      'CRITICAL FAILURE DURING RESOURCE ALLOCATION.';
+      'SETUP STOPPED BEFORE COMPLETION. NO LATER STEP WILL CONTINUE.';
 
   @override
   String get deploymentDescriptionInitializing =>
@@ -1434,7 +1460,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String deploymentCopyLabel(Object label) {
+  String deploymentCopyLabel(String label) {
     return 'COPY $label';
   }
 
@@ -1446,6 +1472,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentActionDeployInstance => 'DEPLOY INSTANCE';
+
+  @override
+  String get deploymentActionProvisionServer => 'PROVISION SERVER';
 
   @override
   String get deploymentSystemParameters => 'SYSTEM PARAMETERS';
@@ -1497,6 +1526,110 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentUbuntu => 'Ubuntu';
+
+  @override
+  String get deploymentSetupTypeTitle => 'CHOOSE YOUR SETUP';
+
+  @override
+  String get deploymentServerSizeTitle => 'CHOOSE YOUR SERVER SIZE';
+
+  @override
+  String get deploymentServerRegionTitle => 'CHOOSE YOUR SERVER REGION';
+
+  @override
+  String get deploymentCodingAgentsTitle => 'CHOOSE CODING AGENTS';
+
+  @override
+  String get deploymentLinuxSystemTitle => 'CHOOSE LINUX SYSTEM';
+
+  @override
+  String get deploymentReviewTitle => 'REVIEW YOUR SERVER';
+
+  @override
+  String get deploymentWorkloadPoco =>
+      'Before we choose your server, what kind of PocketCoder setup are you planning?\n\nA cloud model runs through an online AI account. A local model runs on your own server.';
+
+  @override
+  String get deploymentWorkloadCloudReply =>
+      'Cloud models run inference through your online AI account. Your server mainly needs room for PocketCoder, your agents, and your projects.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.';
+
+  @override
+  String get deploymentWorkloadLocalReply =>
+      'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.';
+
+  @override
+  String get deploymentUseCloudModels => 'USE CLOUD MODELS';
+
+  @override
+  String get deploymentRunLocalModel => 'RUN A LOCAL MODEL';
+
+  @override
+  String get deploymentPlanPoco =>
+      'Here are the server sizes available from Linode.\n\nThe highlighted option is the minimum I recommend for the setup you chose. You can select a larger server.';
+
+  @override
+  String get deploymentRegionPoco =>
+      'Choose where your server will live. A nearby region will usually respond faster, but you can use any available Linode region.';
+
+  @override
+  String get deploymentHarnessPoco =>
+      'Now choose which coding agents to have ready on your server.\n\nThis installs their software. You’ll connect any required accounts after your server is ready.';
+
+  @override
+  String get deploymentLinuxPoco =>
+      'Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.';
+
+  @override
+  String get deploymentReviewPoco =>
+      'Your server is ready to be provisioned.\n\nPocketCoder will create it in your Linode account, then install the coding agents you selected. Linode will bill you directly for the server.';
+
+  @override
+  String get deploymentNoSuitablePlans =>
+      'NO SUITABLE SERVER SIZES ARE AVAILABLE FOR THIS SETUP.';
+
+  @override
+  String get deploymentRecommendedMinimum => 'RECOMMENDED MINIMUM';
+
+  @override
+  String get deploymentRecommended => 'RECOMMENDED';
+
+  @override
+  String get deploymentGpuBadge => 'GPU';
+
+  @override
+  String get deploymentDefaultAgent => 'READY BY DEFAULT';
+
+  @override
+  String deploymentPlanSpecs(int vcpus, String memory, int diskGb) {
+    return '$vcpus CPU · $memory RAM · $diskGb GB DISK';
+  }
+
+  @override
+  String deploymentMemoryGb(int value) {
+    return '$value GB';
+  }
+
+  @override
+  String deploymentMemoryMb(int value) {
+    return '$value MB';
+  }
+
+  @override
+  String get deploymentNixosDescription =>
+      'A repeatable server setup that is easier to recreate and roll back if a system change goes wrong.';
+
+  @override
+  String get deploymentDebianDescription =>
+      'A Debian server configured with setup scripts. Faster to set up.';
+
+  @override
+  String get deploymentProvisioningSummary => 'PROVISIONING SUMMARY';
+
+  @override
+  String get deploymentServerProvider => 'SERVER PROVIDER';
+
+  @override
+  String get deploymentProviderLinode => 'LINODE';
 
   @override
   String walkthroughLabel(int current, int total) {
@@ -1559,6 +1692,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pocoProvisioningSourceUnavailable =>
       'The deployment is still running, but I could not load its annotated source right now. This lesson is optional and never blocks your VPS.';
+
+  @override
+  String get pocoProvisioningFailed =>
+      'The setup stopped, so I stopped the walkthrough too. Go back to review the configuration, then we can try again.';
 
   @override
   String get pocoProvisioningPrevious => 'PREVIOUS';
@@ -1768,8 +1905,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingProviderChipElestioComingSoon => 'ELESTIO — COMING SOON';
 
   @override
-  String onboardingTrialPoco(String trialDuration) {
-    return 'Your server provider account and server are yours, and the provider bills you directly.\n\nPocketCoder Pro includes a $trialDuration free trial. It lets you provision servers and receive notifications from your agents. When it ends, your server keeps running exactly as it is; you just won’t receive agent notifications or be able to provision more servers.\n\nYour server provider may offer its own trial or credit as well.';
+  String onboardingTrialPoco(int trialDuration) {
+    return 'Your server provider account and server are yours, and the provider bills you directly.\n\nPocketCoder Pro includes a $trialDuration-day free trial. It lets you provision servers and receive notifications from your agents. When it ends, your server keeps running exactly as it is; you just won’t receive agent notifications or be able to provision more servers.\n\nYour server provider may offer its own trial or credit as well.';
   }
 
   @override
@@ -1790,6 +1927,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String onboardingProviderAuthorizationAction(String providerName) {
     return 'CONTINUE WITH $providerName';
   }
+
+  @override
+  String get onboardingProviderAuthorizationWaiting =>
+      'WAITING FOR PROVIDER SIGN-IN';
+
+  @override
+  String get onboardingProviderAuthorizationError => 'CONNECTION STOPPED';
+
+  @override
+  String get onboardingProviderAuthorizationCancelled =>
+      'The provider sign-in was cancelled. Nothing was provisioned.';
+
+  @override
+  String get onboardingProviderAuthorizationFailed =>
+      'I could not connect to the server provider. Check your connection and try again.';
 
   @override
   String get onboardingIntentPoco =>

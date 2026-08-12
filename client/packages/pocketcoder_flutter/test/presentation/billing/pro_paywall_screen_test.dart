@@ -24,6 +24,7 @@ void main() {
     VoidCallback? onRestore,
     VoidCallback? onConfigure,
     bool showNavigation = true,
+    bool isOnboarding = false,
   }) {
     return MaterialApp(
       theme: AppTheme.terminalTheme,
@@ -35,6 +36,7 @@ void main() {
         onRestore: onRestore ?? () {},
         onConfigureSelfHostedPush: onConfigure ?? () {},
         showNavigation: showNavigation,
+        isOnboarding: isOnboarding,
       ),
     );
   }
@@ -82,11 +84,19 @@ void main() {
     expect(configures, 1);
   });
 
-  testWidgets('hides primary navigation inside the deployment flow',
+  testWidgets('keeps only the back action inside the deployment flow',
       (tester) async {
-    await tester.pumpWidget(subject(showNavigation: false));
+    await tester.pumpWidget(subject(
+      showNavigation: false,
+      isOnboarding: true,
+    ));
     await tester.pumpAndSettle();
 
-    expect(find.byType(TerminalFooter), findsNothing);
+    expect(find.byType(TerminalFooter), findsOneWidget);
+    expect(find.text('NOT NOW'), findsOneWidget);
+    expect(find.text('CHATS'), findsNothing);
+    expect(find.text('MONITOR'), findsNothing);
+    expect(find.text('CONFIGURE'), findsNothing);
+    expect(find.text('CONFIGURE SELF-HOSTED PUSH'), findsNothing);
   });
 }

@@ -58,6 +58,7 @@ Future<void> bootstrap() async {
       final userId = pocketBase.authStore.record?.id;
       if (pocketBase.authStore.isValid && userId != null) {
         await billingService.identify(userId);
+        await pushService.syncAuthenticatedDevice();
       }
     } catch (e, stack) {
       debugPrint(

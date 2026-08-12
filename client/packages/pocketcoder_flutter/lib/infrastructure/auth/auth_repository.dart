@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
@@ -14,12 +15,14 @@ class AuthRepository implements IAuthRepository {
   final AuthStoreConfig _authStoreConfig;
   final FlutterSecureStorage _storage;
   final BillingService _billingService;
+  final PushService _pushService;
 
   AuthRepository(
     this._pocketBase,
     this._authStoreConfig,
     this._storage,
     this._billingService,
+    this._pushService,
   );
 
   @override
@@ -41,6 +44,7 @@ class AuthRepository implements IAuthRepository {
         final userId = _pocketBase.authStore.record?.id;
         if (userId != null) {
           await _billingService.identify(userId);
+          await _pushService.syncAuthenticatedDevice();
         }
         return true;
       },
@@ -64,6 +68,7 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<void> logout() async {
+    await _pushService.unregisterAuthenticatedDevice();
     _pocketBase.authStore.clear();
     await _authStoreConfig.clear();
     await _billingService.reset();

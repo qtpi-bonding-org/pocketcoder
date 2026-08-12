@@ -8,7 +8,12 @@ import 'package:pocketcoder_flutter/presentation/notifications/notification_sett
 
 class NotificationSettingsAdapter
     extends CubitAdapter<NotificationRuleCubit, NotificationRuleState> {
-  const NotificationSettingsAdapter({super.key});
+  const NotificationSettingsAdapter({
+    super.key,
+    required this.onEnableDevice,
+  });
+
+  final Future<bool> Function() onEnableDevice;
 
   static NotificationRuleState _selectState(NotificationRuleState state) =>
       state;
@@ -25,6 +30,7 @@ class NotificationSettingsAdapter
         builder: (context, value, _) => NotificationSettingsView(
           state: value,
           onChanged: context.read<NotificationRuleCubit>().setTypeEnabled,
+          onEnableDevice: onEnableDevice,
         ),
       ),
     );
