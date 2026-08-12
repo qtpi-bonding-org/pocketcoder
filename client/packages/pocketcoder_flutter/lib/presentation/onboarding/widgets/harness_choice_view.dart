@@ -55,7 +55,7 @@ class HarnessChoiceView extends StatelessWidget {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
+        constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
         child: ListView(
           shrinkWrap: true,
           padding: EdgeInsets.all(AppSizes.space * 2),
@@ -94,7 +94,7 @@ class _HarnessChoiceCard extends StatelessWidget {
       child: TerminalCard(
         child: Row(
           children: [
-            Icon(Icons.smart_toy_outlined, color: colors.primary),
+            TerminalText.label(r'$', color: colors.primary),
             HSpace.x2,
             Expanded(
               child: Column(

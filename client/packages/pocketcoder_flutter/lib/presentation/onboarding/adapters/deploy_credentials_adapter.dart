@@ -12,7 +12,10 @@ class DeployCredentialsAdapter
   const DeployCredentialsAdapter({super.key});
 
   @override
-  Widget buildAdapter(BuildContext context, CubitAdapterState<DeployCredentialsCubit, DeployCredentialsState> adapter) {
+  Widget buildAdapter(
+      BuildContext context,
+      CubitAdapterState<DeployCredentialsCubit, DeployCredentialsState>
+          adapter) {
     final state = adapter.cubitField((value) => value);
     final cubit = context.read<DeployCredentialsCubit>();
     return ValueListenableBuilder<DeployCredentialsState>(
@@ -22,10 +25,16 @@ class DeployCredentialsAdapter
         password: value.password,
         onEmailChanged: cubit.setEmail,
         onPasswordChanged: cubit.setPassword,
-        onContinue: () => context.pushNamed(
-          RouteNames.deploy,
-          extra: DeployCredentials(email: value.email.trim(), password: value.password),
-        ),
+        onContinue: () {
+          final current = cubit.state;
+          context.pushNamed(
+            RouteNames.deploy,
+            extra: DeployCredentials(
+              email: current.email.trim(),
+              password: current.password,
+            ),
+          );
+        },
       ),
     );
   }

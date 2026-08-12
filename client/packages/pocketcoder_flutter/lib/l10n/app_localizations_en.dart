@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -1650,12 +1649,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String walkthroughProgress(
-    int current,
-    int total,
-    String briefing,
-    Object brief,
-  ) {
+  String walkthroughProgress(int current, int total, String brief) {
     return 'WALKTHROUGH $current/$total · BRIEF $brief';
   }
 

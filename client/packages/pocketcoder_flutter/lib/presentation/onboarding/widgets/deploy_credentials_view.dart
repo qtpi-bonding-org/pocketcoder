@@ -46,12 +46,15 @@ class _DeployCredentialsViewState extends State<DeployCredentialsView> {
   Widget build(BuildContext context) => TerminalScaffold(
         title: context.l10n.onboardingDeployTitle,
         actions: [
-          TerminalAction(label: context.l10n.actionBack, onTap: () => Navigator.of(context).maybePop()),
-          TerminalAction(label: context.l10n.actionContinue, onTap: widget.onContinue),
+          TerminalAction(
+              label: context.l10n.actionBack,
+              onTap: () => Navigator.of(context).maybePop()),
+          TerminalAction(
+              label: context.l10n.actionContinue, onTap: widget.onContinue),
         ],
         body: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
               child: Column(
