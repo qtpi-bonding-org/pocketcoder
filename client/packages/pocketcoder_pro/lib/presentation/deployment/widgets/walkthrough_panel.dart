@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/domain/deployment/poco_code_section.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
-import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_lesson_card.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_conversation_view.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_snippet.dart';
 
-class ProvisioningTourPanel extends StatefulWidget {
-  const ProvisioningTourPanel({
+class WalkthroughPanel extends StatefulWidget {
+  const WalkthroughPanel({
     super.key,
     required this.stage,
     required this.sourceCommit,
@@ -24,10 +25,10 @@ class ProvisioningTourPanel extends StatefulWidget {
   final ProvisionBackendKind backend;
 
   @override
-  State<ProvisioningTourPanel> createState() => _ProvisioningTourPanelState();
+  State<WalkthroughPanel> createState() => _WalkthroughPanelState();
 }
 
-class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
+class _WalkthroughPanelState extends State<WalkthroughPanel> {
   Future<List<_LoadedLesson>>? _lessons;
   String? _loadedCommit;
   ProvisionBackendKind? _loadedBackend;
@@ -42,7 +43,7 @@ class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
   }
 
   @override
-  void didUpdateWidget(covariant ProvisioningTourPanel oldWidget) {
+  void didUpdateWidget(covariant WalkthroughPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.stage != widget.stage) {
       _selectedId = _preferredLessonId(widget.stage);
@@ -89,7 +90,7 @@ class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
         byId[section.id] = (section, file);
       }
     }
-    return _lessonDefinitions
+    final lessons = _lessonDefinitions
         .map((definition) {
           final parts = definition.sectionIds
               .map((id) {
@@ -110,43 +111,41 @@ class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
         })
         .whereType<_LoadedLesson>()
         .toList(growable: false);
+    return lessons;
   }
 
   @override
   Widget build(BuildContext context) {
     final future = _lessons;
-    return BiosFrame(
-      title: context.l10n.pocoProvisioningTourTitle,
-      child: Padding(
-        padding: EdgeInsets.all(AppSizes.space * 2),
-        child: future == null
-            ? PocoBubble(
-                message: context.l10n.pocoProvisioningWaitingForSource,
-                sequence: PocoExpressions.scanning,
-                pocoSize: AppSizes.fontLarge,
-              )
-            : FutureBuilder<List<_LoadedLesson>>(
-                future: future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return PocoBubble(
-                      message: context.l10n.pocoProvisioningLoadingSource,
-                      sequence: PocoExpressions.scanning,
-                      pocoSize: AppSizes.fontLarge,
-                    );
-                  }
-                  final lessons = snapshot.data ?? const <_LoadedLesson>[];
-                  if (snapshot.hasError || lessons.isEmpty) {
-                    return PocoBubble(
-                      message: context.l10n.pocoProvisioningSourceUnavailable,
-                      sequence: PocoExpressions.nervous,
-                      pocoSize: AppSizes.fontLarge,
-                    );
-                  }
-                  return _buildLesson(context, lessons);
-                },
-              ),
-      ),
+    return Padding(
+      padding: EdgeInsets.all(AppSizes.space * 2),
+      child: future == null
+          ? PocoBubble(
+              message: context.l10n.pocoProvisioningWaitingForSource,
+              sequence: PocoExpressions.scanning,
+              pocoSize: AppSizes.fontLarge,
+            )
+          : FutureBuilder<List<_LoadedLesson>>(
+              future: future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return PocoBubble(
+                    message: context.l10n.pocoProvisioningLoadingSource,
+                    sequence: PocoExpressions.scanning,
+                    pocoSize: AppSizes.fontLarge,
+                  );
+                }
+                final lessons = snapshot.data ?? const <_LoadedLesson>[];
+                if (snapshot.hasError || lessons.isEmpty) {
+                  return PocoBubble(
+                    message: context.l10n.pocoProvisioningSourceUnavailable,
+                    sequence: PocoExpressions.nervous,
+                    pocoSize: AppSizes.fontLarge,
+                  );
+                }
+                return _buildLesson(context, lessons);
+              },
+            ),
     );
   }
 
@@ -155,23 +154,36 @@ class _ProvisioningTourPanelState extends State<ProvisioningTourPanel> {
         lessons.indexWhere((lesson) => lesson.definition.id == _selectedId);
     if (index < 0) index = 0;
     final lesson = lessons[index];
-    return ProvisioningLessonCard(
-      title: _lessonTitle(context, lesson.copyId),
-      explanation: _lessonExplanation(context, lesson.copyId),
-      codeBlocks: lesson.parts
-          .map(
-            (part) => ProvisioningLessonCodeBlock(
-              title: _lessonTitle(context, part.section.id),
-              sourceLabel: '${part.sourceFile.path}:${part.section.startLine}',
-              code: part.section.code,
+    return WalkthroughConversationView(
+      progressLabel:
+          'WALKTHROUGH 01 / 01 · BRIEF ${index + 1} / ${lessons.length}',
+      briefTitle: _lessonTitle(context, lesson.copyId),
+      entries: [
+        WalkthroughConversationEntry(
+          speaker: TerminalConversationSpeaker.poco,
+          message: _lessonExplanation(context, lesson.copyId),
+          sequence: PocoExpressions.thinking,
+        ),
+      ],
+      snippet: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final part in lesson.parts) ...[
+            WalkthroughSnippet(
               previewCode: part.section.previewCode,
+              expandedCode: part.section.code,
+              sourceLabel: '${part.sourceFile.path}:${part.section.startLine}',
+              expanded: _showFullCode,
+              onExpandedChanged: (value) =>
+                  setState(() => _showFullCode = value),
             ),
-          )
-          .toList(growable: false),
-      lessonNumber: index + 1,
-      lessonCount: lessons.length,
-      expanded: _showFullCode,
-      onExpandedChanged: (value) => setState(() => _showFullCode = value),
+            if (part != lesson.parts.last) VSpace.x2,
+          ],
+        ],
+      ),
+      suggestions: const [],
+      onSuggestionSelected: (_) {},
+      showBriefDivider: index > 0,
       onPrevious: index == 0
           ? null
           : () => setState(() {

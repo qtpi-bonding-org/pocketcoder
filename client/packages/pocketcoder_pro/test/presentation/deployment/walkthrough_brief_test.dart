@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_lesson_card.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_brief.dart';
 
 void main() {
   testWidgets('shows a concise preview and expands every complete block',
@@ -15,25 +15,25 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: StatefulBuilder(
-              builder: (context, setState) => ProvisioningLessonCard(
+              builder: (context, setState) => WalkthroughBrief(
                 title: 'Safe image installation',
                 explanation: 'I verify the disk and image before installation.',
                 codeBlocks: const [
-                  ProvisioningLessonCodeBlock(
+                  WalkthroughSnippetBlock(
                     title: 'Check the disk',
                     sourceLabel: 'installer.sh:10',
                     code: 'blockdev --getsize64 /dev/sdb',
                     previewCode: 'test -b /dev/sdb',
                   ),
-                  ProvisioningLessonCodeBlock(
+                  WalkthroughSnippetBlock(
                     title: 'Verify the image',
                     sourceLabel: 'installer.sh:34',
                     code: 'sha256sum /tmp/image',
                     previewCode: 'test -f /tmp/image',
                   ),
                 ],
-                lessonNumber: 1,
-                lessonCount: 10,
+                briefNumber: 1,
+                briefCount: 10,
                 expanded: expanded,
                 onExpandedChanged: (value) {
                   setState(() => expanded = value);

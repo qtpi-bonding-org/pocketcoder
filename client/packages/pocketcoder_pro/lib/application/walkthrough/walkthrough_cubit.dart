@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocketcoder_pro/domain/deployment/provisioning_walkthrough.dart';
+import 'package:pocketcoder_pro/domain/deployment/walkthrough.dart';
 
 import 'walkthrough_state.dart';
 
@@ -11,7 +11,7 @@ import 'walkthrough_state.dart';
 class WalkthroughCubit extends Cubit<WalkthroughState> {
   WalkthroughCubit() : super(const WalkthroughState.initial());
 
-  void loadContent(ProvisioningWalkthroughContent content) {
+  void loadContent(WalkthroughContent content) {
     final currentContent = state.content;
     if (currentContent != null && currentContent.hasSameIdentityAs(content)) {
       return;
@@ -24,49 +24,69 @@ class WalkthroughCubit extends Cubit<WalkthroughState> {
     emit(state.copyWith(isCodeExpanded: expanded));
   }
 
-  void nextBriefing() {
+  void nextBrief() {
     final currentContent = state.content;
     final currentWalkthrough = state.currentWalkthrough;
-    final briefingId = state.currentBriefingId;
+    final briefId = state.currentBriefId;
     if (currentContent == null ||
         currentWalkthrough == null ||
-        briefingId == null ||
+        briefId == null ||
         state.isSkipped ||
         state.isComplete) {
       return;
     }
 
-    final completed = {...state.completedBriefingIds, briefingId};
-    if (state.briefingIndex + 1 < currentWalkthrough.briefings.length) {
+    final completed = {...state.completedBriefIds, briefId};
+    if (state.briefIndex + 1 < currentWalkthrough.briefs.length) {
       emit(state.copyWith(
-        briefingIndex: state.briefingIndex + 1,
+        briefIndex: state.briefIndex + 1,
         isCodeExpanded: false,
-        completedBriefingIds: completed,
+        completedBriefIds: completed,
       ));
       return;
     }
     if (state.walkthroughIndex + 1 < currentContent.walkthroughs.length) {
       emit(state.copyWith(
         walkthroughIndex: state.walkthroughIndex + 1,
-        briefingIndex: 0,
+        briefIndex: 0,
         isCodeExpanded: false,
-        completedBriefingIds: completed,
+        completedBriefIds: completed,
       ));
       return;
     }
     emit(state.copyWith(
       isCodeExpanded: false,
       isComplete: true,
-      completedBriefingIds: completed,
+      completedBriefIds: completed,
     ));
   }
 
-  void previousBriefing() {
+  void selectBrief(String briefId) {
     final currentContent = state.content;
     if (currentContent == null || state.isSkipped) return;
-    if (state.briefingIndex > 0) {
+
+    for (var walkthroughIndex = 0;
+        walkthroughIndex < currentContent.walkthroughs.length;
+        walkthroughIndex += 1) {
+      final briefs = currentContent.walkthroughs[walkthroughIndex].briefs;
+      final briefIndex = briefs.indexWhere((brief) => brief.id == briefId);
+      if (briefIndex < 0) continue;
       emit(state.copyWith(
-        briefingIndex: state.briefingIndex - 1,
+        walkthroughIndex: walkthroughIndex,
+        briefIndex: briefIndex,
+        isCodeExpanded: false,
+        isComplete: false,
+      ));
+      return;
+    }
+  }
+
+  void previousBrief() {
+    final currentContent = state.content;
+    if (currentContent == null || state.isSkipped) return;
+    if (state.briefIndex > 0) {
+      emit(state.copyWith(
+        briefIndex: state.briefIndex - 1,
         isCodeExpanded: false,
       ));
       return;
@@ -77,7 +97,7 @@ class WalkthroughCubit extends Cubit<WalkthroughState> {
         currentContent.walkthroughs[previousWalkthroughIndex];
     emit(state.copyWith(
       walkthroughIndex: previousWalkthroughIndex,
-      briefingIndex: previousWalkthrough.briefings.length - 1,
+      briefIndex: previousWalkthrough.briefs.length - 1,
       isCodeExpanded: false,
     ));
   }

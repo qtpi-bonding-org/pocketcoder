@@ -9,7 +9,8 @@ import 'package:pocketcoder_pro/application/deployment/deployment_message_mapper
 import 'package:pocketcoder_pro/application/deployment/deployment_state.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/presentation/deployment/widgets/progress_view.dart';
-import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_tour_panel.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/pocketcoder_progress_pane.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_panel.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
 import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 
@@ -63,7 +64,8 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
           deploymentStatus: value.deploymentStatus,
           pollingAttempts: value.pollingAttempts,
           serverStatusDocument: value.serverStatusDocument,
-          provisioningTour: ProvisioningTourPanel(
+          progressPane: _progressPane(value),
+          provisioningTour: WalkthroughPanel(
             stage: value.deploymentStatus,
             sourceCommit: value.serverStatusDocument?.sourceCommit,
             sourceService: sourceService,
@@ -84,5 +86,72 @@ class ProgressAdapter extends CubitAdapter<DeploymentCubit, DeploymentState> {
         ),
       ),
     );
+  }
+
+  PocketCoderProgressPane _progressPane(DeploymentState value) {
+    final stage = value.deploymentStatus;
+    final failed =
+        value.status == UiFlowStatus.failure || stage == OnboardingStage.failed;
+    final complete = stage == OnboardingStage.ready;
+    final provisionStages = const [
+      OnboardingStage.validating,
+      OnboardingStage.creatingServer,
+      OnboardingStage.preparingHost,
+      OnboardingStage.hostReady,
+      OnboardingStage.securingConnection,
+    ];
+    final deployStages = const [
+      OnboardingStage.installingHost,
+      OnboardingStage.fetchingRelease,
+      OnboardingStage.loadingImages,
+      OnboardingStage.startingServices,
+      OnboardingStage.finishingUp,
+      OnboardingStage.ready,
+    ];
+    final isProvisioning = stage == null || provisionStages.contains(stage);
+    final isDeploying = deployStages.contains(stage);
+    final detail = value.serverStatusDocument?.detail;
+    final currentStep = detail?.trim().isNotEmpty == true
+        ? detail!.trim()
+        : (stage?.name.replaceAllMapped(
+              RegExp(r'([a-z])([A-Z])'),
+              (match) => '${match.group(1)} ${match.group(2)}',
+            ) ??
+            'INITIALIZING');
+
+    return PocketCoderProgressPane(
+      provision: PocketCoderProgressPhase(
+        label: 'PROVISION SERVER',
+        progress: isProvisioning ? _phaseProgress(stage, provisionStages) : 1,
+        currentStep: isProvisioning
+            ? currentStep
+            : (failed ? 'PROVISION FAILED' : 'SERVER CREATED'),
+        state: failed && isProvisioning
+            ? PocketCoderProgressPhaseState.failed
+            : isProvisioning
+                ? PocketCoderProgressPhaseState.running
+                : PocketCoderProgressPhaseState.complete,
+      ),
+      deploy: PocketCoderProgressPhase(
+        label: 'DEPLOY POCKETCODER',
+        progress: isDeploying ? _phaseProgress(stage, deployStages) : 0,
+        currentStep: isDeploying
+            ? currentStep
+            : (complete ? 'DEPLOYMENT COMPLETE' : 'WAITING FOR SERVER'),
+        state: failed && isDeploying
+            ? PocketCoderProgressPhaseState.failed
+            : complete
+                ? PocketCoderProgressPhaseState.complete
+                : isDeploying
+                    ? PocketCoderProgressPhaseState.running
+                    : PocketCoderProgressPhaseState.waiting,
+      ),
+    );
+  }
+
+  double _phaseProgress(OnboardingStage? stage, List<OnboardingStage> phases) {
+    final index = stage == null ? 0 : phases.indexOf(stage);
+    if (index < 0) return 0;
+    return (index + 1) / phases.length;
   }
 }

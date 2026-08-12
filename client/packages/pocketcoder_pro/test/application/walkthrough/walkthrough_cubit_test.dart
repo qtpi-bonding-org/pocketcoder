@@ -1,68 +1,68 @@
 import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_pro/application/walkthrough/walkthrough_cubit.dart';
-import 'package:pocketcoder_pro/domain/deployment/provisioning_walkthrough.dart';
+import 'package:pocketcoder_pro/domain/deployment/walkthrough.dart';
 
 void main() {
-  final firstContent = ProvisioningWalkthroughContent(
+  final firstContent = WalkthroughContent(
     sourceCommit: 'a1b2c3d4',
     backend: ProvisionBackendKind.nixos,
     walkthroughs: [
-      ProvisioningWalkthrough(
+      Walkthrough(
         id: 'nixos-configuration',
-        briefings: [
-          ProvisioningBriefing(id: 'storage', sectionIds: ['vps-storage']),
-          ProvisioningBriefing(id: 'network', sectionIds: ['vps-network']),
+        briefs: [
+          WalkthroughBrief(id: 'storage', sectionIds: ['vps-storage']),
+          WalkthroughBrief(id: 'network', sectionIds: ['vps-network']),
         ],
       ),
-      ProvisioningWalkthrough(
+      Walkthrough(
         id: 'nixos-bootstrap',
-        briefings: [
-          ProvisioningBriefing(id: 'key', sectionIds: ['bootstrap-key']),
+        briefs: [
+          WalkthroughBrief(id: 'key', sectionIds: ['bootstrap-key']),
         ],
       ),
     ],
   );
 
-  final changedContent = ProvisioningWalkthroughContent(
+  final changedContent = WalkthroughContent(
     sourceCommit: 'd4c3b2a1',
     backend: ProvisionBackendKind.standardLinux,
     walkthroughs: [
-      ProvisioningWalkthrough(
+      Walkthrough(
         id: 'debian-bootstrap',
-        briefings: [
-          ProvisioningBriefing(id: 'status', sectionIds: ['debian-status']),
+        briefs: [
+          WalkthroughBrief(id: 'status', sectionIds: ['debian-status']),
         ],
       ),
     ],
   );
 
-  test('moves through briefings and records completed progress', () {
+  test('moves through briefs and records completed progress', () {
     final cubit = WalkthroughCubit()..loadContent(firstContent);
 
-    expect(cubit.state.currentBriefingId, 'nixos-configuration/storage');
+    expect(cubit.state.currentBriefId, 'nixos-configuration/storage');
 
-    cubit.nextBriefing();
-    expect(cubit.state.currentBriefingId, 'nixos-configuration/network');
+    cubit.nextBrief();
+    expect(cubit.state.currentBriefId, 'nixos-configuration/network');
     expect(
-      cubit.state.completedBriefingIds,
+      cubit.state.completedBriefIds,
       contains('nixos-configuration/storage'),
     );
 
-    cubit.nextBriefing();
-    expect(cubit.state.currentBriefingId, 'nixos-bootstrap/key');
+    cubit.nextBrief();
+    expect(cubit.state.currentBriefId, 'nixos-bootstrap/key');
     expect(
-      cubit.state.completedBriefingIds,
+      cubit.state.completedBriefIds,
       containsAll([
         'nixos-configuration/storage',
         'nixos-configuration/network',
       ]),
     );
 
-    cubit.nextBriefing();
+    cubit.nextBrief();
     expect(cubit.state.isComplete, isTrue);
     expect(
-      cubit.state.completedBriefingIds,
+      cubit.state.completedBriefIds,
       contains('nixos-bootstrap/key'),
     );
 
@@ -72,14 +72,14 @@ void main() {
   test('same source content never resets reader-controlled progress', () {
     final cubit = WalkthroughCubit()..loadContent(firstContent);
 
-    cubit.nextBriefing();
+    cubit.nextBrief();
     cubit.setCodeExpanded(true);
     cubit.loadContent(firstContent);
 
-    expect(cubit.state.currentBriefingId, 'nixos-configuration/network');
+    expect(cubit.state.currentBriefId, 'nixos-configuration/network');
     expect(cubit.state.isCodeExpanded, isTrue);
     expect(
-      cubit.state.completedBriefingIds,
+      cubit.state.completedBriefIds,
       contains('nixos-configuration/storage'),
     );
 
@@ -89,35 +89,34 @@ void main() {
   test('only a different source identity resets walkthrough progress', () {
     final cubit = WalkthroughCubit()..loadContent(firstContent);
 
-    cubit.nextBriefing();
+    cubit.nextBrief();
     cubit.setCodeExpanded(true);
     cubit.loadContent(changedContent);
 
-    expect(cubit.state.currentBriefingId, 'debian-bootstrap/status');
+    expect(cubit.state.currentBriefId, 'debian-bootstrap/status');
     expect(cubit.state.isCodeExpanded, isFalse);
-    expect(cubit.state.completedBriefingIds, isEmpty);
+    expect(cubit.state.completedBriefIds, isEmpty);
     expect(cubit.state.isComplete, isFalse);
 
     cubit.close();
   });
 
-  test('skip and resume retain the current briefing and completion history',
-      () {
+  test('skip and resume retain the current brief and completion history', () {
     final cubit = WalkthroughCubit()..loadContent(firstContent);
 
-    cubit.nextBriefing();
+    cubit.nextBrief();
     cubit.skip();
-    cubit.nextBriefing();
+    cubit.nextBrief();
 
     expect(cubit.state.isSkipped, isTrue);
-    expect(cubit.state.currentBriefingId, 'nixos-configuration/network');
+    expect(cubit.state.currentBriefId, 'nixos-configuration/network');
 
     cubit.resume();
 
     expect(cubit.state.isSkipped, isFalse);
-    expect(cubit.state.currentBriefingId, 'nixos-configuration/network');
+    expect(cubit.state.currentBriefId, 'nixos-configuration/network');
     expect(
-      cubit.state.completedBriefingIds,
+      cubit.state.completedBriefIds,
       contains('nixos-configuration/storage'),
     );
 
@@ -128,13 +127,13 @@ void main() {
       () {
     final cubit = WalkthroughCubit()..loadContent(firstContent);
 
-    cubit.nextBriefing();
-    cubit.nextBriefing();
-    cubit.previousBriefing();
+    cubit.nextBrief();
+    cubit.nextBrief();
+    cubit.previousBrief();
 
-    expect(cubit.state.currentBriefingId, 'nixos-configuration/network');
+    expect(cubit.state.currentBriefId, 'nixos-configuration/network');
     expect(
-      cubit.state.completedBriefingIds,
+      cubit.state.completedBriefIds,
       containsAll([
         'nixos-configuration/storage',
         'nixos-configuration/network',

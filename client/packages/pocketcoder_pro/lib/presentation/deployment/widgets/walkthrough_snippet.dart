@@ -6,8 +6,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 ///
 /// The parent owns [expanded] so the widget stays a pure view and can be
 /// adapted to a Cubit without giving the widget access to application state.
-class ProvisioningSnippet extends StatelessWidget {
-  const ProvisioningSnippet({
+class WalkthroughSnippet extends StatelessWidget {
+  const WalkthroughSnippet({
     super.key,
     required this.previewCode,
     required this.expandedCode,

@@ -5,20 +5,20 @@ import 'package:flutter_aeroform/domain/models/provision_progress.dart';
 /// The source sections are resolved later, after the deployed immutable commit
 /// is known. Keeping this outline separate from deployment status means a
 /// walkthrough can be read at the owner's pace.
-class ProvisioningWalkthrough {
-  ProvisioningWalkthrough({
+class Walkthrough {
+  Walkthrough({
     required this.id,
-    required this.briefings,
+    required this.briefs,
   })  : assert(id != ''),
-        assert(briefings.length > 0);
+        assert(briefs.length > 0);
 
   final String id;
-  final List<ProvisioningBriefing> briefings;
+  final List<WalkthroughBrief> briefs;
 }
 
-/// One meaningful explanation within a [ProvisioningWalkthrough].
-class ProvisioningBriefing {
-  ProvisioningBriefing({
+/// One meaningful explanation within a [Walkthrough].
+class WalkthroughBrief {
+  WalkthroughBrief({
     required this.id,
     required this.sectionIds,
   })  : assert(id != ''),
@@ -27,7 +27,7 @@ class ProvisioningBriefing {
   final String id;
 
   /// Annotated source sections that provide the code snippets for this
-  /// briefing. A briefing may draw from more than one section in the same
+  /// brief. A brief may draw from more than one section in the same
   /// walkthrough file.
   final List<String> sectionIds;
 }
@@ -37,8 +37,8 @@ class ProvisioningBriefing {
 /// The content is reset only when either the deployed source commit or target
 /// operating-system backend changes. Deployment progress changes do not appear
 /// here and therefore cannot reset reading progress.
-class ProvisioningWalkthroughContent {
-  ProvisioningWalkthroughContent({
+class WalkthroughContent {
+  WalkthroughContent({
     required this.sourceCommit,
     required this.backend,
     required this.walkthroughs,
@@ -47,8 +47,8 @@ class ProvisioningWalkthroughContent {
 
   final String sourceCommit;
   final ProvisionBackendKind backend;
-  final List<ProvisioningWalkthrough> walkthroughs;
+  final List<Walkthrough> walkthroughs;
 
-  bool hasSameIdentityAs(ProvisioningWalkthroughContent other) =>
+  bool hasSameIdentityAs(WalkthroughContent other) =>
       sourceCommit == other.sourceCommit && backend == other.backend;
 }

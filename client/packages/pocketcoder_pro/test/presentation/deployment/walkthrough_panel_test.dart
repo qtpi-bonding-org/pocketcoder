@@ -8,7 +8,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_pro/domain/deployment/onboarding_stage.dart';
 import 'package:pocketcoder_pro/infrastructure/deployment/github_provisioning_source_service.dart';
-import 'package:pocketcoder_pro/presentation/deployment/widgets/provisioning_tour_panel.dart';
+import 'package:pocketcoder_pro/presentation/deployment/widgets/walkthrough_panel.dart';
 
 class _SourceClient extends http.BaseClient {
   final requestedPaths = <String>[];
@@ -70,7 +70,7 @@ void main() {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
-        body: ProvisioningTourPanel(
+        body: WalkthroughPanel(
           stage: OnboardingStage.fetchingRelease,
           sourceCommit: 'abcdef1234567',
           sourceService: GithubProvisioningSourceService(client: client),
@@ -90,7 +90,8 @@ void main() {
     expect(client.requestedPaths, hasLength(5));
   });
 
-  testWidgets('standard Linux shows its bootstrap script and never requests NixOS source',
+  testWidgets(
+      'standard Linux shows its bootstrap script and never requests NixOS source',
       (tester) async {
     final client = _SourceClient();
 
@@ -99,7 +100,7 @@ void main() {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
-        body: ProvisioningTourPanel(
+        body: WalkthroughPanel(
           stage: OnboardingStage.installingHost,
           sourceCommit: 'abcdef1234567',
           sourceService: GithubProvisioningSourceService(client: client),

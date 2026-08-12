@@ -88,7 +88,7 @@ const _screenInventory = {
   'AuthScreen',
   'ConfigScreen',
   'ProgressScreen',
-  'ProvisioningLessonCard',
+  'WalkthroughBrief',
   'DetailsScreen',
   'UpdateServerScreen',
 };
