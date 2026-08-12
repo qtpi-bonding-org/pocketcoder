@@ -49,13 +49,15 @@ void main() {
     );
   }
 
-  testWidgets('server choice has separate LOGIN and DEPLOY actions',
+  testWidgets('server choice has concise CONNECT and DEPLOY actions',
       (tester) async {
     await tester.pumpWidget(buildTestable(const OnboardingScreen()));
     await tester.pump();
 
-    expect(find.text('LOGIN'), findsOneWidget);
+    expect(find.text('CONNECT'), findsOneWidget);
     expect(find.text('DEPLOY'), findsOneWidget);
+    expect(find.text('USE AN EXISTING POCKETBASE SERVER'), findsNothing);
+    expect(find.text('CREATE A NEW SERVER'), findsNothing);
     expect(find.byType(TextField), findsNothing);
   });
 
@@ -66,7 +68,7 @@ void main() {
 
     expect(find.byType(PocoBubble), findsOneWidget);
     expect(find.byType(TextField), findsNWidgets(3));
-    expect(find.text('LOGIN'), findsOneWidget);
+    expect(find.text('CONNECT'), findsOneWidget);
   });
 
   testWidgets('prefilled login page shows server credentials', (tester) async {

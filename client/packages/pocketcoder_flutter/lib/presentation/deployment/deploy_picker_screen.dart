@@ -47,6 +47,7 @@ class DeployPickerView extends StatelessWidget {
         title: context.l10n.deployTitle,
         activePillar: NavPillar.configure,
         showBack: true,
+        showNavigation: false,
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),

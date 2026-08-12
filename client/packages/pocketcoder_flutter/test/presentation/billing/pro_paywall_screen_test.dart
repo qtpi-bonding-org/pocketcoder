@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/billing/pro_paywall_screen.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 
 void main() {
   const package = BillingPackage(
@@ -22,6 +23,7 @@ void main() {
     VoidCallback? onPurchase,
     VoidCallback? onRestore,
     VoidCallback? onConfigure,
+    bool showNavigation = true,
   }) {
     return MaterialApp(
       theme: AppTheme.terminalTheme,
@@ -32,6 +34,7 @@ void main() {
         onPurchase: onPurchase ?? () {},
         onRestore: onRestore ?? () {},
         onConfigureSelfHostedPush: onConfigure ?? () {},
+        showNavigation: showNavigation,
       ),
     );
   }
@@ -77,5 +80,13 @@ void main() {
     expect(purchases, 1);
     expect(restores, 1);
     expect(configures, 1);
+  });
+
+  testWidgets('hides primary navigation inside the deployment flow',
+      (tester) async {
+    await tester.pumpWidget(subject(showNavigation: false));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TerminalFooter), findsNothing);
   });
 }
