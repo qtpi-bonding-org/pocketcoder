@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-11T22:44:11.752617
+// Generated at: 2026-08-12T04:40:47.914044
 
 import 'app_localizations.dart';
 
@@ -24,7 +24,7 @@ class L10nKeyResolver {
   ///
   /// For parameterized messages, pass the arguments map.
   String? resolve(String key, {Map<String, dynamic>? args}) {
-    return switch (key) {
+    return (switch (key) {
       // Simple keys (no parameters)
       'action.add' => _l10n.actionAdd,
       'action.add.new' => _l10n.actionAddNew,
@@ -124,12 +124,77 @@ class L10nKeyResolver {
       'deploy.pro.badge' => _l10n.deployProBadge,
       'deploy.select.provider' => _l10n.deploySelectProvider,
       'deploy.title' => _l10n.deployTitle,
+      'deployment.action.abort' => _l10n.deploymentActionAbort,
+      'deployment.action.back' => _l10n.deploymentActionBack,
+      'deployment.action.deploy.instance' => _l10n.deploymentActionDeployInstance,
+      'deployment.action.dismiss' => _l10n.deploymentActionDismiss,
+      'deployment.action.login.now' => _l10n.deploymentActionLoginNow,
+      'deployment.action.refresh' => _l10n.deploymentActionRefresh,
+      'deployment.action.retry.scan' => _l10n.deploymentActionRetryScan,
+      'deployment.action.update' => _l10n.deploymentActionUpdate,
+      'deployment.admin.identity' => _l10n.deploymentAdminIdentity,
+      'deployment.admin.password' => _l10n.deploymentAdminPassword,
+      'deployment.backend' => _l10n.deploymentBackend,
+      'deployment.cloud.region' => _l10n.deploymentCloudRegion,
+      'deployment.coding.harnesses' => _l10n.deploymentCodingHarnesses,
+      'deployment.connection.parameters' => _l10n.deploymentConnectionParameters,
+      'deployment.copy.label' => _l10n.deploymentCopyLabel,
       'deployment.current.operation' => _l10n.deploymentCurrentOperation,
+      'deployment.debian' => _l10n.deploymentDebian,
+      'deployment.description.constructing' => _l10n.deploymentDescriptionConstructing,
+      'deployment.description.failed' => _l10n.deploymentDescriptionFailed,
+      'deployment.description.fetching' => _l10n.deploymentDescriptionFetching,
+      'deployment.description.finishing' => _l10n.deploymentDescriptionFinishing,
+      'deployment.description.initializing' => _l10n.deploymentDescriptionInitializing,
+      'deployment.description.installing' => _l10n.deploymentDescriptionInstalling,
+      'deployment.description.loading.images' => _l10n.deploymentDescriptionLoadingImages,
+      'deployment.description.preparing.host' => _l10n.deploymentDescriptionPreparingHost,
+      'deployment.description.ready' => _l10n.deploymentDescriptionReady,
+      'deployment.description.securing' => _l10n.deploymentDescriptionSecuring,
+      'deployment.description.starting' => _l10n.deploymentDescriptionStarting,
+      'deployment.description.validating' => _l10n.deploymentDescriptionValidating,
+      'deployment.distribution' => _l10n.deploymentDistribution,
       'deployment.error.code' => _l10n.deploymentErrorCode,
+      'deployment.geo.grid' => _l10n.deploymentGeoGrid,
+      'deployment.hardware.geography' => _l10n.deploymentHardwareGeography,
+      'deployment.hardware.plan' => _l10n.deploymentHardwarePlan,
+      'deployment.harness.selection.description' => _l10n.deploymentHarnessSelectionDescription,
+      'deployment.https.endpoint' => _l10n.deploymentHttpsEndpoint,
+      'deployment.initializing.hardware' => _l10n.deploymentInitializingHardware,
+      'deployment.instance.manifest' => _l10n.deploymentInstanceManifest,
+      'deployment.instance.plan' => _l10n.deploymentInstancePlan,
+      'deployment.ip.address' => _l10n.deploymentIpAddress,
       'deployment.last.signal' => _l10n.deploymentLastSignal,
+      'deployment.manifest.configuration' => _l10n.deploymentManifestConfiguration,
+      'deployment.metadata.registry' => _l10n.deploymentMetadataRegistry,
+      'deployment.network.ip' => _l10n.deploymentNetworkIp,
+      'deployment.nixos' => _l10n.deploymentNixos,
+      'deployment.operating.system' => _l10n.deploymentOperatingSystem,
+      'deployment.provisioned' => _l10n.deploymentProvisioned,
+      'deployment.region' => _l10n.deploymentRegion,
       'deployment.run.id' => _l10n.deploymentRunId,
+      'deployment.scanning.regions' => _l10n.deploymentScanningRegions,
+      'deployment.screen.title' => _l10n.deploymentScreenTitle,
+      'deployment.secure' => _l10n.deploymentSecure,
+      'deployment.security.notice' => _l10n.deploymentSecurityNotice,
       'deployment.source.commit' => _l10n.deploymentSourceCommit,
+      'deployment.standard.linux' => _l10n.deploymentStandardLinux,
+      'deployment.status.constructing' => _l10n.deploymentStatusConstructing,
+      'deployment.status.failed' => _l10n.deploymentStatusFailed,
+      'deployment.status.fetching' => _l10n.deploymentStatusFetching,
+      'deployment.status.finishing' => _l10n.deploymentStatusFinishing,
+      'deployment.status.initializing' => _l10n.deploymentStatusInitializing,
+      'deployment.status.installing' => _l10n.deploymentStatusInstalling,
+      'deployment.status.loading.images' => _l10n.deploymentStatusLoadingImages,
+      'deployment.status.preparing.host' => _l10n.deploymentStatusPreparingHost,
+      'deployment.status.ready' => _l10n.deploymentStatusReady,
       'deployment.status.schema' => _l10n.deploymentStatusSchema,
+      'deployment.status.securing' => _l10n.deploymentStatusSecuring,
+      'deployment.status.starting' => _l10n.deploymentStatusStarting,
+      'deployment.status.validating' => _l10n.deploymentStatusValidating,
+      'deployment.system.parameters' => _l10n.deploymentSystemParameters,
+      'deployment.ubuntu' => _l10n.deploymentUbuntu,
+      'deployment.unknown' => _l10n.deploymentUnknown,
       'error.auth.failed' => _l10n.errorAuthFailed,
       'error.auth.unauthorized' => _l10n.errorAuthUnauthorized,
       'error.generic' => _l10n.errorGeneric,
@@ -600,6 +665,10 @@ class L10nKeyResolver {
       'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
+      'deployment.copied.to.buffer' => _l10n.deploymentCopiedToBuffer(args?['label'] as String? ?? ''),
+      'deployment.fault.detected' => _l10n.deploymentFaultDetected(args?['error'] as String? ?? ''),
+      'deployment.monthly.price' => _l10n.deploymentMonthlyPrice(args?['price'] as String? ?? ''),
+      'deployment.status.prefix' => _l10n.deploymentStatusPrefix(args?['status'] as String? ?? ''),
       'deployment.sync.attempt' => _l10n.deploymentSyncAttempt(args?['attempt'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'home.error.prefix' => _l10n.homeErrorPrefix(args?['error'] as String? ?? ''),
@@ -632,11 +701,11 @@ class L10nKeyResolver {
       'terminal.ssh.link' => _l10n.terminalSshLink(args?['host'] as String? ?? '', args?['port'] as String? ?? ''),
       'walkthrough.header' => _l10n.walkthroughHeader(args?['os'] as String? ?? '', args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
       'walkthrough.label' => _l10n.walkthroughLabel(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
-      'walkthrough.progress' => _l10n.walkthroughProgress(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0, args?['briefing'] as String? ?? ''),
+      'walkthrough.progress' => _l10n.walkthroughProgress(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0, args?['brief'] as String? ?? ''),
       'walkthrough.services.harnesses.poco' => _l10n.walkthroughServicesHarnessesPoco(args?['selectedHarnesses'] as String? ?? ''),
 
       _ => null,
-    };
+    }) as String?;
   }
 
   /// Set of all known keys (for validation/debugging).
@@ -747,13 +816,82 @@ class L10nKeyResolver {
     'deploy.pro.badge',
     'deploy.select.provider',
     'deploy.title',
+    'deployment.action.abort',
+    'deployment.action.back',
+    'deployment.action.deploy.instance',
+    'deployment.action.dismiss',
+    'deployment.action.login.now',
+    'deployment.action.refresh',
+    'deployment.action.retry.scan',
+    'deployment.action.update',
+    'deployment.admin.identity',
+    'deployment.admin.password',
+    'deployment.backend',
+    'deployment.cloud.region',
+    'deployment.coding.harnesses',
+    'deployment.connection.parameters',
+    'deployment.copied.to.buffer',
+    'deployment.copy.label',
     'deployment.current.operation',
+    'deployment.debian',
+    'deployment.description.constructing',
+    'deployment.description.failed',
+    'deployment.description.fetching',
+    'deployment.description.finishing',
+    'deployment.description.initializing',
+    'deployment.description.installing',
+    'deployment.description.loading.images',
+    'deployment.description.preparing.host',
+    'deployment.description.ready',
+    'deployment.description.securing',
+    'deployment.description.starting',
+    'deployment.description.validating',
+    'deployment.distribution',
     'deployment.error.code',
+    'deployment.fault.detected',
+    'deployment.geo.grid',
+    'deployment.hardware.geography',
+    'deployment.hardware.plan',
+    'deployment.harness.selection.description',
+    'deployment.https.endpoint',
+    'deployment.initializing.hardware',
+    'deployment.instance.manifest',
+    'deployment.instance.plan',
+    'deployment.ip.address',
     'deployment.last.signal',
+    'deployment.manifest.configuration',
+    'deployment.metadata.registry',
+    'deployment.monthly.price',
+    'deployment.network.ip',
+    'deployment.nixos',
+    'deployment.operating.system',
+    'deployment.provisioned',
+    'deployment.region',
     'deployment.run.id',
+    'deployment.scanning.regions',
+    'deployment.screen.title',
+    'deployment.secure',
+    'deployment.security.notice',
     'deployment.source.commit',
+    'deployment.standard.linux',
+    'deployment.status.constructing',
+    'deployment.status.failed',
+    'deployment.status.fetching',
+    'deployment.status.finishing',
+    'deployment.status.initializing',
+    'deployment.status.installing',
+    'deployment.status.loading.images',
+    'deployment.status.prefix',
+    'deployment.status.preparing.host',
+    'deployment.status.ready',
     'deployment.status.schema',
+    'deployment.status.securing',
+    'deployment.status.starting',
+    'deployment.status.validating',
     'deployment.sync.attempt',
+    'deployment.system.parameters',
+    'deployment.ubuntu',
+    'deployment.unknown',
     'error.auth.failed',
     'error.auth.unauthorized',
     'error.generic',
@@ -1360,13 +1498,82 @@ class L10nKeyResolver {
     'deployProBadge': 'deploy.pro.badge',
     'deploySelectProvider': 'deploy.select.provider',
     'deployTitle': 'deploy.title',
+    'deploymentActionAbort': 'deployment.action.abort',
+    'deploymentActionBack': 'deployment.action.back',
+    'deploymentActionDeployInstance': 'deployment.action.deploy.instance',
+    'deploymentActionDismiss': 'deployment.action.dismiss',
+    'deploymentActionLoginNow': 'deployment.action.login.now',
+    'deploymentActionRefresh': 'deployment.action.refresh',
+    'deploymentActionRetryScan': 'deployment.action.retry.scan',
+    'deploymentActionUpdate': 'deployment.action.update',
+    'deploymentAdminIdentity': 'deployment.admin.identity',
+    'deploymentAdminPassword': 'deployment.admin.password',
+    'deploymentBackend': 'deployment.backend',
+    'deploymentCloudRegion': 'deployment.cloud.region',
+    'deploymentCodingHarnesses': 'deployment.coding.harnesses',
+    'deploymentConnectionParameters': 'deployment.connection.parameters',
+    'deploymentCopiedToBuffer': 'deployment.copied.to.buffer',
+    'deploymentCopyLabel': 'deployment.copy.label',
     'deploymentCurrentOperation': 'deployment.current.operation',
+    'deploymentDebian': 'deployment.debian',
+    'deploymentDescriptionConstructing': 'deployment.description.constructing',
+    'deploymentDescriptionFailed': 'deployment.description.failed',
+    'deploymentDescriptionFetching': 'deployment.description.fetching',
+    'deploymentDescriptionFinishing': 'deployment.description.finishing',
+    'deploymentDescriptionInitializing': 'deployment.description.initializing',
+    'deploymentDescriptionInstalling': 'deployment.description.installing',
+    'deploymentDescriptionLoadingImages': 'deployment.description.loading.images',
+    'deploymentDescriptionPreparingHost': 'deployment.description.preparing.host',
+    'deploymentDescriptionReady': 'deployment.description.ready',
+    'deploymentDescriptionSecuring': 'deployment.description.securing',
+    'deploymentDescriptionStarting': 'deployment.description.starting',
+    'deploymentDescriptionValidating': 'deployment.description.validating',
+    'deploymentDistribution': 'deployment.distribution',
     'deploymentErrorCode': 'deployment.error.code',
+    'deploymentFaultDetected': 'deployment.fault.detected',
+    'deploymentGeoGrid': 'deployment.geo.grid',
+    'deploymentHardwareGeography': 'deployment.hardware.geography',
+    'deploymentHardwarePlan': 'deployment.hardware.plan',
+    'deploymentHarnessSelectionDescription': 'deployment.harness.selection.description',
+    'deploymentHttpsEndpoint': 'deployment.https.endpoint',
+    'deploymentInitializingHardware': 'deployment.initializing.hardware',
+    'deploymentInstanceManifest': 'deployment.instance.manifest',
+    'deploymentInstancePlan': 'deployment.instance.plan',
+    'deploymentIpAddress': 'deployment.ip.address',
     'deploymentLastSignal': 'deployment.last.signal',
+    'deploymentManifestConfiguration': 'deployment.manifest.configuration',
+    'deploymentMetadataRegistry': 'deployment.metadata.registry',
+    'deploymentMonthlyPrice': 'deployment.monthly.price',
+    'deploymentNetworkIp': 'deployment.network.ip',
+    'deploymentNixos': 'deployment.nixos',
+    'deploymentOperatingSystem': 'deployment.operating.system',
+    'deploymentProvisioned': 'deployment.provisioned',
+    'deploymentRegion': 'deployment.region',
     'deploymentRunId': 'deployment.run.id',
+    'deploymentScanningRegions': 'deployment.scanning.regions',
+    'deploymentScreenTitle': 'deployment.screen.title',
+    'deploymentSecure': 'deployment.secure',
+    'deploymentSecurityNotice': 'deployment.security.notice',
     'deploymentSourceCommit': 'deployment.source.commit',
+    'deploymentStandardLinux': 'deployment.standard.linux',
+    'deploymentStatusConstructing': 'deployment.status.constructing',
+    'deploymentStatusFailed': 'deployment.status.failed',
+    'deploymentStatusFetching': 'deployment.status.fetching',
+    'deploymentStatusFinishing': 'deployment.status.finishing',
+    'deploymentStatusInitializing': 'deployment.status.initializing',
+    'deploymentStatusInstalling': 'deployment.status.installing',
+    'deploymentStatusLoadingImages': 'deployment.status.loading.images',
+    'deploymentStatusPrefix': 'deployment.status.prefix',
+    'deploymentStatusPreparingHost': 'deployment.status.preparing.host',
+    'deploymentStatusReady': 'deployment.status.ready',
     'deploymentStatusSchema': 'deployment.status.schema',
+    'deploymentStatusSecuring': 'deployment.status.securing',
+    'deploymentStatusStarting': 'deployment.status.starting',
+    'deploymentStatusValidating': 'deployment.status.validating',
     'deploymentSyncAttempt': 'deployment.sync.attempt',
+    'deploymentSystemParameters': 'deployment.system.parameters',
+    'deploymentUbuntu': 'deployment.ubuntu',
+    'deploymentUnknown': 'deployment.unknown',
     'errorAuthFailed': 'error.auth.failed',
     'errorAuthUnauthorized': 'error.auth.unauthorized',
     'errorGeneric': 'error.generic',
@@ -1970,13 +2177,82 @@ class L10nKeyResolver {
     'deploy.pro.badge': 'deployProBadge',
     'deploy.select.provider': 'deploySelectProvider',
     'deploy.title': 'deployTitle',
+    'deployment.action.abort': 'deploymentActionAbort',
+    'deployment.action.back': 'deploymentActionBack',
+    'deployment.action.deploy.instance': 'deploymentActionDeployInstance',
+    'deployment.action.dismiss': 'deploymentActionDismiss',
+    'deployment.action.login.now': 'deploymentActionLoginNow',
+    'deployment.action.refresh': 'deploymentActionRefresh',
+    'deployment.action.retry.scan': 'deploymentActionRetryScan',
+    'deployment.action.update': 'deploymentActionUpdate',
+    'deployment.admin.identity': 'deploymentAdminIdentity',
+    'deployment.admin.password': 'deploymentAdminPassword',
+    'deployment.backend': 'deploymentBackend',
+    'deployment.cloud.region': 'deploymentCloudRegion',
+    'deployment.coding.harnesses': 'deploymentCodingHarnesses',
+    'deployment.connection.parameters': 'deploymentConnectionParameters',
+    'deployment.copied.to.buffer': 'deploymentCopiedToBuffer',
+    'deployment.copy.label': 'deploymentCopyLabel',
     'deployment.current.operation': 'deploymentCurrentOperation',
+    'deployment.debian': 'deploymentDebian',
+    'deployment.description.constructing': 'deploymentDescriptionConstructing',
+    'deployment.description.failed': 'deploymentDescriptionFailed',
+    'deployment.description.fetching': 'deploymentDescriptionFetching',
+    'deployment.description.finishing': 'deploymentDescriptionFinishing',
+    'deployment.description.initializing': 'deploymentDescriptionInitializing',
+    'deployment.description.installing': 'deploymentDescriptionInstalling',
+    'deployment.description.loading.images': 'deploymentDescriptionLoadingImages',
+    'deployment.description.preparing.host': 'deploymentDescriptionPreparingHost',
+    'deployment.description.ready': 'deploymentDescriptionReady',
+    'deployment.description.securing': 'deploymentDescriptionSecuring',
+    'deployment.description.starting': 'deploymentDescriptionStarting',
+    'deployment.description.validating': 'deploymentDescriptionValidating',
+    'deployment.distribution': 'deploymentDistribution',
     'deployment.error.code': 'deploymentErrorCode',
+    'deployment.fault.detected': 'deploymentFaultDetected',
+    'deployment.geo.grid': 'deploymentGeoGrid',
+    'deployment.hardware.geography': 'deploymentHardwareGeography',
+    'deployment.hardware.plan': 'deploymentHardwarePlan',
+    'deployment.harness.selection.description': 'deploymentHarnessSelectionDescription',
+    'deployment.https.endpoint': 'deploymentHttpsEndpoint',
+    'deployment.initializing.hardware': 'deploymentInitializingHardware',
+    'deployment.instance.manifest': 'deploymentInstanceManifest',
+    'deployment.instance.plan': 'deploymentInstancePlan',
+    'deployment.ip.address': 'deploymentIpAddress',
     'deployment.last.signal': 'deploymentLastSignal',
+    'deployment.manifest.configuration': 'deploymentManifestConfiguration',
+    'deployment.metadata.registry': 'deploymentMetadataRegistry',
+    'deployment.monthly.price': 'deploymentMonthlyPrice',
+    'deployment.network.ip': 'deploymentNetworkIp',
+    'deployment.nixos': 'deploymentNixos',
+    'deployment.operating.system': 'deploymentOperatingSystem',
+    'deployment.provisioned': 'deploymentProvisioned',
+    'deployment.region': 'deploymentRegion',
     'deployment.run.id': 'deploymentRunId',
+    'deployment.scanning.regions': 'deploymentScanningRegions',
+    'deployment.screen.title': 'deploymentScreenTitle',
+    'deployment.secure': 'deploymentSecure',
+    'deployment.security.notice': 'deploymentSecurityNotice',
     'deployment.source.commit': 'deploymentSourceCommit',
+    'deployment.standard.linux': 'deploymentStandardLinux',
+    'deployment.status.constructing': 'deploymentStatusConstructing',
+    'deployment.status.failed': 'deploymentStatusFailed',
+    'deployment.status.fetching': 'deploymentStatusFetching',
+    'deployment.status.finishing': 'deploymentStatusFinishing',
+    'deployment.status.initializing': 'deploymentStatusInitializing',
+    'deployment.status.installing': 'deploymentStatusInstalling',
+    'deployment.status.loading.images': 'deploymentStatusLoadingImages',
+    'deployment.status.prefix': 'deploymentStatusPrefix',
+    'deployment.status.preparing.host': 'deploymentStatusPreparingHost',
+    'deployment.status.ready': 'deploymentStatusReady',
     'deployment.status.schema': 'deploymentStatusSchema',
+    'deployment.status.securing': 'deploymentStatusSecuring',
+    'deployment.status.starting': 'deploymentStatusStarting',
+    'deployment.status.validating': 'deploymentStatusValidating',
     'deployment.sync.attempt': 'deploymentSyncAttempt',
+    'deployment.system.parameters': 'deploymentSystemParameters',
+    'deployment.ubuntu': 'deploymentUbuntu',
+    'deployment.unknown': 'deploymentUnknown',
     'error.auth.failed': 'errorAuthFailed',
     'error.auth.unauthorized': 'errorAuthUnauthorized',
     'error.generic': 'errorGeneric',
@@ -2587,13 +2863,82 @@ abstract class L10nKeys {
   static const deployProBadge = 'deploy.pro.badge';
   static const deploySelectProvider = 'deploy.select.provider';
   static const deployTitle = 'deploy.title';
+  static const deploymentActionAbort = 'deployment.action.abort';
+  static const deploymentActionBack = 'deployment.action.back';
+  static const deploymentActionDeployInstance = 'deployment.action.deploy.instance';
+  static const deploymentActionDismiss = 'deployment.action.dismiss';
+  static const deploymentActionLoginNow = 'deployment.action.login.now';
+  static const deploymentActionRefresh = 'deployment.action.refresh';
+  static const deploymentActionRetryScan = 'deployment.action.retry.scan';
+  static const deploymentActionUpdate = 'deployment.action.update';
+  static const deploymentAdminIdentity = 'deployment.admin.identity';
+  static const deploymentAdminPassword = 'deployment.admin.password';
+  static const deploymentBackend = 'deployment.backend';
+  static const deploymentCloudRegion = 'deployment.cloud.region';
+  static const deploymentCodingHarnesses = 'deployment.coding.harnesses';
+  static const deploymentConnectionParameters = 'deployment.connection.parameters';
+  static (String, Map<String, dynamic>) deploymentCopiedToBuffer(String label) => ('deployment.copied.to.buffer', {'label': label});
+  static const deploymentCopyLabel = 'deployment.copy.label';
   static const deploymentCurrentOperation = 'deployment.current.operation';
+  static const deploymentDebian = 'deployment.debian';
+  static const deploymentDescriptionConstructing = 'deployment.description.constructing';
+  static const deploymentDescriptionFailed = 'deployment.description.failed';
+  static const deploymentDescriptionFetching = 'deployment.description.fetching';
+  static const deploymentDescriptionFinishing = 'deployment.description.finishing';
+  static const deploymentDescriptionInitializing = 'deployment.description.initializing';
+  static const deploymentDescriptionInstalling = 'deployment.description.installing';
+  static const deploymentDescriptionLoadingImages = 'deployment.description.loading.images';
+  static const deploymentDescriptionPreparingHost = 'deployment.description.preparing.host';
+  static const deploymentDescriptionReady = 'deployment.description.ready';
+  static const deploymentDescriptionSecuring = 'deployment.description.securing';
+  static const deploymentDescriptionStarting = 'deployment.description.starting';
+  static const deploymentDescriptionValidating = 'deployment.description.validating';
+  static const deploymentDistribution = 'deployment.distribution';
   static const deploymentErrorCode = 'deployment.error.code';
+  static (String, Map<String, dynamic>) deploymentFaultDetected(String error) => ('deployment.fault.detected', {'error': error});
+  static const deploymentGeoGrid = 'deployment.geo.grid';
+  static const deploymentHardwareGeography = 'deployment.hardware.geography';
+  static const deploymentHardwarePlan = 'deployment.hardware.plan';
+  static const deploymentHarnessSelectionDescription = 'deployment.harness.selection.description';
+  static const deploymentHttpsEndpoint = 'deployment.https.endpoint';
+  static const deploymentInitializingHardware = 'deployment.initializing.hardware';
+  static const deploymentInstanceManifest = 'deployment.instance.manifest';
+  static const deploymentInstancePlan = 'deployment.instance.plan';
+  static const deploymentIpAddress = 'deployment.ip.address';
   static const deploymentLastSignal = 'deployment.last.signal';
+  static const deploymentManifestConfiguration = 'deployment.manifest.configuration';
+  static const deploymentMetadataRegistry = 'deployment.metadata.registry';
+  static (String, Map<String, dynamic>) deploymentMonthlyPrice(String price) => ('deployment.monthly.price', {'price': price});
+  static const deploymentNetworkIp = 'deployment.network.ip';
+  static const deploymentNixos = 'deployment.nixos';
+  static const deploymentOperatingSystem = 'deployment.operating.system';
+  static const deploymentProvisioned = 'deployment.provisioned';
+  static const deploymentRegion = 'deployment.region';
   static const deploymentRunId = 'deployment.run.id';
+  static const deploymentScanningRegions = 'deployment.scanning.regions';
+  static const deploymentScreenTitle = 'deployment.screen.title';
+  static const deploymentSecure = 'deployment.secure';
+  static const deploymentSecurityNotice = 'deployment.security.notice';
   static const deploymentSourceCommit = 'deployment.source.commit';
+  static const deploymentStandardLinux = 'deployment.standard.linux';
+  static const deploymentStatusConstructing = 'deployment.status.constructing';
+  static const deploymentStatusFailed = 'deployment.status.failed';
+  static const deploymentStatusFetching = 'deployment.status.fetching';
+  static const deploymentStatusFinishing = 'deployment.status.finishing';
+  static const deploymentStatusInitializing = 'deployment.status.initializing';
+  static const deploymentStatusInstalling = 'deployment.status.installing';
+  static const deploymentStatusLoadingImages = 'deployment.status.loading.images';
+  static (String, Map<String, dynamic>) deploymentStatusPrefix(String status) => ('deployment.status.prefix', {'status': status});
+  static const deploymentStatusPreparingHost = 'deployment.status.preparing.host';
+  static const deploymentStatusReady = 'deployment.status.ready';
   static const deploymentStatusSchema = 'deployment.status.schema';
+  static const deploymentStatusSecuring = 'deployment.status.securing';
+  static const deploymentStatusStarting = 'deployment.status.starting';
+  static const deploymentStatusValidating = 'deployment.status.validating';
   static (String, Map<String, dynamic>) deploymentSyncAttempt(int attempt) => ('deployment.sync.attempt', {'attempt': attempt});
+  static const deploymentSystemParameters = 'deployment.system.parameters';
+  static const deploymentUbuntu = 'deployment.ubuntu';
+  static const deploymentUnknown = 'deployment.unknown';
   static const errorAuthFailed = 'error.auth.failed';
   static const errorAuthUnauthorized = 'error.auth.unauthorized';
   static const errorGeneric = 'error.generic';
@@ -3033,7 +3378,7 @@ abstract class L10nKeys {
   static const walkthroughNixosSshTitle = 'walkthrough.nixos.ssh.title';
   static const walkthroughNixosStoragePoco = 'walkthrough.nixos.storage.poco';
   static const walkthroughNixosStorageTitle = 'walkthrough.nixos.storage.title';
-  static (String, Map<String, dynamic>) walkthroughProgress(int current, int total, String briefing) => ('walkthrough.progress', {'current': current, 'total': total, 'briefing': briefing});
+  static (String, Map<String, dynamic>) walkthroughProgress(int current, int total, String brief) => ('walkthrough.progress', {'current': current, 'total': total, 'brief': brief});
   static const walkthroughRuntimeSettingsChipLocalSettings = 'walkthrough.runtime.settings.chip.local.settings';
   static const walkthroughRuntimeSettingsPoco = 'walkthrough.runtime.settings.poco';
   static const walkthroughRuntimeSettingsTitle = 'walkthrough.runtime.settings.title';
