@@ -19,11 +19,11 @@ async fn links_are_many_to_many_and_idempotent() {
         .await
         .unwrap();
     let interpretation_a = repository
-        .create(MemoryKind::Interpretation, &author, "IA", 3)
+        .create_interpretation_with_links(&author, "IA", std::slice::from_ref(&observation_a.id), 3)
         .await
         .unwrap();
     let interpretation_b = repository
-        .create(MemoryKind::Interpretation, &author, "IB", 4)
+        .create_interpretation_with_links(&author, "IB", std::slice::from_ref(&observation_a.id), 4)
         .await
         .unwrap();
 
@@ -31,15 +31,7 @@ async fn links_are_many_to_many_and_idempotent() {
         .link(
             "family",
             &interpretation_a.id,
-            &[observation_a.id.clone(), observation_b.id.clone()],
-        )
-        .await
-        .unwrap();
-    repository
-        .link(
-            "family",
-            &interpretation_b.id,
-            std::slice::from_ref(&observation_a.id),
+            std::slice::from_ref(&observation_b.id),
         )
         .await
         .unwrap();
@@ -87,13 +79,13 @@ async fn links_are_many_to_many_and_idempotent() {
 #[tokio::test]
 async fn cross_account_links_are_rejected() {
     let repository = Repository::open_in_memory().await.unwrap();
+    let family = identity("family", "poco");
+    let source = repository
+        .create(MemoryKind::Observation, &family, "source", 0)
+        .await
+        .unwrap();
     let interpretation = repository
-        .create(
-            MemoryKind::Interpretation,
-            &identity("family", "poco"),
-            "interpretation",
-            1,
-        )
+        .create_interpretation_with_links(&family, "interpretation", &[source.id], 1)
         .await
         .unwrap();
     let observation = repository
@@ -166,31 +158,62 @@ async fn interpretation_and_initial_links_are_one_transaction() {
         .await
         .unwrap();
     assert_eq!(interpretations.len(), 1);
+
+    let error = repository
+        .create_interpretation_with_links(&family, "unsupported", &[], 5)
+        .await
+        .unwrap_err();
+    assert!(matches!(error, MemoryError::InvalidInput(_)));
 }
 
 #[tokio::test]
-async fn deleting_a_record_only_cascades_its_join_rows() {
+async fn removing_observations_cannot_orphan_an_interpretation() {
     let repository = Repository::open_in_memory().await.unwrap();
     let author = identity("family", "poco");
-    let observation = repository
-        .create(MemoryKind::Observation, &author, "observation", 1)
+    let observation_a = repository
+        .create(MemoryKind::Observation, &author, "observation A", 1)
+        .await
+        .unwrap();
+    let observation_b = repository
+        .create(MemoryKind::Observation, &author, "observation B", 2)
         .await
         .unwrap();
     let interpretation = repository
-        .create(MemoryKind::Interpretation, &author, "interpretation", 2)
-        .await
-        .unwrap();
-    repository
-        .link(
-            "family",
-            &interpretation.id,
-            std::slice::from_ref(&observation.id),
+        .create_interpretation_with_links(
+            &author,
+            "interpretation",
+            std::slice::from_ref(&observation_a.id),
+            3,
         )
         .await
         .unwrap();
 
+    let unlink_error = repository
+        .unlink(
+            "family",
+            &interpretation.id,
+            std::slice::from_ref(&observation_a.id),
+        )
+        .await
+        .unwrap_err();
+    assert!(matches!(unlink_error, MemoryError::InvalidInput(_)));
+
+    let delete_error = repository
+        .delete(MemoryKind::Observation, "family", &observation_a.id)
+        .await
+        .unwrap_err();
+    assert!(matches!(delete_error, MemoryError::InvalidInput(_)));
+
     repository
-        .delete(MemoryKind::Observation, "family", &observation.id)
+        .link(
+            "family",
+            &interpretation.id,
+            std::slice::from_ref(&observation_b.id),
+        )
+        .await
+        .unwrap();
+    repository
+        .delete(MemoryKind::Observation, "family", &observation_a.id)
         .await
         .unwrap();
 
@@ -199,9 +222,114 @@ async fn deleting_a_record_only_cascades_its_join_rows() {
         .await
         .unwrap();
     assert_eq!(survivor.body, "interpretation");
-    assert!(
+    assert_eq!(
         repository
             .linked_ids(MemoryKind::Interpretation, "family", &interpretation.id)
+            .await
+            .unwrap(),
+        vec![observation_b.id]
+    );
+}
+
+#[tokio::test]
+async fn a_new_observation_and_interpretation_are_created_atomically() {
+    let repository = Repository::open_in_memory().await.unwrap();
+    let author = identity("family", "poco");
+    let additional = repository
+        .create(MemoryKind::Observation, &author, "additional", 1)
+        .await
+        .unwrap();
+
+    let (created_observation, interpretation) = repository
+        .create_observation_with_interpretation(
+            &author,
+            "new observation",
+            "new interpretation",
+            std::slice::from_ref(&additional.id),
+            2,
+        )
+        .await
+        .unwrap();
+
+    let mut expected = vec![created_observation.id, additional.id];
+    expected.sort();
+    assert_eq!(
+        repository
+            .linked_ids(MemoryKind::Interpretation, "family", &interpretation.id)
+            .await
+            .unwrap(),
+        expected
+    );
+}
+
+#[tokio::test]
+async fn batch_unlink_rolls_back_if_it_would_remove_every_observation() {
+    let repository = Repository::open_in_memory().await.unwrap();
+    let author = identity("family", "poco");
+    let observation_a = repository
+        .create(MemoryKind::Observation, &author, "A", 1)
+        .await
+        .unwrap();
+    let observation_b = repository
+        .create(MemoryKind::Observation, &author, "B", 2)
+        .await
+        .unwrap();
+    let interpretation = repository
+        .create_interpretation_with_links(
+            &author,
+            "interpretation",
+            &[observation_a.id.clone(), observation_b.id.clone()],
+            3,
+        )
+        .await
+        .unwrap();
+
+    let error = repository
+        .unlink(
+            "family",
+            &interpretation.id,
+            &[observation_a.id.clone(), observation_b.id.clone()],
+        )
+        .await
+        .unwrap_err();
+    assert!(matches!(error, MemoryError::InvalidInput(_)));
+
+    let mut expected = vec![observation_a.id, observation_b.id];
+    expected.sort();
+    assert_eq!(
+        repository
+            .linked_ids(MemoryKind::Interpretation, "family", &interpretation.id)
+            .await
+            .unwrap(),
+        expected
+    );
+}
+
+#[tokio::test]
+async fn deleting_an_interpretation_cascades_all_of_its_links() {
+    let repository = Repository::open_in_memory().await.unwrap();
+    let author = identity("family", "poco");
+    let observation = repository
+        .create(MemoryKind::Observation, &author, "source", 1)
+        .await
+        .unwrap();
+    let interpretation = repository
+        .create_interpretation_with_links(
+            &author,
+            "interpretation",
+            std::slice::from_ref(&observation.id),
+            2,
+        )
+        .await
+        .unwrap();
+
+    repository
+        .delete(MemoryKind::Interpretation, "family", &interpretation.id)
+        .await
+        .unwrap();
+    assert!(
+        repository
+            .linked_ids(MemoryKind::Observation, "family", &observation.id)
             .await
             .unwrap()
             .is_empty()

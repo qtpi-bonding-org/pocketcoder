@@ -45,7 +45,8 @@ CREATE INDEX interpretations_account_retrieved
 
 CREATE TABLE interpretation_observations (
     interpretation_id TEXT NOT NULL
-        REFERENCES interpretations(id) ON DELETE CASCADE,
+        REFERENCES interpretations(id) ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
     observation_id    TEXT NOT NULL
         REFERENCES observations(id) ON DELETE CASCADE,
     PRIMARY KEY (interpretation_id, observation_id)
@@ -53,6 +54,47 @@ CREATE TABLE interpretation_observations (
 
 CREATE INDEX interpretation_observations_by_observation
     ON interpretation_observations(observation_id, interpretation_id);
+
+-- Every interpretation must retain at least one observation. Creation is
+-- performed by inserting its join rows first in one deferred-FK transaction.
+-- These guards enforce the invariant at creation and removal boundaries.
+CREATE TRIGGER interpretations_require_observation
+AFTER INSERT ON interpretations
+WHEN NOT EXISTS (
+    SELECT 1 FROM interpretation_observations
+    WHERE interpretation_id = new.id
+)
+BEGIN
+    SELECT RAISE(ABORT, 'interpretation requires at least one observation');
+END;
+
+CREATE TRIGGER interpretation_observations_keep_one
+BEFORE DELETE ON interpretation_observations
+WHEN EXISTS (
+    SELECT 1 FROM interpretations
+    WHERE id = old.interpretation_id
+) AND (
+    SELECT count(*) FROM interpretation_observations
+    WHERE interpretation_id = old.interpretation_id
+) <= 1
+BEGIN
+    SELECT RAISE(ABORT, 'interpretation requires at least one observation');
+END;
+
+CREATE TRIGGER observations_prevent_orphaned_interpretations
+BEFORE DELETE ON observations
+WHEN EXISTS (
+    SELECT 1
+    FROM interpretation_observations AS links
+    WHERE links.observation_id = old.id
+      AND (
+          SELECT count(*) FROM interpretation_observations AS siblings
+          WHERE siblings.interpretation_id = links.interpretation_id
+      ) <= 1
+)
+BEGIN
+    SELECT RAISE(ABORT, 'observation is the only support for an interpretation');
+END;
 
 CREATE VIRTUAL TABLE observations_fts USING fts5(
     body,

@@ -96,31 +96,31 @@ async fn fts_tracks_create_body_update_and_delete() {
 #[tokio::test]
 async fn fts_respects_account_and_author_filters() {
     let repository = Repository::open_in_memory().await.unwrap();
+    let poco_author = author("family", "poco");
+    let scout_author = author("family", "scout");
+    let outsider = author("other", "poco");
+    let poco_source = repository
+        .create(MemoryKind::Observation, &poco_author, "poco source", 0)
+        .await
+        .unwrap();
+    let scout_source = repository
+        .create(MemoryKind::Observation, &scout_author, "scout source", 0)
+        .await
+        .unwrap();
+    let outsider_source = repository
+        .create(MemoryKind::Observation, &outsider, "other source", 0)
+        .await
+        .unwrap();
     let poco = repository
-        .create(
-            MemoryKind::Interpretation,
-            &author("family", "poco"),
-            "shared keyword",
-            1,
-        )
+        .create_interpretation_with_links(&poco_author, "shared keyword", &[poco_source.id], 1)
         .await
         .unwrap();
     repository
-        .create(
-            MemoryKind::Interpretation,
-            &author("family", "scout"),
-            "shared keyword",
-            2,
-        )
+        .create_interpretation_with_links(&scout_author, "shared keyword", &[scout_source.id], 2)
         .await
         .unwrap();
     repository
-        .create(
-            MemoryKind::Interpretation,
-            &author("other", "poco"),
-            "shared keyword",
-            3,
-        )
+        .create_interpretation_with_links(&outsider, "shared keyword", &[outsider_source.id], 3)
         .await
         .unwrap();
 

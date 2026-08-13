@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AgentIdentity, MemoryError, MemoryKind, MemoryRecord,
     domain::TimestampFilter,
-    service::{MemoryService, MemoryWithLinks, SearchMatch, SearchMode},
+    service::{InterpretationObservation, MemoryService, MemoryWithLinks, SearchMatch, SearchMode},
 };
 
 #[derive(Clone)]
@@ -32,14 +32,10 @@ struct CreateObservationArgs {
 #[derive(Debug, Deserialize, JsonSchema)]
 struct CreateInterpretationArgs {
     body: String,
+    existing_observation_id: Option<String>,
+    new_observation_body: Option<String>,
     #[serde(default)]
-    observation_ids: Vec<String>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-struct UpdateArgs {
-    id: String,
-    body: String,
+    additional_observation_ids: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -51,12 +47,6 @@ struct IdArgs {
 struct LinkArgs {
     interpretation_id: String,
     observation_ids: Vec<String>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-struct GetArgs {
-    kind: MemoryKind,
-    id: String,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -123,70 +113,38 @@ impl MemoryMcp {
 
     #[tool(
         name = "memory_create_interpretation",
-        description = "Create a mutable agent-authored interpretation, optionally linked to existing observations. The service performs no interpretation itself."
+        description = "Create an agent-authored interpretation with at least one observation. Provide exactly one starting source: existing_observation_id, or new_observation_body to create an observation atomically. additional_observation_ids are optional and all links are equal."
     )]
     async fn create_interpretation(
         &self,
         Parameters(args): Parameters<CreateInterpretationArgs>,
         context: RequestContext<RoleServer>,
-    ) -> Result<Json<MemoryRecord>, McpError> {
+    ) -> Result<Json<MemoryWithLinks>, McpError> {
         let identity = identity(&context)?;
+        let observation = match (args.existing_observation_id, args.new_observation_body) {
+            (Some(id), None) if !id.trim().is_empty() => {
+                InterpretationObservation::ExistingObservation(id)
+            }
+            (None, Some(body)) if !body.trim().is_empty() => {
+                InterpretationObservation::NewObservation(body)
+            }
+            _ => {
+                return Err(McpError::invalid_params(
+                    "provide exactly one of existing_observation_id or new_observation_body",
+                    None,
+                ));
+            }
+        };
         self.service
-            .create_interpretation(&identity, args.body, &args.observation_ids)
+            .create_interpretation(
+                &identity,
+                args.body,
+                observation,
+                &args.additional_observation_ids,
+            )
             .await
             .map(Json)
             .map_err(map_error)
-    }
-
-    #[tool(
-        name = "memory_update_observation",
-        description = "Replace an observation body by ID."
-    )]
-    async fn update_observation(
-        &self,
-        Parameters(args): Parameters<UpdateArgs>,
-        context: RequestContext<RoleServer>,
-    ) -> Result<Json<MemoryRecord>, McpError> {
-        self.update(MemoryKind::Observation, args, &context).await
-    }
-
-    #[tool(
-        name = "memory_update_interpretation",
-        description = "Replace an interpretation body by ID."
-    )]
-    async fn update_interpretation(
-        &self,
-        Parameters(args): Parameters<UpdateArgs>,
-        context: RequestContext<RoleServer>,
-    ) -> Result<Json<MemoryRecord>, McpError> {
-        self.update(MemoryKind::Interpretation, args, &context)
-            .await
-    }
-
-    #[tool(
-        name = "memory_delete_observation",
-        description = "Delete an observation; its join rows cascade."
-    )]
-    async fn delete_observation(
-        &self,
-        Parameters(args): Parameters<IdArgs>,
-        context: RequestContext<RoleServer>,
-    ) -> Result<Json<MutationResult>, McpError> {
-        self.delete(MemoryKind::Observation, &args.id, &context)
-            .await
-    }
-
-    #[tool(
-        name = "memory_delete_interpretation",
-        description = "Delete an interpretation; its join rows cascade."
-    )]
-    async fn delete_interpretation(
-        &self,
-        Parameters(args): Parameters<IdArgs>,
-        context: RequestContext<RoleServer>,
-    ) -> Result<Json<MutationResult>, McpError> {
-        self.delete(MemoryKind::Interpretation, &args.id, &context)
-            .await
     }
 
     #[tool(
@@ -208,7 +166,7 @@ impl MemoryMcp {
 
     #[tool(
         name = "memory_unlink",
-        description = "Idempotently remove ordinary interpretation-observation links."
+        description = "Idempotently remove interpretation-observation links without allowing an interpretation to lose its final observation."
     )]
     async fn unlink(
         &self,
@@ -224,17 +182,34 @@ impl MemoryMcp {
     }
 
     #[tool(
-        name = "memory_get",
-        description = "Fetch one memory plus all directly linked memories."
+        name = "memory_get_observation",
+        description = "Fetch one observation and all interpretations linked to it."
     )]
-    async fn get(
+    async fn get_observation(
         &self,
-        Parameters(args): Parameters<GetArgs>,
+        Parameters(args): Parameters<IdArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<Json<MemoryWithLinks>, McpError> {
         let identity = identity(&context)?;
         self.service
-            .get(&identity, args.kind, &args.id)
+            .get(&identity, MemoryKind::Observation, &args.id)
+            .await
+            .map(Json)
+            .map_err(map_error)
+    }
+
+    #[tool(
+        name = "memory_get_interpretation",
+        description = "Fetch one interpretation and all observations linked to it."
+    )]
+    async fn get_interpretation(
+        &self,
+        Parameters(args): Parameters<IdArgs>,
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<MemoryWithLinks>, McpError> {
+        let identity = identity(&context)?;
+        self.service
+            .get(&identity, MemoryKind::Interpretation, &args.id)
             .await
             .map(Json)
             .map_err(map_error)
@@ -295,34 +270,6 @@ impl MemoryMcp {
             })
             .map_err(map_error)
     }
-
-    async fn update(
-        &self,
-        kind: MemoryKind,
-        args: UpdateArgs,
-        context: &RequestContext<RoleServer>,
-    ) -> Result<Json<MemoryRecord>, McpError> {
-        let identity = identity(context)?;
-        self.service
-            .update(&identity, kind, &args.id, args.body)
-            .await
-            .map(Json)
-            .map_err(map_error)
-    }
-
-    async fn delete(
-        &self,
-        kind: MemoryKind,
-        id: &str,
-        context: &RequestContext<RoleServer>,
-    ) -> Result<Json<MutationResult>, McpError> {
-        let identity = identity(context)?;
-        self.service
-            .delete(&identity, kind, id)
-            .await
-            .map(|()| Json(MutationResult { ok: true }))
-            .map_err(map_error)
-    }
 }
 
 #[tool_handler]
@@ -379,9 +326,17 @@ mod tests {
             .iter()
             .map(|tool| tool.name.as_ref())
             .collect::<Vec<_>>();
-        assert_eq!(names.len(), 11);
+        assert_eq!(names.len(), 8);
         assert!(names.contains(&"memory_create_observation"));
+        assert!(names.contains(&"memory_create_interpretation"));
+        assert!(names.contains(&"memory_link"));
+        assert!(names.contains(&"memory_unlink"));
+        assert!(names.contains(&"memory_get_observation"));
+        assert!(names.contains(&"memory_get_interpretation"));
+        assert!(names.contains(&"memory_list"));
         assert!(names.contains(&"memory_search"));
+        assert!(!names.iter().any(|name| name.contains("update")));
+        assert!(!names.iter().any(|name| name.contains("delete")));
 
         for tool in tools {
             let schema = serde_json::to_string(&tool.input_schema).unwrap();

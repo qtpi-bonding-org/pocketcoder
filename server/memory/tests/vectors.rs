@@ -109,8 +109,12 @@ async fn vectors_are_searchable_and_invalidated_by_body_updates() {
 async fn stale_embedding_results_are_rejected() {
     let repository = Repository::open_in_memory().await.unwrap();
     let identity = AgentIdentity::new("family", "poco", "Poco").unwrap();
+    let observation = repository
+        .create(MemoryKind::Observation, &identity, "source", 0)
+        .await
+        .unwrap();
     let record = repository
-        .create(MemoryKind::Interpretation, &identity, "before", 1)
+        .create_interpretation_with_links(&identity, "before", &[observation.id], 1)
         .await
         .unwrap();
     repository

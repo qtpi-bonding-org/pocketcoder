@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 use axum::http::HeaderValue;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
@@ -54,11 +54,26 @@ async fn streamable_http_initializes_and_attributes_a_write() {
         .unwrap();
 
     let listed = client.list_tools(Option::default()).await.unwrap();
-    assert!(
-        listed
-            .tools
-            .iter()
-            .any(|tool| tool.name == "memory_create_observation")
+    let tool_names = listed
+        .tools
+        .iter()
+        .map(|tool| tool.name.to_string())
+        .collect::<BTreeSet<_>>();
+    assert_eq!(
+        tool_names,
+        [
+            "memory_create_interpretation",
+            "memory_create_observation",
+            "memory_get_interpretation",
+            "memory_get_observation",
+            "memory_link",
+            "memory_list",
+            "memory_search",
+            "memory_unlink",
+        ]
+        .into_iter()
+        .map(str::to_owned)
+        .collect()
     );
 
     let result = client
@@ -82,6 +97,41 @@ async fn streamable_http_initializes_and_attributes_a_write() {
         .await
         .unwrap();
     assert_eq!(stored.body, "remember the blue gate");
+
+    let existing_result = client
+        .call_tool(
+            CallToolRequestParams::new("memory_create_interpretation").with_arguments(
+                serde_json::json!({
+                    "body": "the blue gate marks the entrance",
+                    "existing_observation_id": record.id
+                })
+                .as_object()
+                .cloned()
+                .unwrap(),
+            ),
+        )
+        .await
+        .unwrap();
+    let existing = existing_result.structured_content.unwrap();
+    assert_eq!(existing["linked"][0]["id"], stored.id);
+
+    let atomic_result = client
+        .call_tool(
+            CallToolRequestParams::new("memory_create_interpretation").with_arguments(
+                serde_json::json!({
+                    "body": "the brass key opens the workshop",
+                    "new_observation_body": "a brass key is on the desk"
+                })
+                .as_object()
+                .cloned()
+                .unwrap(),
+            ),
+        )
+        .await
+        .unwrap();
+    let atomic = atomic_result.structured_content.unwrap();
+    assert_eq!(atomic["linked"].as_array().unwrap().len(), 1);
+    assert_eq!(atomic["linked"][0]["body"], "a brass key is on the desk");
 
     client.cancel().await.unwrap();
     cancellation.cancel();

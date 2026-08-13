@@ -75,8 +75,12 @@ async fn list_is_scoped_by_account_and_optionally_author() {
 #[tokio::test]
 async fn operations_cannot_address_another_account() {
     let repository = Repository::open_in_memory().await.expect("open database");
+    let observation = repository
+        .create(MemoryKind::Observation, &poco("family"), "source", 99)
+        .await
+        .unwrap();
     let record = repository
-        .create(MemoryKind::Interpretation, &poco("family"), "private", 100)
+        .create_interpretation_with_links(&poco("family"), "private", &[observation.id], 100)
         .await
         .unwrap();
 
