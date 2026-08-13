@@ -22,10 +22,10 @@ class FilesApi {
   const FilesApi(this._dio, this._serializers);
 
   /// getWorkspaceFile
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [path] 
+  /// * [path]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -35,7 +35,7 @@ class FilesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [Uint8List] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<Uint8List>> getWorkspaceFile({ 
+  Future<Response<Uint8List>> getWorkspaceFile({
     required String path,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -44,7 +44,7 @@ class FilesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/files';
+    final _path = r'/api/pocketcoder/v1/files';
     final _options = Options(
       method: r'GET',
       responseType: ResponseType.bytes,
@@ -107,10 +107,10 @@ class FilesApi {
   }
 
   /// listWorkspaceFiles
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [path] 
+  /// * [path]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -120,7 +120,7 @@ class FilesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [FileListResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<FileListResponse>> listWorkspaceFiles({ 
+  Future<Response<FileListResponse>> listWorkspaceFiles({
     String? path = '',
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -129,7 +129,7 @@ class FilesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/files-list';
+    final _path = r'/api/pocketcoder/v1/files-list';
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{

@@ -21,7 +21,7 @@ class ReleaseApi {
   const ReleaseApi(this._dio, this._serializers);
 
   /// getReleaseCompatibility
-  /// 
+  ///
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -33,7 +33,7 @@ class ReleaseApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> getReleaseCompatibility({ 
+  Future<Response<BuiltMap<String, JsonObject>>> getReleaseCompatibility({
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -41,7 +41,7 @@ class ReleaseApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/release/compatibility';
+    final _path = r'/api/pocketcoder/v1/compatibility';
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -94,7 +94,7 @@ class ReleaseApi {
   }
 
   /// getReleaseStatus
-  /// 
+  ///
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -106,7 +106,7 @@ class ReleaseApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> getReleaseStatus({ 
+  Future<Response<BuiltMap<String, JsonObject>>> getReleaseStatus({
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -114,7 +114,7 @@ class ReleaseApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/release/status';
+    final _path = r'/api/pocketcoder/v1/release/status';
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{

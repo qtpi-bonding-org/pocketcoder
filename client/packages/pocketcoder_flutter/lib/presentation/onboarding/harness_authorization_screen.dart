@@ -4,9 +4,9 @@ import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/adapters/harness_authorization_adapter.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class HarnessAuthorizationScreen extends StatelessWidget {
   const HarnessAuthorizationScreen({
@@ -24,7 +24,7 @@ class HarnessAuthorizationScreen extends StatelessWidget {
       create: (_) => HarnessAuthCubit(
         providerRepository: getIt<IProviderRepository>(),
         authRepository: HarnessAuthRepository(
-          getIt<PocketBase>(),
+          getIt<PocketCoderApiClient>(),
           getIt<IAuthRepository>(),
         ),
       )..watchData(),

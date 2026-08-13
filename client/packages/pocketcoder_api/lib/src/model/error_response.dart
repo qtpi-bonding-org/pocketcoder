@@ -13,9 +13,9 @@ part 'error_response.g.dart';
 /// ErrorResponse
 ///
 /// Properties:
-/// * [code] 
-/// * [message] 
-/// * [data] 
+/// * [code]
+/// * [message]
+/// * [data]
 @BuiltValue()
 abstract class ErrorResponse implements Built<ErrorResponse, ErrorResponseBuilder> {
   @BuiltValueField(wireName: r'code')

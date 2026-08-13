@@ -5,7 +5,6 @@ import 'package:ag_ui/ag_ui.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 
 import '../../domain/agent/elicitation_response.dart';
-import 'agent_actions_api.dart' show elidedSessionId;
 import 'agent_chat_repository.dart';
 
 /// Synthetic marker this transport emits itself before replaying a
@@ -17,7 +16,8 @@ BaseEvent _syntheticResetMarker() =>
     CustomEvent(name: 'pocketcoder:sync', value: {'mode': 'replace'});
 
 class PocketcoderAgUiTransport implements IAgUiTransport {
-  PocketcoderAgUiTransport(this._repository, {required String chatId}) : _chatId = chatId;
+  PocketcoderAgUiTransport(this._repository, {required String chatId})
+      : _chatId = chatId;
 
   final AgentChatRepository _repository;
   final String _chatId;
@@ -52,7 +52,8 @@ class PocketcoderAgUiTransport implements IAgUiTransport {
   }
 
   @override
-  Future<void> sendMessage(String text, {List<AgUiContextItem> context = const []}) async {
+  Future<void> sendMessage(String text,
+      {List<AgUiContextItem> context = const []}) async {
     // pocketcoder's sendPrompt has no context-item support yet (that's a
     // newer AgUiChat capability) — dropped like submitToolResult below,
     // satisfying IAgUiTransport's now-wider interface.
@@ -65,14 +66,18 @@ class PocketcoderAgUiTransport implements IAgUiTransport {
   }
 
   @override
-  Future<void> respondPermission(String callId, {String? optionId, bool cancelled = false}) async {
-    await _repository.respondPermission(_chatId, callId, optionId: optionId, cancelled: cancelled);
+  Future<void> respondPermission(String callId,
+      {String? optionId, bool cancelled = false}) async {
+    await _repository.respondPermission(_chatId, callId,
+        optionId: optionId, cancelled: cancelled);
   }
 
   @override
-  Future<void> respondElicitation(String elicitationId, Map<String, dynamic> response) async {
+  Future<void> respondElicitation(
+      String elicitationId, Map<String, dynamic> response) async {
     final decoded = switch (response['action']) {
-      'accept' => ElicitationResponse.accept(response['content'] as Map<String, dynamic>? ?? const {}),
+      'accept' => ElicitationResponse.accept(
+          response['content'] as Map<String, dynamic>? ?? const {}),
       'decline' => const ElicitationResponse.decline(),
       _ => const ElicitationResponse.cancel(),
     };
@@ -97,11 +102,9 @@ class PocketcoderAgUiTransport implements IAgUiTransport {
     await _repository.setConfigOption(
       _chatId,
       SetSessionConfigOptionRequest(
-        sessionId: elidedSessionId, // matches agent_actions_api.dart's
-                                     // elidedSessionId convention — the
-                                     // server derives the real session from
-                                     // the chatId path segment and this
-                                     // field gets stripped before send.
+        // Required by the ACP DTO but intentionally excluded from the
+        // generated REST model; the server resolves the session by chatId.
+        sessionId: '',
         configId: optionId,
         value: value,
       ),

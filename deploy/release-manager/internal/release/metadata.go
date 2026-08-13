@@ -8,20 +8,21 @@ import (
 )
 
 type Current struct {
-	SchemaVersion             int      `json:"schemaVersion"`
-	ReleaseDigest             string   `json:"releaseDigest"`
-	SourceCommit              string   `json:"sourceCommit"`
-	ServerVersion             string   `json:"serverVersion"`
-	DataVersion               int      `json:"dataVersion"`
-	DeploymentContractVersion int      `json:"deploymentContractVersion"`
-	Channel                   string   `json:"channel"`
-	ChannelSequence           int64    `json:"channelSequence"`
-	RevocationSequence        int64    `json:"revocationSequence"`
-	SelectedHarnesses         []string `json:"selectedHarnesses"`
-	SelectedOptionalImages    []string `json:"selectedOptionalImages"`
-	SelectedImages            []string `json:"selectedImages"`
-	ManifestURL               string   `json:"manifestUrl"`
-	ActivatedAt               string   `json:"activatedAt"`
+	SchemaVersion             int                    `json:"schemaVersion"`
+	ReleaseDigest             string                 `json:"releaseDigest"`
+	SourceCommit              string                 `json:"sourceCommit"`
+	ServerVersion             string                 `json:"serverVersion"`
+	DataVersion               int                    `json:"dataVersion"`
+	DeploymentContractVersion int                    `json:"deploymentContractVersion"`
+	Compatibility             contract.Compatibility `json:"compatibility"`
+	Channel                   string                 `json:"channel"`
+	ChannelSequence           int64                  `json:"channelSequence"`
+	RevocationSequence        int64                  `json:"revocationSequence"`
+	SelectedHarnesses         []string               `json:"selectedHarnesses"`
+	SelectedOptionalImages    []string               `json:"selectedOptionalImages"`
+	SelectedImages            []string               `json:"selectedImages"`
+	ManifestURL               string                 `json:"manifestUrl"`
+	ActivatedAt               string                 `json:"activatedAt"`
 }
 
 type MetadataStatus struct {

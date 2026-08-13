@@ -1,14 +1,12 @@
-// Up-channel actions: every method builds an acp_dart request type, calls
-// `.toJson()`, strips the `sessionId` key (c1 injects it from the path —
-// spec §5.3, "REST bodies = verbatim ACP payloads minus sessionId"), and
-// POSTs through the injected PocketBase. c1's response statuses map to the
-// typed failures in [AgentActionFailure] (spec §10).
+// Agent actions use generated OpenAPI request models and operations. ACP-only
+// unions are converted at this boundary before they reach the generated API.
 import 'package:acp_dart/acp_dart.dart';
+import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
-import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 
 /// Typed failures for the up-channel, mapped from c1's documented HTTP
 /// statuses (spec §10): 400 malformed/option-not-offered, 401 unauthenticated,
@@ -44,46 +42,34 @@ class UnknownAgentActionFailure extends AgentActionFailure {
   const UnknownAgentActionFailure(super.message);
 }
 
-/// Placeholder sessionId used only to satisfy acp_dart's required
-/// constructor parameter; every `toJson()` result below has this key
-/// stripped before the body is sent — c1 derives the real session from the
-/// chatId path segment, and Flutter never sees `acp_session_id` (spec §12).
-const elidedSessionId = '';
-
 @lazySingleton
 class AgentActionsApi {
-  AgentActionsApi(this._pb);
+  AgentActionsApi(this._api);
 
-  final PocketBase _pb;
+  final PocketCoderApiClient _api;
 
-  Map<String, dynamic> _withoutSessionId(Map<String, dynamic> json) {
-    return {...json}..remove('sessionId');
-  }
-
-  Future<void> _postVoid(String path, Map<String, dynamic> body) async {
+  Future<void> _callVoid(Future<void> Function() operation) async {
     try {
-      await _pb.send<dynamic>(path, method: 'POST', body: body);
-    } on ClientException catch (e) {
+      await operation();
+    } on DioException catch (e) {
       throw _mapFailure(e);
     }
   }
 
-  Future<T> _postJson<T>(
-    String path,
-    Map<String, dynamic> body,
-    T Function(Map<String, dynamic>) parse,
-  ) async {
+  Future<T> _call<T>(Future<T> Function() operation) async {
     try {
-      final result = await _pb.send<dynamic>(path, method: 'POST', body: body);
-      return parse(result as Map<String, dynamic>);
-    } on ClientException catch (e) {
+      return await operation();
+    } on DioException catch (e) {
       throw _mapFailure(e);
     }
   }
 
-  AgentActionFailure _mapFailure(ClientException e) {
-    final message = (e.response['message'] as String?) ?? e.toString();
-    switch (e.statusCode) {
+  AgentActionFailure _mapFailure(DioException e) {
+    final data = e.response?.data;
+    final message = data is Map<String, dynamic>
+        ? data['message'] as String? ?? e.message ?? e.toString()
+        : e.message ?? e.toString();
+    switch (e.response?.statusCode) {
       case 400:
         return BadRequestFailure(message);
       case 401:
@@ -103,34 +89,51 @@ class AgentActionsApi {
   /// server-assigned `runId`. Throws [RunInProgressFailure] (409) if a run
   /// is already active for this chat.
   Future<String> prompt(String chatId, String text) {
-    final req = PromptRequest(
-      sessionId: elidedSessionId,
-      prompt: [TextContentBlock(text: text)],
+    final request = generated.PromptRequest(
+      (builder) => builder.prompt.add(
+        generated.ContentBlock(
+          (block) => block
+            ..type = 'text'
+            ..text = text,
+        ),
+      ),
     );
-    return _postJson<String>(
-      ApiEndpoints.agentPrompt(chatId),
-      _withoutSessionId(req.toJson()),
-      (json) => json['runId'] as String,
+    return _call(
+      () async {
+        final response = await _api.agent.promptChat(
+          chatId: chatId,
+          promptRequest: request,
+        );
+        final runId = response.data?.runId;
+        if (runId == null || runId.isEmpty) {
+          throw const UnknownAgentActionFailure('Missing agent run id');
+        }
+        return runId;
+      },
     );
   }
 
   /// POST `session/cancel`, `{}`.
   Future<void> cancel(String chatId) {
-    return _postVoid(
-      ApiEndpoints.agentCancel(chatId),
-      const {},
+    return _callVoid(
+      () async {
+        await _api.agent.cancelChatSession(chatId: chatId);
+      },
     );
   }
 
   /// POST `session/set_mode` ← `SetSessionModeRequest`.
   Future<void> setMode(String chatId, String modeId) {
-    final req = SetSessionModeRequest(
-      sessionId: elidedSessionId,
-      modeId: modeId,
+    final request = generated.ModeRequest(
+      (builder) => builder.modeId = modeId,
     );
-    return _postVoid(
-      ApiEndpoints.agentSetMode(chatId),
-      _withoutSessionId(req.toJson()),
+    return _callVoid(
+      () async {
+        await _api.agent.setChatMode(
+          chatId: chatId,
+          modeRequest: request,
+        );
+      },
     );
   }
 
@@ -142,9 +145,18 @@ class AgentActionsApi {
     String chatId,
     SetSessionConfigOptionRequest req,
   ) {
-    return _postVoid(
-      ApiEndpoints.agentSetConfigOption(chatId),
-      _withoutSessionId(req.toJson()),
+    final request = generated.ConfigOptionRequest(
+      (builder) => builder
+        ..configId = req.configId
+        ..value = req.value,
+    );
+    return _callVoid(
+      () async {
+        await _api.agent.setChatConfigOption(
+          chatId: chatId,
+          configOptionRequest: request,
+        );
+      },
     );
   }
 
@@ -159,10 +171,16 @@ class AgentActionsApi {
     final outcome = cancelled || optionId == null
         ? CancelledOutcome()
         : SelectedOutcome(optionId: optionId);
-    final req = RequestPermissionResponse(outcome: outcome);
-    return _postVoid(
-      ApiEndpoints.agentPermission(chatId, requestId),
-      _withoutSessionId(req.toJson()),
+    final request = RequestPermissionResponse(outcome: outcome).toJson()
+      ..remove('sessionId');
+    return _callVoid(
+      () async {
+        await _api.agent.respondToPermission(
+          chatId: chatId,
+          id: requestId,
+          requestBody: PocketCoderApiClient.encodeJson(request),
+        );
+      },
     );
   }
 
@@ -173,9 +191,14 @@ class AgentActionsApi {
     String elicitationId,
     ElicitationResponse resp,
   ) {
-    return _postVoid(
-      ApiEndpoints.agentElicitation(chatId, elicitationId),
-      resp.toJson(),
+    return _callVoid(
+      () async {
+        await _api.agent.respondToElicitation(
+          chatId: chatId,
+          id: elicitationId,
+          requestBody: PocketCoderApiClient.encodeJson(resp.toJson()),
+        );
+      },
     );
   }
 }

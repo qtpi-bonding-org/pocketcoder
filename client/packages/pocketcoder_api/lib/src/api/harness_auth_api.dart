@@ -21,10 +21,10 @@ class HarnessAuthApi {
   const HarnessAuthApi(this._dio, this._serializers);
 
   /// cancelHarnessAuth
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -34,7 +34,7 @@ class HarnessAuthApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> cancelHarnessAuth({ 
+  Future<Response<BuiltMap<String, JsonObject>>> cancelHarnessAuth({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -43,7 +43,7 @@ class HarnessAuthApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/harness-auth/cancel';
+    final _path = r'/api/pocketcoder/v1/harness-auth/cancel';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -123,10 +123,10 @@ class HarnessAuthApi {
   }
 
   /// disconnectHarnessAuth
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -136,7 +136,7 @@ class HarnessAuthApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> disconnectHarnessAuth({ 
+  Future<Response<BuiltMap<String, JsonObject>>> disconnectHarnessAuth({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -145,7 +145,7 @@ class HarnessAuthApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/harness-auth/disconnect';
+    final _path = r'/api/pocketcoder/v1/harness-auth/disconnect';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -225,10 +225,10 @@ class HarnessAuthApi {
   }
 
   /// getHarnessAuthStatus
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -238,7 +238,7 @@ class HarnessAuthApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> getHarnessAuthStatus({ 
+  Future<Response<BuiltMap<String, JsonObject>>> getHarnessAuthStatus({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -247,7 +247,7 @@ class HarnessAuthApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/harness-auth/status';
+    final _path = r'/api/pocketcoder/v1/harness-auth/status';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -327,10 +327,10 @@ class HarnessAuthApi {
   }
 
   /// pollHarnessAuth
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -340,7 +340,7 @@ class HarnessAuthApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> pollHarnessAuth({ 
+  Future<Response<BuiltMap<String, JsonObject>>> pollHarnessAuth({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -349,7 +349,7 @@ class HarnessAuthApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/harness-auth/poll';
+    final _path = r'/api/pocketcoder/v1/harness-auth/poll';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -429,10 +429,10 @@ class HarnessAuthApi {
   }
 
   /// startHarnessAuth
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -442,7 +442,7 @@ class HarnessAuthApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> startHarnessAuth({ 
+  Future<Response<BuiltMap<String, JsonObject>>> startHarnessAuth({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -451,7 +451,7 @@ class HarnessAuthApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/harness-auth/start';
+    final _path = r'/api/pocketcoder/v1/harness-auth/start';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -531,10 +531,10 @@ class HarnessAuthApi {
   }
 
   /// submitHarnessAuth
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -544,7 +544,7 @@ class HarnessAuthApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> submitHarnessAuth({ 
+  Future<Response<BuiltMap<String, JsonObject>>> submitHarnessAuth({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -553,7 +553,7 @@ class HarnessAuthApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/harness-auth/submit';
+    final _path = r'/api/pocketcoder/v1/harness-auth/submit';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{

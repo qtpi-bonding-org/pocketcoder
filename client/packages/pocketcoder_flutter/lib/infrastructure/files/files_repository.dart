@@ -1,31 +1,31 @@
-import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/file_entry.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 
 @LazySingleton(as: IFilesRepository)
 class FilesRepository implements IFilesRepository {
-  final PocketBase _pb;
-  final http.Client _http;
+  final PocketCoderApiClient _api;
 
-  FilesRepository(this._pb, this._http);
+  FilesRepository(this._api);
 
   @override
   Future<List<FileEntry>> listFiles(String path) async {
     return tryMethod(
       () async {
-        final response = await _pb.send<dynamic>(
-          ApiEndpoints.filesList(path),
-          method: 'GET',
-        );
-        final entries = (response as Map<String, dynamic>)['entries'] as List;
+        final response = await _api.files.listWorkspaceFiles(path: path);
+        final entries = response.data?.entries;
+        if (entries == null) throw const FormatException('Missing file list');
         return entries
-            .map((e) => FileEntry.fromJson(e as Map<String, dynamic>))
-            .toList();
+            .map((entry) => FileEntry(
+                  name: entry.name,
+                  isDir: entry.isDir,
+                  size: entry.size,
+                  modTime: entry.modTime,
+                ))
+            .toList(growable: false);
       },
       FilesException.new,
       'listFiles',
@@ -36,16 +36,10 @@ class FilesRepository implements IFilesRepository {
   Future<List<int>> readFile(String path) async {
     return tryMethod(
       () async {
-        final token = _pb.authStore.token;
-        if (token.isEmpty) {
-          throw FilesException.noAuthToken();
-        }
-        final uri = Uri.parse('${_pb.baseURL}${ApiEndpoints.files(path)}');
-        final response = await _http.get(uri, headers: {'Authorization': token});
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          throw FilesException.httpError(response.statusCode);
-        }
-        return response.bodyBytes;
+        final response = await _api.files.getWorkspaceFile(path: path);
+        final bytes = response.data;
+        if (bytes == null) throw const FormatException('Missing file body');
+        return bytes;
       },
       FilesException.new,
       'readFile',

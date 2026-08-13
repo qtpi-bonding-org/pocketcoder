@@ -21,20 +21,26 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
 
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-// RegisterProxyApi registers the reverse proxy endpoints for logs and observability.
-func RegisterProxyApi(_ core.App, e *core.ServeEvent) {
-
+func AddProxyOperations(registry *operation.Registry) {
 	// 📈 Observability Proxy (SQLPage)
 	// Proxies to the SQLPage container which provides database dashboards.
-	e.Router.GET("/api/pocketcoder/proxy/observability/{path...}", createProxyHandler("http://sqlpage:8080", "/api/pocketcoder/proxy/observability")).Bind(apis.RequireAuth())
+	registry.Add(operation.Route{
+		OperationID: "proxyObservability",
+		Method:      http.MethodGet,
+		Path:        "/api/pocketcoder/v1/proxy/observability/{path...}",
+		Auth:        true,
+		Direct:      true,
+		Action:      createProxyHandler("http://sqlpage:8080", "/api/pocketcoder/v1/proxy/observability"),
+	})
 }
 
 // createProxyHandler creates a standard reverse proxy handler that strips a prefix and forwards to a target.

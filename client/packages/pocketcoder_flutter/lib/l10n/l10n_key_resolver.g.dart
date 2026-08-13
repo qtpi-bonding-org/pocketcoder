@@ -1,6 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-13T04:14:58.080761
 
 import 'app_localizations.dart';
 
@@ -462,6 +461,8 @@ class L10nKeyResolver {
       'pocket.coder.update.required.disk' => _l10n.pocketCoderUpdateRequiredDisk,
       'pocket.coder.update.review.data.change' => _l10n.pocketCoderUpdateReviewDataChange,
       'pocket.coder.update.rollback.warning' => _l10n.pocketCoderUpdateRollbackWarning,
+      'pocket.coder.update.stderr' => _l10n.pocketCoderUpdateStderr,
+      'pocket.coder.update.succeeded' => _l10n.pocketCoderUpdateSucceeded,
       'pocket.coder.update.title' => _l10n.pocketCoderUpdateTitle,
       'pocket.coder.update.unknown.status' => _l10n.pocketCoderUpdateUnknownStatus,
       'pocket.coder.update.upgrade' => _l10n.pocketCoderUpdateUpgrade,
@@ -771,6 +772,7 @@ class L10nKeyResolver {
       'onboarding.trial.poco' => _l10n.onboardingTrialPoco(args?['trialDuration'] as int? ?? 0),
       'permission.requesting.label' => _l10n.permissionRequestingLabel(args?['source'] as String? ?? ''),
       'pocket.coder.update.data.boundary' => _l10n.pocketCoderUpdateDataBoundary(args?['currentVersion'] as int? ?? 0, args?['availableVersion'] as int? ?? 0),
+      'pocket.coder.update.failed' => _l10n.pocketCoderUpdateFailed(args?['exitCode'] as int? ?? 0),
       'pro.price' => _l10n.proPrice(args?['price'] as String? ?? ''),
       'pro.price.after.trial' => _l10n.proPriceAfterTrial(args?['price'] as String? ?? ''),
       'pro.price.per.month' => _l10n.proPricePerMonth(args?['price'] as String? ?? ''),
@@ -1271,11 +1273,14 @@ class L10nKeyResolver {
     'pocket.coder.update.current.status',
     'pocket.coder.update.data.boundary',
     'pocket.coder.update.download',
+    'pocket.coder.update.failed',
     'pocket.coder.update.no.deployment',
     'pocket.coder.update.output',
     'pocket.coder.update.required.disk',
     'pocket.coder.update.review.data.change',
     'pocket.coder.update.rollback.warning',
+    'pocket.coder.update.stderr',
+    'pocket.coder.update.succeeded',
     'pocket.coder.update.title',
     'pocket.coder.update.unknown.status',
     'pocket.coder.update.upgrade',
@@ -2040,11 +2045,14 @@ class L10nKeyResolver {
     'pocketCoderUpdateCurrentStatus': 'pocket.coder.update.current.status',
     'pocketCoderUpdateDataBoundary': 'pocket.coder.update.data.boundary',
     'pocketCoderUpdateDownload': 'pocket.coder.update.download',
+    'pocketCoderUpdateFailed': 'pocket.coder.update.failed',
     'pocketCoderUpdateNoDeployment': 'pocket.coder.update.no.deployment',
     'pocketCoderUpdateOutput': 'pocket.coder.update.output',
     'pocketCoderUpdateRequiredDisk': 'pocket.coder.update.required.disk',
     'pocketCoderUpdateReviewDataChange': 'pocket.coder.update.review.data.change',
     'pocketCoderUpdateRollbackWarning': 'pocket.coder.update.rollback.warning',
+    'pocketCoderUpdateStderr': 'pocket.coder.update.stderr',
+    'pocketCoderUpdateSucceeded': 'pocket.coder.update.succeeded',
     'pocketCoderUpdateTitle': 'pocket.coder.update.title',
     'pocketCoderUpdateUnknownStatus': 'pocket.coder.update.unknown.status',
     'pocketCoderUpdateUpgrade': 'pocket.coder.update.upgrade',
@@ -2806,11 +2814,14 @@ class L10nKeyResolver {
     'pocket.coder.update.current.status': 'pocketCoderUpdateCurrentStatus',
     'pocket.coder.update.data.boundary': 'pocketCoderUpdateDataBoundary',
     'pocket.coder.update.download': 'pocketCoderUpdateDownload',
+    'pocket.coder.update.failed': 'pocketCoderUpdateFailed',
     'pocket.coder.update.no.deployment': 'pocketCoderUpdateNoDeployment',
     'pocket.coder.update.output': 'pocketCoderUpdateOutput',
     'pocket.coder.update.required.disk': 'pocketCoderUpdateRequiredDisk',
     'pocket.coder.update.review.data.change': 'pocketCoderUpdateReviewDataChange',
     'pocket.coder.update.rollback.warning': 'pocketCoderUpdateRollbackWarning',
+    'pocket.coder.update.stderr': 'pocketCoderUpdateStderr',
+    'pocket.coder.update.succeeded': 'pocketCoderUpdateSucceeded',
     'pocket.coder.update.title': 'pocketCoderUpdateTitle',
     'pocket.coder.update.unknown.status': 'pocketCoderUpdateUnknownStatus',
     'pocket.coder.update.upgrade': 'pocketCoderUpdateUpgrade',
@@ -3579,11 +3590,14 @@ abstract class L10nKeys {
   static const pocketCoderUpdateCurrentStatus = 'pocket.coder.update.current.status';
   static (String, Map<String, dynamic>) pocketCoderUpdateDataBoundary(int currentVersion, int availableVersion) => ('pocket.coder.update.data.boundary', {'currentVersion': currentVersion, 'availableVersion': availableVersion});
   static const pocketCoderUpdateDownload = 'pocket.coder.update.download';
+  static (String, Map<String, dynamic>) pocketCoderUpdateFailed(int exitCode) => ('pocket.coder.update.failed', {'exitCode': exitCode});
   static const pocketCoderUpdateNoDeployment = 'pocket.coder.update.no.deployment';
   static const pocketCoderUpdateOutput = 'pocket.coder.update.output';
   static const pocketCoderUpdateRequiredDisk = 'pocket.coder.update.required.disk';
   static const pocketCoderUpdateReviewDataChange = 'pocket.coder.update.review.data.change';
   static const pocketCoderUpdateRollbackWarning = 'pocket.coder.update.rollback.warning';
+  static const pocketCoderUpdateStderr = 'pocket.coder.update.stderr';
+  static const pocketCoderUpdateSucceeded = 'pocket.coder.update.succeeded';
   static const pocketCoderUpdateTitle = 'pocket.coder.update.title';
   static const pocketCoderUpdateUnknownStatus = 'pocket.coder.update.unknown.status';
   static const pocketCoderUpdateUpgrade = 'pocket.coder.update.upgrade';

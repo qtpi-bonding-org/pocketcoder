@@ -21,10 +21,10 @@ class SchedulesApi {
   const SchedulesApi(this._dio, this._serializers);
 
   /// runScheduleNow
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [scheduleId] 
+  /// * [scheduleId]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -34,7 +34,7 @@ class SchedulesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [ScheduleRunAcceptedResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<ScheduleRunAcceptedResponse>> runScheduleNow({ 
+  Future<Response<ScheduleRunAcceptedResponse>> runScheduleNow({
     required String scheduleId,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -43,7 +43,7 @@ class SchedulesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/schedules/{scheduleId}/run'.replaceAll('{' r'scheduleId' '}', encodeQueryParameter(_serializers, scheduleId, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/schedules/{scheduleId}/run'.replaceAll('{' r'scheduleId' '}', encodeQueryParameter(_serializers, scheduleId, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{

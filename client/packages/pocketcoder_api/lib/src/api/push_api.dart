@@ -21,10 +21,10 @@ class PushApi {
   const PushApi(this._dio, this._serializers);
 
   /// sendPushNotification
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -34,7 +34,7 @@ class PushApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> sendPushNotification({ 
+  Future<Response<BuiltMap<String, JsonObject>>> sendPushNotification({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -43,7 +43,7 @@ class PushApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/push';
+    final _path = r'/api/pocketcoder/v1/push';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{

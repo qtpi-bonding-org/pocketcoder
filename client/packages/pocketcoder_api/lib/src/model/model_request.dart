@@ -11,7 +11,7 @@ part 'model_request.g.dart';
 /// ModelRequest
 ///
 /// Properties:
-/// * [model] 
+/// * [model]
 @BuiltValue()
 abstract class ModelRequest implements Built<ModelRequest, ModelRequestBuilder> {
   @BuiltValueField(wireName: r'model')

@@ -14,14 +14,12 @@ import (
 )
 
 type openAPIRouteSpec struct {
-	Paths map[string]map[string]yaml.Node `yaml:"paths"`
+	Paths map[string]map[string]struct {
+		OperationID string `yaml:"operationId"`
+	} `yaml:"paths"`
 }
 
-var routeRegistrationPattern = regexp.MustCompile(`\.Router\.(GET|POST|PUT|PATCH|DELETE)\("([^"]+)"`)
-
-func normalizeRoutePath(path string) string {
-	return strings.ReplaceAll(path, "{path...}", "{path}")
-}
+var operationRegistrationPattern = regexp.MustCompile(`OperationID:\s*"([^"]+)"`)
 
 func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
@@ -40,11 +38,14 @@ func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 
 	want := make([]string, 0)
 	for path, methods := range spec.Paths {
-		for method := range methods {
+		if !strings.HasPrefix(path, "/api/pocketcoder/v1/") {
+			t.Fatalf("custom API path is outside the v1 namespace: %s", path)
+		}
+		for method, operationSpec := range methods {
 			if method == "parameters" {
 				continue
 			}
-			want = append(want, strings.ToUpper(method)+" "+path)
+			want = append(want, operationSpec.OperationID)
 		}
 	}
 	sort.Strings(want)
@@ -61,10 +62,8 @@ func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 		if readErr != nil {
 			return readErr
 		}
-		for _, match := range routeRegistrationPattern.FindAllStringSubmatch(string(data), -1) {
-			if strings.HasPrefix(match[2], "/api/pocketcoder/") {
-				got = append(got, match[1]+" "+normalizeRoutePath(match[2]))
-			}
+		for _, match := range operationRegistrationPattern.FindAllStringSubmatch(string(data), -1) {
+			got = append(got, match[1])
 		}
 		return nil
 	})
@@ -73,6 +72,6 @@ func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 	}
 	sort.Strings(got)
 	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("backend routes differ from api/openapi/pocketcoder.yaml\n got: %v\nwant: %v", got, want)
+		t.Fatalf("backend operations differ from api/openapi/pocketcoder.yaml\n got: %v\nwant: %v", got, want)
 	}
 }

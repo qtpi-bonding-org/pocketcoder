@@ -28,20 +28,18 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 var safeContainerName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
-// RegisterLogsApi registers the native Docker log streaming endpoints.
-func RegisterLogsApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+func AddLogOperations(registry *operation.Registry) {
 	// 📜 Stream Container Logs (SSE)
 	// This endpoint replaces Dozzle by providing a native SSE stream that the Flutter
 	// app can consume to show real-time logs with custom styling.
-	// Example: GET /api/pocketcoder/logs/pocketcoder-sandbox
-	e.Router.GET("/api/pocketcoder/logs/{containerName}", func(re *core.RequestEvent) error {
+	// Example: GET /api/pocketcoder/v1/logs/pocketcoder-sandbox
+	registry.Add(operation.Route{OperationID: "streamContainerLogs", Method: http.MethodGet, Path: "/api/pocketcoder/v1/logs/{containerName}", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
 		// 🛡️ Security Gate: Only allow authenticated admins to stream system logs.
 		if re.Auth == nil || re.Auth.GetString("role") != "admin" {
 			return re.ForbiddenError("Only admins can stream logs.", nil)
@@ -114,5 +112,5 @@ func RegisterLogsApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 
 		return nil
-	}).Bind(apis.RequireAuth())
+	}})
 }

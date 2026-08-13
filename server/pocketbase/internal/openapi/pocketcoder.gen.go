@@ -50,6 +50,13 @@ type ConfigOptionRequest struct {
 	Value    string `json:"value"`
 }
 
+// ContentBlock defines model for ContentBlock.
+type ContentBlock struct {
+	Text                 *string                `json:"text,omitempty"`
+	Type                 string                 `json:"type"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
 // DecisionRequest defines model for DecisionRequest.
 type DecisionRequest map[string]interface{}
 
@@ -104,7 +111,7 @@ type OllamaProgress map[string]interface{}
 
 // PromptRequest defines model for PromptRequest.
 type PromptRequest struct {
-	Prompt string `json:"prompt"`
+	Prompt []ContentBlock `json:"prompt"`
 }
 
 // PushRequest defines model for PushRequest.
@@ -226,82 +233,163 @@ type PullOllamaModelJSONRequestBody = ModelRequest
 // SendPushNotificationJSONRequestBody defines body for SendPushNotification for application/json ContentType.
 type SendPushNotificationJSONRequestBody = PushRequest
 
+// Getter for additional properties for ContentBlock. Returns the specified
+// element and whether it was found
+func (a ContentBlock) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ContentBlock
+func (a *ContentBlock) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ContentBlock to handle AdditionalProperties
+func (a *ContentBlock) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["text"]; found {
+		err = json.Unmarshal(raw, &a.Text)
+		if err != nil {
+			return fmt.Errorf("error reading 'text': %w", err)
+		}
+		delete(object, "text")
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ContentBlock to handle AdditionalProperties
+func (a ContentBlock) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Text != nil {
+		object["text"], err = json.Marshal(a.Text)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'text': %w", err)
+		}
+	}
+
+	object["type"], err = json.Marshal(a.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/cancel)
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/cancel)
 	CancelChatSession(w http.ResponseWriter, r *http.Request, chatId ChatId)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/elicitation/{id})
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/elicitation/{id})
 	RespondToElicitation(w http.ResponseWriter, r *http.Request, chatId ChatId, id RequestId)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/prompt)
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/prompt)
 	PromptChat(w http.ResponseWriter, r *http.Request, chatId ChatId)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/request-permission/{id})
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/request-permission/{id})
 	RespondToPermission(w http.ResponseWriter, r *http.Request, chatId ChatId, id RequestId)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/set-config-option)
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/set-config-option)
 	SetChatConfigOption(w http.ResponseWriter, r *http.Request, chatId ChatId)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/set-mode)
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/set-mode)
 	SetChatMode(w http.ResponseWriter, r *http.Request, chatId ChatId)
 
-	// (GET /api/pocketcoder/chats/{chatId}/stream)
+	// (GET /api/pocketcoder/v1/chats/{chatId}/stream)
 	StreamChatEvents(w http.ResponseWriter, r *http.Request, chatId ChatId, params StreamChatEventsParams)
 
-	// (GET /api/pocketcoder/files)
-	GetWorkspaceFile(w http.ResponseWriter, r *http.Request, params GetWorkspaceFileParams)
-
-	// (GET /api/pocketcoder/files-list)
-	ListWorkspaceFiles(w http.ResponseWriter, r *http.Request, params ListWorkspaceFilesParams)
-
-	// (POST /api/pocketcoder/harness-auth/cancel)
-	CancelHarnessAuth(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/pocketcoder/harness-auth/disconnect)
-	DisconnectHarnessAuth(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/pocketcoder/harness-auth/poll)
-	PollHarnessAuth(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/pocketcoder/harness-auth/start)
-	StartHarnessAuth(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/pocketcoder/harness-auth/status)
-	GetHarnessAuthStatus(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/pocketcoder/harness-auth/submit)
-	SubmitHarnessAuth(w http.ResponseWriter, r *http.Request)
-
-	// (GET /api/pocketcoder/logs/{containerName})
-	StreamContainerLogs(w http.ResponseWriter, r *http.Request, containerName ContainerName)
-
-	// (POST /api/pocketcoder/mcp/oauth/store)
-	StoreMcpOAuthToken(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/pocketcoder/mcp/request)
-	ExecuteMcpRequest(w http.ResponseWriter, r *http.Request)
-
-	// (GET /api/pocketcoder/ollama/models)
-	ListOllamaModels(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/pocketcoder/ollama/pull)
-	PullOllamaModel(w http.ResponseWriter, r *http.Request)
-
-	// (GET /api/pocketcoder/proxy/observability/{path})
-	ProxyObservability(w http.ResponseWriter, r *http.Request, path string)
-
-	// (POST /api/pocketcoder/push)
-	SendPushNotification(w http.ResponseWriter, r *http.Request)
-
-	// (GET /api/pocketcoder/release/compatibility)
+	// (GET /api/pocketcoder/v1/compatibility)
 	GetReleaseCompatibility(w http.ResponseWriter, r *http.Request)
 
-	// (GET /api/pocketcoder/release/status)
+	// (GET /api/pocketcoder/v1/files)
+	GetWorkspaceFile(w http.ResponseWriter, r *http.Request, params GetWorkspaceFileParams)
+
+	// (GET /api/pocketcoder/v1/files-list)
+	ListWorkspaceFiles(w http.ResponseWriter, r *http.Request, params ListWorkspaceFilesParams)
+
+	// (POST /api/pocketcoder/v1/harness-auth/cancel)
+	CancelHarnessAuth(w http.ResponseWriter, r *http.Request)
+
+	// (POST /api/pocketcoder/v1/harness-auth/disconnect)
+	DisconnectHarnessAuth(w http.ResponseWriter, r *http.Request)
+
+	// (POST /api/pocketcoder/v1/harness-auth/poll)
+	PollHarnessAuth(w http.ResponseWriter, r *http.Request)
+
+	// (POST /api/pocketcoder/v1/harness-auth/start)
+	StartHarnessAuth(w http.ResponseWriter, r *http.Request)
+
+	// (POST /api/pocketcoder/v1/harness-auth/status)
+	GetHarnessAuthStatus(w http.ResponseWriter, r *http.Request)
+
+	// (POST /api/pocketcoder/v1/harness-auth/submit)
+	SubmitHarnessAuth(w http.ResponseWriter, r *http.Request)
+
+	// (GET /api/pocketcoder/v1/logs/{containerName})
+	StreamContainerLogs(w http.ResponseWriter, r *http.Request, containerName ContainerName)
+
+	// (POST /api/pocketcoder/v1/mcp/oauth/store)
+	StoreMcpOAuthToken(w http.ResponseWriter, r *http.Request)
+
+	// (POST /api/pocketcoder/v1/mcp/request)
+	ExecuteMcpRequest(w http.ResponseWriter, r *http.Request)
+
+	// (GET /api/pocketcoder/v1/ollama/models)
+	ListOllamaModels(w http.ResponseWriter, r *http.Request)
+
+	// (POST /api/pocketcoder/v1/ollama/pull)
+	PullOllamaModel(w http.ResponseWriter, r *http.Request)
+
+	// (GET /api/pocketcoder/v1/proxy/observability/{path})
+	ProxyObservability(w http.ResponseWriter, r *http.Request, path string)
+
+	// (POST /api/pocketcoder/v1/push)
+	SendPushNotification(w http.ResponseWriter, r *http.Request)
+
+	// (GET /api/pocketcoder/v1/release/status)
 	GetReleaseStatus(w http.ResponseWriter, r *http.Request)
 
-	// (POST /api/pocketcoder/schedules/{scheduleId}/run)
+	// (POST /api/pocketcoder/v1/schedules/{scheduleId}/run)
 	RunScheduleNow(w http.ResponseWriter, r *http.Request, scheduleId string)
 }
 
@@ -563,6 +651,20 @@ func (siw *ServerInterfaceWrapper) StreamChatEvents(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.StreamChatEvents(w, r, chatId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetReleaseCompatibility operation middleware
+func (siw *ServerInterfaceWrapper) GetReleaseCompatibility(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetReleaseCompatibility(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -934,20 +1036,6 @@ func (siw *ServerInterfaceWrapper) SendPushNotification(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
-// GetReleaseCompatibility operation middleware
-func (siw *ServerInterfaceWrapper) GetReleaseCompatibility(w http.ResponseWriter, r *http.Request) {
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetReleaseCompatibility(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 // GetReleaseStatus operation middleware
 func (siw *ServerInterfaceWrapper) GetReleaseStatus(w http.ResponseWriter, r *http.Request) {
 
@@ -1120,31 +1208,31 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/chats/{chatId}/session/cancel", wrapper.CancelChatSession)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/chats/{chatId}/session/elicitation/{id}", wrapper.RespondToElicitation)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/chats/{chatId}/session/prompt", wrapper.PromptChat)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/chats/{chatId}/session/request-permission/{id}", wrapper.RespondToPermission)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/chats/{chatId}/session/set-config-option", wrapper.SetChatConfigOption)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/chats/{chatId}/session/set-mode", wrapper.SetChatMode)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/chats/{chatId}/stream", wrapper.StreamChatEvents)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/files", wrapper.GetWorkspaceFile)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/files-list", wrapper.ListWorkspaceFiles)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/harness-auth/cancel", wrapper.CancelHarnessAuth)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/harness-auth/disconnect", wrapper.DisconnectHarnessAuth)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/harness-auth/poll", wrapper.PollHarnessAuth)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/harness-auth/start", wrapper.StartHarnessAuth)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/harness-auth/status", wrapper.GetHarnessAuthStatus)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/harness-auth/submit", wrapper.SubmitHarnessAuth)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/logs/{containerName}", wrapper.StreamContainerLogs)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/mcp/oauth/store", wrapper.StoreMcpOAuthToken)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/mcp/request", wrapper.ExecuteMcpRequest)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/ollama/models", wrapper.ListOllamaModels)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/ollama/pull", wrapper.PullOllamaModel)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/proxy/observability/{path}", wrapper.ProxyObservability)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/push", wrapper.SendPushNotification)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/release/compatibility", wrapper.GetReleaseCompatibility)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/release/status", wrapper.GetReleaseStatus)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/schedules/{scheduleId}/run", wrapper.RunScheduleNow)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/session/cancel", wrapper.CancelChatSession)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/session/elicitation/{id}", wrapper.RespondToElicitation)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/session/prompt", wrapper.PromptChat)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/session/request-permission/{id}", wrapper.RespondToPermission)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/session/set-config-option", wrapper.SetChatConfigOption)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/session/set-mode", wrapper.SetChatMode)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/stream", wrapper.StreamChatEvents)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/compatibility", wrapper.GetReleaseCompatibility)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files", wrapper.GetWorkspaceFile)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files-list", wrapper.ListWorkspaceFiles)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/cancel", wrapper.CancelHarnessAuth)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/disconnect", wrapper.DisconnectHarnessAuth)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/poll", wrapper.PollHarnessAuth)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/start", wrapper.StartHarnessAuth)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/status", wrapper.GetHarnessAuthStatus)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/submit", wrapper.SubmitHarnessAuth)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/logs/{containerName}", wrapper.StreamContainerLogs)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/oauth/store", wrapper.StoreMcpOAuthToken)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/request", wrapper.ExecuteMcpRequest)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/ollama/models", wrapper.ListOllamaModels)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/ollama/pull", wrapper.PullOllamaModel)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/proxy/observability/{path}", wrapper.ProxyObservability)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/push", wrapper.SendPushNotification)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/release/status", wrapper.GetReleaseStatus)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/schedules/{scheduleId}/run", wrapper.RunScheduleNow)
 
 	return m
 }
@@ -1175,11 +1263,11 @@ type CancelChatSessionResponseObject interface {
 	VisitCancelChatSessionResponse(w http.ResponseWriter) error
 }
 
-type CancelChatSession204Response struct {
+type CancelChatSession202Response struct {
 }
 
-func (response CancelChatSession204Response) VisitCancelChatSessionResponse(w http.ResponseWriter) error {
-	w.WriteHeader(204)
+func (response CancelChatSession202Response) VisitCancelChatSessionResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
 	return nil
 }
 
@@ -1716,6 +1804,83 @@ func (response StreamChatEvents404JSONResponse) VisitStreamChatEventsResponse(w 
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReleaseCompatibilityRequestObject struct {
+}
+
+type GetReleaseCompatibilityResponseObject interface {
+	VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error
+}
+
+type GetReleaseCompatibility200JSONResponse struct{ JsonSuccessJSONResponse }
+
+func (response GetReleaseCompatibility200JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReleaseCompatibility400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response GetReleaseCompatibility400JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReleaseCompatibility401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetReleaseCompatibility401JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReleaseCompatibility404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetReleaseCompatibility404JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReleaseCompatibility500JSONResponse struct{ InternalErrorJSONResponse }
+
+func (response GetReleaseCompatibility500JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -2884,83 +3049,6 @@ func (response SendPushNotification404JSONResponse) VisitSendPushNotificationRes
 	return err
 }
 
-type GetReleaseCompatibilityRequestObject struct {
-}
-
-type GetReleaseCompatibilityResponseObject interface {
-	VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error
-}
-
-type GetReleaseCompatibility200JSONResponse struct{ JsonSuccessJSONResponse }
-
-func (response GetReleaseCompatibility200JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type GetReleaseCompatibility400JSONResponse struct{ BadRequestJSONResponse }
-
-func (response GetReleaseCompatibility400JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type GetReleaseCompatibility401JSONResponse struct{ UnauthorizedJSONResponse }
-
-func (response GetReleaseCompatibility401JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(401)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type GetReleaseCompatibility404JSONResponse struct{ NotFoundJSONResponse }
-
-func (response GetReleaseCompatibility404JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type GetReleaseCompatibility500JSONResponse struct{ InternalErrorJSONResponse }
-
-func (response GetReleaseCompatibility500JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type GetReleaseStatusRequestObject struct {
 }
 
@@ -3105,79 +3193,79 @@ func (response RunScheduleNow404JSONResponse) VisitRunScheduleNowResponse(w http
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/cancel)
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/cancel)
 	CancelChatSession(ctx context.Context, request CancelChatSessionRequestObject) (CancelChatSessionResponseObject, error)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/elicitation/{id})
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/elicitation/{id})
 	RespondToElicitation(ctx context.Context, request RespondToElicitationRequestObject) (RespondToElicitationResponseObject, error)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/prompt)
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/prompt)
 	PromptChat(ctx context.Context, request PromptChatRequestObject) (PromptChatResponseObject, error)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/request-permission/{id})
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/request-permission/{id})
 	RespondToPermission(ctx context.Context, request RespondToPermissionRequestObject) (RespondToPermissionResponseObject, error)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/set-config-option)
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/set-config-option)
 	SetChatConfigOption(ctx context.Context, request SetChatConfigOptionRequestObject) (SetChatConfigOptionResponseObject, error)
 
-	// (POST /api/pocketcoder/chats/{chatId}/session/set-mode)
+	// (POST /api/pocketcoder/v1/chats/{chatId}/session/set-mode)
 	SetChatMode(ctx context.Context, request SetChatModeRequestObject) (SetChatModeResponseObject, error)
 
-	// (GET /api/pocketcoder/chats/{chatId}/stream)
+	// (GET /api/pocketcoder/v1/chats/{chatId}/stream)
 	StreamChatEvents(ctx context.Context, request StreamChatEventsRequestObject) (StreamChatEventsResponseObject, error)
 
-	// (GET /api/pocketcoder/files)
-	GetWorkspaceFile(ctx context.Context, request GetWorkspaceFileRequestObject) (GetWorkspaceFileResponseObject, error)
-
-	// (GET /api/pocketcoder/files-list)
-	ListWorkspaceFiles(ctx context.Context, request ListWorkspaceFilesRequestObject) (ListWorkspaceFilesResponseObject, error)
-
-	// (POST /api/pocketcoder/harness-auth/cancel)
-	CancelHarnessAuth(ctx context.Context, request CancelHarnessAuthRequestObject) (CancelHarnessAuthResponseObject, error)
-
-	// (POST /api/pocketcoder/harness-auth/disconnect)
-	DisconnectHarnessAuth(ctx context.Context, request DisconnectHarnessAuthRequestObject) (DisconnectHarnessAuthResponseObject, error)
-
-	// (POST /api/pocketcoder/harness-auth/poll)
-	PollHarnessAuth(ctx context.Context, request PollHarnessAuthRequestObject) (PollHarnessAuthResponseObject, error)
-
-	// (POST /api/pocketcoder/harness-auth/start)
-	StartHarnessAuth(ctx context.Context, request StartHarnessAuthRequestObject) (StartHarnessAuthResponseObject, error)
-
-	// (POST /api/pocketcoder/harness-auth/status)
-	GetHarnessAuthStatus(ctx context.Context, request GetHarnessAuthStatusRequestObject) (GetHarnessAuthStatusResponseObject, error)
-
-	// (POST /api/pocketcoder/harness-auth/submit)
-	SubmitHarnessAuth(ctx context.Context, request SubmitHarnessAuthRequestObject) (SubmitHarnessAuthResponseObject, error)
-
-	// (GET /api/pocketcoder/logs/{containerName})
-	StreamContainerLogs(ctx context.Context, request StreamContainerLogsRequestObject) (StreamContainerLogsResponseObject, error)
-
-	// (POST /api/pocketcoder/mcp/oauth/store)
-	StoreMcpOAuthToken(ctx context.Context, request StoreMcpOAuthTokenRequestObject) (StoreMcpOAuthTokenResponseObject, error)
-
-	// (POST /api/pocketcoder/mcp/request)
-	ExecuteMcpRequest(ctx context.Context, request ExecuteMcpRequestRequestObject) (ExecuteMcpRequestResponseObject, error)
-
-	// (GET /api/pocketcoder/ollama/models)
-	ListOllamaModels(ctx context.Context, request ListOllamaModelsRequestObject) (ListOllamaModelsResponseObject, error)
-
-	// (POST /api/pocketcoder/ollama/pull)
-	PullOllamaModel(ctx context.Context, request PullOllamaModelRequestObject) (PullOllamaModelResponseObject, error)
-
-	// (GET /api/pocketcoder/proxy/observability/{path})
-	ProxyObservability(ctx context.Context, request ProxyObservabilityRequestObject) (ProxyObservabilityResponseObject, error)
-
-	// (POST /api/pocketcoder/push)
-	SendPushNotification(ctx context.Context, request SendPushNotificationRequestObject) (SendPushNotificationResponseObject, error)
-
-	// (GET /api/pocketcoder/release/compatibility)
+	// (GET /api/pocketcoder/v1/compatibility)
 	GetReleaseCompatibility(ctx context.Context, request GetReleaseCompatibilityRequestObject) (GetReleaseCompatibilityResponseObject, error)
 
-	// (GET /api/pocketcoder/release/status)
+	// (GET /api/pocketcoder/v1/files)
+	GetWorkspaceFile(ctx context.Context, request GetWorkspaceFileRequestObject) (GetWorkspaceFileResponseObject, error)
+
+	// (GET /api/pocketcoder/v1/files-list)
+	ListWorkspaceFiles(ctx context.Context, request ListWorkspaceFilesRequestObject) (ListWorkspaceFilesResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/harness-auth/cancel)
+	CancelHarnessAuth(ctx context.Context, request CancelHarnessAuthRequestObject) (CancelHarnessAuthResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/harness-auth/disconnect)
+	DisconnectHarnessAuth(ctx context.Context, request DisconnectHarnessAuthRequestObject) (DisconnectHarnessAuthResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/harness-auth/poll)
+	PollHarnessAuth(ctx context.Context, request PollHarnessAuthRequestObject) (PollHarnessAuthResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/harness-auth/start)
+	StartHarnessAuth(ctx context.Context, request StartHarnessAuthRequestObject) (StartHarnessAuthResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/harness-auth/status)
+	GetHarnessAuthStatus(ctx context.Context, request GetHarnessAuthStatusRequestObject) (GetHarnessAuthStatusResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/harness-auth/submit)
+	SubmitHarnessAuth(ctx context.Context, request SubmitHarnessAuthRequestObject) (SubmitHarnessAuthResponseObject, error)
+
+	// (GET /api/pocketcoder/v1/logs/{containerName})
+	StreamContainerLogs(ctx context.Context, request StreamContainerLogsRequestObject) (StreamContainerLogsResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/mcp/oauth/store)
+	StoreMcpOAuthToken(ctx context.Context, request StoreMcpOAuthTokenRequestObject) (StoreMcpOAuthTokenResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/mcp/request)
+	ExecuteMcpRequest(ctx context.Context, request ExecuteMcpRequestRequestObject) (ExecuteMcpRequestResponseObject, error)
+
+	// (GET /api/pocketcoder/v1/ollama/models)
+	ListOllamaModels(ctx context.Context, request ListOllamaModelsRequestObject) (ListOllamaModelsResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/ollama/pull)
+	PullOllamaModel(ctx context.Context, request PullOllamaModelRequestObject) (PullOllamaModelResponseObject, error)
+
+	// (GET /api/pocketcoder/v1/proxy/observability/{path})
+	ProxyObservability(ctx context.Context, request ProxyObservabilityRequestObject) (ProxyObservabilityResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/push)
+	SendPushNotification(ctx context.Context, request SendPushNotificationRequestObject) (SendPushNotificationResponseObject, error)
+
+	// (GET /api/pocketcoder/v1/release/status)
 	GetReleaseStatus(ctx context.Context, request GetReleaseStatusRequestObject) (GetReleaseStatusResponseObject, error)
 
-	// (POST /api/pocketcoder/schedules/{scheduleId}/run)
+	// (POST /api/pocketcoder/v1/schedules/{scheduleId}/run)
 	RunScheduleNow(ctx context.Context, request RunScheduleNowRequestObject) (RunScheduleNowResponseObject, error)
 }
 
@@ -3423,6 +3511,30 @@ func (sh *strictHandler) StreamChatEvents(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(StreamChatEventsResponseObject); ok {
 		if err := validResponse.VisitStreamChatEventsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetReleaseCompatibility operation middleware
+func (sh *strictHandler) GetReleaseCompatibility(w http.ResponseWriter, r *http.Request) {
+	var request GetReleaseCompatibilityRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetReleaseCompatibility(ctx, request.(GetReleaseCompatibilityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetReleaseCompatibility")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetReleaseCompatibilityResponseObject); ok {
+		if err := validResponse.VisitGetReleaseCompatibilityResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -3861,30 +3973,6 @@ func (sh *strictHandler) SendPushNotification(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SendPushNotificationResponseObject); ok {
 		if err := validResponse.VisitSendPushNotificationResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// GetReleaseCompatibility operation middleware
-func (sh *strictHandler) GetReleaseCompatibility(w http.ResponseWriter, r *http.Request) {
-	var request GetReleaseCompatibilityRequestObject
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.GetReleaseCompatibility(ctx, request.(GetReleaseCompatibilityRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetReleaseCompatibility")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(GetReleaseCompatibilityResponseObject); ok {
-		if err := validResponse.VisitGetReleaseCompatibilityResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

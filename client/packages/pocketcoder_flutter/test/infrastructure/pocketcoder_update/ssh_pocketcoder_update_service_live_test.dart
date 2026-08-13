@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_credentials_provider.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_credentials.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/os_control/ssh_root_command_runner.dart';
 import 'package:pocketcoder_flutter/infrastructure/pocketcoder_update/ssh_pocketcoder_update_service.dart';
 import 'package:pocketcoder_flutter/infrastructure/release/server_release_status_service.dart';
@@ -65,7 +66,10 @@ void main() {
       final service = SshPocketCoderUpdateService(
         rootSshCommandRunner: commandRunner,
         pocketBase: pocketBase,
-        releaseStatusService: ServerReleaseStatusService(pocketBase),
+        releaseStatusService: ServerReleaseStatusService(
+          pocketBase,
+          PocketCoderApiClient.fromPocketBase(pocketBase),
+        ),
       );
       final result = await service.updatePocketCoder(
         instanceId: 'live-test-instance',

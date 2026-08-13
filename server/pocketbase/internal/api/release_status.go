@@ -8,20 +8,44 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/openapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 const defaultReleaseStateDir = "/var/lib/pocketcoder/release"
 
 type releasePointerResponse struct {
-	ReleaseDigest             string `json:"releaseDigest"`
-	SourceCommit              string `json:"sourceCommit"`
-	ServerVersion             string `json:"serverVersion"`
-	DataVersion               int    `json:"dataVersion"`
-	DeploymentContractVersion int    `json:"deploymentContractVersion"`
+	ReleaseDigest             string          `json:"releaseDigest"`
+	SourceCommit              string          `json:"sourceCommit"`
+	ServerVersion             string          `json:"serverVersion"`
+	DataVersion               int             `json:"dataVersion"`
+	DeploymentContractVersion int             `json:"deploymentContractVersion"`
+	Compatibility             json.RawMessage `json:"compatibility"`
+}
+
+var developmentCompatibility = map[string]any{
+	"app": map[string]any{
+		"contractVersion": 1,
+		"officialMinimumVersions": map[string]string{
+			"pocketcoder-pro":  "1.0.0",
+			"pocketcoder-foss": "1.0.0",
+		},
+	},
+	"server": map[string]int{"apiVersion": 1},
+	"workers": map[string]int{
+		"image-relay": 1,
+		"push-relay":  1,
+		"oauth-relay": 1,
+	},
+	"provisioning": map[string]int{"contractVersion": 1},
+	"deployment": map[string]any{
+		"contractVersion": 1,
+		"supportedSourceContractVersions": map[string]int{
+			"minimum": 1,
+			"maximum": 1,
+		},
+	},
 }
 
 func releaseStateDir() string {
@@ -39,32 +63,28 @@ func readJSON(path string, target any) error {
 	return json.Unmarshal(data, target)
 }
 
-// RegisterReleaseStatusApi exposes contract-only compatibility before login
-// and detailed release/update identity only to authenticated owners.
-func RegisterReleaseStatusApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.GET("/api/pocketcoder/release/compatibility", func(re *core.RequestEvent) error {
+func AddReleaseStatusOperations(registry *operation.Registry) {
+	registry.Add(operation.Route{OperationID: "getReleaseCompatibility", Method: http.MethodGet, Path: "/api/pocketcoder/v1/compatibility", Action: func(re *core.RequestEvent) error {
 		dataVersion := 1
-		deploymentContractVersion := 1
+		compatibility := any(developmentCompatibility)
 		var pointer releasePointerResponse
 		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err == nil {
 			dataVersion = pointer.DataVersion
-			deploymentContractVersion = pointer.DeploymentContractVersion
+			if len(pointer.Compatibility) != 0 {
+				compatibility = pointer.Compatibility
+			}
 		}
 		response := map[string]any{
 			"schemaVersion": 1,
 			"dataVersion":   dataVersion,
-			"compatibility": map[string]any{
-				"app":        map[string]int{"contractVersion": 1},
-				"server":     map[string]int{"apiVersion": 1},
-				"deployment": map[string]int{"contractVersion": deploymentContractVersion},
-			},
+			"compatibility": compatibility,
 		}
 		return writeGeneratedJSON(re, openapi.GetReleaseCompatibility200JSONResponse{
 			JsonSuccessJSONResponse: openapi.JsonSuccessJSONResponse(response),
 		})
-	})
+	}})
 
-	e.Router.GET("/api/pocketcoder/release/status", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "getReleaseStatus", Method: http.MethodGet, Path: "/api/pocketcoder/v1/release/status", Auth: true, Action: func(re *core.RequestEvent) error {
 		var pointer releasePointerResponse
 		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil &&
 			!errors.Is(err, os.ErrNotExist) {
@@ -81,7 +101,7 @@ func RegisterReleaseStatusApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
 				"metadataStatus": metadataStatus,
 			}),
 		})
-	}).Bind(apis.RequireAuth())
+	}})
 }
 
 func writeGeneratedJSON(re *core.RequestEvent, response any) error {

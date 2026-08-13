@@ -21,10 +21,10 @@ class McpApi {
   const McpApi(this._dio, this._serializers);
 
   /// executeMcpRequest
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -34,7 +34,7 @@ class McpApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> executeMcpRequest({ 
+  Future<Response<BuiltMap<String, JsonObject>>> executeMcpRequest({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -43,7 +43,7 @@ class McpApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/mcp/request';
+    final _path = r'/api/pocketcoder/v1/mcp/request';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -123,10 +123,10 @@ class McpApi {
   }
 
   /// storeMcpOAuthToken
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [requestBody] 
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -136,7 +136,7 @@ class McpApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> storeMcpOAuthToken({ 
+  Future<Response<BuiltMap<String, JsonObject>>> storeMcpOAuthToken({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -145,7 +145,7 @@ class McpApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/mcp/oauth/store';
+    final _path = r'/api/pocketcoder/v1/mcp/oauth/store';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{

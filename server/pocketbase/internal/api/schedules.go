@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/cron"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 func resolveOwnedSchedule(app core.App, userID, id string) (*core.Record, error) {
@@ -24,8 +25,8 @@ func resolveOwnedSchedule(app core.App, userID, id string) (*core.Record, error)
 	return rec, nil
 }
 
-func RegisterSchedulesApi(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() *coordinator.Coordinator) {
-	e.Router.POST("/api/pocketcoder/schedules/{scheduleId}/run", func(re *core.RequestEvent) error {
+func AddScheduleOperations(app *pocketbase.PocketBase, registry *operation.Registry, coord func() *coordinator.Coordinator) {
+	registry.Add(operation.Route{OperationID: "runScheduleNow", Method: http.MethodPost, Path: "/api/pocketcoder/v1/schedules/{scheduleId}/run", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
 		}
@@ -39,7 +40,7 @@ func RegisterSchedulesApi(app *pocketbase.PocketBase, e *core.ServeEvent, coord 
 		}
 		go runPocketCoderSchedule(app, coord, row.Id)
 		return re.JSON(202, map[string]string{"status": "started"})
-	}).Bind(apis.RequireAuth())
+	}})
 
 	app.OnRecordCreateRequest("schedule_owners").BindFunc(func(ev *core.RecordRequestEvent) error {
 		if ev.Auth == nil || ev.Auth.Id == "" {

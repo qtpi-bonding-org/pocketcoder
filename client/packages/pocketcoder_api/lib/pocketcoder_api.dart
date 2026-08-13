@@ -23,6 +23,7 @@ export 'package:pocketcoder_api/src/api/schedules_api.dart';
 
 export 'package:pocketcoder_api/src/model/accepted_response.dart';
 export 'package:pocketcoder_api/src/model/config_option_request.dart';
+export 'package:pocketcoder_api/src/model/content_block.dart';
 export 'package:pocketcoder_api/src/model/error_response.dart';
 export 'package:pocketcoder_api/src/model/file_entry.dart';
 export 'package:pocketcoder_api/src/model/file_list_response.dart';

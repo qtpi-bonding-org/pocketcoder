@@ -26,10 +26,10 @@ class AgentApi {
   const AgentApi(this._dio, this._serializers);
 
   /// cancelChatSession
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [chatId] 
+  /// * [chatId]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -39,7 +39,7 @@ class AgentApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> cancelChatSession({ 
+  Future<Response<void>> cancelChatSession({
     required String chatId,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -48,7 +48,7 @@ class AgentApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/chats/{chatId}/session/cancel'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/chats/{chatId}/session/cancel'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -80,11 +80,11 @@ class AgentApi {
   }
 
   /// promptChat
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [chatId] 
-  /// * [promptRequest] 
+  /// * [chatId]
+  /// * [promptRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -94,7 +94,7 @@ class AgentApi {
   ///
   /// Returns a [Future] containing a [Response] with a [AcceptedResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<AcceptedResponse>> promptChat({ 
+  Future<Response<AcceptedResponse>> promptChat({
     required String chatId,
     required PromptRequest promptRequest,
     CancelToken? cancelToken,
@@ -104,7 +104,7 @@ class AgentApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/chats/{chatId}/session/prompt'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/chats/{chatId}/session/prompt'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -184,12 +184,12 @@ class AgentApi {
   }
 
   /// respondToElicitation
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [chatId] 
-  /// * [id] 
-  /// * [requestBody] 
+  /// * [chatId]
+  /// * [id]
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -199,7 +199,7 @@ class AgentApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> respondToElicitation({ 
+  Future<Response<void>> respondToElicitation({
     required String chatId,
     required String id,
     required BuiltMap<String, JsonObject> requestBody,
@@ -210,7 +210,7 @@ class AgentApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/chats/{chatId}/session/elicitation/{id}'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString()).replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/chats/{chatId}/session/elicitation/{id}'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString()).replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -262,12 +262,12 @@ class AgentApi {
   }
 
   /// respondToPermission
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [chatId] 
-  /// * [id] 
-  /// * [requestBody] 
+  /// * [chatId]
+  /// * [id]
+  /// * [requestBody]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -277,7 +277,7 @@ class AgentApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> respondToPermission({ 
+  Future<Response<void>> respondToPermission({
     required String chatId,
     required String id,
     required BuiltMap<String, JsonObject> requestBody,
@@ -288,7 +288,7 @@ class AgentApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/chats/{chatId}/session/request-permission/{id}'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString()).replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/chats/{chatId}/session/request-permission/{id}'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString()).replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -340,11 +340,11 @@ class AgentApi {
   }
 
   /// setChatConfigOption
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [chatId] 
-  /// * [configOptionRequest] 
+  /// * [chatId]
+  /// * [configOptionRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -354,7 +354,7 @@ class AgentApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> setChatConfigOption({ 
+  Future<Response<void>> setChatConfigOption({
     required String chatId,
     required ConfigOptionRequest configOptionRequest,
     CancelToken? cancelToken,
@@ -364,7 +364,7 @@ class AgentApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/chats/{chatId}/session/set-config-option'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/chats/{chatId}/session/set-config-option'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -416,11 +416,11 @@ class AgentApi {
   }
 
   /// setChatMode
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [chatId] 
-  /// * [modeRequest] 
+  /// * [chatId]
+  /// * [modeRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -430,7 +430,7 @@ class AgentApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> setChatMode({ 
+  Future<Response<void>> setChatMode({
     required String chatId,
     required ModeRequest modeRequest,
     CancelToken? cancelToken,
@@ -440,7 +440,7 @@ class AgentApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/chats/{chatId}/session/set-mode'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/chats/{chatId}/session/set-mode'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -492,11 +492,11 @@ class AgentApi {
   }
 
   /// streamChatEvents
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [chatId] 
-  /// * [cursor] 
+  /// * [chatId]
+  /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -506,7 +506,7 @@ class AgentApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> streamChatEvents({ 
+  Future<Response<BuiltMap<String, JsonObject>>> streamChatEvents({
     required String chatId,
     int? cursor,
     CancelToken? cancelToken,
@@ -516,7 +516,7 @@ class AgentApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/chats/{chatId}/stream'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/chats/{chatId}/stream'.replaceAll('{' r'chatId' '}', encodeQueryParameter(_serializers, chatId, const FullType(String)).toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{

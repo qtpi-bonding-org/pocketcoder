@@ -11,8 +11,8 @@ part 'config_option_request.g.dart';
 /// ConfigOptionRequest
 ///
 /// Properties:
-/// * [configId] 
-/// * [value] 
+/// * [configId]
+/// * [value]
 @BuiltValue()
 abstract class ConfigOptionRequest implements Built<ConfigOptionRequest, ConfigOptionRequestBuilder> {
   @BuiltValueField(wireName: r'configId')

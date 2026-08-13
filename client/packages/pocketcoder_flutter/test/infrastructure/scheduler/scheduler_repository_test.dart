@@ -1,11 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/scheduler/schedule_owner_dao.dart';
 import 'package:pocketcoder_flutter/infrastructure/scheduler/scheduler_repository.dart';
 
-class MockPocketBase extends Mock implements PocketBase {}
+import '../../helpers/capturing_dio_adapter.dart';
 
 class MockScheduleOwnerDao extends Mock implements ScheduleOwnerDao {}
 
@@ -19,14 +20,18 @@ const schedule = ScheduleOwner(
 );
 
 void main() {
-  late MockPocketBase pocketBase;
+  late CapturingDioAdapter adapter;
   late MockScheduleOwnerDao dao;
   late SchedulerRepository repository;
 
   setUp(() {
-    pocketBase = MockPocketBase();
+    adapter = CapturingDioAdapter(
+      (_, __) => jsonResponse({'status': 'started'}, statusCode: 202),
+    );
+    final dio = Dio(BaseOptions(baseUrl: 'http://pb.local'))
+      ..httpClientAdapter = adapter;
     dao = MockScheduleOwnerDao();
-    repository = SchedulerRepository(pocketBase, dao);
+    repository = SchedulerRepository(PocketCoderApiClient(dio: dio), dao);
   });
 
   test('lists schedule records through the collection DAO', () async {
@@ -57,18 +62,12 @@ void main() {
   });
 
   test('run now remains a PocketCoder operation', () async {
-    when(() => pocketBase.send<dynamic>(
-          '/api/pocketcoder/schedules/run-now',
-          method: 'POST',
-          body: {'id': 'schedule1'},
-        )).thenAnswer((_) async => {'status': 'started'});
-
     await repository.runNow('schedule1');
 
-    verify(() => pocketBase.send<dynamic>(
-          '/api/pocketcoder/schedules/run-now',
-          method: 'POST',
-          body: {'id': 'schedule1'},
-        )).called(1);
+    expect(
+      adapter.lastRequest?.path,
+      '/api/pocketcoder/v1/schedules/schedule1/run',
+    );
+    expect(adapter.lastRequest?.method, 'POST');
   });
 }

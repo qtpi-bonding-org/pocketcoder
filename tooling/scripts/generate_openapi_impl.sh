@@ -45,6 +45,15 @@ npx --yes "@openapitools/openapi-generator-cli@$OPENAPI_GENERATOR_CLI_VERSION" g
 dart_pubspec="$repo_root/client/packages/pocketcoder_api/pubspec.yaml"
 perl -0pi -e 's/name: pocketcoder_api\n/name: pocketcoder_api\nresolution: workspace\n/; s/>=2\.18\.0 <4\.0\.0/>=3.5.0 <4.0.0/' "$dart_pubspec"
 
+# OpenAPI Generator emits trailing spaces in some model documentation and can
+# leave more than one newline at EOF. Normalize every generated Dart source so
+# regeneration remains compatible with git diff --check.
+while IFS= read -r -d '' dart_file; do
+  perl -pi -e 's/[ \t]+$//' "$dart_file"
+  perl -0pi -e 's/\s*\z/\n/' "$dart_file"
+done < <(find "$repo_root/client/packages/pocketcoder_api/lib" \
+  "$repo_root/client/packages/pocketcoder_api/test" -type f -name '*.dart' -print0)
+
 (cd "$repo_root/client" && dart pub get)
 (cd "$repo_root/client/packages/pocketcoder_api" && \
   dart run build_runner build --delete-conflicting-outputs)

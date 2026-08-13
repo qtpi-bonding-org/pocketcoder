@@ -16,6 +16,7 @@ import 'package:pocketcoder_api/src/model/date.dart';
 
 import 'package:pocketcoder_api/src/model/accepted_response.dart';
 import 'package:pocketcoder_api/src/model/config_option_request.dart';
+import 'package:pocketcoder_api/src/model/content_block.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
 import 'package:pocketcoder_api/src/model/file_entry.dart';
 import 'package:pocketcoder_api/src/model/file_list_response.dart';
@@ -29,6 +30,7 @@ part 'serializers.g.dart';
 @SerializersFor([
   AcceptedResponse,
   ConfigOptionRequest,
+  ContentBlock,
   ErrorResponse,
   FileEntry,
   FileListResponse,
@@ -45,6 +47,10 @@ Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(
         const FullType(BuiltMap, [FullType(String), FullType.nullable(JsonObject)]),
         () => MapBuilder<String, JsonObject?>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ContentBlock)]),
+        () => ListBuilder<ContentBlock>(),
       )
       ..addBuilderFactory(
         const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),

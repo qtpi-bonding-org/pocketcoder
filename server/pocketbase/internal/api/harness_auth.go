@@ -24,15 +24,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessauth"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 const (
@@ -85,13 +86,10 @@ type harnessAuthStatusResp struct {
 	Challenge      *harnessAuthChallengeResp `json:"challenge,omitempty"`
 }
 
-// RegisterHarnessAuthApi registers the auth lifecycle routes for deployment or
-// personal harness accounts. A deployment account is available to every local
-// PocketBase user; a personal account is owner-only.
-func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+func AddHarnessAuthOperations(app *pocketbase.PocketBase, registry *operation.Registry) {
 	runtime := harnessauth.NewDefaultRuntime()
 
-	e.Router.POST("/api/pocketcoder/harness-auth/status", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "getHarnessAuthStatus", Method: http.MethodPost, Path: "/api/pocketcoder/v1/harness-auth/status", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
 		}
@@ -118,9 +116,9 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 		attempt, _ := activeHarnessAuthAttempt(app, account.Id)
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/harness-auth/start", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "startHarnessAuth", Method: http.MethodPost, Path: "/api/pocketcoder/v1/harness-auth/start", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
 		}
@@ -231,9 +229,9 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 
 		return re.NoContent(500)
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/harness-auth/poll", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "pollHarnessAuth", Method: http.MethodPost, Path: "/api/pocketcoder/v1/harness-auth/poll", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
 		}
@@ -284,9 +282,9 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			}
 		}
 		return re.JSON(200, response)
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/harness-auth/submit", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "submitHarnessAuth", Method: http.MethodPost, Path: "/api/pocketcoder/v1/harness-auth/submit", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
 		}
@@ -326,9 +324,9 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		account.Set("last_error", state.LastError)
 		_ = app.Save(account)
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/harness-auth/cancel", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "cancelHarnessAuth", Method: http.MethodPost, Path: "/api/pocketcoder/v1/harness-auth/cancel", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
 		}
@@ -361,9 +359,9 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		account.Set("last_error", state.LastError)
 		_ = app.Save(account)
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/harness-auth/disconnect", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "disconnectHarnessAuth", Method: http.MethodPost, Path: "/api/pocketcoder/v1/harness-auth/disconnect", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
 		}
@@ -404,7 +402,7 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			return pocketCoderError(re, 500, "Unable to save account")
 		}
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
-	}).Bind(apis.RequireAuth())
+	}})
 }
 
 func bindProviderKey(app core.App, account *core.Record, providerKeyID, actorUserID string) error {

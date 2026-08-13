@@ -6,7 +6,7 @@ info:
 servers:
   - url: /
 paths:
-  /api/pocketcoder/chats/{chatId}/session/prompt:
+  /api/pocketcoder/v1/chats/{chatId}/session/prompt:
     post:
       operationId: promptChat
       tags:
@@ -36,7 +36,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '503':
           $ref: '#/components/responses/Unavailable'
-  /api/pocketcoder/chats/{chatId}/stream:
+  /api/pocketcoder/v1/chats/{chatId}/stream:
     get:
       operationId: streamChatEvents
       tags:
@@ -58,7 +58,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/pocketcoder/chats/{chatId}/session/cancel:
+  /api/pocketcoder/v1/chats/{chatId}/session/cancel:
     post:
       operationId: cancelChatSession
       tags:
@@ -68,13 +68,13 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ChatId'
       responses:
-        '204':
-          description: Session cancelled
+        '202':
+          description: Cancellation accepted
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/pocketcoder/chats/{chatId}/session/set-mode:
+  /api/pocketcoder/v1/chats/{chatId}/session/set-mode:
     post:
       operationId: setChatMode
       tags:
@@ -102,7 +102,7 @@ paths:
           $ref: '#/components/responses/BadGateway'
         '503':
           $ref: '#/components/responses/Unavailable'
-  /api/pocketcoder/chats/{chatId}/session/set-config-option:
+  /api/pocketcoder/v1/chats/{chatId}/session/set-config-option:
     post:
       operationId: setChatConfigOption
       tags:
@@ -130,7 +130,7 @@ paths:
           $ref: '#/components/responses/BadGateway'
         '503':
           $ref: '#/components/responses/Unavailable'
-  /api/pocketcoder/chats/{chatId}/session/request-permission/{id}:
+  /api/pocketcoder/v1/chats/{chatId}/session/request-permission/{id}:
     post:
       operationId: respondToPermission
       tags:
@@ -159,7 +159,7 @@ paths:
           $ref: '#/components/responses/BadGateway'
         '503':
           $ref: '#/components/responses/Unavailable'
-  /api/pocketcoder/chats/{chatId}/session/elicitation/{id}:
+  /api/pocketcoder/v1/chats/{chatId}/session/elicitation/{id}:
     post:
       operationId: respondToElicitation
       tags:
@@ -188,7 +188,7 @@ paths:
           $ref: '#/components/responses/BadGateway'
         '503':
           $ref: '#/components/responses/Unavailable'
-  /api/pocketcoder/harness-auth/status:
+  /api/pocketcoder/v1/harness-auth/status:
     post:
       operationId: getHarnessAuthStatus
       tags:
@@ -212,7 +212,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/harness-auth/start:
+  /api/pocketcoder/v1/harness-auth/start:
     post:
       operationId: startHarnessAuth
       tags:
@@ -236,7 +236,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/harness-auth/poll:
+  /api/pocketcoder/v1/harness-auth/poll:
     post:
       operationId: pollHarnessAuth
       tags:
@@ -260,7 +260,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/harness-auth/submit:
+  /api/pocketcoder/v1/harness-auth/submit:
     post:
       operationId: submitHarnessAuth
       tags:
@@ -284,7 +284,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/harness-auth/cancel:
+  /api/pocketcoder/v1/harness-auth/cancel:
     post:
       operationId: cancelHarnessAuth
       tags:
@@ -308,7 +308,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/harness-auth/disconnect:
+  /api/pocketcoder/v1/harness-auth/disconnect:
     post:
       operationId: disconnectHarnessAuth
       tags:
@@ -332,7 +332,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/schedules/{scheduleId}/run:
+  /api/pocketcoder/v1/schedules/{scheduleId}/run:
     post:
       operationId: runScheduleNow
       tags:
@@ -359,7 +359,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/pocketcoder/files:
+  /api/pocketcoder/v1/files:
     get:
       operationId: getWorkspaceFile
       tags:
@@ -381,7 +381,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/pocketcoder/files-list:
+  /api/pocketcoder/v1/files-list:
     get:
       operationId: listWorkspaceFiles
       tags:
@@ -401,7 +401,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/pocketcoder/ollama/models:
+  /api/pocketcoder/v1/ollama/models:
     get:
       operationId: listOllamaModels
       tags:
@@ -421,7 +421,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/ollama/pull:
+  /api/pocketcoder/v1/ollama/pull:
     post:
       operationId: pullOllamaModel
       tags:
@@ -454,7 +454,7 @@ paths:
           $ref: '#/components/responses/BadGateway'
         '503':
           $ref: '#/components/responses/Unavailable'
-  /api/pocketcoder/mcp/request:
+  /api/pocketcoder/v1/mcp/request:
     post:
       operationId: executeMcpRequest
       tags:
@@ -484,7 +484,7 @@ paths:
           $ref: '#/components/responses/Unprocessable'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/mcp/oauth/store:
+  /api/pocketcoder/v1/mcp/oauth/store:
     post:
       operationId: storeMcpOAuthToken
       tags:
@@ -508,7 +508,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/release/compatibility:
+  /api/pocketcoder/v1/compatibility:
     get:
       operationId: getReleaseCompatibility
       tags:
@@ -525,7 +525,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/release/status:
+  /api/pocketcoder/v1/release/status:
     get:
       operationId: getReleaseStatus
       tags:
@@ -543,7 +543,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/pocketcoder/logs/{containerName}:
+  /api/pocketcoder/v1/logs/{containerName}:
     get:
       operationId: streamContainerLogs
       tags:
@@ -564,7 +564,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/pocketcoder/proxy/observability/{path}:
+  /api/pocketcoder/v1/proxy/observability/{path}:
     get:
       operationId: proxyObservability
       tags:
@@ -572,7 +572,7 @@ paths:
       x-pocketcoder-roles:
         - admin
       x-pocketcoder-transport: opaque-proxy
-      x-pocketcoder-router-path: /api/pocketcoder/proxy/observability/{path...}
+      x-pocketcoder-router-path: /api/pocketcoder/v1/proxy/observability/{path...}
       security:
         - pocketbaseToken: []
       parameters:
@@ -590,7 +590,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-  /api/pocketcoder/push:
+  /api/pocketcoder/v1/push:
     post:
       operationId: sendPushNotification
       tags:
@@ -764,8 +764,21 @@ components:
       additionalProperties: false
       properties:
         prompt:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ContentBlock'
+    ContentBlock:
+      type: object
+      required:
+        - type
+      additionalProperties: true
+      properties:
+        type:
           type: string
           minLength: 1
+        text:
+          type: string
     ModeRequest:
       type: object
       required:

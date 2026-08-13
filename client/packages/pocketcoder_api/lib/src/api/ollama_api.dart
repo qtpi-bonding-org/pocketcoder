@@ -22,7 +22,7 @@ class OllamaApi {
   const OllamaApi(this._dio, this._serializers);
 
   /// listOllamaModels
-  /// 
+  ///
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -34,7 +34,7 @@ class OllamaApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> listOllamaModels({ 
+  Future<Response<BuiltMap<String, JsonObject>>> listOllamaModels({
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -42,7 +42,7 @@ class OllamaApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/ollama/models';
+    final _path = r'/api/pocketcoder/v1/ollama/models';
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -102,10 +102,10 @@ class OllamaApi {
   }
 
   /// pullOllamaModel
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [modelRequest] 
+  /// * [modelRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -115,7 +115,7 @@ class OllamaApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> pullOllamaModel({ 
+  Future<Response<BuiltMap<String, JsonObject>>> pullOllamaModel({
     required ModelRequest modelRequest,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -124,7 +124,7 @@ class OllamaApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/ollama/pull';
+    final _path = r'/api/pocketcoder/v1/ollama/pull';
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{

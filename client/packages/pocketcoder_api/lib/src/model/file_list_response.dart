@@ -13,8 +13,8 @@ part 'file_list_response.g.dart';
 /// FileListResponse
 ///
 /// Properties:
-/// * [path] 
-/// * [entries] 
+/// * [path]
+/// * [entries]
 @BuiltValue()
 abstract class FileListResponse implements Built<FileListResponse, FileListResponseBuilder> {
   @BuiltValueField(wireName: r'path')

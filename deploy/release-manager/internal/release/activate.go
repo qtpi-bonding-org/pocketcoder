@@ -75,6 +75,7 @@ func (activation Activation) Run() (Current, error) {
 		SchemaVersion: 1, ReleaseDigest: digest, SourceCommit: activation.Manifest.SourceCommit,
 		ServerVersion: activation.Manifest.ServerVersion, DataVersion: activation.Manifest.DataVersion,
 		DeploymentContractVersion: activation.Manifest.Compatibility.Deployment.ContractVersion,
+		Compatibility:             activation.Manifest.Compatibility,
 		Channel:                   activation.Channel, ChannelSequence: activation.ChannelSequence,
 		RevocationSequence: activation.RevocationSequence, SelectedHarnesses: activation.Harnesses,
 		SelectedOptionalImages: activation.OptionalImages, SelectedImages: selectedImages,

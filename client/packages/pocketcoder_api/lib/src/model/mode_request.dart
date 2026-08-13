@@ -11,7 +11,7 @@ part 'mode_request.g.dart';
 /// ModeRequest
 ///
 /// Properties:
-/// * [modeId] 
+/// * [modeId]
 @BuiltValue()
 abstract class ModeRequest implements Built<ModeRequest, ModeRequestBuilder> {
   @BuiltValueField(wireName: r'modeId')

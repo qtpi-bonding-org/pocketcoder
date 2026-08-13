@@ -32,10 +32,11 @@ package api
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 var (
@@ -43,9 +44,8 @@ var (
 	errOAuthNotConfigured  = fmt.Errorf("mcp_servers row has no oauth_token_env_var set")
 )
 
-// RegisterMcpOAuthApi registers the OAuth token-intake endpoint.
-func RegisterMcpOAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.POST("/api/pocketcoder/mcp/oauth/store", func(re *core.RequestEvent) error {
+func AddMcpOAuthOperations(app *pocketbase.PocketBase, registry *operation.Registry) {
+	registry.Add(operation.Route{OperationID: "storeMcpOAuthToken", Method: http.MethodPost, Path: "/api/pocketcoder/v1/mcp/oauth/store", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
 		}
@@ -76,7 +76,7 @@ func RegisterMcpOAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 		log.Printf("✅ [MCPOAuth] stored OAuth token for server %q", input.ServerName)
 		return re.JSON(200, map[string]any{"stored": true})
-	}).Bind(apis.RequireAuth())
+	}})
 }
 
 // storeOAuthToken merges access_token (and, if present, refresh_token) into

@@ -4,6 +4,7 @@ analysis_options.yaml
 doc/AcceptedResponse.md
 doc/AgentApi.md
 doc/ConfigOptionRequest.md
+doc/ContentBlock.md
 doc/ErrorResponse.md
 doc/FileEntry.md
 doc/FileListResponse.md
@@ -41,6 +42,7 @@ lib/src/auth/oauth.dart
 lib/src/date_serializer.dart
 lib/src/model/accepted_response.dart
 lib/src/model/config_option_request.dart
+lib/src/model/content_block.dart
 lib/src/model/date.dart
 lib/src/model/error_response.dart
 lib/src/model/file_entry.dart
@@ -51,4 +53,3 @@ lib/src/model/prompt_request.dart
 lib/src/model/schedule_run_accepted_response.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/schedule_run_accepted_response_test.dart

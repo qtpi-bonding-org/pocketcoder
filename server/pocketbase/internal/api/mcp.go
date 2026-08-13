@@ -22,12 +22,13 @@ package api
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 // resolveImageDigest pins a proposed image reference to a sha256 digest at
@@ -65,9 +66,8 @@ func resolveImageDigest(name, image string) (string, error) {
 	return repo + "@" + digest, nil
 }
 
-// RegisterMcpApi registers the MCP server request endpoint.
-func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.POST("/api/pocketcoder/mcp/request", func(re *core.RequestEvent) error {
+func AddMcpOperations(app *pocketbase.PocketBase, registry *operation.Registry) {
+	registry.Add(operation.Route{OperationID: "executeMcpRequest", Method: http.MethodPost, Path: "/api/pocketcoder/v1/mcp/request", Auth: true, Action: func(re *core.RequestEvent) error {
 		// 1. Require authentication
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
@@ -167,5 +167,5 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			"id":     record.Id,
 			"status": "pending",
 		})
-	}).Bind(apis.RequireAuth())
+	}})
 }

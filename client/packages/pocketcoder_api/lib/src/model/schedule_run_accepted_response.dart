@@ -12,7 +12,7 @@ part 'schedule_run_accepted_response.g.dart';
 /// ScheduleRunAcceptedResponse
 ///
 /// Properties:
-/// * [status] 
+/// * [status]
 @BuiltValue()
 abstract class ScheduleRunAcceptedResponse implements Built<ScheduleRunAcceptedResponse, ScheduleRunAcceptedResponseBuilder> {
   @BuiltValueField(wireName: r'status')

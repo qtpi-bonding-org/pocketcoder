@@ -32,11 +32,10 @@ import (
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/api"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operationapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseidentity"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
@@ -46,7 +45,7 @@ func main() {
 
 	// PocketBase ships with a built-in rate limiter, but leaves it disabled in
 	// its default settings. Enable conservative production defaults on fresh
-	// and legacy deployments unless rate limiting is already configured. This
+	// deployments unless rate limiting is already configured. This
 	// protects public auth/API endpoints without requiring a custom Caddy build.
 	app.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
 		if err := e.Next(); err != nil {
@@ -68,7 +67,7 @@ func main() {
 		return app.Save(settings)
 	})
 
-	// coord is nil until RegisterAgentApi runs inside OnServe below, and
+	// coord is nil until operationapi.Register runs inside OnServe below, and
 	// stays nil if the agent profile isn't configured. Hooks registered
 	// before OnServe (goose config, MCP) capture this getter and dereference
 	// it whenever they fire. For real traffic that's always after OnServe —
@@ -111,32 +110,18 @@ func main() {
 			}
 		}
 
-		// A. Register Custom API Endpoints
-		api.RegisterMcpApi(app, e)
-		api.RegisterMcpOAuthApi(app, e)
-		api.RegisterProxyApi(app, e)
-		api.RegisterLogsApi(app, e)
-		api.RegisterOllamaApi(app, e)
-		api.RegisterReleaseStatusApi(app, e)
+		// A. Register the generated PocketCoder API boundary.
 		var err error
-		coord, err = api.RegisterAgentApi(app, e)
+		coord, err = operationapi.Register(app, e, coordGetter)
 		if err != nil {
 			app.Logger().Warn("agent API not configured; agent profile disabled", "error", err)
 		}
-		filesystem.RegisterFilesApi(app, e)
-		hooks.RegisterPushApi(app, e)
-
-		// E. Harness auth API (account/API-key mode selection + auth-helper lifecycle).
-		api.RegisterHarnessAuthApi(app, e)
-
-		// F. Schedule execution API. Schedule state itself uses PocketBase CRUD.
-		api.RegisterSchedulesApi(app, e, coordGetter)
 
 		// F. Harness instance status watcher: subscribes to the Docker
 		// event stream and reconciles harness_instances.status against
 		// real container state for the lifetime of the app. Tied to a
 		// cancel context released on OnTerminate, and — like
-		// RegisterAgentApi's coordinator shutdown above — the OnTerminate
+		// the agent coordinator's shutdown hook above — the OnTerminate
 		// handler blocks (bounded by a timeout) until the watcher's own
 		// goroutine confirms it actually stopped, so PocketBase doesn't
 		// tear down the DB out from under an in-flight status Save.
