@@ -13,6 +13,23 @@ current_phase=configuring_operating_system
 heartbeat_pid=
 failure_reported=0
 release_stage=
+ssh_host_key_type=
+ssh_host_key_fingerprint=
+
+capture_ssh_host_key() {
+  public_key=/etc/ssh/ssh_host_ed25519_key.pub
+  if [ ! -r "$public_key" ] || ! command -v ssh-keygen >/dev/null 2>&1; then
+    return
+  fi
+  fingerprint=$(ssh-keygen -E md5 -lf "$public_key" 2>/dev/null | awk '{print $2}')
+  case "$fingerprint" in MD5:*:*:*:*:*:*:*:*:*:*:*:*:*:*:*:*) ;;
+    *) return ;;
+  esac
+  ssh_host_key_type=ssh-ed25519
+  ssh_host_key_fingerprint=$fingerprint
+  export POCKETCODER_SSH_HOST_KEY_TYPE=$ssh_host_key_type
+  export POCKETCODER_SSH_HOST_KEY_FINGERPRINT=$ssh_host_key_fingerprint
+}
 
 status() {
   current_phase=$1
@@ -21,10 +38,16 @@ status() {
   status_tmp="$status_file.tmp.$$"
   jq -n --arg runId "$run_id" --arg phase "$current_phase" \
     --arg detail "$detail" --arg sourceCommit "$source_commit" \
+    --arg sshHostKeyType "$ssh_host_key_type" \
+    --arg sshHostKeyFingerprint "$ssh_host_key_fingerprint" \
     --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg error "$error" \
     '{schema:1,runId:$runId,phase:$phase,
       detail:(if $detail == "" then null else $detail end),
       sourceCommit:$sourceCommit,updatedAt:$updatedAt,
+      sshHostKey:(if $sshHostKeyType == "" or $sshHostKeyFingerprint == ""
+        then null
+        else {type:$sshHostKeyType,fingerprint:$sshHostKeyFingerprint}
+        end),
       error:(if $error == "" then null else $error end)}' > "$status_tmp"
   chmod 0644 "$status_tmp"
   mv -f "$status_tmp" "$status_file"
@@ -72,6 +95,7 @@ install -d -m 0755 /opt/pocketcoder/releases
 install -d -m 0755 "$(dirname -- "$phase_log")"
 touch "$phase_log"
 chmod 0644 "$phase_log"
+capture_ssh_host_key
 status configuring_operating_system
 
 # POCO:BEGIN bootstrap-owner-config
