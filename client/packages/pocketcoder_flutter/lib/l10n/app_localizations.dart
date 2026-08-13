@@ -4552,17 +4552,29 @@ abstract class AppLocalizations {
   /// **'CHALLENGE TARGET COPIED'**
   String get harnessAuthChallengeTargetCopied;
 
-  /// No description provided for @serverUpdateChecking.
+  /// No description provided for @pocketCoderUpdateChecking.
   ///
   /// In en, this message translates to:
   /// **'\$ CHECKING VERIFIED RELEASE STATUS...'**
-  String get serverUpdateChecking;
+  String get pocketCoderUpdateChecking;
 
-  /// No description provided for @serverUpdateCheckAgain.
+  /// No description provided for @pocketCoderUpdateCheckAgain.
   ///
   /// In en, this message translates to:
   /// **'CHECK AGAIN'**
-  String get serverUpdateCheckAgain;
+  String get pocketCoderUpdateCheckAgain;
+
+  /// No description provided for @pocketCoderUpdateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETCODER UPDATE'**
+  String get pocketCoderUpdateTitle;
+
+  /// No description provided for @pocketCoderUpdateNoDeployment.
+  ///
+  /// In en, this message translates to:
+  /// **'NO DEPLOYMENT FOUND ON THIS DEVICE.'**
+  String get pocketCoderUpdateNoDeployment;
 
   /// No description provided for @actionDismiss.
   ///
@@ -4570,101 +4582,120 @@ abstract class AppLocalizations {
   /// **'DISMISS'**
   String get actionDismiss;
 
-  /// No description provided for @serverUpdateWorking.
+  /// No description provided for @pocketCoderUpdateWorking.
   ///
   /// In en, this message translates to:
   /// **'UPGRADING...'**
-  String get serverUpdateWorking;
+  String get pocketCoderUpdateWorking;
 
-  /// No description provided for @serverUpdateUpgrade.
+  /// No description provided for @pocketCoderUpdateUpgrade.
   ///
   /// In en, this message translates to:
   /// **'UPGRADE POCKETCODER'**
-  String get serverUpdateUpgrade;
+  String get pocketCoderUpdateUpgrade;
 
-  /// No description provided for @serverUpdateCommand.
+  /// No description provided for @pocketCoderUpdateCommand.
   ///
   /// In en, this message translates to:
   /// **'pocketcoder-release update'**
-  String get serverUpdateCommand;
+  String get pocketCoderUpdateCommand;
 
-  /// No description provided for @serverUpdateOutput.
+  /// No description provided for @pocketCoderUpdateOutput.
   ///
   /// In en, this message translates to:
   /// **'OUTPUT'**
-  String get serverUpdateOutput;
+  String get pocketCoderUpdateOutput;
 
-  /// No description provided for @serverUpdateReviewDataChange.
+  /// No description provided for @pocketCoderUpdateStderr.
+  ///
+  /// In en, this message translates to:
+  /// **'--- STDERR ---'**
+  String get pocketCoderUpdateStderr;
+
+  /// No description provided for @pocketCoderUpdateSucceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'UPDATE SUCCEEDED (EXIT 0)'**
+  String get pocketCoderUpdateSucceeded;
+
+  /// No description provided for @pocketCoderUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'UPDATE FAILED (EXIT {exitCode})'**
+  String pocketCoderUpdateFailed(int exitCode);
+
+  /// No description provided for @pocketCoderUpdateReviewDataChange.
   ///
   /// In en, this message translates to:
   /// **'REVIEW DATA CHANGE'**
-  String get serverUpdateReviewDataChange;
+  String get pocketCoderUpdateReviewDataChange;
 
-  /// No description provided for @serverUpdateConfirmUpgrade.
+  /// No description provided for @pocketCoderUpdateConfirmUpgrade.
   ///
   /// In en, this message translates to:
   /// **'CONFIRM UPGRADE'**
-  String get serverUpdateConfirmUpgrade;
+  String get pocketCoderUpdateConfirmUpgrade;
 
-  /// No description provided for @serverUpdateCurrent.
+  /// No description provided for @pocketCoderUpdateCurrent.
   ///
   /// In en, this message translates to:
   /// **'CURRENT'**
-  String get serverUpdateCurrent;
+  String get pocketCoderUpdateCurrent;
 
-  /// No description provided for @serverUpdateAvailable.
+  /// No description provided for @pocketCoderUpdateAvailable.
   ///
   /// In en, this message translates to:
   /// **'AVAILABLE'**
-  String get serverUpdateAvailable;
+  String get pocketCoderUpdateAvailable;
 
-  /// No description provided for @serverUpdateDownload.
+  /// No description provided for @pocketCoderUpdateDownload.
   ///
   /// In en, this message translates to:
   /// **'DOWNLOAD'**
-  String get serverUpdateDownload;
+  String get pocketCoderUpdateDownload;
 
-  /// No description provided for @serverUpdateRequiredDisk.
+  /// No description provided for @pocketCoderUpdateRequiredDisk.
   ///
   /// In en, this message translates to:
   /// **'REQUIRED DISK'**
-  String get serverUpdateRequiredDisk;
+  String get pocketCoderUpdateRequiredDisk;
 
-  /// No description provided for @serverUpdateCurrentStatus.
+  /// No description provided for @pocketCoderUpdateCurrentStatus.
   ///
   /// In en, this message translates to:
   /// **'\$ POCKETCODER IS CURRENT'**
-  String get serverUpdateCurrentStatus;
+  String get pocketCoderUpdateCurrentStatus;
 
-  /// No description provided for @serverUpdateAvailableStatus.
+  /// No description provided for @pocketCoderUpdateAvailableStatus.
   ///
   /// In en, this message translates to:
   /// **'\$ UPDATE AVAILABLE'**
-  String get serverUpdateAvailableStatus;
+  String get pocketCoderUpdateAvailableStatus;
 
-  /// No description provided for @serverUpdateCriticalStatus.
+  /// No description provided for @pocketCoderUpdateCriticalStatus.
   ///
   /// In en, this message translates to:
   /// **'\$ CRITICAL RELEASE WARNING'**
-  String get serverUpdateCriticalStatus;
+  String get pocketCoderUpdateCriticalStatus;
 
-  /// No description provided for @serverUpdateUnknownStatus.
+  /// No description provided for @pocketCoderUpdateUnknownStatus.
   ///
   /// In en, this message translates to:
   /// **'\$ RELEASE STATUS UNKNOWN'**
-  String get serverUpdateUnknownStatus;
+  String get pocketCoderUpdateUnknownStatus;
 
-  /// No description provided for @serverUpdateRollbackWarning.
+  /// No description provided for @pocketCoderUpdateRollbackWarning.
   ///
   /// In en, this message translates to:
   /// **'AFTER SUCCESS, NORMAL ROLLBACK IS UNAVAILABLE. RESTORING THE PRE-UPGRADE SNAPSHOT WOULD DISCARD DATA CREATED AFTERWARD.'**
-  String get serverUpdateRollbackWarning;
+  String get pocketCoderUpdateRollbackWarning;
 
-  /// No description provided for @serverUpdateDataBoundary.
+  /// No description provided for @pocketCoderUpdateDataBoundary.
   ///
   /// In en, this message translates to:
   /// **'DATA VERSION {currentVersion} → {availableVersion}'**
-  String serverUpdateDataBoundary(int currentVersion, int availableVersion);
+  String pocketCoderUpdateDataBoundary(
+      int currentVersion, int availableVersion);
 
   /// No description provided for @errorsOccurred.
   ///

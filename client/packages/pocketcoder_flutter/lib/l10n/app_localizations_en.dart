@@ -2497,62 +2497,82 @@ class AppLocalizationsEn extends AppLocalizations {
   String get harnessAuthChallengeTargetCopied => 'CHALLENGE TARGET COPIED';
 
   @override
-  String get serverUpdateChecking => '\$ CHECKING VERIFIED RELEASE STATUS...';
+  String get pocketCoderUpdateChecking =>
+      '\$ CHECKING VERIFIED RELEASE STATUS...';
 
   @override
-  String get serverUpdateCheckAgain => 'CHECK AGAIN';
+  String get pocketCoderUpdateCheckAgain => 'CHECK AGAIN';
+
+  @override
+  String get pocketCoderUpdateTitle => 'POCKETCODER UPDATE';
+
+  @override
+  String get pocketCoderUpdateNoDeployment =>
+      'NO DEPLOYMENT FOUND ON THIS DEVICE.';
 
   @override
   String get actionDismiss => 'DISMISS';
 
   @override
-  String get serverUpdateWorking => 'UPGRADING...';
+  String get pocketCoderUpdateWorking => 'UPGRADING...';
 
   @override
-  String get serverUpdateUpgrade => 'UPGRADE POCKETCODER';
+  String get pocketCoderUpdateUpgrade => 'UPGRADE POCKETCODER';
 
   @override
-  String get serverUpdateCommand => 'pocketcoder-release update';
+  String get pocketCoderUpdateCommand => 'pocketcoder-release update';
 
   @override
-  String get serverUpdateOutput => 'OUTPUT';
+  String get pocketCoderUpdateOutput => 'OUTPUT';
 
   @override
-  String get serverUpdateReviewDataChange => 'REVIEW DATA CHANGE';
+  String get pocketCoderUpdateStderr => '--- STDERR ---';
 
   @override
-  String get serverUpdateConfirmUpgrade => 'CONFIRM UPGRADE';
+  String get pocketCoderUpdateSucceeded => 'UPDATE SUCCEEDED (EXIT 0)';
 
   @override
-  String get serverUpdateCurrent => 'CURRENT';
+  String pocketCoderUpdateFailed(int exitCode) {
+    return 'UPDATE FAILED (EXIT $exitCode)';
+  }
 
   @override
-  String get serverUpdateAvailable => 'AVAILABLE';
+  String get pocketCoderUpdateReviewDataChange => 'REVIEW DATA CHANGE';
 
   @override
-  String get serverUpdateDownload => 'DOWNLOAD';
+  String get pocketCoderUpdateConfirmUpgrade => 'CONFIRM UPGRADE';
 
   @override
-  String get serverUpdateRequiredDisk => 'REQUIRED DISK';
+  String get pocketCoderUpdateCurrent => 'CURRENT';
 
   @override
-  String get serverUpdateCurrentStatus => '\$ POCKETCODER IS CURRENT';
+  String get pocketCoderUpdateAvailable => 'AVAILABLE';
 
   @override
-  String get serverUpdateAvailableStatus => '\$ UPDATE AVAILABLE';
+  String get pocketCoderUpdateDownload => 'DOWNLOAD';
 
   @override
-  String get serverUpdateCriticalStatus => '\$ CRITICAL RELEASE WARNING';
+  String get pocketCoderUpdateRequiredDisk => 'REQUIRED DISK';
 
   @override
-  String get serverUpdateUnknownStatus => '\$ RELEASE STATUS UNKNOWN';
+  String get pocketCoderUpdateCurrentStatus => '\$ POCKETCODER IS CURRENT';
 
   @override
-  String get serverUpdateRollbackWarning =>
+  String get pocketCoderUpdateAvailableStatus => '\$ UPDATE AVAILABLE';
+
+  @override
+  String get pocketCoderUpdateCriticalStatus => '\$ CRITICAL RELEASE WARNING';
+
+  @override
+  String get pocketCoderUpdateUnknownStatus => '\$ RELEASE STATUS UNKNOWN';
+
+  @override
+  String get pocketCoderUpdateRollbackWarning =>
       'AFTER SUCCESS, NORMAL ROLLBACK IS UNAVAILABLE. RESTORING THE PRE-UPGRADE SNAPSHOT WOULD DISCARD DATA CREATED AFTERWARD.';
 
   @override
-  String serverUpdateDataBoundary(int currentVersion, int availableVersion) {
+  String pocketCoderUpdateDataBoundary(
+      int currentVersion, int availableVersion) {
     return 'DATA VERSION $currentVersion → $availableVersion';
   }
 

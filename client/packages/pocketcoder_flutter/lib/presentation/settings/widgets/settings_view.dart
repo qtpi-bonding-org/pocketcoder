@@ -44,7 +44,11 @@ class SettingsView extends StatelessWidget {
             context.l10n.proSettingsStatus,
             'configurePaywall',
           ),
-          ('SERVER UPDATE', '[UPDATE]', 'updateServer'),
+          (
+            context.l10n.pocketCoderUpdateTitle,
+            '[UPDATE]',
+            'updatePocketCoder',
+          ),
           (context.l10n.errorsTitle, '[VIEW]', 'configureErrors'),
         ]
       ),
