@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 
 /// PocketBase proxy for the private Ollama control network. The app never
 /// receives Ollama's hostname or a host-published port.
@@ -17,7 +18,7 @@ class OllamaApi {
 
   Future<List<OllamaModel>> listModels() async {
     final response = await _pb.send<dynamic>(
-      '/api/pocketcoder/ollama/models',
+      ApiEndpoints.ollamaModels,
       method: 'GET',
     );
     final json = response as Map<String, dynamic>;
@@ -31,7 +32,7 @@ class OllamaApi {
   Stream<String> pull(String model) async* {
     final request = http.Request(
       'POST',
-      Uri.parse('${_pb.baseURL}/api/pocketcoder/ollama/pull'),
+      Uri.parse('${_pb.baseURL}${ApiEndpoints.ollamaPull}'),
     )
       ..headers['Content-Type'] = 'application/json'
       ..headers['Accept'] = 'application/x-ndjson'

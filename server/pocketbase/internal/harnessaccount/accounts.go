@@ -24,6 +24,43 @@ const (
 // RegisterHooks enforces the cross-collection selection invariants that the
 // schema's relation fields and unique index cannot express on their own.
 func RegisterHooks(app core.App) {
+	app.OnRecordCreateRequest("harness_accounts").BindFunc(func(e *core.RecordRequestEvent) error {
+		if e.Auth == nil || e.Auth.Id == "" {
+			return fmt.Errorf("authentication required")
+		}
+		e.Record.Set("owner", e.Auth.Id)
+		e.Record.Set("provider_key", "")
+		e.Record.Set("status", StatusDisconnected)
+		e.Record.Set("last_error", "")
+		return e.Next()
+	})
+	app.OnRecordUpdateRequest("harness_accounts").BindFunc(func(e *core.RecordRequestEvent) error {
+		original := e.Record.Original()
+		if e.Auth == nil || e.Auth.Id == "" || original == nil || original.GetString("owner") != e.Auth.Id {
+			return fmt.Errorf("harness account must belong to the authenticated user")
+		}
+		for _, field := range []string{"owner", "harness", "provider_key", "status", "last_error"} {
+			e.Record.Set(field, original.Get(field))
+		}
+		return e.Next()
+	})
+	app.OnRecordCreateRequest("harness_account_selections").BindFunc(func(e *core.RecordRequestEvent) error {
+		if e.Auth == nil || e.Auth.Id == "" {
+			return fmt.Errorf("authentication required")
+		}
+		e.Record.Set("user", e.Auth.Id)
+		return e.Next()
+	})
+	app.OnRecordUpdateRequest("harness_account_selections").BindFunc(func(e *core.RecordRequestEvent) error {
+		original := e.Record.Original()
+		if e.Auth == nil || e.Auth.Id == "" || original == nil || original.GetString("user") != e.Auth.Id {
+			return fmt.Errorf("harness account selection must belong to the authenticated user")
+		}
+		e.Record.Set("user", original.Get("user"))
+		e.Record.Set("harness", original.Get("harness"))
+		return e.Next()
+	})
+
 	validate := func(e *core.RecordEvent) error {
 		account, err := app.FindRecordById("harness_accounts", e.Record.GetString("account"))
 		if err != nil {

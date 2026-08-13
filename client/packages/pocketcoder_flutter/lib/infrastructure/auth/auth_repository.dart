@@ -64,15 +64,27 @@ class AuthRepository implements IAuthRepository {
       () async {
         final response = _pocketBase is $PocketBase
             ? await _pocketBase.send<Map<String, dynamic>>(
-                ApiEndpoints.compatibility,
+                ApiEndpoints.releaseCompatibility,
                 requestPolicy: RequestPolicy.networkOnly,
               )
             : await _pocketBase.send<Map<String, dynamic>>(
-                ApiEndpoints.compatibility,
+                ApiEndpoints.releaseCompatibility,
               );
-        final serverApiVersion = response['serverApiVersion'];
-        final appContractVersion = response['appContractVersion'];
-        final deploymentContractVersion = response['deploymentContractVersion'];
+        final compatibility = response['compatibility'];
+        if (compatibility is! Map<String, dynamic>) {
+          throw const FormatException(
+              'Invalid release compatibility response.');
+        }
+        final app = compatibility['app'];
+        final server = compatibility['server'];
+        final deployment = compatibility['deployment'];
+        final serverApiVersion =
+            server is Map<String, dynamic> ? server['apiVersion'] : null;
+        final appContractVersion =
+            app is Map<String, dynamic> ? app['contractVersion'] : null;
+        final deploymentContractVersion = deployment is Map<String, dynamic>
+            ? deployment['contractVersion']
+            : null;
         if (serverApiVersion != _supportedServerApiVersion ||
             appContractVersion != _supportedAppContractVersion ||
             deploymentContractVersion != _supportedDeploymentContractVersion) {
@@ -141,16 +153,4 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<String?> getSavedBaseUrl() => _storage.read(key: 'pb_server_url');
-
-  @override
-  Future<String> getSshKeysForAuthorizedKeys() async {
-    return tryMethod(
-      () async {
-        final response = await _pocketBase.send('/api/pocketcoder/ssh_keys');
-        return response.body as String;
-      },
-      AuthException.new,
-      'getSshKeysForAuthorizedKeys',
-    );
-  }
 }

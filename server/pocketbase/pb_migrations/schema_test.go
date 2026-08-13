@@ -3,6 +3,7 @@ package pb_migrations
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -199,8 +200,9 @@ func TestHarnessAccountsHaveRequiredFields(t *testing.T) {
 		}
 	}
 	for _, rule := range []string{"listRule", "viewRule", "createRule", "updateRule", "deleteRule"} {
-		if accounts[rule] != nil {
-			t.Errorf("harness_accounts.%s should be custom-API only", rule)
+		value, ok := accounts[rule].(string)
+		if !ok || !strings.Contains(value, "@request.auth.id") {
+			t.Errorf("harness_accounts.%s should require authenticated collection access", rule)
 		}
 	}
 }

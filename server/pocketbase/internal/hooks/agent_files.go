@@ -4,9 +4,12 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"path"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -43,8 +46,12 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 			return fmt.Errorf("skill %q has invalid name", name)
 		}
 		content := skill.GetString("content")
-		files[path.Join(".agents", "skills", name, "SKILL.md")] = content
-		files[path.Join(".claude", "skills", name, "SKILL.md")] = content
+		root, err := skillMaterializationRoot(skill)
+		if err != nil {
+			return err
+		}
+		files[path.Join(root, ".agents", "skills", name, "SKILL.md")] = content
+		files[path.Join(root, ".claude", "skills", name, "SKILL.md")] = content
 	}
 
 	profiles, err := app.FindRecordsByFilter("agent_profiles", "is_default = true && user = {:user}", "name", 0, 0, map[string]any{"user": userID})
@@ -75,6 +82,16 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 	files["AGENTS.md"] = body
 	files["CLAUDE.md"] = body
 	files[".goosehints"] = body
+	managed := make([]string, 0, len(files))
+	for name := range files {
+		managed = append(managed, name)
+	}
+	sort.Strings(managed)
+	manifest, err := json.Marshal(map[string]any{"schemaVersion": 1, "files": managed})
+	if err != nil {
+		return fmt.Errorf("encode managed-file manifest: %w", err)
+	}
+	files[path.Join(".pocketcoder", "managed-agent-files.json")] = string(manifest)
 
 	archive, err := tarArchive(files)
 	if err != nil {
@@ -84,6 +101,21 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 		return fmt.Errorf("materialize harness files: %w", err)
 	}
 	return nil
+}
+
+func skillMaterializationRoot(skill *core.Record) (string, error) {
+	var metadata map[string]any
+	_ = skill.UnmarshalJSONField("metadata", &metadata)
+	projectDir, _ := metadata["projectDir"].(string)
+	projectDir = strings.TrimSpace(projectDir)
+	if projectDir == "" || filepath.Clean(projectDir) == workspaceRoot {
+		return "", nil
+	}
+	clean := filepath.Clean(projectDir)
+	if !strings.HasPrefix(clean, workspaceRoot+string(filepath.Separator)) {
+		return "", fmt.Errorf("skill %q projectDir is outside %s", skill.GetString("name"), workspaceRoot)
+	}
+	return filepath.ToSlash(strings.TrimPrefix(clean, workspaceRoot+string(filepath.Separator))), nil
 }
 
 func validSkillName(name string) bool {
@@ -124,6 +156,41 @@ var _ archiveCopier = (*dockerapi.Client)(nil)
 // RegisterAgentFileHooks refreshes every running harness for a user whenever
 // PocketBase-owned prompt, profile, or skill content changes.
 func RegisterAgentFileHooks(app core.App) {
+	app.OnRecordCreateRequest("skills").BindFunc(func(e *core.RecordRequestEvent) error {
+		if e.Auth == nil || e.Auth.Id == "" {
+			return fmt.Errorf("authentication required")
+		}
+		e.Record.Set("user", e.Auth.Id)
+		e.Record.Set("is_system", false)
+		e.Record.Set("active", true)
+		return e.Next()
+	})
+	app.OnRecordUpdateRequest("skills").BindFunc(func(e *core.RecordRequestEvent) error {
+		if e.Auth == nil || e.Auth.Id == "" || e.Record.Original() == nil || e.Record.Original().GetString("user") != e.Auth.Id {
+			return fmt.Errorf("skill must belong to the authenticated user")
+		}
+		e.Record.Set("user", e.Record.Original().Get("user"))
+		e.Record.Set("is_system", e.Record.Original().Get("is_system"))
+		return e.Next()
+	})
+	validateSkill := func(e *core.RecordEvent) error {
+		if !validSkillName(e.Record.GetString("name")) {
+			return fmt.Errorf("invalid skill name")
+		}
+		if !e.Record.GetBool("is_system") && e.Record.GetString("user") == "" {
+			return fmt.Errorf("skill owner is required")
+		}
+		if strings.TrimSpace(e.Record.GetString("description")) == "" || strings.TrimSpace(e.Record.GetString("content")) == "" {
+			return fmt.Errorf("skill description and content are required")
+		}
+		if _, err := skillMaterializationRoot(e.Record); err != nil {
+			return err
+		}
+		return e.Next()
+	}
+	app.OnRecordCreate("skills").BindFunc(validateSkill)
+	app.OnRecordUpdate("skills").BindFunc(validateSkill)
+
 	handler := func(e *core.RecordEvent) error {
 		userID := e.Record.GetString("user")
 		filter := "status = 'running'"
@@ -139,12 +206,20 @@ func RegisterAgentFileHooks(app core.App) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		client := dockerapi.New()
+		materializedUsers := map[string]bool{}
 		for _, instance := range instances {
+			instanceUser := instance.GetString("user")
+			if materializedUsers[instanceUser] {
+				continue
+			}
 			if err := MaterializeUserHarnessFiles(ctx, app, client, instance); err != nil {
 				// A stale or stopped harness must not make a successful PocketBase
 				// record update fail. The next provisioning/start refresh retries.
 				continue
 			}
+			// All of a user's sibling harness containers mount the same workspace,
+			// so one successful copy refreshes every harness without repeated work.
+			materializedUsers[instanceUser] = true
 		}
 		return e.Next()
 	}

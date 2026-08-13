@@ -1,220 +1,97 @@
-/// Custom API endpoint constants for PocketCoder backend.
+/// Canonical Flutter inventory for PocketCoder operations beyond the standard
+/// PocketBase collection API.
 ///
-/// These are the custom endpoints beyond standard PocketBase collection operations.
-/// Usage:
-/// ```dart
-/// _pb.send(ApiEndpoints.permission, body: {...})
-/// _pb.send(ApiEndpoints.sshKeys)
-/// ```
-class ApiEndpoints {
-  // ===========================================================================
-  // PERMISSION ENDPOINTS
-  // ===========================================================================
+/// Durable collection CRUD does not belong here. Dynamic path methods mirror
+/// backend route templates while keeping raw `/api/pocketcoder/*` strings out
+/// of feature repositories and transports.
+abstract final class ApiEndpoints {
+  static const String _root = '/api/pocketcoder';
 
-  /// POST /api/pocketcoder/permission
-  /// Evaluates if a permission request should be granted.
-  /// Creates an audit record and returns authorization decision.
-  static const String permission = '/api/pocketcoder/permission';
+  // Agent session operations and stream.
+  static String agentPrompt(String chatId) =>
+      '$_root/chats/$chatId/session/prompt';
+  static String agentStream(String chatId) => '$_root/chats/$chatId/stream';
+  static String agentCancel(String chatId) =>
+      '$_root/chats/$chatId/session/cancel';
+  static String agentSetMode(String chatId) =>
+      '$_root/chats/$chatId/session/set_mode';
+  static String agentSetConfigOption(String chatId) =>
+      '$_root/chats/$chatId/session/set_config_option';
+  static String agentPermission(String chatId, String requestId) =>
+      '$_root/chats/$chatId/session/request_permission/$requestId';
+  static String agentElicitation(String chatId, String elicitationId) =>
+      '$_root/chats/$chatId/session/elicitation/$elicitationId';
 
-  // ===========================================================================
-  // SSH KEY ENDPOINTS
-  // ===========================================================================
+  // Harness authentication lifecycle.
+  static const String harnessAuthStatus = '$_root/harness_auth/status';
+  static const String harnessAuthStart = '$_root/harness_auth/start';
+  static const String harnessAuthPoll = '$_root/harness_auth/poll';
+  static const String harnessAuthSubmit = '$_root/harness_auth/submit';
+  static const String harnessAuthCancel = '$_root/harness_auth/cancel';
+  static const String harnessAuthDisconnect = '$_root/harness_auth/disconnect';
 
-  /// GET /api/pocketcoder/ssh_keys
-  /// Returns all active SSH public keys as newline-separated list
-  /// for authorized_keys file population.
-  static const String sshKeys = '/api/pocketcoder/ssh_keys';
+  // The schedule record itself uses Collections.scheduleOwners.
+  static const String schedulesRunNow = '$_root/schedules/run-now';
 
-  // ===========================================================================
-  // FILE ENDPOINTS
-  // ===========================================================================
+  // Workspace reads.
+  static String files(String path) => '$_root/files/$path';
+  static String filesList(String path) => '$_root/files-list/$path';
 
-  /// GET /api/pocketcoder/files/{path}
-  /// Secure read-only access to workspace files.
-  /// Prevents path traversal and unauthorized access.
-  static String files(String path) => '/api/pocketcoder/files/$path';
+  // Private Ollama proxy.
+  static const String ollamaModels = '$_root/ollama/models';
+  static const String ollamaPull = '$_root/ollama/pull';
 
-  /// GET /api/pocketcoder/files-list/{path}
-  /// Lists the immediate children of a workspace directory.
-  static String filesList(String path) => '/api/pocketcoder/files-list/$path';
+  // MCP operations.
+  static const String mcpRequest = '$_root/mcp_request';
+  static const String mcpOAuthStore = '$_root/mcp_oauth/store';
 
-  // ===========================================================================
-  // INFRASTRUCTURE ENDPOINTS
-  // ===========================================================================
+  // Release/update state, named after the release manifest JSON contract.
+  static const String releaseCompatibility = '$_root/release/compatibility';
+  static const String releaseStatus = '$_root/release/status';
 
-  /// GET /api/pocketcoder/health
-  /// Returns system health status.
-  static const String health = '/api/pocketcoder/health';
+  // Deployment diagnostics and dispatch.
+  static String logs(String containerName) => '$_root/logs/$containerName';
+  static const String observability = '$_root/proxy/observability/';
+  static const String push = '$_root/push';
 
-  /// GET /api/pocketcoder/compatibility
-  /// Returns only public protocol versions; no release identity or host data.
-  static const String compatibility = '/api/pocketcoder/compatibility';
-
-  /// GET /api/pocketcoder/capabilities
-  /// Returns authenticated release identity and cached update status.
-  static const String capabilities = '/api/pocketcoder/capabilities';
-
-  // ===========================================================================
-  // OBSERVABILITY ENDPOINTS
-  // ===========================================================================
-
-  /// GET /api/pocketcoder/logs/{containerName}
-  /// SSE stream of Docker container logs.
-  static String logs(String containerName) =>
-      '/api/pocketcoder/logs/$containerName';
-
-  /// GET /api/pocketcoder/proxy/observability/*
-  /// Proxy to SQLPage dashboard.
-  static const String observability = '/api/pocketcoder/proxy/observability/';
-
-  // ===========================================================================
-  // SKILLS ENDPOINTS
-  // ===========================================================================
-
-  /// POST /api/pocketcoder/skills/list
-  /// Lists all skills (global + every known poco_config's project scope).
-  static const String skillsList = '/api/pocketcoder/skills/list';
-
-  /// POST /api/pocketcoder/skills/create
-  /// Creates a skill under global or project scope.
-  static const String skillsCreate = '/api/pocketcoder/skills/create';
-
-  /// POST /api/pocketcoder/skills/update
-  /// Updates a skill's name/description/content by its stable path.
-  static const String skillsUpdate = '/api/pocketcoder/skills/update';
-
-  /// POST /api/pocketcoder/skills/delete
-  /// Deletes a skill by its stable path.
-  static const String skillsDelete = '/api/pocketcoder/skills/delete';
-
-  // ===========================================================================
-  // SCHEDULER ENDPOINTS
-  // ===========================================================================
-
-  /// POST /api/pocketcoder/schedules/list
-  /// Lists the caller's own scheduled recipe runs.
-  static const String schedulesList = '/api/pocketcoder/schedules/list';
-
-  /// POST /api/pocketcoder/schedules/create
-  /// Creates a new scheduled recipe run.
-  static const String schedulesCreate = '/api/pocketcoder/schedules/create';
-
-  /// POST /api/pocketcoder/schedules/rename
-  /// Renames a schedule (PocketBase-side display name only).
-  static const String schedulesRename = '/api/pocketcoder/schedules/rename';
-
-  /// POST /api/pocketcoder/schedules/update-cron
-  /// Updates a schedule's cron expression.
-  static const String schedulesUpdateCron =
-      '/api/pocketcoder/schedules/update-cron';
-
-  /// POST /api/pocketcoder/schedules/pause
-  static const String schedulesPause = '/api/pocketcoder/schedules/pause';
-
-  /// POST /api/pocketcoder/schedules/unpause
-  static const String schedulesUnpause = '/api/pocketcoder/schedules/unpause';
-
-  /// POST /api/pocketcoder/schedules/delete
-  static const String schedulesDelete = '/api/pocketcoder/schedules/delete';
-
-  /// POST /api/pocketcoder/schedules/run-now
-  /// Fires a schedule immediately (async — the resulting session is
-  /// imported into the chat feed once it finishes, not returned here).
-  static const String schedulesRunNow = '/api/pocketcoder/schedules/run-now';
-
-  // ===========================================================================
-  // MCP OAUTH ENDPOINTS
-  // ===========================================================================
-
-  /// POST /api/pocketcoder/mcp_oauth/store
-  /// Merges an OAuth {access_token, refresh_token} pair into the target
-  /// mcp_servers row's config, which hooks/mcp.go renders into mcp.env.
-  static const String mcpOAuthStore = '/api/pocketcoder/mcp_oauth/store';
-
-  // ===========================================================================
-  // HARNESS AUTH ENDPOINTS
-  // ===========================================================================
-
-  /// POST /api/pocketcoder/harness_auth/status
-  /// Returns current harness auth binding state and active attempt/challenge.
-  static const String harnessAuthStatus =
-      '/api/pocketcoder/harness_auth/status';
-
-  /// POST /api/pocketcoder/harness_auth/start
-  /// Starts a harness auth flow for a specific credential mode.
-  static const String harnessAuthStart = '/api/pocketcoder/harness_auth/start';
-
-  /// POST /api/pocketcoder/harness_auth/poll
-  /// Polls the active auth attempt for the binding and returns latest status.
-  static const String harnessAuthPoll = '/api/pocketcoder/harness_auth/poll';
-
-  /// POST /api/pocketcoder/harness_auth/submit
-  /// Submits a device/browser code for the active attempt.
-  static const String harnessAuthSubmit =
-      '/api/pocketcoder/harness_auth/submit';
-
-  /// POST /api/pocketcoder/harness_auth/cancel
-  /// Cancels the active auth attempt container.
-  static const String harnessAuthCancel =
-      '/api/pocketcoder/harness_auth/cancel';
-
-  /// POST /api/pocketcoder/harness_auth/disconnect
-  /// Clears the active auth binding and stops any auth helper state.
-  static const String harnessAuthDisconnect =
-      '/api/pocketcoder/harness_auth/disconnect';
-
-  // ===========================================================================
-  // HELPER METHODS
-  // ===========================================================================
-
-  /// All custom endpoints (excluding dynamic ones)
-  static const List<String> all = [
-    permission,
-    sshKeys,
-    health,
-    compatibility,
-    capabilities,
-    observability,
-    skillsList,
-    skillsCreate,
-    skillsUpdate,
-    skillsDelete,
-    schedulesList,
-    schedulesCreate,
-    schedulesRename,
-    schedulesUpdateCron,
-    schedulesPause,
-    schedulesUnpause,
-    schedulesDelete,
-    schedulesRunNow,
-    mcpOAuthStore,
+  /// Static routes, used by the backend/client parity check.
+  static const List<String> staticRoutes = [
     harnessAuthStatus,
     harnessAuthStart,
     harnessAuthPoll,
     harnessAuthSubmit,
     harnessAuthCancel,
     harnessAuthDisconnect,
+    schedulesRunNow,
+    ollamaModels,
+    ollamaPull,
+    mcpRequest,
+    mcpOAuthStore,
+    releaseCompatibility,
+    releaseStatus,
+    push,
   ];
 
-  /// Dynamic endpoints that require parameters
-  static const List<String> dynamicEndpoints = [
-    '/api/pocketcoder/files/{path}',
-    '/api/pocketcoder/files-list/{path}',
-    '/api/pocketcoder/logs/{containerName}',
+  /// Dynamic backend templates, used by the backend/client parity check.
+  static const List<String> dynamicRoutes = [
+    '$_root/chats/{chatId}/session/prompt',
+    '$_root/chats/{chatId}/stream',
+    '$_root/chats/{chatId}/session/cancel',
+    '$_root/chats/{chatId}/session/set_mode',
+    '$_root/chats/{chatId}/session/set_config_option',
+    '$_root/chats/{chatId}/session/request_permission/{id}',
+    '$_root/chats/{chatId}/session/elicitation/{id}',
+    '$_root/files/{path...}',
+    '$_root/files-list/{path...}',
+    '$_root/logs/{containerName}',
+    '$_root/proxy/observability/{path...}',
   ];
 
-  /// Checks if an endpoint is a custom PocketCoder endpoint
-  static bool isCustomEndpoint(String path) {
-    return path.startsWith('/api/pocketcoder/');
-  }
+  static bool isCustomEndpoint(String path) => path.startsWith('$_root/');
 
-  /// Validates if a path is safe for file access
-  /// (prevents path traversal attacks)
   static bool isSafeFilePath(String path) {
-    if (path.isEmpty) return false;
-    if (path.startsWith('/')) return false; // Absolute paths not allowed
-    if (path.contains('..')) return false; // Path traversal
-    if (path.contains('//')) return false; // Double slashes
+    if (path.isEmpty || path.startsWith('/')) return false;
+    if (path.contains('..') || path.contains('//')) return false;
     return true;
   }
 }

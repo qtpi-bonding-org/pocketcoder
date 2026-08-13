@@ -19,7 +19,6 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 		"users":                      {"role"},
 		"chats":                      {"title", "user", "agent_profile", "harness_model_override", "ollama_model_override"},
 		"sandbox_agents":             {"sandbox_agent_id", "delegating_agent_id", "chat"},
-		"ssh_keys":                   {"user", "public_key", "fingerprint"},
 		"permission_modes":           {"name", "description", "base_session_mode", "user", "is_system", "is_default"},
 		"permission_mode_tools":      {"tool", "pattern", "action", "permission_mode"},
 		"healthchecks":               {"name", "status"},
@@ -70,6 +69,7 @@ func TestDeadCollectionsDoNotExist(t *testing.T) {
 		"cognee_config",
 		"harness_auth_bindings",
 		"harness_account_members",
+		"ssh_keys",
 	} {
 		if _, err := app.FindCollectionByNameOrId(name); err == nil {
 			t.Errorf("collection %q should not exist but was found", name)

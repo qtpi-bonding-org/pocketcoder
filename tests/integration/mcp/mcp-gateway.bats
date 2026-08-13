@@ -158,20 +158,6 @@ mcp_request_unauthenticated() {
         }"
 }
 
-# Helper function to make unauthenticated permission request
-permission_request_unauthenticated() {
-    local data="$1"
-    
-    curl -s -w "\n%{http_code}" -X POST "$PB_URL/api/pocketcoder/permission" \
-        -H "Content-Type: application/json" \
-        -d "$data"
-}
-
-# Helper function to make unauthenticated SSH keys request
-ssh_keys_request_unauthenticated() {
-    curl -s -w "\n%{http_code}" -X GET "$PB_URL/api/pocketcoder/ssh_keys"
-}
-
 # Helper function to create mcp_servers record directly
 create_mcp_server() {
     local name="$1"
@@ -315,44 +301,6 @@ count_mcp_servers_by_name() {
     [ "$count_after" -eq "$count_before" ] || run_diagnostic_on_failure "MCP Request Idempotency" "Should not create duplicate records (before: $count_before, after: $count_after)"
     
     echo "✓ MCP request endpoint returns existing approved record (idempotent behavior verified)"
-}
-
-@test "Auth Hardening: Permission endpoint requires auth (unauthenticated POST → 401)" {
-    # Validates: Requirement 8.1 - Permission endpoint SHALL use apis.RequireAuth() middleware
-    
-    # Make unauthenticated request
-    local response
-    response=$(permission_request_unauthenticated '{"chat": "test-chat-id", "permission": "write_file"}')
-    
-    # Extract HTTP status code (last line)
-    local http_code
-    http_code=$(echo "$response" | tail -n 1)
-    local body
-    body=$(echo "$response" | sed '$d')
-    
-    # Verify HTTP 401
-    [ "$http_code" = "401" ] || run_diagnostic_on_failure "Permission Auth" "Expected HTTP 401, got HTTP $http_code"
-    
-    echo "✓ Permission endpoint correctly requires authentication (HTTP 401)"
-}
-
-@test "Auth Hardening: SSH keys endpoint requires auth (unauthenticated GET → 401)" {
-    # Validates: Requirement 8.2 - SSH keys endpoint SHALL use apis.RequireAuth() middleware
-    
-    # Make unauthenticated request
-    local response
-    response=$(ssh_keys_request_unauthenticated)
-    
-    # Extract HTTP status code (last line)
-    local http_code
-    http_code=$(echo "$response" | tail -n 1)
-    local body
-    body=$(echo "$response" | sed '$d')
-    
-    # Verify HTTP 401
-    [ "$http_code" = "401" ] || run_diagnostic_on_failure "SSH Keys Auth" "Expected HTTP 401, got HTTP $http_code"
-    
-    echo "✓ SSH keys endpoint correctly requires authentication (HTTP 401)"
 }
 
 @test "MCP Servers Collection: Exists and accepts records" {

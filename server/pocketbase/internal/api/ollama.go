@@ -33,6 +33,16 @@ const (
 
 var ollamaModelName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._/-]*(?::[A-Za-z0-9][A-Za-z0-9._-]*)?$`)
 
+func requireAdmin(re *core.RequestEvent) error {
+	if re.Auth == nil {
+		return re.JSON(http.StatusUnauthorized, map[string]string{"error": "Authentication required"})
+	}
+	if re.Auth.GetString("role") != "admin" {
+		return re.JSON(http.StatusForbidden, map[string]string{"error": "Insufficient permissions"})
+	}
+	return nil
+}
+
 type ollamaModel struct {
 	Name string `json:"name"`
 	Size int64  `json:"size"`

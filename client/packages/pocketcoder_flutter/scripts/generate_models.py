@@ -10,9 +10,8 @@ OUTPUT_DIR = 'lib/domain/models'
 # Collections to skip for model generation (system or have custom models)
 SKIP_COLLECTIONS = [
     '_mfas', '_otps', '_externalAuths', '_authOrigins', '_superusers', 'users',
-    # These collections use hand-maintained compatibility/API models whose
-    # public names and fields intentionally differ from the PocketBase schema.
-    'agent_profiles', 'permission_mode_tools', 'skills',
+    # These collections retain domain-specific hand-maintained models.
+    'agent_profiles', 'permission_mode_tools',
 ]
 
 # Collections to skip for the Collections constants (internal PB system only)
@@ -180,7 +179,9 @@ def generate_model(collection):
         seen_vals = set()
         for val in en['values']:
             # Handle empty values and sanitization
-            safe_val = val.replace('-', '_').replace(' ', '_').lower()
+            safe_val = snake_to_camel(
+                val.replace('-', '_').replace(' ', '_').lower()
+            )
             if not safe_val: safe_val = "none"
             # Handle starting with numbers
             if safe_val and safe_val[0].isdigit():

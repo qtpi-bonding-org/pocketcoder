@@ -23,8 +23,17 @@ Widget skillsEmpty(BuildContext context) => _app(SkillsView(
 @wb.UseCase(name: 'global and project skills', type: SkillsView)
 Widget skillsPopulated(BuildContext context) => _app(SkillsView(
       data: SkillsViewData(skills: const [
-        Skill(name: 'deploy', description: 'Deploy the current project.', content: 'run deploy', path: 'global/deploy.md', global: true),
-        Skill(name: 'review', description: 'Review changes before merging.', content: 'review diff', path: 'project/review.md', global: false),
+        Skill(
+            id: 'deploy',
+            name: 'deploy',
+            description: 'Deploy the current project.',
+            content: 'run deploy'),
+        Skill(
+            id: 'review',
+            name: 'review',
+            description: 'Review changes before merging.',
+            content: 'review diff',
+            metadata: {'projectDir': '/workspace/project'}),
       ]),
       onAdd: () {},
       onEdit: (_) {},
@@ -33,5 +42,8 @@ Widget skillsPopulated(BuildContext context) => _app(SkillsView(
 
 @wb.UseCase(name: 'loading', type: SkillsView)
 Widget skillsLoading(BuildContext context) => _app(SkillsView(
-      data: const SkillsViewData(isLoading: true), onAdd: () {}, onEdit: (_) {}, onDelete: (_) {},
+      data: const SkillsViewData(isLoading: true),
+      onAdd: () {},
+      onEdit: (_) {},
+      onDelete: (_) {},
     ));

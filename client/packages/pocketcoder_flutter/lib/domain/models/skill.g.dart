@@ -7,19 +7,23 @@ part of 'skill.dart';
 // **************************************************************************
 
 _Skill _$SkillFromJson(Map<String, dynamic> json) => _Skill(
+      id: json['id'] as String,
+      user: json['user'] as String?,
+      isSystem: json['is_system'] as bool?,
       name: json['name'] as String,
       description: json['description'] as String,
       content: json['content'] as String,
-      path: json['path'] as String,
-      global: json['global'] as bool,
-      system: json['system'] as bool? ?? false,
+      metadata: json['metadata'],
+      active: json['active'] as bool?,
     );
 
 Map<String, dynamic> _$SkillToJson(_Skill instance) => <String, dynamic>{
+      'id': instance.id,
+      'user': instance.user,
+      'is_system': instance.isSystem,
       'name': instance.name,
       'description': instance.description,
       'content': instance.content,
-      'path': instance.path,
-      'global': instance.global,
-      'system': instance.system,
+      'metadata': instance.metadata,
+      'active': instance.active,
     };

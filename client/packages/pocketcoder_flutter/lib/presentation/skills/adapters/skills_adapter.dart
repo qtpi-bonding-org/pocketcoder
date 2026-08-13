@@ -44,7 +44,7 @@ class SkillsAdapter extends CubitAdapter<SkillsCubit, SkillsState> {
       builder: (_) => SkillEditorDialog(
         skill: skill,
         onSubmit: (name, description, content) => cubit.updateSkill(
-          path: skill.path,
+          id: skill.id,
           name: name,
           description: description,
           content: content,

@@ -7,14 +7,15 @@ import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart';
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart';
 
 class MockSkillsRepository extends Mock implements ISkillsRepository {}
-class MockAgentConfigRepository extends Mock implements IAgentConfigRepository {}
+
+class MockAgentConfigRepository extends Mock
+    implements IAgentConfigRepository {}
 
 const _skill = Skill(
+  id: 'skill1',
   name: 'my-skill',
   description: 'd',
   content: 'c',
-  path: '/global/my-skill',
-  global: true,
 );
 
 void main() {
@@ -112,7 +113,8 @@ void main() {
           )).thenThrow(Exception('boom'));
 
       final cubit = buildCubit();
-      await cubit.createSkill(name: 'n', description: 'd', content: 'c', global: true);
+      await cubit.createSkill(
+          name: 'n', description: 'd', content: 'c', global: true);
 
       expect(cubit.state.hasError, isTrue);
       verifyNever(() => repo.listSkills());
@@ -122,7 +124,7 @@ void main() {
   group('SkillsCubit.updateSkill', () {
     test('calls repository.updateSkill then reloads', () async {
       when(() => repo.updateSkill(
-            path: any(named: 'path'),
+            id: any(named: 'id'),
             name: any(named: 'name'),
             description: any(named: 'description'),
             content: any(named: 'content'),
@@ -131,14 +133,14 @@ void main() {
 
       final cubit = buildCubit();
       await cubit.updateSkill(
-        path: '/global/my-skill',
+        id: 'skill1',
         name: 'renamed',
         description: 'd2',
         content: 'c2',
       );
 
       verify(() => repo.updateSkill(
-            path: '/global/my-skill',
+            id: 'skill1',
             name: 'renamed',
             description: 'd2',
             content: 'c2',

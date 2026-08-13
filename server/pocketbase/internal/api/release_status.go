@@ -40,22 +40,27 @@ func readJSON(path string, target any) error {
 // RegisterReleaseStatusApi exposes contract-only compatibility before login
 // and detailed release/update identity only to authenticated owners.
 func RegisterReleaseStatusApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.GET("/api/pocketcoder/compatibility", func(re *core.RequestEvent) error {
-		response := map[string]int{
-			"serverApiVersion":          1,
-			"appContractVersion":        1,
-			"dataVersion":               1,
-			"deploymentContractVersion": 1,
-		}
+	e.Router.GET("/api/pocketcoder/release/compatibility", func(re *core.RequestEvent) error {
+		dataVersion := 1
+		deploymentContractVersion := 1
 		var pointer releasePointerResponse
 		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err == nil {
-			response["dataVersion"] = pointer.DataVersion
-			response["deploymentContractVersion"] = pointer.DeploymentContractVersion
+			dataVersion = pointer.DataVersion
+			deploymentContractVersion = pointer.DeploymentContractVersion
+		}
+		response := map[string]any{
+			"schemaVersion": 1,
+			"dataVersion":   dataVersion,
+			"compatibility": map[string]any{
+				"app":        map[string]int{"contractVersion": 1},
+				"server":     map[string]int{"apiVersion": 1},
+				"deployment": map[string]int{"contractVersion": deploymentContractVersion},
+			},
 		}
 		return re.JSON(200, response)
 	})
 
-	e.Router.GET("/api/pocketcoder/capabilities", func(re *core.RequestEvent) error {
+	e.Router.GET("/api/pocketcoder/release/status", func(re *core.RequestEvent) error {
 		var pointer releasePointerResponse
 		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil &&
 			!errors.Is(err, os.ErrNotExist) {
@@ -66,11 +71,9 @@ func RegisterReleaseStatusApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
 			metadataStatus = map[string]any{"schemaVersion": 1, "status": "unknown"}
 		}
 		return re.JSON(200, map[string]any{
-			"schemaVersion":      1,
-			"serverApiVersion":   1,
-			"appContractVersion": 1,
-			"release":            pointer,
-			"releaseMetadata":    metadataStatus,
+			"schemaVersion":  1,
+			"current":        pointer,
+			"metadataStatus": metadataStatus,
 		})
 	}).Bind(apis.RequireAuth())
 }

@@ -154,7 +154,7 @@ extension SchedulerStatePatterns on SchedulerState {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<Schedule> schedules)? loaded,
+    TResult Function(List<ScheduleOwner> schedules)? loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -190,7 +190,7 @@ extension SchedulerStatePatterns on SchedulerState {
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() loading,
-    required TResult Function(List<Schedule> schedules) loaded,
+    required TResult Function(List<ScheduleOwner> schedules) loaded,
     required TResult Function(String message) error,
   }) {
     final _that = this;
@@ -222,7 +222,7 @@ extension SchedulerStatePatterns on SchedulerState {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<Schedule> schedules)? loaded,
+    TResult? Function(List<ScheduleOwner> schedules)? loaded,
     TResult? Function(String message)? error,
   }) {
     final _that = this;
@@ -284,12 +284,12 @@ class _Loading extends SchedulerState {
 /// @nodoc
 
 class _Loaded extends SchedulerState {
-  const _Loaded(final List<Schedule> schedules)
+  const _Loaded(final List<ScheduleOwner> schedules)
       : _schedules = schedules,
         super._();
 
-  final List<Schedule> _schedules;
-  List<Schedule> get schedules {
+  final List<ScheduleOwner> _schedules;
+  List<ScheduleOwner> get schedules {
     if (_schedules is EqualUnmodifiableListView) return _schedules;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_schedules);
@@ -327,7 +327,7 @@ abstract mixin class _$LoadedCopyWith<$Res>
   factory _$LoadedCopyWith(_Loaded value, $Res Function(_Loaded) _then) =
       __$LoadedCopyWithImpl;
   @useResult
-  $Res call({List<Schedule> schedules});
+  $Res call({List<ScheduleOwner> schedules});
 }
 
 /// @nodoc
@@ -347,7 +347,7 @@ class __$LoadedCopyWithImpl<$Res> implements _$LoadedCopyWith<$Res> {
       null == schedules
           ? _self._schedules
           : schedules // ignore: cast_nullable_to_non_nullable
-              as List<Schedule>,
+              as List<ScheduleOwner>,
     ));
   }
 }

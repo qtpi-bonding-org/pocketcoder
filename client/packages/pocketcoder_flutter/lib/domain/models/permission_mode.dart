@@ -29,7 +29,7 @@ enum PermissionModeBaseSessionMode {
   @JsonValue('approve')
   approve,
   @JsonValue('smart_approve')
-  smart_approve,
+  smartApprove,
   @JsonValue('chat')
   chat,
   @JsonValue('__unknown__')

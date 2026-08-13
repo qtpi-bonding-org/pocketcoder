@@ -37,8 +37,8 @@ class SkillsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final global = data.skills.where((skill) => skill.global).toList();
-    final project = data.skills.where((skill) => !skill.global).toList();
+    final global = data.skills.where(_isGlobal).toList();
+    final project = data.skills.where((skill) => !_isGlobal(skill)).toList();
 
     return PocketCoderShell(
       title: context.l10n.skillsTitle,
@@ -110,7 +110,7 @@ class SkillsView extends StatelessWidget {
           VSpace.x1,
           TerminalText.mini(skill.description, alpha: 0.6),
           VSpace.x1,
-          if (skill.system)
+          if (skill.isSystem ?? false)
             const TerminalText.mini('BUILT-IN', alpha: 0.5)
           else
             Row(
@@ -126,12 +126,17 @@ class SkillsView extends StatelessWidget {
                 TerminalButton(
                   label: context.l10n.skillsDeleteButton,
                   color: context.colorScheme.error,
-                  onTap: () => onDelete(skill.path),
+                  onTap: () => onDelete(skill.id),
                 ),
               ],
             ),
         ],
       ),
     );
+  }
+
+  bool _isGlobal(Skill skill) {
+    final metadata = skill.metadata;
+    return metadata is! Map || '${metadata['projectDir'] ?? ''}'.isEmpty;
   }
 }

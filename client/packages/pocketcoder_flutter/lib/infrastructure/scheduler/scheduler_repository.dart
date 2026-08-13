@@ -1,30 +1,24 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart';
-import 'package:pocketcoder_flutter/domain/models/schedule.dart';
+import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
+import 'package:pocketcoder_flutter/infrastructure/scheduler/schedule_owner_dao.dart';
 
 @LazySingleton(as: ISchedulerRepository)
 class SchedulerRepository implements ISchedulerRepository {
   final PocketBase _pb;
+  final ScheduleOwnerDao _dao;
 
-  SchedulerRepository(this._pb);
+  SchedulerRepository(this._pb, this._dao);
 
   @override
-  Future<List<Schedule>> listSchedules() async {
+  Future<List<ScheduleOwner>> listSchedules() async {
     return tryMethod(
       () async {
-        final response = await _pb.send<dynamic>(
-          ApiEndpoints.schedulesList,
-          method: 'POST',
-          body: {},
-        );
-        final schedules = (response as Map<String, dynamic>)['schedules'] as List;
-        return schedules
-            .map((s) => Schedule.fromJson(s as Map<String, dynamic>))
-            .toList();
+        return _dao.getFullList(sort: 'display_name');
       },
       SchedulerException.new,
       'listSchedules',
@@ -32,19 +26,22 @@ class SchedulerRepository implements ISchedulerRepository {
   }
 
   @override
-  Future<Schedule> createSchedule({
+  Future<ScheduleOwner> createSchedule({
     required String displayName,
     required String cron,
     required String prompt,
   }) async {
     return tryMethod(
       () async {
-        final response = await _pb.send<dynamic>(
-          ApiEndpoints.schedulesCreate,
-          method: 'POST',
-          body: {'displayName': displayName, 'cron': cron, 'prompt': prompt},
+        return _dao.save(
+          null,
+          {
+            'display_name': displayName,
+            'cron': cron,
+            'prompt': prompt,
+            'paused': false,
+          },
         );
-        return Schedule.fromJson(response as Map<String, dynamic>);
       },
       SchedulerException.new,
       'createSchedule',
@@ -52,14 +49,11 @@ class SchedulerRepository implements ISchedulerRepository {
   }
 
   @override
-  Future<void> renameSchedule({required String id, required String displayName}) async {
+  Future<void> renameSchedule(
+      {required String id, required String displayName}) async {
     return tryMethod(
       () async {
-        await _pb.send<dynamic>(
-          ApiEndpoints.schedulesRename,
-          method: 'POST',
-          body: {'id': id, 'displayName': displayName},
-        );
+        await _dao.save(id, {'display_name': displayName});
       },
       SchedulerException.new,
       'renameSchedule',
@@ -67,15 +61,11 @@ class SchedulerRepository implements ISchedulerRepository {
   }
 
   @override
-  Future<Schedule> updateCron({required String id, required String cron}) async {
+  Future<ScheduleOwner> updateCron(
+      {required String id, required String cron}) async {
     return tryMethod(
       () async {
-        final response = await _pb.send<dynamic>(
-          ApiEndpoints.schedulesUpdateCron,
-          method: 'POST',
-          body: {'id': id, 'cron': cron},
-        );
-        return Schedule.fromJson(response as Map<String, dynamic>);
+        return _dao.save(id, {'cron': cron});
       },
       SchedulerException.new,
       'updateCron',
@@ -86,11 +76,7 @@ class SchedulerRepository implements ISchedulerRepository {
   Future<void> pauseSchedule(String id) async {
     return tryMethod(
       () async {
-        await _pb.send<dynamic>(
-          ApiEndpoints.schedulesPause,
-          method: 'POST',
-          body: {'id': id},
-        );
+        await _dao.save(id, {'paused': true});
       },
       SchedulerException.new,
       'pauseSchedule',
@@ -101,11 +87,7 @@ class SchedulerRepository implements ISchedulerRepository {
   Future<void> unpauseSchedule(String id) async {
     return tryMethod(
       () async {
-        await _pb.send<dynamic>(
-          ApiEndpoints.schedulesUnpause,
-          method: 'POST',
-          body: {'id': id},
-        );
+        await _dao.save(id, {'paused': false});
       },
       SchedulerException.new,
       'unpauseSchedule',
@@ -116,11 +98,7 @@ class SchedulerRepository implements ISchedulerRepository {
   Future<void> deleteSchedule(String id) async {
     return tryMethod(
       () async {
-        await _pb.send<dynamic>(
-          ApiEndpoints.schedulesDelete,
-          method: 'POST',
-          body: {'id': id},
-        );
+        await _dao.delete(id);
       },
       SchedulerException.new,
       'deleteSchedule',

@@ -59,8 +59,6 @@ import 'package:pocketcoder_flutter/application/system/poco_cubit.dart'
     as _i992;
 import 'package:pocketcoder_flutter/application/system/status_cubit.dart'
     as _i506;
-import 'package:pocketcoder_flutter/application/terminal/terminal_cubit.dart'
-    as _i1000;
 import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_cubit.dart'
     as _i89;
 import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart'
@@ -74,6 +72,8 @@ import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart'
     as _i34;
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart'
     as _i209;
+import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_accounts_repository.dart'
+    as _i255;
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart'
     as _i623;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart'
@@ -138,6 +138,12 @@ import 'package:pocketcoder_flutter/infrastructure/feedback/localization_service
     as _i1000;
 import 'package:pocketcoder_flutter/infrastructure/files/files_repository.dart'
     as _i369;
+import 'package:pocketcoder_flutter/infrastructure/git/git_ssh_daos.dart'
+    as _i920;
+import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_account_daos.dart'
+    as _i730;
+import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_accounts_repository.dart'
+    as _i467;
 import 'package:pocketcoder_flutter/infrastructure/healthcheck/healthcheck_repository.dart'
     as _i40;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_daos.dart' as _i444;
@@ -167,8 +173,12 @@ import 'package:pocketcoder_flutter/infrastructure/release/server_release_status
     as _i175;
 import 'package:pocketcoder_flutter/infrastructure/sandbox_agent/sandbox_agent_repository.dart'
     as _i853;
+import 'package:pocketcoder_flutter/infrastructure/scheduler/schedule_owner_dao.dart'
+    as _i479;
 import 'package:pocketcoder_flutter/infrastructure/scheduler/scheduler_repository.dart'
     as _i715;
+import 'package:pocketcoder_flutter/infrastructure/skills/skill_dao.dart'
+    as _i9;
 import 'package:pocketcoder_flutter/infrastructure/skills/skills_repository.dart'
     as _i675;
 import 'package:pocketcoder_flutter/infrastructure/status/status_repository.dart'
@@ -207,8 +217,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
     gh.lazySingleton<_i145.ErrorBoxStorage>(
         () => externalModule.errorBoxStorage);
-    gh.factory<_i1000.SshTerminalCubit>(
-        () => _i1000.SshTerminalCubit(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i300.AgentActionsApi>(
         () => _i300.AgentActionsApi(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i611.IObservabilityRepository>(
@@ -228,16 +236,12 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i619.BillingService>(),
           gh<_i178.PushService>(),
         ));
-    gh.lazySingleton<_i165.ISkillsRepository>(
-        () => _i675.SkillsRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
     gh.lazySingleton<String>(
       () => externalModule.oauthRelayBaseUrl,
       instanceName: 'oauthRelayBaseUrl',
     );
     gh.lazySingleton<_i653.ILoadingService>(() => _i976.AppLoadingService());
-    gh.lazySingleton<_i470.ISchedulerRepository>(
-        () => _i715.SchedulerRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<String>(
       () => externalModule.releaseBaseUrl,
       instanceName: 'releaseBaseUrl',
@@ -254,6 +258,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i199.ChatDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i464.SandboxAgentDao>(
         () => _i464.SandboxAgentDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i920.GitSshCredentialDao>(
+        () => _i920.GitSshCredentialDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i920.GitRepositoryAccessDao>(
+        () => _i920.GitRepositoryAccessDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i730.HarnessAccountDao>(
+        () => _i730.HarnessAccountDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i730.HarnessAccountSelectionDao>(
+        () => _i730.HarnessAccountSelectionDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i444.McpServerDao>(
         () => _i444.McpServerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i849.DeviceDao>(
@@ -268,6 +280,9 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i294.HarnessModelDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i294.ProviderKeyDao>(
         () => _i294.ProviderKeyDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i479.ScheduleOwnerDao>(
+        () => _i479.ScheduleOwnerDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i9.SkillDao>(() => _i9.SkillDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i1065.HealthcheckDao>(
         () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i398.ToolPermissionDao>(
@@ -343,14 +358,26 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i922.IMcpRepository>(),
           gh<_i904.IMcpOAuthService>(),
         ));
+    gh.lazySingleton<_i255.IHarnessAccountsRepository>(
+        () => _i467.HarnessAccountsRepository(
+              gh<_i730.HarnessAccountDao>(),
+              gh<_i730.HarnessAccountSelectionDao>(),
+            ));
     gh.factory<_i723.AgentConfigCubit>(
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
+    gh.lazySingleton<_i470.ISchedulerRepository>(
+        () => _i715.SchedulerRepository(
+              gh<_i169.PocketBase>(),
+              gh<_i479.ScheduleOwnerDao>(),
+            ));
     gh.factory<_i490.SchedulerCubit>(
         () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
     gh.factory<_i614.ReleaseStatusCubit>(() =>
         _i614.ReleaseStatusCubit(gh<_i472.IServerReleaseStatusService>()));
+    gh.lazySingleton<_i165.ISkillsRepository>(
+        () => _i675.SkillsRepository(gh<_i9.SkillDao>()));
     gh.factory<_i67.SkillsCubit>(() => _i67.SkillsCubit(
           gh<_i165.ISkillsRepository>(),
           gh<_i630.IAgentConfigRepository>(),

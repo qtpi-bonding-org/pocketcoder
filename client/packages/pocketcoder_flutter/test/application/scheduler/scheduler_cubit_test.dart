@@ -2,17 +2,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
-import 'package:pocketcoder_flutter/domain/models/schedule.dart';
+import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart';
 
 class MockSchedulerRepository extends Mock implements ISchedulerRepository {}
 
-const _schedule = Schedule(
+const _schedule = ScheduleOwner(
   id: 'rec1',
+  user: 'user1',
   displayName: 'Nightly Sync',
   cron: '0 2 * * *',
   paused: false,
-  currentlyRunning: false,
 );
 
 void main() {
@@ -74,7 +74,10 @@ void main() {
       when(() => repo.listSchedules()).thenAnswer((_) async => [_schedule]);
 
       final cubit = buildCubit();
-      await cubit.createSchedule(displayName: 'Nightly Sync', cron: '0 2 * * *', prompt: 'do the thing');
+      await cubit.createSchedule(
+          displayName: 'Nightly Sync',
+          cron: '0 2 * * *',
+          prompt: 'do the thing');
 
       verify(() => repo.createSchedule(
             displayName: 'Nightly Sync',
@@ -110,14 +113,16 @@ void main() {
       final cubit = buildCubit();
       await cubit.renameSchedule(id: 'rec1', displayName: 'Renamed');
 
-      verify(() => repo.renameSchedule(id: 'rec1', displayName: 'Renamed')).called(1);
+      verify(() => repo.renameSchedule(id: 'rec1', displayName: 'Renamed'))
+          .called(1);
       verify(() => repo.listSchedules()).called(1);
     });
   });
 
   group('SchedulerCubit.updateCron', () {
     test('calls repository.updateCron then reloads', () async {
-      when(() => repo.updateCron(id: any(named: 'id'), cron: any(named: 'cron')))
+      when(() =>
+              repo.updateCron(id: any(named: 'id'), cron: any(named: 'cron')))
           .thenAnswer((_) async => _schedule);
       when(() => repo.listSchedules()).thenAnswer((_) async => [_schedule]);
 

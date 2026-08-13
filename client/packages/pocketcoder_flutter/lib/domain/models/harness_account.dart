@@ -40,7 +40,7 @@ enum HarnessAccountCredentialMode {
   @JsonValue('account')
   account,
   @JsonValue('api_key')
-  api_key,
+  apiKey,
   @JsonValue('none')
   none,
   @JsonValue('__unknown__')
@@ -57,7 +57,7 @@ enum HarnessAccountStatus {
   @JsonValue('error')
   error,
   @JsonValue('needs_api_key')
-  needs_api_key,
+  needsApiKey,
   @JsonValue('__unknown__')
   unknown,
 }

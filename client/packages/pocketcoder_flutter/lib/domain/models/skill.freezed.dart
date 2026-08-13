@@ -14,12 +14,14 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$Skill {
+  String get id;
+  String? get user;
+  bool? get isSystem;
   String get name;
   String get description;
   String get content;
-  String get path;
-  bool get global;
-  bool get system;
+  dynamic get metadata;
+  bool? get active;
 
   /// Create a copy of Skill
   /// with the given fields replaced by the non-null parameter values.
@@ -36,23 +38,34 @@ mixin _$Skill {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is Skill &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.user, user) || other.user == user) &&
+            (identical(other.isSystem, isSystem) ||
+                other.isSystem == isSystem) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.content, content) || other.content == content) &&
-            (identical(other.path, path) || other.path == path) &&
-            (identical(other.global, global) || other.global == global) &&
-            (identical(other.system, system) || other.system == system));
+            const DeepCollectionEquality().equals(other.metadata, metadata) &&
+            (identical(other.active, active) || other.active == active));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, name, description, content, path, global, system);
+      runtimeType,
+      id,
+      user,
+      isSystem,
+      name,
+      description,
+      content,
+      const DeepCollectionEquality().hash(metadata),
+      active);
 
   @override
   String toString() {
-    return 'Skill(name: $name, description: $description, content: $content, path: $path, global: $global, system: $system)';
+    return 'Skill(id: $id, user: $user, isSystem: $isSystem, name: $name, description: $description, content: $content, metadata: $metadata, active: $active)';
   }
 }
 
@@ -62,12 +75,14 @@ abstract mixin class $SkillCopyWith<$Res> {
       _$SkillCopyWithImpl;
   @useResult
   $Res call(
-      {String name,
+      {String id,
+      String? user,
+      bool? isSystem,
+      String name,
       String description,
       String content,
-      String path,
-      bool global,
-      bool system});
+      dynamic metadata,
+      bool? active});
 }
 
 /// @nodoc
@@ -82,14 +97,28 @@ class _$SkillCopyWithImpl<$Res> implements $SkillCopyWith<$Res> {
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? id = null,
+    Object? user = freezed,
+    Object? isSystem = freezed,
     Object? name = null,
     Object? description = null,
     Object? content = null,
-    Object? path = null,
-    Object? global = null,
-    Object? system = null,
+    Object? metadata = freezed,
+    Object? active = freezed,
   }) {
     return _then(_self.copyWith(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      user: freezed == user
+          ? _self.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isSystem: freezed == isSystem
+          ? _self.isSystem
+          : isSystem // ignore: cast_nullable_to_non_nullable
+              as bool?,
       name: null == name
           ? _self.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -102,18 +131,14 @@ class _$SkillCopyWithImpl<$Res> implements $SkillCopyWith<$Res> {
           ? _self.content
           : content // ignore: cast_nullable_to_non_nullable
               as String,
-      path: null == path
-          ? _self.path
-          : path // ignore: cast_nullable_to_non_nullable
-              as String,
-      global: null == global
-          ? _self.global
-          : global // ignore: cast_nullable_to_non_nullable
-              as bool,
-      system: null == system
-          ? _self.system
-          : system // ignore: cast_nullable_to_non_nullable
-              as bool,
+      metadata: freezed == metadata
+          ? _self.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      active: freezed == active
+          ? _self.active
+          : active // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -211,16 +236,16 @@ extension SkillPatterns on Skill {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String name, String description, String content,
-            String path, bool global, bool system)?
+    TResult Function(String id, String? user, bool? isSystem, String name,
+            String description, String content, dynamic metadata, bool? active)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _Skill() when $default != null:
-        return $default(_that.name, _that.description, _that.content,
-            _that.path, _that.global, _that.system);
+        return $default(_that.id, _that.user, _that.isSystem, _that.name,
+            _that.description, _that.content, _that.metadata, _that.active);
       case _:
         return orElse();
     }
@@ -241,15 +266,15 @@ extension SkillPatterns on Skill {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String name, String description, String content,
-            String path, bool global, bool system)
+    TResult Function(String id, String? user, bool? isSystem, String name,
+            String description, String content, dynamic metadata, bool? active)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Skill():
-        return $default(_that.name, _that.description, _that.content,
-            _that.path, _that.global, _that.system);
+        return $default(_that.id, _that.user, _that.isSystem, _that.name,
+            _that.description, _that.content, _that.metadata, _that.active);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -269,15 +294,15 @@ extension SkillPatterns on Skill {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String name, String description, String content,
-            String path, bool global, bool system)?
+    TResult? Function(String id, String? user, bool? isSystem, String name,
+            String description, String content, dynamic metadata, bool? active)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Skill() when $default != null:
-        return $default(_that.name, _that.description, _that.content,
-            _that.path, _that.global, _that.system);
+        return $default(_that.id, _that.user, _that.isSystem, _that.name,
+            _that.description, _that.content, _that.metadata, _that.active);
       case _:
         return null;
     }
@@ -288,14 +313,22 @@ extension SkillPatterns on Skill {
 @JsonSerializable()
 class _Skill implements Skill {
   const _Skill(
-      {required this.name,
+      {required this.id,
+      this.user,
+      this.isSystem,
+      required this.name,
       required this.description,
       required this.content,
-      required this.path,
-      required this.global,
-      this.system = false});
+      this.metadata,
+      this.active});
   factory _Skill.fromJson(Map<String, dynamic> json) => _$SkillFromJson(json);
 
+  @override
+  final String id;
+  @override
+  final String? user;
+  @override
+  final bool? isSystem;
   @override
   final String name;
   @override
@@ -303,12 +336,9 @@ class _Skill implements Skill {
   @override
   final String content;
   @override
-  final String path;
+  final dynamic metadata;
   @override
-  final bool global;
-  @override
-  @JsonKey()
-  final bool system;
+  final bool? active;
 
   /// Create a copy of Skill
   /// with the given fields replaced by the non-null parameter values.
@@ -330,23 +360,34 @@ class _Skill implements Skill {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _Skill &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.user, user) || other.user == user) &&
+            (identical(other.isSystem, isSystem) ||
+                other.isSystem == isSystem) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.content, content) || other.content == content) &&
-            (identical(other.path, path) || other.path == path) &&
-            (identical(other.global, global) || other.global == global) &&
-            (identical(other.system, system) || other.system == system));
+            const DeepCollectionEquality().equals(other.metadata, metadata) &&
+            (identical(other.active, active) || other.active == active));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, name, description, content, path, global, system);
+      runtimeType,
+      id,
+      user,
+      isSystem,
+      name,
+      description,
+      content,
+      const DeepCollectionEquality().hash(metadata),
+      active);
 
   @override
   String toString() {
-    return 'Skill(name: $name, description: $description, content: $content, path: $path, global: $global, system: $system)';
+    return 'Skill(id: $id, user: $user, isSystem: $isSystem, name: $name, description: $description, content: $content, metadata: $metadata, active: $active)';
   }
 }
 
@@ -357,12 +398,14 @@ abstract mixin class _$SkillCopyWith<$Res> implements $SkillCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String name,
+      {String id,
+      String? user,
+      bool? isSystem,
+      String name,
       String description,
       String content,
-      String path,
-      bool global,
-      bool system});
+      dynamic metadata,
+      bool? active});
 }
 
 /// @nodoc
@@ -377,14 +420,28 @@ class __$SkillCopyWithImpl<$Res> implements _$SkillCopyWith<$Res> {
   @override
   @pragma('vm:prefer-inline')
   $Res call({
+    Object? id = null,
+    Object? user = freezed,
+    Object? isSystem = freezed,
     Object? name = null,
     Object? description = null,
     Object? content = null,
-    Object? path = null,
-    Object? global = null,
-    Object? system = null,
+    Object? metadata = freezed,
+    Object? active = freezed,
   }) {
     return _then(_Skill(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      user: freezed == user
+          ? _self.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isSystem: freezed == isSystem
+          ? _self.isSystem
+          : isSystem // ignore: cast_nullable_to_non_nullable
+              as bool?,
       name: null == name
           ? _self.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -397,18 +454,14 @@ class __$SkillCopyWithImpl<$Res> implements _$SkillCopyWith<$Res> {
           ? _self.content
           : content // ignore: cast_nullable_to_non_nullable
               as String,
-      path: null == path
-          ? _self.path
-          : path // ignore: cast_nullable_to_non_nullable
-              as String,
-      global: null == global
-          ? _self.global
-          : global // ignore: cast_nullable_to_non_nullable
-              as bool,
-      system: null == system
-          ? _self.system
-          : system // ignore: cast_nullable_to_non_nullable
-              as bool,
+      metadata: freezed == metadata
+          ? _self.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      active: freezed == active
+          ? _self.active
+          : active // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }

@@ -112,7 +112,6 @@ func main() {
 		}
 
 		// A. Register Custom API Endpoints
-		api.RegisterSSHApi(app, e)
 		api.RegisterMcpApi(app, e)
 		api.RegisterMcpOAuthApi(app, e)
 		api.RegisterProxyApi(app, e)
@@ -127,15 +126,10 @@ func main() {
 		filesystem.RegisterFilesApi(app, e)
 		hooks.RegisterPushApi(app, e)
 
-		// C. Skills API remains a compatibility surface; its canonical data is
-		// PocketBase-owned and materialized into each harness volume.
-		api.RegisterSkillsApi(app, e, coordGetter)
-
 		// E. Harness auth API (account/API-key mode selection + auth-helper lifecycle).
 		api.RegisterHarnessAuthApi(app, e)
 
-		// F. Scheduler API (per-user CRUD over Goose's schedules, backed by
-		// schedule_owners).
+		// F. Schedule execution API. Schedule state itself uses PocketBase CRUD.
 		api.RegisterSchedulesApi(app, e, coordGetter)
 
 		// F. Harness instance status watcher: subscribes to the Docker
