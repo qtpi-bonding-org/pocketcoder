@@ -34,7 +34,7 @@ Map<String, dynamic> _$PermissionModeToJson(_PermissionMode instance) =>
 const _$PermissionModeBaseSessionModeEnumMap = {
   PermissionModeBaseSessionMode.auto: 'auto',
   PermissionModeBaseSessionMode.approve: 'approve',
-  PermissionModeBaseSessionMode.smart_approve: 'smart_approve',
+  PermissionModeBaseSessionMode.smartApprove: 'smart_approve',
   PermissionModeBaseSessionMode.chat: 'chat',
   PermissionModeBaseSessionMode.unknown: '__unknown__',
 };

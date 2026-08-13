@@ -56,14 +56,14 @@ class SkillsCubit extends Cubit<SkillsState> {
   }
 
   Future<void> updateSkill({
-    required String path,
+    required String id,
     required String name,
     required String description,
     required String content,
   }) async {
     try {
       await _repository.updateSkill(
-        path: path,
+        id: id,
         name: name,
         description: description,
         content: content,
@@ -77,9 +77,9 @@ class SkillsCubit extends Cubit<SkillsState> {
     }
   }
 
-  Future<void> deleteSkill(String path) async {
+  Future<void> deleteSkill(String id) async {
     try {
-      await _repository.deleteSkill(path);
+      await _repository.deleteSkill(id);
       await loadSkills();
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(

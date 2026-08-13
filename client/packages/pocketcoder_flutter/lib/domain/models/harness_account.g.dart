@@ -54,7 +54,7 @@ const _$HarnessAccountVisibilityEnumMap = {
 
 const _$HarnessAccountCredentialModeEnumMap = {
   HarnessAccountCredentialMode.account: 'account',
-  HarnessAccountCredentialMode.api_key: 'api_key',
+  HarnessAccountCredentialMode.apiKey: 'api_key',
   HarnessAccountCredentialMode.none: 'none',
   HarnessAccountCredentialMode.unknown: '__unknown__',
 };
@@ -64,6 +64,6 @@ const _$HarnessAccountStatusEnumMap = {
   HarnessAccountStatus.connecting: 'connecting',
   HarnessAccountStatus.connected: 'connected',
   HarnessAccountStatus.error: 'error',
-  HarnessAccountStatus.needs_api_key: 'needs_api_key',
+  HarnessAccountStatus.needsApiKey: 'needs_api_key',
   HarnessAccountStatus.unknown: '__unknown__',
 };

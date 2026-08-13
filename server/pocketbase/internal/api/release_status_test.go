@@ -50,13 +50,14 @@ func TestReleaseCompatibilityExposesContractsWithoutIdentity(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:           "public compatibility contains only contracts",
 		Method:         http.MethodGet,
-		URL:            "/api/pocketcoder/compatibility",
+		URL:            "/api/pocketcoder/release/compatibility",
 		ExpectedStatus: 200,
 		ExpectedContent: []string{
-			`"serverApiVersion":1`,
-			`"appContractVersion":1`,
+			`"schemaVersion":1`,
+			`"apiVersion":1`,
+			`"contractVersion":1`,
 			`"dataVersion":3`,
-			`"deploymentContractVersion":2`,
+			`"deployment":{"contractVersion":2}`,
 		},
 		NotExpectedContent: []string{"releaseDigest", "sourceCommit", "1.2.3"},
 		BeforeTestFunc: func(_ testing.TB, _ *tests.TestApp, e *core.ServeEvent) {
@@ -66,12 +67,12 @@ func TestReleaseCompatibilityExposesContractsWithoutIdentity(t *testing.T) {
 	scenario.Test(t)
 }
 
-func TestReleaseCapabilitiesRequiresAuth(t *testing.T) {
+func TestReleaseStatusRequiresAuth(t *testing.T) {
 	t.Setenv("POCKETCODER_RELEASE_STATE_DIR", t.TempDir())
 	scenario := tests.ApiScenario{
-		Name:            "release capabilities requires auth",
+		Name:            "release status requires auth",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/capabilities",
+		URL:             "/api/pocketcoder/release/status",
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(_ testing.TB, _ *tests.TestApp, e *core.ServeEvent) {
@@ -81,7 +82,7 @@ func TestReleaseCapabilitiesRequiresAuth(t *testing.T) {
 	scenario.Test(t)
 }
 
-func TestReleaseCapabilitiesCarriesCachedMetadataStatus(t *testing.T) {
+func TestReleaseStatusCarriesCachedMetadataStatus(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("POCKETCODER_RELEASE_STATE_DIR", dir)
 	writeReleaseFixture(t, "current.json", `{
@@ -104,13 +105,15 @@ func TestReleaseCapabilitiesCarriesCachedMetadataStatus(t *testing.T) {
 
 	headers := map[string]string{}
 	scenario := tests.ApiScenario{
-		Name:           "authenticated capabilities includes cached release status",
+		Name:           "authenticated release status includes cached update state",
 		Method:         http.MethodGet,
-		URL:            "/api/pocketcoder/capabilities",
+		URL:            "/api/pocketcoder/release/status",
 		Headers:        headers,
 		ExpectedStatus: 200,
 		ExpectedContent: []string{
+			`"current":{`,
 			`"releaseDigest":"aaaaaaaa`,
+			`"metadataStatus":{`,
 			`"status":"update-available"`,
 			`"availableVersion":"1.1.0"`,
 			`"requiredDiskBytes":456`,

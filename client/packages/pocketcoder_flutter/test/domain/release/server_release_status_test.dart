@@ -8,13 +8,13 @@ const _digestB =
 
 void main() {
   test('parses authenticated update metadata and data boundary', () {
-    final snapshot = ServerReleaseStatusSnapshot.fromCapabilities({
-      'release': {
+    final snapshot = ServerReleaseStatusSnapshot.fromStatus({
+      'current': {
         'releaseDigest': _digestA,
         'serverVersion': '1.0.0',
         'dataVersion': 1,
       },
-      'releaseMetadata': {
+      'metadataStatus': {
         'status': 'update-available',
         'checkedAt': '2026-08-12T20:00:00Z',
         'availableReleaseDigest': _digestB,
@@ -35,13 +35,13 @@ void main() {
   });
 
   test('parses bounded critical warning metadata', () {
-    final snapshot = ServerReleaseStatusSnapshot.fromCapabilities({
-      'release': {
+    final snapshot = ServerReleaseStatusSnapshot.fromStatus({
+      'current': {
         'releaseDigest': _digestA,
         'serverVersion': '1.0.0',
         'dataVersion': 1,
       },
-      'releaseMetadata': {
+      'metadataStatus': {
         'status': 'critical-release-warning',
         'reasonCode': 'health-regression',
         'summary': 'This release can lose task output.',

@@ -402,7 +402,6 @@ class AppRoutes {
   static const String onboardingCodexAuth = '/onboarding/harness-auth/codex';
   static const String boot = '/boot';
   static const String files = '/files';
-  static const String terminal = '/terminal';
   static const String fileViewer = '/files/view';
   // Configure sub-routes
   static const String configureAi = '/configure/ai';
@@ -454,7 +453,6 @@ class RouteNames {
   static const String onboardingCodexAuth = 'onboardingCodexAuth';
   static const String boot = 'boot';
   static const String files = 'files';
-  static const String terminal = 'terminal';
   static const String fileViewer = 'fileViewer';
   // Configure sub-routes
   static const String configureAi = 'configureAi';
@@ -500,8 +498,6 @@ class AppNavigation {
       context.push(AppRoutes.configureToolPermissions);
   static void toPaywall(BuildContext context) =>
       context.push(AppRoutes.configurePaywall);
-  static void toTerminal(BuildContext context) =>
-      context.push(AppRoutes.terminal);
   static void toFiles(BuildContext context) => context.push(AppRoutes.files);
   static void toFileViewer(BuildContext context, String path) =>
       context.pushNamed(

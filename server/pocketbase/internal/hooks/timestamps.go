@@ -47,7 +47,7 @@ func RegisterGlobalTimestamps(app core.App) {
 		return e.Next()
 	}
 
-	collections := []string{"chats", "usages", "ssh_keys", "agent_profiles"}
+	collections := []string{"chats", "usages", "agent_profiles"}
 	for _, col := range collections {
 		app.OnRecordCreate(col).BindFunc(handler)
 		app.OnRecordUpdate(col).BindFunc(handler)

@@ -1,6 +1,6 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:pocketcoder_flutter/domain/models/schedule.dart';
+import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 
 part 'scheduler_state.freezed.dart';
 
@@ -10,7 +10,7 @@ sealed class SchedulerState with _$SchedulerState implements IUiFlowState {
 
   const factory SchedulerState.initial() = _Initial;
   const factory SchedulerState.loading() = _Loading;
-  const factory SchedulerState.loaded(List<Schedule> schedules) = _Loaded;
+  const factory SchedulerState.loaded(List<ScheduleOwner> schedules) = _Loaded;
   const factory SchedulerState.error(String message) = _Error;
 
   @override

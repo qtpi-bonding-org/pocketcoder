@@ -10,7 +10,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_fiel
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
-import 'package:pocketcoder_flutter/domain/models/schedule.dart';
+import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'adapters/scheduler_adapter.dart';
 
@@ -44,9 +44,14 @@ class SchedulerView extends StatelessWidget {
   final ValueChanged<String> onUnpause;
   final ValueChanged<String> onRunNow;
   final ValueChanged<String> onDelete;
-  final Future<void> Function({required String id, required String displayName}) onRename;
-  final Future<void> Function({required String id, required String cron}) onUpdateCron;
-  final Future<void> Function({required String displayName, required String cron, required String prompt}) onCreate;
+  final Future<void> Function({required String id, required String displayName})
+      onRename;
+  final Future<void> Function({required String id, required String cron})
+      onUpdateCron;
+  final Future<void> Function(
+      {required String displayName,
+      required String cron,
+      required String prompt}) onCreate;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +74,8 @@ class SchedulerView extends StatelessWidget {
                       onTap: () => _showAddScheduleDialog(context),
                     ),
                   ),
-                  for (final schedule in schedules) _buildScheduleItem(context, schedule),
+                  for (final schedule in schedules)
+                    _buildScheduleItem(context, schedule),
                   if (schedules.isEmpty)
                     Center(
                       child: Padding(
@@ -84,7 +90,8 @@ class SchedulerView extends StatelessWidget {
               ),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (msg) => Center(
-                child: Text('ERROR: $msg', style: TextStyle(color: colors.error)),
+                child:
+                    Text('ERROR: $msg', style: TextStyle(color: colors.error)),
               ),
               orElse: () => const SizedBox.shrink(),
             );
@@ -94,7 +101,7 @@ class SchedulerView extends StatelessWidget {
     );
   }
 
-  Widget _buildScheduleItem(BuildContext context, Schedule schedule) {
+  Widget _buildScheduleItem(BuildContext context, ScheduleOwner schedule) {
     return TerminalCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,24 +114,23 @@ class SchedulerView extends StatelessWidget {
                   weight: TerminalTextWeight.heavy,
                 ),
               ),
-              if (schedule.currentlyRunning)
-                TerminalText.mini(context.l10n.schedulerRunningBadge, alpha: 0.8)
-              else if (schedule.paused)
-                TerminalText.mini(context.l10n.schedulerPausedBadge, alpha: 0.5),
+              if (schedule.paused ?? false)
+                TerminalText.mini(context.l10n.schedulerPausedBadge,
+                    alpha: 0.5),
             ],
           ),
           VSpace.x1,
-          TerminalText.mini(schedule.cron, alpha: 0.6),
+          TerminalText.mini(schedule.cron ?? '', alpha: 0.6),
           VSpace.x1,
           Row(
             children: [
               Expanded(
                 child: TerminalButton(
-                  label: schedule.paused
+                  label: (schedule.paused ?? false)
                       ? context.l10n.schedulerResumeButton
                       : context.l10n.schedulerPauseButton,
                   isPrimary: false,
-                  onTap: () => schedule.paused
+                  onTap: () => (schedule.paused ?? false)
                       ? onUnpause(schedule.id)
                       : onPause(schedule.id),
                 ),
@@ -162,15 +168,16 @@ class SchedulerView extends StatelessWidget {
     );
   }
 
-  void _showEditScheduleDialog(BuildContext context, Schedule schedule) {
+  void _showEditScheduleDialog(BuildContext context, ScheduleOwner schedule) {
     final colors = Theme.of(context).colorScheme;
     final nameController = TextEditingController(text: schedule.displayName);
-    final cronController = TextEditingController(text: schedule.cron);
+    final cronController = TextEditingController(text: schedule.cron ?? '');
 
     showDialog(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: context.l10n.schedulerEditDialogTitle(schedule.displayName.toUpperCase()),
+        title: context.l10n
+            .schedulerEditDialogTitle(schedule.displayName.toUpperCase()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,7 +201,8 @@ class SchedulerView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.onSurface,
               side: BorderSide(color: colors.onSurface.withValues(alpha: 0.3)),
-              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape:
+                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: Text(context.l10n.actionCancel),
           ),
@@ -209,7 +217,7 @@ class SchedulerView extends StatelessWidget {
               if (name != schedule.displayName) {
                 onRename(id: schedule.id, displayName: name);
               }
-              if (cron != schedule.cron) {
+              if (cron != (schedule.cron ?? '')) {
                 onUpdateCron(id: schedule.id, cron: cron);
               }
               Navigator.of(dialogContext).pop();
@@ -217,7 +225,8 @@ class SchedulerView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.primary,
               side: BorderSide(color: colors.primary),
-              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape:
+                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: Text(context.l10n.schedulerSaveButton),
           ),
@@ -266,7 +275,8 @@ class SchedulerView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.onSurface,
               side: BorderSide(color: colors.onSurface.withValues(alpha: 0.3)),
-              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape:
+                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: Text(context.l10n.actionCancel),
           ),
@@ -285,7 +295,8 @@ class SchedulerView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.primary,
               side: BorderSide(color: colors.primary),
-              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape:
+                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: Text(context.l10n.actionAdd),
           ),

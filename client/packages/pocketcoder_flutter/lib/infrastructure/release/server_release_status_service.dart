@@ -24,12 +24,12 @@ class ServerReleaseStatusService implements IServerReleaseStatusService {
     }
     final response = _pocketBase is $PocketBase
         ? await _pocketBase.send<Map<String, dynamic>>(
-            ApiEndpoints.capabilities,
+            ApiEndpoints.releaseStatus,
             requestPolicy: RequestPolicy.networkOnly,
           )
         : await _pocketBase.send<Map<String, dynamic>>(
-            ApiEndpoints.capabilities,
+            ApiEndpoints.releaseStatus,
           );
-    return ServerReleaseStatusSnapshot.fromCapabilities(response);
+    return ServerReleaseStatusSnapshot.fromStatus(response);
   }
 }

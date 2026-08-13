@@ -28,7 +28,7 @@ enum HarnessAuthAttemptStatus {
   @JsonValue('starting')
   starting,
   @JsonValue('awaiting_input')
-  awaiting_input,
+  awaitingInput,
   @JsonValue('succeeded')
   succeeded,
   @JsonValue('failed')

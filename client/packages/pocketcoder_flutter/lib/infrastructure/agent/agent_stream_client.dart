@@ -28,6 +28,7 @@ import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agui_decode.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 
 /// One decoded SSE frame: the hub-allocated seq (parsed from the `id:` line),
 /// the verbatim `data:` JSON (carried through to the cache so it never gets
@@ -81,7 +82,7 @@ class AgentStreamClient {
         final request = http.Request(
           'GET',
           Uri.parse(
-            '${_pb.baseURL}/api/pocketcoder/chats/$chatId/stream?cursor=$cursor',
+            '${_pb.baseURL}${ApiEndpoints.agentStream(chatId)}?cursor=$cursor',
           ),
         );
         // c1 only checks the raw token value, so we mirror what

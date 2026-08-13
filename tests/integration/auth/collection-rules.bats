@@ -84,10 +84,10 @@ teardown() {
 # ---------------------------------------------------------------------------
 # 3. Custom endpoints require auth
 # ---------------------------------------------------------------------------
-@test "Auth Rules: POST /api/pocketcoder/permission without token returns 401" {
+@test "Auth Rules: POST /api/pocketcoder/mcp_request without token returns 401" {
     local http_code
     http_code=$(curl -s -o /dev/null -w "%{http_code}" \
-        -X POST "$PB_URL/api/pocketcoder/permission" \
+        -X POST "$PB_URL/api/pocketcoder/mcp_request" \
         -H "Content-Type: application/json" \
         -d '{"test": true}')
 

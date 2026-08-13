@@ -1,40 +1,79 @@
-class GitRepositoryAccess {
-  final String id;
-  final String? user,
-      provider,
-      repository,
-      purpose,
-      credentialMode,
-      credential,
-      requestedAccess,
-      registrationStatus,
-      status,
-      lastError;
-  const GitRepositoryAccess({
-    required this.id,
-    this.user,
-    this.provider,
-    this.repository,
-    this.purpose,
-    this.credentialMode,
-    this.credential,
-    this.requestedAccess,
-    this.registrationStatus,
-    this.status,
-    this.lastError,
-  });
-  factory GitRepositoryAccess.fromJson(Map<String, dynamic> j) =>
-      GitRepositoryAccess(
-        id: '${j['id'] ?? ''}',
-        user: j['user']?.toString(),
-        provider: j['provider']?.toString(),
-        repository: j['repository']?.toString(),
-        purpose: j['purpose']?.toString(),
-        credentialMode: j['credential_mode']?.toString(),
-        credential: j['credential']?.toString(),
-        requestedAccess: j['requested_access']?.toString(),
-        registrationStatus: j['registration_status']?.toString(),
-        status: j['status']?.toString(),
-        lastError: j['last_error']?.toString(),
-      );
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
+
+part 'git_repository_access.freezed.dart';
+part 'git_repository_access.g.dart';
+
+@freezed
+abstract class GitRepositoryAccess with _$GitRepositoryAccess {
+  const factory GitRepositoryAccess({
+    required String id,
+    required String user,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown) required GitRepositoryAccessProvider provider,
+    required String repository,
+    required String purpose,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessCredentialMode.unknown) required GitRepositoryAccessCredentialMode credentialMode,
+    String? credential,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessRequestedAccess.unknown) required GitRepositoryAccessRequestedAccess requestedAccess,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessRegistrationStatus.unknown) required GitRepositoryAccessRegistrationStatus registrationStatus,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessStatus.unknown) required GitRepositoryAccessStatus status,
+    String? lastError,
+  }) = _GitRepositoryAccess;
+
+  factory GitRepositoryAccess.fromRecord(RecordModel record) =>
+      GitRepositoryAccess.fromJson(record.toJson());
+
+  factory GitRepositoryAccess.fromJson(Map<String, dynamic> json) =>
+      _$GitRepositoryAccessFromJson(json);
+}
+
+enum GitRepositoryAccessProvider {
+  @JsonValue('github')
+  github,
+  @JsonValue('gitlab')
+  gitlab,
+  @JsonValue('codeberg')
+  codeberg,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum GitRepositoryAccessCredentialMode {
+  @JsonValue('generated_deploy')
+  generatedDeploy,
+  @JsonValue('existing_account')
+  existingAccount,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum GitRepositoryAccessRequestedAccess {
+  @JsonValue('read_only')
+  readOnly,
+  @JsonValue('read_write')
+  readWrite,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum GitRepositoryAccessRegistrationStatus {
+  @JsonValue('needs_registration')
+  needsRegistration,
+  @JsonValue('registered')
+  registered,
+  @JsonValue('revoked')
+  revoked,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum GitRepositoryAccessStatus {
+  @JsonValue('pending')
+  pending,
+  @JsonValue('ready')
+  ready,
+  @JsonValue('error')
+  error,
+  @JsonValue('__unknown__')
+  unknown,
 }

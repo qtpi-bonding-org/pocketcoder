@@ -10,10 +10,10 @@ abstract class ISkillsRepository {
     String? projectDir,
   });
   Future<Skill> updateSkill({
-    required String path,
+    required String id,
     required String name,
     required String description,
     required String content,
   });
-  Future<void> deleteSkill(String path);
+  Future<void> deleteSkill(String id);
 }

@@ -39,7 +39,7 @@ Map<String, dynamic> _$HarnessAuthAttemptToJson(_HarnessAuthAttempt instance) =>
 
 const _$HarnessAuthAttemptStatusEnumMap = {
   HarnessAuthAttemptStatus.starting: 'starting',
-  HarnessAuthAttemptStatus.awaiting_input: 'awaiting_input',
+  HarnessAuthAttemptStatus.awaitingInput: 'awaiting_input',
   HarnessAuthAttemptStatus.succeeded: 'succeeded',
   HarnessAuthAttemptStatus.failed: 'failed',
   HarnessAuthAttemptStatus.expired: 'expired',

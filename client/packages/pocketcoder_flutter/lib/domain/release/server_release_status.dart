@@ -44,11 +44,11 @@ class ServerReleaseStatusSnapshot {
       status == ServerReleaseStatus.updateAvailable ||
       status == ServerReleaseStatus.criticalReleaseWarning;
 
-  factory ServerReleaseStatusSnapshot.fromCapabilities(
+  factory ServerReleaseStatusSnapshot.fromStatus(
     Map<String, dynamic> value,
   ) {
-    final release = _map(value['release']);
-    final metadata = _map(value['releaseMetadata']);
+    final release = _map(value['current']);
+    final metadata = _map(value['metadataStatus']);
     return ServerReleaseStatusSnapshot(
       status: _status(metadata['status']),
       currentVersion: _string(

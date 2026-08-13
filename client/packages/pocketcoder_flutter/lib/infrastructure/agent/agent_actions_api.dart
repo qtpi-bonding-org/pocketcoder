@@ -8,6 +8,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 
 /// Typed failures for the up-channel, mapped from c1's documented HTTP
 /// statuses (spec §10): 400 malformed/option-not-offered, 401 unauthenticated,
@@ -73,8 +74,7 @@ class AgentActionsApi {
     T Function(Map<String, dynamic>) parse,
   ) async {
     try {
-      final result =
-          await _pb.send<dynamic>(path, method: 'POST', body: body);
+      final result = await _pb.send<dynamic>(path, method: 'POST', body: body);
       return parse(result as Map<String, dynamic>);
     } on ClientException catch (e) {
       throw _mapFailure(e);
@@ -108,7 +108,7 @@ class AgentActionsApi {
       prompt: [TextContentBlock(text: text)],
     );
     return _postJson<String>(
-      'api/pocketcoder/chats/$chatId/session/prompt',
+      ApiEndpoints.agentPrompt(chatId),
       _withoutSessionId(req.toJson()),
       (json) => json['runId'] as String,
     );
@@ -117,7 +117,7 @@ class AgentActionsApi {
   /// POST `session/cancel`, `{}`.
   Future<void> cancel(String chatId) {
     return _postVoid(
-      'api/pocketcoder/chats/$chatId/session/cancel',
+      ApiEndpoints.agentCancel(chatId),
       const {},
     );
   }
@@ -129,7 +129,7 @@ class AgentActionsApi {
       modeId: modeId,
     );
     return _postVoid(
-      'api/pocketcoder/chats/$chatId/session/set_mode',
+      ApiEndpoints.agentSetMode(chatId),
       _withoutSessionId(req.toJson()),
     );
   }
@@ -143,7 +143,7 @@ class AgentActionsApi {
     SetSessionConfigOptionRequest req,
   ) {
     return _postVoid(
-      'api/pocketcoder/chats/$chatId/session/set_config_option',
+      ApiEndpoints.agentSetConfigOption(chatId),
       _withoutSessionId(req.toJson()),
     );
   }
@@ -161,7 +161,7 @@ class AgentActionsApi {
         : SelectedOutcome(optionId: optionId);
     final req = RequestPermissionResponse(outcome: outcome);
     return _postVoid(
-      'api/pocketcoder/chats/$chatId/session/request_permission/$requestId',
+      ApiEndpoints.agentPermission(chatId, requestId),
       _withoutSessionId(req.toJson()),
     );
   }
@@ -174,7 +174,7 @@ class AgentActionsApi {
     ElicitationResponse resp,
   ) {
     return _postVoid(
-      'api/pocketcoder/chats/$chatId/session/elicitation/$elicitationId',
+      ApiEndpoints.agentElicitation(chatId, elicitationId),
       resp.toJson(),
     );
   }
