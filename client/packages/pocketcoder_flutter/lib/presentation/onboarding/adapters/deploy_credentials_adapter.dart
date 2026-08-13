@@ -4,12 +4,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/onboarding/deploy_credentials_cubit.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/deploy_credentials_view.dart';
 
 class DeployCredentialsAdapter
     extends CubitAdapter<DeployCredentialsCubit, DeployCredentialsState> {
-  const DeployCredentialsAdapter({super.key});
+  const DeployCredentialsAdapter({super.key, this.provider});
+
+  final DeployOption? provider;
 
   @override
   Widget buildAdapter(
@@ -27,13 +30,16 @@ class DeployCredentialsAdapter
         onPasswordChanged: cubit.setPassword,
         onContinue: () {
           final current = cubit.state;
-          context.pushNamed(
-            RouteNames.deploy,
-            extra: DeployCredentials(
-              email: current.email.trim(),
-              password: current.password,
-            ),
+          final credentials = DeployCredentials(
+            email: current.email.trim(),
+            password: current.password,
           );
+          final providerRoute = provider?.routePath;
+          if (providerRoute == null) {
+            context.pushNamed(RouteNames.deploy, extra: credentials);
+          } else {
+            context.push(providerRoute, extra: credentials);
+          }
         },
       ),
     );

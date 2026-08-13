@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-12T13:50:19.580826
+// Generated at: 2026-08-12T17:39:13.940113
 
 import 'app_localizations.dart';
 
@@ -412,6 +412,14 @@ class L10nKeyResolver {
       'onboarding.required.fields' => _l10n.onboardingRequiredFields,
       'onboarding.review.action.provision' => _l10n.onboardingReviewActionProvision,
       'onboarding.review.title' => _l10n.onboardingReviewTitle,
+      'onboarding.self.host.action.connect' => _l10n.onboardingSelfHostActionConnect,
+      'onboarding.self.host.action.guide' => _l10n.onboardingSelfHostActionGuide,
+      'onboarding.self.host.poco' => _l10n.onboardingSelfHostPoco,
+      'onboarding.self.host.requirement.access' => _l10n.onboardingSelfHostRequirementAccess,
+      'onboarding.self.host.requirement.docker' => _l10n.onboardingSelfHostRequirementDocker,
+      'onboarding.self.host.requirement.server' => _l10n.onboardingSelfHostRequirementServer,
+      'onboarding.self.host.requirements.title' => _l10n.onboardingSelfHostRequirementsTitle,
+      'onboarding.self.host.title' => _l10n.onboardingSelfHostTitle,
       'onboarding.server.connecting' => _l10n.onboardingServerConnecting,
       'onboarding.server.login.title' => _l10n.onboardingServerLoginTitle,
       'onboarding.server.url' => _l10n.onboardingServerUrl,
@@ -423,6 +431,10 @@ class L10nKeyResolver {
       'onboarding.title' => _l10n.onboardingTitle,
       'onboarding.trial.chip.not.now' => _l10n.onboardingTrialChipNotNow,
       'onboarding.trial.chip.start' => _l10n.onboardingTrialChipStart,
+      'onboarding.welcome.action.guided' => _l10n.onboardingWelcomeActionGuided,
+      'onboarding.welcome.action.self.host' => _l10n.onboardingWelcomeActionSelfHost,
+      'onboarding.welcome.poco' => _l10n.onboardingWelcomePoco,
+      'onboarding.welcome.title' => _l10n.onboardingWelcomeTitle,
       'permission.error' => _l10n.permissionError,
       'permission.fetch.failed' => _l10n.permissionFetchFailed,
       'permission.patterns.label' => _l10n.permissionPatternsLabel,
@@ -1192,6 +1204,14 @@ class L10nKeyResolver {
     'onboarding.review.action.provision',
     'onboarding.review.poco',
     'onboarding.review.title',
+    'onboarding.self.host.action.connect',
+    'onboarding.self.host.action.guide',
+    'onboarding.self.host.poco',
+    'onboarding.self.host.requirement.access',
+    'onboarding.self.host.requirement.docker',
+    'onboarding.self.host.requirement.server',
+    'onboarding.self.host.requirements.title',
+    'onboarding.self.host.title',
     'onboarding.server.connecting',
     'onboarding.server.login.title',
     'onboarding.server.url',
@@ -1204,6 +1224,10 @@ class L10nKeyResolver {
     'onboarding.trial.chip.not.now',
     'onboarding.trial.chip.start',
     'onboarding.trial.poco',
+    'onboarding.welcome.action.guided',
+    'onboarding.welcome.action.self.host',
+    'onboarding.welcome.poco',
+    'onboarding.welcome.title',
     'permission.error',
     'permission.fetch.failed',
     'permission.patterns.label',
@@ -1931,6 +1955,14 @@ class L10nKeyResolver {
     'onboardingReviewActionProvision': 'onboarding.review.action.provision',
     'onboardingReviewPoco': 'onboarding.review.poco',
     'onboardingReviewTitle': 'onboarding.review.title',
+    'onboardingSelfHostActionConnect': 'onboarding.self.host.action.connect',
+    'onboardingSelfHostActionGuide': 'onboarding.self.host.action.guide',
+    'onboardingSelfHostPoco': 'onboarding.self.host.poco',
+    'onboardingSelfHostRequirementAccess': 'onboarding.self.host.requirement.access',
+    'onboardingSelfHostRequirementDocker': 'onboarding.self.host.requirement.docker',
+    'onboardingSelfHostRequirementServer': 'onboarding.self.host.requirement.server',
+    'onboardingSelfHostRequirementsTitle': 'onboarding.self.host.requirements.title',
+    'onboardingSelfHostTitle': 'onboarding.self.host.title',
     'onboardingServerConnecting': 'onboarding.server.connecting',
     'onboardingServerLoginTitle': 'onboarding.server.login.title',
     'onboardingServerUrl': 'onboarding.server.url',
@@ -1943,6 +1975,10 @@ class L10nKeyResolver {
     'onboardingTrialChipNotNow': 'onboarding.trial.chip.not.now',
     'onboardingTrialChipStart': 'onboarding.trial.chip.start',
     'onboardingTrialPoco': 'onboarding.trial.poco',
+    'onboardingWelcomeActionGuided': 'onboarding.welcome.action.guided',
+    'onboardingWelcomeActionSelfHost': 'onboarding.welcome.action.self.host',
+    'onboardingWelcomePoco': 'onboarding.welcome.poco',
+    'onboardingWelcomeTitle': 'onboarding.welcome.title',
     'permissionError': 'permission.error',
     'permissionFetchFailed': 'permission.fetch.failed',
     'permissionPatternsLabel': 'permission.patterns.label',
@@ -2667,6 +2703,14 @@ class L10nKeyResolver {
     'onboarding.review.action.provision': 'onboardingReviewActionProvision',
     'onboarding.review.poco': 'onboardingReviewPoco',
     'onboarding.review.title': 'onboardingReviewTitle',
+    'onboarding.self.host.action.connect': 'onboardingSelfHostActionConnect',
+    'onboarding.self.host.action.guide': 'onboardingSelfHostActionGuide',
+    'onboarding.self.host.poco': 'onboardingSelfHostPoco',
+    'onboarding.self.host.requirement.access': 'onboardingSelfHostRequirementAccess',
+    'onboarding.self.host.requirement.docker': 'onboardingSelfHostRequirementDocker',
+    'onboarding.self.host.requirement.server': 'onboardingSelfHostRequirementServer',
+    'onboarding.self.host.requirements.title': 'onboardingSelfHostRequirementsTitle',
+    'onboarding.self.host.title': 'onboardingSelfHostTitle',
     'onboarding.server.connecting': 'onboardingServerConnecting',
     'onboarding.server.login.title': 'onboardingServerLoginTitle',
     'onboarding.server.url': 'onboardingServerUrl',
@@ -2679,6 +2723,10 @@ class L10nKeyResolver {
     'onboarding.trial.chip.not.now': 'onboardingTrialChipNotNow',
     'onboarding.trial.chip.start': 'onboardingTrialChipStart',
     'onboarding.trial.poco': 'onboardingTrialPoco',
+    'onboarding.welcome.action.guided': 'onboardingWelcomeActionGuided',
+    'onboarding.welcome.action.self.host': 'onboardingWelcomeActionSelfHost',
+    'onboarding.welcome.poco': 'onboardingWelcomePoco',
+    'onboarding.welcome.title': 'onboardingWelcomeTitle',
     'permission.error': 'permissionError',
     'permission.fetch.failed': 'permissionFetchFailed',
     'permission.patterns.label': 'permissionPatternsLabel',
@@ -3410,6 +3458,14 @@ abstract class L10nKeys {
   static const onboardingReviewActionProvision = 'onboarding.review.action.provision';
   static (String, Map<String, dynamic>) onboardingReviewPoco(String providerName) => ('onboarding.review.poco', {'providerName': providerName});
   static const onboardingReviewTitle = 'onboarding.review.title';
+  static const onboardingSelfHostActionConnect = 'onboarding.self.host.action.connect';
+  static const onboardingSelfHostActionGuide = 'onboarding.self.host.action.guide';
+  static const onboardingSelfHostPoco = 'onboarding.self.host.poco';
+  static const onboardingSelfHostRequirementAccess = 'onboarding.self.host.requirement.access';
+  static const onboardingSelfHostRequirementDocker = 'onboarding.self.host.requirement.docker';
+  static const onboardingSelfHostRequirementServer = 'onboarding.self.host.requirement.server';
+  static const onboardingSelfHostRequirementsTitle = 'onboarding.self.host.requirements.title';
+  static const onboardingSelfHostTitle = 'onboarding.self.host.title';
   static const onboardingServerConnecting = 'onboarding.server.connecting';
   static const onboardingServerLoginTitle = 'onboarding.server.login.title';
   static const onboardingServerUrl = 'onboarding.server.url';
@@ -3422,6 +3478,10 @@ abstract class L10nKeys {
   static const onboardingTrialChipNotNow = 'onboarding.trial.chip.not.now';
   static const onboardingTrialChipStart = 'onboarding.trial.chip.start';
   static (String, Map<String, dynamic>) onboardingTrialPoco(int trialDuration) => ('onboarding.trial.poco', {'trialDuration': trialDuration});
+  static const onboardingWelcomeActionGuided = 'onboarding.welcome.action.guided';
+  static const onboardingWelcomeActionSelfHost = 'onboarding.welcome.action.self.host';
+  static const onboardingWelcomePoco = 'onboarding.welcome.poco';
+  static const onboardingWelcomeTitle = 'onboarding.welcome.title';
   static const permissionError = 'permission.error';
   static const permissionFetchFailed = 'permission.fetch.failed';
   static const permissionPatternsLabel = 'permission.patterns.label';

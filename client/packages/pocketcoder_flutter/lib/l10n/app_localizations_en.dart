@@ -204,7 +204,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingConnectOrDeploy =>
-      'CONNECT TO AN EXISTING SERVER OR DEPLOY A NEW ONE.';
+      'ARE YOU ALREADY PART OF THE POCKETCODER INITIATIVE?';
 
   @override
   String get onboardingExistingServer => 'USE AN EXISTING POCKETBASE SERVER';
@@ -1876,13 +1876,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingNoServerPoco =>
-      'I couldn\'t reach a PocketCoder server from here. Do you already have one, or should I get you set up?';
+      'Are you already part of the PocketCoder Initiative?';
 
   @override
-  String get onboardingNoServerChipExisting => 'I HAVE A SERVER';
+  String get onboardingNoServerChipExisting => 'YES — CONNECT ME';
 
   @override
-  String get onboardingNoServerChipNew => 'I\'M NEW';
+  String get onboardingNoServerChipNew => 'NO — I’D LIKE TO JOIN';
+
+  @override
+  String get onboardingWelcomeTitle => 'WELCOME';
+
+  @override
+  String get onboardingWelcomePoco =>
+      'Welcome to the PocketCoder Initiative.\n\nI’ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.';
+
+  @override
+  String get onboardingWelcomeActionGuided => 'HELP ME WITH SETUP';
+
+  @override
+  String get onboardingWelcomeActionSelfHost => 'I’LL SET IT UP';
+
+  @override
+  String get onboardingSelfHostTitle => 'SELF-HOST SETUP';
+
+  @override
+  String get onboardingSelfHostPoco =>
+      'You’ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you’ll use to connect this app.';
+
+  @override
+  String get onboardingSelfHostRequirementsTitle => 'WHAT YOU’LL NEED';
+
+  @override
+  String get onboardingSelfHostRequirementServer =>
+      'A LINUX SERVER OR VPS YOU CONTROL';
+
+  @override
+  String get onboardingSelfHostRequirementDocker => 'DOCKER COMPOSE V2';
+
+  @override
+  String get onboardingSelfHostRequirementAccess => 'SSH ACCESS TO THE SERVER';
+
+  @override
+  String get onboardingSelfHostActionGuide => 'OPEN SETUP GUIDE';
+
+  @override
+  String get onboardingSelfHostActionConnect => 'CONNECT TO MY SERVER';
 
   @override
   String get onboardingSignInPoco =>
@@ -1906,7 +1945,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String onboardingTrialPoco(int trialDuration) {
-    return 'Your server provider account and server are yours, and the provider bills you directly.\n\nPocketCoder Pro includes a $trialDuration-day free trial. It lets you provision servers and receive notifications from your agents. When it ends, your server keeps running exactly as it is; you just won’t receive agent notifications or be able to provision more servers.\n\nYour server provider may offer its own trial or credit as well.';
+    return 'Your server and AI accounts are yours, and each provider bills you directly. PocketCoder helps you connect and set everything up.\n\nPocketCoder Pro includes a $trialDuration-day free trial. It lets you provision servers and receive notifications from your agents. When the trial ends, your server keeps running exactly as it is.\n\nYour server provider may offer its own trial or credit as well.';
   }
 
   @override

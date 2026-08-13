@@ -4,8 +4,8 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class OnboardingView extends StatelessWidget {
   const OnboardingView(
@@ -35,55 +35,24 @@ class OnboardingView extends StatelessWidget {
                       fontSize: AppSizes.fontTiny),
                   VSpace.x6,
                   PocoBubble(
-                      message: pocoState.message,
+                      message: context.l10n.onboardingNoServerPoco,
                       sequence: pocoState.sequence,
                       history: pocoState.history,
                       pocoSize: AppSizes.fontLarge),
                   VSpace.x4,
-                  TerminalText(context.l10n.onboardingConnectOrDeploy,
-                      alpha: 0.7),
-                  VSpace.x4,
-                  Row(children: [
-                    Expanded(
-                        child: _Choice(
-                            label: context.l10n.onboardingLogin,
-                            onTap: onLogin)),
-                    HSpace.x2,
-                    Expanded(
-                        child: _Choice(
-                            label: context.l10n.onboardingDeploy,
-                            onTap: onDeploy)),
-                  ]),
+                  TerminalPromptSuggestion(
+                    label: context.l10n.onboardingNoServerChipExisting,
+                    onSelected: onLogin,
+                  ),
+                  VSpace.x1,
+                  TerminalPromptSuggestion(
+                    label: context.l10n.onboardingNoServerChipNew,
+                    onSelected: onDeploy,
+                  ),
                 ],
               ),
             ),
           ),
         ),
       );
-}
-
-class _Choice extends StatelessWidget {
-  const _Choice({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(AppSizes.space * 1.5),
-        decoration: BoxDecoration(
-            border: Border.all(color: colors.primary.withValues(alpha: 0.7))),
-        child: Text(label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                color: colors.primary,
-                fontFamily: AppFonts.headerFamily,
-                fontSize: AppSizes.fontStandard,
-                fontWeight: AppFonts.heavy)),
-      ),
-    );
-  }
 }

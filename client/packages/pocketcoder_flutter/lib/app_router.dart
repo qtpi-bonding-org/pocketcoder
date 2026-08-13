@@ -5,6 +5,8 @@ import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_login_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_deploy_credentials_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_welcome_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_self_host_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
@@ -103,12 +105,34 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.onboardingWelcome,
+        name: RouteNames.onboardingWelcome,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const OnboardingWelcomeScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingSelfHost,
+        name: RouteNames.onboardingSelfHost,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const OnboardingSelfHostScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.onboardingDeploy,
         name: RouteNames.onboardingDeploy,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const OnboardingDeployCredentialsScreen(),
+          child: OnboardingDeployCredentialsScreen(
+            provider: state.extra is DeployOption
+                ? state.extra as DeployOption
+                : null,
+          ),
         ),
       ),
       GoRoute(
@@ -370,6 +394,8 @@ class AppRoutes {
   static const String chat = '/chat';
   static const String onboarding = '/onboarding';
   static const String onboardingLogin = '/onboarding/login';
+  static const String onboardingWelcome = '/onboarding/welcome';
+  static const String onboardingSelfHost = '/onboarding/self-host';
   static const String onboardingDeploy = '/onboarding/deploy';
   static const String onboardingHarnessAuth = '/onboarding/harness-auth';
   static const String onboardingClaudeAuth = '/onboarding/harness-auth/claude';
@@ -420,6 +446,8 @@ class RouteNames {
   static const String settings = 'configure';
   static const String onboarding = 'onboarding';
   static const String onboardingLogin = 'onboardingLogin';
+  static const String onboardingWelcome = 'onboardingWelcome';
+  static const String onboardingSelfHost = 'onboardingSelfHost';
   static const String onboardingDeploy = 'onboardingDeploy';
   static const String onboardingHarnessAuth = 'onboardingHarnessAuth';
   static const String onboardingClaudeAuth = 'onboardingClaudeAuth';

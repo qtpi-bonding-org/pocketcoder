@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
@@ -84,6 +85,45 @@ void main() {
     expect(capturedRoute, '/auth');
     expect(capturedExtra, isA<DeployCredentials>());
     expect((capturedExtra as DeployCredentials).email, 'reviewer@example.com');
+  });
+
+  testWidgets('sends onboarding to credentials after provider selection',
+      (tester) async {
+    DeployOption? selectedProvider;
+    final router = GoRouter(
+      initialLocation: '/deploy',
+      routes: [
+        GoRoute(
+          path: '/deploy',
+          builder: (context, state) => DeployPickerScreen(
+            deployOptionService: FakeDeployOptionService(),
+            onHasProAccess: () async => true,
+          ),
+        ),
+        GoRoute(
+          name: RouteNames.onboardingDeploy,
+          path: AppRoutes.onboardingDeploy,
+          builder: (context, state) {
+            selectedProvider = state.extra as DeployOption?;
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: router,
+    ));
+    await tester.pump();
+
+    await tester.tap(find.textContaining('LINODE'));
+    await tester.pumpAndSettle();
+
+    expect(selectedProvider?.id, 'linode');
+    expect(selectedProvider?.routePath, '/auth');
   });
 
   testWidgets('shows coming-soon providers dimmed and disables selection',

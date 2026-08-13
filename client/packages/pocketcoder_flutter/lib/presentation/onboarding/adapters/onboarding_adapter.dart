@@ -9,14 +9,15 @@ class OnboardingAdapter extends CubitAdapter<PocoCubit, PocoState> {
   const OnboardingAdapter({super.key});
 
   @override
-  Widget buildAdapter(BuildContext context, CubitAdapterState<PocoCubit, PocoState> adapter) {
+  Widget buildAdapter(
+      BuildContext context, CubitAdapterState<PocoCubit, PocoState> adapter) {
     final state = adapter.cubitField((value) => value);
     return ValueListenableBuilder<PocoState>(
       valueListenable: state,
       builder: (context, value, _) => OnboardingView(
         pocoState: value,
         onLogin: () => context.pushNamed(RouteNames.onboardingLogin),
-        onDeploy: () => context.pushNamed(RouteNames.onboardingDeploy),
+        onDeploy: () => context.pushNamed(RouteNames.onboardingWelcome),
       ),
     );
   }

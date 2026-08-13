@@ -475,7 +475,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingConnectOrDeploy.
   ///
   /// In en, this message translates to:
-  /// **'CONNECT TO AN EXISTING SERVER OR DEPLOY A NEW ONE.'**
+  /// **'ARE YOU ALREADY PART OF THE POCKETCODER INITIATIVE?'**
   String get onboardingConnectOrDeploy;
 
   /// No description provided for @onboardingExistingServer.
@@ -3499,20 +3499,92 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingNoServerPoco.
   ///
   /// In en, this message translates to:
-  /// **'I couldn\'t reach a PocketCoder server from here. Do you already have one, or should I get you set up?'**
+  /// **'Are you already part of the PocketCoder Initiative?'**
   String get onboardingNoServerPoco;
 
   /// No description provided for @onboardingNoServerChipExisting.
   ///
   /// In en, this message translates to:
-  /// **'I HAVE A SERVER'**
+  /// **'YES — CONNECT ME'**
   String get onboardingNoServerChipExisting;
 
   /// No description provided for @onboardingNoServerChipNew.
   ///
   /// In en, this message translates to:
-  /// **'I\'M NEW'**
+  /// **'NO — I’D LIKE TO JOIN'**
   String get onboardingNoServerChipNew;
+
+  /// No description provided for @onboardingWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WELCOME'**
+  String get onboardingWelcomeTitle;
+
+  /// No description provided for @onboardingWelcomePoco.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to the PocketCoder Initiative.\n\nI’ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.'**
+  String get onboardingWelcomePoco;
+
+  /// No description provided for @onboardingWelcomeActionGuided.
+  ///
+  /// In en, this message translates to:
+  /// **'HELP ME WITH SETUP'**
+  String get onboardingWelcomeActionGuided;
+
+  /// No description provided for @onboardingWelcomeActionSelfHost.
+  ///
+  /// In en, this message translates to:
+  /// **'I’LL SET IT UP'**
+  String get onboardingWelcomeActionSelfHost;
+
+  /// No description provided for @onboardingSelfHostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SELF-HOST SETUP'**
+  String get onboardingSelfHostTitle;
+
+  /// No description provided for @onboardingSelfHostPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'You’ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you’ll use to connect this app.'**
+  String get onboardingSelfHostPoco;
+
+  /// No description provided for @onboardingSelfHostRequirementsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT YOU’LL NEED'**
+  String get onboardingSelfHostRequirementsTitle;
+
+  /// No description provided for @onboardingSelfHostRequirementServer.
+  ///
+  /// In en, this message translates to:
+  /// **'A LINUX SERVER OR VPS YOU CONTROL'**
+  String get onboardingSelfHostRequirementServer;
+
+  /// No description provided for @onboardingSelfHostRequirementDocker.
+  ///
+  /// In en, this message translates to:
+  /// **'DOCKER COMPOSE V2'**
+  String get onboardingSelfHostRequirementDocker;
+
+  /// No description provided for @onboardingSelfHostRequirementAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH ACCESS TO THE SERVER'**
+  String get onboardingSelfHostRequirementAccess;
+
+  /// No description provided for @onboardingSelfHostActionGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'OPEN SETUP GUIDE'**
+  String get onboardingSelfHostActionGuide;
+
+  /// No description provided for @onboardingSelfHostActionConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECT TO MY SERVER'**
+  String get onboardingSelfHostActionConnect;
 
   /// No description provided for @onboardingSignInPoco.
   ///
@@ -3553,7 +3625,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingTrialPoco.
   ///
   /// In en, this message translates to:
-  /// **'Your server provider account and server are yours, and the provider bills you directly.\n\nPocketCoder Pro includes a {trialDuration}-day free trial. It lets you provision servers and receive notifications from your agents. When it ends, your server keeps running exactly as it is; you just won’t receive agent notifications or be able to provision more servers.\n\nYour server provider may offer its own trial or credit as well.'**
+  /// **'Your server and AI accounts are yours, and each provider bills you directly. PocketCoder helps you connect and set everything up.\n\nPocketCoder Pro includes a {trialDuration}-day free trial. It lets you provision servers and receive notifications from your agents. When the trial ends, your server keeps running exactly as it is.\n\nYour server provider may offer its own trial or credit as well.'**
   String onboardingTrialPoco(int trialDuration);
 
   /// No description provided for @onboardingTrialChipStart.
