@@ -160,47 +160,42 @@ impl Repository {
                 "limit must be between 1 and {MAX_LIST_LIMIT}"
             )));
         }
+        filter.timestamps.validate()?;
 
         self.call(move |connection| {
             let table = table_name(filter.kind);
-            let sql = if filter.agent_profile_id.is_some() {
-                format!(
-                    "SELECT id, account_id, agent_profile_id, agent_name, body, \
-                            created_at, updated_at, retrieved_at \
-                     FROM {table} \
-                     WHERE account_id = ?1 AND agent_profile_id = ?2 \
-                     ORDER BY created_at DESC, id ASC LIMIT ?3 OFFSET ?4"
-                )
-            } else {
-                format!(
-                    "SELECT id, account_id, agent_profile_id, agent_name, body, \
-                            created_at, updated_at, retrieved_at \
-                     FROM {table} \
-                     WHERE account_id = ?1 \
-                     ORDER BY created_at DESC, id ASC LIMIT ?3 OFFSET ?4"
-                )
-            };
+            let sql = format!(
+                "SELECT id, account_id, agent_profile_id, agent_name, body, \
+                        created_at, updated_at, retrieved_at \
+                 FROM {table} \
+                 WHERE account_id = ?1 \
+                   AND (?2 IS NULL OR agent_profile_id = ?2) \
+                   AND (?3 IS NULL OR created_at >= ?3) \
+                   AND (?4 IS NULL OR created_at <= ?4) \
+                   AND (?5 IS NULL OR updated_at >= ?5) \
+                   AND (?6 IS NULL OR updated_at <= ?6) \
+                   AND (?7 IS NULL OR retrieved_at >= ?7) \
+                   AND (?8 IS NULL OR retrieved_at <= ?8) \
+                 ORDER BY created_at DESC, id ASC LIMIT ?9 OFFSET ?10"
+            );
             let mut statement = connection.prepare(&sql)?;
-            let records = if let Some(agent_profile_id) = filter.agent_profile_id {
-                statement
-                    .query_map(
-                        params![
-                            filter.account_id,
-                            agent_profile_id,
-                            filter.limit,
-                            filter.offset
-                        ],
-                        map_record,
-                    )?
-                    .collect::<std::result::Result<Vec<_>, _>>()?
-            } else {
-                statement
-                    .query_map(
-                        params![filter.account_id, "", filter.limit, filter.offset],
-                        map_record,
-                    )?
-                    .collect::<std::result::Result<Vec<_>, _>>()?
-            };
+            let records = statement
+                .query_map(
+                    params![
+                        filter.account_id,
+                        filter.agent_profile_id,
+                        filter.timestamps.created_after_ms,
+                        filter.timestamps.created_before_ms,
+                        filter.timestamps.updated_after_ms,
+                        filter.timestamps.updated_before_ms,
+                        filter.timestamps.retrieved_after_ms,
+                        filter.timestamps.retrieved_before_ms,
+                        filter.limit,
+                        filter.offset,
+                    ],
+                    map_record,
+                )?
+                .collect::<std::result::Result<Vec<_>, _>>()?;
             Ok(records)
         })
         .await

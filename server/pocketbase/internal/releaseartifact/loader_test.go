@@ -207,8 +207,8 @@ func TestEnsureOptionalOllamaImageUsesVerifiedReleaseArtifact(t *testing.T) {
 	if docker.calls() != 1 || string(docker.payload) != string(payload) {
 		t.Fatalf("Docker load calls/payload = %d/%q", docker.calls(), docker.payload)
 	}
-	if err := loader.EnsureOptionalImage(context.Background(), docker, "cognee", image); err == nil {
-		t.Fatal("deferred Cognee capability was unexpectedly accepted")
+	if err := loader.EnsureOptionalImage(context.Background(), docker, "unknown", image); err == nil {
+		t.Fatal("unknown optional capability was unexpectedly accepted")
 	}
 }
 

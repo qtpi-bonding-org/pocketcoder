@@ -43,6 +43,8 @@ awk -v release="$release" '
       image = "pocketcoder-pocketbase:" release
     } else if (service == "mcp-gateway") {
       image = "pocketcoder-mcp-gateway:" release
+    } else if (service == "pocket-memory") {
+      image = "pocketcoder-memory:" release
     } else if (service == "ollama") {
       image = "pocketcoder-ollama:" release
     } else if (service in harness_image) {

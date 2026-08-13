@@ -5,4 +5,6 @@
 -- won't change during this connection and to skip that machinery entirely
 -- (verified empirically against the real mounted volume).
 ATTACH DATABASE 'file:/goose_data/data/sessions/sessions.db?immutable=1' AS goose;
-ATTACH DATABASE 'file:/cognee_data/system/databases/cognee_db?immutable=1' AS cognee;
+-- Pocket Memory remains live in WAL mode. mode=ro observes committed WAL
+-- content; immutable=1 would incorrectly allow SQLite to ignore it.
+ATTACH DATABASE 'file:/memory_data/memory.sqlite3?mode=ro' AS memory;

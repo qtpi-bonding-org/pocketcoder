@@ -2,7 +2,11 @@
 
 use tokio_rusqlite::rusqlite::params;
 
-use crate::{MemoryError, MemoryRecord, Result, db::Repository, domain::MemoryKind};
+use crate::{
+    MemoryError, MemoryRecord, Result,
+    db::Repository,
+    domain::{MemoryKind, TimestampFilter},
+};
 
 const MAX_CANDIDATES: u32 = 1_000;
 
@@ -27,6 +31,7 @@ impl Repository {
         kind: MemoryKind,
         account_id: &str,
         agent_profile_id: Option<&str>,
+        timestamps: TimestampFilter,
         query: &str,
         limit: u32,
     ) -> Result<Vec<FtsCandidate>> {
@@ -35,6 +40,7 @@ impl Repository {
                 "account_id must not be empty".to_owned(),
             ));
         }
+        timestamps.validate()?;
         if limit == 0 || limit > MAX_CANDIDATES {
             return Err(MemoryError::InvalidInput(format!(
                 "candidate limit must be between 1 and {MAX_CANDIDATES}"
@@ -49,49 +55,44 @@ impl Repository {
                 MemoryKind::Observation => ("observations_fts", "observations"),
                 MemoryKind::Interpretation => ("interpretations_fts", "interpretations"),
             };
-            let sql = if agent_profile_id.is_some() {
-                format!(
-                    "SELECT content.id, content.account_id, content.agent_profile_id, \
-                            content.agent_name, content.body, content.created_at, \
-                            content.updated_at, content.retrieved_at, \
-                            bm25({fts_table}) AS relevance \
-                     FROM {fts_table} \
-                     JOIN {content_table} AS content \
-                       ON content.storage_id = {fts_table}.rowid \
-                     WHERE {fts_table} MATCH ?1 \
-                       AND content.account_id = ?2 \
-                       AND content.agent_profile_id = ?3 \
-                     ORDER BY relevance ASC, content.updated_at DESC, content.id ASC \
-                     LIMIT ?4"
-                )
-            } else {
-                format!(
-                    "SELECT content.id, content.account_id, content.agent_profile_id, \
-                            content.agent_name, content.body, content.created_at, \
-                            content.updated_at, content.retrieved_at, \
-                            bm25({fts_table}) AS relevance \
-                     FROM {fts_table} \
-                     JOIN {content_table} AS content \
-                       ON content.storage_id = {fts_table}.rowid \
-                     WHERE {fts_table} MATCH ?1 \
-                       AND content.account_id = ?2 \
-                     ORDER BY relevance ASC, content.updated_at DESC, content.id ASC \
-                     LIMIT ?3"
-                )
-            };
+            let sql = format!(
+                "SELECT content.id, content.account_id, content.agent_profile_id, \
+                        content.agent_name, content.body, content.created_at, \
+                        content.updated_at, content.retrieved_at, \
+                        bm25({fts_table}) AS relevance \
+                 FROM {fts_table} \
+                 JOIN {content_table} AS content \
+                   ON content.storage_id = {fts_table}.rowid \
+                 WHERE {fts_table} MATCH ?1 \
+                   AND content.account_id = ?2 \
+                   AND (?3 IS NULL OR content.agent_profile_id = ?3) \
+                   AND (?4 IS NULL OR content.created_at >= ?4) \
+                   AND (?5 IS NULL OR content.created_at <= ?5) \
+                   AND (?6 IS NULL OR content.updated_at >= ?6) \
+                   AND (?7 IS NULL OR content.updated_at <= ?7) \
+                   AND (?8 IS NULL OR content.retrieved_at >= ?8) \
+                   AND (?9 IS NULL OR content.retrieved_at <= ?9) \
+                 ORDER BY relevance ASC, content.updated_at DESC, content.id ASC \
+                 LIMIT ?10"
+            );
             let mut statement = connection.prepare(&sql)?;
-            let rows = if let Some(agent_profile_id) = agent_profile_id {
-                statement
-                    .query_map(
-                        params![query, account_id, agent_profile_id, limit],
-                        map_candidate_row,
-                    )?
-                    .collect::<std::result::Result<Vec<_>, _>>()?
-            } else {
-                statement
-                    .query_map(params![query, account_id, limit], map_candidate_row)?
-                    .collect::<std::result::Result<Vec<_>, _>>()?
-            };
+            let rows = statement
+                .query_map(
+                    params![
+                        query,
+                        account_id,
+                        agent_profile_id,
+                        timestamps.created_after_ms,
+                        timestamps.created_before_ms,
+                        timestamps.updated_after_ms,
+                        timestamps.updated_before_ms,
+                        timestamps.retrieved_after_ms,
+                        timestamps.retrieved_before_ms,
+                        limit,
+                    ],
+                    map_candidate_row,
+                )?
+                .collect::<std::result::Result<Vec<_>, _>>()?;
             rows.into_iter()
                 .enumerate()
                 .map(|(rank, (record, bm25))| {

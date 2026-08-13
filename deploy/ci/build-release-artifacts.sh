@@ -28,9 +28,13 @@ base_url=https://images.pocketcoder.org
 compose_snapshot="$artifact_dir/docker-compose.prebuilt.yml"
 
 # Build repository-owned images and give each one its immutable release name.
-docker compose -p pocketcoder build pocketbase mcp-gateway
+: "${POCKET_MEMORY_MODEL_URL:?Pocket Memory model artifact URL is required}"
+: "${POCKET_MEMORY_MODEL_SHA256:?Pocket Memory model artifact SHA-256 is required}"
+export POCKET_MEMORY_REQUIRE_MODEL=1
+docker compose -p pocketcoder build pocketbase mcp-gateway pocket-memory
 docker tag pocketcoder-pocketbase:latest "pocketcoder-pocketbase:$release"
 docker tag pocketcoder-mcp-gateway:latest "pocketcoder-mcp-gateway:$release"
+docker tag pocketcoder-memory:latest "pocketcoder-memory:$release"
 
 compose_json=$(docker compose --profile harness-images config --format json)
 while IFS=$'\t' read -r id service repository; do

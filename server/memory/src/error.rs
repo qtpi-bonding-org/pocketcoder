@@ -23,14 +23,29 @@ pub enum MemoryError {
     #[error("observation and interpretation must belong to the active account")]
     CrossAccountLink,
 
+    #[error("embedding result is stale because the memory body changed")]
+    StaleEmbedding,
+
+    #[error("embedding must contain exactly 384 finite values with a non-zero norm")]
+    InvalidEmbedding,
+
+    #[error("embedding worker is unavailable")]
+    EmbedderUnavailable,
+
+    #[error("embedding error: {0}")]
+    Embedding(String),
+
+    #[error("failed to register bundled sqlite-vec extension")]
+    VectorExtensionRegistration,
+
     #[error("database error: {0}")]
     Database(#[from] tokio_rusqlite::rusqlite::Error),
 
     #[error("database worker stopped")]
     DatabaseWorkerStopped,
 
-    #[error("database schema version {found} is newer than supported version {supported}")]
-    UnsupportedSchema { found: u32, supported: u32 },
+    #[error("unsupported database schema: {0}")]
+    UnsupportedSchema(String),
 }
 
 impl From<tokio_rusqlite::Error<MemoryError>> for MemoryError {

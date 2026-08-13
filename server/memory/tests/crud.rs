@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use pocket_memory::{AgentIdentity, MemoryError, MemoryKind, Repository, domain::ListFilter};
+use pocket_memory::{
+    AgentIdentity, MemoryError, MemoryKind, Repository,
+    domain::{ListFilter, TimestampFilter},
+};
 
 fn poco(account: &str) -> AgentIdentity {
     AgentIdentity::new(account, "poco-profile", "Poco").expect("valid identity")
@@ -58,6 +61,7 @@ async fn list_is_scoped_by_account_and_optionally_author() {
             kind: MemoryKind::Observation,
             account_id: "family".to_owned(),
             agent_profile_id: Some("scout-profile".to_owned()),
+            timestamps: TimestampFilter::default(),
             limit: 10,
             offset: 0,
         })

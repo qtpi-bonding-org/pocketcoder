@@ -7,7 +7,7 @@ PocketCoder is a solo research project built in the open. It follows an **Alpine
 > ### ⚠️ Status: mid-build, core loop usable
 > - ✅ **Backend contract (c1 ↔ c2) is implemented and passes live acceptance** against a real model — authenticated runs, streaming, tool calls, and phone approve/deny all work.
 > - ✅ **The Flutter client's core loop is live**: chat list (home screen), conversation, file browser, MCP/scheduler/skills/tool-permissions/agent-config/notification settings, logout — all wired to real PocketBase-backed data, no stubs.
-> - ✅ **Cognee memory is live**, sharing Goose's own `agent` Compose profile — not gated behind the MCP gateway.
+> - ✅ **Pocket Memory replaces Cognee** with an always-on Rust/SQLite MCP service: agent-authored observations and interpretations, local multilingual hybrid recall, and no generative-memory LLM.
 > - ✅ **The c3 MCP gateway container runs by default** (no Compose profile gate) — external MCP servers are approved per-deployment via the `mcp_servers` PocketBase collection.
 > - 💤 **Dormant:** the Rust sandbox proxy is retained for future work — see [`dormant/`](dormant/).
 >
@@ -60,7 +60,8 @@ The agent core is three containers connected by open protocols:
 | **c1** | PocketBase (as a Go library) + Go AG-UI server + Go ACP client | The "front door." Auth, chat ownership, the single `chat → Goose-session` mapping, and the **ACP ↔ AG-UI translation** seam. |
 | **c2** | **Goose** in ACP agent-server mode (`goose serve`) | The default agent harness and sole provider of Goose-only features such as schedules and extensions. |
 | **Peer harnesses** | Claude Agent ACP / Codex ACP, provisioned independently on first selection | Optional agent harness containers routed per chat. Each exposes the same authenticated ACP WebSocket boundary through PocketCoder's stdio adapter. |
-| **c3** | Docker MCP Gateway | Runs by default. Hosts external tools as MCP servers (GitHub, Notion, etc.), approved per-deployment via the `mcp_servers` PocketBase collection. **Cognee memory is no longer part of this — see below.** |
+| **c3** | Docker MCP Gateway | Runs by default. Hosts external tools as MCP servers (GitHub, Notion, etc.), approved per-deployment via the `mcp_servers` PocketBase collection. **Core memory is attached directly per ACP session so PocketBase can inject agent identity.** |
+| **Memory** | Pocket Memory | Always-on Rust service with SQLite, FTS5, sqlite-vec, and an in-process multilingual E5 embedder. |
 
 ```
 Mobile (Flutter)
@@ -83,7 +84,12 @@ c3  Docker MCP Gateway — GitHub, Notion, etc. (approved per-deployment)
 | **ACP** | c1 ↔ c2 (and c2 ↔ its spawned harness) | Session, tool calls, permission requests |
 | **MCP** | c3 ↔ c2 | Tool access — GitHub, Notion, etc. |
 
-**Cognee memory runs as a Goose extension, not through the MCP gateway.** It is optional via the `memory` Compose profile (`docker compose --profile memory up -d`), configured live via the `cognee_config` PocketBase collection → rendered `cognee.env` → mounted into the container. The Goose runtime itself is part of the core stack.
+**Pocket Memory is attached directly to each harness through ACP, not routed
+through the deployment-wide MCP gateway.** PocketBase injects the resolved
+account and concrete agent profile in the MCP connection, so memory tools do not
+ask an agent to remember its own identity. The service is local and always on;
+if its bundled embedding model is unavailable, canonical writes and FTS5 recall
+continue in an explicitly degraded mode.
 
 Goose is the **sole system of record** for conversation history (its own SQLite session store). PocketBase stores only authentication and the `chat_id → goose_session_id` mapping — it is not a conversation or approval ledger. The Flutter client keeps a local Drift cache as an offline mirror that Goose refreshes on load.
 
@@ -183,8 +189,7 @@ the rest are opt-in via profiles.
 | `docker-socket-proxy-write` | *(always)* | Scoped Docker API for PocketBase operations |
 | `sqlpage` | *(always)* | Observability dashboard |
 | `sqlpage-data-init` | *(always)* | Initializes dashboard SQLite files |
-| `cognee` | `memory` | Optional agent memory, loaded as a live Goose extension (not via `c3`) |
-| `cognee-data-init` | `memory` | Initializes the Cognee data volume |
+| `pocket-memory` | *(always)* | Agent-authored SQLite memory with local hybrid recall |
 | `ntfy` | `foss` | Self-hosted push notifications |
 | `tailscale` | `tailscale` | Remote access (funnel/private) |
 | `caddy` | `caddy` | Containerized TLS termination for local Docker deployments |
@@ -192,7 +197,6 @@ the rest are opt-in via profiles.
 
 ```bash
 docker compose up -d
-docker compose --profile memory up -d          # add Cognee memory
 docker compose --profile foss up -d            # add self-hosted ntfy
 docker compose --profile tailscale up -d       # add Tailscale access
 docker compose --profile caddy up -d           # local Docker TLS route
@@ -209,9 +213,12 @@ The signed deployment-sizing policy stores exact bytes in
 [`deploy/release/deployment-sizing.json`](deploy/release/deployment-sizing.json).
 These measurements were taken on 2026-08-13 with the pinned `linux/amd64`
 images under Docker Desktop LinuxKit. Container and Caddy values are the
-maximum Docker working set across 12 one-second idle samples. Cognee was
-deliberately omitted. The one-shot `sqlpage-data-init` container is also
-excluded because it does not remain resident.
+maximum Docker working set across 12 one-second idle samples, except Pocket
+Memory: Docker Desktop under-reported its image-backed model pages, so its row
+uses the Linux process RSS after one real embedding and return to idle. The
+one-shot `sqlpage-data-init` container is excluded because it does not remain
+resident. See the [Pocket Memory measurements](server/memory/README.md#measured-memory-footprint)
+for the cold/warm breakdown and sizing guidance.
 
 | Component | Exact bytes | MiB | Measurement role |
 |:---|---:|---:|:---|
@@ -220,6 +227,7 @@ excluded because it does not remain resident.
 | Docker socket proxy (MCP) | 10,506,732 | 10.020 | Core container, idle maximum |
 | Docker socket proxy (write) | 7,286,555 | 6.949 | Core container, idle maximum |
 | SQLPage | 24,819,794 | 23.670 | Core container, idle maximum |
+| Pocket Memory | 206,376,960 | 196.816 | Core container, warm idle process RSS |
 | Goose | 42,540,728 | 40.570 | Harness container, idle maximum |
 | Claude Code | 10,064,232 | 9.598 | Harness container, idle maximum |
 | Codex | 8,158,970 | 7.781 | Harness container, idle maximum |
@@ -229,9 +237,10 @@ excluded because it does not remain resident.
 | Caddy | 65,245,184 | 62.223 | Pinned Caddy container used as an estimate for native Caddy |
 | `pocketcoder-release check-metadata` | 6,692,864 | 6.383 | One-shot Linux peak RSS; exits after the check |
 
-The five permanent core containers total 196,449,666 bytes (187.349 MiB).
+The six permanent core containers total 402,826,626 bytes (384.165 MiB).
 The release manager is a systemd one-shot task, not a daemon, so its
-steady-state contribution is zero.
+steady-state contribution is zero. Approximately 130 MiB of Pocket Memory's
+warm RSS is file-backed model data that Linux can reclaim under pressure.
 
 Docker does not publish one fixed Docker Engine memory requirement. Its
 [resource guidance](https://docs.docker.com/engine/containers/resource_constraints/)
@@ -250,7 +259,8 @@ Those runtime values are environment-specific measurements, not portable
 constants. They also exclude Linux itself, filesystem cache, active agent
 subprocesses, compilers, package installation, release downloads and database
 snapshots. The signed policy therefore declares 2 GiB as the minimum for a
-remote-model deployment and recommends 4 GiB for operational headroom. Local
+remote-model deployment and recommends 4 GiB for operational headroom. Pocket
+Memory's embedding model is already included above; optional generative local
 models add their model and context requirements separately.
 
 ## Flutter client
@@ -339,9 +349,8 @@ An active research project by a solo developer, built in the open — not a comm
 PocketCoder is licensed as a whole under **AGPL-3.0-or-later**, including the
 Flutter client, backend, and self-hosting infrastructure. Third-party runtime
 components retain their own licenses. The agent core (Goose) and PocketBase are OSI-approved open
-source. The optional memory component (Cognee) runs through the `memory`
-Compose profile rather than behind the `c3` gateway, and any non-OSI runtime
-dependency it introduces is tracked here.
+source. Pocket Memory is original AGPL code; its local multilingual E5 model and
+other third-party dependencies retain their own FOSS licenses and provenance.
 
 The client and backend here are free software and fully self-hostable. The
 separate PocketCoder Pro distribution adds managed one-tap VPS provisioning,

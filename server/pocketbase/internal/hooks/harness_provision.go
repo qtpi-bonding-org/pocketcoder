@@ -275,7 +275,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		workspaceVolume + ":/workspace",
 		authVolume + ":" + harnessAuthHomeMount,
 	}
-	networkNames := []string{networkName, ModelNetwork, "pocketcoder-mcp-gateway", "pocketcoder-cognee"}
+	networkNames := []string{networkName, ModelNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
 	if harness.GetString("cli_id") == "goose" {
 		// The Goose image keeps its session/config state under GOOSE_PATH_ROOT.
 		// Reuse the same per-user auth volume so its state is never shared with

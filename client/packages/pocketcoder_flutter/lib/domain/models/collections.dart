@@ -17,7 +17,6 @@ class Collections {
   static const String pocoConfigs = 'poco_configs';
   static const String agentSessions = 'agent_sessions';
   static const String scheduleOwners = 'schedule_owners';
-  static const String cogneeConfig = 'cognee_config';
   static const String harnessInstances = 'harness_instances';
 
   static const List<String> all = [
@@ -38,7 +37,6 @@ class Collections {
     pocoConfigs,
     agentSessions,
     scheduleOwners,
-    cogneeConfig,
     harnessInstances,
   ];
 }

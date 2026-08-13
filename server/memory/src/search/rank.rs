@@ -84,7 +84,6 @@ pub fn rank_candidates(
         right
             .score
             .total_cmp(&left.score)
-            .then_with(|| right.rrf_score.total_cmp(&left.rrf_score))
             .then_with(|| right.updated_at.cmp(&left.updated_at))
             .then_with(|| kind_order(left.kind).cmp(&kind_order(right.kind)))
             .then_with(|| left.id.cmp(&right.id))

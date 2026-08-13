@@ -89,8 +89,8 @@ class AgentObservabilityView extends StatelessWidget {
                               ),
                               _buildContainerTile(
                                 context,
-                                'cognee',
-                                'pocketcoder-cognee',
+                                'pocket-memory',
+                                'pocketcoder-memory',
                                 state.currentContainer,
                                 onSelectContainer,
                               ),

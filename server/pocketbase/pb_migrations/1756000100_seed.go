@@ -87,6 +87,19 @@ func init() {
 			return err
 		}
 
+		agentProfiles, err := app.FindCollectionByNameOrId("agent_profiles")
+		if err != nil {
+			return err
+		}
+		poco := core.NewRecord(agentProfiles)
+		poco.Set("name", "Poco")
+		poco.Set("is_system", true)
+		poco.Set("is_default", true)
+		poco.Set("permission_mode", balanced.Id)
+		if err := app.Save(poco); err != nil {
+			return fmt.Errorf("seed Poco agent profile: %w", err)
+		}
+
 		tpColl, err := app.FindCollectionByNameOrId("permission_mode_tools")
 		if err != nil {
 			return err

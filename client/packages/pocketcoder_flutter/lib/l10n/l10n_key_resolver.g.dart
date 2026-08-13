@@ -687,9 +687,6 @@ class L10nKeyResolver {
       'walkthrough.server.key.chip.ssh' => _l10n.walkthroughServerKeyChipSsh,
       'walkthrough.server.key.poco' => _l10n.walkthroughServerKeyPoco,
       'walkthrough.server.key.title' => _l10n.walkthroughServerKeyTitle,
-      'walkthrough.services.cognee.badge' => _l10n.walkthroughServicesCogneeBadge,
-      'walkthrough.services.cognee.poco' => _l10n.walkthroughServicesCogneePoco,
-      'walkthrough.services.cognee.title' => _l10n.walkthroughServicesCogneeTitle,
       'walkthrough.services.compose.chip.docker.compose' => _l10n.walkthroughServicesComposeChipDockerCompose,
       'walkthrough.services.compose.chip.private.connections' => _l10n.walkthroughServicesComposeChipPrivateConnections,
       'walkthrough.services.compose.chip.saved.data' => _l10n.walkthroughServicesComposeChipSavedData,
@@ -1522,9 +1519,6 @@ class L10nKeyResolver {
     'walkthrough.server.key.chip.ssh',
     'walkthrough.server.key.poco',
     'walkthrough.server.key.title',
-    'walkthrough.services.cognee.badge',
-    'walkthrough.services.cognee.poco',
-    'walkthrough.services.cognee.title',
     'walkthrough.services.compose.chip.docker.compose',
     'walkthrough.services.compose.chip.private.connections',
     'walkthrough.services.compose.chip.saved.data',
@@ -2294,9 +2288,6 @@ class L10nKeyResolver {
     'walkthroughServerKeyChipSsh': 'walkthrough.server.key.chip.ssh',
     'walkthroughServerKeyPoco': 'walkthrough.server.key.poco',
     'walkthroughServerKeyTitle': 'walkthrough.server.key.title',
-    'walkthroughServicesCogneeBadge': 'walkthrough.services.cognee.badge',
-    'walkthroughServicesCogneePoco': 'walkthrough.services.cognee.poco',
-    'walkthroughServicesCogneeTitle': 'walkthrough.services.cognee.title',
     'walkthroughServicesComposeChipDockerCompose': 'walkthrough.services.compose.chip.docker.compose',
     'walkthroughServicesComposeChipPrivateConnections': 'walkthrough.services.compose.chip.private.connections',
     'walkthroughServicesComposeChipSavedData': 'walkthrough.services.compose.chip.saved.data',
@@ -3063,9 +3054,6 @@ class L10nKeyResolver {
     'walkthrough.server.key.chip.ssh': 'walkthroughServerKeyChipSsh',
     'walkthrough.server.key.poco': 'walkthroughServerKeyPoco',
     'walkthrough.server.key.title': 'walkthroughServerKeyTitle',
-    'walkthrough.services.cognee.badge': 'walkthroughServicesCogneeBadge',
-    'walkthrough.services.cognee.poco': 'walkthroughServicesCogneePoco',
-    'walkthrough.services.cognee.title': 'walkthroughServicesCogneeTitle',
     'walkthrough.services.compose.chip.docker.compose': 'walkthroughServicesComposeChipDockerCompose',
     'walkthrough.services.compose.chip.private.connections': 'walkthroughServicesComposeChipPrivateConnections',
     'walkthrough.services.compose.chip.saved.data': 'walkthroughServicesComposeChipSavedData',
@@ -3839,9 +3827,6 @@ abstract class L10nKeys {
   static const walkthroughServerKeyChipSsh = 'walkthrough.server.key.chip.ssh';
   static const walkthroughServerKeyPoco = 'walkthrough.server.key.poco';
   static const walkthroughServerKeyTitle = 'walkthrough.server.key.title';
-  static const walkthroughServicesCogneeBadge = 'walkthrough.services.cognee.badge';
-  static const walkthroughServicesCogneePoco = 'walkthrough.services.cognee.poco';
-  static const walkthroughServicesCogneeTitle = 'walkthrough.services.cognee.title';
   static const walkthroughServicesComposeChipDockerCompose = 'walkthrough.services.compose.chip.docker.compose';
   static const walkthroughServicesComposeChipPrivateConnections = 'walkthrough.services.compose.chip.private.connections';
   static const walkthroughServicesComposeChipSavedData = 'walkthrough.services.compose.chip.saved.data';

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use pocket_memory::{AgentIdentity, MemoryError, MemoryKind, Repository};
+use pocket_memory::{AgentIdentity, MemoryError, MemoryKind, Repository, domain::TimestampFilter};
 
 fn identity(account: &str, profile: &str) -> AgentIdentity {
     AgentIdentity::new(account, profile, profile).unwrap()
@@ -159,6 +159,7 @@ async fn interpretation_and_initial_links_are_one_transaction() {
             kind: MemoryKind::Interpretation,
             account_id: "family".to_owned(),
             agent_profile_id: None,
+            timestamps: TimestampFilter::default(),
             limit: 10,
             offset: 0,
         })

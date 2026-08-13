@@ -44,6 +44,9 @@ type SessionProfile struct {
 	McpServers                         []acpsdk.McpServer
 	Mode                               acpsdk.SessionModeId
 	PermissionRules                    []ToolPermissionRule
+	AccountID                          string
+	AgentProfileID                     string
+	AgentName                          string
 
 	Target                        Target
 	ResolvedInstanceID            string // the harness_instances id this chat resolves to right now
