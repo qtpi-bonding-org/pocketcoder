@@ -6,9 +6,10 @@ head: []
 
 # Backend API Boundary
 
-**Status:** Approved direction; implementation pending
+**Status:** Endpoint reduction implemented; OpenAPI contract generation is the
+next phase
 **Date:** 2026-08-13
-**Revalidated against:** `b1ffdff8b` (Git SSH collections and hooks)
+**Revalidated against:** `172ccbef4` (release image delivery) plus the API cleanup branch
 **Scope:** PocketBase collection APIs, PocketBase hooks, and `/api/pocketcoder/*`
 
 There are no deployed users or user data to migrate. This cleanup does not
@@ -24,14 +25,16 @@ deployment's durable control plane. The Flutter app uses the official PocketBase
 Dart SDK, extended by `pocketbase_drift`, for authentication, collection CRUD,
 realtime subscriptions, and offline caching.
 
-PocketCoder currently registers 37 routes below `/api/pocketcoder/*`.
+Before this cleanup, PocketCoder registered 37 routes below
+`/api/pocketcoder/*`.
 Some are true operations or streams. Others duplicate CRUD already provided by
 PocketBase collections. Maintaining both paths produces two contracts, two sets
 of Dart models, inconsistent authorization, and avoidable endpoint drift.
 
-This document defines the boundary before a generated API contract is added.
+This document defines the boundary for the collection conversion and the
+generated API contract that follows it.
 
-## Current surface snapshot
+## Pre-cleanup surface snapshot
 
 The post-Git-SSH, post-harness-normalization route surface is:
 
@@ -50,11 +53,36 @@ The post-Git-SSH, post-harness-normalization route surface is:
 | Push dispatch | 1 | Keep as operation |
 | **Total** | **37** | |
 
-The Flutter `ApiEndpoints` class is not an accurate inventory today. It still
-contains routes the backend does not register (`permission`, `health`), omits
-several routes the backend does register, and is bypassed by raw path strings in
-some infrastructure clients. A checked route manifest/parity test is therefore
-an early cleanup requirement, not merely final polish.
+The Flutter `ApiEndpoints` class was not an accurate inventory. It contained
+routes the backend did not register (`permission`, `health`), omitted several
+routes the backend did register, and was bypassed by raw path strings in some
+infrastructure clients. That made a checked route manifest/parity test an early
+cleanup requirement, not merely final polish.
+
+## Implemented outcome
+
+The cleanup leaves 25 custom routes and checks them against one repository route
+manifest from both Go and Flutter tests. The remaining surface consists of:
+
+| Transport shape | Routes |
+|:---|---:|
+| JSON operations | 20 |
+| SSE or NDJSON streams | 3 |
+| Binary workspace file read | 1 |
+| Observability proxy | 1 |
+| **Total** | **25** |
+
+Skills and schedules now use generated PocketBase records and collection
+DAOs/repositories. Only schedule `run-now` remains an operation. Harness
+accounts and per-profile selections use owner-scoped collection rules, request
+hooks, cross-collection validation, and a Flutter repository. The obsolete
+inbound `ssh_keys` projection and terminal client were removed. Release routes
+and response fields now follow the release metadata vocabulary.
+
+Skill materialization now respects project scope, deduplicates sibling harness
+writes to their shared user workspace, and records a manifest of PocketCoder-
+owned files. Removing stale managed files and exposing retry/error state remain
+reconciler follow-ups; they are not reasons to restore CRUD wrapper routes.
 
 ## Decision
 
@@ -334,12 +362,13 @@ must not be represented as ordinary offline-capable record creation by accident.
 OpenAPI is not required for the standard PocketBase collection API. PocketBase's
 schema and Dart SDK already define that contract.
 
-First remove redundant collection wrappers. Then inventory the remaining
-PocketCoder behavior API. If OpenAPI is adopted, it should cover **all remaining
+The post-reduction inventory contains 20 JSON operations in addition to three
+streams, a binary read, and a proxy. A path manifest prevents route drift, but it
+cannot detect request/response field drift. Adopt OpenAPI for **all remaining
 `/api/pocketcoder/*` operations**, including normal JSON operations and stream
-metadata. It should not be introduced only for streaming routes: generated
-clients provide the most value for typed JSON request/response operations, while
-SSE and NDJSON still need specialized incremental Dart readers.
+metadata. Do not introduce it only for streaming routes: generated clients
+provide the most value for typed JSON request/response operations, while SSE and
+NDJSON still need specialized incremental Dart readers.
 
 The intended split would be:
 
@@ -347,7 +376,7 @@ The intended split would be:
 PocketBase schema
   -> collection models, CRUD, rules, realtime, offline state
 
-PocketCoder OpenAPI (if retained after the endpoint reduction)
+PocketCoder OpenAPI
   -> operation paths, methods, typed request/response models, errors,
      authentication declarations, and stream media/event contracts
 ```
@@ -356,9 +385,11 @@ OpenAPI would describe streams, but generated code would delegate their actual
 transport to handwritten `Stream<T>` implementations using the shared
 PocketBase base URL and auth token.
 
-Until that decision is made, remaining PocketCoder operations must still have a
-single typed Flutter client/repository boundary. Raw `/api/pocketcoder/*` path
-strings must not appear in Cubits, adapters, widgets, or screens.
+The route manifest remains the checked path inventory until the OpenAPI source
+replaces it. During that transition, remaining PocketCoder operations still
+have a single typed Flutter client/repository boundary. Raw
+`/api/pocketcoder/*` path strings must not appear in Cubits, adapters, widgets,
+or screens.
 
 ## Expected result
 
@@ -374,26 +405,23 @@ interface per behavior:
 - an imperative behavior has one explicit operation contract;
 - a continuous result has one explicit stream contract.
 
-## Implementation order
+## Implementation record and next steps
 
-1. Establish a checked route inventory from the current 37-route backend
-   surface. Remove nonexistent Flutter constants, add missing operations to one
-   typed infrastructure boundary, and add a parity test so backend/client drift
-   is visible during the cleanup.
-2. Convert skills to generated collection models, DAO/repository access, and a
-   deterministic filesystem reconciler; remove the four redundant wrapper routes
-   and their custom Dart request/response models.
-3. Convert schedule state to collection CRUD and strengthen its rules/request
-   hooks; retain only `run-now` as an operation and a small typed operation
-   client.
-4. Open `harness_accounts` and `harness_account_selections` through scoped
-   collection rules and request hooks, then add Flutter DAOs/repositories for
-   account listing, creation/rename, and selection. Do not add CRUD wrappers.
-5. Remove the obsolete inbound `ssh_keys` collection, route, Flutter auth
-   method/constants, and tests. Do not add a compatibility alias or migration.
-6. Re-inventory the remaining 25 `/api/pocketcoder/*` operations and
-   decide whether their typed JSON contracts justify OpenAPI generation. Streams
-   remain handwritten transports even if OpenAPI documents them.
-7. Enforce that raw `/api/pocketcoder/*` strings exist only in the chosen
-   infrastructure transport/manifest layer, never in repositories, Cubits,
-   adapters, widgets, or screens.
+1. Completed: establish a checked 37-route inventory, then reduce it to 25 and
+   enforce backend/Flutter parity through `api/pocketcoder-routes.json`.
+2. Completed: convert skills to generated collection models and
+   DAO/repository access; remove the four CRUD wrappers and custom transport
+   models.
+3. Completed: convert schedules to collection CRUD with strengthened
+   rules/hooks; retain only `run-now` as an operation.
+4. Completed: expose `harness_accounts` and `harness_account_selections`
+   through scoped collection rules, hooks, DAOs, and a Flutter repository.
+5. Completed: remove the obsolete inbound `ssh_keys` collection, route,
+   terminal client, and tests without an alias or migration.
+6. Completed: rename release endpoints and response fields to match the release
+   JSON vocabulary without compatibility paths.
+7. Decided: add OpenAPI for all 25 remaining operations, with handwritten
+   incremental stream transports conforming to the documented contracts.
+8. Follow-up: finish stale managed-skill removal and observable reconciliation
+   retry/error state using the ownership manifest already written to each user
+   workspace.
