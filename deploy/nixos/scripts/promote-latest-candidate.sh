@@ -13,16 +13,16 @@ run=$(curl -sf -H "$auth" "$api/workflows/nixos-image.yml/runs?branch=main&statu
 test -n "$run" || { echo 'no successful NixOS candidate run found' >&2; exit 1; }
 
 artifact=$(curl -sf -H "$auth" "$api/runs/$run/artifacts?per_page=100" |
-  jq -r '.artifacts[] | select(.name | startswith("release-candidate-")) | .archive_download_url' | head -1)
-test -n "$artifact" || { echo "no canonical candidate artifact found for run $run" >&2; exit 1; }
+  jq -r '.artifacts[] | select(.name | startswith("release-candidate-manifest-")) | .archive_download_url' | head -1)
+test -n "$artifact" || { echo "no candidate identity artifact found for run $run" >&2; exit 1; }
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 curl -sfL -H "$auth" "$artifact" -o "$tmp/candidate.zip"
 unzip -q "$tmp/candidate.zip" -d "$tmp/candidate"
-manifest="$tmp/candidate/release-manifest.json"
-test -f "$manifest" || { echo 'candidate artifact has no release manifest' >&2; exit 1; }
-digest=$(sha256sum "$manifest" | cut -d' ' -f1)
+digest=$(tr -d '[:space:]' < "$tmp/candidate/manifest.sha256")
+case "$digest" in *[!0-9a-f]* | '') echo 'candidate identity is not a SHA-256 digest' >&2; exit 1 ;; esac
+test "${#digest}" -eq 64
 
 payload=$(jq -n --arg channel "$channel" --arg digest "$digest" \
   '{ref:"main",inputs:{channel:$channel,manifest_sha256:$digest,sequence:"next"}}')

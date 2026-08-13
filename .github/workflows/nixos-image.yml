@@ -233,3 +233,10 @@ jobs:
           name: release-candidate-${{ github.sha }}
           path: candidate
           retention-days: 30
+
+      - name: Upload immutable candidate identity
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-candidate-manifest-${{ github.sha }}
+          path: candidate/manifest.sha256
+          retention-days: 30
