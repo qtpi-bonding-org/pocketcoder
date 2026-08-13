@@ -44,7 +44,7 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
         pocoSequence: _pocoSequence.value,
         pocoHistory: _pocoHistory,
         onBack: () => AppNavigation.back(context),
-        onDeploy: () => context.pushNamed(RouteNames.onboardingDeploy),
+        onDeploy: () => context.pushNamed(RouteNames.onboardingWelcome),
         onLogin: (url, email, password) =>
             _login(context, url, email, password),
       ),

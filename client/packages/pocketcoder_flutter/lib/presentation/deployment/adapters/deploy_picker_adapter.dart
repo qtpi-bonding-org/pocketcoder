@@ -52,7 +52,12 @@ class DeployPickerAdapter
       await launchUrl(Uri.parse(option.url!),
           mode: LaunchMode.externalApplication);
     } else if (option.routePath != null && context.mounted) {
-      context.push(option.routePath!, extra: credentials);
+      final currentCredentials = credentials;
+      if (currentCredentials == null) {
+        context.pushNamed(RouteNames.onboardingDeploy, extra: option);
+      } else {
+        context.push(option.routePath!, extra: currentCredentials);
+      }
     }
   }
 }

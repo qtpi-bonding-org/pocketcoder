@@ -1,0 +1,92 @@
+import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+
+class OnboardingSelfHostView extends StatelessWidget {
+  const OnboardingSelfHostView({
+    super.key,
+    required this.onBack,
+    required this.onOpenGuide,
+    required this.onConnect,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback onOpenGuide;
+  final VoidCallback onConnect;
+
+  @override
+  Widget build(BuildContext context) => TerminalScaffold(
+        title: context.l10n.onboardingSelfHostTitle,
+        actions: [
+          TerminalAction(label: context.l10n.actionBack, onTap: onBack),
+          TerminalAction(
+            label: context.l10n.onboardingSelfHostActionGuide,
+            onTap: onOpenGuide,
+          ),
+          TerminalAction(
+            label: context.l10n.onboardingSelfHostActionConnect,
+            onTap: onConnect,
+          ),
+        ],
+        body: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PocoBubble(
+                    message: context.l10n.onboardingSelfHostPoco,
+                    pocoSize: AppSizes.fontLarge,
+                  ),
+                  VSpace.x3,
+                  BiosFrame(
+                    title: context.l10n.onboardingSelfHostRequirementsTitle,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _Requirement(
+                          label:
+                              context.l10n.onboardingSelfHostRequirementServer,
+                        ),
+                        VSpace.x1,
+                        _Requirement(
+                          label:
+                              context.l10n.onboardingSelfHostRequirementDocker,
+                        ),
+                        VSpace.x1,
+                        _Requirement(
+                          label:
+                              context.l10n.onboardingSelfHostRequirementAccess,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+class _Requirement extends StatelessWidget {
+  const _Requirement({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TerminalText.label('[+]'),
+          HSpace.x1,
+          Expanded(child: TerminalText(label)),
+        ],
+      );
+}
