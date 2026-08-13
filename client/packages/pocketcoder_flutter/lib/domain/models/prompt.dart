@@ -10,6 +10,8 @@ abstract class Prompt with _$Prompt {
     required String id,
     required String name,
     required String body,
+    String? user,
+    bool? isSystem,
   }) = _Prompt;
 
   factory Prompt.fromRecord(RecordModel record) =>

@@ -4,7 +4,8 @@ class Collections {
   static const String chats = 'chats';
   static const String sandboxAgents = 'sandbox_agents';
   static const String sshKeys = 'ssh_keys';
-  static const String toolPermissions = 'tool_permissions';
+  static const String permissionModes = 'permission_modes';
+  static const String toolPermissions = 'permission_mode_tools';
   static const String healthchecks = 'healthchecks';
   static const String mcpServers = 'mcp_servers';
   static const String devices = 'devices';
@@ -14,16 +15,21 @@ class Collections {
   static const String harnessModels = 'harness_models';
   static const String providerKeys = 'provider_keys';
   static const String prompts = 'prompts';
-  static const String pocoConfigs = 'poco_configs';
+  static const String pocoConfigs = 'agent_profiles';
+  static const String skills = 'skills';
   static const String agentSessions = 'agent_sessions';
   static const String scheduleOwners = 'schedule_owners';
   static const String harnessInstances = 'harness_instances';
+  static const String harnessAccounts = 'harness_accounts';
+  static const String harnessAccountSelections = 'harness_account_selections';
+  static const String harnessAuthAttempts = 'harness_auth_attempts';
 
   static const List<String> all = [
     users,
     chats,
     sandboxAgents,
     sshKeys,
+    permissionModes,
     toolPermissions,
     healthchecks,
     mcpServers,
@@ -35,8 +41,12 @@ class Collections {
     providerKeys,
     prompts,
     pocoConfigs,
+    skills,
     agentSessions,
     scheduleOwners,
     harnessInstances,
+    harnessAccounts,
+    harnessAccountSelections,
+    harnessAuthAttempts,
   ];
 }

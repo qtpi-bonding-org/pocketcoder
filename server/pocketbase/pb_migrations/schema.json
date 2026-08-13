@@ -1503,15 +1503,6 @@
       },
       {
         "hidden": false,
-        "id": "bool_harnesses_single_connection_only",
-        "name": "single_connection_only",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "bool"
-      },
-      {
-        "hidden": false,
         "id": "bool_harnesses_supports_session_delete",
         "name": "supports_session_delete",
         "presentable": false,
@@ -2391,6 +2382,19 @@
         "type": "relation"
       },
       {
+        "cascadeDelete": false,
+        "collectionId": "pc_harness_accounts",
+        "hidden": false,
+        "id": "relation_hi_harness_account",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "harness_account",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
         "autogeneratePattern": "",
         "hidden": false,
         "id": "text_hi_launch_key",
@@ -2517,26 +2521,26 @@
     ],
     "indexes": [
       "CREATE UNIQUE INDEX idx_harness_instances_name ON harness_instances (container_name)",
-      "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (user, harness, launch_key)"
+      "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (user, harness, harness_account, launch_key)"
     ],
     "created": "2026-07-29 00:00:00.000Z",
     "updated": "2026-07-29 00:00:00.000Z",
     "system": false
   },
   {
-    "id": "pc_harness_auth_bindings",
-    "listRule": "(scope_kind = 'user' && scope_id = @request.auth.id) || @request.auth.role = 'admin'",
-    "viewRule": "(scope_kind = 'user' && scope_id = @request.auth.id) || @request.auth.role = 'admin'",
-    "createRule": "@request.auth.id != '' && scope_kind = 'user' && scope_id = @request.auth.id",
-    "updateRule": "@request.auth.id != '' && scope_kind = 'user' && scope_id = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' && scope_kind = 'user' && scope_id = @request.auth.id",
-    "name": "harness_auth_bindings",
+    "id": "pc_harness_accounts",
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "harness_accounts",
     "type": "base",
     "fields": [
       {
         "autogeneratePattern": "[a-z0-9]{15}",
         "hidden": false,
-        "id": "text_hab_id",
+        "id": "text_ha_id",
         "max": 15,
         "min": 15,
         "name": "id",
@@ -2548,35 +2552,10 @@
         "type": "text"
       },
       {
-        "hidden": false,
-        "id": "select_hab_scope_kind",
-        "maxSelect": 1,
-        "name": "scope_kind",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "values": ["user", "deployment"]
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text_hab_scope_id",
-        "max": 0,
-        "min": 0,
-        "name": "scope_id",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
-      },
-      {
         "cascadeDelete": false,
         "collectionId": "pc_harnesses",
         "hidden": false,
-        "id": "relation_hab_harness",
+        "id": "relation_ha_harness",
         "maxSelect": 1,
         "minSelect": 1,
         "name": "harness",
@@ -2586,8 +2565,46 @@
         "type": "relation"
       },
       {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
         "hidden": false,
-        "id": "select_hab_mode",
+        "id": "relation_ha_owner",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "owner",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_ha_name",
+        "max": 120,
+        "min": 1,
+        "name": "name",
+        "pattern": "",
+        "presentable": true,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "select_ha_visibility",
+        "maxSelect": 1,
+        "name": "visibility",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": ["personal", "deployment"]
+      },
+      {
+        "hidden": false,
+        "id": "select_ha_mode",
         "maxSelect": 1,
         "name": "credential_mode",
         "presentable": false,
@@ -2600,7 +2617,7 @@
         "cascadeDelete": false,
         "collectionId": "pc_provider_keys",
         "hidden": false,
-        "id": "relation_hab_provider_key",
+        "id": "relation_ha_provider_key",
         "maxSelect": 1,
         "minSelect": 0,
         "name": "provider_key",
@@ -2611,7 +2628,7 @@
       },
       {
         "hidden": false,
-        "id": "select_hab_status",
+        "id": "select_ha_status",
         "maxSelect": 1,
         "name": "status",
         "presentable": false,
@@ -2623,7 +2640,7 @@
       {
         "autogeneratePattern": "",
         "hidden": true,
-        "id": "text_hab_last_error",
+        "id": "text_ha_last_error",
         "max": 0,
         "min": 0,
         "name": "last_error",
@@ -2636,7 +2653,7 @@
       },
       {
         "hidden": false,
-        "id": "autodate_hab_created",
+        "id": "autodate_ha_created",
         "name": "created",
         "onCreate": true,
         "onUpdate": false,
@@ -2646,7 +2663,7 @@
       },
       {
         "hidden": false,
-        "id": "autodate_hab_updated",
+        "id": "autodate_ha_updated",
         "name": "updated",
         "onCreate": true,
         "onUpdate": true,
@@ -2656,7 +2673,99 @@
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_harness_auth_bindings_scope ON harness_auth_bindings (scope_kind, scope_id, harness)"
+      "CREATE INDEX idx_harness_accounts_harness_visibility ON harness_accounts (harness, visibility)"
+    ],
+    "created": "2026-08-04 10:00:00.000Z",
+    "updated": "2026-08-04 10:00:00.000Z",
+    "system": false
+  },
+  {
+    "id": "pc_harness_account_selections",
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "harness_account_selections",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text_has_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_has_user",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "user",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_harnesses",
+        "hidden": false,
+        "id": "relation_has_harness",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "harness",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_harness_accounts",
+        "hidden": false,
+        "id": "relation_has_account",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "account",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_has_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_has_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_harness_account_selections_user_harness ON harness_account_selections (user, harness)",
+      "CREATE INDEX idx_harness_account_selections_account ON harness_account_selections (account)"
     ],
     "created": "2026-08-04 10:00:00.000Z",
     "updated": "2026-08-04 10:00:00.000Z",
@@ -2664,11 +2773,11 @@
   },
   {
     "id": "pc_harness_auth_attempts",
-    "listRule": "(scope_kind = 'user' && scope_id = @request.auth.id) || @request.auth.role = 'admin'",
-    "viewRule": "(scope_kind = 'user' && scope_id = @request.auth.id) || @request.auth.role = 'admin'",
-    "createRule": "@request.auth.id != '' && scope_kind = 'user' && scope_id = @request.auth.id",
-    "updateRule": "@request.auth.id != '' && scope_kind = 'user' && scope_id = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' && scope_kind = 'user' && scope_id = @request.auth.id",
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
     "name": "harness_auth_attempts",
     "type": "base",
     "fields": [
@@ -2687,51 +2796,13 @@
         "type": "text"
       },
       {
-        "hidden": false,
-        "id": "select_hab_kind",
-        "maxSelect": 1,
-        "name": "scope_kind",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "values": ["user", "deployment"]
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text_hab_scope_id",
-        "max": 0,
-        "min": 0,
-        "name": "scope_id",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "cascadeDelete": false,
-        "collectionId": "pc_harnesses",
-        "hidden": false,
-        "id": "relation_haa_harness",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "harness",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
         "cascadeDelete": true,
-        "collectionId": "pc_harness_auth_bindings",
+        "collectionId": "pc_harness_accounts",
         "hidden": false,
-        "id": "relation_haa_binding",
+        "id": "relation_haa_account",
         "maxSelect": 1,
         "minSelect": 1,
-        "name": "binding",
+        "name": "account",
         "presentable": false,
         "required": true,
         "system": false,
@@ -2810,8 +2881,7 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX idx_harness_auth_attempts_binding_status ON harness_auth_attempts (binding, status)",
-      "CREATE INDEX idx_harness_auth_attempts_scope_harness ON harness_auth_attempts (scope_kind, scope_id, harness)"
+      "CREATE INDEX idx_harness_auth_attempts_account_status ON harness_auth_attempts (account, status)"
     ],
     "created": "2026-08-04 10:00:00.000Z",
     "updated": "2026-08-04 10:00:00.000Z",

@@ -10,14 +10,20 @@ _ScheduleOwner _$ScheduleOwnerFromJson(Map<String, dynamic> json) =>
     _ScheduleOwner(
       id: json['id'] as String,
       user: json['user'] as String,
-      gooseScheduleId: json['goose_schedule_id'] as String,
       displayName: json['display_name'] as String,
+      cron: json['cron'] as String?,
+      prompt: json['prompt'] as String?,
+      paused: json['paused'] as bool?,
+      lastRun: json['last_run'] as String?,
     );
 
 Map<String, dynamic> _$ScheduleOwnerToJson(_ScheduleOwner instance) =>
     <String, dynamic>{
       'id': instance.id,
       'user': instance.user,
-      'goose_schedule_id': instance.gooseScheduleId,
       'display_name': instance.displayName,
+      'cron': instance.cron,
+      'prompt': instance.prompt,
+      'paused': instance.paused,
+      'last_run': instance.lastRun,
     };

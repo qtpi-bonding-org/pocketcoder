@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/pocketbase/pocketbase/tests"
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 func TestSeedCreatesAdminAgentAndSuperuser(t *testing.T) {
@@ -136,8 +136,8 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 			if rec.GetString("version") != tc.version || rec.GetString("container_image") != tc.image {
 				t.Errorf("version/image = %q/%q, want %q/%q", rec.GetString("version"), rec.GetString("container_image"), tc.version, tc.image)
 			}
-			if rec.GetString("acp_transport") != "stdio" || !rec.GetBool("single_connection_only") {
-				t.Errorf("unexpected capability flags for %s", tc.cliID)
+			if rec.GetString("acp_transport") != "stdio" {
+				t.Errorf("acp_transport = %q for %s, want stdio", rec.GetString("acp_transport"), tc.cliID)
 			}
 			var launch struct {
 				Cmd         []string          `json:"cmd"`

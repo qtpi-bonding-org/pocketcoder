@@ -10,10 +10,14 @@ _Prompt _$PromptFromJson(Map<String, dynamic> json) => _Prompt(
       id: json['id'] as String,
       name: json['name'] as String,
       body: json['body'] as String,
+      user: json['user'] as String?,
+      isSystem: json['is_system'] as bool?,
     );
 
 Map<String, dynamic> _$PromptToJson(_Prompt instance) => <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
       'body': instance.body,
+      'user': instance.user,
+      'is_system': instance.isSystem,
     };

@@ -62,7 +62,8 @@ class SkillsView extends StatelessWidget {
     }
     if (data.error != null) {
       return Center(
-        child: Text('ERROR: ${data.error}', style: TextStyle(color: colors.error)),
+        child:
+            Text('ERROR: ${data.error}', style: TextStyle(color: colors.error)),
       );
     }
 
@@ -70,17 +71,23 @@ class SkillsView extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.all(AppSizes.space),
-          child: TerminalButton(label: context.l10n.skillsAddButton, onTap: onAdd),
+          child:
+              TerminalButton(label: context.l10n.skillsAddButton, onTap: onAdd),
         ),
         if (global.isNotEmpty)
           BiosSection(
             title: context.l10n.skillsGlobalSection,
-            child: Column(children: global.map((skill) => _skillItem(context, skill)).toList()),
+            child: Column(
+                children:
+                    global.map((skill) => _skillItem(context, skill)).toList()),
           ),
         if (project.isNotEmpty)
           BiosSection(
             title: context.l10n.skillsProjectSection,
-            child: Column(children: project.map((skill) => _skillItem(context, skill)).toList()),
+            child: Column(
+                children: project
+                    .map((skill) => _skillItem(context, skill))
+                    .toList()),
           ),
         if (data.skills.isEmpty)
           Center(
@@ -98,27 +105,31 @@ class SkillsView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TerminalText(skill.name.toUpperCase(), weight: TerminalTextWeight.heavy),
+          TerminalText(skill.name.toUpperCase(),
+              weight: TerminalTextWeight.heavy),
           VSpace.x1,
           TerminalText.mini(skill.description, alpha: 0.6),
           VSpace.x1,
-          Row(
-            children: [
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.skillsEditButton,
-                  isPrimary: false,
-                  onTap: () => onEdit(skill),
+          if (skill.system)
+            const TerminalText.mini('BUILT-IN', alpha: 0.5)
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: TerminalButton(
+                    label: context.l10n.skillsEditButton,
+                    isPrimary: false,
+                    onTap: () => onEdit(skill),
+                  ),
                 ),
-              ),
-              HSpace.x2,
-              TerminalButton(
-                label: context.l10n.skillsDeleteButton,
-                color: context.colorScheme.error,
-                onTap: () => onDelete(skill.path),
-              ),
-            ],
-          ),
+                HSpace.x2,
+                TerminalButton(
+                  label: context.l10n.skillsDeleteButton,
+                  color: context.colorScheme.error,
+                  onTap: () => onDelete(skill.path),
+                ),
+              ],
+            ),
         ],
       ),
     );

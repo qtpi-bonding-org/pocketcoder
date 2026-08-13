@@ -9,7 +9,9 @@ abstract class HarnessInstance with _$HarnessInstance {
   const factory HarnessInstance({
     required String id,
     required String harness,
+    String? user,
     String? harnessModel,
+    String? harnessAccount,
     String? launchKey,
     required String containerName,
     String? acpEndpoint,
@@ -17,6 +19,7 @@ abstract class HarnessInstance with _$HarnessInstance {
     @JsonKey(unknownEnumValue: HarnessInstanceStatus.unknown) required HarnessInstanceStatus status,
     String? lastError,
     bool? managed,
+    String? lastUsed,
     DateTime? created,
     DateTime? updated,
   }) = _HarnessInstance;

@@ -8,7 +8,12 @@ SCHEMA_PATH = 'assets/pb_schema.json'
 OUTPUT_DIR = 'lib/domain/models'
 
 # Collections to skip for model generation (system or have custom models)
-SKIP_COLLECTIONS = ['_mfas', '_otps', '_externalAuths', '_authOrigins', '_superusers', 'users']
+SKIP_COLLECTIONS = [
+    '_mfas', '_otps', '_externalAuths', '_authOrigins', '_superusers', 'users',
+    # These collections use hand-maintained compatibility/API models whose
+    # public names and fields intentionally differ from the PocketBase schema.
+    'agent_profiles', 'permission_mode_tools', 'skills',
+]
 
 # Collections to skip for the Collections constants (internal PB system only)
 SKIP_COLLECTION_CONSTANTS = ['_mfas', '_otps', '_externalAuths', '_authOrigins', '_superusers']
@@ -17,7 +22,10 @@ SKIP_COLLECTION_CONSTANTS = ['_mfas', '_otps', '_externalAuths', '_authOrigins',
 CLASS_NAME_OVERRIDES = {}
 
 # Mapping for collection constant names (camelCase key used in Collections class)
-COLLECTION_CONST_OVERRIDES = {}
+COLLECTION_CONST_OVERRIDES = {
+    'agent_profiles': 'pocoConfigs',
+    'permission_mode_tools': 'toolPermissions',
+}
 
 # Mapping for field name overrides: (collection_name, pb_field_name) -> dart_field_name
 FIELD_NAME_OVERRIDES = {}

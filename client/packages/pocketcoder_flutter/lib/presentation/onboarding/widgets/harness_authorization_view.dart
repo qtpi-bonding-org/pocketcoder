@@ -71,9 +71,9 @@ class _HarnessAuthorizationViewState extends State<HarnessAuthorizationView> {
     final current = widget.status ??
         const HarnessAuthStatus(
           harness: '',
-          scopeKind: 'user',
-          scopeId: '',
-          bindingId: '',
+          accountId: '',
+          accountName: '',
+          visibility: harnessAccountVisibilityPersonal,
           credentialMode: 'none',
           status: 'disconnected',
         );

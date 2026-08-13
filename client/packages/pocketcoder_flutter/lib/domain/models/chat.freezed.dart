@@ -26,7 +26,7 @@ mixin _$Chat {
   String? get tags;
   DateTime? get created;
   DateTime? get updated;
-  String? get pocoConfig;
+  String? get agentProfile;
   String? get harnessModelOverride;
   String? get ollamaModelOverride;
   String? get harness;
@@ -61,8 +61,8 @@ mixin _$Chat {
             (identical(other.tags, tags) || other.tags == tags) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated) &&
-            (identical(other.pocoConfig, pocoConfig) ||
-                other.pocoConfig == pocoConfig) &&
+            (identical(other.agentProfile, agentProfile) ||
+                other.agentProfile == agentProfile) &&
             (identical(other.harnessModelOverride, harnessModelOverride) ||
                 other.harnessModelOverride == harnessModelOverride) &&
             (identical(other.ollamaModelOverride, ollamaModelOverride) ||
@@ -87,7 +87,7 @@ mixin _$Chat {
       tags,
       created,
       updated,
-      pocoConfig,
+      agentProfile,
       harnessModelOverride,
       ollamaModelOverride,
       harness,
@@ -95,7 +95,7 @@ mixin _$Chat {
 
   @override
   String toString() {
-    return 'Chat(id: $id, title: $title, user: $user, lastActive: $lastActive, preview: $preview, turn: $turn, description: $description, archived: $archived, tags: $tags, created: $created, updated: $updated, pocoConfig: $pocoConfig, harnessModelOverride: $harnessModelOverride, ollamaModelOverride: $ollamaModelOverride, harness: $harness, workspaceOverride: $workspaceOverride)';
+    return 'Chat(id: $id, title: $title, user: $user, lastActive: $lastActive, preview: $preview, turn: $turn, description: $description, archived: $archived, tags: $tags, created: $created, updated: $updated, agentProfile: $agentProfile, harnessModelOverride: $harnessModelOverride, ollamaModelOverride: $ollamaModelOverride, harness: $harness, workspaceOverride: $workspaceOverride)';
   }
 }
 
@@ -116,7 +116,7 @@ abstract mixin class $ChatCopyWith<$Res> {
       String? tags,
       DateTime? created,
       DateTime? updated,
-      String? pocoConfig,
+      String? agentProfile,
       String? harnessModelOverride,
       String? ollamaModelOverride,
       String? harness,
@@ -146,7 +146,7 @@ class _$ChatCopyWithImpl<$Res> implements $ChatCopyWith<$Res> {
     Object? tags = freezed,
     Object? created = freezed,
     Object? updated = freezed,
-    Object? pocoConfig = freezed,
+    Object? agentProfile = freezed,
     Object? harnessModelOverride = freezed,
     Object? ollamaModelOverride = freezed,
     Object? harness = freezed,
@@ -197,9 +197,9 @@ class _$ChatCopyWithImpl<$Res> implements $ChatCopyWith<$Res> {
           ? _self.updated
           : updated // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      pocoConfig: freezed == pocoConfig
-          ? _self.pocoConfig
-          : pocoConfig // ignore: cast_nullable_to_non_nullable
+      agentProfile: freezed == agentProfile
+          ? _self.agentProfile
+          : agentProfile // ignore: cast_nullable_to_non_nullable
               as String?,
       harnessModelOverride: freezed == harnessModelOverride
           ? _self.harnessModelOverride
@@ -326,7 +326,7 @@ extension ChatPatterns on Chat {
             String? tags,
             DateTime? created,
             DateTime? updated,
-            String? pocoConfig,
+            String? agentProfile,
             String? harnessModelOverride,
             String? ollamaModelOverride,
             String? harness,
@@ -349,7 +349,7 @@ extension ChatPatterns on Chat {
             _that.tags,
             _that.created,
             _that.updated,
-            _that.pocoConfig,
+            _that.agentProfile,
             _that.harnessModelOverride,
             _that.ollamaModelOverride,
             _that.harness,
@@ -386,7 +386,7 @@ extension ChatPatterns on Chat {
             String? tags,
             DateTime? created,
             DateTime? updated,
-            String? pocoConfig,
+            String? agentProfile,
             String? harnessModelOverride,
             String? ollamaModelOverride,
             String? harness,
@@ -408,7 +408,7 @@ extension ChatPatterns on Chat {
             _that.tags,
             _that.created,
             _that.updated,
-            _that.pocoConfig,
+            _that.agentProfile,
             _that.harnessModelOverride,
             _that.ollamaModelOverride,
             _that.harness,
@@ -444,7 +444,7 @@ extension ChatPatterns on Chat {
             String? tags,
             DateTime? created,
             DateTime? updated,
-            String? pocoConfig,
+            String? agentProfile,
             String? harnessModelOverride,
             String? ollamaModelOverride,
             String? harness,
@@ -466,7 +466,7 @@ extension ChatPatterns on Chat {
             _that.tags,
             _that.created,
             _that.updated,
-            _that.pocoConfig,
+            _that.agentProfile,
             _that.harnessModelOverride,
             _that.ollamaModelOverride,
             _that.harness,
@@ -492,7 +492,7 @@ class _Chat implements Chat {
       this.tags,
       this.created,
       this.updated,
-      this.pocoConfig,
+      this.agentProfile,
       this.harnessModelOverride,
       this.ollamaModelOverride,
       this.harness,
@@ -523,7 +523,7 @@ class _Chat implements Chat {
   @override
   final DateTime? updated;
   @override
-  final String? pocoConfig;
+  final String? agentProfile;
   @override
   final String? harnessModelOverride;
   @override
@@ -567,8 +567,8 @@ class _Chat implements Chat {
             (identical(other.tags, tags) || other.tags == tags) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated) &&
-            (identical(other.pocoConfig, pocoConfig) ||
-                other.pocoConfig == pocoConfig) &&
+            (identical(other.agentProfile, agentProfile) ||
+                other.agentProfile == agentProfile) &&
             (identical(other.harnessModelOverride, harnessModelOverride) ||
                 other.harnessModelOverride == harnessModelOverride) &&
             (identical(other.ollamaModelOverride, ollamaModelOverride) ||
@@ -593,7 +593,7 @@ class _Chat implements Chat {
       tags,
       created,
       updated,
-      pocoConfig,
+      agentProfile,
       harnessModelOverride,
       ollamaModelOverride,
       harness,
@@ -601,7 +601,7 @@ class _Chat implements Chat {
 
   @override
   String toString() {
-    return 'Chat(id: $id, title: $title, user: $user, lastActive: $lastActive, preview: $preview, turn: $turn, description: $description, archived: $archived, tags: $tags, created: $created, updated: $updated, pocoConfig: $pocoConfig, harnessModelOverride: $harnessModelOverride, ollamaModelOverride: $ollamaModelOverride, harness: $harness, workspaceOverride: $workspaceOverride)';
+    return 'Chat(id: $id, title: $title, user: $user, lastActive: $lastActive, preview: $preview, turn: $turn, description: $description, archived: $archived, tags: $tags, created: $created, updated: $updated, agentProfile: $agentProfile, harnessModelOverride: $harnessModelOverride, ollamaModelOverride: $ollamaModelOverride, harness: $harness, workspaceOverride: $workspaceOverride)';
   }
 }
 
@@ -623,7 +623,7 @@ abstract mixin class _$ChatCopyWith<$Res> implements $ChatCopyWith<$Res> {
       String? tags,
       DateTime? created,
       DateTime? updated,
-      String? pocoConfig,
+      String? agentProfile,
       String? harnessModelOverride,
       String? ollamaModelOverride,
       String? harness,
@@ -653,7 +653,7 @@ class __$ChatCopyWithImpl<$Res> implements _$ChatCopyWith<$Res> {
     Object? tags = freezed,
     Object? created = freezed,
     Object? updated = freezed,
-    Object? pocoConfig = freezed,
+    Object? agentProfile = freezed,
     Object? harnessModelOverride = freezed,
     Object? ollamaModelOverride = freezed,
     Object? harness = freezed,
@@ -704,9 +704,9 @@ class __$ChatCopyWithImpl<$Res> implements _$ChatCopyWith<$Res> {
           ? _self.updated
           : updated // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      pocoConfig: freezed == pocoConfig
-          ? _self.pocoConfig
-          : pocoConfig // ignore: cast_nullable_to_non_nullable
+      agentProfile: freezed == agentProfile
+          ? _self.agentProfile
+          : agentProfile // ignore: cast_nullable_to_non_nullable
               as String?,
       harnessModelOverride: freezed == harnessModelOverride
           ? _self.harnessModelOverride

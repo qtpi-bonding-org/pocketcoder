@@ -21,8 +21,8 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/releaseartifact"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseartifact"
 )
 
 const (

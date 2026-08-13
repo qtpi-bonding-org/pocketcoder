@@ -28,8 +28,8 @@ import (
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/acp"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 // randomSuffixForTest generates a random string for unique test data.

@@ -18,6 +18,7 @@ abstract class Skill with _$Skill {
     required String content,
     required String path,
     required bool global,
+    @Default(false) bool system,
   }) = _Skill;
 
   factory Skill.fromJson(Map<String, dynamic> json) => _$SkillFromJson(json);

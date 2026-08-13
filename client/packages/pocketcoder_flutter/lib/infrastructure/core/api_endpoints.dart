@@ -63,7 +63,7 @@ class ApiEndpoints {
   static String logs(String containerName) =>
       '/api/pocketcoder/logs/$containerName';
 
-  /// ANY /api/pocketcoder/proxy/observability/*
+  /// GET /api/pocketcoder/proxy/observability/*
   /// Proxy to SQLPage dashboard.
   static const String observability = '/api/pocketcoder/proxy/observability/';
 

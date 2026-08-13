@@ -5,7 +5,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 func TestFinalSchemaCollectionsExist(t *testing.T) {
@@ -16,27 +16,28 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 	defer app.Cleanup()
 
 	expected := map[string][]string{
-		"users":                 {"role"},
-		"chats":                 {"title", "user", "agent_profile", "harness_model_override", "ollama_model_override"},
-		"sandbox_agents":        {"sandbox_agent_id", "delegating_agent_id", "chat"},
-		"ssh_keys":              {"user", "public_key", "fingerprint"},
-		"permission_modes":      {"name", "description", "base_session_mode", "user", "is_system", "is_default"},
-		"permission_mode_tools": {"tool", "pattern", "action", "permission_mode"},
-		"healthchecks":          {"name", "status"},
-		"mcp_servers":           {"name", "status", "config"},
-		"devices":               {"user", "push_token", "push_service"},
-		"notification_rules":    {"user", "rules"},
-		"harnesses":             {"name", "cli_id", "acp_transport"},
-		"models":                {"name", "provider"},
-		"harness_models":        {"harness", "model", "harness_model_id"},
-		"provider_keys":         {"user", "provider", "env_vars"},
-		"prompts":               {"name", "body", "user", "is_system"},
-		"agent_profiles":        {"name", "user", "is_system", "system_prompt", "permission_mode"},
-		"skills":                {"user", "is_system", "name", "description", "content", "metadata", "active"},
-		"agent_sessions":        {"chat", "user", "acp_session_id"},
-		"schedule_owners":       {"user", "display_name", "cron", "prompt", "paused", "last_run"},
-		"harness_auth_bindings": {"scope_kind", "scope_id", "harness", "credential_mode", "status", "provider_key"},
-		"harness_auth_attempts": {"scope_kind", "scope_id", "harness", "binding", "provider", "status", "expires_at"},
+		"users":                      {"role"},
+		"chats":                      {"title", "user", "agent_profile", "harness_model_override", "ollama_model_override"},
+		"sandbox_agents":             {"sandbox_agent_id", "delegating_agent_id", "chat"},
+		"ssh_keys":                   {"user", "public_key", "fingerprint"},
+		"permission_modes":           {"name", "description", "base_session_mode", "user", "is_system", "is_default"},
+		"permission_mode_tools":      {"tool", "pattern", "action", "permission_mode"},
+		"healthchecks":               {"name", "status"},
+		"mcp_servers":                {"name", "status", "config"},
+		"devices":                    {"user", "push_token", "push_service"},
+		"notification_rules":         {"user", "rules"},
+		"harnesses":                  {"name", "cli_id", "acp_transport"},
+		"models":                     {"name", "provider"},
+		"harness_models":             {"harness", "model", "harness_model_id"},
+		"provider_keys":              {"user", "provider", "env_vars"},
+		"prompts":                    {"name", "body", "user", "is_system"},
+		"agent_profiles":             {"name", "user", "is_system", "system_prompt", "permission_mode"},
+		"skills":                     {"user", "is_system", "name", "description", "content", "metadata", "active"},
+		"agent_sessions":             {"chat", "user", "acp_session_id"},
+		"schedule_owners":            {"user", "display_name", "cron", "prompt", "paused", "last_run"},
+		"harness_accounts":           {"harness", "owner", "name", "visibility", "credential_mode", "status", "provider_key"},
+		"harness_account_selections": {"user", "harness", "account"},
+		"harness_auth_attempts":      {"account", "provider", "status", "expires_at"},
 	}
 
 	for name, fields := range expected {
@@ -60,7 +61,16 @@ func TestDeadCollectionsDoNotExist(t *testing.T) {
 	}
 	defer app.Cleanup()
 
-	for _, name := range []string{"ai_agents", "ai_prompts", "ai_models", "cron_jobs", "messages"} {
+	for _, name := range []string{
+		"ai_agents",
+		"ai_prompts",
+		"ai_models",
+		"cron_jobs",
+		"messages",
+		"cognee_config",
+		"harness_auth_bindings",
+		"harness_account_members",
+	} {
 		if _, err := app.FindCollectionByNameOrId(name); err == nil {
 			t.Errorf("collection %q should not exist but was found", name)
 		}
@@ -118,7 +128,7 @@ func TestAgentSessionsUniqueIndexes(t *testing.T) {
 	}
 }
 
-func TestHarnessAuthBindingsUniqueScope(t *testing.T) {
+func TestHarnessAccountSelectionIsUniquePerUserAndHarness(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
@@ -133,7 +143,11 @@ func TestHarnessAuthBindingsUniqueScope(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bindingsCol, err := app.FindCollectionByNameOrId("harness_auth_bindings")
+	accountsCol, err := app.FindCollectionByNameOrId("harness_accounts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	selectionsCol, err := app.FindCollectionByNameOrId("harness_account_selections")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,23 +167,30 @@ func TestHarnessAuthBindingsUniqueScope(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	first := core.NewRecord(bindingsCol)
-	first.Set("scope_kind", "user")
-	first.Set("scope_id", user.Id)
-	first.Set("harness", harness.Id)
-	first.Set("credential_mode", "account")
-	first.Set("status", "disconnected")
-	if err := app.Save(first); err != nil {
-		t.Fatalf("save harness_auth_binding: %v", err)
+	account := core.NewRecord(accountsCol)
+	account.Set("harness", harness.Id)
+	account.Set("owner", user.Id)
+	account.Set("name", "Personal Auth Harness")
+	account.Set("visibility", "personal")
+	account.Set("credential_mode", "account")
+	account.Set("status", "disconnected")
+	if err := app.Save(account); err != nil {
+		t.Fatalf("save harness_account: %v", err)
 	}
 
-	dup := core.NewRecord(bindingsCol)
-	dup.Set("scope_kind", "user")
-	dup.Set("scope_id", user.Id)
+	first := core.NewRecord(selectionsCol)
+	first.Set("account", account.Id)
+	first.Set("user", user.Id)
+	first.Set("harness", harness.Id)
+	if err := app.Save(first); err != nil {
+		t.Fatalf("save harness_account_selection: %v", err)
+	}
+
+	dup := core.NewRecord(selectionsCol)
+	dup.Set("account", account.Id)
+	dup.Set("user", user.Id)
 	dup.Set("harness", harness.Id)
-	dup.Set("credential_mode", "account")
-	dup.Set("status", "disconnected")
 	if err := app.Save(dup); err == nil {
-		t.Fatal("expected unique-index violation for duplicate harness_auth_bindings scope pair")
+		t.Fatal("expected unique-index violation for duplicate user/harness selection")
 	}
 }

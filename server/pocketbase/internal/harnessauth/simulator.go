@@ -28,11 +28,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessvolume"
 )
 
 const (
-	helperMountPath       = "/workspace/.pocketcoder_auth"
+	helperMountPath       = harnessvolume.AuthHomeMount
 	helperCodeFile        = helperMountPath + "/pocketcoder_claude_auth_code.txt"
 	helperContainerPrefix = "pocketcoder-auth-helper"
 	helperLogTail         = 200
@@ -191,7 +192,7 @@ func (c *commandAuthenticator) Disconnect(ctx context.Context, attempt AttemptCo
 }
 
 func validateAttemptContext(attempt AttemptContext) error {
-	if attempt.AttemptID == "" || attempt.UserID == "" {
+	if attempt.AttemptID == "" || attempt.UserID == "" || attempt.AccountID == "" || attempt.HarnessCLI == "" {
 		return errMissingAttemptContext
 	}
 	if attempt.HarnessImage == "" {
@@ -221,7 +222,7 @@ func (c *commandAuthenticator) ensureRunningHelper(ctx context.Context, attempt 
 		return err
 	}
 
-	authVolume, err := resolveAuthVolume(ctx, c.docker, attempt.UserID)
+	authVolume, err := resolveAuthVolume(ctx, c.docker, attempt.UserID, attempt.HarnessCLI, attempt.AccountID)
 	if err != nil {
 		return err
 	}
@@ -240,8 +241,9 @@ func (c *commandAuthenticator) ensureRunningHelper(ctx context.Context, attempt 
 		VolumeBinds:   []string{authVolume + ":" + helperMountPath},
 		RestartPolicy: "no",
 		Labels: map[string]string{
-			"pc_helper":     "true",
-			"pc_helper_for": attempt.AttemptID,
+			"pc_helper":             "true",
+			"pc_helper_for":         attempt.AttemptID,
+			"pc_harness_account_id": attempt.AccountID,
 		},
 	})
 	if err != nil {
@@ -369,7 +371,7 @@ func scrubLogText(logs string) string {
 	return strings.Join(lines, "\n")
 }
 
-func resolveAuthVolume(ctx context.Context, client *dockerapi.Client, userID string) (string, error) {
+func resolveAuthVolume(ctx context.Context, client *dockerapi.Client, userID, harnessCLI, accountID string) (string, error) {
 	self := strings.TrimSpace(os.Getenv(selfContainerIDEnv))
 	if self == "" {
 		self = defaultSelfContainerName
@@ -389,10 +391,11 @@ func resolveAuthVolume(ctx context.Context, client *dockerapi.Client, userID str
 		return "", fmt.Errorf("unable to resolve workspace volume for container %q", self)
 	}
 
-	if len(userID) > 8 {
-		userID = userID[:8]
+	volumes, err := harnessvolume.Resolve(workspaceVolume, userID, harnessCLI, accountID)
+	if err != nil {
+		return "", err
 	}
-	return fmt.Sprintf("%s_%s_auth_home", workspaceVolume, userID), nil
+	return volumes.Auth, nil
 }
 
 func writeClaudeCode(ctx context.Context, attempt AttemptContext, code string) error {
@@ -400,7 +403,7 @@ func writeClaudeCode(ctx context.Context, attempt AttemptContext, code string) e
 		return err
 	}
 
-	volume, err := resolveAuthVolume(ctx, dockerapi.New(), attempt.UserID)
+	volume, err := resolveAuthVolume(ctx, dockerapi.New(), attempt.UserID, attempt.HarnessCLI, attempt.AccountID)
 	if err != nil {
 		return err
 	}

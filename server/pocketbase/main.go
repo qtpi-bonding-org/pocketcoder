@@ -31,13 +31,14 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/api"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/releaseidentity"
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/api"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/filesystem"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseidentity"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 func main() {
@@ -87,6 +88,7 @@ func main() {
 	hooks.RegisterGlobalTimestamps(app)
 	hooks.RegisterNotificationHooks(app)
 	hooks.RegisterChatsHarnessPinHook(app)
+	harnessaccount.RegisterHooks(app)
 
 	// 3. Register MCP Hooks (config rendering + gateway restart)
 	// The interface receives MCP status updates via PocketBase realtime subscriptions.

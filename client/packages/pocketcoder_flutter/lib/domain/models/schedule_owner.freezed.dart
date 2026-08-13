@@ -16,8 +16,11 @@ T _$identity<T>(T value) => value;
 mixin _$ScheduleOwner {
   String get id;
   String get user;
-  String get gooseScheduleId;
   String get displayName;
+  String? get cron;
+  String? get prompt;
+  bool? get paused;
+  String? get lastRun;
 
   /// Create a copy of ScheduleOwner
   /// with the given fields replaced by the non-null parameter values.
@@ -37,20 +40,22 @@ mixin _$ScheduleOwner {
             other is ScheduleOwner &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.user, user) || other.user == user) &&
-            (identical(other.gooseScheduleId, gooseScheduleId) ||
-                other.gooseScheduleId == gooseScheduleId) &&
             (identical(other.displayName, displayName) ||
-                other.displayName == displayName));
+                other.displayName == displayName) &&
+            (identical(other.cron, cron) || other.cron == cron) &&
+            (identical(other.prompt, prompt) || other.prompt == prompt) &&
+            (identical(other.paused, paused) || other.paused == paused) &&
+            (identical(other.lastRun, lastRun) || other.lastRun == lastRun));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, user, gooseScheduleId, displayName);
+  int get hashCode => Object.hash(
+      runtimeType, id, user, displayName, cron, prompt, paused, lastRun);
 
   @override
   String toString() {
-    return 'ScheduleOwner(id: $id, user: $user, gooseScheduleId: $gooseScheduleId, displayName: $displayName)';
+    return 'ScheduleOwner(id: $id, user: $user, displayName: $displayName, cron: $cron, prompt: $prompt, paused: $paused, lastRun: $lastRun)';
   }
 }
 
@@ -61,7 +66,13 @@ abstract mixin class $ScheduleOwnerCopyWith<$Res> {
       _$ScheduleOwnerCopyWithImpl;
   @useResult
   $Res call(
-      {String id, String user, String gooseScheduleId, String displayName});
+      {String id,
+      String user,
+      String displayName,
+      String? cron,
+      String? prompt,
+      bool? paused,
+      String? lastRun});
 }
 
 /// @nodoc
@@ -79,8 +90,11 @@ class _$ScheduleOwnerCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? user = null,
-    Object? gooseScheduleId = null,
     Object? displayName = null,
+    Object? cron = freezed,
+    Object? prompt = freezed,
+    Object? paused = freezed,
+    Object? lastRun = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -91,14 +105,26 @@ class _$ScheduleOwnerCopyWithImpl<$Res>
           ? _self.user
           : user // ignore: cast_nullable_to_non_nullable
               as String,
-      gooseScheduleId: null == gooseScheduleId
-          ? _self.gooseScheduleId
-          : gooseScheduleId // ignore: cast_nullable_to_non_nullable
-              as String,
       displayName: null == displayName
           ? _self.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
               as String,
+      cron: freezed == cron
+          ? _self.cron
+          : cron // ignore: cast_nullable_to_non_nullable
+              as String?,
+      prompt: freezed == prompt
+          ? _self.prompt
+          : prompt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      paused: freezed == paused
+          ? _self.paused
+          : paused // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      lastRun: freezed == lastRun
+          ? _self.lastRun
+          : lastRun // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -196,16 +222,16 @@ extension ScheduleOwnerPatterns on ScheduleOwner {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(
-            String id, String user, String gooseScheduleId, String displayName)?
+    TResult Function(String id, String user, String displayName, String? cron,
+            String? prompt, bool? paused, String? lastRun)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _ScheduleOwner() when $default != null:
-        return $default(
-            _that.id, _that.user, _that.gooseScheduleId, _that.displayName);
+        return $default(_that.id, _that.user, _that.displayName, _that.cron,
+            _that.prompt, _that.paused, _that.lastRun);
       case _:
         return orElse();
     }
@@ -226,15 +252,15 @@ extension ScheduleOwnerPatterns on ScheduleOwner {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(
-            String id, String user, String gooseScheduleId, String displayName)
+    TResult Function(String id, String user, String displayName, String? cron,
+            String? prompt, bool? paused, String? lastRun)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ScheduleOwner():
-        return $default(
-            _that.id, _that.user, _that.gooseScheduleId, _that.displayName);
+        return $default(_that.id, _that.user, _that.displayName, _that.cron,
+            _that.prompt, _that.paused, _that.lastRun);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -254,15 +280,15 @@ extension ScheduleOwnerPatterns on ScheduleOwner {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(
-            String id, String user, String gooseScheduleId, String displayName)?
+    TResult? Function(String id, String user, String displayName, String? cron,
+            String? prompt, bool? paused, String? lastRun)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ScheduleOwner() when $default != null:
-        return $default(
-            _that.id, _that.user, _that.gooseScheduleId, _that.displayName);
+        return $default(_that.id, _that.user, _that.displayName, _that.cron,
+            _that.prompt, _that.paused, _that.lastRun);
       case _:
         return null;
     }
@@ -275,8 +301,11 @@ class _ScheduleOwner implements ScheduleOwner {
   const _ScheduleOwner(
       {required this.id,
       required this.user,
-      required this.gooseScheduleId,
-      required this.displayName});
+      required this.displayName,
+      this.cron,
+      this.prompt,
+      this.paused,
+      this.lastRun});
   factory _ScheduleOwner.fromJson(Map<String, dynamic> json) =>
       _$ScheduleOwnerFromJson(json);
 
@@ -285,9 +314,15 @@ class _ScheduleOwner implements ScheduleOwner {
   @override
   final String user;
   @override
-  final String gooseScheduleId;
-  @override
   final String displayName;
+  @override
+  final String? cron;
+  @override
+  final String? prompt;
+  @override
+  final bool? paused;
+  @override
+  final String? lastRun;
 
   /// Create a copy of ScheduleOwner
   /// with the given fields replaced by the non-null parameter values.
@@ -311,20 +346,22 @@ class _ScheduleOwner implements ScheduleOwner {
             other is _ScheduleOwner &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.user, user) || other.user == user) &&
-            (identical(other.gooseScheduleId, gooseScheduleId) ||
-                other.gooseScheduleId == gooseScheduleId) &&
             (identical(other.displayName, displayName) ||
-                other.displayName == displayName));
+                other.displayName == displayName) &&
+            (identical(other.cron, cron) || other.cron == cron) &&
+            (identical(other.prompt, prompt) || other.prompt == prompt) &&
+            (identical(other.paused, paused) || other.paused == paused) &&
+            (identical(other.lastRun, lastRun) || other.lastRun == lastRun));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, user, gooseScheduleId, displayName);
+  int get hashCode => Object.hash(
+      runtimeType, id, user, displayName, cron, prompt, paused, lastRun);
 
   @override
   String toString() {
-    return 'ScheduleOwner(id: $id, user: $user, gooseScheduleId: $gooseScheduleId, displayName: $displayName)';
+    return 'ScheduleOwner(id: $id, user: $user, displayName: $displayName, cron: $cron, prompt: $prompt, paused: $paused, lastRun: $lastRun)';
   }
 }
 
@@ -337,7 +374,13 @@ abstract mixin class _$ScheduleOwnerCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id, String user, String gooseScheduleId, String displayName});
+      {String id,
+      String user,
+      String displayName,
+      String? cron,
+      String? prompt,
+      bool? paused,
+      String? lastRun});
 }
 
 /// @nodoc
@@ -355,8 +398,11 @@ class __$ScheduleOwnerCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? user = null,
-    Object? gooseScheduleId = null,
     Object? displayName = null,
+    Object? cron = freezed,
+    Object? prompt = freezed,
+    Object? paused = freezed,
+    Object? lastRun = freezed,
   }) {
     return _then(_ScheduleOwner(
       id: null == id
@@ -367,14 +413,26 @@ class __$ScheduleOwnerCopyWithImpl<$Res>
           ? _self.user
           : user // ignore: cast_nullable_to_non_nullable
               as String,
-      gooseScheduleId: null == gooseScheduleId
-          ? _self.gooseScheduleId
-          : gooseScheduleId // ignore: cast_nullable_to_non_nullable
-              as String,
       displayName: null == displayName
           ? _self.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
               as String,
+      cron: freezed == cron
+          ? _self.cron
+          : cron // ignore: cast_nullable_to_non_nullable
+              as String?,
+      prompt: freezed == prompt
+          ? _self.prompt
+          : prompt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      paused: freezed == paused
+          ? _self.paused
+          : paused // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      lastRun: freezed == lastRun
+          ? _self.lastRun
+          : lastRun // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

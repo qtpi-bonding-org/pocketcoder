@@ -10,8 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 type fakeInspectClient struct {
@@ -357,6 +358,10 @@ func TestProvisionHarnessInstanceRecreatesStoppedReleaseContainer(t *testing.T) 
 		"container_image": "example.com/harness:2.0",
 		"launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000},
 	})
+	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harness.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
 	instances, err := app.FindCollectionByNameOrId("harness_instances")
 	if err != nil {
 		t.Fatal(err)
@@ -364,6 +369,7 @@ func TestProvisionHarnessInstanceRecreatesStoppedReleaseContainer(t *testing.T) 
 	stale := core.NewRecord(instances)
 	stale.Set("harness", harness.Id)
 	stale.Set("user", userID)
+	stale.Set("harness_account", account.Id)
 	stale.Set("launch_key", "")
 	stale.Set("container_name", "old-release-container")
 	stale.Set("secret", "old-secret")
@@ -460,6 +466,49 @@ func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T)
 	}
 }
 
+func TestProvisionHarnessInstanceAccountLoginDoesNotRequireAPIKey(t *testing.T) {
+	app := testApp(t)
+	user := testUser(t, app, "account-login-"+uuid.NewString()[:8]+"@example.com")
+	harness := createTestHarness(t, app, map[string]any{
+		"cli_id":          "codex-account-login-test",
+		"container_image": "local-codex",
+		"launch_template": map[string]any{
+			"cmd":          []string{"codex-acp"},
+			"port":         3000,
+			"env_template": map[string]any{"OPENAI_API_KEY": "{{.API_KEY}}"},
+		},
+	})
+	account, err := harnessaccount.SelectOrCreate(app, user.Id, harness.Id, "", "Personal Codex", harnessaccount.VisibilityPersonal, harnessaccount.ModeAccount)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account.Set("credential_mode", harnessaccount.ModeAccount)
+	if err := app.Save(account); err != nil {
+		t.Fatal(err)
+	}
+	fake := newFakeDockerClient()
+	fake.imageExists = true
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.GetString("status") != "running" {
+		t.Fatalf("status = %q, want running", rec.GetString("status"))
+	}
+	if !containsString(fake.lastCreateSpec.Env, "OPENAI_API_KEY=") {
+		t.Fatalf("env = %v, want empty API key for account-volume login", fake.lastCreateSpec.Env)
+	}
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
 const harnessProviderForTest = "claude-code-test"
 
 func TestProvisionHarnessInstanceScopesGenericAPIKeyToSelectedHarness(t *testing.T) {
@@ -481,8 +530,69 @@ func TestProvisionHarnessInstanceScopesGenericAPIKeyToSelectedHarness(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := fake.lastCreateSpec.Env; len(got) != 1 || got[0] != "OPENAI_API_KEY=codex-key" {
-		t.Errorf("Env = %v, want only the selected Codex harness's API key", got)
+	got := fake.lastCreateSpec.Env
+	want := map[string]bool{
+		"OPENAI_API_KEY=codex-key":                                false,
+		"HOME=/workspace/.pocketcoder_auth":                       false,
+		"XDG_CONFIG_HOME=/workspace/.pocketcoder_auth/.config":    false,
+		"XDG_DATA_HOME=/workspace/.pocketcoder_auth/.local/share": false,
+	}
+	for _, entry := range got {
+		if _, ok := want[entry]; ok {
+			want[entry] = true
+		}
+	}
+	for entry, found := range want {
+		if !found {
+			t.Errorf("Env = %v, missing %s", got, entry)
+		}
+	}
+}
+
+func TestProvisionHarnessInstanceUsesPerHarnessPersistentAuthVolume(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{
+		"cli_id":          "codex-volume-test",
+		"container_image": "local-codex",
+		"launch_template": map[string]any{"cmd": []string{"codex-acp"}, "port": 3000},
+	})
+
+	firstUser := testUser(t, app, "first-auth-volume@example.com")
+	secondUser := testUser(t, app, "second-auth-volume@example.com")
+	firstDocker := newFakeDockerClient()
+	secondDocker := newFakeDockerClient()
+	firstDocker.imageExists = true
+	secondDocker.imageExists = true
+	if _, err := harnessaccount.SelectOrCreate(app, firstUser.Id, harness.Id, "", "Family Codex", harnessaccount.VisibilityDeployment, harnessaccount.ModeAccount); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := harnessaccount.SelectOrCreate(app, secondUser.Id, harness.Id, "", "", harnessaccount.VisibilityDeployment, harnessaccount.ModeAccount); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ProvisionHarnessInstance(context.Background(), app, firstDocker, harness.Id, "", firstUser.Id); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ProvisionHarnessInstance(context.Background(), app, secondDocker, harness.Id, "", secondUser.Id); err != nil {
+		t.Fatal(err)
+	}
+
+	findMount := func(binds []string, destination string) string {
+		for _, bind := range binds {
+			if strings.HasSuffix(bind, ":"+destination) {
+				return strings.TrimSuffix(bind, ":"+destination)
+			}
+		}
+		return ""
+	}
+	firstAuth := findMount(firstDocker.lastCreateSpec.VolumeBinds, "/workspace/.pocketcoder_auth")
+	secondAuth := findMount(secondDocker.lastCreateSpec.VolumeBinds, "/workspace/.pocketcoder_auth")
+	if firstAuth == "" || firstAuth != secondAuth {
+		t.Fatalf("auth mounts = %q and %q, want one persistent shared-account Codex volume", firstAuth, secondAuth)
+	}
+	firstWorkspace := findMount(firstDocker.lastCreateSpec.VolumeBinds, "/workspace")
+	secondWorkspace := findMount(secondDocker.lastCreateSpec.VolumeBinds, "/workspace")
+	if firstWorkspace == "" || firstWorkspace == secondWorkspace {
+		t.Fatalf("workspace mounts = %q and %q, want separate per-user volumes", firstWorkspace, secondWorkspace)
 	}
 }
 
@@ -518,7 +628,8 @@ func TestProvisionHarnessInstanceFailsClearlyWhenSelectedHarnessHasNoAPIKey(t *t
 // the race two concurrent ProvisionHarnessInstance callers can hit for the
 // same (harness, launch_key): both pass the initial FindHarnessInstance
 // check before either row exists, so the loser's own Save fails on the
-// (harness, launch_key) unique index (idx_harness_instances_pair). Real
+// (user, harness, harness_account, launch_key) unique index
+// (idx_harness_instances_pair). Real
 // goroutine scheduling can't reliably land both calls in that exact window
 // on demand, so this uses a test-only seam (raceHookForTests) to
 // deterministically simulate a concurrent winner's row landing in the gap

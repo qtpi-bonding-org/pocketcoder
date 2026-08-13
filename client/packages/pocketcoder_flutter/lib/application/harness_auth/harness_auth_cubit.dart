@@ -148,6 +148,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
       () => _authRepository
           .status(
             harnessId: harnessId,
+            accountId: snapshot?.accountId,
             attemptId: snapshot?.attempt?.id,
           )
           .then((status) => _updateStatus(harnessId, status)),
@@ -157,10 +158,12 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   Future<void> startWithAccount({
     required String harnessId,
     required String provider,
+    required String visibility,
   }) async {
     OnboardingLogger.event('harness account login requested', {
       'harness': harnessId,
       'provider': provider,
+      'visibility': visibility,
     });
     return _withBusy(
       harnessId,
@@ -168,6 +171,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
           .start(
             harnessId: harnessId,
             credentialMode: 'account',
+            visibility: visibility,
             provider: provider,
           )
           .then((status) => _updateStatus(harnessId, status)),
@@ -177,6 +181,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   Future<void> startWithApiKey({
     required String harnessId,
     required String providerKey,
+    required String visibility,
   }) async {
     OnboardingLogger.event(
         'harness api key login requested', {'harness': harnessId});
@@ -186,19 +191,25 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
           .start(
             harnessId: harnessId,
             credentialMode: 'api_key',
+            visibility: visibility,
             providerKey: providerKey,
           )
           .then((status) => _updateStatus(harnessId, status)),
     );
   }
 
-  Future<void> startWithNone(String harnessId) async {
+  Future<void> startWithNone(String harnessId,
+      {required String visibility}) async {
     OnboardingLogger.event(
         'harness anonymous login requested', {'harness': harnessId});
     return _withBusy(
       harnessId,
       () => _authRepository
-          .start(harnessId: harnessId, credentialMode: 'none')
+          .start(
+            harnessId: harnessId,
+            credentialMode: 'none',
+            visibility: visibility,
+          )
           .then((status) => _updateStatus(harnessId, status)),
     );
   }
@@ -210,7 +221,11 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
     await _withBusy(
       harnessId,
       () => _authRepository
-          .poll(harnessId: harnessId, attemptId: snapshot?.attempt?.id)
+          .poll(
+            harnessId: harnessId,
+            accountId: snapshot?.accountId,
+            attemptId: snapshot?.attempt?.id,
+          )
           .then((status) => _updateStatus(harnessId, status)),
     );
   }
@@ -228,7 +243,12 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
     await _withBusy(
       harnessId,
       () => _authRepository
-          .submit(harnessId: harnessId, code: code, attemptId: attemptId)
+          .submit(
+            harnessId: harnessId,
+            accountId: snapshot?.accountId,
+            code: code,
+            attemptId: attemptId,
+          )
           .then((status) => _updateStatus(harnessId, status)),
     );
   }
@@ -242,6 +262,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
       () => _authRepository
           .cancel(
             harnessId: harnessId,
+            accountId: snapshot?.accountId,
             attemptId: snapshot?.attempt?.id,
           )
           .then((status) => _updateStatus(harnessId, status)),
@@ -251,10 +272,14 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   Future<void> disconnect(String harnessId) async {
     OnboardingLogger.event(
         'harness disconnect requested', {'harness': harnessId});
+    final snapshot = state.statuses[harnessId];
     await _withBusy(
       harnessId,
       () => _authRepository
-          .disconnect(harnessId: harnessId)
+          .disconnect(
+            harnessId: harnessId,
+            accountId: snapshot?.accountId,
+          )
           .then((status) => _updateStatus(harnessId, status)),
     );
   }

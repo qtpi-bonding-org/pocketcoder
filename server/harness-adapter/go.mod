@@ -1,4 +1,4 @@
-module github.com/qtpi-automaton/pocketcoder/harness-adapter
+module github.com/qtpi-bonding-org/pocketcoder/harness-adapter
 
 go 1.23.0
 

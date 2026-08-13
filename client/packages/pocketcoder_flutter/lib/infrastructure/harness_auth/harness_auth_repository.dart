@@ -13,17 +13,17 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
   final PocketBase _pb;
   final IAuthRepository _authRepo;
 
-  static const String _scopeKind = 'user';
-
   @override
   Future<HarnessAuthStatus> status({
     required String harnessId,
+    String? accountId,
     String? attemptId,
   }) {
     return _sendStatus(
       path: ApiEndpoints.harnessAuthStatus,
-      body: _scopePayload(
+      body: _accountPayload(
         harnessId: harnessId,
+        accountId: accountId,
         attemptId: attemptId,
       ),
     );
@@ -33,13 +33,19 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
   Future<HarnessAuthStatus> start({
     required String harnessId,
     required String credentialMode,
+    required String visibility,
+    String? accountId,
+    String? accountName,
     String? provider,
     String? providerKey,
   }) {
     return _sendStatus(
       path: ApiEndpoints.harnessAuthStart,
-      body: _scopePayload(
+      body: _accountPayload(
         harnessId: harnessId,
+        accountId: accountId,
+        accountName: accountName,
+        visibility: visibility,
         credentialMode: credentialMode,
         provider: provider,
         providerKey: providerKey,
@@ -50,12 +56,14 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
   @override
   Future<HarnessAuthStatus> poll({
     required String harnessId,
+    String? accountId,
     String? attemptId,
   }) {
     return _sendStatus(
       path: ApiEndpoints.harnessAuthPoll,
-      body: _scopePayload(
+      body: _accountPayload(
         harnessId: harnessId,
+        accountId: accountId,
         attemptId: attemptId,
       ),
     );
@@ -65,12 +73,14 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
   Future<HarnessAuthStatus> submit({
     required String harnessId,
     required String code,
+    String? accountId,
     String? attemptId,
   }) {
     return _sendStatus(
       path: ApiEndpoints.harnessAuthSubmit,
-      body: _scopePayload(
+      body: _accountPayload(
         harnessId: harnessId,
+        accountId: accountId,
         attemptId: attemptId,
         code: code,
       ),
@@ -80,22 +90,27 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
   @override
   Future<HarnessAuthStatus> cancel({
     required String harnessId,
+    String? accountId,
     String? attemptId,
   }) {
     return _sendStatus(
       path: ApiEndpoints.harnessAuthCancel,
-      body: _scopePayload(
+      body: _accountPayload(
         harnessId: harnessId,
+        accountId: accountId,
         attemptId: attemptId,
       ),
     );
   }
 
   @override
-  Future<HarnessAuthStatus> disconnect({required String harnessId}) {
+  Future<HarnessAuthStatus> disconnect({
+    required String harnessId,
+    String? accountId,
+  }) {
     return _sendStatus(
       path: ApiEndpoints.harnessAuthDisconnect,
-      body: _scopePayload(harnessId: harnessId),
+      body: _accountPayload(harnessId: harnessId, accountId: accountId),
     );
   }
 
@@ -106,8 +121,8 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
     OnboardingLogger.event('harness auth request started', {'endpoint': path});
     return tryMethod(
       () async {
-        final scopeID = _authRepo.currentUserId;
-        if (scopeID == null || scopeID.isEmpty) {
+        final userId = _authRepo.currentUserId;
+        if (userId == null || userId.isEmpty) {
           throw HarnessAuthException.notAuthenticated();
         }
 
@@ -134,8 +149,11 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
     );
   }
 
-  Map<String, dynamic> _scopePayload({
+  Map<String, dynamic> _accountPayload({
     required String harnessId,
+    String? accountId,
+    String? accountName,
+    String? visibility,
     String? attemptId,
     String? credentialMode,
     String? provider,
@@ -143,9 +161,11 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
     String? code,
   }) {
     return {
-      'scopeKind': _scopeKind,
-      'scopeId': _authRepo.currentUserId ?? '',
       'harness': harnessId,
+      if (accountId != null && accountId.isNotEmpty) 'accountId': accountId,
+      if (accountName != null && accountName.isNotEmpty)
+        'accountName': accountName,
+      if (visibility != null) 'visibility': visibility,
       if (attemptId != null) 'attemptId': attemptId,
       if (credentialMode != null) 'credentialMode': credentialMode,
       if (provider != null) 'provider': provider,

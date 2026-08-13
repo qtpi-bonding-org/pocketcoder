@@ -33,8 +33,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/releaseartifact"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessvolume"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseartifact"
 )
 
 // inspector is the minimal interface ResolveWorkspaceVolumeAndNetwork needs
@@ -49,8 +51,6 @@ type inspector interface {
 // so it can reach the always-on local Ollama service, while the socket proxy
 // still forbids arbitrary post-create network attachment.
 const ModelNetwork = "pocketcoder-model"
-
-const harnessAuthHomeMount = "/workspace/.pocketcoder_auth"
 
 // ResolveWorkspaceVolumeAndNetwork finds the real, possibly compose-project-
 // prefixed names of the shared workspace volume and agent network by
@@ -96,12 +96,12 @@ var ensureReleaseHarnessImage = func(ctx context.Context, client dockerProvision
 }
 
 // FindHarnessInstance looks up the harness_instances row for (harness,
-// launchKey) scoped to a user. See ProvisionHarnessInstance for why this can't be a single
-// `harness = {:h} && launch_key = {:k} && user = {:u}` filter. Exported so api/profile.go's
+// account, launchKey) scoped to a user. See ProvisionHarnessInstance for why
+// launch_key is matched in Go. Exported so api/profile.go's
 // buildSessionProfile can share this exact lookup instead of maintaining its own
 // copy of the same launch_key-in-Go workaround.
-func FindHarnessInstance(app core.App, harnessID, launchKey, userID string) (*core.Record, error) {
-	candidates, err := app.FindRecordsByFilter("harness_instances", "harness = {:h} && user = {:u}", "", 0, 0, map[string]any{"h": harnessID, "u": userID})
+func FindHarnessInstance(app core.App, harnessID, launchKey, userID, accountID string) (*core.Record, error) {
+	candidates, err := app.FindRecordsByFilter("harness_instances", "harness = {:h} && user = {:u} && harness_account = {:a}", "", 0, 0, map[string]any{"h": harnessID, "u": userID, "a": accountID})
 	if err != nil {
 		return nil, fmt.Errorf("query harness_instances for harness %s: %w", harnessID, err)
 	}
@@ -122,26 +122,32 @@ func FindHarnessInstance(app core.App, harnessID, launchKey, userID string) (*co
 var raceHookForTests func()
 
 // ProvisionHarnessInstance turns a harnesses catalog row into a running,
-// dialable container idempotent per (harnessID, launchKey, userID), minting a
-// per-instance secret, rendering launch_template.env_template against
-// provider_keys, ensuring the release image, and creating+starting the container.
+// dialable container idempotent per (harnessID, harnessAccountID, launchKey,
+// userID), minting a per-instance secret, rendering launch_template.env_template
+// against provider_keys, ensuring the release image, and creating+starting the
+// container.
 func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerProvisioner, harnessID, launchKey, userID string) (*core.Record, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("userID is required")
 	}
-	// NOT `"harness = {:h} && launch_key = {:k}"`  confirmed against the
+	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harnessID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve harness account: %w", err)
+	}
+	// Do not add `launch_key = {:k}` to FindHarnessInstance's PocketBase filter.
+	// This is confirmed against the
 	// already-landed api/profile.go (buildSessionProfile queries
 	// harness_instances the same way, see its own in-code comment):
 	// PocketBase's filter evaluator does not reliably match an empty-string
 	// `launch_key` inside an `&&` expression, and launch_key = "" is the
 	// COMMON case (every supports_live_config = true harness). A direct
-	// `&&` filter here would fail to find the existing shared instance on
+	// `&&` filter here would fail to find the existing user/account instance on
 	// every call after the first, and each failed lookup would attempt to
 	// mint and Create a brand-new container colliding with the first on
 	// the (harness, launch_key) unique index and erroring out. Query by
 	// harness alone, then match launch_key in Go, exactly like
 	// buildSessionProfile already does.
-	existing, err := FindHarnessInstance(app, harnessID, launchKey, userID)
+	existing, err := FindHarnessInstance(app, harnessID, launchKey, userID, account.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -183,6 +189,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	containerName := "pocketcoder-harness-" + userSuffix + "-" + uuid.NewString()[:8]
 	rec.Set("harness", harnessID)
 	rec.Set("user", userID)
+	rec.Set("harness_account", account.Id)
 	rec.Set("launch_key", launchKey)
 	if launchKey != "" {
 		// launch_key IS the harness_models id for a supports_live_config =
@@ -207,7 +214,8 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		raceHookForTests()
 	}
 	if err := app.Save(rec); err != nil {
-		// (harness, launch_key) is unique-indexed (idx_harness_instances_pair),
+		// (user, harness, harness_account, launch_key) is unique-indexed
+		// (idx_harness_instances_pair),
 		// so a concurrent caller provisioning the same pair can win this race
 		// and land its row first, this Save then fails on the unique-index
 		// violation even though a perfectly usable instance now exists. Re-run
@@ -216,7 +224,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		// error to a caller that just lost a benign race. Only propagate the
 		// raw Save error if the row still isn't there, a genuinely different
 		// failure (e.g. a validation error), not a race loss.
-		if winner, lookupErr := FindHarnessInstance(app, harnessID, launchKey, userID); lookupErr == nil && winner != nil {
+		if winner, lookupErr := FindHarnessInstance(app, harnessID, launchKey, userID, account.Id); lookupErr == nil && winner != nil {
 			return winner, nil
 		}
 		return nil, fmt.Errorf("save pending harness_instances row: %w", err)
@@ -250,7 +258,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 			}
 		}
 	}
-	env, err := renderEnv(app, launch.EnvTemplate, secret, harness.GetString("cli_id"), userID, providerID, modelID)
+	env, err := renderEnv(app, launch.EnvTemplate, secret, harness.GetString("cli_id"), userID, providerID, modelID, account)
 	if err != nil {
 		return fail(fmt.Errorf("render launch_template.env_template: %w", err))
 	}
@@ -269,19 +277,30 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		}
 	}
 
-	workspaceVolume := fmt.Sprintf("%s_%s_workspace", volumeName, userSuffix)
-	authVolume := fmt.Sprintf("%s_%s_auth_home", volumeName, userSuffix)
+	volumes, err := harnessvolume.Resolve(volumeName, userID, harness.GetString("cli_id"), account.Id)
+	if err != nil {
+		return fail(fmt.Errorf("resolve harness volumes: %w", err))
+	}
 	volumeBinds := []string{
-		workspaceVolume + ":/workspace",
-		authVolume + ":" + harnessAuthHomeMount,
+		volumes.Workspace + ":/workspace",
+		volumes.Auth + ":" + harnessvolume.AuthHomeMount,
 	}
 	networkNames := []string{networkName, ModelNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
 	if harness.GetString("cli_id") == "goose" {
 		// The Goose image keeps its session/config state under GOOSE_PATH_ROOT.
-		// Reuse the same per-user auth volume so its state is never shared with
-		// the compose control-plane Goose container.
-		volumeBinds = append(volumeBinds, authVolume+":/goose")
+		// Keep that durable state in the selected Goose account's volume,
+		// separate from the compose control-plane Goose container.
+		volumeBinds = append(volumeBinds, volumes.Auth+":/goose")
 		networkNames = append(networkNames, "pocketcoder-goose-egress")
+	} else {
+		// Account-login helpers write into this named volume with HOME rooted at
+		// the mount. The actual ACP subprocesses must use the same paths or the
+		// persisted Claude/Codex login is invisible at runtime.
+		env = append(env,
+			"HOME="+harnessvolume.AuthHomeMount,
+			"XDG_CONFIG_HOME="+harnessvolume.AuthHomeMount+"/.config",
+			"XDG_DATA_HOME="+harnessvolume.AuthHomeMount+"/.local/share",
+		)
 	}
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
 		Image:        image,
@@ -290,11 +309,12 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		VolumeBinds:  volumeBinds,
 		NetworkNames: networkNames,
 		Labels: map[string]string{
-			"pc_managed":    "pocketcoder",
-			"pc_release":    os.Getenv("POCKETCODER_RELEASE"),
-			"pc_scope":      "user",
-			"pc_scope_id":   userID,
-			"pc_harness_id": harnessID,
+			"pc_managed":            "pocketcoder",
+			"pc_release":            os.Getenv("POCKETCODER_RELEASE"),
+			"pc_scope":              "user",
+			"pc_scope_id":           userID,
+			"pc_harness_id":         harnessID,
+			"pc_harness_account_id": account.Id,
 		},
 	})
 	if err != nil {
@@ -348,7 +368,7 @@ func mintSecret() (string, error) {
 // {"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}"} becomes
 // "ANTHROPIC_API_KEY=sk-..." in the returned KEY=VALUE slice Docker's
 // container-create API expects.
-func renderEnv(app core.App, envTemplate map[string]string, secret, provider, userID, providerID, modelID string) ([]string, error) {
+func renderEnv(app core.App, envTemplate map[string]string, secret, provider, userID, providerID, modelID string, account *core.Record) ([]string, error) {
 	filter := "provider = {:provider} && user = {:user}"
 	params := map[string]any{"provider": provider, "user": userID}
 	providerScopeAny := false
@@ -359,15 +379,32 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 		filter = "user = {:user}"
 		params = map[string]any{"user": userID}
 	}
-	keyRecs, err := app.FindRecordsByFilter("provider_keys", filter, "", 0, 0, params)
-	if err != nil {
-		return nil, fmt.Errorf("query provider_keys: %w", err)
+	var keyRecs []*core.Record
+	if account.GetString("credential_mode") == harnessaccount.ModeAPIKey && account.GetString("provider_key") != "" {
+		key, err := app.FindRecordById("provider_keys", account.GetString("provider_key"))
+		if err != nil {
+			return nil, fmt.Errorf("resolve harness account provider key: %w", err)
+		}
+		keyRecs = []*core.Record{key}
+	} else {
+		var err error
+		keyRecs, err = app.FindRecordsByFilter("provider_keys", filter, "", 0, 0, params)
+		if err != nil {
+			return nil, fmt.Errorf("query provider_keys: %w", err)
+		}
 	}
 	values := map[string]string{
 		"__adapter_secret": secret,
 		"__ollama_host":    "http://ollama:11434",
 		"__provider":       providerID,
 		"__model":          modelID,
+	}
+	if account.GetString("credential_mode") == harnessaccount.ModeAccount && provider != "goose" {
+		// Claude Code and Codex read their account login from the account-owned
+		// HOME volume; their adapter image still declares API_KEY in its launch
+		// template, so render it empty instead of requiring an unrelated key.
+		keyRecs = nil
+		values["API_KEY"] = ""
 	}
 	if provider == "goose" {
 		if values["__provider"] == "" {

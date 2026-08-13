@@ -19,6 +19,7 @@ mixin _$Skill {
   String get content;
   String get path;
   bool get global;
+  bool get system;
 
   /// Create a copy of Skill
   /// with the given fields replaced by the non-null parameter values.
@@ -40,17 +41,18 @@ mixin _$Skill {
                 other.description == description) &&
             (identical(other.content, content) || other.content == content) &&
             (identical(other.path, path) || other.path == path) &&
-            (identical(other.global, global) || other.global == global));
+            (identical(other.global, global) || other.global == global) &&
+            (identical(other.system, system) || other.system == system));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, name, description, content, path, global);
+  int get hashCode => Object.hash(
+      runtimeType, name, description, content, path, global, system);
 
   @override
   String toString() {
-    return 'Skill(name: $name, description: $description, content: $content, path: $path, global: $global)';
+    return 'Skill(name: $name, description: $description, content: $content, path: $path, global: $global, system: $system)';
   }
 }
 
@@ -64,7 +66,8 @@ abstract mixin class $SkillCopyWith<$Res> {
       String description,
       String content,
       String path,
-      bool global});
+      bool global,
+      bool system});
 }
 
 /// @nodoc
@@ -84,6 +87,7 @@ class _$SkillCopyWithImpl<$Res> implements $SkillCopyWith<$Res> {
     Object? content = null,
     Object? path = null,
     Object? global = null,
+    Object? system = null,
   }) {
     return _then(_self.copyWith(
       name: null == name
@@ -105,6 +109,10 @@ class _$SkillCopyWithImpl<$Res> implements $SkillCopyWith<$Res> {
       global: null == global
           ? _self.global
           : global // ignore: cast_nullable_to_non_nullable
+              as bool,
+      system: null == system
+          ? _self.system
+          : system // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }
@@ -204,7 +212,7 @@ extension SkillPatterns on Skill {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(String name, String description, String content,
-            String path, bool global)?
+            String path, bool global, bool system)?
         $default, {
     required TResult orElse(),
   }) {
@@ -212,7 +220,7 @@ extension SkillPatterns on Skill {
     switch (_that) {
       case _Skill() when $default != null:
         return $default(_that.name, _that.description, _that.content,
-            _that.path, _that.global);
+            _that.path, _that.global, _that.system);
       case _:
         return orElse();
     }
@@ -234,14 +242,14 @@ extension SkillPatterns on Skill {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(String name, String description, String content,
-            String path, bool global)
+            String path, bool global, bool system)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Skill():
         return $default(_that.name, _that.description, _that.content,
-            _that.path, _that.global);
+            _that.path, _that.global, _that.system);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -262,14 +270,14 @@ extension SkillPatterns on Skill {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(String name, String description, String content,
-            String path, bool global)?
+            String path, bool global, bool system)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Skill() when $default != null:
         return $default(_that.name, _that.description, _that.content,
-            _that.path, _that.global);
+            _that.path, _that.global, _that.system);
       case _:
         return null;
     }
@@ -284,7 +292,8 @@ class _Skill implements Skill {
       required this.description,
       required this.content,
       required this.path,
-      required this.global});
+      required this.global,
+      this.system = false});
   factory _Skill.fromJson(Map<String, dynamic> json) => _$SkillFromJson(json);
 
   @override
@@ -297,6 +306,9 @@ class _Skill implements Skill {
   final String path;
   @override
   final bool global;
+  @override
+  @JsonKey()
+  final bool system;
 
   /// Create a copy of Skill
   /// with the given fields replaced by the non-null parameter values.
@@ -323,17 +335,18 @@ class _Skill implements Skill {
                 other.description == description) &&
             (identical(other.content, content) || other.content == content) &&
             (identical(other.path, path) || other.path == path) &&
-            (identical(other.global, global) || other.global == global));
+            (identical(other.global, global) || other.global == global) &&
+            (identical(other.system, system) || other.system == system));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, name, description, content, path, global);
+  int get hashCode => Object.hash(
+      runtimeType, name, description, content, path, global, system);
 
   @override
   String toString() {
-    return 'Skill(name: $name, description: $description, content: $content, path: $path, global: $global)';
+    return 'Skill(name: $name, description: $description, content: $content, path: $path, global: $global, system: $system)';
   }
 }
 
@@ -348,7 +361,8 @@ abstract mixin class _$SkillCopyWith<$Res> implements $SkillCopyWith<$Res> {
       String description,
       String content,
       String path,
-      bool global});
+      bool global,
+      bool system});
 }
 
 /// @nodoc
@@ -368,6 +382,7 @@ class __$SkillCopyWithImpl<$Res> implements _$SkillCopyWith<$Res> {
     Object? content = null,
     Object? path = null,
     Object? global = null,
+    Object? system = null,
   }) {
     return _then(_Skill(
       name: null == name
@@ -389,6 +404,10 @@ class __$SkillCopyWithImpl<$Res> implements _$SkillCopyWith<$Res> {
       global: null == global
           ? _self.global
           : global // ignore: cast_nullable_to_non_nullable
+              as bool,
+      system: null == system
+          ? _self.system
+          : system // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }

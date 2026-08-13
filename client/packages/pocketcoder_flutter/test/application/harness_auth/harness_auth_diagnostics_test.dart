@@ -2,6 +2,7 @@ import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
+import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 
@@ -52,9 +53,11 @@ void main() {
     when(() => authRepository.start(
           harnessId: 'harness-1',
           credentialMode: 'none',
+          visibility: harnessAccountVisibilityPersonal,
         )).thenThrow(StateError('not persisted'));
 
-    await cubit.startWithNone('harness-1');
+    await cubit.startWithNone('harness-1',
+        visibility: harnessAccountVisibilityPersonal);
 
     expect(cubit.state.error, isA<StateError>());
     final entries = verify(() => storage.saveError(captureAny())).captured;

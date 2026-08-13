@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 )
 
 func TestMemoryMcpServerEncodesUnicodeIdentity(t *testing.T) {

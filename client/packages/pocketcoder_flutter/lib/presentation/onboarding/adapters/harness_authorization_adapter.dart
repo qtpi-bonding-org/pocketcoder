@@ -10,6 +10,8 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/harness_authorization_view.dart';
@@ -106,10 +108,16 @@ class HarnessAuthorizationAdapter
               harnessId: harnessId,
               code: code,
             ),
-            onStartLogin: () => cubit.startWithAccount(
-              harnessId: harnessId,
-              provider: provider,
-            ),
+            onStartLogin: () async {
+              final visibility = await _chooseVisibility(context);
+              if (visibility != null) {
+                await cubit.startWithAccount(
+                  harnessId: harnessId,
+                  provider: provider,
+                  visibility: visibility,
+                );
+              }
+            },
             onOpenChallenge: (challenge) {
               final target = challenge.target;
               if (target == null || target.isEmpty) return;
@@ -126,6 +134,32 @@ class HarnessAuthorizationAdapter
       ),
     );
   }
+
+  Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
+        context: context,
+        builder: (dialogContext) => TerminalDialog(
+          title: 'Who uses this harness account?',
+          content: const Text(
+            'Shared reuses this login across profiles on this server. Personal keeps a separate login for this profile.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext)
+                  .pop(harnessAccountVisibilityPersonal),
+              child: const Text('Personal'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext)
+                  .pop(harnessAccountVisibilityDeployment),
+              child: const Text('Shared'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      );
 
   @override
   void disposeAdapter() {

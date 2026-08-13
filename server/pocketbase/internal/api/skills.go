@@ -3,10 +3,9 @@ package api
 import (
 	"strings"
 
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 )
 
 type skillScope struct {
@@ -33,10 +32,10 @@ func requireAdmin(re *core.RequestEvent) error {
 
 // RegisterSkillsApi exposes the PocketBase skills collection. The collection
 // is canonical; agent_files.go materializes changes into running harnesses.
-func RegisterSkillsApi(app *pocketbase.PocketBase, e *core.ServeEvent, _ func() *coordinator.Coordinator) {
+func RegisterSkillsApi(app core.App, e *core.ServeEvent, _ func() *coordinator.Coordinator) {
 	e.Router.POST("/api/pocketcoder/skills/list", func(re *core.RequestEvent) error {
-		if err := requireAdmin(re); err != nil {
-			return err
+		if re.Auth == nil {
+			return re.JSON(401, map[string]string{"error": "Authentication required"})
 		}
 		recs, err := app.FindRecordsByFilter("skills", "active = true && (user = {:user} || is_system = true)", "name", 0, 0, map[string]any{"user": re.Auth.Id})
 		if err != nil {
@@ -50,8 +49,8 @@ func RegisterSkillsApi(app *pocketbase.PocketBase, e *core.ServeEvent, _ func() 
 	}).Bind(apis.RequireAuth())
 
 	e.Router.POST("/api/pocketcoder/skills/create", func(re *core.RequestEvent) error {
-		if err := requireAdmin(re); err != nil {
-			return err
+		if re.Auth == nil {
+			return re.JSON(401, map[string]string{"error": "Authentication required"})
 		}
 		var in skillRequest
 		if err := re.BindBody(&in); err != nil || in.Name == "" || in.Description == "" || in.Content == "" {
@@ -74,11 +73,10 @@ func RegisterSkillsApi(app *pocketbase.PocketBase, e *core.ServeEvent, _ func() 
 		rec.Set("name", in.Name)
 		rec.Set("description", in.Description)
 		rec.Set("content", in.Content)
+		rec.Set("user", re.Auth.Id)
+		rec.Set("is_system", false)
 		rec.Set("active", true)
-		if in.Scope.Scope == "global" {
-			rec.Set("is_system", true)
-		} else {
-			rec.Set("user", re.Auth.Id)
+		if in.Scope.Scope == "projectDir" {
 			rec.Set("metadata", map[string]any{"projectDir": in.Scope.ProjectDir})
 		}
 		if err := app.Save(rec); err != nil {
@@ -88,8 +86,8 @@ func RegisterSkillsApi(app *pocketbase.PocketBase, e *core.ServeEvent, _ func() 
 	}).Bind(apis.RequireAuth())
 
 	e.Router.POST("/api/pocketcoder/skills/update", func(re *core.RequestEvent) error {
-		if err := requireAdmin(re); err != nil {
-			return err
+		if re.Auth == nil {
+			return re.JSON(401, map[string]string{"error": "Authentication required"})
 		}
 		var in struct {
 			Path        string `json:"path"`
@@ -104,7 +102,7 @@ func RegisterSkillsApi(app *pocketbase.PocketBase, e *core.ServeEvent, _ func() 
 			return re.JSON(400, map[string]string{"error": "path, name, description, and content are required"})
 		}
 		rec, err := app.FindRecordById("skills", in.Path)
-		if err != nil || (!rec.GetBool("is_system") && rec.GetString("user") != re.Auth.Id) {
+		if err != nil || rec.GetBool("is_system") || rec.GetString("user") != re.Auth.Id {
 			return re.JSON(404, map[string]string{"error": "skill not found"})
 		}
 		rec.Set("name", in.Name)
@@ -117,8 +115,8 @@ func RegisterSkillsApi(app *pocketbase.PocketBase, e *core.ServeEvent, _ func() 
 	}).Bind(apis.RequireAuth())
 
 	e.Router.POST("/api/pocketcoder/skills/delete", func(re *core.RequestEvent) error {
-		if err := requireAdmin(re); err != nil {
-			return err
+		if re.Auth == nil {
+			return re.JSON(401, map[string]string{"error": "Authentication required"})
 		}
 		var in struct {
 			Path string `json:"path"`
@@ -127,7 +125,7 @@ func RegisterSkillsApi(app *pocketbase.PocketBase, e *core.ServeEvent, _ func() 
 			return re.JSON(400, map[string]string{"error": "path is required"})
 		}
 		rec, err := app.FindRecordById("skills", in.Path)
-		if err != nil || (!rec.GetBool("is_system") && rec.GetString("user") != re.Auth.Id) {
+		if err != nil || rec.GetBool("is_system") || rec.GetString("user") != re.Auth.Id {
 			return re.JSON(404, map[string]string{"error": "skill not found"})
 		}
 		if err := app.Delete(rec); err != nil {
@@ -138,7 +136,17 @@ func RegisterSkillsApi(app *pocketbase.PocketBase, e *core.ServeEvent, _ func() 
 }
 
 func skillResponse(rec *core.Record) map[string]any {
-	return map[string]any{"name": rec.GetString("name"), "description": rec.GetString("description"), "content": rec.GetString("content"), "path": rec.Id, "global": rec.GetBool("is_system")}
+	var metadata map[string]any
+	_ = rec.UnmarshalJSONField("metadata", &metadata)
+	projectDir, _ := metadata["projectDir"].(string)
+	return map[string]any{
+		"name":        rec.GetString("name"),
+		"description": rec.GetString("description"),
+		"content":     rec.GetString("content"),
+		"path":        rec.Id,
+		"global":      strings.TrimSpace(projectDir) == "",
+		"system":      rec.GetBool("is_system"),
+	}
 }
 
 func validSkillName(name string) bool {

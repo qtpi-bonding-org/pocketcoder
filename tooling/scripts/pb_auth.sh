@@ -23,7 +23,7 @@ set -e
 
 # Default values
 ROLE="admin"
-PB_URL="http://127.0.0.1:8090"
+PB_URL="${PB_URL:-http://127.0.0.1:8090}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -54,11 +54,12 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Load environment variables
-if [ -f .env ]; then
-    # Filter out comments and empty lines, then export
-    export $(grep -v '^#' .env | xargs)
+ENV_FILE="${PB_ENV_FILE:-.env}"
+if [ -f "$ENV_FILE" ]; then
+	# Filter out comments and empty lines, then export
+	export $(grep -v '^#' "$ENV_FILE" | xargs)
 else
-    echo -e "${RED}Error: .env file not found.${NC}" >&2
+	echo -e "${RED}Error: environment file not found: $ENV_FILE${NC}" >&2
     exit 1
 fi
 
