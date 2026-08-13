@@ -37,7 +37,6 @@ append_default POCKETBASE_SUPERUSER_EMAIL superuser@pocketcoder.local
 append_default POCKETBASE_SUPERUSER_PASSWORD "$(random_secret)"
 append_default AGENT_EMAIL agent@pocketcoder.local
 append_default AGENT_PASSWORD "$(random_secret)"
-append_default GOOSE_ACP_URL ws://goose:3000/acp
 append_default PN_RELAY_SECRET "$(random_secret)"
 append_default MCP_GATEWAY_AUTH_TOKEN "$(random_secret)"
 append_default POCKETCODER_SELECTED_HARNESSES goose

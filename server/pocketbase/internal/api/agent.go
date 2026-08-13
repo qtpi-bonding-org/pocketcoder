@@ -52,13 +52,11 @@ func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) (*coordina
 // integration/local runs can inject a fake Goose without touching the
 // production entry point.
 func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coordinator.DialFunc) (*coordinator.Coordinator, error) {
-	workspace := os.Getenv("GOOSE_WORKSPACE")
+	workspace := os.Getenv("POCKETCODER_WORKSPACE")
 	if workspace == "" {
 		workspace = "/workspace"
 	}
 	service, configErr := coordinator.New(coordinator.Config{
-		GooseURL:          os.Getenv("GOOSE_ACP_URL"),
-		GooseSecret:       os.Getenv("GOOSE_SERVER__SECRET_KEY"),
 		Workspace:         workspace,
 		PermissionTimeout: permissionTimeout(),
 		Dial:              dial,
@@ -404,7 +402,7 @@ func writeFlush(w http.ResponseWriter, flusher http.Flusher, seq int, ev events.
 }
 
 func permissionTimeout() time.Duration {
-	value := strings.TrimSpace(os.Getenv("GOOSE_PERMISSION_TIMEOUT"))
+	value := strings.TrimSpace(os.Getenv("POCKETCODER_PERMISSION_TIMEOUT"))
 	if value == "" {
 		return 5 * time.Minute
 	}

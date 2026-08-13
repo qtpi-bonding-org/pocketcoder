@@ -38,15 +38,15 @@ import (
 )
 
 type Config struct {
-	GooseURL, GooseSecret, Workspace string
-	PermissionTimeout                time.Duration
-	Dial                             DialFunc
-	Clock                            Clock
-	LingerWindow                     time.Duration
-	MaxRun                           time.Duration
-	ElicitationTimeout               time.Duration
-	MaxRunEvents                     int
-	LiveBuffer                       int
+	Workspace          string
+	PermissionTimeout  time.Duration
+	Dial               DialFunc
+	Clock              Clock
+	LingerWindow       time.Duration
+	MaxRun             time.Duration
+	ElicitationTimeout time.Duration
+	MaxRunEvents       int
+	LiveBuffer         int
 }
 type Emit func(events.Event) error
 type ResolveSession func(context.Context) (string, error)
@@ -111,19 +111,14 @@ var ErrNoPendingElicitation = errors.New("no pending elicitation")
 
 func New(config Config) (*Coordinator, error) {
 	if config.Workspace == "" {
-		return nil, fmt.Errorf("GOOSE_WORKSPACE is required")
+		return nil, fmt.Errorf("workspace is required")
 	}
 	if config.Dial == nil {
 		config.Dial = func(ctx context.Context, client acpsdk.Client, t Target) (acp.Conn, error) {
-			url, secret := config.GooseURL, config.GooseSecret
 			if t.URL == "" {
-				if url == "" || secret == "" {
-					return nil, fmt.Errorf("harness target is required")
-				}
-			} else {
-				url, secret = t.URL, t.Secret
+				return nil, fmt.Errorf("harness target is required")
 			}
-			return acp.Dial(ctx, acp.DialConfig{URL: url, Secret: secret}, client)
+			return acp.Dial(ctx, acp.DialConfig{URL: t.URL, Secret: t.Secret}, client)
 		}
 	}
 	if config.Clock == nil {

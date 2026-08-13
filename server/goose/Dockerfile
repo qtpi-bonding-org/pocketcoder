@@ -5,7 +5,8 @@
 FROM ghcr.io/aaif-goose/goose@sha256:b5e2d93bba1a6a6b9302ad3fa70e01fe7a0a5e68c127954653d3b95101c31409
 
 USER root
-RUN mkdir -p /goose /workspace && chown -R goose:goose /goose /workspace
+RUN mkdir -p /workspace/.pocketcoder_auth \
+    && chown -R goose:goose /workspace
 COPY entrypoint.sh /usr/local/bin/pocketcoder-goose
 RUN chmod 0555 /usr/local/bin/pocketcoder-goose
 

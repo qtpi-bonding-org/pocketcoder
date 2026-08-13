@@ -667,10 +667,7 @@ func runningInstanceFor(t *testing.T, app core.App, harness *core.Record, userID
 }
 
 // TestBuildSessionProfileAttachesMcpGatewayForPeerHarness verifies a peer
-// stdio harness (anything with cli_id != "goose") gets the gateway attached
-// via McpServers -- the session/new delivery mechanism
-// hooks.McpGatewayHttpServer documents, as opposed to Goose's persistent
-// extension (RegisterMcpGatewayExtension).
+// stdio harness gets the gateway through the common ACP session path.
 func TestBuildSessionProfileAttachesMcpGatewayForPeerHarness(t *testing.T) {
 	t.Setenv("MCP_GATEWAY_AUTH_TOKEN", "test-token-123")
 

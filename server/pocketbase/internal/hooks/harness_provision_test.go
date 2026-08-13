@@ -12,6 +12,7 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessvolume"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
@@ -28,7 +29,7 @@ func TestResolveWorkspaceVolumeAndNetworkMatchesByDestinationAndSuffix(t *testin
 		insp: dockerapi.ContainerInspect{
 			Mounts: []dockerapi.Mount{
 				{Destination: "/app/pb_data", Name: "proj_pb_data"},
-				{Destination: "/workspace", Name: "proj_goose_workspace"},
+				{Destination: "/workspace", Name: "proj_workspace"},
 			},
 		},
 	}
@@ -40,8 +41,8 @@ func TestResolveWorkspaceVolumeAndNetworkMatchesByDestinationAndSuffix(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	if vol != "proj_goose_workspace" {
-		t.Errorf("volume = %q, want proj_goose_workspace", vol)
+	if vol != "proj_workspace" {
+		t.Errorf("volume = %q, want proj_workspace", vol)
 	}
 	if net != "proj_pocketcoder-agent" {
 		t.Errorf("network = %q, want proj_pocketcoder-agent", net)
@@ -154,7 +155,7 @@ func newFakeDockerClient() *fakeDockerClient {
 
 func (f *fakeDockerClient) Inspect(ctx context.Context, containerName string) (dockerapi.ContainerInspect, error) {
 	insp := dockerapi.ContainerInspect{
-		Mounts: []dockerapi.Mount{{Destination: "/workspace", Name: "test_goose_workspace"}},
+		Mounts: []dockerapi.Mount{{Destination: "/workspace", Name: "test_workspace"}},
 	}
 	insp.NetworkSettings.Networks = map[string]dockerapi.NetworkEndpoint{
 		"test_pocketcoder-agent": {},
@@ -303,7 +304,7 @@ func TestProvisionHarnessInstanceLoadsMissingManagedReleaseArtifact(t *testing.T
 	}
 }
 
-func TestProvisionGooseUsesPerUserStateVolume(t *testing.T) {
+func TestProvisionGooseUsesTheCommonHarnessStorageAndNetworkShape(t *testing.T) {
 	app := testApp(t)
 	userID := testUser(t, app, "test-goose-user-"+uuid.NewString()[:8]+"@example.com").Id
 	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
@@ -314,14 +315,64 @@ func TestProvisionGooseUsesPerUserStateVolume(t *testing.T) {
 	if _, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID); err != nil {
 		t.Fatal(err)
 	}
-	foundGooseState := false
+	foundAuthHome := false
 	for _, bind := range fake.lastCreateSpec.VolumeBinds {
+		if strings.HasSuffix(bind, ":"+harnessvolume.AuthHomeMount) {
+			foundAuthHome = true
+		}
 		if strings.HasSuffix(bind, ":/goose") {
-			foundGooseState = true
+			t.Fatalf("Goose has a legacy-only /goose mount: %v", fake.lastCreateSpec.VolumeBinds)
 		}
 	}
-	if !foundGooseState {
-		t.Fatalf("Goose volume binds = %v, want a per-user /goose state mount", fake.lastCreateSpec.VolumeBinds)
+	if !foundAuthHome {
+		t.Fatalf("Goose volume binds = %v, want the common auth-home mount", fake.lastCreateSpec.VolumeBinds)
+	}
+	if !containsString(fake.lastCreateSpec.NetworkNames, HarnessEgressNetwork) {
+		t.Fatalf("Goose networks = %v, want shared harness egress", fake.lastCreateSpec.NetworkNames)
+	}
+	for _, network := range fake.lastCreateSpec.NetworkNames {
+		if strings.Contains(network, "goose-egress") {
+			t.Fatalf("Goose has a legacy-only egress network: %v", fake.lastCreateSpec.NetworkNames)
+		}
+	}
+}
+
+func TestDefaultGooseAndPeerHarnessHaveEqualRuntimeTopology(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "topology-user-"+uuid.NewString()[:8]+"@example.com").Id
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	peer := createTestHarness(t, app, map[string]any{
+		"cli_id":          "peer-topology-" + uuid.NewString()[:8],
+		"container_image": "peer-topology-image",
+		"launch_template": map[string]any{"port": 3000},
+	})
+
+	gooseDocker, peerDocker := newFakeDockerClient(), newFakeDockerClient()
+	if _, err := ProvisionHarnessInstance(context.Background(), app, gooseDocker, goose.Id, "", userID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ProvisionHarnessInstance(context.Background(), app, peerDocker, peer.Id, "", userID); err != nil {
+		t.Fatal(err)
+	}
+	if fmt.Sprint(gooseDocker.lastCreateSpec.NetworkNames) != fmt.Sprint(peerDocker.lastCreateSpec.NetworkNames) {
+		t.Fatalf("network topology differs: Goose=%v peer=%v", gooseDocker.lastCreateSpec.NetworkNames, peerDocker.lastCreateSpec.NetworkNames)
+	}
+	mountDestinations := func(binds []string) []string {
+		result := make([]string, 0, len(binds))
+		for _, bind := range binds {
+			if split := strings.LastIndexByte(bind, ':'); split >= 0 {
+				result = append(result, bind[split+1:])
+			}
+		}
+		return result
+	}
+	gooseMounts := mountDestinations(gooseDocker.lastCreateSpec.VolumeBinds)
+	peerMounts := mountDestinations(peerDocker.lastCreateSpec.VolumeBinds)
+	if fmt.Sprint(gooseMounts) != fmt.Sprint(peerMounts) {
+		t.Fatalf("storage topology differs: Goose=%v peer=%v", gooseMounts, peerMounts)
 	}
 }
 

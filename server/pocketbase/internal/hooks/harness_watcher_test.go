@@ -30,9 +30,8 @@ import (
 
 // createTestHarnessInstance inserts a harness_instances row with sane
 // defaults, overridden by whatever fields the caller supplies. If a row
-// with the requested container_name already exists (e.g. the seed
-// migration's "pocketcoder-goose" row), it updates that row in place
-// instead of violating the unique index on container_name.
+// with the requested container_name already exists, it updates that row in
+// place instead of violating the unique index on container_name.
 func createTestHarnessInstance(t *testing.T, app core.App, overrides map[string]any) *core.Record {
 	t.Helper()
 	coll, err := app.FindCollectionByNameOrId("harness_instances")
@@ -140,9 +139,9 @@ func TestWatcherReconciliationMarksAbsentManagedRowsStopped(t *testing.T) {
 
 func TestWatcherReconciliationSweepSkipsUnmanagedRows(t *testing.T) {
 	app := testApp(t)
-	unmanaged := createTestHarnessInstance(t, app, map[string]any{"container_name": "pocketcoder-goose", "status": "running", "managed": false})
+	unmanaged := createTestHarnessInstance(t, app, map[string]any{"container_name": "external-harness", "status": "running", "managed": false})
 	fake := newFakeEventClient()
-	fake.listAllResult = nil // pocketcoder-goose "not found" in a ListAll snapshot — should NOT be marked stopped, since it's unmanaged
+	fake.listAllResult = nil // absent unmanaged harnesses must remain untouched
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go StartHarnessWatcher(ctx, app, fake)

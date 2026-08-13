@@ -150,7 +150,7 @@ func init() {
 				"GOOSE_SERVER__SECRET_KEY": "{{.__adapter_secret}}",
 				"GOOSE_PROVIDER":           "{{.__provider}}",
 				"GOOSE_MODEL":              "{{.__model}}",
-				"GOOSE_PATH_ROOT":          "/goose",
+				"GOOSE_PATH_ROOT":          "/workspace/.pocketcoder_auth",
 				"GOOSE_DISABLE_KEYRING":    "1",
 				"GOOSE_TELEMETRY_ENABLED":  "false",
 				"OLLAMA_HOST":              "{{.__ollama_host}}",

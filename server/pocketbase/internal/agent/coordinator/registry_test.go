@@ -7,7 +7,7 @@ import (
 
 func newTestCoordinatorClk(t *testing.T, clk Clock) *Coordinator {
 	t.Helper()
-	c, err := New(Config{GooseURL: "ws://x", GooseSecret: "s", Workspace: "/w", Clock: clk})
+	c, err := New(Config{Workspace: "/w", Clock: clk})
 	if err != nil {
 		t.Fatal(err)
 	}

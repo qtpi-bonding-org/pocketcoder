@@ -52,6 +52,10 @@ type inspector interface {
 // still forbids arbitrary post-create network attachment.
 const ModelNetwork = "pocketcoder-model"
 
+// HarnessEgressNetwork is shared by every harness. A harness being the catalog
+// default must not grant it a different Docker network trust tier.
+const HarnessEgressNetwork = "pocketcoder-harness-egress"
+
 // ResolveWorkspaceVolumeAndNetwork finds the real, possibly compose-project-
 // prefixed names of the shared workspace volume and agent network by
 // inspecting PocketBase's own container by inspecting the mount destination and
@@ -285,23 +289,15 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		volumes.Workspace + ":/workspace",
 		volumes.Auth + ":" + harnessvolume.AuthHomeMount,
 	}
-	networkNames := []string{networkName, ModelNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
-	if harness.GetString("cli_id") == "goose" {
-		// The Goose image keeps its session/config state under GOOSE_PATH_ROOT.
-		// Keep that durable state in the selected Goose account's volume,
-		// separate from the compose control-plane Goose container.
-		volumeBinds = append(volumeBinds, volumes.Auth+":/goose")
-		networkNames = append(networkNames, "pocketcoder-goose-egress")
-	} else {
-		// Account-login helpers write into this named volume with HOME rooted at
-		// the mount. The actual ACP subprocesses must use the same paths or the
-		// persisted Claude/Codex login is invisible at runtime.
-		env = append(env,
-			"HOME="+harnessvolume.AuthHomeMount,
-			"XDG_CONFIG_HOME="+harnessvolume.AuthHomeMount+"/.config",
-			"XDG_DATA_HOME="+harnessvolume.AuthHomeMount+"/.local/share",
-		)
-	}
+	// Account-login helpers and all ACP subprocesses share one conventional
+	// auth home. Goose points GOOSE_PATH_ROOT here in its catalog launch
+	// template; peers use HOME/XDG directly. No harness gets extra storage.
+	env = append(env,
+		"HOME="+harnessvolume.AuthHomeMount,
+		"XDG_CONFIG_HOME="+harnessvolume.AuthHomeMount+"/.config",
+		"XDG_DATA_HOME="+harnessvolume.AuthHomeMount+"/.local/share",
+	)
+	networkNames := []string{networkName, HarnessEgressNetwork, ModelNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
 		Image:        image,
 		Cmd:          launch.Cmd,

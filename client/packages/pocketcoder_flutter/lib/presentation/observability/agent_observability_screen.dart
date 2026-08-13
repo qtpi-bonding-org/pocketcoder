@@ -75,13 +75,6 @@ class AgentObservabilityView extends StatelessWidget {
                               ),
                               _buildContainerTile(
                                 context,
-                                'goose',
-                                'pocketcoder-goose',
-                                state.currentContainer,
-                                onSelectContainer,
-                              ),
-                              _buildContainerTile(
-                                context,
                                 'mcp-gateway',
                                 'pocketcoder-mcp-gateway',
                                 state.currentContainer,

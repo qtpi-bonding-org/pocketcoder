@@ -142,10 +142,8 @@ func TestDeleteSessionDialsPinnedInstance(t *testing.T) {
 	f := newFakeConn()
 	var dialedTarget Target
 	c, err := New(Config{
-		GooseURL:    "ws://x",
-		GooseSecret: "s",
-		Workspace:   "/w",
-		Clock:       NewFakeClock(time.Unix(0, 0)),
+		Workspace: "/w",
+		Clock:     NewFakeClock(time.Unix(0, 0)),
 		Dial: func(ctx context.Context, client acpsdk.Client, t Target) (acp.Conn, error) {
 			dialedTarget = t
 			f.mu.Lock()
