@@ -13,8 +13,9 @@ on:
         required: true
         type: string
       sequence:
-        description: Next monotonic channel sequence
+        description: Next monotonic channel sequence, or next to allocate it from R2
         required: true
+        default: next
         type: string
 
 permissions:

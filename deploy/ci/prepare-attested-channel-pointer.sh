@@ -12,8 +12,11 @@ base_url=${POCKETCODER_RELEASE_BASE:-https://images.pocketcoder.org}
 case "$channel" in stable | beta | nightly) ;; *) echo "invalid channel" >&2; exit 1 ;; esac
 case "$manifest_sha" in *[!0-9a-f]* | '') echo "invalid manifest digest" >&2; exit 1 ;; esac
 test "${#manifest_sha}" -eq 64
-case "$sequence" in '' | *[!0-9]*) echo "invalid sequence" >&2; exit 1 ;; esac
-test "$sequence" -ge 1
+case "$sequence" in
+  next) ;;
+  '' | *[!0-9]*) echo "invalid sequence" >&2; exit 1 ;;
+  *) test "$sequence" -ge 1 ;;
+esac
 
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -26,7 +29,13 @@ test "$manifest_bytes" -le 1048576
 current="$tmp_dir/current.json"
 if aws s3 cp "s3://$bucket/channels/$channel.json" "$current" --endpoint-url "$endpoint" >/dev/null 2>&1; then
   current_sequence=$(jq -r '.sequence' "$current")
-  test "$sequence" -gt "$current_sequence" || { echo "channel sequence must increase" >&2; exit 1; }
+  if [ "$sequence" = next ]; then
+    sequence=$((current_sequence + 1))
+  else
+    test "$sequence" -gt "$current_sequence" || { echo "channel sequence must increase" >&2; exit 1; }
+  fi
+elif [ "$sequence" = next ]; then
+  sequence=1
 fi
 
 jq -S -n --arg channel "$channel" --argjson sequence "$sequence" \
