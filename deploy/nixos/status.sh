@@ -5,7 +5,7 @@
 PC_STATUS_DIR="${PC_STATUS_DIR:-/var/lib/pocketcoder/public}"
 PC_STATUS_FILE="$PC_STATUS_DIR/status.json"
 PC_RUN_ID=""
-PC_CURRENT_PHASE="installing_host"
+PC_CURRENT_PHASE="configuring_operating_system"
 PC_HEARTBEAT_PID=""
 
 _pc_status_write() {
@@ -33,7 +33,7 @@ _pc_status_write() {
 
 pc_status_init() {
   PC_RUN_ID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || date +%s%N)
-  PC_CURRENT_PHASE="installing_host"
+  PC_CURRENT_PHASE="configuring_operating_system"
   _pc_status_write "$PC_CURRENT_PHASE" "" ""
 }
 

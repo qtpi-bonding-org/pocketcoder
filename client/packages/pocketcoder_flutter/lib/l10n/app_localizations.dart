@@ -2542,11 +2542,11 @@ abstract class AppLocalizations {
   /// **'CONSTRUCTING INSTANCE'**
   String get deploymentStatusConstructing;
 
-  /// No description provided for @deploymentStatusPreparingHost.
+  /// No description provided for @deploymentStatusPreparingOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'PREPARING HOST'**
-  String get deploymentStatusPreparingHost;
+  /// **'PREPARING OS'**
+  String get deploymentStatusPreparingOperatingSystem;
 
   /// No description provided for @deploymentStatusSecuring.
   ///
@@ -2554,11 +2554,11 @@ abstract class AppLocalizations {
   /// **'SECURING CONNECTION'**
   String get deploymentStatusSecuring;
 
-  /// No description provided for @deploymentStatusInstalling.
+  /// No description provided for @deploymentStatusConfiguringOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'INSTALLING HOST'**
-  String get deploymentStatusInstalling;
+  /// **'CONFIGURING OS'**
+  String get deploymentStatusConfiguringOperatingSystem;
 
   /// No description provided for @deploymentStatusFetching.
   ///
@@ -2614,11 +2614,11 @@ abstract class AppLocalizations {
   /// **'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.'**
   String get deploymentDescriptionConstructing;
 
-  /// No description provided for @deploymentDescriptionPreparingHost.
+  /// No description provided for @deploymentDescriptionPreparingOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'INSTALLING THE CONTAINER HOST.'**
-  String get deploymentDescriptionPreparingHost;
+  /// **'PREPARING THE OPERATING SYSTEM.'**
+  String get deploymentDescriptionPreparingOperatingSystem;
 
   /// No description provided for @deploymentDescriptionSecuring.
   ///
@@ -2626,11 +2626,11 @@ abstract class AppLocalizations {
   /// **'WAITING FOR THE NATIVE REVERSE PROXY.'**
   String get deploymentDescriptionSecuring;
 
-  /// No description provided for @deploymentDescriptionInstalling.
+  /// No description provided for @deploymentDescriptionConfiguringOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'INSTALLING THE APPLICATION HOST.'**
-  String get deploymentDescriptionInstalling;
+  /// **'PREPARING NATIVE SERVICES AND DEPENDENCIES.'**
+  String get deploymentDescriptionConfiguringOperatingSystem;
 
   /// No description provided for @deploymentDescriptionFetching.
   ///
@@ -4551,6 +4551,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CHALLENGE TARGET COPIED'**
   String get harnessAuthChallengeTargetCopied;
+
+  /// No description provided for @serverUpdateChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'\$ CHECKING VERIFIED RELEASE STATUS...'**
+  String get serverUpdateChecking;
+
+  /// No description provided for @serverUpdateCheckAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'CHECK AGAIN'**
+  String get serverUpdateCheckAgain;
+
+  /// No description provided for @actionDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'DISMISS'**
+  String get actionDismiss;
+
+  /// No description provided for @serverUpdateWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'UPGRADING...'**
+  String get serverUpdateWorking;
+
+  /// No description provided for @serverUpdateUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'UPGRADE POCKETCODER'**
+  String get serverUpdateUpgrade;
+
+  /// No description provided for @serverUpdateCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'pocketcoder-release update'**
+  String get serverUpdateCommand;
+
+  /// No description provided for @serverUpdateOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'OUTPUT'**
+  String get serverUpdateOutput;
+
+  /// No description provided for @serverUpdateReviewDataChange.
+  ///
+  /// In en, this message translates to:
+  /// **'REVIEW DATA CHANGE'**
+  String get serverUpdateReviewDataChange;
+
+  /// No description provided for @serverUpdateConfirmUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIRM UPGRADE'**
+  String get serverUpdateConfirmUpgrade;
+
+  /// No description provided for @serverUpdateCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT'**
+  String get serverUpdateCurrent;
+
+  /// No description provided for @serverUpdateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'AVAILABLE'**
+  String get serverUpdateAvailable;
+
+  /// No description provided for @serverUpdateDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'DOWNLOAD'**
+  String get serverUpdateDownload;
+
+  /// No description provided for @serverUpdateRequiredDisk.
+  ///
+  /// In en, this message translates to:
+  /// **'REQUIRED DISK'**
+  String get serverUpdateRequiredDisk;
+
+  /// No description provided for @serverUpdateCurrentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'\$ POCKETCODER IS CURRENT'**
+  String get serverUpdateCurrentStatus;
+
+  /// No description provided for @serverUpdateAvailableStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'\$ UPDATE AVAILABLE'**
+  String get serverUpdateAvailableStatus;
+
+  /// No description provided for @serverUpdateCriticalStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'\$ CRITICAL RELEASE WARNING'**
+  String get serverUpdateCriticalStatus;
+
+  /// No description provided for @serverUpdateUnknownStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'\$ RELEASE STATUS UNKNOWN'**
+  String get serverUpdateUnknownStatus;
+
+  /// No description provided for @serverUpdateRollbackWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'AFTER SUCCESS, NORMAL ROLLBACK IS UNAVAILABLE. RESTORING THE PRE-UPGRADE SNAPSHOT WOULD DISCARD DATA CREATED AFTERWARD.'**
+  String get serverUpdateRollbackWarning;
+
+  /// No description provided for @serverUpdateDataBoundary.
+  ///
+  /// In en, this message translates to:
+  /// **'DATA VERSION {currentVersion} → {availableVersion}'**
+  String serverUpdateDataBoundary(int currentVersion, int availableVersion);
 
   /// No description provided for @errorsOccurred.
   ///

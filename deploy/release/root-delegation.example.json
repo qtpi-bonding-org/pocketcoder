@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "sequence": 1,
+  "issuedAt": "2026-08-12T19:00:00Z",
+  "rootKeyId": "root-2026-01",
+  "roles": {
+    "release": [
+      {
+        "keyId": "operations-2026-01",
+        "algorithm": "ed25519",
+        "publicKey": "MCowBQYDK2VwAyEApNOrrFrCe5Kcb+36P0PdkDQ1RdpXkuuyIwpscP/4N74=",
+        "validFrom": "2026-08-12T19:00:00Z",
+        "validUntil": null
+      }
+    ],
+    "channel": [
+      {
+        "keyId": "operations-2026-01",
+        "algorithm": "ed25519",
+        "publicKey": "MCowBQYDK2VwAyEApNOrrFrCe5Kcb+36P0PdkDQ1RdpXkuuyIwpscP/4N74=",
+        "validFrom": "2026-08-12T19:00:00Z",
+        "validUntil": null
+      }
+    ],
+    "metadata": [
+      {
+        "keyId": "operations-2026-01",
+        "algorithm": "ed25519",
+        "publicKey": "MCowBQYDK2VwAyEApNOrrFrCe5Kcb+36P0PdkDQ1RdpXkuuyIwpscP/4N74=",
+        "validFrom": "2026-08-12T19:00:00Z",
+        "validUntil": null
+      }
+    ],
+    "revocation": [
+      {
+        "keyId": "operations-2026-01",
+        "algorithm": "ed25519",
+        "publicKey": "MCowBQYDK2VwAyEApNOrrFrCe5Kcb+36P0PdkDQ1RdpXkuuyIwpscP/4N74=",
+        "validFrom": "2026-08-12T19:00:00Z",
+        "validUntil": null
+      }
+    ]
+  },
+  "revokedKeyIds": []
+}

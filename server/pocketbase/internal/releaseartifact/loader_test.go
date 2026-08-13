@@ -57,33 +57,29 @@ func writeReleaseState(t *testing.T, root, artifactURL string, payload []byte, c
 	if err := os.MkdirAll(filepath.Join(stateDir, "manifests"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	pointer := releasePointer{
-		SchemaVersion:         1,
-		ManifestSchemaVersion: 2,
-		Release:               testRelease,
-		ManifestURL:           "https://images.example.test/release-" + testRelease + ".json",
-		ActivatedAt:           "2026-08-10T00:00:00Z",
+	artifactValue := func(image string) map[string]any {
+		return map[string]any{
+			"url": artifactURL, "sha256": checksum,
+			"downloadBytes": len(payload), "unpackedBytes": len(payload),
+			"images": []string{image},
+		}
 	}
-	manifest := releaseManifest{
-		SchemaVersion: 2,
-		Release:       testRelease,
-		SourceURL:     "https://github.com/example/repo/tree/" + testRelease,
-		Harnesses: map[string]artifact{
-			"codex": {
-				URL:           artifactURL,
-				SHA256:        checksum,
-				Bytes:         int64(len(payload)),
-				ExpandedBytes: int64(len(payload)),
-				Images:        []string{"pocketcoder-harness-codex:" + testRelease},
-			},
+	manifest := map[string]any{
+		"schemaVersion": 1, "serverVersion": "1.0.0",
+		"sourceRepository": "qtpi-bonding-org/pocketcoder", "sourceCommit": testRelease,
+		"builtAt": "2026-08-10T00:00:00Z", "platform": map[string]any{"os": "linux", "architecture": "amd64"},
+		"dataVersion": 1, "minimumUpgradeFromDataVersion": 1,
+		"compatibility": map[string]any{}, "documents": map[string]any{},
+		"osImages": map[string]any{}, "serverFiles": artifactValue("unused:" + testRelease),
+		"images": map[string]any{
+			"required": map[string]any{},
+			"choices": map[string]any{"coding-harnesses": map[string]any{
+				"schemaVersion": 1, "consumerPolicy": "required", "catalogDocument": "coding-harnesses",
+				"minimumSelections": 1, "maximumSelections": 1,
+				"options": map[string]any{"codex": artifactValue("pocketcoder-harness-codex:" + testRelease)},
+			}},
+			"optional": map[string]any{"ollama": artifactValue("pocketcoder-ollama:" + testRelease)},
 		},
-	}
-	manifest.Optional.Ollama = artifact{
-		URL:           artifactURL,
-		SHA256:        checksum,
-		Bytes:         int64(len(payload)),
-		ExpandedBytes: int64(len(payload)),
-		Images:        []string{"pocketcoder-ollama:" + testRelease},
 	}
 	writeJSON := func(path string, value any) {
 		data, err := json.Marshal(value)
@@ -94,9 +90,25 @@ func writeReleaseState(t *testing.T, root, artifactURL string, payload []byte, c
 			t.Fatal(err)
 		}
 	}
+	manifestData, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifestDigest := sha256.Sum256(manifestData)
+	releaseDigest := hex.EncodeToString(manifestDigest[:])
+	pointer := map[string]any{
+		"schemaVersion": 1, "releaseDigest": releaseDigest, "sourceCommit": testRelease,
+		"serverVersion": "1.0.0", "dataVersion": 1, "deploymentContractVersion": 1,
+		"channel": "stable", "channelSequence": 1, "revocationSequence": 1,
+		"selectedImages": []string{"pocketcoder-harness-codex:" + testRelease},
+		"manifestUrl":    "https://images.example.test/v1/releases/" + releaseDigest + ".json",
+		"activatedAt":    "2026-08-10T00:00:00Z",
+	}
 	pointerPath := filepath.Join(stateDir, "current.json")
 	writeJSON(pointerPath, pointer)
-	writeJSON(filepath.Join(stateDir, "manifests", testRelease+".json"), manifest)
+	if err := os.WriteFile(filepath.Join(stateDir, "manifests", releaseDigest+".json"), manifestData, 0o600); err != nil {
+		t.Fatal(err)
+	}
 	return pointerPath
 }
 

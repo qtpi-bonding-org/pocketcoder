@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "sequence": 1,
+  "publishedAt": "2026-08-12T21:00:00Z",
+  "revokedReleases": {
+    "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd": {
+      "reasonCode": "failed-health-check",
+      "summary": "This release can leave PocketBase unavailable after restart.",
+      "revokedAt": "2026-08-12T20:55:00Z"
+    }
+  }
+}

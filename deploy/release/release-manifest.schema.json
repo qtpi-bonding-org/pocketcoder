@@ -1,0 +1,604 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pocketcoder.org/schemas/release-manifest-v1.schema.json",
+  "$comment": "This schema is authoritative for structure. Publication must also run the PocketCoder semantic validator for cross-field constraints. The exact manifest bytes are content-addressed by SHA-256 and accompanied by a detached Ed25519 signature.",
+  "title": "PocketCoder immutable release manifest",
+  "description": "One immutable, channel-neutral PocketCoder server release.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "serverVersion",
+    "sourceRepository",
+    "sourceCommit",
+    "builtAt",
+    "platform",
+    "dataVersion",
+    "minimumUpgradeFromDataVersion",
+    "compatibility",
+    "documents",
+    "osImages",
+    "serverFiles",
+    "images"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "serverVersion": {
+      "$ref": "#/$defs/semanticVersion",
+      "description": "Human-facing version of the PocketCoder server stack."
+    },
+    "sourceRepository": {
+      "const": "qtpi-bonding-org/pocketcoder",
+      "description": "Inspectable public source repository for official PocketCoder releases."
+    },
+    "sourceCommit": {
+      "$ref": "#/$defs/gitCommit"
+    },
+    "builtAt": {
+      "$ref": "#/$defs/utcTimestamp",
+      "description": "UTC time at which this immutable release was assembled."
+    },
+    "platform": {
+      "$ref": "#/$defs/platform"
+    },
+    "dataVersion": {
+      "$ref": "#/$defs/positiveVersion",
+      "description": "Monotonic version of persistent server data and migrations."
+    },
+    "minimumUpgradeFromDataVersion": {
+      "$ref": "#/$defs/positiveVersion",
+      "description": "Oldest installed data version that may upgrade directly to this release."
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "documents": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/document"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      },
+      "description": "Bounded, checksummed release content served by image-relay. Object keys are unique document IDs."
+    },
+    "osImages": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/osImage"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "serverFiles": {
+      "$ref": "#/$defs/artifact",
+      "description": "Archive containing the release-controlled Compose file, deployment scripts, and server configuration."
+    },
+    "images": {
+      "$ref": "#/$defs/imageGroups"
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Optional, non-critical metadata. Consumers must ignore unknown extension keys. Required behavior needs a schema-version change instead."
+    }
+  },
+  "$defs": {
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
+    },
+    "gitCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "positiveVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "repositoryPath": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$",
+      "not": {
+        "pattern": "(^|/)\\.\\.(/|$)"
+      }
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "httpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^/]+/"
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "app",
+        "server",
+        "workers",
+        "provisioning",
+        "deployment"
+      ],
+      "properties": {
+        "app": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contractVersion",
+            "officialMinimumVersions"
+          ],
+          "properties": {
+            "contractVersion": {
+              "$ref": "#/$defs/positiveVersion",
+              "description": "Client contract that official and self-built Flutter apps must implement."
+            },
+            "officialMinimumVersions": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "pocketcoder-pro",
+                "pocketcoder-foss"
+              ],
+              "properties": {
+                "pocketcoder-pro": {
+                  "$ref": "#/$defs/semanticVersion"
+                },
+                "pocketcoder-foss": {
+                  "$ref": "#/$defs/semanticVersion"
+                }
+              }
+            }
+          }
+        },
+        "server": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "apiVersion"
+          ],
+          "properties": {
+            "apiVersion": {
+              "$ref": "#/$defs/positiveVersion"
+            }
+          }
+        },
+        "workers": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/positiveVersion"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/identifier"
+          },
+          "description": "Required API contract version for each independently deployed Worker."
+        },
+        "provisioning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contractVersion"
+          ],
+          "properties": {
+            "contractVersion": {
+              "$ref": "#/$defs/positiveVersion",
+              "description": "Aeroform-to-host provisioning contract."
+            }
+          }
+        },
+        "deployment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contractVersion",
+            "supportedSourceContractVersions"
+          ],
+          "properties": {
+            "contractVersion": {
+              "$ref": "#/$defs/positiveVersion",
+              "description": "Host-to-PocketCoder deployment and activation contract."
+            },
+            "supportedSourceContractVersions": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "minimum",
+                "maximum"
+              ],
+              "properties": {
+                "minimum": {
+                  "$ref": "#/$defs/positiveVersion"
+                },
+                "maximum": {
+                  "$ref": "#/$defs/positiveVersion"
+                }
+              },
+              "description": "Inclusive range of installed updater contract versions allowed to install this release."
+            }
+          }
+        }
+      }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mediaType",
+        "sourcePath",
+        "url",
+        "sha256",
+        "downloadBytes"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "$ref": "#/$defs/positiveVersion",
+          "description": "Required for schema-bearing JSON documents and omitted for opaque text documents."
+        },
+        "mediaType": {
+          "enum": [
+            "application/json",
+            "text/plain",
+            "text/x-shellscript",
+            "text/x-go"
+          ]
+        },
+        "sourcePath": {
+          "$ref": "#/$defs/repositoryPath",
+          "description": "Inspectable path in sourceRepository at sourceCommit; consumers fetch url instead."
+        },
+        "url": {
+          "$ref": "#/$defs/httpsUrl"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "downloadBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mediaType": {
+                "const": "application/json"
+              }
+            },
+            "required": [
+              "mediaType"
+            ]
+          },
+          "then": {
+            "required": [
+              "schemaVersion"
+            ]
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "downloadBytes",
+        "unpackedBytes"
+      ],
+      "properties": {
+        "url": {
+          "$ref": "#/$defs/httpsUrl"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "downloadBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unpackedBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Must be greater than or equal to downloadBytes; enforced by the semantic validator."
+        }
+      }
+    },
+    "imageArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "downloadBytes",
+        "unpackedBytes",
+        "images"
+      ],
+      "properties": {
+        "url": {
+          "$ref": "#/$defs/httpsUrl"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "downloadBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unpackedBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Must be greater than or equal to downloadBytes; enforced by the semantic validator."
+        },
+        "images": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Exact Docker image references expected inside the archive, used for idempotency and post-load verification."
+        }
+      }
+    },
+    "osImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delivery",
+        "bootstrap"
+      ],
+      "properties": {
+        "delivery": {
+          "$ref": "#/$defs/osDelivery"
+        },
+        "bootstrap": {
+          "$ref": "#/$defs/osBootstrap"
+        }
+      }
+    },
+    "osDelivery": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "artifact"
+          ],
+          "properties": {
+            "kind": {
+              "const": "artifact"
+            },
+            "artifact": {
+              "$ref": "#/$defs/artifact"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "providerImages"
+          ],
+          "properties": {
+            "kind": {
+              "const": "provider"
+            },
+            "providerImages": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              },
+              "propertyNames": {
+                "$ref": "#/$defs/identifier"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "osBootstrap": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "image-baked"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "scriptDocument",
+            "supportingDocuments"
+          ],
+          "properties": {
+            "kind": {
+              "const": "generated-config"
+            },
+            "scriptDocument": {
+              "$ref": "#/$defs/identifier"
+            },
+            "supportingDocuments": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/identifier"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "imageArtifactMap": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/imageArtifact"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "choiceGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "consumerPolicy",
+        "minimumSelections",
+        "maximumSelections",
+        "options"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "consumerPolicy": {
+          "type": "string",
+          "enum": [
+            "required",
+            "ignorable"
+          ],
+          "description": "Unknown required groups make the release incompatible; unknown ignorable groups may be skipped."
+        },
+        "catalogDocument": {
+          "$ref": "#/$defs/identifier"
+        },
+        "minimumSelections": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximumSelections": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Null permits every option. The semantic validator enforces bounds against minimumSelections and option count."
+        },
+        "options": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/imageArtifactMap"
+            },
+            {
+              "minProperties": 1
+            }
+          ]
+        }
+      }
+    },
+    "choiceGroupMap": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/choiceGroup"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "imageGroups": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "choices",
+        "optional"
+      ],
+      "properties": {
+        "required": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/imageArtifactMap"
+            },
+            {
+              "minProperties": 1
+            }
+          ]
+        },
+        "choices": {
+          "$ref": "#/$defs/choiceGroupMap"
+        },
+        "optional": {
+          "$ref": "#/$defs/imageArtifactMap"
+        }
+      }
+    },
+    "nonNegativeVersion": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "base64": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "architecture"
+      ],
+      "properties": {
+        "os": {
+          "enum": [
+            "linux"
+          ]
+        },
+        "architecture": {
+          "enum": [
+            "amd64"
+          ]
+        }
+      }
+    },
+    "signatureDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "keyId",
+        "url"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "keyId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "url": {
+          "$ref": "#/$defs/httpsUrl"
+        }
+      }
+    }
+  }
+}

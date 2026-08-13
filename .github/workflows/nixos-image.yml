@@ -6,17 +6,12 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Build an immutable candidate or promote one already built
+        description: Build an immutable candidate bundle for local signing
         required: true
         default: build_candidate
         type: choice
         options:
           - build_candidate
-          - promote_candidate
-      release_sha:
-        description: Exact candidate commit to promote
-        required: false
-        type: string
   push:
     tags:
       - 'v*-nixos'
@@ -81,30 +76,22 @@ jobs:
           SIZE=$(stat -c%s pocketcoder-nixos.img.gz)
           echo "Compressed image size: $SIZE bytes ($((SIZE / 1024 / 1024)) MiB)"
 
-      - name: Upload to R2
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
-        run: |
-          aws s3 cp pocketcoder-nixos.img.gz \
-            s3://pocketcoder-images/pocketcoder-nixos-${{ github.sha }}.img.gz \
-            --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
-
-
       - name: Write release metadata
         run: |
           sh deploy/scripts/write-artifact-metadata.sh \
             nixos-release-metadata.json \
-            "https://images.pocketcoder.org/pocketcoder-nixos-${{ github.sha }}.img.gz" \
+            auto \
             pocketcoder-nixos.img.gz \
             "${{ steps.meta.outputs.uncompressed_bytes }}"
+          mkdir -p artifacts
+          mv pocketcoder-nixos.img.gz \
+            "artifacts/${{ steps.meta.outputs.sha256 }}.img.gz"
 
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: nixos-image
-          path: pocketcoder-nixos.img.gz
+          path: artifacts/*.img.gz
           retention-days: 30
 
       - name: Upload release metadata
@@ -129,7 +116,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          files: pocketcoder-nixos.img.gz
+          files: '*.img.gz'
           generate_release_notes: true
 
   # Publishes the runtime snapshot, core, independently selectable harnesses,
@@ -143,31 +130,34 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: deploy/release-manager/go.mod
+
+      - name: Test native OS release manager
+        working-directory: deploy/release-manager
+        run: go test ./...
+
       - name: Validate release contract and deployment snapshot
         run: |
           set -euo pipefail
+          python3 -m pip install -r deploy/release/requirements.txt
+          deploy/release/generate-release-schemas.sh
+          git diff --exit-code -- 'deploy/release/*.schema.json'
+          deploy/release/tests/release-schema-test.sh
+          deploy/release/tests/signature-test.sh
           deploy/release/tests/release-contract-test.sh
 
       - name: Build split release artifacts and metadata
         run: deploy/ci/build-release-artifacts.sh "$GITHUB_SHA"
 
-      - name: Upload to R2
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
-        run: |
-          for artifact in artifacts/*.tar.gz; do
-            aws s3 cp "$artifact" \
-              "s3://pocketcoder-images/$(basename "$artifact")" \
-              --endpoint-url https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
-          done
-
-      - name: Upload release metadata
+      - name: Upload release artifact bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-artifacts-metadata
-          path: release-artifacts-metadata.json
+          path: |
+            release-artifacts-metadata.json
+            artifacts/*.tar.gz
           retention-days: 30
 
   # Assemble and publish the immutable candidate after both the NixOS image
@@ -184,47 +174,42 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: nixos-release-metadata
+          path: candidate
+
+      - name: Download NixOS artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: nixos-image
+          path: candidate/artifacts
 
       - name: Download release artifact metadata
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-artifacts-metadata
+          path: candidate
 
-      - name: Validate and publish immutable candidate
+      - name: Assemble and validate canonical candidate
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
           SOURCE_COMMIT: ${{ github.sha }}
-          R2_ENDPOINT: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
-        run: deploy/ci/publish-release-candidate.sh "$SOURCE_COMMIT"
-
-  # Promotion is the only operation allowed to update mutable discovery
-  # pointers. It consumes a previously built candidate by exact commit and
-  # never rebuilds or substitutes artifacts.
-  promote:
-    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'promote_candidate'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    steps:
-      - name: Validate promotion input
-        env:
-          SOURCE_COMMIT: ${{ inputs.release_sha }}
         run: |
-          case "$SOURCE_COMMIT" in
-            *[!0-9a-f]*|'') exit 1 ;;
-          esac
-          test "${#SOURCE_COMMIT}" -eq 40
+          set -euo pipefail
+          mkdir -p candidate/documents
+          find candidate -mindepth 2 -type f -name '*.tar.gz' \
+            -exec mv {} candidate/artifacts/ \;
+          python3 -m pip install -r deploy/release/requirements.txt
+          deploy/ci/assemble-release-manifest.sh "$SOURCE_COMMIT" \
+            candidate/nixos-release-metadata.json \
+            candidate/release-artifacts-metadata.json \
+            candidate/release-manifest.json candidate/documents
+          POCKETCODER_SIGNING_KEY_FILE=deploy/release/fixtures/keys/test-operations-private.pem \
+            deploy/release/sign-payload.sh candidate/release-manifest.json \
+              release test-operations candidate/release-manifest.test.sig
+          deploy/release/tests/release-schema-test.sh
+          deploy/release/tests/signature-test.sh
 
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Upload canonical candidate for local signing
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          fetch-depth: 1
-          ref: ${{ inputs.release_sha }}
-
-      - name: Promote immutable candidate
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
-          SOURCE_COMMIT: ${{ inputs.release_sha }}
-          R2_ENDPOINT: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
-        run: deploy/ci/promote-release.sh "$SOURCE_COMMIT"
+          name: release-candidate-${{ github.sha }}
+          path: candidate
+          retention-days: 30

@@ -118,6 +118,7 @@ func main() {
 		api.RegisterProxyApi(app, e)
 		api.RegisterLogsApi(app, e)
 		api.RegisterOllamaApi(app, e)
+		api.RegisterReleaseStatusApi(app, e)
 		var err error
 		coord, err = api.RegisterAgentApi(app, e)
 		if err != nil {

@@ -6,11 +6,16 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 
 @LazySingleton(as: IAuthRepository)
 class AuthRepository implements IAuthRepository {
+  static const _supportedServerApiVersion = 1;
+  static const _supportedAppContractVersion = 1;
+  static const _supportedDeploymentContractVersion = 1;
+
   final PocketBase _pocketBase;
   final AuthStoreConfig _authStoreConfig;
   final FlutterSecureStorage _storage;
@@ -50,6 +55,34 @@ class AuthRepository implements IAuthRepository {
       },
       AuthException.new,
       'login',
+    );
+  }
+
+  @override
+  Future<void> verifyServerCompatibility() async {
+    await tryMethod(
+      () async {
+        final response = _pocketBase is $PocketBase
+            ? await _pocketBase.send<Map<String, dynamic>>(
+                ApiEndpoints.compatibility,
+                requestPolicy: RequestPolicy.networkOnly,
+              )
+            : await _pocketBase.send<Map<String, dynamic>>(
+                ApiEndpoints.compatibility,
+              );
+        final serverApiVersion = response['serverApiVersion'];
+        final appContractVersion = response['appContractVersion'];
+        final deploymentContractVersion = response['deploymentContractVersion'];
+        if (serverApiVersion != _supportedServerApiVersion ||
+            appContractVersion != _supportedAppContractVersion ||
+            deploymentContractVersion != _supportedDeploymentContractVersion) {
+          throw const FormatException(
+            'This PocketCoder server is not compatible with this app version.',
+          );
+        }
+      },
+      AuthException.new,
+      'verifyServerCompatibility',
     );
   }
 

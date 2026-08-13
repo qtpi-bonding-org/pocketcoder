@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "ed25519",
+  "role": "release",
+  "keyId": "operations-2026-01",
+  "payloadSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+}

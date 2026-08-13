@@ -55,6 +55,7 @@ class AuthCubit extends AppCubit<AuthState> {
     });
     await tryOperation(() async {
       await _authRepository.updateBaseUrl(url);
+      await _authRepository.verifyServerCompatibility();
       final success = await _authRepository.login(email, password);
       if (!success) {
         throw 'ACCESS DENIED. CHECK CREDENTIALS.';

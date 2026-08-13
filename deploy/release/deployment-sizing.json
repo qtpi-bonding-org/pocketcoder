@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "baseSystemMemoryMiB": 4096,
+  "localModelSizing": {
+    "gpuSystemMemoryMinimumMiB": 4096,
+    "cpuModelMultiplier": 1,
+    "cpuContextMultiplier": 1,
+    "gpuVramModelMultiplier": 1,
+    "gpuVramContextMultiplier": 1
+  }
+}

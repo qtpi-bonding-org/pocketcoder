@@ -1,0 +1,87 @@
+name: Release Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/**'
+      - 'server/pocketbase/internal/api/release_status*'
+      - 'server/pocketbase/internal/releaseartifact/**'
+      - 'workers/image-relay/**'
+      - 'client/packages/pocketcoder_flutter/lib/**/release/**'
+      - 'client/packages/pocketcoder_flutter/lib/application/release_status/**'
+      - 'client/packages/pocketcoder_flutter/lib/presentation/core/widgets/release_status_banner.dart'
+      - 'client/packages/pocketcoder_flutter/test/**/release/**'
+      - '.github/workflows/release-contract.yml'
+  pull_request:
+    paths:
+      - 'deploy/**'
+      - 'server/pocketbase/internal/api/release_status*'
+      - 'server/pocketbase/internal/releaseartifact/**'
+      - 'workers/image-relay/**'
+      - 'client/packages/pocketcoder_flutter/lib/**/release/**'
+      - 'client/packages/pocketcoder_flutter/lib/application/release_status/**'
+      - 'client/packages/pocketcoder_flutter/lib/presentation/core/widgets/release_status_banner.dart'
+      - 'client/packages/pocketcoder_flutter/test/**/release/**'
+      - '.github/workflows/release-contract.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-and-contract:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: deploy/release-manager/go.mod
+
+      - name: Install pinned schema validator
+        run: python3 -m pip install -r deploy/release/requirements.txt
+
+      - name: Verify generated schemas
+        run: |
+          deploy/release/generate-release-schemas.sh
+          git diff --exit-code -- 'deploy/release/*.schema.json'
+
+      - name: Test signed release contract
+        run: |
+          deploy/release/tests/release-schema-test.sh
+          deploy/release/tests/signature-test.sh
+          deploy/release/tests/release-contract-test.sh
+
+      - name: Test native OS release manager
+        working-directory: deploy/release-manager
+        run: go test ./...
+
+      - name: Test PocketBase release APIs and lazy loader
+        working-directory: server/pocketbase
+        run: go test ./internal/api ./internal/releaseartifact
+
+  flutter-core:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+
+      - name: Analyze Flutter Core
+        working-directory: client/packages/pocketcoder_flutter
+        run: flutter analyze
+
+      - name: Test verified release and status flows
+        working-directory: client/packages/pocketcoder_flutter
+        run: |
+          flutter test \
+            test/infrastructure/release/release_content_service_test.dart \
+            test/domain/release/server_release_status_test.dart \
+            test/application/release_status/release_status_cubit_test.dart \
+            test/presentation/core/widgets/release_status_banner_test.dart

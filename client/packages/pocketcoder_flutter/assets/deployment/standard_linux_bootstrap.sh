@@ -9,7 +9,7 @@ status_file=/var/lib/pocketcoder/public/status.json
 phase_log=/var/log/pocketcoder-bootstrap-phases.log
 run_id=$(cat /proc/sys/kernel/random/uuid)
 source_commit=unknown
-current_phase=installing_host
+current_phase=configuring_operating_system
 heartbeat_pid=
 failure_reported=0
 release_stage=
@@ -72,11 +72,11 @@ install -d -m 0755 /opt/pocketcoder/releases
 install -d -m 0755 "$(dirname -- "$phase_log")"
 touch "$phase_log"
 chmod 0644 "$phase_log"
-status installing_host
+status configuring_operating_system
 
 # POCO:BEGIN bootstrap-owner-config
 # The app delivers owner credentials inside cloud-init, while Aeroform handles
-# the host packages and firewall. The SSH key is moved into OpenSSH's protected
+# the OS packages and firewall. The SSH key is moved into OpenSSH's protected
 # file and removed from the application environment before containers start.
 install -d -m 0700 /root/.ssh
 root_ssh_key=$(sed -n 's/^root_ssh_key=//p' "$runtime_env")
@@ -87,73 +87,75 @@ sed -i '/^root_ssh_key=/d' "$runtime_env"
 # POCO:END bootstrap-owner-config
 
 # POCO:BEGIN bootstrap-release-source
-# Resolve a mutable discovery pointer once, then use the immutable manifest and
-# its checksum to acquire the exact deployment snapshot for this release.
+# Independently resolve and verify the signed release selected by the app, then
+# acquire the exact deployment snapshot named by that immutable manifest.
 if ! jq -e '
   .schemaVersion == 1 and
-  (.requestedCommit == "main" or
-    (.requestedCommit | test("^[0-9a-f]{40}$"))) and
+  (.releaseChannel | test("^(stable|beta|nightly)$")) and
+  (.releaseDigest | test("^[0-9a-f]{64}$")) and
+  (.channelSequence | type == "number" and . == floor and . > 0) and
   (.selectedHarnesses | type == "array" and length > 0) and
   all(.selectedHarnesses[]; test("^[a-z0-9]+(?:-[a-z0-9]+)*$"))
 ' "$bootstrap_config" >/dev/null; then
-  fail_bootstrap installing_host bootstrap_config_invalid
+  fail_bootstrap configuring_operating_system bootstrap_config_invalid
 fi
-requested_commit=$(jq -r '.requestedCommit' "$bootstrap_config")
+release_channel=$(jq -r '.releaseChannel' "$bootstrap_config")
+expected_digest=$(jq -r '.releaseDigest' "$bootstrap_config")
+expected_sequence=$(jq -r '.channelSequence' "$bootstrap_config")
 release_base=${RELEASE_BASE:-https://images.pocketcoder.org}
-if [ "$requested_commit" = main ]; then
-  discovery_url="$release_base/release-manifest.json"
-else
-  discovery_url="$release_base/release-$requested_commit.json"
-fi
+resolver=/usr/local/lib/pocketcoder/release/resolve-signed-release.sh
+verifier=/usr/local/lib/pocketcoder/release/verify-signed-payload.sh
+root_public_key=/etc/pocketcoder/release-root.pem
+test -x "$resolver" && test -x "$verifier" && test -s "$root_public_key" ||
+  fail_bootstrap fetching_release release_trust_material_unavailable
+
+resolution="$artifact_dir/release-resolution.$$.json"
 manifest_candidate="$artifact_dir/release-manifest.$$.json"
 status fetching_release
 heartbeat_start
-if ! curl -sfL --max-time 30 -o "$manifest_candidate" "$discovery_url"; then
-  fail_bootstrap fetching_release release_manifest_unavailable
+if ! RELEASE_BASE="$release_base" \
+  POCKETCODER_ROOT_PUBLIC_KEY="$root_public_key" \
+  POCKETCODER_VERIFY_SCRIPT="$verifier" \
+  "$resolver" "$release_channel" "$release_state" \
+    "$release_state/resolved" > "$resolution"; then
+  fail_bootstrap fetching_release release_metadata_verification_failed
 fi
+resolved_digest=$(jq -r '.manifestSha256' "$resolution")
+resolved_sequence=$(jq -r '.channelSequence' "$resolution")
+if [ "$resolved_digest" != "$expected_digest" ] ||
+    [ "$resolved_sequence" -lt "$expected_sequence" ]; then
+  fail_bootstrap fetching_release release_selection_changed
+fi
+immutable_url=$(jq -r '.manifestUrl' "$resolution")
+cp "$(jq -r '.manifestPath' "$resolution")" "$manifest_candidate"
+export POCKETCODER_RELEASE_CHANNEL="$release_channel"
+export POCKETCODER_CHANNEL_SEQUENCE="$resolved_sequence"
+POCKETCODER_REVOCATION_SEQUENCE=$(jq -r '.revocationSequence' "$resolution")
+export POCKETCODER_REVOCATION_SEQUENCE
+rm -f "$resolution"
 
-resolved_commit=$(jq -r '.release // empty' "$manifest_candidate")
-case "$resolved_commit" in
-  *[!0-9a-f]* | '')
-    fail_bootstrap fetching_release release_manifest_identity_invalid
-    ;;
-esac
-if [ "${#resolved_commit}" -ne 40 ]; then
-  fail_bootstrap fetching_release release_manifest_identity_invalid
-fi
-if [ "$requested_commit" != main ] && [ "$requested_commit" != "$resolved_commit" ]; then
-  fail_bootstrap fetching_release release_manifest_identity_mismatch
-fi
-source_commit=$resolved_commit
-immutable_url="$release_base/release-$resolved_commit.json"
-if [ "$discovery_url" != "$immutable_url" ]; then
-  if ! curl -sfL --max-time 30 -o "$manifest_candidate" "$immutable_url"; then
-    fail_bootstrap fetching_release immutable_release_manifest_unavailable
-  fi
-  if [ "$(jq -r '.release // empty' "$manifest_candidate")" != "$resolved_commit" ]; then
-    fail_bootstrap fetching_release immutable_release_manifest_mismatch
-  fi
-fi
-
-deployment_url=$(jq -r '.deployment.url // empty' "$manifest_candidate")
-deployment_sha256=$(jq -r '.deployment.sha256 // empty' "$manifest_candidate")
-deployment_bytes=$(jq -r '.deployment.bytes // empty' "$manifest_candidate")
-deployment_expanded=$(jq -r '.deployment.expandedBytes // empty' "$manifest_candidate")
+source_commit=$(jq -r '.sourceCommit' "$manifest_candidate")
+deployment_url=$(jq -r '.serverFiles.url // empty' "$manifest_candidate")
+deployment_sha256=$(jq -r '.serverFiles.sha256 // empty' "$manifest_candidate")
+deployment_bytes=$(jq -r '.serverFiles.downloadBytes // empty' "$manifest_candidate")
+deployment_expanded=$(jq -r '.serverFiles.unpackedBytes // empty' "$manifest_candidate")
 test -n "$deployment_url"
 test -n "$deployment_sha256"
 if ! jq -e '
   . as $manifest |
-  ($manifest.deployment.bytes |
+  ($manifest.serverFiles.downloadBytes |
     type == "number" and . == floor and . > 0) and
-  ($manifest.deployment.expandedBytes |
+  ($manifest.serverFiles.unpackedBytes |
     type == "number" and . == floor and
-    . >= $manifest.deployment.bytes) and
-  ($manifest.deployment.sha256 | test("^[0-9a-f]{64}$")) and
-  ($manifest.deployment.url | startswith("https://"))
+    . >= $manifest.serverFiles.downloadBytes) and
+  ($manifest.serverFiles.sha256 | test("^[0-9a-f]{64}$"))
 ' "$manifest_candidate" >/dev/null; then
   fail_bootstrap fetching_release deployment_artifact_metadata_invalid
 fi
-deployment_file="$artifact_dir/$resolved_commit-deployment.tar.gz.part.$$"
+if [ "$deployment_url" != "$release_base/v1/artifacts/$deployment_sha256.tar.gz" ]; then
+  fail_bootstrap fetching_release deployment_artifact_url_invalid
+fi
+deployment_file="$artifact_dir/$deployment_sha256.tar.gz.part.$$"
 required_blocks=$(((deployment_bytes + deployment_expanded + 1073741824 + 1023) / 1024))
 available_blocks=$(df -Pk "$artifact_dir" | awk 'NR == 2 {print $4}')
 if [ -z "$available_blocks" ] || [ "$available_blocks" -lt "$required_blocks" ]; then
@@ -174,12 +176,20 @@ if tar -tzf "$deployment_file" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
   fail_bootstrap fetching_release deployment_artifact_path_invalid
 fi
 
-release_dir="/opt/pocketcoder/releases/$resolved_commit"
+release_dir="/opt/pocketcoder/releases/$resolved_digest"
 release_stage="$release_dir.stage.$$"
 if [ ! -d "$release_dir" ]; then
   install -d -m 0755 "$release_stage"
   tar -xzf "$deployment_file" -C "$release_stage"
-  if [ "$(jq -r '.release // empty' "$release_stage/release.json")" != "$resolved_commit" ]; then
+  if ! jq -e --slurpfile manifest "$manifest_candidate" '
+    .schemaVersion == 1 and
+    .serverVersion == $manifest[0].serverVersion and
+    .sourceCommit == $manifest[0].sourceCommit and
+    .serverApiVersion == $manifest[0].compatibility.server.apiVersion and
+    .dataVersion == $manifest[0].dataVersion and
+    .deploymentContractVersion ==
+      $manifest[0].compatibility.deployment.contractVersion
+  ' "$release_stage/release.json" >/dev/null; then
     fail_bootstrap fetching_release deployment_snapshot_identity_mismatch
   fi
   mv "$release_stage" "$release_dir"
@@ -190,14 +200,25 @@ heartbeat_stop
 # POCO:END bootstrap-release-source
 
 selected_harnesses=$(jq -r '.selectedHarnesses[]' "$bootstrap_config")
-# Harness IDs are validated in Dart and contain no shell metacharacters.
-# shellcheck disable=SC2086
-set -- $selected_harnesses
-if ! "$release_dir/deploy/scripts/activate-release.sh" \
-  "$manifest_candidate" "$immutable_url" "$runtime_env" "$release_state" \
-  "$artifact_dir" "$run_id" "$status_file" "$@"; then
+selected_harness_csv=$(printf '%s\n' "$selected_harnesses" | paste -sd, -)
+if ! RELEASE_BASE="$release_base" \
+  POCKETCODER_ROOT_PUBLIC_KEY="$root_public_key" \
+  POCKETCODER_RELEASE_CHANNEL="$release_channel" \
+  POCKETCODER_RELEASE_DIGEST="$expected_digest" \
+  POCKETCODER_RELEASE_SEQUENCE="$expected_sequence" \
+  POCKETCODER_SELECTED_HARNESSES="$selected_harness_csv" \
+  POCKETCODER_RUNTIME_ENV="$runtime_env" \
+  POCKETCODER_STATUS_FILE="$status_file" \
+  POCKETCODER_STATUS_RUN_ID="$run_id" \
+  PC_SOURCE_COMMIT="$source_commit" \
+  "$release_dir/bin/pocketcoder-release" install; then
+  # The native manager owns status reporting after this handoff, including
+  # the exact phase and failure document. Preserve that richer status.
   failure_reported=1
   exit 1
 fi
+source_commit=$(jq -r '.sourceCommit' "$manifest_candidate")
+status bootstrap_complete
+"$release_dir/deploy/scripts/install-release-metadata-timer.sh"
 
 trap - EXIT HUP INT TERM

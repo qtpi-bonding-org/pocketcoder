@@ -26,12 +26,18 @@ fi
 
 jq --argjson selected "$selected" --slurpfile catalog "$catalog_file" '
   . as $manifest |
+  (.images.choices[] |
+    select(.catalogDocument? == "coding-harnesses") |
+    .options) as $harnesses |
   [
-    {kind: "deployment", id: "deployment", artifact: $manifest.deployment},
-    {kind: "core", id: "core", artifact: $manifest.core}
+    {kind: "server-files", id: "server-files", artifact: $manifest.serverFiles}
+  ] + [
+    $manifest.images.required | to_entries[] |
+    {kind: "required", id: .key, artifact: .value}
   ] + [
     $catalog[0].harnesses[]
     | select(.id as $id | $selected | index($id) != null)
-    | {kind: "harness", id: .id, artifact: $manifest.harnesses[.id]}
+    | {kind: "choice", group: "coding-harnesses", id: .id,
+       artifact: $harnesses[.id]}
   ]
 ' "$manifest_file"

@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pocketcoder.org/schemas/deployment-sizing-v1.schema.json",
+  "title": "PocketCoder deployment sizing policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "baseSystemMemoryMiB",
+    "localModelSizing"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "baseSystemMemoryMiB": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "System memory required before adding any local model or context allocation."
+    },
+    "localModelSizing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gpuSystemMemoryMinimumMiB",
+        "cpuModelMultiplier",
+        "cpuContextMultiplier",
+        "gpuVramModelMultiplier",
+        "gpuVramContextMultiplier"
+      ],
+      "properties": {
+        "gpuSystemMemoryMinimumMiB": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cpuModelMultiplier": {
+          "const": 1
+        },
+        "cpuContextMultiplier": {
+          "const": 1
+        },
+        "gpuVramModelMultiplier": {
+          "const": 1
+        },
+        "gpuVramContextMultiplier": {
+          "const": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
+    },
+    "gitCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "positiveVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nonNegativeVersion": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "repositoryPath": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$",
+      "not": {
+        "pattern": "(^|/)\\.\\.(/|$)"
+      }
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "httpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^/]+/"
+    },
+    "base64": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "architecture"
+      ],
+      "properties": {
+        "os": {
+          "enum": [
+            "linux"
+          ]
+        },
+        "architecture": {
+          "enum": [
+            "amd64"
+          ]
+        }
+      }
+    },
+    "signatureDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "keyId",
+        "url"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "keyId": {
+          "$ref": "#/$defs/identifier"
+        },
+        "url": {
+          "$ref": "#/$defs/httpsUrl"
+        }
+      }
+    }
+  }
+}

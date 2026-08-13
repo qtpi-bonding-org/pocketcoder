@@ -3,6 +3,10 @@ set -eu
 
 release=${1:?40-character release commit is required}
 output=${2:?deployment artifact output path is required}
+server_version=${POCKETCODER_SERVER_VERSION:-1.0.0}
+server_api_version=${POCKETCODER_SERVER_API_VERSION:-1}
+data_version=${POCKETCODER_DATA_VERSION:-1}
+deployment_contract_version=${POCKETCODER_DEPLOYMENT_CONTRACT_VERSION:-1}
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
@@ -10,7 +14,11 @@ catalog="$repo_root/deploy/release/harnesses.json"
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 
-install -d "$stage/deploy/scripts" "$stage/deploy/release"
+install -d "$stage/bin" "$stage/deploy/scripts"
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go -C \
+  "$repo_root/deploy/release-manager" build -trimpath \
+  -ldflags "-s -w -X main.version=$server_version" \
+  -o "$stage/bin/pocketcoder-release" ./cmd/pocketcoder-release
 "$script_dir/resolve-release-compose.sh" \
   "$repo_root/docker-compose.yml" \
   "$stage/docker-compose.prebuilt.yml" \
@@ -18,19 +26,11 @@ install -d "$stage/deploy/scripts" "$stage/deploy/release"
   "$catalog"
 
 for file in \
-  activate-release.sh \
-  cleanup-old-releases.sh \
-  discover-release-harnesses.sh \
-  install-release-images.sh \
-  prepare-runtime-env.sh \
-  remove-managed-release-containers.sh \
-  resolve-release-artifacts.sh \
-  update-release.sh \
-  validate-release-contract.sh
+  install-release-metadata-timer.sh \
+  prepare-runtime-env.sh
 do
   install -m 0755 "$script_dir/$file" "$stage/deploy/scripts/$file"
 done
-install -m 0644 "$catalog" "$stage/deploy/release/harnesses.json"
 install -m 0644 "$repo_root/Caddyfile" "$stage/Caddyfile"
 
 # Copy only Git-tracked runtime files. In particular, the generated
@@ -50,8 +50,15 @@ done
 chmod 0755 "$stage/deploy/tailscale/entrypoint.sh"
 
 jq -n \
-  --arg release "$release" \
-  '{schemaVersion: 1, manifestSchemaVersion: 2, release: $release}' \
+  --arg serverVersion "$server_version" \
+  --arg sourceCommit "$release" \
+  --argjson serverApiVersion "$server_api_version" \
+  --argjson dataVersion "$data_version" \
+  --argjson deploymentContractVersion "$deployment_contract_version" \
+  '{schemaVersion: 1, serverVersion: $serverVersion,
+    sourceCommit: $sourceCommit, serverApiVersion: $serverApiVersion,
+    dataVersion: $dataVersion,
+    deploymentContractVersion: $deploymentContractVersion}' \
   > "$stage/release.json"
 
 if find "$stage" -type f \( -name '.env' -o -name '*.key' -o -name '*.pem' \) \

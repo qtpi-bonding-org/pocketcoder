@@ -26,7 +26,7 @@ chmod 0644 "$PHASE_LOG"
 
 # POCO:BEGIN bootstrap-owner-config
 # NixOS accepts owner configuration from the one-shot file written by the
-# image installer. The legacy custom-image route still uses Linode metadata,
+# image installer. A compatibility fallback can still read Linode metadata,
 # and an interrupted boot resumes from the protected environment file.
 BOOTSTRAP_ENV_FILE=/var/lib/pocketcoder-bootstrap-env
 if [ -f "$BOOTSTRAP_ENV_FILE" ]; then
@@ -73,46 +73,63 @@ fi
 # POCO:END bootstrap-owner-config
 
 # POCO:BEGIN bootstrap-release-source
-# The NixOS image is only the host layer. First boot resolves the coupled
-# application release, verifies its deployment snapshot, and hands all
-# platform-neutral work to activate-release.sh from that snapshot.
+# The NixOS image is only the OS layer. First boot independently resolves the
+# signed release selected by the app, verifies the exact digest and sequence,
+# and hands all platform-neutral work to the release snapshot.
 pc_status_phase fetching_release
 pc_status_heartbeat_start
 RELEASE_BASE="${RELEASE_BASE:-https://images.pocketcoder.org}"
-if [ "$POCKETCODER_REF" = main ]; then
-  DISCOVERY_URL="$RELEASE_BASE/release-manifest.json"
-else
-  DISCOVERY_URL="$RELEASE_BASE/release-$POCKETCODER_REF.json"
-fi
-MANIFEST_CANDIDATE="$ARTIFACT_DIR/release-manifest.$$.json"
-curl -sfL --max-time 30 -o "$MANIFEST_CANDIDATE" "$DISCOVERY_URL"
-RESOLVED_COMMIT=$(jq -r '.release // empty' "$MANIFEST_CANDIDATE")
-case "$RESOLVED_COMMIT" in
-  *[!0-9a-f]* | '')
-    pc_status_error fetching_release release_manifest_identity_invalid
-    exit 1
-    ;;
+RELEASE_CHANNEL=$(sed -n 's/^POCKETCODER_RELEASE_CHANNEL=//p' "$RUNTIME_ENV")
+RELEASE_CHANNEL=${RELEASE_CHANNEL:-stable}
+EXPECTED_DIGEST=$(sed -n 's/^POCKETCODER_RELEASE_DIGEST=//p' "$RUNTIME_ENV")
+EXPECTED_SEQUENCE=$(sed -n 's/^POCKETCODER_RELEASE_SEQUENCE=//p' "$RUNTIME_ENV")
+case "$RELEASE_CHANNEL" in stable | beta | nightly) ;; *)
+  pc_status_error fetching_release release_channel_invalid
+  exit 1
 esac
-if [ "${#RESOLVED_COMMIT}" -ne 40 ]; then
-  pc_status_error fetching_release release_manifest_identity_invalid
+case "$EXPECTED_DIGEST" in *[!0-9a-f]* | '')
+  pc_status_error fetching_release release_digest_invalid
+  exit 1
+esac
+if [ "${#EXPECTED_DIGEST}" -ne 64 ]; then
+  pc_status_error fetching_release release_digest_invalid
   exit 1
 fi
-if [ "$POCKETCODER_REF" != main ] && [ "$POCKETCODER_REF" != "$RESOLVED_COMMIT" ]; then
-  pc_status_error fetching_release release_manifest_identity_mismatch
+case "$EXPECTED_SEQUENCE" in *[!0-9]* | '' | 0)
+  pc_status_error fetching_release release_sequence_invalid
   exit 1
-fi
-export PC_SOURCE_COMMIT="$RESOLVED_COMMIT"
-IMMUTABLE_URL="$RELEASE_BASE/release-$RESOLVED_COMMIT.json"
-if [ "$DISCOVERY_URL" != "$IMMUTABLE_URL" ]; then
-  curl -sfL --max-time 30 -o "$MANIFEST_CANDIDATE" "$IMMUTABLE_URL"
-  test "$(jq -r '.release // empty' "$MANIFEST_CANDIDATE")" = "$RESOLVED_COMMIT"
-fi
+esac
 
-DEPLOYMENT_URL=$(jq -r '.deployment.url // empty' "$MANIFEST_CANDIDATE")
-DEPLOYMENT_SHA256=$(jq -r '.deployment.sha256 // empty' "$MANIFEST_CANDIDATE")
-DEPLOYMENT_BYTES=$(jq -r '.deployment.bytes // empty' "$MANIFEST_CANDIDATE")
-DEPLOYMENT_EXPANDED=$(jq -r '.deployment.expandedBytes // empty' "$MANIFEST_CANDIDATE")
-DEPLOYMENT_FILE="$ARTIFACT_DIR/$RESOLVED_COMMIT-deployment.tar.gz.part.$$"
+RESOLUTION="$ARTIFACT_DIR/release-resolution.$$.json"
+RELEASE_BASE="$RELEASE_BASE" \
+POCKETCODER_ROOT_PUBLIC_KEY=/etc/pocketcoder/release-root.pem \
+POCKETCODER_VERIFY_SCRIPT=/etc/pocketcoder/release/verify-signed-payload.sh \
+  /etc/pocketcoder/release/resolve-signed-release.sh \
+    "$RELEASE_CHANNEL" "$RELEASE_STATE" "$RELEASE_STATE/resolved" \
+    > "$RESOLUTION"
+RESOLVED_DIGEST=$(jq -r '.manifestSha256' "$RESOLUTION")
+RESOLVED_SEQUENCE=$(jq -r '.channelSequence' "$RESOLUTION")
+if [ "$RESOLVED_DIGEST" != "$EXPECTED_DIGEST" ] ||
+    [ "$RESOLVED_SEQUENCE" -lt "$EXPECTED_SEQUENCE" ]; then
+  pc_status_error fetching_release release_selection_changed
+  exit 1
+fi
+IMMUTABLE_URL=$(jq -r '.manifestUrl' "$RESOLUTION")
+MANIFEST_CANDIDATE="$ARTIFACT_DIR/release-manifest.$$.json"
+cp "$(jq -r '.manifestPath' "$RESOLUTION")" "$MANIFEST_CANDIDATE"
+export POCKETCODER_RELEASE_CHANNEL="$RELEASE_CHANNEL"
+export POCKETCODER_CHANNEL_SEQUENCE="$RESOLVED_SEQUENCE"
+export POCKETCODER_REVOCATION_SEQUENCE="$(jq -r '.revocationSequence' "$RESOLUTION")"
+rm -f "$RESOLUTION"
+
+RESOLVED_COMMIT=$(jq -r '.sourceCommit' "$MANIFEST_CANDIDATE")
+export PC_SOURCE_COMMIT="$RESOLVED_COMMIT"
+DEPLOYMENT_URL=$(jq -r '.serverFiles.url' "$MANIFEST_CANDIDATE")
+DEPLOYMENT_SHA256=$(jq -r '.serverFiles.sha256' "$MANIFEST_CANDIDATE")
+DEPLOYMENT_BYTES=$(jq -r '.serverFiles.downloadBytes' "$MANIFEST_CANDIDATE")
+DEPLOYMENT_EXPANDED=$(jq -r '.serverFiles.unpackedBytes' "$MANIFEST_CANDIDATE")
+test "$DEPLOYMENT_URL" = "$RELEASE_BASE/v1/artifacts/$DEPLOYMENT_SHA256.tar.gz"
+DEPLOYMENT_FILE="$ARTIFACT_DIR/$DEPLOYMENT_SHA256.tar.gz.part.$$"
 REQUIRED_BLOCKS=$(((DEPLOYMENT_BYTES + DEPLOYMENT_EXPANDED + 1073741824 + 1023) / 1024))
 AVAILABLE_BLOCKS=$(df -Pk "$ARTIFACT_DIR" | awk 'NR == 2 {print $4}')
 if [ -z "$AVAILABLE_BLOCKS" ] || [ "$AVAILABLE_BLOCKS" -lt "$REQUIRED_BLOCKS" ]; then
@@ -129,7 +146,7 @@ if tar -tzf "$DEPLOYMENT_FILE" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
   exit 1
 fi
 
-RELEASE_DIR="$RELEASES_DIR/$RESOLVED_COMMIT"
+RELEASE_DIR="$RELEASES_DIR/$RESOLVED_DIGEST"
 RELEASE_STAGE="$RELEASE_DIR.stage.$$"
 cleanup_release_stage() {
   if [ -n "${RELEASE_STAGE:-}" ] && [ -d "$RELEASE_STAGE" ]; then
@@ -140,7 +157,15 @@ trap cleanup_release_stage EXIT
 if [ ! -d "$RELEASE_DIR" ]; then
   install -d -m 0755 "$RELEASE_STAGE"
   tar -xzf "$DEPLOYMENT_FILE" -C "$RELEASE_STAGE"
-  test "$(jq -r '.release // empty' "$RELEASE_STAGE/release.json")" = "$RESOLVED_COMMIT"
+  jq -e --slurpfile manifest "$MANIFEST_CANDIDATE" '
+    .schemaVersion == 1 and
+    .serverVersion == $manifest[0].serverVersion and
+    .sourceCommit == $manifest[0].sourceCommit and
+    .serverApiVersion == $manifest[0].compatibility.server.apiVersion and
+    .dataVersion == $manifest[0].dataVersion and
+    .deploymentContractVersion ==
+      $manifest[0].compatibility.deployment.contractVersion
+  ' "$RELEASE_STAGE/release.json" >/dev/null
   mv "$RELEASE_STAGE" "$RELEASE_DIR"
   RELEASE_STAGE=
 fi
@@ -150,13 +175,22 @@ pc_status_heartbeat_stop
 
 SELECTED_HARNESSES=$(sed -n 's/^POCKETCODER_SELECTED_HARNESSES=//p' "$RUNTIME_ENV")
 SELECTED_HARNESSES="${SELECTED_HARNESSES:-goose}"
-read -r -a SELECTED_HARNESS_ARGS <<< "${SELECTED_HARNESSES//,/ }"
 trap - ERR
 export POCKETCODER_INITIALIZED_MARKER="$MARKER"
-"$RELEASE_DIR/deploy/scripts/activate-release.sh" \
-  "$MANIFEST_CANDIDATE" "$IMMUTABLE_URL" "$RUNTIME_ENV" \
-  "$RELEASE_STATE" "$ARTIFACT_DIR" "$PC_RUN_ID" "$PC_STATUS_FILE" \
-  "${SELECTED_HARNESS_ARGS[@]}"
+RELEASE_BASE="$RELEASE_BASE" \
+POCKETCODER_ROOT_PUBLIC_KEY=/etc/pocketcoder/release-root.pem \
+POCKETCODER_RELEASE_CHANNEL="$RELEASE_CHANNEL" \
+POCKETCODER_RELEASE_DIGEST="$EXPECTED_DIGEST" \
+POCKETCODER_RELEASE_SEQUENCE="$EXPECTED_SEQUENCE" \
+POCKETCODER_SELECTED_HARNESSES="$SELECTED_HARNESSES" \
+POCKETCODER_RUNTIME_ENV="$RUNTIME_ENV" \
+POCKETCODER_STATUS_FILE="$PC_STATUS_FILE" \
+POCKETCODER_STATUS_RUN_ID="$PC_RUN_ID" \
+PC_SOURCE_COMMIT="$PC_SOURCE_COMMIT" \
+  "$RELEASE_DIR/bin/pocketcoder-release" install
+
+date -u +%Y-%m-%dT%H:%M:%SZ > "$MARKER"
+pc_status_phase bootstrap_complete
 
 trap - EXIT
 echo "PocketCoder bootstrap complete"
