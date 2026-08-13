@@ -8,11 +8,12 @@ set -eu
 API="https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions"
 AUTH="Authorization: Bearer $GH_TOKEN"
 
-RUNS_JSON=$(curl -sf -H "$AUTH" "$API/workflows/nixos-image.yml/runs?per_page=1")
+WORKFLOW=${POCKETCODER_CI_WORKFLOW:-nixos-image.yml}
+RUNS_JSON=$(curl -sf -H "$AUTH" "$API/workflows/$WORKFLOW/runs?per_page=1")
 RUN_ID=$(printf '%s' "$RUNS_JSON" | grep -o '"id":[[:space:]]*[0-9]*' | head -1 | tr -dc '0-9')
 
 if [ -z "$RUN_ID" ]; then
-  echo "ERROR: could not extract a run id. Raw API response:" >&2
+  echo "ERROR: could not extract a run id for $WORKFLOW. Raw API response:" >&2
   printf '%s\n' "$RUNS_JSON" >&2
   exit 1
 fi
