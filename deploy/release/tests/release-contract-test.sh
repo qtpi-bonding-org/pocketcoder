@@ -83,7 +83,7 @@ jq '.osImages.nixos.delivery.artifact' "$manifest" > "$tmp_dir/nixos.json"
 jq '{schemaVersion:1,sourceCommit:.sourceCommit,serverFiles:.serverFiles,
   images:{required:.images.required,
     choices:{"coding-harnesses":.images.choices["coding-harnesses"].options},
-    optional:.images.optional}}' "$manifest" > "$tmp_dir/artifacts.json"
+    registry:.images.registry}}' "$manifest" > "$tmp_dir/artifacts.json"
 mkdir -p "$tmp_dir/documents"
 POCKETCODER_BUILT_AT=2026-08-12T19:00:00Z \
   "$assembler" "$release" "$tmp_dir/nixos.json" \

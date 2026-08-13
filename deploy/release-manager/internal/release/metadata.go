@@ -103,11 +103,10 @@ func selectedArtifactBytes(manifest contract.Manifest, harnesses, optional []str
 		return 0, 0, fmt.Errorf("selected harness is absent from candidate release")
 	}
 	for _, id := range optional {
-		artifact, exists := manifest.Images.Optional[id]
+		_, exists := manifest.Images.Registry.Optional[id]
 		if !exists {
 			return 0, 0, fmt.Errorf("selected optional image %q is absent from candidate release", id)
 		}
-		add(artifact)
 	}
 	return download, staging, nil
 }

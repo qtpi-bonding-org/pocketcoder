@@ -42,7 +42,7 @@ func (operations *dockerFixtureOperations) StopPrevious(_ Candidate) error {
 }
 
 func (operations *dockerFixtureOperations) Activate(_ Candidate) error {
-	if err := operations.docker.ComposeUp(operations.composeB, operations.environment, false); err != nil {
+	if err := operations.docker.ComposeUp(operations.composeB, operations.environment, nil); err != nil {
 		return err
 	}
 	return operations.waitHealthy(4 * time.Second)
@@ -55,7 +55,7 @@ func (operations *dockerFixtureOperations) RestoreSnapshot(_ Candidate, value Sn
 }
 
 func (operations *dockerFixtureOperations) RestorePrevious(_ Candidate) error {
-	if err := operations.docker.ComposeUp(operations.composeA, operations.environment, false); err != nil {
+	if err := operations.docker.ComposeUp(operations.composeA, operations.environment, nil); err != nil {
 		return err
 	}
 	return operations.waitHealthy(10 * time.Second)
@@ -192,7 +192,7 @@ func (fixture *dockerFixture) manager(t *testing.T) Manager {
 
 func (fixture *dockerFixture) startA(t *testing.T) {
 	t.Helper()
-	if err := fixture.operations.docker.ComposeUp(fixture.operations.composeA, fixture.operations.environment, false); err != nil {
+	if err := fixture.operations.docker.ComposeUp(fixture.operations.composeA, fixture.operations.environment, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := fixture.operations.waitHealthy(20 * time.Second); err != nil {

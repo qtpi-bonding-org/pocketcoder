@@ -30,15 +30,17 @@ const (
 )
 
 var (
-	releasePattern   = regexp.MustCompile(`^[0-9a-f]{40}$`)
-	digestPattern    = regexp.MustCompile(`^[0-9a-f]{64}$`)
-	harnessIDPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
-	shaPattern       = regexp.MustCompile(`^[0-9a-f]{64}$`)
+	releasePattern       = regexp.MustCompile(`^[0-9a-f]{40}$`)
+	digestPattern        = regexp.MustCompile(`^[0-9a-f]{64}$`)
+	harnessIDPattern     = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+	shaPattern           = regexp.MustCompile(`^[0-9a-f]{64}$`)
+	registryImagePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9./_-]*(?::[A-Za-z0-9._-]+)?@sha256:[0-9a-f]{64}$`)
 )
 
 // DockerLoader is the narrow Docker API surface artifact installation needs.
 type DockerLoader interface {
 	ImageExists(ctx context.Context, image string) (bool, error)
+	PullImage(ctx context.Context, image string) error
 	LoadImage(ctx context.Context, archive io.Reader) error
 }
 
@@ -103,7 +105,13 @@ type releaseManifest struct {
 			MaximumSelections *int                `json:"maximumSelections"`
 			Options           map[string]artifact `json:"options"`
 		} `json:"choices"`
-		Optional map[string]artifact `json:"optional"`
+		Registry struct {
+			Required []string `json:"required"`
+			Optional map[string]struct {
+				Image          string `json:"image"`
+				ComposeProfile string `json:"composeProfile"`
+			} `json:"optional"`
+		} `json:"registry"`
 	} `json:"images"`
 	Extensions json.RawMessage `json:"extensions,omitempty"`
 }
@@ -161,9 +169,9 @@ func EnsureHarnessImage(ctx context.Context, docker DockerLoader, harnessID, ima
 // EnsureOptionalImage installs a release-pinned optional runtime without
 // making it part of the default bootstrap artifact set. Optional IDs are a
 // closed manifest contract; today Ollama is the only supported capability.
-func EnsureOptionalImage(ctx context.Context, docker DockerLoader, optionalID, image string) error {
+func EnsureOptionalImage(ctx context.Context, docker DockerLoader, optionalID string) (string, error) {
 	defaultOnce.Do(func() { defaultLoader = New(ConfigFromEnvironment()) })
-	return defaultLoader.EnsureOptionalImage(ctx, docker, optionalID, image)
+	return defaultLoader.EnsureOptionalImage(ctx, docker, optionalID)
 }
 
 func (l *Loader) EnsureHarnessImage(ctx context.Context, docker DockerLoader, harnessID, image string) error {
@@ -190,41 +198,52 @@ func (l *Loader) EnsureHarnessImage(ctx context.Context, docker DockerLoader, ha
 	})
 }
 
-func (l *Loader) EnsureOptionalImage(ctx context.Context, docker DockerLoader, optionalID, image string) error {
+func (l *Loader) EnsureOptionalImage(ctx context.Context, docker DockerLoader, optionalID string) (string, error) {
 	if !harnessIDPattern.MatchString(optionalID) {
-		return fmt.Errorf("unknown optional release artifact %q", optionalID)
+		return "", fmt.Errorf("unknown optional release image %q", optionalID)
 	}
 	if !releasePattern.MatchString(l.config.ExpectedRelease) {
-		return fmt.Errorf("invalid active release identity %q", l.config.ExpectedRelease)
-	}
-	if !ManagedReleaseImage(image, l.config.ExpectedRelease) {
-		return fmt.Errorf("optional image %q does not belong to active release", image)
+		return "", fmt.Errorf("invalid active release identity %q", l.config.ExpectedRelease)
 	}
 	pointer, manifest, err := l.loadReleaseState()
 	if err != nil {
-		return err
+		return "", err
 	}
 	if pointer.SourceCommit != l.config.ExpectedRelease || manifest.SourceCommit != l.config.ExpectedRelease {
-		return fmt.Errorf("release state does not match active release %s", l.config.ExpectedRelease)
+		return "", fmt.Errorf("release state does not match active release %s", l.config.ExpectedRelease)
 	}
-	selected, ok := manifest.Images.Optional[optionalID]
+	selected, ok := manifest.Images.Registry.Optional[optionalID]
 	if !ok {
-		return fmt.Errorf("release %s has no optional artifact %s", pointer.ReleaseDigest, optionalID)
+		return "", fmt.Errorf("release %s has no optional registry image %s", pointer.ReleaseDigest, optionalID)
 	}
-	if err := validateHarnessArtifact(selected, image); err != nil {
-		return fmt.Errorf("invalid optional %s artifact: %w", optionalID, err)
+	if !registryImagePattern.MatchString(selected.Image) {
+		return "", fmt.Errorf("optional registry image %s is not pinned by digest", optionalID)
 	}
-	flightKey := l.config.ExpectedRelease + ":optional:" + optionalID + ":" + image
-	return l.flights.Do(ctx, flightKey, func() error {
-		local, err := docker.ImageExists(ctx, image)
+	flightKey := l.config.ExpectedRelease + ":optional:" + optionalID + ":" + selected.Image
+	err = l.flights.Do(ctx, flightKey, func() error {
+		local, err := docker.ImageExists(ctx, selected.Image)
 		if err != nil {
-			return fmt.Errorf("inspect optional release image %s: %w", image, err)
+			return fmt.Errorf("inspect optional registry image %s: %w", selected.Image, err)
 		}
 		if local {
 			return nil
 		}
-		return l.installOptional(ctx, docker, optionalID, image)
+		if err := docker.PullImage(ctx, selected.Image); err != nil {
+			return fmt.Errorf("pull optional registry image %s: %w", selected.Image, err)
+		}
+		local, err = docker.ImageExists(ctx, selected.Image)
+		if err != nil {
+			return fmt.Errorf("inspect pulled optional registry image %s: %w", selected.Image, err)
+		}
+		if !local {
+			return fmt.Errorf("pulled optional registry image %s is unavailable", selected.Image)
+		}
+		return nil
 	})
+	if err != nil {
+		return "", err
+	}
+	return selected.Image, nil
 }
 
 func (l *Loader) installHarness(ctx context.Context, docker DockerLoader, harnessID, image string) error {
@@ -250,24 +269,6 @@ func (l *Loader) installHarness(ctx context.Context, docker DockerLoader, harnes
 		return fmt.Errorf("invalid %s harness artifact: %w", harnessID, err)
 	}
 	return l.installArtifact(ctx, docker, "harness "+harnessID, selected, image)
-}
-
-func (l *Loader) installOptional(ctx context.Context, docker DockerLoader, optionalID, image string) error {
-	pointer, manifest, err := l.loadReleaseState()
-	if err != nil {
-		return err
-	}
-	if pointer.SourceCommit != l.config.ExpectedRelease || manifest.SourceCommit != l.config.ExpectedRelease {
-		return fmt.Errorf("release state does not match active release %s", l.config.ExpectedRelease)
-	}
-	selected, ok := manifest.Images.Optional[optionalID]
-	if !ok {
-		return fmt.Errorf("release %s has no optional artifact %s", pointer.ReleaseDigest, optionalID)
-	}
-	if err := validateHarnessArtifact(selected, image); err != nil {
-		return fmt.Errorf("invalid optional %s artifact: %w", optionalID, err)
-	}
-	return l.installArtifact(ctx, docker, "optional "+optionalID, selected, image)
 }
 
 func (l *Loader) installArtifact(ctx context.Context, docker DockerLoader, artifactLabel string, selected artifact, image string) error {

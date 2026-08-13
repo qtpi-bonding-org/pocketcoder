@@ -45,14 +45,8 @@ awk -v release="$release" '
       image = "pocketcoder-mcp-gateway:" release
     } else if (service == "pocket-memory") {
       image = "pocketcoder-memory:" release
-    } else if (service == "ollama") {
-      image = "pocketcoder-ollama:" release
     } else if (service in harness_image) {
       image = harness_image[service] ":" release
-    } else if (image ~ /@sha256:/) {
-      digest = image
-      sub(/.*@sha256:/, "", digest)
-      image = "pocketcoder-bundle-" substr(digest, 1, 16)
     }
     print "    image: " image
     next

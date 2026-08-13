@@ -21,9 +21,9 @@ func TestDiscoverLocalSelectionsPreservesAcquiredHarnessesAndOptionalImages(t *t
 				},
 			},
 		},
-		Optional: map[string]contract.Artifact{
-			"ollama": {Images: []string{"ollama:a"}},
-		},
+		Registry: contract.RegistryImages{Optional: map[string]contract.OptionalRegistryImage{
+			"ollama": {Image: "ollama:a"},
+		}},
 	}}
 	local := map[string]bool{"goose:a": true, "codex:a": true, "ollama:a": true}
 

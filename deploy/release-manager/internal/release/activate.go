@@ -47,7 +47,11 @@ func (activation Activation) Run() (Current, error) {
 	// POCO:END bootstrap-activation-prepare
 	// POCO:BEGIN bootstrap-compose-start
 	compose := filepath.Join(activation.ReleaseDirectory, "docker-compose.prebuilt.yml")
-	if err := activation.Docker.ComposeUp(compose, activation.RuntimeEnvironment, len(activation.OptionalImages) > 0); err != nil {
+	profiles, err := activation.selectedProfiles()
+	if err != nil {
+		return Current{}, err
+	}
+	if err := activation.Docker.ComposeUp(compose, activation.RuntimeEnvironment, profiles); err != nil {
 		return Current{}, err
 	}
 	healthURL := activation.HealthURL
@@ -96,6 +100,11 @@ func (activation Activation) Preload() error {
 			return err
 		}
 	}
+	for _, image := range activation.Manifest.Images.Registry.Required {
+		if err := activation.Docker.PullImage(image); err != nil {
+			return err
+		}
+	}
 	remaining := stringSet(activation.Harnesses)
 	for groupID, group := range activation.Manifest.Images.Choices {
 		for id := range remaining {
@@ -113,11 +122,11 @@ func (activation Activation) Preload() error {
 		return fmt.Errorf("selected harness is absent from release")
 	}
 	for _, id := range activation.OptionalImages {
-		descriptor, exists := activation.Manifest.Images.Optional[id]
+		descriptor, exists := activation.Manifest.Images.Registry.Optional[id]
 		if !exists {
 			return fmt.Errorf("selected optional image %q is absent from release", id)
 		}
-		if err := installer.Ensure("optional."+id, descriptor); err != nil {
+		if err := activation.Docker.PullImage(descriptor.Image); err != nil {
 			return err
 		}
 	}
@@ -132,7 +141,7 @@ func (activation Activation) Preload() error {
 }
 
 func (activation Activation) selectedImages() ([]string, error) {
-	selected := make([]string, 0)
+	selected := append([]string(nil), activation.Manifest.Images.Registry.Required...)
 	for _, descriptor := range activation.Manifest.Images.Required {
 		selected = append(selected, descriptor.Images...)
 	}
@@ -149,13 +158,29 @@ func (activation Activation) selectedImages() ([]string, error) {
 		return nil, fmt.Errorf("selected harness is absent from release")
 	}
 	for _, id := range activation.OptionalImages {
-		descriptor, exists := activation.Manifest.Images.Optional[id]
+		descriptor, exists := activation.Manifest.Images.Registry.Optional[id]
 		if !exists {
 			return nil, fmt.Errorf("selected optional image %q is absent from release", id)
 		}
-		selected = append(selected, descriptor.Images...)
+		selected = append(selected, descriptor.Image)
 	}
 	return selected, nil
+}
+
+func (activation Activation) selectedProfiles() ([]string, error) {
+	profiles := make([]string, 0, len(activation.OptionalImages))
+	seen := make(map[string]bool)
+	for _, id := range activation.OptionalImages {
+		descriptor, exists := activation.Manifest.Images.Registry.Optional[id]
+		if !exists {
+			return nil, fmt.Errorf("selected optional image %q is absent from release", id)
+		}
+		if !seen[descriptor.ComposeProfile] {
+			profiles = append(profiles, descriptor.ComposeProfile)
+			seen[descriptor.ComposeProfile] = true
+		}
+	}
+	return profiles, nil
 }
 
 func verifyInternalIdentity(directory string, manifest contract.Manifest) error {

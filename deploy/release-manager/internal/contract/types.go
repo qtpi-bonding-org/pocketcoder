@@ -144,10 +144,20 @@ type ChoiceGroup struct {
 	Options           map[string]Artifact `json:"options"`
 }
 
+type OptionalRegistryImage struct {
+	Image          string `json:"image"`
+	ComposeProfile string `json:"composeProfile"`
+}
+
+type RegistryImages struct {
+	Required []string                         `json:"required"`
+	Optional map[string]OptionalRegistryImage `json:"optional"`
+}
+
 type Images struct {
 	Required map[string]Artifact    `json:"required"`
 	Choices  map[string]ChoiceGroup `json:"choices"`
-	Optional map[string]Artifact    `json:"optional"`
+	Registry RegistryImages         `json:"registry"`
 }
 
 type Manifest struct {

@@ -114,10 +114,29 @@ func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.
 	defer ollamaRuntimeMu.Unlock()
 
 	release := os.Getenv("POCKETCODER_RELEASE")
-	expectedImage := "pocketcoder-ollama:" + release
+	expectedImage := ""
+	acquireReleaseImage := func() error {
+		image, err := ensureOllamaReleaseImage(ctx, docker, "ollama")
+		if err != nil {
+			return fmt.Errorf("acquire Ollama runtime: %w", err)
+		}
+		expectedImage = image
+		return nil
+	}
 	insp, err := docker.Inspect(ctx, ollamaContainerName)
 	if err == nil {
-		if release != "" && release != "development" && insp.Config.Image != expectedImage {
+		if release == "" || release == "development" {
+			if !insp.State.Running {
+				if err := docker.Start(ctx, ollamaContainerName); err != nil {
+					return fmt.Errorf("start Ollama runtime: %w", err)
+				}
+			}
+			return waitForOllama(ctx, client, baseURL)
+		}
+		if err := acquireReleaseImage(); err != nil {
+			return err
+		}
+		if insp.Config.Image != expectedImage {
 			if err := docker.Remove(ctx, ollamaContainerName); err != nil {
 				return fmt.Errorf("replace stale Ollama runtime: %w", err)
 			}
@@ -132,13 +151,15 @@ func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.
 	} else if !errors.Is(err, dockerapi.ErrContainerNotFound) {
 		return fmt.Errorf("inspect Ollama runtime: %w", err)
 	}
-
 	if release == "" || release == "development" {
 		return errors.New("Ollama must be started through the local-models profile in development")
 	}
-	if err := ensureOllamaReleaseImage(ctx, docker, "ollama", expectedImage); err != nil {
-		return fmt.Errorf("acquire Ollama runtime: %w", err)
+	if expectedImage == "" {
+		if err := acquireReleaseImage(); err != nil {
+			return err
+		}
 	}
+
 	if _, err := docker.Create(ctx, ollamaContainerName, dockerapi.CreateSpec{
 		Image: expectedImage,
 		Env:   []string{"OLLAMA_MODELS=/ollama-models"},

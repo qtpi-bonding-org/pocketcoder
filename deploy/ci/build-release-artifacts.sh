@@ -36,7 +36,18 @@ docker tag pocketcoder-pocketbase:latest "pocketcoder-pocketbase:$release"
 docker tag pocketcoder-mcp-gateway:latest "pocketcoder-mcp-gateway:$release"
 docker tag pocketcoder-memory:latest "pocketcoder-memory:$release"
 
-compose_json=$(docker compose --profile harness-images config --format json)
+compose_json=$(docker compose --profile '*' config --format json)
+catalog_harness_services=$(jq -r '.harnesses[].composeService' "$catalog" | sort)
+compose_harness_services=$(printf '%s' "$compose_json" | jq -r '
+  .services | to_entries[] |
+  select(.value.build != null) |
+  select(((.value.profiles // []) | index("harness-images")) != null) |
+  .key
+' | sort)
+if [[ "$catalog_harness_services" != "$compose_harness_services" ]]; then
+  echo "harness catalog and custom Compose harness services disagree" >&2
+  exit 1
+fi
 while IFS=$'\t' read -r id service repository; do
   test -n "$id"
   docker compose -p pocketcoder --profile harness-images build "$service"
@@ -46,24 +57,6 @@ while IFS=$'\t' read -r id service repository; do
   docker tag "$source_image" "$repository:$release"
 done < <(jq -r '.harnesses[] | [.id, .composeService, .imageRepository] | @tsv' \
   "$catalog")
-
-ollama_source=$(docker compose --profile local-models config --format json \
-  | jq -r '.services.ollama.image')
-docker pull "$ollama_source"
-docker tag "$ollama_source" "pocketcoder-ollama:$release"
-
-# Pull digest-pinned third-party images and give them local names that remain
-# usable after the VPS loads an offline Docker archive.
-while IFS= read -r image; do
-  test -n "$image"
-  if ! docker image inspect "$image" >/dev/null 2>&1; then
-    docker pull "$image"
-  fi
-  if [[ "$image" == *@sha256:* ]]; then
-    digest=${image##*@sha256:}
-    docker tag "$image" "pocketcoder-bundle-${digest:0:16}"
-  fi
-done < <(docker compose -p pocketcoder config --images)
 
 deployment_archive="$artifact_dir/pocketcoder-deployment-$release.tar.gz"
 deploy/scripts/build-deployment-artifact.sh "$release" "$deployment_archive"
@@ -77,7 +70,22 @@ mv "$deployment_archive" "$artifact_dir/$deployment_sha.tar.gz"
 
 deploy/scripts/resolve-release-compose.sh docker-compose.yml \
   "$compose_snapshot" "$release" "$catalog"
-mapfile -t core_images < <(deploy/scripts/list-prebuilt-images.sh "$compose_snapshot")
+resolved_compose_json=$(docker compose --profile '*' -f "$compose_snapshot" \
+  config --format json)
+
+# A service with a repository build definition is PocketCoder-owned and ships
+# in a release archive. Unmodified upstream services remain registry
+# references and must be pinned by digest.
+mapfile -t core_services < <(printf '%s' "$compose_json" | jq -r '
+  .services | to_entries[] |
+  select(.value.build != null) |
+  select(((.value.profiles // []) | index("harness-images")) == null) |
+  .key
+')
+mapfile -t core_images < <(for service in "${core_services[@]}"; do
+  printf '%s' "$resolved_compose_json" |
+    jq -r --arg service "$service" '.services[$service].image'
+done | sort -u)
 test "${#core_images[@]}" -gt 0
 core_archive="$artifact_dir/pocketcoder-core-$release.tar.gz"
 core_expanded=$(deploy/scripts/build-docker-artifact.sh \
@@ -102,15 +110,25 @@ while IFS=$'\t' read -r id repository; do
     '{id:$id,artifact:$artifact[0]}' > "$metadata_dir/harness-entry-$id.json"
 done < <(jq -r '.harnesses[] | [.id, .imageRepository] | @tsv' "$catalog")
 
-ollama_image="pocketcoder-ollama:$release"
-ollama_archive="$artifact_dir/pocketcoder-ollama-$release.tar.gz"
-ollama_expanded=$(deploy/scripts/build-docker-artifact.sh \
-  "$ollama_archive" "$ollama_image")
-deploy/scripts/write-artifact-metadata.sh "$metadata_dir/ollama.json" \
-  auto "$ollama_archive" \
-  "$ollama_expanded" "$ollama_image"
-ollama_sha=$(jq -r '.sha256' "$metadata_dir/ollama.json")
-mv "$ollama_archive" "$artifact_dir/$ollama_sha.tar.gz"
+printf '%s' "$compose_json" | jq -e '
+  [.services | to_entries[] | select(.value.build == null)] as $upstream |
+  if all($upstream[];
+    (.value.image | test("@sha256:[0-9a-f]{64}$")) and
+    ((.value.profiles // []) | length <= 1))
+  then {
+    required: ([$upstream[] |
+      select((.value.profiles // []) | length == 0) |
+      .value.image] | unique | sort),
+    optional: (reduce ($upstream[] |
+      select((.value.profiles // []) | index("local-models") != null)) as $service
+      ({}; .[$service.key] = {
+        image:$service.value.image,
+        composeProfile:$service.value.profiles[0]
+      }))
+  }
+  else error("every unmodified upstream image must be pinned by digest")
+  end
+' > "$metadata_dir/registry-images.json"
 
 jq -n 'reduce inputs as $entry ({}; .[$entry.id] = $entry.artifact)' \
   "$metadata_dir"/harness-entry-*.json > "$metadata_dir/harnesses.json"
@@ -118,8 +136,8 @@ jq -n --arg release "$release" \
   --slurpfile deployment "$metadata_dir/deployment.json" \
   --slurpfile core "$metadata_dir/core.json" \
   --slurpfile harnesses "$metadata_dir/harnesses.json" \
-  --slurpfile ollama "$metadata_dir/ollama.json" \
+  --slurpfile registry "$metadata_dir/registry-images.json" \
   '{schemaVersion:1,sourceCommit:$release,serverFiles:$deployment[0],
     images:{required:{server:$core[0]},
       choices:{"coding-harnesses":$harnesses[0]},
-      optional:{ollama:$ollama[0]}}}' > "$output"
+      registry:$registry[0]}}' > "$output"

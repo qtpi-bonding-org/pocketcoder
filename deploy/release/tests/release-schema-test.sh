@@ -59,6 +59,8 @@ expect_semantic_failure "$mutations/missing-catalog-document.jq" "catalog docume
 expect_semantic_failure "$mutations/catalog-mismatch.jq" "harness choices"
 expect_semantic_failure "$mutations/harness-image.jq" "catalog repository"
 expect_semantic_failure "$mutations/duplicate-image.jq" "more than one archive"
+expect_semantic_failure "$mutations/registry-image-tag.jq" "not immutable"
+expect_semantic_failure "$mutations/registry-image-duplicate.jq" "not immutable"
 
 expect_schema_failure "$mutations/bad-url-host.jq"
 expect_schema_failure "$mutations/non-utc-time.jq"

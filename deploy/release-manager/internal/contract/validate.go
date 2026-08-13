@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	digestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
-	commitPattern = regexp.MustCompile(`^[0-9a-f]{40}$`)
+	digestPattern        = regexp.MustCompile(`^[0-9a-f]{64}$`)
+	commitPattern        = regexp.MustCompile(`^[0-9a-f]{40}$`)
+	registryImagePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9./_-]*(?::[A-Za-z0-9._-]+)?@sha256:[0-9a-f]{64}$`)
 )
 
 func ValidateManifest(manifest Manifest) error {
@@ -50,7 +51,7 @@ func ValidateManifest(manifest Manifest) error {
 	if len(manifest.ServerFiles.Images) != 0 {
 		return fmt.Errorf("serverFiles may not declare Docker images")
 	}
-	if len(manifest.Documents) == 0 || len(manifest.OSImages) == 0 || len(manifest.Images.Required) == 0 {
+	if len(manifest.Documents) == 0 || len(manifest.OSImages) == 0 || len(manifest.Images.Required) == 0 || len(manifest.Images.Registry.Required) == 0 {
 		return fmt.Errorf("release manifest is missing required content")
 	}
 	seenImages := make(map[string]string)
@@ -72,8 +73,17 @@ func ValidateManifest(manifest Manifest) error {
 			}
 		}
 	}
-	for id, artifact := range manifest.Images.Optional {
-		if err := validateImageArtifact("optional."+id, artifact, seenImages); err != nil {
+	seenRegistryImages := make(map[string]string)
+	for _, image := range manifest.Images.Registry.Required {
+		if err := validateRegistryImage("required", image, seenRegistryImages); err != nil {
+			return err
+		}
+	}
+	for id, descriptor := range manifest.Images.Registry.Optional {
+		if descriptor.ComposeProfile == "" {
+			return fmt.Errorf("optional registry image %q has no Compose profile", id)
+		}
+		if err := validateRegistryImage("optional."+id, descriptor.Image, seenRegistryImages); err != nil {
 			return err
 		}
 	}
@@ -123,6 +133,17 @@ func ValidateManifest(manifest Manifest) error {
 			return fmt.Errorf("OS image %q has invalid bootstrap kind", id)
 		}
 	}
+	return nil
+}
+
+func validateRegistryImage(name, image string, seen map[string]string) error {
+	if !registryImagePattern.MatchString(image) {
+		return fmt.Errorf("registry image %q is not pinned by digest", name)
+	}
+	if previous, exists := seen[image]; exists {
+		return fmt.Errorf("registry image %q is duplicated by %s and %s", image, previous, name)
+	}
+	seen[image] = name
 	return nil
 }
 

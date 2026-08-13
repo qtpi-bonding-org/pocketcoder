@@ -17,7 +17,9 @@ func TestBuildMetadataStatusUsesSelectedArtifacts(t *testing.T) {
 				"goose": {DownloadBytes: 50, UnpackedBytes: 60},
 				"codex": {DownloadBytes: 500, UnpackedBytes: 600},
 			}}},
-			Optional: map[string]contract.Artifact{"ollama": {DownloadBytes: 70, UnpackedBytes: 80}},
+			Registry: contract.RegistryImages{Optional: map[string]contract.OptionalRegistryImage{
+				"ollama": {Image: "ollama@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+			}},
 		},
 	}
 	resolved := Resolved{ManifestSHA256: "new", Manifest: manifest}
@@ -26,10 +28,10 @@ func TestBuildMetadataStatusUsesSelectedArtifacts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status.DownloadBytes != 160 {
+	if status.DownloadBytes != 90 {
 		t.Fatalf("download bytes = %d", status.DownloadBytes)
 	}
-	if status.RequiredDiskBytes != 1460 {
+	if status.RequiredDiskBytes != 1310 {
 		t.Fatalf("required disk bytes = %d", status.RequiredDiskBytes)
 	}
 	if status.NormalRollbackAvailableAfterSuccess == nil || *status.NormalRollbackAvailableAfterSuccess {

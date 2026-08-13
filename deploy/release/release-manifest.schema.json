@@ -525,13 +525,61 @@
         "$ref": "#/$defs/identifier"
       }
     },
+    "registryImage": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9./_-]*(?::[A-Za-z0-9._-]+)?@sha256:[0-9a-f]{64}$",
+      "description": "Unmodified upstream OCI image pinned to an immutable registry digest."
+    },
+    "optionalRegistryImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image",
+        "composeProfile"
+      ],
+      "properties": {
+        "image": {
+          "$ref": "#/$defs/registryImage"
+        },
+        "composeProfile": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "registryImages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "optional"
+      ],
+      "properties": {
+        "required": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/registryImage"
+          }
+        },
+        "optional": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/optionalRegistryImage"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/identifier"
+          }
+        }
+      }
+    },
     "imageGroups": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "required",
         "choices",
-        "optional"
+        "registry"
       ],
       "properties": {
         "required": {
@@ -547,8 +595,8 @@
         "choices": {
           "$ref": "#/$defs/choiceGroupMap"
         },
-        "optional": {
-          "$ref": "#/$defs/imageArtifactMap"
+        "registry": {
+          "$ref": "#/$defs/registryImages"
         }
       }
     },
