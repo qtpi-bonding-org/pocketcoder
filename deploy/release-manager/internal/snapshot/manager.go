@@ -333,6 +333,9 @@ func (manager Manager) cleanup(backupRoot string) error {
 		items = append(items, item{filepath.Join(directory, entry.Name()), info.ModTime()})
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i].modified.After(items[j].modified) })
+	if len(items) <= retain {
+		return nil
+	}
 	for _, stale := range items[retain:] {
 		data, err := os.ReadFile(stale.path)
 		if err != nil {

@@ -60,6 +60,13 @@ jobs:
         working-directory: deploy/release-manager
         run: go test ./...
 
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: server/pocketbase/go.mod
+
+      - name: Test Docker and PocketBase release migration
+        run: deploy/release-manager/tests/run-docker-integration.sh
+
       - name: Test PocketBase release APIs and lazy loader
         working-directory: server/pocketbase
         run: go test ./internal/api ./internal/releaseartifact

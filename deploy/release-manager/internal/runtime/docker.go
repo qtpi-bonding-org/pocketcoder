@@ -12,8 +12,9 @@ import (
 )
 
 type Docker struct {
-	Stdout io.Writer
-	Stderr io.Writer
+	ProjectName string
+	Stdout      io.Writer
+	Stderr      io.Writer
 }
 
 func (docker Docker) ImageExists(image string) bool {
@@ -52,7 +53,7 @@ func (docker Docker) LoadGzipArchive(path string) error {
 }
 
 func (docker Docker) ComposeUp(composeFile, environmentFile string, optional bool) error {
-	arguments := []string{"compose", "--project-name", "pocketcoder", "--env-file", environmentFile, "-f", composeFile}
+	arguments := []string{"compose", "--project-name", docker.projectName(), "--env-file", environmentFile, "-f", composeFile}
 	if optional {
 		arguments = append(arguments, "--profile", "local-models")
 	}
@@ -74,7 +75,7 @@ func (docker Docker) ComposeUp(composeFile, environmentFile string, optional boo
 }
 
 func (docker Docker) ComposeDown(composeFile, environmentFile string) error {
-	arguments := []string{"compose", "--project-name", "pocketcoder", "--env-file", environmentFile, "-f", composeFile, "down", "--remove-orphans"}
+	arguments := []string{"compose", "--project-name", docker.projectName(), "--env-file", environmentFile, "-f", composeFile, "down", "--remove-orphans"}
 	command := exec.Command("docker", arguments...)
 	command.Stdout = docker.Stdout
 	command.Stderr = docker.Stderr
@@ -85,6 +86,13 @@ func (docker Docker) ComposeDown(composeFile, environmentFile string) error {
 	command.Stdout = docker.Stdout
 	command.Stderr = docker.Stderr
 	return command.Run()
+}
+
+func (docker Docker) projectName() string {
+	if docker.ProjectName != "" {
+		return docker.ProjectName
+	}
+	return "pocketcoder"
 }
 
 func WaitHealthy(ctx context.Context, rawURL string, interval time.Duration) error {
