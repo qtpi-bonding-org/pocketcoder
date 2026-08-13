@@ -17,13 +17,19 @@ type Sink interface {
 }
 
 type document struct {
-	Schema       int    `json:"schema"`
-	RunID        string `json:"runId"`
-	Phase        string `json:"phase"`
-	Detail       string `json:"detail,omitempty"`
-	SourceCommit string `json:"sourceCommit"`
-	UpdatedAt    string `json:"updatedAt"`
-	Error        string `json:"error,omitempty"`
+	Schema       int         `json:"schema"`
+	RunID        string      `json:"runId"`
+	Phase        string      `json:"phase"`
+	Detail       string      `json:"detail,omitempty"`
+	SourceCommit string      `json:"sourceCommit"`
+	UpdatedAt    string      `json:"updatedAt"`
+	Error        string      `json:"error,omitempty"`
+	SSHHostKey   *sshHostKey `json:"sshHostKey,omitempty"`
+}
+
+type sshHostKey struct {
+	Type        string `json:"type"`
+	Fingerprint string `json:"fingerprint"`
 }
 
 // Reporter atomically continues the bootstrap status stream while the native
@@ -37,9 +43,10 @@ type Reporter struct {
 	phase        string
 	detail       string
 	sourceCommit string
+	sshHostKey   *sshHostKey
 }
 
-func New(path, runID, sourceCommit string, errorWriter io.Writer) *Reporter {
+func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, errorWriter io.Writer) *Reporter {
 	if errorWriter == nil {
 		errorWriter = io.Discard
 	}
@@ -49,9 +56,13 @@ func New(path, runID, sourceCommit string, errorWriter io.Writer) *Reporter {
 	if sourceCommit == "" {
 		sourceCommit = "unknown"
 	}
+	var hostKey *sshHostKey
+	if hostKeyType != "" && hostKeyFingerprint != "" {
+		hostKey = &sshHostKey{Type: hostKeyType, Fingerprint: hostKeyFingerprint}
+	}
 	return &Reporter{
 		path: path, runID: runID, sourceCommit: sourceCommit,
-		errorWriter: errorWriter, phase: "fetching_release",
+		errorWriter: errorWriter, phase: "fetching_release", sshHostKey: hostKey,
 	}
 }
 
@@ -123,6 +134,7 @@ func (reporter *Reporter) writeLocked(errorCode string) {
 		Schema: 1, RunID: reporter.runID, Phase: reporter.phase,
 		Detail: reporter.detail, SourceCommit: reporter.sourceCommit,
 		UpdatedAt: time.Now().UTC().Format(time.RFC3339), Error: errorCode,
+		SSHHostKey: reporter.sshHostKey,
 	}
 	if err := state.WriteJSONAtomic(reporter.path, value, 0o644); err != nil {
 		fmt.Fprintf(reporter.errorWriter, "pocketcoder-release: status warning: %v\n", err)

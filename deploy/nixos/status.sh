@@ -10,6 +10,8 @@ PC_HEARTBEAT_PID=""
 
 _pc_status_write() {
   local phase="$1" detail="${2:-}" error="${3:-}" tmp
+  local ssh_host_key_type="${POCKETCODER_SSH_HOST_KEY_TYPE:-}"
+  local ssh_host_key_fingerprint="${POCKETCODER_SSH_HOST_KEY_FINGERPRINT:-}"
   mkdir -p "$PC_STATUS_DIR"
   tmp=$(mktemp -p "$PC_STATUS_DIR" .status.XXXXXX)
   jq -n \
@@ -18,11 +20,17 @@ _pc_status_write() {
     --arg phase "$phase" \
     --arg detail "$detail" \
     --arg sourceCommit "${PC_SOURCE_COMMIT:-unknown}" \
+    --arg sshHostKeyType "$ssh_host_key_type" \
+    --arg sshHostKeyFingerprint "$ssh_host_key_fingerprint" \
     --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg error "$error" \
     '{schema:$schema,runId:$runId,phase:$phase,
       detail:(if $detail == "" then null else $detail end),
       sourceCommit:$sourceCommit,updatedAt:$updatedAt,
+      sshHostKey:(if $sshHostKeyType == "" or $sshHostKeyFingerprint == ""
+        then null
+        else {type:$sshHostKeyType,fingerprint:$sshHostKeyFingerprint}
+        end),
       error:(if $error == "" then null else $error end)}' > "$tmp"
   chmod 0644 "$tmp"
   mv -f "$tmp" "$PC_STATUS_FILE"
@@ -31,7 +39,21 @@ _pc_status_write() {
   fi
 }
 
+pc_status_capture_ssh_host_key() {
+  local public_key=/etc/ssh/ssh_host_ed25519_key.pub fingerprint
+  if [ ! -r "$public_key" ] || ! command -v ssh-keygen >/dev/null 2>&1; then
+    return
+  fi
+  fingerprint=$(ssh-keygen -E md5 -lf "$public_key" 2>/dev/null | awk '{print $2}')
+  case "$fingerprint" in MD5:*:*:*:*:*:*:*:*:*:*:*:*:*:*:*:*) ;;
+    *) return ;;
+  esac
+  export POCKETCODER_SSH_HOST_KEY_TYPE=ssh-ed25519
+  export POCKETCODER_SSH_HOST_KEY_FINGERPRINT="$fingerprint"
+}
+
 pc_status_init() {
+  pc_status_capture_ssh_host_key
   PC_RUN_ID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || date +%s%N)
   PC_CURRENT_PHASE="configuring_operating_system"
   _pc_status_write "$PC_CURRENT_PHASE" "" ""

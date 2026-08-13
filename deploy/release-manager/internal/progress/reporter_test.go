@@ -10,7 +10,14 @@ import (
 
 func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "status.json")
-	reporter := New(path, "run-1", "unknown", nil)
+	reporter := New(
+		path,
+		"run-1",
+		"unknown",
+		"ssh-ed25519",
+		"MD5:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff",
+		nil,
+	)
 	reporter.SetSourceCommit("0123456789abcdef")
 	reporter.Report("loading_images", "required.core")
 
@@ -22,6 +29,9 @@ func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 	if value.Error != "" {
 		t.Fatalf("unexpected error: %q", value.Error)
 	}
+	if value.SSHHostKey == nil || value.SSHHostKey.Type != "ssh-ed25519" {
+		t.Fatalf("SSH host identity was not retained: %#v", value.SSHHostKey)
+	}
 
 	reporter.Fail("release_install_failed")
 	value = readDocument(t, path)
@@ -32,7 +42,7 @@ func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 
 func TestReporterHeartbeatRefreshesStatus(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "status.json")
-	reporter := New(path, "run-2", "commit", nil)
+	reporter := New(path, "run-2", "commit", "", "", nil)
 	reporter.Report("compose_up", "starting")
 	first := readDocument(t, path).UpdatedAt
 

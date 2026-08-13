@@ -22,6 +22,7 @@
       gawk
       gzip
       gnutar
+      config.services.openssh.package
       config.virtualisation.docker.package
     ];
     script = builtins.readFile ./bootstrap.sh;

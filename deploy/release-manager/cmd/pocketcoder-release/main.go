@@ -95,7 +95,14 @@ func update(operation string, args []string) (returnErr error) {
 	if err != nil {
 		return err
 	}
-	reporter := progress.New(options.statusFile, options.statusRunID, envOr("PC_SOURCE_COMMIT", "unknown"), os.Stderr)
+	reporter := progress.New(
+		options.statusFile,
+		options.statusRunID,
+		envOr("PC_SOURCE_COMMIT", "unknown"),
+		envOr("POCKETCODER_SSH_HOST_KEY_TYPE", ""),
+		envOr("POCKETCODER_SSH_HOST_KEY_FINGERPRINT", ""),
+		os.Stderr,
+	)
 	reporter.Report("fetching_release", "resolving_release")
 	defer func() {
 		if returnErr != nil {
