@@ -6,9 +6,15 @@ head: []
 
 # Backend API Boundary
 
-**Status:** Proposed architecture
+**Status:** Approved direction; implementation pending
 **Date:** 2026-08-13
+**Revalidated against:** `b1ffdff8b` (Git SSH collections and hooks)
 **Scope:** PocketBase collection APIs, PocketBase hooks, and `/api/pocketcoder/*`
+
+There are no deployed users or user data to migrate. This cleanup does not
+preserve obsolete routes, collections, field shapes, or Dart compatibility
+wrappers. Schema changes are made directly in the canonical PocketBase schema
+snapshot, with no additive migration files and no dual-read/dual-write period.
 
 ## Context
 
@@ -18,12 +24,37 @@ deployment's durable control plane. The Flutter app uses the official PocketBase
 Dart SDK, extended by `pocketbase_drift`, for authentication, collection CRUD,
 realtime subscriptions, and offline caching.
 
-PocketCoder also registers approximately 37 routes below `/api/pocketcoder/*`.
+PocketCoder currently registers 37 routes below `/api/pocketcoder/*`.
 Some are true operations or streams. Others duplicate CRUD already provided by
 PocketBase collections. Maintaining both paths produces two contracts, two sets
 of Dart models, inconsistent authorization, and avoidable endpoint drift.
 
 This document defines the boundary before a generated API contract is added.
+
+## Current surface snapshot
+
+The post-Git-SSH, post-harness-normalization route surface is:
+
+| Area | Routes | Direction |
+|:---|---:|:---|
+| Agent session and stream | 7 | Keep as operations/stream |
+| Harness authentication | 6 | Keep as operations |
+| Schedules | 8 | Replace 7 CRUD wrappers; keep `run-now` |
+| Skills | 4 | Replace with collection CRUD |
+| Workspace files | 2 | Keep as non-collection reads |
+| Ollama | 2 | Keep discovery plus pull stream |
+| MCP request and OAuth intake | 2 | Keep as operations |
+| Release compatibility/status | 2 | Keep as deployment reads; rename cleanly |
+| Logs and observability | 2 | Keep as stream/proxy |
+| Obsolete inbound SSH-key projection | 1 | Remove |
+| Push dispatch | 1 | Keep as operation |
+| **Total** | **37** | |
+
+The Flutter `ApiEndpoints` class is not an accurate inventory today. It still
+contains routes the backend does not register (`permission`, `health`), omits
+several routes the backend does register, and is bypassed by raw path strings in
+some infrastructure clients. A checked route manifest/parity test is therefore
+an early cleanup requirement, not merely final polish.
 
 ## Decision
 
@@ -111,7 +142,7 @@ silently treat a best-effort copy as permanent success.
 
 The `skills` collection is already canonical. The existing record hooks already
 attempt to materialize skills into managed files in the user's shared workspace.
-The following compatibility routes should be removed:
+The following redundant wrapper routes should be removed:
 
 - `POST /api/pocketcoder/skills/list`
 - `POST /api/pocketcoder/skills/create`
@@ -122,7 +153,8 @@ Flutter should use generated `Skill` collection records through a `SkillDao` and
 repository. PocketBase rules continue to expose the user's own skills plus
 system skills and prevent ordinary users from modifying system records.
 
-Before removing the wrapper, the materializer must become a real reconciler:
+The wrapper routes and Flutter transport models are removed in the same change.
+The materializer must become a real reconciler:
 
 - write every desired managed skill file;
 - remove stale managed files after delete or rename;
@@ -161,13 +193,32 @@ The current `currentlyRunning` API field does not justify a wrapper: it is
 declared but never populated. If running state is needed, it should be modeled as
 real observable state rather than synthesized as a permanently false field.
 
-### SSH keys
+### Git SSH credentials and repository access
 
-SSH-key redesign and reconciliation are intentionally out of scope for this
-document because they are being implemented independently. That work should
-apply the same boundary: collection records for durable credential/configuration
-state, hooks or reconcilers for derived files, and explicit operations only for
-imperative key lifecycle behavior that cannot be represented safely as CRUD.
+The Git SSH work now follows the intended boundary without adding a custom HTTP
+route:
+
+- `git_ssh_credentials` stores user-owned credential metadata and materializer
+  status;
+- `git_repository_access` stores user-owned repository access intent;
+- owner-scoped PocketBase rules provide standard CRUD;
+- request/model hooks set ownership, protect server-managed fields, canonicalize
+  repositories, and validate credential relationships;
+- generated Dart models and `BaseDao` implementations provide Flutter access;
+- private key material belongs in the per-user Git SSH volume, not in a
+  PocketBase field.
+
+The landed queue/materializer pieces are still infrastructure, not a reason to
+add wrapper CRUD routes. Completing asynchronous reconciliation and surfacing
+its status should continue through those collections.
+
+This is separate from the obsolete `ssh_keys` collection and
+`GET /api/pocketcoder/ssh_keys`, which aggregate inbound public keys as an
+`authorized_keys` text file. No current production consumer is visible in the
+repository. With no deployed users or compatibility requirement, remove the
+route, its Flutter auth method/constants, its tests, and the `ssh_keys`
+collection rather than carrying an unused second SSH concept alongside outbound
+Git credentials.
 
 ## Operations that remain justified
 
@@ -195,12 +246,24 @@ Harness login identity, access, and user preference are separate concepts:
 - PocketBase users continue to own their workspace volumes independently of
   the selected harness account.
 
-The selection hook must verify that the account belongs to the recorded harness
-and is accessible to the recorded user. Listing, renaming, and selection should
-use protected collection access once the collection rules and Flutter
-repositories are added. Authentication start, poll, submit, cancel, disconnect,
-and status remain explicit operations because they control live helper
-containers and challenges.
+The selection hook already verifies that the account belongs to the recorded
+harness and is accessible to the recorded user. However, both collections still
+have closed (`null`) API rules, and Flutter has collection constants/models but
+no complete DAO/repository workflow. Before exposing direct access:
+
+- add rules that list personal accounts owned by the caller plus
+  deployment-visible accounts;
+- allow owners to create/rename/manage their accounts without permitting clients
+  to forge status, provider-key bindings, or ownership;
+- scope selections to the caller and protect the `user` field in request hooks;
+- preserve the `(user, harness)` uniqueness and cross-collection selection
+  validation;
+- add generated-model DAOs/repositories for listing accounts and upserting the
+  caller's selection.
+
+No new list/create/select wrapper endpoint is needed. Authentication start,
+poll, submit, cancel, disconnect, and status remain explicit operations because
+they control live helper containers and challenges.
 
 ### Workspace files
 
@@ -223,9 +286,27 @@ digest and deduplicates pending/active requests.
 
 ### Release, observability, logs, and push
 
-Keep release compatibility/capabilities, the observability proxy, Docker log
-SSE, and push dispatch. These read deployment state, proxy private services, or
-trigger delivery rather than performing collection CRUD.
+Keep release compatibility/status, the observability proxy, Docker log SSE, and
+push dispatch. These read deployment state, proxy private services, or trigger
+delivery rather than performing collection CRUD.
+
+Release route and field names should match the authoritative update JSON rather
+than introducing a second vocabulary:
+
+- rename `GET /api/pocketcoder/compatibility` to
+  `GET /api/pocketcoder/release/compatibility`;
+- rename `GET /api/pocketcoder/capabilities` to
+  `GET /api/pocketcoder/release/status`;
+- do not retain aliases for the old paths;
+- shape the public compatibility response around `schemaVersion`,
+  `dataVersion`, and the release manifest's nested
+  `compatibility.app.contractVersion`, `compatibility.server.apiVersion`, and
+  `compatibility.deployment.contractVersion` names;
+- shape the authenticated status response around the local update-state names
+  `current` (`current.json`) and `metadataStatus` (`metadata-status.json`).
+
+The compatibility resource performs current client/server contract negotiation;
+it does not preserve retired endpoint or schema shapes.
 
 ## Do not create command collections casually
 
@@ -281,9 +362,9 @@ strings must not appear in Cubits, adapters, widgets, or screens.
 
 ## Expected result
 
-The immediate skills and schedules conversion removes eleven redundant routes,
-reducing the current custom surface from approximately 37 routes to 26 before
-new harness-account operations. SSH work may reduce or reshape it further.
+Skills and schedules remove eleven redundant routes. Removing the obsolete
+inbound `ssh_keys` projection removes one more, reducing the custom surface from
+37 routes to 25. Harness-account and Git-SSH CRUD add no custom routes.
 
 The goal is not the smallest possible route count. The goal is one canonical
 interface per behavior:
@@ -295,14 +376,24 @@ interface per behavior:
 
 ## Implementation order
 
-1. Complete the independently owned SSH-key work without overlapping changes.
+1. Establish a checked route inventory from the current 37-route backend
+   surface. Remove nonexistent Flutter constants, add missing operations to one
+   typed infrastructure boundary, and add a parity test so backend/client drift
+   is visible during the cleanup.
 2. Convert skills to generated collection models, DAO/repository access, and a
-   deterministic filesystem reconciler; remove the four compatibility routes.
-3. Convert schedule state to collection CRUD and strengthen its rules/hooks;
-   retain only `run-now` as an operation.
-4. Classify harness-account listing as a protected collection view or operation,
-   then implement transactional create/select behavior.
-5. Re-inventory the remaining `/api/pocketcoder/*` surface.
-6. Decide whether the reduced operation surface warrants OpenAPI generation.
-7. Regardless of OpenAPI, enforce route parity and ban raw PocketCoder paths
-   outside the infrastructure transport layer.
+   deterministic filesystem reconciler; remove the four redundant wrapper routes
+   and their custom Dart request/response models.
+3. Convert schedule state to collection CRUD and strengthen its rules/request
+   hooks; retain only `run-now` as an operation and a small typed operation
+   client.
+4. Open `harness_accounts` and `harness_account_selections` through scoped
+   collection rules and request hooks, then add Flutter DAOs/repositories for
+   account listing, creation/rename, and selection. Do not add CRUD wrappers.
+5. Remove the obsolete inbound `ssh_keys` collection, route, Flutter auth
+   method/constants, and tests. Do not add a compatibility alias or migration.
+6. Re-inventory the remaining 25 `/api/pocketcoder/*` operations and
+   decide whether their typed JSON contracts justify OpenAPI generation. Streams
+   remain handwritten transports even if OpenAPI documents them.
+7. Enforce that raw `/api/pocketcoder/*` strings exist only in the chosen
+   infrastructure transport/manifest layer, never in repositories, Cubits,
+   adapters, widgets, or screens.
