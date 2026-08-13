@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_key_provider.dart';
 import 'package:pocketcoder_flutter/domain/pocketcoder_update/i_pocketcoder_update_service.dart';
 import 'package:pocketcoder_flutter/domain/pocketcoder_update/pocketcoder_update_exception.dart';
@@ -36,68 +37,77 @@ class SshPocketCoderUpdateService implements IPocketCoderUpdateService {
   final IServerReleaseStatusService _releaseStatusService;
 
   @override
-  Future<ServerReleaseStatusSnapshot> inspect() =>
-      _releaseStatusService.inspect();
+  Future<ServerReleaseStatusSnapshot> inspect() => tryMethod(
+        _releaseStatusService.inspect,
+        PocketCoderUpdateException.new,
+        'inspectPocketCoderUpdate',
+      );
 
   @override
   Future<PocketCoderUpdateResult> updatePocketCoder({
     required String instanceId,
-  }) async {
-    final privateKey = await _rootSshKeyProvider.readRootSshPrivateKey(
-      instanceId: instanceId,
-    );
-    if (privateKey == null || privateKey.isEmpty) {
-      throw PocketCoderUpdateException(
-        'No stored root credentials for instance $instanceId -- '
-        'this device may not be the one that deployed it.',
-      );
-    }
+  }) =>
+      tryMethod(
+        () async {
+          final privateKey = await _rootSshKeyProvider.readRootSshPrivateKey(
+            instanceId: instanceId,
+          );
+          if (privateKey == null || privateKey.isEmpty) {
+            throw const PocketCoderUpdateException(
+              'No stored root credentials are available on this device.',
+            );
+          }
 
-    final host = Uri.parse(_pocketBase.baseURL).host;
-    if (host.isEmpty) {
-      throw const PocketCoderUpdateException(
-        'No known server host to connect to.',
-      );
-    }
+          final host = Uri.parse(_pocketBase.baseURL).host;
+          if (host.isEmpty) {
+            throw const PocketCoderUpdateException(
+              'No known server host to connect to.',
+            );
+          }
 
-    late final List<SSHKeyPair> keyPairs;
-    try {
-      keyPairs = SSHKeyPair.fromPem(privateKey);
-    } catch (_) {
-      throw const PocketCoderUpdateException(
-        'Stored root SSH key could not be parsed.',
-      );
-    }
-    if (keyPairs.isEmpty) {
-      throw const PocketCoderUpdateException(
-        'Stored root SSH key could not be parsed.',
-      );
-    }
+          late final List<SSHKeyPair> keyPairs;
+          try {
+            keyPairs = SSHKeyPair.fromPem(privateKey);
+          } catch (_) {
+            throw const PocketCoderUpdateException(
+              'Stored root SSH key could not be parsed.',
+            );
+          }
+          if (keyPairs.isEmpty) {
+            throw const PocketCoderUpdateException(
+              'Stored root SSH key could not be parsed.',
+            );
+          }
 
-    final socket = await SSHSocket.connect(host, _sshPort);
-    final client = SSHClient(
-      socket,
-      username: 'root',
-      identities: keyPairs,
-    );
+          final socket = await SSHSocket.connect(host, _sshPort);
+          final client = SSHClient(
+            socket,
+            username: 'root',
+            identities: keyPairs,
+          );
 
-    try {
-      await client.authenticated;
-      final session = await client.execute(_updateCommand);
-      final stdoutBytes = BytesBuilder();
-      final stderrBytes = BytesBuilder();
-      final stdoutDone = session.stdout.listen(stdoutBytes.add).asFuture();
-      final stderrDone = session.stderr.listen(stderrBytes.add).asFuture();
-      await session.done;
-      await Future.wait([stdoutDone, stderrDone]);
+          try {
+            await client.authenticated;
+            final session = await client.execute(_updateCommand);
+            final stdoutBytes = BytesBuilder();
+            final stderrBytes = BytesBuilder();
+            final stdoutDone =
+                session.stdout.listen(stdoutBytes.add).asFuture();
+            final stderrDone =
+                session.stderr.listen(stderrBytes.add).asFuture();
+            await session.done;
+            await Future.wait([stdoutDone, stderrDone]);
 
-      return PocketCoderUpdateResult(
-        exitCode: session.exitCode ?? -1,
-        stdout: utf8.decode(stdoutBytes.toBytes(), allowMalformed: true),
-        stderr: utf8.decode(stderrBytes.toBytes(), allowMalformed: true),
+            return PocketCoderUpdateResult(
+              exitCode: session.exitCode ?? -1,
+              stdout: utf8.decode(stdoutBytes.toBytes(), allowMalformed: true),
+              stderr: utf8.decode(stderrBytes.toBytes(), allowMalformed: true),
+            );
+          } finally {
+            client.close();
+          }
+        },
+        PocketCoderUpdateException.new,
+        'updatePocketCoder',
       );
-    } finally {
-      client.close();
-    }
-  }
 }
