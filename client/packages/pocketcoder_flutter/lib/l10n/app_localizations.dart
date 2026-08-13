@@ -2977,8 +2977,8 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentPlanPoco.
   ///
   /// In en, this message translates to:
-  /// **'Here are the server sizes available from Linode.\n\nThe highlighted option is the minimum I recommend for the setup you chose. You can select a larger server.'**
-  String get deploymentPlanPoco;
+  /// **'The {minimumMemory} option is the minimum for remote models. I recommend {recommendedMemory} for builds, tests, and updates. You can choose either or go larger.'**
+  String deploymentPlanPoco(String minimumMemory, String recommendedMemory);
 
   /// No description provided for @deploymentRegionPoco.
   ///
@@ -3010,11 +3010,11 @@ abstract class AppLocalizations {
   /// **'NO SUITABLE SERVER SIZES ARE AVAILABLE FOR THIS SETUP.'**
   String get deploymentNoSuitablePlans;
 
-  /// No description provided for @deploymentRecommendedMinimum.
+  /// No description provided for @deploymentMinimum.
   ///
   /// In en, this message translates to:
-  /// **'RECOMMENDED MINIMUM'**
-  String get deploymentRecommendedMinimum;
+  /// **'MINIMUM'**
+  String get deploymentMinimum;
 
   /// No description provided for @deploymentRecommended.
   ///

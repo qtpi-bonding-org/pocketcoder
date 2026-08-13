@@ -1,8 +1,55 @@
 {
   "schemaVersion": 1,
-  "baseSystemMemoryMiB": 4096,
+  "memorySizing": {
+    "minimumDeploymentBytes": 2147483648,
+    "recommendedDeploymentBytes": 4294967296,
+    "measuredIdle": {
+      "sampleCount": 12,
+      "statistic": "maximum",
+      "platform": {
+        "os": "linux",
+        "architecture": "amd64"
+      },
+      "environment": {
+        "runtime": "Docker Desktop LinuxKit",
+        "runtimeMemoryLimitBytes": 8219119616
+      },
+      "coreServices": {
+        "pocketbase": 44889539,
+        "mcp-gateway": 108947046,
+        "docker-socket-proxy-mcp": 10506732,
+        "docker-socket-proxy-write": 7286555,
+        "sqlpage": 24819794
+      },
+      "harnesses": {
+        "goose": 42540728,
+        "claude-code": 10064232,
+        "codex": 8158970,
+        "opencode": 8081375
+      },
+      "optionalServices": {
+        "ollama": 167038157,
+        "ntfy": 33218888
+      },
+      "hostServiceEstimates": {
+        "caddy": 65245184
+      },
+      "transientProcessPeaks": {
+        "pocketcoder-release-metadata-check": 6692864
+      },
+      "dockerRuntime": {
+        "sampleCount": 1,
+        "activeContainerCount": 5,
+        "processes": {
+          "dockerd": 169189376,
+          "containerd": 60919808
+        },
+        "containerShimMaximumBytes": 18354176
+      }
+    }
+  },
   "localModelSizing": {
-    "gpuSystemMemoryMinimumMiB": 4096,
+    "gpuSystemMemoryMinimumBytes": 4294967296,
     "cpuModelMultiplier": 1,
     "cpuContextMultiplier": 1,
     "gpuVramModelMultiplier": 1,

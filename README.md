@@ -203,6 +203,56 @@ On Linux, `deploy.sh` configures native host Caddy instead of the `caddy`
 Compose profile. Do not enable both on the same host because they compete for
 ports 80 and 443.
 
+### Memory sizing measurements
+
+The signed deployment-sizing policy stores exact bytes in
+[`deploy/release/deployment-sizing.json`](deploy/release/deployment-sizing.json).
+These measurements were taken on 2026-08-13 with the pinned `linux/amd64`
+images under Docker Desktop LinuxKit. Container and Caddy values are the
+maximum Docker working set across 12 one-second idle samples. Cognee was
+deliberately omitted. The one-shot `sqlpage-data-init` container is also
+excluded because it does not remain resident.
+
+| Component | Exact bytes | MiB | Measurement role |
+|:---|---:|---:|:---|
+| PocketBase | 44,889,539 | 42.810 | Core container, idle maximum |
+| MCP Gateway | 108,947,046 | 103.900 | Core container, idle maximum |
+| Docker socket proxy (MCP) | 10,506,732 | 10.020 | Core container, idle maximum |
+| Docker socket proxy (write) | 7,286,555 | 6.949 | Core container, idle maximum |
+| SQLPage | 24,819,794 | 23.670 | Core container, idle maximum |
+| Goose | 42,540,728 | 40.570 | Harness container, idle maximum |
+| Claude Code | 10,064,232 | 9.598 | Harness container, idle maximum |
+| Codex | 8,158,970 | 7.781 | Harness container, idle maximum |
+| OpenCode | 8,081,375 | 7.707 | Harness container, idle maximum |
+| Ollama, no model loaded | 167,038,157 | 159.300 | Optional container, idle maximum |
+| ntfy | 33,218,888 | 31.680 | Optional container, idle maximum |
+| Caddy | 65,245,184 | 62.223 | Pinned Caddy container used as an estimate for native Caddy |
+| `pocketcoder-release check-metadata` | 6,692,864 | 6.383 | One-shot Linux peak RSS; exits after the check |
+
+The five permanent core containers total 196,449,666 bytes (187.349 MiB).
+The release manager is a systemd one-shot task, not a daemon, so its
+steady-state contribution is zero.
+
+Docker does not publish one fixed Docker Engine memory requirement. Its
+[resource guidance](https://docs.docker.com/engine/containers/resource_constraints/)
+instead recommends measuring the real application and provisioning adequate
+host memory. For local context, one snapshot of the benchmark LinuxKit VM with
+five workload containers measured:
+
+| Docker runtime process | Exact bytes | MiB |
+|:---|---:|---:|
+| `dockerd` | 169,189,376 | 161.352 |
+| `containerd` | 60,919,808 | 58.098 |
+| Combined engine processes | 230,109,184 | 219.449 |
+| Largest `containerd-shim` per container | 18,354,176 | 17.504 |
+
+Those runtime values are environment-specific measurements, not portable
+constants. They also exclude Linux itself, filesystem cache, active agent
+subprocesses, compilers, package installation, release downloads and database
+snapshots. The signed policy therefore declares 2 GiB as the minimum for a
+remote-model deployment and recommends 4 GiB for operational headroom. Local
+models add their model and context requirements separately.
+
 ## Flutter client
 
 The [`client/`](client/) workspace contains the reusable PocketCoder client and

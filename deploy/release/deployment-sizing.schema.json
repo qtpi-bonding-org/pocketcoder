@@ -6,30 +6,137 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion",
-    "baseSystemMemoryMiB",
+    "memorySizing",
     "localModelSizing"
   ],
   "properties": {
     "schemaVersion": {
       "const": 1
     },
-    "baseSystemMemoryMiB": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "System memory required before adding any local model or context allocation."
+    "memorySizing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimumDeploymentBytes",
+        "recommendedDeploymentBytes",
+        "measuredIdle"
+      ],
+      "properties": {
+        "minimumDeploymentBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Smallest supported deployment before adding local model and context bytes. Consumers compare exact bytes and round up only when selecting a provider plan."
+        },
+        "recommendedDeploymentBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Recommended deployment memory for operational headroom. It must be greater than or equal to minimumDeploymentBytes; consumers enforce this cross-field invariant."
+        },
+        "measuredIdle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sampleCount",
+            "statistic",
+            "platform",
+            "environment",
+            "coreServices",
+            "harnesses",
+            "optionalServices",
+            "hostServiceEstimates",
+            "transientProcessPeaks",
+            "dockerRuntime"
+          ],
+          "properties": {
+            "sampleCount": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "statistic": {
+              "const": "maximum"
+            },
+            "platform": {
+              "$ref": "#/$defs/platform"
+            },
+            "environment": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "runtime",
+                "runtimeMemoryLimitBytes"
+              ],
+              "properties": {
+                "runtime": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "runtimeMemoryLimitBytes": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "coreServices": {
+              "$ref": "#/$defs/idleMemoryMap"
+            },
+            "harnesses": {
+              "$ref": "#/$defs/idleMemoryMap"
+            },
+            "optionalServices": {
+              "$ref": "#/$defs/idleMemoryMap"
+            },
+            "hostServiceEstimates": {
+              "$ref": "#/$defs/idleMemoryMap",
+              "description": "Container-measured approximations for services that run natively on supported VPS deployments."
+            },
+            "transientProcessPeaks": {
+              "$ref": "#/$defs/idleMemoryMap",
+              "description": "Maximum resident bytes for one-shot processes. These values are not part of steady-state idle memory."
+            },
+            "dockerRuntime": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "sampleCount",
+                "activeContainerCount",
+                "processes",
+                "containerShimMaximumBytes"
+              ],
+              "properties": {
+                "sampleCount": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "activeContainerCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "processes": {
+                  "$ref": "#/$defs/idleMemoryMap"
+                },
+                "containerShimMaximumBytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Largest observed resident set for one containerd shim; consumers multiply it by the selected running-container count."
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "localModelSizing": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "gpuSystemMemoryMinimumMiB",
+        "gpuSystemMemoryMinimumBytes",
         "cpuModelMultiplier",
         "cpuContextMultiplier",
         "gpuVramModelMultiplier",
         "gpuVramContextMultiplier"
       ],
       "properties": {
-        "gpuSystemMemoryMinimumMiB": {
+        "gpuSystemMemoryMinimumBytes": {
           "type": "integer",
           "minimum": 1
         },
@@ -49,6 +156,17 @@
     }
   },
   "$defs": {
+    "idleMemoryMap": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
     "semanticVersion": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"

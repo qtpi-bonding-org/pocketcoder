@@ -676,13 +676,23 @@
   "deploymentWorkloadLocalReply": "A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.",
   "deploymentUseCloudModels": "USE CLOUD MODELS",
   "deploymentRunLocalModel": "RUN A LOCAL MODEL",
-  "deploymentPlanPoco": "Here are the server sizes available from Linode.\n\nThe highlighted option is the minimum I recommend for the setup you chose. You can select a larger server.",
+  "deploymentPlanPoco": "The {minimumMemory} option is the minimum for remote models. I recommend {recommendedMemory} for builds, tests, and updates. You can choose either or go larger.",
+  "@deploymentPlanPoco": {
+    "placeholders": {
+      "minimumMemory": {
+        "type": "String"
+      },
+      "recommendedMemory": {
+        "type": "String"
+      }
+    }
+  },
   "deploymentRegionPoco": "Choose where your server will live. A nearby region will usually respond faster, but you can use any available Linode region.",
   "deploymentHarnessPoco": "Now choose which coding agents to have ready on your server.\n\nThis installs their software. You’ll connect any required accounts after your server is ready.",
   "deploymentLinuxPoco": "Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.",
   "deploymentReviewPoco": "Your server is ready to be provisioned.\n\nPocketCoder will create it in your Linode account, then install the coding agents you selected. Linode will bill you directly for the server.",
   "deploymentNoSuitablePlans": "NO SUITABLE SERVER SIZES ARE AVAILABLE FOR THIS SETUP.",
-  "deploymentRecommendedMinimum": "RECOMMENDED MINIMUM",
+  "deploymentMinimum": "MINIMUM",
   "deploymentRecommended": "RECOMMENDED",
   "deploymentGpuBadge": "GPU",
   "deploymentDefaultAgent": "READY BY DEFAULT",
