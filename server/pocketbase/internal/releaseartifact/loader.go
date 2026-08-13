@@ -31,6 +31,7 @@ const (
 
 var (
 	releasePattern   = regexp.MustCompile(`^[0-9a-f]{40}$`)
+	digestPattern    = regexp.MustCompile(`^[0-9a-f]{64}$`)
 	harnessIDPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 	shaPattern       = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
@@ -57,32 +58,54 @@ type Loader struct {
 }
 
 type releasePointer struct {
-	SchemaVersion         int    `json:"schemaVersion"`
-	ManifestSchemaVersion int    `json:"manifestSchemaVersion"`
-	Release               string `json:"release"`
-	ManifestURL           string `json:"manifestUrl"`
-	ActivatedAt           string `json:"activatedAt"`
+	SchemaVersion             int      `json:"schemaVersion"`
+	ReleaseDigest             string   `json:"releaseDigest"`
+	SourceCommit              string   `json:"sourceCommit"`
+	ServerVersion             string   `json:"serverVersion"`
+	DataVersion               int      `json:"dataVersion"`
+	DeploymentContractVersion int      `json:"deploymentContractVersion"`
+	Channel                   string   `json:"channel"`
+	ChannelSequence           int      `json:"channelSequence"`
+	RevocationSequence        int      `json:"revocationSequence"`
+	SelectedImages            []string `json:"selectedImages"`
+	ManifestURL               string   `json:"manifestUrl"`
+	ActivatedAt               string   `json:"activatedAt"`
 }
 
 type artifact struct {
 	URL           string   `json:"url"`
 	SHA256        string   `json:"sha256"`
-	Bytes         int64    `json:"bytes"`
-	ExpandedBytes int64    `json:"expandedBytes"`
+	DownloadBytes int64    `json:"downloadBytes"`
+	UnpackedBytes int64    `json:"unpackedBytes"`
 	Images        []string `json:"images"`
 }
 
 type releaseManifest struct {
-	SchemaVersion int                 `json:"schemaVersion"`
-	Release       string              `json:"release"`
-	SourceURL     string              `json:"sourceUrl"`
-	NixOSImage    artifact            `json:"nixosImage"`
-	Deployment    artifact            `json:"deployment"`
-	Core          artifact            `json:"core"`
-	Harnesses     map[string]artifact `json:"harnesses"`
-	Optional      struct {
-		Ollama artifact `json:"ollama"`
-	} `json:"optional"`
+	SchemaVersion                 int                        `json:"schemaVersion"`
+	ServerVersion                 string                     `json:"serverVersion"`
+	SourceRepository              string                     `json:"sourceRepository"`
+	SourceCommit                  string                     `json:"sourceCommit"`
+	BuiltAt                       string                     `json:"builtAt"`
+	Platform                      json.RawMessage            `json:"platform"`
+	DataVersion                   int                        `json:"dataVersion"`
+	MinimumUpgradeFromDataVersion int                        `json:"minimumUpgradeFromDataVersion"`
+	Compatibility                 json.RawMessage            `json:"compatibility"`
+	Documents                     map[string]json.RawMessage `json:"documents"`
+	OSImages                      map[string]json.RawMessage `json:"osImages"`
+	ServerFiles                   artifact                   `json:"serverFiles"`
+	Images                        struct {
+		Required map[string]artifact `json:"required"`
+		Choices  map[string]struct {
+			SchemaVersion     int                 `json:"schemaVersion"`
+			ConsumerPolicy    string              `json:"consumerPolicy"`
+			CatalogDocument   string              `json:"catalogDocument"`
+			MinimumSelections int                 `json:"minimumSelections"`
+			MaximumSelections *int                `json:"maximumSelections"`
+			Options           map[string]artifact `json:"options"`
+		} `json:"choices"`
+		Optional map[string]artifact `json:"optional"`
+	} `json:"images"`
+	Extensions json.RawMessage `json:"extensions,omitempty"`
 }
 
 func New(config Config) *Loader {
@@ -168,14 +191,28 @@ func (l *Loader) EnsureHarnessImage(ctx context.Context, docker DockerLoader, ha
 }
 
 func (l *Loader) EnsureOptionalImage(ctx context.Context, docker DockerLoader, optionalID, image string) error {
-	if optionalID != "ollama" {
+	if !harnessIDPattern.MatchString(optionalID) {
 		return fmt.Errorf("unknown optional release artifact %q", optionalID)
 	}
 	if !releasePattern.MatchString(l.config.ExpectedRelease) {
 		return fmt.Errorf("invalid active release identity %q", l.config.ExpectedRelease)
 	}
-	if image != "pocketcoder-ollama:"+l.config.ExpectedRelease {
+	if !ManagedReleaseImage(image, l.config.ExpectedRelease) {
 		return fmt.Errorf("optional image %q does not belong to active release", image)
+	}
+	pointer, manifest, err := l.loadReleaseState()
+	if err != nil {
+		return err
+	}
+	if pointer.SourceCommit != l.config.ExpectedRelease || manifest.SourceCommit != l.config.ExpectedRelease {
+		return fmt.Errorf("release state does not match active release %s", l.config.ExpectedRelease)
+	}
+	selected, ok := manifest.Images.Optional[optionalID]
+	if !ok {
+		return fmt.Errorf("release %s has no optional artifact %s", pointer.ReleaseDigest, optionalID)
+	}
+	if err := validateHarnessArtifact(selected, image); err != nil {
+		return fmt.Errorf("invalid optional %s artifact: %w", optionalID, err)
 	}
 	flightKey := l.config.ExpectedRelease + ":optional:" + optionalID + ":" + image
 	return l.flights.Do(ctx, flightKey, func() error {
@@ -195,12 +232,19 @@ func (l *Loader) installHarness(ctx context.Context, docker DockerLoader, harnes
 	if err != nil {
 		return err
 	}
-	if pointer.Release != l.config.ExpectedRelease || manifest.Release != l.config.ExpectedRelease {
+	if pointer.SourceCommit != l.config.ExpectedRelease || manifest.SourceCommit != l.config.ExpectedRelease {
 		return fmt.Errorf("release state does not match active release %s", l.config.ExpectedRelease)
 	}
-	selected, ok := manifest.Harnesses[harnessID]
+	var selected artifact
+	ok := false
+	for _, group := range manifest.Images.Choices {
+		if group.CatalogDocument == "coding-harnesses" {
+			selected, ok = group.Options[harnessID]
+			break
+		}
+	}
 	if !ok {
-		return fmt.Errorf("release %s has no artifact for harness %s", manifest.Release, harnessID)
+		return fmt.Errorf("release %s has no artifact for harness %s", pointer.ReleaseDigest, harnessID)
 	}
 	if err := validateHarnessArtifact(selected, image); err != nil {
 		return fmt.Errorf("invalid %s harness artifact: %w", harnessID, err)
@@ -213,10 +257,13 @@ func (l *Loader) installOptional(ctx context.Context, docker DockerLoader, optio
 	if err != nil {
 		return err
 	}
-	if pointer.Release != l.config.ExpectedRelease || manifest.Release != l.config.ExpectedRelease {
+	if pointer.SourceCommit != l.config.ExpectedRelease || manifest.SourceCommit != l.config.ExpectedRelease {
 		return fmt.Errorf("release state does not match active release %s", l.config.ExpectedRelease)
 	}
-	selected := manifest.Optional.Ollama
+	selected, ok := manifest.Images.Optional[optionalID]
+	if !ok {
+		return fmt.Errorf("release %s has no optional artifact %s", pointer.ReleaseDigest, optionalID)
+	}
 	if err := validateHarnessArtifact(selected, image); err != nil {
 		return fmt.Errorf("invalid optional %s artifact: %w", optionalID, err)
 	}
@@ -232,7 +279,7 @@ func (l *Loader) installArtifact(ctx context.Context, docker DockerLoader, artif
 	if err != nil {
 		return fmt.Errorf("measure artifact disk space: %w", err)
 	}
-	required := uint64(selected.Bytes) + uint64(selected.ExpandedBytes) + uint64(l.config.ReserveBytes)
+	required := uint64(selected.DownloadBytes) + uint64(selected.UnpackedBytes) + uint64(l.config.ReserveBytes)
 	if available < required {
 		return fmt.Errorf("insufficient disk space for %s artifact", artifactLabel)
 	}
@@ -282,16 +329,16 @@ func (l *Loader) installArtifact(ctx context.Context, docker DockerLoader, artif
 	if resp.Request.URL.Scheme != "https" {
 		return fmt.Errorf("download %s artifact redirected outside HTTPS", artifactLabel)
 	}
-	if resp.ContentLength >= 0 && resp.ContentLength != selected.Bytes {
+	if resp.ContentLength >= 0 && resp.ContentLength != selected.DownloadBytes {
 		return fmt.Errorf("%s artifact size header mismatch", artifactLabel)
 	}
 
 	hasher := sha256.New()
-	written, err := io.Copy(io.MultiWriter(temp, hasher), io.LimitReader(resp.Body, selected.Bytes+1))
+	written, err := io.Copy(io.MultiWriter(temp, hasher), io.LimitReader(resp.Body, selected.DownloadBytes+1))
 	if err != nil {
 		return fmt.Errorf("download %s artifact body: %w", artifactLabel, err)
 	}
-	if written != selected.Bytes {
+	if written != selected.DownloadBytes {
 		return fmt.Errorf("%s artifact size mismatch", artifactLabel)
 	}
 	if actual := hex.EncodeToString(hasher.Sum(nil)); actual != selected.SHA256 {
@@ -321,23 +368,40 @@ func (l *Loader) loadReleaseState() (releasePointer, releaseManifest, error) {
 	if err := decodeStrictFile(l.config.PointerPath, &pointer); err != nil {
 		return pointer, releaseManifest{}, fmt.Errorf("read release pointer: %w", err)
 	}
-	if pointer.SchemaVersion != 1 || pointer.ManifestSchemaVersion != 2 || !releasePattern.MatchString(pointer.Release) {
+	if pointer.SchemaVersion != 1 || !digestPattern.MatchString(pointer.ReleaseDigest) ||
+		!releasePattern.MatchString(pointer.SourceCommit) {
 		return pointer, releaseManifest{}, errors.New("invalid release pointer")
 	}
 	manifestURL, err := url.Parse(pointer.ManifestURL)
 	if err != nil || manifestURL.Scheme != "https" || manifestURL.Host == "" {
 		return pointer, releaseManifest{}, errors.New("invalid immutable manifest URL")
 	}
-	if !strings.HasSuffix(manifestURL.Path, "/release-"+pointer.Release+".json") {
+	if !strings.HasSuffix(manifestURL.Path, "/v1/releases/"+pointer.ReleaseDigest+".json") {
 		return pointer, releaseManifest{}, errors.New("immutable manifest URL does not match release pointer")
 	}
-	manifestPath := filepath.Join(filepath.Dir(l.config.PointerPath), "manifests", pointer.Release+".json")
+	manifestPath := filepath.Join(filepath.Dir(l.config.PointerPath), "manifests", pointer.ReleaseDigest+".json")
 	var manifest releaseManifest
 	if err := decodeStrictFile(manifestPath, &manifest); err != nil {
 		return pointer, manifest, fmt.Errorf("read cached release manifest: %w", err)
 	}
-	if manifest.SchemaVersion != 2 || !releasePattern.MatchString(manifest.Release) || manifest.Release != pointer.Release {
+	manifestBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return pointer, manifest, fmt.Errorf("hash cached release manifest: %w", err)
+	}
+	digest := sha256.Sum256(manifestBytes)
+	if manifest.SchemaVersion != 1 || !releasePattern.MatchString(manifest.SourceCommit) ||
+		manifest.SourceCommit != pointer.SourceCommit ||
+		hex.EncodeToString(digest[:]) != pointer.ReleaseDigest {
 		return pointer, manifest, errors.New("cached manifest identity does not match release pointer")
+	}
+	revocationPath := filepath.Join(filepath.Dir(l.config.PointerPath), "resolved", "revocations.json")
+	if data, readErr := os.ReadFile(revocationPath); readErr == nil {
+		var revocations struct {
+			RevokedReleases map[string]json.RawMessage `json:"revokedReleases"`
+		}
+		if json.Unmarshal(data, &revocations) == nil && revocations.RevokedReleases[pointer.ReleaseDigest] != nil {
+			return pointer, manifest, errors.New("active release is revoked; lazy image downloads are blocked")
+		}
 	}
 	return pointer, manifest, nil
 }
@@ -350,7 +414,7 @@ func validateHarnessArtifact(candidate artifact, image string) error {
 	if !shaPattern.MatchString(candidate.SHA256) {
 		return errors.New("artifact checksum is invalid")
 	}
-	if candidate.Bytes <= 0 || candidate.ExpandedBytes < candidate.Bytes {
+	if candidate.DownloadBytes <= 0 || candidate.UnpackedBytes < candidate.DownloadBytes {
 		return errors.New("artifact sizes are invalid")
 	}
 	if len(candidate.Images) != 1 || candidate.Images[0] != image {

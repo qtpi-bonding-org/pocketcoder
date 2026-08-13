@@ -9,10 +9,14 @@
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
     sourceCommit = import ./release-commit.nix;
+    rootPublicKey =
+      if builtins.pathExists ./production-root-public-key.pem
+      then builtins.readFile ./production-root-public-key.pem
+      else "";
   in {
     nixosConfigurations.pocketcoder = nixpkgs.lib.nixosSystem {
       inherit system;
-      specialArgs = { inherit sourceCommit; };
+      specialArgs = { inherit sourceCommit rootPublicKey; };
       modules = [
         ./configuration.nix
         ./caddy.nix

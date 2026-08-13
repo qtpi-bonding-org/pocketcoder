@@ -66,8 +66,10 @@ deploy/scripts/build-deployment-artifact.sh "$release" "$deployment_archive"
 deployment_expanded=$(gzip -dc "$deployment_archive" | wc -c | tr -d ' ')
 deploy/scripts/write-artifact-metadata.sh \
   "$metadata_dir/deployment.json" \
-  "$base_url/pocketcoder-deployment-$release.tar.gz" \
+  auto \
   "$deployment_archive" "$deployment_expanded"
+deployment_sha=$(jq -r '.sha256' "$metadata_dir/deployment.json")
+mv "$deployment_archive" "$artifact_dir/$deployment_sha.tar.gz"
 
 deploy/scripts/resolve-release-compose.sh docker-compose.yml \
   "$compose_snapshot" "$release" "$catalog"
@@ -77,8 +79,10 @@ core_archive="$artifact_dir/pocketcoder-core-$release.tar.gz"
 core_expanded=$(deploy/scripts/build-docker-artifact.sh \
   "$core_archive" "${core_images[@]}")
 deploy/scripts/write-artifact-metadata.sh "$metadata_dir/core.json" \
-  "$base_url/pocketcoder-core-$release.tar.gz" "$core_archive" \
+  auto "$core_archive" \
   "$core_expanded" "${core_images[@]}"
+core_sha=$(jq -r '.sha256' "$metadata_dir/core.json")
+mv "$core_archive" "$artifact_dir/$core_sha.tar.gz"
 
 while IFS=$'\t' read -r id repository; do
   image="$repository:$release"
@@ -86,8 +90,10 @@ while IFS=$'\t' read -r id repository; do
   expanded=$(deploy/scripts/build-docker-artifact.sh "$archive" "$image")
   deploy/scripts/write-artifact-metadata.sh \
     "$metadata_dir/harness-$id.json" \
-    "$base_url/pocketcoder-harness-$id-$release.tar.gz" \
+    auto \
     "$archive" "$expanded" "$image"
+  artifact_sha=$(jq -r '.sha256' "$metadata_dir/harness-$id.json")
+  mv "$archive" "$artifact_dir/$artifact_sha.tar.gz"
   jq -n --arg id "$id" --slurpfile artifact "$metadata_dir/harness-$id.json" \
     '{id:$id,artifact:$artifact[0]}' > "$metadata_dir/harness-entry-$id.json"
 done < <(jq -r '.harnesses[] | [.id, .imageRepository] | @tsv' "$catalog")
@@ -97,8 +103,10 @@ ollama_archive="$artifact_dir/pocketcoder-ollama-$release.tar.gz"
 ollama_expanded=$(deploy/scripts/build-docker-artifact.sh \
   "$ollama_archive" "$ollama_image")
 deploy/scripts/write-artifact-metadata.sh "$metadata_dir/ollama.json" \
-  "$base_url/pocketcoder-ollama-$release.tar.gz" "$ollama_archive" \
+  auto "$ollama_archive" \
   "$ollama_expanded" "$ollama_image"
+ollama_sha=$(jq -r '.sha256' "$metadata_dir/ollama.json")
+mv "$ollama_archive" "$artifact_dir/$ollama_sha.tar.gz"
 
 jq -n 'reduce inputs as $entry ({}; .[$entry.id] = $entry.artifact)' \
   "$metadata_dir"/harness-entry-*.json > "$metadata_dir/harnesses.json"
@@ -107,5 +115,7 @@ jq -n --arg release "$release" \
   --slurpfile core "$metadata_dir/core.json" \
   --slurpfile harnesses "$metadata_dir/harnesses.json" \
   --slurpfile ollama "$metadata_dir/ollama.json" \
-  '{release:$release,deployment:$deployment[0],core:$core[0],
-    harnesses:$harnesses[0],optional:{ollama:$ollama[0]}}' > "$output"
+  '{schemaVersion:1,sourceCommit:$release,serverFiles:$deployment[0],
+    images:{required:{server:$core[0]},
+      choices:{"coding-harnesses":$harnesses[0]},
+      optional:{ollama:$ollama[0]}}}' > "$output"

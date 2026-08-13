@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "channel": "stable",
+  "sequence": 12,
+  "promotedAt": "2026-08-12T20:00:00Z",
+  "manifest": {
+    "url": "https://images.pocketcoder.org/v1/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.json",
+    "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "downloadBytes": 32768,
+    "signature": {
+      "algorithm": "ed25519",
+      "keyId": "operations-2026-01",
+      "url": "https://images.pocketcoder.org/v1/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.json.sig"
+    }
+  },
+  "signature": {
+    "algorithm": "ed25519",
+    "keyId": "operations-2026-01",
+    "url": "https://images.pocketcoder.org/v1/channels/stable/12.sig"
+  }
+}

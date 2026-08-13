@@ -49,4 +49,45 @@ void main() {
       expect(cubit.state.error, isNotNull);
     });
   });
+
+  group('AuthCubit.login', () {
+    test('checks compatibility before sending credentials', () async {
+      when(() => repo.updateBaseUrl('https://server.example'))
+          .thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
+      when(() => repo.login('owner@example.com', 'secret'))
+          .thenAnswer((_) async => true);
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://server.example',
+        'owner@example.com',
+        'secret',
+      );
+
+      verifyInOrder([
+        () => repo.updateBaseUrl('https://server.example'),
+        () => repo.verifyServerCompatibility(),
+        () => repo.login('owner@example.com', 'secret'),
+      ]);
+      expect(cubit.state.status, UiFlowStatus.success);
+    });
+
+    test('does not send credentials to an incompatible server', () async {
+      when(() => repo.updateBaseUrl('https://server.example'))
+          .thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility())
+          .thenThrow(Exception('incompatible server'));
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://server.example',
+        'owner@example.com',
+        'secret',
+      );
+
+      verifyNever(() => repo.login(any(), any()));
+      expect(cubit.state.status, UiFlowStatus.failure);
+    });
+  });
 }

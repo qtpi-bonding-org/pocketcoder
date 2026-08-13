@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pocketcoder.org/schemas/app-distributions-v1.schema.json",
+  "$comment": "This schema is authoritative for structure. Publication and stable-release promotion must also run PocketCoder's semantic and cross-document compatibility validators.",
+  "title": "PocketCoder app distributions",
+  "description": "Mutable public state describing the newest PocketCoder Pro and PocketCoder FOSS builds submitted to or available from each official distributor.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "updatedAt",
+    "apps"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "updatedAt": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "apps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pocketcoder-pro",
+        "pocketcoder-foss"
+      ],
+      "properties": {
+        "pocketcoder-pro": {
+          "$ref": "#/$defs/proApp"
+        },
+        "pocketcoder-foss": {
+          "$ref": "#/$defs/fossApp"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
+    },
+    "gitCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "positiveVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "httpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^/]+/"
+    },
+    "serverApiCompatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimumVersion",
+        "maximumVersion"
+      ],
+      "properties": {
+        "minimumVersion": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "maximumVersion": {
+          "$ref": "#/$defs/positiveVersion"
+        }
+      },
+      "description": "Inclusive server API range implemented by this exact distributed app build. Publication semantically requires maximumVersion to be at least minimumVersion."
+    },
+    "availableBuild": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "version",
+        "buildNumber",
+        "appContractVersion",
+        "serverApiCompatibility",
+        "coreSourceCommit",
+        "url"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "review",
+            "available",
+            "phased",
+            "retired"
+          ]
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion",
+          "description": "User-facing version of this Pro or FOSS build. The two products version independently."
+        },
+        "buildNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Distributor-specific monotonically increasing build identifier."
+        },
+        "appContractVersion": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "serverApiCompatibility": {
+          "$ref": "#/$defs/serverApiCompatibility"
+        },
+        "coreSourceCommit": {
+          "$ref": "#/$defs/gitCommit",
+          "description": "Exact public PocketCoder repository commit from which Flutter Core in this binary was built."
+        },
+        "url": {
+          "$ref": "#/$defs/httpsUrl"
+        }
+      }
+    },
+    "unavailableDistribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "const": "unavailable"
+        }
+      }
+    },
+    "distribution": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/unavailableDistribution"
+        },
+        {
+          "$ref": "#/$defs/availableBuild"
+        }
+      ]
+    },
+    "proApp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "distributions"
+      ],
+      "properties": {
+        "distributions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "apple-app-store",
+            "google-play"
+          ],
+          "properties": {
+            "apple-app-store": {
+              "$ref": "#/$defs/distribution"
+            },
+            "google-play": {
+              "$ref": "#/$defs/distribution"
+            }
+          }
+        }
+      }
+    },
+    "fossApp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "distributions"
+      ],
+      "properties": {
+        "distributions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fdroid"
+          ],
+          "properties": {
+            "fdroid": {
+              "$ref": "#/$defs/distribution"
+            }
+          }
+        }
+      }
+    }
+  }
+}

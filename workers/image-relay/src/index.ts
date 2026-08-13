@@ -26,12 +26,84 @@ export default {
 		if (url.pathname === '/release-manifest' && request.method === 'GET') {
 			return handleReleaseManifest(env);
 		}
+		if (url.pathname === '/v1/health' && request.method === 'GET') {
+			return json({ status: 'ok', service: 'pocketcoder-image-relay', apiVersion: 1 });
+		}
+		if (request.method === 'GET') {
+			const objectPath = resolveV1ObjectPath(url.pathname);
+			if (objectPath) return handleV1Object(env, objectPath);
+		}
 		if (url.pathname === '/health' && request.method === 'GET') {
 			return json({ status: 'ok', service: 'pocketcoder-image-relay' });
 		}
 		return json({ error: 'Not found' }, 404);
 	},
 };
+
+type ReleaseObject = {
+	key: string;
+	contentType: string;
+	immutable: boolean;
+};
+
+function resolveV1ObjectPath(pathname: string): ReleaseObject | null {
+	const mutable = [
+		/^\/v1\/channels\/(stable|beta|nightly)\.json$/,
+		/^\/v1\/revocations\/releases\.json$/,
+		/^\/v1\/delegations\/root\.json(?:\.sig)?$/,
+	];
+	const immutable = [
+		/^\/v1\/channels\/(stable|beta|nightly)\/[1-9][0-9]*\.sig$/,
+		/^\/v1\/releases\/[0-9a-f]{64}\.json(?:\.sig)?$/,
+		/^\/v1\/revocations\/releases\/[1-9][0-9]*\.sig$/,
+		/^\/v1\/documents\/[0-9a-f]{64}\.(?:json|txt|sh|go)$/,
+		/^\/v1\/artifacts\/[0-9a-f]{64}\.(?:tar\.gz|img\.gz)$/,
+	];
+
+	if (mutable.some((pattern) => pattern.test(pathname))) {
+		return {
+			key: pathname.slice('/v1/'.length),
+			contentType: 'application/json',
+			immutable: false,
+		};
+	}
+	if (immutable.some((pattern) => pattern.test(pathname))) {
+		return {
+			key: pathname.slice('/v1/'.length),
+			contentType: contentTypeFor(pathname),
+			immutable: true,
+		};
+	}
+	return null;
+}
+
+function contentTypeFor(pathname: string): string {
+	if (pathname.endsWith('.sh')) return 'text/x-shellscript; charset=utf-8';
+	if (pathname.endsWith('.go')) return 'text/x-go; charset=utf-8';
+	if (pathname.endsWith('.txt')) return 'text/plain; charset=utf-8';
+	if (pathname.endsWith('.tar.gz') || pathname.endsWith('.img.gz')) {
+		return 'application/gzip';
+	}
+	return 'application/json';
+}
+
+async function handleV1Object(env: Env, path: ReleaseObject): Promise<Response> {
+	const object = await env.IMAGES.get(path.key);
+	if (!object) return json({ error: 'Release object unavailable' }, 404);
+
+	return new Response(object.body, {
+		status: 200,
+		headers: {
+			...CORS_HEADERS,
+			'Content-Type': path.contentType,
+			'Content-Length': object.size.toString(),
+			'Cache-Control': path.immutable
+				? 'public, max-age=31536000, immutable'
+				: 'public, max-age=300, must-revalidate',
+			ETag: object.httpEtag,
+		},
+	});
+}
 
 async function handleImageManifest(env: Env): Promise<Response> {
 	const object = await env.IMAGES.get('image-manifest.json');

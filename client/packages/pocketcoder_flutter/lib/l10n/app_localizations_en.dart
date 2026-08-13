@@ -1327,13 +1327,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentStatusConstructing => 'CONSTRUCTING INSTANCE';
 
   @override
-  String get deploymentStatusPreparingHost => 'PREPARING HOST';
+  String get deploymentStatusPreparingOperatingSystem => 'PREPARING OS';
 
   @override
   String get deploymentStatusSecuring => 'SECURING CONNECTION';
 
   @override
-  String get deploymentStatusInstalling => 'INSTALLING HOST';
+  String get deploymentStatusConfiguringOperatingSystem => 'CONFIGURING OS';
 
   @override
   String get deploymentStatusFetching => 'FETCHING RELEASE';
@@ -1365,16 +1365,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.';
 
   @override
-  String get deploymentDescriptionPreparingHost =>
-      'INSTALLING THE CONTAINER HOST.';
+  String get deploymentDescriptionPreparingOperatingSystem =>
+      'PREPARING THE OPERATING SYSTEM.';
 
   @override
   String get deploymentDescriptionSecuring =>
       'WAITING FOR THE NATIVE REVERSE PROXY.';
 
   @override
-  String get deploymentDescriptionInstalling =>
-      'INSTALLING THE APPLICATION HOST.';
+  String get deploymentDescriptionConfiguringOperatingSystem =>
+      'PREPARING NATIVE SERVICES AND DEPENDENCIES.';
 
   @override
   String get deploymentDescriptionFetching => 'FETCHING THE IMMUTABLE RELEASE.';
@@ -2494,6 +2494,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get harnessAuthChallengeTargetCopied => 'CHALLENGE TARGET COPIED';
+
+  @override
+  String get serverUpdateChecking => '\$ CHECKING VERIFIED RELEASE STATUS...';
+
+  @override
+  String get serverUpdateCheckAgain => 'CHECK AGAIN';
+
+  @override
+  String get actionDismiss => 'DISMISS';
+
+  @override
+  String get serverUpdateWorking => 'UPGRADING...';
+
+  @override
+  String get serverUpdateUpgrade => 'UPGRADE POCKETCODER';
+
+  @override
+  String get serverUpdateCommand => 'pocketcoder-release update';
+
+  @override
+  String get serverUpdateOutput => 'OUTPUT';
+
+  @override
+  String get serverUpdateReviewDataChange => 'REVIEW DATA CHANGE';
+
+  @override
+  String get serverUpdateConfirmUpgrade => 'CONFIRM UPGRADE';
+
+  @override
+  String get serverUpdateCurrent => 'CURRENT';
+
+  @override
+  String get serverUpdateAvailable => 'AVAILABLE';
+
+  @override
+  String get serverUpdateDownload => 'DOWNLOAD';
+
+  @override
+  String get serverUpdateRequiredDisk => 'REQUIRED DISK';
+
+  @override
+  String get serverUpdateCurrentStatus => '\$ POCKETCODER IS CURRENT';
+
+  @override
+  String get serverUpdateAvailableStatus => '\$ UPDATE AVAILABLE';
+
+  @override
+  String get serverUpdateCriticalStatus => '\$ CRITICAL RELEASE WARNING';
+
+  @override
+  String get serverUpdateUnknownStatus => '\$ RELEASE STATUS UNKNOWN';
+
+  @override
+  String get serverUpdateRollbackWarning =>
+      'AFTER SUCCESS, NORMAL ROLLBACK IS UNAVAILABLE. RESTORING THE PRE-UPGRADE SNAPSHOT WOULD DISCARD DATA CREATED AFTERWARD.';
+
+  @override
+  String serverUpdateDataBoundary(int currentVersion, int availableVersion) {
+    return 'DATA VERSION $currentVersion → $availableVersion';
+  }
 
   @override
   String errorsOccurred(int count) {

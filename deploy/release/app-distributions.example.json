@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-12T20:00:00Z",
+  "apps": {
+    "pocketcoder-pro": {
+      "distributions": {
+        "apple-app-store": {
+          "status": "available",
+          "version": "1.0.0",
+          "buildNumber": 12,
+          "appContractVersion": 1,
+          "serverApiCompatibility": {
+            "minimumVersion": 1,
+            "maximumVersion": 1
+          },
+          "coreSourceCommit": "0123456789abcdef0123456789abcdef01234567",
+          "url": "https://apps.apple.com/app/pocketcoder/id0000000000"
+        },
+        "google-play": {
+          "status": "review",
+          "version": "1.0.0",
+          "buildNumber": 14,
+          "appContractVersion": 1,
+          "serverApiCompatibility": {
+            "minimumVersion": 1,
+            "maximumVersion": 1
+          },
+          "coreSourceCommit": "0123456789abcdef0123456789abcdef01234567",
+          "url": "https://play.google.com/store/apps/details?id=org.pocketcoder.pro"
+        }
+      }
+    },
+    "pocketcoder-foss": {
+      "distributions": {
+        "fdroid": {
+          "status": "available",
+          "version": "1.0.1",
+          "buildNumber": 11,
+          "appContractVersion": 1,
+          "serverApiCompatibility": {
+            "minimumVersion": 1,
+            "maximumVersion": 1
+          },
+          "coreSourceCommit": "89abcdef0123456789abcdef0123456789abcdef",
+          "url": "https://f-droid.org/packages/org.pocketcoder.app/"
+        }
+      }
+    }
+  }
+}

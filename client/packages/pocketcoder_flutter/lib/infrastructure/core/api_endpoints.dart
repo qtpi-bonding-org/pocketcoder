@@ -46,6 +46,14 @@ class ApiEndpoints {
   /// Returns system health status.
   static const String health = '/api/pocketcoder/health';
 
+  /// GET /api/pocketcoder/compatibility
+  /// Returns only public protocol versions; no release identity or host data.
+  static const String compatibility = '/api/pocketcoder/compatibility';
+
+  /// GET /api/pocketcoder/capabilities
+  /// Returns authenticated release identity and cached update status.
+  static const String capabilities = '/api/pocketcoder/capabilities';
+
   // ===========================================================================
   // OBSERVABILITY ENDPOINTS
   // ===========================================================================
@@ -129,7 +137,8 @@ class ApiEndpoints {
 
   /// POST /api/pocketcoder/harness_auth/status
   /// Returns current harness auth binding state and active attempt/challenge.
-  static const String harnessAuthStatus = '/api/pocketcoder/harness_auth/status';
+  static const String harnessAuthStatus =
+      '/api/pocketcoder/harness_auth/status';
 
   /// POST /api/pocketcoder/harness_auth/start
   /// Starts a harness auth flow for a specific credential mode.
@@ -141,15 +150,18 @@ class ApiEndpoints {
 
   /// POST /api/pocketcoder/harness_auth/submit
   /// Submits a device/browser code for the active attempt.
-  static const String harnessAuthSubmit = '/api/pocketcoder/harness_auth/submit';
+  static const String harnessAuthSubmit =
+      '/api/pocketcoder/harness_auth/submit';
 
   /// POST /api/pocketcoder/harness_auth/cancel
   /// Cancels the active auth attempt container.
-  static const String harnessAuthCancel = '/api/pocketcoder/harness_auth/cancel';
+  static const String harnessAuthCancel =
+      '/api/pocketcoder/harness_auth/cancel';
 
   /// POST /api/pocketcoder/harness_auth/disconnect
   /// Clears the active auth binding and stops any auth helper state.
-  static const String harnessAuthDisconnect = '/api/pocketcoder/harness_auth/disconnect';
+  static const String harnessAuthDisconnect =
+      '/api/pocketcoder/harness_auth/disconnect';
 
   // ===========================================================================
   // HELPER METHODS
@@ -160,6 +172,8 @@ class ApiEndpoints {
     permission,
     sshKeys,
     health,
+    compatibility,
+    capabilities,
     observability,
     skillsList,
     skillsCreate,

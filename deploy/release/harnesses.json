@@ -5,22 +5,26 @@
     {
       "id": "goose",
       "composeService": "goose",
-      "imageRepository": "pocketcoder-harness-goose"
+      "imageRepository": "pocketcoder-harness-goose",
+      "upstreamVersion": "1.43.0"
     },
     {
       "id": "claude-code",
       "composeService": "claude-code-harness-image",
-      "imageRepository": "pocketcoder-harness-claude-code"
+      "imageRepository": "pocketcoder-harness-claude-code",
+      "upstreamVersion": "2.1.221"
     },
     {
       "id": "codex",
       "composeService": "codex-harness-image",
-      "imageRepository": "pocketcoder-harness-codex"
+      "imageRepository": "pocketcoder-harness-codex",
+      "upstreamVersion": "0.146.0"
     },
     {
       "id": "opencode",
       "composeService": "opencode-harness-image",
-      "imageRepository": "pocketcoder-harness-opencode"
+      "imageRepository": "pocketcoder-harness-opencode",
+      "upstreamVersion": "1.18.11"
     }
   ]
 }

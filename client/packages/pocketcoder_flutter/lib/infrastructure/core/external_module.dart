@@ -19,7 +19,8 @@ abstract class ExternalModule {
     const storage = FlutterSecureStorage();
     final savedUrl = await storage.read(key: 'pb_server_url');
     final baseUrl = savedUrl ?? 'http://127.0.0.1:8090';
-    logDebug('PocketBaseInit: Using URL: $baseUrl${savedUrl != null ? ' (restored)' : ' (default)'}');
+    logDebug(
+        'PocketBaseInit: Using URL: $baseUrl${savedUrl != null ? ' (restored)' : ' (default)'}');
 
     // Load Schema (for offline capabilities)
     String? schemaJson;
@@ -30,8 +31,9 @@ abstract class ExternalModule {
           .loadString('packages/pocketcoder_flutter/assets/pb_schema.json');
       logDebug('PocketBaseInit: Schema loaded (${schemaJson.length} chars)');
     } catch (e) {
-          logError(
-          'PocketBaseInit: ⚠️ Warning - failed to load schema asset (as package)', e);
+      logError(
+          'PocketBaseInit: ⚠️ Warning - failed to load schema asset (as package)',
+          e);
       // Fallback to direct path for local runs
       try {
         schemaJson = await rootBundle.loadString('assets/pb_schema.json');
@@ -112,6 +114,17 @@ abstract class ExternalModule {
   @Named('oauthRelayBaseUrl')
   @lazySingleton
   String get oauthRelayBaseUrl => 'https://oauth.relay.pocketcoder.org';
+
+  @Named('releaseBaseUrl')
+  @lazySingleton
+  String get releaseBaseUrl => 'https://images.pocketcoder.org/v1';
+
+  /// DER-encoded Ed25519 root public key, base64. The production value is
+  /// supplied at release build time; an empty value fails closed.
+  @Named('releaseRootPublicKey')
+  @lazySingleton
+  String get releaseRootPublicKey =>
+      const String.fromEnvironment('POCKETCODER_RELEASE_ROOT_PUBLIC_KEY');
 
   /// Local-only storage for the on-device error inbox. Never synced or
   /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.

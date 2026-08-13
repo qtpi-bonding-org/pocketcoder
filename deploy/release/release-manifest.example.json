@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "serverVersion": "1.0.0",
+  "sourceRepository": "qtpi-bonding-org/pocketcoder",
+  "sourceCommit": "0123456789abcdef0123456789abcdef01234567",
+  "builtAt": "2026-08-12T19:30:00Z",
+  "platform": {
+    "os": "linux",
+    "architecture": "amd64"
+  },
+  "dataVersion": 1,
+  "minimumUpgradeFromDataVersion": 1,
+  "compatibility": {
+    "app": {
+      "contractVersion": 1,
+      "officialMinimumVersions": {
+        "pocketcoder-pro": "1.0.0",
+        "pocketcoder-foss": "1.0.0"
+      }
+    },
+    "server": {
+      "apiVersion": 1
+    },
+    "workers": {
+      "image-relay": 1,
+      "push-relay": 1,
+      "oauth-relay": 1
+    },
+    "provisioning": {
+      "contractVersion": 1
+    },
+    "deployment": {
+      "contractVersion": 1,
+      "supportedSourceContractVersions": {
+        "minimum": 1,
+        "maximum": 1
+      }
+    }
+  },
+  "documents": {
+    "deployment-sizing": {
+      "schemaVersion": 1,
+      "mediaType": "application/json",
+      "sourcePath": "deploy/release/deployment-sizing.json",
+      "url": "https://images.pocketcoder.org/documents/9999999999999999999999999999999999999999999999999999999999999999.json",
+      "sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+      "downloadBytes": 512
+    },
+    "coding-harnesses": {
+      "schemaVersion": 1,
+      "mediaType": "application/json",
+      "sourcePath": "deploy/release/harnesses.json",
+      "url": "https://images.pocketcoder.org/documents/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "downloadBytes": 2048
+    },
+    "standard-linux-bootstrap": {
+      "mediaType": "text/x-shellscript",
+      "sourcePath": "client/packages/pocketcoder_flutter/assets/deployment/standard_linux_bootstrap.sh",
+      "url": "https://images.pocketcoder.org/documents/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.sh",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "downloadBytes": 16000
+    },
+    "standard-linux-caddy": {
+      "mediaType": "text/plain",
+      "sourcePath": "client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template",
+      "url": "https://images.pocketcoder.org/documents/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.txt",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "downloadBytes": 2000
+    }
+  },
+  "osImages": {
+    "nixos": {
+      "delivery": {
+        "kind": "artifact",
+        "artifact": {
+          "url": "https://images.pocketcoder.org/v1/artifacts/1111111111111111111111111111111111111111111111111111111111111111.img.gz",
+          "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "downloadBytes": 800000000,
+          "unpackedBytes": 4000000000
+        }
+      },
+      "bootstrap": {
+        "kind": "image-baked"
+      }
+    },
+    "debian": {
+      "delivery": {
+        "kind": "provider",
+        "providerImages": {
+          "linode": "linode/debian12"
+        }
+      },
+      "bootstrap": {
+        "kind": "generated-config",
+        "scriptDocument": "standard-linux-bootstrap",
+        "supportingDocuments": [
+          "standard-linux-caddy"
+        ]
+      }
+    },
+    "debian-testing": {
+      "delivery": {
+        "kind": "provider",
+        "providerImages": {
+          "linode": "linode/debian13"
+        }
+      },
+      "bootstrap": {
+        "kind": "generated-config",
+        "scriptDocument": "standard-linux-bootstrap",
+        "supportingDocuments": [
+          "standard-linux-caddy"
+        ]
+      }
+    }
+  },
+  "serverFiles": {
+    "url": "https://images.pocketcoder.org/v1/artifacts/2222222222222222222222222222222222222222222222222222222222222222.tar.gz",
+    "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "downloadBytes": 1000000,
+    "unpackedBytes": 5000000
+  },
+  "images": {
+    "required": {
+      "server": {
+        "url": "https://images.pocketcoder.org/v1/artifacts/3333333333333333333333333333333333333333333333333333333333333333.tar.gz",
+        "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "downloadBytes": 500000000,
+        "unpackedBytes": 1500000000,
+        "images": [
+          "pocketcoder-pocketbase:0123456789abcdef0123456789abcdef01234567",
+          "pocketcoder-mcp-gateway:0123456789abcdef0123456789abcdef01234567"
+        ]
+      }
+    },
+    "choices": {
+      "coding-harnesses": {
+        "schemaVersion": 1,
+        "consumerPolicy": "required",
+        "catalogDocument": "coding-harnesses",
+        "minimumSelections": 1,
+        "maximumSelections": 4,
+        "options": {
+          "goose": {
+            "url": "https://images.pocketcoder.org/v1/artifacts/4444444444444444444444444444444444444444444444444444444444444444.tar.gz",
+            "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+            "downloadBytes": 150000000,
+            "unpackedBytes": 350000000,
+            "images": [
+              "pocketcoder-harness-goose:0123456789abcdef0123456789abcdef01234567"
+            ]
+          },
+          "claude-code": {
+            "url": "https://images.pocketcoder.org/v1/artifacts/5555555555555555555555555555555555555555555555555555555555555555.tar.gz",
+            "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+            "downloadBytes": 400000000,
+            "unpackedBytes": 900000000,
+            "images": [
+              "pocketcoder-harness-claude-code:0123456789abcdef0123456789abcdef01234567"
+            ]
+          },
+          "codex": {
+            "url": "https://images.pocketcoder.org/v1/artifacts/6666666666666666666666666666666666666666666666666666666666666666.tar.gz",
+            "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+            "downloadBytes": 450000000,
+            "unpackedBytes": 1000000000,
+            "images": [
+              "pocketcoder-harness-codex:0123456789abcdef0123456789abcdef01234567"
+            ]
+          },
+          "opencode": {
+            "url": "https://images.pocketcoder.org/v1/artifacts/7777777777777777777777777777777777777777777777777777777777777777.tar.gz",
+            "sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+            "downloadBytes": 300000000,
+            "unpackedBytes": 650000000,
+            "images": [
+              "pocketcoder-harness-opencode:0123456789abcdef0123456789abcdef01234567"
+            ]
+          }
+        }
+      },
+      "future-addons": {
+        "schemaVersion": 1,
+        "consumerPolicy": "ignorable",
+        "minimumSelections": 0,
+        "maximumSelections": null,
+        "options": {
+          "future-addon": {
+            "url": "https://images.pocketcoder.org/v1/artifacts/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.tar.gz",
+            "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "downloadBytes": 1000,
+            "unpackedBytes": 2000,
+            "images": [
+              "pocketcoder-future-addon:0123456789abcdef0123456789abcdef01234567"
+            ]
+          }
+        }
+      }
+    },
+    "optional": {}
+  }
+}

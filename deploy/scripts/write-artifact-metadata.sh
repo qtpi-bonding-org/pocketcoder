@@ -26,12 +26,22 @@ fi
 bytes=$(wc -c < "$archive" | tr -d ' ')
 images=$(for image in "$@"; do printf '%s\n' "$image"; done | jq -Rsc 'split("\n")[:-1]')
 
+if test "$url" = auto; then
+  case "$archive" in
+    *.tar.gz) suffix=tar.gz ;;
+    *.img.gz) suffix=img.gz ;;
+    *) echo "cannot derive artifact extension: $archive" >&2; exit 1 ;;
+  esac
+  url="${POCKETCODER_RELEASE_BASE:-https://images.pocketcoder.org}/v1/artifacts/$sha256.$suffix"
+fi
+
 jq -n \
   --arg url "$url" \
   --arg sha256 "$sha256" \
-  --argjson bytes "$bytes" \
-  --argjson expandedBytes "$expanded_bytes" \
+  --argjson downloadBytes "$bytes" \
+  --argjson unpackedBytes "$expanded_bytes" \
   --argjson images "$images" \
-  '{url: $url, sha256: $sha256, bytes: $bytes,
-    expandedBytes: $expandedBytes, images: $images}' \
+  '({url: $url, sha256: $sha256, downloadBytes: $downloadBytes,
+    unpackedBytes: $unpackedBytes} +
+    if ($images | length) > 0 then {images: $images} else {} end)' \
   > "$output"
