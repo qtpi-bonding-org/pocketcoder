@@ -43,7 +43,37 @@ func testApp(t *testing.T) core.App {
 		t.Fatal(err)
 	}
 	t.Cleanup(app.Cleanup)
+	ensureTestPoco(t, app)
 	return app
+}
+
+func ensureTestPoco(t *testing.T, app core.App) *core.Record {
+	t.Helper()
+	if poco, err := app.FindFirstRecordByFilter("agent_profiles", "name = 'Poco' && is_system = true", nil); err == nil {
+		poco.Set("is_default", true)
+		if err := app.Save(poco); err != nil {
+			t.Fatal(err)
+		}
+		if !poco.GetBool("is_default") {
+			t.Fatal("test Poco is_default was not persisted")
+		}
+		return poco
+	}
+	collection, err := app.FindCollectionByNameOrId("agent_profiles")
+	if err != nil {
+		t.Fatal(err)
+	}
+	poco := core.NewRecord(collection)
+	poco.Set("name", "Poco")
+	poco.Set("is_system", true)
+	poco.Set("is_default", true)
+	if err := app.Save(poco); err != nil {
+		t.Fatal(err)
+	}
+	if !poco.GetBool("is_default") {
+		t.Fatal("test Poco is_default was not persisted")
+	}
+	return poco
 }
 
 // waitForHarnessProvisioning drains the asynchronous provisioning started by
@@ -241,21 +271,15 @@ func createTestPocoConfig(t *testing.T, app core.App, fields map[string]any, use
 	return poco
 }
 
-// TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig verifies that
+// TestBuildSessionProfileResolvesChatFieldsWithDefaultPoco verifies that
 // chat-level fields (harness, workspace_override) are read BEFORE checking
-// for an agent_profile, fixing the early-return bug.
-func TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig(t *testing.T) {
-	app, err := tests.NewTestApp()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer app.Cleanup()
+// for an explicit agent_profile, and that seeded Poco supplies identity.
+func TestBuildSessionProfileResolvesChatFieldsWithDefaultPoco(t *testing.T) {
+	app := testApp(t)
 
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
 	harness, instance := seedTestHarnessAndInstance(t, app, "goose", true, true, false, userID)
 	chat := createTestChat(t, app, map[string]any{"user": userID, "harness": harness.Id})
-	// deliberately: no agent_profiles row exists, and none is marked is_default
-
 	profile, err := buildSessionProfile(app, chat.Id)
 	if err != nil {
 		t.Fatal(err)
@@ -265,6 +289,36 @@ func TestBuildSessionProfileResolvesChatFieldsWithNoPocoConfig(t *testing.T) {
 	}
 	if profile.Instructions != pocoprompt.Default {
 		t.Error("profile without an explicit prompt must use Poco's built-in prompt")
+	}
+	if profile.AccountID != userID || profile.AgentProfileID == "" || profile.AgentName != "Poco" {
+		t.Fatalf("memory identity = %q/%q/%q, want %q/<Poco id>/Poco", profile.AccountID, profile.AgentProfileID, profile.AgentName, userID)
+	}
+	for _, server := range profile.McpServers {
+		if server.Http != nil && server.Http.Name == "memory" {
+			return
+		}
+	}
+	t.Fatal("expected profile.McpServers to contain attributed memory HTTP entry")
+}
+
+func TestBuildSessionProfileUsesExplicitAgentAsMemoryAuthor(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
+	harness, _ := seedTestHarnessAndInstance(t, app, "goose", true, true, false, userID)
+	agent := createTestPocoConfig(t, app, map[string]any{
+		"name": "Amélie 🌱",
+		"user": userID,
+	}, userID)
+	chat := createTestChat(t, app, map[string]any{
+		"user": userID, "harness": harness.Id, "agent_profile": agent.Id,
+	})
+
+	profile, err := buildSessionProfile(app, chat.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if profile.AccountID != userID || profile.AgentProfileID != agent.Id || profile.AgentName != "Amélie 🌱" {
+		t.Fatalf("memory identity = %q/%q/%q", profile.AccountID, profile.AgentProfileID, profile.AgentName)
 	}
 }
 

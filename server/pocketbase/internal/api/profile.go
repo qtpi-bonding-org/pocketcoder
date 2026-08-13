@@ -123,6 +123,15 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	} else if poco, err = defaultPocoConfigAPI(app, userID); err != nil {
 		return p, err
 	}
+	if poco == nil {
+		return p, fmt.Errorf("no default Poco agent profile is configured")
+	}
+	p.AccountID = userID
+	p.AgentProfileID = poco.Id
+	p.AgentName = strings.TrimSpace(poco.GetString("name"))
+	if p.AgentName == "" {
+		return p, fmt.Errorf("agent_profile %s has no name", poco.Id)
+	}
 
 	// Default mode if no agent_profile
 	p.Mode = acpsdk.SessionModeId("approve")
@@ -258,9 +267,11 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	if gw := hooks.McpGatewayHttpServer(); gw != nil {
 		p.McpServers = append(p.McpServers, *gw)
 	}
-	if memory := hooks.CogneeMcpServer(); memory != nil {
-		p.McpServers = append(p.McpServers, *memory)
+	memory, err := hooks.MemoryMcpServer(p.AccountID, p.AgentProfileID, p.AgentName)
+	if err != nil {
+		return p, err
 	}
+	p.McpServers = append(p.McpServers, *memory)
 
 	launchKey := ""
 	if (harnessRec.GetString("cli_id") == "goose" || !p.SupportsLiveConfig) && hmID != "" && ollamaModel == "" {
@@ -315,12 +326,12 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 // agent_profiles has no created/updated autodate field, so the stable,
 // unique-indexed `name` column is the sort key (matches defaultPocoConfig).
 func defaultPocoConfigAPI(app core.App, userID string) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter("agent_profiles", "is_default = true && user = {:user}", "name", 0, 1, map[string]any{"user": userID})
+	recs, err := app.FindRecordsByFilter("agent_profiles", "is_default = true && user = {:user}", "name", 0, 0, map[string]any{"user": userID})
 	if err != nil {
 		return nil, err
 	}
 	if len(recs) == 0 {
-		recs, err = app.FindRecordsByFilter("agent_profiles", "is_default = true && is_system = true", "name", 0, 1)
+		recs, err = app.FindRecordsByFilter("agent_profiles", "is_default = true && is_system = true", "name", 0, 0)
 		if err != nil {
 			return nil, err
 		}

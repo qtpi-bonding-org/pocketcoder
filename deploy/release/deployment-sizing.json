@@ -19,7 +19,8 @@
         "mcp-gateway": 108947046,
         "docker-socket-proxy-mcp": 10506732,
         "docker-socket-proxy-write": 7286555,
-        "sqlpage": 24819794
+        "sqlpage": 24819794,
+        "pocket-memory": 206376960
       },
       "harnesses": {
         "goose": 42540728,

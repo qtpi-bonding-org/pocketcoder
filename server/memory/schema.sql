@@ -1,5 +1,10 @@
 -- SPDX-License-Identifier: AGPL-3.0-or-later
 
+CREATE TABLE memory_schema (
+    schema_id TEXT PRIMARY KEY CHECK (schema_id = 'pocket-memory-v1')
+) STRICT;
+INSERT INTO memory_schema(schema_id) VALUES ('pocket-memory-v1');
+
 CREATE TABLE observations (
     storage_id       INTEGER PRIMARY KEY AUTOINCREMENT,
     id               TEXT NOT NULL UNIQUE,
@@ -95,3 +100,48 @@ CREATE TRIGGER interpretations_fts_update AFTER UPDATE OF body ON interpretation
     VALUES (new.storage_id, new.body);
 END;
 
+CREATE VIRTUAL TABLE observation_vectors USING vec0(
+    storage_id INTEGER PRIMARY KEY,
+    embedding FLOAT[384] distance_metric=cosine,
+    account_id TEXT PARTITION KEY
+);
+
+CREATE TABLE observation_embedding_state (
+    storage_id        INTEGER PRIMARY KEY
+        REFERENCES observations(storage_id) ON DELETE CASCADE,
+    source_hash       BLOB NOT NULL CHECK (length(source_hash) = 32),
+    embedding_version TEXT NOT NULL,
+    embedded_at       INTEGER NOT NULL
+) STRICT;
+
+CREATE TRIGGER observations_vector_delete AFTER DELETE ON observations BEGIN
+    DELETE FROM observation_vectors WHERE storage_id = old.storage_id;
+END;
+
+CREATE TRIGGER observations_vector_invalidate AFTER UPDATE OF body ON observations BEGIN
+    DELETE FROM observation_vectors WHERE storage_id = old.storage_id;
+    DELETE FROM observation_embedding_state WHERE storage_id = old.storage_id;
+END;
+
+CREATE VIRTUAL TABLE interpretation_vectors USING vec0(
+    storage_id INTEGER PRIMARY KEY,
+    embedding FLOAT[384] distance_metric=cosine,
+    account_id TEXT PARTITION KEY
+);
+
+CREATE TABLE interpretation_embedding_state (
+    storage_id        INTEGER PRIMARY KEY
+        REFERENCES interpretations(storage_id) ON DELETE CASCADE,
+    source_hash       BLOB NOT NULL CHECK (length(source_hash) = 32),
+    embedding_version TEXT NOT NULL,
+    embedded_at       INTEGER NOT NULL
+) STRICT;
+
+CREATE TRIGGER interpretations_vector_delete AFTER DELETE ON interpretations BEGIN
+    DELETE FROM interpretation_vectors WHERE storage_id = old.storage_id;
+END;
+
+CREATE TRIGGER interpretations_vector_invalidate AFTER UPDATE OF body ON interpretations BEGIN
+    DELETE FROM interpretation_vectors WHERE storage_id = old.storage_id;
+    DELETE FROM interpretation_embedding_state WHERE storage_id = old.storage_id;
+END;

@@ -1820,7 +1820,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pocoLessonMemoryExplanation =>
-      'Cognee is an optional memory service. Its initialization step fixes storage ownership first, and its private network lets the agent reach memory without exposing it publicly.';
+      'Pocket Memory is an always-on local service. Agents write observations and interpretations directly, and semantic recall stays on your own server.';
 
   @override
   String get pocoLessonPocketbaseDockerAccessTitle => 'Limited Docker control';
@@ -2421,16 +2421,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkthroughServicesOllamaChipGpu =>
       'DOES THIS USE MY SERVER\'S GPU?';
-
-  @override
-  String get walkthroughServicesCogneeTitle => 'LONG-TERM MEMORY';
-
-  @override
-  String get walkthroughServicesCogneeBadge => 'COMING SOON';
-
-  @override
-  String get walkthroughServicesCogneePoco =>
-      'Cognee will help PocketCoder build long-term memory from your work. It is not included in this setup yet, so there is nothing more to configure today.';
 
   @override
   String get walkthroughServicesSqlPageTitle => 'SERVER DASHBOARD';

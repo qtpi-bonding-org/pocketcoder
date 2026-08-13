@@ -25,7 +25,6 @@ services:
       - ./server/mcp-gateway/config:/mcp_config
       - llm_keys:/llm_keys
       - goose_config:/goose-config
-      - cognee_config:/cognee-config
       - ${POCKETCODER_RELEASE_STATE_DIR:-./.runtime/release}:/var/lib/pocketcoder/release:ro
       - ${POCKETCODER_ARTIFACT_DIR:-./.runtime/artifacts}:/artifacts
       - ./deploy/release/harnesses.json:/etc/pocketcoder/harnesses.json:ro
@@ -112,7 +111,7 @@ services:
       - pocketcoder-agent
       - pocketcoder-goose-egress
       - pocketcoder-mcp-gateway
-      - pocketcoder-cognee
+      - pocketcoder-memory
       - pocketcoder-model
     restart: unless-stopped
     healthcheck:
@@ -282,76 +281,37 @@ services:
   # POCO:END compose-mcp-sandbox
 
   # POCO:BEGIN compose-memory
-  # 🧠 COGNEE (Agent Memory MCP Server)
-  # Standalone MCP memory server for Goose — knowledge-graph + vector recall,
-  # embedded storage (SQLite + LanceDB), no external DB services. Registered
-  # as a live Goose extension by hooks.RegisterCogneeExtension (Task 6), not
-  # via the mcp_servers/Docker-MCP-gateway catalog path.
-  # Optional, unlike goose/mcp-gateway: cognee/cognee-mcp:main is a multi-GB
-  # pull (bundles ML/embedding deps), and RegisterCogneeExtension already
-  # handles cognee being absent gracefully (bounded retries, then logs and
-  # gives up -- goose keeps working without the memory extension).
-  # To enable: docker compose --profile memory up
-  # One-shot init: Docker creates the cognee_data named volume root-owned on
-  # first use, but cognee-mcp's image runs as a non-root uid/gid 1000:1000 —
-  # without this, cognee crashes on its first write with
-  # `PermissionError: /cognee_data/system` (verified empirically, see
-  # spikes/cognee-mcp-transport/). Runs once, exits 0, cognee waits for it.
-  cognee-data-init:
-    image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
-    container_name: pocketcoder-cognee-data-init
-    profiles: ["memory"]
-    command: ["chown", "-R", "1000:1000", "/cognee_data"]
-    volumes:
-      - cognee_data:/cognee_data
-
-  cognee:
-    image: cognee/cognee-mcp@sha256:513a4c6730b98287f1ee886376672392faa6644ba2149fc9100474b39332e8ba
-    container_name: pocketcoder-cognee
-    profiles: ["memory"]
-    depends_on:
-      cognee-data-init:
-        condition: service_completed_successfully
+  # 🧠 POCKET MEMORY (local agent-authored memory)
+  # Always-on core service. Canonical memory, FTS5, sqlite-vec, and the local
+  # multilingual E5 embedder all live in one Rust process and one SQLite file.
+  # A missing/broken model degrades to FTS-only without losing writes.
+  pocket-memory:
+    image: pocketcoder-memory:latest
+    build:
+      context: .
+      dockerfile: server/memory/Dockerfile
+      args:
+        # Immutable MIT development artifact, verified by the service's model test.
+        # Release CI overrides this with PocketCoder's independently reproduced artifact.
+        POCKET_MEMORY_MODEL_URL: ${POCKET_MEMORY_MODEL_URL:-https://huggingface.co/keisuke-miyako/multilingual-e5-small-gguf-q8_0/resolve/e1da94460f223e3204e75dfe51350e5491c879d4/multilingual-e5-small-Q8_0.gguf?download=true}
+        POCKET_MEMORY_MODEL_SHA256: ${POCKET_MEMORY_MODEL_SHA256:-0d5a5a0b0ad84faad6357a6145e769b0661f0efbf53acf74598afc34dab454f4}
+        POCKET_MEMORY_REQUIRE_MODEL: ${POCKET_MEMORY_REQUIRE_MODEL:-0}
+    container_name: pocketcoder-memory
     environment:
-      # TRANSPORT_MODE/HTTP_PORT/MCP_ALLOWED_HOSTS are consumed by the image's
-      # own entrypoint.sh, not passed as --transport CLI args — the entrypoint
-      # appends its own --transport $TRANSPORT_MODE after any passed args, so
-      # a CLI --transport would be silently overridden back to stdio.
-      # MCP_ALLOWED_HOSTS must match the service's network alias:port, else
-      # every cross-container request 421s on the DNS-rebinding Host check.
-      - TRANSPORT_MODE=http
-      - HTTP_PORT=8000
-      - MCP_ALLOWED_HOSTS=cognee:8000
-      # cognee's own defaults (pydantic BaseSettings env vars, case-insensitive)
-      # write its SQLite/LanceDB/Kuzu state under a path baked into the image
-      # (~/.cognee_system, ~/.data_storage) — NOT under /cognee_data. Without
-      # these two, the cognee_data volume mount below is a no-op: nothing is
-      # ever written there, state doesn't persist across container recreates,
-      # and sqlpage's read-only mount (below, and in the sqlpage service) has
-      # nothing to read. Verified empirically: spikes/cognee-mcp-transport.
-      - DATA_ROOT_DIRECTORY=/cognee_data/data
-      - SYSTEM_ROOT_DIRECTORY=/cognee_data/system
-      # No LLM_API_KEY/embedding env vars required just to boot — those are
-      # consumed lazily by remember/recall tool calls. Task 5's render hook
-      # writes real values into cognee_config later; the placeholder is here
-      # so the compose file is self-describing about the var's existence.
-      - LLM_API_KEY=${COGNEE_LLM_API_KEY:-}
+      - POCKET_MEMORY_DATABASE_PATH=/memory_data/memory.sqlite3
+      - POCKET_MEMORY_BIND_ADDRESS=0.0.0.0:8000
+      - POCKET_MEMORY_EMBEDDING_MODEL_PATH=/models/multilingual-e5-small-q8_0.gguf
     volumes:
-      - cognee_data:/cognee_data
-      - cognee_config:/cognee-config
+      - memory_data:/memory_data
     networks:
-      - pocketcoder-cognee
+      - pocketcoder-memory
     restart: unless-stopped
     healthcheck:
-      # No curl/wget in this image, and cognee-mcp exposes no plain /health
-      # route (the streamable-HTTP MCP endpoint 406s on non-MCP requests,
-      # which still proves the process is up and listening) — so just
-      # confirm the port accepts a TCP connection.
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 8000), timeout=3).close()"]
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 30s
   # POCO:END compose-memory
 
   # POCO:BEGIN compose-pocketbase-docker-access
@@ -397,18 +357,12 @@ services:
   # POCO:END compose-pocketbase-docker-access
 
   # POCO:BEGIN compose-dashboard
-  # 📈 SQLPAGE data init — on_connect.sql ATTACHes goose's and cognee's
-  # SQLite files in `immutable=1` mode (see comment below), which refuses
-  # to open a file that doesn't exist yet. goose only creates sessions.db
-  # after it successfully starts (needs a configured provider key first),
-  # and cognee is an entirely optional `--profile memory` service that may
-  # never run at all -- on a fresh/default deployment, both files are
-  # legitimately absent, which previously made sqlpage's connection pool
-  # fail every single connection attempt ("pool timed out while waiting
-  # for an open connection", verified via local repro). A zero-byte file
-  # is a valid, empty SQLite database, so touching one into existence (only
-  # if missing -- never overwrite real data) is enough for ATTACH to
-  # succeed with zero rows rather than erroring out.
+  # 📈 SQLPAGE data init — on_connect.sql ATTACHes Goose's SQLite store in
+  # immutable mode, which refuses to open a file that does not exist yet.
+  # Goose creates sessions.db only after it starts with a configured provider,
+  # so a fresh deployment legitimately needs this non-overwriting placeholder.
+  # Pocket Memory initializes its own live database; SQLPage waits for its
+  # health check and opens it read-only without immutable mode so WAL is visible.
   sqlpage-data-init:
     image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
     container_name: pocketcoder-sqlpage-data-init
@@ -416,12 +370,10 @@ services:
       - sh
       - -c
       - |
-        mkdir -p /goose_data/data/sessions /cognee_data/system/databases
+        mkdir -p /goose_data/data/sessions
         [ -f /goose_data/data/sessions/sessions.db ] || touch /goose_data/data/sessions/sessions.db
-        [ -f /cognee_data/system/databases/cognee_db ] || touch /cognee_data/system/databases/cognee_db
     volumes:
       - goose_data:/goose_data
-      - cognee_data:/cognee_data
 
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
@@ -439,7 +391,7 @@ services:
       # disk at all. This mismatch predates this branch (confirmed on main)
       # and silently no-ops both sqlpage.json's database_url (SQLPage falls
       # back to a throwaway in-memory DB every restart) and on_connect.sql's
-      # ATTACH statements (opencode/cognee dashboards error "no such table").
+      # ATTACH statements (the old dashboards errored with "no such table").
       - ./server/sqlpage/dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
       # opencode was removed from this repo entirely (see git history) — its
       # on_connect.sql ATTACH referenced a volume/path that no longer exists
@@ -450,7 +402,7 @@ services:
       # spikes/goose-acp-http/README.md — WAL mode, safe for concurrent
       # read-only access).
       - goose_data:/goose_data:ro
-      - cognee_data:/cognee_data:ro
+      - memory_data:/memory_data:ro
     networks:
       - pocketcoder-dashboard
       - pocketcoder-tailscale
@@ -463,6 +415,8 @@ services:
       start_period: 15s
     depends_on:
       pocketbase:
+        condition: service_healthy
+      pocket-memory:
         condition: service_healthy
       sqlpage-data-init:
         condition: service_completed_successfully
@@ -585,8 +539,7 @@ volumes:
   caddy_config:
   goose_data:        # Goose SQLite/session state; back up independently of PocketBase
   goose_config:      # Goose config.yaml + keys.env, written by PocketBase, read by goose
-  cognee_data:        # cognee's embedded SQLite/LanceDB/Kuzu storage
-  cognee_config:       # cognee.env, written by PocketBase, read by cognee
+  memory_data:        # Pocket Memory canonical SQLite and rebuildable indexes
   ollama_models:       # downloaded local models; intentionally not in R2 cache
 # POCO:END compose-persistent-volumes
 
@@ -621,11 +574,13 @@ networks:
   # PocketBase) so this addition doesn't touch that boundary.
   pocketcoder-mcp-gateway:
     driver: bridge
-  # Carries MCP traffic between Goose and cognee only - deliberately separate
+  # Carries MCP traffic between harnesses and Pocket Memory only — deliberately
+  # separate
   # from pocketcoder-agent (Goose's sole path to/from PocketBase) so this
   # addition doesn't touch that boundary. Mirrors pocketcoder-mcp-gateway.
-  pocketcoder-cognee:
+  pocketcoder-memory:
     driver: bridge
+    name: pocketcoder-memory
   # Local inference only: Goose and dynamic peer harnesses can reach Ollama,
   # but PocketBase cannot reach Goose through this network.
   pocketcoder-model:

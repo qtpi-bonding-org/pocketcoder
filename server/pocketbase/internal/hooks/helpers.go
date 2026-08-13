@@ -27,7 +27,6 @@ import (
 
 const (
 	GatewayContainer = "pocketcoder-mcp-gateway"
-	CogneeContainer  = "pocketcoder-cognee"
 )
 
 // renderAndRestart runs a config render function and restarts the given container.

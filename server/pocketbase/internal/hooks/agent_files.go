@@ -47,12 +47,12 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 		files[path.Join(".claude", "skills", name, "SKILL.md")] = content
 	}
 
-	profiles, err := app.FindRecordsByFilter("agent_profiles", "is_default = true && user = {:user}", "name", 0, 1, map[string]any{"user": userID})
+	profiles, err := app.FindRecordsByFilter("agent_profiles", "is_default = true && user = {:user}", "name", 0, 0, map[string]any{"user": userID})
 	if err != nil {
 		return fmt.Errorf("query default agent profile: %w", err)
 	}
 	if len(profiles) == 0 {
-		profiles, err = app.FindRecordsByFilter("agent_profiles", "is_default = true && is_system = true", "name", 0, 1)
+		profiles, err = app.FindRecordsByFilter("agent_profiles", "is_default = true && is_system = true", "name", 0, 0)
 		if err != nil {
 			return fmt.Errorf("query system default agent profile: %w", err)
 		}

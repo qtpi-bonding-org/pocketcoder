@@ -31,6 +31,7 @@ struct ErrorResponse {
 }
 
 pub fn router(service: MemoryService, cancellation: CancellationToken) -> Router {
+    let health_service = service.clone();
     let mcp_service = StreamableHttpService::new(
         move || Ok(tools::MemoryMcp::new(service.clone())),
         LocalSessionManager::default().into(),
@@ -44,15 +45,26 @@ pub fn router(service: MemoryService, cancellation: CancellationToken) -> Router
         .layer(middleware::from_fn(require_identity));
 
     Router::new()
-        .route("/health", get(health))
+        .route(
+            "/health",
+            get(move || {
+                let service = health_service.clone();
+                async move { health(&service) }
+            }),
+        )
         .merge(protected_mcp)
 }
 
-async fn health() -> Json<HealthResponse> {
+fn health(service: &MemoryService) -> Json<HealthResponse> {
+    let semantic_search = service.semantic_search_available();
     Json(HealthResponse {
-        status: "degraded_fts_only",
+        status: if semantic_search {
+            "ready"
+        } else {
+            "degraded_fts_only"
+        },
         canonical_store: true,
-        semantic_search: false,
+        semantic_search,
     })
 }
 

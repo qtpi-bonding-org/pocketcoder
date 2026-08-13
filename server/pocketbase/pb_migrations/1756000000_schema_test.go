@@ -35,7 +35,6 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 		"skills":                {"user", "is_system", "name", "description", "content", "metadata", "active"},
 		"agent_sessions":        {"chat", "user", "acp_session_id"},
 		"schedule_owners":       {"user", "display_name", "cron", "prompt", "paused", "last_run"},
-		"cognee_config":         {"llm_provider", "llm_model", "llm_base_url", "llm_api_key"},
 		"harness_auth_bindings": {"scope_kind", "scope_id", "harness", "credential_mode", "status", "provider_key"},
 		"harness_auth_attempts": {"scope_kind", "scope_id", "harness", "binding", "provider", "status", "expires_at"},
 	}

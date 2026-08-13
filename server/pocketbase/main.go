@@ -94,9 +94,6 @@ func main() {
 
 	hooks.RegisterAgentFileHooks(app)
 
-	// 3c. Register cognee Config Hooks (cognee.env render + cognee restart)
-	hooks.RegisterCogneeConfigHooks(app)
-
 	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")

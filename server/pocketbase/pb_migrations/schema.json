@@ -1969,9 +1969,6 @@
         "type": "bool"
       },
       {
-        "hidden": false,
-        "id": "select2546616235",
-        "maxSelect": 1,
         "cascadeDelete": false,
         "collectionId": "pc_permission_modes",
         "hidden": false,
@@ -2328,92 +2325,6 @@
     ],
     "created": "2026-07-24 05:34:50.291Z",
     "updated": "2026-07-24 05:34:50.291Z",
-    "system": false
-  },
-  {
-    "id": "pbc_2270491863",
-    "listRule": null,
-    "viewRule": null,
-    "createRule": null,
-    "updateRule": null,
-    "deleteRule": null,
-    "name": "cognee_config",
-    "type": "base",
-    "fields": [
-      {
-        "autogeneratePattern": "[a-z0-9]{15}",
-        "hidden": false,
-        "id": "text3208210256",
-        "max": 15,
-        "min": 15,
-        "name": "id",
-        "pattern": "^[a-z0-9]+$",
-        "presentable": false,
-        "primaryKey": true,
-        "required": true,
-        "system": true,
-        "type": "text"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text1918324363",
-        "max": 0,
-        "min": 0,
-        "name": "llm_provider",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text3709124905",
-        "max": 0,
-        "min": 0,
-        "name": "llm_model",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text2122516211",
-        "max": 0,
-        "min": 0,
-        "name": "llm_base_url",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": false,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text2412176535",
-        "max": 0,
-        "min": 0,
-        "name": "llm_api_key",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
-      }
-    ],
-    "indexes": [],
-    "created": "2026-07-24 14:08:25.485Z",
-    "updated": "2026-07-24 14:08:25.485Z",
     "system": false
   },
   {

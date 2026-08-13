@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 mod links;
-mod migrations;
+mod native;
 mod records;
+mod schema;
+mod vectors;
+
+pub use vectors::{EMBEDDING_DIMENSION, PendingEmbedding, VectorCandidate};
 
 use std::{path::Path, time::Duration};
 
@@ -34,6 +38,7 @@ impl Repository {
         path: impl AsRef<Path>,
         busy_timeout: Duration,
     ) -> Result<Self> {
+        native::register_sqlite_vec()?;
         let connection = Connection::open(path)
             .await
             .map_err(MemoryError::Database)?;
@@ -48,6 +53,7 @@ impl Repository {
     ///
     /// Returns an error when SQLite cannot initialize or migrate the database.
     pub async fn open_in_memory() -> Result<Self> {
+        native::register_sqlite_vec()?;
         let connection = Connection::open_in_memory()
             .await
             .map_err(MemoryError::Database)?;
@@ -65,7 +71,7 @@ impl Repository {
                  PRAGMA synchronous = NORMAL;\n\
                  PRAGMA wal_autocheckpoint = 1000;",
             )?;
-            migrations::apply(connection)
+            schema::initialize(connection)
         })
         .await
     }

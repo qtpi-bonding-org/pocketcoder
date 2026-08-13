@@ -13,7 +13,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AgentIdentity, MemoryError, MemoryKind, MemoryRecord,
-    service::{MemoryService, MemoryWithLinks, SearchMatch},
+    domain::TimestampFilter,
+    service::{MemoryService, MemoryWithLinks, SearchMatch, SearchMode},
 };
 
 #[derive(Clone)]
@@ -62,6 +63,8 @@ struct GetArgs {
 struct ListArgs {
     kind: MemoryKind,
     author_profile_id: Option<String>,
+    #[serde(flatten)]
+    timestamps: TimestampFilter,
     limit: Option<u32>,
     offset: Option<u32>,
 }
@@ -71,6 +74,8 @@ struct SearchArgs {
     query: String,
     kind: Option<MemoryKind>,
     author_profile_id: Option<String>,
+    #[serde(flatten)]
+    timestamps: TimestampFilter,
     top_k: Option<u32>,
     deep_recall: Option<bool>,
     lambda: Option<f64>,
@@ -84,7 +89,7 @@ struct MutationResult {
 
 #[derive(Debug, Serialize, JsonSchema)]
 struct SearchResult {
-    mode: &'static str,
+    mode: SearchMode,
     matches: Vec<SearchMatch>,
 }
 
@@ -250,6 +255,7 @@ impl MemoryMcp {
                 &identity,
                 args.kind,
                 args.author_profile_id,
+                args.timestamps,
                 args.limit.unwrap_or(50),
                 args.offset.unwrap_or(0),
             )
@@ -268,22 +274,23 @@ impl MemoryMcp {
         context: RequestContext<RoleServer>,
     ) -> Result<Json<SearchResult>, McpError> {
         let identity = identity(&context)?;
-        let _debug = args.debug.unwrap_or(false);
         self.service
-            .search_fts_only(
+            .search(
                 &identity,
                 &args.query,
                 args.kind,
                 args.author_profile_id.as_deref(),
+                args.timestamps,
                 args.top_k.unwrap_or(10),
                 args.deep_recall.unwrap_or(false),
                 args.lambda.unwrap_or(0.05),
+                args.debug.unwrap_or(false),
             )
             .await
-            .map(|matches| {
+            .map(|output| {
                 Json(SearchResult {
-                    mode: "degraded_fts_only",
-                    matches,
+                    mode: output.mode,
+                    matches: output.matches,
                 })
             })
             .map_err(map_error)

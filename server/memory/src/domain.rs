@@ -55,7 +55,7 @@ impl AgentIdentity {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum MemoryKind {
     Observation,
@@ -88,6 +88,52 @@ pub struct ListFilter {
     pub kind: MemoryKind,
     pub account_id: String,
     pub agent_profile_id: Option<String>,
+    pub timestamps: TimestampFilter,
     pub limit: u32,
     pub offset: u32,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct TimestampFilter {
+    pub created_after_ms: Option<i64>,
+    pub created_before_ms: Option<i64>,
+    pub updated_after_ms: Option<i64>,
+    pub updated_before_ms: Option<i64>,
+    pub retrieved_after_ms: Option<i64>,
+    pub retrieved_before_ms: Option<i64>,
+}
+
+impl TimestampFilter {
+    /// Rejects inverted time ranges.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when an `after` bound is greater than its matching
+    /// `before` bound.
+    pub fn validate(self) -> Result<()> {
+        for (name, after, before) in [
+            ("created", self.created_after_ms, self.created_before_ms),
+            ("updated", self.updated_after_ms, self.updated_before_ms),
+            (
+                "retrieved",
+                self.retrieved_after_ms,
+                self.retrieved_before_ms,
+            ),
+        ] {
+            if after
+                .zip(before)
+                .is_some_and(|(after, before)| after > before)
+            {
+                return Err(MemoryError::InvalidInput(format!(
+                    "{name}_after_ms must not be greater than {name}_before_ms"
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    #[must_use]
+    pub fn is_empty(self) -> bool {
+        self == Self::default()
+    }
 }

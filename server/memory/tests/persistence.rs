@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use pocket_memory::{AgentIdentity, MemoryKind, Repository, domain::ListFilter};
+use pocket_memory::{
+    AgentIdentity, MemoryKind, Repository,
+    domain::{ListFilter, TimestampFilter},
+};
 
 #[tokio::test]
 async fn canonical_records_survive_close_and_reopen() {
@@ -21,6 +24,25 @@ async fn canonical_records_survive_close_and_reopen() {
         .await
         .unwrap();
     assert_eq!(loaded, created);
+}
+
+#[tokio::test]
+async fn nonempty_database_with_another_schema_is_rejected() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("not-memory.sqlite3");
+    let connection = tokio_rusqlite::rusqlite::Connection::open(&path).unwrap();
+    connection
+        .execute("CREATE TABLE unrelated (id INTEGER PRIMARY KEY)", [])
+        .unwrap();
+    drop(connection);
+
+    let Err(error) = Repository::open(&path).await else {
+        panic!("unrelated schema was accepted");
+    };
+    assert!(matches!(
+        error,
+        pocket_memory::MemoryError::UnsupportedSchema(_)
+    ));
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
@@ -52,6 +74,7 @@ async fn concurrent_agents_do_not_lose_creates() {
             kind: MemoryKind::Observation,
             account_id: "family".to_owned(),
             agent_profile_id: None,
+            timestamps: TimestampFilter::default(),
             limit: 100,
             offset: 0,
         })

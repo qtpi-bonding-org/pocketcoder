@@ -7,14 +7,18 @@ license = "AGPL-3.0-or-later"
 publish = false
 
 [dependencies]
+async-trait = "=0.1.89"
 axum = "=0.8.9"
 base64 = "=0.22.1"
+llama-cpp-2 = { version = "=0.1.154", default-features = false }
 rmcp = { version = "=3.1.2", features = ["transport-streamable-http-server"] }
 schemars = "=1.2.1"
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.149"
+sha2 = "=0.10.9"
+sqlite-vec = "=0.1.9"
 thiserror = "=2.0.20"
-tokio = { version = "=1.53.1", features = ["macros", "net", "rt-multi-thread", "signal"] }
+tokio = { version = "=1.53.1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
 tokio-rusqlite = { version = "=0.7.0", features = ["bundled", "modern_sqlite"] }
 tokio-util = "=0.7.18"
 tracing = "=0.1.44"
@@ -26,7 +30,7 @@ rmcp = { version = "=3.1.2", features = ["client", "transport-streamable-http-cl
 tempfile = "=3.27.0"
 
 [lints.rust]
-unsafe_code = "forbid"
+unsafe_code = "deny"
 
 [lints.clippy]
 all = { level = "deny", priority = -1 }

@@ -1,6 +1,6 @@
 -- Headless Observability API for PocketCoder
 -- This file provides a unified JSON summary of the platform state.
--- Databases (goose, cognee) are attached via config/on_connect.sql.
+-- Databases (goose, memory) are attached via config/on_connect.sql.
 --
 -- Previously read from an `opencode` database/schema that no longer exists
 -- anywhere in this repo (opencode was fully removed — see git history);
