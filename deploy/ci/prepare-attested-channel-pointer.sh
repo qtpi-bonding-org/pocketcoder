@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+channel=${1:?channel is required}
+manifest_sha=${2:?manifest sha256 is required}
+sequence=${3:?sequence is required}
+output=${4:?output path is required}
+endpoint=${R2_ENDPOINT:?R2_ENDPOINT is required}
+bucket=${POCKETCODER_RELEASE_BUCKET:-pocketcoder-images}
+base_url=${POCKETCODER_RELEASE_BASE:-https://images.pocketcoder.org}
+
+case "$channel" in stable | beta | nightly) ;; *) echo "invalid channel" >&2; exit 1 ;; esac
+case "$manifest_sha" in *[!0-9a-f]* | '') echo "invalid manifest digest" >&2; exit 1 ;; esac
+test "${#manifest_sha}" -eq 64
+case "$sequence" in '' | *[!0-9]*) echo "invalid sequence" >&2; exit 1 ;; esac
+test "$sequence" -ge 1
+
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+manifest="$tmp_dir/manifest.json"
+aws s3 cp "s3://$bucket/releases/$manifest_sha.json" "$manifest" --endpoint-url "$endpoint" >/dev/null
+test "$(sha256sum "$manifest" | cut -d' ' -f1)" = "$manifest_sha"
+manifest_bytes=$(wc -c < "$manifest" | tr -d ' ')
+test "$manifest_bytes" -le 1048576
+
+current="$tmp_dir/current.json"
+if aws s3 cp "s3://$bucket/channels/$channel.json" "$current" --endpoint-url "$endpoint" >/dev/null 2>&1; then
+  current_sequence=$(jq -r '.sequence' "$current")
+  test "$sequence" -gt "$current_sequence" || { echo "channel sequence must increase" >&2; exit 1; }
+fi
+
+jq -S -n --arg channel "$channel" --argjson sequence "$sequence" \
+  --arg promotedAt "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+  --arg manifestUrl "$base_url/v1/releases/$manifest_sha.json" \
+  --arg manifestSha "$manifest_sha" --argjson manifestBytes "$manifest_bytes" \
+  --arg manifestBundle "$base_url/v1/attestations/releases/$manifest_sha.sigstore.json" \
+  --arg pointerBundle "$base_url/v1/attestations/channels/$channel/$sequence.sigstore.json" \
+  '{schemaVersion:1,channel:$channel,sequence:$sequence,promotedAt:$promotedAt,
+    manifest:{url:$manifestUrl,sha256:$manifestSha,downloadBytes:$manifestBytes,
+      attestation:{url:$manifestBundle}},attestation:{url:$pointerBundle}}' > "$output"
+
+"${POCKETCODER_SCHEMA_VALIDATOR:-check-jsonschema}" \
+  --schemafile "$(dirname "$0")/../release/release-channel-pointer.schema.json" "$output"

@@ -50,10 +50,9 @@ jobs:
           deploy/release/generate-release-schemas.sh
           git diff --exit-code -- 'deploy/release/*.schema.json'
 
-      - name: Test signed release contract
+      - name: Test attested release contract
         run: |
           deploy/release/tests/release-schema-test.sh
-          deploy/release/tests/signature-test.sh
           deploy/release/tests/release-contract-test.sh
 
       - name: Test native OS release manager

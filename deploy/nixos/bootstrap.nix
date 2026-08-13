@@ -1,4 +1,4 @@
-{ config, pkgs, sourceCommit ? "main", rootPublicKey ? "", ... }:
+{ config, pkgs, sourceCommit ? "main", releaseManager, ... }:
 
 {
   systemd.services.pocketcoder-bootstrap = {
@@ -24,26 +24,15 @@
       gnutar
       config.services.openssh.package
       config.virtualisation.docker.package
+      releaseManager
     ];
     script = builtins.readFile ./bootstrap.sh;
   };
 
   environment.etc."pocketcoder/status.sh".source = ./status.sh;
-  environment.etc."pocketcoder/release-root.pem" = {
-    text = rootPublicKey;
-    mode = "0444";
-  };
-  environment.etc."pocketcoder/release/resolve-signed-release.sh" = {
-    source = ../scripts/resolve-signed-release.sh;
-    mode = "0555";
-  };
-  environment.etc."pocketcoder/release/verify-signed-payload.sh" = {
-    source = ../release/verify-signed-payload.sh;
-    mode = "0555";
-  };
 
   systemd.services.pocketcoder-release-metadata = {
-    description = "Check signed PocketCoder release metadata";
+    description = "Check GitHub-attested PocketCoder release metadata";
     after = [ "network-online.target" "pocketcoder-bootstrap.service" ];
     wants = [ "network-online.target" ];
     unitConfig.ConditionPathExists = "/opt/pocketcoder/current/bin/pocketcoder-release";
@@ -54,7 +43,7 @@
   };
 
   systemd.timers.pocketcoder-release-metadata = {
-    description = "Periodically check signed PocketCoder release metadata";
+    description = "Periodically check GitHub-attested PocketCoder release metadata";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "15min";

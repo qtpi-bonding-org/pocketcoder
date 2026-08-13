@@ -7,15 +7,7 @@
     "url": "https://images.pocketcoder.org/v1/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.json",
     "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
     "downloadBytes": 32768,
-    "signature": {
-      "algorithm": "ed25519",
-      "keyId": "operations-2026-01",
-      "url": "https://images.pocketcoder.org/v1/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.json.sig"
-    }
+    "attestation": {"url": "https://images.pocketcoder.org/v1/attestations/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.sigstore.json"}
   },
-  "signature": {
-    "algorithm": "ed25519",
-    "keyId": "operations-2026-01",
-    "url": "https://images.pocketcoder.org/v1/channels/stable/12.sig"
-  }
+  "attestation": {"url": "https://images.pocketcoder.org/v1/attestations/channels/stable/12.sigstore.json"}
 }

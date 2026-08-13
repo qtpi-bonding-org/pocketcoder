@@ -1,0 +1,50 @@
+name: Publish NixOS Release Revocations
+
+on:
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: Complete release-revocation JSON document with a monotonically increasing sequence
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install contract validator
+        run: python3 -m pip install -r deploy/release/requirements.txt
+
+      - name: Validate and prepare revocation document
+        env:
+          REVOCATION_PAYLOAD: ${{ inputs.payload }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$REVOCATION_PAYLOAD" > revocations.json
+          deploy/release/validate-release-schemas.sh
+          check-jsonschema --schemafile deploy/release/release-revocation.schema.json revocations.json
+          sequence=$(jq -r '.sequence' revocations.json)
+          test "$sequence" -ge 1
+
+      - name: Attest revocation document
+        id: attest-revocations
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: revocations.json
+
+      - name: Publish revocation document
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          deploy/ci/publish-attested-revocation.sh revocations.json '${{ steps.attest-revocations.outputs.bundle-path }}'

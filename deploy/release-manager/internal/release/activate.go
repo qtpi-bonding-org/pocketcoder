@@ -14,6 +14,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/contract"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/runtime"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/state"
+	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/trust"
 )
 
 type Activation struct {
@@ -32,6 +33,8 @@ type Activation struct {
 	Docker             runtime.Docker
 	HealthURL          string
 	HealthTimeout      time.Duration
+	ReleaseBundle      []byte
+	Verifier           trust.SubjectVerifier
 }
 
 func (activation Activation) Run() (Current, error) {
@@ -95,7 +98,13 @@ func (activation Activation) Preload() error {
 	if err := verifyInternalIdentity(activation.ReleaseDirectory, activation.Manifest); err != nil {
 		return err
 	}
-	installer := artifact.ImageInstaller{Fetcher: activation.Fetcher, Runtime: activation.Docker, StagingDirectory: activation.Paths.Artifacts}
+	if activation.Verifier == nil || len(activation.ReleaseBundle) == 0 {
+		return fmt.Errorf("release attestation verifier is required")
+	}
+	verify := func(subject []byte) error {
+		return activation.Verifier.Verify("release", subject, activation.ReleaseBundle)
+	}
+	installer := artifact.ImageInstaller{Fetcher: activation.Fetcher, Runtime: activation.Docker, StagingDirectory: activation.Paths.Artifacts, Verify: verify}
 	for id, descriptor := range activation.Manifest.Images.Required {
 		if err := installer.Ensure("required."+id, descriptor); err != nil {
 			return err

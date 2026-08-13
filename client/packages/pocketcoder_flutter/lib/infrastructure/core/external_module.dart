@@ -124,13 +124,6 @@ abstract class ExternalModule {
   @lazySingleton
   String get releaseBaseUrl => 'https://images.pocketcoder.org/v1';
 
-  /// DER-encoded Ed25519 root public key, base64. The production value is
-  /// supplied at release build time; an empty value fails closed.
-  @Named('releaseRootPublicKey')
-  @lazySingleton
-  String get releaseRootPublicKey =>
-      const String.fromEnvironment('POCKETCODER_RELEASE_ROOT_PUBLIC_KEY');
-
   /// Local-only storage for the on-device error inbox. Never synced or
   /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.
   @lazySingleton

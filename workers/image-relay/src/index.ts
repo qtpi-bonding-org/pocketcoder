@@ -50,12 +50,12 @@ function resolveV1ObjectPath(pathname: string): ReleaseObject | null {
 	const mutable = [
 		/^\/v1\/channels\/(stable|beta|nightly)\.json$/,
 		/^\/v1\/revocations\/releases\.json$/,
-		/^\/v1\/delegations\/root\.json(?:\.sig)?$/,
 	];
 	const immutable = [
-		/^\/v1\/channels\/(stable|beta|nightly)\/[1-9][0-9]*\.sig$/,
-		/^\/v1\/releases\/[0-9a-f]{64}\.json(?:\.sig)?$/,
-		/^\/v1\/revocations\/releases\/[1-9][0-9]*\.sig$/,
+		/^\/v1\/attestations\/channels\/(stable|beta|nightly)\/[1-9][0-9]*\.sigstore\.json$/,
+		/^\/v1\/releases\/[0-9a-f]{64}\.json$/,
+		/^\/v1\/attestations\/releases\/[0-9a-f]{64}\.sigstore\.json$/,
+		/^\/v1\/attestations\/revocations\/releases\/[1-9][0-9]*\.sigstore\.json$/,
 		/^\/v1\/documents\/[0-9a-f]{64}\.(?:json|txt|sh|go)$/,
 		/^\/v1\/artifacts\/[0-9a-f]{64}\.(?:tar\.gz|img\.gz)$/,
 	];

@@ -66,26 +66,6 @@
           ]
         }
       }
-    },
-    "signatureDescriptor": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "algorithm",
-        "keyId",
-        "url"
-      ],
-      "properties": {
-        "algorithm": {
-          "const": "ed25519"
-        },
-        "keyId": {
-          "$ref": "#/$defs/identifier"
-        },
-        "url": {
-          "$ref": "#/$defs/httpsUrl"
-        }
-      }
     }
   }
 }

@@ -41,8 +41,8 @@ func TestStrictDecodeRejectsUnknownAndDuplicateMembers(t *testing.T) {
 		"duplicate": []byte(`{"schemaVersion":1,"schemaVersion":1}`),
 	} {
 		t.Run(name, func(t *testing.T) {
-			var envelope SignatureEnvelope
-			if err := DecodeStrict(data, &envelope); err == nil {
+			var pointer ChannelPointer
+			if err := DecodeStrict(data, &pointer); err == nil {
 				t.Fatal("expected strict decoding to fail")
 			}
 		})

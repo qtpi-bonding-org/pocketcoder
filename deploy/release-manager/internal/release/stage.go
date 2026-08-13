@@ -11,7 +11,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/state"
 )
 
-func StageServerFiles(fetcher artifact.Fetcher, manifest contract.Manifest, releaseDigest, releasesDirectory, artifactDirectory string) (string, error) {
+func StageServerFiles(fetcher artifact.Fetcher, manifest contract.Manifest, releaseDigest, releasesDirectory, artifactDirectory string, verify func([]byte) error) (string, error) {
 	releaseDirectory := filepath.Join(releasesDirectory, releaseDigest)
 	if info, err := os.Stat(releaseDirectory); err == nil {
 		if !info.IsDir() {
@@ -29,6 +29,9 @@ func StageServerFiles(fetcher artifact.Fetcher, manifest contract.Manifest, rele
 		return "", err
 	}
 	defer os.Remove(archivePath)
+	if err := verifyFile(archivePath, verify); err != nil {
+		return "", err
+	}
 	if err := os.MkdirAll(releasesDirectory, 0o755); err != nil {
 		return "", err
 	}
@@ -55,4 +58,15 @@ func StageServerFiles(fetcher artifact.Fetcher, manifest contract.Manifest, rele
 		return "", err
 	}
 	return releaseDirectory, nil
+}
+
+func verifyFile(path string, verify func([]byte) error) error {
+	if verify == nil {
+		return fmt.Errorf("release attestation verifier is required")
+	}
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return verify(bytes)
 }

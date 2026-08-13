@@ -1,9 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://pocketcoder.org/schemas/release-channel-pointer-v1.schema.json",
-  "$comment": "The exact pointer bytes are accompanied by a detached Ed25519 signature. Consumers verify that signature with an embedded trusted key before accepting any field.",
+  "$comment": "GitHub Actions Sigstore bundles authenticate exact pointer and manifest bytes. Publisher identity is native verifier policy, not mutable metadata.",
   "title": "PocketCoder release channel pointer",
-  "description": "Mutable, signed discovery pointer from one release channel to an immutable content-addressed manifest.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -12,14 +11,13 @@
     "sequence",
     "promotedAt",
     "manifest",
-    "signature"
+    "attestation"
   ],
   "properties": {
     "schemaVersion": {
       "const": 1
     },
     "channel": {
-      "type": "string",
       "enum": [
         "stable",
         "beta",
@@ -27,14 +25,13 @@
       ]
     },
     "sequence": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "Monotonically increasing within this channel. Consumers persist and reject lower values."
+      "$ref": "#/$defs/positiveVersion"
     },
     "promotedAt": {
-      "type": "string",
-      "format": "date-time",
-      "pattern": "Z$"
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "attestation": {
+      "$ref": "#/$defs/attestationDescriptor"
     },
     "manifest": {
       "type": "object",
@@ -43,60 +40,43 @@
         "url",
         "sha256",
         "downloadBytes",
-        "signature"
+        "attestation"
       ],
       "properties": {
         "url": {
-          "type": "string",
-          "format": "uri",
-          "pattern": "^https://[^/]+/"
+          "$ref": "#/$defs/httpsUrl"
         },
         "sha256": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$",
-          "description": "Release identity and expected SHA-256 of the immutable manifest bytes."
+          "$ref": "#/$defs/sha256"
         },
         "downloadBytes": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 1048576,
-          "description": "Exact immutable manifest byte length, enforced before parsing."
+          "maximum": 1048576
         },
-        "signature": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "algorithm",
-            "keyId",
-            "url"
-          ],
-          "properties": {
-            "algorithm": {
-              "const": "ed25519"
-            },
-            "keyId": {
-              "type": "string",
-              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-            },
-            "url": {
-              "type": "string",
-              "format": "uri",
-              "pattern": "^https://[^/]+/"
-            }
-          }
+        "attestation": {
+          "$ref": "#/$defs/attestationDescriptor"
         }
       }
     },
-    "signature": {
-      "$ref": "#/$defs/signatureDescriptor",
-      "description": "Detached signature over the exact channel pointer bytes."
-    },
     "extensions": {
       "type": "object",
-      "description": "Optional, ignorable channel metadata."
+      "maxProperties": 32
     }
   },
   "$defs": {
+    "attestationDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "$ref": "#/$defs/httpsUrl"
+        }
+      }
+    },
     "semanticVersion": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
@@ -159,26 +139,6 @@
           "enum": [
             "amd64"
           ]
-        }
-      }
-    },
-    "signatureDescriptor": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "algorithm",
-        "keyId",
-        "url"
-      ],
-      "properties": {
-        "algorithm": {
-          "const": "ed25519"
-        },
-        "keyId": {
-          "$ref": "#/$defs/identifier"
-        },
-        "url": {
-          "$ref": "#/$defs/httpsUrl"
         }
       }
     }

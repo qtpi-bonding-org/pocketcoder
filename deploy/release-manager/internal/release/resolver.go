@@ -1,7 +1,6 @@
 package release
 
 import (
-	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -9,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/artifact"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/contract"
@@ -18,10 +16,8 @@ import (
 )
 
 const (
-	maximumDelegationBytes = 256 << 10
 	maximumPointerBytes    = 256 << 10
 	maximumRevocationBytes = 256 << 10
-	maximumEnvelopeBytes   = 16 << 10
 	maximumManifestBytes   = 1 << 20
 )
 
@@ -30,68 +26,41 @@ type Config struct {
 	Channel             string
 	StableSequenceFloor int64
 	State               state.Paths
-	RootPublicKey       ed25519.PublicKey
 	AllowRevoked        bool
 	Fetcher             artifact.Fetcher
-	Now                 func() time.Time
+	Verifier            trust.SubjectVerifier
 }
 
 type Resolved struct {
-	SchemaVersion      int                  `json:"schemaVersion"`
-	Channel            string               `json:"channel"`
-	ChannelSequence    int64                `json:"channelSequence"`
-	RevocationSequence int64                `json:"revocationSequence"`
-	ManifestSHA256     string               `json:"manifestSha256"`
-	ManifestPath       string               `json:"manifestPath"`
-	ManifestURL        string               `json:"manifestUrl"`
-	Revoked            *contract.Revocation `json:"revoked"`
-	Manifest           contract.Manifest    `json:"-"`
-	Revocations        contract.Revocations `json:"-"`
+	SchemaVersion      int                   `json:"schemaVersion"`
+	Channel            string                `json:"channel"`
+	ChannelSequence    int64                 `json:"channelSequence"`
+	RevocationSequence int64                 `json:"revocationSequence"`
+	ManifestSHA256     string                `json:"manifestSha256"`
+	ManifestPath       string                `json:"manifestPath"`
+	ManifestURL        string                `json:"manifestUrl"`
+	Revoked            *contract.Revocation  `json:"revoked"`
+	Manifest           contract.Manifest     `json:"-"`
+	Revocations        contract.Revocations  `json:"-"`
+	ReleaseBundle      []byte                `json:"-"`
+	Verifier           trust.SubjectVerifier `json:"-"`
 }
 
 type Resolver struct{ Config Config }
 
 func (resolver Resolver) Resolve() (Resolved, error) {
-	config := resolver.Config
-	config.ReleaseBase = strings.TrimRight(config.ReleaseBase, "/")
-	if config.ReleaseBase == "" || (config.Channel != "stable" && config.Channel != "beta" && config.Channel != "nightly") {
+	c := resolver.Config
+	c.ReleaseBase = strings.TrimRight(c.ReleaseBase, "/")
+	if c.ReleaseBase == "" || (c.Channel != "stable" && c.Channel != "beta" && c.Channel != "nightly") || c.Verifier == nil {
 		return Resolved{}, fmt.Errorf("invalid release resolver configuration")
 	}
-	sequences, err := state.LoadSequences(config.State.Sequences)
+	sequences, err := state.LoadSequences(c.State.Sequences)
 	if err != nil {
-		return Resolved{}, err
-	}
-	verifier := trust.Verifier{RootPublicKey: config.RootPublicKey, Now: config.Now}
-
-	delegationURL := config.ReleaseBase + "/v1/delegations/root.json"
-	delegationBytes, err := config.Fetcher.Bounded(delegationURL, maximumDelegationBytes)
-	if err != nil {
-		return Resolved{}, err
-	}
-	delegationEnvelopeBytes, err := config.Fetcher.Bounded(delegationURL+".sig", maximumEnvelopeBytes)
-	if err != nil {
-		return Resolved{}, err
-	}
-	var delegation contract.RootDelegation
-	var delegationEnvelope contract.SignatureEnvelope
-	if err := contract.DecodeStrict(delegationBytes, &delegation); err != nil {
-		return Resolved{}, err
-	}
-	if err := contract.DecodeStrict(delegationEnvelopeBytes, &delegationEnvelope); err != nil {
-		return Resolved{}, err
-	}
-	if err := verifier.VerifyRoot(delegationBytes, delegationEnvelope, delegation); err != nil {
-		return Resolved{}, err
-	}
-	if delegation.SchemaVersion != contract.SchemaVersion || delegation.Sequence < 1 {
-		return Resolved{}, fmt.Errorf("invalid root delegation")
-	}
-	if err := sequences.Accept("delegation", delegation.Sequence, 0); err != nil {
 		return Resolved{}, err
 	}
 
-	pointerURL := config.ReleaseBase + "/v1/channels/" + config.Channel + ".json"
-	pointerBytes, err := config.Fetcher.Bounded(pointerURL, maximumPointerBytes)
+	pointerURL := c.ReleaseBase + "/v1/channels/" + c.Channel + ".json"
+	pointerBytes, err := c.Fetcher.Bounded(pointerURL, maximumPointerBytes)
 	if err != nil {
 		return Resolved{}, err
 	}
@@ -99,32 +68,25 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 	if err := contract.DecodeStrict(pointerBytes, &pointer); err != nil {
 		return Resolved{}, err
 	}
-	if err := contract.ValidatePointer(pointer, config.Channel, config.ReleaseBase, maximumManifestBytes); err != nil {
+	if err := contract.ValidatePointer(pointer, c.Channel, c.ReleaseBase, maximumManifestBytes); err != nil {
 		return Resolved{}, err
 	}
-	pointerEnvelopeBytes, err := config.Fetcher.Bounded(pointer.Signature.URL, maximumEnvelopeBytes)
+	pointerBundle, err := c.Fetcher.Bounded(pointer.Attestation.URL, 16<<20)
 	if err != nil {
 		return Resolved{}, err
 	}
-	var pointerEnvelope contract.SignatureEnvelope
-	if err := contract.DecodeStrict(pointerEnvelopeBytes, &pointerEnvelope); err != nil {
-		return Resolved{}, err
-	}
-	if pointerEnvelope.KeyID != pointer.Signature.KeyID || pointerEnvelope.Algorithm != pointer.Signature.Algorithm {
-		return Resolved{}, fmt.Errorf("channel signature descriptor does not match its envelope")
-	}
-	if err := verifier.VerifyDelegated(pointerBytes, pointerEnvelope, "channel", delegation); err != nil {
+	if err := c.Verifier.Verify("channel", pointerBytes, pointerBundle); err != nil {
 		return Resolved{}, err
 	}
 	floor := int64(0)
-	if config.Channel == "stable" {
-		floor = config.StableSequenceFloor
+	if c.Channel == "stable" {
+		floor = c.StableSequenceFloor
 	}
-	if err := sequences.Accept("channel-"+config.Channel, pointer.Sequence, floor); err != nil {
+	if err := sequences.Accept("channel-"+c.Channel, pointer.Sequence, floor); err != nil {
 		return Resolved{}, err
 	}
 
-	manifestBytes, err := config.Fetcher.Bounded(pointer.Manifest.URL, maximumManifestBytes)
+	manifestBytes, err := c.Fetcher.Bounded(pointer.Manifest.URL, maximumManifestBytes)
 	if err != nil {
 		return Resolved{}, err
 	}
@@ -135,18 +97,11 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 	if hex.EncodeToString(digest[:]) != pointer.Manifest.SHA256 {
 		return Resolved{}, fmt.Errorf("manifest digest mismatch")
 	}
-	manifestEnvelopeBytes, err := config.Fetcher.Bounded(pointer.Manifest.Signature.URL, maximumEnvelopeBytes)
+	releaseBundle, err := c.Fetcher.Bounded(pointer.Manifest.Attestation.URL, 16<<20)
 	if err != nil {
 		return Resolved{}, err
 	}
-	var manifestEnvelope contract.SignatureEnvelope
-	if err := contract.DecodeStrict(manifestEnvelopeBytes, &manifestEnvelope); err != nil {
-		return Resolved{}, err
-	}
-	if manifestEnvelope.KeyID != pointer.Manifest.Signature.KeyID || manifestEnvelope.Algorithm != pointer.Manifest.Signature.Algorithm {
-		return Resolved{}, fmt.Errorf("manifest signature descriptor does not match its envelope")
-	}
-	if err := verifier.VerifyDelegated(manifestBytes, manifestEnvelope, "release", delegation); err != nil {
+	if err := c.Verifier.Verify("release", manifestBytes, releaseBundle); err != nil {
 		return Resolved{}, err
 	}
 	var manifest contract.Manifest
@@ -157,8 +112,8 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 
-	revocationURL := config.ReleaseBase + "/v1/revocations/releases.json"
-	revocationBytes, err := config.Fetcher.Bounded(revocationURL, maximumRevocationBytes)
+	revocationURL := c.ReleaseBase + "/v1/revocations/releases.json"
+	revocationBytes, err := c.Fetcher.Bounded(revocationURL, maximumRevocationBytes)
 	if err != nil {
 		return Resolved{}, err
 	}
@@ -169,16 +124,12 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 	if err := contract.ValidateRevocations(revocations); err != nil {
 		return Resolved{}, err
 	}
-	revocationEnvelopeURL := fmt.Sprintf("%s/v1/revocations/releases/%d.sig", config.ReleaseBase, revocations.Sequence)
-	revocationEnvelopeBytes, err := config.Fetcher.Bounded(revocationEnvelopeURL, maximumEnvelopeBytes)
+	revocationBundleURL := fmt.Sprintf("%s/v1/attestations/revocations/releases/%d.sigstore.json", c.ReleaseBase, revocations.Sequence)
+	revocationBundle, err := c.Fetcher.Bounded(revocationBundleURL, 16<<20)
 	if err != nil {
 		return Resolved{}, err
 	}
-	var revocationEnvelope contract.SignatureEnvelope
-	if err := contract.DecodeStrict(revocationEnvelopeBytes, &revocationEnvelope); err != nil {
-		return Resolved{}, err
-	}
-	if err := verifier.VerifyDelegated(revocationBytes, revocationEnvelope, "revocation", delegation); err != nil {
+	if err := c.Verifier.Verify("revocation", revocationBytes, revocationBundle); err != nil {
 		return Resolved{}, err
 	}
 	if err := sequences.Accept("revocation", revocations.Sequence, 0); err != nil {
@@ -186,35 +137,26 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 	}
 
 	var revoked *contract.Revocation
-	if value, exists := revocations.RevokedReleases[pointer.Manifest.SHA256]; exists {
+	if value, ok := revocations.RevokedReleases[pointer.Manifest.SHA256]; ok {
 		copy := value
 		revoked = &copy
-		if !config.AllowRevoked {
+		if !c.AllowRevoked {
 			return Resolved{}, fmt.Errorf("release %s is revoked: %s", pointer.Manifest.SHA256, value.ReasonCode)
 		}
 	}
-	resolvedDirectory := filepath.Join(config.State.Root, "resolved")
-	manifestDirectory := filepath.Join(config.State.Root, "manifests")
-	manifestPath := filepath.Join(manifestDirectory, pointer.Manifest.SHA256+".json")
+	manifestPath := filepath.Join(c.State.Root, "manifests", pointer.Manifest.SHA256+".json")
 	if err := state.WriteAtomic(manifestPath, manifestBytes, 0o644); err != nil {
 		return Resolved{}, err
 	}
-	if err := state.WriteAtomic(filepath.Join(resolvedDirectory, "revocations.json"), revocationBytes, 0o644); err != nil {
+	if err := state.WriteAtomic(filepath.Join(c.State.Root, "resolved", "revocations.json"), revocationBytes, 0o644); err != nil {
 		return Resolved{}, err
 	}
-	sequences["delegation"] = delegation.Sequence
-	sequences["channel-"+config.Channel] = pointer.Sequence
+	sequences["channel-"+c.Channel] = pointer.Sequence
 	sequences["revocation"] = revocations.Sequence
-	if err := state.WriteJSONAtomic(config.State.Sequences, sequences, 0o644); err != nil {
+	if err := state.WriteJSONAtomic(c.State.Sequences, sequences, 0o644); err != nil {
 		return Resolved{}, err
 	}
-	return Resolved{
-		SchemaVersion: contract.SchemaVersion, Channel: config.Channel,
-		ChannelSequence: pointer.Sequence, RevocationSequence: revocations.Sequence,
-		ManifestSHA256: pointer.Manifest.SHA256, ManifestPath: manifestPath,
-		ManifestURL: pointer.Manifest.URL, Revoked: revoked, Manifest: manifest,
-		Revocations: revocations,
-	}, nil
+	return Resolved{SchemaVersion: contract.SchemaVersion, Channel: c.Channel, ChannelSequence: pointer.Sequence, RevocationSequence: revocations.Sequence, ManifestSHA256: pointer.Manifest.SHA256, ManifestPath: manifestPath, ManifestURL: pointer.Manifest.URL, Revoked: revoked, Manifest: manifest, Revocations: revocations, ReleaseBundle: releaseBundle, Verifier: c.Verifier}, nil
 }
 
 func ReadCurrent(path string) (map[string]any, error) {
