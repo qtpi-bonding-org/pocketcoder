@@ -18,7 +18,7 @@ class ObservabilityRepository implements IObservabilityRepository {
   @override
   Stream<String> watchLogs(String containerName) {
     final controller = StreamController<String>();
-    final url = "${_pb.baseURL}${ApiEndpoints.logs(containerName)}";
+    final url = "${_pb.baseURL}${StreamingEndpoints.logs(containerName)}";
 
     logInfo('📈 [Observability] Subscribing to container log stream');
 
@@ -57,7 +57,7 @@ class ObservabilityRepository implements IObservabilityRepository {
     return tryMethod(
       () async {
         final response = await _pb.send(
-          ApiEndpoints.observability,
+          StreamingEndpoints.observability,
           method: 'GET',
         );
 

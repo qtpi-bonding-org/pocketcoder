@@ -3,81 +3,67 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/json_object.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
-part 'file_entry.g.dart';
+part 'content_block.g.dart';
 
-/// FileEntry
+/// ContentBlock
 ///
 /// Properties:
-/// * [name]
-/// * [isDir]
-/// * [size]
-/// * [modTime]
+/// * [type]
+/// * [text]
 @BuiltValue()
-abstract class FileEntry implements Built<FileEntry, FileEntryBuilder> {
-  @BuiltValueField(wireName: r'name')
-  String get name;
+abstract class ContentBlock implements Built<ContentBlock, ContentBlockBuilder> {
+  @BuiltValueField(wireName: r'type')
+  String get type;
 
-  @BuiltValueField(wireName: r'isDir')
-  bool get isDir;
+  @BuiltValueField(wireName: r'text')
+  String? get text;
 
-  @BuiltValueField(wireName: r'size')
-  int get size;
+  ContentBlock._();
 
-  @BuiltValueField(wireName: r'modTime')
-  String get modTime;
-
-  FileEntry._();
-
-  factory FileEntry([void updates(FileEntryBuilder b)]) = _$FileEntry;
+  factory ContentBlock([void updates(ContentBlockBuilder b)]) = _$ContentBlock;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(FileEntryBuilder b) => b;
+  static void _defaults(ContentBlockBuilder b) => b;
 
   @BuiltValueSerializer(custom: true)
-  static Serializer<FileEntry> get serializer => _$FileEntrySerializer();
+  static Serializer<ContentBlock> get serializer => _$ContentBlockSerializer();
 }
 
-class _$FileEntrySerializer implements PrimitiveSerializer<FileEntry> {
+class _$ContentBlockSerializer implements PrimitiveSerializer<ContentBlock> {
   @override
-  final Iterable<Type> types = const [FileEntry, _$FileEntry];
+  final Iterable<Type> types = const [ContentBlock, _$ContentBlock];
 
   @override
-  final String wireName = r'FileEntry';
+  final String wireName = r'ContentBlock';
 
   Iterable<Object?> _serializeProperties(
     Serializers serializers,
-    FileEntry object, {
+    ContentBlock object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
-    yield r'name';
+    yield r'type';
     yield serializers.serialize(
-      object.name,
+      object.type,
       specifiedType: const FullType(String),
     );
-    yield r'isDir';
-    yield serializers.serialize(
-      object.isDir,
-      specifiedType: const FullType(bool),
-    );
-    yield r'size';
-    yield serializers.serialize(
-      object.size,
-      specifiedType: const FullType(int),
-    );
-    yield r'modTime';
-    yield serializers.serialize(
-      object.modTime,
-      specifiedType: const FullType(String),
-    );
+    if (object.text != null) {
+      yield r'text';
+      yield serializers.serialize(
+        object.text,
+        specifiedType: const FullType(String),
+      );
+    }
   }
 
   @override
   Object serialize(
     Serializers serializers,
-    FileEntry object, {
+    ContentBlock object, {
     FullType specifiedType = FullType.unspecified,
   }) {
     return _serializeProperties(serializers, object, specifiedType: specifiedType).toList();
@@ -88,40 +74,27 @@ class _$FileEntrySerializer implements PrimitiveSerializer<FileEntry> {
     Object serialized, {
     FullType specifiedType = FullType.unspecified,
     required List<Object?> serializedList,
-    required FileEntryBuilder result,
+    required ContentBlockBuilder result,
     required List<Object?> unhandled,
   }) {
     for (var i = 0; i < serializedList.length; i += 2) {
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
-        case r'name':
+        case r'type':
           final valueDes = serializers.deserialize(
             value,
             specifiedType: const FullType(String),
           ) as String;
-          result.name = valueDes;
+          result.type = valueDes;
           break;
-        case r'isDir':
+        case r'text':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(bool),
-          ) as bool;
-          result.isDir = valueDes;
-          break;
-        case r'size':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(int),
-          ) as int;
-          result.size = valueDes;
-          break;
-        case r'modTime':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
-          result.modTime = valueDes;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.text = valueDes;
           break;
         default:
           unhandled.add(key);
@@ -132,12 +105,12 @@ class _$FileEntrySerializer implements PrimitiveSerializer<FileEntry> {
   }
 
   @override
-  FileEntry deserialize(
+  ContentBlock deserialize(
     Serializers serializers,
     Object serialized, {
     FullType specifiedType = FullType.unspecified,
   }) {
-    final result = FileEntryBuilder();
+    final result = ContentBlockBuilder();
     final serializedList = (serialized as Iterable<Object?>).toList();
     final unhandled = <Object?>[];
     _deserializeProperties(
@@ -151,4 +124,3 @@ class _$FileEntrySerializer implements PrimitiveSerializer<FileEntry> {
     return result.build();
   }
 }
-

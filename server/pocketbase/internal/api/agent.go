@@ -37,21 +37,10 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-// RegisterAgentApi registers PocketBase-owned routes. AG-UI is the response
-// format, not a second public service and never exposes Goose credentials.
-// Returns the constructed Coordinator (nil if configErr != nil) so callers
-// outside this package (main.go) can reuse it for admin-connection work
-// that isn't tied to any HTTP route.
-func RegisterAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent) (*coordinator.Coordinator, error) {
-	return registerAgentApi(app, e, nil) // nil => coordinator.New uses the real acp.Dial
-}
-
-// registerAgentApi is the seam: a non-nil dial overrides Config.Dial so
-// integration/local runs can inject a fake Goose without touching the
-// production entry point.
-func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coordinator.DialFunc) (*coordinator.Coordinator, error) {
+func AddAgentOperations(app *pocketbase.PocketBase, registry *operation.Registry, dial coordinator.DialFunc) (*coordinator.Coordinator, error) {
 	workspace := os.Getenv("POCKETCODER_WORKSPACE")
 	if workspace == "" {
 		workspace = "/workspace"
@@ -70,7 +59,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		})
 	}
 
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/prompt", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "promptChat", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/prompt", Auth: true, Action: func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -138,7 +127,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			return apis.NewApiError(http.StatusInternalServerError, "Unable to start agent run", err)
 		}
 		return re.JSON(http.StatusAccepted, map[string]string{"runId": runID})
-	}).Bind(apis.RequireAuth())
+	}})
 
 	// GET stream is the durable subscription: it attaches to the chat's hub at
 	// a caller-supplied cursor (?cursor= or Last-Event-ID), flushing the
@@ -146,7 +135,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 	// Reserves — any number of subscribers can attach without stalling or
 	// conflicting with an active run. A cursor whose history has been evicted
 	// (ColdReplayNeeded) is first backfilled via a bounded Goose replay.
-	e.Router.GET("/api/pocketcoder/chats/{chatId}/stream", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "streamChatEvents", Method: http.MethodGet, Path: "/api/pocketcoder/v1/chats/{chatId}/stream", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -208,9 +197,9 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 				}
 			}
 		}
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/cancel", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "cancelChatSession", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/cancel", Auth: true, Action: func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -226,9 +215,9 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			return apis.NewApiError(http.StatusBadGateway, "Unable to cancel agent run", err)
 		}
 		return re.NoContent(http.StatusAccepted)
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/set-mode", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "setChatMode", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/set-mode", Auth: true, Action: func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -250,9 +239,9 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			return apis.NewApiError(http.StatusBadGateway, "Unable to set mode", err)
 		}
 		return re.NoContent(http.StatusAccepted)
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/set-config-option", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "setChatConfigOption", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/set-config-option", Auth: true, Action: func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -275,11 +264,11 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			return apis.NewApiError(http.StatusBadGateway, "Unable to set config option", err)
 		}
 		return re.NoContent(http.StatusAccepted)
-	}).Bind(apis.RequireAuth())
+	}})
 
 	// Permission records are transient process state. The option is checked
 	// against the exact set Goose offered before it is forwarded over ACP.
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/request-permission/{id}", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "respondToPermission", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/request-permission/{id}", Auth: true, Action: func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -315,11 +304,11 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			return apis.NewApiError(http.StatusBadGateway, "Unable to submit permission decision", err)
 		}
 		return re.NoContent(http.StatusAccepted)
-	}).Bind(apis.RequireAuth())
+	}})
 
 	// Elicitation is a separate ACP side-channel from permission (spec N5):
 	// its own id-space, its own resolution path.
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/elicitation/{id}", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "respondToElicitation", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/elicitation/{id}", Auth: true, Action: func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -354,7 +343,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 			return apis.NewApiError(http.StatusBadGateway, "Unable to submit elicitation response", err)
 		}
 		return re.NoContent(http.StatusAccepted)
-	}).Bind(apis.RequireAuth())
+	}})
 
 	if service != nil {
 		// Best-effort cleanup: a deleted chat's mapped Agent session is

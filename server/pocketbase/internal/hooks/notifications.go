@@ -29,6 +29,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 // PushProvider defines the interface for different notification services.
@@ -137,11 +138,8 @@ func (p *FcmRelayProvider) Send(token, title, body string) error {
 func RegisterNotificationHooks(app core.App) {
 }
 
-// RegisterPushApi registers the POST /api/push endpoint.
-// Called by the interface service to send push notifications for
-// task_complete, task_error, and other notification types.
-func RegisterPushApi(app core.App, e *core.ServeEvent) {
-	e.Router.POST("/api/pocketcoder/push", func(re *core.RequestEvent) error {
+func AddPushOperations(app core.App, registry *operation.Registry) {
+	registry.Add(operation.Route{OperationID: "sendPushNotification", Method: http.MethodPost, Path: "/api/pocketcoder/v1/push", Auth: true, Action: func(re *core.RequestEvent) error {
 		// Only agent or admin can send push notifications
 		role := re.Auth.GetString("role")
 		if role != "agent" && role != "admin" {
@@ -167,7 +165,7 @@ func RegisterPushApi(app core.App, e *core.ServeEvent) {
 		go SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID)
 
 		return re.JSON(200, map[string]any{"ok": true})
-	}).Bind(apis.RequireAuth())
+	}})
 }
 
 // SendPushNotification is the unified dispatch function.

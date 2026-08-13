@@ -22,10 +22,10 @@ class LogsApi {
   const LogsApi(this._dio, this._serializers);
 
   /// streamContainerLogs
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [containerName] 
+  /// * [containerName]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -35,7 +35,7 @@ class LogsApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> streamContainerLogs({ 
+  Future<Response<BuiltMap<String, JsonObject>>> streamContainerLogs({
     required String containerName,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -44,7 +44,7 @@ class LogsApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/logs/{containerName}'.replaceAll('{' r'containerName' '}', encodeQueryParameter(_serializers, containerName, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/logs/{containerName}'.replaceAll('{' r'containerName' '}', encodeQueryParameter(_serializers, containerName, const FullType(String)).toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{

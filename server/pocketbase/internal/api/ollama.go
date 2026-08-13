@@ -18,10 +18,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseartifact"
 )
 
@@ -212,13 +211,11 @@ func waitForOllama(ctx context.Context, client *http.Client, baseURL string) err
 	}
 }
 
-// RegisterOllamaApi exposes a private local-model control plane. Installed
-// tags are virtual choices, never models/harness_models catalog records.
-func RegisterOllamaApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
+func AddOllamaOperations(registry *operation.Registry) {
 	client := ollamaHTTPClient()
 	docker := dockerapi.New()
 
-	e.Router.GET("/api/pocketcoder/ollama/models", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "listOllamaModels", Method: http.MethodGet, Path: "/api/pocketcoder/v1/ollama/models", Auth: true, Action: func(re *core.RequestEvent) error {
 		models, err := fetchOllamaTags(re.Request.Context(), client, ollamaURL())
 		if err != nil {
 			return re.JSON(http.StatusOK, map[string]any{
@@ -227,9 +224,9 @@ func RegisterOllamaApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
 			})
 		}
 		return re.JSON(http.StatusOK, map[string]any{"models": models, "enabled": true})
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.POST("/api/pocketcoder/ollama/pull", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "pullOllamaModel", Method: http.MethodPost, Path: "/api/pocketcoder/v1/ollama/pull", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
 		if err := requireAdmin(re); err != nil {
 			return err
 		}
@@ -271,5 +268,5 @@ func RegisterOllamaApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
 			}
 		}
 		return scanner.Err()
-	}).Bind(apis.RequireAuth())
+	}})
 }

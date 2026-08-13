@@ -20,10 +20,10 @@ class ObservabilityApi {
   const ObservabilityApi(this._dio, this._serializers);
 
   /// proxyObservability
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [path] 
+  /// * [path]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -33,7 +33,7 @@ class ObservabilityApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> proxyObservability({ 
+  Future<Response<void>> proxyObservability({
     required String path,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -42,7 +42,7 @@ class ObservabilityApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/proxy/observability/{path}'.replaceAll('{' r'path' '}', encodeQueryParameter(_serializers, path, const FullType(String)).toString());
+    final _path = r'/api/pocketcoder/v1/proxy/observability/{path}'.replaceAll('{' r'path' '}', encodeQueryParameter(_serializers, path, const FullType(String)).toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{

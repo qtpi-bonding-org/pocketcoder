@@ -1,18 +1,17 @@
 import 'package:injectable/injectable.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/scheduler/schedule_owner_dao.dart';
 
 @LazySingleton(as: ISchedulerRepository)
 class SchedulerRepository implements ISchedulerRepository {
-  final PocketBase _pb;
+  final PocketCoderApiClient _api;
   final ScheduleOwnerDao _dao;
 
-  SchedulerRepository(this._pb, this._dao);
+  SchedulerRepository(this._api, this._dao);
 
   @override
   Future<List<ScheduleOwner>> listSchedules() async {
@@ -109,10 +108,7 @@ class SchedulerRepository implements ISchedulerRepository {
   Future<void> runNow(String id) async {
     return tryMethod(
       () async {
-        await _pb.send<dynamic>(
-          ApiEndpoints.schedulesRunNow(id),
-          method: 'POST',
-        );
+        await _api.schedules.runScheduleNow(scheduleId: id);
       },
       SchedulerException.new,
       'runNow',

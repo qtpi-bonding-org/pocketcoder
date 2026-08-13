@@ -11,7 +11,7 @@ part 'accepted_response.g.dart';
 /// AcceptedResponse
 ///
 /// Properties:
-/// * [runId] 
+/// * [runId]
 @BuiltValue()
 abstract class AcceptedResponse implements Built<AcceptedResponse, AcceptedResponseBuilder> {
   @BuiltValueField(wireName: r'runId')

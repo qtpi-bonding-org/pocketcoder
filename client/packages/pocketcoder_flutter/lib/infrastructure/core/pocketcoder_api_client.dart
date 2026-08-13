@@ -1,3 +1,5 @@
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/json_object.dart';
 import 'package:dio/dio.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
@@ -9,22 +11,28 @@ import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 class PocketCoderApiClient {
   PocketCoderApiClient({required Dio dio})
       : _dio = dio,
-        release = generated.ReleaseApi(dio, generated.serializers),
-        agent = generated.AgentApi(dio, generated.serializers),
-        files = generated.FilesApi(dio, generated.serializers),
-        harnessAuth = generated.HarnessAuthApi(dio, generated.serializers),
-        logs = generated.LogsApi(dio, generated.serializers),
-        mcp = generated.McpApi(dio, generated.serializers),
-        observability = generated.ObservabilityApi(dio, generated.serializers),
-        ollama = generated.OllamaApi(dio, generated.serializers),
-        push = generated.PushApi(dio, generated.serializers),
-        schedules = generated.SchedulesApi(dio, generated.serializers);
+        release = generated.ReleaseApi(dio, generated.standardSerializers),
+        agent = generated.AgentApi(dio, generated.standardSerializers),
+        files = generated.FilesApi(dio, generated.standardSerializers),
+        harnessAuth =
+            generated.HarnessAuthApi(dio, generated.standardSerializers),
+        logs = generated.LogsApi(dio, generated.standardSerializers),
+        mcp = generated.McpApi(dio, generated.standardSerializers),
+        observability =
+            generated.ObservabilityApi(dio, generated.standardSerializers),
+        ollama = generated.OllamaApi(dio, generated.standardSerializers),
+        push = generated.PushApi(dio, generated.standardSerializers),
+        schedules = generated.SchedulesApi(dio, generated.standardSerializers);
 
   factory PocketCoderApiClient.fromPocketBase(PocketBase pocketBase) {
     final dio = Dio(BaseOptions(baseUrl: pocketBase.baseURL));
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          // The deployment URL can change during onboarding. Resolve it from
+          // PocketBase for every operation so generated clients cannot retain
+          // a stale host.
+          options.baseUrl = pocketBase.baseURL;
           final token = pocketBase.authStore.token;
           if (token.isNotEmpty) {
             // PocketBase uses the raw token, not `Bearer <token>`.
@@ -50,4 +58,21 @@ class PocketCoderApiClient {
   final generated.SchedulesApi schedules;
 
   Dio get dio => _dio;
+
+  static BuiltMap<String, JsonObject> encodeJson(
+    Map<String, dynamic> value,
+  ) {
+    return BuiltMap<String, JsonObject>(
+      value.map((key, item) => MapEntry(key, JsonObject(item))),
+    );
+  }
+
+  static Map<String, dynamic> decodeJson(
+    BuiltMap<String, JsonObject>? value,
+  ) {
+    if (value == null) return const {};
+    return {
+      for (final entry in value.entries) entry.key: entry.value.value,
+    };
+  }
 }

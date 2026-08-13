@@ -3,14 +3,15 @@ import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_daos.dart';
 
 @LazySingleton(as: IMcpRepository)
 class McpRepository implements IMcpRepository {
   final McpServerDao _mcpServerDao;
+  final PocketCoderApiClient _api;
 
-  McpRepository(this._mcpServerDao);
+  McpRepository(this._mcpServerDao, this._api);
 
   @override
   Stream<List<McpServer>> watchServers() {
@@ -77,14 +78,12 @@ class McpRepository implements IMcpRepository {
   }) async {
     return tryMethod(
       () async {
-        await _mcpServerDao.pb.send<dynamic>(
-          ApiEndpoints.mcpOAuthStore,
-          method: 'POST',
-          body: {
+        await _api.mcp.storeMcpOAuthToken(
+          requestBody: PocketCoderApiClient.encodeJson({
             'server_name': serverName,
             'access_token': accessToken,
             if (refreshToken != null && refreshToken.isNotEmpty) 'refresh_token': refreshToken,
-          },
+          }),
         );
       },
       McpException.new,

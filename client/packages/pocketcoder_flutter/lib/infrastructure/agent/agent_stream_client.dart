@@ -35,7 +35,7 @@ import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 /// lossily re-encoded), and the typed AG-UI event from [decodeAguiFrame].
 typedef StreamFrame = ({int seq, String rawJson, AguiEvent event});
 
-/// Connects to `GET /api/pocketcoder/chats/{chatId}/stream?cursor={cursor}` on
+/// Connects to `GET /api/pocketcoder/v1/chats/{chatId}/stream?cursor={cursor}` on
 /// the injected PocketBase's [baseURL], authenticating with the injected
 /// PocketBase's [authStore.token], and yields one [StreamFrame] per SSE
 /// record. Reconnection is caller-driven: this class never retries
@@ -82,7 +82,7 @@ class AgentStreamClient {
         final request = http.Request(
           'GET',
           Uri.parse(
-            '${_pb.baseURL}${ApiEndpoints.agentStream(chatId)}?cursor=$cursor',
+            '${_pb.baseURL}${StreamingEndpoints.agentStream(chatId)}?cursor=$cursor',
           ),
         );
         // c1 only checks the raw token value, so we mirror what

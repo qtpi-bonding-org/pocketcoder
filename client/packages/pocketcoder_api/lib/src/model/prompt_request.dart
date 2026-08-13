@@ -3,6 +3,8 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:pocketcoder_api/src/model/content_block.dart';
+import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -11,11 +13,11 @@ part 'prompt_request.g.dart';
 /// PromptRequest
 ///
 /// Properties:
-/// * [prompt] 
+/// * [prompt]
 @BuiltValue()
 abstract class PromptRequest implements Built<PromptRequest, PromptRequestBuilder> {
   @BuiltValueField(wireName: r'prompt')
-  String get prompt;
+  BuiltList<ContentBlock> get prompt;
 
   PromptRequest._();
 
@@ -43,7 +45,7 @@ class _$PromptRequestSerializer implements PrimitiveSerializer<PromptRequest> {
     yield r'prompt';
     yield serializers.serialize(
       object.prompt,
-      specifiedType: const FullType(String),
+      specifiedType: const FullType(BuiltList, [FullType(ContentBlock)]),
     );
   }
 
@@ -71,9 +73,9 @@ class _$PromptRequestSerializer implements PrimitiveSerializer<PromptRequest> {
         case r'prompt':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
-          result.prompt = valueDes;
+            specifiedType: const FullType(BuiltList, [FullType(ContentBlock)]),
+          ) as BuiltList<ContentBlock>;
+          result.prompt.replace(valueDes);
           break;
         default:
           unhandled.add(key);

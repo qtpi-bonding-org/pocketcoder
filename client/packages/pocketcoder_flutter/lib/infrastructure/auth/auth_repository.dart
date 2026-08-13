@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 
@@ -21,6 +21,7 @@ class AuthRepository implements IAuthRepository {
   final FlutterSecureStorage _storage;
   final BillingService _billingService;
   final PushService _pushService;
+  final PocketCoderApiClient _api;
 
   AuthRepository(
     this._pocketBase,
@@ -28,6 +29,7 @@ class AuthRepository implements IAuthRepository {
     this._storage,
     this._billingService,
     this._pushService,
+    this._api,
   );
 
   @override
@@ -62,14 +64,9 @@ class AuthRepository implements IAuthRepository {
   Future<void> verifyServerCompatibility() async {
     await tryMethod(
       () async {
-        final response = _pocketBase is $PocketBase
-            ? await _pocketBase.send<Map<String, dynamic>>(
-                ApiEndpoints.releaseCompatibility,
-                requestPolicy: RequestPolicy.networkOnly,
-              )
-            : await _pocketBase.send<Map<String, dynamic>>(
-                ApiEndpoints.releaseCompatibility,
-              );
+        final generatedResponse =
+            await _api.release.getReleaseCompatibility();
+        final response = PocketCoderApiClient.decodeJson(generatedResponse.data);
         final compatibility = response['compatibility'];
         if (compatibility is! Map<String, dynamic>) {
           throw const FormatException(

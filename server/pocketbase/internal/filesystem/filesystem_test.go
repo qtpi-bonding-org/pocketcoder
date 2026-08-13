@@ -28,9 +28,16 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 	"github.com/pocketbase/pocketbase/tools/filesystem/blob"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
+
+func mountFileOperations(e *core.ServeEvent) {
+	registry := operation.NewRegistry()
+	AddFileOperations(registry)
+	operation.MountForTests(e, registry.Routes())
+}
 
 func withTestWorkspaceRoot(t *testing.T, dir string) {
 	t.Helper()
@@ -244,11 +251,11 @@ func TestFilesListEndpoint_RequiresAuth(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files-list without auth is rejected",
 		Method:          http.MethodGet,
-			URL:             "/api/pocketcoder/files-list",
+		URL:             "/api/pocketcoder/v1/files-list",
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			RegisterFilesApi(nil, e)
+			mountFileOperations(e)
 		},
 	}
 	scenario.Test(t)
@@ -260,11 +267,11 @@ func TestFilesReadEndpoint_RequiresAuth(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files read without auth is rejected",
 		Method:          http.MethodGet,
-			URL:             "/api/pocketcoder/files?path=main.go",
+		URL:             "/api/pocketcoder/v1/files?path=main.go",
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			RegisterFilesApi(nil, e)
+			mountFileOperations(e)
 		},
 	}
 	scenario.Test(t)
@@ -290,12 +297,12 @@ func TestFilesListEndpoint_ReturnsImmediateChildren(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files-list returns immediate children as JSON",
 		Method:          http.MethodGet,
-			URL:             "/api/pocketcoder/files-list",
+		URL:             "/api/pocketcoder/v1/files-list",
 		Headers:         headers,
 		ExpectedStatus:  200,
 		ExpectedContent: []string{`"name":"main.go"`, `"name":"internal"`, `"isDir":true`},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			RegisterFilesApi(nil, e)
+			mountFileOperations(e)
 			user := newFilesTestUser(t, app, "files-list@example.com")
 			token, err := user.NewAuthToken()
 			if err != nil {
@@ -322,12 +329,12 @@ func TestFilesListEndpoint_RejectsSymlinkEscape(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files-list rejects a symlink that escapes the workspace root",
 		Method:          http.MethodGet,
-			URL:             "/api/pocketcoder/files-list?path=escape",
+		URL:             "/api/pocketcoder/v1/files-list?path=escape",
 		Headers:         headers,
 		ExpectedStatus:  403,
 		ExpectedContent: []string{"escape attempt"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			RegisterFilesApi(nil, e)
+			mountFileOperations(e)
 			user := newFilesTestUser(t, app, "symlink-escape@example.com")
 			token, err := user.NewAuthToken()
 			if err != nil {
@@ -354,12 +361,12 @@ func TestFilesReadEndpoint_RejectsSymlinkEscape(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files read rejects a symlink that escapes the workspace root",
 		Method:          http.MethodGet,
-			URL:             "/api/pocketcoder/files?path=escape%2Fsecret.txt",
+		URL:             "/api/pocketcoder/v1/files?path=escape%2Fsecret.txt",
 		Headers:         headers,
 		ExpectedStatus:  403,
 		ExpectedContent: []string{"escape attempt"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			RegisterFilesApi(nil, e)
+			mountFileOperations(e)
 			user := newFilesTestUser(t, app, "read-symlink-escape@example.com")
 			token, err := user.NewAuthToken()
 			if err != nil {

@@ -8,7 +8,14 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
+
+func mountReleaseStatusOperations(e *core.ServeEvent) {
+	registry := operation.NewRegistry()
+	AddReleaseStatusOperations(registry)
+	operation.MountForTests(e, registry.Routes())
+}
 
 func writeReleaseFixture(t *testing.T, name, body string) {
 	t.Helper()
@@ -44,24 +51,33 @@ func TestReleaseCompatibilityExposesContractsWithoutIdentity(t *testing.T) {
 		"sourceCommit":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
 		"serverVersion":"1.2.3",
 		"dataVersion":3,
-		"deploymentContractVersion":2
+		"deploymentContractVersion":2,
+		"compatibility":{
+			"app":{"contractVersion":1,"officialMinimumVersions":{"pocketcoder-pro":"1.0.0","pocketcoder-foss":"1.0.0"}},
+			"server":{"apiVersion":1},
+			"workers":{"image-relay":1,"push-relay":1,"oauth-relay":1},
+			"provisioning":{"contractVersion":1},
+			"deployment":{"contractVersion":2,"supportedSourceContractVersions":{"minimum":1,"maximum":2}}
+		}
 	}`)
 
 	scenario := tests.ApiScenario{
 		Name:           "public compatibility contains only contracts",
 		Method:         http.MethodGet,
-		URL:            "/api/pocketcoder/release/compatibility",
+		URL:            "/api/pocketcoder/v1/compatibility",
 		ExpectedStatus: 200,
 		ExpectedContent: []string{
 			`"schemaVersion":1`,
 			`"apiVersion":1`,
 			`"contractVersion":1`,
 			`"dataVersion":3`,
-			`"deployment":{"contractVersion":2}`,
+			`"deployment":{"contractVersion":2,`,
+			`"workers":{`,
+			`"provisioning":{"contractVersion":1}`,
 		},
 		NotExpectedContent: []string{"releaseDigest", "sourceCommit", "1.2.3"},
 		BeforeTestFunc: func(_ testing.TB, _ *tests.TestApp, e *core.ServeEvent) {
-			RegisterReleaseStatusApi(nil, e)
+			mountReleaseStatusOperations(e)
 		},
 	}
 	scenario.Test(t)
@@ -72,11 +88,11 @@ func TestReleaseStatusRequiresAuth(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "release status requires auth",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/release/status",
+		URL:             "/api/pocketcoder/v1/release/status",
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(_ testing.TB, _ *tests.TestApp, e *core.ServeEvent) {
-			RegisterReleaseStatusApi(nil, e)
+			mountReleaseStatusOperations(e)
 		},
 	}
 	scenario.Test(t)
@@ -107,7 +123,7 @@ func TestReleaseStatusCarriesCachedMetadataStatus(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:           "authenticated release status includes cached update state",
 		Method:         http.MethodGet,
-		URL:            "/api/pocketcoder/release/status",
+		URL:            "/api/pocketcoder/v1/release/status",
 		Headers:        headers,
 		ExpectedStatus: 200,
 		ExpectedContent: []string{
@@ -119,7 +135,7 @@ func TestReleaseStatusCarriesCachedMetadataStatus(t *testing.T) {
 			`"requiredDiskBytes":456`,
 		},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			RegisterReleaseStatusApi(nil, e)
+			mountReleaseStatusOperations(e)
 			user := releaseTestUser(t, app)
 			token, err := user.NewAuthToken()
 			if err != nil {

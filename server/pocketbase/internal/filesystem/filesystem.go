@@ -21,16 +21,16 @@ package filesystem
 
 import (
 	"io"
+	"net/http"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"github.com/pocketbase/pocketbase/tools/filesystem/blob"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 // fileEntry is one immediate child of a listed directory.
@@ -118,9 +118,8 @@ func groupImmediateChildren(prefix string, objects []*blob.ListObject) []fileEnt
 	return result
 }
 
-// RegisterFilesApi provides a secure window into the /workspace using the PB Filesystem abstraction.
-func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.GET("/api/pocketcoder/files", func(re *core.RequestEvent) error {
+func AddFileOperations(registry *operation.Registry) {
+	registry.Add(operation.Route{OperationID: "getWorkspaceFile", Method: http.MethodGet, Path: "/api/pocketcoder/v1/files", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
 		// 1. Auth Gate
 		if re.Auth == nil {
 			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
@@ -168,9 +167,9 @@ func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 		_, err = io.Copy(re.Response, r)
 		return err
-	}).Bind(apis.RequireAuth())
+	}})
 
-	e.Router.GET("/api/pocketcoder/files-list", func(re *core.RequestEvent) error {
+	registry.Add(operation.Route{OperationID: "listWorkspaceFiles", Method: http.MethodGet, Path: "/api/pocketcoder/v1/files-list", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
 		}
@@ -205,5 +204,5 @@ func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			"path":    cleanPath,
 			"entries": entries,
 		})
-	}).Bind(apis.RequireAuth())
+	}})
 }

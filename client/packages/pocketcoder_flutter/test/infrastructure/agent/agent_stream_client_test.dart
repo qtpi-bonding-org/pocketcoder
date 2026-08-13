@@ -75,7 +75,8 @@ void main() {
   group('connect()', () {
     test(
       'parses a single SSE frame into a StreamFrame with the right seq + '
-      'decoded event', () async {
+      'decoded event',
+      () async {
         final body = Stream<List<int>>.fromIterable([
           utf8.encode('id: 3\ndata: $runStartedJson\n\n'),
         ]);
@@ -172,7 +173,7 @@ void main() {
       final req = fake.lastRequest;
       expect(req, isNotNull);
       expect(req?.url.toString(),
-          'http://pb.local:8090/api/pocketcoder/chats/chat-xyz/stream?cursor=42');
+          'http://pb.local:8090/api/pocketcoder/v1/chats/chat-xyz/stream?cursor=42');
       expect(req?.method, 'GET');
     });
 
