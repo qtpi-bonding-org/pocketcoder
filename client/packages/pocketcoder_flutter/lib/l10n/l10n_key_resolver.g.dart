@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-13T03:24:26.948903
+// Generated at: 2026-08-13T04:14:58.080761
 
 import 'app_localizations.dart';
 
@@ -447,6 +447,25 @@ class L10nKeyResolver {
       'pocket.coder.progress.initializing' => _l10n.pocketCoderProgressInitializing,
       'pocket.coder.progress.provision.server' => _l10n.pocketCoderProgressProvisionServer,
       'pocket.coder.progress.waiting' => _l10n.pocketCoderProgressWaiting,
+      'pocket.coder.update.available' => _l10n.pocketCoderUpdateAvailable,
+      'pocket.coder.update.available.status' => _l10n.pocketCoderUpdateAvailableStatus,
+      'pocket.coder.update.check.again' => _l10n.pocketCoderUpdateCheckAgain,
+      'pocket.coder.update.checking' => _l10n.pocketCoderUpdateChecking,
+      'pocket.coder.update.command' => _l10n.pocketCoderUpdateCommand,
+      'pocket.coder.update.confirm.upgrade' => _l10n.pocketCoderUpdateConfirmUpgrade,
+      'pocket.coder.update.critical.status' => _l10n.pocketCoderUpdateCriticalStatus,
+      'pocket.coder.update.current' => _l10n.pocketCoderUpdateCurrent,
+      'pocket.coder.update.current.status' => _l10n.pocketCoderUpdateCurrentStatus,
+      'pocket.coder.update.download' => _l10n.pocketCoderUpdateDownload,
+      'pocket.coder.update.no.deployment' => _l10n.pocketCoderUpdateNoDeployment,
+      'pocket.coder.update.output' => _l10n.pocketCoderUpdateOutput,
+      'pocket.coder.update.required.disk' => _l10n.pocketCoderUpdateRequiredDisk,
+      'pocket.coder.update.review.data.change' => _l10n.pocketCoderUpdateReviewDataChange,
+      'pocket.coder.update.rollback.warning' => _l10n.pocketCoderUpdateRollbackWarning,
+      'pocket.coder.update.title' => _l10n.pocketCoderUpdateTitle,
+      'pocket.coder.update.unknown.status' => _l10n.pocketCoderUpdateUnknownStatus,
+      'pocket.coder.update.upgrade' => _l10n.pocketCoderUpdateUpgrade,
+      'pocket.coder.update.working' => _l10n.pocketCoderUpdateWorking,
       'poco.lesson.agent.explanation' => _l10n.pocoLessonAgentExplanation,
       'poco.lesson.agent.title' => _l10n.pocoLessonAgentTitle,
       'poco.lesson.compose.start.explanation' => _l10n.pocoLessonComposeStartExplanation,
@@ -554,23 +573,6 @@ class L10nKeyResolver {
       'scheduler.running.badge' => _l10n.schedulerRunningBadge,
       'scheduler.save.button' => _l10n.schedulerSaveButton,
       'scheduler.title' => _l10n.schedulerTitle,
-      'server.update.available' => _l10n.serverUpdateAvailable,
-      'server.update.available.status' => _l10n.serverUpdateAvailableStatus,
-      'server.update.check.again' => _l10n.serverUpdateCheckAgain,
-      'server.update.checking' => _l10n.serverUpdateChecking,
-      'server.update.command' => _l10n.serverUpdateCommand,
-      'server.update.confirm.upgrade' => _l10n.serverUpdateConfirmUpgrade,
-      'server.update.critical.status' => _l10n.serverUpdateCriticalStatus,
-      'server.update.current' => _l10n.serverUpdateCurrent,
-      'server.update.current.status' => _l10n.serverUpdateCurrentStatus,
-      'server.update.download' => _l10n.serverUpdateDownload,
-      'server.update.output' => _l10n.serverUpdateOutput,
-      'server.update.required.disk' => _l10n.serverUpdateRequiredDisk,
-      'server.update.review.data.change' => _l10n.serverUpdateReviewDataChange,
-      'server.update.rollback.warning' => _l10n.serverUpdateRollbackWarning,
-      'server.update.unknown.status' => _l10n.serverUpdateUnknownStatus,
-      'server.update.upgrade' => _l10n.serverUpdateUpgrade,
-      'server.update.working' => _l10n.serverUpdateWorking,
       'settings.account.section' => _l10n.settingsAccountSection,
       'settings.ai.agents.section' => _l10n.settingsAiAgentsSection,
       'settings.automation.section' => _l10n.settingsAutomationSection,
@@ -771,6 +773,7 @@ class L10nKeyResolver {
       'onboarding.review.poco' => _l10n.onboardingReviewPoco(args?['providerName'] as String? ?? ''),
       'onboarding.trial.poco' => _l10n.onboardingTrialPoco(args?['trialDuration'] as int? ?? 0),
       'permission.requesting.label' => _l10n.permissionRequestingLabel(args?['source'] as String? ?? ''),
+      'pocket.coder.update.data.boundary' => _l10n.pocketCoderUpdateDataBoundary(args?['currentVersion'] as int? ?? 0, args?['availableVersion'] as int? ?? 0),
       'pro.price' => _l10n.proPrice(args?['price'] as String? ?? ''),
       'pro.price.after.trial' => _l10n.proPriceAfterTrial(args?['price'] as String? ?? ''),
       'pro.price.per.month' => _l10n.proPricePerMonth(args?['price'] as String? ?? ''),
@@ -784,7 +787,6 @@ class L10nKeyResolver {
       'provider.screen.add.key.title' => _l10n.providerScreenAddKeyTitle(args?['provider'] as String? ?? ''),
       'provider.screen.error.prefix' => _l10n.providerScreenErrorPrefix(args?['error'] as String? ?? ''),
       'scheduler.edit.dialog.title' => _l10n.schedulerEditDialogTitle(args?['name'] as String? ?? ''),
-      'server.update.data.boundary' => _l10n.serverUpdateDataBoundary(args?['currentVersion'] as int? ?? 0, args?['availableVersion'] as int? ?? 0),
       'skills.edit.dialog.title' => _l10n.skillsEditDialogTitle(args?['name'] as String? ?? ''),
       'terminal.ssh.link' => _l10n.terminalSshLink(args?['host'] as String? ?? '', args?['port'] as String? ?? ''),
       'walkthrough.header' => _l10n.walkthroughHeader(args?['os'] as String? ?? '', args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
@@ -1261,6 +1263,26 @@ class L10nKeyResolver {
     'pocket.coder.progress.initializing',
     'pocket.coder.progress.provision.server',
     'pocket.coder.progress.waiting',
+    'pocket.coder.update.available',
+    'pocket.coder.update.available.status',
+    'pocket.coder.update.check.again',
+    'pocket.coder.update.checking',
+    'pocket.coder.update.command',
+    'pocket.coder.update.confirm.upgrade',
+    'pocket.coder.update.critical.status',
+    'pocket.coder.update.current',
+    'pocket.coder.update.current.status',
+    'pocket.coder.update.data.boundary',
+    'pocket.coder.update.download',
+    'pocket.coder.update.no.deployment',
+    'pocket.coder.update.output',
+    'pocket.coder.update.required.disk',
+    'pocket.coder.update.review.data.change',
+    'pocket.coder.update.rollback.warning',
+    'pocket.coder.update.title',
+    'pocket.coder.update.unknown.status',
+    'pocket.coder.update.upgrade',
+    'pocket.coder.update.working',
     'poco.lesson.agent.explanation',
     'poco.lesson.agent.title',
     'poco.lesson.compose.start.explanation',
@@ -1381,24 +1403,6 @@ class L10nKeyResolver {
     'scheduler.running.badge',
     'scheduler.save.button',
     'scheduler.title',
-    'server.update.available',
-    'server.update.available.status',
-    'server.update.check.again',
-    'server.update.checking',
-    'server.update.command',
-    'server.update.confirm.upgrade',
-    'server.update.critical.status',
-    'server.update.current',
-    'server.update.current.status',
-    'server.update.data.boundary',
-    'server.update.download',
-    'server.update.output',
-    'server.update.required.disk',
-    'server.update.review.data.change',
-    'server.update.rollback.warning',
-    'server.update.unknown.status',
-    'server.update.upgrade',
-    'server.update.working',
     'settings.account.section',
     'settings.ai.agents.section',
     'settings.automation.section',
@@ -2031,6 +2035,26 @@ class L10nKeyResolver {
     'pocketCoderProgressInitializing': 'pocket.coder.progress.initializing',
     'pocketCoderProgressProvisionServer': 'pocket.coder.progress.provision.server',
     'pocketCoderProgressWaiting': 'pocket.coder.progress.waiting',
+    'pocketCoderUpdateAvailable': 'pocket.coder.update.available',
+    'pocketCoderUpdateAvailableStatus': 'pocket.coder.update.available.status',
+    'pocketCoderUpdateCheckAgain': 'pocket.coder.update.check.again',
+    'pocketCoderUpdateChecking': 'pocket.coder.update.checking',
+    'pocketCoderUpdateCommand': 'pocket.coder.update.command',
+    'pocketCoderUpdateConfirmUpgrade': 'pocket.coder.update.confirm.upgrade',
+    'pocketCoderUpdateCriticalStatus': 'pocket.coder.update.critical.status',
+    'pocketCoderUpdateCurrent': 'pocket.coder.update.current',
+    'pocketCoderUpdateCurrentStatus': 'pocket.coder.update.current.status',
+    'pocketCoderUpdateDataBoundary': 'pocket.coder.update.data.boundary',
+    'pocketCoderUpdateDownload': 'pocket.coder.update.download',
+    'pocketCoderUpdateNoDeployment': 'pocket.coder.update.no.deployment',
+    'pocketCoderUpdateOutput': 'pocket.coder.update.output',
+    'pocketCoderUpdateRequiredDisk': 'pocket.coder.update.required.disk',
+    'pocketCoderUpdateReviewDataChange': 'pocket.coder.update.review.data.change',
+    'pocketCoderUpdateRollbackWarning': 'pocket.coder.update.rollback.warning',
+    'pocketCoderUpdateTitle': 'pocket.coder.update.title',
+    'pocketCoderUpdateUnknownStatus': 'pocket.coder.update.unknown.status',
+    'pocketCoderUpdateUpgrade': 'pocket.coder.update.upgrade',
+    'pocketCoderUpdateWorking': 'pocket.coder.update.working',
     'pocoLessonAgentExplanation': 'poco.lesson.agent.explanation',
     'pocoLessonAgentTitle': 'poco.lesson.agent.title',
     'pocoLessonComposeStartExplanation': 'poco.lesson.compose.start.explanation',
@@ -2151,24 +2175,6 @@ class L10nKeyResolver {
     'schedulerRunningBadge': 'scheduler.running.badge',
     'schedulerSaveButton': 'scheduler.save.button',
     'schedulerTitle': 'scheduler.title',
-    'serverUpdateAvailable': 'server.update.available',
-    'serverUpdateAvailableStatus': 'server.update.available.status',
-    'serverUpdateCheckAgain': 'server.update.check.again',
-    'serverUpdateChecking': 'server.update.checking',
-    'serverUpdateCommand': 'server.update.command',
-    'serverUpdateConfirmUpgrade': 'server.update.confirm.upgrade',
-    'serverUpdateCriticalStatus': 'server.update.critical.status',
-    'serverUpdateCurrent': 'server.update.current',
-    'serverUpdateCurrentStatus': 'server.update.current.status',
-    'serverUpdateDataBoundary': 'server.update.data.boundary',
-    'serverUpdateDownload': 'server.update.download',
-    'serverUpdateOutput': 'server.update.output',
-    'serverUpdateRequiredDisk': 'server.update.required.disk',
-    'serverUpdateReviewDataChange': 'server.update.review.data.change',
-    'serverUpdateRollbackWarning': 'server.update.rollback.warning',
-    'serverUpdateUnknownStatus': 'server.update.unknown.status',
-    'serverUpdateUpgrade': 'server.update.upgrade',
-    'serverUpdateWorking': 'server.update.working',
     'settingsAccountSection': 'settings.account.section',
     'settingsAiAgentsSection': 'settings.ai.agents.section',
     'settingsAutomationSection': 'settings.automation.section',
@@ -2798,6 +2804,26 @@ class L10nKeyResolver {
     'pocket.coder.progress.initializing': 'pocketCoderProgressInitializing',
     'pocket.coder.progress.provision.server': 'pocketCoderProgressProvisionServer',
     'pocket.coder.progress.waiting': 'pocketCoderProgressWaiting',
+    'pocket.coder.update.available': 'pocketCoderUpdateAvailable',
+    'pocket.coder.update.available.status': 'pocketCoderUpdateAvailableStatus',
+    'pocket.coder.update.check.again': 'pocketCoderUpdateCheckAgain',
+    'pocket.coder.update.checking': 'pocketCoderUpdateChecking',
+    'pocket.coder.update.command': 'pocketCoderUpdateCommand',
+    'pocket.coder.update.confirm.upgrade': 'pocketCoderUpdateConfirmUpgrade',
+    'pocket.coder.update.critical.status': 'pocketCoderUpdateCriticalStatus',
+    'pocket.coder.update.current': 'pocketCoderUpdateCurrent',
+    'pocket.coder.update.current.status': 'pocketCoderUpdateCurrentStatus',
+    'pocket.coder.update.data.boundary': 'pocketCoderUpdateDataBoundary',
+    'pocket.coder.update.download': 'pocketCoderUpdateDownload',
+    'pocket.coder.update.no.deployment': 'pocketCoderUpdateNoDeployment',
+    'pocket.coder.update.output': 'pocketCoderUpdateOutput',
+    'pocket.coder.update.required.disk': 'pocketCoderUpdateRequiredDisk',
+    'pocket.coder.update.review.data.change': 'pocketCoderUpdateReviewDataChange',
+    'pocket.coder.update.rollback.warning': 'pocketCoderUpdateRollbackWarning',
+    'pocket.coder.update.title': 'pocketCoderUpdateTitle',
+    'pocket.coder.update.unknown.status': 'pocketCoderUpdateUnknownStatus',
+    'pocket.coder.update.upgrade': 'pocketCoderUpdateUpgrade',
+    'pocket.coder.update.working': 'pocketCoderUpdateWorking',
     'poco.lesson.agent.explanation': 'pocoLessonAgentExplanation',
     'poco.lesson.agent.title': 'pocoLessonAgentTitle',
     'poco.lesson.compose.start.explanation': 'pocoLessonComposeStartExplanation',
@@ -2918,24 +2944,6 @@ class L10nKeyResolver {
     'scheduler.running.badge': 'schedulerRunningBadge',
     'scheduler.save.button': 'schedulerSaveButton',
     'scheduler.title': 'schedulerTitle',
-    'server.update.available': 'serverUpdateAvailable',
-    'server.update.available.status': 'serverUpdateAvailableStatus',
-    'server.update.check.again': 'serverUpdateCheckAgain',
-    'server.update.checking': 'serverUpdateChecking',
-    'server.update.command': 'serverUpdateCommand',
-    'server.update.confirm.upgrade': 'serverUpdateConfirmUpgrade',
-    'server.update.critical.status': 'serverUpdateCriticalStatus',
-    'server.update.current': 'serverUpdateCurrent',
-    'server.update.current.status': 'serverUpdateCurrentStatus',
-    'server.update.data.boundary': 'serverUpdateDataBoundary',
-    'server.update.download': 'serverUpdateDownload',
-    'server.update.output': 'serverUpdateOutput',
-    'server.update.required.disk': 'serverUpdateRequiredDisk',
-    'server.update.review.data.change': 'serverUpdateReviewDataChange',
-    'server.update.rollback.warning': 'serverUpdateRollbackWarning',
-    'server.update.unknown.status': 'serverUpdateUnknownStatus',
-    'server.update.upgrade': 'serverUpdateUpgrade',
-    'server.update.working': 'serverUpdateWorking',
     'settings.account.section': 'settingsAccountSection',
     'settings.ai.agents.section': 'settingsAiAgentsSection',
     'settings.automation.section': 'settingsAutomationSection',
@@ -3572,6 +3580,26 @@ abstract class L10nKeys {
   static const pocketCoderProgressInitializing = 'pocket.coder.progress.initializing';
   static const pocketCoderProgressProvisionServer = 'pocket.coder.progress.provision.server';
   static const pocketCoderProgressWaiting = 'pocket.coder.progress.waiting';
+  static const pocketCoderUpdateAvailable = 'pocket.coder.update.available';
+  static const pocketCoderUpdateAvailableStatus = 'pocket.coder.update.available.status';
+  static const pocketCoderUpdateCheckAgain = 'pocket.coder.update.check.again';
+  static const pocketCoderUpdateChecking = 'pocket.coder.update.checking';
+  static const pocketCoderUpdateCommand = 'pocket.coder.update.command';
+  static const pocketCoderUpdateConfirmUpgrade = 'pocket.coder.update.confirm.upgrade';
+  static const pocketCoderUpdateCriticalStatus = 'pocket.coder.update.critical.status';
+  static const pocketCoderUpdateCurrent = 'pocket.coder.update.current';
+  static const pocketCoderUpdateCurrentStatus = 'pocket.coder.update.current.status';
+  static (String, Map<String, dynamic>) pocketCoderUpdateDataBoundary(int currentVersion, int availableVersion) => ('pocket.coder.update.data.boundary', {'currentVersion': currentVersion, 'availableVersion': availableVersion});
+  static const pocketCoderUpdateDownload = 'pocket.coder.update.download';
+  static const pocketCoderUpdateNoDeployment = 'pocket.coder.update.no.deployment';
+  static const pocketCoderUpdateOutput = 'pocket.coder.update.output';
+  static const pocketCoderUpdateRequiredDisk = 'pocket.coder.update.required.disk';
+  static const pocketCoderUpdateReviewDataChange = 'pocket.coder.update.review.data.change';
+  static const pocketCoderUpdateRollbackWarning = 'pocket.coder.update.rollback.warning';
+  static const pocketCoderUpdateTitle = 'pocket.coder.update.title';
+  static const pocketCoderUpdateUnknownStatus = 'pocket.coder.update.unknown.status';
+  static const pocketCoderUpdateUpgrade = 'pocket.coder.update.upgrade';
+  static const pocketCoderUpdateWorking = 'pocket.coder.update.working';
   static const pocoLessonAgentExplanation = 'poco.lesson.agent.explanation';
   static const pocoLessonAgentTitle = 'poco.lesson.agent.title';
   static const pocoLessonComposeStartExplanation = 'poco.lesson.compose.start.explanation';
@@ -3692,24 +3720,6 @@ abstract class L10nKeys {
   static const schedulerRunningBadge = 'scheduler.running.badge';
   static const schedulerSaveButton = 'scheduler.save.button';
   static const schedulerTitle = 'scheduler.title';
-  static const serverUpdateAvailable = 'server.update.available';
-  static const serverUpdateAvailableStatus = 'server.update.available.status';
-  static const serverUpdateCheckAgain = 'server.update.check.again';
-  static const serverUpdateChecking = 'server.update.checking';
-  static const serverUpdateCommand = 'server.update.command';
-  static const serverUpdateConfirmUpgrade = 'server.update.confirm.upgrade';
-  static const serverUpdateCriticalStatus = 'server.update.critical.status';
-  static const serverUpdateCurrent = 'server.update.current';
-  static const serverUpdateCurrentStatus = 'server.update.current.status';
-  static (String, Map<String, dynamic>) serverUpdateDataBoundary(int currentVersion, int availableVersion) => ('server.update.data.boundary', {'currentVersion': currentVersion, 'availableVersion': availableVersion});
-  static const serverUpdateDownload = 'server.update.download';
-  static const serverUpdateOutput = 'server.update.output';
-  static const serverUpdateRequiredDisk = 'server.update.required.disk';
-  static const serverUpdateReviewDataChange = 'server.update.review.data.change';
-  static const serverUpdateRollbackWarning = 'server.update.rollback.warning';
-  static const serverUpdateUnknownStatus = 'server.update.unknown.status';
-  static const serverUpdateUpgrade = 'server.update.upgrade';
-  static const serverUpdateWorking = 'server.update.working';
   static const settingsAccountSection = 'settings.account.section';
   static const settingsAiAgentsSection = 'settings.ai.agents.section';
   static const settingsAutomationSection = 'settings.automation.section';

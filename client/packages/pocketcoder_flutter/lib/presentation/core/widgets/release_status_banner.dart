@@ -43,8 +43,8 @@ class ReleaseStatusBanner extends StatelessWidget {
     final color =
         critical ? context.colorScheme.error : context.colorScheme.primary;
     final label = critical
-        ? context.l10n.serverUpdateCriticalStatus
-        : context.l10n.serverUpdateAvailableStatus;
+        ? context.l10n.pocketCoderUpdateCriticalStatus
+        : context.l10n.pocketCoderUpdateAvailableStatus;
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(bottom: AppSizes.space),
