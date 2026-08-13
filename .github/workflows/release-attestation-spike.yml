@@ -34,6 +34,19 @@ jobs:
           cp "${{ steps.attest.outputs.bundle-path }}" attestation-spike/bundle.sigstore.json
           sha256sum attestation-spike/release-fixture.txt > attestation-spike/SHA256SUMS
 
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: deploy/release-manager/go.mod
+
+      - name: Verify through PocketCoder's native production path
+        working-directory: deploy/release-manager
+        run: |
+          go run ./cmd/pocketcoder-attest-verify \
+            --artifact ../../attestation-spike/release-fixture.txt \
+            --bundle ../../attestation-spike/bundle.sigstore.json \
+            --workflow-ref .github/workflows/release-attestation-spike.yml@refs/heads/main \
+            --tuf-cache "$RUNNER_TEMP/pocketcoder-sigstore-tuf"
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-attestation-spike-${{ github.run_id }}
