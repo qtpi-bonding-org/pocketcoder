@@ -1,0 +1,41 @@
+name: Release Attestation Spike
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  attest-fixture:
+    name: Attest and retain a verification fixture
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Build deterministic fixture
+        run: |
+          mkdir -p attestation-spike
+          printf 'PocketCoder GitHub attestation fixture\ncommit=%s\n' "$GITHUB_SHA" \
+            > attestation-spike/release-fixture.txt
+
+      - name: Attest fixture
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: attestation-spike/release-fixture.txt
+
+      - name: Preserve exact fixture and Sigstore bundle
+        run: |
+          cp "${{ steps.attest.outputs.bundle-path }}" attestation-spike/bundle.sigstore.json
+          sha256sum attestation-spike/release-fixture.txt > attestation-spike/SHA256SUMS
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-attestation-spike-${{ github.run_id }}
+          path: attestation-spike
+          retention-days: 30
