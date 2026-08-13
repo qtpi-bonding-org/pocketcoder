@@ -157,7 +157,7 @@ jq -S -n \
         catalogDocument:"coding-harnesses",minimumSelections:1,
         maximumSelections:($artifacts[0].images.choices["coding-harnesses"] | length),
         options:$artifacts[0].images.choices["coding-harnesses"]}},
-      optional:$artifacts[0].images.optional
+      registry:$artifacts[0].images.registry
     }
   }
 ' > "$output"

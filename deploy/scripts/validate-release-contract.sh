@@ -71,8 +71,7 @@ check "an artifact has impossible byte sizes" '
     .serverFiles,
     (.osImages[].delivery | select(.kind == "artifact") | .artifact),
     .images.required[],
-    .images.choices[].options[],
-    .images.optional[]
+    .images.choices[].options[]
   ] |
   all(.[]; .unpackedBytes >= .downloadBytes)
 '
@@ -82,8 +81,7 @@ check "an immutable artifact URL is not content-addressed by its sha256" '
     .serverFiles,
     (.osImages[].delivery | select(.kind == "artifact") | .artifact),
     .images.required[],
-    .images.choices[].options[],
-    .images.optional[]
+    .images.choices[].options[]
   ] |
   all(.[]; . as $artifact |
     ($artifact.url | test("/" + $artifact.sha256 + "[.][A-Za-z0-9.]+$")))
@@ -152,10 +150,21 @@ check "a harness image does not match its catalog repository and source commit" 
 check "a Docker image identity occurs in more than one archive" '
   [
     .images.required[].images[],
-    .images.choices[].options[].images[],
-    .images.optional[].images[]
+    .images.choices[].options[].images[]
   ] as $images |
   ($images | length) == ($images | unique | length)
+'
+
+check "an upstream registry image is not immutable or is duplicated" '
+  ([.images.registry.required[], .images.registry.optional[].image]) as $images |
+  ($images | length) == ($images | unique | length) and
+  all($images[];
+    test("^[a-z0-9][a-z0-9./_-]*(?::[A-Za-z0-9._-]+)?@sha256:[0-9a-f]{64}$"))
+'
+
+check "an optional registry image lacks its Compose profile" '
+  all(.images.registry.optional[];
+    (.composeProfile | type == "string" and length > 0))
 '
 
 exit 0

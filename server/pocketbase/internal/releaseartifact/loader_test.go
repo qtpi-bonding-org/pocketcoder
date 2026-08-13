@@ -23,7 +23,16 @@ type fakeDockerLoader struct {
 	mu        sync.Mutex
 	exists    bool
 	loadCalls int
+	pullCalls int
 	payload   []byte
+}
+
+func (f *fakeDockerLoader) PullImage(context.Context, string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.pullCalls++
+	f.exists = true
+	return nil
 }
 
 func (f *fakeDockerLoader) ImageExists(context.Context, string) (bool, error) {
@@ -78,7 +87,13 @@ func writeReleaseState(t *testing.T, root, artifactURL string, payload []byte, c
 				"minimumSelections": 1, "maximumSelections": 1,
 				"options": map[string]any{"codex": artifactValue("pocketcoder-harness-codex:" + testRelease)},
 			}},
-			"optional": map[string]any{"ollama": artifactValue("pocketcoder-ollama:" + testRelease)},
+			"registry": map[string]any{
+				"required": []string{"tecnativa/docker-socket-proxy@sha256:" + strings.Repeat("a", 64)},
+				"optional": map[string]any{"ollama": map[string]any{
+					"image":          "ollama/ollama@sha256:" + strings.Repeat("b", 64),
+					"composeProfile": "local-models",
+				}},
+			},
 		},
 	}
 	writeJSON := func(path string, value any) {
@@ -183,7 +198,7 @@ func TestEnsureHarnessImageRejectsChecksumBeforeDockerLoad(t *testing.T) {
 	}
 }
 
-func TestEnsureOptionalOllamaImageUsesVerifiedReleaseArtifact(t *testing.T) {
+func TestEnsureOptionalOllamaImagePullsPinnedRegistryDigest(t *testing.T) {
 	payload := []byte("compressed ollama image archive")
 	digest := sha256.Sum256(payload)
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -199,15 +214,17 @@ func TestEnsureOptionalOllamaImageUsesVerifiedReleaseArtifact(t *testing.T) {
 	pointer := writeReleaseState(t, root, server.URL+"/ollama.tar.gz", payload, hex.EncodeToString(digest[:]))
 	docker := &fakeDockerLoader{}
 	loader := testLoader(t, pointer, artifactDir, server.Client())
-	image := "pocketcoder-ollama:" + testRelease
-
-	if err := loader.EnsureOptionalImage(context.Background(), docker, "ollama", image); err != nil {
+	image, err := loader.EnsureOptionalImage(context.Background(), docker, "ollama")
+	if err != nil {
 		t.Fatal(err)
 	}
-	if docker.calls() != 1 || string(docker.payload) != string(payload) {
-		t.Fatalf("Docker load calls/payload = %d/%q", docker.calls(), docker.payload)
+	if image != "ollama/ollama@sha256:"+strings.Repeat("b", 64) {
+		t.Fatalf("resolved image = %q", image)
 	}
-	if err := loader.EnsureOptionalImage(context.Background(), docker, "unknown", image); err == nil {
+	if docker.pullCalls != 1 || docker.calls() != 0 {
+		t.Fatalf("Docker pull/load calls = %d/%d", docker.pullCalls, docker.calls())
+	}
+	if _, err := loader.EnsureOptionalImage(context.Background(), docker, "unknown"); err == nil {
 		t.Fatal("unknown optional capability was unexpectedly accepted")
 	}
 }

@@ -21,6 +21,24 @@ func (docker Docker) ImageExists(image string) bool {
 	return exec.Command("docker", "image", "inspect", image).Run() == nil
 }
 
+// PullImage makes an immutable upstream image available before activation.
+// The release contract only permits digest-pinned references here.
+func (docker Docker) PullImage(image string) error {
+	if docker.ImageExists(image) {
+		return nil
+	}
+	command := exec.Command("docker", "pull", image)
+	command.Stdout = docker.Stdout
+	command.Stderr = docker.Stderr
+	if err := command.Run(); err != nil {
+		return fmt.Errorf("pull Docker image %s: %w", image, err)
+	}
+	if !docker.ImageExists(image) {
+		return fmt.Errorf("pulled Docker image %s is unavailable", image)
+	}
+	return nil
+}
+
 func (docker Docker) RemoveImage(image string) error {
 	command := exec.Command("docker", "image", "rm", image)
 	command.Stdout = docker.Stdout
@@ -52,10 +70,10 @@ func (docker Docker) LoadGzipArchive(path string) error {
 	return nil
 }
 
-func (docker Docker) ComposeUp(composeFile, environmentFile string, optional bool) error {
+func (docker Docker) ComposeUp(composeFile, environmentFile string, profiles []string) error {
 	arguments := []string{"compose", "--project-name", docker.projectName(), "--env-file", environmentFile, "-f", composeFile}
-	if optional {
-		arguments = append(arguments, "--profile", "local-models")
+	for _, profile := range profiles {
+		arguments = append(arguments, "--profile", profile)
 	}
 	arguments = append(arguments, "up", "-d", "--no-build", "--remove-orphans")
 	command := exec.Command("docker", arguments...)

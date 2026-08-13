@@ -18,6 +18,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
@@ -192,7 +193,10 @@ func (chain *testChain) addRelease(t *testing.T, id string, sequence int64, vers
 		Images: contract.Images{
 			Required: map[string]contract.Artifact{"server": imageArtifact},
 			Choices:  map[string]contract.ChoiceGroup{"coding-harnesses": {SchemaVersion: 1, ConsumerPolicy: "required", MinimumSelections: 1, MaximumSelections: &maximum, Options: map[string]contract.Artifact{"goose": imageArtifact}}},
-			Optional: map[string]contract.Artifact{},
+			Registry: contract.RegistryImages{
+				Required: []string{"example/required@sha256:" + strings.Repeat("d", 64)},
+				Optional: map[string]contract.OptionalRegistryImage{},
+			},
 		},
 	}
 	// Required and choice image inventories must be distinct.

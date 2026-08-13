@@ -129,8 +129,9 @@ func allImages(manifest contract.Manifest) []string {
 			images = append(images, artifact.Images...)
 		}
 	}
-	for _, artifact := range manifest.Images.Optional {
-		images = append(images, artifact.Images...)
+	images = append(images, manifest.Images.Registry.Required...)
+	for _, descriptor := range manifest.Images.Registry.Optional {
+		images = append(images, descriptor.Image)
 	}
 	return images
 }

@@ -25,6 +25,8 @@ func (f *fakeOllamaDocker) Inspect(context.Context, string) (dockerapi.Container
 
 func (f *fakeOllamaDocker) ImageExists(context.Context, string) (bool, error) { return false, nil }
 
+func (f *fakeOllamaDocker) PullImage(context.Context, string) error { return nil }
+
 func (f *fakeOllamaDocker) LoadImage(_ context.Context, archive io.Reader) error {
 	_, err := io.Copy(io.Discard, archive)
 	return err
@@ -82,16 +84,17 @@ func TestEnsureOllamaRuntimeAcquiresCreatesAndPreservesModelVolume(t *testing.T)
 	docker := &fakeOllamaDocker{inspectErr: dockerapi.ErrContainerNotFound}
 	original := ensureOllamaReleaseImage
 	acquired := false
-	ensureOllamaReleaseImage = func(_ context.Context, _ releaseartifact.DockerLoader, id, image string) error {
-		acquired = id == "ollama" && image == "pocketcoder-ollama:"+release
-		return nil
+	expectedImage := "ollama/ollama@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	ensureOllamaReleaseImage = func(_ context.Context, _ releaseartifact.DockerLoader, id string) (string, error) {
+		acquired = id == "ollama"
+		return expectedImage, nil
 	}
 	t.Cleanup(func() { ensureOllamaReleaseImage = original })
 
 	if err := ensureOllamaRuntime(context.Background(), docker, server.Client(), server.URL); err != nil {
 		t.Fatal(err)
 	}
-	if !acquired || docker.created.Image != "pocketcoder-ollama:"+release {
+	if !acquired || docker.created.Image != expectedImage {
 		t.Fatalf("acquired/image = %v/%q", acquired, docker.created.Image)
 	}
 	if len(docker.created.VolumeBinds) != 1 || docker.created.VolumeBinds[0] != "pocketcoder_ollama_models:/ollama-models" {

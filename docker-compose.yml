@@ -318,7 +318,7 @@ services:
   # POCO:BEGIN compose-dashboard
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
-    image: lovasoa/sqlpage:v0.32.0
+    image: lovasoa/sqlpage:v0.32.0@sha256:8c286b2248188f379772ba45e5f05336c6f7204ebe75474490278aab8016648d
     user: root
     container_name: pocketcoder-sqlpage
     environment:
@@ -356,7 +356,7 @@ services:
   # 🔔 NTFY (Optional Sovereign Notification Server)
   # To enable: docker compose --profile foss up
   ntfy:
-    image: binwiederhier/ntfy:v2.11.0
+    image: binwiederhier/ntfy:v2.11.0@sha256:4a7d0f0adc6d5d9fc36e64ab55ef676e76e124a2bdd50ce115b6d9c1c7430294
     container_name: pocketcoder-ntfy
     profiles:
       - foss

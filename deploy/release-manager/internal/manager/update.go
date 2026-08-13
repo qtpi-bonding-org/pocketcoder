@@ -125,8 +125,8 @@ func discoverLocalSelections(current *releasecontract.Current, previous contract
 			}
 		}
 	}
-	for id, descriptor := range previous.Images.Optional {
-		if artifactIsLocal(descriptor, imageExists) {
+	for id, descriptor := range previous.Images.Registry.Optional {
+		if imageExists(descriptor.Image) {
 			optional[id] = struct{}{}
 		}
 	}
@@ -268,11 +268,10 @@ func selectedBytes(manifest contract.Manifest, harnesses, optional []string) (in
 		return 0, 0, fmt.Errorf("selected harness is absent from candidate")
 	}
 	for _, id := range optional {
-		value, exists := manifest.Images.Optional[id]
+		_, exists := manifest.Images.Registry.Optional[id]
 		if !exists {
 			return 0, 0, fmt.Errorf("selected optional image %q is absent from candidate", id)
 		}
-		add(value)
 	}
 	return download, staging, nil
 }

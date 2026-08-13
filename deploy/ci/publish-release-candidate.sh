@@ -66,7 +66,7 @@ jq -c '
   [
     .serverFiles,
     (.osImages[].delivery | select(.kind == "artifact") | .artifact),
-    .images.required[], .images.choices[].options[], .images.optional[]
+    .images.required[], .images.choices[].options[]
   ][]
 ' "$manifest" | while IFS= read -r artifact; do
   sha=$(printf '%s' "$artifact" | jq -r '.sha256')
@@ -110,7 +110,7 @@ jq -r '
   [
     .serverFiles,
     (.osImages[].delivery | select(.kind == "artifact") | .artifact),
-    .images.required[], .images.choices[].options[], .images.optional[]
+    .images.required[], .images.choices[].options[]
   ][].url | split("/")[-1]
 ' "$manifest" | while IFS= read -r name; do
   publish_immutable "$artifact_dir/$name" "artifacts/$name"

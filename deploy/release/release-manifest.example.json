@@ -130,7 +130,8 @@
         "unpackedBytes": 1500000000,
         "images": [
           "pocketcoder-pocketbase:0123456789abcdef0123456789abcdef01234567",
-          "pocketcoder-mcp-gateway:0123456789abcdef0123456789abcdef01234567"
+          "pocketcoder-mcp-gateway:0123456789abcdef0123456789abcdef01234567",
+          "pocketcoder-memory:0123456789abcdef0123456789abcdef01234567"
         ]
       }
     },
@@ -198,6 +199,17 @@
         }
       }
     },
-    "optional": {}
+    "registry": {
+      "required": [
+        "lovasoa/sqlpage:v0.32.0@sha256:8c286b2248188f379772ba45e5f05336c6f7204ebe75474490278aab8016648d",
+        "tecnativa/docker-socket-proxy@sha256:9e4b9e7517a6b660f2cc903a19b257b1852d5b3344794e3ea334ff00ae677ac2"
+      ],
+      "optional": {
+        "ollama": {
+          "image": "ollama/ollama@sha256:f040603c11a11f125660eaf848170780e43b68973fc270e26f168536031ac258",
+          "composeProfile": "local-models"
+        }
+      }
+    }
   }
 }
