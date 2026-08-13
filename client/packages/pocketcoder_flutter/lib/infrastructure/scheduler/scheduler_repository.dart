@@ -110,9 +110,8 @@ class SchedulerRepository implements ISchedulerRepository {
     return tryMethod(
       () async {
         await _pb.send<dynamic>(
-          ApiEndpoints.schedulesRunNow,
+          ApiEndpoints.schedulesRunNow(id),
           method: 'POST',
-          body: {'id': id},
         );
       },
       SchedulerException.new,

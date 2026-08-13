@@ -228,7 +228,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		return re.NoContent(http.StatusAccepted)
 	}).Bind(apis.RequireAuth())
 
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/set_mode", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/set-mode", func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -252,7 +252,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 		return re.NoContent(http.StatusAccepted)
 	}).Bind(apis.RequireAuth())
 
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/set_config_option", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/set-config-option", func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
@@ -279,7 +279,7 @@ func registerAgentApi(app *pocketbase.PocketBase, e *core.ServeEvent, dial coord
 
 	// Permission records are transient process state. The option is checked
 	// against the exact set Goose offered before it is forwarded over ACP.
-	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/request_permission/{id}", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/chats/{chatId}/session/request-permission/{id}", func(re *core.RequestEvent) error {
 		if configErr != nil {
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}

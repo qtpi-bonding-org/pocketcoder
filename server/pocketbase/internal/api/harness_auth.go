@@ -91,23 +91,23 @@ type harnessAuthStatusResp struct {
 func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 	runtime := harnessauth.NewDefaultRuntime()
 
-	e.Router.POST("/api/pocketcoder/harness_auth/status", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/harness-auth/status", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
 		var input harnessAuthRequest
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return pocketCoderError(re, 400, "Invalid request body")
 		}
 		if input.Harness == "" {
-			return re.JSON(400, map[string]string{"error": "harness is required"})
+			return pocketCoderError(re, 400, "harness is required")
 		}
 		if _, err := app.FindRecordById("harnesses", input.Harness); err != nil {
-			return re.JSON(404, map[string]string{"error": "Harness not found"})
+			return pocketCoderError(re, 404, "Harness not found")
 		}
 		account, err := harnessaccount.Resolve(app, re.Auth.Id, input.Harness, input.AccountID)
 		if err != nil {
-			return re.JSON(500, map[string]string{"error": "Internal error"})
+			return pocketCoderError(re, 500, "Internal error")
 		}
 		if account == nil {
 			return re.JSON(200, harnessAuthStatusResp{
@@ -120,26 +120,26 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
 	}).Bind(apis.RequireAuth())
 
-	e.Router.POST("/api/pocketcoder/harness_auth/start", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/harness-auth/start", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
 		var input harnessAuthRequest
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return pocketCoderError(re, 400, "Invalid request body")
 		}
 		if input.Harness == "" {
-			return re.JSON(400, map[string]string{"error": "harness is required"})
+			return pocketCoderError(re, 400, "harness is required")
 		}
 		if _, err := app.FindRecordById("harnesses", input.Harness); err != nil {
-			return re.JSON(404, map[string]string{"error": "Harness not found"})
+			return pocketCoderError(re, 404, "Harness not found")
 		}
 		mode := strings.TrimSpace(input.CredentialMode)
 		if mode == "" {
 			mode = harnessAuthModeAccount
 		}
 		if mode != harnessAuthModeAccount && mode != harnessAuthModeAPIKey && mode != harnessAuthModeNone {
-			return re.JSON(400, map[string]string{"error": "credentialMode must be one of account|api_key|none"})
+			return pocketCoderError(re, 400, "credentialMode must be one of account|api_key|none")
 		}
 
 		visibility := strings.TrimSpace(input.Visibility)
@@ -148,10 +148,10 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 		account, err := harnessaccount.SelectOrCreate(app, re.Auth.Id, input.Harness, input.AccountID, input.AccountName, visibility, mode)
 		if err != nil {
-			return re.JSON(500, map[string]string{"error": "Internal error"})
+			return pocketCoderError(re, 500, "Internal error")
 		}
 		if account.GetString("owner") != re.Auth.Id {
-			return re.JSON(403, map[string]string{"error": "Only the account owner can change harness credentials"})
+			return pocketCoderError(re, 403, "Only the account owner can change harness credentials")
 		}
 
 		switch mode {
@@ -160,14 +160,14 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			account.Set("status", accountStatusDisconnected)
 			account.Set("last_error", "")
 			if err := app.Save(account); err != nil {
-				return re.JSON(500, map[string]string{"error": "Unable to save account"})
+				return pocketCoderError(re, 500, "Unable to save account")
 			}
 			return re.JSON(200, renderHarnessAuthStatus(app, account, nil))
 
 		case harnessAuthModeAPIKey:
 			if input.ProviderKey != "" {
 				if err := bindProviderKey(app, account, input.ProviderKey, re.Auth.Id); err != nil {
-					return re.JSON(400, map[string]string{"error": err.Error()})
+					return pocketCoderError(re, 400, err.Error())
 				}
 			}
 			account.Set("credential_mode", harnessAuthModeAPIKey)
@@ -178,28 +178,28 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 				account.Set("last_error", "")
 			}
 			if err := app.Save(account); err != nil {
-				return re.JSON(500, map[string]string{"error": "Unable to save account"})
+				return pocketCoderError(re, 500, "Unable to save account")
 			}
 			return re.JSON(200, renderHarnessAuthStatus(app, account, nil))
 
 		case harnessAuthModeAccount:
 			provider := strings.TrimSpace(strings.ToLower(input.Provider))
 			if provider == "" {
-				return re.JSON(400, map[string]string{"error": "provider is required for account mode"})
+				return pocketCoderError(re, 400, "provider is required for account mode")
 			}
 			attempt, err := createHarnessAuthAttempt(app, account.Id, provider)
 			if err != nil {
 				account.Set("status", accountStatusError)
 				account.Set("last_error", "Unable to create auth attempt")
 				_ = app.Save(account)
-				return re.JSON(500, map[string]string{"error": "Unable to create auth attempt"})
+				return pocketCoderError(re, 500, "Unable to create auth attempt")
 			}
 			stateCtx, err := runtimeAttemptContext(app, attempt, re.Auth.Id)
 			if err != nil {
 				account.Set("status", accountStatusError)
 				account.Set("last_error", err.Error())
 				_ = app.Save(account)
-				return re.JSON(500, map[string]string{"error": err.Error()})
+				return pocketCoderError(re, 500, err.Error())
 			}
 			state, err := runtime.Start(context.Background(), provider, stateCtx)
 			if err != nil {
@@ -207,16 +207,16 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 				account.Set("status", accountStatusError)
 				account.Set("last_error", "Unable to initialize authenticator")
 				_ = app.Save(account)
-				return re.JSON(502, map[string]string{"error": "Unable to start auth helper"})
+				return pocketCoderError(re, 502, "Unable to start auth helper")
 			}
 			if err := updateHarnessAuthAttempt(app, attempt, state.Status, ""); err != nil {
-				return re.JSON(500, map[string]string{"error": "Unable to update auth attempt"})
+				return pocketCoderError(re, 500, "Unable to update auth attempt")
 			}
 			account.Set("credential_mode", harnessAuthModeAccount)
 			account.Set("status", statusForAttempt(state.Status))
 			account.Set("last_error", "")
 			if err := app.Save(account); err != nil {
-				return re.JSON(500, map[string]string{"error": "Unable to save account"})
+				return pocketCoderError(re, 500, "Unable to save account")
 			}
 			response := renderHarnessAuthStatus(app, account, attempt)
 			if state.Challenge != nil {
@@ -233,28 +233,28 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		return re.NoContent(500)
 	}).Bind(apis.RequireAuth())
 
-	e.Router.POST("/api/pocketcoder/harness_auth/poll", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/harness-auth/poll", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
 		var input harnessAuthRequest
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return pocketCoderError(re, 400, "Invalid request body")
 		}
 		account, attempt, err := authAccountAndAttemptForRequest(app, re.Auth.Id, input)
 		if err != nil {
-			return re.JSON(400, map[string]string{"error": err.Error()})
+			return pocketCoderError(re, 400, err.Error())
 		}
 		if account.GetString("owner") != re.Auth.Id {
-			return re.JSON(403, map[string]string{"error": "Only the account owner can manage harness authentication"})
+			return pocketCoderError(re, 403, "Only the account owner can manage harness authentication")
 		}
 		if attempt == nil {
-			return re.JSON(404, map[string]string{"error": "No active auth attempt found"})
+			return pocketCoderError(re, 404, "No active auth attempt found")
 		}
 
 		stateCtx, err := runtimeAttemptContext(app, attempt, re.Auth.Id)
 		if err != nil {
-			return re.JSON(500, map[string]string{"error": err.Error()})
+			return pocketCoderError(re, 500, err.Error())
 		}
 		state, err := runtime.Poll(context.Background(), attempt.GetString("provider"), stateCtx)
 		if err != nil {
@@ -264,12 +264,12 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 				account.Set("status", accountStatusError)
 				account.Set("last_error", "Auth attempt expired")
 				_ = app.Save(account)
-				return re.JSON(410, map[string]string{"error": "Auth attempt expired"})
+				return pocketCoderError(re, 410, "Auth attempt expired")
 			}
-			return re.JSON(502, map[string]string{"error": "Auth helper poll failed"})
+			return pocketCoderError(re, 502, "Auth helper poll failed")
 		}
 		if err := updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError); err != nil {
-			return re.JSON(500, map[string]string{"error": "Unable to update auth attempt"})
+			return pocketCoderError(re, 500, "Unable to update auth attempt")
 		}
 		account.Set("status", statusForAttempt(state.Status))
 		account.Set("last_error", state.LastError)
@@ -286,41 +286,41 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		return re.JSON(200, response)
 	}).Bind(apis.RequireAuth())
 
-	e.Router.POST("/api/pocketcoder/harness_auth/submit", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/harness-auth/submit", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
 		var input harnessAuthRequest
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return pocketCoderError(re, 400, "Invalid request body")
 		}
 		account, attempt, err := authAccountAndAttemptForRequest(app, re.Auth.Id, input)
 		if err != nil {
-			return re.JSON(400, map[string]string{"error": err.Error()})
+			return pocketCoderError(re, 400, err.Error())
 		}
 		if account.GetString("owner") != re.Auth.Id {
-			return re.JSON(403, map[string]string{"error": "Only the account owner can manage harness authentication"})
+			return pocketCoderError(re, 403, "Only the account owner can manage harness authentication")
 		}
 		if attempt == nil {
-			return re.JSON(404, map[string]string{"error": "No active auth attempt found"})
+			return pocketCoderError(re, 404, "No active auth attempt found")
 		}
 		code := strings.TrimSpace(input.Code)
 		if code == "" {
-			return re.JSON(400, map[string]string{"error": "code is required"})
+			return pocketCoderError(re, 400, "code is required")
 		}
 		stateCtx, err := runtimeAttemptContext(app, attempt, re.Auth.Id)
 		if err != nil {
-			return re.JSON(500, map[string]string{"error": err.Error()})
+			return pocketCoderError(re, 500, err.Error())
 		}
 		state, err := runtime.Submit(context.Background(), attempt.GetString("provider"), stateCtx, code)
 		if err != nil {
 			account.Set("status", accountStatusError)
 			account.Set("last_error", err.Error())
 			_ = app.Save(account)
-			return re.JSON(502, map[string]string{"error": err.Error()})
+			return pocketCoderError(re, 502, err.Error())
 		}
 		if err := updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError); err != nil {
-			return re.JSON(500, map[string]string{"error": "Unable to update auth attempt"})
+			return pocketCoderError(re, 500, "Unable to update auth attempt")
 		}
 		account.Set("status", statusForAttempt(state.Status))
 		account.Set("last_error", state.LastError)
@@ -328,34 +328,34 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
 	}).Bind(apis.RequireAuth())
 
-	e.Router.POST("/api/pocketcoder/harness_auth/cancel", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/harness-auth/cancel", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
 		var input harnessAuthRequest
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return pocketCoderError(re, 400, "Invalid request body")
 		}
 		account, attempt, err := authAccountAndAttemptForRequest(app, re.Auth.Id, input)
 		if err != nil {
-			return re.JSON(400, map[string]string{"error": err.Error()})
+			return pocketCoderError(re, 400, err.Error())
 		}
 		if account.GetString("owner") != re.Auth.Id {
-			return re.JSON(403, map[string]string{"error": "Only the account owner can manage harness authentication"})
+			return pocketCoderError(re, 403, "Only the account owner can manage harness authentication")
 		}
 		if attempt == nil {
-			return re.JSON(404, map[string]string{"error": "No active auth attempt found"})
+			return pocketCoderError(re, 404, "No active auth attempt found")
 		}
 		stateCtx, err := runtimeAttemptContext(app, attempt, re.Auth.Id)
 		if err != nil {
-			return re.JSON(500, map[string]string{"error": err.Error()})
+			return pocketCoderError(re, 500, err.Error())
 		}
 		state, err := runtime.Cancel(context.Background(), attempt.GetString("provider"), stateCtx)
 		if err != nil {
-			return re.JSON(502, map[string]string{"error": "Auth helper cancel failed"})
+			return pocketCoderError(re, 502, "Auth helper cancel failed")
 		}
 		if err := updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError); err != nil {
-			return re.JSON(500, map[string]string{"error": "Unable to update auth attempt"})
+			return pocketCoderError(re, 500, "Unable to update auth attempt")
 		}
 		account.Set("status", statusForAttempt(state.Status))
 		account.Set("last_error", state.LastError)
@@ -363,35 +363,35 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
 	}).Bind(apis.RequireAuth())
 
-	e.Router.POST("/api/pocketcoder/harness_auth/disconnect", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/harness-auth/disconnect", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
 		var input harnessAuthRequest
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return pocketCoderError(re, 400, "Invalid request body")
 		}
 		if input.Harness == "" {
-			return re.JSON(400, map[string]string{"error": "harness is required"})
+			return pocketCoderError(re, 400, "harness is required")
 		}
 		account, err := harnessaccount.Resolve(app, re.Auth.Id, input.Harness, input.AccountID)
 		if err != nil {
-			return re.JSON(500, map[string]string{"error": "Internal error"})
+			return pocketCoderError(re, 500, "Internal error")
 		}
 		if account == nil {
-			return re.JSON(404, map[string]string{"error": "Account not found"})
+			return pocketCoderError(re, 404, "Account not found")
 		}
 		if account.GetString("owner") != re.Auth.Id {
-			return re.JSON(403, map[string]string{"error": "Only the account owner can disconnect harness credentials"})
+			return pocketCoderError(re, 403, "Only the account owner can disconnect harness credentials")
 		}
 		attempt, err := latestHarnessAuthAttempt(app, account.Id)
 		if err != nil {
-			return re.JSON(500, map[string]string{"error": "Internal error"})
+			return pocketCoderError(re, 500, "Internal error")
 		}
 		if attempt != nil {
 			stateCtx, ctxErr := runtimeAttemptContext(app, attempt, re.Auth.Id)
 			if ctxErr != nil {
-				return re.JSON(500, map[string]string{"error": ctxErr.Error()})
+				return pocketCoderError(re, 500, ctxErr.Error())
 			}
 			state, err := runtime.Disconnect(context.Background(), attempt.GetString("provider"), stateCtx)
 			if err == nil {
@@ -401,7 +401,7 @@ func RegisterHarnessAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		account.Set("status", accountStatusDisconnected)
 		account.Set("last_error", "")
 		if err := app.Save(account); err != nil {
-			return re.JSON(500, map[string]string{"error": "Unable to save account"})
+			return pocketCoderError(re, 500, "Unable to save account")
 		}
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
 	}).Bind(apis.RequireAuth())

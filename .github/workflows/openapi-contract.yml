@@ -1,0 +1,43 @@
+name: OpenAPI contract
+
+on:
+  pull_request:
+    paths:
+      - 'api/openapi/**'
+      - 'server/pocketbase/internal/openapi/**'
+      - 'server/pocketbase/internal/api/**'
+      - 'client/packages/pocketcoder_api/**'
+      - 'tooling/scripts/generate_openapi*.sh'
+      - '.github/workflows/openapi-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'api/openapi/**'
+      - 'server/pocketbase/internal/openapi/**'
+      - 'client/packages/pocketcoder_api/**'
+      - 'tooling/scripts/generate_openapi*.sh'
+
+jobs:
+  contract:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.4'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate and verify checked-in artifacts
+        run: |
+          ./tooling/scripts/generate_openapi.sh
+          git diff --exit-code
+      - name: Go contract tests
+        working-directory: server/pocketbase
+        run: go test ./internal/api ./internal/filesystem ./internal/openapi
+      - name: Dart generated client tests
+        working-directory: client
+        run: dart test packages/pocketcoder_api

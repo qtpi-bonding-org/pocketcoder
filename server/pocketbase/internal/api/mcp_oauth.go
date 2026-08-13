@@ -45,9 +45,9 @@ var (
 
 // RegisterMcpOAuthApi registers the OAuth token-intake endpoint.
 func RegisterMcpOAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.POST("/api/pocketcoder/mcp_oauth/store", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/mcp/oauth/store", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
 
 		var input struct {
@@ -56,21 +56,21 @@ func RegisterMcpOAuthApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 			RefreshToken string `json:"refresh_token"`
 		}
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return pocketCoderError(re, 400, "Invalid request body")
 		}
 		if input.ServerName == "" || input.AccessToken == "" {
-			return re.JSON(400, map[string]string{"error": "server_name and access_token are required"})
+			return pocketCoderError(re, 400, "server_name and access_token are required")
 		}
 
 		if err := storeOAuthToken(app, input.ServerName, input.AccessToken, input.RefreshToken); err != nil {
 			switch err {
 			case errOAuthServerNotFound:
-				return re.JSON(404, map[string]string{"error": "mcp server not found"})
+				return pocketCoderError(re, 404, "mcp server not found")
 			case errOAuthNotConfigured:
-				return re.JSON(400, map[string]string{"error": "mcp server is not configured for OAuth (oauth_token_env_var unset)"})
+				return pocketCoderError(re, 400, "mcp server is not configured for OAuth (oauth_token_env_var unset)")
 			default:
 				log.Printf("❌ [MCPOAuth] store failed for %q: %v", input.ServerName, err)
-				return re.JSON(500, map[string]string{"error": "internal error"})
+				return pocketCoderError(re, 500, "internal error")
 			}
 		}
 

@@ -4,12 +4,14 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/openapi"
 )
 
 const defaultReleaseStateDir = "/var/lib/pocketcoder/release"
@@ -57,23 +59,41 @@ func RegisterReleaseStatusApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
 				"deployment": map[string]int{"contractVersion": deploymentContractVersion},
 			},
 		}
-		return re.JSON(200, response)
+		return writeGeneratedJSON(re, openapi.GetReleaseCompatibility200JSONResponse{
+			JsonSuccessJSONResponse: openapi.JsonSuccessJSONResponse(response),
+		})
 	})
 
 	e.Router.GET("/api/pocketcoder/release/status", func(re *core.RequestEvent) error {
 		var pointer releasePointerResponse
 		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil &&
 			!errors.Is(err, os.ErrNotExist) {
-			return re.JSON(500, map[string]string{"error": "release state unavailable"})
+			return pocketCoderError(re, 500, "release state unavailable")
 		}
 		var metadataStatus map[string]any
 		if err := readJSON(filepath.Join(releaseStateDir(), "metadata-status.json"), &metadataStatus); err != nil {
 			metadataStatus = map[string]any{"schemaVersion": 1, "status": "unknown"}
 		}
-		return re.JSON(200, map[string]any{
-			"schemaVersion":  1,
-			"current":        pointer,
-			"metadataStatus": metadataStatus,
+		return writeGeneratedJSON(re, openapi.GetReleaseStatus200JSONResponse{
+			JsonSuccessJSONResponse: openapi.JsonSuccessJSONResponse(map[string]any{
+				"schemaVersion":  1,
+				"current":        pointer,
+				"metadataStatus": metadataStatus,
+			}),
 		})
 	}).Bind(apis.RequireAuth())
+}
+
+func writeGeneratedJSON(re *core.RequestEvent, response any) error {
+	if typed, ok := response.(interface {
+		VisitGetReleaseCompatibilityResponse(http.ResponseWriter) error
+	}); ok {
+		return typed.VisitGetReleaseCompatibilityResponse(re.Response)
+	}
+	if typed, ok := response.(interface {
+		VisitGetReleaseStatusResponse(http.ResponseWriter) error
+	}); ok {
+		return typed.VisitGetReleaseStatusResponse(re.Response)
+	}
+	return re.InternalServerError("generated response type mismatch", nil)
 }

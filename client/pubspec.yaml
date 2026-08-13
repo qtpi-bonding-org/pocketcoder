@@ -5,6 +5,7 @@ environment:
   sdk: '>=3.5.0 <4.0.0'
 
 workspace:
+  - packages/pocketcoder_api
   - packages/pocketcoder_flutter
   - apps/pocketcoder_foss
 

@@ -244,7 +244,7 @@ func TestFilesListEndpoint_RequiresAuth(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files-list without auth is rejected",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/files-list/",
+			URL:             "/api/pocketcoder/files-list",
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
@@ -260,7 +260,7 @@ func TestFilesReadEndpoint_RequiresAuth(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files read without auth is rejected",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/files/main.go",
+			URL:             "/api/pocketcoder/files?path=main.go",
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
@@ -290,7 +290,7 @@ func TestFilesListEndpoint_ReturnsImmediateChildren(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files-list returns immediate children as JSON",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/files-list/",
+			URL:             "/api/pocketcoder/files-list",
 		Headers:         headers,
 		ExpectedStatus:  200,
 		ExpectedContent: []string{`"name":"main.go"`, `"name":"internal"`, `"isDir":true`},
@@ -322,7 +322,7 @@ func TestFilesListEndpoint_RejectsSymlinkEscape(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files-list rejects a symlink that escapes the workspace root",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/files-list/escape",
+			URL:             "/api/pocketcoder/files-list?path=escape",
 		Headers:         headers,
 		ExpectedStatus:  403,
 		ExpectedContent: []string{"escape attempt"},
@@ -354,7 +354,7 @@ func TestFilesReadEndpoint_RejectsSymlinkEscape(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files read rejects a symlink that escapes the workspace root",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/files/escape/secret.txt",
+			URL:             "/api/pocketcoder/files?path=escape%2Fsecret.txt",
 		Headers:         headers,
 		ExpectedStatus:  403,
 		ExpectedContent: []string{"escape attempt"},

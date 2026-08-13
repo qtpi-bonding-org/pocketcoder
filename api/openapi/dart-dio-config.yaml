@@ -1,0 +1,6 @@
+serializationLibrary: built_value
+enumUnknownDefaultCase: true
+useEnumExtension: true
+nullableFields: true
+pubName: pocketcoder_api
+pubVersion: 0.1.0

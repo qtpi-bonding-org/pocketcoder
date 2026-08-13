@@ -14,36 +14,38 @@ abstract final class ApiEndpoints {
   static String agentCancel(String chatId) =>
       '$_root/chats/$chatId/session/cancel';
   static String agentSetMode(String chatId) =>
-      '$_root/chats/$chatId/session/set_mode';
+      '$_root/chats/$chatId/session/set-mode';
   static String agentSetConfigOption(String chatId) =>
-      '$_root/chats/$chatId/session/set_config_option';
+      '$_root/chats/$chatId/session/set-config-option';
   static String agentPermission(String chatId, String requestId) =>
-      '$_root/chats/$chatId/session/request_permission/$requestId';
+      '$_root/chats/$chatId/session/request-permission/$requestId';
   static String agentElicitation(String chatId, String elicitationId) =>
       '$_root/chats/$chatId/session/elicitation/$elicitationId';
 
   // Harness authentication lifecycle.
-  static const String harnessAuthStatus = '$_root/harness_auth/status';
-  static const String harnessAuthStart = '$_root/harness_auth/start';
-  static const String harnessAuthPoll = '$_root/harness_auth/poll';
-  static const String harnessAuthSubmit = '$_root/harness_auth/submit';
-  static const String harnessAuthCancel = '$_root/harness_auth/cancel';
-  static const String harnessAuthDisconnect = '$_root/harness_auth/disconnect';
+  static const String harnessAuthStatus = '$_root/harness-auth/status';
+  static const String harnessAuthStart = '$_root/harness-auth/start';
+  static const String harnessAuthPoll = '$_root/harness-auth/poll';
+  static const String harnessAuthSubmit = '$_root/harness-auth/submit';
+  static const String harnessAuthCancel = '$_root/harness-auth/cancel';
+  static const String harnessAuthDisconnect = '$_root/harness-auth/disconnect';
 
   // The schedule record itself uses Collections.scheduleOwners.
-  static const String schedulesRunNow = '$_root/schedules/run-now';
+  static String schedulesRunNow(String id) => '$_root/schedules/$id/run';
 
   // Workspace reads.
-  static String files(String path) => '$_root/files/$path';
-  static String filesList(String path) => '$_root/files-list/$path';
+  static String files(String path) =>
+      '$_root/files?path=${Uri.encodeQueryComponent(path)}';
+  static String filesList(String path) =>
+      '$_root/files-list?path=${Uri.encodeQueryComponent(path)}';
 
   // Private Ollama proxy.
   static const String ollamaModels = '$_root/ollama/models';
   static const String ollamaPull = '$_root/ollama/pull';
 
   // MCP operations.
-  static const String mcpRequest = '$_root/mcp_request';
-  static const String mcpOAuthStore = '$_root/mcp_oauth/store';
+  static const String mcpRequest = '$_root/mcp/request';
+  static const String mcpOAuthStore = '$_root/mcp/oauth/store';
 
   // Release/update state, named after the release manifest JSON contract.
   static const String releaseCompatibility = '$_root/release/compatibility';
@@ -62,7 +64,6 @@ abstract final class ApiEndpoints {
     harnessAuthSubmit,
     harnessAuthCancel,
     harnessAuthDisconnect,
-    schedulesRunNow,
     ollamaModels,
     ollamaPull,
     mcpRequest,
@@ -77,12 +78,13 @@ abstract final class ApiEndpoints {
     '$_root/chats/{chatId}/session/prompt',
     '$_root/chats/{chatId}/stream',
     '$_root/chats/{chatId}/session/cancel',
-    '$_root/chats/{chatId}/session/set_mode',
-    '$_root/chats/{chatId}/session/set_config_option',
-    '$_root/chats/{chatId}/session/request_permission/{id}',
+    '$_root/chats/{chatId}/session/set-mode',
+    '$_root/chats/{chatId}/session/set-config-option',
+    '$_root/chats/{chatId}/session/request-permission/{id}',
+    '$_root/schedules/{scheduleId}/run',
     '$_root/chats/{chatId}/session/elicitation/{id}',
-    '$_root/files/{path...}',
-    '$_root/files-list/{path...}',
+    '$_root/files?path={path}',
+    '$_root/files-list?path={path}',
     '$_root/logs/{containerName}',
     '$_root/proxy/observability/{path...}',
   ];

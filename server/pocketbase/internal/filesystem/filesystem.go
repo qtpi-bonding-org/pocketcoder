@@ -120,14 +120,14 @@ func groupImmediateChildren(prefix string, objects []*blob.ListObject) []fileEnt
 
 // RegisterFilesApi provides a secure window into the /workspace using the PB Filesystem abstraction.
 func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.GET("/api/pocketcoder/files/{path...}", func(re *core.RequestEvent) error {
+	e.Router.GET("/api/pocketcoder/files", func(re *core.RequestEvent) error {
 		// 1. Auth Gate
 		if re.Auth == nil {
 			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
 		}
 
 		// 2. Resolve Path
-		pathParam := re.Request.PathValue("path")
+		pathParam := re.Request.URL.Query().Get("path")
 		if pathParam == "" {
 			return re.BadRequestError("Empty path.", nil)
 		}
@@ -156,20 +156,26 @@ func RegisterFilesApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		// Actually, http.ServeContent or similar might be better, but GetReader logic is manual
 		// We'll set a default and let the client handle it for now, or use a basic extension check.
 		re.Response.Header().Set("Content-Type", "application/octet-stream")
-		if strings.HasSuffix(cleanPath, ".html") { re.Response.Header().Set("Content-Type", "text/html") }
-		if strings.HasSuffix(cleanPath, ".png") { re.Response.Header().Set("Content-Type", "image/png") }
-		if strings.HasSuffix(cleanPath, ".txt") { re.Response.Header().Set("Content-Type", "text/plain") }
+		if strings.HasSuffix(cleanPath, ".html") {
+			re.Response.Header().Set("Content-Type", "text/html")
+		}
+		if strings.HasSuffix(cleanPath, ".png") {
+			re.Response.Header().Set("Content-Type", "image/png")
+		}
+		if strings.HasSuffix(cleanPath, ".txt") {
+			re.Response.Header().Set("Content-Type", "text/plain")
+		}
 
 		_, err = io.Copy(re.Response, r)
 		return err
 	}).Bind(apis.RequireAuth())
 
-	e.Router.GET("/api/pocketcoder/files-list/{path...}", func(re *core.RequestEvent) error {
+	e.Router.GET("/api/pocketcoder/files-list", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
 		}
 
-		pathParam := re.Request.PathValue("path")
+		pathParam := re.Request.URL.Query().Get("path")
 		cleanPath, ok := resolveWorkspacePath(pathParam)
 		if !ok {
 			return re.ForbiddenError("Path escape attempt detected.", nil)

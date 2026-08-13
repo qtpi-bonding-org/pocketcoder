@@ -16,7 +16,6 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-
 // @pocketcoder-core: MCP API. Handler for MCP server requests from Poco.
 package api
 
@@ -68,16 +67,16 @@ func resolveImageDigest(name, image string) (string, error) {
 
 // RegisterMcpApi registers the MCP server request endpoint.
 func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.POST("/api/pocketcoder/mcp_request", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/mcp/request", func(re *core.RequestEvent) error {
 		// 1. Require authentication
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
 
 		// 2. Check role: agent or admin only
 		role := re.Auth.GetString("role")
 		if role != "agent" && role != "admin" {
-			return re.JSON(403, map[string]string{"error": "Insufficient permissions"})
+			return pocketCoderError(re, 403, "Insufficient permissions")
 		}
 
 		// 3. Parse request body
@@ -90,19 +89,19 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return pocketCoderError(re, 400, "Invalid request body")
 		}
 
 		// Validate required fields
 		if input.ServerName == "" {
-			return re.JSON(400, map[string]string{"error": "server_name is required"})
+			return pocketCoderError(re, 400, "server_name is required")
 		}
 
 		// 4. Check for existing approved record with the same name
 		mcpServers, err := app.FindCollectionByNameOrId("mcp_servers")
 		if err != nil {
 			log.Printf("❌ [MCP] Failed to find mcp_servers collection: %v", err)
-			return re.JSON(500, map[string]string{"error": "Internal error"})
+			return pocketCoderError(re, 500, "Internal error")
 		}
 
 		// Query for existing record with the same name that is active or pending
@@ -117,13 +116,13 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 		)
 		if err != nil {
 			log.Printf("❌ [MCP] Failed to query existing MCP servers: %v", err)
-			return re.JSON(500, map[string]string{"error": "Internal error"})
+			return pocketCoderError(re, 500, "Internal error")
 		}
 
 		resolvedImage, err := resolveImageDigest(input.ServerName, input.Image)
 		if err != nil {
 			log.Printf("❌ [MCP] Failed to resolve image digest for %s: %v", input.ServerName, err)
-			return re.JSON(422, map[string]string{"error": "Could not resolve image to a digest: " + err.Error()})
+			return pocketCoderError(re, 422, "Could not resolve image to a digest: "+err.Error())
 		}
 
 		// If a record exists (either approved or pending), sync the latest researched metadata
@@ -160,7 +159,7 @@ func RegisterMcpApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
 
 		if err := app.Save(record); err != nil {
 			log.Printf("❌ [MCP] Failed to create MCP server record: %v", err)
-			return re.JSON(500, map[string]string{"error": "Failed to create record"})
+			return pocketCoderError(re, 500, "Failed to create record")
 		}
 
 		// 6. Return record ID and status
