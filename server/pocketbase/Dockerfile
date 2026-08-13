@@ -2,7 +2,7 @@
 # ------------------------------------------------------------------------------
 FROM golang:1.24.4-alpine AS pocketbase-builder
 
-RUN apk add --no-cache git gcc musl-dev
+RUN apk add --no-cache git openssh-client gcc musl-dev
 
 WORKDIR /app
 
@@ -17,6 +17,7 @@ RUN go mod download
 
 # 3. Build Source
 RUN CGO_ENABLED=0 go build -o pocketbase main.go
+RUN CGO_ENABLED=0 go build -o git-materializer ./cmd/git-materializer
 
 # ------------------------------------------------------------------------------
 # STAGE 2: Final Stage (PocketBase Only)
@@ -30,12 +31,15 @@ RUN apk add --no-cache \
     tzdata \
     openssl \
     sqlite \
-    sqlite-dev
+    sqlite-dev \
+    git \
+    openssh-client
 
 WORKDIR /app
 
 # Copy PocketBase Binary
 COPY --from=pocketbase-builder /app/pocketbase /app/pocketbase
+COPY --from=pocketbase-builder /app/git-materializer /app/git-materializer
 
 # Copy PocketBase Configs/Hooks
 COPY server/pocketbase/pb_migrations /app/pb_migrations

@@ -46,3 +46,14 @@ func TestResolveRejectsBindSyntax(t *testing.T) {
 		t.Fatal("expected an invalid user id to be rejected")
 	}
 }
+
+func TestResolveGitVolumeUsesFullUserID(t *testing.T) {
+	first, _ := Resolve("base", "abcdefghijklmnop", "codex", "account")
+	second, _ := Resolve("base", "abcdefghijklmnoq", "codex", "account")
+	if first.GitSSH == second.GitSSH {
+		t.Fatal("git volumes must not collide on truncated user IDs")
+	}
+	if first.GitSSH != "base_git_ssh_abcdefghijklmnop" {
+		t.Fatalf("GitSSH = %q", first.GitSSH)
+	}
+}

@@ -9,6 +9,7 @@ import (
 )
 
 const AuthHomeMount = "/workspace/.pocketcoder_auth"
+const GitSSHMount = "/run/pocketcoder/git"
 
 var nameComponent = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`)
 
@@ -18,6 +19,7 @@ var nameComponent = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`)
 type Names struct {
 	Workspace string
 	Auth      string
+	GitSSH    string
 }
 
 // Resolve derives durable sibling volume names from the generic Compose
@@ -43,8 +45,11 @@ func Resolve(base, userID, harnessCLI, accountID string) (Names, error) {
 	if namespace == "" {
 		return Names{}, fmt.Errorf("invalid base volume %q", base)
 	}
-	return Names{
+	names := Names{
 		Workspace: fmt.Sprintf("%s_user_%s_workspace", namespace, userSuffix),
 		Auth:      fmt.Sprintf("%s_harness_%s_account_%s_auth_home", namespace, harnessCLI, accountID),
-	}, nil
+		GitSSH:    fmt.Sprintf("%s_git_ssh_%s", namespace, userID),
+	}
+	if len(names.GitSSH) > 255 { return Names{}, fmt.Errorf("git volume name is too long") }
+	return names, nil
 }

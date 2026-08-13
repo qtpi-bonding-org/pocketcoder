@@ -95,6 +95,7 @@ func main() {
 	hooks.RegisterMcpHooks(app)
 
 	hooks.RegisterAgentFileHooks(app)
+	hooks.RegisterGitSSHHooks(app)
 
 	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {

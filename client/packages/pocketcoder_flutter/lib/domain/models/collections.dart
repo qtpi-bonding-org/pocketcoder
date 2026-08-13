@@ -23,6 +23,8 @@ class Collections {
   static const String harnessAccounts = 'harness_accounts';
   static const String harnessAccountSelections = 'harness_account_selections';
   static const String harnessAuthAttempts = 'harness_auth_attempts';
+  static const String gitSshCredentials = 'git_ssh_credentials';
+  static const String gitRepositoryAccess = 'git_repository_access';
 
   static const List<String> all = [
     users,
@@ -48,5 +50,7 @@ class Collections {
     harnessAccounts,
     harnessAccountSelections,
     harnessAuthAttempts,
+    gitSshCredentials,
+    gitRepositoryAccess,
   ];
 }
