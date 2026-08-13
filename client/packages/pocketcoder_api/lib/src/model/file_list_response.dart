@@ -121,4 +121,3 @@ class _$FileListResponseSerializer implements PrimitiveSerializer<FileListRespon
     return result.build();
   }
 }
-

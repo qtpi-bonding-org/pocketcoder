@@ -151,4 +151,3 @@ class _$FileEntrySerializer implements PrimitiveSerializer<FileEntry> {
     return result.build();
   }
 }
-

@@ -119,4 +119,3 @@ class _$ConfigOptionRequestSerializer implements PrimitiveSerializer<ConfigOptio
     return result.build();
   }
 }
-
