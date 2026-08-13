@@ -7,6 +7,7 @@ pkgs.testers.runNixOSTest {
     # bootstrap.nix receives this from the real flake's specialArgs. Supply
     # the development default explicitly in the standalone ordering test.
     _module.args.sourceCommit = "main";
+    _module.args.releaseManager = self.packages.${system}.release-manager;
     imports = [ ../caddy.nix ../bootstrap.nix ];
     systemd.services.detect-public-ip.script = pkgs.lib.mkForce ''
       mkdir -p /etc/caddy /etc/pocketcoder

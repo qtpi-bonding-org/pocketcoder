@@ -21,13 +21,21 @@ RUN_CONCLUSION=$(printf '%s' "$RUNS_JSON" | jq -r '.workflow_runs[0].conclusion 
 echo "=== run $RUN_ID status=$RUN_STATUS conclusion=$RUN_CONCLUSION ==="
 JOBS_JSON=$(curl --http1.1 -sS -f -H "$AUTH" "$API/runs/$RUN_ID/jobs?per_page=100")
 printf '%s' "$JOBS_JSON" | jq -r '.jobs[] | "job=\(.name) status=\(.status) conclusion=\(.conclusion // "pending")"'
-if [ "$RUN_STATUS" != "completed" ]; then
+if [ "$RUN_STATUS" != "completed" ] || [ "$RUN_CONCLUSION" != "success" ]; then
   FAILED_JOB_ID=$(printf '%s' "$JOBS_JSON" | jq -r '.jobs[] | select(.conclusion == "failure") | .id' | head -1)
   if [ -n "$FAILED_JOB_ID" ]; then
     FAILED_LOG="/tmp/pocketcoder-ci-failed.zip"
     curl --http1.1 -sS -fL -H "$AUTH" "$API/jobs/$FAILED_JOB_ID/logs" -o "$FAILED_LOG"
     echo "=== failed job log tail ==="
-    tail -300 "$FAILED_LOG"
+    if unzip -tq "$FAILED_LOG" >/dev/null 2>&1; then
+      LOGDIR="/tmp/pocketcoder-ci-failed-log"
+      rm -rf "$LOGDIR"
+      mkdir -p "$LOGDIR"
+      unzip -q "$FAILED_LOG" -d "$LOGDIR"
+      (cat "$LOGDIR"/*/*.txt 2>/dev/null || cat "$LOGDIR"/*.txt) | tail -300
+    else
+      tail -300 "$FAILED_LOG"
+    fi
   fi
   exit 0
 fi
