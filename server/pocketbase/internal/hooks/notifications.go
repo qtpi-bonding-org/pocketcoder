@@ -145,7 +145,7 @@ func RegisterPushApi(app core.App, e *core.ServeEvent) {
 		// Only agent or admin can send push notifications
 		role := re.Auth.GetString("role")
 		if role != "agent" && role != "admin" {
-			return re.JSON(403, map[string]string{"error": "Insufficient permissions"})
+			return apis.NewApiError(403, "Insufficient permissions", nil)
 		}
 
 		var input struct {
@@ -157,11 +157,11 @@ func RegisterPushApi(app core.App, e *core.ServeEvent) {
 		}
 
 		if err := re.BindBody(&input); err != nil {
-			return re.JSON(400, map[string]string{"error": "Invalid request body"})
+			return apis.NewApiError(400, "Invalid request body", nil)
 		}
 
 		if input.UserID == "" || input.Type == "" {
-			return re.JSON(400, map[string]string{"error": "user_id and type are required"})
+			return apis.NewApiError(400, "user_id and type are required", nil)
 		}
 
 		go SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID)

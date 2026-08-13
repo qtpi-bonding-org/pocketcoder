@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info:
+  title: PocketCoder operation API
+  version: 1.0.0
+  description: Spec-first contract for PocketCoder custom operations. PocketBase collection APIs are out of scope.
+servers:
+  - url: /
+paths:
+  /api/pocketcoder/chats/{chatId}/session/prompt:
+    post:
+      operationId: promptChat
+      tags: [agent]
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/ChatId' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PromptRequest' } } } }
+      responses: { '202': { description: Run accepted, content: { application/json: { schema: { $ref: '#/components/schemas/AcceptedResponse' } } } }, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '503': {$ref: '#/components/responses/Unavailable'} }
+  /api/pocketcoder/chats/{chatId}/stream:
+    get:
+      operationId: streamChatEvents
+      tags: [agent]
+      x-pocketcoder-transport: sse
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/ChatId' }, { $ref: '#/components/parameters/Cursor' }]
+      responses: { '200': { description: Incremental AG-UI events, content: { text/event-stream: { schema: { $ref: '#/components/schemas/AgentEvent' } } } }, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/chats/{chatId}/session/cancel:
+    post:
+      operationId: cancelChatSession
+      tags: [agent]
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/ChatId' }]
+      responses: { '204': {description: Session cancelled}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/chats/{chatId}/session/set-mode:
+    post:
+      operationId: setChatMode
+      tags: [agent]
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/ChatId' }]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ModeRequest'}}}}
+      responses: {'202': {description: Operation accepted}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '502': {$ref: '#/components/responses/BadGateway'}, '503': {$ref: '#/components/responses/Unavailable'} }
+  /api/pocketcoder/chats/{chatId}/session/set-config-option:
+    post:
+      operationId: setChatConfigOption
+      tags: [agent]
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/ChatId' }]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ConfigOptionRequest'}}}}
+      responses: {'202': {description: Operation accepted}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '502': {$ref: '#/components/responses/BadGateway'}, '503': {$ref: '#/components/responses/Unavailable'} }
+  /api/pocketcoder/chats/{chatId}/session/request-permission/{id}:
+    post:
+      operationId: respondToPermission
+      tags: [agent]
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/ChatId' }, { $ref: '#/components/parameters/RequestId' }]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DecisionRequest'}}}}
+      responses: {'202': {description: Operation accepted}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '502': {$ref: '#/components/responses/BadGateway'}, '503': {$ref: '#/components/responses/Unavailable'} }
+  /api/pocketcoder/chats/{chatId}/session/elicitation/{id}:
+    post:
+      operationId: respondToElicitation
+      tags: [agent]
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/ChatId' }, { $ref: '#/components/parameters/RequestId' }]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DecisionRequest'}}}}
+      responses: {'202': {description: Operation accepted}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '502': {$ref: '#/components/responses/BadGateway'}, '503': {$ref: '#/components/responses/Unavailable'} }
+  /api/pocketcoder/harness-auth/status:
+    post:
+      operationId: getHarnessAuthStatus
+      tags: [harness-auth]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/harness-auth/start:
+    post:
+      operationId: startHarnessAuth
+      tags: [harness-auth]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/harness-auth/poll:
+    post:
+      operationId: pollHarnessAuth
+      tags: [harness-auth]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/harness-auth/submit:
+    post:
+      operationId: submitHarnessAuth
+      tags: [harness-auth]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/harness-auth/cancel:
+    post:
+      operationId: cancelHarnessAuth
+      tags: [harness-auth]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/harness-auth/disconnect:
+    post:
+      operationId: disconnectHarnessAuth
+      tags: [harness-auth]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/schedules/{scheduleId}/run:
+    post:
+      operationId: runScheduleNow
+      tags: [schedules]
+      security: [{pocketbaseToken: []}]
+      parameters: [{name: scheduleId, in: path, required: true, schema: {type: string, minLength: 1}}]
+      responses: {'202': {description: Schedule run accepted, content: {application/json: {schema: {$ref: '#/components/schemas/ScheduleRunAcceptedResponse'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/files:
+    get:
+      operationId: getWorkspaceFile
+      tags: [files]
+      x-pocketcoder-transport: binary
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/FilePath' }]
+      responses: {'200': {description: Raw file bytes, content: {application/octet-stream: {schema: {type: string, format: binary}}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/files-list:
+    get:
+      operationId: listWorkspaceFiles
+      tags: [files]
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/DirectoryPath' }]
+      responses: {'200': {description: Immediate directory entries, content: {application/json: {schema: {$ref: '#/components/schemas/FileListResponse'}}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/ollama/models:
+    get:
+      operationId: listOllamaModels
+      tags: [ollama]
+      x-pocketcoder-roles: [admin]
+      security: [{pocketbaseToken: []}]
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/ollama/pull:
+    post:
+      operationId: pullOllamaModel
+      tags: [ollama]
+      x-pocketcoder-roles: [admin]
+      x-pocketcoder-transport: ndjson
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ModelRequest'}}}}
+      responses: {'200': {description: Incremental pull progress, content: {application/x-ndjson: {schema: {$ref: '#/components/schemas/OllamaProgress'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '403': {$ref: '#/components/responses/Forbidden'}, '502': {$ref: '#/components/responses/BadGateway'}, '503': {$ref: '#/components/responses/Unavailable'} }
+  /api/pocketcoder/mcp/request:
+    post:
+      operationId: executeMcpRequest
+      tags: [mcp]
+      x-pocketcoder-roles: [admin]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/McpRequest'}}}}
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/Unprocessable'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/mcp/oauth/store:
+    post:
+      operationId: storeMcpOAuthToken
+      tags: [mcp]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/McpOAuthRequest'}}}}
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/release/compatibility:
+    get:
+      operationId: getReleaseCompatibility
+      tags: [release]
+      security: []
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/release/status:
+    get:
+      operationId: getReleaseStatus
+      tags: [release]
+      security: [{pocketbaseToken: []}]
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+  /api/pocketcoder/logs/{containerName}:
+    get:
+      operationId: streamContainerLogs
+      tags: [logs]
+      x-pocketcoder-transport: sse
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/ContainerName' }]
+      responses: {'200': {description: Incremental container log events, content: {text/event-stream: {schema: {$ref: '#/components/schemas/LogEvent'}}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/proxy/observability/{path}:
+    get:
+      operationId: proxyObservability
+      tags: [observability]
+      x-pocketcoder-roles: [admin]
+      x-pocketcoder-transport: opaque-proxy
+      x-pocketcoder-router-path: /api/pocketcoder/proxy/observability/{path...}
+      security: [{pocketbaseToken: []}]
+      parameters: [{name: path, in: path, required: true, schema: {type: string}}]
+      responses: {'200': {description: Opaque SQLPage response, content: {'*/*': {}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '403': {$ref: '#/components/responses/Forbidden'} }
+  /api/pocketcoder/push:
+    post:
+      operationId: sendPushNotification
+      tags: [push]
+      security: [{pocketbaseToken: []}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/PushRequest'}}}}
+      responses: {'204': {description: Operation completed}, '200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+components:
+  securitySchemes:
+    pocketbaseToken: {type: apiKey, in: header, name: Authorization, description: Raw PocketBase token; do not prefix with Bearer.}
+  parameters:
+    ChatId: {name: chatId, in: path, required: true, schema: {type: string, minLength: 1}}
+    RequestId: {name: id, in: path, required: true, schema: {type: string, minLength: 1}}
+    Cursor: {name: cursor, in: query, required: false, schema: {type: integer, minimum: 0}}
+    FilePath: {name: path, in: query, required: true, schema: {type: string, minLength: 1}}
+    DirectoryPath: {name: path, in: query, required: false, schema: {type: string, default: ''}}
+    ContainerName: {name: containerName, in: path, required: true, schema: {type: string, minLength: 1}}
+  responses:
+    JsonSuccess: {description: Successful JSON response, content: {application/json: {schema: {$ref: '#/components/schemas/JsonObject'}}}}
+    BadRequest: {description: Invalid request, content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}
+    Unauthorized: {description: Authentication required, content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}
+    Forbidden: {description: Forbidden, content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}
+    NotFound: {description: Not found, content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}
+    InternalError: {description: Internal error, content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}
+    Unavailable: {description: Service unavailable, content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}
+    BadGateway: {description: Upstream service unavailable, content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}
+    Unprocessable: {description: Request could not be processed, content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}
+  schemas:
+    JsonObject: {type: object, additionalProperties: true}
+    ErrorResponse: {type: object, required: [code, message, data], additionalProperties: false, properties: {code: {type: integer}, message: {type: string}, data: {type: object, additionalProperties: true}}}
+    AcceptedResponse: {type: object, required: [runId], additionalProperties: false, properties: {runId: {type: string, minLength: 1}}}
+    ScheduleRunAcceptedResponse: {type: object, required: [status], additionalProperties: false, properties: {status: {type: string, enum: [started]}}}
+    PromptRequest: {type: object, required: [prompt], additionalProperties: false, properties: {prompt: {type: string, minLength: 1}}}
+    ModeRequest: {type: object, required: [modeId], additionalProperties: false, properties: {modeId: {type: string, minLength: 1}}}
+    ConfigOptionRequest: {type: object, required: [configId, value], additionalProperties: false, properties: {configId: {type: string, minLength: 1}, value: {type: string}}}
+    DecisionRequest: {type: object, additionalProperties: true}
+    HarnessRequest: {type: object, additionalProperties: true}
+    ModelRequest: {type: object, required: [model], additionalProperties: false, properties: {model: {type: string, minLength: 1}}}
+    McpRequest: {type: object, additionalProperties: true}
+    McpOAuthRequest: {type: object, additionalProperties: true}
+    PushRequest: {type: object, additionalProperties: true}
+    FileListResponse: {type: object, required: [path, entries], additionalProperties: false, properties: {path: {type: string}, entries: {type: array, items: {$ref: '#/components/schemas/FileEntry'}}}}
+    FileEntry: {type: object, required: [name, isDir, size, modTime], additionalProperties: false, properties: {name: {type: string}, isDir: {type: boolean}, size: {type: integer, format: int64}, modTime: {type: string}}}
+    OllamaProgress: {type: object, additionalProperties: true}
+    AgentEvent: {type: object, additionalProperties: true}
+    LogEvent: {type: object, additionalProperties: true}

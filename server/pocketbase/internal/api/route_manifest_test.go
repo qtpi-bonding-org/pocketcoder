@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -10,17 +9,19 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
-type routeManifest struct {
-	SchemaVersion int `json:"schemaVersion"`
-	Routes        []struct {
-		Method string `json:"method"`
-		Path   string `json:"path"`
-	} `json:"routes"`
+type openAPIRouteSpec struct {
+	Paths map[string]map[string]yaml.Node `yaml:"paths"`
 }
 
 var routeRegistrationPattern = regexp.MustCompile(`\.Router\.(GET|POST|PUT|PATCH|DELETE)\("([^"]+)"`)
+
+func normalizeRoutePath(path string) string {
+	return strings.ReplaceAll(path, "{path...}", "{path}")
+}
 
 func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
@@ -28,21 +29,23 @@ func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 		t.Fatal("resolve test location")
 	}
 	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(filename), "../../../.."))
-	manifestData, err := os.ReadFile(filepath.Join(repoRoot, "api", "pocketcoder-routes.json"))
+	manifestData, err := os.ReadFile(filepath.Join(repoRoot, "api", "openapi", "pocketcoder.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var manifest routeManifest
-	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+	var spec openAPIRouteSpec
+	if err := yaml.Unmarshal(manifestData, &spec); err != nil {
 		t.Fatal(err)
 	}
-	if manifest.SchemaVersion != 1 {
-		t.Fatalf("unsupported route manifest schemaVersion %d", manifest.SchemaVersion)
-	}
 
-	want := make([]string, 0, len(manifest.Routes))
-	for _, route := range manifest.Routes {
-		want = append(want, route.Method+" "+route.Path)
+	want := make([]string, 0)
+	for path, methods := range spec.Paths {
+		for method := range methods {
+			if method == "parameters" {
+				continue
+			}
+			want = append(want, strings.ToUpper(method)+" "+path)
+		}
 	}
 	sort.Strings(want)
 
@@ -60,7 +63,7 @@ func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 		}
 		for _, match := range routeRegistrationPattern.FindAllStringSubmatch(string(data), -1) {
 			if strings.HasPrefix(match[2], "/api/pocketcoder/") {
-				got = append(got, match[1]+" "+match[2])
+				got = append(got, match[1]+" "+normalizeRoutePath(match[2]))
 			}
 		}
 		return nil
@@ -70,6 +73,6 @@ func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 	}
 	sort.Strings(got)
 	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("backend routes differ from api/pocketcoder-routes.json\n got: %v\nwant: %v", got, want)
+		t.Fatalf("backend routes differ from api/openapi/pocketcoder.yaml\n got: %v\nwant: %v", got, want)
 	}
 }

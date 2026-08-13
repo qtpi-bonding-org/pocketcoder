@@ -408,7 +408,7 @@ interface per behavior:
 ## Implementation record and next steps
 
 1. Completed: establish a checked 37-route inventory, then reduce it to 25 and
-   enforce backend/Flutter parity through `api/pocketcoder-routes.json`.
+   enforce backend/Flutter parity through the checked-in OpenAPI contract.
 2. Completed: convert skills to generated collection models and
    DAO/repository access; remove the four CRUD wrappers and custom transport
    models.

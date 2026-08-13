@@ -1,0 +1,11 @@
+apis:
+  pocketcoder@phase1:
+    root: ./pocketcoder-phase1.yaml
+extends:
+  - recommended
+rules:
+  operation-operationId: error
+  no-unresolved-refs: error
+  no-empty-servers: error
+  operation-summary: off
+  info-license: off

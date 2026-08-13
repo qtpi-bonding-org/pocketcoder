@@ -35,10 +35,10 @@ var ollamaModelName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._/-]*(?::[A-Za-
 
 func requireAdmin(re *core.RequestEvent) error {
 	if re.Auth == nil {
-		return re.JSON(http.StatusUnauthorized, map[string]string{"error": "Authentication required"})
+		return pocketCoderError(re, http.StatusUnauthorized, "Authentication required")
 	}
 	if re.Auth.GetString("role") != "admin" {
-		return re.JSON(http.StatusForbidden, map[string]string{"error": "Insufficient permissions"})
+		return pocketCoderError(re, http.StatusForbidden, "Insufficient permissions")
 	}
 	return nil
 }
@@ -235,25 +235,25 @@ func RegisterOllamaApi(_ *pocketbase.PocketBase, e *core.ServeEvent) {
 		}
 		var input ollamaPullRequest
 		if err := re.BindBody(&input); err != nil || !ollamaModelName.MatchString(input.Model) {
-			return re.JSON(http.StatusBadRequest, map[string]string{"error": "model must be a valid Ollama model name"})
+			return pocketCoderError(re, http.StatusBadRequest, "model must be a valid Ollama model name")
 		}
 		if err := ensureOllamaRuntime(re.Request.Context(), docker, client, ollamaURL()); err != nil {
-			return re.JSON(http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+			return pocketCoderError(re, http.StatusServiceUnavailable, err.Error())
 		}
 		payload, _ := json.Marshal(map[string]string{"model": input.Model})
 		request, err := http.NewRequestWithContext(re.Request.Context(), http.MethodPost, ollamaURL()+"/api/pull", bytes.NewReader(payload))
 		if err != nil {
-			return re.InternalServerError("create Ollama pull request", err)
+			return pocketCoderError(re, http.StatusInternalServerError, "create Ollama pull request")
 		}
 		request.Header.Set("Content-Type", "application/json")
 		response, err := client.Do(request)
 		if err != nil {
-			return re.JSON(http.StatusBadGateway, map[string]string{"error": "Ollama is unavailable"})
+			return pocketCoderError(re, http.StatusBadGateway, "Ollama is unavailable")
 		}
 		defer response.Body.Close()
 		if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 			body, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
-			return re.JSON(http.StatusBadGateway, map[string]string{"error": strings.TrimSpace(string(body))})
+			return pocketCoderError(re, http.StatusBadGateway, strings.TrimSpace(string(body)))
 		}
 
 		re.Response.Header().Set("Content-Type", "application/x-ndjson")

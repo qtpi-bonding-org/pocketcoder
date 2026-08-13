@@ -25,19 +25,17 @@ func resolveOwnedSchedule(app core.App, userID, id string) (*core.Record, error)
 }
 
 func RegisterSchedulesApi(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() *coordinator.Coordinator) {
-	e.Router.POST("/api/pocketcoder/schedules/run-now", func(re *core.RequestEvent) error {
+	e.Router.POST("/api/pocketcoder/schedules/{scheduleId}/run", func(re *core.RequestEvent) error {
 		if re.Auth == nil {
-			return re.JSON(401, map[string]string{"error": "Authentication required"})
+			return pocketCoderError(re, 401, "Authentication required")
 		}
-		var in struct {
-			ID string `json:"id"`
+		id := re.Request.PathValue("scheduleId")
+		if id == "" {
+			return pocketCoderError(re, 400, "scheduleId is required")
 		}
-		if err := re.BindBody(&in); err != nil || in.ID == "" {
-			return re.JSON(400, map[string]string{"error": "id is required"})
-		}
-		row, err := resolveOwnedSchedule(app, re.Auth.Id, in.ID)
+		row, err := resolveOwnedSchedule(app, re.Auth.Id, id)
 		if err != nil {
-			return re.JSON(404, map[string]string{"error": "Schedule not found"})
+			return pocketCoderError(re, 404, "Schedule not found")
 		}
 		go runPocketCoderSchedule(app, coord, row.Id)
 		return re.JSON(202, map[string]string{"status": "started"})
