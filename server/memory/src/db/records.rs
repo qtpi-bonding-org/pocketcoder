@@ -13,7 +13,8 @@ const MAX_BODY_BYTES: usize = 256 * 1024;
 const MAX_LIST_LIMIT: u32 = 100;
 
 impl Repository {
-    /// Creates an unlinked observation or interpretation attributed to `identity`.
+    /// Creates an unlinked observation attributed to `identity`.
+    /// Interpretations must use the atomic linked-creation methods.
     ///
     /// # Errors
     ///
@@ -25,6 +26,11 @@ impl Repository {
         body: impl Into<String>,
         now_ms: i64,
     ) -> Result<MemoryRecord> {
+        if kind == MemoryKind::Interpretation {
+            return Err(MemoryError::InvalidInput(
+                "interpretations require at least one linked observation".to_owned(),
+            ));
+        }
         identity.validate()?;
         let body = validate_body(body.into())?;
         let identity = identity.clone();
@@ -117,7 +123,8 @@ impl Repository {
         .await
     }
 
-    /// Deletes a canonical record and lets foreign keys cascade only its links.
+    /// Deletes a canonical record and lets foreign keys cascade its links,
+    /// unless deleting an observation would orphan an interpretation.
     ///
     /// # Errors
     ///
@@ -127,6 +134,26 @@ impl Repository {
         let id = id.to_owned();
         let missing_id = id.clone();
         self.call(move |connection| {
+            if kind == MemoryKind::Observation {
+                let would_orphan = connection.query_row(
+                    "SELECT EXISTS(\
+                         SELECT 1 FROM interpretation_observations AS links \
+                         WHERE links.observation_id = ?1 \
+                           AND (\
+                               SELECT count(*) \
+                               FROM interpretation_observations AS siblings \
+                               WHERE siblings.interpretation_id = links.interpretation_id\
+                           ) <= 1\
+                     )",
+                    [&id],
+                    |row| row.get::<_, bool>(0),
+                )?;
+                if would_orphan {
+                    return Err(MemoryError::InvalidInput(
+                        "the observation is the final link for an interpretation".to_owned(),
+                    ));
+                }
+            }
             let table = table_name(kind);
             let changed = connection.execute(
                 &format!("DELETE FROM {table} WHERE id = ?1 AND account_id = ?2"),

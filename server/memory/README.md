@@ -24,6 +24,30 @@ MCP/HTTP -> service/use cases -> explicit SQLite repositories
 historical migration chain. Startup initializes an empty database or rejects a
 database carrying another schema identifier.
 
+## Agent MCP surface
+
+Pocket Memory exposes eight tools to coding agents:
+
+- `memory_create_observation`
+- `memory_create_interpretation`
+- `memory_link`
+- `memory_unlink`
+- `memory_get_observation`
+- `memory_get_interpretation`
+- `memory_list`
+- `memory_search`
+
+Every interpretation must remain linked to at least one observation. All links
+are equal rows in the `interpretation_observations` many-to-many table; there is
+no separate or privileged basis relationship. Interpretation creation accepts
+either an existing observation or a new observation body, in which case both
+records and their link are committed atomically. Additional existing
+observations may be linked in the same transaction.
+
+Body updates and record deletion remain internal service/repository primitives
+for a future user-owned memory-management interface. They are deliberately not
+exposed as agent MCP tools.
+
 ## Model contract
 
 - Upstream: `intfloat/multilingual-e5-small`

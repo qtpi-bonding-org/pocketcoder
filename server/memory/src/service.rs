@@ -52,6 +52,12 @@ pub struct MemoryWithLinks {
     pub linked: Vec<MemoryRecord>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum InterpretationObservation {
+    ExistingObservation(String),
+    NewObservation(String),
+}
+
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct SearchMatch {
     pub kind: MemoryKind,
@@ -154,7 +160,9 @@ impl MemoryService {
         Ok(record)
     }
 
-    /// Creates one interpretation and optional initial links atomically.
+    /// Creates one interpretation with either an existing observation or a new
+    /// observation created in the same transaction. Additional links are
+    /// optional and all observation links are equal.
     ///
     /// # Errors
     ///
@@ -163,15 +171,38 @@ impl MemoryService {
         &self,
         identity: &AgentIdentity,
         body: String,
-        observation_ids: &[String],
-    ) -> Result<MemoryRecord> {
-        let record = self
-            .repository
-            .create_interpretation_with_links(identity, body, observation_ids, self.clock.now_ms())
-            .await?;
-        self.embed_record_best_effort(MemoryKind::Interpretation, &record)
+        observation: InterpretationObservation,
+        additional_observation_ids: &[String],
+    ) -> Result<MemoryWithLinks> {
+        let now_ms = self.clock.now_ms();
+        let interpretation = match observation {
+            InterpretationObservation::ExistingObservation(observation_id) => {
+                let mut observation_ids = additional_observation_ids.to_vec();
+                observation_ids.push(observation_id);
+                self.repository
+                    .create_interpretation_with_links(identity, body, &observation_ids, now_ms)
+                    .await?
+            }
+            InterpretationObservation::NewObservation(observation_body) => {
+                let (observation, interpretation) = self
+                    .repository
+                    .create_observation_with_interpretation(
+                        identity,
+                        observation_body,
+                        body,
+                        additional_observation_ids,
+                        now_ms,
+                    )
+                    .await?;
+                self.embed_record_best_effort(MemoryKind::Observation, &observation)
+                    .await;
+                interpretation
+            }
+        };
+        self.embed_record_best_effort(MemoryKind::Interpretation, &interpretation)
             .await;
-        Ok(record)
+        self.get(identity, MemoryKind::Interpretation, &interpretation.id)
+            .await
     }
 
     /// Replaces a record body without changing original authorship.
