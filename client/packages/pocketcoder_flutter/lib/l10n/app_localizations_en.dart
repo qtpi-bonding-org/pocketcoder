@@ -1564,8 +1564,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentRunLocalModel => 'RUN A LOCAL MODEL';
 
   @override
-  String get deploymentPlanPoco =>
-      'Here are the server sizes available from Linode.\n\nThe highlighted option is the minimum I recommend for the setup you chose. You can select a larger server.';
+  String deploymentPlanPoco(String minimumMemory, String recommendedMemory) {
+    return 'The $minimumMemory option is the minimum for remote models. I recommend $recommendedMemory for builds, tests, and updates. You can choose either or go larger.';
+  }
 
   @override
   String get deploymentRegionPoco =>
@@ -1588,7 +1589,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'NO SUITABLE SERVER SIZES ARE AVAILABLE FOR THIS SETUP.';
 
   @override
-  String get deploymentRecommendedMinimum => 'RECOMMENDED MINIMUM';
+  String get deploymentMinimum => 'MINIMUM';
 
   @override
   String get deploymentRecommended => 'RECOMMENDED';
