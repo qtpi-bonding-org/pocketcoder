@@ -103,4 +103,3 @@ class _$ModelRequestSerializer implements PrimitiveSerializer<ModelRequest> {
     return result.build();
   }
 }
-

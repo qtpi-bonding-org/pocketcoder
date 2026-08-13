@@ -120,4 +120,3 @@ class ScheduleRunAcceptedResponseStatusEnum extends EnumClass {
   static BuiltSet<ScheduleRunAcceptedResponseStatusEnum> get values => _$scheduleRunAcceptedResponseStatusEnumValues;
   static ScheduleRunAcceptedResponseStatusEnum valueOf(String name) => _$scheduleRunAcceptedResponseStatusEnumValueOf(name);
 }
-

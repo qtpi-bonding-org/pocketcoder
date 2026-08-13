@@ -105,4 +105,3 @@ class _$PromptRequestSerializer implements PrimitiveSerializer<PromptRequest> {
     return result.build();
   }
 }
-

@@ -103,4 +103,3 @@ class _$ModeRequestSerializer implements PrimitiveSerializer<ModeRequest> {
     return result.build();
   }
 }
-

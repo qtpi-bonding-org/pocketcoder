@@ -103,4 +103,3 @@ class _$AcceptedResponseSerializer implements PrimitiveSerializer<AcceptedRespon
     return result.build();
   }
 }
-
