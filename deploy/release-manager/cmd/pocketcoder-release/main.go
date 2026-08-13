@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/ed25519"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -54,13 +53,13 @@ func run(args []string) error {
 }
 
 type mutationOptions struct {
-	stateRoot, artifactRoot, releasesRoot, currentLink    string
-	releaseBase, channel, rootKeyPath, runtimeEnvironment string
-	statusFile, statusRunID                               string
-	stableFloor, reserveBytes                             int64
-	expectedDigest                                        string
-	expectedSequence                                      int64
-	harnesses, optional                                   []string
+	stateRoot, artifactRoot, releasesRoot, currentLink string
+	releaseBase, channel, runtimeEnvironment           string
+	statusFile, statusRunID                            string
+	stableFloor, reserveBytes                          int64
+	expectedDigest                                     string
+	expectedSequence                                   int64
+	harnesses, optional                                []string
 }
 
 func mutationFlags(name string, args []string) (mutationOptions, error) {
@@ -72,7 +71,6 @@ func mutationFlags(name string, args []string) (mutationOptions, error) {
 	flags.StringVar(&result.currentLink, "current-link", envOr("POCKETCODER_CURRENT_LINK", "/opt/pocketcoder/current"), "active release symlink")
 	flags.StringVar(&result.releaseBase, "release-base", envOr("RELEASE_BASE", "https://images.pocketcoder.org"), "release service base URL")
 	flags.StringVar(&result.channel, "channel", envOr("POCKETCODER_RELEASE_CHANNEL", "stable"), "release channel")
-	flags.StringVar(&result.rootKeyPath, "root-public-key", envOr("POCKETCODER_ROOT_PUBLIC_KEY", "/etc/pocketcoder/release-root.pem"), "root public key PEM")
 	flags.StringVar(&result.runtimeEnvironment, "runtime-env", envOr("POCKETCODER_RUNTIME_ENV", "/var/lib/pocketcoder/config/runtime.env"), "runtime environment file")
 	flags.StringVar(&result.statusFile, "status-file", envOr("POCKETCODER_STATUS_FILE", ""), "bootstrap status document to continue")
 	flags.StringVar(&result.statusRunID, "status-run-id", envOr("POCKETCODER_STATUS_RUN_ID", ""), "bootstrap status run identifier")
@@ -237,15 +235,7 @@ func newUpdateManager(options mutationOptions, paths state.Paths, current releas
 }
 
 func resolveLocked(options mutationOptions, paths state.Paths, allowRevoked bool) (releasecontract.Resolved, []byte, error) {
-	rootPEM, err := os.ReadFile(options.rootKeyPath)
-	if err != nil {
-		return releasecontract.Resolved{}, nil, err
-	}
-	rootKey, err := trust.ParseRootPublicKeyPEM(rootPEM)
-	if err != nil {
-		return releasecontract.Resolved{}, nil, err
-	}
-	resolved, resolveErr := (releasecontract.Resolver{Config: releasecontract.Config{ReleaseBase: options.releaseBase, Channel: options.channel, StableSequenceFloor: options.stableFloor, State: paths, RootPublicKey: ed25519.PublicKey(rootKey), AllowRevoked: allowRevoked, Fetcher: artifact.Fetcher{}, Now: time.Now}}).Resolve()
+	resolved, resolveErr := (releasecontract.Resolver{Config: releasecontract.Config{ReleaseBase: options.releaseBase, Channel: options.channel, StableSequenceFloor: options.stableFloor, State: paths, AllowRevoked: allowRevoked, Fetcher: artifact.Fetcher{}, Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")}}}).Resolve()
 	if resolveErr != nil {
 		return releasecontract.Resolved{}, nil, resolveErr
 	}
@@ -283,7 +273,6 @@ func checkMetadata(args []string) error {
 	artifactRoot := flags.String("artifact-dir", envOr("POCKETCODER_ARTIFACT_DIR", "/var/lib/pocketcoder/artifacts"), "artifact directory")
 	releaseBase := flags.String("release-base", envOr("RELEASE_BASE", "https://images.pocketcoder.org"), "release service base URL")
 	channel := flags.String("channel", envOr("POCKETCODER_RELEASE_CHANNEL", "stable"), "release channel")
-	rootKeyPath := flags.String("root-public-key", envOr("POCKETCODER_ROOT_PUBLIC_KEY", "/etc/pocketcoder/release-root.pem"), "root public key PEM")
 	stableFloor := flags.Int64("stable-sequence-floor", envInt64("POCKETCODER_STABLE_SEQUENCE_FLOOR", 1), "stable sequence floor")
 	reserveBytes := flags.Int64("reserve-bytes", envInt64("POCKETCODER_DISK_RESERVE_BYTES", 1<<30), "required free-space reserve")
 	if err := flags.Parse(args); err != nil {
@@ -306,18 +295,10 @@ func checkMetadata(args []string) error {
 	if err := contract.DecodeStrict(currentBytes, &current); err != nil {
 		return err
 	}
-	rootPEM, err := os.ReadFile(*rootKeyPath)
-	if err != nil {
-		return err
-	}
-	rootKey, err := trust.ParseRootPublicKeyPEM(rootPEM)
-	if err != nil {
-		return err
-	}
 	resolved, err := (releasecontract.Resolver{Config: releasecontract.Config{
 		ReleaseBase: *releaseBase, Channel: *channel, StableSequenceFloor: *stableFloor,
-		State: paths, RootPublicKey: ed25519.PublicKey(rootKey), AllowRevoked: true,
-		Fetcher: artifact.Fetcher{}, Now: time.Now,
+		State: paths, AllowRevoked: true, Fetcher: artifact.Fetcher{},
+		Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")},
 	}}).Resolve()
 	if err != nil {
 		return err

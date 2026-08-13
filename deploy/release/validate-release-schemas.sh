@@ -18,7 +18,5 @@ validate() {
 validate release-manifest.schema.json release-manifest.example.json
 validate release-channel-pointer.schema.json release-channel-pointer.example.json
 validate release-revocation.schema.json release-revocation.example.json
-validate signature-envelope.schema.json signature-envelope.example.json
-validate root-delegation.schema.json root-delegation.example.json
 validate harnesses.schema.json harnesses.json
 validate deployment-sizing.schema.json deployment-sizing.json

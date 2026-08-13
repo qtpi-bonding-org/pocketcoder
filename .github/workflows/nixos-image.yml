@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Build an immutable candidate bundle for local signing
+        description: Build and publish an immutable GitHub-attested NixOS candidate
         required: true
         default: build_candidate
         type: choice
@@ -145,7 +145,6 @@ jobs:
           deploy/release/generate-release-schemas.sh
           git diff --exit-code -- 'deploy/release/*.schema.json'
           deploy/release/tests/release-schema-test.sh
-          deploy/release/tests/signature-test.sh
           deploy/release/tests/release-contract-test.sh
 
       - name: Build split release artifacts and metadata
@@ -164,7 +163,12 @@ jobs:
   # and split Docker artifacts exist. This job cannot move public pointers.
   candidate:
     needs: [build, release-artifacts]
+    if: github.ref == 'refs/heads/main'
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -201,13 +205,37 @@ jobs:
             candidate/nixos-release-metadata.json \
             candidate/release-artifacts-metadata.json \
             candidate/release-manifest.json candidate/documents
-          POCKETCODER_SIGNING_KEY_FILE=deploy/release/fixtures/keys/test-operations-private.pem \
-            deploy/release/sign-payload.sh candidate/release-manifest.json \
-              release test-operations candidate/release-manifest.test.sig
           deploy/release/tests/release-schema-test.sh
-          deploy/release/tests/signature-test.sh
 
-      - name: Upload canonical candidate for local signing
+      - name: Attest canonical candidate
+        id: attest-candidate
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            candidate/release-manifest.json
+            candidate/artifacts/*
+            candidate/documents/*
+
+      - name: Preserve candidate attestation bundle
+        run: |
+          sha256sum candidate/release-manifest.json | cut -d' ' -f1 > candidate/manifest.sha256
+          SHA256=$(cat candidate/manifest.sha256)
+          mkdir -p candidate/attestations/releases
+          cp "${{ steps.attest-candidate.outputs.bundle-path }}" \
+            "candidate/attestations/releases/$SHA256.sigstore.json"
+
+      - name: Publish immutable GitHub-attested candidate
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -euo pipefail
+          deploy/ci/publish-attested-candidate.sh candidate \
+            "candidate/attestations/releases/$(cat candidate/manifest.sha256).sigstore.json"
+
+      - name: Upload canonical candidate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-candidate-${{ github.sha }}

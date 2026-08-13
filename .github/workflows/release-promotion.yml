@@ -1,0 +1,55 @@
+name: Promote NixOS Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Channel to advance
+        required: true
+        type: choice
+        options: [stable, beta, nightly]
+      manifest_sha256:
+        description: Immutable candidate manifest SHA-256
+        required: true
+        type: string
+      sequence:
+        description: Next monotonic channel sequence
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install contract validator
+        run: python3 -m pip install -r deploy/release/requirements.txt
+
+      - name: Prepare channel pointer
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: deploy/ci/prepare-attested-channel-pointer.sh '${{ inputs.channel }}' '${{ inputs.manifest_sha256 }}' '${{ inputs.sequence }}' channel-pointer.json
+
+      - name: Attest channel pointer
+        id: attest-pointer
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: channel-pointer.json
+
+      - name: Publish channel pointer
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: deploy/ci/publish-attested-channel-pointer.sh channel-pointer.json '${{ steps.attest-pointer.outputs.bundle-path }}'

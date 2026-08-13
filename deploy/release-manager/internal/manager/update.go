@@ -102,7 +102,10 @@ func (update *Update) Preflight(previous, candidate transaction.Candidate) error
 	if available < required {
 		return fmt.Errorf("insufficient disk: available %d, require %d", available, required)
 	}
-	directory, err := releasecontract.StageServerFiles(update.Fetcher, manifest, candidate.Digest, update.Paths.Releases, update.Paths.Artifacts)
+	verify := func(subject []byte) error {
+		return update.Resolved.Verifier.Verify("release", subject, update.Resolved.ReleaseBundle)
+	}
+	directory, err := releasecontract.StageServerFiles(update.Fetcher, manifest, candidate.Digest, update.Paths.Releases, update.Paths.Artifacts, verify)
 	if err != nil {
 		return err
 	}
@@ -239,7 +242,7 @@ func (update *Update) recoveryPointerPath() string {
 }
 
 func (update *Update) activation(resolved releasecontract.Resolved, bytes []byte, directory string, harnesses, optional []string) releasecontract.Activation {
-	return releasecontract.Activation{ManifestBytes: bytes, ManifestURL: resolved.ManifestURL, Manifest: resolved.Manifest, ReleaseDirectory: directory, RuntimeEnvironment: update.RuntimeEnvironment, Harnesses: harnesses, OptionalImages: optional, Channel: update.Current.Channel, ChannelSequence: resolved.ChannelSequence, RevocationSequence: resolved.RevocationSequence, Paths: update.Paths, Fetcher: update.Fetcher, Docker: update.Docker, HealthURL: update.HealthURL, HealthTimeout: update.HealthTimeout}
+	return releasecontract.Activation{ManifestBytes: bytes, ManifestURL: resolved.ManifestURL, Manifest: resolved.Manifest, ReleaseDirectory: directory, RuntimeEnvironment: update.RuntimeEnvironment, Harnesses: harnesses, OptionalImages: optional, Channel: update.Current.Channel, ChannelSequence: resolved.ChannelSequence, RevocationSequence: resolved.RevocationSequence, Paths: update.Paths, Fetcher: update.Fetcher, Docker: update.Docker, HealthURL: update.HealthURL, HealthTimeout: update.HealthTimeout, ReleaseBundle: resolved.ReleaseBundle, Verifier: resolved.Verifier}
 }
 
 func selectedBytes(manifest contract.Manifest, harnesses, optional []string) (int64, int64, error) {

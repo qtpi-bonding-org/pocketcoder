@@ -16,6 +16,7 @@ type ImageInstaller struct {
 	Fetcher          Fetcher
 	Runtime          ImageRuntime
 	StagingDirectory string
+	Verify           func([]byte) error
 }
 
 func (installer ImageInstaller) Ensure(id string, descriptor contract.Artifact) error {
@@ -37,6 +38,16 @@ func (installer ImageInstaller) Ensure(id string, descriptor contract.Artifact) 
 		return err
 	}
 	defer os.Remove(path)
+	if installer.Verify == nil {
+		return fmt.Errorf("release attestation verifier is required")
+	}
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	if err := installer.Verify(bytes); err != nil {
+		return fmt.Errorf("verify artifact %s: %w", id, err)
+	}
 	if err := installer.Runtime.LoadGzipArchive(path); err != nil {
 		return err
 	}

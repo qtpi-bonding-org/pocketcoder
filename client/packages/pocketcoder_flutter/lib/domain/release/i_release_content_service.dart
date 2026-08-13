@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-class VerifiedRelease {
-  const VerifiedRelease({
+class ReleaseSelection {
+  const ReleaseSelection({
     required this.channel,
     required this.sequence,
     required this.revocationSequence,
@@ -19,11 +19,15 @@ class VerifiedRelease {
   int get dataVersion => manifest['dataVersion'] as int? ?? 0;
 }
 
+/// Temporary source-compatibility name for dormant standard-Linux support.
+/// The type no longer claims that Flutter established execution trust.
+typedef VerifiedRelease = ReleaseSelection;
+
 abstract interface class IReleaseContentService {
-  Future<VerifiedRelease> resolve({String channel = 'stable'});
+  Future<ReleaseSelection> resolve({String channel = 'stable'});
 
   Future<Uint8List> fetchDocument(
-    VerifiedRelease release,
+    ReleaseSelection release,
     String documentId,
   );
 }

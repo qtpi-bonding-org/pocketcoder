@@ -4,52 +4,27 @@ import "encoding/json"
 
 const SchemaVersion = 1
 
-type SignatureDescriptor struct {
-	Algorithm string `json:"algorithm"`
-	KeyID     string `json:"keyId"`
-	URL       string `json:"url"`
-}
-
-type SignatureEnvelope struct {
-	SchemaVersion int    `json:"schemaVersion"`
-	Algorithm     string `json:"algorithm"`
-	Role          string `json:"role"`
-	KeyID         string `json:"keyId"`
-	PayloadSHA256 string `json:"payloadSha256"`
-	Signature     string `json:"signature"`
-}
-
-type DelegatedKey struct {
-	KeyID      string  `json:"keyId"`
-	Algorithm  string  `json:"algorithm"`
-	PublicKey  string  `json:"publicKey"`
-	ValidFrom  string  `json:"validFrom"`
-	ValidUntil *string `json:"validUntil"`
-}
-
-type RootDelegation struct {
-	SchemaVersion int                       `json:"schemaVersion"`
-	Sequence      int64                     `json:"sequence"`
-	IssuedAt      string                    `json:"issuedAt"`
-	RootKeyID     string                    `json:"rootKeyId"`
-	Roles         map[string][]DelegatedKey `json:"roles"`
-	RevokedKeyIDs []string                  `json:"revokedKeyIds"`
+// AttestationDescriptor locates the GitHub Actions Sigstore bundle for a
+// subject. Publisher identity is deliberately not data: it is immutable
+// verifier policy baked into the native release manager.
+type AttestationDescriptor struct {
+	URL string `json:"url"`
 }
 
 type ManifestReference struct {
-	URL           string              `json:"url"`
-	SHA256        string              `json:"sha256"`
-	DownloadBytes int64               `json:"downloadBytes"`
-	Signature     SignatureDescriptor `json:"signature"`
+	URL           string                `json:"url"`
+	SHA256        string                `json:"sha256"`
+	DownloadBytes int64                 `json:"downloadBytes"`
+	Attestation   AttestationDescriptor `json:"attestation"`
 }
 
 type ChannelPointer struct {
-	SchemaVersion int                 `json:"schemaVersion"`
-	Channel       string              `json:"channel"`
-	Sequence      int64               `json:"sequence"`
-	PromotedAt    string              `json:"promotedAt"`
-	Manifest      ManifestReference   `json:"manifest"`
-	Signature     SignatureDescriptor `json:"signature"`
+	SchemaVersion int                   `json:"schemaVersion"`
+	Channel       string                `json:"channel"`
+	Sequence      int64                 `json:"sequence"`
+	PromotedAt    string                `json:"promotedAt"`
+	Manifest      ManifestReference     `json:"manifest"`
+	Attestation   AttestationDescriptor `json:"attestation"`
 }
 
 type Revocation struct {

@@ -51,6 +51,29 @@ type AttestationVerifier struct {
 	CachePath string
 }
 
+// SubjectVerifier lets release resolution use a real Sigstore verifier in
+// production and a deliberately small fixture verifier in hermetic tests.
+// Test fixtures never model a second, weaker production trust path.
+type SubjectVerifier interface {
+	Verify(role string, subject, bundle []byte) error
+}
+
+type GitHubVerifier struct{ CachePath string }
+
+func (verifier GitHubVerifier) Verify(role string, subject, bundleBytes []byte) error {
+	workflow, ok := map[string]string{
+		"release":    ".github/workflows/nixos-image.yml@refs/heads/main",
+		"channel":    ".github/workflows/release-promotion.yml@refs/heads/main",
+		"revocation": ".github/workflows/release-revocation.yml@refs/heads/main",
+	}[role]
+	if !ok {
+		return fmt.Errorf("unsupported GitHub attestation role %q", role)
+	}
+	return (AttestationVerifier{Policy: GitHubAttestationPolicy{
+		Repository: "qtpi-bonding-org/pocketcoder", WorkflowRef: workflow,
+	}, CachePath: verifier.CachePath}).Verify(subject, bundleBytes)
+}
+
 func (verifier AttestationVerifier) Verify(artifactBytes, bundleBytes []byte) error {
 	if err := verifier.Policy.Validate(); err != nil {
 		return err

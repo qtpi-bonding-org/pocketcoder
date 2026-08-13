@@ -225,10 +225,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i623.IHealthcheckRepository>(
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
-    gh.lazySingleton<String>(
-      () => externalModule.releaseRootPublicKey,
-      instanceName: 'releaseRootPublicKey',
-    );
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
         () => _i976.AppExceptionKeyMapper());
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
@@ -297,13 +293,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i398.ToolPermissionDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
-    gh.lazySingleton<_i1033.IReleaseContentService>(
-        () => _i456.ReleaseContentService(
-              gh<_i519.Client>(),
-              gh<_i558.FlutterSecureStorage>(),
-              gh<String>(instanceName: 'releaseBaseUrl'),
-              gh<String>(instanceName: 'releaseRootPublicKey'),
-            ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
@@ -353,6 +342,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i506.StatusCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i190.IStatusRepository>(
         () => _i907.StatusRepository(gh<_i824.PocketBase>()));
+    gh.lazySingleton<_i1033.IReleaseContentService>(
+        () => _i456.ReleaseContentService(
+              gh<_i519.Client>(),
+              gh<_i558.FlutterSecureStorage>(),
+              gh<String>(instanceName: 'releaseBaseUrl'),
+            ));
     gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
           gh<_i294.HarnesseDao>(),
           gh<_i294.ModelDao>(),

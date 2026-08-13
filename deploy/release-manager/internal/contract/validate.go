@@ -151,22 +151,25 @@ func ValidatePointer(pointer ChannelPointer, expectedChannel, releaseBase string
 	if pointer.SchemaVersion != SchemaVersion || pointer.Channel != expectedChannel || pointer.Sequence < 1 {
 		return fmt.Errorf("invalid channel pointer")
 	}
-	if err := validateSignatureDescriptor(pointer.Signature); err != nil {
-		return fmt.Errorf("channel signature: %w", err)
+	if err := validateAttestationDescriptor(pointer.Attestation); err != nil {
+		return fmt.Errorf("channel attestation: %w", err)
 	}
-	if err := validateSignatureDescriptor(pointer.Manifest.Signature); err != nil {
-		return fmt.Errorf("manifest signature: %w", err)
+	if err := validateAttestationDescriptor(pointer.Manifest.Attestation); err != nil {
+		return fmt.Errorf("manifest attestation: %w", err)
 	}
 	if pointer.Manifest.DownloadBytes < 1 || pointer.Manifest.DownloadBytes > maximumManifestBytes || !digestPattern.MatchString(pointer.Manifest.SHA256) {
 		return fmt.Errorf("invalid manifest identity or size")
 	}
 	expectedManifest := strings.TrimRight(releaseBase, "/") + "/v1/releases/" + pointer.Manifest.SHA256 + ".json"
-	if pointer.Manifest.URL != expectedManifest || pointer.Manifest.Signature.URL != expectedManifest+".sig" {
+	if pointer.Manifest.URL != expectedManifest {
 		return fmt.Errorf("manifest URL is outside its content-addressed path")
 	}
-	expectedPointerSignature := strings.TrimRight(releaseBase, "/") + "/v1/channels/" + expectedChannel + "/" + fmt.Sprint(pointer.Sequence) + ".sig"
-	if pointer.Signature.URL != expectedPointerSignature {
-		return fmt.Errorf("channel signature URL is outside its sequenced path")
+	base := strings.TrimRight(releaseBase, "/")
+	if pointer.Attestation.URL != base+"/v1/attestations/channels/"+expectedChannel+"/"+fmt.Sprint(pointer.Sequence)+".sigstore.json" {
+		return fmt.Errorf("channel attestation URL is outside its sequenced path")
+	}
+	if pointer.Manifest.Attestation.URL != base+"/v1/attestations/releases/"+pointer.Manifest.SHA256+".sigstore.json" {
+		return fmt.Errorf("manifest attestation URL is outside its content-addressed path")
 	}
 	if _, err := time.Parse(time.RFC3339, pointer.PromotedAt); err != nil {
 		return fmt.Errorf("invalid promotion time: %w", err)
@@ -222,10 +225,7 @@ func ValidateRevocations(revocations Revocations) error {
 	return nil
 }
 
-func validateSignatureDescriptor(descriptor SignatureDescriptor) error {
-	if descriptor.Algorithm != "ed25519" || descriptor.KeyID == "" {
-		return fmt.Errorf("invalid signature descriptor")
-	}
+func validateAttestationDescriptor(descriptor AttestationDescriptor) error {
 	return validateHTTPS(descriptor.URL)
 }
 

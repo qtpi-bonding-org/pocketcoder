@@ -66,7 +66,12 @@ func TestImageInstallerStreamsVerifiedArtifactToDisk(t *testing.T) {
 		DownloadBytes: int64(len(payload)), UnpackedBytes: int64(len(payload)),
 		Images: []string{"example/image:release"},
 	}
-	installer := ImageInstaller{Fetcher: Fetcher{Client: client}, Runtime: runtime, StagingDirectory: directory}
+	installer := ImageInstaller{Fetcher: Fetcher{Client: client}, Runtime: runtime, StagingDirectory: directory, Verify: func(bytes []byte) error {
+		if string(bytes) != payload {
+			t.Fatal("unexpected attested bytes")
+		}
+		return nil
+	}}
 	if err := installer.Ensure("required.server", descriptor); err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +85,7 @@ func TestImageInstallerStreamsVerifiedArtifactToDisk(t *testing.T) {
 
 func TestImageInstallerSkipsDownloadWhenAllImagesExist(t *testing.T) {
 	runtime := &fakeImageRuntime{images: map[string]bool{"example/image:release": true}}
-	installer := ImageInstaller{Runtime: runtime, StagingDirectory: t.TempDir()}
+	installer := ImageInstaller{Runtime: runtime, StagingDirectory: t.TempDir(), Verify: func([]byte) error { return nil }}
 	if err := installer.Ensure("required.server", contract.Artifact{Images: []string{"example/image:release"}}); err != nil {
 		t.Fatal(err)
 	}
