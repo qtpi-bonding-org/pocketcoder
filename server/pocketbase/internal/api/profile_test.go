@@ -30,8 +30,9 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/pocoprompt"
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/pocoprompt"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 // testApp spins up a fresh in-memory PocketBase test app with this repo's
@@ -142,9 +143,18 @@ func testUser(t *testing.T, app core.App, email string) *core.Record {
 	return u
 }
 
+func testHarnessAccountID(t *testing.T, app core.App, userID, harnessID string) string {
+	t.Helper()
+	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harnessID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return account.Id
+}
+
 // seedTestHarnessAndInstance creates a harness and its default harness_instance.
 // It uses a unique suffix to avoid conflicts with other tests using the same name.
-func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, supportsLive, supportsGoose, singleConnOnly bool, userID string) (*core.Record, *core.Record) {
+func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, supportsLive bool, userID string) (*core.Record, *core.Record) {
 	t.Helper()
 	harnessesColl, err := app.FindCollectionByNameOrId("harnesses")
 	if err != nil {
@@ -161,7 +171,6 @@ func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, 
 	harness.Set("acp_transport", "websocket")
 	harness.Set("supports_live_config", supportsLive)
 	harness.Set("supports_additional_directories", true)
-	harness.Set("single_connection_only", singleConnOnly)
 	if err := app.Save(harness); err != nil {
 		t.Fatal(err)
 	}
@@ -180,6 +189,11 @@ func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, 
 	instance.Set("managed", false)
 	if userID != "" {
 		instance.Set("user", userID)
+		account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harness.Id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		instance.Set("harness_account", account.Id)
 	}
 	if err := app.Save(instance); err != nil {
 		t.Fatal(err)
@@ -249,7 +263,7 @@ func createTestHarnessModel(t *testing.T, app core.App, harness *core.Record) *c
 func createTestPocoConfig(t *testing.T, app core.App, fields map[string]any, userID string) *core.Record {
 	t.Helper()
 	// Create a test harness first; agent profiles are harness-independent.
-	seedTestHarnessAndInstance(t, app, "test-harness", true, true, false, userID)
+	seedTestHarnessAndInstance(t, app, "test-harness", true, userID)
 
 	pocoColl, err := app.FindCollectionByNameOrId("agent_profiles")
 	if err != nil {
@@ -278,7 +292,7 @@ func TestBuildSessionProfileResolvesChatFieldsWithDefaultPoco(t *testing.T) {
 	app := testApp(t)
 
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
-	harness, instance := seedTestHarnessAndInstance(t, app, "goose", true, true, false, userID)
+	harness, instance := seedTestHarnessAndInstance(t, app, "goose", true, userID)
 	chat := createTestChat(t, app, map[string]any{"user": userID, "harness": harness.Id})
 	profile, err := buildSessionProfile(app, chat.Id)
 	if err != nil {
@@ -304,7 +318,7 @@ func TestBuildSessionProfileResolvesChatFieldsWithDefaultPoco(t *testing.T) {
 func TestBuildSessionProfileUsesExplicitAgentAsMemoryAuthor(t *testing.T) {
 	app := testApp(t)
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
-	harness, _ := seedTestHarnessAndInstance(t, app, "goose", true, true, false, userID)
+	harness, _ := seedTestHarnessAndInstance(t, app, "goose", true, userID)
 	agent := createTestPocoConfig(t, app, map[string]any{
 		"name": "Amélie 🌱",
 		"user": userID,
@@ -345,6 +359,7 @@ func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testin
 	instance := core.NewRecord(instances)
 	instance.Set("harness", harness.Id)
 	instance.Set("user", userID)
+	instance.Set("harness_account", testHarnessAccountID(t, app, userID, harness.Id))
 	instance.Set("launch_key", "")
 	instance.Set("container_name", "pocketcoder-goose-"+randomSuffix())
 	instance.Set("status", "running")
@@ -377,7 +392,7 @@ func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testin
 func TestBuildSessionProfileRejectsVirtualOllamaOnUnsupportedHarness(t *testing.T) {
 	app := testApp(t)
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
-	harness, _ := seedTestHarnessAndInstance(t, app, "codex", true, false, true, userID)
+	harness, _ := seedTestHarnessAndInstance(t, app, "codex", true, userID)
 	chat := createTestChat(t, app, map[string]any{
 		"user":                  userID,
 		"harness":               harness.Id,
@@ -402,7 +417,7 @@ func TestBuildSessionProfileWorkspaceOverrideKeepsPocoAdditionalDirectories(t *t
 	defer app.Cleanup()
 
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
-	harness, _ := seedTestHarnessAndInstance(t, app, "goose", true, true, false, userID)
+	harness, _ := seedTestHarnessAndInstance(t, app, "goose", true, userID)
 	poco := createTestPocoConfig(t, app, map[string]any{
 		"workspace_folders": []string{"/workspace/project", "/workspace/tools"},
 	}, userID)
@@ -515,6 +530,7 @@ func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testin
 	inst := core.NewRecord(instColl)
 	inst.Set("user", userID)
 	inst.Set("harness", harness.Id)
+	inst.Set("harness_account", testHarnessAccountID(t, app, userID, harness.Id))
 	inst.Set("launch_key", "")
 	inst.Set("container_name", "pocketcoder-failed-"+randomSuffix())
 	inst.Set("secret", "s")
@@ -581,6 +597,7 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 	inst := core.NewRecord(instColl)
 	inst.Set("user", failedUserID)
 	inst.Set("harness", failedHarness.Id)
+	inst.Set("harness_account", testHarnessAccountID(t, app, failedUserID, failedHarness.Id))
 	inst.Set("launch_key", "")
 	inst.Set("container_name", "pocketcoder-classify-"+randomSuffix())
 	inst.Set("secret", "s")
@@ -637,6 +654,7 @@ func runningInstanceFor(t *testing.T, app core.App, harness *core.Record, userID
 	inst := core.NewRecord(instColl)
 	inst.Set("user", userID)
 	inst.Set("harness", harness.Id)
+	inst.Set("harness_account", testHarnessAccountID(t, app, userID, harness.Id))
 	inst.Set("launch_key", "")
 	inst.Set("container_name", "pocketcoder-"+harness.GetString("cli_id")+"-"+randomSuffix())
 	inst.Set("secret", "s")

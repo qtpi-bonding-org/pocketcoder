@@ -56,6 +56,8 @@ type AttemptState struct {
 type AttemptContext struct {
 	AttemptID    string
 	UserID       string
+	AccountID    string
+	HarnessCLI   string
 	HarnessImage string
 }
 

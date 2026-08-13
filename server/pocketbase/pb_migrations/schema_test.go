@@ -63,7 +63,7 @@ func TestHarnessesCollectionHasCapabilityFields(t *testing.T) {
 	if harnesses == nil {
 		t.Fatal("harnesses collection not found")
 	}
-	want := []string{"container_image", "launch_template", "supports_live_config", "provider_scope", "supports_ollama", "single_connection_only", "supports_session_delete", "supports_additional_directories"}
+	want := []string{"container_image", "launch_template", "supports_live_config", "provider_scope", "supports_ollama", "supports_session_delete", "supports_additional_directories"}
 	got := map[string]bool{}
 	for _, f := range harnesses["fields"].([]any) {
 		got[f.(map[string]any)["name"].(string)] = true
@@ -72,6 +72,9 @@ func TestHarnessesCollectionHasCapabilityFields(t *testing.T) {
 		if !got[name] {
 			t.Errorf("harnesses.%s field missing", name)
 		}
+	}
+	if got["single_connection_only"] {
+		t.Error("obsolete harnesses.single_connection_only field must not be present")
 	}
 }
 
@@ -104,7 +107,7 @@ func TestHarnessInstancesCollectionExists(t *testing.T) {
 		m := f.(map[string]any)
 		fields[m["name"].(string)] = m
 	}
-	for _, name := range []string{"harness", "harness_model", "launch_key", "user", "container_name", "acp_endpoint", "secret", "status", "last_error", "managed", "created", "updated"} {
+	for _, name := range []string{"harness", "harness_model", "harness_account", "launch_key", "user", "container_name", "acp_endpoint", "secret", "status", "last_error", "managed", "created", "updated"} {
 		if fields[name] == nil {
 			t.Errorf("harness_instances.%s field missing", name)
 		}
@@ -116,7 +119,7 @@ func TestHarnessInstancesCollectionExists(t *testing.T) {
 	uniqueName := false
 	for _, idx := range hi["indexes"].([]any) {
 		s := idx.(string)
-		if s == "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (user, harness, launch_key)" {
+		if s == "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (user, harness, harness_account, launch_key)" {
 			uniquePair = true
 		}
 		if s == "CREATE UNIQUE INDEX idx_harness_instances_name ON harness_instances (container_name)" {
@@ -157,7 +160,7 @@ func TestAgentSessionsHasHarnessInstance(t *testing.T) {
 	}
 }
 
-func TestHarnessAuthBindingHasRequiredFields(t *testing.T) {
+func TestHarnessAccountsHaveRequiredFields(t *testing.T) {
 	data, err := os.ReadFile("schema.json")
 	if err != nil {
 		t.Fatal(err)
@@ -166,44 +169,67 @@ func TestHarnessAuthBindingHasRequiredFields(t *testing.T) {
 	if err := json.Unmarshal(data, &collections); err != nil {
 		t.Fatal(err)
 	}
-	var bindings map[string]any
+	var accounts map[string]any
 	for _, c := range collections {
-		if c["name"] == "harness_auth_bindings" {
-			bindings = c
+		if c["name"] == "harness_accounts" {
+			accounts = c
 			break
 		}
 	}
-	if bindings == nil {
-		t.Fatal("harness_auth_bindings collection not found")
+	if accounts == nil {
+		t.Fatal("harness_accounts collection not found")
 	}
 	required := []string{
-		"scope_kind",
-		"scope_id",
 		"harness",
+		"owner",
+		"name",
+		"visibility",
 		"credential_mode",
 		"provider_key",
 		"status",
 		"last_error",
 	}
 	found := map[string]bool{}
-	for _, f := range bindings["fields"].([]any) {
+	for _, f := range accounts["fields"].([]any) {
 		found[f.(map[string]any)["name"].(string)] = true
 	}
 	for _, name := range required {
 		if !found[name] {
-			t.Errorf("harness_auth_bindings.%s field missing", name)
+			t.Errorf("harness_accounts.%s field missing", name)
 		}
 	}
-	wantUnique := "CREATE UNIQUE INDEX idx_harness_auth_bindings_scope ON harness_auth_bindings (scope_kind, scope_id, harness)"
-	foundUnique := false
-	for _, idx := range bindings["indexes"].([]any) {
-		if idx == wantUnique {
-			foundUnique = true
+	for _, rule := range []string{"listRule", "viewRule", "createRule", "updateRule", "deleteRule"} {
+		if accounts[rule] != nil {
+			t.Errorf("harness_accounts.%s should be custom-API only", rule)
 		}
 	}
-	if !foundUnique {
-		t.Error("harness_auth_bindings unique scope index missing")
+}
+
+func TestHarnessAccountSelectionsHaveRequiredFields(t *testing.T) {
+	data, err := os.ReadFile("schema.json")
+	if err != nil {
+		t.Fatal(err)
 	}
+	var collections []map[string]any
+	if err := json.Unmarshal(data, &collections); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range collections {
+		if c["name"] != "harness_account_selections" {
+			continue
+		}
+		found := map[string]bool{}
+		for _, f := range c["fields"].([]any) {
+			found[f.(map[string]any)["name"].(string)] = true
+		}
+		for _, name := range []string{"user", "harness", "account"} {
+			if !found[name] {
+				t.Errorf("harness_account_selections.%s field missing", name)
+			}
+		}
+		return
+	}
+	t.Fatal("harness_account_selections collection not found")
 }
 
 func TestHarnessAuthAttemptsHasRequiredFields(t *testing.T) {
@@ -226,10 +252,7 @@ func TestHarnessAuthAttemptsHasRequiredFields(t *testing.T) {
 		t.Fatal("harness_auth_attempts collection not found")
 	}
 	required := []string{
-		"scope_kind",
-		"scope_id",
-		"harness",
-		"binding",
+		"account",
 		"provider",
 		"status",
 		"last_error",
@@ -244,11 +267,16 @@ func TestHarnessAuthAttemptsHasRequiredFields(t *testing.T) {
 			t.Errorf("harness_auth_attempts.%s field missing", name)
 		}
 	}
+	for _, rule := range []string{"listRule", "viewRule", "createRule", "updateRule", "deleteRule"} {
+		if attempts[rule] != nil {
+			t.Errorf("harness_auth_attempts.%s should be custom-API only", rule)
+		}
+	}
 	for _, idx := range attempts["indexes"].([]any) {
 		index := idx.(string)
-		if index == "CREATE INDEX idx_harness_auth_attempts_binding_status ON harness_auth_attempts (binding, status)" {
+		if index == "CREATE INDEX idx_harness_auth_attempts_account_status ON harness_auth_attempts (account, status)" {
 			return
 		}
 	}
-	t.Error("harness_auth_attempts index idx_harness_auth_attempts_binding_status missing")
+	t.Error("harness_auth_attempts account/status index missing")
 }

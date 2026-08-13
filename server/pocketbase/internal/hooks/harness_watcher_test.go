@@ -25,7 +25,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 )
 
 // createTestHarnessInstance inserts a harness_instances row with sane

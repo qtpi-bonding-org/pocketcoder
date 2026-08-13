@@ -11,7 +11,7 @@ import (
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/acp"
 )
 
 func testCoordinator(t *testing.T, dial DialFunc) *Coordinator {
@@ -588,7 +588,7 @@ func TestEstablishSessionRejectsHarnessMismatch(t *testing.T) {
 		ResolvedInstanceID: "newharness12345",
 		PinnedInstanceID:   "oldharness12345", // different from ResolvedInstanceID
 	}
-	_, _, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
 	if err == nil {
 		t.Fatal("expected an error when resolved harness differs from pinned harness")
 	}
@@ -602,11 +602,10 @@ func TestEstablishSessionAllowsMatchingPin(t *testing.T) {
 		ResolvedInstanceID: "sameharness1234",
 		PinnedInstanceID:   "sameharness1234",
 	}
-	_, _, _, _, _, _, release, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
 	if err != nil {
 		t.Fatalf("expected no error when resolved == pinned, got %v", err)
 	}
-	release()
 }
 
 func TestEstablishSessionCallsBeforeSessionCallBeforeLoadSession(t *testing.T) {
@@ -614,11 +613,10 @@ func TestEstablishSessionCallsBeforeSessionCallBeforeLoadSession(t *testing.T) {
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	var calledBefore bool
 	profile := SessionProfile{PinnedInstanceID: "", ResolvedInstanceID: ""}
-	_, _, _, _, _, _, release, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() { calledBefore = true })
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() { calledBefore = true })
 	if err != nil {
 		t.Fatal(err)
 	}
-	release()
 	if !calledBefore {
 		t.Fatal("beforeSessionCall must be invoked before LoadSession")
 	}
@@ -629,38 +627,8 @@ func TestEstablishSessionErrorsWhenLoadSessionCapabilityMissing(t *testing.T) {
 	f.initResp = acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{LoadSession: false}}
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
 	profile := SessionProfile{}
-	_, _, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
 	if err == nil {
 		t.Fatal("expected an error resuming a session against a harness that doesn't advertise LoadSession")
 	}
-}
-
-func TestEstablishSessionSerializesSingleConnectionOnlyHarness(t *testing.T) {
-	f := newFakeConn()
-	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
-	profile := SessionProfile{ResolvedInstanceID: "inst1", SingleConnectionOnly: true}
-
-	_, _, _, _, _, _, release1, err := c.establishSession(context.Background(), nil, profile, "sess1", func() {})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	done := make(chan struct{})
-	go func() {
-		_, _, _, _, _, _, release2, err := c.establishSession(context.Background(), nil, profile, "sess1", func() {})
-		if err != nil {
-			t.Error(err)
-		}
-		release2()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		t.Fatal("second establishSession call must block until the first releases")
-	case <-time.After(50 * time.Millisecond):
-		// expected: still blocked
-	}
-	release1()
-	<-done // must now complete
 }

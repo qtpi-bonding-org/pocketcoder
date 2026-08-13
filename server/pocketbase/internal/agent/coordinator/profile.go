@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	acpsdk "github.com/coder/acp-go-sdk"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/acp"
 )
 
 // Target identifies the harness_instances row a session should dial —
@@ -52,7 +52,6 @@ type SessionProfile struct {
 	ResolvedInstanceID            string // the harness_instances id this chat resolves to right now
 	PinnedInstanceID              string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
 	SupportsLiveConfig            bool
-	SingleConnectionOnly          bool
 	SupportsSessionDelete         bool
 	SupportsAdditionalDirectories bool
 }

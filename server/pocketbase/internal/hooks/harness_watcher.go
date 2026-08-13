@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 )
 
 // eventSource is the subset of *dockerapi.Client the watcher depends on,

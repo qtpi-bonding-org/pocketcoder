@@ -5,7 +5,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 func TestChatsHarnessPinRejectsChangeAfterSessionExists(t *testing.T) {

@@ -10,7 +10,9 @@ _HarnessInstance _$HarnessInstanceFromJson(Map<String, dynamic> json) =>
     _HarnessInstance(
       id: json['id'] as String,
       harness: json['harness'] as String,
+      user: json['user'] as String?,
       harnessModel: json['harness_model'] as String?,
+      harnessAccount: json['harness_account'] as String?,
       launchKey: json['launch_key'] as String?,
       containerName: json['container_name'] as String,
       acpEndpoint: json['acp_endpoint'] as String?,
@@ -19,6 +21,7 @@ _HarnessInstance _$HarnessInstanceFromJson(Map<String, dynamic> json) =>
           unknownValue: HarnessInstanceStatus.unknown),
       lastError: json['last_error'] as String?,
       managed: json['managed'] as bool?,
+      lastUsed: json['last_used'] as String?,
       created: json['created'] == null
           ? null
           : DateTime.parse(json['created'] as String),
@@ -31,7 +34,9 @@ Map<String, dynamic> _$HarnessInstanceToJson(_HarnessInstance instance) =>
     <String, dynamic>{
       'id': instance.id,
       'harness': instance.harness,
+      'user': instance.user,
       'harness_model': instance.harnessModel,
+      'harness_account': instance.harnessAccount,
       'launch_key': instance.launchKey,
       'container_name': instance.containerName,
       'acp_endpoint': instance.acpEndpoint,
@@ -39,6 +44,7 @@ Map<String, dynamic> _$HarnessInstanceToJson(_HarnessInstance instance) =>
       'status': _$HarnessInstanceStatusEnumMap[instance.status]!,
       'last_error': instance.lastError,
       'managed': instance.managed,
+      'last_used': instance.lastUsed,
       'created': instance.created?.toIso8601String(),
       'updated': instance.updated?.toIso8601String(),
     };

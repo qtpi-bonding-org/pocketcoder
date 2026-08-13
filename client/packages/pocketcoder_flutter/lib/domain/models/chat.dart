@@ -18,7 +18,7 @@ abstract class Chat with _$Chat {
     String? tags,
     DateTime? created,
     DateTime? updated,
-    String? pocoConfig,
+    String? agentProfile,
     String? harnessModelOverride,
     String? ollamaModelOverride,
     String? harness,

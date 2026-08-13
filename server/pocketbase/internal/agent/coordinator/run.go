@@ -33,8 +33,8 @@ import (
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/google/uuid"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/acp"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/agui"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/acp"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/agui"
 )
 
 type Config struct {
@@ -73,7 +73,6 @@ type Coordinator struct {
 	hubs               map[string]*ChatHub
 	runs               map[string]*runHandle
 	elicits            map[string]*pendingElicitation
-	connLocks          map[string]chan struct{}
 	lingerWindow       time.Duration
 	maxRun             time.Duration
 	elicitationTimeout time.Duration
@@ -608,12 +607,6 @@ func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingEl
 // own job, done with the conn/sessionID/modes/configOptions this returns. See design
 // spec §5.6 for why the split is drawn exactly here.
 //
-// The returned release func must be deferred by the caller immediately
-// upon receiving a non-nil conn (release is a no-op when profile is not
-// SingleConnectionOnly). It is NOT called internally by establishSession,
-// because the lock must be held for the connection's full lifetime, which
-// outlives this function — only the caller knows when that lifetime ends
-// (conn.Close(), whether called directly or via a deferred cleanup).
 // wasNew reports whether this call minted a brand-new session (sessionID
 // was empty) — callers need this to decide whether to persist a new
 // agent_sessions row; sessionID's own emptiness can no longer be used for
@@ -621,31 +614,24 @@ func (s *sessionClient) resolveExpiredElicitation(id string, expected *pendingEl
 func (c *Coordinator) establishSession(
 	ctx context.Context, client acpsdk.Client, profile SessionProfile, sessionID string,
 	beforeSessionCall func(),
-) (conn acp.Conn, newSessionID string, modes *acpsdk.SessionModeState, configOptions []acpsdk.SessionConfigOption, initResp *acpsdk.InitializeResponse, wasNew bool, release func(), err error) {
-	release = func() {}
+) (conn acp.Conn, newSessionID string, modes *acpsdk.SessionModeState, configOptions []acpsdk.SessionConfigOption, initResp *acpsdk.InitializeResponse, wasNew bool, err error) {
 
 	// Pin check: compare resolved vs. pinned harness identity, not Targets
 	// (an unresolved Target and the pinned default Target are both the
 	// zero value and would otherwise compare equal).
 	if profile.PinnedInstanceID != "" && profile.ResolvedInstanceID != "" &&
 		profile.PinnedInstanceID != profile.ResolvedInstanceID {
-		return nil, "", nil, nil, nil, false, release, fmt.Errorf("this chat's harness changed after its session was created — start a new chat")
-	}
-
-	if profile.SingleConnectionOnly {
-		release = c.lockChatConnection(profile.ResolvedInstanceID)
+		return nil, "", nil, nil, nil, false, fmt.Errorf("this chat's harness changed after its session was created — start a new chat")
 	}
 
 	dialedConn, dialErr := c.config.Dial(ctx, client, profile.Target)
 	if dialErr != nil {
-		release()
-		return nil, "", nil, nil, nil, false, func() {}, fmt.Errorf("dial harness: %w", dialErr)
+		return nil, "", nil, nil, nil, false, fmt.Errorf("dial harness: %w", dialErr)
 	}
 	initRespVal, err := dialedConn.Initialize(ctx, initializeRequest())
 	if err != nil {
 		dialedConn.Close()
-		release()
-		return nil, "", nil, nil, nil, false, func() {}, fmt.Errorf("initialize harness: %w", err)
+		return nil, "", nil, nil, nil, false, fmt.Errorf("initialize harness: %w", err)
 	}
 	initResp = &initRespVal
 
@@ -661,21 +647,18 @@ func (c *Coordinator) establishSession(
 		})
 		if err != nil {
 			dialedConn.Close()
-			release()
-			return nil, "", nil, nil, nil, false, func() {}, err
+			return nil, "", nil, nil, nil, false, err
 		}
 		if string(res.SessionId) == "" {
 			dialedConn.Close()
-			release()
-			return nil, "", nil, nil, nil, false, func() {}, errors.New("session/new response missing sessionId")
+			return nil, "", nil, nil, nil, false, errors.New("session/new response missing sessionId")
 		}
-		return dialedConn, string(res.SessionId), res.Modes, res.ConfigOptions, initResp, true, release, nil
+		return dialedConn, string(res.SessionId), res.Modes, res.ConfigOptions, initResp, true, nil
 	}
 
 	if !initResp.AgentCapabilities.LoadSession {
 		dialedConn.Close()
-		release()
-		return nil, "", nil, nil, nil, false, func() {}, fmt.Errorf("harness does not support resuming a session (AgentCapabilities.LoadSession is false)")
+		return nil, "", nil, nil, nil, false, fmt.Errorf("harness does not support resuming a session (AgentCapabilities.LoadSession is false)")
 	}
 	beforeSessionCall()
 	res, err := dialedConn.LoadSession(ctx, acpsdk.LoadSessionRequest{
@@ -683,39 +666,9 @@ func (c *Coordinator) establishSession(
 	})
 	if err != nil {
 		dialedConn.Close()
-		release()
-		return nil, "", nil, nil, nil, false, func() {}, fmt.Errorf("load harness session: %w", err)
+		return nil, "", nil, nil, nil, false, fmt.Errorf("load harness session: %w", err)
 	}
-	return dialedConn, sessionID, res.Modes, res.ConfigOptions, initResp, false, release, nil
-}
-
-// lockChatConnection blocks until no other caller holds the named key's
-// connection lock, then holds it until the returned func is called. Only
-// used when a harness's single_connection_only flag is set (§5.6 item 2)
-// — Goose and any harness that safely serves multiple connections never
-// takes this path.
-func (c *Coordinator) lockChatConnection(key string) func() {
-	c.mu.Lock()
-	if c.connLocks == nil {
-		c.connLocks = map[string]chan struct{}{}
-	}
-	for {
-		ch, held := c.connLocks[key]
-		if !held {
-			myCh := make(chan struct{})
-			c.connLocks[key] = myCh
-			c.mu.Unlock()
-			return func() {
-				c.mu.Lock()
-				delete(c.connLocks, key)
-				close(myCh)
-				c.mu.Unlock()
-			}
-		}
-		c.mu.Unlock()
-		<-ch // wait for the holder to release
-		c.mu.Lock()
-	}
+	return dialedConn, sessionID, res.Modes, res.ConfigOptions, initResp, false, nil
 }
 
 // StreamColdReplay runs a bounded, no-Reserve Goose replay for a subscriber
@@ -744,11 +697,10 @@ func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID st
 		return fmt.Errorf("resolve session profile: %w", err)
 	}
 	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emitSeq, accepting: &atomic.Bool{}}
-	conn, _, _, _, _, _, release, err := c.establishSession(ctx, sc, profile, sessionID, func() { sc.accepting.Store(true) })
+	conn, _, _, _, _, _, err := c.establishSession(ctx, sc, profile, sessionID, func() { sc.accepting.Store(true) })
 	if err != nil {
 		return err
 	}
-	defer release()
 	defer conn.Close()
 	return emitAll(emitSeq, bridge.Finished(acpsdk.StopReasonEndTurn))
 }
@@ -869,10 +821,8 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) {
 	hub := c.hubFor(chatID)
 	var once sync.Once
-	var release func() = func() {} // initialize to no-op; updated after establishSession succeeds
 	teardown := func() {
 		once.Do(func() {
-			release()                // call release first when tearing down
 			h.accepting.Store(false) // straggler SessionUpdates now return early
 			c.stopTimers(h)
 			if h.conn != nil {
@@ -914,12 +864,11 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		emit:      func(e events.Event) error { hub.Publish(e); return nil },
 		accepting: h.accepting, maxEvents: c.maxRunEvents, cancel: h.cancel}
 
-	conn, sessionID, modes, configOptions, _, wasNew, releaseLock, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
+	conn, sessionID, modes, configOptions, _, wasNew, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
 	if err != nil {
 		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 		return
 	}
-	release = releaseLock // update the captured release function
 	h.conn = conn
 	h.sessionID = sessionID
 	sc.sessionID = sessionID
@@ -930,7 +879,6 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 			if _, dErr := conn.UnstableDeleteSession(runCtx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)}); dErr != nil {
 				log.Printf("coordinator: orphan session delete failed: %v", dErr)
 			}
-			release()
 			hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 			return
 		}
@@ -941,7 +889,6 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 	applier := selectApplier(profile)
 	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
-		release()
 		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 		return
 	}

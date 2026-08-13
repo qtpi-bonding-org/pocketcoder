@@ -25,7 +25,7 @@ _Chat _$ChatFromJson(Map<String, dynamic> json) => _Chat(
       updated: json['updated'] == null
           ? null
           : DateTime.parse(json['updated'] as String),
-      pocoConfig: json['poco_config'] as String?,
+      agentProfile: json['agent_profile'] as String?,
       harnessModelOverride: json['harness_model_override'] as String?,
       ollamaModelOverride: json['ollama_model_override'] as String?,
       harness: json['harness'] as String?,
@@ -44,7 +44,7 @@ Map<String, dynamic> _$ChatToJson(_Chat instance) => <String, dynamic>{
       'tags': instance.tags,
       'created': instance.created?.toIso8601String(),
       'updated': instance.updated?.toIso8601String(),
-      'poco_config': instance.pocoConfig,
+      'agent_profile': instance.agentProfile,
       'harness_model_override': instance.harnessModelOverride,
       'ollama_model_override': instance.ollamaModelOverride,
       'harness': instance.harness,

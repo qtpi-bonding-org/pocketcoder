@@ -17,6 +17,8 @@ mixin _$Prompt {
   String get id;
   String get name;
   String get body;
+  String? get user;
+  bool? get isSystem;
 
   /// Create a copy of Prompt
   /// with the given fields replaced by the non-null parameter values.
@@ -35,16 +37,19 @@ mixin _$Prompt {
             other is Prompt &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.body, body) || other.body == body));
+            (identical(other.body, body) || other.body == body) &&
+            (identical(other.user, user) || other.user == user) &&
+            (identical(other.isSystem, isSystem) ||
+                other.isSystem == isSystem));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, body);
+  int get hashCode => Object.hash(runtimeType, id, name, body, user, isSystem);
 
   @override
   String toString() {
-    return 'Prompt(id: $id, name: $name, body: $body)';
+    return 'Prompt(id: $id, name: $name, body: $body, user: $user, isSystem: $isSystem)';
   }
 }
 
@@ -53,7 +58,8 @@ abstract mixin class $PromptCopyWith<$Res> {
   factory $PromptCopyWith(Prompt value, $Res Function(Prompt) _then) =
       _$PromptCopyWithImpl;
   @useResult
-  $Res call({String id, String name, String body});
+  $Res call(
+      {String id, String name, String body, String? user, bool? isSystem});
 }
 
 /// @nodoc
@@ -71,6 +77,8 @@ class _$PromptCopyWithImpl<$Res> implements $PromptCopyWith<$Res> {
     Object? id = null,
     Object? name = null,
     Object? body = null,
+    Object? user = freezed,
+    Object? isSystem = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -85,6 +93,14 @@ class _$PromptCopyWithImpl<$Res> implements $PromptCopyWith<$Res> {
           ? _self.body
           : body // ignore: cast_nullable_to_non_nullable
               as String,
+      user: freezed == user
+          ? _self.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isSystem: freezed == isSystem
+          ? _self.isSystem
+          : isSystem // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -182,13 +198,16 @@ extension PromptPatterns on Prompt {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String id, String name, String body)? $default, {
+    TResult Function(
+            String id, String name, String body, String? user, bool? isSystem)?
+        $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _Prompt() when $default != null:
-        return $default(_that.id, _that.name, _that.body);
+        return $default(
+            _that.id, _that.name, _that.body, _that.user, _that.isSystem);
       case _:
         return orElse();
     }
@@ -209,12 +228,15 @@ extension PromptPatterns on Prompt {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String id, String name, String body) $default,
+    TResult Function(
+            String id, String name, String body, String? user, bool? isSystem)
+        $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Prompt():
-        return $default(_that.id, _that.name, _that.body);
+        return $default(
+            _that.id, _that.name, _that.body, _that.user, _that.isSystem);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -234,12 +256,15 @@ extension PromptPatterns on Prompt {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String id, String name, String body)? $default,
+    TResult? Function(
+            String id, String name, String body, String? user, bool? isSystem)?
+        $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Prompt() when $default != null:
-        return $default(_that.id, _that.name, _that.body);
+        return $default(
+            _that.id, _that.name, _that.body, _that.user, _that.isSystem);
       case _:
         return null;
     }
@@ -249,7 +274,12 @@ extension PromptPatterns on Prompt {
 /// @nodoc
 @JsonSerializable()
 class _Prompt implements Prompt {
-  const _Prompt({required this.id, required this.name, required this.body});
+  const _Prompt(
+      {required this.id,
+      required this.name,
+      required this.body,
+      this.user,
+      this.isSystem});
   factory _Prompt.fromJson(Map<String, dynamic> json) => _$PromptFromJson(json);
 
   @override
@@ -258,6 +288,10 @@ class _Prompt implements Prompt {
   final String name;
   @override
   final String body;
+  @override
+  final String? user;
+  @override
+  final bool? isSystem;
 
   /// Create a copy of Prompt
   /// with the given fields replaced by the non-null parameter values.
@@ -281,16 +315,19 @@ class _Prompt implements Prompt {
             other is _Prompt &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.body, body) || other.body == body));
+            (identical(other.body, body) || other.body == body) &&
+            (identical(other.user, user) || other.user == user) &&
+            (identical(other.isSystem, isSystem) ||
+                other.isSystem == isSystem));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, body);
+  int get hashCode => Object.hash(runtimeType, id, name, body, user, isSystem);
 
   @override
   String toString() {
-    return 'Prompt(id: $id, name: $name, body: $body)';
+    return 'Prompt(id: $id, name: $name, body: $body, user: $user, isSystem: $isSystem)';
   }
 }
 
@@ -300,7 +337,8 @@ abstract mixin class _$PromptCopyWith<$Res> implements $PromptCopyWith<$Res> {
       __$PromptCopyWithImpl;
   @override
   @useResult
-  $Res call({String id, String name, String body});
+  $Res call(
+      {String id, String name, String body, String? user, bool? isSystem});
 }
 
 /// @nodoc
@@ -318,6 +356,8 @@ class __$PromptCopyWithImpl<$Res> implements _$PromptCopyWith<$Res> {
     Object? id = null,
     Object? name = null,
     Object? body = null,
+    Object? user = freezed,
+    Object? isSystem = freezed,
   }) {
     return _then(_Prompt(
       id: null == id
@@ -332,6 +372,14 @@ class __$PromptCopyWithImpl<$Res> implements _$PromptCopyWith<$Res> {
           ? _self.body
           : body // ignore: cast_nullable_to_non_nullable
               as String,
+      user: freezed == user
+          ? _self.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isSystem: freezed == isSystem
+          ? _self.isSystem
+          : isSystem // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }

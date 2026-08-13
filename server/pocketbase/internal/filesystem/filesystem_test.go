@@ -29,7 +29,7 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 	"github.com/pocketbase/pocketbase/tools/filesystem/blob"
 
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 func withTestWorkspaceRoot(t *testing.T, dir string) {

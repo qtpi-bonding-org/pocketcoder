@@ -110,6 +110,57 @@ func TestAdapterSpawnsFreshSubprocessPerConnection(t *testing.T) {
 	}
 }
 
+func TestAdapterServesConnectionsConcurrently(t *testing.T) {
+	// Keep the first subprocess alive while opening the second connection. A
+	// serialized adapter would never let the second process announce "ready"
+	// until the first connection closed.
+	srv := httptest.NewServer(newAdapterHandler(adapterConfig{
+		Cmd: []string{"sh", "-c", "echo ready; cat"}, Secret: "", MaxLineBytes: 64 << 20,
+	}))
+	defer srv.Close()
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp"
+
+	dialAndWaitReady := func() *websocket.Conn {
+		conn, _, err := websocket.Dial(context.Background(), wsURL, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_, data, err := conn.Read(ctx)
+		if err != nil {
+			conn.Close(websocket.StatusInternalError, "")
+			t.Fatal(err)
+		}
+		if string(data) != "ready" {
+			conn.Close(websocket.StatusInternalError, "")
+			t.Fatalf("startup message = %q, want ready", data)
+		}
+		return conn
+	}
+
+	first := dialAndWaitReady()
+	defer first.Close(websocket.StatusNormalClosure, "")
+	second := dialAndWaitReady()
+	defer second.Close(websocket.StatusNormalClosure, "")
+
+	for i, conn := range []*websocket.Conn{first, second} {
+		message := []byte{byte('a' + i)}
+		if err := conn.Write(context.Background(), websocket.MessageText, message); err != nil {
+			t.Fatal(err)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		_, echoed, err := conn.Read(ctx)
+		cancel()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(echoed) != string(message) {
+			t.Fatalf("connection %d echoed %q, want %q", i, echoed, message)
+		}
+	}
+}
+
 func TestAdapterDoesNotHangOnOversizedMessage(t *testing.T) {
 	// Regression test for the teardown bug: an oversized line used to leave
 	// the subprocess (and its still-open stdout pipe) running forever with

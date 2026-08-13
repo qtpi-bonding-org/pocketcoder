@@ -154,11 +154,10 @@ func TestSelectApplierAlwaysReturnsPerSessionApplier(t *testing.T) {
 
 func TestSessionProfileCarriesTargetAndCapabilityFlags(t *testing.T) {
 	p := SessionProfile{
-		Target:               Target{URL: "ws://example/acp", Secret: "s3cr3t"},
-		ResolvedInstanceID:   "abc123456789012",
-		PinnedInstanceID:     "abc123456789012",
-		SupportsLiveConfig:   true,
-		SingleConnectionOnly: true,
+		Target:             Target{URL: "ws://example/acp", Secret: "s3cr3t"},
+		ResolvedInstanceID: "abc123456789012",
+		PinnedInstanceID:   "abc123456789012",
+		SupportsLiveConfig: true,
 	}
 	if p.Target.URL != "ws://example/acp" {
 		t.Error("Target.URL not settable")

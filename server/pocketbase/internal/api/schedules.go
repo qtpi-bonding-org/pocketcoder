@@ -10,8 +10,8 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 )
 
 type scheduleResp struct {

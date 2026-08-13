@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/releaseartifact"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseartifact"
 )
 
 type fakeOllamaDocker struct {

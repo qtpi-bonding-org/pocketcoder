@@ -41,9 +41,9 @@ class HarnessAuthScreenView extends StatelessWidget {
   final Object? error;
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
-  final void Function(Harnesse) onStartAccount;
+  final Future<void> Function(Harnesse) onStartAccount;
   final Future<void> Function(Harnesse) onStartApiKey;
-  final void Function(Harnesse) onStartNone;
+  final Future<void> Function(Harnesse) onStartNone;
   final void Function(Harnesse) onPoll;
   final Future<void> Function(Harnesse, String) onSubmit;
   final void Function(Harnesse) onCancel;
@@ -101,9 +101,9 @@ class HarnessAuthView extends StatefulWidget {
   final Object? error;
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
-  final void Function(Harnesse) onStartAccount;
+  final Future<void> Function(Harnesse) onStartAccount;
   final Future<void> Function(Harnesse) onStartApiKey;
-  final void Function(Harnesse) onStartNone;
+  final Future<void> Function(Harnesse) onStartNone;
   final void Function(Harnesse) onPoll;
   final Future<void> Function(Harnesse, String) onSubmit;
   final void Function(Harnesse) onCancel;
@@ -205,9 +205,9 @@ class HarnessAuthCard extends StatelessWidget {
     final s = status ??
         HarnessAuthStatus(
             harness: harness.id,
-            scopeKind: 'user',
-            scopeId: '',
-            bindingId: '',
+            accountId: '',
+            accountName: '',
+            visibility: harnessAccountVisibilityPersonal,
             credentialMode: 'none',
             status: 'disconnected');
     final keys = providerKeys
@@ -230,9 +230,10 @@ class HarnessAuthCard extends StatelessWidget {
                 VSpace.x1,
                 TerminalText('Mode: ${s.credentialMode.toUpperCase()}')
               ],
-              if (s.bindingId.isNotEmpty) ...[
+              if (s.accountId.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText('Binding: ${s.bindingId}')
+                TerminalText(
+                    'Account: ${s.accountName.isEmpty ? s.accountId : s.accountName} (${s.isDeploymentVisible ? 'shared' : 'personal'})')
               ],
               VSpace.x2,
               if (s.challenge != null)

@@ -23,7 +23,7 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	_ "github.com/qtpi-automaton/pocketcoder/backend/pb_migrations"
+	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
 func newMcpServer(t *testing.T, app core.App, name, status string, extra map[string]any) *core.Record {

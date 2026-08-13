@@ -25,17 +25,16 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 // RegisterProxyApi registers the reverse proxy endpoints for logs and observability.
-func RegisterProxyApi(app *pocketbase.PocketBase, e *core.ServeEvent) {
+func RegisterProxyApi(_ core.App, e *core.ServeEvent) {
 
 	// 📈 Observability Proxy (SQLPage)
 	// Proxies to the SQLPage container which provides database dashboards.
-	e.Router.Any("/api/pocketcoder/proxy/observability/{path...}", createProxyHandler("http://sqlpage:8080", "/api/pocketcoder/proxy/observability")).Bind(apis.RequireAuth())
+	e.Router.GET("/api/pocketcoder/proxy/observability/{path...}", createProxyHandler("http://sqlpage:8080", "/api/pocketcoder/proxy/observability")).Bind(apis.RequireAuth())
 }
 
 // createProxyHandler creates a standard reverse proxy handler that strips a prefix and forwards to a target.
@@ -56,7 +55,7 @@ func createProxyHandler(target string, prefix string) func(re *core.RequestEvent
 		}
 
 		req := re.Request
-		
+
 		// Update headers and target URL for the proxy
 		req.URL.Host = targetUrl.Host
 		req.URL.Scheme = targetUrl.Scheme

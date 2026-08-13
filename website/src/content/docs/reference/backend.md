@@ -8,7 +8,7 @@ head: []
 # pocketbase
 
 ```go
-import "github.com/qtpi-automaton/pocketcoder/backend"
+import "github.com/qtpi-bonding-org/pocketcoder/backend"
 ```
 
 @pocketcoder\-core: Main Orchestrator. Registers hooks, starts the relay, and boots PocketBase. @pocketcoder\-core: Sovereign Relay. The orchestration layer that syncs OpenCode with the Sandbox.
@@ -30,7 +30,7 @@ func main()
 # agents
 
 ```go
-import "github.com/qtpi-automaton/pocketcoder/backend/internal/agents"
+import "github.com/qtpi-bonding-org/pocketcoder/backend/internal/agents"
 ```
 
 @pocketcoder\-core: Agent Bundler. Expands agent records into frontmatter\-laden bundles.
@@ -62,7 +62,7 @@ UpdateAgentConfig re\-assembles the bundle and saves it to the 'config' field if
 # api
 
 ```go
-import "github.com/qtpi-automaton/pocketcoder/backend/internal/api"
+import "github.com/qtpi-bonding-org/pocketcoder/backend/internal/api"
 ```
 
 @pocketcoder\-core: Logs API. Native Docker log streaming via SSE.
@@ -142,7 +142,7 @@ createProxyHandler creates a standard reverse proxy handler that strips a prefix
 # filesystem
 
 ```go
-import "github.com/qtpi-automaton/pocketcoder/backend/internal/filesystem"
+import "github.com/qtpi-bonding-org/pocketcoder/backend/internal/filesystem"
 ```
 
 @pocketcoder\-core: Artifact API. Secure endpoint for accessing workspace artifacts.
@@ -164,7 +164,7 @@ RegisterArtifactApi provides a secure window into the /workspace using the PB Fi
 # hooks
 
 ```go
-import "github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
+import "github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 ```
 
 @pocketcoder\-core: Agent Hooks. Triggers re\-bundling when agent records change.
@@ -506,7 +506,7 @@ type permEntry struct {
 # permission
 
 ```go
-import "github.com/qtpi-automaton/pocketcoder/backend/internal/permission"
+import "github.com/qtpi-bonding-org/pocketcoder/backend/internal/permission"
 ```
 
 @pocketcoder\-core: Permission Evaluator. Checks requests against whitelisted action patterns.
@@ -542,7 +542,7 @@ type EvaluationInput struct {
 # provisioning
 
 ```go
-import "github.com/qtpi-automaton/pocketcoder/backend/internal/provisioning"
+import "github.com/qtpi-bonding-org/pocketcoder/backend/internal/provisioning"
 ```
 
 ## Index
@@ -582,7 +582,7 @@ func processSopProposal(app *pocketbase.PocketBase, path string)
 # utils
 
 ```go
-import "github.com/qtpi-automaton/pocketcoder/backend/internal/utils"
+import "github.com/qtpi-bonding-org/pocketcoder/backend/internal/utils"
 ```
 
 @pocketcoder\-core: Wildcard Matcher. Glob\-to\-regex pattern matching for permission paths.

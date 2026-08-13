@@ -1,4 +1,4 @@
-module github.com/qtpi-automaton/pocketcoder/backend
+module github.com/qtpi-bonding-org/pocketcoder/backend
 
 go 1.24.4
 

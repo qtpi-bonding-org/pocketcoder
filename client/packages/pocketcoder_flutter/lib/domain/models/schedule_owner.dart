@@ -9,8 +9,11 @@ abstract class ScheduleOwner with _$ScheduleOwner {
   const factory ScheduleOwner({
     required String id,
     required String user,
-    required String gooseScheduleId,
     required String displayName,
+    String? cron,
+    String? prompt,
+    bool? paused,
+    String? lastRun,
   }) = _ScheduleOwner;
 
   factory ScheduleOwner.fromRecord(RecordModel record) =>

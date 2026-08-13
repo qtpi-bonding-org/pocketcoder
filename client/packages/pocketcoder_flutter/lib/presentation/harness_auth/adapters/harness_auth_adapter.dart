@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
@@ -44,17 +45,29 @@ class HarnessAuthAdapter
           error: value.error,
           isLoading: value.isLoading,
           isHarnessBusy: value.isHarnessBusy,
-          onStartAccount: (h) {
+          onStartAccount: (h) async {
             final provider = h.cliId.trim();
             if (provider.isEmpty) {
               _showError(context,
                   'This harness does not expose a provider identifier.');
             } else {
-              cubit.startWithAccount(harnessId: h.id, provider: provider);
+              final visibility = await _chooseVisibility(context);
+              if (visibility != null) {
+                cubit.startWithAccount(
+                  harnessId: h.id,
+                  provider: provider,
+                  visibility: visibility,
+                );
+              }
             }
           },
           onStartApiKey: (h) => _startApiKey(context, cubit, h),
-          onStartNone: (h) => cubit.startWithNone(h.id),
+          onStartNone: (h) async {
+            final visibility = await _chooseVisibility(context);
+            if (visibility != null) {
+              cubit.startWithNone(h.id, visibility: visibility);
+            }
+          },
           onPoll: (h) => cubit.poll(h.id),
           onSubmit: (h, code) => cubit.submitCode(harnessId: h.id, code: code),
           onCancel: (h) => cubit.cancel(h.id),
@@ -130,9 +143,42 @@ class HarnessAuthAdapter
       ),
     );
     if (selected != null && context.mounted) {
-      cubit.startWithApiKey(harnessId: harness.id, providerKey: selected);
+      final visibility = await _chooseVisibility(context);
+      if (visibility != null) {
+        cubit.startWithApiKey(
+          harnessId: harness.id,
+          providerKey: selected,
+          visibility: visibility,
+        );
+      }
     }
   }
+
+  Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
+        context: context,
+        builder: (dialogContext) => TerminalDialog(
+          title: 'Who uses this harness account?',
+          content: const Text(
+            'A shared account reuses one login across profiles on this PocketCoder server. A personal account keeps a separate login.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext)
+                  .pop(harnessAccountVisibilityPersonal),
+              child: const Text('Personal'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext)
+                  .pop(harnessAccountVisibilityDeployment),
+              child: const Text('Shared'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      );
 
   void _showError(BuildContext context, String message) {
     VimToast.show(context, message, color: context.colorScheme.error);

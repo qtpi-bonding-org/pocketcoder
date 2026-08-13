@@ -1,3 +1,6 @@
+const harnessAccountVisibilityPersonal = 'personal';
+const harnessAccountVisibilityDeployment = 'deployment';
+
 class HarnessAuthChallenge {
   const HarnessAuthChallenge({
     required this.type,
@@ -20,6 +23,7 @@ class HarnessAuthChallenge {
     );
   }
 }
+
 class HarnessAuthAttempt {
   const HarnessAuthAttempt({
     required this.id,
@@ -46,9 +50,9 @@ class HarnessAuthAttempt {
 class HarnessAuthStatus {
   const HarnessAuthStatus({
     required this.harness,
-    required this.scopeKind,
-    required this.scopeId,
-    required this.bindingId,
+    required this.accountId,
+    required this.accountName,
+    required this.visibility,
     required this.credentialMode,
     required this.status,
     this.lastError,
@@ -57,9 +61,9 @@ class HarnessAuthStatus {
   });
 
   final String harness;
-  final String scopeKind;
-  final String scopeId;
-  final String bindingId;
+  final String accountId;
+  final String accountName;
+  final String visibility;
   final String credentialMode;
   final String status;
   final String? lastError;
@@ -72,9 +76,10 @@ class HarnessAuthStatus {
 
     return HarnessAuthStatus(
       harness: json['harness']?.toString() ?? '',
-      scopeKind: json['scopeKind']?.toString() ?? '',
-      scopeId: json['scopeId']?.toString() ?? '',
-      bindingId: json['bindingId']?.toString() ?? '',
+      accountId: json['accountId']?.toString() ?? '',
+      accountName: json['accountName']?.toString() ?? '',
+      visibility:
+          json['visibility']?.toString() ?? harnessAccountVisibilityPersonal,
       credentialMode: json['credentialMode']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       lastError: json['lastError']?.toString(),
@@ -89,7 +94,11 @@ class HarnessAuthStatus {
 
   bool get isConnected => status == 'connected';
   bool get isConnecting =>
-      status == 'connecting' || status == 'awaiting_input' || status == 'starting';
+      status == 'connecting' ||
+      status == 'awaiting_input' ||
+      status == 'starting';
   bool get isDisconnected => status == 'disconnected';
   bool get needsApiKey => status == 'needs_api_key';
+  bool get isDeploymentVisible =>
+      visibility == harnessAccountVisibilityDeployment;
 }

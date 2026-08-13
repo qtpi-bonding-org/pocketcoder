@@ -29,10 +29,11 @@ import (
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/coordinator"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/pocoprompt"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/pocoprompt"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 )
 
 // ErrHarnessProvisioning is returned by buildSessionProfile when no
@@ -257,7 +258,6 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	}
 
 	p.SupportsLiveConfig = harnessRec.GetBool("supports_live_config")
-	p.SingleConnectionOnly = harnessRec.GetBool("single_connection_only")
 	p.SupportsSessionDelete = harnessRec.GetBool("supports_session_delete")
 	p.SupportsAdditionalDirectories = harnessRec.GetBool("supports_additional_directories")
 
@@ -277,11 +277,15 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	if (harnessRec.GetString("cli_id") == "goose" || !p.SupportsLiveConfig) && hmID != "" && ollamaModel == "" {
 		launchKey = hmID
 	}
+	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harnessRec.Id)
+	if err != nil {
+		return p, fmt.Errorf("resolve harness account: %w", err)
+	}
 
 	// Shared with hooks.ProvisionHarnessInstance's own lookup — see
 	// hooks.FindHarnessInstance's doc comment for why this can't be a
 	// single `harness = {:h} && launch_key = {:k}` filter.
-	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey, userID)
+	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey, userID, account.Id)
 	if err != nil {
 		return p, err
 	}

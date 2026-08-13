@@ -24,9 +24,9 @@ mixin _$Harnesse {
   String? get containerImage;
   dynamic get launchTemplate;
   bool? get supportsLiveConfig;
+  @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
+  HarnesseProviderScope? get providerScope;
   bool? get supportsOllama;
-  String? get providerScope;
-  bool? get singleConnectionOnly;
   bool? get supportsSessionDelete;
   bool? get supportsAdditionalDirectories;
 
@@ -59,12 +59,10 @@ mixin _$Harnesse {
                 .equals(other.launchTemplate, launchTemplate) &&
             (identical(other.supportsLiveConfig, supportsLiveConfig) ||
                 other.supportsLiveConfig == supportsLiveConfig) &&
-            (identical(other.supportsOllama, supportsOllama) ||
-                other.supportsOllama == supportsOllama) &&
             (identical(other.providerScope, providerScope) ||
                 other.providerScope == providerScope) &&
-            (identical(other.singleConnectionOnly, singleConnectionOnly) ||
-                other.singleConnectionOnly == singleConnectionOnly) &&
+            (identical(other.supportsOllama, supportsOllama) ||
+                other.supportsOllama == supportsOllama) &&
             (identical(other.supportsSessionDelete, supportsSessionDelete) ||
                 other.supportsSessionDelete == supportsSessionDelete) &&
             (identical(other.supportsAdditionalDirectories,
@@ -86,15 +84,14 @@ mixin _$Harnesse {
       containerImage,
       const DeepCollectionEquality().hash(launchTemplate),
       supportsLiveConfig,
-      supportsOllama,
       providerScope,
-      singleConnectionOnly,
+      supportsOllama,
       supportsSessionDelete,
       supportsAdditionalDirectories);
 
   @override
   String toString() {
-    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, supportsOllama: $supportsOllama, providerScope: $providerScope, singleConnectionOnly: $singleConnectionOnly, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
+    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerScope: $providerScope, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
   }
 }
 
@@ -114,9 +111,9 @@ abstract mixin class $HarnesseCopyWith<$Res> {
       String? containerImage,
       dynamic launchTemplate,
       bool? supportsLiveConfig,
+      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
+      HarnesseProviderScope? providerScope,
       bool? supportsOllama,
-      String? providerScope,
-      bool? singleConnectionOnly,
       bool? supportsSessionDelete,
       bool? supportsAdditionalDirectories});
 }
@@ -142,9 +139,8 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
     Object? containerImage = freezed,
     Object? launchTemplate = freezed,
     Object? supportsLiveConfig = freezed,
-    Object? supportsOllama = freezed,
     Object? providerScope = freezed,
-    Object? singleConnectionOnly = freezed,
+    Object? supportsOllama = freezed,
     Object? supportsSessionDelete = freezed,
     Object? supportsAdditionalDirectories = freezed,
   }) {
@@ -185,17 +181,13 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
           ? _self.supportsLiveConfig
           : supportsLiveConfig // ignore: cast_nullable_to_non_nullable
               as bool?,
-      supportsOllama: freezed == supportsOllama
-          ? _self.supportsOllama
-          : supportsOllama // ignore: cast_nullable_to_non_nullable
-              as bool?,
       providerScope: freezed == providerScope
           ? _self.providerScope
           : providerScope // ignore: cast_nullable_to_non_nullable
-              as String?,
-      singleConnectionOnly: freezed == singleConnectionOnly
-          ? _self.singleConnectionOnly
-          : singleConnectionOnly // ignore: cast_nullable_to_non_nullable
+              as HarnesseProviderScope?,
+      supportsOllama: freezed == supportsOllama
+          ? _self.supportsOllama
+          : supportsOllama // ignore: cast_nullable_to_non_nullable
               as bool?,
       supportsSessionDelete: freezed == supportsSessionDelete
           ? _self.supportsSessionDelete
@@ -313,9 +305,9 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
+            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
+            HarnesseProviderScope? providerScope,
             bool? supportsOllama,
-            String? providerScope,
-            bool? singleConnectionOnly,
             bool? supportsSessionDelete,
             bool? supportsAdditionalDirectories)?
         $default, {
@@ -334,9 +326,8 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.supportsOllama,
             _that.providerScope,
-            _that.singleConnectionOnly,
+            _that.supportsOllama,
             _that.supportsSessionDelete,
             _that.supportsAdditionalDirectories);
       case _:
@@ -370,9 +361,9 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
+            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
+            HarnesseProviderScope? providerScope,
             bool? supportsOllama,
-            String? providerScope,
-            bool? singleConnectionOnly,
             bool? supportsSessionDelete,
             bool? supportsAdditionalDirectories)
         $default,
@@ -390,9 +381,8 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.supportsOllama,
             _that.providerScope,
-            _that.singleConnectionOnly,
+            _that.supportsOllama,
             _that.supportsSessionDelete,
             _that.supportsAdditionalDirectories);
       case _:
@@ -425,9 +415,9 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
+            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
+            HarnesseProviderScope? providerScope,
             bool? supportsOllama,
-            String? providerScope,
-            bool? singleConnectionOnly,
             bool? supportsSessionDelete,
             bool? supportsAdditionalDirectories)?
         $default,
@@ -445,9 +435,8 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.supportsOllama,
             _that.providerScope,
-            _that.singleConnectionOnly,
+            _that.supportsOllama,
             _that.supportsSessionDelete,
             _that.supportsAdditionalDirectories);
       case _:
@@ -470,9 +459,9 @@ class _Harnesse implements Harnesse {
       this.containerImage,
       this.launchTemplate,
       this.supportsLiveConfig,
-      this.supportsOllama,
+      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
       this.providerScope,
-      this.singleConnectionOnly,
+      this.supportsOllama,
       this.supportsSessionDelete,
       this.supportsAdditionalDirectories});
   factory _Harnesse.fromJson(Map<String, dynamic> json) =>
@@ -498,11 +487,10 @@ class _Harnesse implements Harnesse {
   @override
   final bool? supportsLiveConfig;
   @override
+  @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
+  final HarnesseProviderScope? providerScope;
+  @override
   final bool? supportsOllama;
-  @override
-  final String? providerScope;
-  @override
-  final bool? singleConnectionOnly;
   @override
   final bool? supportsSessionDelete;
   @override
@@ -542,12 +530,10 @@ class _Harnesse implements Harnesse {
                 .equals(other.launchTemplate, launchTemplate) &&
             (identical(other.supportsLiveConfig, supportsLiveConfig) ||
                 other.supportsLiveConfig == supportsLiveConfig) &&
-            (identical(other.supportsOllama, supportsOllama) ||
-                other.supportsOllama == supportsOllama) &&
             (identical(other.providerScope, providerScope) ||
                 other.providerScope == providerScope) &&
-            (identical(other.singleConnectionOnly, singleConnectionOnly) ||
-                other.singleConnectionOnly == singleConnectionOnly) &&
+            (identical(other.supportsOllama, supportsOllama) ||
+                other.supportsOllama == supportsOllama) &&
             (identical(other.supportsSessionDelete, supportsSessionDelete) ||
                 other.supportsSessionDelete == supportsSessionDelete) &&
             (identical(other.supportsAdditionalDirectories,
@@ -569,15 +555,14 @@ class _Harnesse implements Harnesse {
       containerImage,
       const DeepCollectionEquality().hash(launchTemplate),
       supportsLiveConfig,
-      supportsOllama,
       providerScope,
-      singleConnectionOnly,
+      supportsOllama,
       supportsSessionDelete,
       supportsAdditionalDirectories);
 
   @override
   String toString() {
-    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, supportsOllama: $supportsOllama, providerScope: $providerScope, singleConnectionOnly: $singleConnectionOnly, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
+    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerScope: $providerScope, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
   }
 }
 
@@ -599,9 +584,9 @@ abstract mixin class _$HarnesseCopyWith<$Res>
       String? containerImage,
       dynamic launchTemplate,
       bool? supportsLiveConfig,
+      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
+      HarnesseProviderScope? providerScope,
       bool? supportsOllama,
-      String? providerScope,
-      bool? singleConnectionOnly,
       bool? supportsSessionDelete,
       bool? supportsAdditionalDirectories});
 }
@@ -627,9 +612,8 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
     Object? containerImage = freezed,
     Object? launchTemplate = freezed,
     Object? supportsLiveConfig = freezed,
-    Object? supportsOllama = freezed,
     Object? providerScope = freezed,
-    Object? singleConnectionOnly = freezed,
+    Object? supportsOllama = freezed,
     Object? supportsSessionDelete = freezed,
     Object? supportsAdditionalDirectories = freezed,
   }) {
@@ -670,17 +654,13 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
           ? _self.supportsLiveConfig
           : supportsLiveConfig // ignore: cast_nullable_to_non_nullable
               as bool?,
-      supportsOllama: freezed == supportsOllama
-          ? _self.supportsOllama
-          : supportsOllama // ignore: cast_nullable_to_non_nullable
-              as bool?,
       providerScope: freezed == providerScope
           ? _self.providerScope
           : providerScope // ignore: cast_nullable_to_non_nullable
-              as String?,
-      singleConnectionOnly: freezed == singleConnectionOnly
-          ? _self.singleConnectionOnly
-          : singleConnectionOnly // ignore: cast_nullable_to_non_nullable
+              as HarnesseProviderScope?,
+      supportsOllama: freezed == supportsOllama
+          ? _self.supportsOllama
+          : supportsOllama // ignore: cast_nullable_to_non_nullable
               as bool?,
       supportsSessionDelete: freezed == supportsSessionDelete
           ? _self.supportsSessionDelete

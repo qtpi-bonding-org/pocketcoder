@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/agent/pocoprompt"
-	"github.com/qtpi-automaton/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/pocoprompt"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 )
 
 // archiveCopier is intentionally smaller than dockerapi.Client so the
