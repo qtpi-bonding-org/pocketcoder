@@ -288,6 +288,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	volumeBinds := []string{
 		volumes.Workspace + ":/workspace",
 		volumes.Auth + ":" + harnessvolume.AuthHomeMount,
+		volumes.GitSSH + ":" + harnessvolume.GitSSHMount + ":ro",
 	}
 	// Account-login helpers and all ACP subprocesses share one conventional
 	// auth home. Goose points GOOSE_PATH_ROOT here in its catalog launch
@@ -297,6 +298,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		"XDG_CONFIG_HOME="+harnessvolume.AuthHomeMount+"/.config",
 		"XDG_DATA_HOME="+harnessvolume.AuthHomeMount+"/.local/share",
 	)
+	env = append(env, "GIT_SSH_COMMAND=ssh -F "+harnessvolume.GitSSHMount+"/current/ssh_config")
 	networkNames := []string{networkName, HarnessEgressNetwork, ModelNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
 		Image:        image,
