@@ -38,7 +38,7 @@ func liveConfig(t *testing.T) Config {
 	if ws == "" {
 		ws = "/workspace"
 	}
-	return Config{GooseURL: url, GooseSecret: secret, Workspace: ws, PermissionTimeout: time.Minute}
+	return Config{Workspace: ws, PermissionTimeout: time.Minute}
 }
 
 // liveProfile optionally applies a model through the same per-session ACP
@@ -48,6 +48,7 @@ func liveConfig(t *testing.T) Config {
 func liveProfile() SessionProfile {
 	provider, model := os.Getenv("GOOSE_LIVE_PROVIDER"), os.Getenv("GOOSE_LIVE_MODEL")
 	return SessionProfile{
+		Target:             Target{URL: os.Getenv("GOOSE_ACP_URL"), Secret: os.Getenv("GOOSE_SERVER__SECRET_KEY")},
 		Provider:           provider,
 		Model:              model,
 		SupportsLiveConfig: provider != "" || model != "",
@@ -161,7 +162,6 @@ func TestLiveRunNewSession(t *testing.T) {
 // instead of driving goose.
 func TestLiveWrongSecretRejected(t *testing.T) {
 	cfg := liveConfig(t)
-	cfg.GooseSecret = "definitely-not-the-secret"
 	c, err := New(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -169,7 +169,11 @@ func TestLiveWrongSecretRejected(t *testing.T) {
 
 	chatID := "live-chat-bad"
 	resolve := func(context.Context) (string, error) { return "", nil }
-	profileFn := func(context.Context) (SessionProfile, error) { return liveProfile(), nil }
+	profileFn := func(context.Context) (SessionProfile, error) {
+		profile := liveProfile()
+		profile.Target.Secret = "definitely-not-the-secret"
+		return profile, nil
+	}
 	created := func(context.Context, string) error { return nil }
 	finished := func(context.Context, acpsdk.StopReason) error { return nil }
 	if _, err := c.StartPrompt(chatID, "should never run", resolve, profileFn, created, finished); err != nil {

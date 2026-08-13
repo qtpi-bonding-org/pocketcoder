@@ -1,6 +1,6 @@
 // Wires AgentStreamClient -> AgentCacheDb (the offline mirror) and exposes
-// the reduced Conversation view. Goose is the sole authority for history
-// (design spec §4): a cold-replay marker replaces the cache wholesale, a
+// the reduced Conversation view. The selected harness owns its history: a
+// cold-replay marker replaces the cache wholesale, a
 // warm frame just upserts. No direct AG-UI/ACP type leaks past this file
 // except AguiEvent (already re-exported by agui_decode.dart).
 import 'package:acp_dart/acp_dart.dart';

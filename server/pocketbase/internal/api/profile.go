@@ -274,7 +274,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 	p.McpServers = append(p.McpServers, *memory)
 
 	launchKey := ""
-	if (harnessRec.GetString("cli_id") == "goose" || !p.SupportsLiveConfig) && hmID != "" && ollamaModel == "" {
+	if !p.SupportsLiveConfig && hmID != "" && ollamaModel == "" {
 		launchKey = hmID
 	}
 	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harnessRec.Id)

@@ -5,6 +5,7 @@ package harnessvolume
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 const AuthHomeMount = "/workspace/.pocketcoder_auth"
@@ -19,9 +20,9 @@ type Names struct {
 	Auth      string
 }
 
-// Resolve derives durable volume names from the Compose workspace volume used
-// as this deployment's namespace. The existing first-eight-character workspace
-// suffix is retained so this change does not orphan deployed user workspaces.
+// Resolve derives durable sibling volume names from the generic Compose
+// workspace volume used as this deployment's namespace. The Compose volume's
+// trailing "_workspace" is structural rather than part of the namespace.
 func Resolve(base, userID, harnessCLI, accountID string) (Names, error) {
 	for label, value := range map[string]string{
 		"base volume": base,
@@ -38,8 +39,12 @@ func Resolve(base, userID, harnessCLI, accountID string) (Names, error) {
 	if len(userSuffix) > 8 {
 		userSuffix = userSuffix[:8]
 	}
+	namespace := strings.TrimSuffix(base, "_workspace")
+	if namespace == "" {
+		return Names{}, fmt.Errorf("invalid base volume %q", base)
+	}
 	return Names{
-		Workspace: fmt.Sprintf("%s_%s_workspace", base, userSuffix),
-		Auth:      fmt.Sprintf("%s_harness_%s_account_%s_auth_home", base, harnessCLI, accountID),
+		Workspace: fmt.Sprintf("%s_user_%s_workspace", namespace, userSuffix),
+		Auth:      fmt.Sprintf("%s_harness_%s_account_%s_auth_home", namespace, harnessCLI, accountID),
 	}, nil
 }

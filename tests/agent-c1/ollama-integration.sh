@@ -11,7 +11,9 @@ timeout="${OLLAMA_SMOKE_TIMEOUT_SECONDS:-300}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 
-GOOSE_PROVIDER=ollama GOOSE_MODEL="$model" docker compose up -d --build ollama goose
+GOOSE_PROVIDER=ollama GOOSE_MODEL="$model" docker compose \
+  -f docker-compose.yml -f docker-compose.agent-test.yml \
+  --profile agent-test up -d --build ollama goose
 
 for _ in $(seq 1 30); do
   [ "$(docker inspect --format '{{.State.Health.Status}}' pocketcoder-ollama)" = healthy ] && break

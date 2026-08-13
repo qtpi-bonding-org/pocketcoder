@@ -3,15 +3,15 @@ package harnessvolume
 import "testing"
 
 func TestResolveKeepsUserWorkspacesSeparateAndSharesAccountAuth(t *testing.T) {
-	first, err := Resolve("pocketcoder_goose_workspace", "user123456789", "codex", "account1234567")
+	first, err := Resolve("pocketcoder_workspace", "user123456789", "codex", "account1234567")
 	if err != nil {
 		t.Fatal(err)
 	}
-	otherUser, err := Resolve("pocketcoder_goose_workspace", "other987654321", "codex", "account1234567")
+	otherUser, err := Resolve("pocketcoder_workspace", "other987654321", "codex", "account1234567")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if first.Workspace != "pocketcoder_goose_workspace_user1234_workspace" {
+	if first.Workspace != "pocketcoder_user_user1234_workspace" {
 		t.Fatalf("Workspace = %q", first.Workspace)
 	}
 	if first.Workspace == otherUser.Workspace {
@@ -20,7 +20,7 @@ func TestResolveKeepsUserWorkspacesSeparateAndSharesAccountAuth(t *testing.T) {
 	if first.Auth != otherUser.Auth {
 		t.Fatal("members of one harness account must share its authentication volume")
 	}
-	if first.Auth != "pocketcoder_goose_workspace_harness_codex_account_account1234567_auth_home" {
+	if first.Auth != "pocketcoder_harness_codex_account_account1234567_auth_home" {
 		t.Fatalf("Auth = %q", first.Auth)
 	}
 }

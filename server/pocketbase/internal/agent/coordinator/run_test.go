@@ -16,7 +16,7 @@ import (
 
 func testCoordinator(t *testing.T, dial DialFunc) *Coordinator {
 	t.Helper()
-	c, err := New(Config{GooseURL: "ws://goose.test/acp", GooseSecret: "secret", Workspace: "/workspace", Dial: dial})
+	c, err := New(Config{Workspace: "/workspace", Dial: dial})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func testCoordinator(t *testing.T, dial DialFunc) *Coordinator {
 // tests can drive SessionUpdate / RequestPermission from inside the fake.
 func testCoordinatorWithConn(t *testing.T, f *fakeConn, clk Clock) *Coordinator {
 	t.Helper()
-	c, err := New(Config{GooseURL: "ws://x", GooseSecret: "s", Workspace: "/w", Clock: clk,
+	c, err := New(Config{Workspace: "/w", Clock: clk,
 		Dial: func(_ context.Context, client acpsdk.Client, _ Target) (acp.Conn, error) {
 			f.mu.Lock()
 			f.client = client

@@ -4,7 +4,7 @@
   "harnesses": [
     {
       "id": "goose",
-      "composeService": "goose",
+      "composeService": "goose-harness-image",
       "imageRepository": "pocketcoder-harness-goose",
       "upstreamVersion": "1.43.0"
     },

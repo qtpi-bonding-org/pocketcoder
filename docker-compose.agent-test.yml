@@ -2,6 +2,49 @@
 # plus c3 (the Docker MCP Gateway) for MCP-governance coverage. It
 # intentionally does not depend on Interface, OpenCode, or the sandbox.
 services:
+  # Test-only fixed Goose fixture for low-level ACP/config acceptance tests.
+  # Production has no singleton Goose service; it provisions Goose lazily from
+  # the goose-harness-image catalog entry like every other harness.
+  goose:
+    image: pocketcoder-goose:1.43.0
+    build:
+      context: server/goose
+      dockerfile: Dockerfile
+    container_name: pocketcoder-goose
+    profiles: ["agent-test"]
+    environment:
+      GOOSE_SERVER__SECRET_KEY: ${GOOSE_SERVER__SECRET_KEY:?set the Goose ACP secret}
+      GOOSE_PROVIDER: ${GOOSE_PROVIDER:-anthropic}
+      GOOSE_MODEL: ${GOOSE_MODEL:-MiniMax-M2.5}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_HOST: ${ANTHROPIC_HOST:-https://api.minimax.io/anthropic}
+      OLLAMA_HOST: http://ollama:11434
+      GOOSE_DISABLE_KEYRING: "1"
+      GOOSE_PATH_ROOT: /workspace/.pocketcoder_auth
+      GOOSE_TELEMETRY_ENABLED: "false"
+    volumes:
+      - agent_test_goose_state:/workspace/.pocketcoder_auth
+      - agent_test_goose_config:/workspace/.pocketcoder_auth/config
+      - workspace:/workspace
+    working_dir: /workspace
+    networks:
+      - pocketcoder-agent
+      - pocketcoder-harness-egress
+      - pocketcoder-mcp-gateway
+      - pocketcoder-memory
+      - pocketcoder-model
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3000/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  pocketbase:
+    volumes:
+      - agent_test_goose_config:/goose-config
+
   agent-c1-test:
     build:
       context: .
@@ -30,3 +73,7 @@ services:
       # Reaches PocketBase's API only; the private pocketcoder-agent ACP net
       # stays a two-node c1<->c2 channel.
       - pocketcoder-pocketbase-sdk
+
+volumes:
+  agent_test_goose_state:
+  agent_test_goose_config:

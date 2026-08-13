@@ -50,7 +50,7 @@ func TestInspectParsesMountsAndNetworks(t *testing.T) {
 		}
 		json.NewEncoder(w).Encode(map[string]any{
 			"Mounts": []map[string]any{
-				{"Destination": "/workspace", "Name": "myproject_goose_workspace"},
+				{"Destination": "/workspace", "Name": "myproject_workspace"},
 				{"Destination": "/app/pb_data", "Name": "myproject_pb_data"},
 			},
 			"NetworkSettings": map[string]any{
@@ -70,7 +70,7 @@ func TestInspectParsesMountsAndNetworks(t *testing.T) {
 	}
 	found := false
 	for _, m := range insp.Mounts {
-		if m.Destination == "/workspace" && m.Name == "myproject_goose_workspace" {
+		if m.Destination == "/workspace" && m.Name == "myproject_workspace" {
 			found = true
 		}
 	}
@@ -145,7 +145,7 @@ func TestCreateAttachesVolumeAndNetworksInOneCall(t *testing.T) {
 	c := &Client{baseURL: srv.URL, http: srv.Client()}
 	id, err := c.Create(context.Background(), "my-harness", CreateSpec{
 		Image: "example.com/harness:1.0", Cmd: []string{"/adapter"},
-		VolumeName: "myproject_goose_workspace", VolumeDest: "/workspace",
+		VolumeName: "myproject_workspace", VolumeDest: "/workspace",
 		NetworkNames:   []string{"myproject_pocketcoder-agent", "pocketcoder-model"},
 		NetworkAliases: map[string][]string{"pocketcoder-model": {"ollama"}},
 		Labels:         map[string]string{"pc_managed": "pocketcoder"},
@@ -158,8 +158,8 @@ func TestCreateAttachesVolumeAndNetworksInOneCall(t *testing.T) {
 	}
 	hostConfig := body["HostConfig"].(map[string]any)
 	binds := hostConfig["Binds"].([]any)
-	if len(binds) != 1 || binds[0] != "myproject_goose_workspace:/workspace" {
-		t.Errorf("Binds = %v, want [myproject_goose_workspace:/workspace]", binds)
+	if len(binds) != 1 || binds[0] != "myproject_workspace:/workspace" {
+		t.Errorf("Binds = %v, want [myproject_workspace:/workspace]", binds)
 	}
 	labels := body["Labels"].(map[string]any)
 	if labels["pc_managed"] != "pocketcoder" {

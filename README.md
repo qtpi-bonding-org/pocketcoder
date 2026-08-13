@@ -2,7 +2,7 @@
 
 **A sovereign, mobile-first coding agent you run on your own infrastructure.** Use local models through Ollama or a hosted provider, receive private notifications through ntfy, and approve consequential actions from your phone before they run — without routing commands through a chat app.
 
-PocketCoder is a solo research project built in the open. It follows an **Alpine Linux** philosophy — a tiny original surface area standing on FOSS "giant's shoulders" rather than hand-rolled glue: **PocketBase** for state and auth, **Goose** as the agent core, and open agent protocols (**ACP**, **AG-UI**, **MCP**) for everything in between.
+PocketCoder is a solo research project built in the open. It follows an **Alpine Linux** philosophy — a tiny original surface area standing on FOSS "giant's shoulders" rather than hand-rolled glue: **PocketBase** for state and auth, **Goose** as the default harness, and open agent protocols (**ACP**, **AG-UI**, **MCP**) for everything in between.
 
 > ### ⚠️ Status: mid-build, core loop usable
 > - ✅ **Backend contract (c1 ↔ c2) is implemented and passes live acceptance** against a real model — authenticated runs, streaming, tool calls, and phone approve/deny all work.
@@ -57,9 +57,8 @@ The agent core is three containers connected by open protocols:
 
 | Container | Runs | Role |
 |:---|:---|:---|
-| **c1** | PocketBase (as a Go library) + Go AG-UI server + Go ACP client | The "front door." Auth, chat ownership, the single `chat → Goose-session` mapping, and the **ACP ↔ AG-UI translation** seam. |
-| **c2** | **Goose** in ACP agent-server mode (`goose serve`) | The default agent harness and sole provider of Goose-only features such as schedules and extensions. |
-| **Peer harnesses** | Claude Agent ACP / Codex ACP, provisioned independently on first selection | Optional agent harness containers routed per chat. Each exposes the same authenticated ACP WebSocket boundary through PocketCoder's stdio adapter. |
+| **c1** | PocketBase (as a Go library) + Go AG-UI server + Go ACP client | The "front door." Auth, chat ownership, the `chat → harness session` mapping, and the **ACP ↔ AG-UI translation** seam. |
+| **c2** | **Selected harness** | Goose by default, or Claude Code/Codex/OpenCode. Every harness is provisioned independently on first selection and exposes the same authenticated ACP WebSocket boundary. |
 | **c3** | Docker MCP Gateway | Runs by default. Hosts external tools as MCP servers (GitHub, Notion, etc.), approved per-deployment via the `mcp_servers` PocketBase collection. **Core memory is attached directly per ACP session so PocketBase can inject agent identity.** |
 | **Memory** | Pocket Memory | Always-on Rust service with SQLite, FTS5, sqlite-vec, and an in-process multilingual E5 embedder. |
 
@@ -67,10 +66,10 @@ The agent core is three containers connected by open protocols:
 Mobile (Flutter)
    │  AG-UI events over SSE
    ▼
-c1  PocketBase — auth, chat→Goose-session mapping, ACP↔AG-UI translation
+c1  PocketBase — auth, chat→harness-session mapping, ACP↔AG-UI translation
    │  ACP over an authenticated WebSocket (coder/acp-go-sdk)
    ▼
-c2  Selected harness — Goose by default, or an independently provisioned Claude Code/Codex container
+c2  Selected harness — Goose by default, or Claude Code/Codex/OpenCode
    │  (MCP tools via c3)
    ▼
 c3  Docker MCP Gateway — GitHub, Notion, etc. (approved per-deployment)
@@ -91,7 +90,7 @@ ask an agent to remember its own identity. The service is local and always on;
 if its bundled embedding model is unavailable, canonical writes and FTS5 recall
 continue in an explicitly degraded mode.
 
-Goose is the **sole system of record** for conversation history (its own SQLite session store). PocketBase stores only authentication and the `chat_id → goose_session_id` mapping — it is not a conversation or approval ledger. The Flutter client keeps a local Drift cache as an offline mirror that Goose refreshes on load.
+The selected harness is the **system of record** for its conversation history. PocketBase stores authentication and the `chat_id → external harness session` mapping — it is not a conversation or approval ledger. The Flutter client keeps a local Drift cache as an offline mirror refreshed from the selected harness.
 
 The security model and its honest limits (tool execution currently lives inside c2; the hardened sandbox is dormant) are documented in [`SECURITY.md`](SECURITY.md); the full design and open questions in [`docs/architecture-refactor.md`](docs/architecture-refactor.md).
 
@@ -115,7 +114,7 @@ Flutter development client additionally requires the Flutter/Dart SDK. The
 Cloudflare Workers are optional infrastructure for hosted OAuth and
 image-manifest services.
 
-1. **Deploy the infrastructure.** Generates secure passwords into a local `.env`, applies the host baseline, installs native Caddy, derives the VPS's `sslip.io` HTTPS hostname, and prompts for the credentials your chosen Goose provider needs:
+1. **Deploy the infrastructure.** Generates secure passwords into a local `.env`, applies the host baseline, installs native Caddy, and derives the VPS's `sslip.io` HTTPS hostname. Harness accounts and model-provider credentials are configured in the app:
    ```bash
    ./deploy.sh
    ```
@@ -182,25 +181,23 @@ the rest are opt-in via profiles.
 | Service | Profile | Role |
 |:---|:---|:---|
 | `pocketbase` | *(always)* | c1 — backend, auth, ACP↔AG-UI bridge |
-| `goose` | *(always)* | c2 — the Goose agent core and session store |
 | `ollama` | *(always)* | Local-model runtime; no model is downloaded automatically |
 | `mcp-gateway` | *(always)* | c3 — Docker MCP Gateway |
 | `docker-socket-proxy-mcp` | *(always)* | Scoped Docker API for MCP server containers |
 | `docker-socket-proxy-write` | *(always)* | Scoped Docker API for PocketBase operations |
 | `sqlpage` | *(always)* | Observability dashboard |
-| `sqlpage-data-init` | *(always)* | Initializes dashboard SQLite files |
 | `pocket-memory` | *(always)* | Agent-authored SQLite memory with local hybrid recall |
 | `ntfy` | `foss` | Self-hosted push notifications |
 | `tailscale` | `tailscale` | Remote access (funnel/private) |
 | `caddy` | `caddy` | Containerized TLS termination for local Docker deployments |
-| `*-harness-image` | `harness-images` | Build-only Claude, Codex, and OpenCode ACP images |
+| `*-harness-image` | `harness-images` | Build-only Goose, Claude Code, Codex, and OpenCode ACP images |
 
 ```bash
 docker compose up -d
 docker compose --profile foss up -d            # add self-hosted ntfy
 docker compose --profile tailscale up -d       # add Tailscale access
 docker compose --profile caddy up -d           # local Docker TLS route
-docker compose --profile harness-images build  # prebuild Claude/Codex/OpenCode images
+docker compose --profile harness-images build  # prebuild all selectable harness images
 ```
 
 On Linux, `deploy.sh` configures native host Caddy instead of the `caddy`
@@ -215,9 +212,8 @@ These measurements were taken on 2026-08-13 with the pinned `linux/amd64`
 images under Docker Desktop LinuxKit. Container and Caddy values are the
 maximum Docker working set across 12 one-second idle samples, except Pocket
 Memory: Docker Desktop under-reported its image-backed model pages, so its row
-uses the Linux process RSS after one real embedding and return to idle. The
-one-shot `sqlpage-data-init` container is excluded because it does not remain
-resident. See the [Pocket Memory measurements](server/memory/README.md#measured-memory-footprint)
+uses the Linux process RSS after one real embedding and return to idle. See the
+[Pocket Memory measurements](server/memory/README.md#measured-memory-footprint)
 for the cold/warm breakdown and sizing guidance.
 
 | Component | Exact bytes | MiB | Measurement role |

@@ -21,10 +21,12 @@ services:
       # the PocketBase container does not destroy the recovery copy.
       - pb_backups:/app/pb_backups
       - pocketcoder-logs:/app/pb_public/logs
-      - goose_workspace:/workspace
+      # Generic deployment workspace/volume namespace. User harnesses receive
+      # their own derived workspace volumes; this mount keeps PocketBase's
+      # file API and Docker-side namespace discovery harness-neutral.
+      - workspace:/workspace
       - ./server/mcp-gateway/config:/mcp_config
       - llm_keys:/llm_keys
-      - goose_config:/goose-config
       - ${POCKETCODER_RELEASE_STATE_DIR:-./.runtime/release}:/var/lib/pocketcoder/release:ro
       - ${POCKETCODER_ARTIFACT_DIR:-./.runtime/artifacts}:/artifacts
       - ./deploy/release/harnesses.json:/etc/pocketcoder/harnesses.json:ro
@@ -70,58 +72,6 @@ services:
       - pocketcoder-ollama-control
   # POCO:END compose-pocketbase
 
-  # POCO:BEGIN compose-agent
-  # 🪿 GOOSE C2 (private agent core)
-  # Core service -- starts with plain `docker compose up`, same as
-  # PocketBase and mcp-gateway. It never publishes a host port; it shares
-  # only the private `pocketcoder-agent` ACP network with
-  # PocketBase (authenticated WS) plus its own model-provider egress network.
-  # goose is the sole system of record for history; PocketBase never calls it
-  # back, so this network carries only c1 -> c2 ACP traffic.
-  goose:
-    profiles: ["harness-images"]
-    image: pocketcoder-goose:1.43.0
-    build:
-      context: server/goose
-      dockerfile: Dockerfile
-    container_name: pocketcoder-goose
-    environment:
-      - GOOSE_SERVER__SECRET_KEY=${GOOSE_SERVER__SECRET_KEY:-}
-      - GOOSE_PROVIDER=${GOOSE_PROVIDER:-anthropic}
-      - GOOSE_MODEL=${GOOSE_MODEL:-MiniMax-M2.5}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - ANTHROPIC_HOST=${ANTHROPIC_HOST:-https://api.minimax.io/anthropic}
-      # Harmless unless GOOSE_PROVIDER=ollama. Keeping the endpoint in Compose
-      # makes the default Linux topology deterministic rather than depending on
-      # a host port or Docker Desktop-specific DNS.
-      - OLLAMA_HOST=http://ollama:11434
-      - GOOSE_DISABLE_KEYRING=1
-      - GOOSE_PATH_ROOT=/goose
-      - GOOSE_TELEMETRY_ENABLED=false
-    volumes:
-      - goose_data:/goose
-      # Goose derives its config dir from GOOSE_PATH_ROOT: /goose/config/config.yaml
-      # (verified via `goose info`, spec §13.1). Mount the PocketBase-written
-      # config volume there — nested inside goose_data — so Goose actually reads
-      # the rendered config.yaml/keys.env. NOT ~/.config/goose (goose ignores it).
-      - goose_config:/goose/config
-      - goose_workspace:/workspace
-    working_dir: /workspace
-    networks:
-      - pocketcoder-agent
-      - pocketcoder-goose-egress
-      - pocketcoder-mcp-gateway
-      - pocketcoder-memory
-      - pocketcoder-model
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:3000/status"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-  # POCO:END compose-agent
-
   # POCO:BEGIN compose-local-model
   # 🧠 OLLAMA (optional local model runtime)
   #
@@ -162,6 +112,15 @@ services:
   # services never run under the normal stack: the inactive profile keeps
   # them out of `docker compose up`, while bootstrap/CI build and cache the
   # images so PocketBase can create a container on first harness selection.
+  # Goose is first because it is the catalog default, not because it has a
+  # different runtime lifecycle or trust level.
+  goose-harness-image:
+    profiles: ["harness-images"]
+    image: pocketcoder-goose:1.43.0
+    build:
+      context: server/goose
+      dockerfile: Dockerfile
+
   claude-code-harness-image:
     profiles: ["harness-images"]
     image: pocketcoder-harness-claude-code:0.64.2
@@ -357,24 +316,6 @@ services:
   # POCO:END compose-pocketbase-docker-access
 
   # POCO:BEGIN compose-dashboard
-  # 📈 SQLPAGE data init — on_connect.sql ATTACHes Goose's SQLite store in
-  # immutable mode, which refuses to open a file that does not exist yet.
-  # Goose creates sessions.db only after it starts with a configured provider,
-  # so a fresh deployment legitimately needs this non-overwriting placeholder.
-  # Pocket Memory initializes its own live database; SQLPage waits for its
-  # health check and opens it read-only without immutable mode so WAL is visible.
-  sqlpage-data-init:
-    image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
-    container_name: pocketcoder-sqlpage-data-init
-    command:
-      - sh
-      - -c
-      - |
-        mkdir -p /goose_data/data/sessions
-        [ -f /goose_data/data/sessions/sessions.db ] || touch /goose_data/data/sessions/sessions.db
-    volumes:
-      - goose_data:/goose_data
-
   # 📈 SQLPAGE (SQLite Dashboard)
   sqlpage:
     image: lovasoa/sqlpage:v0.32.0
@@ -393,15 +334,6 @@ services:
       # back to a throwaway in-memory DB every restart) and on_connect.sql's
       # ATTACH statements (the old dashboards errored with "no such table").
       - ./server/sqlpage/dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
-      # opencode was removed from this repo entirely (see git history) — its
-      # on_connect.sql ATTACH referenced a volume/path that no longer exists
-      # anywhere in this compose file, which hard-fails the whole SQLPage
-      # connection pool the moment the real /etc/sqlpage config actually
-      # loads (fixed above). Replaced with goose's own SQLite session store
-      # instead (data/sessions/sessions.db under GOOSE_PATH_ROOT=/goose, per
-      # spikes/goose-acp-http/README.md — WAL mode, safe for concurrent
-      # read-only access).
-      - goose_data:/goose_data:ro
       - memory_data:/memory_data:ro
     networks:
       - pocketcoder-dashboard
@@ -418,8 +350,6 @@ services:
         condition: service_healthy
       pocket-memory:
         condition: service_healthy
-      sqlpage-data-init:
-        condition: service_completed_successfully
   # POCO:END compose-dashboard
 
   # POCO:BEGIN compose-notifications
@@ -529,16 +459,14 @@ volumes:
   pb_data:
   pb_backups:
   pocketcoder-logs:
-  goose_workspace:
-    name: pocketcoder_goose_workspace
+  workspace:
+    name: pocketcoder_workspace
   llm_keys:  # Shared LLM API keys (env file written by PocketBase, read by sandbox)
   ntfy-cache:
   ntfy-auth:
   tailscale_state:  # Persists Tailscale node identity across restarts
   caddy_data:       # Persists TLS certificates
   caddy_config:
-  goose_data:        # Goose SQLite/session state; back up independently of PocketBase
-  goose_config:      # Goose config.yaml + keys.env, written by PocketBase, read by goose
   memory_data:        # Pocket Memory canonical SQLite and rebuildable indexes
   ollama_models:       # downloaded local models; intentionally not in R2 cache
 # POCO:END compose-persistent-volumes
@@ -566,18 +494,17 @@ networks:
   pocketcoder-agent:
     driver: bridge
     name: pocketcoder-agent
-  # Gives Goose model-provider egress without a route to PocketBase services.
-  pocketcoder-goose-egress:
+  # Shared provider/internet egress for every dynamically provisioned harness.
+  # Goose is the default harness, not a separate network trust tier.
+  pocketcoder-harness-egress:
     driver: bridge
-  # Carries MCP traffic between Goose and the Docker MCP Gateway only -
-  # deliberately separate from pocketcoder-agent (Goose's sole path to/from
-  # PocketBase) so this addition doesn't touch that boundary.
+    name: pocketcoder-harness-egress
+  # Carries MCP traffic between harnesses and the Docker MCP Gateway only,
+  # separate from the PocketBase-facing ACP network.
   pocketcoder-mcp-gateway:
     driver: bridge
-  # Carries MCP traffic between harnesses and Pocket Memory only — deliberately
-  # separate
-  # from pocketcoder-agent (Goose's sole path to/from PocketBase) so this
-  # addition doesn't touch that boundary. Mirrors pocketcoder-mcp-gateway.
+  # Carries MCP traffic between harnesses and Pocket Memory only, separate
+  # from the PocketBase-facing ACP network. Mirrors pocketcoder-mcp-gateway.
   pocketcoder-memory:
     driver: bridge
     name: pocketcoder-memory
