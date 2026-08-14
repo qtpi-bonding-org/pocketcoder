@@ -126,7 +126,7 @@ fi
 release_channel=$(jq -r '.releaseChannel' "$bootstrap_config")
 expected_digest=$(jq -r '.releaseDigest' "$bootstrap_config")
 expected_sequence=$(jq -r '.channelSequence' "$bootstrap_config")
-release_base=${RELEASE_BASE:-https://images.pocketcoder.org}
+release_base=${RELEASE_BASE:-https://images.relay.pocketcoder.org}
 resolver=/usr/local/lib/pocketcoder/release/resolve-signed-release.sh
 verifier=/usr/local/lib/pocketcoder/release/verify-signed-payload.sh
 root_public_key=/etc/pocketcoder/release-root.pem

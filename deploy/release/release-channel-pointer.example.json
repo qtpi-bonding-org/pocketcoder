@@ -4,10 +4,10 @@
   "sequence": 12,
   "promotedAt": "2026-08-12T20:00:00Z",
   "manifest": {
-    "url": "https://images.pocketcoder.org/v1/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.json",
+    "url": "https://images.relay.pocketcoder.org/v1/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.json",
     "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
     "downloadBytes": 32768,
-    "attestation": {"url": "https://images.pocketcoder.org/v1/attestations/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.sigstore.json"}
+    "attestation": {"url": "https://images.relay.pocketcoder.org/v1/attestations/releases/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.sigstore.json"}
   },
-  "attestation": {"url": "https://images.pocketcoder.org/v1/attestations/channels/stable/12.sigstore.json"}
+  "attestation": {"url": "https://images.relay.pocketcoder.org/v1/attestations/channels/stable/12.sigstore.json"}
 }

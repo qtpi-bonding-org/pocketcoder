@@ -43,7 +43,7 @@ class _Fixture {
   _Fixture(this.routes, this.digest);
   final Map<String, Uint8List> routes;
   final String digest;
-  static const base = 'https://images.pocketcoder.org/v1';
+  static const base = 'https://images.relay.pocketcoder.org/v1';
   ReleaseContentService service() =>
       ReleaseContentService(MockClient((request) async {
         final body = routes[request.url.path];

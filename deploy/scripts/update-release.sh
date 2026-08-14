@@ -4,7 +4,7 @@ set -eu
 operation=${1:-update}
 case "$operation" in update | rollback) ;; *) echo "usage: $0 [update|rollback]" >&2; exit 1 ;; esac
 
-release_base=${RELEASE_BASE:-https://images.pocketcoder.org}
+release_base=${RELEASE_BASE:-https://images.relay.pocketcoder.org}
 releases_dir=${POCKETCODER_RELEASES_DIR:-/opt/pocketcoder/releases}
 release_state=${POCKETCODER_RELEASE_STATE_DIR:-/var/lib/pocketcoder/release}
 artifact_dir=${POCKETCODER_ARTIFACT_DIR:-/var/lib/pocketcoder/artifacts}

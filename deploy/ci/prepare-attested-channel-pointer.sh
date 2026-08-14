@@ -7,7 +7,7 @@ sequence=${3:?sequence is required}
 output=${4:?output path is required}
 endpoint=${R2_ENDPOINT:?R2_ENDPOINT is required}
 bucket=${POCKETCODER_RELEASE_BUCKET:-pocketcoder-images}
-base_url=${POCKETCODER_RELEASE_BASE:-https://images.pocketcoder.org}
+base_url=${POCKETCODER_RELEASE_BASE:-https://images.relay.pocketcoder.org}
 
 case "$channel" in stable | beta | nightly) ;; *) echo "invalid channel" >&2; exit 1 ;; esac
 case "$manifest_sha" in *[!0-9a-f]* | '') echo "invalid manifest digest" >&2; exit 1 ;; esac

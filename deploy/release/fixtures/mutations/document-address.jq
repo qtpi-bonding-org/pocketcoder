@@ -1,1 +1,1 @@
-.documents["deployment-sizing"].url = "https://images.pocketcoder.org/v1/documents/not-the-digest.json"
+.documents["deployment-sizing"].url = "https://images.relay.pocketcoder.org/v1/documents/not-the-digest.json"
