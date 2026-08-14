@@ -24,7 +24,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -46,15 +45,11 @@ type AgentDeps struct {
 }
 
 func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDeps) (coordinator.AgentRuntime, error) {
-	workspace := os.Getenv("POCKETCODER_WORKSPACE")
-	if workspace == "" {
-		workspace = "/workspace"
-	}
 	ollamaBaseURL := ollama.ResolveBaseURL()
 	var service coordinator.AgentRuntime = deps.Runtime
 	var configErr error
 	if service == nil {
-		concrete, err := coordinator.New(coordinator.Config{Workspace: workspace, PermissionTimeout: permissionTimeout(), Dial: deps.Dial})
+		concrete, err := coordinator.New(coordinator.Config{Workspace: coordinator.DefaultWorkspace(), PermissionTimeout: coordinator.DefaultPermissionTimeout(), Dial: deps.Dial})
 		configErr = err
 		if concrete != nil {
 			service = concrete
@@ -393,16 +388,4 @@ func writeFlush(w http.ResponseWriter, flusher http.Flusher, seq int, ev events.
 		flusher.Flush()
 	}
 	return nil
-}
-
-func permissionTimeout() time.Duration {
-	value := strings.TrimSpace(os.Getenv("POCKETCODER_PERMISSION_TIMEOUT"))
-	if value == "" {
-		return 5 * time.Minute
-	}
-	duration, err := time.ParseDuration(value)
-	if err != nil || duration <= 0 {
-		return 5 * time.Minute
-	}
-	return duration
 }

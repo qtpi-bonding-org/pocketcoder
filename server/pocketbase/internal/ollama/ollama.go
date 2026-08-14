@@ -70,6 +70,12 @@ func ResolveBaseURL() string {
 	}
 	return DefaultURL
 }
+
+// ResolveRelease reads POCKETCODER_RELEASE once. Empty or "development"
+// selects the local-models runtime path in EnsureRuntime.
+func ResolveRelease() string {
+	return strings.TrimSpace(os.Getenv("POCKETCODER_RELEASE"))
+}
 func HTTPClient() *http.Client          { return &http.Client{Timeout: 10 * time.Second} }
 func StreamingHTTPClient() *http.Client { return &http.Client{} }
 func FetchTags(ctx context.Context, client *http.Client, baseURL string) ([]Model, error) {
