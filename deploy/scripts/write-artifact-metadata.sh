@@ -32,7 +32,7 @@ if test "$url" = auto; then
     *.img.gz) suffix=img.gz ;;
     *) echo "cannot derive artifact extension: $archive" >&2; exit 1 ;;
   esac
-  url="${POCKETCODER_RELEASE_BASE:-https://images.pocketcoder.org}/v1/artifacts/$sha256.$suffix"
+  url="${POCKETCODER_RELEASE_BASE:-https://images.relay.pocketcoder.org}/v1/artifacts/$sha256.$suffix"
 fi
 
 jq -n \

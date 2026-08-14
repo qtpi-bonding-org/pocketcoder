@@ -42,7 +42,7 @@
       "schemaVersion": 1,
       "mediaType": "application/json",
       "sourcePath": "deploy/release/deployment-sizing.json",
-      "url": "https://images.pocketcoder.org/documents/9999999999999999999999999999999999999999999999999999999999999999.json",
+      "url": "https://images.relay.pocketcoder.org/documents/9999999999999999999999999999999999999999999999999999999999999999.json",
       "sha256": "9999999999999999999999999999999999999999999999999999999999999999",
       "downloadBytes": 512
     },
@@ -50,21 +50,21 @@
       "schemaVersion": 1,
       "mediaType": "application/json",
       "sourcePath": "deploy/release/harnesses.json",
-      "url": "https://images.pocketcoder.org/documents/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json",
+      "url": "https://images.relay.pocketcoder.org/documents/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json",
       "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "downloadBytes": 2048
     },
     "standard-linux-bootstrap": {
       "mediaType": "text/x-shellscript",
       "sourcePath": "client/packages/pocketcoder_flutter/assets/deployment/standard_linux_bootstrap.sh",
-      "url": "https://images.pocketcoder.org/documents/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.sh",
+      "url": "https://images.relay.pocketcoder.org/documents/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.sh",
       "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "downloadBytes": 16000
     },
     "standard-linux-caddy": {
       "mediaType": "text/plain",
       "sourcePath": "client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template",
-      "url": "https://images.pocketcoder.org/documents/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.txt",
+      "url": "https://images.relay.pocketcoder.org/documents/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.txt",
       "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
       "downloadBytes": 2000
     }
@@ -74,7 +74,7 @@
       "delivery": {
         "kind": "artifact",
         "artifact": {
-          "url": "https://images.pocketcoder.org/v1/artifacts/1111111111111111111111111111111111111111111111111111111111111111.img.gz",
+          "url": "https://images.relay.pocketcoder.org/v1/artifacts/1111111111111111111111111111111111111111111111111111111111111111.img.gz",
           "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
           "downloadBytes": 800000000,
           "unpackedBytes": 4000000000
@@ -116,7 +116,7 @@
     }
   },
   "serverFiles": {
-    "url": "https://images.pocketcoder.org/v1/artifacts/2222222222222222222222222222222222222222222222222222222222222222.tar.gz",
+    "url": "https://images.relay.pocketcoder.org/v1/artifacts/2222222222222222222222222222222222222222222222222222222222222222.tar.gz",
     "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
     "downloadBytes": 1000000,
     "unpackedBytes": 5000000
@@ -124,7 +124,7 @@
   "images": {
     "required": {
       "server": {
-        "url": "https://images.pocketcoder.org/v1/artifacts/3333333333333333333333333333333333333333333333333333333333333333.tar.gz",
+        "url": "https://images.relay.pocketcoder.org/v1/artifacts/3333333333333333333333333333333333333333333333333333333333333333.tar.gz",
         "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
         "downloadBytes": 500000000,
         "unpackedBytes": 1500000000,
@@ -144,7 +144,7 @@
         "maximumSelections": 4,
         "options": {
           "goose": {
-            "url": "https://images.pocketcoder.org/v1/artifacts/4444444444444444444444444444444444444444444444444444444444444444.tar.gz",
+            "url": "https://images.relay.pocketcoder.org/v1/artifacts/4444444444444444444444444444444444444444444444444444444444444444.tar.gz",
             "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
             "downloadBytes": 150000000,
             "unpackedBytes": 350000000,
@@ -153,7 +153,7 @@
             ]
           },
           "claude-code": {
-            "url": "https://images.pocketcoder.org/v1/artifacts/5555555555555555555555555555555555555555555555555555555555555555.tar.gz",
+            "url": "https://images.relay.pocketcoder.org/v1/artifacts/5555555555555555555555555555555555555555555555555555555555555555.tar.gz",
             "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
             "downloadBytes": 400000000,
             "unpackedBytes": 900000000,
@@ -162,7 +162,7 @@
             ]
           },
           "codex": {
-            "url": "https://images.pocketcoder.org/v1/artifacts/6666666666666666666666666666666666666666666666666666666666666666.tar.gz",
+            "url": "https://images.relay.pocketcoder.org/v1/artifacts/6666666666666666666666666666666666666666666666666666666666666666.tar.gz",
             "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
             "downloadBytes": 450000000,
             "unpackedBytes": 1000000000,
@@ -171,7 +171,7 @@
             ]
           },
           "opencode": {
-            "url": "https://images.pocketcoder.org/v1/artifacts/7777777777777777777777777777777777777777777777777777777777777777.tar.gz",
+            "url": "https://images.relay.pocketcoder.org/v1/artifacts/7777777777777777777777777777777777777777777777777777777777777777.tar.gz",
             "sha256": "7777777777777777777777777777777777777777777777777777777777777777",
             "downloadBytes": 300000000,
             "unpackedBytes": 650000000,
@@ -188,7 +188,7 @@
         "maximumSelections": null,
         "options": {
           "future-addon": {
-            "url": "https://images.pocketcoder.org/v1/artifacts/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.tar.gz",
+            "url": "https://images.relay.pocketcoder.org/v1/artifacts/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.tar.gz",
             "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
             "downloadBytes": 1000,
             "unpackedBytes": 2000,

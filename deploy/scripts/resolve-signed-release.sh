@@ -4,7 +4,7 @@ set -eu
 channel=${1:-stable}
 release_state=${2:-/var/lib/pocketcoder/release}
 output_dir=${3:-/var/lib/pocketcoder/artifacts/release-metadata}
-release_base=${RELEASE_BASE:-https://images.pocketcoder.org}
+release_base=${RELEASE_BASE:-https://images.relay.pocketcoder.org}
 root_public_key=${POCKETCODER_ROOT_PUBLIC_KEY:-/etc/pocketcoder/release-root.pem}
 stable_floor=${POCKETCODER_STABLE_SEQUENCE_FLOOR:-1}
 max_manifest_bytes=1048576

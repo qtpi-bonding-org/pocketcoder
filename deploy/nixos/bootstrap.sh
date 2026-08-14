@@ -78,7 +78,7 @@ fi
 # and hands all platform-neutral work to the release snapshot.
 pc_status_phase fetching_release
 pc_status_heartbeat_start
-RELEASE_BASE="${RELEASE_BASE:-https://images.pocketcoder.org}"
+RELEASE_BASE="${RELEASE_BASE:-https://images.relay.pocketcoder.org}"
 RELEASE_CHANNEL=$(sed -n 's/^POCKETCODER_RELEASE_CHANNEL=//p' "$RUNTIME_ENV")
 RELEASE_CHANNEL=${RELEASE_CHANNEL:-stable}
 EXPECTED_DIGEST=$(sed -n 's/^POCKETCODER_RELEASE_DIGEST=//p' "$RUNTIME_ENV")

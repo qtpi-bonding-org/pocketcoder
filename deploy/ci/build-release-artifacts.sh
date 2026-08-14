@@ -24,7 +24,7 @@ test "$(git rev-parse HEAD)" = "$release"
 mkdir -p "$artifact_dir" "$metadata_dir"
 
 catalog=deploy/release/harnesses.json
-base_url=https://images.pocketcoder.org
+base_url=https://images.relay.pocketcoder.org
 compose_snapshot="$artifact_dir/docker-compose.prebuilt.yml"
 
 # Build repository-owned images and give each one its immutable release name.

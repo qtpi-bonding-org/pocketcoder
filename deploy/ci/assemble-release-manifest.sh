@@ -28,7 +28,7 @@ data_version=${POCKETCODER_DATA_VERSION:-1}
 minimum_data_version=${POCKETCODER_MINIMUM_UPGRADE_DATA_VERSION:-1}
 pro_minimum_version=${POCKETCODER_PRO_MINIMUM_VERSION:-1.0.0}
 foss_minimum_version=${POCKETCODER_FOSS_MINIMUM_VERSION:-1.0.0}
-base_url=${POCKETCODER_RELEASE_BASE:-https://images.pocketcoder.org}
+base_url=${POCKETCODER_RELEASE_BASE:-https://images.relay.pocketcoder.org}
 built_at=${POCKETCODER_BUILT_AT:-$(date -u '+%Y-%m-%dT%H:%M:%SZ')}
 
 mkdir -p "$document_output_dir"
