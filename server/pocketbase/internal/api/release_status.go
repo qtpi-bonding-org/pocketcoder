@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/openapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
@@ -74,13 +73,10 @@ func AddReleaseStatusOperations(registry *operation.Registry) {
 				compatibility = pointer.Compatibility
 			}
 		}
-		response := map[string]any{
+		return re.JSON(http.StatusOK, map[string]any{
 			"schemaVersion": 1,
 			"dataVersion":   dataVersion,
 			"compatibility": compatibility,
-		}
-		return writeGeneratedJSON(re, openapi.GetReleaseCompatibility200JSONResponse{
-			JsonSuccessJSONResponse: openapi.JsonSuccessJSONResponse(response),
 		})
 	}})
 
@@ -94,26 +90,10 @@ func AddReleaseStatusOperations(registry *operation.Registry) {
 		if err := readJSON(filepath.Join(releaseStateDir(), "metadata-status.json"), &metadataStatus); err != nil {
 			metadataStatus = map[string]any{"schemaVersion": 1, "status": "unknown"}
 		}
-		return writeGeneratedJSON(re, openapi.GetReleaseStatus200JSONResponse{
-			JsonSuccessJSONResponse: openapi.JsonSuccessJSONResponse(map[string]any{
-				"schemaVersion":  1,
-				"current":        pointer,
-				"metadataStatus": metadataStatus,
-			}),
+		return re.JSON(http.StatusOK, map[string]any{
+			"schemaVersion":  1,
+			"current":        pointer,
+			"metadataStatus": metadataStatus,
 		})
 	}})
-}
-
-func writeGeneratedJSON(re *core.RequestEvent, response any) error {
-	if typed, ok := response.(interface {
-		VisitGetReleaseCompatibilityResponse(http.ResponseWriter) error
-	}); ok {
-		return typed.VisitGetReleaseCompatibilityResponse(re.Response)
-	}
-	if typed, ok := response.(interface {
-		VisitGetReleaseStatusResponse(http.ResponseWriter) error
-	}); ok {
-		return typed.VisitGetReleaseStatusResponse(re.Response)
-	}
-	return re.InternalServerError("generated response type mismatch", nil)
 }

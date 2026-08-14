@@ -54,6 +54,9 @@ func init() {
 		if err := seedUser(os.Getenv("AGENT_EMAIL"), os.Getenv("AGENT_PASSWORD"), "agent"); err != nil {
 			return err
 		}
+		if err := seedUser(os.Getenv("API_TEST_EMAIL"), os.Getenv("API_TEST_PASSWORD"), "user"); err != nil {
+			return err
+		}
 
 		superEmail := os.Getenv("POCKETBASE_SUPERUSER_EMAIL")
 		superPass := os.Getenv("POCKETBASE_SUPERUSER_PASSWORD")
