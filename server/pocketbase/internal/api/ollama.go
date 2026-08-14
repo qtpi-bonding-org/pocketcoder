@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 
@@ -49,7 +48,7 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 		config.BaseURL = ollama.ResolveBaseURL()
 	}
 	if strings.TrimSpace(config.Release) == "" {
-		config.Release = strings.TrimSpace(os.Getenv("POCKETCODER_RELEASE"))
+		config.Release = ollama.ResolveRelease()
 	}
 	runtimeMu := deps.RuntimeMu
 	if runtimeMu == nil {

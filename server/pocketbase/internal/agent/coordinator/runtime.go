@@ -20,6 +20,9 @@ package coordinator
 
 import (
 	"context"
+	"os"
+	"strings"
+	"time"
 
 	events "github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
@@ -40,4 +43,27 @@ type AgentRuntime interface {
 	ResolveElicitation(chatID, id string, resp acpsdk.UnstableCreateElicitationResponse) error
 	DeleteSession(ctx context.Context, app core.App, chatID string) error
 	Shutdown(ctx context.Context)
+}
+
+// DefaultWorkspace reads POCKETCODER_WORKSPACE once, falling back to
+// "/workspace".
+func DefaultWorkspace() string {
+	if v := os.Getenv("POCKETCODER_WORKSPACE"); v != "" {
+		return v
+	}
+	return "/workspace"
+}
+
+// DefaultPermissionTimeout reads POCKETCODER_PERMISSION_TIMEOUT once,
+// falling back to 5 minutes for an empty or invalid value.
+func DefaultPermissionTimeout() time.Duration {
+	value := strings.TrimSpace(os.Getenv("POCKETCODER_PERMISSION_TIMEOUT"))
+	if value == "" {
+		return 5 * time.Minute
+	}
+	duration, err := time.ParseDuration(value)
+	if err != nil || duration <= 0 {
+		return 5 * time.Minute
+	}
+	return duration
 }
