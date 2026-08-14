@@ -9,7 +9,7 @@ setup() {
 
 @test "init writes a clean document" {
   pc_status_init
-  [ "$(jq -r .phase "$PC_STATUS_DIR/status.json")" = installing_host ]
+  [ "$(jq -r .phase "$PC_STATUS_DIR/status.json")" = configuring_operating_system ]
   [ "$(jq -r '.error // "null"' "$PC_STATUS_DIR/status.json")" = null ]
   [ -n "$(jq -r .runId "$PC_STATUS_DIR/status.json")" ]
 }

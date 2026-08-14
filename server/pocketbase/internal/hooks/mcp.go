@@ -30,9 +30,6 @@ import (
 )
 
 const (
-	mcpConfigPath  = "/mcp_config/docker-mcp.yaml"
-	mcpSecretsPath = "/mcp_config/mcp.env"
-
 	// mcpDockerHost is the compose-pinned address of the socket proxy scoped
 	// for mcp-gateway's own use (docker-compose.yml's docker-socket-proxy-mcp
 	// service, NETWORKS=1 for per-session isolation) -- deliberately not the
@@ -42,6 +39,10 @@ const (
 	// from this process's own env.
 	mcpDockerHost = "tcp://docker-socket-proxy-mcp:2375"
 )
+
+// mcpConfigDir is a var, not a const, so tests can point renderMcpConfig at
+// a t.TempDir() instead of the real /mcp_config volume.
+var mcpConfigDir = "/mcp_config"
 
 // RegisterMcpHooks registers hooks for MCP server lifecycle management.
 // When a user approves or revokes an MCP server in the Flutter UI, this hook
@@ -105,12 +106,13 @@ func renderMcpConfig(app core.App) error {
 		return fmt.Errorf("failed to query approved MCP servers: %w", err)
 	}
 
-	dir := "/mcp_config"
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if mkErr := os.MkdirAll(dir, 0755); mkErr != nil {
+	if _, err := os.Stat(mcpConfigDir); os.IsNotExist(err) {
+		if mkErr := os.MkdirAll(mcpConfigDir, 0755); mkErr != nil {
 			return fmt.Errorf("failed to create MCP config directory: %w", mkErr)
 		}
 	}
+	mcpConfigPath := mcpConfigDir + "/docker-mcp.yaml"
+	mcpSecretsPath := mcpConfigDir + "/mcp.env"
 
 	var catalog strings.Builder
 	catalog.WriteString("# PocketCoder MCP Catalog (auto-generated)\n")

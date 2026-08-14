@@ -86,7 +86,7 @@ open_stream() {
   STREAM_FILE="$BATS_TEST_TMPDIR/stream-${RANDOM}.sse"
   curl --retry 5 --retry-connrefused --retry-delay 1 \
     --max-time "${AGENT_TEST_TIMEOUT_SECONDS:-120}" -sS -N \
-    "$PB_URL/api/pocketcoder/chats/$CHAT_ID/stream?cursor=$cursor" \
+    "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/stream?cursor=$cursor" \
     -H "Authorization: $USER_TOKEN" >"$STREAM_FILE" 2>&1 &
   STREAM_PID=$!
   # Give the subscription a moment to attach before a caller posts a prompt,
@@ -98,7 +98,7 @@ start_run() {
   local prompt="$1"
   local resp
   resp=$(curl --max-time 15 -sS \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/prompt" \
+    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/prompt" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
     -d "{\"prompt\":[{\"type\":\"text\",\"text\":$(jq -Rs . <<<"$prompt")}]}")
   RUN_ID=$(jq -r .runId <<<"$resp")
@@ -149,7 +149,7 @@ submit_option() {
   local option_id="$1"
   [ -n "${APPROVAL_ID:-}" ]
   APPROVAL_HTTP_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/request_permission/$APPROVAL_ID" \
+    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/request-permission/$APPROVAL_ID" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
     -d "{\"outcome\":{\"outcome\":\"selected\",\"optionId\":\"$option_id\"}}")
 }
@@ -236,7 +236,7 @@ resolve_permissions_until_finish() {
 
   local conflict
   conflict=$(curl -sS -o "$BATS_TEST_TMPDIR/conflict.json" -w '%{http_code}' \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/prompt" \
+    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/prompt" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
     -d '{"prompt":[{"type":"text","text":"This must be rejected as concurrent."}]}')
   [ "$conflict" = 409 ]
@@ -248,13 +248,13 @@ resolve_permissions_until_finish() {
   # the line while -w still captures the 200 status line received up front.
   local concurrent_stream_status
   concurrent_stream_status=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 \
-    "$PB_URL/api/pocketcoder/chats/$CHAT_ID/stream?cursor=0" \
+    "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/stream?cursor=0" \
     -H "Authorization: $USER_TOKEN" || true)
   [ "$concurrent_stream_status" = 200 ]
 
   local cancelled
   cancelled=$(curl -fsS -o /dev/null -w '%{http_code}' \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/cancel" \
+    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/cancel" \
     -H "Authorization: $USER_TOKEN")
   [ "$cancelled" = 202 ]
   wait_for_finish
@@ -268,7 +268,7 @@ resolve_permissions_until_finish() {
 
   local set_mode_status
   set_mode_status=$(curl -sS -o /dev/null -w '%{http_code}' \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/set_mode" \
+    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/set-mode" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
     -d '{"modeId":"approve"}')
   [ "$set_mode_status" = 202 ]
@@ -297,7 +297,7 @@ resolve_permissions_until_finish() {
   fi
   local stale_status
   stale_status=$(curl -sS -o "$BATS_TEST_TMPDIR/stale.json" -w '%{http_code}' \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/request_permission/$old_approval" \
+    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/request-permission/$old_approval" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
     -d '{"outcome":{"outcome":"selected","optionId":"allow_once"}}')
   [ "$stale_status" = 404 ]

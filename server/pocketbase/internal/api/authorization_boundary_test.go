@@ -216,6 +216,24 @@ func TestAuthorizationOwnershipBoundaries(t *testing.T) {
 	})
 }
 
+func TestSendPushNotificationValidatesRequiredFields(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+	}{
+		{"missing user_id", `{"type":"test"}`},
+		{"missing type", `{"user_id":"test-user"}`},
+		{"empty body", `{}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := authorizationRequest(t, http.MethodPost, "/api/pocketcoder/v1/push", tc.body, "agent"); got != http.StatusBadRequest {
+				t.Fatalf("status = %d, want 400", got)
+			}
+		})
+	}
+}
+
 func mountedRequest(t *testing.T, app core.App, method, url, body, token string) int {
 	t.Helper()
 	router, err := apis.NewRouter(app)
