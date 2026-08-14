@@ -49,10 +49,11 @@ class AgentActionsApi {
   final PocketCoderApiClient _api;
 
   // The generated built_value callbacks are nullable under Flutter stable's
-  // analyzer but non-nullable under the newer local analyzer. Keep that
-  // generator-version detail contained at this boundary.
+  // analyzer but non-nullable under the newer local analyzer. Their builder
+  // classes are also intentionally not exported by pocketcoder_api. Keep both
+  // generator-version details contained at this boundary.
   static void _writeTextPrompt(
-    generated.PromptRequestBuilder? builder,
+    dynamic builder,
     String text,
   ) {
     final prompt = builder?.prompt;
@@ -67,7 +68,7 @@ class AgentActionsApi {
   }
 
   static void _writeTextContentBlock(
-    generated.ContentBlockBuilder? builder,
+    dynamic builder,
     String text,
   ) {
     if (builder == null) {
@@ -79,7 +80,7 @@ class AgentActionsApi {
   }
 
   static void _writeMode(
-    generated.ModeRequestBuilder? builder,
+    dynamic builder,
     String modeId,
   ) {
     if (builder == null) {
@@ -89,7 +90,7 @@ class AgentActionsApi {
   }
 
   static void _writeConfigOption(
-    generated.ConfigOptionRequestBuilder? builder,
+    dynamic builder,
     SetSessionConfigOptionRequest request,
   ) {
     final configId = _optionalString(request.configId);
