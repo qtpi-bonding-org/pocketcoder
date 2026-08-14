@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
@@ -37,7 +38,7 @@ void main() {
   });
 
   group('SchedulerCubit.loadSchedules', () {
-    test('emits loading then loaded on success', () async {
+    test('emits loaded on success', () async {
       when(() => repo.listSchedules()).thenAnswer((_) async => [_schedule]);
 
       final cubit = buildCubit();
@@ -49,8 +50,11 @@ void main() {
       await sub.cancel();
 
       expect(states, [
-        const SchedulerState.loading(),
-        const SchedulerState.loaded([_schedule]),
+        const SchedulerState(status: UiFlowStatus.loading),
+        const SchedulerState(
+          status: UiFlowStatus.success,
+          schedules: [_schedule],
+        ),
       ]);
     });
 

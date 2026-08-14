@@ -1,3 +1,4 @@
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -64,36 +65,43 @@ class SchedulerView extends StatelessWidget {
         child: Builder(
           builder: (context) {
             final colors = context.colorScheme;
-            return state.maybeWhen(
-              loaded: (schedules) => ListView(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(AppSizes.space),
-                    child: TerminalButton(
-                      label: context.l10n.schedulerAddButton,
-                      onTap: () => _showAddScheduleDialog(context),
-                    ),
+            if (state.status == UiFlowStatus.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.status == UiFlowStatus.failure) {
+              return Center(
+                child: Text(
+                  'ERROR: ${state.error}',
+                  style: TextStyle(color: colors.error),
+                ),
+              );
+            }
+            if (state.status != UiFlowStatus.success) {
+              return const SizedBox.shrink();
+            }
+            final schedules = state.schedules;
+            return ListView(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(AppSizes.space),
+                  child: TerminalButton(
+                    label: context.l10n.schedulerAddButton,
+                    onTap: () => _showAddScheduleDialog(context),
                   ),
-                  for (final schedule in schedules)
-                    _buildScheduleItem(context, schedule),
-                  if (schedules.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(AppSizes.space * 4),
-                        child: TerminalText(
-                          context.l10n.schedulerNoSchedules,
-                          alpha: 0.5,
-                        ),
+                ),
+                for (final schedule in schedules)
+                  _buildScheduleItem(context, schedule),
+                if (schedules.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSizes.space * 4),
+                      child: TerminalText(
+                        context.l10n.schedulerNoSchedules,
+                        alpha: 0.5,
                       ),
                     ),
-                ],
-              ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (msg) => Center(
-                child:
-                    Text('ERROR: $msg', style: TextStyle(color: colors.error)),
-              ),
-              orElse: () => const SizedBox.shrink(),
+                  ),
+              ],
             );
           },
         ),

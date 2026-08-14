@@ -1,34 +1,31 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
-import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart';
-import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 
 import 'skills_state.dart';
 
 @injectable
-class SkillsCubit extends Cubit<SkillsState> {
+class SkillsCubit extends AppCubit<SkillsState> {
   final ISkillsRepository _repository;
   final IAgentConfigRepository _configRepository;
 
   SkillsCubit(this._repository, this._configRepository)
-      : super(const SkillsState.initial());
+      : super(const SkillsState());
 
   Stream<List<PocoConfig>> watchConfigs() => _configRepository.watchConfigs();
 
   Future<void> loadSkills() async {
-    emit(const SkillsState.loading());
-    try {
+    await tryOperation(() async {
       final skills = await _repository.listSkills();
-      emit(SkillsState.loaded(skills));
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SkillsCubit', operation: 'loadSkills');
-      logError('Skills: Failed to load skills', e);
-      emit(SkillsState.error(e.toString()));
-    }
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        skills: skills,
+      );
+    }, emitLoading: true);
   }
 
   Future<void> createSkill({
@@ -38,7 +35,7 @@ class SkillsCubit extends Cubit<SkillsState> {
     required bool global,
     String? projectDir,
   }) async {
-    try {
+    await tryOperation(() async {
       await _repository.createSkill(
         name: name,
         description: description,
@@ -46,13 +43,13 @@ class SkillsCubit extends Cubit<SkillsState> {
         global: global,
         projectDir: projectDir,
       );
-      await loadSkills();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SkillsCubit', operation: 'createSkill');
-      logError('Skills: Failed to create skill', e);
-      emit(SkillsState.error(e.toString()));
-    }
+      final skills = await _repository.listSkills();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        skills: skills,
+      );
+    });
   }
 
   Future<void> updateSkill({
@@ -61,31 +58,31 @@ class SkillsCubit extends Cubit<SkillsState> {
     required String description,
     required String content,
   }) async {
-    try {
+    await tryOperation(() async {
       await _repository.updateSkill(
         id: id,
         name: name,
         description: description,
         content: content,
       );
-      await loadSkills();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SkillsCubit', operation: 'updateSkill');
-      logError('Skills: Failed to update skill', e);
-      emit(SkillsState.error(e.toString()));
-    }
+      final skills = await _repository.listSkills();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        skills: skills,
+      );
+    });
   }
 
   Future<void> deleteSkill(String id) async {
-    try {
+    await tryOperation(() async {
       await _repository.deleteSkill(id);
-      await loadSkills();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SkillsCubit', operation: 'deleteSkill');
-      logError('Skills: Failed to delete skill', e);
-      emit(SkillsState.error(e.toString()));
-    }
+      final skills = await _repository.listSkills();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        skills: skills,
+      );
+    });
   }
 }
