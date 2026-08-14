@@ -23,28 +23,14 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessauth"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
-)
-
-const (
-	harnessAuthModeAccount = "account"
-	harnessAuthModeAPIKey  = "api_key"
-	harnessAuthModeNone    = "none"
-
-	accountStatusDisconnected = "disconnected"
-	accountStatusConnecting   = "connecting"
-	accountStatusConnected    = "connected"
-	accountStatusError        = "error"
-	accountStatusNeedsAPIKey  = "needs_api_key"
 )
 
 type harnessAuthRequest struct {
@@ -124,11 +110,11 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if account == nil {
 			return re.JSON(200, harnessAuthStatusResp{
 				Harness:        input.Harness,
-				Status:         accountStatusDisconnected,
-				CredentialMode: harnessAuthModeNone,
+				Status:         harnessauth.StatusDisconnected,
+				CredentialMode: harnessauth.ModeNone,
 			})
 		}
-		attempt, _ := activeHarnessAuthAttempt(app, account.Id)
+		attempt, _ := harnessauth.ActiveAttempt(app, account.Id)
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
 	}})
 
@@ -148,9 +134,9 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		}
 		mode := strings.TrimSpace(input.CredentialMode)
 		if mode == "" {
-			mode = harnessAuthModeAccount
+			mode = harnessauth.ModeAccount
 		}
-		if mode != harnessAuthModeAccount && mode != harnessAuthModeAPIKey && mode != harnessAuthModeNone {
+		if mode != harnessauth.ModeAccount && mode != harnessauth.ModeAPIKey && mode != harnessauth.ModeNone {
 			return pocketCoderError(re, 400, "credentialMode must be one of account|api_key|none")
 		}
 
@@ -167,26 +153,26 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		}
 
 		switch mode {
-		case harnessAuthModeNone:
-			account.Set("credential_mode", harnessAuthModeNone)
-			account.Set("status", accountStatusDisconnected)
+		case harnessauth.ModeNone:
+			account.Set("credential_mode", harnessauth.ModeNone)
+			account.Set("status", harnessauth.StatusDisconnected)
 			account.Set("last_error", "")
 			if err := app.Save(account); err != nil {
 				return pocketCoderError(re, 500, "Unable to save account")
 			}
 			return re.JSON(200, renderHarnessAuthStatus(app, account, nil))
 
-		case harnessAuthModeAPIKey:
+		case harnessauth.ModeAPIKey:
 			if input.ProviderKey != "" {
-				if err := bindProviderKey(app, account, input.ProviderKey, re.Auth.Id); err != nil {
+				if err := harnessauth.BindProviderKey(app, account, input.ProviderKey, re.Auth.Id); err != nil {
 					return pocketCoderError(re, 400, err.Error())
 				}
 			}
-			account.Set("credential_mode", harnessAuthModeAPIKey)
+			account.Set("credential_mode", harnessauth.ModeAPIKey)
 			if pk := account.GetString("provider_key"); pk == "" {
-				account.Set("status", accountStatusNeedsAPIKey)
+				account.Set("status", harnessauth.StatusNeedsAPIKey)
 			} else {
-				account.Set("status", accountStatusConnected)
+				account.Set("status", harnessauth.StatusConnected)
 				account.Set("last_error", "")
 			}
 			if err := app.Save(account); err != nil {
@@ -194,38 +180,38 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 			}
 			return re.JSON(200, renderHarnessAuthStatus(app, account, nil))
 
-		case harnessAuthModeAccount:
+		case harnessauth.ModeAccount:
 			provider := strings.TrimSpace(strings.ToLower(input.Provider))
 			if provider == "" {
 				return pocketCoderError(re, 400, "provider is required for account mode")
 			}
-			attempt, err := createHarnessAuthAttempt(app, account.Id, provider)
+			attempt, err := harnessauth.CreateAttempt(app, account.Id, provider)
 			if err != nil {
-				account.Set("status", accountStatusError)
+				account.Set("status", harnessauth.StatusError)
 				account.Set("last_error", "Unable to create auth attempt")
 				_ = app.Save(account)
 				return pocketCoderError(re, 500, "Unable to create auth attempt")
 			}
-			stateCtx, err := runtimeAttemptContext(app, attempt, re.Auth.Id)
+			stateCtx, err := harnessauth.BuildAttemptContext(app, attempt, re.Auth.Id)
 			if err != nil {
-				account.Set("status", accountStatusError)
+				account.Set("status", harnessauth.StatusError)
 				account.Set("last_error", err.Error())
 				_ = app.Save(account)
 				return pocketCoderError(re, 500, err.Error())
 			}
 			state, err := runtime.Start(re.Request.Context(), provider, stateCtx)
 			if err != nil {
-				_ = updateHarnessAuthAttempt(app, attempt, harnessauth.AttemptStatusFailed, "Unable to initialize authenticator")
-				account.Set("status", accountStatusError)
+				_ = harnessauth.UpdateAttempt(app, attempt, harnessauth.AttemptStatusFailed, "Unable to initialize authenticator")
+				account.Set("status", harnessauth.StatusError)
 				account.Set("last_error", "Unable to initialize authenticator")
 				_ = app.Save(account)
 				return pocketCoderError(re, 502, "Unable to start auth helper")
 			}
-			if err := updateHarnessAuthAttempt(app, attempt, state.Status, ""); err != nil {
+			if err := harnessauth.UpdateAttempt(app, attempt, state.Status, ""); err != nil {
 				return pocketCoderError(re, 500, "Unable to update auth attempt")
 			}
-			account.Set("credential_mode", harnessAuthModeAccount)
-			account.Set("status", statusForAttempt(state.Status))
+			account.Set("credential_mode", harnessauth.ModeAccount)
+			account.Set("status", harnessauth.StatusForAttempt(state.Status))
 			account.Set("last_error", "")
 			if err := app.Save(account); err != nil {
 				return pocketCoderError(re, 500, "Unable to save account")
@@ -253,7 +239,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if err := re.BindBody(&input); err != nil {
 			return pocketCoderError(re, 400, "Invalid request body")
 		}
-		account, attempt, err := authAccountAndAttemptForRequest(app, re.Auth.Id, input)
+		account, attempt, err := harnessauth.ResolveAccountAndAttempt(app, re.Auth.Id, input.Harness, input.AccountID, input.AttemptID)
 		if err != nil {
 			return pocketCoderError(re, 400, err.Error())
 		}
@@ -264,7 +250,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 			return pocketCoderError(re, 404, "No active auth attempt found")
 		}
 
-		stateCtx, err := runtimeAttemptContext(app, attempt, re.Auth.Id)
+		stateCtx, err := harnessauth.BuildAttemptContext(app, attempt, re.Auth.Id)
 		if err != nil {
 			return pocketCoderError(re, 500, err.Error())
 		}
@@ -272,18 +258,18 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if err != nil {
 			if errors.Is(err, harnessauth.ErrAttemptExpired) {
 				attemptStatus := harnessauth.AttemptStatusFailed
-				_ = updateHarnessAuthAttempt(app, attempt, attemptStatus, "Auth attempt expired")
-				account.Set("status", accountStatusError)
+				_ = harnessauth.UpdateAttempt(app, attempt, attemptStatus, "Auth attempt expired")
+				account.Set("status", harnessauth.StatusError)
 				account.Set("last_error", "Auth attempt expired")
 				_ = app.Save(account)
 				return pocketCoderError(re, 410, "Auth attempt expired")
 			}
 			return pocketCoderError(re, 502, "Auth helper poll failed")
 		}
-		if err := updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError); err != nil {
+		if err := harnessauth.UpdateAttempt(app, attempt, state.Status, state.LastError); err != nil {
 			return pocketCoderError(re, 500, "Unable to update auth attempt")
 		}
-		account.Set("status", statusForAttempt(state.Status))
+		account.Set("status", harnessauth.StatusForAttempt(state.Status))
 		account.Set("last_error", state.LastError)
 		_ = app.Save(account)
 		response := renderHarnessAuthStatus(app, account, attempt)
@@ -306,7 +292,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if err := re.BindBody(&input); err != nil {
 			return pocketCoderError(re, 400, "Invalid request body")
 		}
-		account, attempt, err := authAccountAndAttemptForRequest(app, re.Auth.Id, input)
+		account, attempt, err := harnessauth.ResolveAccountAndAttempt(app, re.Auth.Id, input.Harness, input.AccountID, input.AttemptID)
 		if err != nil {
 			return pocketCoderError(re, 400, err.Error())
 		}
@@ -320,21 +306,21 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if code == "" {
 			return pocketCoderError(re, 400, "code is required")
 		}
-		stateCtx, err := runtimeAttemptContext(app, attempt, re.Auth.Id)
+		stateCtx, err := harnessauth.BuildAttemptContext(app, attempt, re.Auth.Id)
 		if err != nil {
 			return pocketCoderError(re, 500, err.Error())
 		}
 		state, err := runtime.Submit(re.Request.Context(), attempt.GetString("provider"), stateCtx, code)
 		if err != nil {
-			account.Set("status", accountStatusError)
+			account.Set("status", harnessauth.StatusError)
 			account.Set("last_error", err.Error())
 			_ = app.Save(account)
 			return pocketCoderError(re, 502, err.Error())
 		}
-		if err := updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError); err != nil {
+		if err := harnessauth.UpdateAttempt(app, attempt, state.Status, state.LastError); err != nil {
 			return pocketCoderError(re, 500, "Unable to update auth attempt")
 		}
-		account.Set("status", statusForAttempt(state.Status))
+		account.Set("status", harnessauth.StatusForAttempt(state.Status))
 		account.Set("last_error", state.LastError)
 		_ = app.Save(account)
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
@@ -348,7 +334,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if err := re.BindBody(&input); err != nil {
 			return pocketCoderError(re, 400, "Invalid request body")
 		}
-		account, attempt, err := authAccountAndAttemptForRequest(app, re.Auth.Id, input)
+		account, attempt, err := harnessauth.ResolveAccountAndAttempt(app, re.Auth.Id, input.Harness, input.AccountID, input.AttemptID)
 		if err != nil {
 			return pocketCoderError(re, 400, err.Error())
 		}
@@ -358,7 +344,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if attempt == nil {
 			return pocketCoderError(re, 404, "No active auth attempt found")
 		}
-		stateCtx, err := runtimeAttemptContext(app, attempt, re.Auth.Id)
+		stateCtx, err := harnessauth.BuildAttemptContext(app, attempt, re.Auth.Id)
 		if err != nil {
 			return pocketCoderError(re, 500, err.Error())
 		}
@@ -366,10 +352,10 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if err != nil {
 			return pocketCoderError(re, 502, "Auth helper cancel failed")
 		}
-		if err := updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError); err != nil {
+		if err := harnessauth.UpdateAttempt(app, attempt, state.Status, state.LastError); err != nil {
 			return pocketCoderError(re, 500, "Unable to update auth attempt")
 		}
-		account.Set("status", statusForAttempt(state.Status))
+		account.Set("status", harnessauth.StatusForAttempt(state.Status))
 		account.Set("last_error", state.LastError)
 		_ = app.Save(account)
 		return re.JSON(200, renderHarnessAuthStatus(app, account, attempt))
@@ -396,21 +382,21 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		if account.GetString("owner") != re.Auth.Id {
 			return pocketCoderError(re, 403, "Only the account owner can disconnect harness credentials")
 		}
-		attempt, err := latestHarnessAuthAttempt(app, account.Id)
+		attempt, err := harnessauth.LatestAttempt(app, account.Id)
 		if err != nil {
 			return pocketCoderError(re, 500, "Internal error")
 		}
 		if attempt != nil {
-			stateCtx, ctxErr := runtimeAttemptContext(app, attempt, re.Auth.Id)
+			stateCtx, ctxErr := harnessauth.BuildAttemptContext(app, attempt, re.Auth.Id)
 			if ctxErr != nil {
 				return pocketCoderError(re, 500, ctxErr.Error())
 			}
 			state, err := runtime.Disconnect(re.Request.Context(), attempt.GetString("provider"), stateCtx)
 			if err == nil {
-				_ = updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError)
+				_ = harnessauth.UpdateAttempt(app, attempt, state.Status, state.LastError)
 			}
 		}
-		account.Set("status", accountStatusDisconnected)
+		account.Set("status", harnessauth.StatusDisconnected)
 		account.Set("last_error", "")
 		if err := app.Save(account); err != nil {
 			return pocketCoderError(re, 500, "Unable to save account")
@@ -419,157 +405,10 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 	}})
 }
 
-func bindProviderKey(app core.App, account *core.Record, providerKeyID, actorUserID string) error {
-	pk, err := app.FindRecordById("provider_keys", providerKeyID)
-	if err != nil {
-		return fmt.Errorf("providerKey not found")
-	}
-	if pk.GetString("user") != actorUserID {
-		return fmt.Errorf("providerKey does not belong to the authenticated user")
-	}
-	harness, err := app.FindRecordById("harnesses", account.GetString("harness"))
-	if err != nil {
-		return fmt.Errorf("harness not found")
-	}
-	if harness.GetString("provider_scope") != "any" && pk.GetString("provider") != harness.GetString("cli_id") {
-		return fmt.Errorf("providerKey does not match this harness")
-	}
-	account.Set("provider_key", providerKeyID)
-	return nil
-}
-
-func createHarnessAuthAttempt(app core.App, accountID, provider string) (*core.Record, error) {
-	col, err := app.FindCollectionByNameOrId("harness_auth_attempts")
-	if err != nil {
-		return nil, err
-	}
-	rec := core.NewRecord(col)
-	rec.Set("account", accountID)
-	rec.Set("provider", provider)
-	rec.Set("status", harnessauth.AttemptStatusStarting)
-	rec.Set("expires_at", time.Now().UTC().Add(15*time.Minute))
-	return rec, app.Save(rec)
-}
-
-func latestHarnessAuthAttempt(app core.App, accountID string) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter("harness_auth_attempts", "account = {:account}", "-created", 1, 0, map[string]any{"account": accountID})
-	if err != nil {
-		return nil, err
-	}
-	if len(recs) == 0 {
-		return nil, nil
-	}
-	return recs[0], nil
-}
-
-func activeHarnessAuthAttempt(app core.App, accountID string) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter(
-		"harness_auth_attempts",
-		"account = {:account} && (status = 'starting' || status = 'awaiting_input')",
-		"-created",
-		1,
-		0,
-		map[string]any{"account": accountID},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(recs) == 0 {
-		return nil, nil
-	}
-	return recs[0], nil
-}
-
-func authAccountAndAttemptForRequest(app core.App, userID string, input harnessAuthRequest) (*core.Record, *core.Record, error) {
-	if input.Harness == "" {
-		return nil, nil, fmt.Errorf("harness is required")
-	}
-	account, err := harnessaccount.Resolve(app, userID, input.Harness, input.AccountID)
-	if err != nil {
-		return nil, nil, err
-	}
-	if account == nil {
-		return nil, nil, fmt.Errorf("account not found")
-	}
-	var attempt *core.Record
-	if input.AttemptID != "" {
-		attempt, err = app.FindRecordById("harness_auth_attempts", input.AttemptID)
-		if err != nil {
-			return account, nil, fmt.Errorf("attempt not found")
-		}
-		if attempt.GetString("account") != account.Id {
-			return account, nil, fmt.Errorf("attempt does not belong to this account")
-		}
-		return account, attempt, nil
-	}
-	attempt, err = activeHarnessAuthAttempt(app, account.Id)
-	if err != nil {
-		return account, nil, err
-	}
-	return account, attempt, nil
-}
-
-func runtimeAttemptContext(app core.App, attempt *core.Record, userID string) (harnessauth.AttemptContext, error) {
-	accountID := attempt.GetString("account")
-	if accountID == "" {
-		return harnessauth.AttemptContext{}, fmt.Errorf("attempt is missing harness account")
-	}
-	account, err := app.FindRecordById("harness_accounts", accountID)
-	if err != nil {
-		return harnessauth.AttemptContext{}, fmt.Errorf("resolve harness account %s: %w", accountID, err)
-	}
-	harnessID := account.GetString("harness")
-	harness, err := app.FindRecordById("harnesses", harnessID)
-	if err != nil {
-		return harnessauth.AttemptContext{}, fmt.Errorf("resolve harness %s: %w", harnessID, err)
-	}
-	image := strings.TrimSpace(harness.GetString("container_image"))
-	if image == "" {
-		return harnessauth.AttemptContext{}, fmt.Errorf("harness %s is missing container_image", harnessID)
-	}
-	return harnessauth.AttemptContext{
-		AttemptID:    attempt.Id,
-		UserID:       userID,
-		AccountID:    accountID,
-		HarnessCLI:   harness.GetString("cli_id"),
-		HarnessImage: image,
-	}, nil
-}
-
-func updateHarnessAuthAttempt(app core.App, attempt *core.Record, status, errorText string) error {
-	attempt.Set("status", status)
-	if errorText != "" {
-		attempt.Set("last_error", errorText)
-	} else {
-		attempt.Set("last_error", nil)
-	}
-	if status == harnessauth.AttemptStatusFailed && errorText == "" {
-		attempt.Set("last_error", "auth flow failed")
-	}
-	return app.Save(attempt)
-}
-
-func statusForAttempt(attemptStatus string) string {
-	switch attemptStatus {
-	case harnessauth.AttemptStatusStarting, harnessauth.AttemptStatusAwaiting:
-		return accountStatusConnecting
-	case harnessauth.AttemptStatusSucceeded:
-		return accountStatusConnected
-	case harnessauth.AttemptStatusCancelled:
-		return accountStatusDisconnected
-	case harnessauth.AttemptStatusExpired:
-		return accountStatusError
-	case harnessauth.AttemptStatusFailed:
-		return accountStatusError
-	default:
-		return accountStatusError
-	}
-}
-
 func renderHarnessAuthStatus(app core.App, account *core.Record, attempt *core.Record) harnessAuthStatusResp {
 	status := account.GetString("status")
 	if status == "" {
-		status = accountStatusDisconnected
+		status = harnessauth.StatusDisconnected
 	}
 	response := harnessAuthStatusResp{
 		Harness:        account.GetString("harness"),
