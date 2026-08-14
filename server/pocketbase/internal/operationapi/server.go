@@ -37,7 +37,7 @@ func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() *coor
 	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, nil)
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
-	api.AddHarnessAuthOperations(app, registry)
+	api.AddHarnessAuthOperations(app, registry, api.HarnessAuthDeps{})
 	api.AddScheduleOperations(app, registry, coord)
 
 	operation.MountDirect(e, registry.Routes())
