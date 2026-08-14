@@ -173,7 +173,7 @@ func TestHarnessAuthFailuresAndOwnership(t *testing.T) {
 		t.Fatalf("failed start = %d", code)
 	}
 	account, err := harnessaccount.Resolve(app, owner.Id, harness.Id, "")
-	if err != nil || account == nil || account.GetString("status") != accountStatusError {
+	if err != nil || account == nil || account.GetString("status") != harnessauth.StatusError {
 		t.Fatalf("failed start account = %v", account)
 	}
 	// Create a live attempt, then exercise expired and absent-attempt responses.
@@ -206,21 +206,5 @@ func TestHarnessAuthFailuresAndOwnership(t *testing.T) {
 	code, _ = harnessRequest(t, app, fake, other, http.MethodPost, "/api/pocketcoder/v1/harness-auth/start", `{"harness":"`+harness.Id+`","accountId":"`+account.Id+`","credentialMode":"none"}`)
 	if code != http.StatusForbidden {
 		t.Fatalf("foreign account = %d", code)
-	}
-}
-
-func TestHarnessAuthAttemptStatusMapping(t *testing.T) {
-	tests := map[string]string{
-		harnessauth.AttemptStatusStarting:  accountStatusConnecting,
-		harnessauth.AttemptStatusAwaiting:  accountStatusConnecting,
-		harnessauth.AttemptStatusSucceeded: accountStatusConnected,
-		harnessauth.AttemptStatusCancelled: accountStatusDisconnected,
-		harnessauth.AttemptStatusFailed:    accountStatusError,
-		harnessauth.AttemptStatusExpired:   accountStatusError,
-	}
-	for attempt, want := range tests {
-		if got := statusForAttempt(attempt); got != want {
-			t.Errorf("statusForAttempt(%q) = %q, want %q", attempt, got, want)
-		}
 	}
 }

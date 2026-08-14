@@ -1,0 +1,186 @@
+/*
+PocketCoder: An accessible, secure, and user-friendly open-source coding assistant platform.
+Copyright (C) 2026 Qtpi Bonding LLC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+package harnessauth
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+)
+
+const (
+	ModeAccount        = "account"
+	ModeAPIKey         = "api_key"
+	ModeNone           = "none"
+	StatusDisconnected = "disconnected"
+	StatusConnecting   = "connecting"
+	StatusConnected    = "connected"
+	StatusError        = "error"
+	StatusNeedsAPIKey  = "needs_api_key"
+)
+
+func BindProviderKey(app core.App, account *core.Record, providerKeyID, actorUserID string) error {
+	pk, err := app.FindRecordById("provider_keys", providerKeyID)
+	if err != nil {
+		return fmt.Errorf("providerKey not found")
+	}
+	if pk.GetString("user") != actorUserID {
+		return fmt.Errorf("providerKey does not belong to the authenticated user")
+	}
+	harness, err := app.FindRecordById("harnesses", account.GetString("harness"))
+	if err != nil {
+		return fmt.Errorf("harness not found")
+	}
+	if harness.GetString("provider_scope") != "any" && pk.GetString("provider") != harness.GetString("cli_id") {
+		return fmt.Errorf("providerKey does not match this harness")
+	}
+	account.Set("provider_key", providerKeyID)
+	return nil
+}
+
+func CreateAttempt(app core.App, accountID, provider string) (*core.Record, error) {
+	col, err := app.FindCollectionByNameOrId("harness_auth_attempts")
+	if err != nil {
+		return nil, err
+	}
+	rec := core.NewRecord(col)
+	rec.Set("account", accountID)
+	rec.Set("provider", provider)
+	rec.Set("status", AttemptStatusStarting)
+	rec.Set("expires_at", time.Now().UTC().Add(15*time.Minute))
+	return rec, app.Save(rec)
+}
+
+func LatestAttempt(app core.App, accountID string) (*core.Record, error) {
+	recs, err := app.FindRecordsByFilter("harness_auth_attempts", "account = {:account}", "-created", 1, 0, map[string]any{"account": accountID})
+	if err != nil {
+		return nil, err
+	}
+	if len(recs) == 0 {
+		return nil, nil
+	}
+	return recs[0], nil
+}
+
+func ActiveAttempt(app core.App, accountID string) (*core.Record, error) {
+	recs, err := app.FindRecordsByFilter(
+		"harness_auth_attempts",
+		"account = {:account} && (status = 'starting' || status = 'awaiting_input')",
+		"-created",
+		1,
+		0,
+		map[string]any{"account": accountID},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(recs) == 0 {
+		return nil, nil
+	}
+	return recs[0], nil
+}
+
+func ResolveAccountAndAttempt(app core.App, userID, harness, accountID, attemptID string) (*core.Record, *core.Record, error) {
+	if harness == "" {
+		return nil, nil, fmt.Errorf("harness is required")
+	}
+	account, err := harnessaccount.Resolve(app, userID, harness, accountID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if account == nil {
+		return nil, nil, fmt.Errorf("account not found")
+	}
+	var attempt *core.Record
+	if attemptID != "" {
+		attempt, err = app.FindRecordById("harness_auth_attempts", attemptID)
+		if err != nil {
+			return account, nil, fmt.Errorf("attempt not found")
+		}
+		if attempt.GetString("account") != account.Id {
+			return account, nil, fmt.Errorf("attempt does not belong to this account")
+		}
+		return account, attempt, nil
+	}
+	attempt, err = ActiveAttempt(app, account.Id)
+	if err != nil {
+		return account, nil, err
+	}
+	return account, attempt, nil
+}
+
+func BuildAttemptContext(app core.App, attempt *core.Record, userID string) (AttemptContext, error) {
+	accountID := attempt.GetString("account")
+	if accountID == "" {
+		return AttemptContext{}, fmt.Errorf("attempt is missing harness account")
+	}
+	account, err := app.FindRecordById("harness_accounts", accountID)
+	if err != nil {
+		return AttemptContext{}, fmt.Errorf("resolve harness account %s: %w", accountID, err)
+	}
+	harnessID := account.GetString("harness")
+	harness, err := app.FindRecordById("harnesses", harnessID)
+	if err != nil {
+		return AttemptContext{}, fmt.Errorf("resolve harness %s: %w", harnessID, err)
+	}
+	image := strings.TrimSpace(harness.GetString("container_image"))
+	if image == "" {
+		return AttemptContext{}, fmt.Errorf("harness %s is missing container_image", harnessID)
+	}
+	return AttemptContext{
+		AttemptID:    attempt.Id,
+		UserID:       userID,
+		AccountID:    accountID,
+		HarnessCLI:   harness.GetString("cli_id"),
+		HarnessImage: image,
+	}, nil
+}
+
+func UpdateAttempt(app core.App, attempt *core.Record, status, errorText string) error {
+	attempt.Set("status", status)
+	if errorText != "" {
+		attempt.Set("last_error", errorText)
+	} else {
+		attempt.Set("last_error", nil)
+	}
+	if status == AttemptStatusFailed && errorText == "" {
+		attempt.Set("last_error", "auth flow failed")
+	}
+	return app.Save(attempt)
+}
+
+func StatusForAttempt(attemptStatus string) string {
+	switch attemptStatus {
+	case AttemptStatusStarting, AttemptStatusAwaiting:
+		return StatusConnecting
+	case AttemptStatusSucceeded:
+		return StatusConnected
+	case AttemptStatusCancelled:
+		return StatusDisconnected
+	case AttemptStatusExpired:
+		return StatusError
+	case AttemptStatusFailed:
+		return StatusError
+	default:
+		return StatusError
+	}
+}
