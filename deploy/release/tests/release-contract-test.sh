@@ -41,6 +41,7 @@ for path in \
   ./release.json \
   ./docker-compose.prebuilt.yml \
   ./bin/pocketcoder-release \
+  ./deploy/release/harnesses.json \
   ./deploy/scripts/install-release-metadata-timer.sh \
   ./deploy/scripts/prepare-runtime-env.sh
 do
