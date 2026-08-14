@@ -18,15 +18,16 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package api
+package mcpserver
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
 
 func TestResolveImageDigest_LiveRegistryRoundTrip(t *testing.T) {
-	got, err := resolveImageDigest("test-verify", "mcp/time:latest")
+	got, err := ResolveImageDigest(context.Background(), "test-verify", "mcp/time:latest")
 	if err != nil {
 		t.Fatal(err)
 	}

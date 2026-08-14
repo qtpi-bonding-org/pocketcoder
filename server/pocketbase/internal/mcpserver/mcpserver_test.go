@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package api
+package mcpserver
 
 import (
 	"context"
@@ -78,7 +78,7 @@ func testResolver(gotName, gotImage *string, result string, err error) ImageReso
 	}
 }
 
-func TestMCPRequestServer_ResolvesGivenImageAndCreatesPending(t *testing.T) {
+func TestRequestServer_ResolvesGivenImageAndCreatesPending(t *testing.T) {
 	store := newMcpTestStore(t)
 	var gotName, gotImage string
 	result, err := RequestServer(context.Background(), store, testResolver(&gotName, &gotImage, "mcp/time@sha256:abc", nil), Request{ServerName: "time", Image: "custom:tag"})
@@ -93,7 +93,7 @@ func TestMCPRequestServer_ResolvesGivenImageAndCreatesPending(t *testing.T) {
 	}
 }
 
-func TestMCPRequestServer_ImageResolutionFailureDoesNotSave(t *testing.T) {
+func TestRequestServer_ImageResolutionFailureDoesNotSave(t *testing.T) {
 	store := newMcpTestStore(t)
 	wantErr := errors.New("registry unavailable")
 	_, err := RequestServer(context.Background(), store, testResolver(new(string), new(string), "", wantErr), Request{ServerName: "time"})
@@ -105,7 +105,7 @@ func TestMCPRequestServer_ImageResolutionFailureDoesNotSave(t *testing.T) {
 	}
 }
 
-func TestMCPRequestServer_RejectsMissingName(t *testing.T) {
+func TestRequestServer_RejectsMissingName(t *testing.T) {
 	store := newMcpTestStore(t)
 	_, err := RequestServer(context.Background(), store, func(context.Context, string, string) (string, error) { return "unused", nil }, Request{})
 	if err == nil {
@@ -116,7 +116,7 @@ func TestMCPRequestServer_RejectsMissingName(t *testing.T) {
 	}
 }
 
-func TestMCPRequestServer_DuplicateSynchronizesExistingRecord(t *testing.T) {
+func TestRequestServer_DuplicateSynchronizesExistingRecord(t *testing.T) {
 	store := newMcpTestStore(t)
 	resolver := func(context.Context, string, string) (string, error) { return "mcp/time@sha256:abc", nil }
 	first, err := RequestServer(context.Background(), store, resolver, Request{ServerName: "time", Reason: "first"})
@@ -139,7 +139,7 @@ func TestMCPRequestServer_DuplicateSynchronizesExistingRecord(t *testing.T) {
 	}
 }
 
-func TestMCPRequestServer_SyncSaveFailureIsReturned(t *testing.T) {
+func TestRequestServer_SyncSaveFailureIsReturned(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
