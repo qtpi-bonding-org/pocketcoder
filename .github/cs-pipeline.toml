@@ -9,7 +9,11 @@ model = "deepseek/deepseek-v4-flash"
 [syndication]
 tone = "shipping-update"
 hashtags = ["#buildinpublic", "#selfhosted"]
-max_posts = 2
+max_posts = 1
+
+[aggregation]
+# One daily summary covers all meaningful commits in this rolling window.
+since = "24 hours ago"
 
 [achaean]
 # The Aigion runner overrides this with the real checked-out content repository.
