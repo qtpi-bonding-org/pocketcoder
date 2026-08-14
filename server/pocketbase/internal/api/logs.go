@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
@@ -52,22 +53,29 @@ var errLogsUnavailable = errors.New("logs unavailable")
 type dockerProxyLogSource struct{}
 
 func (dockerProxyLogSource) StreamLogs(ctx context.Context, containerName string) (io.ReadCloser, error) {
-	// We use follow=1 for real-time streaming and tail=100 for initial context.
-	dockerUrl := fmt.Sprintf("http://docker-socket-proxy-write:2375/containers/%s/logs?follow=1&stdout=1&stderr=1&tail=100", containerName)
+	body, err := dockerapi.New().StreamLogs(ctx, containerName, 100)
+	if errors.Is(err, dockerapi.ErrContainerNotFound) {
+		return nil, fmt.Errorf("%w: %v", errLogsUnavailable, err)
+	}
+	return body, err
+}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, dockerUrl, nil)
-	if err != nil {
-		return nil, err
+const maxDockerLogFrameSize = 1 << 20
+
+func decodeDockerFrame(r *bufio.Reader) (stream byte, payload []byte, err error) {
+	var header [8]byte
+	if _, err := io.ReadFull(r, header[:]); err != nil {
+		return 0, nil, err
 	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
+	size := binary.BigEndian.Uint32(header[4:])
+	if size > maxDockerLogFrameSize {
+		return 0, nil, fmt.Errorf("docker log frame payload %d exceeds maximum %d", size, maxDockerLogFrameSize)
 	}
-	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
-		return nil, fmt.Errorf("%w: docker proxy returned %s", errLogsUnavailable, resp.Status)
+	payload = make([]byte, int(size))
+	if _, err := io.ReadFull(r, payload); err != nil {
+		return 0, nil, err
 	}
-	return resp.Body, nil
+	return header[0], payload, nil
 }
 
 type LogsDeps struct {
@@ -119,19 +127,9 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 		reader := bufio.NewReader(body)
 
 		for {
-			header := make([]byte, 8)
-			_, err := io.ReadFull(reader, header)
+			_, payload, err := decodeDockerFrame(reader)
 			if err != nil {
-				// Connection closed or source stream ended.
-				break
-			}
-
-			// streamType := header[0] // 0: stdin, 1: stdout, 2: stderr
-			payloadSize := binary.BigEndian.Uint32(header[4:8])
-
-			payload := make([]byte, payloadSize)
-			_, err = io.ReadFull(reader, payload)
-			if err != nil {
+				// Connection closed, truncated, or malformed upstream frame.
 				break
 			}
 
