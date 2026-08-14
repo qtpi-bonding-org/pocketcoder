@@ -34,6 +34,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 )
 
 // ErrHarnessProvisioning is returned by buildSessionProfile when no
@@ -240,13 +241,13 @@ func buildSessionProfile(app core.App, chatID string, ctx context.Context, ollam
 		}
 	}
 	if ollamaModel != "" {
-		if !ollamaModelName.MatchString(ollamaModel) {
+		if !ollama.ModelNameValid(ollamaModel) {
 			return p, fmt.Errorf("invalid Ollama model name %q", ollamaModel)
 		}
 		if !supportsOllamaHarness(harnessRec) {
 			return p, fmt.Errorf("harness %q does not support local Ollama models", harnessRec.GetString("cli_id"))
 		}
-		installed, err := ollamaModelInstalled(ctx, ollamaHTTPClient(), ollamaBaseURL, ollamaModel)
+		installed, err := ollama.ModelInstalled(ctx, ollama.HTTPClient(), ollamaBaseURL, ollamaModel)
 		if err != nil {
 			return p, fmt.Errorf("check local Ollama model: %w", err)
 		}

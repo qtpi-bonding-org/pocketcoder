@@ -13,11 +13,12 @@ import (
 	"github.com/pocketbase/pocketbase/tools/cron"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
 func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() AgentRuntime) {
-	ollamaBaseURL := resolveOllamaURL()
+	ollamaBaseURL := ollama.ResolveBaseURL()
 	runner := &ScheduleRunner{App: app, Coord: coord, OllamaBaseURL: ollamaBaseURL}
 	registry.Add(operation.Route{OperationID: "runScheduleNow", Method: http.MethodPost, Path: "/api/pocketcoder/v1/schedules/{scheduleId}/run", Auth: true, Action: func(re *core.RequestEvent) error {
 		id := re.Request.PathValue("scheduleId")
