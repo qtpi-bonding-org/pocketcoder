@@ -1,23 +1,15 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class ErrorInboxDiagnosticsState with UiFlowStateMixin {
-  const ErrorInboxDiagnosticsState({
-    this.status = UiFlowStatus.idle,
-    this.error,
-  });
+part 'error_inbox_diagnostics_state.freezed.dart';
 
-  @override
-  final UiFlowStatus status;
-  @override
-  final Object? error;
+@freezed
+sealed class ErrorInboxDiagnosticsState
+    with _$ErrorInboxDiagnosticsState, UiFlowStateMixin {
+  const ErrorInboxDiagnosticsState._();
 
-  ErrorInboxDiagnosticsState copyWith({
-    UiFlowStatus? status,
+  const factory ErrorInboxDiagnosticsState({
+    @Default(UiFlowStatus.idle) UiFlowStatus status,
     Object? error,
-  }) {
-    return ErrorInboxDiagnosticsState(
-      status: status ?? this.status,
-      error: error,
-    );
-  }
+  }) = _ErrorInboxDiagnosticsState;
 }

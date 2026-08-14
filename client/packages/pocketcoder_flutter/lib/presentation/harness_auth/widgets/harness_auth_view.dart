@@ -52,7 +52,9 @@ class HarnessAuthScreenView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: onboarding ? 'CONNECT A HARNESS' : 'Harness connections',
+        title: onboarding
+            ? context.l10n.onboardingChooseHarnessTitle
+            : context.l10n.harnessAuthConnections,
         activePillar: NavPillar.configure,
         showBack: true,
         body: HarnessAuthView(
@@ -133,16 +135,17 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading && widget.harnesses.isEmpty) {
-      return const Center(
-          child: TerminalLoadingIndicator(label: 'Loading harnesses'));
+      return Center(
+          child:
+              TerminalLoadingIndicator(label: context.l10n.harnessAuthLoading));
     }
     final harnesses = widget.harnesses.where(_matches).toList();
     if (harnesses.isEmpty) {
       return Center(
           child: TerminalText(
               widget.onboarding
-                  ? 'Claude Code and Codex are not available on this server.'
-                  : 'No harnesses were found.',
+                  ? context.l10n.harnessAuthUnavailable
+                  : context.l10n.harnessAuthEmpty,
               alpha: .6));
     }
     return ListView(padding: EdgeInsets.all(AppSizes.space), children: [
@@ -202,6 +205,7 @@ class HarnessAuthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final s = status ??
         HarnessAuthStatus(
             harness: harness.id,
@@ -219,38 +223,43 @@ class HarnessAuthCard extends StatelessWidget {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-              TerminalText('Status: ${s.status.toUpperCase()}',
+              TerminalText(l10n.harnessAuthStatus(s.status.toUpperCase()),
                   weight: TerminalTextWeight.heavy),
-              if (s.lastError != null && s.lastError!.isNotEmpty) ...[
+              if (s.lastError case final lastError?
+                  when lastError.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText(s.lastError!,
+                TerminalText(lastError,
                     color: Theme.of(context).colorScheme.error)
               ],
               if (s.credentialMode.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText('Mode: ${s.credentialMode.toUpperCase()}')
+                TerminalText(
+                    l10n.harnessAuthMode(s.credentialMode.toUpperCase()))
               ],
               if (s.accountId.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText(
-                    'Account: ${s.accountName.isEmpty ? s.accountId : s.accountName} (${s.isDeploymentVisible ? 'shared' : 'personal'})')
+                TerminalText(l10n.harnessAuthAccount(
+                    s.accountName.isEmpty ? s.accountId : s.accountName,
+                    s.isDeploymentVisible
+                        ? l10n.harnessAuthShared
+                        : l10n.harnessAuthPersonal))
               ],
               VSpace.x2,
-              if (s.challenge != null)
-                HarnessChallengePanel(challenge: s.challenge!),
+              if (s.challenge case final challenge?)
+                HarnessChallengePanel(challenge: challenge),
               if (s.challenge != null) ...[
                 VSpace.x1,
                 TerminalTextField(
                     controller: codeController,
-                    label: 'One-time code',
-                    hint: 'paste code',
+                    label: l10n.harnessAuthOneTimeCode,
+                    hint: l10n.harnessAuthPasteCode,
                     onSubmitted: _submit,
                     enabled: !isBusy),
                 VSpace.x1,
                 Align(
                     alignment: Alignment.centerRight,
                     child: TerminalButton(
-                        label: 'Submit',
+                        label: l10n.harnessAuthSubmit,
                         onTap: () => _submit(codeController.text),
                         isLoading: isBusy))
               ],
@@ -260,15 +269,15 @@ class HarnessAuthCard extends StatelessWidget {
               Align(
                   alignment: Alignment.centerLeft,
                   child: TerminalButton(
-                      label: 'Refresh',
+                      label: l10n.harnessAuthRefresh,
                       isPrimary: false,
                       isLoading: isBusy,
                       onTap: isBusy ? () {} : onRefresh)),
-              if (s.attempt?.id != null)
+              if (s.attempt case final attempt?)
                 Padding(
                     padding: EdgeInsets.only(top: AppSizes.space),
-                    child:
-                        TerminalText('Attempt: ${s.attempt!.id}', alpha: .5)),
+                    child: TerminalText(l10n.harnessAuthAttempt(attempt.id),
+                        alpha: .5)),
             ])));
   }
 
@@ -279,22 +288,22 @@ class HarnessAuthCard extends StatelessWidget {
           runSpacing: AppSizes.space,
           children: [
             TerminalButton(
-                label: 'Account login',
+                label: context.l10n.harnessAuthAccountLogin,
                 onTap: isBusy ? () {} : onStartAccount,
                 isLoading: isBusy),
             TerminalButton(
-                label: 'API key',
+                label: context.l10n.harnessAuthApiKey,
                 onTap: hasKeys
                     ? (isBusy ? () {} : onStartApiKey)
                     : () => _noKey(context),
                 isLoading: isBusy),
             TerminalButton(
-                label: 'None',
+                label: context.l10n.harnessAuthNone,
                 onTap: isBusy ? () {} : onStartNone,
                 isLoading: isBusy,
                 isPrimary: false),
             TerminalButton(
-                label: 'Poll',
+                label: context.l10n.harnessAuthPoll,
                 onTap: isBusy ? () {} : onPoll,
                 isLoading: isBusy,
                 isPrimary: false),
@@ -302,31 +311,32 @@ class HarnessAuthCard extends StatelessWidget {
     }
     if (s.isConnected) {
       return TerminalButton(
-          label: 'Disconnect',
+          label: context.l10n.harnessAuthDisconnect,
           onTap: isBusy ? () {} : onDisconnect,
           isLoading: isBusy);
     }
     return Wrap(spacing: AppSizes.space, runSpacing: AppSizes.space, children: [
       TerminalButton(
-          label: 'Poll',
+          label: context.l10n.harnessAuthPoll,
           onTap: isBusy ? () {} : onPoll,
           isLoading: isBusy,
           isPrimary: false),
       TerminalButton(
-          label: 'Cancel', onTap: isBusy ? () {} : onCancel, isLoading: isBusy)
+          label: context.l10n.harnessAuthCancel,
+          onTap: isBusy ? () {} : onCancel,
+          isLoading: isBusy)
     ]);
   }
 
   void _noKey(BuildContext context) => showDialog<void>(
       context: context,
       builder: (d) => TerminalDialog(
-              title: 'No API key',
-              content: const Text(
-                  'No matching provider key exists for this harness. Open the LLM management screen to add a provider key first.'),
+              title: context.l10n.harnessAuthNoApiKeyTitle,
+              content: Text(context.l10n.harnessAuthNoApiKeyBody),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.of(d).pop(),
-                    child: const Text('Close'))
+                    child: Text(context.l10n.actionClose))
               ]));
   Future<void> _submit(String code) async {
     final value = code.trim();
@@ -348,23 +358,24 @@ class HarnessChallengePanel extends StatelessWidget {
       decoration: BoxDecoration(
           border: Border.all(color: Theme.of(context).colorScheme.primary)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        TerminalText('Challenge', weight: TerminalTextWeight.heavy),
+        TerminalText(context.l10n.harnessAuthChallenge,
+            weight: TerminalTextWeight.heavy),
         VSpace.x1,
         TerminalText(challenge.text),
-        if (challenge.target != null && challenge.target!.isNotEmpty) ...[
+        if (challenge.target case final target? when target.isNotEmpty) ...[
           VSpace.x1,
           GestureDetector(
               onLongPress: () {
-                Clipboard.setData(ClipboardData(text: challenge.target!));
+                Clipboard.setData(ClipboardData(text: target));
                 VimToast.show(
                     context, context.l10n.harnessAuthChallengeTargetCopied);
               },
-              child: TerminalText(challenge.target!,
+              child: TerminalText(target,
                   color: Theme.of(context).colorScheme.primary, alpha: .9))
         ],
-        if (challenge.details != null && challenge.details!.isNotEmpty) ...[
+        if (challenge.details case final details? when details.isNotEmpty) ...[
           VSpace.x1,
-          TerminalText('Details: ${challenge.details}', alpha: .7)
+          TerminalText(context.l10n.harnessAuthDetails(details), alpha: .7)
         ],
       ]));
 }

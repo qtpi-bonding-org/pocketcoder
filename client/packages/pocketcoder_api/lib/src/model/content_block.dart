@@ -2,7 +2,7 @@
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
 
-// ignore_for_file: unused_element
+// ignore_for_file: duplicate_import, unused_import, unused_element
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/json_object.dart';
 import 'package:built_value/built_value.dart';

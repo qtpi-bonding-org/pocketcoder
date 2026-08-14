@@ -1228,6 +1228,24 @@ abstract class AppLocalizations {
   /// **'{provider} NOT YET CONFIGURED'**
   String mcpOauthProviderNotConfiguredLabel(String provider);
 
+  /// No description provided for @mcpAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD NEW'**
+  String get mcpAddNew;
+
+  /// No description provided for @mcpDeny.
+  ///
+  /// In en, this message translates to:
+  /// **'DENY'**
+  String get mcpDeny;
+
+  /// No description provided for @mcpAuthorize.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTHORIZE'**
+  String get mcpAuthorize;
+
   /// No description provided for @actionAdd.
   ///
   /// In en, this message translates to:
@@ -4533,6 +4551,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CHALLENGE TARGET COPIED'**
   String get harnessAuthChallengeTargetCopied;
+
+  /// No description provided for @harnessAuthLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading harnesses'**
+  String get harnessAuthLoading;
+
+  /// No description provided for @harnessAuthConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'Harness connections'**
+  String get harnessAuthConnections;
+
+  /// No description provided for @harnessAuthUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code and Codex are not available on this server.'**
+  String get harnessAuthUnavailable;
+
+  /// No description provided for @harnessAuthEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No harnesses were found.'**
+  String get harnessAuthEmpty;
+
+  /// No description provided for @harnessAuthStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String harnessAuthStatus(String status);
+
+  /// No description provided for @harnessAuthMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Mode: {mode}'**
+  String harnessAuthMode(String mode);
+
+  /// No description provided for @harnessAuthAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account: {account} ({visibility})'**
+  String harnessAuthAccount(String account, String visibility);
+
+  /// No description provided for @harnessAuthShared.
+  ///
+  /// In en, this message translates to:
+  /// **'shared'**
+  String get harnessAuthShared;
+
+  /// No description provided for @harnessAuthPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'personal'**
+  String get harnessAuthPersonal;
+
+  /// No description provided for @harnessAuthOneTimeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time code'**
+  String get harnessAuthOneTimeCode;
+
+  /// No description provided for @harnessAuthPasteCode.
+  ///
+  /// In en, this message translates to:
+  /// **'paste code'**
+  String get harnessAuthPasteCode;
+
+  /// No description provided for @harnessAuthSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get harnessAuthSubmit;
+
+  /// No description provided for @harnessAuthRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get harnessAuthRefresh;
+
+  /// No description provided for @harnessAuthAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempt: {id}'**
+  String harnessAuthAttempt(String id);
+
+  /// No description provided for @harnessAuthAccountLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Account login'**
+  String get harnessAuthAccountLogin;
+
+  /// No description provided for @harnessAuthApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get harnessAuthApiKey;
+
+  /// No description provided for @harnessAuthNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get harnessAuthNone;
+
+  /// No description provided for @harnessAuthPoll.
+  ///
+  /// In en, this message translates to:
+  /// **'Poll'**
+  String get harnessAuthPoll;
+
+  /// No description provided for @harnessAuthDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get harnessAuthDisconnect;
+
+  /// No description provided for @harnessAuthCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get harnessAuthCancel;
+
+  /// No description provided for @harnessAuthNoApiKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No API key'**
+  String get harnessAuthNoApiKeyTitle;
+
+  /// No description provided for @harnessAuthNoApiKeyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching provider key exists for this harness. Open the LLM management screen to add a provider key first.'**
+  String get harnessAuthNoApiKeyBody;
+
+  /// No description provided for @harnessAuthProviderKeyMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No provider key found for {harness}.'**
+  String harnessAuthProviderKeyMissing(String harness);
+
+  /// No description provided for @harnessAuthChooseProviderKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose provider key'**
+  String get harnessAuthChooseProviderKey;
+
+  /// No description provided for @harnessAuthVisibilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who uses this harness account?'**
+  String get harnessAuthVisibilityTitle;
+
+  /// No description provided for @harnessAuthVisibilityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A shared account reuses one login across profiles on this PocketCoder server. A personal account keeps a separate login.'**
+  String get harnessAuthVisibilityBody;
+
+  /// No description provided for @harnessAuthChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge'**
+  String get harnessAuthChallenge;
+
+  /// No description provided for @harnessAuthDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details: {details}'**
+  String harnessAuthDetails(String details);
+
+  /// No description provided for @agentModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MODE:'**
+  String get agentModeLabel;
+
+  /// No description provided for @agentConfigLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIG'**
+  String get agentConfigLabel;
 
   /// No description provided for @pocketCoderUpdateChecking.
   ///

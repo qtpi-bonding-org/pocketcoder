@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/widgets/mcp_management_view.dart';
 
@@ -12,7 +13,8 @@ class McpManagementAdapter extends CubitAdapter<McpCubit, McpState> {
   static McpState _selectState(McpState state) => state;
 
   @override
-  Widget buildAdapter(BuildContext context, CubitAdapterState<McpCubit, McpState> adapter) {
+  Widget buildAdapter(
+      BuildContext context, CubitAdapterState<McpCubit, McpState> adapter) {
     final state = adapter.cubitField(_selectState);
     final cubit = context.read<McpCubit>();
     return UiFlowListener<McpCubit, McpState>(
@@ -21,14 +23,14 @@ class McpManagementAdapter extends CubitAdapter<McpCubit, McpState> {
         builder: (context, value, _) => switch (value.status) {
           UiFlowStatus.loading =>
             const Center(child: CircularProgressIndicator()),
-          UiFlowStatus.failure =>
-            Center(child: Text('ERROR: ${value.error}')),
+          UiFlowStatus.failure => Center(
+              child:
+                  Text(context.l10n.homeErrorPrefix(value.error.toString()))),
           UiFlowStatus.success => McpManagementView(
               servers: value.servers,
               oauthProviders: cubit.supportedOAuthProviders(),
               hasPendingDelivery: cubit.hasPendingOAuthDelivery,
-              onAuthorize: (id, config) =>
-                  cubit.authorize(id, config: config),
+              onAuthorize: (id, config) => cubit.authorize(id, config: config),
               onDeny: cubit.deny,
               onConnectOAuth: cubit.connectOAuth,
               onRetryOAuth: cubit.retryOAuthDelivery,

@@ -54,6 +54,56 @@ while IFS= read -r -d '' dart_file; do
 done < <(find "$repo_root/client/packages/pocketcoder_api/lib" \
   "$repo_root/client/packages/pocketcoder_api/test" -type f -name '*.dart' -print0)
 
+# OpenAPI Generator currently emits duplicate and unused imports in a small
+# set of built_value API/model files. Keep the generated package analyzer-clean
+# without hand-editing generated output after every contract regeneration.
+for dart_file in \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/agent_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/files_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/harness_auth_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/logs_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/mcp_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/observability_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/ollama_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/push_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/release_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/schedules_api.dart"; do
+  perl -0pi -e 's/import '\''package:pocketcoder_api\/src\/model\/error_response\.dart'\'';\n//g' "$dart_file"
+done
+for dart_file in \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/agent_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/harness_auth_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/logs_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/mcp_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/ollama_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/push_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/release_api.dart"; do
+  perl -0pi -e 's/(import '\''package:built_value\/json_object\.dart'\'';\n)(?s:.*?)import '\''package:built_value\/json_object\.dart'\'';\n/$1/' "$dart_file"
+done
+for dart_file in \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/files_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/observability_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/schedules_api.dart"; do
+  perl -0pi -e 's/import '\''package:built_value\/json_object\.dart'\'';\n//g' "$dart_file"
+done
+perl -0pi -e 's/import '\''package:built_collection\/built_collection\.dart'\'';\n//g; s/import '\''package:built_value\/json_object\.dart'\'';\n//g' \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/model/content_block.dart"
+
+for dart_file in \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/agent_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/files_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/harness_auth_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/logs_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/mcp_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/observability_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/ollama_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/push_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/release_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/schedules_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/model/content_block.dart"; do
+  perl -0pi -e 's#(// AUTO-GENERATED FILE, DO NOT MODIFY!\n//\n)(?!// ignore_for_file:)#$1// ignore_for_file: duplicate_import, unused_import\n#' "$dart_file"
+done
+
 (cd "$repo_root/client" && dart pub get)
 (cd "$repo_root/client/packages/pocketcoder_api" && \
   dart run build_runner build --delete-conflicting-outputs)

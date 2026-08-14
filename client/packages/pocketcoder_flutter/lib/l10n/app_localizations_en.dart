@@ -618,6 +618,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get mcpAddNew => 'ADD NEW';
+
+  @override
+  String get mcpDeny => 'DENY';
+
+  @override
+  String get mcpAuthorize => 'AUTHORIZE';
+
+  @override
   String get actionAdd => 'ADD';
 
   @override
@@ -2485,6 +2494,111 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get harnessAuthChallengeTargetCopied => 'CHALLENGE TARGET COPIED';
+
+  @override
+  String get harnessAuthLoading => 'Loading harnesses';
+
+  @override
+  String get harnessAuthConnections => 'Harness connections';
+
+  @override
+  String get harnessAuthUnavailable =>
+      'Claude Code and Codex are not available on this server.';
+
+  @override
+  String get harnessAuthEmpty => 'No harnesses were found.';
+
+  @override
+  String harnessAuthStatus(String status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String harnessAuthMode(String mode) {
+    return 'Mode: $mode';
+  }
+
+  @override
+  String harnessAuthAccount(String account, String visibility) {
+    return 'Account: $account ($visibility)';
+  }
+
+  @override
+  String get harnessAuthShared => 'shared';
+
+  @override
+  String get harnessAuthPersonal => 'personal';
+
+  @override
+  String get harnessAuthOneTimeCode => 'One-time code';
+
+  @override
+  String get harnessAuthPasteCode => 'paste code';
+
+  @override
+  String get harnessAuthSubmit => 'Submit';
+
+  @override
+  String get harnessAuthRefresh => 'Refresh';
+
+  @override
+  String harnessAuthAttempt(String id) {
+    return 'Attempt: $id';
+  }
+
+  @override
+  String get harnessAuthAccountLogin => 'Account login';
+
+  @override
+  String get harnessAuthApiKey => 'API key';
+
+  @override
+  String get harnessAuthNone => 'None';
+
+  @override
+  String get harnessAuthPoll => 'Poll';
+
+  @override
+  String get harnessAuthDisconnect => 'Disconnect';
+
+  @override
+  String get harnessAuthCancel => 'Cancel';
+
+  @override
+  String get harnessAuthNoApiKeyTitle => 'No API key';
+
+  @override
+  String get harnessAuthNoApiKeyBody =>
+      'No matching provider key exists for this harness. Open the LLM management screen to add a provider key first.';
+
+  @override
+  String harnessAuthProviderKeyMissing(String harness) {
+    return 'No provider key found for $harness.';
+  }
+
+  @override
+  String get harnessAuthChooseProviderKey => 'Choose provider key';
+
+  @override
+  String get harnessAuthVisibilityTitle => 'Who uses this harness account?';
+
+  @override
+  String get harnessAuthVisibilityBody =>
+      'A shared account reuses one login across profiles on this PocketCoder server. A personal account keeps a separate login.';
+
+  @override
+  String get harnessAuthChallenge => 'Challenge';
+
+  @override
+  String harnessAuthDetails(String details) {
+    return 'Details: $details';
+  }
+
+  @override
+  String get agentModeLabel => 'MODE:';
+
+  @override
+  String get agentConfigLabel => 'CONFIG';
 
   @override
   String get pocketCoderUpdateChecking =>
