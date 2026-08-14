@@ -34,7 +34,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
@@ -44,7 +43,7 @@ var (
 	errOAuthNotConfigured  = fmt.Errorf("mcp_servers row has no oauth_token_env_var set")
 )
 
-func AddMcpOAuthOperations(app *pocketbase.PocketBase, registry *operation.Registry) {
+func AddMcpOAuthOperations(app core.App, registry *operation.Registry) {
 	registry.Add(operation.Route{OperationID: "storeMcpOAuthToken", Method: http.MethodPost, Path: "/api/pocketcoder/v1/mcp/oauth/store", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
