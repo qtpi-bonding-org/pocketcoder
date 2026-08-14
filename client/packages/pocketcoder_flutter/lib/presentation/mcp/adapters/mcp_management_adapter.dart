@@ -18,21 +18,24 @@ class McpManagementAdapter extends CubitAdapter<McpCubit, McpState> {
     return UiFlowListener<McpCubit, McpState>(
       child: ValueListenableBuilder<McpState>(
         valueListenable: state,
-        builder: (context, value, _) => value.maybeWhen(
-          loaded: (servers) => McpManagementView(
-            servers: servers,
-            oauthProviders: cubit.supportedOAuthProviders(),
-            hasPendingDelivery: cubit.hasPendingOAuthDelivery,
-            onAuthorize: (id, config) => cubit.authorize(id, config: config),
-            onDeny: cubit.deny,
-            onConnectOAuth: cubit.connectOAuth,
-            onRetryOAuth: cubit.retryOAuthDelivery,
-            onCreateServer: cubit.createServer,
-          ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (message) => Center(child: Text('ERROR: $message')),
-          orElse: () => const SizedBox.shrink(),
-        ),
+        builder: (context, value, _) => switch (value.status) {
+          UiFlowStatus.loading =>
+            const Center(child: CircularProgressIndicator()),
+          UiFlowStatus.failure =>
+            Center(child: Text('ERROR: ${value.error}')),
+          UiFlowStatus.success => McpManagementView(
+              servers: value.servers,
+              oauthProviders: cubit.supportedOAuthProviders(),
+              hasPendingDelivery: cubit.hasPendingOAuthDelivery,
+              onAuthorize: (id, config) =>
+                  cubit.authorize(id, config: config),
+              onDeny: cubit.deny,
+              onConnectOAuth: cubit.connectOAuth,
+              onRetryOAuth: cubit.retryOAuthDelivery,
+              onCreateServer: cubit.createServer,
+            ),
+          UiFlowStatus.idle => const SizedBox.shrink(),
+        },
       ),
     );
   }

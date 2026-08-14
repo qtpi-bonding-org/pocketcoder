@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_state.dart';
@@ -50,11 +51,11 @@ void main() {
       await controller.close();
 
       expect(states, [
-        const NotificationRuleState.loading(),
-        const NotificationRuleState.loaded({
-          'chat_reply': true,
-          'schedule': false,
-        }),
+        const NotificationRuleState(status: UiFlowStatus.loading),
+        const NotificationRuleState(
+          status: UiFlowStatus.success,
+          rules: {'chat_reply': true, 'schedule': false},
+        ),
       ]);
     });
 

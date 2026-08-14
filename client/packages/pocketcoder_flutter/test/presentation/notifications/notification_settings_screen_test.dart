@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart';
@@ -69,7 +70,8 @@ void main() {
     cubit = MockNotificationRuleCubit();
     when(() => cubit.watchRules()).thenReturn(null);
     when(() => cubit.setTypeEnabled(any(), any())).thenAnswer((_) async {});
-    when(() => cubit.state).thenReturn(const NotificationRuleState.loaded({}));
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
     when(() => cubit.stream)
         .thenAnswer((_) => const Stream<NotificationRuleState>.empty());
     when(() => cubit.close()).thenAnswer((_) async {});
@@ -91,7 +93,8 @@ void main() {
   testWidgets(
       'renders four switches with default-on values when the rules map is empty',
       (tester) async {
-    when(() => cubit.state).thenReturn(const NotificationRuleState.loaded({}));
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
 
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
@@ -110,12 +113,15 @@ void main() {
 
   testWidgets('honors a non-default value from the loaded rules map',
       (tester) async {
-    when(() => cubit.state).thenReturn(const NotificationRuleState.loaded({
-      'chat_reply': false,
-      'schedule': true,
-      'task_complete': true,
-      'task_error': false,
-    }));
+    when(() => cubit.state).thenReturn(const NotificationRuleState(
+      status: UiFlowStatus.success,
+      rules: {
+        'chat_reply': false,
+        'schedule': true,
+        'task_complete': true,
+        'task_error': false,
+      },
+    ));
 
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
@@ -131,7 +137,8 @@ void main() {
 
   testWidgets('tapping a switch calls cubit.setTypeEnabled with the right args',
       (tester) async {
-    when(() => cubit.state).thenReturn(const NotificationRuleState.loaded({}));
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
 
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
