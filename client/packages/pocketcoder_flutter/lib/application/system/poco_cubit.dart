@@ -1,17 +1,22 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 
 part 'poco_cubit.freezed.dart';
 
 @freezed
-sealed class PocoState with _$PocoState {
+sealed class PocoState with _$PocoState, UiFlowStateMixin {
+  const PocoState._();
+
   const factory PocoState({
     required String message,
     required List<(String, int)> sequence,
     @Default([]) List<String> history,
+    @Default(UiFlowStatus.idle) UiFlowStatus status,
+    Object? error,
   }) = _PocoState;
 
   factory PocoState.initial() => const PocoState(
@@ -24,7 +29,7 @@ sealed class PocoState with _$PocoState {
 }
 
 @lazySingleton
-class PocoCubit extends Cubit<PocoState> {
+class PocoCubit extends AppCubit<PocoState> {
   PocoCubit() : super(PocoState.initial());
 
   void updateMessage(String newMessage,
