@@ -1,34 +1,25 @@
 import 'dart:typed_data';
 
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
-
-class FileViewerState {
-  const FileViewerState({
-    this.loading = true,
-    this.bytes,
-    this.error,
-  });
-
-  final bool loading;
-  final Uint8List? bytes;
-  final Object? error;
-}
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
+import 'file_viewer_state.dart';
 
 @injectable
-class FileViewerCubit extends Cubit<FileViewerState> {
+class FileViewerCubit extends AppCubit<FileViewerState> {
   FileViewerCubit(this._repository) : super(const FileViewerState());
 
   final IFilesRepository _repository;
 
   Future<void> load(String path) async {
-    emit(const FileViewerState());
-    try {
+    await tryOperation(() async {
       final bytes = await _repository.readFile(path);
-      if (!isClosed) emit(FileViewerState(bytes: Uint8List.fromList(bytes), loading: false));
-    } catch (error) {
-      if (!isClosed) emit(FileViewerState(error: error, loading: false));
-    }
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        bytes: Uint8List.fromList(bytes),
+      );
+    }, emitLoading: true);
   }
 }
