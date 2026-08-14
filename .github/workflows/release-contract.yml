@@ -12,6 +12,7 @@ on:
       - 'client/pubspec.lock'
       - '.github/workflows/release-contract.yml'
   pull_request:
+    branches: [main]
     paths:
       - 'deploy/**'
       - 'server/pocketbase/internal/api/release_status*'
