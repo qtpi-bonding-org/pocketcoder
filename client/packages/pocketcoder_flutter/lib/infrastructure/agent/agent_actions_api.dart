@@ -48,6 +48,63 @@ class AgentActionsApi {
 
   final PocketCoderApiClient _api;
 
+  // The generated built_value callbacks are nullable under Flutter stable's
+  // analyzer but non-nullable under the newer local analyzer. Keep that
+  // generator-version detail contained at this boundary.
+  static void _writeTextPrompt(
+    generated.PromptRequestBuilder? builder,
+    String text,
+  ) {
+    final prompt = builder?.prompt;
+    if (prompt == null) {
+      throw StateError('Prompt request builder is unavailable');
+    }
+    prompt.add(
+      generated.ContentBlock(
+        (block) => _writeTextContentBlock(block, text),
+      ),
+    );
+  }
+
+  static void _writeTextContentBlock(
+    generated.ContentBlockBuilder? builder,
+    String text,
+  ) {
+    if (builder == null) {
+      throw StateError('Prompt content builder is unavailable');
+    }
+    builder
+      ..type = 'text'
+      ..text = text;
+  }
+
+  static void _writeMode(
+    generated.ModeRequestBuilder? builder,
+    String modeId,
+  ) {
+    if (builder == null) {
+      throw StateError('Mode request builder is unavailable');
+    }
+    builder.modeId = modeId;
+  }
+
+  static void _writeConfigOption(
+    generated.ConfigOptionRequestBuilder? builder,
+    SetSessionConfigOptionRequest request,
+  ) {
+    final configId = _optionalString(request.configId);
+    final value = _optionalString(request.value);
+    if (builder == null || configId == null || value == null) {
+      throw StateError('Config option request is incomplete');
+    }
+    builder
+      ..configId = configId
+      ..value = value;
+  }
+
+  static String? _optionalString(Object? value) =>
+      value is String ? value : null;
+
   Future<void> _callVoid(Future<void> Function() operation) async {
     try {
       await operation();
@@ -90,13 +147,7 @@ class AgentActionsApi {
   /// is already active for this chat.
   Future<String> prompt(String chatId, String text) {
     final request = generated.PromptRequest(
-      (builder) => builder.prompt.add(
-        generated.ContentBlock(
-          (block) => block
-            ..type = 'text'
-            ..text = text,
-        ),
-      ),
+      (builder) => _writeTextPrompt(builder, text),
     );
     return _call(
       () async {
@@ -125,7 +176,7 @@ class AgentActionsApi {
   /// POST `session/set_mode` ← `SetSessionModeRequest`.
   Future<void> setMode(String chatId, String modeId) {
     final request = generated.ModeRequest(
-      (builder) => builder.modeId = modeId,
+      (builder) => _writeMode(builder, modeId),
     );
     return _callVoid(
       () async {
@@ -146,9 +197,7 @@ class AgentActionsApi {
     SetSessionConfigOptionRequest req,
   ) {
     final request = generated.ConfigOptionRequest(
-      (builder) => builder
-        ..configId = req.configId
-        ..value = req.value,
+      (builder) => _writeConfigOption(builder, req),
     );
     return _callVoid(
       () async {
