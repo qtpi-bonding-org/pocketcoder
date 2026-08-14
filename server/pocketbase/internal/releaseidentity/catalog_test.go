@@ -13,10 +13,10 @@ const testCatalog = `{
   "schemaVersion": 1,
   "defaultHarness": "goose",
   "harnesses": [
-    {"id":"goose","composeService":"goose-harness-image","imageRepository":"pocketcoder-harness-goose"},
-    {"id":"claude-code","composeService":"claude-code-harness-image","imageRepository":"pocketcoder-harness-claude-code"},
-    {"id":"codex","composeService":"codex-harness-image","imageRepository":"pocketcoder-harness-codex"},
-    {"id":"opencode","composeService":"opencode-harness-image","imageRepository":"pocketcoder-harness-opencode"}
+    {"id":"goose","composeService":"goose-harness-image","imageRepository":"pocketcoder-harness-goose","upstreamVersion":"1.43.0"},
+    {"id":"claude-code","composeService":"claude-code-harness-image","imageRepository":"pocketcoder-harness-claude-code","upstreamVersion":"2.1.221"},
+    {"id":"codex","composeService":"codex-harness-image","imageRepository":"pocketcoder-harness-codex","upstreamVersion":"0.146.0"},
+    {"id":"opencode","composeService":"opencode-harness-image","imageRepository":"pocketcoder-harness-opencode","upstreamVersion":"1.18.11"}
   ]
 }`
 
@@ -63,5 +63,12 @@ func TestLoadCatalogRejectsUnknownFields(t *testing.T) {
 	path := writeCatalog(t, `{"schemaVersion":1,"defaultHarness":"goose","harnesses":[],"extra":true}`)
 	if _, err := LoadCatalog(path); err == nil {
 		t.Fatal("expected unknown catalog field to fail")
+	}
+}
+
+func TestLoadCatalogRequiresHarnessUpstreamVersion(t *testing.T) {
+	path := writeCatalog(t, `{"schemaVersion":1,"defaultHarness":"goose","harnesses":[{"id":"goose","composeService":"goose-harness-image","imageRepository":"pocketcoder-harness-goose"}]}`)
+	if _, err := LoadCatalog(path); err == nil {
+		t.Fatal("expected harness without upstreamVersion to fail")
 	}
 }

@@ -23,6 +23,7 @@ type Harness struct {
 	ID              string `json:"id"`
 	ComposeService  string `json:"composeService"`
 	ImageRepository string `json:"imageRepository"`
+	UpstreamVersion string `json:"upstreamVersion"`
 }
 
 func LoadCatalog(path string) (Catalog, error) {
@@ -47,7 +48,7 @@ func LoadCatalog(path string) (Catalog, error) {
 	seen := make(map[string]struct{}, len(catalog.Harnesses))
 	defaultFound := false
 	for _, harness := range catalog.Harnesses {
-		if harness.ID == "" || harness.ComposeService == "" || harness.ImageRepository == "" {
+		if harness.ID == "" || harness.ComposeService == "" || harness.ImageRepository == "" || harness.UpstreamVersion == "" {
 			return Catalog{}, errors.New("harness catalog contains an empty field")
 		}
 		if _, exists := seen[harness.ID]; exists {
