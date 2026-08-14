@@ -55,6 +55,7 @@ func run(args []string) error {
 type mutationOptions struct {
 	stateRoot, artifactRoot, releasesRoot, currentLink string
 	releaseBase, channel, runtimeEnvironment           string
+	channelExplicit                                    bool
 	statusFile, statusRunID                            string
 	stableFloor, reserveBytes                          int64
 	expectedDigest                                     string
@@ -82,6 +83,14 @@ func mutationFlags(name string, args []string) (mutationOptions, error) {
 	optional := flags.String("optional-images", envOr("POCKETCODER_OPTIONAL_IMAGES", ""), "comma-separated optional image IDs")
 	if err := flags.Parse(args); err != nil {
 		return mutationOptions{}, err
+	}
+	flags.Visit(func(flag *flag.Flag) {
+		if flag.Name == "channel" {
+			result.channelExplicit = true
+		}
+	})
+	if os.Getenv("POCKETCODER_RELEASE_CHANNEL") != "" {
+		result.channelExplicit = true
 	}
 	result.harnesses = splitList(*harnesses)
 	result.optional = splitList(*optional)
@@ -118,6 +127,13 @@ func update(operation string, args []string) (returnErr error) {
 	current, exists, err := loadCurrent(filepath.Join(options.stateRoot, "current.json"))
 	if err != nil {
 		return err
+	}
+	if operation == "update" {
+		// A deployment's selected channel is part of the activated release
+		// record. A later interactive update must retain it: NixOS first boot
+		// passes the channel only to `install`, while normal updates have no
+		// service environment to re-export it.
+		options.channel = selectedChannel(options.channelExplicit, options.channel, current.Channel)
 	}
 	recovery := newUpdateManager(options, paths, current, releasecontract.Resolved{}, nil, reporter)
 	if err := recovery.Transaction().RecoverLocked(); err != nil {
@@ -267,6 +283,17 @@ func splitList(value string) []string {
 	return result
 }
 
+func validChannel(value string) bool {
+	return value == "stable" || value == "beta" || value == "nightly"
+}
+
+func selectedChannel(explicit bool, requested, current string) string {
+	if !explicit && validChannel(current) {
+		return current
+	}
+	return requested
+}
+
 func checkMetadata(args []string) error {
 	flags := flag.NewFlagSet("check-metadata", flag.ContinueOnError)
 	stateRoot := flags.String("state-dir", envOr("POCKETCODER_RELEASE_STATE_DIR", "/var/lib/pocketcoder/release"), "release state directory")
@@ -278,6 +305,12 @@ func checkMetadata(args []string) error {
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
+	channelExplicit := os.Getenv("POCKETCODER_RELEASE_CHANNEL") != ""
+	flags.Visit(func(flag *flag.Flag) {
+		if flag.Name == "channel" {
+			channelExplicit = true
+		}
+	})
 	paths := state.NewPaths(*stateRoot, envOr("POCKETCODER_RELEASES_DIR", "/opt/pocketcoder/releases"), *artifactRoot, envOr("POCKETCODER_CURRENT_LINK", "/opt/pocketcoder/current"))
 	lock, err := state.AcquireLock(paths.Lock)
 	if err != nil {
@@ -295,6 +328,7 @@ func checkMetadata(args []string) error {
 	if err := contract.DecodeStrict(currentBytes, &current); err != nil {
 		return err
 	}
+	*channel = selectedChannel(channelExplicit, *channel, current.Channel)
 	resolved, err := (releasecontract.Resolver{Config: releasecontract.Config{
 		ReleaseBase: *releaseBase, Channel: *channel, StableSequenceFloor: *stableFloor,
 		State: paths, AllowRevoked: true, Fetcher: artifact.Fetcher{},
