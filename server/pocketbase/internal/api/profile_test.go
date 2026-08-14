@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -294,7 +295,7 @@ func TestBuildSessionProfileResolvesChatFieldsWithDefaultPoco(t *testing.T) {
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
 	harness, instance := seedTestHarnessAndInstance(t, app, "goose", true, userID)
 	chat := createTestChat(t, app, map[string]any{"user": userID, "harness": harness.Id})
-	profile, err := buildSessionProfile(app, chat.Id)
+	profile, err := buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -327,7 +328,7 @@ func TestBuildSessionProfileUsesExplicitAgentAsMemoryAuthor(t *testing.T) {
 		"user": userID, "harness": harness.Id, "agent_profile": agent.Id,
 	})
 
-	profile, err := buildSessionProfile(app, chat.Id)
+	profile, err := buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -344,7 +345,6 @@ func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testin
 		_, _ = w.Write([]byte(`{"models":[{"name":"qwen2.5:0.5b"}]}`))
 	}))
 	defer server.Close()
-	t.Setenv("OLLAMA_API_URL", server.URL)
 
 	app := testApp(t)
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
@@ -373,7 +373,7 @@ func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testin
 		"ollama_model_override": "qwen2.5:0.5b",
 	})
 
-	profile, err := buildSessionProfile(app, chat.Id)
+	profile, err := buildSessionProfile(app, chat.Id, context.Background(), server.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -399,7 +399,7 @@ func TestBuildSessionProfileRejectsVirtualOllamaOnUnsupportedHarness(t *testing.
 		"ollama_model_override": "qwen2.5:0.5b",
 	})
 
-	_, err := buildSessionProfile(app, chat.Id)
+	_, err := buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err == nil || !strings.Contains(err.Error(), "does not support local Ollama") {
 		t.Fatalf("err = %v, want unsupported local Ollama harness error", err)
 	}
@@ -428,7 +428,7 @@ func TestBuildSessionProfileWorkspaceOverrideKeepsPocoAdditionalDirectories(t *t
 		"workspace_override": []string{"/workspace/other"},
 	})
 
-	profile, err := buildSessionProfile(app, chat.Id)
+	profile, err := buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -452,7 +452,7 @@ func TestBuildSessionProfileRejectsWorkspaceOverrideOutsideRoot(t *testing.T) {
 	chat := createTestChat(t, app, map[string]any{
 		"workspace_override": []string{"/goose/config"},
 	})
-	_, err = buildSessionProfile(app, chat.Id)
+	_, err = buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err == nil {
 		t.Fatal("expected rejection of a workspace_override outside /workspace")
 	}
@@ -470,7 +470,7 @@ func TestBuildSessionProfileRejectsTraversal(t *testing.T) {
 	chat := createTestChat(t, app, map[string]any{
 		"workspace_override": []string{"/workspace/../etc"},
 	})
-	_, err = buildSessionProfile(app, chat.Id)
+	_, err = buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err == nil {
 		t.Fatal("expected rejection of a workspace_override containing .. traversal")
 	}
@@ -488,7 +488,7 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 	userID := chat.GetString("user")
 	// deliberately: no harness_instances row exists yet for this harness
 
-	_, err := buildSessionProfile(app, chat.Id)
+	_, err := buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if !errors.Is(err, ErrHarnessProvisioning) {
 		t.Fatalf("expected ErrHarnessProvisioning, got %v", err)
 	}
@@ -545,7 +545,7 @@ func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testin
 		"user":    userID,
 	})
 
-	_, err = buildSessionProfile(app, chat.Id)
+	_, err = buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if !errors.Is(err, errHarnessFailed) {
 		t.Fatalf("expected errHarnessFailed, got %v", err)
 	}
@@ -580,7 +580,7 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 		// app down while that goroutine is still mid-flight, which
 		// panics (observed: nil-pointer dereference in RecordQuery after
 		// Cleanup closes the underlying DB).
-		if _, err := buildSessionProfile(app, provisioningChat.Id); !errors.Is(err, ErrHarnessProvisioning) {
+		if _, err := buildSessionProfile(app, provisioningChat.Id, context.Background(), defaultOllamaURL); !errors.Is(err, ErrHarnessProvisioning) {
 			t.Fatalf("setup: expected ErrHarnessProvisioning, got %v", err)
 		}
 		waitForHarnessProvisioning(t, app, harness.Id, provisioningUserID)
@@ -630,7 +630,7 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := buildSessionProfile(app, tc.chatID)
+			_, err := buildSessionProfile(app, tc.chatID, context.Background(), defaultOllamaURL)
 			if err == nil {
 				t.Fatal("expected buildSessionProfile to return an error")
 			}
@@ -680,7 +680,7 @@ func TestBuildSessionProfileAttachesMcpGatewayForPeerHarness(t *testing.T) {
 	runningInstanceFor(t, app, harness, userID)
 	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
 
-	profile, err := buildSessionProfile(app, chat.Id)
+	profile, err := buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -713,7 +713,7 @@ func TestBuildSessionProfileAttachesMcpGatewayForGoose(t *testing.T) {
 	runningInstanceFor(t, app, harness, userID)
 	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
 
-	profile, err := buildSessionProfile(app, chat.Id)
+	profile, err := buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -739,7 +739,7 @@ func TestBuildSessionProfileOmitsMcpGatewayWithoutToken(t *testing.T) {
 	runningInstanceFor(t, app, harness, userID)
 	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
 
-	profile, err := buildSessionProfile(app, chat.Id)
+	profile, err := buildSessionProfile(app, chat.Id, context.Background(), defaultOllamaURL)
 	if err != nil {
 		t.Fatal(err)
 	}

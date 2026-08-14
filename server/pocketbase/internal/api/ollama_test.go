@@ -55,16 +55,15 @@ func TestOllamaModelInstalledUsesLiveTags(t *testing.T) {
 		_, _ = w.Write([]byte(`{"models":[{"name":"qwen3:0.6b","size":523000000}]}`))
 	}))
 	defer server.Close()
-	t.Setenv("OLLAMA_API_URL", server.URL)
 
-	installed, err := ollamaModelInstalled(context.Background(), server.Client(), "qwen3:0.6b")
+	installed, err := ollamaModelInstalled(context.Background(), server.Client(), server.URL, "qwen3:0.6b")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !installed {
 		t.Fatal("expected tag returned by /api/tags to be installed")
 	}
-	missing, err := ollamaModelInstalled(context.Background(), server.Client(), "qwen2.5:0.5b")
+	missing, err := ollamaModelInstalled(context.Background(), server.Client(), server.URL, "qwen2.5:0.5b")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +74,6 @@ func TestOllamaModelInstalledUsesLiveTags(t *testing.T) {
 
 func TestEnsureOllamaRuntimeAcquiresCreatesAndPreservesModelVolume(t *testing.T) {
 	const release = "0123456789abcdef0123456789abcdef01234567"
-	t.Setenv("POCKETCODER_RELEASE", release)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte(`{"models":[]}`))
 	}))
@@ -91,7 +89,7 @@ func TestEnsureOllamaRuntimeAcquiresCreatesAndPreservesModelVolume(t *testing.T)
 	}
 	t.Cleanup(func() { ensureOllamaReleaseImage = original })
 
-	if err := ensureOllamaRuntime(context.Background(), docker, server.Client(), server.URL); err != nil {
+	if err := ensureOllamaRuntime(context.Background(), docker, server.Client(), server.URL, release); err != nil {
 		t.Fatal(err)
 	}
 	if !acquired || docker.created.Image != expectedImage {
