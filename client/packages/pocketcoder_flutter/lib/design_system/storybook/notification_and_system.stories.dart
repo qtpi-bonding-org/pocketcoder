@@ -21,7 +21,7 @@ Widget _localized(Widget child) => MaterialApp(
 @wb.UseCase(name: 'loaded toggles', type: NotificationSettingsView)
 Widget notificationSettingsLoaded(BuildContext context) => _localized(
       NotificationSettingsView(
-        state: const NotificationRuleState.loaded({
+        state: NotificationRuleState(status: UiFlowStatus.success, rules: {
           'chat_reply': true,
           'schedule': false,
           'task_complete': true,

@@ -8,7 +8,7 @@ import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 part 'auth_cubit.freezed.dart';
 
 @freezed
-sealed class AuthState with _$AuthState implements IUiFlowState {
+sealed class AuthState with _$AuthState, UiFlowStateMixin {
   const AuthState._();
 
   const factory AuthState({
@@ -18,17 +18,6 @@ sealed class AuthState with _$AuthState implements IUiFlowState {
   }) = _AuthState;
 
   factory AuthState.initial() => const AuthState();
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-  @override
-  bool get hasError => error != null;
 }
 
 @injectable

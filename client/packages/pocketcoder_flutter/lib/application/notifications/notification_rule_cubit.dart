@@ -1,18 +1,19 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/notifications/i_notification_rule_repository.dart';
-import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'notification_rule_state.dart';
 
 @injectable
-class NotificationRuleCubit extends Cubit<NotificationRuleState> {
+class NotificationRuleCubit extends AppCubit<NotificationRuleState> {
   final INotificationRuleRepository _repository;
   StreamSubscription? _subscription;
 
   NotificationRuleCubit(this._repository)
-      : super(const NotificationRuleState.initial());
+      : super(const NotificationRuleState());
 
   @override
   Future<void> close() {
@@ -21,10 +22,14 @@ class NotificationRuleCubit extends Cubit<NotificationRuleState> {
   }
 
   void watchRules() {
-    emit(const NotificationRuleState.loading());
+    emit(state.copyWith(status: UiFlowStatus.loading));
     _subscription?.cancel();
     _subscription = _repository.watchRules().listen(
-      (rules) => emit(NotificationRuleState.loaded(rules)),
+      (rules) => emit(state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        rules: rules,
+      )),
       onError: (e) {
         unawaited(pocketCoderDiagnosticCapture.capture(
           error: e,
@@ -32,22 +37,15 @@ class NotificationRuleCubit extends Cubit<NotificationRuleState> {
           operation: 'watchRules',
         ));
         logError('NotificationRules: Failed to watch rules', e);
-        emit(NotificationRuleState.error(e.toString()));
+        emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );
   }
 
   Future<void> setTypeEnabled(String type, bool enabled) async {
-    try {
+    await tryOperation(() async {
       await _repository.setTypeEnabled(type, enabled);
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-        error: e,
-        source: 'NotificationRuleCubit',
-        operation: 'setTypeEnabled',
-      );
-      logError('NotificationRules: Failed to update $type', e);
-      emit(NotificationRuleState.error(e.toString()));
-    }
+      return state.copyWith(status: UiFlowStatus.success, error: null);
+    });
   }
 }

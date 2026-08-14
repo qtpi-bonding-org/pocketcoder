@@ -1,18 +1,18 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/tool_permissions/i_tool_permission_repository.dart';
-import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'tool_permissions_state.dart';
 
 @injectable
-class ToolPermissionsCubit extends Cubit<ToolPermissionsState> {
+class ToolPermissionsCubit extends AppCubit<ToolPermissionsState> {
   final IToolPermissionRepository _repository;
   StreamSubscription? _subscription;
 
-  ToolPermissionsCubit(this._repository)
-      : super(const ToolPermissionsState.initial());
+  ToolPermissionsCubit(this._repository) : super(const ToolPermissionsState());
 
   @override
   Future<void> close() {
@@ -21,52 +21,44 @@ class ToolPermissionsCubit extends Cubit<ToolPermissionsState> {
   }
 
   void watchRules() {
-    emit(const ToolPermissionsState.loading());
+    emit(state.copyWith(status: UiFlowStatus.loading));
     _subscription?.cancel();
     _subscription = _repository.watchRules().listen(
       (rules) {
-        emit(ToolPermissionsState.loaded(rules));
+        emit(state.copyWith(
+          status: UiFlowStatus.success,
+          error: null,
+          rules: rules,
+        ));
       },
       onError: (e) {
         unawaited(pocketCoderDiagnosticCapture.capture(
             error: e, source: 'ToolPermissionsCubit', operation: 'watchRules'));
         logError('ToolPermissions: Failed to watch rules', e);
-        emit(ToolPermissionsState.error(e.toString()));
+        emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );
   }
 
   Future<void> updateAction(String id, String action) async {
-    try {
+    await tryOperation(() async {
       await _repository.updateAction(id, action);
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'ToolPermissionsCubit', operation: 'updateAction');
-      logError('ToolPermissions: Failed to update action', e);
-      emit(ToolPermissionsState.error(e.toString()));
-    }
+      return state.copyWith(status: UiFlowStatus.success, error: null);
+    });
   }
 
   Future<void> setActive(String id, bool active) async {
-    try {
+    await tryOperation(() async {
       await _repository.setActive(id, active);
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'ToolPermissionsCubit', operation: 'setActive');
-      logError('ToolPermissions: Failed to set active', e);
-      emit(ToolPermissionsState.error(e.toString()));
-    }
+      return state.copyWith(status: UiFlowStatus.success, error: null);
+    });
   }
 
   Future<void> createRule(
       {required String tool, required String action}) async {
-    try {
+    await tryOperation(() async {
       await _repository.createRule(tool: tool, action: action);
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'ToolPermissionsCubit', operation: 'createRule');
-      logError('ToolPermissions: Failed to create rule', e);
-      emit(ToolPermissionsState.error(e.toString()));
-    }
+      return state.copyWith(status: UiFlowStatus.success, error: null);
+    });
   }
 }

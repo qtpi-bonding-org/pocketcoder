@@ -1,3 +1,4 @@
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -52,48 +53,49 @@ class ToolPermissionsView extends StatelessWidget {
         child: Builder(
           builder: (context) {
             final colors = context.colorScheme;
-            return state.maybeWhen(
-              loaded: (rules) {
-                return ListView(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(AppSizes.space),
-                      child: TerminalButton(
-                        label: 'ADD RULE',
-                        onTap: () => _showAddRuleDialog(context),
-                      ),
-                    ),
-                    if (rules.isNotEmpty)
-                      BiosSection(
-                        title: context.l10n.toolPermissionsRulesRegistry,
-                        child: Column(
-                          children:
-                              rules.map((r) => _buildRuleItem(context, r)).toList(),
-                        ),
-                      ),
-                    if (rules.isEmpty)
-                      Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(AppSizes.space * 4),
-                          child: TerminalText(
-                            context.l10n.toolPermissionsNoRules,
-                            alpha: 0.5,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (msg) => Center(
+            if (state.status == UiFlowStatus.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.status == UiFlowStatus.failure) {
+              return Center(
                 child: Text(
-                  'ERROR: $msg',
+                  'ERROR: ${state.error}',
                   style: TextStyle(color: colors.error),
                 ),
-              ),
-              orElse: () => const SizedBox.shrink(),
+              );
+            }
+            if (state.status != UiFlowStatus.success) {
+              return const SizedBox.shrink();
+            }
+            final rules = state.rules;
+            return ListView(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(AppSizes.space),
+                  child: TerminalButton(
+                    label: 'ADD RULE',
+                    onTap: () => _showAddRuleDialog(context),
+                  ),
+                ),
+                if (rules.isNotEmpty)
+                  BiosSection(
+                    title: context.l10n.toolPermissionsRulesRegistry,
+                    child: Column(
+                      children:
+                          rules.map((r) => _buildRuleItem(context, r)).toList(),
+                    ),
+                  ),
+                if (rules.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSizes.space * 4),
+                      child: TerminalText(
+                        context.l10n.toolPermissionsNoRules,
+                        alpha: 0.5,
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),

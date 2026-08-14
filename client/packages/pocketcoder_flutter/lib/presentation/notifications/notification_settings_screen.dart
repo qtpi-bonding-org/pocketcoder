@@ -1,3 +1,4 @@
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
@@ -59,43 +60,44 @@ class NotificationSettingsView extends StatelessWidget {
       showBack: true,
       body: BiosFrame(
         title: context.l10n.notificationSettingsScreenTitle,
-        child: state.maybeWhen(
-          loaded: (rules) => ListView(
-            children: [
-              PocoBubble(
-                message: context.l10n.notificationSettingsPoco,
-                pocoSize: AppSizes.fontLarge,
+        child: switch (state.status) {
+          UiFlowStatus.loading =>
+            const Center(child: CircularProgressIndicator()),
+          UiFlowStatus.failure => Center(
+              child: Text(
+                'ERROR: ${state.error}',
+                style: TextStyle(color: context.colorScheme.error),
               ),
-              VSpace.x3,
-              TerminalButton(
-                label: context.l10n.notificationSettingsEnableDevice,
-                onTap: onEnableDevice,
-              ),
-              VSpace.x3,
-              BiosSection(
-                title: context.l10n.notificationSettingsScreenTitle,
-                child: Column(
-                  children: [
-                    for (final (type, key) in types)
-                      _SwitchTile(
-                        label: _labelFor(context, key),
-                        value: rules[type] ?? true,
-                        onChanged: (value) => onChanged(type, value),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (message) => Center(
-            child: Text(
-              'ERROR: $message',
-              style: TextStyle(color: context.colorScheme.error),
             ),
-          ),
-          orElse: () => const SizedBox.shrink(),
-        ),
+          UiFlowStatus.success => ListView(
+              children: [
+                PocoBubble(
+                  message: context.l10n.notificationSettingsPoco,
+                  pocoSize: AppSizes.fontLarge,
+                ),
+                VSpace.x3,
+                TerminalButton(
+                  label: context.l10n.notificationSettingsEnableDevice,
+                  onTap: onEnableDevice,
+                ),
+                VSpace.x3,
+                BiosSection(
+                  title: context.l10n.notificationSettingsScreenTitle,
+                  child: Column(
+                    children: [
+                      for (final (type, key) in types)
+                        _SwitchTile(
+                          label: _labelFor(context, key),
+                          value: state.rules[type] ?? true,
+                          onChanged: (value) => onChanged(type, value),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          UiFlowStatus.idle => const SizedBox.shrink(),
+        },
       ),
     );
   }

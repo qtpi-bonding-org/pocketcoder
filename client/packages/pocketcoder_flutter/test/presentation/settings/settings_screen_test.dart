@@ -24,7 +24,7 @@ void main() {
   setUp(() {
     authRepo = MockAuthRepository();
     mcpCubit = MockMcpCubit();
-    when(() => mcpCubit.state).thenReturn(const McpState.loaded([]));
+    when(() => mcpCubit.state).thenReturn(const McpState());
     when(() => mcpCubit.stream)
         .thenAnswer((_) => const Stream<McpState>.empty());
 

@@ -14,24 +14,76 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$McpState {
+  UiFlowStatus get status;
+  List<McpServer> get servers;
+  Object? get error;
+
+  /// Create a copy of McpState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $McpStateCopyWith<McpState> get copyWith =>
+      _$McpStateCopyWithImpl<McpState>(this as McpState, _$identity);
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is McpState);
+        (other.runtimeType == runtimeType &&
+            other is McpState &&
+            (identical(other.status, status) || other.status == status) &&
+            const DeepCollectionEquality().equals(other.servers, servers) &&
+            const DeepCollectionEquality().equals(other.error, error));
   }
 
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode => Object.hash(
+      runtimeType,
+      status,
+      const DeepCollectionEquality().hash(servers),
+      const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'McpState()';
+    return 'McpState(status: $status, servers: $servers, error: $error)';
   }
 }
 
 /// @nodoc
-class $McpStateCopyWith<$Res> {
-  $McpStateCopyWith(McpState _, $Res Function(McpState) __);
+abstract mixin class $McpStateCopyWith<$Res> {
+  factory $McpStateCopyWith(McpState value, $Res Function(McpState) _then) =
+      _$McpStateCopyWithImpl;
+  @useResult
+  $Res call({UiFlowStatus status, List<McpServer> servers, Object? error});
+}
+
+/// @nodoc
+class _$McpStateCopyWithImpl<$Res> implements $McpStateCopyWith<$Res> {
+  _$McpStateCopyWithImpl(this._self, this._then);
+
+  final McpState _self;
+  final $Res Function(McpState) _then;
+
+  /// Create a copy of McpState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? status = null,
+    Object? servers = null,
+    Object? error = freezed,
+  }) {
+    return _then(_self.copyWith(
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as UiFlowStatus,
+      servers: null == servers
+          ? _self.servers
+          : servers // ignore: cast_nullable_to_non_nullable
+              as List<McpServer>,
+      error: freezed == error ? _self.error : error,
+    ));
+  }
 }
 
 /// Adds pattern-matching-related methods to [McpState].
@@ -49,23 +101,14 @@ extension McpStatePatterns on McpState {
   /// ```
 
   @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(_Initial value)? initial,
-    TResult Function(_Loading value)? loading,
-    TResult Function(_Loaded value)? loaded,
-    TResult Function(_Error value)? error,
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_McpState value)? $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
-      case _Initial() when initial != null:
-        return initial(_that);
-      case _Loading() when loading != null:
-        return loading(_that);
-      case _Loaded() when loaded != null:
-        return loaded(_that);
-      case _Error() when error != null:
-        return error(_that);
+      case _McpState() when $default != null:
+        return $default(_that);
       case _:
         return orElse();
     }
@@ -85,22 +128,13 @@ extension McpStatePatterns on McpState {
   /// ```
 
   @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(_Initial value) initial,
-    required TResult Function(_Loading value) loading,
-    required TResult Function(_Loaded value) loaded,
-    required TResult Function(_Error value) error,
-  }) {
+  TResult map<TResult extends Object?>(
+    TResult Function(_McpState value) $default,
+  ) {
     final _that = this;
     switch (_that) {
-      case _Initial():
-        return initial(_that);
-      case _Loading():
-        return loading(_that);
-      case _Loaded():
-        return loaded(_that);
-      case _Error():
-        return error(_that);
+      case _McpState():
+        return $default(_that);
     }
   }
 
@@ -117,22 +151,13 @@ extension McpStatePatterns on McpState {
   /// ```
 
   @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(_Initial value)? initial,
-    TResult? Function(_Loading value)? loading,
-    TResult? Function(_Loaded value)? loaded,
-    TResult? Function(_Error value)? error,
-  }) {
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_McpState value)? $default,
+  ) {
     final _that = this;
     switch (_that) {
-      case _Initial() when initial != null:
-        return initial(_that);
-      case _Loading() when loading != null:
-        return loading(_that);
-      case _Loaded() when loaded != null:
-        return loaded(_that);
-      case _Error() when error != null:
-        return error(_that);
+      case _McpState() when $default != null:
+        return $default(_that);
       case _:
         return null;
     }
@@ -151,23 +176,16 @@ extension McpStatePatterns on McpState {
   /// ```
 
   @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? initial,
-    TResult Function()? loading,
-    TResult Function(List<McpServer> servers)? loaded,
-    TResult Function(String message)? error,
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            UiFlowStatus status, List<McpServer> servers, Object? error)?
+        $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
-      case _Initial() when initial != null:
-        return initial();
-      case _Loading() when loading != null:
-        return loading();
-      case _Loaded() when loaded != null:
-        return loaded(_that.servers);
-      case _Error() when error != null:
-        return error(_that.message);
+      case _McpState() when $default != null:
+        return $default(_that.status, _that.servers, _that.error);
       case _:
         return orElse();
     }
@@ -187,22 +205,15 @@ extension McpStatePatterns on McpState {
   /// ```
 
   @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function() initial,
-    required TResult Function() loading,
-    required TResult Function(List<McpServer> servers) loaded,
-    required TResult Function(String message) error,
-  }) {
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            UiFlowStatus status, List<McpServer> servers, Object? error)
+        $default,
+  ) {
     final _that = this;
     switch (_that) {
-      case _Initial():
-        return initial();
-      case _Loading():
-        return loading();
-      case _Loaded():
-        return loaded(_that.servers);
-      case _Error():
-        return error(_that.message);
+      case _McpState():
+        return $default(_that.status, _that.servers, _that.error);
     }
   }
 
@@ -219,22 +230,15 @@ extension McpStatePatterns on McpState {
   /// ```
 
   @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? initial,
-    TResult? Function()? loading,
-    TResult? Function(List<McpServer> servers)? loaded,
-    TResult? Function(String message)? error,
-  }) {
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            UiFlowStatus status, List<McpServer> servers, Object? error)?
+        $default,
+  ) {
     final _that = this;
     switch (_that) {
-      case _Initial() when initial != null:
-        return initial();
-      case _Loading() when loading != null:
-        return loading();
-      case _Loaded() when loaded != null:
-        return loaded(_that.servers);
-      case _Error() when error != null:
-        return error(_that.message);
+      case _McpState() when $default != null:
+        return $default(_that.status, _that.servers, _that.error);
       case _:
         return null;
     }
@@ -243,170 +247,96 @@ extension McpStatePatterns on McpState {
 
 /// @nodoc
 
-class _Initial extends McpState {
-  const _Initial() : super._();
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _Initial);
-  }
-
-  @override
-  int get hashCode => runtimeType.hashCode;
-
-  @override
-  String toString() {
-    return 'McpState.initial()';
-  }
-}
-
-/// @nodoc
-
-class _Loading extends McpState {
-  const _Loading() : super._();
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _Loading);
-  }
-
-  @override
-  int get hashCode => runtimeType.hashCode;
-
-  @override
-  String toString() {
-    return 'McpState.loading()';
-  }
-}
-
-/// @nodoc
-
-class _Loaded extends McpState {
-  const _Loaded(final List<McpServer> servers)
+class _McpState extends McpState {
+  const _McpState(
+      {this.status = UiFlowStatus.idle,
+      final List<McpServer> servers = const [],
+      this.error})
       : _servers = servers,
         super._();
 
+  @override
+  @JsonKey()
+  final UiFlowStatus status;
   final List<McpServer> _servers;
+  @override
+  @JsonKey()
   List<McpServer> get servers {
     if (_servers is EqualUnmodifiableListView) return _servers;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_servers);
   }
 
+  @override
+  final Object? error;
+
   /// Create a copy of McpState
   /// with the given fields replaced by the non-null parameter values.
+  @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  _$LoadedCopyWith<_Loaded> get copyWith =>
-      __$LoadedCopyWithImpl<_Loaded>(this, _$identity);
+  _$McpStateCopyWith<_McpState> get copyWith =>
+      __$McpStateCopyWithImpl<_McpState>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _Loaded &&
-            const DeepCollectionEquality().equals(other._servers, _servers));
+            other is _McpState &&
+            (identical(other.status, status) || other.status == status) &&
+            const DeepCollectionEquality().equals(other._servers, _servers) &&
+            const DeepCollectionEquality().equals(other.error, error));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(_servers));
+  int get hashCode => Object.hash(
+      runtimeType,
+      status,
+      const DeepCollectionEquality().hash(_servers),
+      const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'McpState.loaded(servers: $servers)';
+    return 'McpState(status: $status, servers: $servers, error: $error)';
   }
 }
 
 /// @nodoc
-abstract mixin class _$LoadedCopyWith<$Res> implements $McpStateCopyWith<$Res> {
-  factory _$LoadedCopyWith(_Loaded value, $Res Function(_Loaded) _then) =
-      __$LoadedCopyWithImpl;
+abstract mixin class _$McpStateCopyWith<$Res>
+    implements $McpStateCopyWith<$Res> {
+  factory _$McpStateCopyWith(_McpState value, $Res Function(_McpState) _then) =
+      __$McpStateCopyWithImpl;
+  @override
   @useResult
-  $Res call({List<McpServer> servers});
+  $Res call({UiFlowStatus status, List<McpServer> servers, Object? error});
 }
 
 /// @nodoc
-class __$LoadedCopyWithImpl<$Res> implements _$LoadedCopyWith<$Res> {
-  __$LoadedCopyWithImpl(this._self, this._then);
+class __$McpStateCopyWithImpl<$Res> implements _$McpStateCopyWith<$Res> {
+  __$McpStateCopyWithImpl(this._self, this._then);
 
-  final _Loaded _self;
-  final $Res Function(_Loaded) _then;
+  final _McpState _self;
+  final $Res Function(_McpState) _then;
 
   /// Create a copy of McpState
   /// with the given fields replaced by the non-null parameter values.
+  @override
   @pragma('vm:prefer-inline')
   $Res call({
+    Object? status = null,
     Object? servers = null,
+    Object? error = freezed,
   }) {
-    return _then(_Loaded(
-      null == servers
+    return _then(_McpState(
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as UiFlowStatus,
+      servers: null == servers
           ? _self._servers
           : servers // ignore: cast_nullable_to_non_nullable
               as List<McpServer>,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _Error extends McpState {
-  const _Error(this.message) : super._();
-
-  final String message;
-
-  /// Create a copy of McpState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  _$ErrorCopyWith<_Error> get copyWith =>
-      __$ErrorCopyWithImpl<_Error>(this, _$identity);
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _Error &&
-            (identical(other.message, message) || other.message == message));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, message);
-
-  @override
-  String toString() {
-    return 'McpState.error(message: $message)';
-  }
-}
-
-/// @nodoc
-abstract mixin class _$ErrorCopyWith<$Res> implements $McpStateCopyWith<$Res> {
-  factory _$ErrorCopyWith(_Error value, $Res Function(_Error) _then) =
-      __$ErrorCopyWithImpl;
-  @useResult
-  $Res call({String message});
-}
-
-/// @nodoc
-class __$ErrorCopyWithImpl<$Res> implements _$ErrorCopyWith<$Res> {
-  __$ErrorCopyWithImpl(this._self, this._then);
-
-  final _Error _self;
-  final $Res Function(_Error) _then;
-
-  /// Create a copy of McpState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? message = null,
-  }) {
-    return _then(_Error(
-      null == message
-          ? _self.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as String,
+      error: freezed == error ? _self.error : error,
     ));
   }
 }

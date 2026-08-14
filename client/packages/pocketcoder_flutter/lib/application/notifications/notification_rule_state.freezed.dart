@@ -14,25 +14,79 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$NotificationRuleState {
+  UiFlowStatus get status;
+  Map<String, bool> get rules;
+  Object? get error;
+
+  /// Create a copy of NotificationRuleState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $NotificationRuleStateCopyWith<NotificationRuleState> get copyWith =>
+      _$NotificationRuleStateCopyWithImpl<NotificationRuleState>(
+          this as NotificationRuleState, _$identity);
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is NotificationRuleState);
+        (other.runtimeType == runtimeType &&
+            other is NotificationRuleState &&
+            (identical(other.status, status) || other.status == status) &&
+            const DeepCollectionEquality().equals(other.rules, rules) &&
+            const DeepCollectionEquality().equals(other.error, error));
   }
 
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode => Object.hash(
+      runtimeType,
+      status,
+      const DeepCollectionEquality().hash(rules),
+      const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'NotificationRuleState()';
+    return 'NotificationRuleState(status: $status, rules: $rules, error: $error)';
   }
 }
 
 /// @nodoc
-class $NotificationRuleStateCopyWith<$Res> {
-  $NotificationRuleStateCopyWith(
-      NotificationRuleState _, $Res Function(NotificationRuleState) __);
+abstract mixin class $NotificationRuleStateCopyWith<$Res> {
+  factory $NotificationRuleStateCopyWith(NotificationRuleState value,
+          $Res Function(NotificationRuleState) _then) =
+      _$NotificationRuleStateCopyWithImpl;
+  @useResult
+  $Res call({UiFlowStatus status, Map<String, bool> rules, Object? error});
+}
+
+/// @nodoc
+class _$NotificationRuleStateCopyWithImpl<$Res>
+    implements $NotificationRuleStateCopyWith<$Res> {
+  _$NotificationRuleStateCopyWithImpl(this._self, this._then);
+
+  final NotificationRuleState _self;
+  final $Res Function(NotificationRuleState) _then;
+
+  /// Create a copy of NotificationRuleState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? status = null,
+    Object? rules = null,
+    Object? error = freezed,
+  }) {
+    return _then(_self.copyWith(
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as UiFlowStatus,
+      rules: null == rules
+          ? _self.rules
+          : rules // ignore: cast_nullable_to_non_nullable
+              as Map<String, bool>,
+      error: freezed == error ? _self.error : error,
+    ));
+  }
 }
 
 /// Adds pattern-matching-related methods to [NotificationRuleState].
@@ -50,23 +104,14 @@ extension NotificationRuleStatePatterns on NotificationRuleState {
   /// ```
 
   @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(_Initial value)? initial,
-    TResult Function(_Loading value)? loading,
-    TResult Function(_Loaded value)? loaded,
-    TResult Function(_Error value)? error,
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_NotificationRuleState value)? $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
-      case _Initial() when initial != null:
-        return initial(_that);
-      case _Loading() when loading != null:
-        return loading(_that);
-      case _Loaded() when loaded != null:
-        return loaded(_that);
-      case _Error() when error != null:
-        return error(_that);
+      case _NotificationRuleState() when $default != null:
+        return $default(_that);
       case _:
         return orElse();
     }
@@ -86,22 +131,13 @@ extension NotificationRuleStatePatterns on NotificationRuleState {
   /// ```
 
   @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(_Initial value) initial,
-    required TResult Function(_Loading value) loading,
-    required TResult Function(_Loaded value) loaded,
-    required TResult Function(_Error value) error,
-  }) {
+  TResult map<TResult extends Object?>(
+    TResult Function(_NotificationRuleState value) $default,
+  ) {
     final _that = this;
     switch (_that) {
-      case _Initial():
-        return initial(_that);
-      case _Loading():
-        return loading(_that);
-      case _Loaded():
-        return loaded(_that);
-      case _Error():
-        return error(_that);
+      case _NotificationRuleState():
+        return $default(_that);
     }
   }
 
@@ -118,22 +154,13 @@ extension NotificationRuleStatePatterns on NotificationRuleState {
   /// ```
 
   @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(_Initial value)? initial,
-    TResult? Function(_Loading value)? loading,
-    TResult? Function(_Loaded value)? loaded,
-    TResult? Function(_Error value)? error,
-  }) {
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_NotificationRuleState value)? $default,
+  ) {
     final _that = this;
     switch (_that) {
-      case _Initial() when initial != null:
-        return initial(_that);
-      case _Loading() when loading != null:
-        return loading(_that);
-      case _Loaded() when loaded != null:
-        return loaded(_that);
-      case _Error() when error != null:
-        return error(_that);
+      case _NotificationRuleState() when $default != null:
+        return $default(_that);
       case _:
         return null;
     }
@@ -152,23 +179,16 @@ extension NotificationRuleStatePatterns on NotificationRuleState {
   /// ```
 
   @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? initial,
-    TResult Function()? loading,
-    TResult Function(Map<String, bool> rules)? loaded,
-    TResult Function(String message)? error,
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            UiFlowStatus status, Map<String, bool> rules, Object? error)?
+        $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
-      case _Initial() when initial != null:
-        return initial();
-      case _Loading() when loading != null:
-        return loading();
-      case _Loaded() when loaded != null:
-        return loaded(_that.rules);
-      case _Error() when error != null:
-        return error(_that.message);
+      case _NotificationRuleState() when $default != null:
+        return $default(_that.status, _that.rules, _that.error);
       case _:
         return orElse();
     }
@@ -188,22 +208,15 @@ extension NotificationRuleStatePatterns on NotificationRuleState {
   /// ```
 
   @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function() initial,
-    required TResult Function() loading,
-    required TResult Function(Map<String, bool> rules) loaded,
-    required TResult Function(String message) error,
-  }) {
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            UiFlowStatus status, Map<String, bool> rules, Object? error)
+        $default,
+  ) {
     final _that = this;
     switch (_that) {
-      case _Initial():
-        return initial();
-      case _Loading():
-        return loading();
-      case _Loaded():
-        return loaded(_that.rules);
-      case _Error():
-        return error(_that.message);
+      case _NotificationRuleState():
+        return $default(_that.status, _that.rules, _that.error);
     }
   }
 
@@ -220,22 +233,15 @@ extension NotificationRuleStatePatterns on NotificationRuleState {
   /// ```
 
   @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? initial,
-    TResult? Function()? loading,
-    TResult? Function(Map<String, bool> rules)? loaded,
-    TResult? Function(String message)? error,
-  }) {
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            UiFlowStatus status, Map<String, bool> rules, Object? error)?
+        $default,
+  ) {
     final _that = this;
     switch (_that) {
-      case _Initial() when initial != null:
-        return initial();
-      case _Loading() when loading != null:
-        return loading();
-      case _Loaded() when loaded != null:
-        return loaded(_that.rules);
-      case _Error() when error != null:
-        return error(_that.message);
+      case _NotificationRuleState() when $default != null:
+        return $default(_that.status, _that.rules, _that.error);
       case _:
         return null;
     }
@@ -244,172 +250,99 @@ extension NotificationRuleStatePatterns on NotificationRuleState {
 
 /// @nodoc
 
-class _Initial extends NotificationRuleState {
-  const _Initial() : super._();
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _Initial);
-  }
-
-  @override
-  int get hashCode => runtimeType.hashCode;
-
-  @override
-  String toString() {
-    return 'NotificationRuleState.initial()';
-  }
-}
-
-/// @nodoc
-
-class _Loading extends NotificationRuleState {
-  const _Loading() : super._();
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _Loading);
-  }
-
-  @override
-  int get hashCode => runtimeType.hashCode;
-
-  @override
-  String toString() {
-    return 'NotificationRuleState.loading()';
-  }
-}
-
-/// @nodoc
-
-class _Loaded extends NotificationRuleState {
-  const _Loaded(final Map<String, bool> rules)
+class _NotificationRuleState extends NotificationRuleState {
+  const _NotificationRuleState(
+      {this.status = UiFlowStatus.idle,
+      final Map<String, bool> rules = const {},
+      this.error})
       : _rules = rules,
         super._();
 
+  @override
+  @JsonKey()
+  final UiFlowStatus status;
   final Map<String, bool> _rules;
+  @override
+  @JsonKey()
   Map<String, bool> get rules {
     if (_rules is EqualUnmodifiableMapView) return _rules;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableMapView(_rules);
   }
 
+  @override
+  final Object? error;
+
   /// Create a copy of NotificationRuleState
   /// with the given fields replaced by the non-null parameter values.
+  @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  _$LoadedCopyWith<_Loaded> get copyWith =>
-      __$LoadedCopyWithImpl<_Loaded>(this, _$identity);
+  _$NotificationRuleStateCopyWith<_NotificationRuleState> get copyWith =>
+      __$NotificationRuleStateCopyWithImpl<_NotificationRuleState>(
+          this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _Loaded &&
-            const DeepCollectionEquality().equals(other._rules, _rules));
+            other is _NotificationRuleState &&
+            (identical(other.status, status) || other.status == status) &&
+            const DeepCollectionEquality().equals(other._rules, _rules) &&
+            const DeepCollectionEquality().equals(other.error, error));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(_rules));
+  int get hashCode => Object.hash(
+      runtimeType,
+      status,
+      const DeepCollectionEquality().hash(_rules),
+      const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'NotificationRuleState.loaded(rules: $rules)';
+    return 'NotificationRuleState(status: $status, rules: $rules, error: $error)';
   }
 }
 
 /// @nodoc
-abstract mixin class _$LoadedCopyWith<$Res>
+abstract mixin class _$NotificationRuleStateCopyWith<$Res>
     implements $NotificationRuleStateCopyWith<$Res> {
-  factory _$LoadedCopyWith(_Loaded value, $Res Function(_Loaded) _then) =
-      __$LoadedCopyWithImpl;
+  factory _$NotificationRuleStateCopyWith(_NotificationRuleState value,
+          $Res Function(_NotificationRuleState) _then) =
+      __$NotificationRuleStateCopyWithImpl;
+  @override
   @useResult
-  $Res call({Map<String, bool> rules});
+  $Res call({UiFlowStatus status, Map<String, bool> rules, Object? error});
 }
 
 /// @nodoc
-class __$LoadedCopyWithImpl<$Res> implements _$LoadedCopyWith<$Res> {
-  __$LoadedCopyWithImpl(this._self, this._then);
+class __$NotificationRuleStateCopyWithImpl<$Res>
+    implements _$NotificationRuleStateCopyWith<$Res> {
+  __$NotificationRuleStateCopyWithImpl(this._self, this._then);
 
-  final _Loaded _self;
-  final $Res Function(_Loaded) _then;
+  final _NotificationRuleState _self;
+  final $Res Function(_NotificationRuleState) _then;
 
   /// Create a copy of NotificationRuleState
   /// with the given fields replaced by the non-null parameter values.
+  @override
   @pragma('vm:prefer-inline')
   $Res call({
+    Object? status = null,
     Object? rules = null,
+    Object? error = freezed,
   }) {
-    return _then(_Loaded(
-      null == rules
+    return _then(_NotificationRuleState(
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as UiFlowStatus,
+      rules: null == rules
           ? _self._rules
           : rules // ignore: cast_nullable_to_non_nullable
               as Map<String, bool>,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _Error extends NotificationRuleState {
-  const _Error(this.message) : super._();
-
-  final String message;
-
-  /// Create a copy of NotificationRuleState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  _$ErrorCopyWith<_Error> get copyWith =>
-      __$ErrorCopyWithImpl<_Error>(this, _$identity);
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _Error &&
-            (identical(other.message, message) || other.message == message));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, message);
-
-  @override
-  String toString() {
-    return 'NotificationRuleState.error(message: $message)';
-  }
-}
-
-/// @nodoc
-abstract mixin class _$ErrorCopyWith<$Res>
-    implements $NotificationRuleStateCopyWith<$Res> {
-  factory _$ErrorCopyWith(_Error value, $Res Function(_Error) _then) =
-      __$ErrorCopyWithImpl;
-  @useResult
-  $Res call({String message});
-}
-
-/// @nodoc
-class __$ErrorCopyWithImpl<$Res> implements _$ErrorCopyWith<$Res> {
-  __$ErrorCopyWithImpl(this._self, this._then);
-
-  final _Error _self;
-  final $Res Function(_Error) _then;
-
-  /// Create a copy of NotificationRuleState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? message = null,
-  }) {
-    return _then(_Error(
-      null == message
-          ? _self.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as String,
+      error: freezed == error ? _self.error : error,
     ));
   }
 }

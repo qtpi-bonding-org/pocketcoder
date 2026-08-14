@@ -12,11 +12,9 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import '../widgets/settings_view.dart';
 
-bool _hasPendingMcp(McpState state) => state.maybeWhen(
-      loaded: (servers) =>
-          servers.any((server) => server.status == McpServerStatus.pending),
-      orElse: () => false,
-    );
+bool _hasPendingMcp(McpState state) =>
+    state.status == UiFlowStatus.success &&
+    state.servers.any((server) => server.status == McpServerStatus.pending);
 
 class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
   const SettingsAdapter({super.key});
