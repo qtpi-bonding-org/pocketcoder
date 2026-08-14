@@ -5,6 +5,7 @@ package operationapi
 import (
 	"context"
 	"errors"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"net/http"
 	"net/http/httptest"
 
@@ -25,7 +26,7 @@ type requestEventContextKey struct{}
 // request/response operations cross the generated strict server interface.
 // Streaming, proxy, and binary operations remain direct because buffering
 // those responses would alter their transport semantics.
-func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() api.AgentRuntime) (api.AgentRuntime, error) {
+func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() coordinator.AgentRuntime) (coordinator.AgentRuntime, error) {
 	registry := operation.NewRegistry()
 	api.AddMcpOperations(app, registry, api.McpDeps{})
 	api.AddMcpOAuthOperations(app, registry)

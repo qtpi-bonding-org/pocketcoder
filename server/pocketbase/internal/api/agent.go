@@ -40,33 +40,18 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/sessionprofile"
 )
 
-type AgentRuntime interface {
-	StartPrompt(chatID, prompt string, resolve coordinator.ResolveSession, profileFn coordinator.ProfileFunc, created coordinator.OnSessionCreated, finished coordinator.OnRunFinished) (string, error)
-	Attach(chatID string, cursor int) coordinator.Attachment
-	NextSeq(chatID string) int
-	StreamColdReplay(ctx context.Context, chatID, sessionID string, profileFn coordinator.ProfileFunc, emit func(seq int, ev events.Event) error) error
-	Cancel(ctx context.Context, chatID string) error
-	SetMode(ctx context.Context, chatID, modeID string) error
-	SetConfigOption(ctx context.Context, chatID string, req acpsdk.SetSessionConfigOptionRequest) error
-	Approve(ctx context.Context, chatID, requestID, optionID string) error
-	DenyPermission(chatID, requestID string) error
-	ResolveElicitation(chatID, id string, resp acpsdk.UnstableCreateElicitationResponse) error
-	DeleteSession(ctx context.Context, app core.App, chatID string) error
-	Shutdown(ctx context.Context)
-}
-
 type AgentDeps struct {
-	Runtime AgentRuntime
+	Runtime coordinator.AgentRuntime
 	Dial    coordinator.DialFunc
 }
 
-func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDeps) (AgentRuntime, error) {
+func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDeps) (coordinator.AgentRuntime, error) {
 	workspace := os.Getenv("POCKETCODER_WORKSPACE")
 	if workspace == "" {
 		workspace = "/workspace"
 	}
 	ollamaBaseURL := ollama.ResolveBaseURL()
-	var service AgentRuntime = deps.Runtime
+	var service coordinator.AgentRuntime = deps.Runtime
 	var configErr error
 	if service == nil {
 		concrete, err := coordinator.New(coordinator.Config{Workspace: workspace, PermissionTimeout: permissionTimeout(), Dial: deps.Dial})

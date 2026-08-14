@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"net/http"
 	"strings"
 	"testing"
@@ -32,7 +33,7 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
 	AddHarnessAuthOperations(app, registry, HarnessAuthDeps{})
-	AddScheduleOperations(app, registry, func() AgentRuntime { return nil })
+	AddScheduleOperations(app, registry, func() coordinator.AgentRuntime { return nil })
 
 	operation.MountForTests(e, registry.Routes())
 }
