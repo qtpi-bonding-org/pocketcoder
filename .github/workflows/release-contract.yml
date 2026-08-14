@@ -71,7 +71,9 @@ jobs:
         run: go test ./internal/api ./internal/releaseartifact
 
   flutter-core:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    # Flutter's SDK setup is reliable on the standard GitHub runner; the
+    # Blacksmith image repeatedly failed before emitting analyzer diagnostics.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -79,14 +81,18 @@ jobs:
         with:
           channel: stable
 
+      - name: Resolve Flutter dependencies
+        working-directory: client/packages/pocketcoder_flutter
+        run: flutter pub get
+
       - name: Analyze Flutter Core
         working-directory: client/packages/pocketcoder_flutter
-        run: flutter analyze
+        run: flutter analyze --no-pub
 
       - name: Test verified release and status flows
         working-directory: client/packages/pocketcoder_flutter
         run: |
-          flutter test \
+          flutter test --no-pub \
             test/infrastructure/release/release_content_service_test.dart \
             test/domain/release/server_release_status_test.dart \
             test/application/release_status/release_status_cubit_test.dart \
