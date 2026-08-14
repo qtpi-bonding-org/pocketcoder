@@ -8,10 +8,8 @@ on:
       - 'server/pocketbase/internal/api/release_status*'
       - 'server/pocketbase/internal/releaseartifact/**'
       - 'workers/image-relay/**'
-      - 'client/packages/pocketcoder_flutter/lib/**/release/**'
-      - 'client/packages/pocketcoder_flutter/lib/application/release_status/**'
-      - 'client/packages/pocketcoder_flutter/lib/presentation/core/widgets/release_status_banner.dart'
-      - 'client/packages/pocketcoder_flutter/test/**/release/**'
+      - 'client/packages/pocketcoder_flutter/**'
+      - 'client/pubspec.lock'
       - '.github/workflows/release-contract.yml'
   pull_request:
     paths:
@@ -19,10 +17,8 @@ on:
       - 'server/pocketbase/internal/api/release_status*'
       - 'server/pocketbase/internal/releaseartifact/**'
       - 'workers/image-relay/**'
-      - 'client/packages/pocketcoder_flutter/lib/**/release/**'
-      - 'client/packages/pocketcoder_flutter/lib/application/release_status/**'
-      - 'client/packages/pocketcoder_flutter/lib/presentation/core/widgets/release_status_banner.dart'
-      - 'client/packages/pocketcoder_flutter/test/**/release/**'
+      - 'client/packages/pocketcoder_flutter/**'
+      - 'client/pubspec.lock'
       - '.github/workflows/release-contract.yml'
 
 permissions:
