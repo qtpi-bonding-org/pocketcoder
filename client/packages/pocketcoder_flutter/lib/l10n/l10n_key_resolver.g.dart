@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-08-14T07:10:56.646387
 
 import 'app_localizations.dart';
 
@@ -47,6 +48,7 @@ class L10nKeyResolver {
       'agent.config.empty' => _l10n.agentConfigEmpty,
       'agent.config.harness.model.label' => _l10n.agentConfigHarnessModelLabel,
       'agent.config.is.default.label' => _l10n.agentConfigIsDefaultLabel,
+      'agent.config.label' => _l10n.agentConfigLabel,
       'agent.config.mode.label' => _l10n.agentConfigModeLabel,
       'agent.config.name.label' => _l10n.agentConfigNameLabel,
       'agent.config.no.harness.models' => _l10n.agentConfigNoHarnessModels,
@@ -60,6 +62,7 @@ class L10nKeyResolver {
       'agent.config.title' => _l10n.agentConfigTitle,
       'agent.default.tuned' => _l10n.agentDefaultTuned,
       'agent.description.label' => _l10n.agentDescriptionLabel,
+      'agent.mode.label' => _l10n.agentModeLabel,
       'agent.models.label' => _l10n.agentModelsLabel,
       'agent.models.personas' => _l10n.agentModelsPersonas,
       'agent.name.label' => _l10n.agentNameLabel,
@@ -245,7 +248,25 @@ class L10nKeyResolver {
       'files.empty' => _l10n.filesEmpty,
       'files.title' => _l10n.filesTitle,
       'files.too.large.to.preview' => _l10n.filesTooLargeToPreview,
+      'harness.auth.account.login' => _l10n.harnessAuthAccountLogin,
+      'harness.auth.api.key' => _l10n.harnessAuthApiKey,
+      'harness.auth.cancel' => _l10n.harnessAuthCancel,
+      'harness.auth.challenge' => _l10n.harnessAuthChallenge,
       'harness.auth.challenge.target.copied' => _l10n.harnessAuthChallengeTargetCopied,
+      'harness.auth.disconnect' => _l10n.harnessAuthDisconnect,
+      'harness.auth.empty' => _l10n.harnessAuthEmpty,
+      'harness.auth.loading' => _l10n.harnessAuthLoading,
+      'harness.auth.no.api.key.body' => _l10n.harnessAuthNoApiKeyBody,
+      'harness.auth.no.api.key.title' => _l10n.harnessAuthNoApiKeyTitle,
+      'harness.auth.none' => _l10n.harnessAuthNone,
+      'harness.auth.one.time.code' => _l10n.harnessAuthOneTimeCode,
+      'harness.auth.paste.code' => _l10n.harnessAuthPasteCode,
+      'harness.auth.personal' => _l10n.harnessAuthPersonal,
+      'harness.auth.poll' => _l10n.harnessAuthPoll,
+      'harness.auth.refresh' => _l10n.harnessAuthRefresh,
+      'harness.auth.shared' => _l10n.harnessAuthShared,
+      'harness.auth.submit' => _l10n.harnessAuthSubmit,
+      'harness.auth.unavailable' => _l10n.harnessAuthUnavailable,
       'home.loading.chats' => _l10n.homeLoadingChats,
       'home.new.chat' => _l10n.homeNewChat,
       'home.no.chats' => _l10n.homeNoChats,
@@ -270,9 +291,12 @@ class L10nKeyResolver {
       'mcp.active.capabilities' => _l10n.mcpActiveCapabilities,
       'mcp.add.config.optional' => _l10n.mcpAddConfigOptional,
       'mcp.add.dialog.title' => _l10n.mcpAddDialogTitle,
+      'mcp.add.new' => _l10n.mcpAddNew,
+      'mcp.authorize' => _l10n.mcpAuthorize,
       'mcp.authorize.cap' => _l10n.mcpAuthorizeCap,
       'mcp.capabilities.registry' => _l10n.mcpCapabilitiesRegistry,
       'mcp.connect.cap' => _l10n.mcpConnectCap,
+      'mcp.deny' => _l10n.mcpDeny,
       'mcp.edit.config' => _l10n.mcpEditConfig,
       'mcp.enter.secrets' => _l10n.mcpEnterSecrets,
       'mcp.image.optional.label' => _l10n.mcpImageOptionalLabel,
@@ -749,6 +773,11 @@ class L10nKeyResolver {
       'deployment.status.prefix' => _l10n.deploymentStatusPrefix(args?['status'] as String? ?? ''),
       'deployment.sync.attempt' => _l10n.deploymentSyncAttempt(args?['attempt'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
+      'harness.auth.account' => _l10n.harnessAuthAccount(args?['account'] as String? ?? '', args?['visibility'] as String? ?? ''),
+      'harness.auth.attempt' => _l10n.harnessAuthAttempt(args?['id'] as String? ?? ''),
+      'harness.auth.details' => _l10n.harnessAuthDetails(args?['details'] as String? ?? ''),
+      'harness.auth.mode' => _l10n.harnessAuthMode(args?['mode'] as String? ?? ''),
+      'harness.auth.status' => _l10n.harnessAuthStatus(args?['status'] as String? ?? ''),
       'home.error.prefix' => _l10n.homeErrorPrefix(args?['error'] as String? ?? ''),
       'llm.api.key.dialog.title' => _l10n.llmApiKeyDialogTitle(args?['provider'] as String? ?? ''),
       'llm.enter.credentials' => _l10n.llmEnterCredentials(args?['provider'] as String? ?? ''),
@@ -824,6 +853,7 @@ class L10nKeyResolver {
     'agent.config.error.prefix',
     'agent.config.harness.model.label',
     'agent.config.is.default.label',
+    'agent.config.label',
     'agent.config.mode.label',
     'agent.config.name.label',
     'agent.config.no.harness.models',
@@ -838,6 +868,7 @@ class L10nKeyResolver {
     'agent.default.tuned',
     'agent.description.label',
     'agent.dialog.title',
+    'agent.mode.label',
     'agent.models.label',
     'agent.models.personas',
     'agent.name.label',
@@ -1039,7 +1070,30 @@ class L10nKeyResolver {
     'files.empty',
     'files.title',
     'files.too.large.to.preview',
+    'harness.auth.account',
+    'harness.auth.account.login',
+    'harness.auth.api.key',
+    'harness.auth.attempt',
+    'harness.auth.cancel',
+    'harness.auth.challenge',
     'harness.auth.challenge.target.copied',
+    'harness.auth.details',
+    'harness.auth.disconnect',
+    'harness.auth.empty',
+    'harness.auth.loading',
+    'harness.auth.mode',
+    'harness.auth.no.api.key.body',
+    'harness.auth.no.api.key.title',
+    'harness.auth.none',
+    'harness.auth.one.time.code',
+    'harness.auth.paste.code',
+    'harness.auth.personal',
+    'harness.auth.poll',
+    'harness.auth.refresh',
+    'harness.auth.shared',
+    'harness.auth.status',
+    'harness.auth.submit',
+    'harness.auth.unavailable',
     'home.error.prefix',
     'home.loading.chats',
     'home.new.chat',
@@ -1069,10 +1123,13 @@ class L10nKeyResolver {
     'mcp.active.capabilities',
     'mcp.add.config.optional',
     'mcp.add.dialog.title',
+    'mcp.add.new',
+    'mcp.authorize',
     'mcp.authorize.cap',
     'mcp.authorize.dialog.title',
     'mcp.capabilities.registry',
     'mcp.connect.cap',
+    'mcp.deny',
     'mcp.edit.config',
     'mcp.enter.secrets',
     'mcp.image.label',
@@ -1596,6 +1653,7 @@ class L10nKeyResolver {
     'agentConfigErrorPrefix': 'agent.config.error.prefix',
     'agentConfigHarnessModelLabel': 'agent.config.harness.model.label',
     'agentConfigIsDefaultLabel': 'agent.config.is.default.label',
+    'agentConfigLabel': 'agent.config.label',
     'agentConfigModeLabel': 'agent.config.mode.label',
     'agentConfigNameLabel': 'agent.config.name.label',
     'agentConfigNoHarnessModels': 'agent.config.no.harness.models',
@@ -1610,6 +1668,7 @@ class L10nKeyResolver {
     'agentDefaultTuned': 'agent.default.tuned',
     'agentDescriptionLabel': 'agent.description.label',
     'agentDialogTitle': 'agent.dialog.title',
+    'agentModeLabel': 'agent.mode.label',
     'agentModelsLabel': 'agent.models.label',
     'agentModelsPersonas': 'agent.models.personas',
     'agentNameLabel': 'agent.name.label',
@@ -1811,7 +1870,30 @@ class L10nKeyResolver {
     'filesEmpty': 'files.empty',
     'filesTitle': 'files.title',
     'filesTooLargeToPreview': 'files.too.large.to.preview',
+    'harnessAuthAccount': 'harness.auth.account',
+    'harnessAuthAccountLogin': 'harness.auth.account.login',
+    'harnessAuthApiKey': 'harness.auth.api.key',
+    'harnessAuthAttempt': 'harness.auth.attempt',
+    'harnessAuthCancel': 'harness.auth.cancel',
+    'harnessAuthChallenge': 'harness.auth.challenge',
     'harnessAuthChallengeTargetCopied': 'harness.auth.challenge.target.copied',
+    'harnessAuthDetails': 'harness.auth.details',
+    'harnessAuthDisconnect': 'harness.auth.disconnect',
+    'harnessAuthEmpty': 'harness.auth.empty',
+    'harnessAuthLoading': 'harness.auth.loading',
+    'harnessAuthMode': 'harness.auth.mode',
+    'harnessAuthNoApiKeyBody': 'harness.auth.no.api.key.body',
+    'harnessAuthNoApiKeyTitle': 'harness.auth.no.api.key.title',
+    'harnessAuthNone': 'harness.auth.none',
+    'harnessAuthOneTimeCode': 'harness.auth.one.time.code',
+    'harnessAuthPasteCode': 'harness.auth.paste.code',
+    'harnessAuthPersonal': 'harness.auth.personal',
+    'harnessAuthPoll': 'harness.auth.poll',
+    'harnessAuthRefresh': 'harness.auth.refresh',
+    'harnessAuthShared': 'harness.auth.shared',
+    'harnessAuthStatus': 'harness.auth.status',
+    'harnessAuthSubmit': 'harness.auth.submit',
+    'harnessAuthUnavailable': 'harness.auth.unavailable',
     'homeErrorPrefix': 'home.error.prefix',
     'homeLoadingChats': 'home.loading.chats',
     'homeNewChat': 'home.new.chat',
@@ -1841,10 +1923,13 @@ class L10nKeyResolver {
     'mcpActiveCapabilities': 'mcp.active.capabilities',
     'mcpAddConfigOptional': 'mcp.add.config.optional',
     'mcpAddDialogTitle': 'mcp.add.dialog.title',
+    'mcpAddNew': 'mcp.add.new',
+    'mcpAuthorize': 'mcp.authorize',
     'mcpAuthorizeCap': 'mcp.authorize.cap',
     'mcpAuthorizeDialogTitle': 'mcp.authorize.dialog.title',
     'mcpCapabilitiesRegistry': 'mcp.capabilities.registry',
     'mcpConnectCap': 'mcp.connect.cap',
+    'mcpDeny': 'mcp.deny',
     'mcpEditConfig': 'mcp.edit.config',
     'mcpEnterSecrets': 'mcp.enter.secrets',
     'mcpImageLabel': 'mcp.image.label',
@@ -2365,6 +2450,7 @@ class L10nKeyResolver {
     'agent.config.error.prefix': 'agentConfigErrorPrefix',
     'agent.config.harness.model.label': 'agentConfigHarnessModelLabel',
     'agent.config.is.default.label': 'agentConfigIsDefaultLabel',
+    'agent.config.label': 'agentConfigLabel',
     'agent.config.mode.label': 'agentConfigModeLabel',
     'agent.config.name.label': 'agentConfigNameLabel',
     'agent.config.no.harness.models': 'agentConfigNoHarnessModels',
@@ -2379,6 +2465,7 @@ class L10nKeyResolver {
     'agent.default.tuned': 'agentDefaultTuned',
     'agent.description.label': 'agentDescriptionLabel',
     'agent.dialog.title': 'agentDialogTitle',
+    'agent.mode.label': 'agentModeLabel',
     'agent.models.label': 'agentModelsLabel',
     'agent.models.personas': 'agentModelsPersonas',
     'agent.name.label': 'agentNameLabel',
@@ -2580,7 +2667,30 @@ class L10nKeyResolver {
     'files.empty': 'filesEmpty',
     'files.title': 'filesTitle',
     'files.too.large.to.preview': 'filesTooLargeToPreview',
+    'harness.auth.account': 'harnessAuthAccount',
+    'harness.auth.account.login': 'harnessAuthAccountLogin',
+    'harness.auth.api.key': 'harnessAuthApiKey',
+    'harness.auth.attempt': 'harnessAuthAttempt',
+    'harness.auth.cancel': 'harnessAuthCancel',
+    'harness.auth.challenge': 'harnessAuthChallenge',
     'harness.auth.challenge.target.copied': 'harnessAuthChallengeTargetCopied',
+    'harness.auth.details': 'harnessAuthDetails',
+    'harness.auth.disconnect': 'harnessAuthDisconnect',
+    'harness.auth.empty': 'harnessAuthEmpty',
+    'harness.auth.loading': 'harnessAuthLoading',
+    'harness.auth.mode': 'harnessAuthMode',
+    'harness.auth.no.api.key.body': 'harnessAuthNoApiKeyBody',
+    'harness.auth.no.api.key.title': 'harnessAuthNoApiKeyTitle',
+    'harness.auth.none': 'harnessAuthNone',
+    'harness.auth.one.time.code': 'harnessAuthOneTimeCode',
+    'harness.auth.paste.code': 'harnessAuthPasteCode',
+    'harness.auth.personal': 'harnessAuthPersonal',
+    'harness.auth.poll': 'harnessAuthPoll',
+    'harness.auth.refresh': 'harnessAuthRefresh',
+    'harness.auth.shared': 'harnessAuthShared',
+    'harness.auth.status': 'harnessAuthStatus',
+    'harness.auth.submit': 'harnessAuthSubmit',
+    'harness.auth.unavailable': 'harnessAuthUnavailable',
     'home.error.prefix': 'homeErrorPrefix',
     'home.loading.chats': 'homeLoadingChats',
     'home.new.chat': 'homeNewChat',
@@ -2610,10 +2720,13 @@ class L10nKeyResolver {
     'mcp.active.capabilities': 'mcpActiveCapabilities',
     'mcp.add.config.optional': 'mcpAddConfigOptional',
     'mcp.add.dialog.title': 'mcpAddDialogTitle',
+    'mcp.add.new': 'mcpAddNew',
+    'mcp.authorize': 'mcpAuthorize',
     'mcp.authorize.cap': 'mcpAuthorizeCap',
     'mcp.authorize.dialog.title': 'mcpAuthorizeDialogTitle',
     'mcp.capabilities.registry': 'mcpCapabilitiesRegistry',
     'mcp.connect.cap': 'mcpConnectCap',
+    'mcp.deny': 'mcpDeny',
     'mcp.edit.config': 'mcpEditConfig',
     'mcp.enter.secrets': 'mcpEnterSecrets',
     'mcp.image.label': 'mcpImageLabel',
@@ -3141,6 +3254,7 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) agentConfigErrorPrefix(String error) => ('agent.config.error.prefix', {'error': error});
   static const agentConfigHarnessModelLabel = 'agent.config.harness.model.label';
   static const agentConfigIsDefaultLabel = 'agent.config.is.default.label';
+  static const agentConfigLabel = 'agent.config.label';
   static const agentConfigModeLabel = 'agent.config.mode.label';
   static const agentConfigNameLabel = 'agent.config.name.label';
   static const agentConfigNoHarnessModels = 'agent.config.no.harness.models';
@@ -3155,6 +3269,7 @@ abstract class L10nKeys {
   static const agentDefaultTuned = 'agent.default.tuned';
   static const agentDescriptionLabel = 'agent.description.label';
   static (String, Map<String, dynamic>) agentDialogTitle(String name) => ('agent.dialog.title', {'name': name});
+  static const agentModeLabel = 'agent.mode.label';
   static const agentModelsLabel = 'agent.models.label';
   static const agentModelsPersonas = 'agent.models.personas';
   static const agentNameLabel = 'agent.name.label';
@@ -3356,7 +3471,30 @@ abstract class L10nKeys {
   static const filesEmpty = 'files.empty';
   static const filesTitle = 'files.title';
   static const filesTooLargeToPreview = 'files.too.large.to.preview';
+  static (String, Map<String, dynamic>) harnessAuthAccount(String account, String visibility) => ('harness.auth.account', {'account': account, 'visibility': visibility});
+  static const harnessAuthAccountLogin = 'harness.auth.account.login';
+  static const harnessAuthApiKey = 'harness.auth.api.key';
+  static (String, Map<String, dynamic>) harnessAuthAttempt(String id) => ('harness.auth.attempt', {'id': id});
+  static const harnessAuthCancel = 'harness.auth.cancel';
+  static const harnessAuthChallenge = 'harness.auth.challenge';
   static const harnessAuthChallengeTargetCopied = 'harness.auth.challenge.target.copied';
+  static (String, Map<String, dynamic>) harnessAuthDetails(String details) => ('harness.auth.details', {'details': details});
+  static const harnessAuthDisconnect = 'harness.auth.disconnect';
+  static const harnessAuthEmpty = 'harness.auth.empty';
+  static const harnessAuthLoading = 'harness.auth.loading';
+  static (String, Map<String, dynamic>) harnessAuthMode(String mode) => ('harness.auth.mode', {'mode': mode});
+  static const harnessAuthNoApiKeyBody = 'harness.auth.no.api.key.body';
+  static const harnessAuthNoApiKeyTitle = 'harness.auth.no.api.key.title';
+  static const harnessAuthNone = 'harness.auth.none';
+  static const harnessAuthOneTimeCode = 'harness.auth.one.time.code';
+  static const harnessAuthPasteCode = 'harness.auth.paste.code';
+  static const harnessAuthPersonal = 'harness.auth.personal';
+  static const harnessAuthPoll = 'harness.auth.poll';
+  static const harnessAuthRefresh = 'harness.auth.refresh';
+  static const harnessAuthShared = 'harness.auth.shared';
+  static (String, Map<String, dynamic>) harnessAuthStatus(String status) => ('harness.auth.status', {'status': status});
+  static const harnessAuthSubmit = 'harness.auth.submit';
+  static const harnessAuthUnavailable = 'harness.auth.unavailable';
   static (String, Map<String, dynamic>) homeErrorPrefix(String error) => ('home.error.prefix', {'error': error});
   static const homeLoadingChats = 'home.loading.chats';
   static const homeNewChat = 'home.new.chat';
@@ -3386,10 +3524,13 @@ abstract class L10nKeys {
   static const mcpActiveCapabilities = 'mcp.active.capabilities';
   static const mcpAddConfigOptional = 'mcp.add.config.optional';
   static const mcpAddDialogTitle = 'mcp.add.dialog.title';
+  static const mcpAddNew = 'mcp.add.new';
+  static const mcpAuthorize = 'mcp.authorize';
   static const mcpAuthorizeCap = 'mcp.authorize.cap';
   static (String, Map<String, dynamic>) mcpAuthorizeDialogTitle(String name) => ('mcp.authorize.dialog.title', {'name': name});
   static const mcpCapabilitiesRegistry = 'mcp.capabilities.registry';
   static const mcpConnectCap = 'mcp.connect.cap';
+  static const mcpDeny = 'mcp.deny';
   static const mcpEditConfig = 'mcp.edit.config';
   static const mcpEnterSecrets = 'mcp.enter.secrets';
   static (String, Map<String, dynamic>) mcpImageLabel(String image) => ('mcp.image.label', {'image': image});

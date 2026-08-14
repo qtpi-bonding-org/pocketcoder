@@ -62,8 +62,8 @@ class SkillsView extends StatelessWidget {
     }
     if (data.error != null) {
       return Center(
-        child:
-            Text('ERROR: ${data.error}', style: TextStyle(color: colors.error)),
+        child: Text(context.l10n.homeErrorPrefix(data.error.toString()),
+            style: TextStyle(color: colors.error)),
       );
     }
 

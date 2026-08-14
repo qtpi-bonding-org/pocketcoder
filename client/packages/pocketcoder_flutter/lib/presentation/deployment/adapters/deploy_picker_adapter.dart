@@ -49,14 +49,17 @@ class DeployPickerAdapter
       if (unlocked != true) return;
     }
     if (option.url != null) {
-      await launchUrl(Uri.parse(option.url!),
-          mode: LaunchMode.externalApplication);
+      final url = option.url;
+      if (url == null) return;
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else if (option.routePath != null && context.mounted) {
+      final routePath = option.routePath;
+      if (routePath == null) return;
       final currentCredentials = credentials;
       if (currentCredentials == null) {
         context.pushNamed(RouteNames.onboardingDeploy, extra: option);
       } else {
-        context.push(option.routePath!, extra: currentCredentials);
+        context.push(routePath, extra: currentCredentials);
       }
     }
   }

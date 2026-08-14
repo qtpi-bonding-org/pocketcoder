@@ -1,6 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
+// ignore_for_file: duplicate_import, unused_import
 
 import 'dart:async';
 

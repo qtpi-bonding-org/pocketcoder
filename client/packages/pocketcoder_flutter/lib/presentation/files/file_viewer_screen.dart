@@ -15,7 +15,8 @@ const _imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
 const _maxPreviewBytes = 10 * 1024 * 1024;
 
 class FileViewerScreen extends StatelessWidget {
-  const FileViewerScreen({super.key, required this.path, required this.repository});
+  const FileViewerScreen(
+      {super.key, required this.path, required this.repository});
 
   final String path;
   final IFilesRepository repository;
@@ -54,25 +55,34 @@ class FileViewerView extends StatelessWidget {
 
   Widget _buildBody(BuildContext context) {
     if (loading) return const Center(child: TerminalLoadingIndicator());
-    if (error != null) return Center(child: TerminalText('ERROR: $error', alpha: 0.8));
+    if (error != null) {
+      return Center(
+          child: TerminalText(context.l10n.homeErrorPrefix(error.toString()),
+              alpha: 0.8));
+    }
     final value = bytes;
     if (value == null) return const SizedBox.shrink();
     if (_imageExtensions.any(path.toLowerCase().endsWith)) {
       return Center(child: Image.memory(value));
     }
     if (value.length > _maxPreviewBytes) {
-      return Center(child: TerminalText(context.l10n.filesTooLargeToPreview, alpha: 0.5));
+      return Center(
+          child: TerminalText(context.l10n.filesTooLargeToPreview, alpha: 0.5));
     }
     try {
       return SingleChildScrollView(
         padding: EdgeInsets.all(AppSizes.space * 2),
         child: SelectableText(
           utf8.decode(value),
-          style: TextStyle(fontFamily: AppFonts.bodyFamily, fontSize: AppSizes.fontMini, package: 'pocketcoder_flutter'),
+          style: TextStyle(
+              fontFamily: AppFonts.bodyFamily,
+              fontSize: AppSizes.fontMini,
+              package: 'pocketcoder_flutter'),
         ),
       );
     } on FormatException {
-      return Center(child: TerminalText(context.l10n.filesCantPreviewType, alpha: 0.5));
+      return Center(
+          child: TerminalText(context.l10n.filesCantPreviewType, alpha: 0.5));
     }
   }
 }

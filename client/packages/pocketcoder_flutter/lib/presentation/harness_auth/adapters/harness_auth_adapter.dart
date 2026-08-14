@@ -116,13 +116,14 @@ class HarnessAuthAdapter
     final matching =
         cubit.providerKeysForHarness(harness.cliId.trim().toLowerCase());
     if (matching.isEmpty) {
-      _showError(context, 'No provider key found for ${harness.cliId}.');
+      _showError(
+          context, context.l10n.harnessAuthProviderKeyMissing(harness.cliId));
       return;
     }
     final selected = await showDialog<String>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: 'Choose provider key',
+        title: context.l10n.harnessAuthChooseProviderKey,
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -137,7 +138,7 @@ class HarnessAuthAdapter
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
         ],
       ),
@@ -157,24 +158,22 @@ class HarnessAuthAdapter
   Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
         context: context,
         builder: (dialogContext) => TerminalDialog(
-          title: 'Who uses this harness account?',
-          content: const Text(
-            'A shared account reuses one login across profiles on this PocketCoder server. A personal account keeps a separate login.',
-          ),
+          title: context.l10n.harnessAuthVisibilityTitle,
+          content: Text(context.l10n.harnessAuthVisibilityBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext)
                   .pop(harnessAccountVisibilityPersonal),
-              child: const Text('Personal'),
+              child: Text(context.l10n.harnessAuthPersonal),
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext)
                   .pop(harnessAccountVisibilityDeployment),
-              child: const Text('Shared'),
+              child: Text(context.l10n.harnessAuthShared),
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.actionCancel),
             ),
           ],
         ),
