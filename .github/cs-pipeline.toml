@@ -11,6 +11,7 @@ model = "deepseek/deepseek-v4-flash"
 tone = "shipping-update"
 hashtags = ["#BuildInPublic", "#Shipaton", "#selfhosted"]
 max_posts = 1
+max_characters = 280
 
 [aggregation]
 # One daily summary covers all meaningful commits in this rolling window.
