@@ -64,9 +64,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
 		chatID := re.Request.PathValue("chatId")
-		chat, err := app.FindRecordById("chats", chatID)
-		if err != nil || chat.GetString("user") != re.Auth.Id {
-			return re.NotFoundError("Chat not found", err)
+		_, err := requireOwnedRecord(app, re, "chats", chatID)
+		if err != nil {
+			return err
 		}
 		var input acpsdk.PromptRequest
 		if err := re.BindBody(&input); err != nil {
@@ -104,7 +104,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 		}
 		runID, err := service.StartPrompt(chatID, prompt,
 			func(context.Context) (string, error) { return agentSessionForChat(app, chatID, re.Auth.Id) },
-			func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID, ctx, ollamaBaseURL) },
+			func(ctx context.Context) (coordinator.SessionProfile, error) {
+				return buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
+			},
 			func(ctx context.Context, sessionID string) error {
 				profile, perr := buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
 				if perr != nil {
@@ -140,9 +142,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
 		chatID := re.Request.PathValue("chatId")
-		chat, err := app.FindRecordById("chats", chatID)
-		if err != nil || chat.GetString("user") != re.Auth.Id {
-			return re.NotFoundError("Chat not found", err)
+		_, err := requireOwnedRecord(app, re, "chats", chatID)
+		if err != nil {
+			return err
 		}
 		cursor := parseCursor(re)
 		att := service.Attach(chatID, cursor)
@@ -159,7 +161,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 			if err != nil {
 				_ = writeFlush(re.Response, flusher, service.NextSeq(chatID), events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
 			} else if err := service.StreamColdReplay(re.Request.Context(), chatID, sessionID,
-				func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID, ctx, ollamaBaseURL) },
+				func(ctx context.Context) (coordinator.SessionProfile, error) {
+					return buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
+				},
 				func(seq int, ev events.Event) error {
 					return writeFlush(re.Response, flusher, seq, ev)
 				}); err != nil {
@@ -204,9 +208,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
 		chatID := re.Request.PathValue("chatId")
-		chat, err := app.FindRecordById("chats", chatID)
-		if err != nil || chat.GetString("user") != re.Auth.Id {
-			return re.NotFoundError("Chat not found", err)
+		_, err := requireOwnedRecord(app, re, "chats", chatID)
+		if err != nil {
+			return err
 		}
 		if err := service.Cancel(re.Request.Context(), chatID); err != nil {
 			if errors.Is(err, coordinator.ErrNoActiveRun) {
@@ -222,9 +226,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
 		chatID := re.Request.PathValue("chatId")
-		chat, err := app.FindRecordById("chats", chatID)
-		if err != nil || chat.GetString("user") != re.Auth.Id {
-			return re.NotFoundError("Chat not found", err)
+		_, err := requireOwnedRecord(app, re, "chats", chatID)
+		if err != nil {
+			return err
 		}
 		var input struct {
 			ModeID string `json:"modeId"`
@@ -246,9 +250,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
 		chatID := re.Request.PathValue("chatId")
-		chat, err := app.FindRecordById("chats", chatID)
-		if err != nil || chat.GetString("user") != re.Auth.Id {
-			return re.NotFoundError("Chat not found", err)
+		_, err := requireOwnedRecord(app, re, "chats", chatID)
+		if err != nil {
+			return err
 		}
 		var req acpsdk.SetSessionConfigOptionRequest
 		if err := re.BindBody(&req); err != nil {
@@ -273,9 +277,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
 		chatID := re.Request.PathValue("chatId")
-		chat, err := app.FindRecordById("chats", chatID)
-		if err != nil || chat.GetString("user") != re.Auth.Id {
-			return re.NotFoundError("Chat not found", err)
+		_, err := requireOwnedRecord(app, re, "chats", chatID)
+		if err != nil {
+			return err
 		}
 		var input acpsdk.RequestPermissionResponse
 		if err := re.BindBody(&input); err != nil {
@@ -313,9 +317,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 			return apis.NewApiError(http.StatusServiceUnavailable, "Agent service is not configured", nil)
 		}
 		chatID := re.Request.PathValue("chatId")
-		chat, err := app.FindRecordById("chats", chatID)
-		if err != nil || chat.GetString("user") != re.Auth.Id {
-			return re.NotFoundError("Chat not found", err)
+		_, err := requireOwnedRecord(app, re, "chats", chatID)
+		if err != nil {
+			return err
 		}
 		var input struct {
 			Action  string         `json:"action"`

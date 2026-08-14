@@ -86,8 +86,8 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 	// Example: GET /api/pocketcoder/v1/logs/pocketcoder-sandbox
 	registry.Add(operation.Route{OperationID: "streamContainerLogs", Method: http.MethodGet, Path: "/api/pocketcoder/v1/logs/{containerName}", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
 		// 🛡️ Security Gate: Only allow authenticated admins to stream system logs.
-		if re.Auth == nil || re.Auth.GetString("role") != "admin" {
-			return re.ForbiddenError("Only admins can stream logs.", nil)
+		if err := requireRole(re, "admin"); err != nil {
+			return err
 		}
 
 		containerName := re.Request.PathValue("containerName")

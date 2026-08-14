@@ -32,16 +32,6 @@ const (
 
 var ollamaModelName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._/-]*(?::[A-Za-z0-9][A-Za-z0-9._-]*)?$`)
 
-func requireAdmin(re *core.RequestEvent) error {
-	if re.Auth == nil {
-		return pocketCoderError(re, http.StatusUnauthorized, "Authentication required")
-	}
-	if re.Auth.GetString("role") != "admin" {
-		return pocketCoderError(re, http.StatusForbidden, "Insufficient permissions")
-	}
-	return nil
-}
-
 type ollamaModel struct {
 	Name string `json:"name"`
 	Size int64  `json:"size"`
@@ -275,7 +265,7 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 	}})
 
 	registry.Add(operation.Route{OperationID: "pullOllamaModel", Method: http.MethodPost, Path: "/api/pocketcoder/v1/ollama/pull", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
-		if err := requireAdmin(re); err != nil {
+		if err := requireRole(re, "admin"); err != nil {
 			return err
 		}
 		var input ollamaPullRequest

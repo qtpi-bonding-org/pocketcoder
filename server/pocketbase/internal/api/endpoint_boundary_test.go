@@ -39,38 +39,6 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 }
 
 func TestEveryPocketCoderEndpointHasAnAuthBoundary(t *testing.T) {
-	testsByEndpoint := []struct {
-		name   string
-		method string
-		url    string
-		body   string
-	}{
-		{"promptChat", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/prompt", `{"prompt":[{"type":"text","text":"test"}]}`},
-		{"streamChatEvents", http.MethodGet, "/api/pocketcoder/v1/chats/test-chat/stream?cursor=0", ""},
-		{"cancelChatSession", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/cancel", ""},
-		{"setChatMode", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/set-mode", `{"modeId":"approve"}`},
-		{"setChatConfigOption", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/set-config-option", `{"configId":"provider","value":"openrouter"}`},
-		{"respondToPermission", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/request-permission/test-request", `{}`},
-		{"respondToElicitation", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/elicitation/test-request", `{}`},
-		{"getHarnessAuthStatus", http.MethodPost, "/api/pocketcoder/v1/harness-auth/status", `{"harness":"test-harness"}`},
-		{"startHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/start", `{"harness":"test-harness","credentialMode":"none"}`},
-		{"pollHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/poll", `{"harness":"test-harness"}`},
-		{"submitHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/submit", `{"harness":"test-harness","code":"test"}`},
-		{"cancelHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/cancel", `{"harness":"test-harness"}`},
-		{"disconnectHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/disconnect", `{"harness":"test-harness"}`},
-		{"runScheduleNow", http.MethodPost, "/api/pocketcoder/v1/schedules/test-schedule/run", ""},
-		{"getWorkspaceFile", http.MethodGet, "/api/pocketcoder/v1/files?path=test.txt", ""},
-		{"listWorkspaceFiles", http.MethodGet, "/api/pocketcoder/v1/files-list", ""},
-		{"listOllamaModels", http.MethodGet, "/api/pocketcoder/v1/ollama/models", ""},
-		{"pullOllamaModel", http.MethodPost, "/api/pocketcoder/v1/ollama/pull", `{"model":"qwen3:0.6b"}`},
-		{"executeMcpRequest", http.MethodPost, "/api/pocketcoder/v1/mcp/request", `{"server_name":"test-server"}`},
-		{"storeMcpOAuthToken", http.MethodPost, "/api/pocketcoder/v1/mcp/oauth/store", `{"server_name":"test-server","access_token":"test-token"}`},
-		{"getReleaseStatus", http.MethodGet, "/api/pocketcoder/v1/release/status", ""},
-		{"streamContainerLogs", http.MethodGet, "/api/pocketcoder/v1/logs/pocketcoder-pocketbase", ""},
-		{"proxyObservability", http.MethodGet, "/api/pocketcoder/v1/proxy/observability/", ""},
-		{"sendPushNotification", http.MethodPost, "/api/pocketcoder/v1/push", `{"user_id":"test-user","type":"test"}`},
-	}
-
 	for _, tc := range testsByEndpoint {
 		t.Run(tc.name, func(t *testing.T) {
 			scenario := tests.ApiScenario{
@@ -91,6 +59,38 @@ func TestEveryPocketCoderEndpointHasAnAuthBoundary(t *testing.T) {
 			scenario.Test(t)
 		})
 	}
+}
+
+var testsByEndpoint = []struct {
+	name   string
+	method string
+	url    string
+	body   string
+}{
+	{"promptChat", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/prompt", `{"prompt":[{"type":"text","text":"test"}]}`},
+	{"streamChatEvents", http.MethodGet, "/api/pocketcoder/v1/chats/test-chat/stream?cursor=0", ""},
+	{"cancelChatSession", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/cancel", ""},
+	{"setChatMode", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/set-mode", `{"modeId":"approve"}`},
+	{"setChatConfigOption", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/set-config-option", `{"configId":"provider","value":"openrouter"}`},
+	{"respondToPermission", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/request-permission/test-request", `{}`},
+	{"respondToElicitation", http.MethodPost, "/api/pocketcoder/v1/chats/test-chat/session/elicitation/test-request", `{}`},
+	{"getHarnessAuthStatus", http.MethodPost, "/api/pocketcoder/v1/harness-auth/status", `{"harness":"test-harness"}`},
+	{"startHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/start", `{"harness":"test-harness","credentialMode":"none"}`},
+	{"pollHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/poll", `{"harness":"test-harness"}`},
+	{"submitHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/submit", `{"harness":"test-harness","code":"test"}`},
+	{"cancelHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/cancel", `{"harness":"test-harness"}`},
+	{"disconnectHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/disconnect", `{"harness":"test-harness"}`},
+	{"runScheduleNow", http.MethodPost, "/api/pocketcoder/v1/schedules/test-schedule/run", ""},
+	{"getWorkspaceFile", http.MethodGet, "/api/pocketcoder/v1/files?path=test.txt", ""},
+	{"listWorkspaceFiles", http.MethodGet, "/api/pocketcoder/v1/files-list", ""},
+	{"listOllamaModels", http.MethodGet, "/api/pocketcoder/v1/ollama/models", ""},
+	{"pullOllamaModel", http.MethodPost, "/api/pocketcoder/v1/ollama/pull", `{"model":"qwen3:0.6b"}`},
+	{"executeMcpRequest", http.MethodPost, "/api/pocketcoder/v1/mcp/request", `{"server_name":"test-server"}`},
+	{"storeMcpOAuthToken", http.MethodPost, "/api/pocketcoder/v1/mcp/oauth/store", `{"server_name":"test-server","access_token":"test-token"}`},
+	{"getReleaseStatus", http.MethodGet, "/api/pocketcoder/v1/release/status", ""},
+	{"streamContainerLogs", http.MethodGet, "/api/pocketcoder/v1/logs/pocketcoder-pocketbase", ""},
+	{"proxyObservability", http.MethodGet, "/api/pocketcoder/v1/proxy/observability/", ""},
+	{"sendPushNotification", http.MethodPost, "/api/pocketcoder/v1/push", `{"user_id":"test-user","type":"test"}`},
 }
 
 func TestCompatibilityEndpointIsPublicAtTheOperationBoundary(t *testing.T) {
