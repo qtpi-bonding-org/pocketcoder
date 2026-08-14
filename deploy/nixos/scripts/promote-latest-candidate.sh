@@ -8,9 +8,15 @@ case "$channel" in stable | beta | nightly) ;; *) echo "invalid channel" >&2; ex
 
 api='https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions'
 auth="Authorization: Bearer $GH_TOKEN"
+source_commit=$(git rev-parse HEAD)
 run=$(curl -sf -H "$auth" "$api/workflows/nixos-image.yml/runs?branch=main&status=completed&per_page=20" |
-  jq -r '.workflow_runs[] | select(.conclusion == "success") | .id' | head -1)
-test -n "$run" || { echo 'no successful NixOS candidate run found' >&2; exit 1; }
+  jq -r --arg source_commit "$source_commit" \
+    '.workflow_runs[] | select(.conclusion == "success" and .head_sha == $source_commit) | .id' |
+  head -1)
+test -n "$run" || {
+  echo "no successful NixOS candidate run found for commit $source_commit" >&2
+  exit 1
+}
 
 artifact=$(curl -sf -H "$auth" "$api/runs/$run/artifacts?per_page=100" |
   jq -r '.artifacts[] | select(.name | startswith("release-candidate-manifest-")) | .archive_download_url' | head -1)
