@@ -16,22 +16,25 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package api
+package mcpserver
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
-func TestMCPResolveImageDigest_AlreadyPinnedIsUnchanged(t *testing.T) {
+func TestResolveImageDigest_AlreadyPinnedIsUnchanged(t *testing.T) {
 	pinned := "mcp/time@sha256:9c46a918633fb474bf8035e3ee90ebac6bcf2b18ccb00679ac4c179cba0ebfcf"
-	got, err := resolveImageDigest("test-verify", pinned)
+	got, err := ResolveImageDigest(context.Background(), "test-verify", pinned)
 	if err != nil {
-		t.Fatalf("resolveImageDigest: %v", err)
+		t.Fatalf("ResolveImageDigest: %v", err)
 	}
 	if got != pinned {
 		t.Fatalf("got %q, want unchanged %q", got, pinned)
 	}
 }
 
-func TestMCPNormalizeImageRef(t *testing.T) {
+func TestNormalizeImageRef(t *testing.T) {
 	tests := []struct {
 		name, image, want string
 	}{
