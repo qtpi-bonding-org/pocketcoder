@@ -157,6 +157,37 @@ func (c *Client) Logs(ctx context.Context, containerName string, tail int) (stri
 	return decoded, nil
 }
 
+// StreamLogs opens a live Docker log stream without buffering it. The normal
+// client timeout is unsuitable for follow=1; cancellation is controlled by
+// the caller's context instead.
+func (c *Client) StreamLogs(ctx context.Context, containerName string, tail int) (io.ReadCloser, error) {
+	q := url.Values{"stdout": {"1"}, "stderr": {"1"}, "follow": {"1"}, "timestamps": {"0"}}
+	if tail > 0 {
+		q.Set("tail", strconv.Itoa(tail))
+	} else {
+		q.Set("tail", "100")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/containers/"+containerName+"/logs?"+q.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	streamClient := &http.Client{Transport: c.http.Transport, CheckRedirect: c.http.CheckRedirect, Jar: c.http.Jar}
+	resp, err := streamClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("stream logs %s: %w", containerName, err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		resp.Body.Close()
+		return nil, ErrContainerNotFound
+	}
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("stream logs %s: docker API returned %s: %s", containerName, resp.Status, string(body))
+	}
+	return resp.Body, nil
+}
+
 func decodeDockerLogStream(raw []byte) (string, error) {
 	const frameHeaderLen = 8
 	if len(raw) < frameHeaderLen {
