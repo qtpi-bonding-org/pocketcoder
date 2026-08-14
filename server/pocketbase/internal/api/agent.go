@@ -37,6 +37,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
@@ -65,7 +66,7 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 	if workspace == "" {
 		workspace = "/workspace"
 	}
-	ollamaBaseURL := resolveOllamaURL()
+	ollamaBaseURL := ollama.ResolveBaseURL()
 	var service AgentRuntime = deps.Runtime
 	var configErr error
 	if service == nil {

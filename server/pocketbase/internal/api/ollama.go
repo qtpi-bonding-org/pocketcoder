@@ -6,225 +6,28 @@ package api
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseartifact"
 )
-
-const (
-	defaultOllamaURL       = "http://ollama:11434"
-	ollamaContainerName    = "pocketcoder-ollama"
-	ollamaModelsVolumeName = "pocketcoder_ollama_models"
-)
-
-var ollamaModelName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._/-]*(?::[A-Za-z0-9][A-Za-z0-9._-]*)?$`)
-
-type ollamaModel struct {
-	Name string `json:"name"`
-	Size int64  `json:"size"`
-}
-
-type ollamaTagsResponse struct {
-	Models []ollamaModel `json:"models"`
-}
 
 type ollamaPullRequest struct {
 	Model string `json:"model"`
 }
-
-type ollamaDocker interface {
-	releaseartifact.DockerLoader
-	Inspect(context.Context, string) (dockerapi.ContainerInspect, error)
-	Create(context.Context, string, dockerapi.CreateSpec) (string, error)
-	Start(context.Context, string) error
-	Remove(context.Context, string) error
-}
-
-type OllamaConfig struct {
-	BaseURL string
-	Release string
-}
-
 type OllamaDeps struct {
-	Docker     ollamaDocker
+	Docker     ollama.Docker
 	HTTP       *http.Client
 	StreamHTTP *http.Client
-	Config     OllamaConfig
+	Config     ollama.Config
 	RuntimeMu  *sync.Mutex
-}
-
-type releaseImageAcquirer func(context.Context, releaseartifact.DockerLoader, string) (string, error)
-
-func resolveOllamaURL() string {
-	if value := strings.TrimSpace(os.Getenv("OLLAMA_API_URL")); value != "" {
-		return strings.TrimRight(value, "/")
-	}
-	return defaultOllamaURL
-}
-
-func ollamaHTTPClient() *http.Client {
-	return &http.Client{Timeout: 10 * time.Second}
-}
-
-func ollamaStreamingHTTPClient() *http.Client {
-	return &http.Client{}
-}
-
-func fetchOllamaTags(ctx context.Context, client *http.Client, baseURL string) ([]ollamaModel, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(baseURL, "/")+"/api/tags", nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return nil, fmt.Errorf("Ollama tags returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
-	}
-	var tags ollamaTagsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&tags); err != nil {
-		return nil, fmt.Errorf("decode Ollama tags: %w", err)
-	}
-	return tags.Models, nil
-}
-
-// ollamaModelInstalled checks the runtime's source of truth rather than a
-// PocketBase catalog cache. A deleted model immediately becomes unavailable.
-func ollamaModelInstalled(ctx context.Context, client *http.Client, baseURL string, name string) (bool, error) {
-	models, err := fetchOllamaTags(ctx, client, baseURL)
-	if err != nil {
-		return false, err
-	}
-	for _, model := range models {
-		if model.Name == name {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-// ensureOllamaRuntime is invoked only by the explicit administrator model-pull
-// operation. Listing models must remain cheap and must never turn opening a
-// picker into an unexpected multi-gigabyte runtime download.
-func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.Client, cfg OllamaConfig, acquire releaseImageAcquirer, runtimeMu *sync.Mutex) error {
-	if cfg.BaseURL == "" {
-		cfg.BaseURL = resolveOllamaURL()
-	}
-	if cfg.Release != "" {
-		cfg.Release = strings.TrimSpace(cfg.Release)
-	}
-	if runtimeMu == nil {
-		runtimeMu = &sync.Mutex{}
-	}
-	if acquire == nil {
-		acquire = releaseartifact.EnsureOptionalImage
-	}
-
-	runtimeMu.Lock()
-	defer runtimeMu.Unlock()
-
-	expectedImage := ""
-	acquireReleaseImage := func() error {
-		image, err := acquire(ctx, docker, "ollama")
-		if err != nil {
-			return fmt.Errorf("acquire Ollama runtime: %w", err)
-		}
-		expectedImage = image
-		return nil
-	}
-	insp, err := docker.Inspect(ctx, ollamaContainerName)
-	if err == nil {
-		if cfg.Release == "" || cfg.Release == "development" {
-			if !insp.State.Running {
-				if err := docker.Start(ctx, ollamaContainerName); err != nil {
-					return fmt.Errorf("start Ollama runtime: %w", err)
-				}
-			}
-			return waitForOllama(ctx, client, cfg.BaseURL)
-		}
-		if err := acquireReleaseImage(); err != nil {
-			return err
-		}
-		if insp.Config.Image != expectedImage {
-			if err := docker.Remove(ctx, ollamaContainerName); err != nil {
-				return fmt.Errorf("replace stale Ollama runtime: %w", err)
-			}
-		} else {
-			if !insp.State.Running {
-				if err := docker.Start(ctx, ollamaContainerName); err != nil {
-					return fmt.Errorf("start Ollama runtime: %w", err)
-				}
-			}
-			return waitForOllama(ctx, client, cfg.BaseURL)
-		}
-	} else if !errors.Is(err, dockerapi.ErrContainerNotFound) {
-		return fmt.Errorf("inspect Ollama runtime: %w", err)
-	}
-	if cfg.Release == "" || cfg.Release == "development" {
-		return errors.New("Ollama must be started through the local-models profile in development")
-	}
-	if expectedImage == "" {
-		if err := acquireReleaseImage(); err != nil {
-			return err
-		}
-	}
-
-	if _, err := docker.Create(ctx, ollamaContainerName, dockerapi.CreateSpec{
-		Image: expectedImage,
-		Env:   []string{"OLLAMA_MODELS=/ollama-models"},
-		VolumeBinds: []string{
-			ollamaModelsVolumeName + ":/ollama-models",
-		},
-		NetworkNames: []string{"pocketcoder-model", "pocketcoder-ollama-control"},
-		NetworkAliases: map[string][]string{
-			"pocketcoder-model":          {"ollama"},
-			"pocketcoder-ollama-control": {"ollama"},
-		},
-		Labels: map[string]string{
-			"pc_managed":    "pocketcoder",
-			"pc_release":    cfg.Release,
-			"pc_capability": "ollama",
-		},
-	}); err != nil {
-		return fmt.Errorf("create Ollama runtime: %w", err)
-	}
-	if err := docker.Start(ctx, ollamaContainerName); err != nil {
-		return fmt.Errorf("start Ollama runtime: %w", err)
-	}
-	return waitForOllama(ctx, client, cfg.BaseURL)
-}
-
-func waitForOllama(ctx context.Context, client *http.Client, baseURL string) error {
-	readyCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
-	defer cancel()
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
-	for {
-		if _, err := fetchOllamaTags(readyCtx, client, baseURL); err == nil {
-			return nil
-		}
-		select {
-		case <-readyCtx.Done():
-			return errors.New("Ollama runtime did not become ready")
-		case <-ticker.C:
-		}
-	}
 }
 
 func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
@@ -235,15 +38,15 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 
 	client := deps.HTTP
 	if client == nil {
-		client = ollamaHTTPClient()
+		client = ollama.HTTPClient()
 	}
 	streamClient := deps.StreamHTTP
 	if streamClient == nil {
-		streamClient = ollamaStreamingHTTPClient()
+		streamClient = ollama.StreamingHTTPClient()
 	}
 	config := deps.Config
 	if strings.TrimSpace(config.BaseURL) == "" {
-		config.BaseURL = resolveOllamaURL()
+		config.BaseURL = ollama.ResolveBaseURL()
 	}
 	if strings.TrimSpace(config.Release) == "" {
 		config.Release = strings.TrimSpace(os.Getenv("POCKETCODER_RELEASE"))
@@ -254,10 +57,10 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 	}
 
 	registry.Add(operation.Route{OperationID: "listOllamaModels", Method: http.MethodGet, Path: "/api/pocketcoder/v1/ollama/models", Auth: true, Action: func(re *core.RequestEvent) error {
-		models, err := fetchOllamaTags(re.Request.Context(), client, config.BaseURL)
+		models, err := ollama.FetchTags(re.Request.Context(), client, config.BaseURL)
 		if err != nil {
 			return re.JSON(http.StatusOK, map[string]any{
-				"models":  []ollamaModel{},
+				"models":  []ollama.Model{},
 				"enabled": false,
 			})
 		}
@@ -269,10 +72,10 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 			return err
 		}
 		var input ollamaPullRequest
-		if err := re.BindBody(&input); err != nil || !ollamaModelName.MatchString(input.Model) {
+		if err := re.BindBody(&input); err != nil || !ollama.ModelNameValid(input.Model) {
 			return pocketCoderError(re, http.StatusBadRequest, "model must be a valid Ollama model name")
 		}
-		if err := ensureOllamaRuntime(re.Request.Context(), docker, client, config, nil, runtimeMu); err != nil {
+		if err := ollama.EnsureRuntime(re.Request.Context(), docker, client, config, nil, runtimeMu); err != nil {
 			return pocketCoderError(re, http.StatusServiceUnavailable, err.Error())
 		}
 		payload, _ := json.Marshal(map[string]string{"model": input.Model})
