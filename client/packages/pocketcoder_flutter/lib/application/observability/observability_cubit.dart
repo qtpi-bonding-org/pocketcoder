@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'observability_state.dart';
 
 @injectable
-class ObservabilityCubit extends Cubit<ObservabilityState> {
+class ObservabilityCubit extends AppCubit<ObservabilityState> {
   final IObservabilityRepository _repository;
   StreamSubscription? _logSub;
 
@@ -20,20 +20,13 @@ class ObservabilityCubit extends Cubit<ObservabilityState> {
   }
 
   Future<void> refreshStats() async {
-    emit(state.copyWith(status: UiFlowStatus.loading));
-    try {
+    await tryOperation(() async {
       final stats = await _repository.fetchSystemStats();
-      emit(state.copyWith(
+      return state.copyWith(
         stats: stats,
         status: UiFlowStatus.success,
-      ));
-    } catch (e) {
-      logError('📈 [ObservabilityCubit] Failed to refresh stats', e);
-      emit(state.copyWith(
-        error: e,
-        status: UiFlowStatus.failure,
-      ));
-    }
+      );
+    });
   }
 
   void startLogStreaming(String containerName) {

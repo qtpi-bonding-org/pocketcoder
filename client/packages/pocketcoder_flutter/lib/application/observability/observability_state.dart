@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/domain/observability/i_observability_reposit
 part 'observability_state.freezed.dart';
 
 @freezed
-sealed class ObservabilityState with _$ObservabilityState implements IUiFlowState {
+sealed class ObservabilityState with _$ObservabilityState, UiFlowStateMixin {
   const ObservabilityState._();
 
   const factory ObservabilityState({
@@ -16,18 +16,4 @@ sealed class ObservabilityState with _$ObservabilityState implements IUiFlowStat
     Object? error,
   }) = _ObservabilityState;
 
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-
-  @override
-  bool get hasError => error != null;
 }
