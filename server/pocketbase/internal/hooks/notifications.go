@@ -162,7 +162,11 @@ func AddPushOperations(app core.App, registry *operation.Registry) {
 			return apis.NewApiError(400, "user_id and type are required", nil)
 		}
 
-		go SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID)
+		go func() {
+			if err := SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID); err != nil {
+				log.Printf("[Push] dispatch: %v", err)
+			}
+		}()
 
 		return re.JSON(200, map[string]any{"ok": true})
 	}})
@@ -170,21 +174,21 @@ func AddPushOperations(app core.App, registry *operation.Registry) {
 
 // SendPushNotification is the unified dispatch function.
 // Flow: rules check -> presence check -> device dispatch
-func SendPushNotification(app core.App, userID, title, message, notifType, chatID string) {
+func SendPushNotification(app core.App, userID, title, message, notifType, chatID string) error {
 	// 1. Notification Rules: check if this type is enabled for the user
 	if !isNotificationTypeEnabled(app, userID, notifType) {
 		log.Printf("🔕 [Push] User %s has disabled '%s' notifications. Skipping.", userID, notifType)
-		return
+		return nil
 	}
 
 	// 2. Presence Check: suppress if user is online
 	if IsUserOnline(app, userID) {
 		log.Printf("🔔 [Push] User %s is online. Suppressing '%s' notification.", userID, notifType)
-		return
+		return nil
 	}
 
 	// 3. Dispatch to all active devices
-	dispatchToDevices(app, userID, title, message, notifType, chatID)
+	return dispatchToDevices(app, userID, title, message, notifType, chatID)
 }
 
 // isNotificationTypeEnabled checks the user's notification_rules record.
@@ -250,7 +254,7 @@ func IsUserOnline(app core.App, userID string) bool {
 }
 
 // dispatchToDevices sends notifications to every active device registered to the user.
-func dispatchToDevices(app core.App, userID, title, message, notifType, chatID string) {
+func dispatchToDevices(app core.App, userID, title, message, notifType, chatID string) error {
 	devices, err := app.FindRecordsByFilter(
 		"devices",
 		"user = {:userID} && is_active = true",
@@ -260,11 +264,11 @@ func dispatchToDevices(app core.App, userID, title, message, notifType, chatID s
 	)
 	if err != nil {
 		log.Printf("❌ [Push] Error searching for devices: %v", err)
-		return
+		return err
 	}
 
 	if len(devices) == 0 {
-		return
+		return nil
 	}
 
 	providerMode := os.Getenv("PN_PROVIDER")
@@ -300,4 +304,5 @@ func dispatchToDevices(app core.App, userID, title, message, notifType, chatID s
 			}
 		}
 	}
+	return nil
 }

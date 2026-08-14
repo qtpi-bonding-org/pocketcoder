@@ -18,6 +18,7 @@ import (
 
 func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() *coordinator.Coordinator) {
 	ollamaBaseURL := resolveOllamaURL()
+	runner := &ScheduleRunner{App: app, Coord: coord, OllamaBaseURL: ollamaBaseURL}
 	registry.Add(operation.Route{OperationID: "runScheduleNow", Method: http.MethodPost, Path: "/api/pocketcoder/v1/schedules/{scheduleId}/run", Auth: true, Action: func(re *core.RequestEvent) error {
 		id := re.Request.PathValue("scheduleId")
 		if id == "" {
@@ -27,7 +28,7 @@ func AddScheduleOperations(app core.App, registry *operation.Registry, coord fun
 		if err != nil {
 			return err
 		}
-		go runPocketCoderSchedule(app, coord, row.Id, ollamaBaseURL)
+		go runner.runDetached(row.Id)
 		return re.JSON(202, map[string]string{"status": "started"})
 	}})
 
@@ -63,67 +64,114 @@ func AddScheduleOperations(app core.App, registry *operation.Registry, coord fun
 	app.OnRecordUpdate("schedule_owners").BindFunc(validate)
 
 	hook := func(ev *core.RecordEvent) error {
-		registerPocketCoderSchedule(app, coord, ev.Record, ollamaBaseURL)
+		registerPocketCoderSchedule(runner, ev.Record)
 		return ev.Next()
 	}
 	app.OnRecordAfterCreateSuccess("schedule_owners").BindFunc(hook)
 	app.OnRecordAfterUpdateSuccess("schedule_owners").BindFunc(hook)
 	app.OnRecordAfterDeleteSuccess("schedule_owners").BindFunc(func(ev *core.RecordEvent) error { app.Cron().Remove(scheduleJobID(ev.Record.Id)); return ev.Next() })
-	rows, _ := app.FindRecordsByFilter("schedule_owners", "1=1", "", 0, 0)
+	rows, err := app.FindRecordsByFilter("schedule_owners", "1=1", "", 0, 0)
+	if err != nil {
+		log.Printf("[Scheduler] failed to load schedules at startup: %v", err)
+		return
+	}
 	for _, row := range rows {
-		registerPocketCoderSchedule(app, coord, row, ollamaBaseURL)
+		registerPocketCoderSchedule(runner, row)
 	}
 }
 
 func scheduleJobID(id string) string { return "pocketcoder-schedule-" + id }
-func registerPocketCoderSchedule(app core.App, coord func() *coordinator.Coordinator, row *core.Record, ollamaBaseURL string) {
-	app.Cron().Remove(scheduleJobID(row.Id))
+
+type ScheduleRunner struct {
+	App           core.App
+	Coord         func() *coordinator.Coordinator
+	OllamaBaseURL string
+	Now           func() time.Time
+}
+
+func (r *ScheduleRunner) now() time.Time {
+	if r.Now != nil {
+		return r.Now()
+	}
+	return time.Now()
+}
+
+func registerPocketCoderSchedule(runner *ScheduleRunner, row *core.Record) {
+	runner.App.Cron().Remove(scheduleJobID(row.Id))
 	if row.GetBool("paused") || row.GetString("cron") == "" {
 		return
 	}
-	if err := app.Cron().Add(scheduleJobID(row.Id), row.GetString("cron"), func() { runPocketCoderSchedule(app, coord, row.Id, ollamaBaseURL) }); err != nil {
+	if err := runner.App.Cron().Add(scheduleJobID(row.Id), row.GetString("cron"), func() {
+		go runner.runDetached(row.Id)
+	}); err != nil {
 		log.Printf("[Scheduler] invalid schedule %s: %v", row.Id, err)
 	}
 }
 
-func runPocketCoderSchedule(app core.App, coord func() *coordinator.Coordinator, ownerID string, ollamaBaseURL string) {
-	row, err := app.FindRecordById("schedule_owners", ownerID)
-	if err != nil || row.GetBool("paused") {
-		return
+// runDetached runs a schedule in a background goroutine launched by a
+// fire-and-forget caller (an HTTP handler that already responded, or a
+// cron callback). It must never let a panic escape and crash the process
+// -- a background job failing is an operational event to log, not a
+// reason to take down the whole server.
+func (r *ScheduleRunner) runDetached(ownerID string) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.Printf("[Scheduler] run %s panicked: %v", ownerID, rec)
+		}
+	}()
+	if err := r.Run(context.Background(), ownerID); err != nil {
+		log.Printf("[Scheduler] run %s: %v", ownerID, err)
 	}
-	coll, err := app.FindCollectionByNameOrId("chats")
+}
+
+// Run executes a schedule synchronously. A paused schedule is a legitimate no-op.
+func (r *ScheduleRunner) Run(ctx context.Context, ownerID string) error {
+	row, err := r.App.FindRecordById("schedule_owners", ownerID)
 	if err != nil {
-		log.Printf("[Scheduler] create chat: %v", err)
-		return
+		return fmt.Errorf("find schedule %s: %w", ownerID, err)
+	}
+	if row.GetBool("paused") {
+		return nil
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	coll, err := r.App.FindCollectionByNameOrId("chats")
+	if err != nil {
+		return fmt.Errorf("find chats collection: %w", err)
 	}
 	chat := core.NewRecord(coll)
-	chat.Set("title", row.GetString("display_name")+" — "+time.Now().Format("Jan 2 15:04"))
+	chat.Set("title", row.GetString("display_name")+" — "+r.now().Format("Jan 2 15:04"))
 	chat.Set("user", row.GetString("user"))
-	if err := app.Save(chat); err != nil {
-		log.Printf("[Scheduler] create chat: %v", err)
-		return
+	if err := r.App.Save(chat); err != nil {
+		return fmt.Errorf("create chat: %w", err)
 	}
-	c := coord()
+	c := r.Coord()
 	if c == nil {
-		log.Printf("[Scheduler] coordinator unavailable")
-		return
+		return fmt.Errorf("coordinator unavailable")
 	}
 	userID, chatID := row.GetString("user"), chat.Id
-	if _, err := c.StartPrompt(chatID, row.GetString("prompt"), func(context.Context) (string, error) { return agentSessionForChat(app, chatID, userID) }, func(ctx context.Context) (coordinator.SessionProfile, error) {
-		return buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
+	if _, err := c.StartPrompt(chatID, row.GetString("prompt"), func(context.Context) (string, error) { return agentSessionForChat(r.App, chatID, userID) }, func(ctx context.Context) (coordinator.SessionProfile, error) {
+		return buildSessionProfile(r.App, chatID, ctx, r.OllamaBaseURL)
 	}, func(ctx context.Context, sessionID string) error {
-		profile, err := buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
+		profile, err := buildSessionProfile(r.App, chatID, ctx, r.OllamaBaseURL)
 		if err != nil {
 			return err
 		}
-		return saveAgentSession(ctx, app, chatID, userID, sessionID, profile.ResolvedInstanceID)
+		return saveAgentSession(ctx, r.App, chatID, userID, sessionID, profile.ResolvedInstanceID)
 	}, func(context.Context, acpsdk.StopReason) error {
-		go hooks.SendPushNotification(app, userID, "PocketCoder", "Your scheduled agent replied", "schedule", chatID)
+		go func() {
+			if err := hooks.SendPushNotification(r.App, userID, "PocketCoder", "Your scheduled agent replied", "schedule", chatID); err != nil {
+				log.Printf("[Push] schedule: %v", err)
+			}
+		}()
 		return nil
 	}); err != nil {
-		log.Printf("[Scheduler] start %s: %v", ownerID, err)
-		return
+		return fmt.Errorf("start prompt: %w", err)
 	}
-	row.Set("last_run", time.Now().UTC().Format(time.RFC3339))
-	_ = app.Save(row)
+	row.Set("last_run", r.now().UTC().Format(time.RFC3339))
+	if err := r.App.Save(row); err != nil {
+		return fmt.Errorf("update last_run: %w", err)
+	}
+	return nil
 }

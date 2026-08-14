@@ -24,6 +24,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -119,7 +120,11 @@ func AddAgentOperations(app core.App, registry *operation.Registry, dial coordin
 				return err
 			},
 			func(ctx context.Context, stopReason acpsdk.StopReason) error {
-				go hooks.SendPushNotification(app, re.Auth.Id, "PocketCoder", "Your agent replied", "chat_reply", chatID)
+				go func() {
+					if err := hooks.SendPushNotification(app, re.Auth.Id, "PocketCoder", "Your agent replied", "chat_reply", chatID); err != nil {
+						log.Printf("[Push] chat reply: %v", err)
+					}
+				}()
 				return nil
 			})
 		if err != nil {
