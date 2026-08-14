@@ -35,6 +35,21 @@ import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 /// lossily re-encoded), and the typed AG-UI event from [decodeAguiFrame].
 typedef StreamFrame = ({int seq, String rawJson, AguiEvent event});
 
+class AgentStreamException implements Exception {
+  const AgentStreamException(this.statusCode);
+
+  final int statusCode;
+
+  bool get isRetryable =>
+      statusCode == 408 ||
+      statusCode == 425 ||
+      statusCode == 429 ||
+      statusCode >= 500;
+
+  @override
+  String toString() => 'Agent stream returned HTTP $statusCode';
+}
+
 /// Connects to `GET /api/pocketcoder/v1/chats/{chatId}/stream?cursor={cursor}` on
 /// the injected PocketBase's [baseURL], authenticating with the injected
 /// PocketBase's [authStore.token], and yields one [StreamFrame] per SSE
@@ -91,6 +106,10 @@ class AgentStreamClient {
         request.headers['Authorization'] = _pb.authStore.token;
 
         final response = await _http.send(request);
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          await response.stream.drain<void>();
+          throw AgentStreamException(response.statusCode);
+        }
 
         // Current frame accumulator. `id` may be null if the server omits
         // the `id:` line on a record (treated as seq 0 so the cache still

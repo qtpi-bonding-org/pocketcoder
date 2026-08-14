@@ -4,11 +4,13 @@
 import 'dart:async';
 
 import 'package:ag_ui/ag_ui.dart' as agui;
-import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart' as agui_widgets;
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
+    as agui_widgets;
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 
 /// Minimal fake standing in for AgentChatRepository: `watchRawEvents` is driven by a
 /// per-chat StreamController the test controls directly; `ingestOnce`
@@ -29,10 +31,12 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   void setNextCursor(int cursor) => _nextCursor = cursor;
 
   @override
-  Stream<List<agui.BaseEvent>> watchRawEvents(String chatId) => controllerFor(chatId).stream;
+  Stream<List<agui.BaseEvent>> watchRawEvents(String chatId) =>
+      controllerFor(chatId).stream;
 
   @override
-  Stream<agui_widgets.Conversation> watch(String chatId) => const Stream.empty();
+  Stream<agui_widgets.Conversation> watch(String chatId) =>
+      const Stream.empty();
 
   @override
   Future<int> cursorFor(String chatId) async {
@@ -41,13 +45,13 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   }
 
   @override
-  Future<void> ingestOnce(String chatId, {required int cursor}) async {
+  Future<int> ingestOnce(String chatId, {required int cursor}) async {
     ingestCalls.add(cursor);
     // Complete immediately — the cubit's while-loop will call cursorFor/
     // ingestOnce again, so tests bound iterations by awaiting a
     // pumpEventQueue then asserting on the recorded call lists, not by
     // letting this run forever uncontrolled.
-    return;
+    return 0;
   }
 
   @override
@@ -82,7 +86,7 @@ void main() {
 
   setUp(() {
     repo = _FakeAgentChatRepository();
-    cubit = ChatCubit(repo);
+    cubit = ChatCubit(repo, NetworkRecoverySignal());
   });
 
   tearDown(() async {
@@ -116,7 +120,8 @@ void main() {
     expect((item as agui_widgets.TextTimelineItem).text, 'Hello, world!');
   });
 
-  test('sendPrompt calls the repository via transport and does not mutate '
+  test(
+      'sendPrompt calls the repository via transport and does not mutate '
       'conversation directly (effect only arrives via the event stream)',
       () async {
     cubit.open('chat-1');

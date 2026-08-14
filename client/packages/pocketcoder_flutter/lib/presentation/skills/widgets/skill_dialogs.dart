@@ -42,19 +42,30 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final editing = widget.skill != null;
+    final skillName = widget.skill?.name ?? '';
     return TerminalDialog(
       title: editing
-          ? context.l10n.skillsEditDialogTitle(widget.skill!.name.toUpperCase())
+          ? context.l10n.skillsEditDialogTitle(skillName.toUpperCase())
           : context.l10n.skillsAddDialogTitle,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TerminalTextField(controller: _name, label: context.l10n.skillsNameLabel, obscureText: false),
+          TerminalTextField(
+              controller: _name,
+              label: context.l10n.skillsNameLabel,
+              obscureText: false),
           const SizedBox(height: 16),
-          TerminalTextField(controller: _description, label: context.l10n.skillsDescriptionLabel, obscureText: false),
+          TerminalTextField(
+              controller: _description,
+              label: context.l10n.skillsDescriptionLabel,
+              obscureText: false),
           const SizedBox(height: 16),
-          TerminalTextField(controller: _content, label: context.l10n.skillsContentLabel, obscureText: false, maxLines: 8),
+          TerminalTextField(
+              controller: _content,
+              label: context.l10n.skillsContentLabel,
+              obscureText: false,
+              maxLines: 8),
         ],
       ),
       actions: [
@@ -73,7 +84,8 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
             Navigator.of(context).pop();
           },
           style: OutlinedButton.styleFrom(foregroundColor: colors.primary),
-          child: Text(editing ? context.l10n.skillsSaveButton : context.l10n.actionAdd),
+          child: Text(
+              editing ? context.l10n.skillsSaveButton : context.l10n.actionAdd),
         ),
       ],
     );
@@ -81,10 +93,12 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
 }
 
 class AddSkillDialog extends StatefulWidget {
-  const AddSkillDialog({super.key, required this.configs, required this.onSubmit});
+  const AddSkillDialog(
+      {super.key, required this.configs, required this.onSubmit});
 
   final List<PocoConfig> configs;
-  final void Function(String name, String description, String content, bool global, String? projectDir) onSubmit;
+  final void Function(String name, String description, String content,
+      bool global, String? projectDir) onSubmit;
 
   @override
   State<AddSkillDialog> createState() => _AddSkillDialogState();
@@ -108,44 +122,97 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final configs = widget.configs.where((config) => config.workspaceFolders is List && (config.workspaceFolders as List).isNotEmpty).toList();
+    final configs = widget.configs
+        .where((config) =>
+            config.workspaceFolders is List &&
+            (config.workspaceFolders as List).isNotEmpty)
+        .toList();
     final selected = configs.contains(_selectedConfig) ? _selectedConfig : null;
     return TerminalDialog(
       title: context.l10n.skillsAddDialogTitle,
-      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        TerminalTextField(controller: _name, label: context.l10n.skillsNameLabel, obscureText: false),
-        const SizedBox(height: 16),
-        TerminalTextField(controller: _description, label: context.l10n.skillsDescriptionLabel, obscureText: false),
-        const SizedBox(height: 16),
-        TerminalTextField(controller: _content, label: context.l10n.skillsContentLabel, obscureText: false, maxLines: 8),
-        const SizedBox(height: 16),
-        Row(children: [
-          Expanded(child: TerminalButton(label: context.l10n.skillsGlobalLabel, isPrimary: _global, onTap: () => setState(() { _global = true; _selectedConfig = null; }))),
-          const SizedBox(width: 16),
-          Expanded(child: TerminalButton(label: context.l10n.skillsProjectLabel, isPrimary: !_global, onTap: configs.isEmpty ? () {} : () => setState(() { _global = false; _selectedConfig ??= configs.first; }))),
-        ]),
-        if (!_global && configs.isEmpty) ...[const SizedBox(height: 8), Text(context.l10n.skillsNoEligibleConfig)],
-        if (!_global && configs.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          DropdownButton<PocoConfig>(isExpanded: true, value: selected, items: configs.map((config) => DropdownMenuItem(value: config, child: Text(config.name.toUpperCase()))).toList(), onChanged: (value) => setState(() => _selectedConfig = value)),
-        ],
-      ]),
+      content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TerminalTextField(
+                controller: _name,
+                label: context.l10n.skillsNameLabel,
+                obscureText: false),
+            const SizedBox(height: 16),
+            TerminalTextField(
+                controller: _description,
+                label: context.l10n.skillsDescriptionLabel,
+                obscureText: false),
+            const SizedBox(height: 16),
+            TerminalTextField(
+                controller: _content,
+                label: context.l10n.skillsContentLabel,
+                obscureText: false,
+                maxLines: 8),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                  child: TerminalButton(
+                      label: context.l10n.skillsGlobalLabel,
+                      isPrimary: _global,
+                      onTap: () => setState(() {
+                            _global = true;
+                            _selectedConfig = null;
+                          }))),
+              const SizedBox(width: 16),
+              Expanded(
+                  child: TerminalButton(
+                      label: context.l10n.skillsProjectLabel,
+                      isPrimary: !_global,
+                      onTap: configs.isEmpty
+                          ? () {}
+                          : () => setState(() {
+                                _global = false;
+                                _selectedConfig ??= configs.first;
+                              }))),
+            ]),
+            if (!_global && configs.isEmpty) ...[
+              const SizedBox(height: 8),
+              Text(context.l10n.skillsNoEligibleConfig)
+            ],
+            if (!_global && configs.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              DropdownButton<PocoConfig>(
+                  isExpanded: true,
+                  value: selected,
+                  items: configs
+                      .map((config) => DropdownMenuItem(
+                          value: config,
+                          child: Text(config.name.toUpperCase())))
+                      .toList(),
+                  onChanged: (value) =>
+                      setState(() => _selectedConfig = value)),
+            ],
+          ]),
       actions: [
-        OutlinedButton(onPressed: () => Navigator.of(context).pop(), style: OutlinedButton.styleFrom(foregroundColor: colors.onSurface), child: Text(context.l10n.actionCancel)),
-        OutlinedButton(onPressed: () {
-          final name = _name.text.trim();
-          final description = _description.text.trim();
-          final content = _content.text.trim();
-          if (name.isEmpty || description.isEmpty || content.isEmpty) return;
-          String? projectDir;
-          if (!_global) {
-            final folders = _selectedConfig?.workspaceFolders;
-            if (folders is! List || folders.isEmpty) return;
-            projectDir = folders.first as String;
-          }
-          widget.onSubmit(name, description, content, _global, projectDir);
-          Navigator.of(context).pop();
-        }, style: OutlinedButton.styleFrom(foregroundColor: colors.primary), child: Text(context.l10n.actionAdd)),
+        OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: OutlinedButton.styleFrom(foregroundColor: colors.onSurface),
+            child: Text(context.l10n.actionCancel)),
+        OutlinedButton(
+            onPressed: () {
+              final name = _name.text.trim();
+              final description = _description.text.trim();
+              final content = _content.text.trim();
+              if (name.isEmpty || description.isEmpty || content.isEmpty) {
+                return;
+              }
+              String? projectDir;
+              if (!_global) {
+                final folders = _selectedConfig?.workspaceFolders;
+                if (folders is! List || folders.isEmpty) return;
+                projectDir = folders.first as String;
+              }
+              widget.onSubmit(name, description, content, _global, projectDir);
+              Navigator.of(context).pop();
+            },
+            style: OutlinedButton.styleFrom(foregroundColor: colors.primary),
+            child: Text(context.l10n.actionAdd)),
       ],
     );
   }

@@ -28,8 +28,10 @@ class AgentChatRepository {
   /// before any further frame is ingested; every other frame is an
   /// insert-or-replace upsert keyed by its seq. Callers (ChatCubit) are
   /// responsible for reconnecting — this method owns exactly one attempt.
-  Future<void> ingestOnce(String chatId, {required int cursor}) async {
+  Future<int> ingestOnce(String chatId, {required int cursor}) async {
+    var frameCount = 0;
     await for (final frame in _streamClient.connect(chatId, cursor: cursor)) {
+      frameCount++;
       if (isReplaceMarker(frame.event)) {
         await _cache.clearChat(chatId);
         continue;
@@ -41,12 +43,14 @@ class AgentChatRepository {
         frame.rawJson,
       );
     }
+    return frameCount;
   }
 
   /// Reactive reduced view of the chat's cached AG-UI events.
   Stream<Conversation> watch(String chatId) {
     return _cache.watchChat(chatId).map((rows) {
-      final events = rows.map((row) => decodeAguiFrame(row.json).event).toList();
+      final events =
+          rows.map((row) => decodeAguiFrame(row.json).event).toList();
       return reduce(events);
     });
   }

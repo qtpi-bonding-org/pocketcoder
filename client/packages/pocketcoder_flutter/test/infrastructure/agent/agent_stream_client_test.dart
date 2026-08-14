@@ -27,15 +27,16 @@ class _FakeClient extends http.BaseClient {
 
   /// The byte stream the test wants the fake to serve. Default: empty.
   final Stream<List<int>> body;
+  final int statusCode;
 
-  _FakeClient({required this.body});
+  _FakeClient({required this.body, this.statusCode = 200});
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     lastRequest = request;
     return http.StreamedResponse(
       body,
-      200,
+      statusCode,
       contentLength: null,
       request: request,
       headers: const {'Content-Type': 'text/event-stream'},
@@ -215,6 +216,28 @@ void main() {
       // And nothing happens after the body closes — `connect` has not
       // been called again, so fake.lastRequest is still the original.
       expect(fake.lastRequest, isNotNull);
+    });
+
+    test('surfaces non-success HTTP responses without parsing them as SSE',
+        () async {
+      final client = AgentStreamClient(
+        pocketBase: _fakePb(),
+        httpClient: _FakeClient(
+          body: Stream<List<int>>.fromIterable([utf8.encode('not SSE')]),
+          statusCode: 401,
+        ),
+      );
+
+      expect(
+        () => client.connect('chat-1', cursor: 0).toList(),
+        throwsA(
+          isA<AgentStreamException>().having(
+            (error) => error.statusCode,
+            'statusCode',
+            401,
+          ),
+        ),
+      );
     });
   });
 }

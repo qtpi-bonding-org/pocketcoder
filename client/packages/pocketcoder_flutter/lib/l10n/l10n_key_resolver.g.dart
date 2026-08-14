@@ -1,6 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-14T07:10:56.646387
 
 import 'app_localizations.dart';
 
@@ -253,6 +252,8 @@ class L10nKeyResolver {
       'harness.auth.cancel' => _l10n.harnessAuthCancel,
       'harness.auth.challenge' => _l10n.harnessAuthChallenge,
       'harness.auth.challenge.target.copied' => _l10n.harnessAuthChallengeTargetCopied,
+      'harness.auth.choose.provider.key' => _l10n.harnessAuthChooseProviderKey,
+      'harness.auth.connections' => _l10n.harnessAuthConnections,
       'harness.auth.disconnect' => _l10n.harnessAuthDisconnect,
       'harness.auth.empty' => _l10n.harnessAuthEmpty,
       'harness.auth.loading' => _l10n.harnessAuthLoading,
@@ -267,6 +268,8 @@ class L10nKeyResolver {
       'harness.auth.shared' => _l10n.harnessAuthShared,
       'harness.auth.submit' => _l10n.harnessAuthSubmit,
       'harness.auth.unavailable' => _l10n.harnessAuthUnavailable,
+      'harness.auth.visibility.body' => _l10n.harnessAuthVisibilityBody,
+      'harness.auth.visibility.title' => _l10n.harnessAuthVisibilityTitle,
       'home.loading.chats' => _l10n.homeLoadingChats,
       'home.new.chat' => _l10n.homeNewChat,
       'home.no.chats' => _l10n.homeNoChats,
@@ -777,6 +780,7 @@ class L10nKeyResolver {
       'harness.auth.attempt' => _l10n.harnessAuthAttempt(args?['id'] as String? ?? ''),
       'harness.auth.details' => _l10n.harnessAuthDetails(args?['details'] as String? ?? ''),
       'harness.auth.mode' => _l10n.harnessAuthMode(args?['mode'] as String? ?? ''),
+      'harness.auth.provider.key.missing' => _l10n.harnessAuthProviderKeyMissing(args?['harness'] as String? ?? ''),
       'harness.auth.status' => _l10n.harnessAuthStatus(args?['status'] as String? ?? ''),
       'home.error.prefix' => _l10n.homeErrorPrefix(args?['error'] as String? ?? ''),
       'llm.api.key.dialog.title' => _l10n.llmApiKeyDialogTitle(args?['provider'] as String? ?? ''),
@@ -1077,6 +1081,8 @@ class L10nKeyResolver {
     'harness.auth.cancel',
     'harness.auth.challenge',
     'harness.auth.challenge.target.copied',
+    'harness.auth.choose.provider.key',
+    'harness.auth.connections',
     'harness.auth.details',
     'harness.auth.disconnect',
     'harness.auth.empty',
@@ -1089,11 +1095,14 @@ class L10nKeyResolver {
     'harness.auth.paste.code',
     'harness.auth.personal',
     'harness.auth.poll',
+    'harness.auth.provider.key.missing',
     'harness.auth.refresh',
     'harness.auth.shared',
     'harness.auth.status',
     'harness.auth.submit',
     'harness.auth.unavailable',
+    'harness.auth.visibility.body',
+    'harness.auth.visibility.title',
     'home.error.prefix',
     'home.loading.chats',
     'home.new.chat',
@@ -1877,6 +1886,8 @@ class L10nKeyResolver {
     'harnessAuthCancel': 'harness.auth.cancel',
     'harnessAuthChallenge': 'harness.auth.challenge',
     'harnessAuthChallengeTargetCopied': 'harness.auth.challenge.target.copied',
+    'harnessAuthChooseProviderKey': 'harness.auth.choose.provider.key',
+    'harnessAuthConnections': 'harness.auth.connections',
     'harnessAuthDetails': 'harness.auth.details',
     'harnessAuthDisconnect': 'harness.auth.disconnect',
     'harnessAuthEmpty': 'harness.auth.empty',
@@ -1889,11 +1900,14 @@ class L10nKeyResolver {
     'harnessAuthPasteCode': 'harness.auth.paste.code',
     'harnessAuthPersonal': 'harness.auth.personal',
     'harnessAuthPoll': 'harness.auth.poll',
+    'harnessAuthProviderKeyMissing': 'harness.auth.provider.key.missing',
     'harnessAuthRefresh': 'harness.auth.refresh',
     'harnessAuthShared': 'harness.auth.shared',
     'harnessAuthStatus': 'harness.auth.status',
     'harnessAuthSubmit': 'harness.auth.submit',
     'harnessAuthUnavailable': 'harness.auth.unavailable',
+    'harnessAuthVisibilityBody': 'harness.auth.visibility.body',
+    'harnessAuthVisibilityTitle': 'harness.auth.visibility.title',
     'homeErrorPrefix': 'home.error.prefix',
     'homeLoadingChats': 'home.loading.chats',
     'homeNewChat': 'home.new.chat',
@@ -2674,6 +2688,8 @@ class L10nKeyResolver {
     'harness.auth.cancel': 'harnessAuthCancel',
     'harness.auth.challenge': 'harnessAuthChallenge',
     'harness.auth.challenge.target.copied': 'harnessAuthChallengeTargetCopied',
+    'harness.auth.choose.provider.key': 'harnessAuthChooseProviderKey',
+    'harness.auth.connections': 'harnessAuthConnections',
     'harness.auth.details': 'harnessAuthDetails',
     'harness.auth.disconnect': 'harnessAuthDisconnect',
     'harness.auth.empty': 'harnessAuthEmpty',
@@ -2686,11 +2702,14 @@ class L10nKeyResolver {
     'harness.auth.paste.code': 'harnessAuthPasteCode',
     'harness.auth.personal': 'harnessAuthPersonal',
     'harness.auth.poll': 'harnessAuthPoll',
+    'harness.auth.provider.key.missing': 'harnessAuthProviderKeyMissing',
     'harness.auth.refresh': 'harnessAuthRefresh',
     'harness.auth.shared': 'harnessAuthShared',
     'harness.auth.status': 'harnessAuthStatus',
     'harness.auth.submit': 'harnessAuthSubmit',
     'harness.auth.unavailable': 'harnessAuthUnavailable',
+    'harness.auth.visibility.body': 'harnessAuthVisibilityBody',
+    'harness.auth.visibility.title': 'harnessAuthVisibilityTitle',
     'home.error.prefix': 'homeErrorPrefix',
     'home.loading.chats': 'homeLoadingChats',
     'home.new.chat': 'homeNewChat',
@@ -3478,6 +3497,8 @@ abstract class L10nKeys {
   static const harnessAuthCancel = 'harness.auth.cancel';
   static const harnessAuthChallenge = 'harness.auth.challenge';
   static const harnessAuthChallengeTargetCopied = 'harness.auth.challenge.target.copied';
+  static const harnessAuthChooseProviderKey = 'harness.auth.choose.provider.key';
+  static const harnessAuthConnections = 'harness.auth.connections';
   static (String, Map<String, dynamic>) harnessAuthDetails(String details) => ('harness.auth.details', {'details': details});
   static const harnessAuthDisconnect = 'harness.auth.disconnect';
   static const harnessAuthEmpty = 'harness.auth.empty';
@@ -3490,11 +3511,14 @@ abstract class L10nKeys {
   static const harnessAuthPasteCode = 'harness.auth.paste.code';
   static const harnessAuthPersonal = 'harness.auth.personal';
   static const harnessAuthPoll = 'harness.auth.poll';
+  static (String, Map<String, dynamic>) harnessAuthProviderKeyMissing(String harness) => ('harness.auth.provider.key.missing', {'harness': harness});
   static const harnessAuthRefresh = 'harness.auth.refresh';
   static const harnessAuthShared = 'harness.auth.shared';
   static (String, Map<String, dynamic>) harnessAuthStatus(String status) => ('harness.auth.status', {'status': status});
   static const harnessAuthSubmit = 'harness.auth.submit';
   static const harnessAuthUnavailable = 'harness.auth.unavailable';
+  static const harnessAuthVisibilityBody = 'harness.auth.visibility.body';
+  static const harnessAuthVisibilityTitle = 'harness.auth.visibility.title';
   static (String, Map<String, dynamic>) homeErrorPrefix(String error) => ('home.error.prefix', {'error': error});
   static const homeLoadingChats = 'home.loading.chats';
   static const homeNewChat = 'home.new.chat';
