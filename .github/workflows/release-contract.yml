@@ -13,14 +13,6 @@ on:
       - '.github/workflows/release-contract.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'deploy/**'
-      - 'server/pocketbase/internal/api/release_status*'
-      - 'server/pocketbase/internal/releaseartifact/**'
-      - 'workers/image-relay/**'
-      - 'client/packages/pocketcoder_flutter/**'
-      - 'client/pubspec.lock'
-      - '.github/workflows/release-contract.yml'
 
 permissions:
   contents: read
