@@ -84,6 +84,11 @@ type fakeConn struct {
 	lastExtensionParams any
 	callExtensionCalls  int
 
+	resumeCalls          int
+	lastResumeSessionReq acpsdk.ResumeSessionRequest
+	resumeErr            error
+	done                 chan struct{}
+
 	// Task 2: capture dial/handshake counts.
 	initializeCalls int
 	newSessionCalls int
@@ -163,6 +168,25 @@ func (f *fakeConn) LoadSession(_ context.Context, req acpsdk.LoadSessionRequest)
 	f.lastLoadSessionReq = req
 	f.mu.Unlock()
 	return acpsdk.LoadSessionResponse{}, nil
+}
+func (f *fakeConn) ResumeSession(_ context.Context, req acpsdk.ResumeSessionRequest) (acpsdk.ResumeSessionResponse, error) {
+	f.mu.Lock()
+	f.lastResumeSessionReq = req
+	f.resumeCalls++
+	err := f.resumeErr
+	f.mu.Unlock()
+	if err != nil {
+		return acpsdk.ResumeSessionResponse{}, err
+	}
+	return acpsdk.ResumeSessionResponse{}, nil
+}
+func (f *fakeConn) Done() <-chan struct{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.done == nil {
+		f.done = make(chan struct{})
+	}
+	return f.done
 }
 func (f *fakeConn) SetSessionMode(_ context.Context, req acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
 	f.mu.Lock()
@@ -630,5 +654,45 @@ func TestEstablishSessionErrorsWhenLoadSessionCapabilityMissing(t *testing.T) {
 	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
 	if err == nil {
 		t.Fatal("expected an error resuming a session against a harness that doesn't advertise LoadSession")
+	}
+}
+
+func TestEstablishSessionUsesResumeWhenAdvertised(t *testing.T) {
+	f := newFakeConn()
+	f.initResp = acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{
+		LoadSession:         true,
+		SessionCapabilities: acpsdk.SessionCapabilities{Resume: &acpsdk.SessionResumeCapabilities{}},
+	}}
+	c := testCoordinatorWithConn(t, f, RealClock())
+	profile := SessionProfile{Target: Target{URL: "ws://x"}}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.resumeCalls != 1 {
+		t.Fatalf("expected ResumeSession to be called once, got %d", f.resumeCalls)
+	}
+	if string(f.lastResumeSessionReq.SessionId) != "existing-session-id" {
+		t.Fatalf("ResumeSession called with wrong session id: %q", f.lastResumeSessionReq.SessionId)
+	}
+}
+
+func TestEstablishSessionFallsBackToLoadWhenResumeNotAdvertised(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, RealClock())
+	profile := SessionProfile{Target: Target{URL: "ws://x"}}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.resumeCalls != 0 {
+		t.Fatalf("expected ResumeSession NOT to be called, got %d calls", f.resumeCalls)
+	}
+	if string(f.lastLoadSessionReq.SessionId) != "existing-session-id" {
+		t.Fatalf("expected LoadSession fallback, got %+v", f.lastLoadSessionReq)
 	}
 }
