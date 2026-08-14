@@ -16,10 +16,11 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package api
+package sessionprofile
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -37,20 +38,20 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 )
 
-// ErrHarnessProvisioning is returned by buildSessionProfile when no
+// ErrProvisioning is returned by Build when no
 // harness_instances row exists yet for the resolved (harness, launch_key)
 // pair — provisioning has just been kicked off in the background (§5.1),
 // and the caller should surface "harness starting, try again shortly"
 // rather than blocking on an image pull or proceeding with an empty
 // dial target.
-var ErrHarnessProvisioning = errors.New("harness is being provisioned — retry shortly")
+var ErrProvisioning = errors.New("harness is being provisioned — retry shortly")
 
-// errHarnessFailed is the sentinel wrapped into the error returned when a
+// ErrHarnessFailed is the sentinel wrapped into the error returned when a
 // resolved harness_instances row's status is "error" — lets callers tell
-// "harness failed to start" apart from any other buildSessionProfile
+// "harness failed to start" apart from any other Build
 // failure via errors.Is, without matching on the (last_error-dependent)
 // error string.
-var errHarnessFailed = errors.New("harness failed to start")
+var ErrHarnessFailed = errors.New("harness failed to start")
 
 // stdioMcp is the stored acp_mcp_servers JSON shape (spec §5.1). Only stdio is
 // supported today; http/sse/acp entries are skipped + logged.
@@ -79,12 +80,12 @@ func validateWorkspacePath(p string) error {
 	return nil
 }
 
-// buildSessionProfile resolves a chat's agent definition (agent_profile, or the
+// Build resolves a chat's agent definition (agent_profile, or the
 // default per §5.2) into a coordinator.SessionProfile: model/provider,
 // system prompt, workspace cwd/additional directories, per-chat MCP servers
 // (stdio only), and mode. It also resolves the harness identity and
 // harness_instances row, and validates workspace paths.
-func buildSessionProfile(app core.App, chatID string, ctx context.Context, ollamaBaseURL string) (coordinator.SessionProfile, error) {
+func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL string) (coordinator.SessionProfile, error) {
 	p := coordinator.SessionProfile{Instructions: pocoprompt.Default}
 
 	chat, err := app.FindRecordById("chats", chatID)
@@ -299,9 +300,9 @@ func buildSessionProfile(app core.App, chatID string, ctx context.Context, ollam
 		p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
 		switch instance.GetString("status") {
 		case "pending":
-			return p, ErrHarnessProvisioning
+			return p, ErrProvisioning
 		case "error":
-			return p, fmt.Errorf("%w: %s", errHarnessFailed, instance.GetString("last_error"))
+			return p, fmt.Errorf("%w: %s", ErrHarnessFailed, instance.GetString("last_error"))
 		}
 	} else {
 		// No harness_instances row yet for this (harness, launch_key) pair —
@@ -315,7 +316,7 @@ func buildSessionProfile(app core.App, chatID string, ctx context.Context, ollam
 				log.Printf("[Profile] background provisioning failed for harness %s: %v", harnessIDCopy, perr)
 			}
 		}()
-		return p, ErrHarnessProvisioning
+		return p, ErrProvisioning
 	}
 
 	if gs, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:c}", map[string]any{"c": chatID}); err == nil && gs != nil {
@@ -348,4 +349,32 @@ func defaultPocoConfigAPI(app core.App, userID string) (*core.Record, error) {
 		log.Printf("[Profile] %d agent_profiles marked is_default; using first by name %q", len(recs), recs[0].GetString("name"))
 	}
 	return recs[0], nil
+}
+
+// SessionForChat resolves an existing ACP session for a chat owned by userID.
+func SessionForChat(app core.App, chatID, userID string) (string, error) {
+	record, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:chat} && user = {:user}", map[string]any{"chat": chatID, "user": userID})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", nil
+		}
+		return "", err
+	}
+	return record.GetString("acp_session_id"), nil
+}
+
+func SaveSession(ctx context.Context, app core.App, chatID, userID, sessionID, harnessInstanceID string) error {
+	collection, err := app.FindCollectionByNameOrId("agent_sessions")
+	if err != nil {
+		return err
+	}
+	record := core.NewRecord(collection)
+	record.Set("chat", chatID)
+	record.Set("user", userID)
+	record.Set("acp_session_id", sessionID)
+	record.Set("harness_instance", harnessInstanceID)
+	if err := app.Save(record); err != nil {
+		return fmt.Errorf("save Agent session: %w", err)
+	}
+	return nil
 }

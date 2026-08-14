@@ -21,9 +21,7 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -39,6 +37,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/sessionprofile"
 )
 
 type AgentRuntime interface {
@@ -113,37 +112,37 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		if prompt == "" {
 			return re.BadRequestError("prompt must include a text content block", nil)
 		}
-		// buildSessionProfile is otherwise only invoked from inside
+		// sessionprofile.Build is otherwise only invoked from inside
 		// StartPrompt's detached run goroutine (via profileFn below), whose
 		// errors are only ever surfaced as a RUN_ERROR hub event, never as
 		// this handler's HTTP response — StartPrompt returns before that
 		// goroutine runs. Resolve it once synchronously here too, but ONLY
 		// short-circuit for the two new error conditions Task 7 introduces
 		// (still provisioning / failed to start) — every other
-		// buildSessionProfile error (e.g. a workspace-path rejection) must
+		// sessionprofile.Build error (e.g. a workspace-path rejection) must
 		// keep falling through to StartPrompt unchanged, so it continues to
 		// surface asynchronously via the existing RUN_ERROR SSE event exactly
 		// as it did before this task, rather than becoming a new synchronous
 		// 500 for error types this task didn't touch.
-		if _, perr := buildSessionProfile(app, chatID, re.Request.Context(), ollamaBaseURL); perr != nil {
-			if errors.Is(perr, ErrHarnessProvisioning) {
+		if _, perr := sessionprofile.Build(app, chatID, re.Request.Context(), ollamaBaseURL); perr != nil {
+			if errors.Is(perr, sessionprofile.ErrProvisioning) {
 				return re.JSON(http.StatusAccepted, map[string]string{"status": "provisioning", "message": "Harness is starting; retry shortly"})
 			}
-			if errors.Is(perr, errHarnessFailed) {
+			if errors.Is(perr, sessionprofile.ErrHarnessFailed) {
 				return apis.NewApiError(http.StatusBadGateway, "Harness failed to start", perr)
 			}
 		}
 		runID, err := service.StartPrompt(chatID, prompt,
-			func(context.Context) (string, error) { return agentSessionForChat(app, chatID, re.Auth.Id) },
+			func(context.Context) (string, error) { return sessionprofile.SessionForChat(app, chatID, re.Auth.Id) },
 			func(ctx context.Context) (coordinator.SessionProfile, error) {
-				return buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
+				return sessionprofile.Build(app, chatID, ctx, ollamaBaseURL)
 			},
 			func(ctx context.Context, sessionID string) error {
-				profile, perr := buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
+				profile, perr := sessionprofile.Build(app, chatID, ctx, ollamaBaseURL)
 				if perr != nil {
 					return perr
 				}
-				err := saveAgentSession(ctx, app, chatID, re.Auth.Id, sessionID, profile.ResolvedInstanceID)
+				err := sessionprofile.SaveSession(ctx, app, chatID, re.Auth.Id, sessionID, profile.ResolvedInstanceID)
 				if err == nil {
 					app.Logger().Debug("Goose session mapping created", "chat_id", chatID)
 				}
@@ -189,12 +188,12 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		flusher, _ := re.Response.(http.Flusher)
 
 		if att.ColdReplayNeeded {
-			sessionID, err := agentSessionForChat(app, chatID, re.Auth.Id)
+			sessionID, err := sessionprofile.SessionForChat(app, chatID, re.Auth.Id)
 			if err != nil {
 				_ = writeFlush(re.Response, flusher, service.NextSeq(chatID), events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
 			} else if err := service.StreamColdReplay(re.Request.Context(), chatID, sessionID,
 				func(ctx context.Context) (coordinator.SessionProfile, error) {
-					return buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
+					return sessionprofile.Build(app, chatID, ctx, ollamaBaseURL)
 				},
 				func(seq int, ev events.Event) error {
 					return writeFlush(re.Response, flusher, seq, ev)
@@ -205,9 +204,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 				// client knows to retry shortly instead of treating this as
 				// a hard replay failure.
 				switch {
-				case errors.Is(err, ErrHarnessProvisioning):
+				case errors.Is(err, sessionprofile.ErrProvisioning):
 					_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("harness starting", events.WithErrorCode("harness_provisioning")))
-				case errors.Is(err, errHarnessFailed):
+				case errors.Is(err, sessionprofile.ErrHarnessFailed):
 					_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("harness failed to start", events.WithErrorCode("harness_failed")))
 				default:
 					_ = writeSeqFrame(re.Response, service.NextSeq(chatID), events.NewRunErrorEvent("replay failed", events.WithErrorCode("goose_replay_failed")))
@@ -421,31 +420,4 @@ func permissionTimeout() time.Duration {
 		return 5 * time.Minute
 	}
 	return duration
-}
-
-func agentSessionForChat(app core.App, chatID, userID string) (string, error) {
-	record, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:chat} && user = {:user}", map[string]any{"chat": chatID, "user": userID})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", nil
-		}
-		return "", err
-	}
-	return record.GetString("acp_session_id"), nil
-}
-
-func saveAgentSession(ctx context.Context, app core.App, chatID, userID, sessionID, harnessInstanceID string) error {
-	collection, err := app.FindCollectionByNameOrId("agent_sessions")
-	if err != nil {
-		return err
-	}
-	record := core.NewRecord(collection)
-	record.Set("chat", chatID)
-	record.Set("user", userID)
-	record.Set("acp_session_id", sessionID)
-	record.Set("harness_instance", harnessInstanceID)
-	if err := app.Save(record); err != nil {
-		return fmt.Errorf("save Agent session: %w", err)
-	}
-	return nil
 }
