@@ -76,17 +76,7 @@ func (docker Docker) ComposeUp(composeFile, environmentFile string, profiles []s
 		arguments = append(arguments, "--profile", profile)
 	}
 	arguments = append(arguments, "up", "-d", "--no-build", "--remove-orphans")
-	command := exec.Command("docker", arguments...)
-	command.Stdout = docker.Stdout
-	command.Stderr = docker.Stderr
-	if err := command.Run(); err == nil {
-		return nil
-	}
-	arguments = arguments[1:]
-	command = exec.Command("docker-compose", arguments...)
-	command.Stdout = docker.Stdout
-	command.Stderr = docker.Stderr
-	if err := command.Run(); err != nil {
+	if err := docker.runCompose(arguments); err != nil {
 		return fmt.Errorf("docker compose up: %w", err)
 	}
 	return nil
@@ -94,13 +84,21 @@ func (docker Docker) ComposeUp(composeFile, environmentFile string, profiles []s
 
 func (docker Docker) ComposeDown(composeFile, environmentFile string) error {
 	arguments := []string{"compose", "--project-name", docker.projectName(), "--env-file", environmentFile, "-f", composeFile, "down", "--remove-orphans"}
-	command := exec.Command("docker", arguments...)
+	return docker.runCompose(arguments)
+}
+
+// runCompose chooses the legacy binary only when the Compose plugin is
+// unavailable. A failed `docker compose up` is a deployment failure, not a
+// reason to retry an unrelated command and hide its useful error.
+func (docker Docker) runCompose(arguments []string) error {
+	command := exec.Command("docker", "compose", "version")
 	command.Stdout = docker.Stdout
 	command.Stderr = docker.Stderr
-	if err := command.Run(); err == nil {
-		return nil
+	if err := command.Run(); err != nil {
+		command = exec.Command("docker-compose", arguments[1:]...)
+	} else {
+		command = exec.Command("docker", arguments...)
 	}
-	command = exec.Command("docker-compose", arguments[1:]...)
 	command.Stdout = docker.Stdout
 	command.Stderr = docker.Stderr
 	return command.Run()

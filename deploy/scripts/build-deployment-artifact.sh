@@ -24,6 +24,8 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go -C \
   "$stage/docker-compose.prebuilt.yml" \
   "$release" \
   "$catalog"
+install -d "$stage/deploy/release"
+install -m 0644 "$catalog" "$stage/deploy/release/harnesses.json"
 
 for file in \
   install-release-metadata-timer.sh \
