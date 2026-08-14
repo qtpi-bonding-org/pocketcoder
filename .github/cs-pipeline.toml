@@ -2,6 +2,7 @@
 name = "PocketCoder"
 description = "A sovereign, mobile-first coding agent you run on your own infrastructure, with human approval for consequential actions from your phone."
 audience = "indie developers, self-hosters, and people building with coding agents"
+foss = true
 
 [llm]
 model = "deepseek/deepseek-v4-flash"
