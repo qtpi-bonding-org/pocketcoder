@@ -1,0 +1,21 @@
+[project]
+name = "PocketCoder"
+description = "A sovereign, mobile-first coding agent you run on your own infrastructure, with human approval for consequential actions from your phone."
+audience = "indie developers, self-hosters, and people building with coding agents"
+
+[llm]
+model = "deepseek/deepseek-v4-flash"
+
+[syndication]
+tone = "shipping-update"
+hashtags = ["#buildinpublic", "#selfhosted"]
+max_posts = 2
+
+[achaean]
+# The Aigion runner overrides this with the real checked-out content repository.
+content_dir = ".achaean-drafts"
+tags = ["buildinpublic", "pocketcoder"]
+
+[filters]
+ignore_paths = ["docs/", ".github/", "*.md", "*.lock", "test/", "tests/"]
+min_diff_lines = 12
