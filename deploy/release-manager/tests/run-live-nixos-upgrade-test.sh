@@ -111,10 +111,11 @@ wait_for_pointer() {
 
 echo "LIVE UPGRADE: provisioning baseline $channel release"
 instance_created=true
-env AEROFORM_LIVE_TEST=1 \
-  AEROFORM_KEEP_INSTANCE=1 \
-  AEROFORM_GOLDEN_PATH_BACKEND=nixos \
-  "$flutter_bin" test "$aeroform_root/test/integration/golden_path_provision_test.dart" |
+(cd "$aeroform_root" &&
+  env AEROFORM_LIVE_TEST=1 \
+    AEROFORM_KEEP_INSTANCE=1 \
+    AEROFORM_GOLDEN_PATH_BACKEND=nixos \
+    "$flutter_bin" test test/integration/golden_path_provision_test.dart) |
   tee "$work_dir/provision.log"
 handoff=$(sed -n 's/^LIVE: retained update handoff //p' "$work_dir/provision.log" | tail -1)
 test -n "$handoff" && test -f "$handoff" || {
