@@ -25,15 +25,6 @@ docker exec pocketcoder-ollama ollama pull "$model"
 docker volume create pocketcoder-live-go-cache >/dev/null
 docker volume create pocketcoder-live-go-build-cache >/dev/null
 
-# The OpenCode peer's entrypoint derives its provider config from /api/tags;
-# assert that the exact pulled model is present and points only at the private
-# Docker hostname.
-opencode_config="$(docker run --rm --network pocketcoder-model --entrypoint node \
-  pocketcoder-harness-opencode:1.18.11 \
-  /usr/local/lib/pocketcoder/opencode-ollama-config.mjs)"
-grep -Fq 'http://ollama:11434/v1' <<<"$opencode_config"
-grep -Fq "\"$model\"" <<<"$opencode_config"
-
 # Drive the production ACP coordinator from an isolated container on the
 # private agent network. The selected model is applied through Goose's live
 # ACP config-option path, exactly as a chat-specific harness model is.

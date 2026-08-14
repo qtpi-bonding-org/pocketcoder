@@ -79,7 +79,7 @@ open_stream() {
   STREAM_FILE="$BATS_TEST_TMPDIR/stream-${RANDOM}.sse"
   curl --retry 5 --retry-connrefused --retry-delay 1 \
     --max-time "${AGENT_TEST_TIMEOUT_SECONDS:-120}" -sS -N \
-    "$PB_URL/api/pocketcoder/chats/$CHAT_ID/stream?cursor=$cursor" \
+    "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/stream?cursor=$cursor" \
     -H "Authorization: $USER_TOKEN" >"$STREAM_FILE" 2>&1 &
   STREAM_PID=$!
   sleep 1
@@ -89,7 +89,7 @@ start_run() {
   local prompt="$1"
   local resp
   resp=$(curl --max-time 15 -sS \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/prompt" \
+    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/prompt" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
     -d "{\"prompt\":[{\"type\":\"text\",\"text\":$(jq -Rs . <<<"$prompt")}]}")
   RUN_ID=$(jq -r .runId <<<"$resp")
@@ -134,7 +134,7 @@ submit_option() {
   local option_id="$1"
   [ -n "${APPROVAL_ID:-}" ]
   APPROVAL_HTTP_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' \
-    -X POST "$PB_URL/api/pocketcoder/chats/$CHAT_ID/session/request_permission/$APPROVAL_ID" \
+    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/request-permission/$APPROVAL_ID" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
     -d "{\"outcome\":{\"outcome\":\"selected\",\"optionId\":\"$option_id\"}}")
 }

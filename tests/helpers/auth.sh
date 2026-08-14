@@ -154,32 +154,6 @@ pb_get() {
     pb_request "GET" "/api/collections/$collection/records/$id"
 }
 
-# Update a record in a collection
-# Usage: pb_update "chats" "record_id" '{"title": "Updated Title"}'
-pb_update() {
-    local collection="$1"
-    local id="$2"
-    local data="$3"
-    pb_request "PATCH" "/api/collections/$collection/records/$id" "$data"
-}
-
-# Delete a record from a collection
-# Usage: pb_delete "chats" "record_id"
-pb_delete() {
-    local collection="$1"
-    local id="$2"
-    pb_request "DELETE" "/api/collections/$collection/records/$id"
-}
-
-# List records in a collection
-# Usage: pb_list "chats" "?filter=user='...'"
-pb_list() {
-    local collection="$1"
-    local filter="${2:-}"
-    pb_request "GET" "/api/collections/$collection/records$filter"
-}
-
-
 # Export functions for use in BATS
 export -f load_env authenticate_user authenticate_agent authenticate_superuser
-export -f pb_request pb_create pb_update pb_delete pb_get pb_list
+export -f pb_request pb_create pb_get
