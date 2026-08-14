@@ -18,6 +18,7 @@ services:
       GOOSE_MODEL: ${GOOSE_MODEL:-MiniMax-M2.5}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_HOST: ${ANTHROPIC_HOST:-https://api.minimax.io/anthropic}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OLLAMA_HOST: http://ollama:11434
       GOOSE_DISABLE_KEYRING: "1"
       GOOSE_PATH_ROOT: /workspace/.pocketcoder_auth
@@ -44,6 +45,9 @@ services:
   pocketbase:
     volumes:
       - agent_test_goose_config:/goose-config
+    environment:
+      - API_TEST_EMAIL=${API_TEST_EMAIL:-}
+      - API_TEST_PASSWORD=${API_TEST_PASSWORD:-}
 
   agent-c1-test:
     build:
@@ -72,6 +76,29 @@ services:
     networks:
       # Reaches PocketBase's API only; the private pocketcoder-agent ACP net
       # stays a two-node c1<->c2 channel.
+      - pocketcoder-pocketbase-sdk
+
+  api-flow-test:
+    build:
+      context: .
+      dockerfile: server/test/Dockerfile
+    profiles: ["api-test"]
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    command: ["--tap", "/tests/api-flows/core.bats"]
+    volumes:
+      - ./tests:/tests:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PB_URL: http://pocketbase:8090
+      PB_AUTH_COLLECTION: ${PB_AUTH_COLLECTION:-users}
+      API_TEST_EMAIL: ${API_TEST_EMAIL:?set an ordinary PocketBase API-flow test-user email}
+      API_TEST_PASSWORD: ${API_TEST_PASSWORD:?set that API-flow test user's password}
+      AGENT_EMAIL: ${AGENT_EMAIL:-}
+      AGENT_PASSWORD: ${AGENT_PASSWORD:-}
+      POCKETBASE_CONTAINER: ${POCKETBASE_CONTAINER:-pocketcoder-pocketbase}
+    networks:
       - pocketcoder-pocketbase-sdk
 
 volumes:
