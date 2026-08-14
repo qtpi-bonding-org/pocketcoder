@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package api
+package sessionprofile_test
 
 import (
 	"context"
@@ -34,6 +34,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/pocoprompt"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/sessionprofile"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
@@ -80,7 +81,7 @@ func ensureTestPoco(t *testing.T, app core.App) *core.Record {
 }
 
 // waitForHarnessProvisioning drains the asynchronous provisioning started by
-// buildSessionProfile before the test app is cleaned up. Without this, the
+// Build before the test app is cleaned up. Without this, the
 // background goroutine can continue using PocketBase after app.Cleanup closes
 // its database, producing a nil-pointer panic in PocketBase's record hooks.
 func waitForHarnessProvisioning(t *testing.T, app core.App, harnessID, userID string) *core.Record {
@@ -296,7 +297,7 @@ func TestBuildSessionProfileResolvesChatFieldsWithDefaultPoco(t *testing.T) {
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
 	harness, instance := seedTestHarnessAndInstance(t, app, "goose", true, userID)
 	chat := createTestChat(t, app, map[string]any{"user": userID, "harness": harness.Id})
-	profile, err := buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -329,7 +330,7 @@ func TestBuildSessionProfileUsesExplicitAgentAsMemoryAuthor(t *testing.T) {
 		"user": userID, "harness": harness.Id, "agent_profile": agent.Id,
 	})
 
-	profile, err := buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +375,7 @@ func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testin
 		"ollama_model_override": "qwen2.5:0.5b",
 	})
 
-	profile, err := buildSessionProfile(app, chat.Id, context.Background(), server.URL)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), server.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -400,7 +401,7 @@ func TestBuildSessionProfileRejectsVirtualOllamaOnUnsupportedHarness(t *testing.
 		"ollama_model_override": "qwen2.5:0.5b",
 	})
 
-	_, err := buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	_, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err == nil || !strings.Contains(err.Error(), "does not support local Ollama") {
 		t.Fatalf("err = %v, want unsupported local Ollama harness error", err)
 	}
@@ -429,7 +430,7 @@ func TestBuildSessionProfileWorkspaceOverrideKeepsPocoAdditionalDirectories(t *t
 		"workspace_override": []string{"/workspace/other"},
 	})
 
-	profile, err := buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -453,7 +454,7 @@ func TestBuildSessionProfileRejectsWorkspaceOverrideOutsideRoot(t *testing.T) {
 	chat := createTestChat(t, app, map[string]any{
 		"workspace_override": []string{"/goose/config"},
 	})
-	_, err = buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	_, err = sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err == nil {
 		t.Fatal("expected rejection of a workspace_override outside /workspace")
 	}
@@ -471,7 +472,7 @@ func TestBuildSessionProfileRejectsTraversal(t *testing.T) {
 	chat := createTestChat(t, app, map[string]any{
 		"workspace_override": []string{"/workspace/../etc"},
 	})
-	_, err = buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	_, err = sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err == nil {
 		t.Fatal("expected rejection of a workspace_override containing .. traversal")
 	}
@@ -479,8 +480,8 @@ func TestBuildSessionProfileRejectsTraversal(t *testing.T) {
 
 // TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing verifies
 // that when no harness_instances row exists yet for the resolved harness,
-// buildSessionProfile kicks off background provisioning (Task 6) and
-// returns ErrHarnessProvisioning instead of silently proceeding with an
+// Build kicks off background provisioning (Task 6) and
+// returns sessionprofile.ErrProvisioning instead of silently proceeding with an
 // empty dial target.
 func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T) {
 	app := testApp(t)
@@ -489,15 +490,15 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 	userID := chat.GetString("user")
 	// deliberately: no harness_instances row exists yet for this harness
 
-	_, err := buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
-	if !errors.Is(err, ErrHarnessProvisioning) {
-		t.Fatalf("expected ErrHarnessProvisioning, got %v", err)
+	_, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if !errors.Is(err, sessionprofile.ErrProvisioning) {
+		t.Fatalf("expected sessionprofile.ErrProvisioning, got %v", err)
 	}
 
 	// Provisioning is kicked off in a background goroutine. Drain it before
 	// this test's app cleanup can close PocketBase underneath that goroutine.
 	rec := waitForHarnessProvisioning(t, app, harness.Id, userID)
-	// buildSessionProfile's production wiring hands ProvisionHarnessInstance
+	// Build's production wiring hands ProvisionHarnessInstance
 	// the REAL dockerapi.New() client (only Task 6's own tests can inject a
 	// fake docker client) — so outside a live docker-compose network, where
 	// "docker-socket-proxy-write" resolves and self-inspecting
@@ -505,8 +506,8 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 	// fails immediately and the row can race straight from "pending" to
 	// "error" before this test's first poll ever observes "pending". What
 	// THIS task is responsible for is that provisioning was triggered at
-	// all (a row exists) and buildSessionProfile reported
-	// ErrHarnessProvisioning — not that the docker calls it kicks off
+	// all (a row exists) and Build reported
+	// sessionprofile.ErrProvisioning — not that the docker calls it kicks off
 	// succeed, which is Task 6/8's concern and depends on real infra.
 	switch rec.GetString("status") {
 	case "pending", "running", "error":
@@ -517,7 +518,7 @@ func TestBuildSessionProfileTriggersProvisioningWhenInstanceMissing(t *testing.T
 
 // TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance verifies
 // that a resolved harness_instances row with status="error" is reported via
-// the errHarnessFailed sentinel (not ErrHarnessProvisioning, and not a bare
+// the sessionprofile.ErrHarnessFailed sentinel (not sessionprofile.ErrProvisioning, and not a bare
 // unwrapped error) so callers can distinguish "harness failed to start"
 // from "harness still starting" via errors.Is.
 func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testing.T) {
@@ -546,19 +547,19 @@ func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testin
 		"user":    userID,
 	})
 
-	_, err = buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
-	if !errors.Is(err, errHarnessFailed) {
-		t.Fatalf("expected errHarnessFailed, got %v", err)
+	_, err = sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if !errors.Is(err, sessionprofile.ErrHarnessFailed) {
+		t.Fatalf("expected sessionprofile.ErrHarnessFailed, got %v", err)
 	}
-	if errors.Is(err, ErrHarnessProvisioning) {
-		t.Errorf("errHarnessFailed must not also match ErrHarnessProvisioning: %v", err)
+	if errors.Is(err, sessionprofile.ErrProvisioning) {
+		t.Errorf("sessionprofile.ErrHarnessFailed must not also match sessionprofile.ErrProvisioning: %v", err)
 	}
 }
 
 // TestProfileErrorClassificationForSyncShortCircuit is a table test over
 // the sentinel classification agent.go's HTTP handlers use to decide
-// whether a buildSessionProfile error should short-circuit synchronously
-// (ErrHarnessProvisioning / errHarnessFailed — the two error conditions
+// whether a Build error should short-circuit synchronously
+// (sessionprofile.ErrProvisioning / sessionprofile.ErrHarnessFailed — the two error conditions
 // this task introduces) or fall through unchanged to the pre-existing
 // async RUN_ERROR SSE path (everything else, e.g. a workspace-path
 // rejection that predates this task). Guards against re-widening the
@@ -566,13 +567,13 @@ func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testin
 func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 	app := testApp(t)
 
-	// Case 1: no harness_instances row yet -> ErrHarnessProvisioning, which
+	// Case 1: no harness_instances row yet -> sessionprofile.ErrProvisioning, which
 	// SHOULD short-circuit synchronously.
 	harness := createTestHarness(t, app, map[string]any{"cli_id": "classify-missing"})
 	provisioningChat := createTestChat(t, app, map[string]any{"harness": harness.Id})
 	provisioningUserID := provisioningChat.GetString("user")
 	{
-		// buildSessionProfile fires the background provisioning goroutine
+		// Build fires the background provisioning goroutine
 		// (Task 6's ProvisionHarnessInstance) as a side effect of resolving
 		// this case's error below. Drain it to a terminal status here,
 		// BEFORE the table runs, the same way
@@ -581,13 +582,13 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 		// app down while that goroutine is still mid-flight, which
 		// panics (observed: nil-pointer dereference in RecordQuery after
 		// Cleanup closes the underlying DB).
-		if _, err := buildSessionProfile(app, provisioningChat.Id, context.Background(), ollama.DefaultURL); !errors.Is(err, ErrHarnessProvisioning) {
-			t.Fatalf("setup: expected ErrHarnessProvisioning, got %v", err)
+		if _, err := sessionprofile.Build(app, provisioningChat.Id, context.Background(), ollama.DefaultURL); !errors.Is(err, sessionprofile.ErrProvisioning) {
+			t.Fatalf("setup: expected sessionprofile.ErrProvisioning, got %v", err)
 		}
 		waitForHarnessProvisioning(t, app, harness.Id, provisioningUserID)
 	}
 
-	// Case 2: harness_instances row with status="error" -> errHarnessFailed,
+	// Case 2: harness_instances row with status="error" -> sessionprofile.ErrHarnessFailed,
 	// which SHOULD also short-circuit synchronously.
 	failedHarness := createTestHarness(t, app, map[string]any{"cli_id": "classify-failed"})
 	failedUserID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
@@ -631,11 +632,11 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := buildSessionProfile(app, tc.chatID, context.Background(), ollama.DefaultURL)
+			_, err := sessionprofile.Build(app, tc.chatID, context.Background(), ollama.DefaultURL)
 			if err == nil {
-				t.Fatal("expected buildSessionProfile to return an error")
+				t.Fatal("expected Build to return an error")
 			}
-			gotSyncShort := errors.Is(err, ErrHarnessProvisioning) || errors.Is(err, errHarnessFailed)
+			gotSyncShort := errors.Is(err, sessionprofile.ErrProvisioning) || errors.Is(err, sessionprofile.ErrHarnessFailed)
 			if gotSyncShort != tc.wantSyncShort {
 				t.Errorf("err = %v: sync-short-circuit-worthy = %v, want %v", err, gotSyncShort, tc.wantSyncShort)
 			}
@@ -644,7 +645,7 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 }
 
 // runningInstanceFor creates a "running" harness_instances row for the given
-// harness, matching the shape buildSessionProfile requires to resolve past
+// harness, matching the shape Build requires to resolve past
 // the provisioning check.
 func runningInstanceFor(t *testing.T, app core.App, harness *core.Record, userID string) *core.Record {
 	t.Helper()
@@ -681,7 +682,7 @@ func TestBuildSessionProfileAttachesMcpGatewayForPeerHarness(t *testing.T) {
 	runningInstanceFor(t, app, harness, userID)
 	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
 
-	profile, err := buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -714,7 +715,7 @@ func TestBuildSessionProfileAttachesMcpGatewayForGoose(t *testing.T) {
 	runningInstanceFor(t, app, harness, userID)
 	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
 
-	profile, err := buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -740,7 +741,7 @@ func TestBuildSessionProfileOmitsMcpGatewayWithoutToken(t *testing.T) {
 	runningInstanceFor(t, app, harness, userID)
 	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
 
-	profile, err := buildSessionProfile(app, chat.Id, context.Background(), ollama.DefaultURL)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -749,5 +750,56 @@ func TestBuildSessionProfileOmitsMcpGatewayWithoutToken(t *testing.T) {
 		if m.Http != nil && m.Http.Name == "gateway" {
 			t.Fatal("expected no gateway entry when MCP_GATEWAY_AUTH_TOKEN is unset")
 		}
+	}
+}
+
+func TestSaveAgentSessionStampsHarnessInstance(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	chat := createTestChat(t, app, nil)
+	userID := chat.GetString("user")
+
+	// First, create a harness_instances row to reference
+	harnessesColl, err := app.FindCollectionByNameOrId("harnesses")
+	if err != nil {
+		t.Fatal(err)
+	}
+	harness := core.NewRecord(harnessesColl)
+	harness.Set("name", "test-harness")
+	harness.Set("cli_id", "test-cli-123")
+	harness.Set("acp_transport", "websocket")
+	if err := app.Save(harness); err != nil {
+		t.Fatal(err)
+	}
+
+	instancesColl, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		t.Fatal(err)
+	}
+	instance := core.NewRecord(instancesColl)
+	instance.Set("harness", harness.Id)
+	instance.Set("launch_key", "")
+	instance.Set("container_name", "test-container")
+	instance.Set("acp_endpoint", "")
+	instance.Set("secret", "")
+	instance.Set("status", "running")
+	instance.Set("managed", false)
+	if err := app.Save(instance); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := sessionprofile.SaveSession(context.Background(), app, chat.Id, userID, "session-abc", instance.Id); err != nil {
+		t.Fatal(err)
+	}
+	rec, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:c}", map[string]any{"c": chat.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.GetString("harness_instance") != instance.Id {
+		t.Errorf("harness_instance = %q, want %q", rec.GetString("harness_instance"), instance.Id)
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/sessionprofile"
 )
 
 func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() AgentRuntime) {
@@ -152,14 +153,14 @@ func (r *ScheduleRunner) Run(ctx context.Context, ownerID string) error {
 		return fmt.Errorf("coordinator unavailable")
 	}
 	userID, chatID := row.GetString("user"), chat.Id
-	if _, err := c.StartPrompt(chatID, row.GetString("prompt"), func(context.Context) (string, error) { return agentSessionForChat(r.App, chatID, userID) }, func(ctx context.Context) (coordinator.SessionProfile, error) {
-		return buildSessionProfile(r.App, chatID, ctx, r.OllamaBaseURL)
+	if _, err := c.StartPrompt(chatID, row.GetString("prompt"), func(context.Context) (string, error) { return sessionprofile.SessionForChat(r.App, chatID, userID) }, func(ctx context.Context) (coordinator.SessionProfile, error) {
+		return sessionprofile.Build(r.App, chatID, ctx, r.OllamaBaseURL)
 	}, func(ctx context.Context, sessionID string) error {
-		profile, err := buildSessionProfile(r.App, chatID, ctx, r.OllamaBaseURL)
+		profile, err := sessionprofile.Build(r.App, chatID, ctx, r.OllamaBaseURL)
 		if err != nil {
 			return err
 		}
-		return saveAgentSession(ctx, r.App, chatID, userID, sessionID, profile.ResolvedInstanceID)
+		return sessionprofile.SaveSession(ctx, r.App, chatID, userID, sessionID, profile.ResolvedInstanceID)
 	}, func(context.Context, acpsdk.StopReason) error {
 		go func() {
 			if err := hooks.SendPushNotification(r.App, userID, "PocketCoder", "Your scheduled agent replied", "schedule", chatID); err != nil {
