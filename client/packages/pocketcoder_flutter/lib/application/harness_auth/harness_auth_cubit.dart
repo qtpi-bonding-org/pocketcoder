@@ -1,17 +1,18 @@
 import 'dart:async';
 
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 import 'harness_auth_state.dart';
 
-class HarnessAuthCubit extends Cubit<HarnessAuthState> {
+class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
   HarnessAuthCubit({
     required IProviderRepository providerRepository,
     required IHarnessAuthRepository authRepository,
@@ -27,7 +28,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
 
   void watchData() {
     OnboardingLogger.event('harness auth data loading');
-    emit(state.copyWith(isLoading: true, clearError: true));
+    emit(state.copyWith(status: UiFlowStatus.loading, error: null));
     _loadHarnesses();
     _loadProviderKeys();
   }
@@ -38,8 +39,8 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
       emit(
         state.copyWith(
           harnesses: harnesses,
-          isLoading: false,
-          clearError: true,
+          status: UiFlowStatus.success,
+          error: null,
         ),
       );
       OnboardingLogger.event(
@@ -51,7 +52,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
         source: 'HarnessAuthCubit',
         operation: 'watchHarnesses',
       ));
-      emit(state.copyWith(error: e));
+      emit(state.copyWith(status: UiFlowStatus.failure, error: e));
       OnboardingLogger.event('harness list failed', {'error': e.toString()});
     });
   }
@@ -66,7 +67,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
           source: 'HarnessAuthCubit',
           operation: 'watchProviderKeys',
         ));
-        emit(state.copyWith(error: e));
+        emit(state.copyWith(status: UiFlowStatus.failure, error: e));
         OnboardingLogger.event(
             'provider key list failed', {'error': e.toString()});
       },
@@ -88,14 +89,14 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
     await _setBusy(harnessId, true);
     try {
       await action();
-      emit(state.copyWith(clearError: true));
+      emit(state.copyWith(status: UiFlowStatus.success, error: null));
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(
         error: e,
         source: 'HarnessAuthCubit',
         operation: 'harnessOperation',
       );
-      emit(state.copyWith(error: e));
+      emit(state.copyWith(status: UiFlowStatus.failure, error: e));
       OnboardingLogger.event('harness auth operation failed', {
         'harness': harnessId,
         'error': e.toString(),
@@ -108,7 +109,11 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
   void _updateStatus(String harnessId, HarnessAuthStatus status) {
     final next = Map<String, HarnessAuthStatus>.from(state.statuses);
     next[harnessId] = status;
-    emit(state.copyWith(statuses: next, clearError: true));
+    emit(state.copyWith(
+      statuses: next,
+      status: UiFlowStatus.success,
+      error: null,
+    ));
     OnboardingLogger.event('harness auth status', {
       'harness': harnessId,
       'status': status.status,
@@ -135,7 +140,7 @@ class HarnessAuthCubit extends Cubit<HarnessAuthState> {
         source: 'HarnessAuthCubit',
         operation: 'refreshStatus',
       );
-      emit(state.copyWith(error: e));
+      emit(state.copyWith(status: UiFlowStatus.failure, error: e));
     }
   }
 
