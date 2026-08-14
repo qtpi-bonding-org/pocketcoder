@@ -63,10 +63,20 @@ type ollamaDocker interface {
 	Remove(context.Context, string) error
 }
 
-var (
-	ollamaRuntimeMu          sync.Mutex
-	ensureOllamaReleaseImage = releaseartifact.EnsureOptionalImage
-)
+type OllamaConfig struct {
+	BaseURL string
+	Release string
+}
+
+type OllamaDeps struct {
+	Docker     ollamaDocker
+	HTTP       *http.Client
+	StreamHTTP *http.Client
+	Config     OllamaConfig
+	RuntimeMu  *sync.Mutex
+}
+
+type releaseImageAcquirer func(context.Context, releaseartifact.DockerLoader, string) (string, error)
 
 func resolveOllamaURL() string {
 	if value := strings.TrimSpace(os.Getenv("OLLAMA_API_URL")); value != "" {
@@ -122,12 +132,26 @@ func ollamaModelInstalled(ctx context.Context, client *http.Client, baseURL stri
 // ensureOllamaRuntime is invoked only by the explicit administrator model-pull
 // operation. Listing models must remain cheap and must never turn opening a
 // picker into an unexpected multi-gigabyte runtime download.
-func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.Client, baseURL string, release string) error {
-	ollamaRuntimeMu.Lock()
-	defer ollamaRuntimeMu.Unlock()
+func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.Client, cfg OllamaConfig, acquire releaseImageAcquirer, runtimeMu *sync.Mutex) error {
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = resolveOllamaURL()
+	}
+	if cfg.Release != "" {
+		cfg.Release = strings.TrimSpace(cfg.Release)
+	}
+	if runtimeMu == nil {
+		runtimeMu = &sync.Mutex{}
+	}
+	if acquire == nil {
+		acquire = releaseartifact.EnsureOptionalImage
+	}
+
+	runtimeMu.Lock()
+	defer runtimeMu.Unlock()
+
 	expectedImage := ""
 	acquireReleaseImage := func() error {
-		image, err := ensureOllamaReleaseImage(ctx, docker, "ollama")
+		image, err := acquire(ctx, docker, "ollama")
 		if err != nil {
 			return fmt.Errorf("acquire Ollama runtime: %w", err)
 		}
@@ -136,13 +160,13 @@ func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.
 	}
 	insp, err := docker.Inspect(ctx, ollamaContainerName)
 	if err == nil {
-		if release == "" || release == "development" {
+		if cfg.Release == "" || cfg.Release == "development" {
 			if !insp.State.Running {
 				if err := docker.Start(ctx, ollamaContainerName); err != nil {
 					return fmt.Errorf("start Ollama runtime: %w", err)
 				}
 			}
-			return waitForOllama(ctx, client, baseURL)
+			return waitForOllama(ctx, client, cfg.BaseURL)
 		}
 		if err := acquireReleaseImage(); err != nil {
 			return err
@@ -157,12 +181,12 @@ func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.
 					return fmt.Errorf("start Ollama runtime: %w", err)
 				}
 			}
-			return waitForOllama(ctx, client, baseURL)
+			return waitForOllama(ctx, client, cfg.BaseURL)
 		}
 	} else if !errors.Is(err, dockerapi.ErrContainerNotFound) {
 		return fmt.Errorf("inspect Ollama runtime: %w", err)
 	}
-	if release == "" || release == "development" {
+	if cfg.Release == "" || cfg.Release == "development" {
 		return errors.New("Ollama must be started through the local-models profile in development")
 	}
 	if expectedImage == "" {
@@ -184,7 +208,7 @@ func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.
 		},
 		Labels: map[string]string{
 			"pc_managed":    "pocketcoder",
-			"pc_release":    release,
+			"pc_release":    cfg.Release,
 			"pc_capability": "ollama",
 		},
 	}); err != nil {
@@ -193,7 +217,7 @@ func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.
 	if err := docker.Start(ctx, ollamaContainerName); err != nil {
 		return fmt.Errorf("start Ollama runtime: %w", err)
 	}
-	return waitForOllama(ctx, client, baseURL)
+	return waitForOllama(ctx, client, cfg.BaseURL)
 }
 
 func waitForOllama(ctx context.Context, client *http.Client, baseURL string) error {
@@ -213,15 +237,34 @@ func waitForOllama(ctx context.Context, client *http.Client, baseURL string) err
 	}
 }
 
-func AddOllamaOperations(registry *operation.Registry) {
-	ollamaBaseURL := resolveOllamaURL()
-	release := strings.TrimSpace(os.Getenv("POCKETCODER_RELEASE"))
-	client := ollamaHTTPClient()
-	streamClient := ollamaStreamingHTTPClient()
-	docker := dockerapi.New()
+func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
+	docker := deps.Docker
+	if docker == nil {
+		docker = dockerapi.New()
+	}
+
+	client := deps.HTTP
+	if client == nil {
+		client = ollamaHTTPClient()
+	}
+	streamClient := deps.StreamHTTP
+	if streamClient == nil {
+		streamClient = ollamaStreamingHTTPClient()
+	}
+	config := deps.Config
+	if strings.TrimSpace(config.BaseURL) == "" {
+		config.BaseURL = resolveOllamaURL()
+	}
+	if strings.TrimSpace(config.Release) == "" {
+		config.Release = strings.TrimSpace(os.Getenv("POCKETCODER_RELEASE"))
+	}
+	runtimeMu := deps.RuntimeMu
+	if runtimeMu == nil {
+		runtimeMu = &sync.Mutex{}
+	}
 
 	registry.Add(operation.Route{OperationID: "listOllamaModels", Method: http.MethodGet, Path: "/api/pocketcoder/v1/ollama/models", Auth: true, Action: func(re *core.RequestEvent) error {
-		models, err := fetchOllamaTags(re.Request.Context(), client, ollamaBaseURL)
+		models, err := fetchOllamaTags(re.Request.Context(), client, config.BaseURL)
 		if err != nil {
 			return re.JSON(http.StatusOK, map[string]any{
 				"models":  []ollamaModel{},
@@ -239,11 +282,11 @@ func AddOllamaOperations(registry *operation.Registry) {
 		if err := re.BindBody(&input); err != nil || !ollamaModelName.MatchString(input.Model) {
 			return pocketCoderError(re, http.StatusBadRequest, "model must be a valid Ollama model name")
 		}
-		if err := ensureOllamaRuntime(re.Request.Context(), docker, client, ollamaBaseURL, release); err != nil {
+		if err := ensureOllamaRuntime(re.Request.Context(), docker, client, config, nil, runtimeMu); err != nil {
 			return pocketCoderError(re, http.StatusServiceUnavailable, err.Error())
 		}
 		payload, _ := json.Marshal(map[string]string{"model": input.Model})
-		request, err := http.NewRequestWithContext(re.Request.Context(), http.MethodPost, ollamaBaseURL+"/api/pull", bytes.NewReader(payload))
+		request, err := http.NewRequestWithContext(re.Request.Context(), http.MethodPost, config.BaseURL+"/api/pull", bytes.NewReader(payload))
 		if err != nil {
 			return pocketCoderError(re, http.StatusInternalServerError, "create Ollama pull request")
 		}

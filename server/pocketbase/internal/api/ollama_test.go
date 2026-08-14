@@ -80,16 +80,15 @@ func TestEnsureOllamaRuntimeAcquiresCreatesAndPreservesModelVolume(t *testing.T)
 	defer server.Close()
 
 	docker := &fakeOllamaDocker{inspectErr: dockerapi.ErrContainerNotFound}
-	original := ensureOllamaReleaseImage
 	acquired := false
 	expectedImage := "ollama/ollama@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	ensureOllamaReleaseImage = func(_ context.Context, _ releaseartifact.DockerLoader, id string) (string, error) {
+	acquire := func(_ context.Context, _ releaseartifact.DockerLoader, id string) (string, error) {
 		acquired = id == "ollama"
 		return expectedImage, nil
 	}
-	t.Cleanup(func() { ensureOllamaReleaseImage = original })
 
-	if err := ensureOllamaRuntime(context.Background(), docker, server.Client(), server.URL, release); err != nil {
+	cfg := OllamaConfig{BaseURL: server.URL, Release: release}
+	if err := ensureOllamaRuntime(context.Background(), docker, server.Client(), cfg, acquire, nil); err != nil {
 		t.Fatal(err)
 	}
 	if !acquired || docker.created.Image != expectedImage {

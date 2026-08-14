@@ -21,7 +21,9 @@ package api
 
 import (
 	"bufio"
+	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,7 +36,50 @@ import (
 
 var safeContainerName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
-func AddLogOperations(registry *operation.Registry) {
+// dockerLogSource streams a container's combined stdout/stderr log,
+// multiplexed in Docker's frame format, starting from the last 100 lines.
+type dockerLogSource interface {
+	StreamLogs(ctx context.Context, containerName string) (io.ReadCloser, error)
+}
+
+// errLogsUnavailable indicates the upstream Docker proxy responded, but not
+// with a usable log stream (e.g. unknown container) -- distinct from a
+// connection failure to the proxy itself.
+var errLogsUnavailable = errors.New("logs unavailable")
+
+// dockerProxyLogSource is the production dockerLogSource, backed by the
+// internal docker-socket-proxy.
+type dockerProxyLogSource struct{}
+
+func (dockerProxyLogSource) StreamLogs(ctx context.Context, containerName string) (io.ReadCloser, error) {
+	// We use follow=1 for real-time streaming and tail=100 for initial context.
+	dockerUrl := fmt.Sprintf("http://docker-socket-proxy-write:2375/containers/%s/logs?follow=1&stdout=1&stderr=1&tail=100", containerName)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, dockerUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("%w: docker proxy returned %s", errLogsUnavailable, resp.Status)
+	}
+	return resp.Body, nil
+}
+
+type LogsDeps struct {
+	Source dockerLogSource // nil -> dockerProxyLogSource{}
+}
+
+func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
+	source := deps.Source
+	if source == nil {
+		source = dockerProxyLogSource{}
+	}
+
 	// 📜 Stream Container Logs (SSE)
 	// This endpoint replaces Dozzle by providing a native SSE stream that the Flutter
 	// app can consume to show real-time logs with custom styling.
@@ -53,19 +98,14 @@ func AddLogOperations(registry *operation.Registry) {
 			return re.BadRequestError("Invalid container name.", nil)
 		}
 
-		// Docker API URL via the internal docker-socket-proxy.
-		// We use follow=1 for real-time streaming and tail=100 for initial context.
-		dockerUrl := fmt.Sprintf("http://docker-socket-proxy-write:2375/containers/%s/logs?follow=1&stdout=1&stderr=1&tail=100", containerName)
-
-		resp, err := http.Get(dockerUrl)
+		body, err := source.StreamLogs(re.Request.Context(), containerName)
 		if err != nil {
+			if errors.Is(err, errLogsUnavailable) {
+				return re.NotFoundError("Logs unavailable", nil)
+			}
 			return re.InternalServerError("Failed to connect to docker proxy", err)
 		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return re.NotFoundError("Logs unavailable", nil)
-		}
+		defer body.Close()
 
 		// Set HTTP headers for Server-Sent Events (SSE).
 		re.Response.Header().Set("Content-Type", "text/event-stream")
@@ -76,7 +116,7 @@ func AddLogOperations(registry *operation.Registry) {
 
 		// Reader for demuxing Docker's multiplexed log stream.
 		// Each frame starts with an 8-byte header: [streamType, 0, 0, 0, size1, size2, size3, size4]
-		reader := bufio.NewReader(resp.Body)
+		reader := bufio.NewReader(body)
 
 		for {
 			header := make([]byte, 8)

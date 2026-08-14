@@ -28,11 +28,11 @@ type requestEventContextKey struct{}
 // those responses would alter their transport semantics.
 func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() *coordinator.Coordinator) (*coordinator.Coordinator, error) {
 	registry := operation.NewRegistry()
-	api.AddMcpOperations(app, registry)
+	api.AddMcpOperations(app, registry, api.McpDeps{})
 	api.AddMcpOAuthOperations(app, registry)
-	api.AddProxyOperations(registry)
-	api.AddLogOperations(registry)
-	api.AddOllamaOperations(registry)
+	api.AddProxyOperations(registry, api.ProxyDeps{})
+	api.AddLogOperations(registry, api.LogsDeps{})
+	api.AddOllamaOperations(registry, api.OllamaDeps{})
 	api.AddReleaseStatusOperations(registry)
 	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, nil)
 	filesystem.AddFileOperations(registry)
