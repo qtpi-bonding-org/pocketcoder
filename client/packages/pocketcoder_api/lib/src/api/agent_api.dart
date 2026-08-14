@@ -14,6 +14,7 @@ import 'package:built_value/json_object.dart';
 import 'package:pocketcoder_api/src/api_util.dart';
 import 'package:pocketcoder_api/src/model/accepted_response.dart';
 import 'package:pocketcoder_api/src/model/config_option_request.dart';
+import 'package:pocketcoder_api/src/model/error_response.dart';
 import 'package:pocketcoder_api/src/model/mode_request.dart';
 import 'package:pocketcoder_api/src/model/prompt_request.dart';
 

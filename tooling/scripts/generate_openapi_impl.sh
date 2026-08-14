@@ -54,36 +54,10 @@ while IFS= read -r -d '' dart_file; do
 done < <(find "$repo_root/client/packages/pocketcoder_api/lib" \
   "$repo_root/client/packages/pocketcoder_api/test" -type f -name '*.dart' -print0)
 
-# OpenAPI Generator currently emits duplicate and unused imports in a small
-# set of built_value API/model files. Keep the generated package analyzer-clean
-# without hand-editing generated output after every contract regeneration.
-for dart_file in \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/agent_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/files_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/harness_auth_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/logs_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/mcp_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/observability_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/ollama_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/push_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/release_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/schedules_api.dart"; do
-  perl -0pi -e 's/import '\''package:pocketcoder_api\/src\/model\/error_response\.dart'\'';\n//g' "$dart_file"
-done
-# The generator's import layout changed in 7.24.0. Do not remove the block
-# between duplicate json_object imports: that block contains required Dio,
-# serializer, and BuiltMap imports in the current output. The file-level
-# unused-import suppression below is sufficient for the remaining harmless
-# generated imports.
-for dart_file in \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/files_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/observability_api.dart" \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/api/schedules_api.dart"; do
-  perl -0pi -e 's/import '\''package:built_value\/json_object\.dart'\'';\n//g' "$dart_file"
-done
-perl -0pi -e 's/import '\''package:built_collection\/built_collection\.dart'\'';\n//g; s/import '\''package:built_value\/json_object\.dart'\'';\n//g' \
-  "$repo_root/client/packages/pocketcoder_api/lib/src/model/content_block.dart"
-
+# OpenAPI Generator can emit harmless duplicate/unused imports depending on
+# the schema. Keep generation non-destructive: suppress those diagnostics in
+# generated files instead of deleting imports based on filenames or import
+# ordering. This remains stable when the generator changes its layout.
 for dart_file in \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/agent_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/files_api.dart" \

@@ -11,6 +11,7 @@ import 'package:dio/dio.dart';
 
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/json_object.dart';
+import 'package:pocketcoder_api/src/model/error_response.dart';
 
 class PushApi {
 
