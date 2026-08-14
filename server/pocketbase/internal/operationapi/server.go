@@ -12,7 +12,6 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/router"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/api"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
@@ -26,7 +25,7 @@ type requestEventContextKey struct{}
 // request/response operations cross the generated strict server interface.
 // Streaming, proxy, and binary operations remain direct because buffering
 // those responses would alter their transport semantics.
-func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() *coordinator.Coordinator) (*coordinator.Coordinator, error) {
+func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() api.AgentRuntime) (api.AgentRuntime, error) {
 	registry := operation.NewRegistry()
 	api.AddMcpOperations(app, registry, api.McpDeps{})
 	api.AddMcpOAuthOperations(app, registry)
@@ -34,7 +33,7 @@ func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() *coor
 	api.AddLogOperations(registry, api.LogsDeps{})
 	api.AddOllamaOperations(registry, api.OllamaDeps{})
 	api.AddReleaseStatusOperations(registry)
-	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, nil)
+	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, api.AgentDeps{})
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
 	api.AddHarnessAuthOperations(app, registry, api.HarnessAuthDeps{})

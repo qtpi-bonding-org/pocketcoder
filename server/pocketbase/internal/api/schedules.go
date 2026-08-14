@@ -16,7 +16,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() *coordinator.Coordinator) {
+func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() AgentRuntime) {
 	ollamaBaseURL := resolveOllamaURL()
 	runner := &ScheduleRunner{App: app, Coord: coord, OllamaBaseURL: ollamaBaseURL}
 	registry.Add(operation.Route{OperationID: "runScheduleNow", Method: http.MethodPost, Path: "/api/pocketcoder/v1/schedules/{scheduleId}/run", Auth: true, Action: func(re *core.RequestEvent) error {
@@ -84,7 +84,7 @@ func scheduleJobID(id string) string { return "pocketcoder-schedule-" + id }
 
 type ScheduleRunner struct {
 	App           core.App
-	Coord         func() *coordinator.Coordinator
+	Coord         func() AgentRuntime
 	OllamaBaseURL string
 	Now           func() time.Time
 }
