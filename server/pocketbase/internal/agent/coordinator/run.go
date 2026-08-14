@@ -651,6 +651,18 @@ func (c *Coordinator) establishSession(
 		return dialedConn, string(res.SessionId), res.Modes, res.ConfigOptions, initResp, true, nil
 	}
 
+	if initResp.AgentCapabilities.SessionCapabilities.Resume != nil {
+		beforeSessionCall()
+		res, err := dialedConn.ResumeSession(ctx, acpsdk.ResumeSessionRequest{
+			Meta: profile.sessionMeta(), SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
+		})
+		if err != nil {
+			dialedConn.Close()
+			return nil, "", nil, nil, nil, false, fmt.Errorf("resume harness session: %w", err)
+		}
+		return dialedConn, sessionID, res.Modes, res.ConfigOptions, initResp, false, nil
+	}
+
 	if !initResp.AgentCapabilities.LoadSession {
 		dialedConn.Close()
 		return nil, "", nil, nil, nil, false, fmt.Errorf("harness does not support resuming a session (AgentCapabilities.LoadSession is false)")
