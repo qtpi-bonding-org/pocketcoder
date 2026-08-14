@@ -2,6 +2,7 @@ name: Generated contracts
 
 on:
   pull_request:
+    branches: [main]
     paths:
       - 'api/openapi/**'
       - 'server/pocketbase/pb_migrations/schema.json'

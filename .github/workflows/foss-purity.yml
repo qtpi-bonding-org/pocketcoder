@@ -11,6 +11,7 @@ on:
       - 'client/scripts/purity_check.sh'
       - 'client/scripts/check_license_purity.py'
   pull_request:
+    branches: [main]
     paths:
       - 'client/packages/pocketcoder_flutter/**'
       - 'client/apps/pocketcoder_foss/**'
