@@ -28,7 +28,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
@@ -86,8 +85,23 @@ type harnessAuthStatusResp struct {
 	Challenge      *harnessAuthChallengeResp `json:"challenge,omitempty"`
 }
 
-func AddHarnessAuthOperations(app *pocketbase.PocketBase, registry *operation.Registry) {
-	runtime := harnessauth.NewDefaultRuntime()
+type harnessAuthRuntime interface {
+	Start(context.Context, string, harnessauth.AttemptContext) (*harnessauth.AttemptState, error)
+	Poll(context.Context, string, harnessauth.AttemptContext) (*harnessauth.AttemptState, error)
+	Submit(context.Context, string, harnessauth.AttemptContext, string) (*harnessauth.AttemptState, error)
+	Cancel(context.Context, string, harnessauth.AttemptContext) (*harnessauth.AttemptState, error)
+	Disconnect(context.Context, string, harnessauth.AttemptContext) (*harnessauth.AttemptState, error)
+}
+
+type HarnessAuthDeps struct {
+	Runtime harnessAuthRuntime
+}
+
+func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps HarnessAuthDeps) {
+	runtime := deps.Runtime
+	if runtime == nil {
+		runtime = harnessauth.NewDefaultRuntime()
+	}
 
 	registry.Add(operation.Route{OperationID: "getHarnessAuthStatus", Method: http.MethodPost, Path: "/api/pocketcoder/v1/harness-auth/status", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
@@ -199,7 +213,7 @@ func AddHarnessAuthOperations(app *pocketbase.PocketBase, registry *operation.Re
 				_ = app.Save(account)
 				return pocketCoderError(re, 500, err.Error())
 			}
-			state, err := runtime.Start(context.Background(), provider, stateCtx)
+			state, err := runtime.Start(re.Request.Context(), provider, stateCtx)
 			if err != nil {
 				_ = updateHarnessAuthAttempt(app, attempt, harnessauth.AttemptStatusFailed, "Unable to initialize authenticator")
 				account.Set("status", accountStatusError)
@@ -254,7 +268,7 @@ func AddHarnessAuthOperations(app *pocketbase.PocketBase, registry *operation.Re
 		if err != nil {
 			return pocketCoderError(re, 500, err.Error())
 		}
-		state, err := runtime.Poll(context.Background(), attempt.GetString("provider"), stateCtx)
+		state, err := runtime.Poll(re.Request.Context(), attempt.GetString("provider"), stateCtx)
 		if err != nil {
 			if errors.Is(err, harnessauth.ErrAttemptExpired) {
 				attemptStatus := harnessauth.AttemptStatusFailed
@@ -310,7 +324,7 @@ func AddHarnessAuthOperations(app *pocketbase.PocketBase, registry *operation.Re
 		if err != nil {
 			return pocketCoderError(re, 500, err.Error())
 		}
-		state, err := runtime.Submit(context.Background(), attempt.GetString("provider"), stateCtx, code)
+		state, err := runtime.Submit(re.Request.Context(), attempt.GetString("provider"), stateCtx, code)
 		if err != nil {
 			account.Set("status", accountStatusError)
 			account.Set("last_error", err.Error())
@@ -348,7 +362,7 @@ func AddHarnessAuthOperations(app *pocketbase.PocketBase, registry *operation.Re
 		if err != nil {
 			return pocketCoderError(re, 500, err.Error())
 		}
-		state, err := runtime.Cancel(context.Background(), attempt.GetString("provider"), stateCtx)
+		state, err := runtime.Cancel(re.Request.Context(), attempt.GetString("provider"), stateCtx)
 		if err != nil {
 			return pocketCoderError(re, 502, "Auth helper cancel failed")
 		}
@@ -391,7 +405,7 @@ func AddHarnessAuthOperations(app *pocketbase.PocketBase, registry *operation.Re
 			if ctxErr != nil {
 				return pocketCoderError(re, 500, ctxErr.Error())
 			}
-			state, err := runtime.Disconnect(context.Background(), attempt.GetString("provider"), stateCtx)
+			state, err := runtime.Disconnect(re.Request.Context(), attempt.GetString("provider"), stateCtx)
 			if err == nil {
 				_ = updateHarnessAuthAttempt(app, attempt, state.Status, state.LastError)
 			}

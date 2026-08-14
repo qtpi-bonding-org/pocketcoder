@@ -32,7 +32,7 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 	AddReleaseStatusOperations(registry)
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
-	AddHarnessAuthOperations(app, registry)
+	AddHarnessAuthOperations(app, registry, HarnessAuthDeps{})
 	AddScheduleOperations(app, registry, func() *coordinator.Coordinator { return nil })
 
 	operation.MountForTests(e, registry.Routes())
