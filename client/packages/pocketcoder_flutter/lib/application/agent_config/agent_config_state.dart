@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 part 'agent_config_state.freezed.dart';
 
 @freezed
-sealed class AgentConfigState with _$AgentConfigState implements IUiFlowState {
+sealed class AgentConfigState with _$AgentConfigState, UiFlowStateMixin {
   const AgentConfigState._();
 
   const factory AgentConfigState({
@@ -17,15 +17,4 @@ sealed class AgentConfigState with _$AgentConfigState implements IUiFlowState {
   }) = _AgentConfigState;
 
   factory AgentConfigState.initial() => const AgentConfigState();
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-  @override
-  bool get hasError => error != null;
 }

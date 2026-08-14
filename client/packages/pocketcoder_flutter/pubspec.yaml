@@ -25,11 +25,11 @@ dependencies:
   cubit_ui_flow:
     git: 
       url: https://github.com/qtpi-bonding-org/flutter_cubit_ui_flow.git
-      ref: 1d31dce6ab6753a58c230586660b301daf851ec6
+      ref: 78ca8da8b52bd750c96443bcefe3ed1edcda5a52
   flutter_error_privserver:
     git:
       url: https://github.com/qtpi-bonding-org/flutter_error_privserver.git
-      ref: dadb08a
+      ref: be38ae65c5889729b3a5a656fd04b23411b17806
   flutter_color_palette:
     git: https://github.com/qtpi-bonding-org/flutter_color_palette.git
   widgetbook: ^3.25.0

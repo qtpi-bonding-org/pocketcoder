@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/domain/models/chat.dart';
 part 'chat_list_state.freezed.dart';
 
 @freezed
-sealed class ChatListState with _$ChatListState implements IUiFlowState {
+sealed class ChatListState with _$ChatListState, UiFlowStateMixin {
   const ChatListState._();
 
   const factory ChatListState({
@@ -15,14 +15,4 @@ sealed class ChatListState with _$ChatListState implements IUiFlowState {
     Object? error,
   }) = _ChatListState;
 
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-  @override
-  bool get hasError => error != null;
 }

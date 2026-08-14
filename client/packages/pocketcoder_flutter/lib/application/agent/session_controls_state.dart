@@ -16,7 +16,7 @@ enum SessionControlsOperation {
 
 @freezed
 sealed class SessionControlsState with _$SessionControlsState
-    implements IUiFlowState {
+    , UiFlowStateMixin {
   const SessionControlsState._();
 
   const factory SessionControlsState({
@@ -32,19 +32,4 @@ sealed class SessionControlsState with _$SessionControlsState
 
   /// Convenience: the current config map (null when no config published).
   Map<String, dynamic>? get config => sessionState.config;
-
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-
-  @override
-  bool get hasError => error != null;
 }

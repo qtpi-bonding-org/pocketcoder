@@ -8,7 +8,7 @@ import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 part 'provider_state.freezed.dart';
 
 @freezed
-sealed class ProviderState with _$ProviderState implements IUiFlowState {
+sealed class ProviderState with _$ProviderState, UiFlowStateMixin {
   const ProviderState._();
 
   const factory ProviderState({
@@ -21,15 +21,4 @@ sealed class ProviderState with _$ProviderState implements IUiFlowState {
   }) = _ProviderState;
 
   factory ProviderState.initial() => const ProviderState();
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-  @override
-  bool get hasError => error != null;
 }
