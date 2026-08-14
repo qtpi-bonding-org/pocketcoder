@@ -80,7 +80,7 @@ func createProxyHandler(target string, prefix string, transport http.RoundTrippe
 		// Update headers and target URL for the proxy
 		req.URL.Host = targetUrl.Host
 		req.URL.Scheme = targetUrl.Scheme
-		req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+		req.Header.Set("X-Forwarded-Host", req.Host)
 		req.Header.Set("X-Forwarded-Prefix", prefix)
 		req.Host = targetUrl.Host
 
