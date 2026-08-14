@@ -101,8 +101,8 @@ var ensureReleaseHarnessImage = func(ctx context.Context, client dockerProvision
 
 // FindHarnessInstance looks up the harness_instances row for (harness,
 // account, launchKey) scoped to a user. See ProvisionHarnessInstance for why
-// launch_key is matched in Go. Exported so api/profile.go's
-// buildSessionProfile can share this exact lookup instead of maintaining its own
+// launch_key is matched in Go. Exported so internal/sessionprofile's
+// sessionprofile.Build can share this exact lookup instead of maintaining its own
 // copy of the same launch_key-in-Go workaround.
 func FindHarnessInstance(app core.App, harnessID, launchKey, userID, accountID string) (*core.Record, error) {
 	candidates, err := app.FindRecordsByFilter("harness_instances", "harness = {:h} && user = {:u} && harness_account = {:a}", "", 0, 0, map[string]any{"h": harnessID, "u": userID, "a": accountID})
@@ -140,7 +140,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	}
 	// Do not add `launch_key = {:k}` to FindHarnessInstance's PocketBase filter.
 	// This is confirmed against the
-	// already-landed api/profile.go (buildSessionProfile queries
+	// already-landed internal/sessionprofile (sessionprofile.Build queries
 	// harness_instances the same way, see its own in-code comment):
 	// PocketBase's filter evaluator does not reliably match an empty-string
 	// `launch_key` inside an `&&` expression, and launch_key = "" is the
@@ -150,7 +150,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// mint and Create a brand-new container colliding with the first on
 	// the (harness, launch_key) unique index and erroring out. Query by
 	// harness alone, then match launch_key in Go, exactly like
-	// buildSessionProfile already does.
+	// sessionprofile.Build already does.
 	existing, err := FindHarnessInstance(app, harnessID, launchKey, userID, account.Id)
 	if err != nil {
 		return nil, err

@@ -13,20 +13,10 @@ if [ -r "$GOOSE_KEYS_ENV" ]; then
   set +a
 fi
 
-# Keep the accepted provider list explicit: a typo must fail at boot instead of
-# making Goose choose an unintended backend. Ollama is an internal Compose
-# service on the private model network, not a host port or external endpoint.
-case "${GOOSE_PROVIDER:-anthropic}" in
-  anthropic)
-    : "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is required for GOOSE_PROVIDER=anthropic}"
-    ;;
-  ollama)
-    : "${OLLAMA_HOST:?OLLAMA_HOST is required for GOOSE_PROVIDER=ollama}"
-    ;;
-  *)
-    echo "unsupported GOOSE_PROVIDER: ${GOOSE_PROVIDER}" >&2
-    exit 64
-    ;;
-esac
+# Do not maintain a second provider allowlist here. Goose owns provider
+# discovery and validation; this wrapper must not reject providers that Goose
+# supports (for example openrouter, openai, google, or future additions).
+# Provider credentials and provider-specific settings arrive through the
+# rendered keys.env or the container environment and are validated by Goose.
 
 exec /usr/local/bin/goose serve --host 0.0.0.0 --port 3000

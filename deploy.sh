@@ -28,7 +28,6 @@ NC='\033[0m'
 
 # Initialize flags
 INCLUDE_DOCS=false
-INCLUDE_TESTS=false
 HARDEN_HOST=true
 COMPOSE_FILES=("-f" "docker-compose.yml")
 
@@ -36,7 +35,6 @@ COMPOSE_FILES=("-f" "docker-compose.yml")
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --docs) INCLUDE_DOCS=true ;;
-        --tests|--test) INCLUDE_TESTS=true ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -135,11 +133,6 @@ if [ "$INCLUDE_DOCS" = true ]; then
     COMPOSE_FILES+=("-f" "docker-compose.docs.yml")
 fi
 
-if [ "$INCLUDE_TESTS" = true ]; then
-    echo -e "${YELLOW}🧪 Including Test runner service...${NC}"
-    COMPOSE_FILES+=("-f" "docker-compose.test.yml")
-fi
-
 # 3. BUILD & BOOT
 # ---------------
 echo -e "${BLUE}🏗️  Building images...${NC}"
@@ -161,5 +154,5 @@ fi
 if [ "$INCLUDE_DOCS" = true ]; then
     echo -e "📚 ${BLUE}Docs:${NC}          http://localhost:4321"
 fi
-echo -e "🧠 ${BLUE}OpenCode Logs:${NC} docker logs -f pocketcoder-opencode"
+echo -e "🏰 ${BLUE}PocketBase Logs:${NC} docker logs -f pocketcoder-pocketbase"
 echo -e "------------------------------------------------"
