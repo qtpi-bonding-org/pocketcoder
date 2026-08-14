@@ -79,7 +79,7 @@ func TestScheduleRunnerRunSuccessAndClock(t *testing.T) {
 	c := scheduleCoordinator(t, func(_ context.Context, _ acpsdk.Client, _ coordinator.Target) (acp.Conn, error) {
 		return &scheduleFakeConn{}, nil
 	})
-	r := &ScheduleRunner{App: app, Coord: func() *coordinator.Coordinator { return c }, Now: func() time.Time { return when }}
+	r := &ScheduleRunner{App: app, Coord: func() AgentRuntime { return c }, Now: func() time.Time { return when }}
 	if err := r.Run(context.Background(), s.Id); err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func TestScheduleRunnerRunPausedIsNoOp(t *testing.T) {
 	user := testUser(t, app, "schedule-paused-"+randomSuffix()+"@example.com")
 	s := newSchedule(t, app, user.Id, "Paused", true)
 	when := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
-	r := &ScheduleRunner{App: app, Coord: func() *coordinator.Coordinator { return nil }, Now: func() time.Time { return when }}
+	r := &ScheduleRunner{App: app, Coord: func() AgentRuntime { return nil }, Now: func() time.Time { return when }}
 	if err := r.Run(context.Background(), s.Id); err != nil {
 		t.Fatal(err)
 	}
@@ -126,14 +126,14 @@ func TestScheduleRunnerRunErrorsDoNotUpdateLastRun(t *testing.T) {
 	user := testUser(t, app, "schedule-errors-"+randomSuffix()+"@example.com")
 	seedTestHarnessAndInstance(t, app, "goose", true, user.Id)
 	t.Run("missing owner", func(t *testing.T) {
-		r := &ScheduleRunner{App: app, Coord: func() *coordinator.Coordinator { return nil }}
+		r := &ScheduleRunner{App: app, Coord: func() AgentRuntime { return nil }}
 		if err := r.Run(context.Background(), "missing-owner"); err == nil {
 			t.Fatal("expected error")
 		}
 	})
 	t.Run("nil coordinator", func(t *testing.T) {
 		s := newSchedule(t, app, user.Id, "Unavailable", false)
-		r := &ScheduleRunner{App: app, Coord: func() *coordinator.Coordinator { return nil }}
+		r := &ScheduleRunner{App: app, Coord: func() AgentRuntime { return nil }}
 		if err := r.Run(context.Background(), s.Id); err == nil {
 			t.Fatal("expected error")
 		}

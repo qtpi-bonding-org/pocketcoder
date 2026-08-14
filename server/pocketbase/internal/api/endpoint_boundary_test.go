@@ -7,7 +7,6 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
@@ -21,7 +20,7 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 	t.Helper()
 	registry := operation.NewRegistry()
 
-	if _, err := AddAgentOperations(app, registry, nil); err != nil {
+	if _, err := AddAgentOperations(app, registry, AgentDeps{}); err != nil {
 		t.Fatal(err)
 	}
 	AddMcpOperations(app, registry, McpDeps{})
@@ -33,7 +32,7 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
 	AddHarnessAuthOperations(app, registry, HarnessAuthDeps{})
-	AddScheduleOperations(app, registry, func() *coordinator.Coordinator { return nil })
+	AddScheduleOperations(app, registry, func() AgentRuntime { return nil })
 
 	operation.MountForTests(e, registry.Routes())
 }

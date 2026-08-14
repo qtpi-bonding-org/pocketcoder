@@ -31,7 +31,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/api"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
@@ -75,8 +75,8 @@ func main() {
 	// agent_profiles/permission_mode_tools (during app.Bootstrap(), before OnServe)
 	// can also fire it once with coord still nil; every getter() caller
 	// nil-checks and skips, so this is a harmless no-op, not a bug.
-	var coord *coordinator.Coordinator
-	coordGetter := func() *coordinator.Coordinator { return coord }
+	var coord api.AgentRuntime
+	coordGetter := func() api.AgentRuntime { return coord }
 
 	// 1. Register Migrations
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
