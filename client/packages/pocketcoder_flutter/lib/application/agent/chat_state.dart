@@ -11,7 +11,7 @@ enum AgentChatOperation {
 }
 
 @freezed
-sealed class ChatState with _$ChatState implements IUiFlowState {
+sealed class ChatState with _$ChatState, UiFlowStateMixin {
   const ChatState._();
 
   const factory ChatState({
@@ -22,18 +22,4 @@ sealed class ChatState with _$ChatState implements IUiFlowState {
     AgentChatOperation? lastOperation,
   }) = _ChatState;
 
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-
-  @override
-  bool get hasError => error != null;
 }

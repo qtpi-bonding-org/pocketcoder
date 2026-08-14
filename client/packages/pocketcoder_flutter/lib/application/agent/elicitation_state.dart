@@ -13,7 +13,7 @@ enum ElicitationOperation {
 }
 
 @freezed
-sealed class ElicitationState with _$ElicitationState implements IUiFlowState {
+sealed class ElicitationState with _$ElicitationState, UiFlowStateMixin {
   const ElicitationState._();
 
   const factory ElicitationState({
@@ -26,19 +26,4 @@ sealed class ElicitationState with _$ElicitationState implements IUiFlowState {
 
   /// Convenience: the current elicitation map (null when no pending form).
   Map<String, dynamic>? get elicitation => sessionState.elicitation;
-
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-
-  @override
-  bool get hasError => error != null;
 }

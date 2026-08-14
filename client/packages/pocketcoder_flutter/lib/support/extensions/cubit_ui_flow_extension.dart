@@ -10,22 +10,6 @@ abstract class AppCubit<S extends IUiFlowState> extends TryOperationCubit<S>
     with ErrorPrivserverMixin<S> {
   AppCubit(super.initialState);
 
-  @override
-  S createLoadingState() {
-    return (state as dynamic).copyWith(
-      status: UiFlowStatus.loading,
-      error: null,
-    ) as S;
-  }
-
-  @override
-  S createErrorState(Object error) {
-    return (state as dynamic).copyWith(
-      status: UiFlowStatus.failure,
-      error: error,
-    ) as S;
-  }
-
   /// Convenience method to create success state
   S createSuccessState() {
     return (state as dynamic).copyWith(

@@ -9,7 +9,7 @@ part 'pocketcoder_update_state.freezed.dart';
 @freezed
 sealed class PocketCoderUpdateState
     with _$PocketCoderUpdateState
-    implements IUiFlowState {
+    , UiFlowStateMixin {
   const PocketCoderUpdateState._();
 
   const factory PocketCoderUpdateState({
@@ -21,19 +21,4 @@ sealed class PocketCoderUpdateState
   }) = _PocketCoderUpdateState;
 
   factory PocketCoderUpdateState.initial() => const PocketCoderUpdateState();
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-
-  @override
-  bool get hasError => error != null;
 }

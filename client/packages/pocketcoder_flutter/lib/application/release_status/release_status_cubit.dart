@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/domain/release/i_server_release_status_servi
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 
-class ReleaseStatusState implements IUiFlowState {
+class ReleaseStatusState with UiFlowStateMixin {
   const ReleaseStatusState({
     this.status = UiFlowStatus.idle,
     this.error,
@@ -42,17 +42,6 @@ class ReleaseStatusState implements IUiFlowState {
     return value.status == ServerReleaseStatus.criticalReleaseWarning ||
         !updateNoticeDismissed;
   }
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-  @override
-  bool get hasError => error != null;
 }
 
 @injectable

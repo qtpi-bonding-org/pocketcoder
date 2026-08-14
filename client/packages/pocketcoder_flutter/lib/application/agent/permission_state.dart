@@ -14,7 +14,7 @@ enum PermissionOperation {
 }
 
 @freezed
-sealed class PermissionState with _$PermissionState implements IUiFlowState {
+sealed class PermissionState with _$PermissionState, UiFlowStateMixin {
   const PermissionState._();
 
   const factory PermissionState({
@@ -27,19 +27,4 @@ sealed class PermissionState with _$PermissionState implements IUiFlowState {
 
   /// Convenience: the current permission map (null when no pending request).
   Map<String, dynamic>? get permission => sessionState.permission;
-
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-
-  @override
-  bool get hasError => error != null;
 }
