@@ -1,6 +1,7 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/files/file_viewer_cubit.dart';
+import 'package:pocketcoder_flutter/application/files/file_viewer_state.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
 
 class FileViewerAdapter extends CubitAdapter<FileViewerCubit, FileViewerState> {
@@ -18,7 +19,7 @@ class FileViewerAdapter extends CubitAdapter<FileViewerCubit, FileViewerState> {
       valueListenable: state,
       builder: (context, value, _) => FileViewerView(
         path: path,
-        loading: value.loading,
+        loading: value.isLoading,
         bytes: value.bytes,
         error: value.error,
       ),
