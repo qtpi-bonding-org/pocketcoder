@@ -7,9 +7,7 @@ RUN apk add --no-cache \
     curl \
     jq \
     coreutils \
-    docker-cli \
-    netcat-openbsd \
-    tmux
+    docker-cli
 
 # Set working directory
 WORKDIR /tests
@@ -18,5 +16,6 @@ WORKDIR /tests
 COPY tests/helpers/ /tests/helpers/
 COPY tests/test-env.sh /tests/test-env.sh
 
-# Default command runs all tests
-CMD ["bats", "--tap", "/tests/health", "/tests/connection", "/tests/integration"]
+# Default command runs the opt-in current agent acceptance suites. The
+# production stack has no general-purpose `test` Compose service anymore.
+CMD ["bats", "--tap", "/tests/agent-c1/config_pipeline.bats", "/tests/agent-c1/acceptance.bats", "/tests/agent-c1/mcp_gateway.bats"]
