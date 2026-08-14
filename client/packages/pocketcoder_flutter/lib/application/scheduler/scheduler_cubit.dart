@@ -1,28 +1,25 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
-import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart';
-import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 
 import 'scheduler_state.dart';
 
 @injectable
-class SchedulerCubit extends Cubit<SchedulerState> {
+class SchedulerCubit extends AppCubit<SchedulerState> {
   final ISchedulerRepository _repository;
 
-  SchedulerCubit(this._repository) : super(const SchedulerState.initial());
+  SchedulerCubit(this._repository) : super(const SchedulerState());
 
   Future<void> loadSchedules() async {
-    emit(const SchedulerState.loading());
-    try {
+    await tryOperation(() async {
       final schedules = await _repository.listSchedules();
-      emit(SchedulerState.loaded(schedules));
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SchedulerCubit', operation: 'loadSchedules');
-      logError('Scheduler: Failed to load schedules', e);
-      emit(SchedulerState.error(e.toString()));
-    }
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        schedules: schedules,
+      );
+    }, emitLoading: true);
   }
 
   Future<void> createSchedule({
@@ -30,88 +27,93 @@ class SchedulerCubit extends Cubit<SchedulerState> {
     required String cron,
     required String prompt,
   }) async {
-    try {
+    await tryOperation(() async {
       await _repository.createSchedule(
-          displayName: displayName, cron: cron, prompt: prompt);
-      await loadSchedules();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SchedulerCubit', operation: 'createSchedule');
-      logError('Scheduler: Failed to create schedule', e);
-      emit(SchedulerState.error(e.toString()));
-    }
+        displayName: displayName,
+        cron: cron,
+        prompt: prompt,
+      );
+      final schedules = await _repository.listSchedules();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        schedules: schedules,
+      );
+    });
   }
 
-  Future<void> renameSchedule(
-      {required String id, required String displayName}) async {
-    try {
+  Future<void> renameSchedule({
+    required String id,
+    required String displayName,
+  }) async {
+    await tryOperation(() async {
       await _repository.renameSchedule(id: id, displayName: displayName);
-      await loadSchedules();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SchedulerCubit', operation: 'renameSchedule');
-      logError('Scheduler: Failed to rename schedule', e);
-      emit(SchedulerState.error(e.toString()));
-    }
+      final schedules = await _repository.listSchedules();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        schedules: schedules,
+      );
+    });
   }
 
   Future<void> updateCron({required String id, required String cron}) async {
-    try {
+    await tryOperation(() async {
       await _repository.updateCron(id: id, cron: cron);
-      await loadSchedules();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SchedulerCubit', operation: 'updateCron');
-      logError('Scheduler: Failed to update schedule cron', e);
-      emit(SchedulerState.error(e.toString()));
-    }
+      final schedules = await _repository.listSchedules();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        schedules: schedules,
+      );
+    });
   }
 
   Future<void> pauseSchedule(String id) async {
-    try {
+    await tryOperation(() async {
       await _repository.pauseSchedule(id);
-      await loadSchedules();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SchedulerCubit', operation: 'pauseSchedule');
-      logError('Scheduler: Failed to pause schedule', e);
-      emit(SchedulerState.error(e.toString()));
-    }
+      final schedules = await _repository.listSchedules();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        schedules: schedules,
+      );
+    });
   }
 
   Future<void> unpauseSchedule(String id) async {
-    try {
+    await tryOperation(() async {
       await _repository.unpauseSchedule(id);
-      await loadSchedules();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SchedulerCubit', operation: 'unpauseSchedule');
-      logError('Scheduler: Failed to unpause schedule', e);
-      emit(SchedulerState.error(e.toString()));
-    }
+      final schedules = await _repository.listSchedules();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        schedules: schedules,
+      );
+    });
   }
 
   Future<void> deleteSchedule(String id) async {
-    try {
+    await tryOperation(() async {
       await _repository.deleteSchedule(id);
-      await loadSchedules();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SchedulerCubit', operation: 'deleteSchedule');
-      logError('Scheduler: Failed to delete schedule', e);
-      emit(SchedulerState.error(e.toString()));
-    }
+      final schedules = await _repository.listSchedules();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        schedules: schedules,
+      );
+    });
   }
 
   Future<void> runNow(String id) async {
-    try {
+    await tryOperation(() async {
       await _repository.runNow(id);
-      await loadSchedules();
-    } catch (e) {
-      await pocketCoderDiagnosticCapture.capture(
-          error: e, source: 'SchedulerCubit', operation: 'runNow');
-      logError('Scheduler: Failed to run schedule now', e);
-      emit(SchedulerState.error(e.toString()));
-    }
+      final schedules = await _repository.listSchedules();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        schedules: schedules,
+      );
+    });
   }
 }

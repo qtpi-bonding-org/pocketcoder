@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/skills/skills_cubit.dart';
 import 'package:pocketcoder_flutter/application/skills/skills_state.dart';
@@ -42,7 +43,7 @@ void main() {
   });
 
   group('SkillsCubit.loadSkills', () {
-    test('emits loading then loaded on success', () async {
+    test('emits loaded on success', () async {
       when(() => repo.listSkills()).thenAnswer((_) async => [_skill]);
 
       final cubit = buildCubit();
@@ -59,8 +60,11 @@ void main() {
       await sub.cancel();
 
       expect(states, [
-        const SkillsState.loading(),
-        const SkillsState.loaded([_skill]),
+        const SkillsState(status: UiFlowStatus.loading),
+        const SkillsState(
+          status: UiFlowStatus.success,
+          skills: [_skill],
+        ),
       ]);
     });
 

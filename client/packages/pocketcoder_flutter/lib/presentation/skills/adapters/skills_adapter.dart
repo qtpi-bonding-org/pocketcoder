@@ -24,12 +24,13 @@ class SkillsAdapter extends CubitAdapter<SkillsCubit, SkillsState> {
       child: ValueListenableBuilder<SkillsState>(
         valueListenable: state,
         builder: (context, value, _) => SkillsView(
-          data: value.maybeWhen(
-            loaded: (skills) => SkillsViewData(skills: skills),
-            loading: () => const SkillsViewData(isLoading: true),
-            error: (message) => SkillsViewData(error: message),
-            orElse: () => const SkillsViewData(),
-          ),
+          data: switch (value.status) {
+            UiFlowStatus.loading => const SkillsViewData(isLoading: true),
+            UiFlowStatus.failure =>
+              SkillsViewData(error: value.error?.toString()),
+            UiFlowStatus.success => SkillsViewData(skills: value.skills),
+            UiFlowStatus.idle => const SkillsViewData(),
+          },
           onAdd: () => _showAddDialog(context, cubit),
           onEdit: (skill) => _showEditDialog(context, cubit, skill),
           onDelete: cubit.deleteSkill,
