@@ -11,13 +11,7 @@ on:
       - 'client/scripts/purity_check.sh'
       - 'client/scripts/check_license_purity.py'
   pull_request:
-    paths:
-      - 'client/packages/pocketcoder_flutter/**'
-      - 'client/apps/pocketcoder_foss/**'
-      - 'client/pubspec.lock'
-      - 'client/pubspec.yaml'
-      - 'client/scripts/purity_check.sh'
-      - 'client/scripts/check_license_purity.py'
+    branches: [main]
 
 permissions:
   contents: read
@@ -28,7 +22,7 @@ concurrency:
 
 jobs:
   purity:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -42,6 +36,7 @@ jobs:
           set -euo pipefail
           FOSS_WORKSPACE="$RUNNER_TEMP/pocketcoder-foss-workspace"
           mkdir -p "$FOSS_WORKSPACE/packages" "$FOSS_WORKSPACE/apps"
+          cp -R packages/pocketcoder_api "$FOSS_WORKSPACE/packages/"
           cp -R packages/pocketcoder_flutter "$FOSS_WORKSPACE/packages/"
           cp -R apps/pocketcoder_foss "$FOSS_WORKSPACE/apps/"
           cp pubspec.foss-ci.yaml "$FOSS_WORKSPACE/pubspec.yaml"
