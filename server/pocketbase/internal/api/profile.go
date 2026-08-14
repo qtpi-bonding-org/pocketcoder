@@ -83,7 +83,7 @@ func validateWorkspacePath(p string) error {
 // system prompt, workspace cwd/additional directories, per-chat MCP servers
 // (stdio only), and mode. It also resolves the harness identity and
 // harness_instances row, and validates workspace paths.
-func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfile, error) {
+func buildSessionProfile(app core.App, chatID string, ctx context.Context, ollamaBaseURL string) (coordinator.SessionProfile, error) {
 	p := coordinator.SessionProfile{Instructions: pocoprompt.Default}
 
 	chat, err := app.FindRecordById("chats", chatID)
@@ -246,7 +246,7 @@ func buildSessionProfile(app core.App, chatID string) (coordinator.SessionProfil
 		if !supportsOllamaHarness(harnessRec) {
 			return p, fmt.Errorf("harness %q does not support local Ollama models", harnessRec.GetString("cli_id"))
 		}
-		installed, err := ollamaModelInstalled(context.Background(), ollamaHTTPClient(), ollamaModel)
+		installed, err := ollamaModelInstalled(ctx, ollamaHTTPClient(), ollamaBaseURL, ollamaModel)
 		if err != nil {
 			return p, fmt.Errorf("check local Ollama model: %w", err)
 		}

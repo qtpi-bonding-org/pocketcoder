@@ -32,7 +32,6 @@ import (
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
@@ -40,11 +39,12 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-func AddAgentOperations(app *pocketbase.PocketBase, registry *operation.Registry, dial coordinator.DialFunc) (*coordinator.Coordinator, error) {
+func AddAgentOperations(app core.App, registry *operation.Registry, dial coordinator.DialFunc) (*coordinator.Coordinator, error) {
 	workspace := os.Getenv("POCKETCODER_WORKSPACE")
 	if workspace == "" {
 		workspace = "/workspace"
 	}
+	ollamaBaseURL := resolveOllamaURL()
 	service, configErr := coordinator.New(coordinator.Config{
 		Workspace:         workspace,
 		PermissionTimeout: permissionTimeout(),
@@ -94,7 +94,7 @@ func AddAgentOperations(app *pocketbase.PocketBase, registry *operation.Registry
 		// surface asynchronously via the existing RUN_ERROR SSE event exactly
 		// as it did before this task, rather than becoming a new synchronous
 		// 500 for error types this task didn't touch.
-		if _, perr := buildSessionProfile(app, chatID); perr != nil {
+		if _, perr := buildSessionProfile(app, chatID, re.Request.Context(), ollamaBaseURL); perr != nil {
 			if errors.Is(perr, ErrHarnessProvisioning) {
 				return re.JSON(http.StatusAccepted, map[string]string{"status": "provisioning", "message": "Harness is starting; retry shortly"})
 			}
@@ -104,9 +104,9 @@ func AddAgentOperations(app *pocketbase.PocketBase, registry *operation.Registry
 		}
 		runID, err := service.StartPrompt(chatID, prompt,
 			func(context.Context) (string, error) { return agentSessionForChat(app, chatID, re.Auth.Id) },
-			func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
+			func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID, ctx, ollamaBaseURL) },
 			func(ctx context.Context, sessionID string) error {
-				profile, perr := buildSessionProfile(app, chatID)
+				profile, perr := buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
 				if perr != nil {
 					return perr
 				}
@@ -159,7 +159,7 @@ func AddAgentOperations(app *pocketbase.PocketBase, registry *operation.Registry
 			if err != nil {
 				_ = writeFlush(re.Response, flusher, service.NextSeq(chatID), events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
 			} else if err := service.StreamColdReplay(re.Request.Context(), chatID, sessionID,
-				func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) },
+				func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID, ctx, ollamaBaseURL) },
 				func(seq int, ev events.Event) error {
 					return writeFlush(re.Response, flusher, seq, ev)
 				}); err != nil {

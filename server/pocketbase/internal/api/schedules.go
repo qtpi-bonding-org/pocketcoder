@@ -9,7 +9,6 @@ import (
 	"time"
 
 	acpsdk "github.com/coder/acp-go-sdk"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/cron"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
@@ -25,7 +24,8 @@ func resolveOwnedSchedule(app core.App, userID, id string) (*core.Record, error)
 	return rec, nil
 }
 
-func AddScheduleOperations(app *pocketbase.PocketBase, registry *operation.Registry, coord func() *coordinator.Coordinator) {
+func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() *coordinator.Coordinator) {
+	ollamaBaseURL := resolveOllamaURL()
 	registry.Add(operation.Route{OperationID: "runScheduleNow", Method: http.MethodPost, Path: "/api/pocketcoder/v1/schedules/{scheduleId}/run", Auth: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return pocketCoderError(re, 401, "Authentication required")
@@ -38,7 +38,7 @@ func AddScheduleOperations(app *pocketbase.PocketBase, registry *operation.Regis
 		if err != nil {
 			return pocketCoderError(re, 404, "Schedule not found")
 		}
-		go runPocketCoderSchedule(app, coord, row.Id)
+		go runPocketCoderSchedule(app, coord, row.Id, ollamaBaseURL)
 		return re.JSON(202, map[string]string{"status": "started"})
 	}})
 
@@ -73,28 +73,28 @@ func AddScheduleOperations(app *pocketbase.PocketBase, registry *operation.Regis
 	app.OnRecordCreate("schedule_owners").BindFunc(validate)
 	app.OnRecordUpdate("schedule_owners").BindFunc(validate)
 
-	hook := func(ev *core.RecordEvent) error { registerPocketCoderSchedule(app, coord, ev.Record); return ev.Next() }
+	hook := func(ev *core.RecordEvent) error { registerPocketCoderSchedule(app, coord, ev.Record, ollamaBaseURL); return ev.Next() }
 	app.OnRecordAfterCreateSuccess("schedule_owners").BindFunc(hook)
 	app.OnRecordAfterUpdateSuccess("schedule_owners").BindFunc(hook)
 	app.OnRecordAfterDeleteSuccess("schedule_owners").BindFunc(func(ev *core.RecordEvent) error { app.Cron().Remove(scheduleJobID(ev.Record.Id)); return ev.Next() })
 	rows, _ := app.FindRecordsByFilter("schedule_owners", "1=1", "", 0, 0)
 	for _, row := range rows {
-		registerPocketCoderSchedule(app, coord, row)
+		registerPocketCoderSchedule(app, coord, row, ollamaBaseURL)
 	}
 }
 
 func scheduleJobID(id string) string { return "pocketcoder-schedule-" + id }
-func registerPocketCoderSchedule(app *pocketbase.PocketBase, coord func() *coordinator.Coordinator, row *core.Record) {
+func registerPocketCoderSchedule(app core.App, coord func() *coordinator.Coordinator, row *core.Record, ollamaBaseURL string) {
 	app.Cron().Remove(scheduleJobID(row.Id))
 	if row.GetBool("paused") || row.GetString("cron") == "" {
 		return
 	}
-	if err := app.Cron().Add(scheduleJobID(row.Id), row.GetString("cron"), func() { runPocketCoderSchedule(app, coord, row.Id) }); err != nil {
+	if err := app.Cron().Add(scheduleJobID(row.Id), row.GetString("cron"), func() { runPocketCoderSchedule(app, coord, row.Id, ollamaBaseURL) }); err != nil {
 		log.Printf("[Scheduler] invalid schedule %s: %v", row.Id, err)
 	}
 }
 
-func runPocketCoderSchedule(app *pocketbase.PocketBase, coord func() *coordinator.Coordinator, ownerID string) {
+func runPocketCoderSchedule(app core.App, coord func() *coordinator.Coordinator, ownerID string, ollamaBaseURL string) {
 	row, err := app.FindRecordById("schedule_owners", ownerID)
 	if err != nil || row.GetBool("paused") {
 		return
@@ -117,8 +117,8 @@ func runPocketCoderSchedule(app *pocketbase.PocketBase, coord func() *coordinato
 		return
 	}
 	userID, chatID := row.GetString("user"), chat.Id
-	if _, err := c.StartPrompt(chatID, row.GetString("prompt"), func(context.Context) (string, error) { return agentSessionForChat(app, chatID, userID) }, func(context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID) }, func(ctx context.Context, sessionID string) error {
-		profile, err := buildSessionProfile(app, chatID)
+	if _, err := c.StartPrompt(chatID, row.GetString("prompt"), func(context.Context) (string, error) { return agentSessionForChat(app, chatID, userID) }, func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID, ctx, ollamaBaseURL) }, func(ctx context.Context, sessionID string) error {
+		profile, err := buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
 		if err != nil {
 			return err
 		}

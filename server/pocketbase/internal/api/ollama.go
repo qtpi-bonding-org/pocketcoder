@@ -68,15 +68,19 @@ var (
 	ensureOllamaReleaseImage = releaseartifact.EnsureOptionalImage
 )
 
-func ollamaURL() string {
-	if value := strings.TrimRight(os.Getenv("OLLAMA_API_URL"), "/"); value != "" {
-		return value
+func resolveOllamaURL() string {
+	if value := strings.TrimSpace(os.Getenv("OLLAMA_API_URL")); value != "" {
+		return strings.TrimRight(value, "/")
 	}
 	return defaultOllamaURL
 }
 
 func ollamaHTTPClient() *http.Client {
-	return &http.Client{Timeout: 0}
+	return &http.Client{Timeout: 10 * time.Second}
+}
+
+func ollamaStreamingHTTPClient() *http.Client {
+	return &http.Client{}
 }
 
 func fetchOllamaTags(ctx context.Context, client *http.Client, baseURL string) ([]ollamaModel, error) {
@@ -102,8 +106,8 @@ func fetchOllamaTags(ctx context.Context, client *http.Client, baseURL string) (
 
 // ollamaModelInstalled checks the runtime's source of truth rather than a
 // PocketBase catalog cache. A deleted model immediately becomes unavailable.
-func ollamaModelInstalled(ctx context.Context, client *http.Client, name string) (bool, error) {
-	models, err := fetchOllamaTags(ctx, client, ollamaURL())
+func ollamaModelInstalled(ctx context.Context, client *http.Client, baseURL string, name string) (bool, error) {
+	models, err := fetchOllamaTags(ctx, client, baseURL)
 	if err != nil {
 		return false, err
 	}
@@ -118,11 +122,9 @@ func ollamaModelInstalled(ctx context.Context, client *http.Client, name string)
 // ensureOllamaRuntime is invoked only by the explicit administrator model-pull
 // operation. Listing models must remain cheap and must never turn opening a
 // picker into an unexpected multi-gigabyte runtime download.
-func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.Client, baseURL string) error {
+func ensureOllamaRuntime(ctx context.Context, docker ollamaDocker, client *http.Client, baseURL string, release string) error {
 	ollamaRuntimeMu.Lock()
 	defer ollamaRuntimeMu.Unlock()
-
-	release := os.Getenv("POCKETCODER_RELEASE")
 	expectedImage := ""
 	acquireReleaseImage := func() error {
 		image, err := ensureOllamaReleaseImage(ctx, docker, "ollama")
@@ -212,11 +214,14 @@ func waitForOllama(ctx context.Context, client *http.Client, baseURL string) err
 }
 
 func AddOllamaOperations(registry *operation.Registry) {
+	ollamaBaseURL := resolveOllamaURL()
+	release := strings.TrimSpace(os.Getenv("POCKETCODER_RELEASE"))
 	client := ollamaHTTPClient()
+	streamClient := ollamaStreamingHTTPClient()
 	docker := dockerapi.New()
 
 	registry.Add(operation.Route{OperationID: "listOllamaModels", Method: http.MethodGet, Path: "/api/pocketcoder/v1/ollama/models", Auth: true, Action: func(re *core.RequestEvent) error {
-		models, err := fetchOllamaTags(re.Request.Context(), client, ollamaURL())
+		models, err := fetchOllamaTags(re.Request.Context(), client, ollamaBaseURL)
 		if err != nil {
 			return re.JSON(http.StatusOK, map[string]any{
 				"models":  []ollamaModel{},
@@ -234,16 +239,16 @@ func AddOllamaOperations(registry *operation.Registry) {
 		if err := re.BindBody(&input); err != nil || !ollamaModelName.MatchString(input.Model) {
 			return pocketCoderError(re, http.StatusBadRequest, "model must be a valid Ollama model name")
 		}
-		if err := ensureOllamaRuntime(re.Request.Context(), docker, client, ollamaURL()); err != nil {
+		if err := ensureOllamaRuntime(re.Request.Context(), docker, client, ollamaBaseURL, release); err != nil {
 			return pocketCoderError(re, http.StatusServiceUnavailable, err.Error())
 		}
 		payload, _ := json.Marshal(map[string]string{"model": input.Model})
-		request, err := http.NewRequestWithContext(re.Request.Context(), http.MethodPost, ollamaURL()+"/api/pull", bytes.NewReader(payload))
+		request, err := http.NewRequestWithContext(re.Request.Context(), http.MethodPost, ollamaBaseURL+"/api/pull", bytes.NewReader(payload))
 		if err != nil {
 			return pocketCoderError(re, http.StatusInternalServerError, "create Ollama pull request")
 		}
 		request.Header.Set("Content-Type", "application/json")
-		response, err := client.Do(request)
+		response, err := streamClient.Do(request)
 		if err != nil {
 			return pocketCoderError(re, http.StatusBadGateway, "Ollama is unavailable")
 		}
