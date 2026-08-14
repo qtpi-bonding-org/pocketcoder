@@ -17,6 +17,12 @@ work_dir=$(mktemp -d)
 handoff=
 key_path=
 instance_created=false
+result_file=${POCKETCODER_LIVE_UPGRADE_RESULT_FILE:-"${TMPDIR:-/tmp}/pocketcoder-live-nixos-upgrade-result.json"}
+started_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+source_commit=
+baseline_digest=
+candidate_digest=
+candidate_sequence=
 
 require() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -27,6 +33,27 @@ require() {
 
 cleanup() {
   status=$?
+  completed_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+  result_status=failed
+  if [ "$status" -eq 0 ]; then
+    result_status=passed
+  fi
+  result_tmp="${result_file}.tmp.$$"
+  mkdir -p "$(dirname "$result_file")"
+  jq -n \
+    --arg status "$result_status" \
+    --arg startedAt "$started_at" \
+    --arg completedAt "$completed_at" \
+    --arg sourceCommit "$source_commit" \
+    --arg channel "$channel" \
+    --arg baselineDigest "$baseline_digest" \
+    --arg candidateDigest "$candidate_digest" \
+    --arg candidateSequence "$candidate_sequence" \
+    '{status:$status,startedAt:$startedAt,completedAt:$completedAt,
+      sourceCommit:$sourceCommit,channel:$channel,baselineDigest:$baselineDigest,
+      candidateDigest:$candidateDigest,candidateSequence:$candidateSequence}' \
+    > "$result_tmp"
+  mv "$result_tmp" "$result_file"
   if [ "$instance_created" = true ]; then
     "$aeroform_root/scripts/delete-orphaned-instances.sh" || true
   fi
