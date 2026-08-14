@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 part 'billing_state.freezed.dart';
 
 @freezed
-sealed class BillingState with _$BillingState implements IUiFlowState {
+sealed class BillingState with _$BillingState, UiFlowStateMixin {
   const BillingState._();
 
   const factory BillingState({
@@ -15,18 +15,4 @@ sealed class BillingState with _$BillingState implements IUiFlowState {
     Object? error,
   }) = _BillingState;
 
-  @override
-  bool get isLoading => status == UiFlowStatus.loading;
-
-  @override
-  bool get isSuccess => status == UiFlowStatus.success;
-
-  @override
-  bool get isFailure => status == UiFlowStatus.failure;
-
-  @override
-  bool get isIdle => status == UiFlowStatus.idle;
-
-  @override
-  bool get hasError => error != null;
 }
