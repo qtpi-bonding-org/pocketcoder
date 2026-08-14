@@ -16,27 +16,16 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-func resolveOwnedSchedule(app core.App, userID, id string) (*core.Record, error) {
-	rec, err := app.FindRecordById("schedule_owners", id)
-	if err != nil || rec.GetString("user") != userID {
-		return nil, fmt.Errorf("schedule not found")
-	}
-	return rec, nil
-}
-
 func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() *coordinator.Coordinator) {
 	ollamaBaseURL := resolveOllamaURL()
 	registry.Add(operation.Route{OperationID: "runScheduleNow", Method: http.MethodPost, Path: "/api/pocketcoder/v1/schedules/{scheduleId}/run", Auth: true, Action: func(re *core.RequestEvent) error {
-		if re.Auth == nil {
-			return pocketCoderError(re, 401, "Authentication required")
-		}
 		id := re.Request.PathValue("scheduleId")
 		if id == "" {
 			return pocketCoderError(re, 400, "scheduleId is required")
 		}
-		row, err := resolveOwnedSchedule(app, re.Auth.Id, id)
+		row, err := requireOwnedRecord(app, re, "schedule_owners", id)
 		if err != nil {
-			return pocketCoderError(re, 404, "Schedule not found")
+			return err
 		}
 		go runPocketCoderSchedule(app, coord, row.Id, ollamaBaseURL)
 		return re.JSON(202, map[string]string{"status": "started"})
@@ -73,7 +62,10 @@ func AddScheduleOperations(app core.App, registry *operation.Registry, coord fun
 	app.OnRecordCreate("schedule_owners").BindFunc(validate)
 	app.OnRecordUpdate("schedule_owners").BindFunc(validate)
 
-	hook := func(ev *core.RecordEvent) error { registerPocketCoderSchedule(app, coord, ev.Record, ollamaBaseURL); return ev.Next() }
+	hook := func(ev *core.RecordEvent) error {
+		registerPocketCoderSchedule(app, coord, ev.Record, ollamaBaseURL)
+		return ev.Next()
+	}
 	app.OnRecordAfterCreateSuccess("schedule_owners").BindFunc(hook)
 	app.OnRecordAfterUpdateSuccess("schedule_owners").BindFunc(hook)
 	app.OnRecordAfterDeleteSuccess("schedule_owners").BindFunc(func(ev *core.RecordEvent) error { app.Cron().Remove(scheduleJobID(ev.Record.Id)); return ev.Next() })
@@ -117,7 +109,9 @@ func runPocketCoderSchedule(app core.App, coord func() *coordinator.Coordinator,
 		return
 	}
 	userID, chatID := row.GetString("user"), chat.Id
-	if _, err := c.StartPrompt(chatID, row.GetString("prompt"), func(context.Context) (string, error) { return agentSessionForChat(app, chatID, userID) }, func(ctx context.Context) (coordinator.SessionProfile, error) { return buildSessionProfile(app, chatID, ctx, ollamaBaseURL) }, func(ctx context.Context, sessionID string) error {
+	if _, err := c.StartPrompt(chatID, row.GetString("prompt"), func(context.Context) (string, error) { return agentSessionForChat(app, chatID, userID) }, func(ctx context.Context) (coordinator.SessionProfile, error) {
+		return buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
+	}, func(ctx context.Context, sessionID string) error {
 		profile, err := buildSessionProfile(app, chatID, ctx, ollamaBaseURL)
 		if err != nil {
 			return err

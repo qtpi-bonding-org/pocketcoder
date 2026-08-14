@@ -71,8 +71,8 @@ func createProxyHandler(target string, prefix string, transport http.RoundTrippe
 
 	return func(re *core.RequestEvent) error {
 		// 🛡️ Security Gate: Only allow authenticated admins to access internal observability tools.
-		if re.Auth == nil || re.Auth.GetString("role") != "admin" {
-			return re.ForbiddenError("Only admins can access system proxies.", nil)
+		if err := requireRole(re, "admin"); err != nil {
+			return err
 		}
 
 		req := re.Request

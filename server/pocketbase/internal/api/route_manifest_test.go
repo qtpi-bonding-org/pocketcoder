@@ -74,4 +74,18 @@ func TestPocketCoderRouteManifestMatchesBackend(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("backend operations differ from api/openapi/pocketcoder.yaml\n got: %v\nwant: %v", got, want)
 	}
+
+	covered := make(map[string]bool, len(authorizationBoundaryTable))
+	for _, tc := range authorizationBoundaryTable {
+		covered[tc.operationID] = true
+	}
+	var missing []string
+	for _, operationID := range want {
+		if !covered[operationID] {
+			missing = append(missing, operationID)
+		}
+	}
+	if len(missing) != 0 {
+		t.Fatalf("operation IDs present in the route manifest but missing from the authorization boundary table: %v", missing)
+	}
 }

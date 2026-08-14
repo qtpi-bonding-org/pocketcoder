@@ -81,15 +81,9 @@ func AddMcpOperations(app core.App, registry *operation.Registry, deps McpDeps) 
 	}
 
 	registry.Add(operation.Route{OperationID: "executeMcpRequest", Method: http.MethodPost, Path: "/api/pocketcoder/v1/mcp/request", Auth: true, Action: func(re *core.RequestEvent) error {
-		// 1. Require authentication
-		if re.Auth == nil {
-			return pocketCoderError(re, 401, "Authentication required")
-		}
-
-		// 2. Check role: agent or admin only
-		role := re.Auth.GetString("role")
-		if role != "agent" && role != "admin" {
-			return pocketCoderError(re, 403, "Insufficient permissions")
+		// 1. Check role: agent or admin only
+		if err := requireRole(re, "agent", "admin"); err != nil {
+			return err
 		}
 
 		// 3. Parse request body
