@@ -30,7 +30,21 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-func AddProxyOperations(registry *operation.Registry) {
+type ProxyDeps struct {
+	Transport http.RoundTripper
+	TargetURL string
+}
+
+func AddProxyOperations(registry *operation.Registry, deps ProxyDeps) {
+	target := strings.TrimSpace(deps.TargetURL)
+	if target == "" {
+		target = "http://sqlpage:8080"
+	}
+	transport := deps.Transport
+	if transport == nil {
+		transport = http.DefaultTransport
+	}
+
 	// 📈 Observability Proxy (SQLPage)
 	// Proxies to the SQLPage container which provides database dashboards.
 	registry.Add(operation.Route{
@@ -39,12 +53,12 @@ func AddProxyOperations(registry *operation.Registry) {
 		Path:        "/api/pocketcoder/v1/proxy/observability/{path...}",
 		Auth:        true,
 		Direct:      true,
-		Action:      createProxyHandler("http://sqlpage:8080", "/api/pocketcoder/v1/proxy/observability"),
+		Action:      createProxyHandler(target, "/api/pocketcoder/v1/proxy/observability", transport),
 	})
 }
 
 // createProxyHandler creates a standard reverse proxy handler that strips a prefix and forwards to a target.
-func createProxyHandler(target string, prefix string) func(re *core.RequestEvent) error {
+func createProxyHandler(target string, prefix string, transport http.RoundTripper) func(re *core.RequestEvent) error {
 	targetUrl, err := url.Parse(target)
 	if err != nil {
 		// Return a handler that always reports the misconfiguration.
@@ -53,6 +67,7 @@ func createProxyHandler(target string, prefix string) func(re *core.RequestEvent
 		}
 	}
 	proxy := httputil.NewSingleHostReverseProxy(targetUrl)
+	proxy.Transport = transport
 
 	return func(re *core.RequestEvent) error {
 		// 🛡️ Security Gate: Only allow authenticated admins to access internal observability tools.

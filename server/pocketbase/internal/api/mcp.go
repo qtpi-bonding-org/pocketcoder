@@ -20,16 +20,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package api
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/crane"
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
+
+type imageResolver func(context.Context, string, string) (string, error)
+
+type McpDeps struct {
+	ResolveImage imageResolver
+}
 
 // resolveImageDigest pins a proposed image reference to a sha256 digest at
 // request time, before a human ever sees/approves it -- so approval means
@@ -66,7 +72,14 @@ func resolveImageDigest(name, image string) (string, error) {
 	return repo + "@" + digest, nil
 }
 
-func AddMcpOperations(app *pocketbase.PocketBase, registry *operation.Registry) {
+func AddMcpOperations(app core.App, registry *operation.Registry, deps McpDeps) {
+	resolveImage := deps.ResolveImage
+	if resolveImage == nil {
+		resolveImage = func(_ context.Context, name, image string) (string, error) {
+			return resolveImageDigest(name, image)
+		}
+	}
+
 	registry.Add(operation.Route{OperationID: "executeMcpRequest", Method: http.MethodPost, Path: "/api/pocketcoder/v1/mcp/request", Auth: true, Action: func(re *core.RequestEvent) error {
 		// 1. Require authentication
 		if re.Auth == nil {
@@ -119,7 +132,7 @@ func AddMcpOperations(app *pocketbase.PocketBase, registry *operation.Registry) 
 			return pocketCoderError(re, 500, "Internal error")
 		}
 
-		resolvedImage, err := resolveImageDigest(input.ServerName, input.Image)
+		resolvedImage, err := resolveImage(re.Request.Context(), input.ServerName, input.Image)
 		if err != nil {
 			log.Printf("❌ [MCP] Failed to resolve image digest for %s: %v", input.ServerName, err)
 			return pocketCoderError(re, 422, "Could not resolve image to a digest: "+err.Error())

@@ -18,7 +18,7 @@ func TestObservabilityProxyDoesNotAcceptPost(t *testing.T) {
 		ExpectedContent: []string{`"status":404`},
 		BeforeTestFunc: func(_ testing.TB, _ *tests.TestApp, e *core.ServeEvent) {
 			registry := operation.NewRegistry()
-			AddProxyOperations(registry)
+			AddProxyOperations(registry, ProxyDeps{})
 			operation.MountForTests(e, registry.Routes())
 		},
 	}
