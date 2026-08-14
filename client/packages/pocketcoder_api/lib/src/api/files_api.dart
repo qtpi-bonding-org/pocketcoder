@@ -5,11 +5,13 @@
 
 import 'dart:async';
 
+import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
 import 'dart:typed_data';
 import 'package:pocketcoder_api/src/api_util.dart';
+import 'package:pocketcoder_api/src/model/error_response.dart';
 import 'package:pocketcoder_api/src/model/file_list_response.dart';
 
 class FilesApi {
