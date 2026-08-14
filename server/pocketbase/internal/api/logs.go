@@ -22,7 +22,6 @@ package api
 import (
 	"bufio"
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -58,24 +57,6 @@ func (dockerProxyLogSource) StreamLogs(ctx context.Context, containerName string
 		return nil, fmt.Errorf("%w: %v", errLogsUnavailable, err)
 	}
 	return body, err
-}
-
-const maxDockerLogFrameSize = 1 << 20
-
-func decodeDockerFrame(r *bufio.Reader) (stream byte, payload []byte, err error) {
-	var header [8]byte
-	if _, err := io.ReadFull(r, header[:]); err != nil {
-		return 0, nil, err
-	}
-	size := binary.BigEndian.Uint32(header[4:])
-	if size > maxDockerLogFrameSize {
-		return 0, nil, fmt.Errorf("docker log frame payload %d exceeds maximum %d", size, maxDockerLogFrameSize)
-	}
-	payload = make([]byte, int(size))
-	if _, err := io.ReadFull(r, payload); err != nil {
-		return 0, nil, err
-	}
-	return header[0], payload, nil
 }
 
 type LogsDeps struct {
@@ -127,7 +108,7 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 		reader := bufio.NewReader(body)
 
 		for {
-			_, payload, err := decodeDockerFrame(reader)
+			_, payload, err := dockerapi.DecodeLogFrame(reader)
 			if err != nil {
 				// Connection closed, truncated, or malformed upstream frame.
 				break

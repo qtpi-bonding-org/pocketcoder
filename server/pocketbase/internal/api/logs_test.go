@@ -1,98 +1,147 @@
+/*
+PocketCoder: An accessible, secure, and user-friendly open-source coding assistant platform.
+Copyright (C) 2026 Qtpi Bonding LLC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package api
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/binary"
+	"context"
 	"errors"
+	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
-	"testing/iotest"
+	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tests"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-func dockerFrame(stream byte, payload []byte) []byte {
-	frame := make([]byte, 8+len(payload))
-	frame[0] = stream
-	binary.BigEndian.PutUint32(frame[4:8], uint32(len(payload)))
-	copy(frame[8:], payload)
-	return frame
+type fakeLogSource struct {
+	body io.ReadCloser
+	err  error
 }
 
-func TestDecodeDockerFrame(t *testing.T) {
-	stdout := dockerFrame(1, []byte("out\n"))
-	stderr := dockerFrame(2, []byte("err\n"))
-
-	t.Run("stdout", func(t *testing.T) {
-		stream, payload, err := decodeDockerFrame(bufio.NewReader(bytes.NewReader(stdout)))
-		if err != nil || stream != 1 || string(payload) != "out\n" {
-			t.Fatalf("got stream %d payload %q err %v", stream, payload, err)
-		}
-	})
-	t.Run("stderr", func(t *testing.T) {
-		stream, payload, err := decodeDockerFrame(bufio.NewReader(bytes.NewReader(stderr)))
-		if err != nil || stream != 2 || string(payload) != "err\n" {
-			t.Fatalf("got stream %d payload %q err %v", stream, payload, err)
-		}
-	})
-
-	t.Run("multiple", func(t *testing.T) {
-		r := bufio.NewReader(bytes.NewReader(append(stdout, stderr...)))
-		for _, want := range []struct {
-			stream byte
-			text   string
-		}{{1, "out\n"}, {2, "err\n"}} {
-			stream, payload, err := decodeDockerFrame(r)
-			if err != nil || stream != want.stream || string(payload) != want.text {
-				t.Fatalf("got stream %d payload %q err %v", stream, payload, err)
-			}
-		}
-	})
-
-	t.Run("partial reads", func(t *testing.T) {
-		r := bufio.NewReader(iotest.OneByteReader(bytes.NewReader(stdout)))
-		stream, payload, err := decodeDockerFrame(r)
-		if err != nil || stream != 1 || string(payload) != "out\n" {
-			t.Fatalf("got stream %d payload %q err %v", stream, payload, err)
-		}
-	})
+func (f fakeLogSource) StreamLogs(context.Context, string) (io.ReadCloser, error) {
+	return f.body, f.err
 }
 
-func TestDecodeDockerFrameTruncated(t *testing.T) {
-	tests := []struct {
-		name string
-		data []byte
-	}{
-		{"header", []byte{1, 0, 0}},
-		{"payload", append([]byte{1, 0, 0, 0, 0, 0, 0, 4}, 'x')},
+func newLogsAdmin(t *testing.T, app *tests.TestApp) *core.Record {
+	t.Helper()
+	u := testUser(t, app, "logs-admin-"+randomSuffix()+"@example.com")
+	u.Set("role", "admin")
+	if err := app.Save(u); err != nil {
+		t.Fatal(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := decodeDockerFrame(bufio.NewReader(bytes.NewReader(tt.data)))
-			if !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
-				t.Fatalf("expected EOF error, got %v", err)
-			}
-		})
+	return u
+}
+
+func mountLogsRequest(t *testing.T, app *tests.TestApp, source dockerLogSource, containerName string, user *core.Record) *httptest.ResponseRecorder {
+	t.Helper()
+	router, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := &core.ServeEvent{App: app, Router: router}
+	reg := operation.NewRegistry()
+	AddLogOperations(reg, LogsDeps{Source: source})
+	operation.MountForTests(e, reg.Routes())
+	token, err := user.NewAuthToken()
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/pocketcoder/v1/logs/"+containerName, nil)
+	req.Header.Set("Authorization", token)
+	mux, err := e.Router.BuildMux()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	return rec
+}
+
+func TestStreamContainerLogsInvalidContainerName(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	rec := mountLogsRequest(t, app, fakeLogSource{}, "bad*name", newLogsAdmin(t, app))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d", rec.Code)
 	}
 }
 
-func TestDecodeDockerFrameOversized(t *testing.T) {
-	var header [8]byte
-	binary.BigEndian.PutUint32(header[4:], maxDockerLogFrameSize+1)
-	_, _, err := decodeDockerFrame(bufio.NewReader(bytes.NewReader(header[:])))
-	if err == nil {
-		t.Fatal("expected oversized frame error")
+func TestStreamContainerLogsSourceUnavailableReturnsNotFound(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	source := fakeLogSource{err: fmt.Errorf("%w: docker proxy returned 404", errLogsUnavailable)}
+	rec := mountLogsRequest(t, app, source, "missing-container", newLogsAdmin(t, app))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status=%d", rec.Code)
 	}
 }
 
-func FuzzDecodeDockerFrame(f *testing.F) {
-	f.Add(dockerFrame(1, []byte("valid\n")))
-	f.Add([]byte{})
-	f.Add(make([]byte, 8))
-	var huge [8]byte
-	binary.BigEndian.PutUint32(huge[4:], ^uint32(0))
-	f.Add(huge[:])
-	f.Fuzz(func(t *testing.T, data []byte) {
-		decodeDockerFrame(bufio.NewReader(bytes.NewReader(data)))
-	})
+func TestStreamContainerLogsSourceErrorReturnsInternalError(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	source := fakeLogSource{err: errors.New("connection refused")}
+	rec := mountLogsRequest(t, app, source, "good-container", newLogsAdmin(t, app))
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status=%d", rec.Code)
+	}
+}
+
+func TestStreamContainerLogsStreamsDecodedFrames(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	var raw []byte
+	for _, line := range []string{"hello\n", "world\n"} {
+		header := make([]byte, 8)
+		header[0] = 1
+		size := len(line)
+		header[4] = byte(size >> 24)
+		header[5] = byte(size >> 16)
+		header[6] = byte(size >> 8)
+		header[7] = byte(size)
+		raw = append(raw, header...)
+		raw = append(raw, line...)
+	}
+	source := fakeLogSource{body: io.NopCloser(strings.NewReader(string(raw)))}
+	rec := mountLogsRequest(t, app, source, "good-container", newLogsAdmin(t, app))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", rec.Code, rec.Body)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "data: hello") || !strings.Contains(body, "data: world") {
+		t.Fatalf("body=%q", body)
+	}
 }
