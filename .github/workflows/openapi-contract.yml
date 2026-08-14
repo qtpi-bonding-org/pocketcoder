@@ -3,22 +3,6 @@ name: Generated contracts
 on:
   pull_request:
     branches: [main]
-    paths:
-      - 'api/openapi/**'
-      - 'server/pocketbase/pb_migrations/schema.json'
-      - 'server/pocketbase/internal/openapi/**'
-      - 'server/pocketbase/internal/api/**'
-      - 'client/packages/pocketcoder_api/**'
-      - 'client/packages/pocketcoder_flutter/assets/pb_schema.json'
-      - 'client/packages/pocketcoder_flutter/lib/**'
-      - 'client/packages/pocketcoder_flutter/build.yaml'
-      - 'client/packages/pocketcoder_flutter/pubspec.yaml'
-      - 'client/packages/pocketcoder_flutter/scripts/generate_models.py'
-      - 'client/pubspec.yaml'
-      - 'client/pubspec.lock'
-      - 'tooling/scripts/generate_flutter.sh'
-      - 'tooling/scripts/generate_openapi*.sh'
-      - '.github/workflows/openapi-contract.yml'
   push:
     branches: [main]
     paths:
