@@ -83,11 +83,12 @@ dependencies:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
       ref: 79e2e5c4729e615609f694e4b400ea4de81f89ef
+
 dependency_overrides:
-  webcrypto:
-    git:
-      url: https://codeberg.org/UnifiedPush/webcrypto.dart.git
-      ref: 0.6.0-up1
+  # Keep the UnifiedPush crypto dependency on the portable hosted 0.6.0
+  # release.  Newer releases use a native build hook and the former Git
+  # override made otherwise offline-capable analysis depend on Codeberg.
+  webcrypto: 0.6.0
 
 dev_dependencies:
   flutter_test:

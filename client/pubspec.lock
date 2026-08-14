@@ -1722,11 +1722,10 @@ packages:
   webcrypto:
     dependency: "direct overridden"
     description:
-      path: "."
-      ref: "0.6.0-up1"
-      resolved-ref: "1c65b607be1040f0148a37bab80fceb48d9a4260"
-      url: "https://codeberg.org/UnifiedPush/webcrypto.dart.git"
-    source: git
+      name: webcrypto
+      sha256: "6b43001c4110856ff7fa5e5e65e7b2d44bec1d8b54a4d84d5fa2c7622267c5c1"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.6.0"
   webkit_inspection_protocol:
     dependency: transitive
