@@ -16,16 +16,18 @@ class FakeAgentChatRepository implements AgentChatRepository {
   /// Test hook: simulates a new cache emission carrying the full raw event
   /// list seen so far (mirrors AgentChatRepository.watchRawEvents'
   /// row-list semantics).
-  void emitRawEvents(List<BaseEvent> events) => _rawEventsController.add(events);
+  void emitRawEvents(List<BaseEvent> events) =>
+      _rawEventsController.add(events);
 
   @override
-  Stream<List<BaseEvent>> watchRawEvents(String chatId) => _rawEventsController.stream;
+  Stream<List<BaseEvent>> watchRawEvents(String chatId) =>
+      _rawEventsController.stream;
 
   @override
   Stream<Conversation> watch(String chatId) => const Stream.empty();
 
   @override
-  Future<void> ingestOnce(String chatId, {required int cursor}) async {}
+  Future<int> ingestOnce(String chatId, {required int cursor}) async => 0;
 
   @override
   Future<int> cursorFor(String chatId) async => 0;
@@ -43,7 +45,8 @@ class FakeAgentChatRepository implements AgentChatRepository {
   Future<void> setMode(String chatId, String modeId) async {}
 
   @override
-  Future<void> setConfigOption(String chatId, SetSessionConfigOptionRequest req) async {}
+  Future<void> setConfigOption(
+      String chatId, SetSessionConfigOptionRequest req) async {}
 
   @override
   Future<void> respondPermission(

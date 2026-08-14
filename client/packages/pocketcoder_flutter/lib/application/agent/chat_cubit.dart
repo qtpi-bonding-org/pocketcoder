@@ -8,24 +8,32 @@ import 'package:injectable/injectable.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_transport.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'chat_state.dart';
 
 @injectable
 class ChatCubit extends AppCubit<ChatState> {
-  ChatCubit(this._repository) : super(const ChatState());
+  ChatCubit(this._repository, this._networkRecoverySignal)
+      : super(const ChatState());
 
   final AgentChatRepository _repository;
+  final NetworkRecoverySignal _networkRecoverySignal;
   PocketcoderAgUiTransport? _transport;
   ConversationReducer? _reducer;
   StreamSubscription<BaseEvent>? _eventSub;
+  StreamSubscription<void>? _recoverySub;
+  Completer<void>? _retryWake;
   int _generation = 0;
 
   @override
   Future<void> close() {
     _generation++;
     _eventSub?.cancel();
+    _recoverySub?.cancel();
+    _retryWake?.complete();
     _transport?.dispose();
     return super.close();
   }
@@ -44,9 +52,13 @@ class ChatCubit extends AppCubit<ChatState> {
     final myGeneration = _generation;
 
     _eventSub?.cancel();
+    _recoverySub?.cancel();
+    _retryWake?.complete();
     _transport?.dispose();
     _reducer = ConversationReducer();
     _transport = PocketcoderAgUiTransport(_repository, chatId: chatId);
+    final transport = _transport;
+    if (transport == null) return;
 
     emit(state.copyWith(
       chatId: chatId,
@@ -54,12 +66,14 @@ class ChatCubit extends AppCubit<ChatState> {
       lastOperation: AgentChatOperation.open,
     ));
 
-    _eventSub = _transport!.events.listen(
+    _eventSub = transport.events.listen(
       (event) {
         if (myGeneration != _generation) return;
-        _reducer!.apply(event);
+        final reducer = _reducer;
+        if (reducer == null) return;
+        reducer.apply(event);
         emit(state.copyWith(
-            conversation: _reducer!.current, status: UiFlowStatus.success));
+            conversation: reducer.current, status: UiFlowStatus.success));
       },
       onError: (Object e) {
         if (myGeneration != _generation) return;
@@ -73,6 +87,10 @@ class ChatCubit extends AppCubit<ChatState> {
       },
     );
 
+    _recoverySub = _networkRecoverySignal.onRecovered.listen((_) {
+      _retryWake?.complete();
+    });
+
     unawaited(_ingestForever(chatId, myGeneration));
   }
 
@@ -82,9 +100,14 @@ class ChatCubit extends AppCubit<ChatState> {
     while (myGeneration == _generation) {
       try {
         final cursor = await _repository.cursorFor(chatId);
-        await _repository.ingestOnce(chatId, cursor: cursor);
-        consecutiveFailures = 0;
-        delay = _reconnectDelay;
+        final frameCount = await _repository.ingestOnce(chatId, cursor: cursor);
+        if (frameCount > 0) {
+          consecutiveFailures = 0;
+          delay = _reconnectDelay;
+        } else {
+          consecutiveFailures++;
+          delay = _nextDelay(delay);
+        }
       } catch (e) {
         if (myGeneration != _generation) return;
         unawaited(pocketCoderDiagnosticCapture.capture(
@@ -93,6 +116,10 @@ class ChatCubit extends AppCubit<ChatState> {
           operation: 'ingestStream',
         ));
         logError('🤖 [ChatCubit] ingest error, reconnecting', e);
+        if (e is AgentStreamException && !e.isRetryable) {
+          emit(state.copyWith(error: e, status: UiFlowStatus.failure));
+          return;
+        }
         consecutiveFailures++;
         // Fires once on crossing the threshold, not on every retry after
         // it, so the error snackbar doesn't spam while backoff continues.
@@ -106,7 +133,24 @@ class ChatCubit extends AppCubit<ChatState> {
         );
       }
       if (myGeneration != _generation) return;
-      await Future<void>.delayed(delay);
+      await _waitForRetry(delay, myGeneration);
+    }
+  }
+
+  Duration _nextDelay(Duration current) => Duration(
+        milliseconds: (current.inMilliseconds * 2).clamp(
+            _reconnectDelay.inMilliseconds, _maxReconnectDelay.inMilliseconds),
+      );
+
+  Future<void> _waitForRetry(Duration delay, int myGeneration) async {
+    final wake = Completer<void>();
+    _retryWake = wake;
+    await Future.any<void>([
+      Future<void>.delayed(delay),
+      wake.future,
+    ]);
+    if (myGeneration == _generation && identical(_retryWake, wake)) {
+      _retryWake = null;
     }
   }
 

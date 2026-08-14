@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 
+import 'retry_interceptor.dart';
+
 /// Shared transport boundary for generated PocketCoder operation APIs.
 ///
 /// Collection CRUD remains on [PocketBase]. This adapter owns only deployment
@@ -26,6 +28,7 @@ class PocketCoderApiClient {
 
   factory PocketCoderApiClient.fromPocketBase(PocketBase pocketBase) {
     final dio = Dio(BaseOptions(baseUrl: pocketBase.baseURL));
+    dio.interceptors.add(SafeGetRetryInterceptor(dio));
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {

@@ -29,7 +29,7 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   Future<int> cursorFor(String chatId) async => 0;
 
   @override
-  Future<void> ingestOnce(String chatId, {required int cursor}) async {}
+  Future<int> ingestOnce(String chatId, {required int cursor}) async => 0;
 
   @override
   Future<String> sendPrompt(String chatId, String text) async => 'run-1';
@@ -86,7 +86,9 @@ void main() {
       'message': 'Need a name',
       'requestedSchema': {
         'type': 'object',
-        'properties': {'name': {'type': 'string'}},
+        'properties': {
+          'name': {'type': 'string'}
+        },
       },
     };
     repo.controllerFor('chat-1').add(
@@ -114,7 +116,9 @@ void main() {
                 'message': 'Need a name',
                 'requestedSchema': {
                   'type': 'object',
-                  'properties': {'name': {'type': 'string'}},
+                  'properties': {
+                    'name': {'type': 'string'}
+                  },
                 },
               },
             ),
@@ -128,8 +132,8 @@ void main() {
     expect(repo.respondElicitationCalls, hasLength(1));
     expect(repo.respondElicitationCalls.single['chatId'], 'chat-1');
     expect(repo.respondElicitationCalls.single['elicitationId'], 'elic-42');
-    final passed = repo.respondElicitationCalls.single['resp']
-        as ElicitationResponse;
+    final passed =
+        repo.respondElicitationCalls.single['resp'] as ElicitationResponse;
     expect(passed, resp);
     // action discriminator + content match the ACP shape.
     expect(passed.toJson(), {
@@ -157,13 +161,12 @@ void main() {
     await cubit.submit(const ElicitationResponse.decline());
 
     expect(repo.respondElicitationCalls, hasLength(1));
-    final passed = repo.respondElicitationCalls.single['resp']
-        as ElicitationResponse;
+    final passed =
+        repo.respondElicitationCalls.single['resp'] as ElicitationResponse;
     expect(passed.toJson(), {'action': 'decline'});
   });
 
-  test('submit(cancel) calls respondElicitation with action=cancel',
-      () async {
+  test('submit(cancel) calls respondElicitation with action=cancel', () async {
     cubit.open('chat-1');
     await _settle();
 
@@ -181,8 +184,8 @@ void main() {
     await cubit.submit(const ElicitationResponse.cancel());
 
     expect(repo.respondElicitationCalls, hasLength(1));
-    final passed = repo.respondElicitationCalls.single['resp']
-        as ElicitationResponse;
+    final passed =
+        repo.respondElicitationCalls.single['resp'] as ElicitationResponse;
     expect(passed.toJson(), {'action': 'cancel'});
   });
 

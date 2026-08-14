@@ -30,7 +30,7 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   Future<int> cursorFor(String chatId) async => 0;
 
   @override
-  Future<void> ingestOnce(String chatId, {required int cursor}) async {}
+  Future<int> ingestOnce(String chatId, {required int cursor}) async => 0;
 
   @override
   Future<String> sendPrompt(String chatId, String text) async => 'run-1';
@@ -91,8 +91,7 @@ void main() {
     await cubit.close();
   });
 
-  test('modes + config in an emitted Conversation surface in state',
-      () async {
+  test('modes + config in an emitted Conversation surface in state', () async {
     cubit.open('chat-1');
     await _settle();
 
@@ -123,7 +122,8 @@ void main() {
     ]);
   });
 
-  test('selectMode does not mutate the modes map directly (effect only via stream)',
+  test(
+      'selectMode does not mutate the modes map directly (effect only via stream)',
       () async {
     cubit.open('chat-1');
     await _settle();
