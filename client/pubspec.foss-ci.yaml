@@ -7,5 +7,6 @@ environment:
 # Minimal CI workspace. Keep this in sync with the targets checked by
 # foss-purity.yml.
 workspace:
+  - packages/pocketcoder_api
   - packages/pocketcoder_flutter
   - apps/pocketcoder_foss

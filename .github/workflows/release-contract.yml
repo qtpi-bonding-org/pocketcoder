@@ -12,14 +12,7 @@ on:
       - 'client/pubspec.lock'
       - '.github/workflows/release-contract.yml'
   pull_request:
-    paths:
-      - 'deploy/**'
-      - 'server/pocketbase/internal/api/release_status*'
-      - 'server/pocketbase/internal/releaseartifact/**'
-      - 'workers/image-relay/**'
-      - 'client/packages/pocketcoder_flutter/**'
-      - 'client/pubspec.lock'
-      - '.github/workflows/release-contract.yml'
+    branches: [main]
 
 permissions:
   contents: read
@@ -30,7 +23,7 @@ concurrency:
 
 jobs:
   native-and-contract:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
