@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'status_state.dart';
 
 @injectable
-class StatusCubit extends Cubit<StatusState> {
+class StatusCubit extends AppCubit<StatusState> {
   final IAuthRepository _authRepo;
   StreamSubscription<bool>? _connectionSubscription;
 

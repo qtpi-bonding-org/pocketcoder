@@ -17,6 +17,8 @@ mixin _$PocoState {
   String get message;
   List<(String, int)> get sequence;
   List<String> get history;
+  UiFlowStatus get status;
+  Object? get error;
 
   /// Create a copy of PocoState
   /// with the given fields replaced by the non-null parameter values.
@@ -32,7 +34,9 @@ mixin _$PocoState {
             other is PocoState &&
             (identical(other.message, message) || other.message == message) &&
             const DeepCollectionEquality().equals(other.sequence, sequence) &&
-            const DeepCollectionEquality().equals(other.history, history));
+            const DeepCollectionEquality().equals(other.history, history) &&
+            (identical(other.status, status) || other.status == status) &&
+            const DeepCollectionEquality().equals(other.error, error));
   }
 
   @override
@@ -40,11 +44,13 @@ mixin _$PocoState {
       runtimeType,
       message,
       const DeepCollectionEquality().hash(sequence),
-      const DeepCollectionEquality().hash(history));
+      const DeepCollectionEquality().hash(history),
+      status,
+      const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'PocoState(message: $message, sequence: $sequence, history: $history)';
+    return 'PocoState(message: $message, sequence: $sequence, history: $history, status: $status, error: $error)';
   }
 }
 
@@ -54,7 +60,11 @@ abstract mixin class $PocoStateCopyWith<$Res> {
       _$PocoStateCopyWithImpl;
   @useResult
   $Res call(
-      {String message, List<(String, int)> sequence, List<String> history});
+      {String message,
+      List<(String, int)> sequence,
+      List<String> history,
+      UiFlowStatus status,
+      Object? error});
 }
 
 /// @nodoc
@@ -72,6 +82,8 @@ class _$PocoStateCopyWithImpl<$Res> implements $PocoStateCopyWith<$Res> {
     Object? message = null,
     Object? sequence = null,
     Object? history = null,
+    Object? status = null,
+    Object? error = freezed,
   }) {
     return _then(_self.copyWith(
       message: null == message
@@ -86,6 +98,11 @@ class _$PocoStateCopyWithImpl<$Res> implements $PocoStateCopyWith<$Res> {
           ? _self.history
           : history // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as UiFlowStatus,
+      error: freezed == error ? _self.error : error,
     ));
   }
 }
@@ -181,15 +198,16 @@ extension PocoStatePatterns on PocoState {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(
-            String message, List<(String, int)> sequence, List<String> history)?
+    TResult Function(String message, List<(String, int)> sequence,
+            List<String> history, UiFlowStatus status, Object? error)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _PocoState() when $default != null:
-        return $default(_that.message, _that.sequence, _that.history);
+        return $default(_that.message, _that.sequence, _that.history,
+            _that.status, _that.error);
       case _:
         return orElse();
     }
@@ -210,14 +228,15 @@ extension PocoStatePatterns on PocoState {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(
-            String message, List<(String, int)> sequence, List<String> history)
+    TResult Function(String message, List<(String, int)> sequence,
+            List<String> history, UiFlowStatus status, Object? error)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _PocoState():
-        return $default(_that.message, _that.sequence, _that.history);
+        return $default(_that.message, _that.sequence, _that.history,
+            _that.status, _that.error);
     }
   }
 
@@ -235,14 +254,15 @@ extension PocoStatePatterns on PocoState {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(
-            String message, List<(String, int)> sequence, List<String> history)?
+    TResult? Function(String message, List<(String, int)> sequence,
+            List<String> history, UiFlowStatus status, Object? error)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _PocoState() when $default != null:
-        return $default(_that.message, _that.sequence, _that.history);
+        return $default(_that.message, _that.sequence, _that.history,
+            _that.status, _that.error);
       case _:
         return null;
     }
@@ -251,13 +271,16 @@ extension PocoStatePatterns on PocoState {
 
 /// @nodoc
 
-class _PocoState implements PocoState {
+class _PocoState extends PocoState {
   const _PocoState(
       {required this.message,
       required final List<(String, int)> sequence,
-      final List<String> history = const []})
+      final List<String> history = const [],
+      this.status = UiFlowStatus.idle,
+      this.error})
       : _sequence = sequence,
-        _history = history;
+        _history = history,
+        super._();
 
   @override
   final String message;
@@ -278,6 +301,12 @@ class _PocoState implements PocoState {
     return EqualUnmodifiableListView(_history);
   }
 
+  @override
+  @JsonKey()
+  final UiFlowStatus status;
+  @override
+  final Object? error;
+
   /// Create a copy of PocoState
   /// with the given fields replaced by the non-null parameter values.
   @override
@@ -293,7 +322,9 @@ class _PocoState implements PocoState {
             other is _PocoState &&
             (identical(other.message, message) || other.message == message) &&
             const DeepCollectionEquality().equals(other._sequence, _sequence) &&
-            const DeepCollectionEquality().equals(other._history, _history));
+            const DeepCollectionEquality().equals(other._history, _history) &&
+            (identical(other.status, status) || other.status == status) &&
+            const DeepCollectionEquality().equals(other.error, error));
   }
 
   @override
@@ -301,11 +332,13 @@ class _PocoState implements PocoState {
       runtimeType,
       message,
       const DeepCollectionEquality().hash(_sequence),
-      const DeepCollectionEquality().hash(_history));
+      const DeepCollectionEquality().hash(_history),
+      status,
+      const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'PocoState(message: $message, sequence: $sequence, history: $history)';
+    return 'PocoState(message: $message, sequence: $sequence, history: $history, status: $status, error: $error)';
   }
 }
 
@@ -318,7 +351,11 @@ abstract mixin class _$PocoStateCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String message, List<(String, int)> sequence, List<String> history});
+      {String message,
+      List<(String, int)> sequence,
+      List<String> history,
+      UiFlowStatus status,
+      Object? error});
 }
 
 /// @nodoc
@@ -336,6 +373,8 @@ class __$PocoStateCopyWithImpl<$Res> implements _$PocoStateCopyWith<$Res> {
     Object? message = null,
     Object? sequence = null,
     Object? history = null,
+    Object? status = null,
+    Object? error = freezed,
   }) {
     return _then(_PocoState(
       message: null == message
@@ -350,6 +389,11 @@ class __$PocoStateCopyWithImpl<$Res> implements _$PocoStateCopyWith<$Res> {
           ? _self._history
           : history // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as UiFlowStatus,
+      error: freezed == error ? _self.error : error,
     ));
   }
 }
