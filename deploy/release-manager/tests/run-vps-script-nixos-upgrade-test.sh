@@ -18,11 +18,18 @@ handoff=
 key_path=
 instance_created=false
 result_file=${POCKETCODER_VPS_SCRIPT_UPGRADE_RESULT_FILE:-"${TMPDIR:-/tmp}/pocketcoder-vps-script-nixos-upgrade-result.json"}
+log_file=${POCKETCODER_VPS_SCRIPT_LOG_FILE:-"${TMPDIR:-/tmp}/pocketcoder-vps-script-nixos-upgrade.log"}
 started_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 source_commit=
 baseline_digest=
 candidate_digest=
 candidate_sequence=
+full_suite=${POCKETCODER_FULL_VPS_SCRIPT_SUITE:-0}
+
+mkdir -p "$(dirname "$log_file")"
+: >"$log_file"
+exec > >(tee -a "$log_file") 2>&1
+echo "VPS SCRIPT UPGRADE: progress log $log_file"
 
 require() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -94,7 +101,8 @@ test -z "$(git status --porcelain)" || {
 source_commit=$(git rev-parse HEAD)
 remote_commit=$(git ls-remote origin refs/heads/main | awk '{print $1}')
 test "$source_commit" = "$remote_commit" || {
-  echo "local main is not the current remote main; refusing to test a stale release" >&2
+  branch=$(git symbolic-ref --short HEAD 2>/dev/null || printf 'detached')
+  echo "checked-out $branch commit $source_commit is not origin/main $remote_commit; merge the tested staging commit into main before running the VPS script test" >&2
   exit 1
 }
 
@@ -152,6 +160,13 @@ test -n "$handoff" && test -f "$handoff" || {
 key_path=$(jq -er '.sshPrivateKeyPath' "$handoff")
 baseline_digest=$(jq -er '.releaseDigest' "$handoff")
 
+if [ "$full_suite" = 1 ]; then
+  echo "VPS SCRIPT UPGRADE: running pre-update full suite"
+  POCKETCODER_VPS_SCRIPT_TEST=1 \
+    POCKETCODER_VPS_SCRIPT_RESULT_FILE="$work_dir/pre-update-suite.json" \
+    "$repo_root/deploy/release-manager/tests/run-vps-script-suite.sh" "$handoff"
+fi
+
 echo "VPS SCRIPT UPGRADE: building GitHub-attested candidate $source_commit"
 "$repo_root/deploy/nixos/scripts/trigger-ci-build.sh"
 wait_for_candidate
@@ -171,5 +186,12 @@ candidate_sequence=${pointer#*$'\t'}
 echo "VPS SCRIPT UPGRADE: updating baseline to $candidate_digest (sequence $candidate_sequence)"
 "$repo_root/deploy/release-manager/tests/run-vps-script-nixos-update-test.sh" \
   "$handoff" "$candidate_digest" "$source_commit" "$candidate_sequence"
+
+if [ "$full_suite" = 1 ]; then
+  echo "VPS SCRIPT UPGRADE: running post-update full suite"
+  POCKETCODER_VPS_SCRIPT_TEST=1 \
+    POCKETCODER_VPS_SCRIPT_RESULT_FILE="$work_dir/post-update-suite.json" \
+    "$repo_root/deploy/release-manager/tests/run-vps-script-suite.sh" "$handoff"
+fi
 
 echo "VPS SCRIPT UPGRADE: passed $baseline_digest -> $candidate_digest"
