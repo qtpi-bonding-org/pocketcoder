@@ -115,7 +115,9 @@ Related: MVP-07, MVP-11, MVP-12, MVP-13, MVP-14, MVP-21, MVP-22
       onboarding state and the onboarding adapter does not call the backend.
       The test should exercise both adapters through the shared conversation
       widgets, not only test their Cubits in isolation.
-- [ ] Add/complete Widgetbook stories for the shared conversation states.
+- [x] Add/complete the shared conversation Widgetbook stories in
+      `client/packages/pocketcoder_flutter/lib/design_system/storybook/terminal_conversation.stories.dart`.
+      The full deployment story remains a separate open check.
 
 ## 6. Server controls — implementation complete; verification remains
 
@@ -136,13 +138,14 @@ Related: MVP-23, MVP-24, MVP-25, MVP-26
       `client/packages/pocketcoder_pro/lib/infrastructure/pocketcoder_update/aeroform_root_ssh_credentials_provider.dart`.
 - [x] Replace the update-only service/screen with the unified
       `SshServerControlService` and `ServerControlScreen`.
-- [ ] Add `ServerControlCubit` unit tests for operation delegation, loading,
+- [x] Add `ServerControlCubit` unit tests for operation delegation, loading,
       success, and failure states.
-- [ ] Add `SshServerControlService` unit tests for release inspection,
+- [x] Add `SshServerControlService` unit tests for release inspection,
       operation delegation, host extraction, and error conversion.
-- [ ] Add `ServerControlView` widget tests for the five controls, confirmation
+- [x] Add `ServerControlView` widget tests for the five controls, confirmation
       before disruptive operations, busy-state disabling, release status, and
       command output/error rendering.
+- [x] Run the three server-control test files: 13 tests passed on 2026-08-14.
 - [ ] Add integration tests against a disposable deployment for one safe
       backup operation and the non-destructive release inspection path. Keep
       reboot/update operations behind an explicit live-test gate.
@@ -172,10 +175,10 @@ Related: MVP-19, MVP-20
 - [x] Live verification that memory persists and can be retrieved passed on
       2026-08-14; the disposable record was removed afterward.
 
-## 8. Required remaining test additions
+## 8. Definitive test backlog
 
-These are the actual new test files/flows still needed. Existing broad suites
-already cover the rest of the unit and integration surface.
+This is the complete remaining unit/widget and integration backlog. Do not add
+another test framework or duplicate the passing package suites.
 
 ### Unit/widget additions
 
@@ -188,19 +191,53 @@ already cover the rest of the unit and integration surface.
 - [x] Core Flutter `server_control_view_test.dart`: five controls, confirm
       dialog, disabled/busy state, release status, success output, and error
       output.
+- [x] Targeted server-control unit/widget run: 13 tests passed on 2026-08-14.
 
 ### Integration additions
 
-- [ ] Pro review-to-provision handoff flow.
-- [ ] Pro walkthrough boundary/brief/FAQ flow with no backend request.
-- [ ] Shared chat adapter separation flow: fake onboarding versus real chat.
-- [ ] Full deployment Widgetbook story check.
-- [ ] Compose memory MCP create/read/isolation/delete flow.
-- [x] One real MCP gateway/tool flow (`tests/agent-c1/mcp_gateway.bats`).
-- [x] One real harness authentication flow (`tests/api-flows/core.bats`); a
-      real provider-backed harness request remains an explicit live test.
-- [ ] Disposable server-control inspection/backup flow; disruptive commands
-      remain explicit live tests.
+- [x] **Release and deployment:** run the release schema/contract checks,
+      release-manager Docker transaction tests, and the Pro deployment adapter
+      flow together. Release-manager transaction tests and the Pro deployment
+      integration handoff passed on 2026-08-14.
+- [x] **Review → provisioning:** select size, region, OS, and harnesses,
+      review them, confirm, and assert the exact values reach the Aeroform
+      provisioning adapter. Covered by `test/integration/mvp_deployment_flow_test.dart`.
+- [x] **Progress mapping:** feed representative provision/deploy status updates
+      through the Pro adapter and assert provision/deploy stage, current step,
+      waiting, success, and failure render correctly. Wire-level active, ready,
+      failed, and timed-out mappings are covered by the Pro integration test;
+      the full pane story remains covered by the existing widget tests.
+- [x] **Walkthrough:** navigate briefs and walkthrough boundaries while the
+      progress pane remains mounted; assert choices and FAQ history remain
+      scoped correctly. Covered by the Pro integration test and walkthrough
+      widget tests.
+- [x] **FAQ isolation:** select a prepared FAQ chip, assert the local user and
+      Poco turns appear, and assert no PocketBase/chat request was made. Covered
+      by the Pro integration test and walkthrough panel tests.
+- [x] **Shared chat adapters:** exercise local onboarding and connected chat
+      through the shared conversation widgets and assert that neither adapter
+      consumes the other adapter's state. Pro integration coverage confirms
+      local Poco and connected Chat state remain independent.
+- [ ] **Widgetbook:** run the full story generation/check, including the Pro
+      deployment story and shared terminal conversation stories.
+- [ ] **PocketBase contracts:** run OpenAPI/generated-client checks, PocketBase
+      schema export/model generation, and verify the generated diff is clean.
+- [x] **PocketBase API flows:** containerized API Bats passed all 10 flows.
+- [ ] **Harness runtime:** run auth-helper/container integration and one
+      provider-backed harness request. API-key/none auth validation already
+      passes in the Bats suite.
+- [x] **MCP gateway:** the existing `tests/agent-c1/mcp_gateway.bats` flow
+      covers one real gateway/tool interaction.
+- [ ] **Memory:** add a repeatable Compose test for MCP initialize,
+      observation create/read, account isolation, and cleanup. Manual local
+      live persistence already passed.
+- [ ] **Server controls:** run a disposable-deployment integration test for
+      release inspection and backup. Keep reboot/update operations behind the
+      explicit live-test gate.
+- [ ] **Backend reliability:** run deployed health, compatibility, release
+      status, backup, and recovery flows together against the deployment.
+- [ ] **Flutter build integration:** compile the launch iOS/Android targets,
+      run FOSS-purity checks, and verify generated contracts before E2E.
 
 ## 9. Integration and live evidence sweep
 
