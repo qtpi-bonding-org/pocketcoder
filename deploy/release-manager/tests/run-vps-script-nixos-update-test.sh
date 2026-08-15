@@ -60,6 +60,7 @@ ssh_base() {
 }
 
 echo "VPS SCRIPT UPDATE: asserting provisioned release $initial_source_commit (sequence $initial_sequence)"
+initial_manager_sha=$(ssh_base 'sha256sum /opt/pocketcoder/current/bin/pocketcoder-release | cut -d" " -f1')
 ssh_base "set -eu
   test \"\$(jq -r .releaseDigest /var/lib/pocketcoder/release/current.json)\" = \"$initial_digest\"
   test \"\$(jq -r .sourceCommit /var/lib/pocketcoder/release/current.json)\" = \"$initial_source_commit\"
@@ -76,7 +77,13 @@ ssh_base "set -eu
   test \"\$(jq -r .channel /var/lib/pocketcoder/release/current.json)\" = nightly
   test \"\$(jq -r .channelSequence /var/lib/pocketcoder/release/current.json)\" = \"$expected_sequence\"
   test \"\$(readlink /opt/pocketcoder/current)\" = \"/opt/pocketcoder/releases/$expected_digest\"
+  test -x /opt/pocketcoder/current/bin/pocketcoder-release
   test \"\$(docker ps --format '{{.Names}}' | grep -c '^pocketcoder-' || true)\" -gt 0"
+
+final_manager_sha=$(ssh_base 'sha256sum /opt/pocketcoder/current/bin/pocketcoder-release | cut -d" " -f1')
+test -n "$initial_manager_sha"
+test -n "$final_manager_sha"
+echo "VPS SCRIPT UPDATE: release-manager binary $initial_manager_sha -> $final_manager_sha"
 
 curl --fail --silent --show-error --max-time 30 \
   --resolve "$hostname:443:$host" \
