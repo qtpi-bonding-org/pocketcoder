@@ -919,7 +919,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 
 	conn, sessionID, modes, configOptions, _, wasNew, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
 	if err != nil {
-		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
+		hub.Publish(providerRunError(profile.Provider, "session init", err))
 		return
 	}
 	h.conn = conn
@@ -942,7 +942,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 	applier := selectApplier(profile)
 	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
-		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
+		hub.Publish(providerRunError(profile.Provider, "session init", err))
 		return
 	}
 	h.accepting.Store(true)
@@ -957,13 +957,18 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	})
 	if err != nil {
 		code := "goose_unavailable"
+		message := "goose turn failed"
+		if providerAuthFailure(profile.Provider, err) {
+			code = providerAuthRequiredCode
+			message = "Claude Code reauthentication required. Your saved login was kept."
+		}
 		switch {
 		case runCtx.Err() != nil:
 			code = "run_timeout"
 		case isConnDone(conn):
 			code = "connection_interrupted"
 		}
-		hub.Publish(events.NewRunErrorEvent("goose turn failed", events.WithErrorCode(code)))
+		hub.Publish(events.NewRunErrorEvent(message, events.WithErrorCode(code)))
 		return
 	}
 	for _, e := range bridge.Finished(resp.StopReason) {
@@ -972,4 +977,14 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	if finished != nil && resp.StopReason != acpsdk.StopReasonCancelled && runCtx.Err() == nil {
 		_ = finished(runCtx, resp.StopReason)
 	}
+}
+
+func providerRunError(provider, fallback string, err error) events.Event {
+	if providerAuthFailure(provider, err) {
+		return events.NewRunErrorEvent(
+			"Claude Code reauthentication required. Your saved login was kept.",
+			events.WithErrorCode(providerAuthRequiredCode),
+		)
+	}
+	return events.NewRunErrorEvent(fallback, events.WithErrorCode("goose_unavailable"))
 }

@@ -19,6 +19,7 @@ class ChatView extends StatefulWidget {
     required this.title,
     required this.isLoading,
     required this.isRunning,
+    required this.requiresProviderReauthentication,
     required this.modes,
     required this.config,
     required this.onOpen,
@@ -37,6 +38,7 @@ class ChatView extends StatefulWidget {
   final String title;
   final bool isLoading;
   final bool isRunning;
+  final bool requiresProviderReauthentication;
   final Map<String, dynamic>? modes;
   final Map<String, dynamic>? config;
   final ValueChanged<String> onOpen;
@@ -190,6 +192,16 @@ class _ChatViewState extends State<ChatView> {
       padding: EdgeInsets.zero,
       body: Column(
         children: [
+          if (widget.requiresProviderReauthentication)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: context.colorScheme.errorContainer,
+              child: Text(
+                context.l10n.providerReauthenticationRequired,
+                style: TextStyle(color: context.colorScheme.onErrorContainer),
+              ),
+            ),
           if (_sessionPanelExpanded) ...[
             PlanPanel(plan: widget.conversation.sessionState.plan),
             ModeSwitcher(

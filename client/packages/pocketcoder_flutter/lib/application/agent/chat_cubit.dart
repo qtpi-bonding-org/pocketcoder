@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_trans
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'chat_state.dart';
+import 'provider_reauthentication_required.dart';
 
 @injectable
 class ChatCubit extends AppCubit<ChatState> {
@@ -74,7 +75,13 @@ class ChatCubit extends AppCubit<ChatState> {
         if (reducer == null) return;
         reducer.apply(event);
         emit(state.copyWith(
-            conversation: reducer.current, status: UiFlowStatus.success));
+          conversation: reducer.current,
+          status: UiFlowStatus.success,
+          error:
+              event is RunErrorEvent && event.code == 'provider_auth_required'
+                  ? const ProviderReauthenticationRequired()
+                  : state.error,
+        ));
       },
       onError: (Object e) {
         if (myGeneration != _generation) return;

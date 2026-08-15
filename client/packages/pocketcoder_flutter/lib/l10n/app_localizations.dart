@@ -154,6 +154,12 @@ abstract class AppLocalizations {
   /// **'Authentication error'**
   String get authError;
 
+  /// No description provided for @providerReauthenticationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code needs to be reauthenticated. Your saved login was kept.'**
+  String get providerReauthenticationRequired;
+
   /// No description provided for @chatFetchFailed.
   ///
   /// In en, this message translates to:
