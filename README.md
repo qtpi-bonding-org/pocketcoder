@@ -317,7 +317,7 @@ configuring their bindings and secrets with:
 The acceptance suite drives a real c1 (PocketBase) → c2 (Goose) turn against a live model and asserts the AG-UI contract end to end:
 
 ```bash
-tests/agent-c1/run.sh
+tests/compose/agent/run.sh
 ```
 
 It overlays `docker-compose.agent-test.yml`, starts the active c1/c2/c3

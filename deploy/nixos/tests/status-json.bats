@@ -4,7 +4,7 @@ setup() {
   export PC_STATUS_DIR="$BATS_TEST_TMPDIR/public"
   export PC_SOURCE_COMMIT=deadbeef
   mkdir -p "$PC_STATUS_DIR"
-  source "$BATS_TEST_DIRNAME/../deploy/nixos/status.sh"
+  source "$BATS_TEST_DIRNAME/../status.sh"
 }
 
 @test "init writes a clean document" {

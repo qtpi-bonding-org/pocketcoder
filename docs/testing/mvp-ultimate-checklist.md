@@ -523,8 +523,9 @@ real NixOS VPS.
       path and never committed, logged, or embedded in the app.
 - [x] Unit tests: release-manager Go tests and focused provisioning/deployment *(E-RM-UNIT)*
       unit tests are green.
-- [ ] Integration tests: release schemas/contracts, Docker integration, and
-      Flutter deployment integration tests are green.
+- [x] Integration tests: release schemas/contracts, Docker integration, and
+      Flutter deployment integration tests are green. *(E-RM-INTEGRATION,
+      E-PRO-DEPLOYMENT-INTEGRATION)*
 - [x] Live test: real NixOS provision + deployment completed successfully. *(E-LIVE-PROVISION)*
 - [x] Live test: installed release manager updated the same VPS from nightly *(E-LIVE-UPGRADE)*
       sequence 8 to 9 and passed health checks.
@@ -627,10 +628,10 @@ versioned API behave correctly for one user's deployment.
       remain the source of truth; interpretations cannot be detached from all
       observations; primitive storage operations are not exposed as MCP tools.
 - [x] Unit tests: memory linkage, search, and persistence unit tests are green. *(E-MEMORY-UNIT)*
-- [ ] Integration tests: memory container and deployed-stack integration tests
-      are green.
-- [ ] Live test: the memory service starts with the deployed stack and can
-      persist and retrieve a test record.
+- [x] Integration tests: the local Memory container test is green; the
+      deployed-stack VPS check remains open. *(E-MEMORY-COMPOSE)*
+- [x] Live test: local deployed-stack Memory persistence/retrieval passed;
+      the disposable real-VPS check remains open. *(E-LIVE-MEMORY-LOCAL)*
 - [ ] E2E test: a real chat flow stores and retrieves memory through the
       Flutter experience.
 
@@ -672,8 +673,8 @@ test-only shortcuts.
       implementation remains.
 - [x] Unit/widget tests: Flutter analysis, widget tests, and Cubit/adapter *(E-FLUTTER-UNIT)*
       tests are green.
-- [ ] Integration tests: generated contract checks and Widgetbook stories are
-      green.
+- [x] Integration tests: generated contract checks and Widgetbook stories are
+      green. *(E-CONTRACTS, E-WIDGETBOOK)*
 - [x] Live test: — (covered by the Provision + Deploy live test). *(E-FLUTTER-LIVE)*
 - [ ] E2E test: real iOS and Android Flutter builds complete onboarding and
       deployment against the live service.
@@ -770,7 +771,7 @@ Checked on 2026-08-14:
       migration, failed-migration snapshot restore, idempotency, concurrency,
       and recovery-phase cases; its temporary fixtures were cleaned up.
 - [x] Containerized API-flow Bats passed all 10 tests through
-      `tests/api-flows/run.sh`; the test runner built successfully and the
+      `tests/compose/api/run.sh`; the test runner built successfully and the
       PocketBase dependency remained healthy.
 - [ ] Real Flutter iOS/Android E2E: not run; requires the user's simulator or
       device session and the live deployment.
@@ -797,8 +798,8 @@ noted otherwise:
 | E-RELEASE-VERIFY | `deploy/nixos/bootstrap.sh`; `deploy/release-manager/internal/contract/`; `deploy/release-manager/internal/manager/` | Attested release, digest, channel, sequence, and revocation paths inspected. |
 | E-SECRETS | `.github/workflows/`; `deploy/nixos/bootstrap.sh`; secret injection call sites | No repository secret values found in the inspected paths; production secret rotation is outside this checklist. |
 | E-RM-UNIT | `deploy/release-manager` — `go test ./...` | Release-manager unit/package tests passed. |
-| E-LIVE-PROVISION | `deploy/release-manager/tests/run-live-nixos-upgrade-test.sh` and recorded live result | Real NixOS provision/deploy passed; recorded from the earlier live run. |
-| E-LIVE-UPGRADE | `deploy/release-manager/tests/run-live-nixos-update-test.sh` | Real installed updater passed nightly sequence 8 → 9; recorded from the earlier live run. |
+| E-LIVE-PROVISION | `deploy/release-manager/tests/run-vps-script-nixos-upgrade-test.sh` and recorded VPS-script result | Real NixOS provision/deploy passed; recorded from the earlier VPS-script run. |
+| E-LIVE-UPGRADE | `deploy/release-manager/tests/run-vps-script-nixos-update-test.sh` | Real installed updater passed nightly sequence 8 → 9; recorded from the earlier VPS-script run. |
 | E-CLEANUP | `deploy/release-manager/internal/transaction/`; `deploy/release-manager/internal/snapshot/` | Recovery and cleanup implementation inspected; Docker integration still needs a runnable daemon. |
 | E-LIVE-CANDIDATE | live release candidate/promotion/activation result | Real candidate activation and health verification passed in the earlier live run. |
 | E-PB-OWNERSHIP | `server/pocketbase/internal/api/errors.go`; `server/pocketbase/pb_migrations/schema.json`; ownership tests | PB IDs, external IDs, and owner boundaries inspected. |
@@ -829,6 +830,6 @@ noted otherwise:
 | E-SERVER-CONTROLS-UNIT | `CORE:client/packages/pocketcoder_flutter/test/application/server_control/server_control_cubit_test.dart`; `CORE:client/packages/pocketcoder_flutter/test/infrastructure/server_control/ssh_server_control_service_test.dart`; `CORE:client/packages/pocketcoder_flutter/test/presentation/server_control/server_control_view_test.dart` | 13 targeted server-control Cubit, service, and view tests passed on 2026-08-14; disposable-deployment, live, and Flutter E2E verification remain open. |
 | E-SHARED-CHAT-RECENT | `CORE:client/packages/pocketcoder_flutter/lib/presentation/core/widgets/terminal_conversation.dart`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/chat/pocketcoder_chat_builders.dart`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/onboarding/widgets/onboarding_view.dart` | Shared terminal frames are now used by both onboarding and live chat; relevant tests and the full Core 350-test suite passed. Integration/E2E remain open. |
 | E-SUITES-2026-08-14 | Core `flutter analyze --no-pub`, Core `flutter test --no-pub`, Pro `flutter test --no-pub`, PocketBase `go test ./...`, Memory `cargo test`, pinned release-contract test, and `deploy/release-manager/tests/run-docker-integration.sh` | Current code/unit/widget/contract/Docker integration evidence. Live server-control and Flutter E2E remain open. |
-| E-API-BATS-2026-08-14 | `tests/api-flows/run.sh` → `docker-compose.agent-test.yml` → `api-flow-test` | All 10 containerized API-flow tests passed with an ephemeral local user; no production credentials were used. |
+| E-API-BATS-2026-08-14 | `tests/compose/api/run.sh` → `docker-compose.agent-test.yml` → `api-flow-test` | All 10 containerized API-flow tests passed with an ephemeral local user; no production credentials were used. |
 | E-LIVE-PB-2026-08-14 | `http://127.0.0.1:8090/api/health`; `/api/pocketcoder/v1/compatibility`; authenticated `/api/pocketcoder/v1/release/status` | Local live PocketBase checks passed: health 200 and schema/API version 1. Memory dashboard and SSH controls were not exercised. |
 | E-LIVE-MEMORY-2026-08-14 | `docker exec pocketcoder-memory` → `/health`, `/mcp` initialize, `memory_create_observation`, `memory_get`, `memory_delete_observation` | Pocket Memory reported ready with semantic search; MCP create/read persistence passed under a versioned identity; test data was removed. |

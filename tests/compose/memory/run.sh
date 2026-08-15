@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+cd "$repo_root"
+
 project="pocketcoder-memory-test-${USER:-user}-$$"
 compose=(docker compose -p "$project" -f docker-compose.yml -f docker-compose.memory-test.yml)
 
