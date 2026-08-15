@@ -13,13 +13,20 @@ vps_provision() {
   # leaves teardown something precise to sweep.
   teardown_set_label "$label"
 
+  # vps_provision is called as `handoff=$(vps_provision ...)` by the
+  # orchestrator, so anything this function writes to its own stdout
+  # becomes part of $handoff. tee's passthrough copy must go to stderr
+  # (or be discarded), never stdout, or the flutter test's entire log ends
+  # up appended to the handoff path -- confirmed live: it silently
+  # corrupted $handoff into megabytes of log text plus the real path, and
+  # every downstream jq/file lookup failed on it.
   ( cd "$aeroform_root" &&
     env AEROFORM_VPS_SCRIPT_TEST=1 \
       AEROFORM_KEEP_INSTANCE=1 \
       AEROFORM_GOLDEN_PATH_BACKEND=nixos \
       AEROFORM_INSTANCE_LABEL="$label" \
       "$flutter_bin" test test/integration/golden_path_provision_test.dart ) \
-    2>&1 | tee "$provision_log"
+    2>&1 | tee "$provision_log" >&2
 
   handoff=$(sed -n 's/^VPS SCRIPT: retained update handoff //p' "$provision_log" | tail -1)
   if [ -z "$handoff" ] || [ ! -f "$handoff" ]; then
