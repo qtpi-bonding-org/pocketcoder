@@ -1,7 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+
 import 'app/app.dart';
 import 'app/bootstrap.dart';
+import 'app/app_dependency_module.dart';
 import 'domain/notifications/push_service.dart';
 import 'domain/billing/billing_service.dart';
 import 'domain/deployment/i_deploy_option_service.dart';
@@ -49,15 +53,20 @@ class LocalBillingService implements BillingService {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Pre-register services so Injection can pick them up
-  getIt.registerSingleton<PushService>(LocalPushService());
-  getIt.registerSingleton<BillingService>(LocalBillingService());
-  getIt.registerSingleton<IDeployOptionService>(FossDeployOptionService());
-  getIt.registerSingleton<OnboardingSetupFlow>(
-    const SelfHostedOnboardingSetupFlow(),
-  );
-
-  await bootstrap();
+  await bootstrap(appModule: LocalAppModule());
 
   runApp(const App());
+}
+
+/// Local composition used by the shared package's development entry point.
+class LocalAppModule implements AppDependencyModule {
+  @override
+  void register(GetIt getIt) {
+    getIt.registerSingleton<PushService>(LocalPushService());
+    getIt.registerSingleton<BillingService>(LocalBillingService());
+    getIt.registerSingleton<IDeployOptionService>(FossDeployOptionService());
+    getIt.registerSingleton<OnboardingSetupFlow>(
+      const SelfHostedOnboardingSetupFlow(),
+    );
+  }
 }

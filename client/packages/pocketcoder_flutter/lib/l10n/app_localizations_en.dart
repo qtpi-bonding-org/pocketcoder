@@ -39,6 +39,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authError => 'Authentication error';
 
   @override
+  String get providerReauthenticationRequired =>
+      'Claude Code needs to be reauthenticated. Your saved login was kept.';
+
+  @override
   String get chatFetchFailed => 'Unable to load chats';
 
   @override

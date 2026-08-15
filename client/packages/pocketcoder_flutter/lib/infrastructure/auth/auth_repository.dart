@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/auth_aware_http_client.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 
@@ -64,9 +65,9 @@ class AuthRepository implements IAuthRepository {
   Future<void> verifyServerCompatibility() async {
     await tryMethod(
       () async {
-        final generatedResponse =
-            await _api.release.getReleaseCompatibility();
-        final response = PocketCoderApiClient.decodeJson(generatedResponse.data);
+        final generatedResponse = await _api.release.getReleaseCompatibility();
+        final response =
+            PocketCoderApiClient.decodeJson(generatedResponse.data);
         final compatibility = response['compatibility'];
         if (compatibility is! Map<String, dynamic>) {
           throw const FormatException(
@@ -117,15 +118,30 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
-  Future<bool> refreshToken() async {
-    return tryMethod(
-      () async {
-        await _pocketBase.collection(Collections.users).authRefresh();
-        return true;
-      },
-      AuthException.new,
-      'refreshToken',
-    );
+  Future<AuthRefreshResult> refreshToken() async {
+    try {
+      await _pocketBase.collection(Collections.users).authRefresh(
+        headers: {AuthAwareHttpClient.skipRefreshHeader: '1'},
+      );
+      return AuthRefreshResult.refreshed;
+    } on ClientException catch (error) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        // PocketBase does not clear the store for a failed auth-refresh.
+        // Explicitly clear both the in-memory and persisted credentials only
+        // when the server has definitively rejected this session.
+        _pocketBase.authStore.clear();
+        await _authStoreConfig.clear();
+        return AuthRefreshResult.invalidSession;
+      }
+
+      // A timeout, DNS failure, or 5xx response says nothing about whether
+      // the user's locally persisted identity is still valid.
+      return AuthRefreshResult.temporarilyUnavailable;
+    } catch (_) {
+      // Unknown client/decoding failures are still not proof that the session
+      // is invalid. Preserve the credential and let the app recover later.
+      return AuthRefreshResult.temporarilyUnavailable;
+    }
   }
 
   @override

@@ -15,6 +15,7 @@
   "authNotAuthenticated": "Please log in",
   "authTokenExpired": "Session expired, please log in again",
   "authError": "Authentication error",
+  "providerReauthenticationRequired": "Claude Code needs to be reauthenticated. Your saved login was kept.",
 
   "chatFetchFailed": "Unable to load chats",
   "chatSendFailed": "Failed to send message",
