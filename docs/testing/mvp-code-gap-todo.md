@@ -165,9 +165,10 @@ Related: MVP-19, MVP-20
 - [x] Add backend authorization coverage for ordinary authenticated access in
       `TestMemoryDashboardIsAvailableToAuthenticatedUser`; Flutter widget/live
       coverage remains open.
-- [ ] Add a repeatable Compose integration test against the memory container:
+- [x] Add a repeatable Compose integration test against the memory container:
       initialize the MCP session, create an observation, retrieve it, verify
-      account isolation, and remove the disposable record.
+      account isolation, and remove the disposable test volume. See
+      `tests/memory/run.sh` and `tests/memory/memory.bats`.
 - [x] Live verification that memory persists and can be retrieved passed on
       2026-08-14; the disposable record was removed afterward.
 
