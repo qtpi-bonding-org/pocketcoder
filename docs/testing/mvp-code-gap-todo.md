@@ -290,6 +290,64 @@ Run this only after the code gaps above have landed:
 - [ ] Server-control live verification requires an authenticated running
       deployment; no disruptive operation was sent during this pass.
 
+## 10. Findings from the 2026-08-15 sub-audit
+
+Fanned out six read-only Haiku audits over `mvp-ultimate-checklist.md` and
+`mvp-backend-todo.md`. Most checked items still hold up; these are the
+genuine gaps and stale claims found, not already covered above.
+
+- [x] Resolved as of the 2026-08-15 VPS suite hardening pass: this finding
+      was stale even at the time it was written. The entrypoint path it
+      names, `deploy/release-manager/tests/run-vps-script-suite.sh`, was
+      one of the legacy scripts and has since been deleted — the real
+      entrypoint is `deploy/release-manager/tests/vps/run-vps-suite.sh`.
+      The Memory/MCP/harness read-only checks it flags as missing were a
+      deliberate design decision, not a gap: `vps-script-test-plan.md`
+      Phase 2 explicitly supersedes those checks with faster, deterministic
+      local coverage (`tests/compose/memory/memory.bats`,
+      `tests/compose/agent/`, `server/pocketbase/internal/api/harness_auth_test.go`)
+      rather than duplicating them against a live VPS. The orchestrator has
+      since been proven end-to-end against a real deployment (topology,
+      release, backup, restart-stack, reboot, and nixos-update all passing
+      live), so this is no longer a blocker for the "Definition of ready
+      for E2E" gate.
+- [ ] **MCP OAuth has no end-to-end flow test.** Unit coverage exists
+      (`server/pocketbase/internal/api/mcp_oauth_test.go`), and
+      `workers/oauth-relay/` implements the PKCE exchange, but nothing
+      exercises the full loop (relay → token stored in
+      `mcp_servers.config` → MCP server authenticates with it). Also:
+      `mcp_oauth.go` references
+      `docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md`, which
+      does not exist in this repo — confirm whether that spec was meant to
+      ship here or only lives in a different location, and fix or drop the
+      reference.
+- [ ] **Memory `search`/`unlink` MCP tools are implemented but untested.**
+      `server/memory/src/mcp/tools.rs` (`memory_search`, `memory_unlink`)
+      have no bats coverage; `tests/compose/memory/memory.bats` only
+      exercises create/read/list.
+- [ ] **`git_ssh_credentials`, `git_repository_access`, `devices`** exist in
+      `schema.json` with no corresponding MVP-01–MVP-28 row. Likely
+      post-MVP scope — confirm and either add rows or note them as
+      deliberately out of scope.
+- [x] Confirmed not a gap: the matrix's "OPEN: no backup API/status
+      contract found" wording for MVP-26 reads like a missing feature, but
+      section 6 above already made this a deliberate design decision (`[—]`
+      — SSH-only backup with no backend status contract is intentional).
+      Same for MVP-23/MVP-25's "no ... endpoint" wording. Worth rewording
+      the matrix's `OPEN:` prefix to something like `BY DESIGN:` so a
+      future reader doesn't mistake settled decisions for open work.
+- [x] Fixed in `mvp-ultimate-checklist.md`: MVP-27's backend evidence path
+      said `CORE:workers/push-relay/`; push-relay actually lives at
+      `PRO:workers/push-relay/`, not in Core's `workers/`. Worth a
+      deliberate look, not just a path fix — `CLAUDE.md`'s Deployment Model
+      section names `push-relay` by name as part of "the only
+      infrastructure we run centrally," which reads as Core-owned. If
+      push-relay intentionally moved to Pro, update `CLAUDE.md`; if not,
+      this is a real architecture drift worth a decision, not just a doc
+      typo.
+- [x] Fixed in `mvp-ultimate-checklist.md`: `E-API-BATS-2026-08-14`'s "all
+      10" test count is stale — `core.bats` now has 13 `@test` entries.
+
 ## Definition of ready for E2E
 
 - [ ] Every code path above has a code audit record with `P/B/F` references.
