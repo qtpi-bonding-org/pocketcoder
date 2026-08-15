@@ -47,7 +47,7 @@ class SettingsView extends StatelessWidget {
           (
             context.l10n.pocketCoderUpdateTitle,
             '[UPDATE]',
-            'updatePocketCoder',
+            'serverControls',
           ),
           (context.l10n.errorsTitle, '[VIEW]', 'configureErrors'),
         ]

@@ -1,0 +1,61 @@
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:injectable/injectable.dart';
+import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
+import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
+import 'server_control_state.dart';
+
+@injectable
+class ServerControlCubit extends AppCubit<ServerControlState> {
+  ServerControlCubit(this._service) : super(const ServerControlState());
+
+  final IServerControlService _service;
+
+  Future<void> inspectRelease() async {
+    await tryOperation(() async {
+      final release = await _service.inspectRelease();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        release: release,
+        clearError: true,
+      );
+    });
+  }
+
+  Future<void> run({
+    required ServerControlOperation operation,
+    required String instanceId,
+  }) async {
+    await tryOperation(() async {
+      final result = switch (operation) {
+        ServerControlOperation.restartPocketCoder =>
+          await _service.restartPocketCoder(instanceId: instanceId),
+        ServerControlOperation.updatePocketCoder =>
+          await _service.updatePocketCoder(instanceId: instanceId),
+        ServerControlOperation.restartNixOs =>
+          await _service.restartNixOs(instanceId: instanceId),
+        ServerControlOperation.updateNixOs =>
+          await _service.updateNixOs(instanceId: instanceId),
+        ServerControlOperation.saveBackup =>
+          await _service.saveBackup(instanceId: instanceId),
+      };
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        operation: operation,
+        result: result,
+        clearError: true,
+      );
+    });
+  }
+
+  static RootSshCommand commandFor(ServerControlOperation operation) =>
+      switch (operation) {
+        ServerControlOperation.restartPocketCoder =>
+          RootSshCommand.restartPocketCoder,
+        ServerControlOperation.updatePocketCoder =>
+          RootSshCommand.updatePocketCoder,
+        ServerControlOperation.restartNixOs => RootSshCommand.restartNixOs,
+        ServerControlOperation.updateNixOs => RootSshCommand.updateNixOs,
+        ServerControlOperation.saveBackup => RootSshCommand.saveBackup,
+      };
+}
