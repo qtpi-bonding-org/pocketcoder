@@ -108,7 +108,19 @@ backup() {
   integrity=$(ssh_base 'docker exec pocketcoder-pocketbase \
     sqlite3 /app/pb_backups/data.db "PRAGMA integrity_check;"')
   [[ $integrity == ok ]]
-  printf 'backupArtifact=%s\nbackupChecksum=%s\n' "$archive" "$checksum"
+  restored_integrity=$(ssh_base 'set -eu
+    tmp=$(mktemp -d /tmp/pocketcoder-backup-restore.XXXXXX)
+    trap '\''rm -rf "$tmp"'\'' EXIT
+    cp /var/lib/docker/volumes/pocketcoder_pb_backups/_data/data.db "$tmp/data.db"
+    sqlite3 "$tmp/data.db" "PRAGMA integrity_check;"')
+  [[ $restored_integrity == ok ]]
+  printf 'backupArtifact=%s\nbackupChecksum=%s\nrestoredIntegrity=%s\n' "$archive" "$checksum" "$restored_integrity"
+}
+
+inspect_release() {
+  release_status=$(ssh_base 'set -eu; /opt/pocketcoder/current/bin/pocketcoder-release status')
+  jq -e '.schemaVersion == 1 and (.managerVersion | strings | length > 0) and (.current.releaseDigest | strings | test("^[0-9a-f]{64}$"))' \
+    <<<"$release_status" >/dev/null
 }
 
 restart_pocketcoder() {
@@ -162,6 +174,7 @@ write_result() {
 trap write_result EXIT
 
 run_phase read-only read_only
+run_phase inspect-release inspect_release
 run_phase backup backup
 run_phase restart-pocketcoder restart_pocketcoder
 if $include_nixos; then

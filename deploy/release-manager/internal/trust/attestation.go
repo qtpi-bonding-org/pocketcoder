@@ -3,6 +3,7 @@ package trust
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/sigstore/sigstore-go/pkg/bundle"
@@ -61,10 +62,17 @@ type SubjectVerifier interface {
 type GitHubVerifier struct{ CachePath string }
 
 func (verifier GitHubVerifier) Verify(role string, subject, bundleBytes []byte) error {
+	branch := os.Getenv("POCKETCODER_GITHUB_WORKFLOW_BRANCH")
+	if branch == "" {
+		branch = "main"
+	}
+	if branch != "main" && branch != "staging" {
+		return fmt.Errorf("unsupported GitHub workflow branch %q", branch)
+	}
 	workflow, ok := map[string]string{
-		"release":    ".github/workflows/nixos-image.yml@refs/heads/main",
-		"channel":    ".github/workflows/release-promotion.yml@refs/heads/main",
-		"revocation": ".github/workflows/release-revocation.yml@refs/heads/main",
+		"release":    ".github/workflows/nixos-image.yml@refs/heads/" + branch,
+		"channel":    ".github/workflows/release-promotion.yml@refs/heads/" + branch,
+		"revocation": ".github/workflows/release-revocation.yml@refs/heads/" + branch,
 	}[role]
 	if !ok {
 		return fmt.Errorf("unsupported GitHub attestation role %q", role)
