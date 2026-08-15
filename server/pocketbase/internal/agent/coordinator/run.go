@@ -109,6 +109,18 @@ var ErrNoPendingPermission = errors.New("no pending permission")
 var ErrPermissionOptionNotOffered = errors.New("permission option was not offered")
 var ErrNoPendingElicitation = errors.New("no pending elicitation")
 
+// isConnDone reports whether conn's transport has already signalled
+// shutdown, distinguishing a dead pipe from an application-level harness
+// error while the connection is still alive.
+func isConnDone(conn acp.Conn) bool {
+	select {
+	case <-conn.Done():
+		return true
+	default:
+		return false
+	}
+}
+
 func New(config Config) (*Coordinator, error) {
 	if config.Workspace == "" {
 		return nil, fmt.Errorf("workspace is required")
@@ -911,8 +923,11 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	})
 	if err != nil {
 		code := "goose_unavailable"
-		if runCtx.Err() != nil {
+		switch {
+		case runCtx.Err() != nil:
 			code = "run_timeout"
+		case isConnDone(conn):
+			code = "connection_interrupted"
 		}
 		hub.Publish(events.NewRunErrorEvent("goose turn failed", events.WithErrorCode(code)))
 		return
