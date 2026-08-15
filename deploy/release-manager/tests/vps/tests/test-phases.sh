@@ -120,6 +120,44 @@ check_contains "70-post-update: states why it skipped" "release B" "$reason"
 PATH="$phase_stub_dir:$PATH" STUB_DIGEST=bbb phase_precondition >/dev/null
 check_rc "70-post-update: runs when the box already reports release B" 0 "$?"
 
+# --- 70-post-update: metadata-status.json's rollback field is only ever
+# set when status is "update-available" (BuildMetadataStatus never sets it
+# for "current") -- confirmed live: a box freshly updated to the newest
+# release reports "current" with no rollback field, which is correct, not
+# a missing-data failure. ---
+vps_connect 203.0.113.10 "$TEST_TMP/key" "$TEST_TMP/known_hosts"
+: > "$TEST_TMP/key"
+VPS_HOSTNAME=vps.example.test
+stub_bin "$phase_stub_dir" curl 'exit 0'
+stub_bin "$phase_stub_dir" openssl 'echo'
+stub_bin "$phase_stub_dir" ssh '
+for arg in "$@"; do last=$arg; done
+case $last in
+  *State.Health.Status*) echo healthy ;;
+  *data.db*) echo "" ;;
+  *sha256sum*) echo "deadbeef  /opt/pocketcoder/current/bin/pocketcoder-release" ;;
+  *release-metadata.service*) echo "" ;;
+  *metadata-status.json*) echo "$STUB_METADATA" ;;
+  *) echo "" ;;
+esac'
+
+( . "$VPS_DIR/phases/70-post-update.sh"
+  PATH="$phase_stub_dir:$PATH" STUB_METADATA='{"status":"current"}' \
+    phase_run >/dev/null 2>&1 )
+check_rc "70-post-update: status=current passes without a rollback field" 0 "$?"
+
+( . "$VPS_DIR/phases/70-post-update.sh"
+  PATH="$phase_stub_dir:$PATH" \
+    STUB_METADATA='{"status":"update-available","normalRollbackAvailableAfterSuccess":true}' \
+    phase_run >/dev/null 2>&1 )
+check_rc "70-post-update: status=update-available with the field passes" 0 "$?"
+
+( . "$VPS_DIR/phases/70-post-update.sh"
+  PATH="$phase_stub_dir:$PATH" \
+    STUB_METADATA='{"status":"update-available"}' \
+    phase_run >/dev/null 2>&1 )
+check_rc "70-post-update: status=update-available without the field fails" 1 "$?"
+
 # --- 10-provision: vps_provision's stdout must be ONLY the handoff path ---
 # Regression test for a bug found live: tee's passthrough copy went to
 # stdout, so the whole flutter test log leaked into $handoff when the
