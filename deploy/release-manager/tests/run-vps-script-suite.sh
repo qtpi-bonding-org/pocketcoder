@@ -89,9 +89,11 @@ read_only() {
     --resolve "$hostname:443:$host" "https://$hostname/api/pocketcoder/v1/compatibility")
   jq -e '.schemaVersion == 1 and .compatibility.server.apiVersion == 1' \
     <<<"$compatibility" >/dev/null
-  curl --fail --silent --show-error --max-time 30 --resolve "$hostname:443:$host" \
-    "https://$hostname/api/pocketcoder/v1/release/status" >/dev/null ||
-    [[ $? -eq 22 ]] # status is authenticated; a rejected anonymous request is expected.
+  release_status_code=$(curl --silent --show-error --max-time 30 \
+    --output /dev/null --write-out '%{http_code}' \
+    --resolve "$hostname:443:$host" \
+    "https://$hostname/api/pocketcoder/v1/release/status")
+  [[ "$release_status_code" == 401 ]] # status is authenticated; rejection is expected.
 }
 
 backup() {
