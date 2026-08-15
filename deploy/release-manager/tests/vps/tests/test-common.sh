@@ -55,3 +55,27 @@ check_rc "ssh_exec_detached: tolerates a dropped connection" 0 "$?"
 # existing backup() phase relies on this shape.
 nested=$(PATH="$ssh_stub_dir:$PATH" ssh_exec 10 'docker exec pb sh -ec '\''test -s /a; echo ok'\''')
 check "ssh_exec: nested single quotes survive" "docker exec pb sh -ec 'test -s /a; echo ok'" "$nested"
+
+VPS_REDACTION_READY=0
+VPS_REDACTION_VALUES=
+check "redact: fails closed before the dictionary loads" \
+  "[output suppressed: redaction dictionary unavailable]" \
+  "$(redact 'GH_TOKEN=ghp_supersecret')"
+
+VPS_REDACTION_READY=1
+VPS_REDACTION_VALUES='ghp_supersecret
+linode_abc123'
+check "redact: removes dictionary values" \
+  "token=[REDACTED] other=[REDACTED]" \
+  "$(redact 'token=ghp_supersecret other=linode_abc123')"
+
+check_contains "redact: strips bearer tokens" "[REDACTED]" \
+  "$(redact 'Authorization: Bearer eyJhbGciOiJIUzI1')"
+
+check_contains "redact: strips private key blocks" "[REDACTED]" \
+  "$(redact '-----BEGIN OPENSSH PRIVATE KEY-----
+abc
+-----END OPENSSH PRIVATE KEY-----')"
+
+long=$(printf 'a%.0s' $(seq 1 5000))
+check "redact: caps length" "2000" "$(VPS_DETAIL_CAP=2000 redact "$long" | wc -c | tr -d ' ')"

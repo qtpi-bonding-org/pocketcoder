@@ -110,3 +110,46 @@ ssh_exec_detached() {
   ssh_exec "$1" "$2" >/dev/null 2>&1 || true
   return 0
 }
+
+VPS_REDACTION_READY=0
+VPS_REDACTION_VALUES=
+
+# load_redaction_dictionary — pull every value out of the box's runtime.env
+# so it can be scrubbed from captured output. Fetched over the same channel
+# being redacted, so failure must fail closed, never open.
+load_redaction_dictionary() {
+  local env_body
+  if ! env_body=$(ssh_exec 30 'cat /var/lib/pocketcoder/config/runtime.env 2>/dev/null'); then
+    VPS_REDACTION_READY=0
+    return 1
+  fi
+  VPS_REDACTION_VALUES=$(printf '%s\n' "$env_body" |
+    sed -n 's/^[A-Za-z_][A-Za-z0-9_]*=//p' |
+    sed 's/^"//; s/"$//' |
+    awk 'length($0) >= 8')
+  VPS_REDACTION_READY=1
+  return 0
+}
+
+redact() {
+  local text=$1
+  if [ "$VPS_REDACTION_READY" != 1 ]; then
+    printf '%s' "[output suppressed: redaction dictionary unavailable]"
+    return 0
+  fi
+  # Replace each dictionary value, then structural secrets. The heredoc (not
+  # a pipe) keeps the loop in the current shell so $scrubbed survives it.
+  local scrubbed=$text
+  local value
+  while IFS= read -r value; do
+    [ -n "$value" ] || continue
+    scrubbed=${scrubbed//"$value"/[REDACTED]}
+  done <<EOF
+$VPS_REDACTION_VALUES
+EOF
+  scrubbed=$(printf '%s' "$scrubbed" |
+    sed -E 's/(Bearer|bearer) [A-Za-z0-9._~+\/=-]+/\1 [REDACTED]/g' |
+    sed -E '/-----BEGIN [A-Z ]*PRIVATE KEY-----/,/-----END [A-Z ]*PRIVATE KEY-----/c\
+[REDACTED]')
+  printf '%s' "${scrubbed:0:${VPS_DETAIL_CAP:-2000}}"
+}
