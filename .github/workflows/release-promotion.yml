@@ -36,13 +36,32 @@ jobs:
       - name: Verify candidate is publicly reachable before promoting
         run: deploy/ci/verify-candidate-published.sh '${{ inputs.manifest_sha256 }}'
 
+      # Every non-main branch gets its own, fixed "-testing" channel-pointer
+      # object, so a staging-branch promotion can never overwrite (or be
+      # confused with) main's -- confirmed live: before this existed, a
+      # staging promotion onto the shared "nightly.json" broke bootstrap for
+      # every ordinary main-trust box. This is derived from the triggering
+      # ref, never a workflow_dispatch input, so it can't be forgotten or
+      # typo'd. A fixed "-testing" suffix (not the literal branch name)
+      # keeps the public path meaningful regardless of which branch it is --
+      # see internal/release/resolver.go's ChannelPath, which this must stay
+      # in sync with.
+      - name: Compute branch-qualified channel path
+        id: channel-path
+        run: |
+          if [ "${{ github.ref_name }}" = main ]; then
+            echo 'channel_path=${{ inputs.channel }}' >> "$GITHUB_OUTPUT"
+          else
+            echo 'channel_path=${{ inputs.channel }}-testing' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Prepare channel pointer
         env:
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
-        run: deploy/ci/prepare-attested-channel-pointer.sh '${{ inputs.channel }}' '${{ inputs.manifest_sha256 }}' '${{ inputs.sequence }}' channel-pointer.json
+        run: deploy/ci/prepare-attested-channel-pointer.sh '${{ inputs.channel }}' '${{ steps.channel-path.outputs.channel_path }}' '${{ inputs.manifest_sha256 }}' '${{ inputs.sequence }}' channel-pointer.json
 
       - name: Attest channel pointer
         id: attest-pointer
@@ -56,4 +75,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
-        run: deploy/ci/publish-attested-channel-pointer.sh channel-pointer.json '${{ steps.attest-pointer.outputs.bundle-path }}'
+        run: deploy/ci/publish-attested-channel-pointer.sh channel-pointer.json '${{ steps.attest-pointer.outputs.bundle-path }}' '${{ steps.channel-path.outputs.channel_path }}'

@@ -47,12 +47,17 @@ type ReleaseObject = {
 };
 
 function resolveV1ObjectPath(pathname: string): ReleaseObject | null {
+	// The `-testing` suffix is a separate, parallel channel-pointer path for
+	// the staging branch pipeline (see internal/release/resolver.go's
+	// ChannelPath) -- kept as its own literal alternative, not a generic
+	// suffix pattern, since GitHubVerifier.Verify only ever trusts
+	// attestations published from "main" or "staging".
 	const mutable = [
-		/^\/v1\/channels\/(stable|beta|nightly)\.json$/,
+		/^\/v1\/channels\/(stable|beta|nightly)(-testing)?\.json$/,
 		/^\/v1\/revocations\/releases\.json$/,
 	];
 	const immutable = [
-		/^\/v1\/attestations\/channels\/(stable|beta|nightly)\/[1-9][0-9]*\.sigstore\.json$/,
+		/^\/v1\/attestations\/channels\/(stable|beta|nightly)(-testing)?\/[1-9][0-9]*\.sigstore\.json$/,
 		/^\/v1\/releases\/[0-9a-f]{64}\.json$/,
 		/^\/v1\/attestations\/releases\/[0-9a-f]{64}\.sigstore\.json$/,
 		/^\/v1\/attestations\/revocations\/releases\/[1-9][0-9]*\.sigstore\.json$/,

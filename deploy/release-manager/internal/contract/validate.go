@@ -147,7 +147,14 @@ func validateRegistryImage(name, image string, seen map[string]string) error {
 	return nil
 }
 
-func ValidatePointer(pointer ChannelPointer, expectedChannel, releaseBase string, maximumManifestBytes int64) error {
+// ValidatePointer checks a fetched channel pointer against the box's own
+// configuration. expectedChannel is the release-maturity value the box was
+// installed with ("stable"/"beta"/"nightly") -- it never varies by publish
+// branch, so it's what the pointer's own "channel" field is compared
+// against. expectedChannelPath is the (possibly branch-qualified, e.g.
+// "nightly-staging") path segment the pointer and its attestation were
+// actually fetched from -- see resolver.go for how the two diverge.
+func ValidatePointer(pointer ChannelPointer, expectedChannel, expectedChannelPath, releaseBase string, maximumManifestBytes int64) error {
 	if pointer.SchemaVersion != SchemaVersion || pointer.Channel != expectedChannel || pointer.Sequence < 1 {
 		return fmt.Errorf("invalid channel pointer")
 	}
@@ -165,7 +172,7 @@ func ValidatePointer(pointer ChannelPointer, expectedChannel, releaseBase string
 		return fmt.Errorf("manifest URL is outside its content-addressed path")
 	}
 	base := strings.TrimRight(releaseBase, "/")
-	if pointer.Attestation.URL != base+"/v1/attestations/channels/"+expectedChannel+"/"+fmt.Sprint(pointer.Sequence)+".sigstore.json" {
+	if pointer.Attestation.URL != base+"/v1/attestations/channels/"+expectedChannelPath+"/"+fmt.Sprint(pointer.Sequence)+".sigstore.json" {
 		return fmt.Errorf("channel attestation URL is outside its sequenced path")
 	}
 	if pointer.Manifest.Attestation.URL != base+"/v1/attestations/releases/"+pointer.Manifest.SHA256+".sigstore.json" {

@@ -48,6 +48,29 @@ type Resolved struct {
 
 type Resolver struct{ Config Config }
 
+// ChannelPath returns the release-maturity value's object-path segment,
+// qualified with a "-testing" suffix whenever
+// POCKETCODER_GITHUB_WORKFLOW_BRANCH is anything other than main. This is
+// what keeps parallel branch pipelines from ever sharing a channel-pointer
+// object: main's "nightly" stays the bare "nightly.json" it always was,
+// while every other branch (today, only "staging" -- see
+// GitHubVerifier.Verify's branch allowlist) gets its own
+// "nightly-testing.json" that a main-trust box never even requests. A fixed
+// "-testing" suffix (purpose-named, not the literal branch name) keeps the
+// public path meaningful even if the non-main trust branch is ever renamed.
+// Confirmed live: repeated staging-branch promotions onto the shared,
+// unqualified "nightly.json" broke bootstrap for any ordinary main-trust
+// box, since the attestation check alone has no way to reject a pointer
+// object it was never meant to receive in the first place -- the fix has
+// to be in the path, not just the trust check.
+func ChannelPath(channel string) string {
+	branch := os.Getenv("POCKETCODER_GITHUB_WORKFLOW_BRANCH")
+	if branch == "" || branch == "main" {
+		return channel
+	}
+	return channel + "-testing"
+}
+
 func (resolver Resolver) Resolve() (Resolved, error) {
 	c := resolver.Config
 	c.ReleaseBase = strings.TrimRight(c.ReleaseBase, "/")
@@ -59,7 +82,8 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 
-	pointerURL := c.ReleaseBase + "/v1/channels/" + c.Channel + ".json"
+	channelPath := ChannelPath(c.Channel)
+	pointerURL := c.ReleaseBase + "/v1/channels/" + channelPath + ".json"
 	pointerBytes, err := c.Fetcher.Bounded(pointerURL, maximumPointerBytes)
 	if err != nil {
 		return Resolved{}, err
@@ -68,7 +92,7 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 	if err := contract.DecodeStrict(pointerBytes, &pointer); err != nil {
 		return Resolved{}, err
 	}
-	if err := contract.ValidatePointer(pointer, c.Channel, c.ReleaseBase, maximumManifestBytes); err != nil {
+	if err := contract.ValidatePointer(pointer, c.Channel, channelPath, c.ReleaseBase, maximumManifestBytes); err != nil {
 		return Resolved{}, err
 	}
 	pointerBundle, err := c.Fetcher.Bounded(pointer.Attestation.URL, 16<<20)
