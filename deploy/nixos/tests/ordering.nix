@@ -14,7 +14,7 @@ pkgs.testers.runNixOSTest {
     # explicitly here.
     _module.args.sourceCommit = "main";
     _module.args.releaseManager = self.packages.${system}.release-manager;
-    _module.args.caddyTemplate = ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
+    _module.args.caddyTemplate = ../../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
     imports = [ ../caddy.nix ../bootstrap.nix ];
     systemd.services.detect-public-ip.script = pkgs.lib.mkForce ''
       mkdir -p /etc/caddy /etc/pocketcoder
