@@ -99,10 +99,15 @@ test -z "$(git status --porcelain)" || {
   exit 1
 }
 source_commit=$(git rev-parse HEAD)
-remote_commit=$(git ls-remote origin refs/heads/main | awk '{print $1}')
+release_ref=$(git symbolic-ref --short HEAD 2>/dev/null || true)
+case "$release_ref" in main | staging) ;; *)
+  echo "VPS script upgrade test requires a checked-out main or staging branch" >&2
+  exit 64
+  ;;
+esac
+remote_commit=$(git ls-remote origin "refs/heads/$release_ref" | awk '{print $1}')
 test "$source_commit" = "$remote_commit" || {
-  branch=$(git symbolic-ref --short HEAD 2>/dev/null || printf 'detached')
-  echo "checked-out $branch commit $source_commit is not origin/main $remote_commit; merge the tested staging commit into main before running the VPS script test" >&2
+  echo "checked-out $release_ref commit $source_commit is not origin/$release_ref $remote_commit; push the exact tested commit before running the VPS script test" >&2
   exit 1
 }
 
@@ -111,7 +116,7 @@ auth=( -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+j
 wait_for_candidate() {
   for attempt in $(seq 1 120); do
     run=$(curl -fsSL "${auth[@]}" \
-      "$api/workflows/nixos-image.yml/runs?branch=main&event=workflow_dispatch&per_page=20" |
+      "$api/workflows/nixos-image.yml/runs?branch=$release_ref&event=workflow_dispatch&per_page=20" |
       jq -r --arg commit "$source_commit" \
         '.workflow_runs[] | select(.head_sha == $commit) | .id' | head -1)
     if [ -n "$run" ]; then

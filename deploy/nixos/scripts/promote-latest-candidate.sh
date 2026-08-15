@@ -8,8 +8,14 @@ case "$channel" in stable | beta | nightly) ;; *) echo "invalid channel" >&2; ex
 
 api='https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions'
 auth="Authorization: Bearer $GH_TOKEN"
+ref=$(git symbolic-ref --short HEAD 2>/dev/null || true)
+case "$ref" in main | staging) ;; *)
+  echo "candidate promotion requires a checked-out main or staging branch" >&2
+  exit 64
+  ;;
+esac
 source_commit=$(git rev-parse HEAD)
-run=$(curl -sf -H "$auth" "$api/workflows/nixos-image.yml/runs?branch=main&status=completed&per_page=20" |
+run=$(curl -sf -H "$auth" "$api/workflows/nixos-image.yml/runs?branch=$ref&status=completed&per_page=20" |
   jq -r --arg source_commit "$source_commit" \
     '.workflow_runs[] | select(.conclusion == "success" and .head_sha == $source_commit) | .id' |
   head -1)
@@ -31,8 +37,9 @@ case "$digest" in *[!0-9a-f]* | '') echo 'candidate identity is not a SHA-256 di
 test "${#digest}" -eq 64
 
 payload=$(jq -n --arg channel "$channel" --arg digest "$digest" \
-  '{ref:"main",inputs:{channel:$channel,manifest_sha256:$digest,sequence:"next"}}')
+  --arg ref "$ref" \
+  '{ref:$ref,inputs:{channel:$channel,manifest_sha256:$digest,sequence:"next"}}')
 curl -sf -X POST -H "$auth" -H 'Accept: application/vnd.github+json' \
   'https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions/workflows/release-promotion.yml/dispatches' \
   -d "$payload"
-echo "promotion dispatched: channel=$channel manifest=$digest source_run=$run"
+echo "promotion dispatched: ref=$ref channel=$channel manifest=$digest source_run=$run"
