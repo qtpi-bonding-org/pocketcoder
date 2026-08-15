@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/agent_observability_screen.dart';
+import 'package:pocketcoder_flutter/presentation/observability/memory_dashboard_screen.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
@@ -308,6 +309,15 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.configureMemory,
+        name: RouteNames.configureMemory,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: MemoryDashboardScreen(pocketBase: getIt()),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.configureHarnessAuth,
         name: RouteNames.configureHarnessAuth,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -414,6 +424,7 @@ class AppRoutes {
   static const String configureSystemChecks = '/configure/system-checks';
   static const String configurePaywall = '/configure/paywall';
   static const String configureObservability = '/configure/observability';
+  static const String configureMemory = '/configure/memory';
   static const String configureLlm = '/configure/llm';
   static const String configureErrors = '/configure/errors';
   static const String configureHarnessAuth = '/configure/harness-auth';
@@ -465,6 +476,7 @@ class RouteNames {
   static const String configureSystemChecks = 'configureSystemChecks';
   static const String configurePaywall = 'configurePaywall';
   static const String configureObservability = 'configureObservability';
+  static const String configureMemory = 'configureMemory';
   static const String configureLlm = 'configureLlm';
   static const String configureErrors = 'configureErrors';
   static const String configureHarnessAuth = 'configureHarnessAuth';
