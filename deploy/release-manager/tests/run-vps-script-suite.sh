@@ -43,7 +43,8 @@ key_path=$(jq -er '.sshPrivateKeyPath | strings | select(startswith("/"))' "$han
 
 ssh_base() {
   ssh -q -i "$key_path" -o StrictHostKeyChecking=no \
-    -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 "root@$host" "$@"
+    -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o BatchMode=yes \
+    -o ServerAliveInterval=15 -o ServerAliveCountMax=3 "root@$host" "$@"
 }
 
 record_phase() {
@@ -103,22 +104,27 @@ read_only() {
 backup() {
   backup_output=$(ssh_base 'set -eu; docker exec pocketcoder-pocketbase /app/backup_db.sh')
   printf '%s\n' "$backup_output"
-  archive=$(ssh_base 'set -eu
-    find /var/lib/docker/volumes -path "*/_data/*" -type f \
-      \( -name "*.zip" -o -name "*.tar.gz" -o -name "*.sqlite3" -o -name "*.db" \) \
-      -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -1 | cut -d" " -f2-')
-  [[ -n $archive ]]
-  checksum=$(ssh_base "sha256sum -- $(printf '%q' "$archive")")
+  backup_metadata=$(ssh_base 'set -eu
+    docker exec pocketcoder-pocketbase sh -ec '\''
+      test -s /app/pb_backups/data.db
+      sha256sum /app/pb_backups/data.db
+      test "$(sqlite3 /app/pb_backups/data.db "PRAGMA integrity_check;")" = ok
+    '\''')
+  checksum=$(printf '%s\n' "$backup_metadata" | awk 'NF == 2 && $2 == "/app/pb_backups/data.db" { print $1 }')
+  [[ "$checksum" =~ ^[0-9a-f]{64}$ ]]
   integrity=$(ssh_base 'docker exec pocketcoder-pocketbase \
     sqlite3 /app/pb_backups/data.db "PRAGMA integrity_check;"')
   [[ $integrity == ok ]]
   restored_integrity=$(ssh_base 'set -eu
-    tmp=$(mktemp -d /tmp/pocketcoder-backup-restore.XXXXXX)
-    trap '\''rm -rf "$tmp"'\'' EXIT
-    cp /var/lib/docker/volumes/pocketcoder_pb_backups/_data/data.db "$tmp/data.db"
-    sqlite3 "$tmp/data.db" "PRAGMA integrity_check;"')
+    docker exec pocketcoder-pocketbase sh -ec '\''
+      tmp=$(mktemp -d /tmp/pocketcoder-backup-restore.XXXXXX)
+      trap "rm -rf \\"$tmp\\"" EXIT
+      cp /app/pb_backups/data.db "$tmp/data.db"
+      sqlite3 "$tmp/data.db" "PRAGMA integrity_check;"
+    '\''')
   [[ $restored_integrity == ok ]]
-  printf 'backupArtifact=%s\nbackupChecksum=%s\nrestoredIntegrity=%s\n' "$archive" "$checksum" "$restored_integrity"
+  printf 'backupArtifact=%s\nbackupChecksum=%s\nrestoredIntegrity=%s\n' \
+    'pocketcoder-pocketbase:/app/pb_backups/data.db' "$checksum" "$restored_integrity"
 }
 
 inspect_release() {
@@ -145,7 +151,7 @@ restart_pocketcoder() {
 nixos_restart() {
   ssh_base 'systemctl reboot' || true
   for _ in $(seq 1 "${POCKETCODER_VPS_SSH_ATTEMPTS:-60}"); do
-    if ssh_base 'true' >/dev/null 2>&1; then wait_for_https; return; fi
+    if ssh_base 'true' >/dev/null 2>&1 && wait_for_https; then return 0; fi
     sleep 10
   done
   return 1
