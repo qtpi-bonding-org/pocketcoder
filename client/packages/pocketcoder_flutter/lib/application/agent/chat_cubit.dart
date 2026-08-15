@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_trans
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'chat_state.dart';
+import 'provider_reauthentication_required.dart';
 
 @injectable
 class ChatCubit extends AppCubit<ChatState> {
@@ -27,6 +28,7 @@ class ChatCubit extends AppCubit<ChatState> {
   StreamSubscription<void>? _recoverySub;
   Completer<void>? _retryWake;
   int _generation = 0;
+  String? _lastPrompt;
 
   @override
   Future<void> close() {
@@ -73,7 +75,13 @@ class ChatCubit extends AppCubit<ChatState> {
         if (reducer == null) return;
         reducer.apply(event);
         emit(state.copyWith(
-            conversation: reducer.current, status: UiFlowStatus.success));
+          conversation: reducer.current,
+          status: UiFlowStatus.success,
+          error:
+              event is RunErrorEvent && event.code == 'provider_auth_required'
+                  ? const ProviderReauthenticationRequired()
+                  : state.error,
+        ));
       },
       onError: (Object e) {
         if (myGeneration != _generation) return;
@@ -161,12 +169,19 @@ class ChatCubit extends AppCubit<ChatState> {
       logWarning('🤖 [ChatCubit] sendPrompt called before open()');
       return;
     }
+    _lastPrompt = text;
     await tryOperation(() async {
       await transport.sendMessage(text);
       return state.copyWith(
           status: UiFlowStatus.success,
           lastOperation: AgentChatOperation.sendPrompt);
     });
+  }
+
+  Future<void> retryLastPrompt() async {
+    final prompt = _lastPrompt;
+    if (prompt == null || prompt.isEmpty) return;
+    await sendPrompt(prompt);
   }
 
   Future<void> cancel() async {

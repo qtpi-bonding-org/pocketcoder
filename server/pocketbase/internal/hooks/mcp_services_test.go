@@ -8,6 +8,32 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 )
 
+func TestMcpGatewayHttpServerUsesBearerAuthorization(t *testing.T) {
+	t.Setenv("MCP_GATEWAY_AUTH_TOKEN", "gateway-test-token")
+
+	server := hooks.McpGatewayHttpServer()
+	if server == nil || server.Http == nil {
+		t.Fatalf("gateway MCP server = %+v, want HTTP server", server)
+	}
+	if server.Http.Name != "gateway" || server.Http.Url != "http://mcp-gateway:8811/mcp" {
+		t.Fatalf("gateway MCP server = %+v", server.Http)
+	}
+	if len(server.Http.Headers) != 1 {
+		t.Fatalf("gateway headers = %+v, want one Authorization header", server.Http.Headers)
+	}
+	if got := server.Http.Headers[0]; got.Name != "Authorization" || got.Value != "Bearer gateway-test-token" {
+		t.Fatalf("gateway authorization header = %+v, want Bearer token", got)
+	}
+}
+
+func TestMcpGatewayHttpServerIsDisabledWithoutToken(t *testing.T) {
+	t.Setenv("MCP_GATEWAY_AUTH_TOKEN", "")
+
+	if server := hooks.McpGatewayHttpServer(); server != nil {
+		t.Fatalf("gateway MCP server = %+v, want nil without auth token", server)
+	}
+}
+
 func TestMemoryMcpServerEncodesUnicodeIdentity(t *testing.T) {
 	server, err := hooks.MemoryMcpServer("family", "profile-1", "Pocó 🌱")
 	if err != nil {

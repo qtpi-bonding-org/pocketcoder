@@ -78,6 +78,12 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		if err != nil {
 			return err
 		}
+		idemKey := re.Request.Header.Get("Idempotency-Key")
+		if idemKey != "" {
+			if cached, found := service.CheckIdempotency(chatID, idemKey); found {
+				return re.JSON(http.StatusAccepted, cached)
+			}
+		}
 		var input acpsdk.PromptRequest
 		if err := re.BindBody(&input); err != nil {
 			return re.BadRequestError("Invalid run request", err)
@@ -142,7 +148,11 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 			}
 			return apis.NewApiError(http.StatusInternalServerError, "Unable to start agent run", err)
 		}
-		return re.JSON(http.StatusAccepted, map[string]string{"runId": runID})
+		result := map[string]string{"runId": runID}
+		if idemKey != "" {
+			service.RecordIdempotency(chatID, idemKey, result)
+		}
+		return re.JSON(http.StatusAccepted, result)
 	})})
 
 	// GET stream is the durable subscription: it attaches to the chat's hub at
@@ -220,11 +230,20 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		if err != nil {
 			return err
 		}
+		idemKey := re.Request.Header.Get("Idempotency-Key")
+		if idemKey != "" {
+			if _, found := service.CheckIdempotency(chatID, idemKey); found {
+				return re.NoContent(http.StatusAccepted)
+			}
+		}
 		if err := service.Cancel(re.Request.Context(), chatID); err != nil {
 			if errors.Is(err, coordinator.ErrNoActiveRun) {
 				return re.BadRequestError("No active run to cancel", nil)
 			}
 			return apis.NewApiError(http.StatusBadGateway, "Unable to cancel agent run", err)
+		}
+		if idemKey != "" {
+			service.RecordIdempotency(chatID, idemKey, struct{}{})
 		}
 		return re.NoContent(http.StatusAccepted)
 	})})

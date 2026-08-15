@@ -6,11 +6,14 @@ import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
+import 'auth_aware_http_client.dart';
 import 'auth_store.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 
 @module
 abstract class ExternalModule {
+  final _authHttpState = AuthHttpState();
+
   @preResolve
   @singleton
   Future<PocketBase> get pocketBase async {
@@ -47,12 +50,17 @@ abstract class ExternalModule {
     // Create secure auth store (reuses storage from above)
     final authStoreConfig = AuthStoreConfig(storage);
     final authStore = authStoreConfig.createAuthStore();
+    _authHttpState.configureDeployment(
+      baseUrl,
+      tokenProvider: () => authStore.token,
+    );
 
     // Initialize PocketBase Drift Client with persistent auth
     final client = $PocketBase.database(
       baseUrl,
       requestPolicy: RequestPolicy.cacheAndNetwork,
       authStore: authStore,
+      httpClientFactory: () => AuthAwareHttpClient(_authHttpState),
     );
 
     if (schemaJson != null && schemaJson.isNotEmpty && schemaJson != '[]') {
@@ -113,7 +121,7 @@ abstract class ExternalModule {
 
   /// HTTP client for API requests
   @lazySingleton
-  http.Client get httpClient => http.Client();
+  http.Client get httpClient => AuthAwareHttpClient(_authHttpState);
 
   /// Base URL of the shared OAuth relay. No trailing slash.
   @Named('oauthRelayBaseUrl')

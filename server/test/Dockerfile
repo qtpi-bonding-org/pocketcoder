@@ -18,4 +18,4 @@ COPY tests/test-env.sh /tests/test-env.sh
 
 # Default command runs the opt-in current agent acceptance suites. The
 # production stack has no general-purpose `test` Compose service anymore.
-CMD ["bats", "--tap", "/tests/agent-c1/config_pipeline.bats", "/tests/agent-c1/acceptance.bats", "/tests/agent-c1/mcp_gateway.bats"]
+CMD ["bats", "--tap", "/tests/compose/agent/config_pipeline.bats", "/tests/compose/agent/acceptance.bats", "/tests/compose/agent/mcp_gateway.bats"]

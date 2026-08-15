@@ -15,7 +15,7 @@ services:
     environment:
       GOOSE_SERVER__SECRET_KEY: ${GOOSE_SERVER__SECRET_KEY:?set the Goose ACP secret}
       GOOSE_PROVIDER: ${GOOSE_PROVIDER:-anthropic}
-      GOOSE_MODEL: ${GOOSE_MODEL:-MiniMax-M2.5}
+      GOOSE_MODEL: ${GOOSE_MODEL:-deepseek/deepseek-v4-flash}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_HOST: ${ANTHROPIC_HOST:-https://api.minimax.io/anthropic}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
@@ -48,6 +48,12 @@ services:
     environment:
       - API_TEST_EMAIL=${API_TEST_EMAIL:-}
       - API_TEST_PASSWORD=${API_TEST_PASSWORD:-}
+      # The dynamic Goose harness is provisioned by PocketBase, so the fixed
+      # Goose test container's provider environment does not reach it. Keep
+      # this override scoped to the opt-in acceptance stack.
+      - POCKETCODER_AGENT_TEST_PROVIDER=${GOOSE_PROVIDER:-anthropic}
+      - POCKETCODER_AGENT_TEST_MODEL=${GOOSE_MODEL:-MiniMax-M2.5}
+      - POCKETCODER_AGENT_TEST_API_KEY=${OPENROUTER_API_KEY:-}
 
   agent-c1-test:
     build:
@@ -70,6 +76,7 @@ services:
       AGENT_TEST_EMAIL: ${AGENT_TEST_EMAIL:?set an ordinary PocketBase test-user email}
       AGENT_TEST_PASSWORD: ${AGENT_TEST_PASSWORD:?set that test user's password}
       AGENT_TEST_TIMEOUT_SECONDS: ${AGENT_TEST_TIMEOUT_SECONDS:-120}
+      MCP_GATEWAY_AUTH_TOKEN: ${MCP_GATEWAY_AUTH_TOKEN:?set the gateway auth token}
       GOOSE_CONTAINER: ${GOOSE_CONTAINER:-pocketcoder-goose}
       POCKETBASE_CONTAINER: ${POCKETBASE_CONTAINER:-pocketcoder-pocketbase}
       MCP_GATEWAY_CONTAINER: ${MCP_GATEWAY_CONTAINER:-pocketcoder-mcp-gateway}
@@ -77,6 +84,9 @@ services:
       # Reaches PocketBase's API only; the private pocketcoder-agent ACP net
       # stays a two-node c1<->c2 channel.
       - pocketcoder-pocketbase-sdk
+      # Direct MCP protocol assertions exercise the gateway without going
+      # through Goose's model adapter.
+      - pocketcoder-mcp-gateway
 
   api-flow-test:
     build:
@@ -86,7 +96,7 @@ services:
     depends_on:
       pocketbase:
         condition: service_healthy
-    command: ["--tap", "/tests/api-flows/core.bats"]
+    command: ["--tap", "/tests/compose/api/core.bats"]
     volumes:
       - ./tests:/tests:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro

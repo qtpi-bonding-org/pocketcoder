@@ -503,6 +503,7 @@ networks:
   # separate from the PocketBase-facing ACP network.
   pocketcoder-mcp-gateway:
     driver: bridge
+    name: pocketcoder-mcp-gateway
   # Carries MCP traffic between harnesses and Pocket Memory only, separate
   # from the PocketBase-facing ACP network. Mirrors pocketcoder-mcp-gateway.
   pocketcoder-memory:

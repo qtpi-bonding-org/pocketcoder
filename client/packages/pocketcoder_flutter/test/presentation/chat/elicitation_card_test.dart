@@ -106,6 +106,7 @@ void main() {
       requestId: 'elic-1',
       message: 'Pick a value',
       mode: 'form',
+      order: OrderKey(1),
       schema: {
         'type': 'object',
         'properties': {
@@ -196,6 +197,7 @@ void main() {
           requestId: 'elic-2',
           message: 'Pick another value',
           mode: 'form',
+          order: OrderKey(2),
           schema: {
             'type': 'object',
             'properties': {

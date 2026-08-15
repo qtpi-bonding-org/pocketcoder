@@ -39,6 +39,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authError => 'Authentication error';
 
   @override
+  String get providerReauthenticationRequired =>
+      'Claude Code needs to be reauthenticated. Your saved login was kept.';
+
+  @override
   String get chatFetchFailed => 'Unable to load chats';
 
   @override
@@ -429,6 +433,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatNoFieldsRequested => '(no fields requested)';
+
+  @override
+  String get chatRunOutcomeInterruptedTitle => 'RUN INTERRUPTED';
+
+  @override
+  String get chatRunOutcomeInterruptedBody =>
+      'The connection ended before the run finished.';
+
+  @override
+  String get chatRunOutcomeInterruptedRetry => 'RETRY';
+
+  @override
+  String get chatRunOutcomeCancelledTitle => 'RUN STOPPED';
+
+  @override
+  String get chatRunOutcomeCancelledBody => 'The run was stopped.';
+
+  @override
+  String get chatRunOutcomeFailedTitle => 'RUN FAILED';
+
+  @override
+  String get chatRunOutcomeFailedBody =>
+      'Something went wrong while running this request.';
 
   @override
   String get filesTitle => 'FILES';

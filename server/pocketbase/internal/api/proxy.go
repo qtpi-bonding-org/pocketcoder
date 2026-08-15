@@ -70,12 +70,15 @@ func createProxyHandler(target string, prefix string, transport http.RoundTrippe
 	proxy.Transport = transport
 
 	return func(re *core.RequestEvent) error {
-		// 🛡️ Security Gate: Only allow authenticated admins to access internal observability tools.
-		if err := requireRole(re, "admin"); err != nil {
-			return err
-		}
-
 		req := re.Request
+		// The memory dashboard is read-only and belongs to the authenticated
+		// deployment user. Keep every other SQLPage surface admin-only.
+		memoryDashboard := req.URL.Path == prefix+"/memory.sql"
+		if !memoryDashboard {
+			if err := requireRole(re, "admin"); err != nil {
+				return err
+			}
+		}
 
 		// Update headers and target URL for the proxy
 		req.URL.Host = targetUrl.Host

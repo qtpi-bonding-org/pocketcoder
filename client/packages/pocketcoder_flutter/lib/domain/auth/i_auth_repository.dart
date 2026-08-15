@@ -3,7 +3,7 @@ abstract class IAuthRepository {
 
   Future<bool> login(String email, String password);
   Future<void> logout();
-  Future<bool> refreshToken();
+  Future<AuthRefreshResult> refreshToken();
 
   /// Rejects a server whose public contract cannot be spoken by this app.
   /// This check is intentionally unauthenticated and runs before login.
@@ -16,5 +16,11 @@ abstract class IAuthRepository {
 
   Future<void> updateBaseUrl(String url);
   Future<String?> getSavedBaseUrl();
+}
 
+/// Result of attempting to restore a persisted PocketBase session.
+enum AuthRefreshResult {
+  refreshed,
+  temporarilyUnavailable,
+  invalidSession,
 }

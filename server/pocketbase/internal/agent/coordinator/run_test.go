@@ -53,6 +53,37 @@ func newFakeConn() *fakeConn {
 	}
 }
 
+func TestIdempotencySlotOverwritesOnNewKey(t *testing.T) {
+	c := testCoordinator(t, nil)
+	chatID := "chat-1"
+	if _, found := c.CheckIdempotency(chatID, "key-a"); found {
+		t.Fatal("expected no result for a fresh chat")
+	}
+	c.RecordIdempotency(chatID, "key-a", "result-a")
+	if result, found := c.CheckIdempotency(chatID, "key-a"); !found || result != "result-a" {
+		t.Fatalf("expected cached result-a, got %v, found=%v", result, found)
+	}
+	if _, found := c.CheckIdempotency(chatID, "key-b"); found {
+		t.Fatal("expected no result for a new key")
+	}
+	c.RecordIdempotency(chatID, "key-b", "result-b")
+	if _, found := c.CheckIdempotency(chatID, "key-a"); found {
+		t.Fatal("expected key-a's slot to be gone after key-b overwrote it")
+	}
+}
+
+func TestIdempotencyOnlyRecordsAfterSuccessfulWork(t *testing.T) {
+	c := testCoordinator(t, nil)
+	chatID, key := "chat-1", "retry-key"
+	if _, found := c.CheckIdempotency(chatID, key); found {
+		t.Fatal("expected no cached result before any work has run")
+	}
+	c.RecordIdempotency(chatID, key, struct{}{})
+	if _, found := c.CheckIdempotency(chatID, key); !found {
+		t.Fatal("expected the retried request to find the cached slot")
+	}
+}
+
 type fakeConn struct {
 	mu             sync.Mutex
 	cancelled      string
@@ -83,6 +114,12 @@ type fakeConn struct {
 	lastExtensionMethod string
 	lastExtensionParams any
 	callExtensionCalls  int
+
+	resumeCalls                int
+	lastResumeSessionReq       acpsdk.ResumeSessionRequest
+	resumeErr                  error
+	done                       chan struct{}
+	closeDoneBeforePromptError bool
 
 	// Task 2: capture dial/handshake counts.
 	initializeCalls int
@@ -164,6 +201,39 @@ func (f *fakeConn) LoadSession(_ context.Context, req acpsdk.LoadSessionRequest)
 	f.mu.Unlock()
 	return acpsdk.LoadSessionResponse{}, nil
 }
+func (f *fakeConn) ResumeSession(_ context.Context, req acpsdk.ResumeSessionRequest) (acpsdk.ResumeSessionResponse, error) {
+	f.mu.Lock()
+	f.lastResumeSessionReq = req
+	f.resumeCalls++
+	err := f.resumeErr
+	f.mu.Unlock()
+	if err != nil {
+		return acpsdk.ResumeSessionResponse{}, err
+	}
+	return acpsdk.ResumeSessionResponse{}, nil
+}
+func (f *fakeConn) Done() <-chan struct{} {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.done == nil {
+		f.done = make(chan struct{})
+	}
+	return f.done
+}
+
+// closeConnDone is test-only: simulates the transport dying.
+func (f *fakeConn) closeConnDone() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.done == nil {
+		f.done = make(chan struct{})
+	}
+	select {
+	case <-f.done:
+	default:
+		close(f.done)
+	}
+}
 func (f *fakeConn) SetSessionMode(_ context.Context, req acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
 	f.mu.Lock()
 	f.lastMode = string(req.ModeId)
@@ -187,6 +257,13 @@ func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.P
 	}
 	if f.panicOnPrompt {
 		panic("boom")
+	}
+	f.mu.Lock()
+	closeDone := f.closeDoneBeforePromptError
+	f.mu.Unlock()
+	if closeDone {
+		f.closeConnDone()
+		return acpsdk.PromptResponse{}, errors.New("simulated peer disconnect")
 	}
 	if f.requestPermission {
 		if rp, ok := f.client.(interface {
@@ -368,6 +445,51 @@ func TestDetachedRunPermissionEmitsThroughHub(t *testing.T) {
 		t.Fatal(err)
 	}
 	c.waitRunDone(t, "A") // must not panic on a nil emit
+}
+
+func TestPromptFailureAfterConnDoneEmitsInterrupted(t *testing.T) {
+	f := newFakeConn()
+	f.closeDoneBeforePromptError = true
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	chatID := "interrupted-chat"
+
+	if _, err := c.StartPrompt(chatID, "hello",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil); err != nil {
+		t.Fatalf("StartPrompt: %v", err)
+	}
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	deadline := time.After(2 * time.Second)
+	for {
+		for _, se := range att.Buffered {
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(b), `"connection_interrupted"`) {
+				return
+			}
+		}
+		select {
+		case se, ok := <-att.Live:
+			if !ok {
+				t.Fatal("event stream closed before connection_interrupted")
+			}
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(b), `"connection_interrupted"`) {
+				return
+			}
+		case <-deadline:
+			t.Fatal("timed out waiting for connection_interrupted")
+		}
+	}
 }
 
 // TestRequestPermissionForwardsToolCallID covers the fix for the
@@ -630,5 +752,45 @@ func TestEstablishSessionErrorsWhenLoadSessionCapabilityMissing(t *testing.T) {
 	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
 	if err == nil {
 		t.Fatal("expected an error resuming a session against a harness that doesn't advertise LoadSession")
+	}
+}
+
+func TestEstablishSessionUsesResumeWhenAdvertised(t *testing.T) {
+	f := newFakeConn()
+	f.initResp = acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{
+		LoadSession:         true,
+		SessionCapabilities: acpsdk.SessionCapabilities{Resume: &acpsdk.SessionResumeCapabilities{}},
+	}}
+	c := testCoordinatorWithConn(t, f, RealClock())
+	profile := SessionProfile{Target: Target{URL: "ws://x"}}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.resumeCalls != 1 {
+		t.Fatalf("expected ResumeSession to be called once, got %d", f.resumeCalls)
+	}
+	if string(f.lastResumeSessionReq.SessionId) != "existing-session-id" {
+		t.Fatalf("ResumeSession called with wrong session id: %q", f.lastResumeSessionReq.SessionId)
+	}
+}
+
+func TestEstablishSessionFallsBackToLoadWhenResumeNotAdvertised(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, RealClock())
+	profile := SessionProfile{Target: Target{URL: "ws://x"}}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "existing-session-id", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.resumeCalls != 0 {
+		t.Fatalf("expected ResumeSession NOT to be called, got %d calls", f.resumeCalls)
+	}
+	if string(f.lastLoadSessionReq.SessionId) != "existing-session-id" {
+		t.Fatalf("expected LoadSession fallback, got %+v", f.lastLoadSessionReq)
 	}
 }

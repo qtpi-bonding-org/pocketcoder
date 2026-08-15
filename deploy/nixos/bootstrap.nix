@@ -1,4 +1,5 @@
-{ config, pkgs, sourceCommit ? "main", releaseManager, ... }:
+{ config, pkgs, sourceCommit ? "main", releaseBranch ? "main", releaseManager
+, bootstrapScript ? ./bootstrap.sh, statusScript ? ./status.sh, ... }:
 
 {
   systemd.services.pocketcoder-bootstrap = {
@@ -8,6 +9,7 @@
     wants = [ "network-online.target" ];
     requires = [ "docker.service" ];
     environment.POCKETCODER_REF = sourceCommit;
+    environment.POCKETCODER_GITHUB_WORKFLOW_BRANCH = releaseBranch;
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -26,10 +28,10 @@
       config.virtualisation.docker.package
       releaseManager
     ];
-    script = builtins.readFile ./bootstrap.sh;
+    script = builtins.readFile bootstrapScript;
   };
 
-  environment.etc."pocketcoder/status.sh".source = ./status.sh;
+  environment.etc."pocketcoder/status.sh".source = statusScript;
 
   systemd.services.pocketcoder-release-metadata = {
     description = "Check GitHub-attested PocketCoder release metadata";
@@ -37,6 +39,7 @@
     wants = [ "network-online.target" ];
     unitConfig.ConditionPathExists = "/opt/pocketcoder/current/bin/pocketcoder-release";
     serviceConfig.Type = "oneshot";
+    environment.POCKETCODER_GITHUB_WORKFLOW_BRANCH = releaseBranch;
     script = ''
       /opt/pocketcoder/current/bin/pocketcoder-release check-metadata
     '';

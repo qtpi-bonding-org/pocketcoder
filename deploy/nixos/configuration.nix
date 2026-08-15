@@ -1,9 +1,90 @@
 { config, pkgs, lib, modulesPath, ... }:
 
+let
+  # The image is built from a flake, so /etc/nixos is empty at runtime and
+  # the shipped owner-control command (`nixos-rebuild switch --upgrade`, no
+  # `--flake`) cannot resolve a configuration unless every module this
+  # system needs is inlined here and persisted to /etc/nixos below. See
+  # docs/superpowers/specs/2026-08-15-vps-script-test-suite-hardening-design.md,
+  # "NixOS configuration fix".
+  #
+  # caddy.nix and release-manager.nix each read one file from outside
+  # deploy/nixos/ via a relative path that only resolves against a full repo
+  # checkout (the CI build machine). A live on-box rebuild has no such
+  # checkout, so both dependencies are persisted alongside the .nix files
+  # under /etc/nixos and each module falls back to the persisted copy when
+  # present -- otherwise the original repo-relative path, so the very first
+  # (flake) build still works unchanged.
+  # `nixos-rebuild`'s NIX_PATH `nixos-config=/etc/nixos/configuration.nix`
+  # lookup copies only that one file into the store, without its sibling
+  # files -- so a live rebuild's own relative imports/reads from THIS file
+  # (and, transitively, from bootstrap.nix once loaded the same way) break
+  # even though the siblings are still on disk. An absolute /etc/nixos
+  # literal *inside* a coalesced file is fine; a relative one isn't. Every
+  # dependency below therefore prefers its real, already-persisted absolute
+  # path when present, falling back to the repo-relative path so the very
+  # first (flake) build -- which has no /etc/nixos to persist to yet --
+  # still resolves against the real checkout unchanged.
+  # The persisted path is reached through /etc/nixos -> /etc/static/nixos ->
+  # a Nix store path (environment.etc's own symlink chain). Copying a bare
+  # symlink as a derivation `src` (release-manager-src, a directory) is
+  # copied as the symlink object itself rather than a real directory tree,
+  # so `unpackPhase` can't recognize it ("do not know how to unpack source
+  # archive") even though the same value works fine as a module `import`.
+  # `builtins.path` forces a real, dereferenced content copy either way.
+  persisted = name: repoRelative:
+    if builtins.pathExists (/etc/nixos + "/${name}")
+    then builtins.path { path = /etc/nixos + "/${name}"; inherit name; }
+    else repoRelative;
+
+  configurationModule = persisted "configuration.nix" ./configuration.nix;
+  caddyModule = persisted "caddy.nix" ./caddy.nix;
+  bootstrapModule = persisted "bootstrap.nix" ./bootstrap.nix;
+  releaseManagerModule = persisted "release-manager.nix" ./release-manager.nix;
+  releaseCommitModule = persisted "release-commit.nix" ./release-commit.nix;
+  releaseBranchModule = persisted "release-branch.nix" ./release-branch.nix;
+  bootstrapScript = persisted "bootstrap.sh" ./bootstrap.sh;
+  statusScript = persisted "status.sh" ./status.sh;
+  caddyTemplate = persisted "Caddyfile.template"
+    ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
+  releaseManagerSrc = persisted "release-manager-src" ../release-manager;
+
+  sourceCommit = import releaseCommitModule;
+  releaseBranch = import releaseBranchModule;
+  releaseManager = import releaseManagerModule { inherit pkgs releaseManagerSrc; };
+in
 {
   imports = [
     # Linode uses KVM — virtio drivers, QEMU guest agent
     "${modulesPath}/profiles/qemu-guest.nix"
+    (import caddyModule { inherit config pkgs caddyTemplate; })
+    (import bootstrapModule {
+      inherit config pkgs sourceCommit releaseBranch releaseManager bootstrapScript statusScript;
+    })
+  ];
+
+  # Persist every module this configuration needs (plus their repo-external
+  # file dependencies) so a live `nixos-rebuild switch --upgrade` -- run
+  # with no repo checkout on the box -- can resolve the identical module
+  # set the image was originally built with. Each source reuses the same
+  # `persisted` value used above to consume it: on the very first build
+  # that copies fresh from the repo; on every later live rebuild it
+  # re-copies the already-persisted file onto itself, which is an ordinary
+  # absolute-path copy, not subject to the coalescing problem above.
+  environment.etc."nixos/configuration.nix".source = configurationModule;
+  environment.etc."nixos/caddy.nix".source = caddyModule;
+  environment.etc."nixos/bootstrap.nix".source = bootstrapModule;
+  environment.etc."nixos/release-manager.nix".source = releaseManagerModule;
+  environment.etc."nixos/release-commit.nix".source = releaseCommitModule;
+  environment.etc."nixos/release-branch.nix".source = releaseBranchModule;
+  environment.etc."nixos/bootstrap.sh".source = bootstrapScript;
+  environment.etc."nixos/status.sh".source = statusScript;
+  environment.etc."nixos/Caddyfile.template".source = caddyTemplate;
+  environment.etc."nixos/release-manager-src".source = releaseManagerSrc;
+
+  nix.nixPath = [
+    "nixos-config=/etc/nixos/configuration.nix"
+    "nixpkgs=https://github.com/NixOS/nixpkgs/archive/nixos-26.05.tar.gz"
   ];
 
   system.stateVersion = "25.05";

@@ -1,11 +1,11 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 
 class OnboardingLoginView extends StatefulWidget {
   const OnboardingLoginView({
@@ -84,11 +84,11 @@ class _OnboardingLoginViewState extends State<OnboardingLoginView> {
             padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
             child: Column(
               children: [
-                PocoBubble(
+                TerminalConversationTurn(
+                  speaker: TerminalConversationSpeaker.poco,
                   message: widget.pocoMessage,
                   sequence: widget.pocoSequence,
                   history: widget.pocoHistory,
-                  pocoSize: AppSizes.fontLarge,
                 ),
                 VSpace.x4,
                 TerminalTextField(

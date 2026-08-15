@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
     as ag_ui_widgets;
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dart';
@@ -19,10 +22,12 @@ class ChatView extends StatefulWidget {
     required this.title,
     required this.isLoading,
     required this.isRunning,
+    required this.requiresProviderReauthentication,
     required this.modes,
     required this.config,
     required this.onOpen,
     required this.onSendPrompt,
+    required this.onRetry,
     required this.onCancel,
     required this.onSelectMode,
     required this.onSetOption,
@@ -36,10 +41,12 @@ class ChatView extends StatefulWidget {
   final String title;
   final bool isLoading;
   final bool isRunning;
+  final bool requiresProviderReauthentication;
   final Map<String, dynamic>? modes;
   final Map<String, dynamic>? config;
   final ValueChanged<String> onOpen;
   final ValueChanged<String> onSendPrompt;
+  final VoidCallback onRetry;
   final VoidCallback onCancel;
   final ValueChanged<String> onSelectMode;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
@@ -70,7 +77,22 @@ class _ChatViewState extends State<ChatView> {
     if (widget.chatId != oldWidget.chatId) {
       _opened = false;
       _openIfNeeded();
+      return;
     }
+    _provideRunCompletionHaptic(oldWidget);
+  }
+
+  void _provideRunCompletionHaptic(ChatView oldWidget) {
+    final outcome = widget.conversation.sessionState.runOutcome;
+    if (!oldWidget.isRunning || widget.isRunning || outcome == null) return;
+
+    // A completed run gets a gentle acknowledgement. Errors and interrupted
+    // runs use a slightly more noticeable pulse so they are distinguishable
+    // when the user is away from the screen.
+    unawaited((switch (outcome) {
+      ag_ui_widgets.RunOutcome.success => HapticFeedback.lightImpact(),
+      _ => HapticFeedback.mediumImpact(),
+    }));
   }
 
   void _openIfNeeded() {
@@ -112,8 +134,56 @@ class _ChatViewState extends State<ChatView> {
     _inputController.clear();
   }
 
+  Widget? _runOutcomeBanner(BuildContext context) {
+    final outcome = widget.conversation.sessionState.runOutcome;
+    final banner = switch (outcome) {
+      ag_ui_widgets.RunOutcome.interrupted => (
+          context.l10n.chatRunOutcomeInterruptedTitle,
+          context.l10n.chatRunOutcomeInterruptedBody,
+          true,
+        ),
+      ag_ui_widgets.RunOutcome.cancelled => (
+          context.l10n.chatRunOutcomeCancelledTitle,
+          context.l10n.chatRunOutcomeCancelledBody,
+          false,
+        ),
+      ag_ui_widgets.RunOutcome.failed => (
+          context.l10n.chatRunOutcomeFailedTitle,
+          context.l10n.chatRunOutcomeFailedBody,
+          false,
+        ),
+      null || ag_ui_widgets.RunOutcome.success => null,
+    };
+    if (banner == null) return null;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: context.colorScheme.surfaceContainerHighest,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(banner.$1,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(banner.$2),
+              ],
+            ),
+          ),
+          if (banner.$3)
+            TextButton(
+              onPressed: widget.onRetry,
+              child: Text(context.l10n.chatRunOutcomeInterruptedRetry),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final outcomeBanner = _runOutcomeBanner(context);
     final builders = pocketcoderChatBuilders(
       context,
       latestReasoningId: _latestReasoningId(widget.conversation.timeline),
@@ -140,6 +210,16 @@ class _ChatViewState extends State<ChatView> {
       padding: EdgeInsets.zero,
       body: Column(
         children: [
+          if (widget.requiresProviderReauthentication)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: context.colorScheme.errorContainer,
+              child: Text(
+                context.l10n.providerReauthenticationRequired,
+                style: TextStyle(color: context.colorScheme.onErrorContainer),
+              ),
+            ),
           if (_sessionPanelExpanded) ...[
             PlanPanel(plan: widget.conversation.sessionState.plan),
             ModeSwitcher(
@@ -148,41 +228,49 @@ class _ChatViewState extends State<ChatView> {
                 config: widget.config, onSetOption: widget.onSetOption),
           ],
           Expanded(
-            child: Stack(
+            child: Column(
               children: [
-                ag_ui_widgets.AgUiChat(
-                  conversation: widget.conversation,
-                  currentUserId: 'user',
-                  onSendMessage: widget.onSendPrompt,
-                  theme:
-                      ag_ui_widgets.ChatTheme.fromThemeData(Theme.of(context)),
-                  textMessageBuilder: builders.textMessageBuilder,
-                  textStreamMessageBuilder: builders.textStreamMessageBuilder,
-                  toolCallBuilder: builders.toolCallBuilder,
-                  permissionBuilder: builders.permissionBuilder,
-                  elicitationBuilder: builders.elicitationBuilder,
-                  toolRequestBuilder: builders.toolRequestBuilder,
-                  composerBuilder: (context) => ChatComposer(
-                    controller: _inputController,
-                    enabled: !widget.isLoading && widget.chatId != null,
-                    isLoading: widget.isLoading,
-                    onSubmitted: _submit,
-                  ),
-                ),
-                if (widget.conversation.timeline.isEmpty)
-                  IgnorePointer(
-                    child: Center(
-                      child: Text(
-                        context.l10n.chatSessionTitle,
-                        style: TextStyle(
-                          color: context.colorScheme.onSurface
-                              .withValues(alpha: 0.3),
-                          fontSize: AppSizes.fontStandard,
-                          fontStyle: FontStyle.italic,
+                if (outcomeBanner != null) outcomeBanner,
+                Expanded(
+                  child: Stack(
+                    children: [
+                      ag_ui_widgets.AgUiChat(
+                        conversation: widget.conversation,
+                        currentUserId: 'user',
+                        onSendMessage: widget.onSendPrompt,
+                        theme: ag_ui_widgets.ChatTheme.fromThemeData(
+                            Theme.of(context)),
+                        textMessageBuilder: builders.textMessageBuilder,
+                        textStreamMessageBuilder:
+                            builders.textStreamMessageBuilder,
+                        toolCallBuilder: builders.toolCallBuilder,
+                        permissionBuilder: builders.permissionBuilder,
+                        elicitationBuilder: builders.elicitationBuilder,
+                        toolRequestBuilder: builders.toolRequestBuilder,
+                        composerBuilder: (context) => ChatComposer(
+                          controller: _inputController,
+                          enabled: !widget.isLoading && widget.chatId != null,
+                          isLoading: widget.isLoading,
+                          onSubmitted: _submit,
                         ),
                       ),
-                    ),
+                      if (widget.conversation.timeline.isEmpty)
+                        IgnorePointer(
+                          child: Center(
+                            child: Text(
+                              context.l10n.chatSessionTitle,
+                              style: TextStyle(
+                                color: context.colorScheme.onSurface
+                                    .withValues(alpha: 0.3),
+                                fontSize: AppSizes.fontStandard,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
           ),

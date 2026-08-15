@@ -8,6 +8,7 @@ on:
     paths:
       - 'api/openapi/**'
       - 'server/pocketbase/pb_migrations/schema.json'
+      - 'server/pocketbase/pb_migrations/**'
       - 'server/pocketbase/internal/openapi/**'
       - 'server/pocketbase/internal/api/**'
       - 'client/packages/pocketcoder_api/**'
@@ -20,6 +21,7 @@ on:
       - 'client/pubspec.lock'
       - 'tooling/scripts/generate_flutter.sh'
       - 'tooling/scripts/generate_openapi*.sh'
+      - 'tooling/scripts/check_pocketbase_contracts.sh'
 
 jobs:
   contract:
@@ -39,9 +41,11 @@ jobs:
         run: |
           ./tooling/scripts/generate_flutter.sh
           git diff --exit-code
+      - name: Verify PocketBase schema and Dart collection contracts
+        run: ./tooling/scripts/check_pocketbase_contracts.sh
       - name: Go contract tests
         working-directory: server/pocketbase
-        run: go test ./internal/api ./internal/filesystem ./internal/openapi
+        run: go test ./internal/api ./internal/filesystem ./internal/openapi ./pb_migrations
       - name: Dart generated client tests
         working-directory: client
         run: dart test packages/pocketcoder_api

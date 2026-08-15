@@ -78,6 +78,11 @@ type Coordinator struct {
 	elicitationTimeout time.Duration
 	maxRunEvents       int
 	liveBuf            int
+	idempotency        map[string]idempotencySlot
+}
+type idempotencySlot struct {
+	key    string
+	result any
 }
 type pendingPermission struct {
 	chatID, sessionID string
@@ -108,6 +113,18 @@ var ErrRunInProgress = errors.New("chat already has an active run")
 var ErrNoPendingPermission = errors.New("no pending permission")
 var ErrPermissionOptionNotOffered = errors.New("permission option was not offered")
 var ErrNoPendingElicitation = errors.New("no pending elicitation")
+
+// isConnDone reports whether conn's transport has already signalled
+// shutdown, distinguishing a dead pipe from an application-level harness
+// error while the connection is still alive.
+func isConnDone(conn acp.Conn) bool {
+	select {
+	case <-conn.Done():
+		return true
+	default:
+		return false
+	}
+}
 
 func New(config Config) (*Coordinator, error) {
 	if config.Workspace == "" {
@@ -140,6 +157,7 @@ func New(config Config) (*Coordinator, error) {
 		config: config, clock: config.Clock,
 		running: map[string]struct{}{}, pending: map[string]*pendingPermission{},
 		hubs: map[string]*ChatHub{}, runs: map[string]*runHandle{}, elicits: map[string]*pendingElicitation{},
+		idempotency:        map[string]idempotencySlot{},
 		lingerWindow:       orElseD(config.LingerWindow, 30*time.Second),
 		maxRun:             orElseD(config.MaxRun, 15*time.Minute),
 		elicitationTimeout: orElseD(config.ElicitationTimeout, orElseD(config.PermissionTimeout, 5*time.Minute)),
@@ -147,6 +165,34 @@ func New(config Config) (*Coordinator, error) {
 		liveBuf:            orElseI(config.LiveBuffer, 256),
 	}
 	return c, nil
+}
+
+// CheckIdempotency returns the cached result for key if it matches the
+// current chat's slot. A chat holds exactly one slot: the most recent
+// (key, result) pair. There is no TTL — the slot is only ever replaced by
+// the next legitimate mutation for that chat, never expired.
+func (c *Coordinator) CheckIdempotency(chatID, key string) (any, bool) {
+	if key == "" {
+		return nil, false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	slot, ok := c.idempotency[chatID]
+	if !ok || slot.key != key {
+		return nil, false
+	}
+	return slot.result, true
+}
+
+// RecordIdempotency stores result under key for chatID, replacing whatever
+// was there. Call this after successfully performing the mutation.
+func (c *Coordinator) RecordIdempotency(chatID, key string, result any) {
+	if key == "" {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.idempotency[chatID] = idempotencySlot{key: key, result: result}
 }
 
 func (c *Coordinator) Reserve(chatID string) error {
@@ -651,6 +697,18 @@ func (c *Coordinator) establishSession(
 		return dialedConn, string(res.SessionId), res.Modes, res.ConfigOptions, initResp, true, nil
 	}
 
+	if initResp.AgentCapabilities.SessionCapabilities.Resume != nil {
+		beforeSessionCall()
+		res, err := dialedConn.ResumeSession(ctx, acpsdk.ResumeSessionRequest{
+			Meta: profile.sessionMeta(), SessionId: acpsdk.SessionId(sessionID), Cwd: cwd, AdditionalDirectories: profile.additionalDirectories(), McpServers: profile.mcpServers(),
+		})
+		if err != nil {
+			dialedConn.Close()
+			return nil, "", nil, nil, nil, false, fmt.Errorf("resume harness session: %w", err)
+		}
+		return dialedConn, sessionID, res.Modes, res.ConfigOptions, initResp, false, nil
+	}
+
 	if !initResp.AgentCapabilities.LoadSession {
 		dialedConn.Close()
 		return nil, "", nil, nil, nil, false, fmt.Errorf("harness does not support resuming a session (AgentCapabilities.LoadSession is false)")
@@ -861,7 +919,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 
 	conn, sessionID, modes, configOptions, _, wasNew, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
 	if err != nil {
-		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
+		hub.Publish(providerRunError(profile.Provider, "session init", err))
 		return
 	}
 	h.conn = conn
@@ -884,7 +942,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 	applier := selectApplier(profile)
 	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
-		hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
+		hub.Publish(providerRunError(profile.Provider, "session init", err))
 		return
 	}
 	h.accepting.Store(true)
@@ -899,10 +957,18 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	})
 	if err != nil {
 		code := "goose_unavailable"
-		if runCtx.Err() != nil {
-			code = "run_timeout"
+		message := "goose turn failed"
+		if providerAuthFailure(profile.Provider, err) {
+			code = providerAuthRequiredCode
+			message = "Claude Code reauthentication required. Your saved login was kept."
 		}
-		hub.Publish(events.NewRunErrorEvent("goose turn failed", events.WithErrorCode(code)))
+		switch {
+		case runCtx.Err() != nil:
+			code = "run_timeout"
+		case isConnDone(conn):
+			code = "connection_interrupted"
+		}
+		hub.Publish(events.NewRunErrorEvent(message, events.WithErrorCode(code)))
 		return
 	}
 	for _, e := range bridge.Finished(resp.StopReason) {
@@ -911,4 +977,14 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	if finished != nil && resp.StopReason != acpsdk.StopReasonCancelled && runCtx.Err() == nil {
 		_ = finished(runCtx, resp.StopReason)
 	}
+}
+
+func providerRunError(provider, fallback string, err error) events.Event {
+	if providerAuthFailure(provider, err) {
+		return events.NewRunErrorEvent(
+			"Claude Code reauthentication required. Your saved login was kept.",
+			events.WithErrorCode(providerAuthRequiredCode),
+		)
+	}
+	return events.NewRunErrorEvent(fallback, events.WithErrorCode("goose_unavailable"))
 }

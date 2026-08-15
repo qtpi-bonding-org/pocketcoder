@@ -15,6 +15,7 @@
   "authNotAuthenticated": "Please log in",
   "authTokenExpired": "Session expired, please log in again",
   "authError": "Authentication error",
+  "providerReauthenticationRequired": "Claude Code needs to be reauthenticated. Your saved login was kept.",
 
   "chatFetchFailed": "Unable to load chats",
   "chatSendFailed": "Failed to send message",
@@ -175,6 +176,13 @@
   "chatDecline": "DECLINE",
   "chatSubmit": "SUBMIT",
   "chatNoFieldsRequested": "(no fields requested)",
+  "chatRunOutcomeInterruptedTitle": "RUN INTERRUPTED",
+  "chatRunOutcomeInterruptedBody": "The connection ended before the run finished.",
+  "chatRunOutcomeInterruptedRetry": "RETRY",
+  "chatRunOutcomeCancelledTitle": "RUN STOPPED",
+  "chatRunOutcomeCancelledBody": "The run was stopped.",
+  "chatRunOutcomeFailedTitle": "RUN FAILED",
+  "chatRunOutcomeFailedBody": "Something went wrong while running this request.",
 
   "filesTitle": "FILES",
   "filesEmpty": "NO FILES",

@@ -3,7 +3,9 @@ import 'package:built_value/json_object.dart';
 import 'package:dio/dio.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
+import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 
+import 'auth_retry_interceptor.dart';
 import 'retry_interceptor.dart';
 
 /// Shared transport boundary for generated PocketCoder operation APIs.
@@ -28,7 +30,9 @@ class PocketCoderApiClient {
 
   factory PocketCoderApiClient.fromPocketBase(PocketBase pocketBase) {
     final dio = Dio(BaseOptions(baseUrl: pocketBase.baseURL));
+    final authRetryInterceptor = AuthRetryInterceptor(dio);
     dio.interceptors.add(SafeGetRetryInterceptor(dio));
+    dio.interceptors.add(authRetryInterceptor);
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -45,10 +49,13 @@ class PocketCoderApiClient {
         },
       ),
     );
-    return PocketCoderApiClient(dio: dio);
+    final client = PocketCoderApiClient(dio: dio);
+    client._authRetryInterceptor = authRetryInterceptor;
+    return client;
   }
 
   final Dio _dio;
+  AuthRetryInterceptor? _authRetryInterceptor;
   final generated.ReleaseApi release;
   final generated.AgentApi agent;
   final generated.FilesApi files;
@@ -61,6 +68,11 @@ class PocketCoderApiClient {
   final generated.SchedulesApi schedules;
 
   Dio get dio => _dio;
+
+  /// Wires transport recovery after the shared DI graph has been created.
+  void setAuthSessionCoordinator(AuthSessionCoordinator coordinator) {
+    _authRetryInterceptor?.setRefreshCallback(coordinator.refresh);
+  }
 
   static BuiltMap<String, JsonObject> encodeJson(
     Map<String, dynamic> value,

@@ -24,6 +24,9 @@ func (r *recordingConn) NewSession(context.Context, acpsdk.NewSessionRequest) (a
 func (r *recordingConn) LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error) {
 	return acpsdk.LoadSessionResponse{}, nil
 }
+func (r *recordingConn) ResumeSession(context.Context, acpsdk.ResumeSessionRequest) (acpsdk.ResumeSessionResponse, error) {
+	return acpsdk.ResumeSessionResponse{}, nil
+}
 func (r *recordingConn) SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
 	r.calledSetSessionMode = true
 	return acpsdk.SetSessionModeResponse{}, nil
@@ -44,6 +47,9 @@ func (r *recordingConn) UnstableDeleteSession(context.Context, acpsdk.UnstableDe
 func (r *recordingConn) CallExtension(context.Context, string, any) (json.RawMessage, error) {
 	r.calledSystemPromptSet = true
 	return json.RawMessage(`{}`), nil
+}
+func (r *recordingConn) Done() <-chan struct{} {
+	return nil
 }
 func (r *recordingConn) Close() error {
 	return nil

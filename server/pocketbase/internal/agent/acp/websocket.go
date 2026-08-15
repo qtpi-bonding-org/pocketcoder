@@ -56,12 +56,14 @@ type Conn interface {
 	Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk.InitializeResponse, error)
 	NewSession(context.Context, acpsdk.NewSessionRequest) (acpsdk.NewSessionResponse, error)
 	LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error)
+	ResumeSession(context.Context, acpsdk.ResumeSessionRequest) (acpsdk.ResumeSessionResponse, error)
 	SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error)
 	SetSessionConfigOption(context.Context, acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error)
 	CallExtension(ctx context.Context, method string, params any) (json.RawMessage, error)
 	Prompt(context.Context, acpsdk.PromptRequest) (acpsdk.PromptResponse, error)
 	Cancel(context.Context, acpsdk.CancelNotification) error
 	UnstableDeleteSession(context.Context, acpsdk.UnstableDeleteSessionRequest) (acpsdk.UnstableDeleteSessionResponse, error)
+	Done() <-chan struct{}
 	Close() error
 }
 

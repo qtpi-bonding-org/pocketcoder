@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/application/agent/provider_reauthentication_required.dart';
 
 class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
   const ChatAdapter({super.key, this.chatId});
@@ -49,8 +50,9 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
               title: value.conversation.sessionState.title ??
                   context.l10n.chatSessionTitle,
               isLoading: value.isLoading,
-              isRunning: value.isLoading ||
-                  value.lastOperation == AgentChatOperation.sendPrompt,
+              isRunning: value.conversation.sessionState.isRunning,
+              requiresProviderReauthentication:
+                  value.error is ProviderReauthenticationRequired,
               modes: controlsValue.modes,
               config: controlsValue.config,
               onOpen: (id) {
@@ -60,6 +62,7 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                 controls.open(id);
               },
               onSendPrompt: chatCubit.sendPrompt,
+              onRetry: chatCubit.retryLastPrompt,
               onCancel: chatCubit.cancel,
               onSelectMode: controls.selectMode,
               onSetOption: controls.setOption,

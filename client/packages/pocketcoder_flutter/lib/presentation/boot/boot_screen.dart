@@ -9,7 +9,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
 import 'boot_view.dart';
-import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import '../../app_router.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
@@ -136,50 +136,44 @@ class _BootScreenState extends State<BootScreen> {
           .updateMessage(context.l10n.bootCheckingConnection);
     }
 
-    bool pocketbaseAlive = false;
-
-    try {
-      pocketbaseAlive = await getIt<IStatusRepository>()
-          .checkPocketBaseHealth()
-          .timeout(const Duration(seconds: 8));
-    } catch (_) {
-      pocketbaseAlive = false;
-    }
-
     if (mounted) {
-      if (pocketbaseAlive) {
-        OnboardingLogger.event('PocketBase reachable; opening server session');
-        // Now check if we're already logged in
-        final authRepo = getIt<IAuthRepository>();
-        bool alreadyLoggedIn = authRepo.isAuthenticated;
+      final sessionState = await getIt<AuthSessionCoordinator>().restore();
+      if (!mounted) return;
+      final hasLocalSession = sessionState != AuthSessionState.signedOut;
 
-        if (alreadyLoggedIn) {
-          try {
-            // Try to refresh token silently
-            alreadyLoggedIn = await authRepo.refreshToken();
-          } catch (_) {
-            alreadyLoggedIn = false;
-          }
-        }
-
-        if (!mounted) return;
-
+      if (hasLocalSession) {
+        OnboardingLogger.event(
+          sessionState == AuthSessionState.signedIn
+              ? 'PocketBase session restored'
+              : 'PocketBase unavailable; preserving local session',
+        );
         context.read<PocoCubit>().updateMessage(
-              alreadyLoggedIn
+              sessionState == AuthSessionState.signedIn
                   ? context.l10n.bootWelcomeBack
-                  : context.l10n.bootSystemsNominal,
+                  : context.l10n.bootConnectionFailed,
               sequence: PocoExpressions.happy,
             );
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
-          if (alreadyLoggedIn) {
-            context.goNamed(RouteNames.home);
-          } else {
-            // A reachable server needs credentials, not a server choice.
-            context.goNamed(RouteNames.onboardingLogin);
-          }
+          context.goNamed(RouteNames.home);
         }
       } else {
+        final pocketbaseAlive = await getIt<IStatusRepository>()
+            .checkPocketBaseHealth()
+            .timeout(const Duration(seconds: 8), onTimeout: () => false);
+
+        if (!mounted) return;
+        if (pocketbaseAlive) {
+          OnboardingLogger.event('PocketBase reachable; requesting login');
+          context.read<PocoCubit>().updateMessage(
+                context.l10n.bootSystemsNominal,
+                sequence: PocoExpressions.happy,
+              );
+          await Future.delayed(const Duration(seconds: 2));
+          if (mounted) context.goNamed(RouteNames.onboardingLogin);
+          return;
+        }
+
         context.read<PocoCubit>().updateMessage(
           context.l10n.bootConnectionFailed,
           sequence: [

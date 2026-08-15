@@ -154,6 +154,12 @@ abstract class AppLocalizations {
   /// **'Authentication error'**
   String get authError;
 
+  /// No description provided for @providerReauthenticationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code needs to be reauthenticated. Your saved login was kept.'**
+  String get providerReauthenticationRequired;
+
   /// No description provided for @chatFetchFailed.
   ///
   /// In en, this message translates to:
@@ -897,6 +903,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'(no fields requested)'**
   String get chatNoFieldsRequested;
+
+  /// No description provided for @chatRunOutcomeInterruptedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RUN INTERRUPTED'**
+  String get chatRunOutcomeInterruptedTitle;
+
+  /// No description provided for @chatRunOutcomeInterruptedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection ended before the run finished.'**
+  String get chatRunOutcomeInterruptedBody;
+
+  /// No description provided for @chatRunOutcomeInterruptedRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get chatRunOutcomeInterruptedRetry;
+
+  /// No description provided for @chatRunOutcomeCancelledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RUN STOPPED'**
+  String get chatRunOutcomeCancelledTitle;
+
+  /// No description provided for @chatRunOutcomeCancelledBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The run was stopped.'**
+  String get chatRunOutcomeCancelledBody;
+
+  /// No description provided for @chatRunOutcomeFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RUN FAILED'**
+  String get chatRunOutcomeFailedTitle;
+
+  /// No description provided for @chatRunOutcomeFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong while running this request.'**
+  String get chatRunOutcomeFailedBody;
 
   /// No description provided for @filesTitle.
   ///

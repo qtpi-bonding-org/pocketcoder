@@ -120,6 +120,48 @@ func TestObservabilityProxyUsesInjectedTransport(t *testing.T) {
 	}
 }
 
+func TestMemoryDashboardIsAvailableToAuthenticatedUser(t *testing.T) {
+	var gotPath string
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	user := testUser(t, app, "proxy-memory-"+randomSuffix()+"@example.com")
+	if err := app.Save(user); err != nil {
+		t.Fatal(err)
+	}
+	reg := operation.NewRegistry()
+	AddProxyOperations(reg, ProxyDeps{TargetURL: backend.URL})
+	token, err := user.NewAuthToken()
+	if err != nil {
+		t.Fatal(err)
+	}
+	router, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := &core.ServeEvent{App: app, Router: router}
+	operation.MountForTests(e, reg.Routes())
+	req := httptest.NewRequest(http.MethodGet, "/api/pocketcoder/v1/proxy/observability/memory.sql", nil)
+	req.Header.Set("Authorization", token)
+	mux, err := e.Router.BuildMux()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || gotPath != "/memory.sql" {
+		t.Fatalf("status=%d path=%q", rec.Code, gotPath)
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }

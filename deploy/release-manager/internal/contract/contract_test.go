@@ -30,7 +30,7 @@ func TestChannelExampleDecodesAndValidates(t *testing.T) {
 	if err := DecodeStrict(fixture(t, "release-channel-pointer.example.json"), &pointer); err != nil {
 		t.Fatal(err)
 	}
-	if err := ValidatePointer(pointer, "stable", "https://images.relay.pocketcoder.org", 1<<20); err != nil {
+	if err := ValidatePointer(pointer, "stable", "stable", "https://images.relay.pocketcoder.org", 1<<20); err != nil {
 		t.Fatal(err)
 	}
 }

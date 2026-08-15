@@ -71,6 +71,7 @@ dependencies:
   device_info_plus: ^11.3.0
   unifiedpush: ^6.2.0
   url_launcher: ^6.2.0
+  webview_flutter: ^4.10.0
   ag_ui: 0.3.0
   acp_dart: 0.4.0
   pocketcoder_api:
@@ -82,7 +83,7 @@ dependencies:
   ag_ui_widgets_flutter:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
-      ref: 79e2e5c4729e615609f694e4b400ea4de81f89ef
+      ref: f8c03b9e3ee2aa7510af3a94d8eef6ad841f4810
 
 dependency_overrides:
   # Keep the UnifiedPush crypto dependency on the portable hosted 0.6.0

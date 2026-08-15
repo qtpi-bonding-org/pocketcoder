@@ -49,6 +49,8 @@ import 'package:pocketcoder_flutter/application/sandbox_agent/sandbox_agent_cubi
     as _i655;
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart'
     as _i490;
+import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart'
+    as _i898;
 import 'package:pocketcoder_flutter/application/skills/skills_cubit.dart'
     as _i67;
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart'
@@ -97,6 +99,8 @@ import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_reposit
     as _i184;
 import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart'
     as _i470;
+import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart'
+    as _i789;
 import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart'
     as _i165;
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
@@ -337,6 +341,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i300.AgentActionsApi(gh<_i935.PocketCoderApiClient>()));
     gh.lazySingleton<_i209.IFilesRepository>(
         () => _i369.FilesRepository(gh<_i935.PocketCoderApiClient>()));
+    gh.factory<_i898.ServerControlCubit>(
+        () => _i898.ServerControlCubit(gh<_i789.IServerControlService>()));
     gh.lazySingleton<_i630.IAgentConfigRepository>(
         () => _i857.AgentConfigRepository(
               gh<_i810.PocoConfigDao>(),
