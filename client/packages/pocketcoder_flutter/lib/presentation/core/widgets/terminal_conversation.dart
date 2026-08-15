@@ -30,6 +30,67 @@ class TerminalRoleLabel extends StatelessWidget {
   }
 }
 
+/// Shared terminal frame for a conversation message.
+///
+/// The message body remains caller-owned so live AG-UI messages can keep
+/// their markdown/streaming renderer while scripted onboarding can use plain
+/// terminal turns. State and submission behavior stay outside this widget.
+class TerminalConversationFrame extends StatelessWidget {
+  const TerminalConversationFrame({
+    super.key,
+    required this.speaker,
+    required this.child,
+    this.roleLabel,
+    this.isReasoning = false,
+  });
+
+  final TerminalConversationSpeaker speaker;
+  final Widget child;
+  final String? roleLabel;
+  final bool isReasoning;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final terminalColors = context.terminalColors;
+    final isUser = speaker == TerminalConversationSpeaker.user;
+    final accent = isReasoning
+        ? terminalColors.warning
+        : isUser
+            ? terminalColors.user
+            : colors.primary;
+
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (roleLabel != null)
+          Padding(
+            padding: EdgeInsets.only(bottom: AppSizes.space),
+            child: TerminalRoleLabel(label: roleLabel!, color: accent),
+          ),
+        child,
+      ],
+    );
+
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+        padding: EdgeInsets.all(AppSizes.space),
+        decoration: isUser
+            ? BoxDecoration(
+                border: Border.all(
+                  color: terminalColors.user.withValues(alpha: 0.45),
+                ),
+                color: colors.surfaceContainerHighest.withValues(alpha: 0.2),
+              )
+            : null,
+        child: content,
+      ),
+    );
+  }
+}
+
 /// A terminal-styled conversation turn shared by live and guided flows.
 ///
 /// The widget does not own message state or submission behavior. A live-chat
@@ -40,43 +101,37 @@ class TerminalConversationTurn extends StatelessWidget {
     super.key,
     required this.speaker,
     required this.message,
-    this.sequence = PocoExpressions.happy,
+    this.sequence = const [],
+    this.history = const [],
   });
 
   final TerminalConversationSpeaker speaker;
   final String message;
   final List<(String, int)> sequence;
+  final List<String> history;
 
   @override
   Widget build(BuildContext context) {
     if (speaker == TerminalConversationSpeaker.poco) {
-      return PocoBubble(
-        message: message,
-        sequence: sequence,
-        pocoSize: AppSizes.fontLarge,
+      return TerminalConversationFrame(
+        speaker: speaker,
+        child: PocoBubble(
+          message: message,
+          sequence: sequence,
+          history: history,
+          pocoSize: AppSizes.fontLarge,
+        ),
       );
     }
 
-    final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-        padding: EdgeInsets.all(AppSizes.space),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: terminalColors.user.withValues(alpha: 0.45),
-          ),
-          color: colors.surfaceContainerHighest.withValues(alpha: 0.2),
-        ),
-        child: Text(
-          '\$ $message',
-          style: TextStyle(
-            color: terminalColors.user,
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontStandard,
-          ),
+    return TerminalConversationFrame(
+      speaker: speaker,
+      child: Text(
+        '\$ $message',
+        style: TextStyle(
+          color: context.terminalColors.user,
+          fontFamily: AppFonts.bodyFamily,
+          fontSize: AppSizes.fontStandard,
         ),
       ),
     );
