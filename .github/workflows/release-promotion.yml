@@ -33,6 +33,9 @@ jobs:
       - name: Install contract validator
         run: python3 -m pip install -r deploy/release/requirements.txt
 
+      - name: Verify candidate is publicly reachable before promoting
+        run: deploy/ci/verify-candidate-published.sh '${{ inputs.manifest_sha256 }}'
+
       - name: Prepare channel pointer
         env:
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
