@@ -1,9 +1,60 @@
 { config, pkgs, lib, modulesPath, ... }:
 
+let
+  # The image is built from a flake, so /etc/nixos is empty at runtime and
+  # the shipped owner-control command (`nixos-rebuild switch --upgrade`, no
+  # `--flake`) cannot resolve a configuration unless every module this
+  # system needs is inlined here and persisted to /etc/nixos below. See
+  # docs/superpowers/specs/2026-08-15-vps-script-test-suite-hardening-design.md,
+  # "NixOS configuration fix".
+  #
+  # caddy.nix and release-manager.nix each read one file from outside
+  # deploy/nixos/ via a relative path that only resolves against a full repo
+  # checkout (the CI build machine). A live on-box rebuild has no such
+  # checkout, so both dependencies are persisted alongside the .nix files
+  # under /etc/nixos and each module falls back to the persisted copy when
+  # present -- otherwise the original repo-relative path, so the very first
+  # (flake) build still works unchanged.
+  caddyTemplateSrc = ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
+  caddyTemplatePersisted = /etc/nixos/Caddyfile.template;
+  caddyTemplate =
+    if builtins.pathExists caddyTemplatePersisted
+    then caddyTemplatePersisted
+    else caddyTemplateSrc;
+
+  releaseManagerSrcDir = ../release-manager;
+  releaseManagerSrcPersisted = /etc/nixos/release-manager-src;
+  releaseManagerSrc =
+    if builtins.pathExists releaseManagerSrcPersisted
+    then releaseManagerSrcPersisted
+    else releaseManagerSrcDir;
+
+  sourceCommit = import ./release-commit.nix;
+  releaseManager = import ./release-manager.nix { inherit pkgs releaseManagerSrc; };
+in
 {
   imports = [
     # Linode uses KVM — virtio drivers, QEMU guest agent
     "${modulesPath}/profiles/qemu-guest.nix"
+    (import ./caddy.nix { inherit config pkgs caddyTemplate; })
+    (import ./bootstrap.nix { inherit config pkgs sourceCommit releaseManager; })
+  ];
+
+  # Persist every module this configuration needs (plus their two
+  # repo-external file dependencies) so a live `nixos-rebuild switch
+  # --upgrade` -- run with no repo checkout on the box -- can resolve the
+  # identical module set the image was originally built with.
+  environment.etc."nixos/configuration.nix".source = ./configuration.nix;
+  environment.etc."nixos/caddy.nix".source = ./caddy.nix;
+  environment.etc."nixos/bootstrap.nix".source = ./bootstrap.nix;
+  environment.etc."nixos/release-manager.nix".source = ./release-manager.nix;
+  environment.etc."nixos/release-commit.nix".source = ./release-commit.nix;
+  environment.etc."nixos/Caddyfile.template".source = caddyTemplateSrc;
+  environment.etc."nixos/release-manager-src".source = releaseManagerSrcDir;
+
+  nix.nixPath = [
+    "nixos-config=/etc/nixos/configuration.nix"
+    "nixpkgs=https://github.com/NixOS/nixpkgs/archive/nixos-26.05.tar.gz"
   ];
 
   system.stateVersion = "25.05";
