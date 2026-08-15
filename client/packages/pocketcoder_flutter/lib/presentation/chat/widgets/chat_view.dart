@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
     as ag_ui_widgets;
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dart';
@@ -74,7 +77,22 @@ class _ChatViewState extends State<ChatView> {
     if (widget.chatId != oldWidget.chatId) {
       _opened = false;
       _openIfNeeded();
+      return;
     }
+    _provideRunCompletionHaptic(oldWidget);
+  }
+
+  void _provideRunCompletionHaptic(ChatView oldWidget) {
+    final outcome = widget.conversation.sessionState.runOutcome;
+    if (!oldWidget.isRunning || widget.isRunning || outcome == null) return;
+
+    // A completed run gets a gentle acknowledgement. Errors and interrupted
+    // runs use a slightly more noticeable pulse so they are distinguishable
+    // when the user is away from the screen.
+    unawaited((switch (outcome) {
+      ag_ui_widgets.RunOutcome.success => HapticFeedback.lightImpact(),
+      _ => HapticFeedback.mediumImpact(),
+    }));
   }
 
   void _openIfNeeded() {
