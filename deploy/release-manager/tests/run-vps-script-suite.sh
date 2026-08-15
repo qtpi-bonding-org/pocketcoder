@@ -69,11 +69,15 @@ run_phase() {
 }
 
 wait_for_https() {
+  local last_error=
   for _ in $(seq 1 "${POCKETCODER_VPS_HEALTH_ATTEMPTS:-40}"); do
-    if curl --fail --silent --show-error --connect-timeout 5 --max-time 10 --resolve "$hostname:443:$host" \
-      "https://$hostname/api/health" >/dev/null; then return 0; fi
+    if last_error=$(curl --fail --silent --show-error --connect-timeout 5 --max-time 10 \
+      --resolve "$hostname:443:$host" "https://$hostname/api/health" 2>&1); then
+      return 0
+    fi
     sleep "${POCKETCODER_VPS_HEALTH_INTERVAL:-5}"
   done
+  echo "HTTPS readiness timed out: ${last_error:-unknown error}" >&2
   return 1
 }
 

@@ -32,6 +32,8 @@ preserved_handoff=${POCKETCODER_VPS_SCRIPT_HANDOFF_FILE:-"${TMPDIR:-/tmp}/pocket
 
 mkdir -p "$(dirname "$log_file")"
 : >"$log_file"
+mkdir -p "$(dirname "$result_file")"
+: >"$result_file"
 exec > >(tee -a "$log_file") 2>&1
 echo "VPS SCRIPT UPGRADE: progress log $log_file"
 
