@@ -43,6 +43,8 @@ type AgentRuntime interface {
 	ResolveElicitation(chatID, id string, resp acpsdk.UnstableCreateElicitationResponse) error
 	DeleteSession(ctx context.Context, app core.App, chatID string) error
 	Shutdown(ctx context.Context)
+	CheckIdempotency(chatID, key string) (any, bool)
+	RecordIdempotency(chatID, key string, result any)
 }
 
 // DefaultWorkspace reads POCKETCODER_WORKSPACE once, falling back to
