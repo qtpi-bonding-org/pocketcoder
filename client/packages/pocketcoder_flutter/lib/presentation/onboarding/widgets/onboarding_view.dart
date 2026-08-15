@@ -3,7 +3,6 @@ import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 
@@ -34,11 +33,12 @@ class OnboardingView extends StatelessWidget {
                       text: AppAscii.pocketCoderLogo,
                       fontSize: AppSizes.fontTiny),
                   VSpace.x6,
-                  PocoBubble(
-                      message: context.l10n.onboardingNoServerPoco,
-                      sequence: pocoState.sequence,
-                      history: pocoState.history,
-                      pocoSize: AppSizes.fontLarge),
+                  TerminalConversationTurn(
+                    speaker: TerminalConversationSpeaker.poco,
+                    message: context.l10n.onboardingNoServerPoco,
+                    sequence: pocoState.sequence,
+                    history: pocoState.history,
+                  ),
                   VSpace.x4,
                   TerminalPromptSuggestion(
                     label: context.l10n.onboardingNoServerChipExisting,
