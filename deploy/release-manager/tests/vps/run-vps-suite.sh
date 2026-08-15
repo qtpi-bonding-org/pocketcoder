@@ -61,6 +61,29 @@ run_dir=${run_dir:-${TMPDIR:-/tmp}/pocketcoder-vps-$(date -u '+%Y%m%dT%H%M%SZ')-
 result_init "$run_dir"
 echo "VPS SUITE: evidence in $run_dir"
 
+. "$vps_dir/phases/10-provision.sh"
+
+run_label="vps-script-$(date -u '+%Y%m%d%H%M%S')-$$"
+result_set instanceLabel "$run_label"
+
+if [ -z "$handoff" ] && [ "${VPS_SKIP_PROVISION:-0}" != 1 ]; then
+  handoff=$(vps_provision "$repo_root" "$run_dir" "$run_label") || exit 1
+fi
+
+if [ -n "$handoff" ]; then
+  VPS_HOSTNAME=$(jq -er '.hostname' "$handoff")
+  VPS_RELEASE_A_DIGEST=$(jq -er '.releaseDigest' "$handoff")
+  teardown_set_instance "$(jq -r '.instanceId' "$handoff")"
+  result_set instanceId "$(jq -r '.instanceId' "$handoff")"
+  result_set hostname "$VPS_HOSTNAME"
+  result_set_json releaseA "$(jq '{digest:.releaseDigest,sourceCommit:.sourceCommit,
+    channel:.channel,sequence:.sequence}' "$handoff")"
+  vps_connect "$(jq -er '.ipAddress' "$handoff")" "$(jq -er '.sshPrivateKeyPath' "$handoff")" \
+    "$run_dir/known_hosts"
+  pin_host_key || { echo "could not pin the host key" >&2; exit 1; }
+  load_redaction_dictionary || echo "WARNING: redaction dictionary unavailable; output suppressed" >&2
+fi
+
 run_status=failed
 failure_phase=
 

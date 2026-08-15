@@ -100,3 +100,22 @@ esac'
 ( . "$VPS_DIR/phases/90-nixos-update.sh"
   PATH="$phase_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
 check_rc "90-nixos-update: absent config skips with 78 (F9)" 78 "$?"
+
+. "$VPS_DIR/phases/70-post-update.sh"
+
+# The precondition must read ON-BOX state, so `--only post-update` against an
+# un-updated box is well-defined rather than silently wrong.
+stub_bin "$phase_stub_dir" ssh '
+for arg in "$@"; do last=$arg; done
+case $last in
+  *current.json*) echo "{\"releaseDigest\":\"${STUB_DIGEST:-aaa}\"}" ;;
+  *) echo "" ;;
+esac'
+
+VPS_RELEASE_B_DIGEST=bbb
+reason=$(PATH="$phase_stub_dir:$PATH" STUB_DIGEST=aaa phase_precondition)
+check_rc "70-post-update: skips when the box has not been updated" 1 "$?"
+check_contains "70-post-update: states why it skipped" "release B" "$reason"
+
+PATH="$phase_stub_dir:$PATH" STUB_DIGEST=bbb phase_precondition >/dev/null
+check_rc "70-post-update: runs when the box already reports release B" 0 "$?"
