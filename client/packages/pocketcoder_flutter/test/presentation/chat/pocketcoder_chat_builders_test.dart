@@ -16,6 +16,7 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/elicitation_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 
 void main() {
   Widget host(BuildContext context, StackedChatBuilders builders,
@@ -72,6 +73,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('COMMANDER'), findsOneWidget);
+    expect(find.byType(TerminalConversationFrame), findsOneWidget);
   });
 
   testWidgets('permissionCardBuilder renders pocketcoder\'s own PermissionCard',

@@ -12,13 +12,14 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
 import 'package:flyer_chat_text_stream_message/flyer_chat_text_stream_message.dart'
-    show StreamStateStreaming;
+    as chat_stream;
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
 import 'thinking_block.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'widgets/terminal_command_card.dart';
 
 /// Builds this app's `StackedChatBuilders` config: pocketcoder's theme
@@ -125,8 +126,15 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
             isStreaming: false,
           );
         }
-        return super.textMessageBuilder(context, message, index,
-            isSentByMe: isSentByMe, groupStatus: groupStatus);
+        return TerminalConversationFrame(
+          speaker: isSentByMe
+              ? TerminalConversationSpeaker.user
+              : TerminalConversationSpeaker.poco,
+          roleLabel: isSentByMe
+              ? context.l10n.chatCommanderRole
+              : context.l10n.chatPocoRole,
+          child: chatMarkdownBody(context, message.text),
+        );
       };
 
   @override
@@ -136,16 +144,27 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         if (_isReasoning(message)) {
           return ThinkingBlock(
             key: ValueKey(message.id),
-            text: streamState is StreamStateStreaming
+            text: streamState is chat_stream.StreamStateStreaming
                 ? streamState.accumulatedText
                 : '',
             isLatest: message.id == latestReasoningId,
             isStreaming: true,
           );
         }
-        return super.textStreamMessageBuilder(context, message, index,
-            isSentByMe: isSentByMe,
-            groupStatus: groupStatus,
-            streamState: streamState);
+        return TerminalConversationFrame(
+          speaker: isSentByMe
+              ? TerminalConversationSpeaker.user
+              : TerminalConversationSpeaker.poco,
+          roleLabel: isSentByMe
+              ? context.l10n.chatCommanderRole
+              : context.l10n.chatPocoRole,
+          child: chat_stream.FlyerChatTextStreamMessage(
+            message: message,
+            index: index,
+            streamState: streamState,
+            sentTextStyle: style.textStyle,
+            receivedTextStyle: style.textStyle,
+          ),
+        );
       };
 }
