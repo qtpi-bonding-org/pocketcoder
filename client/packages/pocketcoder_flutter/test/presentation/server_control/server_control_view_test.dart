@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
