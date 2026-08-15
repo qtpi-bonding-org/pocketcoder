@@ -50,8 +50,7 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
               title: value.conversation.sessionState.title ??
                   context.l10n.chatSessionTitle,
               isLoading: value.isLoading,
-              isRunning: value.isLoading ||
-                  value.lastOperation == AgentChatOperation.sendPrompt,
+              isRunning: value.conversation.sessionState.isRunning,
               requiresProviderReauthentication:
                   value.error is ProviderReauthenticationRequired,
               modes: controlsValue.modes,
