@@ -7,6 +7,7 @@ vps_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$vps_dir/lib/common.sh"
 . "$vps_dir/lib/result.sh"
 . "$vps_dir/lib/commands.sh"
+. "$vps_dir/lib/teardown.sh"
 
 usage() {
   cat >&2 <<'EOF'
@@ -65,6 +66,11 @@ failure_phase=
 
 finish() {
   local rc=$?
+  if ! teardown_run "$keep"; then
+    run_status=failed
+    [ -n "$failure_phase" ] || failure_phase=teardown
+    rc=1
+  fi
   result_write "$run_status" "$failure_phase"
   echo "VPS SUITE: $run_status (result: $run_dir/result.json)"
   exit "$rc"
