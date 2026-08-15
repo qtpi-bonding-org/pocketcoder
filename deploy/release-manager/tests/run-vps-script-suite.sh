@@ -158,9 +158,14 @@ nixos_restart() {
 }
 
 nixos_update() {
+  ssh_base 'set -eu
+    test -f /etc/nixos/configuration.nix || {
+      echo "NixOS update unavailable: /etc/nixos/configuration.nix is not persisted in this image" >&2
+      exit 78
+    }'
   generation_before=$(ssh_base 'readlink -f /nix/var/nix/profiles/system')
   local rebuild_output
-  if rebuild_output=$(ssh_base 'set -eu; nixos-rebuild switch --upgrade -I nixos-config=/etc/nixos/configuration.nix' 2>&1); then
+  if rebuild_output=$(ssh_base 'set -eu; nixos-rebuild switch --upgrade' 2>&1); then
     printf '%s\n' "$rebuild_output"
   else
     printf '%s\n' "$rebuild_output" >&2
