@@ -1,6 +1,8 @@
 phase_name=restart-stack
 phase_tier=disruptive
 
+_container_is_healthy() { [ "$(container_health "$1")" = healthy ]; }
+
 phase_run() {
   local name before after unchanged= safe_name
 
@@ -33,7 +35,12 @@ EOF
     if [ "$before" = "$after" ]; then
       unchanged="$unchanged $name"
     fi
-    [ "$(container_health "$name")" = healthy ] || {
+    # A container's own HEALTHCHECK needs a few cycles after restart before
+    # settling from "starting" to "healthy" -- confirmed live: pocketbase
+    # reported unhealthy on a single immediate check, then healthy a few
+    # seconds later with a clean startup log the whole time. Retry with the
+    # same deadline as the stack-wide probe above.
+    retry_until "${VPS_HEALTH_DEADLINE:-180}" 5 _container_is_healthy "$name" || {
       echo "container $name is not healthy after restart" >&2
       return 1
     }

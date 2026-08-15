@@ -1,6 +1,8 @@
 phase_name=reboot
 phase_tier=disruptive
 
+_container_is_healthy() { [ "$(container_health "$1")" = healthy ]; }
+
 phase_run() {
   local before after name
 
@@ -27,9 +29,13 @@ phase_run() {
     return 1
   fi
 
+  # After a full reboot every container starts from scratch, so its own
+  # HEALTHCHECK needs a few cycles before settling from "starting" to
+  # "healthy" -- see 50-restart-stack.sh for the identical race confirmed
+  # live on a plain restart, which is a shorter recovery than this.
   while IFS= read -r name; do
     [ -n "$name" ] || continue
-    [ "$(container_health "$name")" = healthy ] || {
+    retry_until "${VPS_HEALTH_DEADLINE:-180}" 5 _container_is_healthy "$name" || {
       echo "container $name is not healthy after reboot" >&2
       return 1
     }
