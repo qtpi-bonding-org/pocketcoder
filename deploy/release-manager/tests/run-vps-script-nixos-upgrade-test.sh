@@ -110,8 +110,10 @@ test "$existing_live_instances" -eq 0 || {
 }
 
 cd "$repo_root"
-test -z "$(git status --porcelain)" || {
-  echo "VPS script upgrade test requires a clean PocketCoder checkout" >&2
+dirty_paths=$(git status --porcelain | awk '{print $2}')
+unexpected_dirty_paths=$(printf '%s\n' "$dirty_paths" | sed '/^$/d;/^docs\/testing\/mvp-code-gap-todo\.md$/d;/^docs\/testing\/mvp-ultimate-checklist\.md$/d')
+test -z "$unexpected_dirty_paths" || {
+  echo "VPS script upgrade test requires a clean PocketCoder checkout (checklist docs may be edited locally)" >&2
   exit 1
 }
 source_commit=$(git rev-parse HEAD)
