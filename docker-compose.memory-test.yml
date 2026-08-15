@@ -1,0 +1,19 @@
+services:
+  pocket-memory:
+    container_name: pocketcoder-memory-integration
+
+  memory-integration-test:
+    build:
+      context: .
+      dockerfile: server/test/Dockerfile
+    profiles: ["memory-test"]
+    depends_on:
+      pocket-memory:
+        condition: service_healthy
+    command: ["--tap", "/tests/memory/memory.bats"]
+    volumes:
+      - ./tests:/tests:ro
+    environment:
+      POCKET_MEMORY_URL: http://pocket-memory:8000
+    networks:
+      - pocketcoder-memory
