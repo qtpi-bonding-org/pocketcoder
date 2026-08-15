@@ -159,6 +159,9 @@ func (*scheduleFakeConn) NewSession(context.Context, acpsdk.NewSessionRequest) (
 func (*scheduleFakeConn) LoadSession(context.Context, acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error) {
 	return acpsdk.LoadSessionResponse{}, nil
 }
+func (*scheduleFakeConn) ResumeSession(context.Context, acpsdk.ResumeSessionRequest) (acpsdk.ResumeSessionResponse, error) {
+	return acpsdk.ResumeSessionResponse{}, nil
+}
 func (*scheduleFakeConn) SetSessionMode(context.Context, acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
 	return acpsdk.SetSessionModeResponse{}, nil
 }
@@ -175,7 +178,8 @@ func (*scheduleFakeConn) UnstableDeleteSession(context.Context, acpsdk.UnstableD
 func (*scheduleFakeConn) CallExtension(context.Context, string, any) (json.RawMessage, error) {
 	return json.RawMessage(`{}`), nil
 }
-func (*scheduleFakeConn) Close() error { return nil }
+func (*scheduleFakeConn) Done() <-chan struct{} { return nil }
+func (*scheduleFakeConn) Close() error          { return nil }
 
 var _ acp.Conn = (*scheduleFakeConn)(nil)
 

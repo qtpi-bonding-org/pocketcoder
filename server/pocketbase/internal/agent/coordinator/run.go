@@ -78,6 +78,11 @@ type Coordinator struct {
 	elicitationTimeout time.Duration
 	maxRunEvents       int
 	liveBuf            int
+	idempotency        map[string]idempotencySlot
+}
+type idempotencySlot struct {
+	key    string
+	result any
 }
 type pendingPermission struct {
 	chatID, sessionID string
@@ -152,6 +157,7 @@ func New(config Config) (*Coordinator, error) {
 		config: config, clock: config.Clock,
 		running: map[string]struct{}{}, pending: map[string]*pendingPermission{},
 		hubs: map[string]*ChatHub{}, runs: map[string]*runHandle{}, elicits: map[string]*pendingElicitation{},
+		idempotency:        map[string]idempotencySlot{},
 		lingerWindow:       orElseD(config.LingerWindow, 30*time.Second),
 		maxRun:             orElseD(config.MaxRun, 15*time.Minute),
 		elicitationTimeout: orElseD(config.ElicitationTimeout, orElseD(config.PermissionTimeout, 5*time.Minute)),
@@ -159,6 +165,34 @@ func New(config Config) (*Coordinator, error) {
 		liveBuf:            orElseI(config.LiveBuffer, 256),
 	}
 	return c, nil
+}
+
+// CheckIdempotency returns the cached result for key if it matches the
+// current chat's slot. A chat holds exactly one slot: the most recent
+// (key, result) pair. There is no TTL — the slot is only ever replaced by
+// the next legitimate mutation for that chat, never expired.
+func (c *Coordinator) CheckIdempotency(chatID, key string) (any, bool) {
+	if key == "" {
+		return nil, false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	slot, ok := c.idempotency[chatID]
+	if !ok || slot.key != key {
+		return nil, false
+	}
+	return slot.result, true
+}
+
+// RecordIdempotency stores result under key for chatID, replacing whatever
+// was there. Call this after successfully performing the mutation.
+func (c *Coordinator) RecordIdempotency(chatID, key string, result any) {
+	if key == "" {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.idempotency[chatID] = idempotencySlot{key: key, result: result}
 }
 
 func (c *Coordinator) Reserve(chatID string) error {

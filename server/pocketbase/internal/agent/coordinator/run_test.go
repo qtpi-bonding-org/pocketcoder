@@ -53,6 +53,37 @@ func newFakeConn() *fakeConn {
 	}
 }
 
+func TestIdempotencySlotOverwritesOnNewKey(t *testing.T) {
+	c := testCoordinator(t, nil)
+	chatID := "chat-1"
+	if _, found := c.CheckIdempotency(chatID, "key-a"); found {
+		t.Fatal("expected no result for a fresh chat")
+	}
+	c.RecordIdempotency(chatID, "key-a", "result-a")
+	if result, found := c.CheckIdempotency(chatID, "key-a"); !found || result != "result-a" {
+		t.Fatalf("expected cached result-a, got %v, found=%v", result, found)
+	}
+	if _, found := c.CheckIdempotency(chatID, "key-b"); found {
+		t.Fatal("expected no result for a new key")
+	}
+	c.RecordIdempotency(chatID, "key-b", "result-b")
+	if _, found := c.CheckIdempotency(chatID, "key-a"); found {
+		t.Fatal("expected key-a's slot to be gone after key-b overwrote it")
+	}
+}
+
+func TestIdempotencyOnlyRecordsAfterSuccessfulWork(t *testing.T) {
+	c := testCoordinator(t, nil)
+	chatID, key := "chat-1", "retry-key"
+	if _, found := c.CheckIdempotency(chatID, key); found {
+		t.Fatal("expected no cached result before any work has run")
+	}
+	c.RecordIdempotency(chatID, key, struct{}{})
+	if _, found := c.CheckIdempotency(chatID, key); !found {
+		t.Fatal("expected the retried request to find the cached slot")
+	}
+}
+
 type fakeConn struct {
 	mu             sync.Mutex
 	cancelled      string
