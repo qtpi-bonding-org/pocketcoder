@@ -13,8 +13,11 @@ pkgs.testers.runNixOSTest {
     # doesn't otherwise recognize, so every such argument must be supplied
     # explicitly here.
     _module.args.sourceCommit = "main";
+    _module.args.releaseBranch = "main";
     _module.args.releaseManager = self.packages.${system}.release-manager;
     _module.args.caddyTemplate = ../../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
+    _module.args.bootstrapScript = ../bootstrap.sh;
+    _module.args.statusScript = ../status.sh;
     imports = [ ../caddy.nix ../bootstrap.nix ];
     systemd.services.detect-public-ip.script = pkgs.lib.mkForce ''
       mkdir -p /etc/caddy /etc/pocketcoder

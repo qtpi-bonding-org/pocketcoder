@@ -12,6 +12,16 @@ on:
         type: choice
         options:
           - build_candidate
+      attest_branch:
+        description: >-
+          Bake POCKETCODER_GITHUB_WORKFLOW_BRANCH into the image as the
+          checked-out ref instead of "main". Explicit opt-in only -- never
+          set automatically by a push, even to staging -- so a normal
+          staging push still produces a "main"-trusting image and a VPS
+          script test that wants a staging-trusting one has to ask for it.
+        required: false
+        default: false
+        type: boolean
   push:
     tags:
       - 'v*-nixos'
@@ -40,6 +50,13 @@ jobs:
             exit 1
           }
 
+      - name: Guard release-branch.nix is never committed as non-main
+        run: |
+          test "$(tail -n1 deploy/nixos/release-branch.nix)" = '"main"' || {
+            echo 'release-branch.nix must stay "main" in the repo; only this workflow, via the attest_branch input, may override it at build time.'
+            exit 1
+          }
+
       - uses: cachix/install-nix-action@08dcb3a5e62fa31e2da3d490afc4176ef55ecd72 # v30
         with:
           nix_path: nixpkgs=channel:nixos-26.05
@@ -51,11 +68,18 @@ jobs:
 
       - name: Build Linode image
         working-directory: deploy/nixos
+        env:
+          ATTEST_BRANCH: ${{ inputs.attest_branch }}
         run: |
           # Embed the exact source revision into bootstrap.nix. First boot
           # resolves the coupled immutable release for this revision, never
           # whatever happens to be on main when a customer deploys later.
           printf '"%s"\n' "$GITHUB_SHA" > release-commit.nix
+          # Only ever overwritten by this explicit, non-default input --
+          # never automatically because the ref happens to be staging.
+          if [ "$ATTEST_BRANCH" = "true" ]; then
+            printf '"%s"\n' "${GITHUB_REF#refs/heads/}" > release-branch.nix
+          fi
           nix build .#linode-image --print-build-logs
 
       - name: Compress image

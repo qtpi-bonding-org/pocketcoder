@@ -42,6 +42,7 @@ let
   bootstrapModule = persisted "bootstrap.nix" ./bootstrap.nix;
   releaseManagerModule = persisted "release-manager.nix" ./release-manager.nix;
   releaseCommitModule = persisted "release-commit.nix" ./release-commit.nix;
+  releaseBranchModule = persisted "release-branch.nix" ./release-branch.nix;
   bootstrapScript = persisted "bootstrap.sh" ./bootstrap.sh;
   statusScript = persisted "status.sh" ./status.sh;
   caddyTemplate = persisted "Caddyfile.template"
@@ -49,6 +50,7 @@ let
   releaseManagerSrc = persisted "release-manager-src" ../release-manager;
 
   sourceCommit = import releaseCommitModule;
+  releaseBranch = import releaseBranchModule;
   releaseManager = import releaseManagerModule { inherit pkgs releaseManagerSrc; };
 in
 {
@@ -56,7 +58,9 @@ in
     # Linode uses KVM — virtio drivers, QEMU guest agent
     "${modulesPath}/profiles/qemu-guest.nix"
     (import caddyModule { inherit config pkgs caddyTemplate; })
-    (import bootstrapModule { inherit config pkgs sourceCommit releaseManager bootstrapScript statusScript; })
+    (import bootstrapModule {
+      inherit config pkgs sourceCommit releaseBranch releaseManager bootstrapScript statusScript;
+    })
   ];
 
   # Persist every module this configuration needs (plus their repo-external
@@ -72,6 +76,7 @@ in
   environment.etc."nixos/bootstrap.nix".source = bootstrapModule;
   environment.etc."nixos/release-manager.nix".source = releaseManagerModule;
   environment.etc."nixos/release-commit.nix".source = releaseCommitModule;
+  environment.etc."nixos/release-branch.nix".source = releaseBranchModule;
   environment.etc."nixos/bootstrap.sh".source = bootstrapScript;
   environment.etc."nixos/status.sh".source = statusScript;
   environment.etc."nixos/Caddyfile.template".source = caddyTemplate;
