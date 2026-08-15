@@ -30,6 +30,8 @@ import 'package:pocketcoder_flutter/design_system/storybook/settings_view.storie
     as _pocketcoder_flutter_design_system_storybook_settings_view_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/skills_view.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_skills_view_stories;
+import 'package:pocketcoder_flutter/design_system/storybook/terminal_conversation.stories.dart'
+    as _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/tool_permissions_view.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
@@ -203,7 +205,35 @@ final directories = <_widgetbook.WidgetbookNode>[
                             .pocoValueWidgetHappy,
                   ),
                 ],
-              )
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'TerminalConversationFrame',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'live message frame',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories
+                            .terminalLiveFrame,
+                  )
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'TerminalConversationTurn',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'prepared Poco turn',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories
+                            .terminalPocoTurn,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'prepared user turn',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories
+                            .terminalUserTurn,
+                  ),
+                ],
+              ),
             ],
           )
         ],

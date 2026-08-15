@@ -341,6 +341,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i300.AgentActionsApi(gh<_i935.PocketCoderApiClient>()));
     gh.lazySingleton<_i209.IFilesRepository>(
         () => _i369.FilesRepository(gh<_i935.PocketCoderApiClient>()));
+    gh.factory<_i898.ServerControlCubit>(
+        () => _i898.ServerControlCubit(gh<_i789.IServerControlService>()));
     gh.lazySingleton<_i630.IAgentConfigRepository>(
         () => _i857.AgentConfigRepository(
               gh<_i810.PocoConfigDao>(),
@@ -411,8 +413,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
-    gh.factory<_i898.ServerControlCubit>(
-        () => _i898.ServerControlCubit(gh<_i789.IServerControlService>()));
     gh.factory<_i710.ElicitationCubit>(
         () => _i710.ElicitationCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i225.PermissionCubit>(
