@@ -104,12 +104,21 @@ fi
 if [ -z "${VPS_RELEASE_B_DIGEST:-}" ] && [ "${VPS_SKIP_PROVISION:-0}" != 1 ] &&
    { selected update || selected post-update; }; then
   release_branch=${release_branch:-$(git -C "$repo_root" symbolic-ref --short HEAD 2>/dev/null || echo main)}
-  promotion=$(vps_promote_candidate "$repo_root" "${VPS_RELEASE_A_DIGEST:-}" "$release_branch") || exit 1
-  VPS_RELEASE_B_DIGEST=$(jq -er '.digest' <<<"$promotion")
-  VPS_RELEASE_B_SOURCE_COMMIT=$(jq -er '.sourceCommit' <<<"$promotion")
-  VPS_RELEASE_B_SEQUENCE=$(jq -er '.sequence' <<<"$promotion")
-  VPS_RELEASE_BRANCH=$release_branch
-  result_set_json releaseB "$promotion"
+  # A promotion failure (e.g. the only buildable candidate is byte-identical
+  # to the box we just provisioned -- expected right after a fresh channel
+  # repair) must not abort the whole run: it only means update/post-update
+  # have nothing to test this time. Their own phase_precondition already
+  # turns an unset VPS_RELEASE_B_DIGEST into a clean "skipped", so every
+  # other phase still runs.
+  if promotion=$(vps_promote_candidate "$repo_root" "${VPS_RELEASE_A_DIGEST:-}" "$release_branch"); then
+    VPS_RELEASE_B_DIGEST=$(jq -er '.digest' <<<"$promotion")
+    VPS_RELEASE_B_SOURCE_COMMIT=$(jq -er '.sourceCommit' <<<"$promotion")
+    VPS_RELEASE_B_SEQUENCE=$(jq -er '.sequence' <<<"$promotion")
+    VPS_RELEASE_BRANCH=$release_branch
+    result_set_json releaseB "$promotion"
+  else
+    echo "VPS SUITE: no release B candidate available; update/post-update will skip" >&2
+  fi
 fi
 
 run_status=failed
