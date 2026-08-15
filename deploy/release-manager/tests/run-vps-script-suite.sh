@@ -158,8 +158,21 @@ nixos_restart() {
 }
 
 nixos_update() {
-  ssh_base 'set -eu; nixos-rebuild switch --upgrade'
+  generation_before=$(ssh_base 'readlink -f /nix/var/nix/profiles/system')
+  local rebuild_output
+  if rebuild_output=$(ssh_base 'set -eu; nixos-rebuild switch --upgrade -I nixos-config=/etc/nixos/configuration.nix' 2>&1); then
+    printf '%s\n' "$rebuild_output"
+  else
+    printf '%s\n' "$rebuild_output" >&2
+    return 1
+  fi
+  if grep -Eqi '(^|[[:space:]])error:|returned non-zero exit status' <<<"$rebuild_output"; then
+    echo "nixos-rebuild reported an error despite returning success" >&2
+    return 1
+  fi
   wait_for_https
+  generation_after=$(ssh_base 'readlink -f /nix/var/nix/profiles/system')
+  [[ -n "$generation_before" && -n "$generation_after" ]]
   ssh_base 'set -eu; test "$(systemctl is-system-running 2>/dev/null || true)" = running'
 }
 
