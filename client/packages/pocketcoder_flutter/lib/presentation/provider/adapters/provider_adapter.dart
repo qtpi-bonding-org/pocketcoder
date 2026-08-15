@@ -287,12 +287,13 @@ class ProviderView extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Delete',
-            icon: Icon(
-              Icons.delete_outline,
-              size: 16,
-              color: colors.error,
+          TextButton(
+            child: Text(
+              'DELETE',
+              style: TextStyle(
+                color: colors.error,
+                fontWeight: AppFonts.heavy,
+              ),
             ),
             onPressed: () => onDelete(key.id),
           ),
@@ -352,4 +353,3 @@ class ProviderView extends StatelessWidget {
     acpTransport: HarnesseAcpTransport.unknown,
   );
 }
-

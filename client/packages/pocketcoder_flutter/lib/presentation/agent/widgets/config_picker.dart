@@ -37,12 +37,12 @@ class _ConfigPickerState extends State<ConfigPicker> {
               child: Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
                   child: Row(children: [
-                    Icon(
-                        _expanded
-                            ? Icons.keyboard_arrow_down
-                            : Icons.keyboard_arrow_right,
-                        color: colors.onSurface.withValues(alpha: .5),
-                        size: 16),
+                    Text(
+                        _expanded ? '[v]' : '[>]',
+                        style: TextStyle(
+                            color: colors.onSurface.withValues(alpha: .5),
+                            fontFamily: AppFonts.bodyFamily,
+                            fontSize: AppSizes.fontTiny)),
                     Text(context.l10n.agentConfigLabel,
                         style: TextStyle(
                             color: colors.onSurface.withValues(alpha: .5),

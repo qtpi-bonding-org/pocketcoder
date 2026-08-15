@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_input.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 
-/// The chat prompt and its transient thinking indicator.
+/// The chat prompt at the bottom of the terminal transcript.
 class ChatComposer extends StatelessWidget {
   const ChatComposer({
     super.key,
@@ -24,21 +23,12 @@ class ChatComposer extends StatelessWidget {
       top: false,
       child: Padding(
         padding: EdgeInsets.all(AppSizes.space),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isLoading) ...[
-              const TerminalLoadingIndicator(),
-              VSpace.x1,
-            ],
-            TerminalInput(
-              controller: controller,
-              prompt: r'$',
-              enabled: enabled,
-              showSendButton: true,
-              onSubmitted: onSubmitted,
-            ),
-          ],
+        child: TerminalInput(
+          controller: controller,
+          prompt: 'root@device \$',
+          enabled: enabled,
+          showSendButton: true,
+          onSubmitted: onSubmitted,
         ),
       ),
     );

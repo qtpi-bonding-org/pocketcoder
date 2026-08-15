@@ -276,7 +276,7 @@ class ProviderHarnessPicker extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(Icons.arrow_drop_down, color: colors.onSurface),
+                Text('[v]', style: TextStyle(color: colors.onSurface)),
               ],
             ),
           ),

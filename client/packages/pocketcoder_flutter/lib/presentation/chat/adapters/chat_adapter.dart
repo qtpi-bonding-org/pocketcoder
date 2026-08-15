@@ -70,9 +70,9 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                   {optionId, cancelled = false}) {
                 final cubit = context.read<PermissionCubit>();
                 if (cancelled || optionId == null) {
-                  cubit.deny();
+                  cubit.deny(requestId: requestId);
                 } else {
-                  cubit.authorize(optionId);
+                  cubit.authorize(optionId, requestId: requestId);
                 }
               },
               onElicitationRespond: (requestId, response) {

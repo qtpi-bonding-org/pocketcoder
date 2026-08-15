@@ -28,6 +28,7 @@ class OnboardingView extends StatelessWidget {
               constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AsciiLogo(
                       text: AppAscii.pocketCoderLogo,

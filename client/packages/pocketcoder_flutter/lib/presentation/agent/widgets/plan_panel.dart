@@ -43,10 +43,13 @@ class PlanPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.checklist_outlined,
-                color: terminalColors.attention,
-                size: 20,
+              Text(
+                '[PLAN]',
+                style: TextStyle(
+                  color: terminalColors.attention,
+                  fontSize: AppSizes.fontTiny,
+                  fontWeight: AppFonts.heavy,
+                ),
               ),
               HSpace.x2,
               Expanded(

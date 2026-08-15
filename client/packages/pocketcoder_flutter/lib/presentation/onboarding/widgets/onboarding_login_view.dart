@@ -67,10 +67,6 @@ class _OnboardingLoginViewState extends State<OnboardingLoginView> {
       actions: [
         TerminalAction(label: context.l10n.actionBack, onTap: widget.onBack),
         TerminalAction(
-          label: context.l10n.onboardingDeploy,
-          onTap: widget.onDeploy,
-        ),
-        TerminalAction(
           label: loading
               ? context.l10n.onboardingServerConnecting
               : context.l10n.onboardingLogin,

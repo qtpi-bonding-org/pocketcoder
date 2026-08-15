@@ -29,6 +29,40 @@ class TerminalRoleLabel extends StatelessWidget {
   }
 }
 
+/// A single terminal transcript line with a semantic speaker prefix.
+class TerminalTranscriptLine extends StatelessWidget {
+  const TerminalTranscriptLine({
+    super.key,
+    required this.prefix,
+    required this.child,
+    required this.color,
+  });
+
+  final String prefix;
+  final Widget child;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          prefix,
+          style: TextStyle(
+            color: color,
+            fontFamily: AppFonts.bodyFamily,
+            package: 'pocketcoder_flutter',
+            fontSize: AppSizes.fontStandard,
+            fontWeight: AppFonts.medium,
+          ),
+        ),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
 /// Shared terminal frame for a conversation message.
 ///
 /// The message body remains caller-owned so live AG-UI messages can keep
@@ -41,12 +75,14 @@ class TerminalConversationFrame extends StatelessWidget {
     required this.child,
     this.roleLabel,
     this.isReasoning = false,
+    this.showUserBorder = true,
   });
 
   final TerminalConversationSpeaker speaker;
   final Widget child;
   final String? roleLabel;
   final bool isReasoning;
+  final bool showUserBorder;
 
   @override
   Widget build(BuildContext context) {
@@ -71,21 +107,34 @@ class TerminalConversationFrame extends StatelessWidget {
       ],
     );
 
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-        padding: EdgeInsets.all(AppSizes.space),
-        decoration: isUser
-            ? BoxDecoration(
-                border: Border.all(
-                  color: terminalColors.user.withValues(alpha: 0.45),
-                ),
-                color: colors.surfaceContainerHighest.withValues(alpha: 0.2),
-              )
-            : null,
-        child: content,
-      ),
+    final frame = Container(
+      constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+      padding: EdgeInsets.all(AppSizes.space),
+      decoration: isUser && showUserBorder
+          ? BoxDecoration(
+              border: Border.all(
+                color: terminalColors.user.withValues(alpha: 0.45),
+              ),
+              color: colors.surfaceContainerHighest.withValues(alpha: 0.2),
+            )
+          : null,
+      child: content,
+    );
+
+    // Every live-chat turn belongs to one left-aligned terminal transcript.
+    // Poco messages still occupy a stable width before streamed text starts,
+    // but neither speaker should float to the right or center as content
+    // changes.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth.clamp(0.0, AppSizes.contentMaxWidth)
+            : AppSizes.contentMaxWidth;
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(width: width.toDouble(), child: frame),
+        );
+      },
     );
   }
 }
@@ -102,12 +151,14 @@ class TerminalConversationTurn extends StatelessWidget {
     required this.message,
     this.sequence = const [],
     this.history = const [],
+    this.showPocoFace = true,
   });
 
   final TerminalConversationSpeaker speaker;
   final String message;
   final List<(String, int)> sequence;
   final List<String> history;
+  final bool showPocoFace;
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +170,7 @@ class TerminalConversationTurn extends StatelessWidget {
           sequence: sequence,
           history: history,
           pocoSize: AppSizes.fontLarge,
+          showFace: showPocoFace,
         ),
       );
     }

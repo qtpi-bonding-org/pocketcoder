@@ -1997,6 +1997,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSignInTitle => 'SET UP YOUR SIGN-IN';
 
   @override
+  String get onboardingDeployCredentialsPoco =>
+      'These are the administrator credentials for PocketCoder on the server we are about to provision.\n\nThey are separate from your Linode password. I will use them to finish setup, and you will use them to sign in to PocketCoder when the server is ready. Keep them safe.';
+
+  @override
   String get onboardingProviderPoco =>
       'Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.';
 

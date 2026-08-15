@@ -164,10 +164,12 @@ class SchedulerView extends StatelessWidget {
                 ),
               ),
               HSpace.x2,
-              TerminalButton(
-                label: context.l10n.schedulerDeleteButton,
-                color: context.colorScheme.error,
-                onTap: () => onDelete(schedule.id),
+              Expanded(
+                child: TerminalButton(
+                  label: context.l10n.schedulerDeleteButton,
+                  color: context.colorScheme.error,
+                  onTap: () => onDelete(schedule.id),
+                ),
               ),
             ],
           ),

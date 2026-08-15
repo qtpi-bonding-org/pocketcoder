@@ -55,6 +55,7 @@ class _HarnessAuthorizationViewState extends State<HarnessAuthorizationView> {
           .onboardingHarnessLoginTitle(widget.provider.toUpperCase()),
       activePillar: NavPillar.configure,
       showBack: true,
+      showNavigation: false,
       body: _body(context),
     );
   }

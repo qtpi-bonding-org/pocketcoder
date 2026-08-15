@@ -11,6 +11,8 @@ import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dar
 import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
+import 'package:pocketcoder_flutter/presentation/chat/thinking_block.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 
@@ -231,6 +233,22 @@ class _ChatViewState extends State<ChatView> {
             child: Column(
               children: [
                 if (outcomeBanner != null) outcomeBanner,
+                if (widget.isLoading &&
+                    _latestReasoningId(widget.conversation.timeline) == null)
+                  const Center(
+                    child: ThinkingBlock(
+                      text: 'Working through the request.',
+                      isLatest: true,
+                      isStreaming: true,
+                    ),
+                  ),
+                if (widget.conversation.timeline.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSizes.space),
+                    child: Center(
+                      child: PocoFace(fontSize: AppSizes.fontLarge),
+                    ),
+                  ),
                 Expanded(
                   child: Stack(
                     children: [
@@ -238,6 +256,7 @@ class _ChatViewState extends State<ChatView> {
                         conversation: widget.conversation,
                         currentUserId: 'user',
                         onSendMessage: widget.onSendPrompt,
+                        composerBuilder: (_) => const SizedBox.shrink(),
                         theme: ag_ui_widgets.ChatTheme.fromThemeData(
                             Theme.of(context)),
                         textMessageBuilder: builders.textMessageBuilder,
@@ -247,12 +266,6 @@ class _ChatViewState extends State<ChatView> {
                         permissionBuilder: builders.permissionBuilder,
                         elicitationBuilder: builders.elicitationBuilder,
                         toolRequestBuilder: builders.toolRequestBuilder,
-                        composerBuilder: (context) => ChatComposer(
-                          controller: _inputController,
-                          enabled: !widget.isLoading && widget.chatId != null,
-                          isLoading: widget.isLoading,
-                          onSubmitted: _submit,
-                        ),
                       ),
                       if (widget.conversation.timeline.isEmpty)
                         IgnorePointer(
@@ -270,6 +283,12 @@ class _ChatViewState extends State<ChatView> {
                         ),
                     ],
                   ),
+                ),
+                ChatComposer(
+                  controller: _inputController,
+                  enabled: !widget.isLoading && widget.chatId != null,
+                  isLoading: widget.isLoading,
+                  onSubmitted: _submit,
                 ),
               ],
             ),
