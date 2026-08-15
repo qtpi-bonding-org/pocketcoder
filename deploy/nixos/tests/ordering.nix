@@ -4,10 +4,17 @@ pkgs.testers.runNixOSTest {
   name = "pocketcoder-caddy-ordering";
 
   nodes.machine = { ... }: {
-    # bootstrap.nix receives this from the real flake's specialArgs. Supply
-    # the development default explicitly in the standalone ordering test.
+    # bootstrap.nix and caddy.nix each receive these from configuration.nix's
+    # own manual `import ./caddy.nix { ... }` / `import ./bootstrap.nix { ... }`
+    # calls in the real system. This standalone test instead loads both
+    # directly via `imports`, which goes through NixOS's own module-arg
+    # injection rather than a plain Nix function call -- that machinery does
+    # not apply a module function's own `?` default for an argument it
+    # doesn't otherwise recognize, so every such argument must be supplied
+    # explicitly here.
     _module.args.sourceCommit = "main";
     _module.args.releaseManager = self.packages.${system}.release-manager;
+    _module.args.caddyTemplate = ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
     imports = [ ../caddy.nix ../bootstrap.nix ];
     systemd.services.detect-public-ip.script = pkgs.lib.mkForce ''
       mkdir -p /etc/caddy /etc/pocketcoder
