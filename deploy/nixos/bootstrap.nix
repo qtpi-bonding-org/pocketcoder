@@ -1,4 +1,4 @@
-{ config, pkgs, sourceCommit ? "main", releaseManager
+{ config, pkgs, sourceCommit ? "main", releaseBranch ? "main", releaseManager
 , bootstrapScript ? ./bootstrap.sh, statusScript ? ./status.sh, ... }:
 
 {
@@ -9,6 +9,7 @@
     wants = [ "network-online.target" ];
     requires = [ "docker.service" ];
     environment.POCKETCODER_REF = sourceCommit;
+    environment.POCKETCODER_GITHUB_WORKFLOW_BRANCH = releaseBranch;
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -38,6 +39,7 @@
     wants = [ "network-online.target" ];
     unitConfig.ConditionPathExists = "/opt/pocketcoder/current/bin/pocketcoder-release";
     serviceConfig.Type = "oneshot";
+    environment.POCKETCODER_GITHUB_WORKFLOW_BRANCH = releaseBranch;
     script = ''
       /opt/pocketcoder/current/bin/pocketcoder-release check-metadata
     '';
