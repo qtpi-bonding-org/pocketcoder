@@ -153,3 +153,56 @@ EOF
 [REDACTED]')
   printf '%s' "${scrubbed:0:${VPS_DETAIL_CAP:-2000}}"
 }
+
+boot_id_now() {
+  ssh_exec 30 'cat /proc/sys/kernel/random/boot_id'
+}
+
+container_started_at() {
+  ssh_exec 30 "docker inspect --format '{{.State.StartedAt}}' $1"
+}
+
+container_health() {
+  ssh_exec 30 "docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' $1"
+}
+
+# The services a healthy NixOS deployment always runs. Verified against the
+# live box; optional profiles (ntfy, tailscale, caddy-in-compose) excluded.
+expected_containers() {
+  cat <<'EOF'
+pocketcoder-pocketbase
+pocketcoder-memory
+pocketcoder-mcp-gateway
+pocketcoder-sqlpage
+pocketcoder-docker-proxy-mcp
+pocketcoder-docker-proxy-write
+EOF
+}
+
+# Reachability before DNS settles: pin the hostname to the known IP.
+https_probe_pinned() {
+  local hostname=$1 ip=$2 path=$3
+  curl --fail --silent --show-error --connect-timeout 5 --max-time 15 \
+    --resolve "$hostname:443:$ip" "https://$hostname$path"
+}
+
+# The real edge: ordinary DNS, real certificate validation, no --insecure.
+https_probe_public() {
+  local hostname=$1 path=$2
+  curl --fail --silent --show-error --connect-timeout 5 --max-time 15 \
+    "https://$hostname$path"
+}
+
+tls_expiry_days() {
+  local hostname=$1 ip=$2 end_date end_epoch
+  end_date=$(echo | openssl s_client -connect "$ip:443" -servername "$hostname" 2>/dev/null |
+    openssl x509 -noout -enddate 2>/dev/null | sed 's/^notAfter=//')
+
+  [ -n "$end_date" ] || return 1
+  if date -j >/dev/null 2>&1; then
+    end_epoch=$(date -j -f '%b %d %T %Y %Z' "$end_date" +%s 2>/dev/null) || return 1
+  else
+    end_epoch=$(date -d "$end_date" +%s 2>/dev/null) || return 1
+  fi
+  echo $(( (end_epoch - $(date +%s)) / 86400 ))
+}
