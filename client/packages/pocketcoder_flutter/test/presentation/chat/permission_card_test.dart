@@ -127,6 +127,7 @@ void main() {
               item: PermissionRequestTimelineItem(
                 requestId: 'req-1',
                 toolTitle: 'run shell',
+                order: const OrderKey(1),
                 options: [
                   PermissionOption(
                     optionId: 'allow-once',
@@ -181,6 +182,7 @@ void main() {
             },
             item: PermissionRequestTimelineItem(
               requestId: 'req-2',
+              order: const OrderKey(1),
               options: [
                 PermissionOption(
                   optionId: 'allow-once',

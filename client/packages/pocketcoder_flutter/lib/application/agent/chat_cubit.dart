@@ -27,6 +27,7 @@ class ChatCubit extends AppCubit<ChatState> {
   StreamSubscription<void>? _recoverySub;
   Completer<void>? _retryWake;
   int _generation = 0;
+  String? _lastPrompt;
 
   @override
   Future<void> close() {
@@ -161,12 +162,19 @@ class ChatCubit extends AppCubit<ChatState> {
       logWarning('🤖 [ChatCubit] sendPrompt called before open()');
       return;
     }
+    _lastPrompt = text;
     await tryOperation(() async {
       await transport.sendMessage(text);
       return state.copyWith(
           status: UiFlowStatus.success,
           lastOperation: AgentChatOperation.sendPrompt);
     });
+  }
+
+  Future<void> retryLastPrompt() async {
+    final prompt = _lastPrompt;
+    if (prompt == null || prompt.isEmpty) return;
+    await sendPrompt(prompt);
   }
 
   Future<void> cancel() async {
