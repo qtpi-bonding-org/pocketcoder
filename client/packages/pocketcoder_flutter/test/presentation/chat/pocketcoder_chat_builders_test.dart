@@ -64,6 +64,7 @@ void main() {
               kind: ChatMessageKind.text,
               role: 'user',
               text: 'hi',
+              order: OrderKey(1),
             ),
           ]),
         );
@@ -91,6 +92,7 @@ void main() {
               requestId: 'p1',
               toolTitle: 'bash',
               options: [],
+              order: OrderKey(1),
             ),
           ]),
         );
@@ -120,6 +122,7 @@ void main() {
               requestId: 'e1',
               message: 'hi',
               mode: 'form',
+              order: OrderKey(1),
             ),
           ]),
         );
