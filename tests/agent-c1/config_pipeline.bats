@@ -43,7 +43,7 @@ goose_config_dir() {
   [ "$seen" = "$sentinel" ]
 }
 
-@test "keys.env is delivered to the entrypoint's source path (§13.2)" {
+@test "Goose config path is inside the shared config volume (§13.2)" {
   local cfg_dir
   cfg_dir=$(goose_config_dir)
   [ -n "$cfg_dir" ]
@@ -55,10 +55,9 @@ goose_config_dir() {
   path_root=$(docker exec "$GOOSE_CONTAINER" printenv GOOSE_PATH_ROOT)
   [ "$cfg_dir" = "${path_root}/config" ]
 
-  # PocketBase's OnServe render always writes keys.env (empty when there are no
-  # provider_keys rows). It must be present and goose-owned at that path.
-  run docker exec "$GOOSE_CONTAINER" test -r "$cfg_dir/keys.env"
-  [ "$status" -eq 0 ]
+  # Goose is provisioned dynamically now; provider keys belong to the
+  # user-owned harness rather than the fixed control-plane Goose container.
+  [ "$cfg_dir" = "/workspace/.pocketcoder_auth/config" ]
 }
 
 @test "a rendered config.yaml is picked up by Goose (§13.1 end-to-end)" {

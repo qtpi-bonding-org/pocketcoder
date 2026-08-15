@@ -9,7 +9,7 @@ for name in GOOSE_SERVER__SECRET_KEY MCP_GATEWAY_AUTH_TOKEN AGENT_TEST_EMAIL AGE
 done
 
 docker compose -f docker-compose.yml -f docker-compose.agent-test.yml \
-  --profile agent-test up -d --build goose pocketbase mcp-gateway
+  --profile agent-test up -d --build docker-socket-proxy-write goose pocketbase mcp-gateway
 docker compose -f docker-compose.yml -f docker-compose.agent-test.yml \
   --profile agent-test run --rm agent-c1-test \
   --tap /tests/agent-c1/config_pipeline.bats \

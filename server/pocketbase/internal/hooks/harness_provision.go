@@ -411,6 +411,17 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 		if values["__model"] == "" {
 			values["__model"] = "MiniMax-M2.5"
 		}
+		// The opt-in agent-test Compose stack provisions Goose dynamically from
+		// PocketBase, rather than reusing the fixed Goose fixture container.
+		// Let that stack supply its deliberately test-scoped provider override;
+		// normal deployments continue to use PocketBase provider-key records.
+		if testProvider := os.Getenv("POCKETCODER_AGENT_TEST_PROVIDER"); testProvider != "" {
+			values["__provider"] = testProvider
+			if testModel := os.Getenv("POCKETCODER_AGENT_TEST_MODEL"); testModel != "" {
+				values["__model"] = testModel
+			}
+			values["OPENROUTER_API_KEY"] = os.Getenv("POCKETCODER_AGENT_TEST_API_KEY")
+		}
 	}
 	// Only OpenCode can run with the local Ollama provider and no cloud key.
 	// Keep missing keys fatal for the Claude/Codex harnesses so their existing
