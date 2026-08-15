@@ -26,6 +26,11 @@ if [ "${POCKETCODER_VPS_SCRIPT_TEST:-}" != 1 ]; then
   exit 64
 fi
 
+. "$vps_dir/lib/guards.sh"
+repo_root=$(CDPATH= cd -- "$vps_dir/../../../.." && pwd)
+
+guard_required_commands curl jq ssh ssh-keyscan git openssl || exit 64
+
 handoff=
 run_dir=
 only=
@@ -44,6 +49,11 @@ while [ $# -gt 0 ]; do
     *) usage ;;
   esac
 done
+
+if [ -z "$handoff" ] && [ "${VPS_SKIP_PROVISION:-0}" != 1 ]; then
+  guard_clean_checkout "$repo_root" || exit 64
+  release_branch=$(guard_release_branch "$repo_root") || exit 64
+fi
 
 phase_dir=${VPS_PHASE_DIR:-$vps_dir/phases}
 run_dir=${run_dir:-${TMPDIR:-/tmp}/pocketcoder-vps-$(date -u '+%Y%m%dT%H%M%SZ')-$$}
