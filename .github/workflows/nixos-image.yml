@@ -156,7 +156,7 @@ jobs:
   # and split Docker artifacts exist. This job cannot move public pointers.
   candidate:
     needs: [build, release-artifacts]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
