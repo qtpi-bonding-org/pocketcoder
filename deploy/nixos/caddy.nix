@@ -1,8 +1,5 @@
-{ config, pkgs, ... }:
+{ config, pkgs, caddyTemplate ? ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template, ... }:
 
-let
-  caddyTemplate = ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
-in
 {
 
   # POCO:BEGIN caddy-address
