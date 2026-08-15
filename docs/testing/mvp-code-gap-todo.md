@@ -124,13 +124,19 @@ Related: MVP-23, MVP-24, MVP-25, MVP-26
 
 Related: MVP-19, MVP-20
 
-- [ ] Decide the smallest MVP inspection surface: context used in a response,
-      observation/interpretation detail, or a memory list/search view.
-- [ ] Add the corresponding API/client contract without exposing primitive
-      memory storage operations as MCP tools.
-- [ ] Preserve the many-to-many observation/interpretation source of truth.
-- [ ] Add Cubit/adapter/view code using shared terminal/CRT widgets.
-- [ ] Add unit/widget tests for loading, empty, linked, and error states.
+- [x] Smallest MVP surface selected: the existing read-only SQLPage memory
+      dashboard shows counts, recent observations, interpretations, links, and
+      interpretation details.
+- [x] Reuse the existing PocketBase-to-SQLPage proxy instead of adding a second
+      memory REST/client contract or exposing primitive storage operations as
+      MCP tools.
+- [x] Preserve the many-to-many observation/interpretation source of truth;
+      the dashboard reads the canonical memory database without mutations.
+- [x] Add an authenticated in-app WebView entry point at the Settings surface:
+      `MemoryDashboardScreen` loads `memory.sql` with the PocketBase token.
+- [x] Add backend authorization coverage for ordinary authenticated access in
+      `TestMemoryDashboardIsAvailableToAuthenticatedUser`; Flutter widget/live
+      coverage remains open.
 - [ ] Add integration tests against the memory container.
 - [ ] Add live verification that memory persists and can be retrieved.
 

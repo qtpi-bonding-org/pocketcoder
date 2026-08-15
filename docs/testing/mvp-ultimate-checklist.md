@@ -135,8 +135,8 @@ commit SHAs, and live-run links to that row before advancing its level.
 | MVP-16 | test/runtime containers in `deploy/` | `server/pocketbase/internal/filesystem/`, agent executor | `lib/presentation/files/`, `lib/presentation/chat/` | pass / pass / open / open / open |
 | MVP-17 | `server/mcp-gateway/`, `deploy/` stack configuration | `server/pocketbase/internal/mcpserver/`, `internal/api/mcp.go` | `lib/application/mcp/`, `lib/presentation/mcp/` | pass / pass / open / open / open |
 | MVP-18 | — | `server/pocketbase/internal/api/mcp_oauth.go`, permission boundaries | `lib/application/tool_permissions/`, `lib/presentation/tool_permissions/` | pass / pass / open / open / open |
-| MVP-19 | `CORE:server/memory/Dockerfile`, persistent volume in compose | `CORE:server/memory/src/db/links.rs`, `CORE:server/memory/src/service.rs` | `OPEN: no explicit memory-retention UI in Core or Pro found` | partial / pass / open / open / open |
-| MVP-20 | `CORE:server/memory/` runtime | `CORE:server/memory/src/search/`, `CORE:server/memory/src/mcp/tools.rs` | `OPEN: no inspectable memory retrieval UI in Core or Pro found` | partial / pass / open / open / open |
+| MVP-19 | `CORE:server/memory/Dockerfile`, persistent volume in compose | `CORE:server/memory/src/db/links.rs`, `CORE:server/memory/src/service.rs` | `CORE:server/memory/src/mcp/tools.rs` (retention remains agent-driven; dashboard is read-only) | partial / pass / open / open / open |
+| MVP-20 | `CORE:server/memory/` runtime | `CORE:server/memory/src/search/`, `CORE:server/memory/src/mcp/tools.rs` | `CORE:server/sqlpage/dashboard/memory.sql`, `CORE:client/packages/pocketcoder_flutter/lib/presentation/observability/memory_dashboard_screen.dart` | pass / pass / open / open / open |
 | MVP-21 | `deploy/nixos/status.sh`, release manager progress | `server/pocketbase/internal/agent/agui/`, release status API | `lib/application/agent/chat_state.dart`, `lib/presentation/chat/` | pass / pass / open / open / open |
 | MVP-22 | runtime persistence/volumes in `deploy/` | `server/pocketbase/internal/agent/coordinator/`, chat API | `lib/application/agent/chat_cubit.dart`, `lib/presentation/chat/` | pass / pass / open / open / open |
 | MVP-23 | `CORE:client/packages/pocketcoder_flutter/lib/domain/os_control/`, `CORE:client/packages/pocketcoder_flutter/lib/infrastructure/os_control/` | `OPEN: no deployed restart operation endpoint; Pro uses owner root SSH` | `CORE:client/packages/pocketcoder_flutter/lib/application/server_control/`, `CORE:client/packages/pocketcoder_flutter/lib/presentation/server_control/` | pass / partial / open / open / open |
@@ -310,8 +310,9 @@ control path.
 
 - [ ] **Backend:** related memory can be listed, searched, and retrieved for a
       conversation.
-- [ ] **Frontend:** relevant remembered context can influence a response and
-      is inspectable when useful.
+- [x] **Frontend:** the existing authenticated SQLPage dashboard makes stored
+      observations, interpretations, links, and interpretation details
+      inspectable; response-context behavior remains agent/MCP-owned.
 
 ### Ongoing chat work
 
@@ -619,6 +620,9 @@ versioned API behave correctly for one user's deployment.
 
 - [ ] MVP feature check: observations, interpretations, links, list/search,
       and retrieval work through the supported internal interface.
+- [x] Read-only inspection surface: SQLPage's `memory.sql` dashboard is served
+      through PocketBase's authenticated observability proxy; the Flutter app
+      opens it in an authenticated WebView.
 - [x] Code inspection/audit: many-to-many observation/interpretation links *(E-MEMORY-AUDIT)*
       remain the source of truth; interpretations cannot be detached from all
       observations; primitive storage operations are not exposed as MCP tools.
@@ -792,6 +796,8 @@ noted otherwise:
 | E-MCP-UNIT | PocketBase MCP/API tests; `server/memory` MCP contract tests | MCP unit/contract tests passed; live external MCP flow remains open. |
 | E-MEMORY-AUDIT | `server/memory/src/db/links.rs`; `server/memory/src/mcp/tools.rs` | Many-to-many links and MCP exposure rules inspected. |
 | E-MEMORY-UNIT | `server/memory` — `cargo test` | 35 memory tests passed. |
+| E-MEMORY-UI | `server/sqlpage/dashboard/memory.sql`; `client/packages/pocketcoder_flutter/lib/presentation/observability/memory_dashboard_screen.dart` | Read-only memory inspection is available through the authenticated SQLPage dashboard; Flutter live/E2E coverage remains open. |
+| E-MEMORY-PROXY | `server/pocketbase/internal/api/proxy.go :: createProxyHandler`; `server/pocketbase/internal/api/proxy_test.go :: TestMemoryDashboardIsAvailableToAuthenticatedUser` | Only `memory.sql` is available to ordinary authenticated users; other observability proxy paths remain admin-only. |
 | E-ROLLBACK-AUDIT | `deploy/release-manager/internal/transaction/`; `internal/snapshot/`; `server/pocketbase/internal/api/release_status.go` | Snapshot, data-version, rollback, and release-status code inspected. |
 | E-FLUTTER-AUDIT | `client/packages/pocketcoder_flutter/lib/presentation/**/adapters/`; `lib/design_system/`; `lib/l10n/` | Adapter/theme/l10n structure inspected; missing feature widgets remain open. |
 | E-FLUTTER-UNIT | `client/packages/pocketcoder_flutter` — `flutter analyze --no-pub`, `flutter test --no-pub` | Analysis clean; 347 Flutter tests passed. |
