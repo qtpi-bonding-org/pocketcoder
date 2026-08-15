@@ -1,4 +1,5 @@
-{ config, pkgs, sourceCommit ? "main", releaseManager, ... }:
+{ config, pkgs, sourceCommit ? "main", releaseManager
+, bootstrapScript ? ./bootstrap.sh, statusScript ? ./status.sh, ... }:
 
 {
   systemd.services.pocketcoder-bootstrap = {
@@ -26,10 +27,10 @@
       config.virtualisation.docker.package
       releaseManager
     ];
-    script = builtins.readFile ./bootstrap.sh;
+    script = builtins.readFile bootstrapScript;
   };
 
-  environment.etc."pocketcoder/status.sh".source = ./status.sh;
+  environment.etc."pocketcoder/status.sh".source = statusScript;
 
   systemd.services.pocketcoder-release-metadata = {
     description = "Check GitHub-attested PocketCoder release metadata";
