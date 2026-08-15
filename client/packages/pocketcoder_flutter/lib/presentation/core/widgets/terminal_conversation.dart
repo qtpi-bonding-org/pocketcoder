@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 

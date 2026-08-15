@@ -569,8 +569,8 @@ versioned API behave correctly for one user's deployment.
 - [x] Code inspection/audit: API boundaries use the current versioned routes, *(E-API-BOUNDARY)*
       generated contracts, and explicit dependency/runtime interfaces.
 - [x] Unit tests: Go package tests and API boundary tests are green. *(E-PB-UNIT)*
-- [ ] Integration tests: generated-contract, schema/model generation, and
-      API-flow Bats tests are green.
+- [x] Integration tests: generated-contract and schema/model generation checks
+      are green with a clean generated diff; API-flow Bats tests are green.
 - [ ] Live test: a provisioned deployment exposes healthy PocketBase APIs over
       HTTPS and reports the expected compatibility/release status.
 - [ ] E2E test: the Flutter app authenticates and completes the core user
@@ -753,23 +753,37 @@ Checked on 2026-08-14:
       *(E-PRO-UI-TESTS)*
 - [x] Code-feature audit: the unified five-operation ServerControl contract,
       reviewed root-SSH mappings, terminal UI, and Pro secure-storage wiring
-      are present. Unit/widget, integration, live, and E2E verification remain
-      open. *(E-PRO-CONTROLS)*
+      are present. Integration, live, and E2E verification remain open.
+      *(E-PRO-CONTROLS)*
+- [x] Core server-control Cubit, SSH service, and view tests passed: 13
+      targeted tests on 2026-08-14. *(E-SERVER-CONTROLS-UNIT)*
 - [x] `flutter test --no-pub` passes in `client/packages/pocketcoder_flutter`
-      (347 tests).
-- [x] `flutter analyze --no-pub` reports no issues.
+      (350 tests, latest pass).
+- [x] `flutter analyze --no-pub` reports no issues after the latest fixes.
+- [x] Pro `flutter test --no-pub` passes (64 tests; two billed live tests
+      skipped by explicit environment gates).
 - [x] `dart test packages/pocketcoder_api` passes (43 tests).
 - [x] Release schema and release contract tests pass with the pinned
       `check-jsonschema` dependency.
 - [x] `git diff --check` passes.
-- [ ] Docker release integration harness: blocked in this environment because
-      the sandbox cannot access the Docker daemon socket; no Docker Desktop
-      state was changed.
-- [ ] API-flow Bats and deployed-stack integration tests: not run in this pass.
+- [x] Release-manager Docker integration passed, including successful
+      migration, failed-migration snapshot restore, idempotency, concurrency,
+      and recovery-phase cases; its temporary fixtures were cleaned up.
+- [x] Containerized API-flow Bats passed all 10 tests through
+      `tests/api-flows/run.sh`; the test runner built successfully and the
+      PocketBase dependency remained healthy.
 - [ ] Real Flutter iOS/Android E2E: not run; requires the user's simulator or
       device session and the live deployment.
 - [x] Real NixOS provision/deploy and release-manager upgrade evidence remains
       recorded above.
+- [x] PocketBase `go test ./...`, Memory `cargo test`, and the pinned release
+      contract test passed in this verification pass.
+- [x] Local live PocketBase checks passed: health 200, compatibility schema/API
+      version 1, and authenticated release-status schema 1.
+- [x] Pocket Memory live MCP persistence/retrieval passed locally; the test
+      observation was removed afterward.
+- [ ] Server-control live checks require an authenticated real deployment; no
+      disruptive server operation was sent.
 
 ### Evidence index
 
@@ -800,9 +814,9 @@ noted otherwise:
 | E-MEMORY-PROXY | `server/pocketbase/internal/api/proxy.go :: createProxyHandler`; `server/pocketbase/internal/api/proxy_test.go :: TestMemoryDashboardIsAvailableToAuthenticatedUser` | Only `memory.sql` is available to ordinary authenticated users; other observability proxy paths remain admin-only. |
 | E-ROLLBACK-AUDIT | `deploy/release-manager/internal/transaction/`; `internal/snapshot/`; `server/pocketbase/internal/api/release_status.go` | Snapshot, data-version, rollback, and release-status code inspected. |
 | E-FLUTTER-AUDIT | `client/packages/pocketcoder_flutter/lib/presentation/**/adapters/`; `lib/design_system/`; `lib/l10n/` | Adapter/theme/l10n structure inspected; missing feature widgets remain open. |
-| E-FLUTTER-UNIT | `client/packages/pocketcoder_flutter` — `flutter analyze --no-pub`, `flutter test --no-pub` | Analysis clean; 347 Flutter tests passed. |
+| E-FLUTTER-UNIT | `client/packages/pocketcoder_flutter` — `flutter analyze --no-pub`, `flutter test --no-pub` | Analysis clean; 350 Flutter tests passed on 2026-08-14. |
 | E-FLUTTER-LIVE | Provision/deploy live evidence above | No separate frontend-only live test claimed. |
-| E-CHAT-UNIT | `client/packages/pocketcoder_flutter/test/presentation/chat/` | Chat/widget tests passed; shared conversation wiring remains open. |
+| E-CHAT-UNIT | `client/packages/pocketcoder_flutter/test/presentation/core/terminal_conversation_test.dart`; `test/presentation/chat/pocketcoder_chat_builders_test.dart`; `test/presentation/onboarding/onboarding_screen_test.dart` | Shared conversation, live-chat builder, and onboarding widget tests passed; integration/E2E remain open. |
 | E-CHAT-LIVE | Backend/live evidence above | No separate chat-only live test claimed. |
 | E-BILLING-AUDIT | `client/packages/pocketcoder_flutter/lib/presentation/billing/`; FOSS app boundary | Billing/FOSS code paths inspected; store E2E remains open. |
 | E-BILLING-UNIT | billing/paywall Flutter tests | Paywall and entitlement tests passed. |
@@ -812,3 +826,9 @@ noted otherwise:
 | E-CUBIT-FLOW | `CORE:client/packages/pocketcoder_flutter/pubspec.yaml`; `CORE:client/pubspec.yaml`; `PRO:client/packages/pocketcoder_pro/pubspec.yaml` | Core and Pro are aligned on `cubit_ui_flow` `1d31dce`; compatible `flutter_error_privserver` revision `dadb08a` is pinned so `AppCubit` compiles against the updated flow API. |
 | E-PRO-BILLING | `PRO:client/packages/pocketcoder_pro/lib/app.dart`; `PRO:client/packages/pocketcoder_pro/lib/infrastructure/billing/revenue_cat_package_mapper.dart`; `PRO:client/packages/pocketcoder_pro/test/infrastructure/billing/revenue_cat_package_mapper_test.dart` | Pro RevenueCat configuration and package mapping inspected; production/store E2E remains open. |
 | E-PRO-CONTROLS | `CORE:client/packages/pocketcoder_flutter/lib/domain/server_control/`; `CORE:client/packages/pocketcoder_flutter/lib/application/server_control/`; `CORE:client/packages/pocketcoder_flutter/lib/infrastructure/os_control/`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/server_control/`; `PRO:client/packages/pocketcoder_pro/lib/app.dart`; `PRO:client/packages/pocketcoder_pro/lib/infrastructure/pocketcoder_update/aeroform_root_ssh_credentials_provider.dart` | Unified `SshServerControlService` exposes restart/update PocketCoder, restart/update NixOS, and save-backup operations. Pro retrieves the Aeroform-generated root SSH private key and pinned host identity from secure storage. Focused command-runner verification passed; disposable-deployment, live, and Flutter E2E verification remain open. |
+| E-SERVER-CONTROLS-UNIT | `CORE:client/packages/pocketcoder_flutter/test/application/server_control/server_control_cubit_test.dart`; `CORE:client/packages/pocketcoder_flutter/test/infrastructure/server_control/ssh_server_control_service_test.dart`; `CORE:client/packages/pocketcoder_flutter/test/presentation/server_control/server_control_view_test.dart` | 13 targeted server-control Cubit, service, and view tests passed on 2026-08-14; disposable-deployment, live, and Flutter E2E verification remain open. |
+| E-SHARED-CHAT-RECENT | `CORE:client/packages/pocketcoder_flutter/lib/presentation/core/widgets/terminal_conversation.dart`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/chat/pocketcoder_chat_builders.dart`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/onboarding/widgets/onboarding_view.dart` | Shared terminal frames are now used by both onboarding and live chat; relevant tests and the full Core 350-test suite passed. Integration/E2E remain open. |
+| E-SUITES-2026-08-14 | Core `flutter analyze --no-pub`, Core `flutter test --no-pub`, Pro `flutter test --no-pub`, PocketBase `go test ./...`, Memory `cargo test`, pinned release-contract test, and `deploy/release-manager/tests/run-docker-integration.sh` | Current code/unit/widget/contract/Docker integration evidence. Live server-control and Flutter E2E remain open. |
+| E-API-BATS-2026-08-14 | `tests/api-flows/run.sh` → `docker-compose.agent-test.yml` → `api-flow-test` | All 10 containerized API-flow tests passed with an ephemeral local user; no production credentials were used. |
+| E-LIVE-PB-2026-08-14 | `http://127.0.0.1:8090/api/health`; `/api/pocketcoder/v1/compatibility`; authenticated `/api/pocketcoder/v1/release/status` | Local live PocketBase checks passed: health 200 and schema/API version 1. Memory dashboard and SSH controls were not exercised. |
+| E-LIVE-MEMORY-2026-08-14 | `docker exec pocketcoder-memory` → `/health`, `/mcp` initialize, `memory_create_observation`, `memory_get`, `memory_delete_observation` | Pocket Memory reported ready with semantic search; MCP create/read persistence passed under a versioned identity; test data was removed. |

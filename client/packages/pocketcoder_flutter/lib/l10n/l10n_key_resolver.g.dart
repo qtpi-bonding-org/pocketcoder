@@ -109,6 +109,13 @@ class L10nKeyResolver {
       'chat.no.fields.requested' => _l10n.chatNoFieldsRequested,
       'chat.not.found' => _l10n.chatNotFound,
       'chat.poco.role' => _l10n.chatPocoRole,
+      'chat.run.outcome.cancelled.body' => _l10n.chatRunOutcomeCancelledBody,
+      'chat.run.outcome.cancelled.title' => _l10n.chatRunOutcomeCancelledTitle,
+      'chat.run.outcome.failed.body' => _l10n.chatRunOutcomeFailedBody,
+      'chat.run.outcome.failed.title' => _l10n.chatRunOutcomeFailedTitle,
+      'chat.run.outcome.interrupted.body' => _l10n.chatRunOutcomeInterruptedBody,
+      'chat.run.outcome.interrupted.retry' => _l10n.chatRunOutcomeInterruptedRetry,
+      'chat.run.outcome.interrupted.title' => _l10n.chatRunOutcomeInterruptedTitle,
       'chat.select.model.title' => _l10n.chatSelectModelTitle,
       'chat.send.failed' => _l10n.chatSendFailed,
       'chat.send.tooltip' => _l10n.chatSendTooltip,
@@ -570,6 +577,7 @@ class L10nKeyResolver {
       'pro.unavailable' => _l10n.proUnavailable,
       'pro.unavailable.body' => _l10n.proUnavailableBody,
       'pro.unlock.command' => _l10n.proUnlockCommand,
+      'provider.reauthentication.required' => _l10n.providerReauthenticationRequired,
       'provider.screen.add.key' => _l10n.providerScreenAddKey,
       'provider.screen.api.keys.section' => _l10n.providerScreenApiKeysSection,
       'provider.screen.default.badge' => _l10n.providerScreenDefaultBadge,
@@ -924,6 +932,13 @@ class L10nKeyResolver {
     'chat.no.fields.requested',
     'chat.not.found',
     'chat.poco.role',
+    'chat.run.outcome.cancelled.body',
+    'chat.run.outcome.cancelled.title',
+    'chat.run.outcome.failed.body',
+    'chat.run.outcome.failed.title',
+    'chat.run.outcome.interrupted.body',
+    'chat.run.outcome.interrupted.retry',
+    'chat.run.outcome.interrupted.title',
     'chat.select.model.title',
     'chat.send.failed',
     'chat.send.tooltip',
@@ -1436,6 +1451,7 @@ class L10nKeyResolver {
     'pro.unavailable',
     'pro.unavailable.body',
     'pro.unlock.command',
+    'provider.reauthentication.required',
     'provider.screen.add.key',
     'provider.screen.add.key.body',
     'provider.screen.add.key.title',
@@ -1729,6 +1745,13 @@ class L10nKeyResolver {
     'chatNoFieldsRequested': 'chat.no.fields.requested',
     'chatNotFound': 'chat.not.found',
     'chatPocoRole': 'chat.poco.role',
+    'chatRunOutcomeCancelledBody': 'chat.run.outcome.cancelled.body',
+    'chatRunOutcomeCancelledTitle': 'chat.run.outcome.cancelled.title',
+    'chatRunOutcomeFailedBody': 'chat.run.outcome.failed.body',
+    'chatRunOutcomeFailedTitle': 'chat.run.outcome.failed.title',
+    'chatRunOutcomeInterruptedBody': 'chat.run.outcome.interrupted.body',
+    'chatRunOutcomeInterruptedRetry': 'chat.run.outcome.interrupted.retry',
+    'chatRunOutcomeInterruptedTitle': 'chat.run.outcome.interrupted.title',
     'chatSelectModelTitle': 'chat.select.model.title',
     'chatSendFailed': 'chat.send.failed',
     'chatSendTooltip': 'chat.send.tooltip',
@@ -2241,6 +2264,7 @@ class L10nKeyResolver {
     'proUnavailable': 'pro.unavailable',
     'proUnavailableBody': 'pro.unavailable.body',
     'proUnlockCommand': 'pro.unlock.command',
+    'providerReauthenticationRequired': 'provider.reauthentication.required',
     'providerScreenAddKey': 'provider.screen.add.key',
     'providerScreenAddKeyBody': 'provider.screen.add.key.body',
     'providerScreenAddKeyTitle': 'provider.screen.add.key.title',
@@ -2531,6 +2555,13 @@ class L10nKeyResolver {
     'chat.no.fields.requested': 'chatNoFieldsRequested',
     'chat.not.found': 'chatNotFound',
     'chat.poco.role': 'chatPocoRole',
+    'chat.run.outcome.cancelled.body': 'chatRunOutcomeCancelledBody',
+    'chat.run.outcome.cancelled.title': 'chatRunOutcomeCancelledTitle',
+    'chat.run.outcome.failed.body': 'chatRunOutcomeFailedBody',
+    'chat.run.outcome.failed.title': 'chatRunOutcomeFailedTitle',
+    'chat.run.outcome.interrupted.body': 'chatRunOutcomeInterruptedBody',
+    'chat.run.outcome.interrupted.retry': 'chatRunOutcomeInterruptedRetry',
+    'chat.run.outcome.interrupted.title': 'chatRunOutcomeInterruptedTitle',
     'chat.select.model.title': 'chatSelectModelTitle',
     'chat.send.failed': 'chatSendFailed',
     'chat.send.tooltip': 'chatSendTooltip',
@@ -3043,6 +3074,7 @@ class L10nKeyResolver {
     'pro.unavailable': 'proUnavailable',
     'pro.unavailable.body': 'proUnavailableBody',
     'pro.unlock.command': 'proUnlockCommand',
+    'provider.reauthentication.required': 'providerReauthenticationRequired',
     'provider.screen.add.key': 'providerScreenAddKey',
     'provider.screen.add.key.body': 'providerScreenAddKeyBody',
     'provider.screen.add.key.title': 'providerScreenAddKeyTitle',
@@ -3340,6 +3372,13 @@ abstract class L10nKeys {
   static const chatNoFieldsRequested = 'chat.no.fields.requested';
   static const chatNotFound = 'chat.not.found';
   static const chatPocoRole = 'chat.poco.role';
+  static const chatRunOutcomeCancelledBody = 'chat.run.outcome.cancelled.body';
+  static const chatRunOutcomeCancelledTitle = 'chat.run.outcome.cancelled.title';
+  static const chatRunOutcomeFailedBody = 'chat.run.outcome.failed.body';
+  static const chatRunOutcomeFailedTitle = 'chat.run.outcome.failed.title';
+  static const chatRunOutcomeInterruptedBody = 'chat.run.outcome.interrupted.body';
+  static const chatRunOutcomeInterruptedRetry = 'chat.run.outcome.interrupted.retry';
+  static const chatRunOutcomeInterruptedTitle = 'chat.run.outcome.interrupted.title';
   static const chatSelectModelTitle = 'chat.select.model.title';
   static const chatSendFailed = 'chat.send.failed';
   static const chatSendTooltip = 'chat.send.tooltip';
@@ -3852,6 +3891,7 @@ abstract class L10nKeys {
   static const proUnavailable = 'pro.unavailable';
   static const proUnavailableBody = 'pro.unavailable.body';
   static const proUnlockCommand = 'pro.unlock.command';
+  static const providerReauthenticationRequired = 'provider.reauthentication.required';
   static const providerScreenAddKey = 'provider.screen.add.key';
   static (String, Map<String, dynamic>) providerScreenAddKeyBody(String provider) => ('provider.screen.add.key.body', {'provider': provider});
   static (String, Map<String, dynamic>) providerScreenAddKeyTitle(String provider) => ('provider.screen.add.key.title', {'provider': provider});

@@ -19,7 +19,7 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
         release: release,
         clearError: true,
       );
-    });
+    }, emitLoading: true);
   }
 
   Future<void> run({
@@ -45,7 +45,7 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
         result: result,
         clearError: true,
       );
-    });
+    }, emitLoading: true);
   }
 
   static RootSshCommand commandFor(ServerControlOperation operation) =>

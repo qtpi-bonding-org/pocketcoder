@@ -220,8 +220,10 @@ another test framework or duplicate the passing package suites.
       local Poco and connected Chat state remain independent.
 - [ ] **Widgetbook:** run the full story generation/check, including the Pro
       deployment story and shared terminal conversation stories.
-- [ ] **PocketBase contracts:** run OpenAPI/generated-client checks, PocketBase
-      schema export/model generation, and verify the generated diff is clean.
+- [x] **PocketBase contracts:** OpenAPI/generated-client checks, PocketBase
+      schema/model generation, and generated-diff verification pass. The
+      non-mutating check is enforced by
+      `tooling/scripts/check_pocketbase_contracts.sh` and CI.
 - [x] **PocketBase API flows:** containerized API Bats passed all 10 flows.
 - [ ] **Harness runtime:** run auth-helper/container integration and one
       provider-backed harness request. API-key/none auth validation already
@@ -245,7 +247,8 @@ Run this only after the code gaps above have landed:
 
 - [x] Run the release-manager Docker integration harness.
 - [x] Run API-flow Bats against the Compose stack; all 10 flows passed.
-- [ ] Run generated OpenAPI/PocketBase contract checks and verify a clean diff.
+- [x] Run generated OpenAPI/PocketBase contract checks and verify a clean diff;
+      completed 2026-08-14 with pinned generators and no generated drift.
 - [ ] Run the full Widgetbook/story generation check, including deployment.
 - [x] Run local test-container PocketBase health, compatibility, and
       authenticated release-status checks.
