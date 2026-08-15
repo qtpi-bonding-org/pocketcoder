@@ -79,3 +79,26 @@ abc
 
 long=$(printf 'a%.0s' $(seq 1 5000))
 check "redact: caps length" "2000" "$(VPS_DETAIL_CAP=2000 redact "$long" | wc -c | tr -d ' ')"
+
+stub_bin "$ssh_stub_dir" ssh '
+for arg in "$@"; do last=$arg; done
+case $last in
+  *random/boot_id*) echo "7fa2cb73-7593-4419-ab5b-a9f1aea34e3a" ;;
+  *State.StartedAt*) echo "2026-08-15T09:49:21.361992419Z" ;;
+  *State.Health.Status*) echo "healthy" ;;
+  *) echo "" ;;
+esac'
+
+check "boot_id_now: reads the kernel boot id" \
+  "7fa2cb73-7593-4419-ab5b-a9f1aea34e3a" \
+  "$(PATH="$ssh_stub_dir:$PATH" boot_id_now)"
+
+check "container_started_at: reads StartedAt" \
+  "2026-08-15T09:49:21.361992419Z" \
+  "$(PATH="$ssh_stub_dir:$PATH" container_started_at pocketcoder-pocketbase)"
+
+check "container_health: reads health status" "healthy" \
+  "$(PATH="$ssh_stub_dir:$PATH" container_health pocketcoder-pocketbase)"
+
+check "expected_containers: lists the six deployed services" "6" \
+  "$(expected_containers | grep -c .)"
