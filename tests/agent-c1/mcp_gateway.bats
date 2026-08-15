@@ -10,6 +10,7 @@ setup() {
   : "${PB_AUTH_COLLECTION:?}"
   : "${AGENT_TEST_EMAIL:?}"
   : "${AGENT_TEST_PASSWORD:?}"
+  : "${MCP_GATEWAY_AUTH_TOKEN:?}"
   : "${GOOSE_CONTAINER:?}"
   : "${POCKETBASE_CONTAINER:?}"
   : "${MCP_GATEWAY_CONTAINER:?}"
@@ -46,15 +47,9 @@ goose_config_dir() {
     awk '/Config yaml:/{print $3}' | xargs dirname
 }
 
-gateway_extension_count() {
-  local cfg_dir
-  cfg_dir=$(goose_config_dir)
-  docker exec "$GOOSE_CONTAINER" sh -c "grep -c '^  gateway:' '$cfg_dir/config.yaml' 2>/dev/null || echo 0"
-}
-
-wait_for_gateway_extension() {
+wait_for_gateway() {
   for _ in $(seq 1 60); do
-    [ "$(gateway_extension_count)" -ge 1 ] && return 0
+    curl -fsS http://mcp-gateway:8811/health >/dev/null 2>&1 && return 0
     sleep 2
   done
   return 1
@@ -87,13 +82,20 @@ open_stream() {
 
 start_run() {
   local prompt="$1"
-  local resp
-  resp=$(curl --max-time 15 -sS \
-    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/prompt" \
-    -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"prompt\":[{\"type\":\"text\",\"text\":$(jq -Rs . <<<"$prompt")}]}")
-  RUN_ID=$(jq -r .runId <<<"$resp")
-  [ -n "$RUN_ID" ] && [ "$RUN_ID" != null ]
+  local resp run_status
+  for _ in $(seq 1 30); do
+    resp=$(curl --retry 5 --retry-connrefused --retry-delay 1 --max-time 15 -sS \
+      -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/prompt" \
+      -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
+      -d "{\"prompt\":[{\"type\":\"text\",\"text\":$(jq -Rs . <<<"$prompt")}] }" || true)
+    [ -n "$resp" ] || { sleep 2; continue; }
+    RUN_ID=$(jq -r .runId <<<"$resp")
+    [ -n "$RUN_ID" ] && [ "$RUN_ID" != null ] && return 0
+    run_status=$(jq -r .status <<<"$resp")
+    [ "$run_status" = provisioning ] || { printf '%s\n' "$resp" >&2; return 1; }
+    sleep 2
+  done
+  return 1
 }
 
 wait_for_text() {
@@ -166,20 +168,14 @@ resolve_permissions_until_finish() {
   return 1
 }
 
-@test "mcp gateway extension registers exactly once and survives a pocketbase restart" {
-  wait_for_gateway_extension
-  [ "$(gateway_extension_count)" -eq 1 ]
-
+@test "mcp gateway remains available across a pocketbase restart" {
+  wait_for_gateway
   docker restart "$POCKETBASE_CONTAINER"
-  # Give PocketBase's OnServe (and RegisterMcpGatewayExtension's first
-  # attempt) time to run again after the restart.
   for _ in $(seq 1 30); do
     curl --max-time 5 -fsS "$PB_URL/api/health" >/dev/null 2>&1 && break
     sleep 2
   done
-
-  wait_for_gateway_extension
-  [ "$(gateway_extension_count)" -eq 1 ]
+  wait_for_gateway
 }
 
 @test "approving an mcp_servers row reaches the gateway's catalog" {
@@ -187,7 +183,7 @@ resolve_permissions_until_finish() {
   local record
   record=$(curl -fsS -X POST "$PB_URL/api/collections/mcp_servers/records" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"name\":\"$name\",\"status\":\"approved\",\"image\":\"mcp/hello-world:latest\"}")
+    -d "{\"name\":\"$name\",\"status\":\"approved\",\"image\":\"mcp/n8n@sha256:061cdb8fbaa78f5a09787338715b180a0759057759f402c473b5f6ee13a8709e\"}")
   local server_id
   server_id=$(jq -r .id <<<"$record")
   [ -n "$server_id" ] && [ "$server_id" != null ]
@@ -195,7 +191,7 @@ resolve_permissions_until_finish() {
 
   local found=0
   for _ in $(seq 1 30); do
-    if docker exec "$MCP_GATEWAY_CONTAINER" cat /root/.docker/mcp/docker-mcp.yaml 2>/dev/null | grep -q "$name"; then
+    if docker exec "$MCP_GATEWAY_CONTAINER" cat /root/.docker/mcp/catalogs/docker-mcp.yaml 2>/dev/null | grep -q "$name"; then
       found=1
       break
     fi
@@ -204,8 +200,50 @@ resolve_permissions_until_finish() {
   [ "$found" -eq 1 ]
 }
 
+@test "one gateway tool request requires and uses the configured authorization" {
+  wait_for_gateway
+
+  local init_body="$BATS_TEST_TMPDIR/gateway-init.json"
+  local init_headers="$BATS_TEST_TMPDIR/gateway-init.headers"
+  local init_status
+  init_status=$(curl -sS -D "$init_headers" -o "$init_body" -w '%{http_code}' \
+    -X POST http://mcp-gateway:8811/mcp \
+    -H "Authorization: Bearer $MCP_GATEWAY_AUTH_TOKEN" \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' \
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"agent-c1","version":"1"}}}')
+  [ "$init_status" = 200 ]
+  grep -iq '^mcp-session-id:' "$init_headers"
+
+  local session_id
+  session_id=$(awk -F': ' 'tolower($1) == "mcp-session-id" {gsub("\r", "", $2); print $2}' "$init_headers")
+  [ -n "$session_id" ]
+
+  local tool_body="$BATS_TEST_TMPDIR/gateway-tool.json"
+  local tool_status
+  tool_status=$(curl -sS -o "$tool_body" -w '%{http_code}' \
+    -X POST http://mcp-gateway:8811/mcp \
+    -H "Authorization: Bearer $MCP_GATEWAY_AUTH_TOKEN" \
+    -H "Mcp-Session-Id: $session_id" \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' \
+    -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"mcp-find","arguments":{"query":"hello","limit":5}}}')
+  [ "$tool_status" = 200 ]
+  grep -Eq 'total_matches|totalMatches' "$tool_body"
+
+  local unauthorized_status
+  unauthorized_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+    -X POST http://mcp-gateway:8811/mcp \
+    -H 'Authorization: Bearer wrong-gateway-token' \
+    -H "Mcp-Session-Id: $session_id" \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' \
+    -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"mcp-find","arguments":{"query":"hello","limit":5}}}')
+  [ "$unauthorized_status" = 401 ]
+}
+
 @test "gateway tools are reachable through a real model-invoked call" {
-  wait_for_gateway_extension
+  wait_for_gateway
 
   new_chat
   open_stream

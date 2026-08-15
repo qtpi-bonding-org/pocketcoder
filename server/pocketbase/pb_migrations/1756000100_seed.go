@@ -153,6 +153,7 @@ func init() {
 				"GOOSE_SERVER__SECRET_KEY": "{{.__adapter_secret}}",
 				"GOOSE_PROVIDER":           "{{.__provider}}",
 				"GOOSE_MODEL":              "{{.__model}}",
+				"OPENROUTER_API_KEY":       "{{.OPENROUTER_API_KEY}}",
 				"GOOSE_PATH_ROOT":          "/workspace/.pocketcoder_auth",
 				"GOOSE_DISABLE_KEYRING":    "1",
 				"GOOSE_TELEMETRY_ENABLED":  "false",

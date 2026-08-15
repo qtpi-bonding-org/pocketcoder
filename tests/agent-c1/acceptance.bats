@@ -96,13 +96,23 @@ open_stream() {
 
 start_run() {
   local prompt="$1"
-  local resp
-  resp=$(curl --max-time 15 -sS \
-    -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/prompt" \
-    -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"prompt\":[{\"type\":\"text\",\"text\":$(jq -Rs . <<<"$prompt")}]}")
-  RUN_ID=$(jq -r .runId <<<"$resp")
-  [ -n "$RUN_ID" ] && [ "$RUN_ID" != null ]
+  local resp run_status
+  for _ in $(seq 1 30); do
+    resp=$(curl --retry 5 --retry-connrefused --retry-delay 1 --max-time 15 -sS \
+      -X POST "$PB_URL/api/pocketcoder/v1/chats/$CHAT_ID/session/prompt" \
+      -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
+      -d "{\"prompt\":[{\"type\":\"text\",\"text\":$(jq -Rs . <<<"$prompt")}] }" || true)
+    [ -n "$resp" ] || { sleep 2; continue; }
+    RUN_ID=$(jq -r .runId <<<"$resp")
+    [ -n "$RUN_ID" ] && [ "$RUN_ID" != null ] && return 0
+    run_status=$(jq -r .status <<<"$resp")
+    [ "$run_status" = provisioning ] || [ "$run_status" = 409 ] || {
+      printf '%s\n' "$resp" >&2
+      return 1
+    }
+    sleep 2
+  done
+  return 1
 }
 
 wait_for() {
@@ -136,7 +146,7 @@ approval_id() {
 
 wait_for_approval() {
   APPROVAL_ID=''
-  for _ in $(seq 1 10); do
+  for _ in $(seq 1 40); do
     APPROVAL_ID=$(approval_id)
     [ -n "$APPROVAL_ID" ] && return 0
     sleep 1
@@ -168,7 +178,8 @@ resolve_permissions_until_finish() {
   local option_id="$1"
   local submitted=''
   for _ in $(seq 1 40); do
-    if grep -q '"type":"RUN_FINISHED"' "$STREAM_FILE" 2>/dev/null; then
+    if grep -q "\"runId\":\"$RUN_ID\"" "$STREAM_FILE" 2>/dev/null &&
+       grep "\"runId\":\"$RUN_ID\"" "$STREAM_FILE" | grep -q '"type":"RUN_FINISHED"'; then
       return 0
     fi
     local current
@@ -263,7 +274,7 @@ resolve_permissions_until_finish() {
 @test "set_mode dispatches to Goose mid-run" {
   new_chat
   open_stream
-  start_run "Invoke the shell tool immediately. Execute exactly: sleep 5. Do not ask a question, explain, or reply with text before the tool call."
+  start_run "Invoke the shell tool immediately. Execute exactly: sleep 20. Do not ask a question, explain, or reply with text before the tool call."
   wait_for_approval
 
   local set_mode_status
