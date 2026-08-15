@@ -17,7 +17,7 @@ work_dir=$(mktemp -d)
 handoff=
 key_path=
 instance_created=false
-result_file=${POCKETCODER_LIVE_UPGRADE_RESULT_FILE:-"${TMPDIR:-/tmp}/pocketcoder-live-nixos-upgrade-result.json"}
+result_file=${POCKETCODER_VPS_SCRIPT_UPGRADE_RESULT_FILE:-"${TMPDIR:-/tmp}/pocketcoder-vps-script-nixos-upgrade-result.json"}
 started_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 source_commit=
 baseline_digest=
@@ -70,7 +70,7 @@ trap cleanup EXIT
 
 case "$channel" in
   nightly) ;;
-  *) echo "live upgrade test only permits the nightly channel" >&2; exit 64 ;;
+  *) echo "VPS script upgrade test only permits the nightly channel" >&2; exit 64 ;;
 esac
 for command in curl git jq "$flutter_bin"; do require "$command"; done
 test -d "$aeroform_root" || { echo "flutter_aeroform checkout is unavailable" >&2; exit 1; }
@@ -80,15 +80,15 @@ test -d "$aeroform_root" || { echo "flutter_aeroform checkout is unavailable" >&
 existing_live_instances=$(curl -fsSL \
   -H "Authorization: Bearer $LINODE_TOKEN" \
   https://api.linode.com/v4/linode/instances |
-  jq '[.data[] | select(.label | startswith("nixos-live-"))] | length')
+  jq '[.data[] | select(.label | startswith("nixos-vps-script-"))] | length')
 test "$existing_live_instances" -eq 0 || {
-  echo "refusing to start while another NixOS live-test instance exists" >&2
+  echo "refusing to start while another NixOS VPS-script-test instance exists" >&2
   exit 1
 }
 
 cd "$repo_root"
 test -z "$(git status --porcelain)" || {
-  echo "live upgrade test requires a clean PocketCoder checkout" >&2
+  echo "VPS script upgrade test requires a clean PocketCoder checkout" >&2
   exit 1
 }
 source_commit=$(git rev-parse HEAD)
@@ -136,15 +136,15 @@ wait_for_pointer() {
   exit 1
 }
 
-echo "LIVE UPGRADE: provisioning baseline $channel release"
+echo "VPS SCRIPT UPGRADE: provisioning baseline $channel release"
 instance_created=true
 (cd "$aeroform_root" &&
-  env AEROFORM_LIVE_TEST=1 \
+  env AEROFORM_VPS_SCRIPT_TEST=1 \
     AEROFORM_KEEP_INSTANCE=1 \
     AEROFORM_GOLDEN_PATH_BACKEND=nixos \
     "$flutter_bin" test test/integration/golden_path_provision_test.dart) |
   tee "$work_dir/provision.log"
-handoff=$(sed -n 's/^LIVE: retained update handoff //p' "$work_dir/provision.log" | tail -1)
+handoff=$(sed -n 's/^VPS SCRIPT: retained update handoff //p' "$work_dir/provision.log" | tail -1)
 test -n "$handoff" && test -f "$handoff" || {
   echo "provisioning did not produce an update handoff" >&2
   exit 1
@@ -152,11 +152,11 @@ test -n "$handoff" && test -f "$handoff" || {
 key_path=$(jq -er '.sshPrivateKeyPath' "$handoff")
 baseline_digest=$(jq -er '.releaseDigest' "$handoff")
 
-echo "LIVE UPGRADE: building GitHub-attested candidate $source_commit"
+echo "VPS SCRIPT UPGRADE: building GitHub-attested candidate $source_commit"
 "$repo_root/deploy/nixos/scripts/trigger-ci-build.sh"
 wait_for_candidate
 
-echo "LIVE UPGRADE: promoting candidate to $channel"
+echo "VPS SCRIPT UPGRADE: promoting candidate to $channel"
 promotion=$("$repo_root/deploy/nixos/scripts/promote-latest-candidate.sh" "$channel")
 printf '%s\n' "$promotion"
 candidate_digest=$(printf '%s\n' "$promotion" | sed -n 's/.*manifest=\([0-9a-f]\{64\}\).*/\1/p')
@@ -168,8 +168,8 @@ test "$candidate_digest" != "$baseline_digest" || {
 pointer=$(wait_for_pointer "$candidate_digest")
 candidate_sequence=${pointer#*$'\t'}
 
-echo "LIVE UPGRADE: updating baseline to $candidate_digest (sequence $candidate_sequence)"
-"$repo_root/deploy/release-manager/tests/run-live-nixos-update-test.sh" \
+echo "VPS SCRIPT UPGRADE: updating baseline to $candidate_digest (sequence $candidate_sequence)"
+"$repo_root/deploy/release-manager/tests/run-vps-script-nixos-update-test.sh" \
   "$handoff" "$candidate_digest" "$source_commit" "$candidate_sequence"
 
-echo "LIVE UPGRADE: passed $baseline_digest -> $candidate_digest"
+echo "VPS SCRIPT UPGRADE: passed $baseline_digest -> $candidate_digest"

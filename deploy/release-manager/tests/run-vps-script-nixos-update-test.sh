@@ -54,17 +54,17 @@ ssh_base() {
     "root@$host" "$@"
 }
 
-echo "LIVE UPDATE: asserting provisioned release $initial_source_commit (sequence $initial_sequence)"
+echo "VPS SCRIPT UPDATE: asserting provisioned release $initial_source_commit (sequence $initial_sequence)"
 ssh_base "set -eu
   test \"\$(jq -r .releaseDigest /var/lib/pocketcoder/release/current.json)\" = \"$initial_digest\"
   test \"\$(jq -r .sourceCommit /var/lib/pocketcoder/release/current.json)\" = \"$initial_source_commit\"
   test \"\$(jq -r .channelSequence /var/lib/pocketcoder/release/current.json)\" = \"$initial_sequence\"
   test -x /opt/pocketcoder/current/bin/pocketcoder-release"
 
-echo "LIVE UPDATE: invoking the same native command used by the Flutter OS-control service"
+echo "VPS SCRIPT UPDATE: invoking the same native command used by the Flutter OS-control service"
 ssh_base 'set -eu; /opt/pocketcoder/current/bin/pocketcoder-release update'
 
-echo "LIVE UPDATE: asserting activated release $expected_source_commit (sequence $expected_sequence)"
+echo "VPS SCRIPT UPDATE: asserting activated release $expected_source_commit (sequence $expected_sequence)"
 ssh_base "set -eu
   test \"\$(jq -r .releaseDigest /var/lib/pocketcoder/release/current.json)\" = \"$expected_digest\"
   test \"\$(jq -r .sourceCommit /var/lib/pocketcoder/release/current.json)\" = \"$expected_source_commit\"
@@ -77,4 +77,4 @@ curl --fail --silent --show-error --max-time 30 \
   --resolve "$hostname:443:$host" \
   "https://$hostname/api/health" >/dev/null
 
-echo "LIVE UPDATE: passed $initial_source_commit -> $expected_source_commit"
+echo "VPS SCRIPT UPDATE: passed $initial_source_commit -> $expected_source_commit"
