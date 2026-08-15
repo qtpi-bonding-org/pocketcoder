@@ -51,6 +51,22 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+in_list() {
+  local needle=$1 list=$2 item
+  local IFS=,
+  for item in $list; do
+    [ "$item" = "$needle" ] && return 0
+  done
+  return 1
+}
+
+selected() {
+  local name=$1
+  [ -n "$only" ] && { in_list "$name" "$only" || return 1; }
+  [ -n "$skip" ] && { in_list "$name" "$skip" && return 1; }
+  return 0
+}
+
 if [ -z "$handoff" ] && [ "${VPS_SKIP_PROVISION:-0}" != 1 ]; then
   guard_clean_checkout "$repo_root" || exit 64
   release_branch=$(guard_release_branch "$repo_root") || exit 64
@@ -62,6 +78,7 @@ result_init "$run_dir"
 echo "VPS SUITE: evidence in $run_dir"
 
 . "$vps_dir/phases/10-provision.sh"
+. "$vps_dir/phases/55-promote.sh"
 
 run_label="vps-script-$(date -u '+%Y%m%d%H%M%S')-$$"
 result_set instanceLabel "$run_label"
@@ -84,6 +101,17 @@ if [ -n "$handoff" ]; then
   load_redaction_dictionary || echo "WARNING: redaction dictionary unavailable; output suppressed" >&2
 fi
 
+if [ -z "${VPS_RELEASE_B_DIGEST:-}" ] && [ "${VPS_SKIP_PROVISION:-0}" != 1 ] &&
+   { selected update || selected post-update; }; then
+  release_branch=${release_branch:-$(git -C "$repo_root" symbolic-ref --short HEAD 2>/dev/null || echo main)}
+  promotion=$(vps_promote_candidate "$repo_root" "${VPS_RELEASE_A_DIGEST:-}" "$release_branch") || exit 1
+  VPS_RELEASE_B_DIGEST=$(jq -er '.digest' <<<"$promotion")
+  VPS_RELEASE_B_SOURCE_COMMIT=$(jq -er '.sourceCommit' <<<"$promotion")
+  VPS_RELEASE_B_SEQUENCE=$(jq -er '.sequence' <<<"$promotion")
+  VPS_RELEASE_BRANCH=$release_branch
+  result_set_json releaseB "$promotion"
+fi
+
 run_status=failed
 failure_phase=
 
@@ -100,22 +128,6 @@ finish() {
 }
 trap finish EXIT
 trap 'exit 1' INT TERM HUP
-
-in_list() {
-  local needle=$1 list=$2 item
-  local IFS=,
-  for item in $list; do
-    [ "$item" = "$needle" ] && return 0
-  done
-  return 1
-}
-
-selected() {
-  local name=$1
-  [ -n "$only" ] && { in_list "$name" "$only" || return 1; }
-  [ -n "$skip" ] && { in_list "$name" "$skip" && return 1; }
-  return 0
-}
 
 run_one_phase() {
   local file=$1 started ended output rc evidence skip_reason
