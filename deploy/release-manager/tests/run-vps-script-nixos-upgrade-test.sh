@@ -25,6 +25,10 @@ baseline_digest=
 candidate_digest=
 candidate_sequence=
 full_suite=${POCKETCODER_FULL_VPS_SCRIPT_SUITE:-0}
+# Keep the disposable VPS and its SSH handoff while this live suite is being
+# debugged. Cleanup becomes an explicit opt-in after a complete passing run.
+preserve_resources=${POCKETCODER_VPS_SCRIPT_PRESERVE_RESOURCES:-1}
+preserved_handoff=${POCKETCODER_VPS_SCRIPT_HANDOFF_FILE:-"${TMPDIR:-/tmp}/pocketcoder-vps-script-full-suite-handoff.json"}
 
 mkdir -p "$(dirname "$log_file")"
 : >"$log_file"
@@ -56,19 +60,31 @@ cleanup() {
     --arg baselineDigest "$baseline_digest" \
     --arg candidateDigest "$candidate_digest" \
     --arg candidateSequence "$candidate_sequence" \
+    --arg preservedResources "$preserve_resources" \
+    --arg handoffPath "${preserved_handoff:-}" \
     '{status:$status,startedAt:$startedAt,completedAt:$completedAt,
       sourceCommit:$sourceCommit,channel:$channel,baselineDigest:$baselineDigest,
-      candidateDigest:$candidateDigest,candidateSequence:$candidateSequence}' \
+      candidateDigest:$candidateDigest,candidateSequence:$candidateSequence,
+      preservedResources:($preservedResources == "1"),
+      handoff:(if $handoffPath == "" then null else $handoffPath end)}' \
     > "$result_tmp"
   mv "$result_tmp" "$result_file"
-  if [ "$instance_created" = true ]; then
-    "$aeroform_root/scripts/delete-orphaned-instances.sh" || true
-  fi
-  if [ -n "$key_path" ]; then
-    rm -f "$key_path" "$key_path.pub"
-  fi
-  if [ -n "$handoff" ]; then
-    rm -f "$handoff"
+  if [ "$preserve_resources" = 1 ]; then
+    if [ -n "$handoff" ] && [ -f "$handoff" ]; then
+      cp "$handoff" "$preserved_handoff"
+    fi
+    echo "VPS SCRIPT UPGRADE: preserving VPS and handoff for debugging"
+    echo "VPS SCRIPT UPGRADE: handoff $preserved_handoff"
+  else
+    if [ "$instance_created" = true ]; then
+      "$aeroform_root/scripts/delete-orphaned-instances.sh" || true
+    fi
+    if [ -n "$key_path" ]; then
+      rm -f "$key_path" "$key_path.pub"
+    fi
+    if [ -n "$handoff" ]; then
+      rm -f "$handoff"
+    fi
   fi
   rm -rf "$work_dir"
   exit "$status"
