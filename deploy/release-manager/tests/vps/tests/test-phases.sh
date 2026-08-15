@@ -151,3 +151,28 @@ result=$(
     vps_provision "$TEST_TMP" "$provision_run_dir" "test-provision-label"
 )
 check "vps_provision: stdout is exactly the handoff path, not the log" "$fake_handoff" "$result"
+
+# --- 60-update: the remote command must actually be valid shell (F-live) ---
+# Regression test for a bug found live: `VAR=val <compound-command>` is
+# invalid bash syntax when the shipped command is an `if` statement, not a
+# simple command -- `bash -c "VAR=val if ...; then ...; fi"` fails with
+# "syntax error near unexpected token `then'". This ran successfully in
+# self-test before ever being validated live, because nothing checked that
+# the assembled remote command actually parses.
+stub_bin "$phase_stub_dir" ssh '
+for arg in "$@"; do last=$arg; done
+printf "%s" "$last" > "'"$TEST_TMP"'/captured-update-command"
+case $last in
+  *pocketcoder-release\ update*) echo "" ;;
+  *current.json*) echo "{\"releaseDigest\":\"deadbeef\",\"sourceCommit\":\"abc\",\"channel\":\"nightly\",\"channelSequence\":\"3\"}" ;;
+  *"readlink /opt/pocketcoder/current"*) echo "/opt/pocketcoder/releases/deadbeef" ;;
+  *) echo "" ;;
+esac'
+
+( . "$VPS_DIR/phases/60-update.sh"
+  PATH="$phase_stub_dir:$PATH" VPS_RELEASE_B_DIGEST=deadbeef \
+    VPS_RELEASE_B_SOURCE_COMMIT=abc VPS_RELEASE_B_SEQUENCE=3 VPS_RELEASE_BRANCH=staging \
+    phase_run >/dev/null 2>&1 )
+check_rc "60-update: happy path passes" 0 "$?"
+check_rc "60-update: the assembled remote command is valid shell" 0 \
+  "$(bash -n "$TEST_TMP/captured-update-command" >/dev/null 2>&1; echo $?)"
