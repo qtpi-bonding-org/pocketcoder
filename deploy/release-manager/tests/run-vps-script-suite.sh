@@ -70,7 +70,7 @@ run_phase() {
 
 wait_for_https() {
   for _ in $(seq 1 "${POCKETCODER_VPS_HEALTH_ATTEMPTS:-40}"); do
-    if curl --fail --silent --show-error --max-time 10 --resolve "$hostname:443:$host" \
+    if curl --fail --silent --show-error --connect-timeout 5 --max-time 10 --resolve "$hostname:443:$host" \
       "https://$hostname/api/health" >/dev/null; then return 0; fi
     sleep "${POCKETCODER_VPS_HEALTH_INTERVAL:-5}"
   done
@@ -87,7 +87,7 @@ read_only() {
   wait_for_https
   compatibility=$(curl --fail --silent --show-error --max-time 30 \
     --resolve "$hostname:443:$host" "https://$hostname/api/pocketcoder/v1/compatibility")
-  jq -e '.schemaVersion == 1 and .compatibility.server.apiVersion == 1' \
+  jq -e '(.JsonSuccessJSONResponse // .) | .schemaVersion == 1 and .compatibility.server.apiVersion == 1' \
     <<<"$compatibility" >/dev/null
   release_status_code=$(curl --silent --show-error --max-time 30 \
     --output /dev/null --write-out '%{http_code}' \
