@@ -10,7 +10,7 @@ services:
     depends_on:
       pocket-memory:
         condition: service_healthy
-    command: ["--tap", "/tests/memory/memory.bats"]
+    command: ["--tap", "/tests/compose/memory/memory.bats"]
     volumes:
       - ./tests:/tests:ro
     environment:

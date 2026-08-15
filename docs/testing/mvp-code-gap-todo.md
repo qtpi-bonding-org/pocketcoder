@@ -117,7 +117,11 @@ Related: MVP-07, MVP-11, MVP-12, MVP-13, MVP-14, MVP-21, MVP-22
       widgets, not only test their Cubits in isolation.
 - [x] Add/complete the shared conversation Widgetbook stories in
       `client/packages/pocketcoder_flutter/lib/design_system/storybook/terminal_conversation.stories.dart`.
-      The full deployment story remains a separate open check.
+      The Pro deployment story is also registered at
+      `client/apps/pocketcoder/lib/widgetbook_screens.dart`; the full
+      deployment Widgetbook check passed all 66 reachable stories on
+      2026-08-14 after synchronizing Core's generated contracts and Pro's
+      dependency pins.
 
 ## 6. Server controls — implementation complete; verification remains
 
@@ -171,7 +175,7 @@ Related: MVP-19, MVP-20
 - [x] Add a repeatable Compose integration test against the memory container:
       initialize the MCP session, create an observation, retrieve it, verify
       account isolation, and remove the disposable test volume. See
-      `tests/memory/run.sh` and `tests/memory/memory.bats`.
+      `tests/compose/memory/run.sh` and `tests/compose/memory/memory.bats`.
 - [x] Live verification that memory persists and can be retrieved passed on
       2026-08-14; the disposable record was removed afterward.
 
@@ -218,8 +222,10 @@ another test framework or duplicate the passing package suites.
       through the shared conversation widgets and assert that neither adapter
       consumes the other adapter's state. Pro integration coverage confirms
       local Poco and connected Chat state remain independent.
-- [ ] **Widgetbook:** run the full story generation/check, including the Pro
-      deployment story and shared terminal conversation stories.
+- [x] **Widgetbook:** run the full story generation/check, including the Pro
+      deployment story and shared terminal conversation stories. The Pro
+      `test/widgetbook_screens_test.dart` check passed all 66 reachable stories
+      on 2026-08-14.
 - [x] **PocketBase contracts:** OpenAPI/generated-client checks, PocketBase
       schema/model generation, and generated-diff verification pass. The
       non-mutating check is enforced by
@@ -228,11 +234,12 @@ another test framework or duplicate the passing package suites.
 - [ ] **Harness runtime:** run auth-helper/container integration and one
       provider-backed harness request. API-key/none auth validation already
       passes in the Bats suite.
-- [x] **MCP gateway:** the existing `tests/agent-c1/mcp_gateway.bats` flow
+- [x] **MCP gateway:** the existing `tests/compose/agent/mcp_gateway.bats` flow
       covers one real gateway/tool interaction.
-- [ ] **Memory:** add a repeatable Compose test for MCP initialize,
-      observation create/read, account isolation, and cleanup. Manual local
-      live persistence already passed.
+- [x] **Memory:** repeatable Compose coverage exists for MCP initialize,
+      observation create/read, account isolation, and cleanup in
+      `tests/compose/memory/run.sh` and `tests/compose/memory/memory.bats`.
+      Manual local live persistence also passed.
 - [ ] **Server controls:** run a disposable-deployment integration test for
       release inspection and backup. Keep reboot/update operations behind the
       explicit live-test gate.
@@ -249,7 +256,8 @@ Run this only after the code gaps above have landed:
 - [x] Run API-flow Bats against the Compose stack; all 10 flows passed.
 - [x] Run generated OpenAPI/PocketBase contract checks and verify a clean diff;
       completed 2026-08-14 with pinned generators and no generated drift.
-- [ ] Run the full Widgetbook/story generation check, including deployment.
+- [x] Run the full Widgetbook/story generation check, including deployment;
+      the Pro check passed all 66 reachable stories on 2026-08-14.
 - [x] Run local test-container PocketBase health, compatibility, and
       authenticated release-status checks.
 - [ ] Run the same checks against the real provisioned deployment.
@@ -271,7 +279,7 @@ Run this only after the code gaps above have landed:
       failed-migration snapshot restore, idempotency, concurrency, and recovery
       phase coverage. The harness cleaned up only its temporary fixtures.
 - [x] Containerized API-flow Bats passed all 10 tests using
-      `tests/api-flows/run.sh`; the runner built `api-flow-test` and started a
+      `tests/compose/api/run.sh`; the runner built `api-flow-test` and started a
       healthy PocketBase dependency.
 - [x] Read-only live checks against the local test container passed: health
       200, compatibility schema/API version 1, and authenticated release

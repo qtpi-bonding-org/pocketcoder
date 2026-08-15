@@ -8,7 +8,7 @@ set -euo pipefail
 
 model="${OLLAMA_SMOKE_MODEL:-qwen2.5:0.5b}"
 timeout="${OLLAMA_SMOKE_TIMEOUT_SECONDS:-300}"
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$root"
 
 GOOSE_PROVIDER=ollama GOOSE_MODEL="$model" docker compose \

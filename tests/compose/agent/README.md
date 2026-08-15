@@ -21,7 +21,7 @@ export ANTHROPIC_HOST='https://api.minimax.io/anthropic' # if applicable
 export GOOSE_MODEL='MiniMax-M2.5'                        # if applicable
 export AGENT_TEST_EMAIL='agent-test@example.com'
 export AGENT_TEST_PASSWORD='...'
-./tests/agent-c1/run.sh
+./tests/compose/agent/run.sh
 
 ### Local Ollama integration
 
@@ -33,7 +33,7 @@ performs CPU inference.
 
 ```bash
 export GOOSE_SERVER__SECRET_KEY='local-test-secret'
-bash ./tests/agent-c1/ollama-integration.sh
+bash ./tests/compose/agent/ollama-integration.sh
 ```
 
 Use `OLLAMA_SMOKE_MODEL` to select another installed/pullable model and

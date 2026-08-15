@@ -8,10 +8,13 @@ for name in GOOSE_SERVER__SECRET_KEY MCP_GATEWAY_AUTH_TOKEN AGENT_TEST_EMAIL AGE
   fi
 done
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+cd "$repo_root"
+
 docker compose -f docker-compose.yml -f docker-compose.agent-test.yml \
   --profile agent-test up -d --build docker-socket-proxy-write goose pocketbase mcp-gateway
 docker compose -f docker-compose.yml -f docker-compose.agent-test.yml \
   --profile agent-test run --rm agent-c1-test \
-  --tap /tests/agent-c1/config_pipeline.bats \
-  /tests/agent-c1/acceptance.bats \
-  /tests/agent-c1/mcp_gateway.bats
+  --tap /tests/compose/agent/config_pipeline.bats \
+  /tests/compose/agent/acceptance.bats \
+  /tests/compose/agent/mcp_gateway.bats

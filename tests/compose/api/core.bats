@@ -100,6 +100,18 @@ assert_unauthenticated() {
   [ "$status" = 401 ]
 }
 
+@test "PocketBase health endpoint returns valid JSON within 30 seconds" {
+  run timeout 30 curl -fsS "$PB_URL/api/health"
+  [ "$status" -eq 0 ]
+  jq -e . >/dev/null <<<"$output"
+}
+
+@test "unauthenticated chat listing does not expose records" {
+  local response
+  response=$(curl -fsS "$PB_URL/api/collections/chats/records")
+  [ "$(jq -r '.totalItems // 0' <<<"$response")" -eq 0 ]
+}
+
 @test "compatibility is public and release status requires a user token" {
   local compatibility
   compatibility=$(curl -fsS "$PB_URL/api/pocketcoder/v1/compatibility")

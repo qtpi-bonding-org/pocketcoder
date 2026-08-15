@@ -96,7 +96,7 @@ services:
     depends_on:
       pocketbase:
         condition: service_healthy
-    command: ["--tap", "/tests/api-flows/core.bats"]
+    command: ["--tap", "/tests/compose/api/core.bats"]
     volumes:
       - ./tests:/tests:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro

@@ -8,5 +8,8 @@ for name in API_TEST_EMAIL API_TEST_PASSWORD; do
   fi
 done
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+cd "$repo_root"
+
 docker compose -f docker-compose.yml -f docker-compose.agent-test.yml \
   --profile api-test run --build --rm api-flow-test
