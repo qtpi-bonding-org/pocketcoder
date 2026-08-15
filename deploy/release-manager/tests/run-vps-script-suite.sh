@@ -26,7 +26,7 @@ case ${2:-} in
 esac
 [[ -f $handoff ]] || { echo "handoff file does not exist: $handoff" >&2; exit 1; }
 
-for command in curl jq ssh sha256sum; do
+for command in curl jq ssh; do
   command -v "$command" >/dev/null || { echo "required command is unavailable: $command" >&2; exit 1; }
 done
 
