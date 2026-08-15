@@ -207,7 +207,8 @@ pointer=$(wait_for_pointer "$candidate_digest")
 candidate_sequence=${pointer#*$'\t'}
 
 echo "VPS SCRIPT UPGRADE: updating baseline to $candidate_digest (sequence $candidate_sequence)"
-"$repo_root/deploy/release-manager/tests/run-vps-script-nixos-update-test.sh" \
+POCKETCODER_VPS_SCRIPT_RELEASE_BRANCH="$release_ref" \
+  "$repo_root/deploy/release-manager/tests/run-vps-script-nixos-update-test.sh" \
   "$handoff" "$candidate_digest" "$source_commit" "$candidate_sequence"
 
 if [ "$full_suite" = 1 ]; then

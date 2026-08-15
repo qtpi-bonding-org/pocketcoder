@@ -12,6 +12,11 @@ handoff=$1
 expected_digest=$2
 expected_source_commit=$3
 expected_sequence=$4
+release_branch=${POCKETCODER_VPS_SCRIPT_RELEASE_BRANCH:-main}
+case "$release_branch" in
+  main|staging) ;;
+  *) echo "release branch must be main or staging" >&2; exit 64 ;;
+esac
 
 [ -f "$handoff" ] || { echo "handoff file does not exist" >&2; exit 1; }
 case "$expected_digest" in
@@ -62,7 +67,7 @@ ssh_base "set -eu
   test -x /opt/pocketcoder/current/bin/pocketcoder-release"
 
 echo "VPS SCRIPT UPDATE: invoking the same native command used by the Flutter OS-control service"
-ssh_base 'set -eu; /opt/pocketcoder/current/bin/pocketcoder-release update'
+ssh_base "set -eu; POCKETCODER_GITHUB_WORKFLOW_BRANCH=$release_branch /opt/pocketcoder/current/bin/pocketcoder-release update"
 
 echo "VPS SCRIPT UPDATE: asserting activated release $expected_source_commit (sequence $expected_sequence)"
 ssh_base "set -eu
