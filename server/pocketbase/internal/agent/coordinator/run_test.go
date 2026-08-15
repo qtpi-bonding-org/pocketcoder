@@ -84,10 +84,11 @@ type fakeConn struct {
 	lastExtensionParams any
 	callExtensionCalls  int
 
-	resumeCalls          int
-	lastResumeSessionReq acpsdk.ResumeSessionRequest
-	resumeErr            error
-	done                 chan struct{}
+	resumeCalls                int
+	lastResumeSessionReq       acpsdk.ResumeSessionRequest
+	resumeErr                  error
+	done                       chan struct{}
+	closeDoneBeforePromptError bool
 
 	// Task 2: capture dial/handshake counts.
 	initializeCalls int
@@ -188,6 +189,20 @@ func (f *fakeConn) Done() <-chan struct{} {
 	}
 	return f.done
 }
+
+// closeConnDone is test-only: simulates the transport dying.
+func (f *fakeConn) closeConnDone() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.done == nil {
+		f.done = make(chan struct{})
+	}
+	select {
+	case <-f.done:
+	default:
+		close(f.done)
+	}
+}
 func (f *fakeConn) SetSessionMode(_ context.Context, req acpsdk.SetSessionModeRequest) (acpsdk.SetSessionModeResponse, error) {
 	f.mu.Lock()
 	f.lastMode = string(req.ModeId)
@@ -211,6 +226,13 @@ func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.P
 	}
 	if f.panicOnPrompt {
 		panic("boom")
+	}
+	f.mu.Lock()
+	closeDone := f.closeDoneBeforePromptError
+	f.mu.Unlock()
+	if closeDone {
+		f.closeConnDone()
+		return acpsdk.PromptResponse{}, errors.New("simulated peer disconnect")
 	}
 	if f.requestPermission {
 		if rp, ok := f.client.(interface {
@@ -392,6 +414,51 @@ func TestDetachedRunPermissionEmitsThroughHub(t *testing.T) {
 		t.Fatal(err)
 	}
 	c.waitRunDone(t, "A") // must not panic on a nil emit
+}
+
+func TestPromptFailureAfterConnDoneEmitsInterrupted(t *testing.T) {
+	f := newFakeConn()
+	f.closeDoneBeforePromptError = true
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	chatID := "interrupted-chat"
+
+	if _, err := c.StartPrompt(chatID, "hello",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil); err != nil {
+		t.Fatalf("StartPrompt: %v", err)
+	}
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	deadline := time.After(2 * time.Second)
+	for {
+		for _, se := range att.Buffered {
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(b), `"connection_interrupted"`) {
+				return
+			}
+		}
+		select {
+		case se, ok := <-att.Live:
+			if !ok {
+				t.Fatal("event stream closed before connection_interrupted")
+			}
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(b), `"connection_interrupted"`) {
+				return
+			}
+		case <-deadline:
+			t.Fatal("timed out waiting for connection_interrupted")
+		}
+	}
 }
 
 // TestRequestPermissionForwardsToolCallID covers the fix for the
