@@ -14,6 +14,8 @@ phase_precondition() {
   return 0
 }
 
+_container_is_healthy() { [ "$(container_health "$1")" = healthy ]; }
+
 phase_run() {
   local rollback_allowed manager_sha name
 
@@ -22,9 +24,12 @@ phase_run() {
     return 1
   }
 
+  # A container's own HEALTHCHECK needs a few cycles after restart before
+  # settling from "starting" to "healthy" -- see 50-restart-stack.sh for the
+  # identical race confirmed live on a plain restart.
   while IFS= read -r name; do
     [ -n "$name" ] || continue
-    [ "$(container_health "$name")" = healthy ] || {
+    retry_until "${VPS_HEALTH_DEADLINE:-180}" 5 _container_is_healthy "$name" || {
       echo "container $name is not healthy after update" >&2
       return 1
     }
