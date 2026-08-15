@@ -55,7 +55,8 @@ ssh_base() {
   ssh -q -i "$key_path" \
     -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null \
-    -o ConnectTimeout=15 \
+    -o ConnectTimeout=15 -o BatchMode=yes \
+    -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
     "root@$host" "$@"
 }
 
