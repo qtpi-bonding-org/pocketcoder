@@ -46,5 +46,48 @@
 
     checks.${system}.ordering =
       import ./tests/ordering.nix { inherit pkgs self system; };
+
+    # ordering.nix's VM test replaces detect-public-ip.script with a
+    # hand-written fake Caddyfile, so it structurally can never catch a
+    # syntax error in the real Caddyfile.template -- confirmed live: a
+    # Caddyfile.template change (90f12ffaf) shipped an invalid `issuer
+    # zerossl` directive (needs an API-key argument it never got) that broke
+    # every box's Caddy/HTTPS from first boot, and nothing in CI rendered or
+    # parsed the real template to notice. This renders it with the exact
+    # sed pipeline caddy.nix uses and runs `caddy validate` against the
+    # result.
+    checks.${system}.caddyfile-validate =
+      pkgs.runCommand "pocketcoder-caddyfile-validate" { } ''
+        set -eu
+        sed \
+          -e 's|{{CADDY_GLOBAL_OPTIONS}}||g' \
+          -e 's|{{DOMAIN}}|test.sslip.io|g' \
+          -e 's|{{STATUS_ROOT}}|/var/lib/pocketcoder/public|g' \
+          -e 's|{{UPSTREAM}}|127.0.0.1:8090|g' \
+          ${../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template} \
+          > Caddyfile
+        ${pkgs.caddy}/bin/caddy validate --config Caddyfile --adapter caddyfile
+        touch $out
+      '';
+
+    # A module can be syntactically valid Nix and still produce a broken
+    # systemd unit -- confirmed live: bootstrap.nix nested
+    # StartLimitIntervalSec/StartLimitBurst (a [Unit]-section directive)
+    # inside serviceConfig (which only ever writes [Service]), and systemd
+    # silently dropped them rather than erroring, leaving the manager's
+    # default 10s/burst-5 restart window in effect instead of the intended
+    # one. systemd-analyze verify is the tool built to catch exactly this
+    # class of "valid config, wrong section" mistake.
+    checks.${system}.systemd-units =
+      let toplevel = self.nixosConfigurations.pocketcoder.config.system.build.toplevel;
+      in pkgs.runCommand "pocketcoder-systemd-verify" { } ''
+        set -eu
+        for unit in pocketcoder-bootstrap.service caddy.service \
+          pocketcoder-tls-status.service pocketcoder-release-metadata.service; do
+          echo "verifying $unit"
+          ${pkgs.systemd}/bin/systemd-analyze verify --root=${toplevel} "$unit"
+        done
+        touch $out
+      '';
   };
 }

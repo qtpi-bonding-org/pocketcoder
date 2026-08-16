@@ -63,8 +63,12 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: NixOS ordering check
-        run: nix build ./deploy/nixos#checks.x86_64-linux.ordering -L
+      - name: NixOS flake checks
+        # Runs every check.${system} declared in flake.nix together (today:
+        # ordering, caddyfile-validate, systemd-units), so a new check added
+        # later is picked up automatically instead of needing this workflow
+        # edited to name it explicitly.
+        run: nix flake check ./deploy/nixos --system x86_64-linux -L
 
       - name: Build Linode image
         working-directory: deploy/nixos
