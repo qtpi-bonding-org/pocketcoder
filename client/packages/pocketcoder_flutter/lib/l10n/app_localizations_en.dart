@@ -1369,6 +1369,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentStatusSecuring => 'SECURING CONNECTION';
 
   @override
+  String get deploymentStatusTlsReady => 'CONNECTION SECURED';
+
+  @override
+  String get deploymentStatusTlsZeroSsl => 'USING BACKUP CERTIFICATE AUTHORITY';
+
+  @override
+  String get deploymentStatusTlsRateLimited =>
+      'CERTIFICATE AUTHORITY RATE LIMITED';
+
+  @override
+  String get deploymentStatusTlsFailed => 'CERTIFICATE ISSUANCE FAILED';
+
+  @override
   String get deploymentStatusConfiguringOperatingSystem => 'CONFIGURING OS';
 
   @override
@@ -1407,6 +1420,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deploymentDescriptionSecuring =>
       'WAITING FOR THE NATIVE REVERSE PROXY.';
+
+  @override
+  String get deploymentDescriptionTlsReady =>
+      'A BROWSER-TRUSTED CERTIFICATE IS ACTIVE.';
+
+  @override
+  String get deploymentDescriptionTlsZeroSsl =>
+      'ISSUED VIA THE BACKUP AUTHORITY AFTER THE PRIMARY WAS UNAVAILABLE.';
+
+  @override
+  String get deploymentDescriptionTlsRateLimited =>
+      'RETRYING AUTOMATICALLY WITH A BACKUP CERTIFICATE AUTHORITY.';
+
+  @override
+  String get deploymentDescriptionTlsFailed =>
+      'THE REVERSE PROXY COULD NOT OBTAIN A CERTIFICATE.';
 
   @override
   String get deploymentDescriptionConfiguringOperatingSystem =>

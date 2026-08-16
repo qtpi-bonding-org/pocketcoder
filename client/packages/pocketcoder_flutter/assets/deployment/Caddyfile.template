@@ -10,6 +10,10 @@
 }
 
 {{DOMAIN}} {
+  tls {
+    issuer acme
+    issuer zerossl
+  }
   handle /_pocketcoder/status.json* {
     uri strip_prefix /_pocketcoder
     root * {{STATUS_ROOT}}

@@ -1,0 +1,180 @@
+version: 1
+owner: PocketCoder
+scope: hosted-workers-and-supabase
+notes:
+  - Customer-owned PocketBase records are outside PocketCoder-hosted data; they are represented only by the boundary category customer_owned_pocketbase.
+  - Push relay delivery is a proprietary hosted path in the sibling pocketcoder-pro repository; this public manifest describes its data boundary without copying proprietary implementation code.
+external_paths:
+  - {id: push-relay, repository: ../pocketcoder-pro, source: workers/push-relay/src/index.js, schema: workers/push-relay/scripts/supabase-schema.sql, status: proprietary_external_worker}
+records:
+  - name: hosted_push_request
+    kind: request
+    service: push-relay
+    status: proprietary_external_worker
+    source: customer_owned_pocketbase_notification_dispatcher
+    destination: firebase_cloud_messaging
+    storage: transient_worker_memory
+    durable: false
+    retention: request_lifetime
+    deletion: discarded_after_delivery_or_error
+    fields:
+      - {name: relay_secret, type: string, required: true, personal_data: authentication_credential, sensitivity: critical, purpose: tenant_binding_authentication, source: X-Relay-Secret_header, destination: push_relay, secret: true, log: false, deletion: not_stored}
+      - {name: user_id, type: string, required: true, personal_data: account_identifier, sensitivity: moderate, purpose: subscription_and_quota_lookup, source: PocketBase, destination: Supabase, secret: false, log: false, deletion: not_stored}
+      - {name: token, type: string, required: true, personal_data: device_identifier, sensitivity: high, purpose: address_push_delivery, source: PocketBase_devices, destination: Firebase, secret: true, log: false, deletion: not_stored}
+      - {name: service, type: enum, values: [fcm], required: true, personal_data: service_metadata, sensitivity: low, purpose: delivery_routing, source: PocketBase, destination: Firebase, secret: false, log: true, deletion: not_stored}
+      - {name: title, type: string, required: false, personal_data: notification_content, sensitivity: moderate, purpose: notification_title, source: PocketBase_event, destination: Firebase, secret: false, log: false, deletion: not_stored}
+      - {name: message, type: string, required: false, personal_data: notification_content, sensitivity: moderate, purpose: notification_body, source: PocketBase_event, destination: Firebase, secret: false, log: false, deletion: not_stored}
+      - {name: type, type: string, required: false, personal_data: notification_metadata, sensitivity: low, purpose: notification_routing, source: PocketBase_event, destination: Firebase, secret: false, log: true, deletion: not_stored}
+      - {name: chat, type: string, required: false, personal_data: conversation_identifier, sensitivity: moderate, purpose: deep_link_notification, source: PocketBase_event, destination: Firebase, secret: false, log: false, deletion: not_stored}
+  - name: relay_binding
+    kind: stored_record
+    service: push-relay
+    status: proprietary_external_worker
+    source: hosted_push_request
+    destination: supabase
+    storage: supabase.relay_bindings
+    durable: true
+    retention: until_user_unbinds_or_90_days_inactive
+    deletion: delete_on_unbind_or_account_deletion
+    fields:
+      - {name: secret_hash, type: string, required: true, personal_data: pseudonymous_identifier, sensitivity: high, purpose: tenant_secret_binding_without_plaintext_secret, source: push_request_header, destination: Supabase, secret: true, log: false, deletion: delete_with_account}
+      - {name: user_id, type: string, required: true, personal_data: account_identifier, sensitivity: moderate, purpose: tenant_attribution, source: push_request, destination: Supabase, secret: false, log: false, deletion: delete_with_account}
+      - {name: bound_at, type: timestamp, required: true, personal_data: activity_metadata, sensitivity: moderate, purpose: binding_liveness, source: database_clock, destination: Supabase, secret: false, log: false, deletion: delete_with_record}
+  - name: push_quota
+    kind: stored_record
+    service: push-relay
+    status: proprietary_external_worker
+    source: hosted_push_request
+    destination: supabase
+    storage: supabase.push_quota
+    durable: true
+    retention: 30_days
+    deletion: purge_after_retention
+    fields:
+      - {name: user_id, type: string, required: true, personal_data: account_identifier, sensitivity: moderate, purpose: rate_limit_subject, source: push_request, destination: Supabase, secret: false, log: false, deletion: purge_with_window}
+      - {name: day, type: date, required: true, personal_data: operational_metadata, sensitivity: low, purpose: fixed_rate_limit_window, source: database_clock, destination: Supabase, secret: false, log: false, deletion: purge_after_retention}
+      - {name: count, type: integer, required: true, personal_data: operational_metadata, sensitivity: low, purpose: rate_limit_counter, source: worker, destination: Supabase, secret: false, log: false, deletion: purge_after_retention}
+  - name: oauth_state
+    kind: transient_payload
+    service: oauth-relay
+    source: oauth_authorize_request
+    destination: oauth_provider
+    storage: redirect_query_and_worker_memory
+    durable: false
+    retention: request_lifetime
+    deletion: discarded_after_callback
+    fields:
+      - {name: provider, type: enum, values: [github, linode], required: true, personal_data: provider_selection, sensitivity: low, purpose: select_oauth_provider, source: app, destination: GitHub_or_Linode, secret: false, log: true, deletion: not_stored}
+      - {name: code_challenge, type: string, required: true, personal_data: pseudonymous_identifier, sensitivity: moderate, purpose: pkce_binding, source: app, destination: oauth_provider, secret: false, log: false, deletion: discard_after_flow}
+      - {name: state, type: string, required: true, personal_data: pseudonymous_identifier, sensitivity: moderate, purpose: oauth_callback_binding, source: worker, destination: app_and_provider, secret: false, log: false, deletion: discard_after_flow}
+  - name: oauth_exchange_record
+    kind: stored_record
+    service: oauth-relay
+    source: oauth_provider_callback
+    destination: oauth_claiming_app
+    storage: cloudflare_kv.exchange
+    durable: false
+    retention: 60_seconds
+    deletion: delete_on_claim_mismatch_or_expiration
+    fields:
+      - {name: exchange_code, type: uuid, required: true, personal_data: pseudonymous_identifier, sensitivity: high, purpose: one_time_token_handle, source: worker, destination: app, secret: true, log: false, deletion: delete_after_claim}
+      - {name: code_challenge, type: string, required: true, personal_data: pseudonymous_identifier, sensitivity: moderate, purpose: pkce_verification, source: oauth_state, destination: KV, secret: false, log: false, deletion: delete_after_claim}
+      - {name: access_token, type: string, required: true, personal_data: oauth_credential, sensitivity: critical, purpose: authenticated_provider_access, source: GitHub_or_Linode, destination: KV_then_app, secret: true, log: false, deletion: delete_after_claim}
+      - {name: refresh_token, type: string, required: false, personal_data: oauth_credential, sensitivity: critical, purpose: token_refresh, source: GitHub_or_Linode, destination: KV_then_app, secret: true, log: false, deletion: delete_after_claim}
+      - {name: expires_in, type: integer_or_null, required: false, personal_data: credential_metadata, sensitivity: moderate, purpose: token_expiry, source: provider, destination: KV_then_app, secret: false, log: false, deletion: delete_after_claim}
+      - {name: scope, type: string_or_null, required: false, personal_data: authorization_metadata, sensitivity: moderate, purpose: granted_access_display, source: provider, destination: KV_then_app, secret: false, log: false, deletion: delete_after_claim}
+  - name: oauth_callback_request
+    kind: request
+    service: oauth-relay
+    source: github_or_linode
+    destination: oauth-relay
+    storage: transient_worker_memory
+    durable: false
+    retention: request_lifetime
+    deletion: discarded_after_callback
+    fields:
+      - {name: code, type: string, required: true, personal_data: oauth_credential, sensitivity: critical, purpose: provider_token_exchange, source: OAuth_provider, destination: worker, secret: true, log: false, deletion: not_stored}
+      - {name: state, type: string, required: true, personal_data: pseudonymous_identifier, sensitivity: moderate, purpose: callback_binding, source: OAuth_provider, destination: worker, secret: false, log: false, deletion: discard_after_flow}
+      - {name: error, type: string, required: false, personal_data: provider_error, sensitivity: moderate, purpose: oauth_failure_handling, source: OAuth_provider, destination: app, secret: false, log: false, deletion: not_stored}
+  - name: oauth_provider_config
+    kind: operational_metadata
+    service: oauth-relay
+    source: PocketCoder_configuration
+    destination: github_or_linode
+    storage: Cloudflare_worker_secrets_and_code
+    durable: true
+    retention: until_configuration_rotation
+    deletion: secret_rotation_or_worker_removal
+    fields:
+      - {name: client_id, type: string, required: true, personal_data: provider_configuration, sensitivity: moderate, purpose: oauth_app_identification, source: Worker_secret, destination: provider, secret: false, log: false, deletion: rotate}
+      - {name: client_secret, type: string, required: true, personal_data: provider_configuration, sensitivity: critical, purpose: oauth_app_authentication, source: Worker_secret, destination: provider, secret: true, log: false, deletion: rotate}
+      - {name: authorize_url, type: string, required: true, personal_data: provider_configuration, sensitivity: low, purpose: authorization_endpoint, source: Worker_code, destination: provider, secret: false, log: false, deletion: worker_removal}
+      - {name: token_url, type: string, required: true, personal_data: provider_configuration, sensitivity: low, purpose: token_endpoint, source: Worker_code, destination: provider, secret: false, log: false, deletion: worker_removal}
+  - name: oauth_claim_request
+    kind: request
+    service: oauth-relay
+    source: app
+    destination: cloudflare_kv
+    storage: transient_worker_memory
+    durable: false
+    retention: request_lifetime
+    deletion: discarded_after_request
+    fields:
+      - {name: exchange_code, type: uuid, required: true, personal_data: pseudonymous_identifier, sensitivity: high, purpose: claim_one_time_exchange, source: app, destination: KV, secret: true, log: false, deletion: not_stored}
+      - {name: code_verifier, type: string, required: true, personal_data: pseudonymous_identifier, sensitivity: high, purpose: pkce_verification, source: app, destination: worker, secret: true, log: false, deletion: not_stored}
+  - name: oauth_refresh_request
+    kind: request
+    service: oauth-relay
+    source: app
+    destination: github_or_linode
+    storage: transient_worker_memory
+    durable: false
+    retention: request_lifetime
+    deletion: discarded_after_provider_response
+    fields:
+      - {name: provider, type: enum, values: [github, linode], required: true, personal_data: provider_selection, sensitivity: low, purpose: token_endpoint_selection, source: app, destination: provider, secret: false, log: true, deletion: not_stored}
+      - {name: refresh_token, type: string, required: true, personal_data: oauth_credential, sensitivity: critical, purpose: refresh_access_token, source: app, destination: provider, secret: true, log: false, deletion: not_stored}
+  - name: subscription_entitlement_check
+    kind: transient_payload
+    service: push-relay
+    status: proprietary_external_worker
+    source: push_relay
+    destination: revenuecat
+    storage: cloudflare_cache
+    durable: false
+    retention: 5_minutes
+    deletion: cache_expiration
+    fields:
+      - {name: user_id, type: string, required: true, personal_data: account_identifier, sensitivity: moderate, purpose: subscription_entitlement_lookup, source: push_request, destination: RevenueCat, secret: false, log: false, deletion: cache_expiration}
+      - {name: is_premium, type: boolean, required: true, personal_data: subscription_status, sensitivity: high, purpose: paid_push_gate, source: RevenueCat, destination: push_relay, secret: false, log: false, deletion: cache_expiration}
+  - name: image_release_object_request
+    kind: request
+    service: image-relay
+    source: public_client
+    destination: cloudflare_r2
+    storage: cloudflare_r2
+    durable: true
+    retention: until_release_or_artifact_purge
+    deletion: release_pipeline_controlled_deletion
+    fields:
+      - {name: object_path, type: constrained_path, required: true, personal_data: none, sensitivity: low, purpose: public_release_distribution, source: URL_path, destination: Cloudflare_R2, secret: false, log: true, deletion: delete_with_release}
+      - {name: content_type, type: string, required: true, personal_data: none, sensitivity: low, purpose: response_content_type, source: worker, destination: client, secret: false, log: true, deletion: not_applicable}
+  - name: customer_owned_pocketbase_boundary
+    kind: boundary_category
+    service: customer_deployment
+    source: customer
+    destination: customer_owned_pocketbase
+    storage: customer_owned_pocketbase
+    durable: true
+    retention: customer_configured
+    deletion: customer_controlled
+    fields:
+      - {name: record_content, type: opaque_customer_data, required: false, personal_data: customer_defined, sensitivity: customer_defined, purpose: customer_application_operation, source: customer_client, destination: customer_owned_pocketbase, secret: customer_defined, log: false, deletion: customer_controlled}
+providers:
+  - {id: cloudflare, services: [Workers, KV, R2], data: [oauth_state, oauth_exchange_record, image_release_object_request], role: hosting_and_edge_storage}
+  - {id: supabase, services: [Postgres], data: [relay_binding, push_quota], role: push_binding_storage_and_quota}
+  - {id: firebase, services: [FCM], data: [hosted_push_request], role: push_delivery}
+  - {id: revenuecat, services: [subscription_entitlement_api], data: [subscription_entitlement_check], role: expected_subscription_verification}
+  - {id: github, services: [OAuth], data: [oauth_state, oauth_exchange_record, oauth_refresh_request], role: oauth_provider}
+  - {id: linode, services: [OAuth], data: [oauth_state, oauth_exchange_record, oauth_refresh_request], role: oauth_provider}
+categories: [account_identifier, authentication_credential, authorization_metadata, activity_metadata, conversation_identifier, credential_metadata, customer_defined, device_identifier, notification_content, notification_metadata, oauth_credential, operational_metadata, provider_configuration, provider_error, provider_selection, pseudonymous_identifier, service_metadata, subscription_status, customer_defined]

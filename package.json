@@ -1,0 +1,12 @@
+{
+  "name": "pocketcoder-contracts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "contracts:generate": "python3 contracts/scripts/generate.py",
+    "contracts:check": "python3 contracts/scripts/check.py",
+    "contracts:test": "node --test contracts/test/*.test.mjs",
+    "privacy:check": "python3 contracts/scripts/check.py --privacy-only",
+    "typecheck": "npx --yes tsc --noEmit --allowJs false contracts/generated/worker-types.ts"
+  }
+}

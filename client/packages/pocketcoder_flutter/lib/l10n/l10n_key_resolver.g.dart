@@ -164,6 +164,10 @@ class L10nKeyResolver {
       'deployment.description.ready' => _l10n.deploymentDescriptionReady,
       'deployment.description.securing' => _l10n.deploymentDescriptionSecuring,
       'deployment.description.starting' => _l10n.deploymentDescriptionStarting,
+      'deployment.description.tls.failed' => _l10n.deploymentDescriptionTlsFailed,
+      'deployment.description.tls.rate.limited' => _l10n.deploymentDescriptionTlsRateLimited,
+      'deployment.description.tls.ready' => _l10n.deploymentDescriptionTlsReady,
+      'deployment.description.tls.zero.ssl' => _l10n.deploymentDescriptionTlsZeroSsl,
       'deployment.description.validating' => _l10n.deploymentDescriptionValidating,
       'deployment.distribution' => _l10n.deploymentDistribution,
       'deployment.error.code' => _l10n.deploymentErrorCode,
@@ -224,6 +228,10 @@ class L10nKeyResolver {
       'deployment.status.schema' => _l10n.deploymentStatusSchema,
       'deployment.status.securing' => _l10n.deploymentStatusSecuring,
       'deployment.status.starting' => _l10n.deploymentStatusStarting,
+      'deployment.status.tls.failed' => _l10n.deploymentStatusTlsFailed,
+      'deployment.status.tls.rate.limited' => _l10n.deploymentStatusTlsRateLimited,
+      'deployment.status.tls.ready' => _l10n.deploymentStatusTlsReady,
+      'deployment.status.tls.zero.ssl' => _l10n.deploymentStatusTlsZeroSsl,
       'deployment.status.validating' => _l10n.deploymentStatusValidating,
       'deployment.system.parameters' => _l10n.deploymentSystemParameters,
       'deployment.ubuntu' => _l10n.deploymentUbuntu,
@@ -989,6 +997,10 @@ class L10nKeyResolver {
     'deployment.description.ready',
     'deployment.description.securing',
     'deployment.description.starting',
+    'deployment.description.tls.failed',
+    'deployment.description.tls.rate.limited',
+    'deployment.description.tls.ready',
+    'deployment.description.tls.zero.ssl',
     'deployment.description.validating',
     'deployment.distribution',
     'deployment.error.code',
@@ -1057,6 +1069,10 @@ class L10nKeyResolver {
     'deployment.status.schema',
     'deployment.status.securing',
     'deployment.status.starting',
+    'deployment.status.tls.failed',
+    'deployment.status.tls.rate.limited',
+    'deployment.status.tls.ready',
+    'deployment.status.tls.zero.ssl',
     'deployment.status.validating',
     'deployment.sync.attempt',
     'deployment.system.parameters',
@@ -1802,6 +1818,10 @@ class L10nKeyResolver {
     'deploymentDescriptionReady': 'deployment.description.ready',
     'deploymentDescriptionSecuring': 'deployment.description.securing',
     'deploymentDescriptionStarting': 'deployment.description.starting',
+    'deploymentDescriptionTlsFailed': 'deployment.description.tls.failed',
+    'deploymentDescriptionTlsRateLimited': 'deployment.description.tls.rate.limited',
+    'deploymentDescriptionTlsReady': 'deployment.description.tls.ready',
+    'deploymentDescriptionTlsZeroSsl': 'deployment.description.tls.zero.ssl',
     'deploymentDescriptionValidating': 'deployment.description.validating',
     'deploymentDistribution': 'deployment.distribution',
     'deploymentErrorCode': 'deployment.error.code',
@@ -1870,6 +1890,10 @@ class L10nKeyResolver {
     'deploymentStatusSchema': 'deployment.status.schema',
     'deploymentStatusSecuring': 'deployment.status.securing',
     'deploymentStatusStarting': 'deployment.status.starting',
+    'deploymentStatusTlsFailed': 'deployment.status.tls.failed',
+    'deploymentStatusTlsRateLimited': 'deployment.status.tls.rate.limited',
+    'deploymentStatusTlsReady': 'deployment.status.tls.ready',
+    'deploymentStatusTlsZeroSsl': 'deployment.status.tls.zero.ssl',
     'deploymentStatusValidating': 'deployment.status.validating',
     'deploymentSyncAttempt': 'deployment.sync.attempt',
     'deploymentSystemParameters': 'deployment.system.parameters',
@@ -2612,6 +2636,10 @@ class L10nKeyResolver {
     'deployment.description.ready': 'deploymentDescriptionReady',
     'deployment.description.securing': 'deploymentDescriptionSecuring',
     'deployment.description.starting': 'deploymentDescriptionStarting',
+    'deployment.description.tls.failed': 'deploymentDescriptionTlsFailed',
+    'deployment.description.tls.rate.limited': 'deploymentDescriptionTlsRateLimited',
+    'deployment.description.tls.ready': 'deploymentDescriptionTlsReady',
+    'deployment.description.tls.zero.ssl': 'deploymentDescriptionTlsZeroSsl',
     'deployment.description.validating': 'deploymentDescriptionValidating',
     'deployment.distribution': 'deploymentDistribution',
     'deployment.error.code': 'deploymentErrorCode',
@@ -2680,6 +2708,10 @@ class L10nKeyResolver {
     'deployment.status.schema': 'deploymentStatusSchema',
     'deployment.status.securing': 'deploymentStatusSecuring',
     'deployment.status.starting': 'deploymentStatusStarting',
+    'deployment.status.tls.failed': 'deploymentStatusTlsFailed',
+    'deployment.status.tls.rate.limited': 'deploymentStatusTlsRateLimited',
+    'deployment.status.tls.ready': 'deploymentStatusTlsReady',
+    'deployment.status.tls.zero.ssl': 'deploymentStatusTlsZeroSsl',
     'deployment.status.validating': 'deploymentStatusValidating',
     'deployment.sync.attempt': 'deploymentSyncAttempt',
     'deployment.system.parameters': 'deploymentSystemParameters',
@@ -3429,6 +3461,10 @@ abstract class L10nKeys {
   static const deploymentDescriptionReady = 'deployment.description.ready';
   static const deploymentDescriptionSecuring = 'deployment.description.securing';
   static const deploymentDescriptionStarting = 'deployment.description.starting';
+  static const deploymentDescriptionTlsFailed = 'deployment.description.tls.failed';
+  static const deploymentDescriptionTlsRateLimited = 'deployment.description.tls.rate.limited';
+  static const deploymentDescriptionTlsReady = 'deployment.description.tls.ready';
+  static const deploymentDescriptionTlsZeroSsl = 'deployment.description.tls.zero.ssl';
   static const deploymentDescriptionValidating = 'deployment.description.validating';
   static const deploymentDistribution = 'deployment.distribution';
   static const deploymentErrorCode = 'deployment.error.code';
@@ -3497,6 +3533,10 @@ abstract class L10nKeys {
   static const deploymentStatusSchema = 'deployment.status.schema';
   static const deploymentStatusSecuring = 'deployment.status.securing';
   static const deploymentStatusStarting = 'deployment.status.starting';
+  static const deploymentStatusTlsFailed = 'deployment.status.tls.failed';
+  static const deploymentStatusTlsRateLimited = 'deployment.status.tls.rate.limited';
+  static const deploymentStatusTlsReady = 'deployment.status.tls.ready';
+  static const deploymentStatusTlsZeroSsl = 'deployment.status.tls.zero.ssl';
   static const deploymentStatusValidating = 'deployment.status.validating';
   static (String, Map<String, dynamic>) deploymentSyncAttempt(int attempt) => ('deployment.sync.attempt', {'attempt': attempt});
   static const deploymentSystemParameters = 'deployment.system.parameters';

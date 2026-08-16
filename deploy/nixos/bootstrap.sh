@@ -6,7 +6,6 @@ RELEASES_DIR=/opt/pocketcoder/releases
 RELEASE_STATE=/var/lib/pocketcoder/release
 ARTIFACT_DIR=/var/lib/pocketcoder/artifacts
 RUNTIME_ENV=/var/lib/pocketcoder/config/runtime.env
-PHASE_LOG=/var/log/pocketcoder-bootstrap-phases.log
 MARKER="$RELEASE_STATE/.initialized"
 export PC_SOURCE_COMMIT="$POCKETCODER_REF"
 
@@ -21,8 +20,6 @@ pc_status_init
 umask 077
 install -d -m 0755 "$RELEASES_DIR" "$RELEASE_STATE/manifests"
 install -d -m 0700 "$ARTIFACT_DIR" /var/lib/pocketcoder/config
-touch "$PHASE_LOG"
-chmod 0644 "$PHASE_LOG"
 
 # POCO:BEGIN bootstrap-owner-config
 # NixOS accepts owner configuration from the one-shot file written by the
@@ -107,16 +104,40 @@ SELECTED_HARNESSES=$(sed -n 's/^POCKETCODER_SELECTED_HARNESSES=//p' "$RUNTIME_EN
 SELECTED_HARNESSES="${SELECTED_HARNESSES:-goose}"
 trap - ERR
 export POCKETCODER_INITIALIZED_MARKER="$MARKER"
-RELEASE_BASE="$RELEASE_BASE" \
-POCKETCODER_RELEASE_CHANNEL="$RELEASE_CHANNEL" \
-POCKETCODER_RELEASE_DIGEST="$EXPECTED_DIGEST" \
-POCKETCODER_RELEASE_SEQUENCE="$EXPECTED_SEQUENCE" \
-POCKETCODER_SELECTED_HARNESSES="$SELECTED_HARNESSES" \
-POCKETCODER_RUNTIME_ENV="$RUNTIME_ENV" \
-POCKETCODER_STATUS_FILE="$PC_STATUS_FILE" \
-POCKETCODER_STATUS_RUN_ID="$PC_RUN_ID" \
-  pocketcoder-release install
+# A first-ever install has no previous release to fall back to, so an
+# interruption mid-install (a live-migration reboot, an OOM kill -- routine
+# cloud events, confirmed live: a Linode instance got SIGTERM'd mid-`docker
+# compose up` here) permanently strands the box: the release manager's own
+# recovery correctly cleans up the interrupted transaction, but still
+# reports it as an error, and this service has no Restart= directive, so a
+# single failed attempt would otherwise never be retried. Retry a few times
+# before giving up for real.
+install_ok=0
+for attempt in 1 2 3; do
+  set +e
+  RELEASE_BASE="$RELEASE_BASE" \
+  POCKETCODER_RELEASE_CHANNEL="$RELEASE_CHANNEL" \
+  POCKETCODER_RELEASE_DIGEST="$EXPECTED_DIGEST" \
+  POCKETCODER_RELEASE_SEQUENCE="$EXPECTED_SEQUENCE" \
+  POCKETCODER_SELECTED_HARNESSES="$SELECTED_HARNESSES" \
+  POCKETCODER_RUNTIME_ENV="$RUNTIME_ENV" \
+  POCKETCODER_STATUS_FILE="$PC_STATUS_FILE" \
+  POCKETCODER_STATUS_RUN_ID="$PC_RUN_ID" \
+    pocketcoder-release install
+  rc=$?
+  set -e
+  if [ "$rc" -eq 0 ]; then
+    install_ok=1
+    break
+  fi
+  echo "Attempt $attempt: pocketcoder-release install failed (exit $rc); retrying in 5s" >&2
+  sleep 5
+done
 pc_status_heartbeat_stop
+if [ "$install_ok" != 1 ]; then
+  pc_status_error fetching_release release_install_failed
+  exit 1
+fi
 # POCO:END bootstrap-release-source
 
 date -u +%Y-%m-%dT%H:%M:%SZ > "$MARKER"

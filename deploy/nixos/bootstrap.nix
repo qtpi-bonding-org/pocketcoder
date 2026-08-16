@@ -24,6 +24,7 @@
       gawk
       gzip
       gnutar
+      util-linux
       config.services.openssh.package
       config.virtualisation.docker.package
       releaseManager

@@ -65,6 +65,29 @@
   };
   # POCO:END caddy-address
 
+  environment.etc."pocketcoder/tls-status.sh".source = ../../deploy/scripts/tls-status.sh;
+
+  systemd.services.pocketcoder-tls-status = {
+    description = "Publish Caddy certificate state to PocketCoder status";
+    after = [ "caddy.service" ];
+    wants = [ "caddy.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "pocketcoder-tls-status" ''
+        set -eu
+        domain=$(sed -n 's/^BASE_DOMAIN=//p' /etc/pocketcoder/domain.env)
+        POCKETCODER_STATUS_FILE=/var/lib/pocketcoder/public/status.json \
+          ${pkgs.bash}/bin/bash /etc/pocketcoder/tls-status.sh "$domain"
+      '';
+    };
+    path = with pkgs; [ coreutils findutils gawk gnugrep gnused jq openssl util-linux systemd ];
+  };
+
+  systemd.timers.pocketcoder-tls-status = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = { OnBootSec = "5s"; OnUnitActiveSec = "30s"; Unit = "pocketcoder-tls-status.service"; };
+  };
+
   # POCO:BEGIN caddy-web-entry
   # --- Caddy reverse proxy ---
   # Enable Caddy but override ExecStart to use our runtime-generated Caddyfile.

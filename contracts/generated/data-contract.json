@@ -1,0 +1,790 @@
+{
+  "categories": [
+    "account_identifier",
+    "authentication_credential",
+    "authorization_metadata",
+    "activity_metadata",
+    "conversation_identifier",
+    "credential_metadata",
+    "customer_defined",
+    "device_identifier",
+    "notification_content",
+    "notification_metadata",
+    "oauth_credential",
+    "operational_metadata",
+    "provider_configuration",
+    "provider_error",
+    "provider_selection",
+    "pseudonymous_identifier",
+    "service_metadata",
+    "subscription_status",
+    "customer_defined"
+  ],
+  "external_paths": [
+    {
+      "id": "push-relay",
+      "repository": "../pocketcoder-pro",
+      "schema": "workers/push-relay/scripts/supabase-schema.sql",
+      "source": "workers/push-relay/src/index.js",
+      "status": "proprietary_external_worker"
+    }
+  ],
+  "notes": [
+    "Customer-owned PocketBase records are outside PocketCoder-hosted data; they are represented only by the boundary category customer_owned_pocketbase.",
+    "Push relay delivery is a proprietary hosted path in the sibling pocketcoder-pro repository; this public manifest describes its data boundary without copying proprietary implementation code."
+  ],
+  "owner": "PocketCoder",
+  "providers": [
+    {
+      "data": [
+        "oauth_state",
+        "oauth_exchange_record",
+        "image_release_object_request"
+      ],
+      "id": "cloudflare",
+      "role": "hosting_and_edge_storage",
+      "services": [
+        "Workers",
+        "KV",
+        "R2"
+      ]
+    },
+    {
+      "data": [
+        "relay_binding",
+        "push_quota"
+      ],
+      "id": "supabase",
+      "role": "push_binding_storage_and_quota",
+      "services": [
+        "Postgres"
+      ]
+    },
+    {
+      "data": [
+        "hosted_push_request"
+      ],
+      "id": "firebase",
+      "role": "push_delivery",
+      "services": [
+        "FCM"
+      ]
+    },
+    {
+      "data": [
+        "subscription_entitlement_check"
+      ],
+      "id": "revenuecat",
+      "role": "expected_subscription_verification",
+      "services": [
+        "subscription_entitlement_api"
+      ]
+    },
+    {
+      "data": [
+        "oauth_state",
+        "oauth_exchange_record",
+        "oauth_refresh_request"
+      ],
+      "id": "github",
+      "role": "oauth_provider",
+      "services": [
+        "OAuth"
+      ]
+    },
+    {
+      "data": [
+        "oauth_state",
+        "oauth_exchange_record",
+        "oauth_refresh_request"
+      ],
+      "id": "linode",
+      "role": "oauth_provider",
+      "services": [
+        "OAuth"
+      ]
+    }
+  ],
+  "records": [
+    {
+      "deletion": "discarded_after_delivery_or_error",
+      "destination": "firebase_cloud_messaging",
+      "durable": false,
+      "fields": [
+        {
+          "deletion": "not_stored",
+          "destination": "push_relay",
+          "log": false,
+          "name": "relay_secret",
+          "personal_data": "authentication_credential",
+          "purpose": "tenant_binding_authentication",
+          "required": true,
+          "secret": true,
+          "sensitivity": "critical",
+          "source": "X-Relay-Secret_header",
+          "type": "string"
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "Supabase",
+          "log": false,
+          "name": "user_id",
+          "personal_data": "account_identifier",
+          "purpose": "subscription_and_quota_lookup",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "PocketBase",
+          "type": "string"
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "Firebase",
+          "log": false,
+          "name": "token",
+          "personal_data": "device_identifier",
+          "purpose": "address_push_delivery",
+          "required": true,
+          "secret": true,
+          "sensitivity": "high",
+          "source": "PocketBase_devices",
+          "type": "string"
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "Firebase",
+          "log": true,
+          "name": "service",
+          "personal_data": "service_metadata",
+          "purpose": "delivery_routing",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "PocketBase",
+          "type": "enum",
+          "values": [
+            "fcm"
+          ]
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "Firebase",
+          "log": false,
+          "name": "title",
+          "personal_data": "notification_content",
+          "purpose": "notification_title",
+          "required": false,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "PocketBase_event",
+          "type": "string"
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "Firebase",
+          "log": false,
+          "name": "message",
+          "personal_data": "notification_content",
+          "purpose": "notification_body",
+          "required": false,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "PocketBase_event",
+          "type": "string"
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "Firebase",
+          "log": true,
+          "name": "type",
+          "personal_data": "notification_metadata",
+          "purpose": "notification_routing",
+          "required": false,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "PocketBase_event",
+          "type": "string"
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "Firebase",
+          "log": false,
+          "name": "chat",
+          "personal_data": "conversation_identifier",
+          "purpose": "deep_link_notification",
+          "required": false,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "PocketBase_event",
+          "type": "string"
+        }
+      ],
+      "kind": "request",
+      "name": "hosted_push_request",
+      "retention": "request_lifetime",
+      "service": "push-relay",
+      "source": "customer_owned_pocketbase_notification_dispatcher",
+      "status": "proprietary_external_worker",
+      "storage": "transient_worker_memory"
+    },
+    {
+      "deletion": "delete_on_unbind_or_account_deletion",
+      "destination": "supabase",
+      "durable": true,
+      "fields": [
+        {
+          "deletion": "delete_with_account",
+          "destination": "Supabase",
+          "log": false,
+          "name": "secret_hash",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "tenant_secret_binding_without_plaintext_secret",
+          "required": true,
+          "secret": true,
+          "sensitivity": "high",
+          "source": "push_request_header",
+          "type": "string"
+        },
+        {
+          "deletion": "delete_with_account",
+          "destination": "Supabase",
+          "log": false,
+          "name": "user_id",
+          "personal_data": "account_identifier",
+          "purpose": "tenant_attribution",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "push_request",
+          "type": "string"
+        },
+        {
+          "deletion": "delete_with_record",
+          "destination": "Supabase",
+          "log": false,
+          "name": "bound_at",
+          "personal_data": "activity_metadata",
+          "purpose": "binding_liveness",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "database_clock",
+          "type": "timestamp"
+        }
+      ],
+      "kind": "stored_record",
+      "name": "relay_binding",
+      "retention": "until_user_unbinds_or_90_days_inactive",
+      "service": "push-relay",
+      "source": "hosted_push_request",
+      "status": "proprietary_external_worker",
+      "storage": "supabase.relay_bindings"
+    },
+    {
+      "deletion": "purge_after_retention",
+      "destination": "supabase",
+      "durable": true,
+      "fields": [
+        {
+          "deletion": "purge_with_window",
+          "destination": "Supabase",
+          "log": false,
+          "name": "user_id",
+          "personal_data": "account_identifier",
+          "purpose": "rate_limit_subject",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "push_request",
+          "type": "string"
+        },
+        {
+          "deletion": "purge_after_retention",
+          "destination": "Supabase",
+          "log": false,
+          "name": "day",
+          "personal_data": "operational_metadata",
+          "purpose": "fixed_rate_limit_window",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "database_clock",
+          "type": "date"
+        },
+        {
+          "deletion": "purge_after_retention",
+          "destination": "Supabase",
+          "log": false,
+          "name": "count",
+          "personal_data": "operational_metadata",
+          "purpose": "rate_limit_counter",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "worker",
+          "type": "integer"
+        }
+      ],
+      "kind": "stored_record",
+      "name": "push_quota",
+      "retention": "30_days",
+      "service": "push-relay",
+      "source": "hosted_push_request",
+      "status": "proprietary_external_worker",
+      "storage": "supabase.push_quota"
+    },
+    {
+      "deletion": "discarded_after_callback",
+      "destination": "oauth_provider",
+      "durable": false,
+      "fields": [
+        {
+          "deletion": "not_stored",
+          "destination": "GitHub_or_Linode",
+          "log": true,
+          "name": "provider",
+          "personal_data": "provider_selection",
+          "purpose": "select_oauth_provider",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "app",
+          "type": "enum",
+          "values": [
+            "github",
+            "linode"
+          ]
+        },
+        {
+          "deletion": "discard_after_flow",
+          "destination": "oauth_provider",
+          "log": false,
+          "name": "code_challenge",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "pkce_binding",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "app",
+          "type": "string"
+        },
+        {
+          "deletion": "discard_after_flow",
+          "destination": "app_and_provider",
+          "log": false,
+          "name": "state",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "oauth_callback_binding",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "worker",
+          "type": "string"
+        }
+      ],
+      "kind": "transient_payload",
+      "name": "oauth_state",
+      "retention": "request_lifetime",
+      "service": "oauth-relay",
+      "source": "oauth_authorize_request",
+      "storage": "redirect_query_and_worker_memory"
+    },
+    {
+      "deletion": "delete_on_claim_mismatch_or_expiration",
+      "destination": "oauth_claiming_app",
+      "durable": false,
+      "fields": [
+        {
+          "deletion": "delete_after_claim",
+          "destination": "app",
+          "log": false,
+          "name": "exchange_code",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "one_time_token_handle",
+          "required": true,
+          "secret": true,
+          "sensitivity": "high",
+          "source": "worker",
+          "type": "uuid"
+        },
+        {
+          "deletion": "delete_after_claim",
+          "destination": "KV",
+          "log": false,
+          "name": "code_challenge",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "pkce_verification",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "oauth_state",
+          "type": "string"
+        },
+        {
+          "deletion": "delete_after_claim",
+          "destination": "KV_then_app",
+          "log": false,
+          "name": "access_token",
+          "personal_data": "oauth_credential",
+          "purpose": "authenticated_provider_access",
+          "required": true,
+          "secret": true,
+          "sensitivity": "critical",
+          "source": "GitHub_or_Linode",
+          "type": "string"
+        },
+        {
+          "deletion": "delete_after_claim",
+          "destination": "KV_then_app",
+          "log": false,
+          "name": "refresh_token",
+          "personal_data": "oauth_credential",
+          "purpose": "token_refresh",
+          "required": false,
+          "secret": true,
+          "sensitivity": "critical",
+          "source": "GitHub_or_Linode",
+          "type": "string"
+        },
+        {
+          "deletion": "delete_after_claim",
+          "destination": "KV_then_app",
+          "log": false,
+          "name": "expires_in",
+          "personal_data": "credential_metadata",
+          "purpose": "token_expiry",
+          "required": false,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "provider",
+          "type": "integer_or_null"
+        },
+        {
+          "deletion": "delete_after_claim",
+          "destination": "KV_then_app",
+          "log": false,
+          "name": "scope",
+          "personal_data": "authorization_metadata",
+          "purpose": "granted_access_display",
+          "required": false,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "provider",
+          "type": "string_or_null"
+        }
+      ],
+      "kind": "stored_record",
+      "name": "oauth_exchange_record",
+      "retention": "60_seconds",
+      "service": "oauth-relay",
+      "source": "oauth_provider_callback",
+      "storage": "cloudflare_kv.exchange"
+    },
+    {
+      "deletion": "discarded_after_callback",
+      "destination": "oauth-relay",
+      "durable": false,
+      "fields": [
+        {
+          "deletion": "not_stored",
+          "destination": "worker",
+          "log": false,
+          "name": "code",
+          "personal_data": "oauth_credential",
+          "purpose": "provider_token_exchange",
+          "required": true,
+          "secret": true,
+          "sensitivity": "critical",
+          "source": "OAuth_provider",
+          "type": "string"
+        },
+        {
+          "deletion": "discard_after_flow",
+          "destination": "worker",
+          "log": false,
+          "name": "state",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "callback_binding",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "OAuth_provider",
+          "type": "string"
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "app",
+          "log": false,
+          "name": "error",
+          "personal_data": "provider_error",
+          "purpose": "oauth_failure_handling",
+          "required": false,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "OAuth_provider",
+          "type": "string"
+        }
+      ],
+      "kind": "request",
+      "name": "oauth_callback_request",
+      "retention": "request_lifetime",
+      "service": "oauth-relay",
+      "source": "github_or_linode",
+      "storage": "transient_worker_memory"
+    },
+    {
+      "deletion": "secret_rotation_or_worker_removal",
+      "destination": "github_or_linode",
+      "durable": true,
+      "fields": [
+        {
+          "deletion": "rotate",
+          "destination": "provider",
+          "log": false,
+          "name": "client_id",
+          "personal_data": "provider_configuration",
+          "purpose": "oauth_app_identification",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "Worker_secret",
+          "type": "string"
+        },
+        {
+          "deletion": "rotate",
+          "destination": "provider",
+          "log": false,
+          "name": "client_secret",
+          "personal_data": "provider_configuration",
+          "purpose": "oauth_app_authentication",
+          "required": true,
+          "secret": true,
+          "sensitivity": "critical",
+          "source": "Worker_secret",
+          "type": "string"
+        },
+        {
+          "deletion": "worker_removal",
+          "destination": "provider",
+          "log": false,
+          "name": "authorize_url",
+          "personal_data": "provider_configuration",
+          "purpose": "authorization_endpoint",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "Worker_code",
+          "type": "string"
+        },
+        {
+          "deletion": "worker_removal",
+          "destination": "provider",
+          "log": false,
+          "name": "token_url",
+          "personal_data": "provider_configuration",
+          "purpose": "token_endpoint",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "Worker_code",
+          "type": "string"
+        }
+      ],
+      "kind": "operational_metadata",
+      "name": "oauth_provider_config",
+      "retention": "until_configuration_rotation",
+      "service": "oauth-relay",
+      "source": "PocketCoder_configuration",
+      "storage": "Cloudflare_worker_secrets_and_code"
+    },
+    {
+      "deletion": "discarded_after_request",
+      "destination": "cloudflare_kv",
+      "durable": false,
+      "fields": [
+        {
+          "deletion": "not_stored",
+          "destination": "KV",
+          "log": false,
+          "name": "exchange_code",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "claim_one_time_exchange",
+          "required": true,
+          "secret": true,
+          "sensitivity": "high",
+          "source": "app",
+          "type": "uuid"
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "worker",
+          "log": false,
+          "name": "code_verifier",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "pkce_verification",
+          "required": true,
+          "secret": true,
+          "sensitivity": "high",
+          "source": "app",
+          "type": "string"
+        }
+      ],
+      "kind": "request",
+      "name": "oauth_claim_request",
+      "retention": "request_lifetime",
+      "service": "oauth-relay",
+      "source": "app",
+      "storage": "transient_worker_memory"
+    },
+    {
+      "deletion": "discarded_after_provider_response",
+      "destination": "github_or_linode",
+      "durable": false,
+      "fields": [
+        {
+          "deletion": "not_stored",
+          "destination": "provider",
+          "log": true,
+          "name": "provider",
+          "personal_data": "provider_selection",
+          "purpose": "token_endpoint_selection",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "app",
+          "type": "enum",
+          "values": [
+            "github",
+            "linode"
+          ]
+        },
+        {
+          "deletion": "not_stored",
+          "destination": "provider",
+          "log": false,
+          "name": "refresh_token",
+          "personal_data": "oauth_credential",
+          "purpose": "refresh_access_token",
+          "required": true,
+          "secret": true,
+          "sensitivity": "critical",
+          "source": "app",
+          "type": "string"
+        }
+      ],
+      "kind": "request",
+      "name": "oauth_refresh_request",
+      "retention": "request_lifetime",
+      "service": "oauth-relay",
+      "source": "app",
+      "storage": "transient_worker_memory"
+    },
+    {
+      "deletion": "cache_expiration",
+      "destination": "revenuecat",
+      "durable": false,
+      "fields": [
+        {
+          "deletion": "cache_expiration",
+          "destination": "RevenueCat",
+          "log": false,
+          "name": "user_id",
+          "personal_data": "account_identifier",
+          "purpose": "subscription_entitlement_lookup",
+          "required": true,
+          "secret": false,
+          "sensitivity": "moderate",
+          "source": "push_request",
+          "type": "string"
+        },
+        {
+          "deletion": "cache_expiration",
+          "destination": "push_relay",
+          "log": false,
+          "name": "is_premium",
+          "personal_data": "subscription_status",
+          "purpose": "paid_push_gate",
+          "required": true,
+          "secret": false,
+          "sensitivity": "high",
+          "source": "RevenueCat",
+          "type": "boolean"
+        }
+      ],
+      "kind": "transient_payload",
+      "name": "subscription_entitlement_check",
+      "retention": "5_minutes",
+      "service": "push-relay",
+      "source": "push_relay",
+      "status": "proprietary_external_worker",
+      "storage": "cloudflare_cache"
+    },
+    {
+      "deletion": "release_pipeline_controlled_deletion",
+      "destination": "cloudflare_r2",
+      "durable": true,
+      "fields": [
+        {
+          "deletion": "delete_with_release",
+          "destination": "Cloudflare_R2",
+          "log": true,
+          "name": "object_path",
+          "personal_data": "none",
+          "purpose": "public_release_distribution",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "URL_path",
+          "type": "constrained_path"
+        },
+        {
+          "deletion": "not_applicable",
+          "destination": "client",
+          "log": true,
+          "name": "content_type",
+          "personal_data": "none",
+          "purpose": "response_content_type",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "worker",
+          "type": "string"
+        }
+      ],
+      "kind": "request",
+      "name": "image_release_object_request",
+      "retention": "until_release_or_artifact_purge",
+      "service": "image-relay",
+      "source": "public_client",
+      "storage": "cloudflare_r2"
+    },
+    {
+      "deletion": "customer_controlled",
+      "destination": "customer_owned_pocketbase",
+      "durable": true,
+      "fields": [
+        {
+          "deletion": "customer_controlled",
+          "destination": "customer_owned_pocketbase",
+          "log": false,
+          "name": "record_content",
+          "personal_data": "customer_defined",
+          "purpose": "customer_application_operation",
+          "required": false,
+          "secret": "customer_defined",
+          "sensitivity": "customer_defined",
+          "source": "customer_client",
+          "type": "opaque_customer_data"
+        }
+      ],
+      "kind": "boundary_category",
+      "name": "customer_owned_pocketbase_boundary",
+      "retention": "customer_configured",
+      "service": "customer_deployment",
+      "source": "customer",
+      "storage": "customer_owned_pocketbase"
+    }
+  ],
+  "scope": "hosted-workers-and-supabase",
+  "version": 1
+}

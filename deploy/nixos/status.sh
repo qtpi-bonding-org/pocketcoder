@@ -4,18 +4,25 @@
 
 PC_STATUS_DIR="${PC_STATUS_DIR:-/var/lib/pocketcoder/public}"
 PC_STATUS_FILE="$PC_STATUS_DIR/status.json"
+PC_STATUS_LOCK="$PC_STATUS_DIR/.status.lock"
 PC_RUN_ID=""
 PC_CURRENT_PHASE="configuring_operating_system"
 PC_HEARTBEAT_PID=""
 
 _pc_status_write() {
-  local phase="$1" detail="${2:-}" error="${3:-}" tmp
+  local phase="$1" detail="${2:-}" error="${3:-}" tmp existing
   local ssh_host_key_type="${POCKETCODER_SSH_HOST_KEY_TYPE:-}"
   local ssh_host_key_fingerprint="${POCKETCODER_SSH_HOST_KEY_FINGERPRINT:-}"
   mkdir -p "$PC_STATUS_DIR"
+  exec 9>>"$PC_STATUS_LOCK"
+  flock 9
+  existing='{}'
+  if [ -s "$PC_STATUS_FILE" ] && jq -e . "$PC_STATUS_FILE" >/dev/null 2>&1; then
+    existing="$PC_STATUS_FILE"
+  fi
   tmp=$(mktemp -p "$PC_STATUS_DIR" .status.XXXXXX)
-  jq -n \
-    --argjson schema 1 \
+  jq \
+    --argjson schema 2 \
     --arg runId "$PC_RUN_ID" \
     --arg phase "$phase" \
     --arg detail "$detail" \
@@ -24,19 +31,18 @@ _pc_status_write() {
     --arg sshHostKeyFingerprint "$ssh_host_key_fingerprint" \
     --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg error "$error" \
-    '{schema:$schema,runId:$runId,phase:$phase,
+    '(. + {schema:$schema,runId:$runId,phase:$phase,
       detail:(if $detail == "" then null else $detail end),
       sourceCommit:$sourceCommit,updatedAt:$updatedAt,
       sshHostKey:(if $sshHostKeyType == "" or $sshHostKeyFingerprint == ""
         then null
         else {type:$sshHostKeyType,fingerprint:$sshHostKeyFingerprint}
         end),
-      error:(if $error == "" then null else $error end)}' > "$tmp"
+      error:(if $error == "" then null else $error end)})' "$existing" > "$tmp"
   chmod 0644 "$tmp"
   mv -f "$tmp" "$PC_STATUS_FILE"
-  if [ "${PC_TRACE:-0}" = 1 ]; then
-    printf '%s %s\n' "$phase" "${detail:-}" >> /var/log/pocketcoder-status-trace.log
-  fi
+  flock -u 9
+  exec 9>&-
 }
 
 pc_status_capture_ssh_host_key() {

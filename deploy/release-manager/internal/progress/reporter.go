@@ -1,10 +1,13 @@
 package progress
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/state"
@@ -14,17 +17,6 @@ import (
 // Release correctness must never depend on the status document being writable.
 type Sink interface {
 	Report(phase, detail string)
-}
-
-type document struct {
-	Schema       int         `json:"schema"`
-	RunID        string      `json:"runId"`
-	Phase        string      `json:"phase"`
-	Detail       string      `json:"detail,omitempty"`
-	SourceCommit string      `json:"sourceCommit"`
-	UpdatedAt    string      `json:"updatedAt"`
-	Error        string      `json:"error,omitempty"`
-	SSHHostKey   *sshHostKey `json:"sshHostKey,omitempty"`
 }
 
 type sshHostKey struct {
@@ -130,13 +122,59 @@ func (reporter *Reporter) StartHeartbeat(interval time.Duration) func() {
 }
 
 func (reporter *Reporter) writeLocked(errorCode string) {
-	value := document{
-		Schema: 1, RunID: reporter.runID, Phase: reporter.phase,
-		Detail: reporter.detail, SourceCommit: reporter.sourceCommit,
-		UpdatedAt: time.Now().UTC().Format(time.RFC3339), Error: errorCode,
-		SSHHostKey: reporter.sshHostKey,
+	if err := os.MkdirAll(filepath.Dir(reporter.path), 0o755); err != nil {
+		fmt.Fprintf(reporter.errorWriter, "pocketcoder-release: status warning: %v\n", err)
+		return
 	}
-	if err := state.WriteJSONAtomic(reporter.path, value, 0o644); err != nil {
+	lockPath := filepath.Join(filepath.Dir(reporter.path), ".status.lock")
+	lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o600)
+	if err == nil {
+		defer lockFile.Close()
+		err = syscall.Flock(int(lockFile.Fd()), syscall.LOCK_EX)
+	}
+	if err == nil {
+		defer syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
+		value := map[string]json.RawMessage{}
+		if data, readErr := os.ReadFile(reporter.path); readErr == nil && len(data) != 0 {
+			if readErr = json.Unmarshal(data, &value); readErr != nil {
+				err = readErr
+			}
+		} else if readErr != nil && !os.IsNotExist(readErr) {
+			err = readErr
+		}
+		if err == nil {
+			set := func(key string, item any) {
+				data, marshalErr := json.Marshal(item)
+				if marshalErr != nil {
+					err = marshalErr
+					return
+				}
+				value[key] = data
+			}
+			set("schema", 2)
+			set("runId", reporter.runID)
+			set("phase", reporter.phase)
+			if reporter.detail == "" {
+				set("detail", nil)
+			} else {
+				set("detail", reporter.detail)
+			}
+			set("sourceCommit", reporter.sourceCommit)
+			set("updatedAt", time.Now().UTC().Format(time.RFC3339))
+			if errorCode == "" {
+				set("error", nil)
+			} else {
+				set("error", errorCode)
+			}
+			if reporter.sshHostKey != nil {
+				set("sshHostKey", reporter.sshHostKey)
+			}
+			if err == nil {
+				err = state.WriteJSONAtomic(reporter.path, value, 0o644)
+			}
+		}
+	}
+	if err != nil {
 		fmt.Fprintf(reporter.errorWriter, "pocketcoder-release: status warning: %v\n", err)
 	}
 }

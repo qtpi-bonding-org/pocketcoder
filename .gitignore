@@ -104,3 +104,7 @@ server/pocketbase/backend/
 server/pocketbase/.gocache/
 server/pocketbase/pocketcoder
 client/apps/pocketcoder/ios/**/xcshareddata/swiftpm/
+
+# Local-only artifacts pulled from disposable VPS-script-test boxes
+# (TLS certs, etc.) -- never committed, machine-local debugging aid only.
+deploy/release-manager/tests/vps/.local/
