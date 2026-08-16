@@ -10,14 +10,21 @@
     requires = [ "docker.service" ];
     environment.POCKETCODER_REF = sourceCommit;
     environment.POCKETCODER_GITHUB_WORKFLOW_BRANCH = releaseBranch;
+    # StartLimitIntervalSec/StartLimitBurst are [Unit]-section directives in
+    # systemd, and NixOS's systemd module exposes them as top-level service
+    # options for exactly that reason -- nesting them inside serviceConfig
+    # (which only ever writes [Service]) makes systemd silently ignore them
+    # ("Unknown key name" in the journal), leaving the manager's own default
+    # (10s interval / burst 5) in effect instead of the wider window we
+    # actually want here.
+    startLimitIntervalSec = 600;
+    startLimitBurst = 5;
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
       TimeoutStartSec = "infinity";
       Restart = "on-failure";
       RestartSec = "10s";
-      StartLimitIntervalSec = "600";
-      StartLimitBurst = "5";
     };
     path = with pkgs; [
       curl
