@@ -2620,6 +2620,30 @@ abstract class AppLocalizations {
   /// **'SECURING CONNECTION'**
   String get deploymentStatusSecuring;
 
+  /// No description provided for @deploymentStatusTlsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECTION SECURED'**
+  String get deploymentStatusTlsReady;
+
+  /// No description provided for @deploymentStatusTlsZeroSsl.
+  ///
+  /// In en, this message translates to:
+  /// **'USING BACKUP CERTIFICATE AUTHORITY'**
+  String get deploymentStatusTlsZeroSsl;
+
+  /// No description provided for @deploymentStatusTlsRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'CERTIFICATE AUTHORITY RATE LIMITED'**
+  String get deploymentStatusTlsRateLimited;
+
+  /// No description provided for @deploymentStatusTlsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'CERTIFICATE ISSUANCE FAILED'**
+  String get deploymentStatusTlsFailed;
+
   /// No description provided for @deploymentStatusConfiguringOperatingSystem.
   ///
   /// In en, this message translates to:
@@ -2691,6 +2715,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'WAITING FOR THE NATIVE REVERSE PROXY.'**
   String get deploymentDescriptionSecuring;
+
+  /// No description provided for @deploymentDescriptionTlsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'A BROWSER-TRUSTED CERTIFICATE IS ACTIVE.'**
+  String get deploymentDescriptionTlsReady;
+
+  /// No description provided for @deploymentDescriptionTlsZeroSsl.
+  ///
+  /// In en, this message translates to:
+  /// **'ISSUED VIA THE BACKUP AUTHORITY AFTER THE PRIMARY WAS UNAVAILABLE.'**
+  String get deploymentDescriptionTlsZeroSsl;
+
+  /// No description provided for @deploymentDescriptionTlsRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRYING AUTOMATICALLY WITH A BACKUP CERTIFICATE AUTHORITY.'**
+  String get deploymentDescriptionTlsRateLimited;
+
+  /// No description provided for @deploymentDescriptionTlsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'THE REVERSE PROXY COULD NOT OBTAIN A CERTIFICATE.'**
+  String get deploymentDescriptionTlsFailed;
 
   /// No description provided for @deploymentDescriptionConfiguringOperatingSystem.
   ///
