@@ -195,6 +195,25 @@ result=$(
 check "vps_provision: stdout is exactly the handoff JSON, not the log" \
   '{"instanceId":"instance-1","ipAddress":"192.0.2.1","hostname":"example.test","sshPrivateKeyPath":"/tmp/key","releaseDigest":"digest-1"}' "$result"
 
+# --- 10-provision: the checked-out branch is forwarded to the provisioner ---
+# Regression test for a bug found live: the provisioner had no way to know
+# which branch pocketcoder was on, so golden_path_provision_test.dart always
+# provisioned from the bare (production) nightly channel regardless of
+# branch -- a staging run could never dry-run against the branch-isolated
+# nightly-testing channel the way 55-promote.sh already does.
+branch_repo="$TEST_TMP/branch-repo"
+mkdir -p "$branch_repo"
+git -C "$branch_repo" init -q
+git -C "$branch_repo" checkout -q -b staging
+stub_bin "$TEST_TMP" branch-capturing-provisioner "
+printf '%s' \"\$POCKETCODER_GITHUB_WORKFLOW_BRANCH\" > '$TEST_TMP/captured-branch'
+printf '%s' '{\"instanceId\":\"instance-1\",\"ipAddress\":\"192.0.2.1\",\"hostname\":\"example.test\",\"sshPrivateKeyPath\":\"/tmp/key\",\"releaseDigest\":\"digest-1\"}'
+"
+VPS_PROVISIONER="$TEST_TMP/branch-capturing-provisioner" \
+  vps_provision "$branch_repo" "$provision_run_dir" "test-provision-label-2" >/dev/null
+check "vps_provision: forwards the checked-out branch to the provisioner" \
+  "staging" "$(cat "$TEST_TMP/captured-branch")"
+
 # --- 60-update: the remote command must actually be valid shell (F-live) ---
 # Regression test for a bug found live: `VAR=val <compound-command>` is
 # invalid bash syntax when the shipped command is an `if` statement, not a
