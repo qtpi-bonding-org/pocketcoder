@@ -10,7 +10,7 @@
 vps_promote_candidate() {
   local repo_root=$1 baseline_digest=$2 branch=$3
   local api auth run state attempt source_commit promotion
-  local digest sequence pointer pointer_digest pointer_sequence
+  local digest sequence pointer pointer_digest pointer_sequence channel_path
 
   : "${GH_TOKEN:?GH_TOKEN must be injected by the secrets-daemon}"
   api='https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions'
@@ -48,10 +48,20 @@ vps_promote_candidate() {
     return 1
   }
 
-  echo "VPS SUITE: waiting for the nightly pointer to serve $digest" >&2
+  # Mirrors resolver.go's ChannelPath: promote-latest-candidate.sh dispatches
+  # release-promotion.yml with ref=$branch, which publishes to the bare
+  # "nightly.json" only for main -- every other branch (today, only staging)
+  # gets its own "nightly-testing.json" so a staging run can never overwrite
+  # the shared pointer a main-trust box actually polls. Polling the wrong
+  # path here doesn't touch production, but it does make this phase time out
+  # and update/post-update/rollback silently skip instead of exercising them.
+  channel_path=nightly
+  [ "$branch" = main ] || channel_path=nightly-testing
+
+  echo "VPS SUITE: waiting for the $channel_path pointer to serve $digest" >&2
   sequence=
   for attempt in $(seq 1 "${VPS_PROMOTE_POINTER_ATTEMPTS:-40}"); do
-    pointer=$(curl -fsSL https://images.relay.pocketcoder.org/v1/channels/nightly.json || true)
+    pointer=$(curl -fsSL "https://images.relay.pocketcoder.org/v1/channels/$channel_path.json" || true)
     pointer_digest=$(printf '%s' "$pointer" | jq -r '.manifest.sha256 // empty' 2>/dev/null || true)
     pointer_sequence=$(printf '%s' "$pointer" | jq -r '.sequence // empty' 2>/dev/null || true)
     if [ "$pointer_digest" = "$digest" ] && [ -n "$pointer_sequence" ]; then
@@ -60,7 +70,7 @@ vps_promote_candidate() {
     fi
     sleep "${VPS_PROMOTE_POLL_INTERVAL:-15}"
   done
-  [ -n "$sequence" ] || { echo "timed out waiting for the nightly pointer to serve $digest" >&2; return 1; }
+  [ -n "$sequence" ] || { echo "timed out waiting for the $channel_path pointer to serve $digest" >&2; return 1; }
 
   jq -n --arg digest "$digest" --arg commit "$source_commit" --arg sequence "$sequence" \
     '{digest:$digest,sourceCommit:$commit,sequence:$sequence}'
