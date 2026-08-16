@@ -1,3 +1,5 @@
+import { validateRecord } from '../../../contracts/generated/validators.js';
+
 /**
  * PocketCoder MCP OAuth Relay
  *
@@ -282,6 +284,11 @@ async function handleClaim(request, env) {
 	} catch (e) {
 		return json({ error: 'invalid_json' }, 400);
 	}
+	try {
+		validateRecord('oauth_claim_request', body);
+	} catch (e) {
+		return json({ error: 'invalid_request' }, 400);
+	}
 
 	const exchangeCode = body.exchange_code;
 	const codeVerifier = body.code_verifier;
@@ -326,6 +333,11 @@ async function handleRefresh(request, env) {
 		body = await request.json();
 	} catch (e) {
 		return json({ error: 'invalid_json' }, 400);
+	}
+	try {
+		validateRecord('oauth_refresh_request', body);
+	} catch (e) {
+		return json({ error: 'invalid_request' }, 400);
 	}
 
 	const providerId = body.provider;

@@ -1,0 +1,42 @@
+name: Hosted data contracts
+
+on:
+  pull_request:
+    branches: [main, staging]
+  push:
+    branches: [main, staging]
+    paths:
+      - 'contracts/**'
+      - 'workers/**'
+      - 'website/src/content/docs/privacy.md'
+      - 'package.json'
+      - '.github/workflows/data-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install manifest parser
+        run: python -m pip install pyyaml
+      - name: Regenerate contract artifacts
+        run: npm run contracts:generate
+      - name: Fail on stale generated artifacts
+        run: git diff --exit-code -- contracts/generated website/src/content/docs/privacy.md
+      - name: Validate SQL, source declarations, and privacy inventory
+        run: npm run contracts:check
+      - name: Contract tests
+        run: npm run contracts:test
+      - name: Type-check generated TypeScript
+        run: npx --yes -p typescript@5.7.2 tsc --noEmit --strict --skipLibCheck contracts/generated/worker-types.ts
+      - name: Privacy marker check
+        run: npm run privacy:check
