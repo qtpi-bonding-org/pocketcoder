@@ -50,6 +50,7 @@ else
   done
   if [ -z "$USER_DATA" ]; then
     echo "No owner configuration was delivered; refusing an unreachable deployment" >&2
+    pc_status_error configuring_operating_system owner_config_undelivered
     exit 1
   fi
   install -m 600 /dev/null "$RUNTIME_ENV"
@@ -59,6 +60,7 @@ fi
 ROOT_SSH_KEY=$(sed -n 's/^root_ssh_key=//p' "$RUNTIME_ENV")
 if [ -z "$ROOT_SSH_KEY" ] && [ ! -s /root/.ssh/authorized_keys ]; then
   echo "No root SSH key was delivered; refusing an unreachable deployment" >&2
+  pc_status_error configuring_operating_system ssh_key_undelivered
   exit 1
 fi
 install -d -m 700 /root/.ssh
