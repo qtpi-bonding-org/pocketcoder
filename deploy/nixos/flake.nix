@@ -44,20 +44,25 @@
       };
     };
 
-    checks.${system}.ordering =
-      import ./tests/ordering.nix { inherit pkgs self system; };
+    # A single assignment: `checks.${system}.a = ...; checks.${system}.b =
+    # ...;` as separate top-level bindings does NOT merge the way it would
+    # with static attribute names -- `${system}` makes the whole path
+    # dynamic, and Nix rejects defining the same dynamic path twice
+    # ("dynamic attribute 'x86_64-linux' already defined"). Confirmed live
+    # in CI. All checks live in one attrset here instead.
+    checks.${system} = {
+      ordering = import ./tests/ordering.nix { inherit pkgs self system; };
 
-    # ordering.nix's VM test replaces detect-public-ip.script with a
-    # hand-written fake Caddyfile, so it structurally can never catch a
-    # syntax error in the real Caddyfile.template -- confirmed live: a
-    # Caddyfile.template change (90f12ffaf) shipped an invalid `issuer
-    # zerossl` directive (needs an API-key argument it never got) that broke
-    # every box's Caddy/HTTPS from first boot, and nothing in CI rendered or
-    # parsed the real template to notice. This renders it with the exact
-    # sed pipeline caddy.nix uses and runs `caddy validate` against the
-    # result.
-    checks.${system}.caddyfile-validate =
-      pkgs.runCommand "pocketcoder-caddyfile-validate" { } ''
+      # ordering.nix's VM test replaces detect-public-ip.script with a
+      # hand-written fake Caddyfile, so it structurally can never catch a
+      # syntax error in the real Caddyfile.template -- confirmed live: a
+      # Caddyfile.template change (90f12ffaf) shipped an invalid `issuer
+      # zerossl` directive (needs an API-key argument it never got) that
+      # broke every box's Caddy/HTTPS from first boot, and nothing in CI
+      # rendered or parsed the real template to notice. This renders it
+      # with the exact sed pipeline caddy.nix uses and runs `caddy
+      # validate` against the result.
+      caddyfile-validate = pkgs.runCommand "pocketcoder-caddyfile-validate" { } ''
         set -eu
         sed \
           -e 's|{{CADDY_GLOBAL_OPTIONS}}||g' \
@@ -70,24 +75,55 @@
         touch $out
       '';
 
-    # A module can be syntactically valid Nix and still produce a broken
-    # systemd unit -- confirmed live: bootstrap.nix nested
-    # StartLimitIntervalSec/StartLimitBurst (a [Unit]-section directive)
-    # inside serviceConfig (which only ever writes [Service]), and systemd
-    # silently dropped them rather than erroring, leaving the manager's
-    # default 10s/burst-5 restart window in effect instead of the intended
-    # one. systemd-analyze verify is the tool built to catch exactly this
-    # class of "valid config, wrong section" mistake.
-    checks.${system}.systemd-units =
-      let toplevel = self.nixosConfigurations.pocketcoder.config.system.build.toplevel;
-      in pkgs.runCommand "pocketcoder-systemd-verify" { } ''
-        set -eu
-        for unit in pocketcoder-bootstrap.service caddy.service \
-          pocketcoder-tls-status.service pocketcoder-release-metadata.service; do
-          echo "verifying $unit"
-          ${pkgs.systemd}/bin/systemd-analyze verify --root=${toplevel} "$unit"
-        done
-        touch $out
-      '';
+      # A module can be syntactically valid Nix and still produce a broken
+      # systemd unit -- confirmed live: bootstrap.nix nested
+      # StartLimitIntervalSec/StartLimitBurst (a [Unit]-section directive)
+      # inside serviceConfig (which only ever writes [Service]), and
+      # systemd silently dropped them rather than erroring, leaving the
+      # manager's default 10s/burst-5 restart window in effect instead of
+      # the intended one. systemd-analyze verify is the tool built to
+      # catch exactly this class of "valid config, wrong section" mistake.
+      # `systemd-analyze verify` is the properly thorough tool for this,
+      # but it needs to create the real /run/systemd/ for its own runtime
+      # state regardless of --root or which unit-file form it's given --
+      # confirmed live, interactively, both with --root+unit-name (which
+      # separately turned out to have its own bug: it resolves
+      # ExecStart='s already-absolute /nix/store/... path as if it were
+      # relative to --root) and with a direct unit-file path. A nix build
+      # sandbox never has a writable /run, and there's no supported way to
+      # get one from inside a sandboxed derivation. Falls back to a
+      # static, sandbox-safe check for the exact bug class this exists to
+      # catch: a [Unit]-only directive silently accepted inside
+      # `serviceConfig` (which only ever writes [Service]).
+      systemd-units =
+        let toplevel = self.nixosConfigurations.pocketcoder.config.system.build.toplevel;
+        in pkgs.runCommand "pocketcoder-systemd-verify" { } ''
+          set -eu
+          fail=0
+          for unit in pocketcoder-bootstrap.service caddy.service \
+            pocketcoder-tls-status.service pocketcoder-release-metadata.service; do
+            echo "checking $unit"
+            file="${toplevel}/etc/systemd/system/$unit"
+            # Extract only the [Service] section, then look for any
+            # directive that belongs to [Unit] instead. This list is the
+            # directives most likely to be written expecting [Unit]
+            # semantics (restart-limiting, conditions, ordering) -- not
+            # exhaustive of every systemd.unit(5) [Unit] key, but it's the
+            # class of mistake that's actually plausible here.
+            section=$(${pkgs.gawk}/bin/awk \
+              '/^\[Service\]/{f=1;next} /^\[/{f=0} f' "$file")
+            misplaced=$(printf '%s\n' "$section" | ${pkgs.gnugrep}/bin/grep -E \
+              '^(StartLimitIntervalSec|StartLimitBurst|StartLimitAction|ConditionPathExists|ConditionPathExistsGlob|After|Before|Wants|Requires|BindsTo|PartOf|OnFailure)=' \
+              || true)
+            if [ -n "$misplaced" ]; then
+              echo "$unit: [Unit]-only directive(s) found inside [Service]:" >&2
+              printf '%s\n' "$misplaced" >&2
+              fail=1
+            fi
+          done
+          [ "$fail" -eq 0 ]
+          touch $out
+        '';
+    };
   };
 }
