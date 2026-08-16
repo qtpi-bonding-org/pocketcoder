@@ -49,6 +49,7 @@ domain=$(jq -r '.hostname // empty' "$tmp")
 cert=$(jq -r '.certificatePemBase64 // empty' "$tmp" | base64 -d)
 key=$(jq -r '.privateKeyPemBase64 // empty' "$tmp" | base64 -d)
 test -n "$domain" -a -n "$cert" -a -n "$key"
+case "$domain" in *[!A-Za-z0-9.-]*|'') exit 1 ;; esac
 printf '%s' "$cert" > "$tmp.crt"
 printf '%s' "$key" > "$key_tmp"
 openssl x509 -in "$tmp.crt" -checkend 0 -noout
@@ -62,6 +63,7 @@ install -d -m 0700 "$cert_dir"
 cp "$tmp.crt" "$cert_dir/$domain.crt"
 cp "$key_tmp" "$cert_dir/$domain.key"
 chmod 0600 "$cert_dir/$domain.key"
+systemctl restart caddy
 ''';
 
 /// Root SSH transport shared by the small set of owner recovery operations.
