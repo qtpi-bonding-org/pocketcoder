@@ -65,6 +65,10 @@ cp "$key_tmp" "$cert_dir/$domain.key"
 chmod 0600 "$cert_dir/$domain.key"
 systemctl restart caddy
 ''';
+const _rollbackCommand =
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release rollback; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
 
 /// Root SSH transport shared by the small set of owner recovery operations.
 ///
@@ -175,6 +179,7 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
     RootSshCommand.saveBackup => _saveBackupCommand,
     RootSshCommand.exportCaddyCertificate => _exportCaddyCertificateCommand,
     RootSshCommand.restoreCaddyCertificate => _restoreCaddyCertificateCommand,
+    RootSshCommand.rollback => _rollbackCommand,
   };
 
   static Uint8List? _parseFingerprint(String value) {

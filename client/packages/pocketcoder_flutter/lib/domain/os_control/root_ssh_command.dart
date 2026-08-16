@@ -10,4 +10,5 @@ enum RootSshCommand {
   saveBackup,
   exportCaddyCertificate,
   restoreCaddyCertificate,
+  rollback,
 }
