@@ -6,10 +6,10 @@ catalog_file=${2:?harness catalog file is required}
 artifact_dir=${3:?artifact staging directory is required}
 run_id=${4:?provisioning run ID is required}
 status_file=${5:?status file is required}
-phase_log=${POCKETCODER_PHASE_LOG:-/var/log/pocketcoder-bootstrap-phases.log}
 shift 5
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+source "$script_dir/status-merge.sh"
 release=$(jq -r '.release // empty' "$manifest_file")
 reserve_bytes=${POCKETCODER_DISK_RESERVE_BYTES:-1073741824}
 resolved_file="$artifact_dir/.resolved-artifacts.$$"
@@ -27,28 +27,7 @@ write_status() {
   phase=$1
   detail=${2:-}
   error=${3:-}
-  status_dir=$(dirname -- "$status_file")
-  install -d -m 0755 "$status_dir"
-  status_tmp="$status_file.tmp.$$"
-  jq -n \
-    --arg runId "$run_id" \
-    --arg phase "$phase" \
-    --arg detail "$detail" \
-    --arg sourceCommit "$release" \
-    --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    --arg error "$error" \
-    '{schema: 1, runId: $runId, phase: $phase,
-      detail: (if $detail == "" then null else $detail end),
-      sourceCommit: $sourceCommit, updatedAt: $updatedAt,
-      error: (if $error == "" then null else $error end)}' \
-    > "$status_tmp"
-  chmod 0644 "$status_tmp"
-  mv -f "$status_tmp" "$status_file"
-  if [ -w "$phase_log" ]; then
-    printf '%s phase=%s detail=%s sourceCommit=%s error=%s\n' \
-      "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$phase" "$detail" "$release" "$error" \
-      >> "$phase_log"
-  fi
+  pc_status_update "$status_file" "$run_id" "$release" "$phase" "$detail" "$error"
 }
 
 fail_artifact() {

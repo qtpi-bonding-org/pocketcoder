@@ -64,7 +64,19 @@ DOMAIN="${IP_DASHED}.sslip.io"
 install -d -m 0755 /etc/caddy /etc/pocketcoder
 install -d -m 0755 /var/lib/pocketcoder/public
 cat > /etc/caddy/Caddyfile <<EOF
+http://${DOMAIN} {
+  handle /_pocketcoder/status.json* {
+    uri strip_prefix /_pocketcoder
+    root * /var/lib/pocketcoder/public
+    file_server
+  }
+  handle { redir https://{host}{uri} permanent }
+}
 ${DOMAIN} {
+  tls {
+    issuer acme
+    issuer zerossl
+  }
   handle /_pocketcoder/status.json* {
     uri strip_prefix /_pocketcoder
     root * /var/lib/pocketcoder/public
@@ -85,5 +97,30 @@ chmod 0644 /etc/pocketcoder/domain.env
 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 systemctl enable --now caddy
 systemctl restart caddy
+
+cat > /etc/systemd/system/pocketcoder-tls-status.service <<'EOF'
+[Unit]
+Description=Publish Caddy certificate state to PocketCoder status
+After=caddy.service
+Wants=caddy.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'domain=$(sed -n "s/^BASE_DOMAIN=//p" /etc/pocketcoder/domain.env); POCKETCODER_STATUS_FILE=/var/lib/pocketcoder/public/status.json /opt/pocketcoder/current/deploy/scripts/tls-status.sh "$domain"'
+EOF
+cat > /etc/systemd/system/pocketcoder-tls-status.timer <<'EOF'
+[Unit]
+Description=Refresh PocketCoder Caddy certificate state
+
+[Timer]
+OnBootSec=5s
+OnUnitActiveSec=30s
+Unit=pocketcoder-tls-status.service
+
+[Install]
+WantedBy=timers.target
+EOF
+systemctl daemon-reload
+systemctl enable --now pocketcoder-tls-status.timer
 
 echo "Native Caddy configured for https://${DOMAIN}"

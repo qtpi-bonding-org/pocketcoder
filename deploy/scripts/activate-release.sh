@@ -8,7 +8,6 @@ release_state=${4:?release state directory is required}
 artifact_dir=${5:?artifact directory is required}
 run_id=${6:?provisioning run ID is required}
 status_file=${7:?provisioning status file is required}
-phase_log=${POCKETCODER_PHASE_LOG:-/var/log/pocketcoder-bootstrap-phases.log}
 shift 7
 
 if [ "$#" -eq 0 ]; then
@@ -17,6 +16,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+source "$script_dir/status-merge.sh"
 release_dir=$(CDPATH= cd -- "$script_dir/../.." && pwd)
 catalog="$release_dir/deploy/release/harnesses.json"
 compose_file="$release_dir/docker-compose.prebuilt.yml"
@@ -29,22 +29,7 @@ write_status() {
   phase=$1
   detail=${2:-}
   error=${3:-}
-  status_tmp="$status_file.tmp.$$"
-  install -d -m 0755 "$(dirname -- "$status_file")"
-  jq -n --arg runId "$run_id" --arg phase "$phase" \
-    --arg detail "$detail" --arg sourceCommit "$release" \
-    --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg error "$error" \
-    '{schema:1,runId:$runId,phase:$phase,
-      detail:(if $detail == "" then null else $detail end),
-      sourceCommit:$sourceCommit,updatedAt:$updatedAt,
-      error:(if $error == "" then null else $error end)}' > "$status_tmp"
-  chmod 0644 "$status_tmp"
-  mv -f "$status_tmp" "$status_file"
-  if [ -w "$phase_log" ]; then
-    printf '%s phase=%s detail=%s sourceCommit=%s error=%s\n' \
-      "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$phase" "$detail" "$release" "$error" \
-      >> "$phase_log"
-  fi
+  pc_status_update "$status_file" "$run_id" "$release" "$phase" "$detail" "$error"
 }
 
 on_exit() {
