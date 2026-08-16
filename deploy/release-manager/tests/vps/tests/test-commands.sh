@@ -18,7 +18,8 @@ check "commands: saveBackup matches the shipped constant" \
 # The Dart constants are split across adjacent literals for formatting. Strip
 # that formatting before checking their literal value.
 dart_source_compact=$(tr -d '[:space:]' < "$runner" | sed "s/'//g; s/\"//g")
-for name in restartPocketCoder updatePocketCoder restartNixOs updateNixOs saveBackup; do
+for name in restartPocketCoder updatePocketCoder restartNixOs updateNixOs saveBackup \
+  exportCaddyCertificate restoreCaddyCertificate; do
   needle=$(shipped_command "$name")
   needle_compact=$(printf '%s' "$needle" | tr -d '[:space:]' | sed "s/'//g; s/\"//g")
   if printf '%s' "$dart_source_compact" | grep -Fq "$needle_compact"; then
