@@ -16,9 +16,17 @@ _pc_status_write() {
   mkdir -p "$PC_STATUS_DIR"
   exec 9>>"$PC_STATUS_LOCK"
   flock 9
+  # $existing must always be JSON *content*, never a file path -- jq's CLI
+  # treats a trailing positional argument as a file to open, so passing the
+  # literal string "{}" (the correct fallback on a fresh box, which is
+  # every box's very first pc_status_init call) made jq try to open a file
+  # literally named "{}" and fail immediately. Confirmed live: this broke
+  # bootstrap.sh's first-ever status write on every single fresh boot.
+  # Feeding content through a herestring instead of a positional filename
+  # sidesteps the ambiguity entirely.
   existing='{}'
   if [ -s "$PC_STATUS_FILE" ] && jq -e . "$PC_STATUS_FILE" >/dev/null 2>&1; then
-    existing="$PC_STATUS_FILE"
+    existing=$(cat "$PC_STATUS_FILE")
   fi
   tmp=$(mktemp -p "$PC_STATUS_DIR" .status.XXXXXX)
   jq \
@@ -38,7 +46,7 @@ _pc_status_write() {
         then null
         else {type:$sshHostKeyType,fingerprint:$sshHostKeyFingerprint}
         end),
-      error:(if $error == "" then null else $error end)})' "$existing" > "$tmp"
+      error:(if $error == "" then null else $error end)})' <<<"$existing" > "$tmp"
   chmod 0644 "$tmp"
   mv -f "$tmp" "$PC_STATUS_FILE"
   flock -u 9

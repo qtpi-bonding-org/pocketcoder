@@ -63,6 +63,16 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
+      - name: status.sh bats tests
+        # deploy/nixos/tests/status-json.bats already exercises
+        # pc_status_init (every fresh box's very first status write) and
+        # would have caught the "jq: error: Could not open file {}"
+        # first-boot crash this session found live -- it just was never
+        # wired into any CI job. Runs on plain bash + jq, no docker/compose
+        # services needed, so it's cheap to run directly here rather than
+        # through the docker-compose bats setup the acceptance suites use.
+        run: nix run nixpkgs#bats -- deploy/nixos/tests/status-json.bats
+
       - name: NixOS flake checks
         # Runs every check.${system} declared in flake.nix together (today:
         # ordering, caddyfile-validate, systemd-units), so a new check added
