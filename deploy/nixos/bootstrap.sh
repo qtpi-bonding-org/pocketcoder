@@ -6,7 +6,6 @@ RELEASES_DIR=/opt/pocketcoder/releases
 RELEASE_STATE=/var/lib/pocketcoder/release
 ARTIFACT_DIR=/var/lib/pocketcoder/artifacts
 RUNTIME_ENV=/var/lib/pocketcoder/config/runtime.env
-PHASE_LOG=/var/log/pocketcoder-bootstrap-phases.log
 MARKER="$RELEASE_STATE/.initialized"
 export PC_SOURCE_COMMIT="$POCKETCODER_REF"
 
@@ -21,8 +20,6 @@ pc_status_init
 umask 077
 install -d -m 0755 "$RELEASES_DIR" "$RELEASE_STATE/manifests"
 install -d -m 0700 "$ARTIFACT_DIR" /var/lib/pocketcoder/config
-touch "$PHASE_LOG"
-chmod 0644 "$PHASE_LOG"
 
 # POCO:BEGIN bootstrap-owner-config
 # NixOS accepts owner configuration from the one-shot file written by the

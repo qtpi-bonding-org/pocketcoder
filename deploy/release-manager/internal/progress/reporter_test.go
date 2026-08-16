@@ -55,15 +55,47 @@ func TestReporterHeartbeatRefreshesStatus(t *testing.T) {
 	}
 }
 
-func readDocument(t *testing.T, path string) document {
+type testDocument struct {
+	Schema       int         `json:"schema"`
+	RunID        string      `json:"runId"`
+	Phase        string      `json:"phase"`
+	Detail       string      `json:"detail"`
+	SourceCommit string      `json:"sourceCommit"`
+	UpdatedAt    string      `json:"updatedAt"`
+	Error        string      `json:"error"`
+	SSHHostKey   *sshHostKey `json:"sshHostKey"`
+}
+
+func readDocument(t *testing.T, path string) testDocument {
 	t.Helper()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var value document
+	var value testDocument
 	if err := json.Unmarshal(data, &value); err != nil {
 		t.Fatal(err)
 	}
 	return value
+}
+
+func TestReporterPreservesUnknownFields(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "status.json")
+	if err := os.WriteFile(path, []byte(`{"schema":2,"tls":{"state":"ready"},"future":true}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	reporter := New(path, "run-3", "commit", "", "", nil)
+	reporter.Report("compose_up", "starting")
+	var value map[string]json.RawMessage
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		t.Fatal(err)
+	}
+	var tls map[string]string
+	if err := json.Unmarshal(value["tls"], &tls); err != nil || tls["state"] != "ready" || string(value["future"]) != "true" {
+		t.Fatalf("reporter discarded fields it does not own: %s", data)
+	}
 }

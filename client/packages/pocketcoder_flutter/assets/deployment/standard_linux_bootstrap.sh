@@ -6,7 +6,6 @@ bootstrap_config=/var/lib/pocketcoder/config/bootstrap.json
 release_state=/var/lib/pocketcoder/release
 artifact_dir=/var/lib/pocketcoder/artifacts
 status_file=/var/lib/pocketcoder/public/status.json
-phase_log=/var/log/pocketcoder-bootstrap-phases.log
 run_id=$(cat /proc/sys/kernel/random/uuid)
 source_commit=unknown
 current_phase=configuring_operating_system
@@ -35,25 +34,30 @@ status() {
   current_phase=$1
   detail=${2:-}
   error=${3:-}
-  status_tmp="$status_file.tmp.$$"
-  jq -n --arg runId "$run_id" --arg phase "$current_phase" \
+  status_dir=$(dirname -- "$status_file")
+  install -d -m 0755 "$status_dir"
+  exec 9>>"$status_dir/.status.lock"
+  flock 9
+  existing='{}'
+  if [ -s "$status_file" ] && jq -e . "$status_file" >/dev/null 2>&1; then existing="$status_file"; fi
+  status_tmp=$(mktemp -p "$status_dir" .status.XXXXXX)
+  jq --argjson schema 2 --arg runId "$run_id" --arg phase "$current_phase" \
     --arg detail "$detail" --arg sourceCommit "$source_commit" \
     --arg sshHostKeyType "$ssh_host_key_type" \
     --arg sshHostKeyFingerprint "$ssh_host_key_fingerprint" \
     --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg error "$error" \
-    '{schema:1,runId:$runId,phase:$phase,
+    '(. + {schema:$schema,runId:$runId,phase:$phase,
       detail:(if $detail == "" then null else $detail end),
       sourceCommit:$sourceCommit,updatedAt:$updatedAt,
       sshHostKey:(if $sshHostKeyType == "" or $sshHostKeyFingerprint == ""
         then null
         else {type:$sshHostKeyType,fingerprint:$sshHostKeyFingerprint}
         end),
-      error:(if $error == "" then null else $error end)}' > "$status_tmp"
+      error:(if $error == "" then null else $error end)})' "$existing" > "$status_tmp"
   chmod 0644 "$status_tmp"
   mv -f "$status_tmp" "$status_file"
-  printf '%s phase=%s detail=%s sourceCommit=%s error=%s\n' \
-    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$current_phase" "$detail" \
-    "$source_commit" "$error" >> "$phase_log"
+  flock -u 9
+  exec 9>&-
 }
 
 fail_bootstrap() {
@@ -92,9 +96,6 @@ trap 'exit 1' HUP INT TERM
 install -d -m 0755 /var/lib/pocketcoder/public /var/lib/pocketcoder/release/manifests
 install -d -m 0700 /var/lib/pocketcoder/config /var/lib/pocketcoder/artifacts
 install -d -m 0755 /opt/pocketcoder/releases
-install -d -m 0755 "$(dirname -- "$phase_log")"
-touch "$phase_log"
-chmod 0644 "$phase_log"
 capture_ssh_host_key
 status configuring_operating_system
 
