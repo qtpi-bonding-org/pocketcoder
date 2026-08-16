@@ -14,6 +14,10 @@
       Type = "oneshot";
       RemainAfterExit = true;
       TimeoutStartSec = "infinity";
+      Restart = "on-failure";
+      RestartSec = "10s";
+      StartLimitIntervalSec = "600";
+      StartLimitBurst = "5";
     };
     path = with pkgs; [
       curl
