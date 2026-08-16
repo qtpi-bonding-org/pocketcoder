@@ -12,7 +12,8 @@ vps_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 usage() {
   cat >&2 <<'EOF'
 usage: run-vps-suite.sh [options]
-  --handoff <path>     use an existing Aeroform handoff instead of provisioning
+  --handoff <path>     use an existing handoff instead of provisioning
+  --provisioner <path> executable that provisions a box and prints handoff JSON
   --run-dir <path>     where evidence is written (default: timestamped tmp dir)
   --only <a,b>         run only these phases
   --skip <a,b>         run everything except these phases
@@ -42,6 +43,7 @@ reap_orphans=0
 while [ $# -gt 0 ]; do
   case $1 in
     --handoff) handoff=${2:-}; shift 2 || usage ;;
+    --provisioner) VPS_PROVISIONER=${2:-}; shift 2 || usage ;;
     --run-dir) run_dir=${2:-}; shift 2 || usage ;;
     --only) only=${2:-}; shift 2 || usage ;;
     --skip) skip=${2:-}; shift 2 || usage ;;
@@ -50,6 +52,11 @@ while [ $# -gt 0 ]; do
     *) usage ;;
   esac
 done
+
+if [ -n "$handoff" ]; then
+  [ -f "$handoff" ] || { echo "--handoff path not found: $handoff" >&2; exit 64; }
+  handoff=$(cat "$handoff")
+fi
 
 in_list() {
   local needle=$1 list=$2 item
@@ -88,14 +95,14 @@ if [ -z "$handoff" ] && [ "${VPS_SKIP_PROVISION:-0}" != 1 ]; then
 fi
 
 if [ -n "$handoff" ]; then
-  VPS_HOSTNAME=$(jq -er '.hostname' "$handoff")
-  VPS_RELEASE_A_DIGEST=$(jq -er '.releaseDigest' "$handoff")
-  teardown_set_instance "$(jq -r '.instanceId' "$handoff")"
-  result_set instanceId "$(jq -r '.instanceId' "$handoff")"
+  VPS_HOSTNAME=$(jq -er '.hostname' <<<"$handoff")
+  VPS_RELEASE_A_DIGEST=$(jq -er '.releaseDigest' <<<"$handoff")
+  teardown_set_instance "$(jq -r '.instanceId' <<<"$handoff")"
+  result_set instanceId "$(jq -r '.instanceId' <<<"$handoff")"
   result_set hostname "$VPS_HOSTNAME"
   result_set_json releaseA "$(jq '{digest:.releaseDigest,sourceCommit:.sourceCommit,
-    channel:.channel,sequence:.sequence}' "$handoff")"
-  vps_connect "$(jq -er '.ipAddress' "$handoff")" "$(jq -er '.sshPrivateKeyPath' "$handoff")" \
+    channel:.channel,sequence:.sequence}' <<<"$handoff")"
+  vps_connect "$(jq -er '.ipAddress' <<<"$handoff")" "$(jq -er '.sshPrivateKeyPath' <<<"$handoff")" \
     "$run_dir/known_hosts"
   pin_host_key || { echo "could not pin the host key" >&2; exit 1; }
   load_redaction_dictionary || echo "WARNING: redaction dictionary unavailable; output suppressed" >&2

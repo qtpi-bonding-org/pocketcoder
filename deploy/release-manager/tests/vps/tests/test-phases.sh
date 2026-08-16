@@ -158,7 +158,7 @@ check_rc "70-post-update: status=update-available with the field passes" 0 "$?"
     phase_run >/dev/null 2>&1 )
 check_rc "70-post-update: status=update-available without the field fails" 1 "$?"
 
-# --- 10-provision: vps_provision's stdout must be ONLY the handoff path ---
+# --- 10-provision: vps_provision's stdout must be ONLY the handoff JSON ---
 # Regression test for a bug found live: tee's passthrough copy went to
 # stdout, so the whole flutter test log leaked into $handoff when the
 # orchestrator captures this function via `handoff=$(vps_provision ...)`.
@@ -166,29 +166,22 @@ check_rc "70-post-update: status=update-available without the field fails" 1 "$?
 . "$VPS_DIR/lib/teardown.sh"
 . "$VPS_DIR/phases/10-provision.sh"
 
-fake_aeroform="$TEST_TMP/fake-aeroform"
-mkdir -p "$fake_aeroform/test/integration"
-: > "$fake_aeroform/test/integration/golden_path_provision_test.dart"
-
-fake_handoff="$TEST_TMP/fake-handoff.json"
-echo '{"hostname":"example.test"}' > "$fake_handoff"
-
-stub_bin "$phase_stub_dir" flutter "
-echo 'noisy line one of test output'
-echo 'noisy line two of test output'
-echo 'VPS SCRIPT: retained update handoff $fake_handoff'
-echo 'noisy trailing diagnostics line'
+provisioner="$TEST_TMP/fake-provisioner"
+stub_bin "$TEST_TMP" fake-provisioner "
+echo 'noisy line one of test output' >&2
+echo 'noisy line two of test output' >&2
+printf '%s' '{\"instanceId\":\"instance-1\",\"ipAddress\":\"192.0.2.1\",\"hostname\":\"example.test\",\"sshPrivateKeyPath\":\"/tmp/key\",\"releaseDigest\":\"digest-1\"}'
 "
 
 provision_run_dir="$TEST_TMP/provision-run"
 mkdir -p "$provision_run_dir"
 
 result=$(
-  FLUTTER_BIN="$phase_stub_dir/flutter" AEROFORM_ROOT="$fake_aeroform" \
-    PATH="$phase_stub_dir:$PATH" \
+  VPS_PROVISIONER="$provisioner" \
     vps_provision "$TEST_TMP" "$provision_run_dir" "test-provision-label"
 )
-check "vps_provision: stdout is exactly the handoff path, not the log" "$fake_handoff" "$result"
+check "vps_provision: stdout is exactly the handoff JSON, not the log" \
+  '{"instanceId":"instance-1","ipAddress":"192.0.2.1","hostname":"example.test","sshPrivateKeyPath":"/tmp/key","releaseDigest":"digest-1"}' "$result"
 
 # --- 60-update: the remote command must actually be valid shell (F-live) ---
 # Regression test for a bug found live: `VAR=val <compound-command>` is

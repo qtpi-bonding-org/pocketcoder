@@ -10,7 +10,7 @@
 # Usage: fetch-tls-cert.sh [handoff.json]
 #        fetch-tls-cert.sh --key <path> --ip <address> [--hostname <name>]
 #   With no arguments, defaults to the most recently retained
-#   aeroform-nixos-vps-script-handoff-*.json in $TMPDIR. A box whose
+#   vps-script-handoff-*.json in $TMPDIR. A box whose
 #   provisioning test never reached "retained update handoff" (e.g. it
 #   timed out waiting on a rate-limited cert, as happened live) has no
 #   handoff file -- use --key/--ip directly in that case; the raw SSH key
@@ -42,7 +42,7 @@ case "${1:-}" in
   *)
     handoff=${1:-}
     if [ -z "$handoff" ]; then
-      handoff=$(ls -t "${TMPDIR:-/tmp}"/aeroform-nixos-vps-script-handoff-*.json 2>/dev/null | head -1)
+      handoff=$(ls -t "${TMPDIR:-/tmp}"/vps-script-handoff-*.json 2>/dev/null | head -1)
     fi
     test -n "$handoff" && test -f "$handoff" || {
       echo "no handoff file found or given; provide one, or use --key/--ip" >&2
