@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:meta/meta.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_command_runner.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_credentials_provider.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
@@ -106,7 +107,7 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
       );
     }
 
-    final expectedFingerprint = _parseFingerprint(
+    final expectedFingerprint = parseFingerprint(
       credentials.hostKeyFingerprint,
     );
     if (credentials.hostKeyType.isEmpty || expectedFingerprint == null) {
@@ -188,8 +189,12 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
   // a decoded MD5 digest. Confirmed live: comparing against a decoded MD5
   // digest meant this could never match, so every host-key verification
   // silently failed and dartssh2 closed the connection before ever
-  // attempting authentication.
-  static Uint8List? _parseFingerprint(String value) {
+  // attempting authentication. Not private (but not part of the public
+  // API contract either) so a test can assert this produces exactly what
+  // dartssh2 itself compares against -- that's the one guarantee that
+  // actually matters here, and this bug shipped once already without it.
+  @visibleForTesting
+  static Uint8List? parseFingerprint(String value) {
     if (!value.startsWith('SHA256:') || value.length <= 'SHA256:'.length) {
       return null;
     }

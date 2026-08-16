@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_credentials_provider.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
@@ -85,5 +87,39 @@ void main() {
         ),
       ),
     );
+  });
+
+  // Regression: dartssh2's onVerifyHostKey passes fingerprint as the
+  // literal UTF-8 bytes of "SHA256:<base64>" -- not a decoded digest, and
+  // not MD5. A prior version of this code decoded a "MD5:aa:bb:..." string
+  // into 16 raw bytes, which could never equal what dartssh2 actually
+  // compares against; every root SSH command silently failed to connect
+  // until this was caught live. These pin the exact contract instead of
+  // relying on a live connection to notice a regression.
+  group('parseFingerprint', () {
+    test('returns the fingerprint string as literal UTF-8 bytes', () {
+      const value = 'SHA256:nA1lraVKLCs/jFY8qc3vOUIJzb6P/xMGFrdFx0A4JR8';
+      expect(
+        SshRootCommandRunner.parseFingerprint(value),
+        utf8.encode(value),
+      );
+    });
+
+    test('rejects an MD5-formatted fingerprint', () {
+      expect(
+        SshRootCommandRunner.parseFingerprint(
+          'MD5:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff',
+        ),
+        isNull,
+      );
+    });
+
+    test('rejects a bare SHA256: prefix with no digest', () {
+      expect(SshRootCommandRunner.parseFingerprint('SHA256:'), isNull);
+    });
+
+    test('rejects an empty string', () {
+      expect(SshRootCommandRunner.parseFingerprint(''), isNull);
+    });
   });
 }
