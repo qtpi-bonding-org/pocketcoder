@@ -18,7 +18,16 @@ vps_promote_candidate() {
   source_commit=$(git -C "$repo_root" rev-parse HEAD)
 
   echo "VPS SUITE: triggering CI build for $source_commit" >&2
-  "$repo_root/deploy/nixos/scripts/trigger-ci-build.sh" >&2 || return 1
+  # --attest-branch bakes POCKETCODER_GITHUB_WORKFLOW_BRANCH=$branch into
+  # the image (see resolver.go's ChannelPath). Without it the image always
+  # defaults to trusting "main" regardless of which branch built it --
+  # confirmed live: an un-attested candidate built from staging still
+  # polled the real, unqualified nightly.json instead of
+  # nightly-testing.json once it actually ran pocketcoder-release install,
+  # producing "resolved release does not match the expected digest" even
+  # though the candidate was correctly promoted to nightly-testing.json.
+  # Safe on main too -- attesting "main" is exactly the existing default.
+  "$repo_root/deploy/nixos/scripts/trigger-ci-build.sh" --attest-branch >&2 || return 1
 
   echo "VPS SUITE: waiting for the candidate build" >&2
   run=
