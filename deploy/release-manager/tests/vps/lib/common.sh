@@ -238,3 +238,46 @@ tls_expiry_days() {
   fi
   echo $(( (end_epoch - $(date +%s)) / 86400 ))
 }
+
+# start_memory_sampler <run_dir>
+start_memory_sampler() {
+  local run_dir=$1 repo_root
+  repo_root=$(CDPATH= cd -- "$vps_dir/../../../.." && pwd)
+  local remote_script=/usr/local/sbin/pocketcoder-live-memory
+  scp -q -i "$VPS_KEY_PATH" -o UserKnownHostsFile="$run_dir/known_hosts" \
+    "$repo_root/deploy/release-manager/tests/sample-live-memory.sh" \
+    "root@$VPS_HOST:$remote_script" || return 1
+  ssh_exec 15 "chmod 0555 $remote_script; \
+    rm -f /var/lib/pocketcoder/live-memory.stop; \
+    nohup $remote_script /var/log/pocketcoder-live-memory.tsv \
+      /var/lib/pocketcoder/live-test-phase \
+      /var/lib/pocketcoder/live-memory.stop 5 \
+      >/var/log/pocketcoder-live-memory.log 2>&1 &" || return 1
+}
+
+# collect_memory_sampler <run_dir>
+collect_memory_sampler() {
+  local run_dir=$1
+  ssh_exec 15 "touch /var/lib/pocketcoder/live-memory.stop; sleep 3" || return 0
+  scp -q -i "$VPS_KEY_PATH" -o UserKnownHostsFile="$run_dir/known_hosts" \
+    "root@$VPS_HOST:/var/log/pocketcoder-live-memory.tsv" \
+    "$run_dir/memory.tsv" || return 0
+  python3 - "$run_dir/memory.tsv" "$run_dir/memory-summary.json" <<'PYEOF'
+import sys, csv, json
+maxima = {}
+with open(sys.argv[1]) as f:
+    reader = csv.reader(f, delimiter='\t')
+    next(reader, None)
+    for row in reader:
+        if len(row) != 5:
+            continue
+        key = f"{row[1]}/{row[2]}/{row[3]}"
+        try:
+            b = int(row[4])
+        except ValueError:
+            continue
+        maxima[key] = max(maxima.get(key, 0), b)
+with open(sys.argv[2], "w") as f:
+    json.dump({"schemaVersion": 1, "maximumBytesByPhaseAndComponent": maxima}, f, indent=2)
+PYEOF
+}

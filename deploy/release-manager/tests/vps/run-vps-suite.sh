@@ -137,6 +137,7 @@ finish() {
     [ -n "$failure_phase" ] || failure_phase=teardown
     rc=1
   fi
+  [ -n "${VPS_HOST:-}" ] && collect_memory_sampler "$run_dir"
   result_write "$run_status" "$failure_phase"
   echo "VPS SUITE: $run_status (result: $run_dir/result.json)"
   exit "$rc"
@@ -184,6 +185,8 @@ run_one_phase() {
   failure_phase=$phase_name
   return 1
 }
+
+[ -n "${VPS_HOST:-}" ] && start_memory_sampler "$run_dir"
 
 tier_failed=0
 for tier in readonly safe-mutating disruptive; do
