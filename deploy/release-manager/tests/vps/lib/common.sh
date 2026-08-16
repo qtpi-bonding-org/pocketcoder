@@ -61,8 +61,14 @@ vps_connect() {
 # (stdin is inherited from the caller's stdin)
 # Runs a reviewed RootSshCommand through the shared Dart CLI.
 dispatch_ssh_command() {
-  local name=$1 shell_env_prefix=${2:-} flutter_bin repo_root fingerprint_line fingerprint
+  local name=$1 shell_env_prefix=${2:-} flutter_bin dart_bin repo_root fingerprint_line fingerprint
   flutter_bin=$(resolve_flutter_bin) || return 1
+  # `flutter dart run ...` isn't a real subcommand on every Flutter
+  # release -- confirmed live: "Could not find a command named 'dart'" on
+  # 3.47.0-0.4.pre (beta). The Dart SDK bundled with any Flutter install
+  # ships a sibling `dart` executable in the same bin/ directory; invoke
+  # that directly instead of going through flutter's own CLI dispatch.
+  dart_bin="$(dirname "$flutter_bin")/dart"
   repo_root=$(CDPATH= cd -- "$vps_dir/../../../.." && pwd)
   fingerprint_line=$(ssh-keygen -E md5 -lf "$VPS_KNOWN_HOSTS" 2>/dev/null | head -1)
   fingerprint=$(printf '%s' "$fingerprint_line" | grep -o 'MD5:[0-9a-f:]*')
@@ -75,13 +81,13 @@ dispatch_ssh_command() {
     cd "$repo_root/client/packages/pocketcoder_flutter" || exit 1
     "$flutter_bin" pub get >/dev/null 2>&1 || exit 1
     if [ -n "$shell_env_prefix" ]; then
-      "$flutter_bin" dart run bin/root_ssh_command.dart \
+      "$dart_bin" run bin/root_ssh_command.dart \
         --command "$name" --host "$VPS_HOST" --key "$VPS_KEY_PATH" \
         --host-key-type "ssh-ed25519" \
         --host-key-fingerprint "$fingerprint" \
         --shell-env-prefix "$shell_env_prefix"
     else
-      "$flutter_bin" dart run bin/root_ssh_command.dart \
+      "$dart_bin" run bin/root_ssh_command.dart \
         --command "$name" --host "$VPS_HOST" --key "$VPS_KEY_PATH" \
         --host-key-type "ssh-ed25519" \
         --host-key-fingerprint "$fingerprint"
@@ -243,16 +249,21 @@ tls_expiry_days() {
 start_memory_sampler() {
   local run_dir=$1 repo_root
   repo_root=$(CDPATH= cd -- "$vps_dir/../../../.." && pwd)
-  local remote_script=/usr/local/sbin/pocketcoder-live-memory
+  # /usr/local/sbin doesn't exist on this NixOS image (confirmed live:
+  # scp fails with "No such file or directory") -- NixOS's filesystem
+  # layout has no FHS /usr/local by default. /root always exists;
+  # /var/lib/pocketcoder is already relied on by this same function for
+  # the phase/stop-file paths below, so it's already guaranteed present.
+  local remote_script=/root/pocketcoder-live-memory
   scp -q -i "$VPS_KEY_PATH" -o UserKnownHostsFile="$run_dir/known_hosts" \
     "$repo_root/deploy/release-manager/tests/sample-live-memory.sh" \
     "root@$VPS_HOST:$remote_script" || return 1
   ssh_exec 15 "chmod 0555 $remote_script; \
     rm -f /var/lib/pocketcoder/live-memory.stop; \
-    nohup $remote_script /var/log/pocketcoder-live-memory.tsv \
+    nohup $remote_script /var/lib/pocketcoder/live-memory.tsv \
       /var/lib/pocketcoder/live-test-phase \
       /var/lib/pocketcoder/live-memory.stop 5 \
-      >/var/log/pocketcoder-live-memory.log 2>&1 &" || return 1
+      >/var/lib/pocketcoder/live-memory.log 2>&1 &" || return 1
 }
 
 # collect_memory_sampler <run_dir>
@@ -260,7 +271,7 @@ collect_memory_sampler() {
   local run_dir=$1
   ssh_exec 15 "touch /var/lib/pocketcoder/live-memory.stop; sleep 3" || return 0
   scp -q -i "$VPS_KEY_PATH" -o UserKnownHostsFile="$run_dir/known_hosts" \
-    "root@$VPS_HOST:/var/log/pocketcoder-live-memory.tsv" \
+    "root@$VPS_HOST:/var/lib/pocketcoder/live-memory.tsv" \
     "$run_dir/memory.tsv" || return 0
   python3 - "$run_dir/memory.tsv" "$run_dir/memory-summary.json" <<'PYEOF'
 import sys, csv, json
