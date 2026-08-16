@@ -126,20 +126,44 @@ _ssh_options() {
 # ssh_exec <timeout_seconds> <remote_script>
 # The remote script is passed as one argument with no added wrapper, so
 # nested single-quoted snippets port over unchanged.
+#
+# Retries only a connection-level failure (rc=255 with a recognized
+# "never even reached the remote command" stderr pattern) a few times
+# with a short backoff -- confirmed live: a freshly-provisioned box's
+# public IP draws internet-wide SSH scanner traffic within minutes, which
+# contends with OpenSSH's own per-source connection penalties
+# (srclimit_penalise) and legitimate reconnection attempts alike, causing
+# transient "Connection refused"/"Connection reset by peer" failures that
+# have nothing to do with the box's actual state. Never retries a
+# same-rc-255 auth failure or (any other rc) a real remote command
+# failure -- only this specific, narrowly-matched connectivity class.
 ssh_exec() {
   local timeout_seconds=$1 script=$2
-  local stderr_file rc options
-  stderr_file=$(mktemp "${TMPDIR:-/tmp}/pocketcoder-ssh-err.XXXXXX")
+  local stderr_file rc options attempt
   options=$(_ssh_options)
-  # shellcheck disable=SC2086
-  with_timeout "$timeout_seconds" ssh $options "root@$VPS_HOST" "$script" \
-    2>"$stderr_file"
-  rc=$?
-  if grep -q 'REMOTE HOST IDENTIFICATION HAS CHANGED' "$stderr_file"; then
-    echo "host key changed for $VPS_HOST — refusing to continue" >&2
-    rm -f "$stderr_file"
-    return 3
-  fi
+  for attempt in 1 2 3 4; do
+    stderr_file=$(mktemp "${TMPDIR:-/tmp}/pocketcoder-ssh-err.XXXXXX")
+    # shellcheck disable=SC2086
+    with_timeout "$timeout_seconds" ssh $options "root@$VPS_HOST" "$script" \
+      2>"$stderr_file"
+    rc=$?
+    if grep -q 'REMOTE HOST IDENTIFICATION HAS CHANGED' "$stderr_file"; then
+      echo "host key changed for $VPS_HOST — refusing to continue" >&2
+      rm -f "$stderr_file"
+      return 3
+    fi
+    if [ "$rc" -eq 255 ] && grep -Eq \
+        'Connection refused|Connection reset by peer|kex_exchange_identification' \
+        "$stderr_file"; then
+      if [ "$attempt" -lt 4 ]; then
+        echo "ssh_exec: transient connection failure (attempt $attempt), retrying in 5s" >&2
+        rm -f "$stderr_file"
+        sleep 5
+        continue
+      fi
+    fi
+    break
+  done
   cat "$stderr_file" >&2
   rm -f "$stderr_file"
   return "$rc"
