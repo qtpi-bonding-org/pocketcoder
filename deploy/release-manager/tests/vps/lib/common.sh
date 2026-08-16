@@ -57,6 +57,38 @@ vps_connect() {
   VPS_KNOWN_HOSTS=$3
 }
 
+# dispatch_ssh_command <name> [shell_env_prefix]
+# (stdin is inherited from the caller's stdin)
+# Runs a reviewed RootSshCommand through the shared Dart CLI.
+dispatch_ssh_command() {
+  local name=$1 shell_env_prefix=${2:-} flutter_bin repo_root fingerprint_line fingerprint
+  flutter_bin=$(resolve_flutter_bin) || return 1
+  repo_root=$(CDPATH= cd -- "$vps_dir/../../../.." && pwd)
+  fingerprint_line=$(ssh-keygen -E md5 -lf "$VPS_KNOWN_HOSTS" 2>/dev/null | head -1)
+  fingerprint=$(printf '%s' "$fingerprint_line" | grep -o 'MD5:[0-9a-f:]*')
+
+  if [ -z "$fingerprint" ]; then
+    echo "could not derive a host key fingerprint from $VPS_KNOWN_HOSTS" >&2
+    return 1
+  fi
+  (
+    cd "$repo_root/client/packages/pocketcoder_flutter" || exit 1
+    "$flutter_bin" pub get >/dev/null 2>&1 || exit 1
+    if [ -n "$shell_env_prefix" ]; then
+      "$flutter_bin" dart run bin/root_ssh_command.dart \
+        --command "$name" --host "$VPS_HOST" --key "$VPS_KEY_PATH" \
+        --host-key-type "ssh-ed25519" \
+        --host-key-fingerprint "$fingerprint" \
+        --shell-env-prefix "$shell_env_prefix"
+    else
+      "$flutter_bin" dart run bin/root_ssh_command.dart \
+        --command "$name" --host "$VPS_HOST" --key "$VPS_KEY_PATH" \
+        --host-key-type "ssh-ed25519" \
+        --host-key-fingerprint "$fingerprint"
+    fi
+  )
+}
+
 # pin_host_key — trust on first use. The Aeroform handoff carries no host
 # key, so capture it once and pin it for the rest of the run. Host keys live
 # on the persistent root disk and survive reboot, so this holds across the

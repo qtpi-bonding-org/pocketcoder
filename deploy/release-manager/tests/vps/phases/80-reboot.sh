@@ -10,7 +10,7 @@ phase_run() {
   [ -n "$before" ] || { echo "could not read boot_id before reboot" >&2; return 1; }
 
   # The SSH channel is expected to die mid-command; that is not a failure.
-  ssh_exec_detached 30 "$(shipped_command restartNixOs)"
+  dispatch_ssh_command restartNixOs >/dev/null 2>&1 || true
 
   # Do not start polling immediately: SSH answers for several seconds after
   # `reboot` is accepted, which is exactly how the old suite produced a false

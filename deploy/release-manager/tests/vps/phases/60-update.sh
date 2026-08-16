@@ -12,12 +12,8 @@ phase_precondition() {
 phase_run() {
   local current digest source_commit channel sequence
 
-  # A bare `VAR=val` prefix is only valid before a simple command, not a
-  # compound `if` statement (updatePocketCoder's shipped command) -- bash -c
-  # rejects it with "syntax error near unexpected token `then'". Use an
-  # explicit export statement instead, confirmed live against a real box.
-  ssh_exec 3600 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; \
-    $(shipped_command updatePocketCoder)" >/dev/null || {
+  dispatch_ssh_command updatePocketCoder \
+    "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; " >/dev/null || {
     echo "updatePocketCoder failed" >&2
     return 1
   }

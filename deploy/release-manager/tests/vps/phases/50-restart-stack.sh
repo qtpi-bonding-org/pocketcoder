@@ -14,7 +14,7 @@ phase_run() {
 $(expected_containers)
 EOF
 
-  ssh_exec 300 "$(shipped_command restartPocketCoder)" >/dev/null || {
+  dispatch_ssh_command restartPocketCoder >/dev/null || {
     echo "restartPocketCoder failed" >&2
     return 1
   }

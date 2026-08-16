@@ -6,7 +6,7 @@ phase_run() {
   local artifact=/app/pb_backups/data.db
   local checksum mtime integrity
 
-  ssh_exec 300 "$(shipped_command saveBackup)" >/dev/null || {
+  dispatch_ssh_command saveBackup >/dev/null || {
     echo "saveBackup failed" >&2
     return 1
   }

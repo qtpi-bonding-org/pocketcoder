@@ -6,7 +6,6 @@ set -uo pipefail
 vps_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$vps_dir/lib/common.sh"
 . "$vps_dir/lib/result.sh"
-. "$vps_dir/lib/commands.sh"
 . "$vps_dir/lib/teardown.sh"
 
 usage() {

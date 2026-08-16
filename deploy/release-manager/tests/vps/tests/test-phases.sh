@@ -1,7 +1,19 @@
 . "$VPS_DIR/lib/common.sh"
-. "$VPS_DIR/lib/commands.sh"
 
 phase_stub_dir="$TEST_TMP/phasebin"
+
+# Keep phase tests offline: replace the production Dart dispatcher with a
+# transport stub while preserving each command's expected SSH payload.
+dispatch_ssh_command() {
+  case $1 in
+    saveBackup) ssh_exec 300 'docker exec pocketcoder-pocketbase /app/backup_db.sh' ;;
+    restartPocketCoder) ssh_exec 300 'docker compose restart' ;;
+    updatePocketCoder) ssh_exec 3600 'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; then /opt/pocketcoder/current/bin/pocketcoder-release update; else exit 1; fi' ;;
+    restartNixOs) ssh_exec 30 'systemctl reboot' ;;
+    updateNixOs) ssh_exec 1800 'nixos-rebuild switch --upgrade' ;;
+    *) return 1 ;;
+  esac
+}
 vps_connect 203.0.113.10 "$TEST_TMP/key" "$TEST_TMP/known_hosts"
 : > "$TEST_TMP/key"
 VPS_HOSTNAME=vps.example.test

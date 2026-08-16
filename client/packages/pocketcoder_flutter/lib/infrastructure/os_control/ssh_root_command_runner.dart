@@ -87,6 +87,7 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
     required String host,
     required RootSshCommand command,
     Uint8List? stdin,
+    String? shellEnvPrefix,
   }) async {
     if (host.isEmpty) {
       throw const RootSshException('No known server host to connect to.');
@@ -136,7 +137,12 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
 
     try {
       await client.authenticated;
-      final session = await client.execute(_shellCommand(command));
+      final shellCommand = _shellCommand(command);
+      final session = await client.execute(
+        shellEnvPrefix != null && shellEnvPrefix.isNotEmpty
+            ? '$shellEnvPrefix$shellCommand'
+            : shellCommand,
+      );
       if (stdin != null) {
         await Stream<Uint8List>.value(stdin).pipe(session.stdin);
       }

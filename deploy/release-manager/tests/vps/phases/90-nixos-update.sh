@@ -20,7 +20,7 @@ phase_run() {
   fi
 
   before=$(ssh_exec 30 'readlink -f /nix/var/nix/profiles/system')
-  output=$(ssh_exec 1800 "$(shipped_command updateNixOs)" 2>&1) || {
+  output=$(dispatch_ssh_command updateNixOs 2>&1) || {
     printf '%s\n' "$output" >&2
     return 1
   }
