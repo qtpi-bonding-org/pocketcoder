@@ -182,19 +182,18 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
     RootSshCommand.rollback => _rollbackCommand,
   };
 
+  // dartssh2's onVerifyHostKey passes the SHA256 fingerprint as the literal
+  // UTF-8 bytes of "SHA256:<base64>" (see SSHHostkeyVerifyHandler's doc
+  // comment and _hostkeyFingerprint in its own ssh_transport.dart) -- not
+  // a decoded MD5 digest. Confirmed live: comparing against a decoded MD5
+  // digest meant this could never match, so every host-key verification
+  // silently failed and dartssh2 closed the connection before ever
+  // attempting authentication.
   static Uint8List? _parseFingerprint(String value) {
-    final normalized = value.startsWith('MD5:') ? value.substring(4) : value;
-    final components = normalized.split(':');
-    if (components.length != 16) return null;
-    final bytes = Uint8List(components.length);
-    for (var index = 0; index < components.length; index += 1) {
-      final component = components[index];
-      if (component.length != 2) return null;
-      final byte = int.tryParse(component, radix: 16);
-      if (byte == null) return null;
-      bytes[index] = byte;
+    if (!value.startsWith('SHA256:') || value.length <= 'SHA256:'.length) {
+      return null;
     }
-    return bytes;
+    return Uint8List.fromList(utf8.encode(value));
   }
 
   static bool _constantTimeEquals(Uint8List actual, Uint8List expected) {

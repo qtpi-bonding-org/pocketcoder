@@ -58,8 +58,18 @@ pc_status_capture_ssh_host_key() {
   if [ ! -r "$public_key" ] || ! command -v ssh-keygen >/dev/null 2>&1; then
     return
   fi
-  fingerprint=$(ssh-keygen -E md5 -lf "$public_key" 2>/dev/null | awk '{print $2}')
-  case "$fingerprint" in MD5:*:*:*:*:*:*:*:*:*:*:*:*:*:*:*:*) ;;
+  # dartssh2's onVerifyHostKey callback (the only consumer of this field,
+  # via SshRootCommandRunner) is documented to pass "OpenSSH-style SHA256
+  # fingerprint... UTF-8 encoded as SHA256:<base64>" -- confirmed live:
+  # publishing an MD5 fingerprint here meant the comparison could never
+  # succeed, so onVerifyHostKey always returned false and dartssh2 closed
+  # every connection before ever attempting authentication (visible
+  # server-side as sshd's srclimit_penalise "connections without
+  # attempting authentication"). Every root SSH command -- restart,
+  # update, backup, cert export/restore, rollback -- was silently unusable
+  # since this was written.
+  fingerprint=$(ssh-keygen -E sha256 -lf "$public_key" 2>/dev/null | awk '{print $2}')
+  case "$fingerprint" in SHA256:?*) ;;
     *) return ;;
   esac
   export POCKETCODER_SSH_HOST_KEY_TYPE=ssh-ed25519

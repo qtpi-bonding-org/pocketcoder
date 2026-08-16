@@ -43,7 +43,7 @@ Future<void> main(List<String> arguments) async {
     stderr.writeln(
       'usage: root_ssh_command.dart --command <name> --host <ip> '
       '--key <path> --host-key-type <type> '
-      '--host-key-fingerprint <MD5:...>',
+      '--host-key-fingerprint <SHA256:...>',
     );
     exitCode = 64;
     return;

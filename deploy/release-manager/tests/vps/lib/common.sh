@@ -70,8 +70,12 @@ dispatch_ssh_command() {
   # that directly instead of going through flutter's own CLI dispatch.
   dart_bin="$(dirname "$flutter_bin")/dart"
   repo_root=$(CDPATH= cd -- "$vps_dir/../../../.." && pwd)
-  fingerprint_line=$(ssh-keygen -E md5 -lf "$VPS_KNOWN_HOSTS" 2>/dev/null | head -1)
-  fingerprint=$(printf '%s' "$fingerprint_line" | grep -o 'MD5:[0-9a-f:]*')
+  # dartssh2's onVerifyHostKey expects a SHA256 fingerprint (the literal
+  # "SHA256:<base64>" string), not MD5 -- confirmed live: an MD5
+  # fingerprint here made every dispatched command fail to connect,
+  # closed before ever attempting authentication.
+  fingerprint_line=$(ssh-keygen -E sha256 -lf "$VPS_KNOWN_HOSTS" 2>/dev/null | head -1)
+  fingerprint=$(printf '%s' "$fingerprint_line" | grep -o 'SHA256:[A-Za-z0-9+/]*')
 
   if [ -z "$fingerprint" ]; then
     echo "could not derive a host key fingerprint from $VPS_KNOWN_HOSTS" >&2

@@ -70,8 +70,7 @@ void main() {
         const RootSshCredentials(
           privateKeyPem: 'not-a-private-key',
           hostKeyType: 'ssh-ed25519',
-          hostKeyFingerprint:
-              'MD5:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff',
+          hostKeyFingerprint: 'SHA256:AAAAC3NzaC1lZDI1NTE5AAAAIA',
         ),
       ).run(
         instanceId: 'instance',

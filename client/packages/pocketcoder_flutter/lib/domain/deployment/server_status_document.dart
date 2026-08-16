@@ -70,9 +70,12 @@ class ServerStatusDocument {
 class ServerSshHostKey {
   const ServerSshHostKey({required this.type, required this.fingerprint});
 
-  static final _md5Fingerprint = RegExp(
-    r'^MD5:(?:[0-9a-f]{2}:){15}[0-9a-f]{2}$',
-  );
+  // dartssh2's onVerifyHostKey expects the literal UTF-8 bytes of
+  // "SHA256:<base64>" -- see SshRootCommandRunner._parseFingerprint. This
+  // field was MD5-formatted (from status.sh) until that mismatch was
+  // found live: the comparison could never succeed, so every root SSH
+  // command silently failed to connect.
+  static final _sha256Fingerprint = RegExp(r'^SHA256:[A-Za-z0-9+/]+$');
 
   final String type;
   final String fingerprint;
@@ -80,7 +83,7 @@ class ServerSshHostKey {
   static ServerSshHostKey? tryParse(Map<String, dynamic> value) {
     final type = value['type']?.toString() ?? '';
     final fingerprint = value['fingerprint']?.toString() ?? '';
-    if (type != 'ssh-ed25519' || !_md5Fingerprint.hasMatch(fingerprint)) {
+    if (type != 'ssh-ed25519' || !_sha256Fingerprint.hasMatch(fingerprint)) {
       return null;
     }
     return ServerSshHostKey(type: type, fingerprint: fingerprint);
