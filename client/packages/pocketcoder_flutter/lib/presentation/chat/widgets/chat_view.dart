@@ -135,6 +135,7 @@ class _ChatViewState extends State<ChatView> {
   void _submit() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
+    _transcriptKey.currentState?.rearmFollow();
     widget.onSendPrompt(text);
     _inputController.clear();
   }

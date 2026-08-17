@@ -192,4 +192,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(haptics, hasLength(1));
   });
+
+  testWidgets('submitting re-arms follow after the user scrolled back',
+      (tester) async {
+    await tester.pumpWidget(buildChatView(
+      conversation: ag_ui_widgets.Conversation(timeline: [
+        for (var i = 0; i < 40; i++)
+          ag_ui_widgets.TimelineItem.text(
+            id: 'm$i',
+            kind: ag_ui_widgets.ChatMessageKind.text,
+            role: 'assistant',
+            text: 'line $i',
+            order: ag_ui_widgets.OrderKey(i),
+          ),
+      ]),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 1500));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.byType(TextField, skipOffstage: false), 'next prompt');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    final position =
+        tester.widget<CustomScrollView>(find.byType(CustomScrollView))
+            .controller
+            ?.position;
+    expect(position?.pixels, moreOrLessEquals(position?.maxScrollExtent ?? 0,
+        epsilon: 1));
+  });
 }
