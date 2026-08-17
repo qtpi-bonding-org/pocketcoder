@@ -21,7 +21,7 @@ misbehaving.
 
 | Worker | Purpose | Docs |
 |---|---|---|
-| `image-relay` | Publishes NixOS release/update channels and the raw boot-image manifest. Backs `images.relay.pocketcoder.org` and `images.pocketcoder.org`. | [image-relay/README.md](image-relay/README.md) |
+| `image-relay` | Publishes the release-distribution API every box (fresh or already-running) reads from — channel pointers, release manifests, and the raw NixOS boot image, all from one digest-addressed, attested pipeline. Backs `images.relay.pocketcoder.org` and `images.pocketcoder.org`. | [image-relay/README.md](image-relay/README.md) |
 | `oauth-relay` | Holds centrally-registered OAuth app credentials (GitHub, Linode, ...) so a per-user VPS never has to hold a client secret; brokers the code exchange and hands the finished token to the user's own deployment. See `docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md` for the worked GitHub OAuth example this followed. | — |
 
 `push-relay` is not part of this repo — this directory only documents
