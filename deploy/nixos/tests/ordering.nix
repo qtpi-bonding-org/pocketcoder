@@ -16,7 +16,7 @@ pkgs.testers.runNixOSTest {
     _module.args.releaseBranch = "main";
     _module.args.releaseManager = self.packages.${system}.release-manager;
     _module.args.caddyTemplate = ../../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
-    _module.args.tlsStatusScript = ../scripts/tls-status.sh;
+    _module.args.tlsStatusScript = ../../scripts/tls-status.sh;
     _module.args.bootstrapScript = ../bootstrap.sh;
     _module.args.statusScript = ../status.sh;
     imports = [ ../caddy.nix ../bootstrap.nix ];
