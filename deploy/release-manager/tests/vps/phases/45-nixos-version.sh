@@ -21,13 +21,13 @@ phase_tier=safe-mutating
 # ChannelPath() and this exact bug, so it never could have disproved it.)
 # 60-update.sh and 85-rollback.sh already establish the fix for their own
 # dispatch_ssh_command calls: export POCKETCODER_GITHUB_WORKFLOW_BRANCH=
-# ${VPS_RELEASE_BRANCH:-main} before invoking anything that resolves a
+# ${release_branch:-main} before invoking anything that resolves a
 # channel. This phase calls the release-manager binary directly rather
 # than through dispatch_ssh_command, so the same export is inlined into
 # every ssh_exec command line below instead.
 _nixos_version_check_real_conditions() {
   local binary=$1 metadata
-  ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; $binary check-metadata" || {
+  ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${release_branch:-main}; $binary check-metadata" || {
     echo "check-metadata attempt failed" >&2
     return 1
   }
@@ -96,10 +96,10 @@ phase_run() {
     echo "could not stage a fake NixOS version file" >&2
     return 1
   }
-  if ! ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; POCKETCODER_NIXOS_VERSION_FILE=/tmp/pocketcoder-fake-nixos-version $binary check-metadata"; then
+  if ! ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${release_branch:-main}; POCKETCODER_NIXOS_VERSION_FILE=/tmp/pocketcoder-fake-nixos-version $binary check-metadata"; then
     echo "check-metadata failed under a simulated mismatch" >&2
     ssh_exec 15 "rm -f /tmp/pocketcoder-fake-nixos-version" || true
-    ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; $binary check-metadata" || true
+    ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${release_branch:-main}; $binary check-metadata" || true
     return 1
   fi
   metadata=$(ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json")
@@ -109,7 +109,7 @@ phase_run() {
   available=$(jq -r '.availableNixosVersion // ""' <<<"$metadata")
   if [ "$host" != "00.01" ] || [ -z "$available" ] || [ "$available" = "00.01" ]; then
     echo "simulated NixOS version mismatch was not reported: $metadata" >&2
-    ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; $binary check-metadata" || true
+    ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${release_branch:-main}; $binary check-metadata" || true
     return 1
   fi
 
