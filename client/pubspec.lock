@@ -37,8 +37,8 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: "23ebd321496181516511ff1a3d122e115a691221"
-      resolved-ref: "23ebd321496181516511ff1a3d122e115a691221"
+      ref: "21c2a311762aba68fd78960f4df2e4567bfb6cb0"
+      resolved-ref: "21c2a311762aba68fd78960f4df2e4567bfb6cb0"
       url: "https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git"
     source: git
     version: "0.6.0"
