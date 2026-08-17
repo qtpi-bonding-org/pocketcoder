@@ -6,17 +6,21 @@ phase_tier=safe-mutating
 # retry_until: this phase is the first readonly/safe-mutating-tier phase to
 # perform a live network Resolve() against the channel (the others work off
 # already-installed local state) -- found live: it can race 55-promote's own
-# concurrent promotion and briefly observe a stale, not-yet-cache-invalidated
+# concurrent promotion and briefly observe a stale, not-yet-revalidated
 # channel pointer still referencing the release *before* this feature
 # shipped (which correctly has no os field at all, DecodeForward leaves
 # NixosVersion as "", and ValidateManifest correctly rejects that empty
-# value) -- the same R2/edge-cache propagation window
-# deploy/ci/verify-candidate-published.sh and workers/image-relay/README.md's
-# debugging checklist point 4 already document elsewhere in this pipeline.
-# Bounded shorter than their ~10min worst case since verify-candidate-
-# published.sh has already confirmed publish consistency by the time this
-# phase runs -- what's left here is just edge-cache TTL, not the original
-# eventual-consistency window.
+# value). Confirmed live via `curl -sI .../channels/nightly-testing.json`:
+# `cache-control: public, max-age=300, must-revalidate` -- a given
+# Cloudflare edge PoP can keep serving a pointer it cached just before a
+# promotion for up to a full 5 minutes before revalidating against origin,
+# regardless of how quickly R2 itself became consistent (a first attempt at
+# this used a 90s window, confirmed too short live: the exact same
+# real-conditions check that failed for 90s straight passed cleanly when
+# re-run by hand several minutes later on the same box). The default here
+# is deliberately set past that 300s ceiling, not just past R2's own
+# eventual-consistency window described in workers/image-relay/README.md's
+# debugging checklist point 4.
 _nixos_version_check_real_conditions() {
   local binary=$1 metadata
   ssh_exec 30 "$binary check-metadata" || {
@@ -43,8 +47,8 @@ phase_run() {
   # comment in cmd/pocketcoder-release/main.go) instead of assuming the file
   # exists.
   if ! ssh_exec 15 "test -f /etc/nixos/nixos-version"; then
-    retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
-    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
+    retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-330}" \
+    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-15}" \
     _nixos_version_check_real_conditions "$binary" || {
       echo "expected no mismatch fields with an unknown host version" >&2
       ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
@@ -70,8 +74,8 @@ phase_run() {
   # (see its "must be kept in sync" comments) -- so the box's own version and
   # its current channel manifest's declared compatibility.os.nixosVersion
   # must agree right now. No mismatch fields should be reported.
-  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
-    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
+  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-330}" \
+    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-15}" \
     _nixos_version_check_real_conditions "$binary" || {
     echo "unexpected NixOS version mismatch under real conditions" >&2
     ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
@@ -109,8 +113,8 @@ phase_run() {
   # pocketcoder-release-metadata.timer also reads and refreshes -- leave it
   # reflecting genuine conditions again before this phase ends, the same
   # restore-before-returning discipline 95-bootstrap-recovery.sh uses.
-  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
-    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
+  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-330}" \
+    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-15}" \
     _nixos_version_check_real_conditions "$binary" || {
     echo "metadata-status.json did not return to real conditions after restore" >&2
     ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
