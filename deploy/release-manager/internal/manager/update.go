@@ -16,6 +16,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/snapshot"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/state"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/transaction"
+	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/trust"
 )
 
 type Update struct {
@@ -216,12 +217,15 @@ func (update *Update) RestorePrevious(previous transaction.Candidate) error {
 		}
 		update.previousBytes = data
 	}
+	resolved, err := update.previousResolved(previous, previousCurrent)
+	if err != nil {
+		return err
+	}
 	directory := filepath.Join(update.Paths.Releases, previous.Digest)
-	resolved := releasecontract.Resolved{ManifestSHA256: previous.Digest, ManifestURL: previousCurrent.ManifestURL, ChannelSequence: previousCurrent.ChannelSequence, RevocationSequence: previousCurrent.RevocationSequence, Manifest: update.previousManifest}
 	activation := update.activation(resolved, update.previousBytes, directory, previousCurrent.SelectedHarnesses, previousCurrent.SelectedOptionalImages)
 	update.previousActivation = activation
 	update.report("compose_up", "restoring_previous_release")
-	_, err := activation.Run()
+	_, err = activation.Run()
 	if err != nil {
 		return err
 	}
@@ -229,6 +233,27 @@ func (update *Update) RestorePrevious(previous transaction.Candidate) error {
 		return err
 	}
 	return nil
+}
+
+// previousResolved builds the Resolved value RestorePrevious activates,
+// loading the attestation bundle Resolve() persisted for this digest when
+// the release was originally installed. Restoring a previous release must
+// not require a network round-trip, so this proves prior verification from
+// local state rather than re-fetching it.
+func (update *Update) previousResolved(previous transaction.Candidate, previousCurrent releasecontract.Current) (releasecontract.Resolved, error) {
+	bundle, err := releasecontract.LoadBundle(update.Paths.Root, previous.Digest)
+	if err != nil {
+		return releasecontract.Resolved{}, err
+	}
+	return releasecontract.Resolved{
+		ManifestSHA256:     previous.Digest,
+		ManifestURL:        previousCurrent.ManifestURL,
+		ChannelSequence:    previousCurrent.ChannelSequence,
+		RevocationSequence: previousCurrent.RevocationSequence,
+		Manifest:           update.previousManifest,
+		ReleaseBundle:      bundle,
+		Verifier:           trust.GitHubVerifier{CachePath: filepath.Join(update.Paths.Root, "sigstore-tuf")},
+	}, nil
 }
 
 func (update *Update) report(phase, detail string) {

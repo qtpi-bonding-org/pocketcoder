@@ -234,7 +234,10 @@ func rollback(args []string) error {
 			return err
 		}
 	}
-	resolved := releasecontract.Resolved{ManifestSHA256: previous.ReleaseDigest, ManifestURL: previous.ManifestURL, ChannelSequence: previous.ChannelSequence, RevocationSequence: previous.RevocationSequence, Manifest: manifest, Revocations: revocations}
+	resolved, err := resolvedFromPrevious(paths, previous, manifest, revocations)
+	if err != nil {
+		return err
+	}
 	updateManager := newUpdateManager(options, paths, current, resolved, manifestBytes, nil)
 	if err := updateManager.Transaction().UpdateLocked(updateManager.Previous(), updateManager.Candidate()); err != nil {
 		return err
@@ -257,6 +260,28 @@ func resolveLocked(options mutationOptions, paths state.Paths, allowRevoked bool
 	}
 	manifestBytes, err := os.ReadFile(resolved.ManifestPath)
 	return resolved, manifestBytes, err
+}
+
+// resolvedFromPrevious builds the Resolved value rollback activates,
+// loading the attestation bundle Resolve() persisted for this digest when
+// the release was originally installed. Rollback must not require a
+// network round-trip, so this proves prior verification from local state
+// rather than re-fetching it.
+func resolvedFromPrevious(paths state.Paths, previous releasecontract.Current, manifest contract.Manifest, revocations contract.Revocations) (releasecontract.Resolved, error) {
+	bundle, err := releasecontract.LoadBundle(paths.Root, previous.ReleaseDigest)
+	if err != nil {
+		return releasecontract.Resolved{}, err
+	}
+	return releasecontract.Resolved{
+		ManifestSHA256:     previous.ReleaseDigest,
+		ManifestURL:        previous.ManifestURL,
+		ChannelSequence:    previous.ChannelSequence,
+		RevocationSequence: previous.RevocationSequence,
+		Manifest:           manifest,
+		Revocations:        revocations,
+		ReleaseBundle:      bundle,
+		Verifier:           trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")},
+	}, nil
 }
 
 func loadCurrent(path string) (releasecontract.Current, bool, error) {

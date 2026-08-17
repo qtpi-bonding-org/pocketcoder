@@ -86,6 +86,43 @@ func TestResolverRequiresAttestedPointerManifestAndRevocations(t *testing.T) {
 	}
 }
 
+// Rollback restores a release without a network round-trip, so it needs a
+// local copy of the attestation bundle that proved this release verified
+// when it was originally resolved. Resolve() must persist that bundle, not
+// just return it in memory for the one call that fetched it.
+func TestResolvePersistsReleaseBundleForLaterOfflineVerification(t *testing.T) {
+	base := "https://images.example"
+	manifest, err := os.ReadFile("../../../release/release-manifest.example.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	digestBytes := sha256.Sum256(manifest)
+	digest := hex.EncodeToString(digestBytes[:])
+	revocations, _ := json.Marshal(contract.Revocations{SchemaVersion: 1, Sequence: 1, PublishedAt: "2026-08-12T19:00:00Z", RevokedReleases: map[string]contract.Revocation{}})
+	pointer := contract.ChannelPointer{SchemaVersion: 1, Channel: "stable", Sequence: 2, PromotedAt: "2026-08-12T20:00:00Z", Attestation: contract.AttestationDescriptor{URL: base + "/v1/attestations/channels/stable/2.sigstore.json"}, Manifest: contract.ManifestReference{URL: base + "/v1/releases/" + digest + ".json", SHA256: digest, DownloadBytes: int64(len(manifest)), Attestation: contract.AttestationDescriptor{URL: base + "/v1/attestations/releases/" + digest + ".sigstore.json"}}}
+	pointerBytes, _ := json.Marshal(pointer)
+	releaseBundle := []byte("release-bundle-bytes")
+	routes := resolverTransport{base + "/v1/channels/stable.json": pointerBytes, pointer.Attestation.URL: []byte("pointer"), pointer.Manifest.URL: manifest, pointer.Manifest.Attestation.URL: releaseBundle, base + "/v1/revocations/releases.json": revocations, base + "/v1/attestations/revocations/releases/1.sigstore.json": []byte("revoke")}
+	verifier := verifierFunc(func(role string, subject, bundle []byte) error {
+		if len(subject) == 0 || len(bundle) == 0 {
+			return fmt.Errorf("empty attested subject")
+		}
+		return nil
+	})
+	paths := state.NewPaths(t.TempDir(), t.TempDir(), t.TempDir(), t.TempDir()+"/current")
+	resolver := Resolver{Config: Config{ReleaseBase: base, Channel: "stable", StableSequenceFloor: 1, State: paths, Fetcher: artifact.Fetcher{Client: &http.Client{Transport: routes}}, Verifier: verifier}}
+	if _, err := resolver.Resolve(); err != nil {
+		t.Fatal(err)
+	}
+	persisted, err := LoadBundle(paths.Root, digest)
+	if err != nil {
+		t.Fatalf("bundle was not persisted: %v", err)
+	}
+	if string(persisted) != string(releaseBundle) {
+		t.Fatalf("persisted bundle = %q, want %q", persisted, releaseBundle)
+	}
+}
+
 func TestChannelPathIsBareOnMainAndQualifiedOtherwise(t *testing.T) {
 	cases := []struct{ branch, want string }{
 		{"", "nightly"},
