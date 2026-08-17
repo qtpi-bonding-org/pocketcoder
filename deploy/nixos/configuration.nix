@@ -263,6 +263,17 @@ in
     curl
     jq
     htop
+    # ssh_root_command_runner.dart's exportCaddyCertificate/
+    # restoreCaddyCertificate commands shell out to `openssl x509`/`openssl
+    # pkey` directly over a bare root SSH session -- confirmed missing live:
+    # openssl is pulled into the store transitively (a build dependency of
+    # something else) but was never symlinked onto the system-wide PATH, so
+    # a real owner running the actual shipped TLS-recovery commands would
+    # have hit "openssl: command not found" in production. Caught by
+    # deploy/release-manager/tests/vps/phases/47-tls-cert-recovery.sh, the
+    # first thing to ever exercise that command live rather than just at
+    # the Dart-unit-test layer.
+    openssl
   ];
 
   # --- LISH serial console ---
