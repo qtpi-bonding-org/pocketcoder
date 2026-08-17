@@ -80,18 +80,10 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
     final combinedOutput =
         [output, diffOutput].where((value) => value.isNotEmpty).join('\n\n');
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(AppSizes.space),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border.all(
-          color: terminalColors.attention.withValues(alpha: 0.3),
-          width: AppSizes.borderWidth,
-        ),
-      ),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.5),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,20 +141,13 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
           ],
           if (_outputExpanded && combinedOutput.isNotEmpty) ...[
             VSpace.x1,
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: AppSizes.commandOutputMaxHeight,
-              ),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  combinedOutput,
-                  style: TextStyle(
-                    color: colors.onSurface.withValues(alpha: 0.75),
-                    fontFamily: AppFonts.bodyFamily,
-                    fontSize: AppSizes.fontMini,
-                    height: 1.4,
-                  ),
-                ),
+            SelectableText(
+              combinedOutput,
+              style: TextStyle(
+                color: colors.onSurface.withValues(alpha: 0.75),
+                fontFamily: AppFonts.bodyFamily,
+                fontSize: AppSizes.fontMini,
+                height: 1.4,
               ),
             ),
           ],
