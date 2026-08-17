@@ -10,12 +10,14 @@ class ChatComposer extends StatelessWidget {
     required this.enabled,
     required this.isLoading,
     required this.onSubmitted,
+    this.focusNode,
   });
 
   final TextEditingController controller;
   final bool enabled;
   final bool isLoading;
   final VoidCallback onSubmitted;
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +27,7 @@ class ChatComposer extends StatelessWidget {
         padding: EdgeInsets.all(AppSizes.space),
         child: TerminalInput(
           controller: controller,
+          focusNode: focusNode,
           prompt: 'root@device \$',
           enabled: enabled,
           showSendButton: true,

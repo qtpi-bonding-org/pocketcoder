@@ -9,6 +9,7 @@ class TerminalInput extends StatefulWidget {
   final bool enabled;
   final bool showSendButton;
   final String? sendTooltip;
+  final FocusNode? focusNode;
 
   const TerminalInput({
     super.key,
@@ -18,6 +19,7 @@ class TerminalInput extends StatefulWidget {
     this.enabled = true,
     this.showSendButton = false,
     this.sendTooltip,
+    this.focusNode,
   });
 
   @override
@@ -92,6 +94,7 @@ class _TerminalInputState extends State<TerminalInput> {
             child: TextField(
               enabled: widget.enabled,
               controller: widget.controller,
+              focusNode: widget.focusNode,
               onSubmitted: (_) => widget.onSubmitted(),
               autofocus: true,
               style: TextStyle(

@@ -64,6 +64,8 @@ class ChatView extends StatefulWidget {
 
 class _ChatViewState extends State<ChatView> {
   final _inputController = TextEditingController();
+  final _inputFocusNode = FocusNode();
+  final _transcriptKey = GlobalKey<ag_ui_widgets.AgUiTranscriptState>();
   bool _opened = false;
   bool _sessionPanelExpanded = false;
 
@@ -110,6 +112,7 @@ class _ChatViewState extends State<ChatView> {
   @override
   void dispose() {
     _inputController.dispose();
+    _inputFocusNode.dispose();
     super.dispose();
   }
 
@@ -250,45 +253,29 @@ class _ChatViewState extends State<ChatView> {
                     ),
                   ),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      ag_ui_widgets.AgUiChat(
-                        conversation: widget.conversation,
-                        currentUserId: 'user',
-                        onSendMessage: widget.onSendPrompt,
-                        composerBuilder: (_) => const SizedBox.shrink(),
-                        theme: ag_ui_widgets.ChatTheme.fromThemeData(
-                            Theme.of(context)),
-                        textMessageBuilder: builders.textMessageBuilder,
-                        textStreamMessageBuilder:
-                            builders.textStreamMessageBuilder,
-                        toolCallBuilder: builders.toolCallBuilder,
-                        permissionBuilder: builders.permissionBuilder,
-                        elicitationBuilder: builders.elicitationBuilder,
-                        toolRequestBuilder: builders.toolRequestBuilder,
-                      ),
-                      if (widget.conversation.timeline.isEmpty)
-                        IgnorePointer(
-                          child: Center(
-                            child: Text(
-                              context.l10n.chatSessionTitle,
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface
-                                    .withValues(alpha: 0.3),
-                                fontSize: AppSizes.fontStandard,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                  child: ag_ui_widgets.AgUiTranscript(
+                    key: _transcriptKey,
+                    conversation: widget.conversation,
+                    currentUserId: 'user',
+                    placement: ag_ui_widgets.ComposerPlacement.inline,
+                    onTapEmptySpace: _inputFocusNode.requestFocus,
+                    theme: ag_ui_widgets.ChatTheme.fromThemeData(
+                        Theme.of(context)),
+                    textMessageBuilder: builders.textMessageBuilder,
+                    textStreamMessageBuilder:
+                        builders.textStreamMessageBuilder,
+                    toolCallBuilder: builders.toolCallBuilder,
+                    permissionBuilder: builders.permissionBuilder,
+                    elicitationBuilder: builders.elicitationBuilder,
+                    toolRequestBuilder: builders.toolRequestBuilder,
+                    composerBuilder: (context) => ChatComposer(
+                      controller: _inputController,
+                      focusNode: _inputFocusNode,
+                      enabled: !widget.isLoading && widget.chatId != null,
+                      isLoading: widget.isLoading,
+                      onSubmitted: _submit,
+                    ),
                   ),
-                ),
-                ChatComposer(
-                  controller: _inputController,
-                  enabled: !widget.isLoading && widget.chatId != null,
-                  isLoading: widget.isLoading,
-                  onSubmitted: _submit,
                 ),
               ],
             ),
