@@ -53,6 +53,7 @@ echo '{}' > "$metadata_state"
 stub_bin "$nixos_stub_dir" ssh "
 for arg in \"\$@\"; do last=\$arg; done
 case \$last in
+  *'test -f /etc/nixos/nixos-version'*) exit 0 ;;
   *'cat /etc/nixos/nixos-version'*) echo '26.05' ;;
   *'POCKETCODER_NIXOS_VERSION_FILE='*'check-metadata'*)
     echo '{\"hostNixosVersion\":\"00.01\",\"availableNixosVersion\":\"26.05\"}' > '$metadata_state' ;;
@@ -79,6 +80,7 @@ echo '{}' > "$metadata_state"
 stub_bin "$nixos_stub_dir" ssh "
 for arg in \"\$@\"; do last=\$arg; done
 case \$last in
+  *'test -f /etc/nixos/nixos-version'*) exit 0 ;;
   *'cat /etc/nixos/nixos-version'*) echo '26.05' ;;
   *check-metadata*) echo '{}' > '$metadata_state' ;;
   *'cat /var/lib/pocketcoder/release/metadata-status.json'*) cat '$metadata_state' ;;
@@ -88,6 +90,40 @@ esac"
 ( . "$VPS_DIR/phases/45-nixos-version.sh"
   PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
 check_rc "45-nixos-version: an undetected mismatch fails the phase" 1 "$?"
+
+# --- 45-nixos-version: a pre-feature box (no /etc/nixos/nixos-version at
+# all -- release A is whatever the channel already had promoted before this
+# suite run, which may predate this feature entirely) must pass by verifying
+# graceful degradation, not fail just because the file is absent ---
+echo '{}' > "$metadata_state"
+stub_bin "$nixos_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'test -f /etc/nixos/nixos-version'*) exit 1 ;;
+  *check-metadata*) echo '{}' > '$metadata_state' ;;
+  *'cat /var/lib/pocketcoder/release/metadata-status.json'*) cat '$metadata_state' ;;
+  *) echo '' ;;
+esac"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"
+  PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
+check_rc "45-nixos-version: a missing version file degrades gracefully" 0 "$?"
+
+# --- 45-nixos-version: a missing version file that STILL reports mismatch
+# fields (a broken degrade path) must fail ---
+echo '{"hostNixosVersion":"","availableNixosVersion":"26.05"}' > "$metadata_state"
+stub_bin "$nixos_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'test -f /etc/nixos/nixos-version'*) exit 1 ;;
+  *check-metadata*) : ;;
+  *'cat /var/lib/pocketcoder/release/metadata-status.json'*) cat '$metadata_state' ;;
+  *) echo '' ;;
+esac"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"
+  PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
+check_rc "45-nixos-version: a broken degrade path fails the phase" 1 "$?"
 
 # --- 20-topology: an unhealthy container must fail ---
 stub_bin "$phase_stub_dir" curl 'exit 0'

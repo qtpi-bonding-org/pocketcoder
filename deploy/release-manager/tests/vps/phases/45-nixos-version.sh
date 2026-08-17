@@ -6,7 +6,34 @@ phase_run() {
   local host_version metadata host available
 
   # /etc/nixos/nixos-version (deploy/nixos/configuration.nix) is the box's
-  # own record of which NixOS release line it's pinned to.
+  # own record of which NixOS release line it's pinned to. It only exists on
+  # a box provisioned from an image built after this feature shipped --
+  # release A is whatever was already promoted on the channel *before* this
+  # suite run started (promoting a new candidate happens later in the
+  # pipeline, to test the update path, not to reprovision release A), so an
+  # older, pre-feature release A is expected here, not a bug. Verify the
+  # documented degrade-gracefully behavior (readHostNixosVersion's doc
+  # comment in cmd/pocketcoder-release/main.go) instead of assuming the file
+  # exists.
+  if ! ssh_exec 15 "test -f /etc/nixos/nixos-version"; then
+    ssh_exec 30 "$binary check-metadata" || {
+      echo "check-metadata failed with no host NixOS version file present" >&2
+      return 1
+    }
+    metadata=$(ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json") || {
+      echo "could not read metadata-status.json" >&2
+      return 1
+    }
+    jq -e '(.hostNixosVersion // "") == "" and (.availableNixosVersion // "") == ""' \
+      <<<"$metadata" >/dev/null || {
+      echo "expected no mismatch fields with an unknown host version: $metadata" >&2
+      return 1
+    }
+    VPS_PHASE_EVIDENCE=$(jq -n \
+      '{hostVersionFilePresent:false,degradedGracefully:true}')
+    return 0
+  fi
+
   host_version=$(ssh_exec 15 "cat /etc/nixos/nixos-version") || {
     echo "could not read the box's own pinned NixOS version" >&2
     return 1
@@ -80,7 +107,8 @@ phase_run() {
 
   VPS_PHASE_EVIDENCE=$(jq -n --arg hostVersion "$host_version" \
     --arg simulatedAvailable "$available" \
-    '{hostNixosVersion:$hostVersion,mismatchDetectionVerified:true,
+    '{hostVersionFilePresent:true,hostNixosVersion:$hostVersion,
+      mismatchDetectionVerified:true,
       simulatedAvailableNixosVersion:$simulatedAvailable}')
   return 0
 }
