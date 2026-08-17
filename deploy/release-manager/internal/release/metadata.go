@@ -41,12 +41,27 @@ type MetadataStatus struct {
 	DownloadBytes                       int64  `json:"downloadBytes,omitempty"`
 	RequiredDiskBytes                   int64  `json:"requiredDiskBytes,omitempty"`
 	NormalRollbackAvailableAfterSuccess *bool  `json:"normalRollbackAvailableAfterSuccess,omitempty"`
+	// HostNixosVersion and AvailableNixosVersion are populated whenever the
+	// box's own currently-pinned NixOS version (read from its own
+	// /etc/nixos/nixos-version, independent of the app-level release it's
+	// running -- the two move on separate schedules, see nixos-update vs.
+	// update) differs from what the channel's current release manifest
+	// expects. This is a detection signal only: nothing here triggers an
+	// automatic version upgrade, that procedure still needs to be designed
+	// and tested against a real target version before it exists.
+	HostNixosVersion      string `json:"hostNixosVersion,omitempty"`
+	AvailableNixosVersion string `json:"availableNixosVersion,omitempty"`
 }
 
-func BuildMetadataStatus(current Current, resolved Resolved, snapshotBytes, reserveBytes int64, now time.Time) (MetadataStatus, error) {
+func BuildMetadataStatus(current Current, resolved Resolved, snapshotBytes, reserveBytes int64, hostNixosVersion string, now time.Time) (MetadataStatus, error) {
 	status := MetadataStatus{
 		SchemaVersion: contract.SchemaVersion, CheckedAt: now.UTC().Format(time.RFC3339),
 		CurrentReleaseDigest: current.ReleaseDigest,
+	}
+	if availableNixosVersion := resolved.Manifest.Compatibility.OS.NixosVersion; hostNixosVersion != "" &&
+		availableNixosVersion != "" && hostNixosVersion != availableNixosVersion {
+		status.HostNixosVersion = hostNixosVersion
+		status.AvailableNixosVersion = availableNixosVersion
 	}
 	if revoked, exists := resolved.Revocations.RevokedReleases[current.ReleaseDigest]; exists {
 		status.Status = "critical-release-warning"

@@ -29,6 +29,23 @@ func TestSelectedChannel(t *testing.T) {
 	}
 }
 
+func TestReadHostNixosVersion(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "nixos-version")
+	t.Setenv("POCKETCODER_NIXOS_VERSION_FILE", path)
+
+	if got := readHostNixosVersion(); got != "" {
+		t.Fatalf("expected empty string for a missing file, got %q", got)
+	}
+
+	if err := os.WriteFile(path, []byte("26.05\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := readHostNixosVersion(); got != "26.05" {
+		t.Fatalf("expected trimmed version, got %q", got)
+	}
+}
+
 // rollback restores an already-installed release without a network
 // round-trip, so it must prove that release verified using the bundle
 // Resolve() persisted at install time, not by re-fetching it. This was

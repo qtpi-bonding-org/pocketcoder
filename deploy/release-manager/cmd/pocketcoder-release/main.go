@@ -369,7 +369,8 @@ func checkMetadata(args []string) error {
 			return fmt.Errorf("measure PocketBase data volume: %w", err)
 		}
 	}
-	metadata, err := releasecontract.BuildMetadataStatus(current, resolved, snapshotBytes, *reserveBytes, time.Now())
+	hostNixosVersion := readHostNixosVersion()
+	metadata, err := releasecontract.BuildMetadataStatus(current, resolved, snapshotBytes, *reserveBytes, hostNixosVersion, time.Now())
 	if err != nil {
 		return err
 	}
@@ -406,6 +407,21 @@ func status(args []string) error {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(result)
+}
+
+// readHostNixosVersion reads the box's own currently-pinned NixOS version,
+// written at build/rebuild time to /etc/nixos/nixos-version (see
+// deploy/nixos/configuration.nix). Missing/unreadable is not an error here
+// -- older already-provisioned images built before this file existed won't
+// have it, and status reporting should degrade to "unknown" rather than
+// fail the whole status check over a file that's allowed to be absent.
+func readHostNixosVersion() string {
+	path := envOr("POCKETCODER_NIXOS_VERSION_FILE", "/etc/nixos/nixos-version")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
 }
 
 func envOr(name, fallback string) string {

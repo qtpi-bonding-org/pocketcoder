@@ -2,6 +2,12 @@
   description = "PocketCoder NixOS server image for Linode";
 
   inputs = {
+    # Must stay in sync with configuration.nix's `nixosVersion` -- flake
+    # inputs are static string literals and can't reference a value
+    # computed by the module they build, so this can't be derived from that
+    # single source of truth the way NIX_PATH is. deploy/ci/
+    # assemble-release-manifest.sh cross-checks the two at publish time and
+    # fails the build if they ever drift apart.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   };
 
