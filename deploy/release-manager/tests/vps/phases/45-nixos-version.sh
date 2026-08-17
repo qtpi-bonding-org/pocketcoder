@@ -19,7 +19,10 @@ phase_tier=safe-mutating
 # eventual-consistency window.
 _nixos_version_check_real_conditions() {
   local binary=$1 metadata
-  ssh_exec 30 "$binary check-metadata" 2>/dev/null || return 1
+  ssh_exec 30 "$binary check-metadata" || {
+    echo "check-metadata attempt failed" >&2
+    return 1
+  }
   metadata=$(ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json") || return 1
   jq -e '(.hostNixosVersion // "") == "" and (.availableNixosVersion // "") == ""' \
     <<<"$metadata" >/dev/null
