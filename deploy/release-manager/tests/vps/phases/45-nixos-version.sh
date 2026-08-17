@@ -1,6 +1,30 @@
 phase_name=nixos-version
 phase_tier=safe-mutating
 
+# Runs check-metadata and asserts no mismatch fields are reported, i.e. the
+# box's host version and its channel's current release agree. Wrapped in
+# retry_until: this phase is the first readonly/safe-mutating-tier phase to
+# perform a live network Resolve() against the channel (the others work off
+# already-installed local state) -- found live: it can race 55-promote's own
+# concurrent promotion and briefly observe a stale, not-yet-cache-invalidated
+# channel pointer still referencing the release *before* this feature
+# shipped (which correctly has no os field at all, DecodeForward leaves
+# NixosVersion as "", and ValidateManifest correctly rejects that empty
+# value) -- the same R2/edge-cache propagation window
+# deploy/ci/verify-candidate-published.sh and workers/image-relay/README.md's
+# debugging checklist point 4 already document elsewhere in this pipeline.
+# Bounded shorter than their ~10min worst case since verify-candidate-
+# published.sh has already confirmed publish consistency by the time this
+# phase runs -- what's left here is just edge-cache TTL, not the original
+# eventual-consistency window.
+_nixos_version_check_real_conditions() {
+  local binary=$1 metadata
+  ssh_exec 30 "$binary check-metadata" 2>/dev/null || return 1
+  metadata=$(ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json") || return 1
+  jq -e '(.hostNixosVersion // "") == "" and (.availableNixosVersion // "") == ""' \
+    <<<"$metadata" >/dev/null
+}
+
 phase_run() {
   local binary=/opt/pocketcoder/current/bin/pocketcoder-release
   local host_version metadata host available
@@ -16,17 +40,11 @@ phase_run() {
   # comment in cmd/pocketcoder-release/main.go) instead of assuming the file
   # exists.
   if ! ssh_exec 15 "test -f /etc/nixos/nixos-version"; then
-    ssh_exec 30 "$binary check-metadata" || {
-      echo "check-metadata failed with no host NixOS version file present" >&2
-      return 1
-    }
-    metadata=$(ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json") || {
-      echo "could not read metadata-status.json" >&2
-      return 1
-    }
-    jq -e '(.hostNixosVersion // "") == "" and (.availableNixosVersion // "") == ""' \
-      <<<"$metadata" >/dev/null || {
-      echo "expected no mismatch fields with an unknown host version: $metadata" >&2
+    retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
+    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
+    _nixos_version_check_real_conditions "$binary" || {
+      echo "expected no mismatch fields with an unknown host version" >&2
+      ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
       return 1
     }
     VPS_PHASE_EVIDENCE=$(jq -n \
@@ -49,17 +67,11 @@ phase_run() {
   # (see its "must be kept in sync" comments) -- so the box's own version and
   # its current channel manifest's declared compatibility.os.nixosVersion
   # must agree right now. No mismatch fields should be reported.
-  ssh_exec 30 "$binary check-metadata" || {
-    echo "check-metadata failed under real conditions" >&2
-    return 1
-  }
-  metadata=$(ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json") || {
-    echo "could not read metadata-status.json" >&2
-    return 1
-  }
-  jq -e '(.hostNixosVersion // "") == "" and (.availableNixosVersion // "") == ""' \
-    <<<"$metadata" >/dev/null || {
-    echo "unexpected NixOS version mismatch under real conditions: $metadata" >&2
+  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
+    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
+    _nixos_version_check_real_conditions "$binary" || {
+    echo "unexpected NixOS version mismatch under real conditions" >&2
+    ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
     return 1
   }
 
@@ -94,14 +106,11 @@ phase_run() {
   # pocketcoder-release-metadata.timer also reads and refreshes -- leave it
   # reflecting genuine conditions again before this phase ends, the same
   # restore-before-returning discipline 95-bootstrap-recovery.sh uses.
-  ssh_exec 30 "$binary check-metadata" || {
-    echo "could not restore metadata-status.json to real conditions" >&2
-    return 1
-  }
-  metadata=$(ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json")
-  jq -e '(.hostNixosVersion // "") == "" and (.availableNixosVersion // "") == ""' \
-    <<<"$metadata" >/dev/null || {
+  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
+    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
+    _nixos_version_check_real_conditions "$binary" || {
     echo "metadata-status.json did not return to real conditions after restore" >&2
+    ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
     return 1
   }
 

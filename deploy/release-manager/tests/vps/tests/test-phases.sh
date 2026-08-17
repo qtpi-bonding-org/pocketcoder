@@ -65,7 +65,7 @@ case \$last in
 esac"
 
 ( . "$VPS_DIR/phases/45-nixos-version.sh"
-  PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
+  PATH="$nixos_stub_dir:$PATH" VPS_NIXOS_VERSION_RETRY_DEADLINE=0 VPS_NIXOS_VERSION_RETRY_INTERVAL=0 phase_run >/dev/null 2>&1 )
 check_rc "45-nixos-version: happy path detects and restores a simulated mismatch" 0 "$?"
 
 check "45-nixos-version: metadata-status.json ends restored to real conditions" \
@@ -88,7 +88,7 @@ case \$last in
 esac"
 
 ( . "$VPS_DIR/phases/45-nixos-version.sh"
-  PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
+  PATH="$nixos_stub_dir:$PATH" VPS_NIXOS_VERSION_RETRY_DEADLINE=0 VPS_NIXOS_VERSION_RETRY_INTERVAL=0 phase_run >/dev/null 2>&1 )
 check_rc "45-nixos-version: an undetected mismatch fails the phase" 1 "$?"
 
 # --- 45-nixos-version: a pre-feature box (no /etc/nixos/nixos-version at
@@ -106,7 +106,7 @@ case \$last in
 esac"
 
 ( . "$VPS_DIR/phases/45-nixos-version.sh"
-  PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
+  PATH="$nixos_stub_dir:$PATH" VPS_NIXOS_VERSION_RETRY_DEADLINE=0 VPS_NIXOS_VERSION_RETRY_INTERVAL=0 phase_run >/dev/null 2>&1 )
 check_rc "45-nixos-version: a missing version file degrades gracefully" 0 "$?"
 
 # --- 45-nixos-version: a missing version file that STILL reports mismatch
@@ -122,7 +122,7 @@ case \$last in
 esac"
 
 ( . "$VPS_DIR/phases/45-nixos-version.sh"
-  PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
+  PATH="$nixos_stub_dir:$PATH" VPS_NIXOS_VERSION_RETRY_DEADLINE=0 VPS_NIXOS_VERSION_RETRY_INTERVAL=0 phase_run >/dev/null 2>&1 )
 check_rc "45-nixos-version: a broken degrade path fails the phase" 1 "$?"
 
 # --- 20-topology: an unhealthy container must fail ---
