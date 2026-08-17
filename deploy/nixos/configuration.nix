@@ -47,6 +47,7 @@ let
   statusScript = persisted "status.sh" ./status.sh;
   caddyTemplate = persisted "Caddyfile.template"
     ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
+  tlsStatusScript = persisted "tls-status.sh" ../scripts/tls-status.sh;
   releaseManagerSrc = persisted "release-manager-src" ../release-manager;
 
   sourceCommit = import releaseCommitModule;
@@ -57,7 +58,7 @@ in
   imports = [
     # Linode uses KVM — virtio drivers, QEMU guest agent
     "${modulesPath}/profiles/qemu-guest.nix"
-    (import caddyModule { inherit config pkgs caddyTemplate; })
+    (import caddyModule { inherit config pkgs caddyTemplate tlsStatusScript; })
     (import bootstrapModule {
       inherit config pkgs sourceCommit releaseBranch releaseManager bootstrapScript statusScript;
     })
@@ -80,6 +81,7 @@ in
   environment.etc."nixos/bootstrap.sh".source = bootstrapScript;
   environment.etc."nixos/status.sh".source = statusScript;
   environment.etc."nixos/Caddyfile.template".source = caddyTemplate;
+  environment.etc."nixos/tls-status.sh".source = tlsStatusScript;
   environment.etc."nixos/release-manager-src".source = releaseManagerSrc;
 
   nix.nixPath = [
