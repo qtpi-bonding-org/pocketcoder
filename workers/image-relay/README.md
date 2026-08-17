@@ -7,10 +7,13 @@ single R2 bucket (`pocketcoder-images`, binding `IMAGES`). This Worker
 read-only relay in front of objects CI/promotion tooling writes
 directly. All routes are defined in `src/index.ts`.
 
-There are **two separate, unrelated pipelines** living behind this one
-Worker. Conflating them wastes time — a debugging session already did
-this once (chased a "broken image-manifest pipeline" that turned out to
-just be the wrong channel pointer). Keep them mentally separate:
+There are **two route groups** living behind this one Worker: one live
+pipeline (§1) and one dead leftover (§2) that happens to still return
+200s. Conflating them wastes real time — a live debugging session did
+this twice: once chasing a "broken image-manifest pipeline" that was
+actually just the wrong channel pointer, and once concluding §2 was a
+"deliberate seam" worth preserving before anyone had actually checked
+whether real code calls it (it doesn't — see §2).
 
 ## 1. Release channel (OTA updates) — the live, actively-developed one
 
@@ -46,47 +49,51 @@ digest-addressed and GitHub-attested (sigstore). The full write path:
    pointer for the first several minutes after a promotion run
    "succeeds" is expected, not a bug.
 
-## 2. Raw boot image — read-only, not currently automated
+## 2. `/image-manifest`, `/release-manifest` — dead, confirmed by tracing real callers
 
 Routes: `/image-manifest` (reads R2 key `image-manifest.json`),
-`/release-manifest` (reads R2 key `release-manifest.json`). Both return
-a JSON pointer to the actual disk image a **fresh, unprovisioned** box
-gets flashed with — a NixOS `.img.gz` + a docker-images tarball — plus
-`sourceCommit`. This is consulted **before** the release-channel system
-above ever runs: it's "what do I install at all," not "what should I
-update to."
+`/release-manifest` (reads R2 key `release-manifest.json`). Both
+return 200 with real-looking JSON (a NixOS `.img.gz` + docker-images
+tarball pointer, `sourceCommit`), which made them *look* load-bearing
+during a live debugging session — they aren't. **Verified by grepping
+every call site across `pocketcoder`, `pocketcoder-pro`, and
+`flutter_aeroform`: zero callers.**
+`flutter_aeroform/lib/domain/models/app_config.dart`'s
+`kImageManifestPath` constant is declared and never referenced again
+anywhere in either the library or the real app.
 
-Deliberately **read-only in the Worker** (commit `b95978012`): *"CI
-writes the manifest object directly to R2, the Worker never writes it,
-since an unauthenticated write route here would let anyone redirect
-every future deployment to an arbitrary image."* Consistent with that,
-grepping all three repos (`pocketcoder`, `pocketcoder-pro`,
-`flutter_aeroform`) turns up **no current automated publisher** for
-either R2 key — whatever's live there today was written by hand or by
-a since-removed pipeline. Do not read that as "dead, delete it" — it's
-the deliberate seam for finishing that automation later, not leftover
-cruft. If you're the one wiring that up: write straight to R2
-(`image-manifest.json` / `release-manifest.json`), matching the schema
-these routes already serve; the Worker needs no code change.
+The raw boot image is **not missing automation** — it already
+publishes automatically, just through §1's pipeline instead of this
+one: `nixos-image.yml`'s `candidate` job embeds the NixOS image's
+URL/sha256 as a `nixosImage` field inside the same
+`/v1/releases/<digest>.json` manifest it publishes for every build.
+Confirmed live in `pocketcoder-pro`'s
+`config_adapter.dart` (`nixosArtifact = release.nixos.delivery.artifact`,
+around line 140): the real app reads the boot image straight out of
+the resolved release object from §1, then hands it to a Linode
+StackScript (published once via `deploy/nixos/scripts/publish-stackscript.sh`)
+that pulls it directly onto a raw disk at provision time. No manual
+step, no gap, no second pipeline actually in use.
 
-**Known-stale, do not trust without checking first:**
+`/image-manifest`/`/release-manifest` are **leftovers of an older,
+already-replaced provisioning strategy** (streaming an image into a
+Linode *custom image* via `/upload-image` + a queue consumer, instead
+of today's boot-time StackScript pull) — see `b95978012`'s commit
+message. Safe to treat as dead; whatever content happens to still be
+sitting in those two R2 keys is stale and unread by anything real.
+
+**Also dead, same era, do not trust without checking first:**
 - `flutter_aeroform/scripts/trigger-image-upload.sh` and
-  `debug-image-upload.sh` POST to `/upload-image`, and
-  `flutter_aeroform/lib/domain/models/app_config.dart`'s
-  `kImageManifestPath` constant is declared but has zero call sites.
-  `/upload-image` and its queue consumer (R2 → Linode image streaming)
-  were disabled in `b95978012` ("now-non-default upload path") and the
-  route itself is gone from current `src/index.ts` — these scripts
-  predate that change and will fail if run as-is.
+  `debug-image-upload.sh` POST to `/upload-image`, which 404s —
+  the route and its queue consumer were disabled in `b95978012`
+  ("now-non-default upload path") and the route itself is gone from
+  current `src/index.ts`.
 - `flutter_aeroform/test/integration/golden_path_provision_test.dart`'s
   `_standardLinuxAppBootstrap()` cloud-init (around line 267) hardcodes
   `release_url=https://images.pocketcoder.org/release-manifest.json` —
-  this is this old pipeline, not the modern
-  `resolve-signed-release.sh`/channel-pointer scheme the *real* shipped
-  `standard_linux_bootstrap.sh` asset actually uses. That test fixture
-  has drifted from production and is worth reconciling, not treated as
-  a second confirmation that `/release-manifest` is load-bearing for
-  the standard-Linux path today.
+  same dead pipeline. The *real* shipped `standard_linux_bootstrap.sh`
+  asset uses `resolve-signed-release.sh` against §1 instead. This test
+  fixture has drifted from production and is worth reconciling.
 
 ## Updating everything
 
@@ -106,11 +113,8 @@ these routes already serve; the Worker needs no code change.
   latest successful `nixos-image.yml` run for the currently-checked-out
   commit and dispatches `release-promotion.yml`, which attests and
   publishes the channel pointer under §1's branch-qualified path.
-- **Publish a new raw boot image** (§2): no scripted path exists today
-  — write `image-manifest.json`/`release-manifest.json` straight to
-  the `pocketcoder-images` R2 bucket, matching the schema the routes
-  already serve (fetch the live `/image-manifest` response as a
-  template). This is the gap noted above, not a documented workflow.
+- There is no separate "publish the raw boot image" step — it's
+  already covered by the two steps above. §2's routes need nothing.
 
 ## Debugging checklist
 
