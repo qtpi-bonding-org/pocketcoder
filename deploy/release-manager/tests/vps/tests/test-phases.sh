@@ -42,6 +42,53 @@ check_rc "40-backup: STALE artifact fails" 1 "$?"
 ( . "$VPS_DIR/phases/40-backup.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier40"
 check "40-backup: is safe-mutating, not disruptive" "safe-mutating" "$(cat "$TEST_TMP/tier40")"
 
+# --- 45-nixos-version: real conditions pass, a simulated mismatch is
+# detected, and the box's own state file ends up restored to real
+# conditions afterward. The stub simulates metadata-status.json as a real
+# file so check-metadata's writes and the phase's own cat reads observe the
+# same sequence a real box would.
+nixos_stub_dir="$TEST_TMP/nixosbin"
+metadata_state="$TEST_TMP/metadata-status.json"
+echo '{}' > "$metadata_state"
+stub_bin "$nixos_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'cat /etc/nixos/nixos-version'*) echo '26.05' ;;
+  *'POCKETCODER_NIXOS_VERSION_FILE='*'check-metadata'*)
+    echo '{\"hostNixosVersion\":\"00.01\",\"availableNixosVersion\":\"26.05\"}' > '$metadata_state' ;;
+  *check-metadata*)
+    echo '{}' > '$metadata_state' ;;
+  *'cat /var/lib/pocketcoder/release/metadata-status.json'*)
+    cat '$metadata_state' ;;
+  *) echo '' ;;
+esac"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"
+  PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
+check_rc "45-nixos-version: happy path detects and restores a simulated mismatch" 0 "$?"
+
+check "45-nixos-version: metadata-status.json ends restored to real conditions" \
+  '{}' "$(cat "$metadata_state")"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier45"
+check "45-nixos-version: is safe-mutating, not disruptive" "safe-mutating" "$(cat "$TEST_TMP/tier45")"
+
+# --- 45-nixos-version: a broken detector (never reports a mismatch) must
+# fail the phase rather than pass silently ---
+echo '{}' > "$metadata_state"
+stub_bin "$nixos_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'cat /etc/nixos/nixos-version'*) echo '26.05' ;;
+  *check-metadata*) echo '{}' > '$metadata_state' ;;
+  *'cat /var/lib/pocketcoder/release/metadata-status.json'*) cat '$metadata_state' ;;
+  *) echo '' ;;
+esac"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"
+  PATH="$nixos_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
+check_rc "45-nixos-version: an undetected mismatch fails the phase" 1 "$?"
+
 # --- 20-topology: an unhealthy container must fail ---
 stub_bin "$phase_stub_dir" curl 'exit 0'
 stub_bin "$phase_stub_dir" openssl 'echo'
