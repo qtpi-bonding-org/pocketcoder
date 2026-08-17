@@ -2,28 +2,32 @@ phase_name=nixos-version
 phase_tier=safe-mutating
 
 # Runs check-metadata and asserts no mismatch fields are reported, i.e. the
-# box's host version and its channel's current release agree. Wrapped in
-# retry_until: this phase is the first readonly/safe-mutating-tier phase to
-# perform a live network Resolve() against the channel (the others work off
-# already-installed local state) -- found live: it can race 55-promote's own
-# concurrent promotion and briefly observe a stale, not-yet-revalidated
-# channel pointer still referencing the release *before* this feature
-# shipped (which correctly has no os field at all, DecodeForward leaves
-# NixosVersion as "", and ValidateManifest correctly rejects that empty
-# value). Confirmed live via `curl -sI .../channels/nightly-testing.json`:
-# `cache-control: public, max-age=300, must-revalidate` -- a given
-# Cloudflare edge PoP can keep serving a pointer it cached just before a
-# promotion for up to a full 5 minutes before revalidating against origin,
-# regardless of how quickly R2 itself became consistent (a first attempt at
-# this used a 90s window, confirmed too short live: the exact same
-# real-conditions check that failed for 90s straight passed cleanly when
-# re-run by hand several minutes later on the same box). The default here
-# is deliberately set past that 300s ceiling, not just past R2's own
-# eventual-consistency window described in workers/image-relay/README.md's
-# debugging checklist point 4.
+# box's host version and its channel's current release agree.
+#
+# The real, deterministic root cause of this phase's early failures (found
+# live, by comparing a manual bare-SSH shell's environment against
+# `systemctl show pocketcoder-release-metadata.service -p Environment`):
+# ChannelPath() (internal/release/resolver.go) branch-qualifies purely off
+# POCKETCODER_GITHUB_WORKFLOW_BRANCH -- unset/empty resolves the bare,
+# main-trust "nightly.json", NOT the branch-qualified "nightly-testing.json"
+# this suite actually promotes onto. A bare `ssh_exec "$binary
+# check-metadata"` (no env) always hit that bare channel, which still
+# pointed at a real pre-feature release with no `os` field at all --
+# "invalid NixOS compatibility version" was correct, deterministic
+# behavior, not a caching artifact. (An earlier version of this phase
+# theorized a Cloudflare edge-cache TTL race and widened a retry window
+# instead -- that diagnosis was built entirely on manual `curl` commands
+# that hardcoded the "nightly-testing.json" path directly, bypassing
+# ChannelPath() and this exact bug, so it never could have disproved it.)
+# 60-update.sh and 85-rollback.sh already establish the fix for their own
+# dispatch_ssh_command calls: export POCKETCODER_GITHUB_WORKFLOW_BRANCH=
+# ${VPS_RELEASE_BRANCH:-main} before invoking anything that resolves a
+# channel. This phase calls the release-manager binary directly rather
+# than through dispatch_ssh_command, so the same export is inlined into
+# every ssh_exec command line below instead.
 _nixos_version_check_real_conditions() {
   local binary=$1 metadata
-  ssh_exec 30 "$binary check-metadata" || {
+  ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; $binary check-metadata" || {
     echo "check-metadata attempt failed" >&2
     return 1
   }
@@ -47,9 +51,9 @@ phase_run() {
   # comment in cmd/pocketcoder-release/main.go) instead of assuming the file
   # exists.
   if ! ssh_exec 15 "test -f /etc/nixos/nixos-version"; then
-    retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-330}" \
-    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-15}" \
-    _nixos_version_check_real_conditions "$binary" || {
+    retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
+      "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
+      _nixos_version_check_real_conditions "$binary" || {
       echo "expected no mismatch fields with an unknown host version" >&2
       ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
       return 1
@@ -74,8 +78,8 @@ phase_run() {
   # (see its "must be kept in sync" comments) -- so the box's own version and
   # its current channel manifest's declared compatibility.os.nixosVersion
   # must agree right now. No mismatch fields should be reported.
-  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-330}" \
-    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-15}" \
+  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
+    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
     _nixos_version_check_real_conditions "$binary" || {
     echo "unexpected NixOS version mismatch under real conditions" >&2
     ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
@@ -92,10 +96,10 @@ phase_run() {
     echo "could not stage a fake NixOS version file" >&2
     return 1
   }
-  if ! ssh_exec 30 "POCKETCODER_NIXOS_VERSION_FILE=/tmp/pocketcoder-fake-nixos-version $binary check-metadata"; then
+  if ! ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; POCKETCODER_NIXOS_VERSION_FILE=/tmp/pocketcoder-fake-nixos-version $binary check-metadata"; then
     echo "check-metadata failed under a simulated mismatch" >&2
     ssh_exec 15 "rm -f /tmp/pocketcoder-fake-nixos-version" || true
-    ssh_exec 30 "$binary check-metadata" || true
+    ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; $binary check-metadata" || true
     return 1
   fi
   metadata=$(ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json")
@@ -105,7 +109,7 @@ phase_run() {
   available=$(jq -r '.availableNixosVersion // ""' <<<"$metadata")
   if [ "$host" != "00.01" ] || [ -z "$available" ] || [ "$available" = "00.01" ]; then
     echo "simulated NixOS version mismatch was not reported: $metadata" >&2
-    ssh_exec 30 "$binary check-metadata" || true
+    ssh_exec 30 "export POCKETCODER_GITHUB_WORKFLOW_BRANCH=${VPS_RELEASE_BRANCH:-main}; $binary check-metadata" || true
     return 1
   fi
 
@@ -113,8 +117,8 @@ phase_run() {
   # pocketcoder-release-metadata.timer also reads and refreshes -- leave it
   # reflecting genuine conditions again before this phase ends, the same
   # restore-before-returning discipline 95-bootstrap-recovery.sh uses.
-  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-330}" \
-    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-15}" \
+  retry_until "${VPS_NIXOS_VERSION_RETRY_DEADLINE:-90}" \
+    "${VPS_NIXOS_VERSION_RETRY_INTERVAL:-10}" \
     _nixos_version_check_real_conditions "$binary" || {
     echo "metadata-status.json did not return to real conditions after restore" >&2
     ssh_exec 15 "cat /var/lib/pocketcoder/release/metadata-status.json" >&2 || true
