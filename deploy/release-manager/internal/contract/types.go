@@ -63,12 +63,27 @@ type DeploymentCompatibility struct {
 	SupportedSourceContractVersions VersionRange `json:"supportedSourceContractVersions"`
 }
 
+// OSCompatibility records the NixOS release version (e.g. "26.05") this
+// release's NixOS image was built against. A box compares this against its
+// own currently-pinned version (readable from its own
+// /etc/nixos/configuration.nix) on every update poll; a mismatch is what
+// triggers the version-upgrade procedure instead of an ordinary app-level
+// update. Named "version" rather than "branch" deliberately -- "branch"
+// already means something different and unrelated elsewhere in this
+// codebase (POCKETCODER_GITHUB_WORKFLOW_BRANCH, release-branch.nix,
+// ChannelPath's own branch-qualification), and NixOS refers to its own
+// release lines as versions, not branches.
+type OSCompatibility struct {
+	NixosVersion string `json:"nixosVersion"`
+}
+
 type Compatibility struct {
 	App          AppCompatibility        `json:"app"`
 	Server       APICompatibility        `json:"server"`
 	Workers      map[string]int          `json:"workers"`
 	Provisioning ContractCompatibility   `json:"provisioning"`
 	Deployment   DeploymentCompatibility `json:"deployment"`
+	OS           OSCompatibility         `json:"os"`
 }
 
 type Platform struct {

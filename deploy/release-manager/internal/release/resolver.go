@@ -89,7 +89,7 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 	var pointer contract.ChannelPointer
-	if err := contract.DecodeStrict(pointerBytes, &pointer); err != nil {
+	if err := contract.DecodeForward(pointerBytes, &pointer); err != nil {
 		return Resolved{}, err
 	}
 	if err := contract.ValidatePointer(pointer, c.Channel, channelPath, c.ReleaseBase, maximumManifestBytes); err != nil {
@@ -129,7 +129,7 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 	var manifest contract.Manifest
-	if err := contract.DecodeStrict(manifestBytes, &manifest); err != nil {
+	if err := contract.DecodeForward(manifestBytes, &manifest); err != nil {
 		return Resolved{}, err
 	}
 	if err := contract.ValidateManifest(manifest); err != nil {
@@ -142,7 +142,7 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 	var revocations contract.Revocations
-	if err := contract.DecodeStrict(revocationBytes, &revocations); err != nil {
+	if err := contract.DecodeForward(revocationBytes, &revocations); err != nil {
 		return Resolved{}, err
 	}
 	if err := contract.ValidateRevocations(revocations); err != nil {

@@ -35,6 +35,9 @@
         "minimum": 1,
         "maximum": 1
       }
+    },
+    "os": {
+      "nixosVersion": "26.05"
     }
   },
   "documents": {
