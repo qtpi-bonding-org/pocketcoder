@@ -39,6 +39,7 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
     final terminalColors = context.terminalColors;
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
@@ -46,9 +47,10 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.5),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _expanded ? '▾' : '▸',
+                  '[ THOUGHTS ]',
                   style: TextStyle(
                     color: terminalColors.warning,
                     fontFamily: AppFonts.bodyFamily,

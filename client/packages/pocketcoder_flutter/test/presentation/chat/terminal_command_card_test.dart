@@ -76,4 +76,46 @@ void main() {
     expect(find.text('All tests passed!'), findsOneWidget);
     semantics.dispose();
   });
+
+  testWidgets('renders flush, with no bordered container', (tester) async {
+    await tester.pumpWidget(_wrap(const TerminalCommandCard(
+      command: 'ls -la',
+      status: TerminalStatus.success,
+      outputLabel: 'OUTPUT',
+      output: 'a\nb',
+    )));
+    await tester.pumpAndSettle();
+
+    expect(find.text(r'$ ls -la'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(TerminalCommandCard),
+        matching: find.byType(Container),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('expanded output flows inline without a nested scroll view',
+      (tester) async {
+    await tester.pumpWidget(_wrap(const TerminalCommandCard(
+      command: 'ls -la',
+      status: TerminalStatus.success,
+      outputLabel: 'OUTPUT',
+      output: 'a\nb\nc',
+    )));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('OUTPUT'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('a\nb\nc'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(TerminalCommandCard),
+        matching: find.byType(SingleChildScrollView),
+      ),
+      findsNothing,
+    );
+  });
 }

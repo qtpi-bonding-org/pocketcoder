@@ -32,6 +32,7 @@ class HarnessChoiceView extends StatelessWidget {
       title: context.l10n.onboardingChooseHarnessTitle,
       activePillar: NavPillar.configure,
       showBack: true,
+      showNavigation: false,
       body: _buildBody(context, supported),
     );
   }
@@ -119,7 +120,7 @@ class _HarnessChoiceCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward, color: colors.primary),
+            Text('[>]', style: TextStyle(color: colors.primary)),
           ],
         ),
       ),

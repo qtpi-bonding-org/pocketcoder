@@ -11,6 +11,8 @@ import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dar
 import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
+import 'package:pocketcoder_flutter/presentation/chat/thinking_block.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 
@@ -62,6 +64,8 @@ class ChatView extends StatefulWidget {
 
 class _ChatViewState extends State<ChatView> {
   final _inputController = TextEditingController();
+  final _inputFocusNode = FocusNode();
+  final _transcriptKey = GlobalKey<ag_ui_widgets.AgUiTranscriptState>();
   bool _opened = false;
   bool _sessionPanelExpanded = false;
 
@@ -108,6 +112,7 @@ class _ChatViewState extends State<ChatView> {
   @override
   void dispose() {
     _inputController.dispose();
+    _inputFocusNode.dispose();
     super.dispose();
   }
 
@@ -130,6 +135,7 @@ class _ChatViewState extends State<ChatView> {
   void _submit() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
+    _transcriptKey.currentState?.rearmFollow();
     widget.onSendPrompt(text);
     _inputController.clear();
   }
@@ -231,44 +237,45 @@ class _ChatViewState extends State<ChatView> {
             child: Column(
               children: [
                 if (outcomeBanner != null) outcomeBanner,
+                if (widget.isLoading &&
+                    _latestReasoningId(widget.conversation.timeline) == null)
+                  const Center(
+                    child: ThinkingBlock(
+                      text: 'Working through the request.',
+                      isLatest: true,
+                      isStreaming: true,
+                    ),
+                  ),
+                if (widget.conversation.timeline.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSizes.space),
+                    child: Center(
+                      child: PocoFace(fontSize: AppSizes.fontLarge),
+                    ),
+                  ),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      ag_ui_widgets.AgUiChat(
-                        conversation: widget.conversation,
-                        currentUserId: 'user',
-                        onSendMessage: widget.onSendPrompt,
-                        theme: ag_ui_widgets.ChatTheme.fromThemeData(
-                            Theme.of(context)),
-                        textMessageBuilder: builders.textMessageBuilder,
-                        textStreamMessageBuilder:
-                            builders.textStreamMessageBuilder,
-                        toolCallBuilder: builders.toolCallBuilder,
-                        permissionBuilder: builders.permissionBuilder,
-                        elicitationBuilder: builders.elicitationBuilder,
-                        toolRequestBuilder: builders.toolRequestBuilder,
-                        composerBuilder: (context) => ChatComposer(
-                          controller: _inputController,
-                          enabled: !widget.isLoading && widget.chatId != null,
-                          isLoading: widget.isLoading,
-                          onSubmitted: _submit,
-                        ),
-                      ),
-                      if (widget.conversation.timeline.isEmpty)
-                        IgnorePointer(
-                          child: Center(
-                            child: Text(
-                              context.l10n.chatSessionTitle,
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface
-                                    .withValues(alpha: 0.3),
-                                fontSize: AppSizes.fontStandard,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                  child: ag_ui_widgets.AgUiTranscript(
+                    key: _transcriptKey,
+                    conversation: widget.conversation,
+                    currentUserId: 'user',
+                    placement: ag_ui_widgets.ComposerPlacement.inline,
+                    onTapEmptySpace: _inputFocusNode.requestFocus,
+                    theme: ag_ui_widgets.ChatTheme.fromThemeData(
+                        Theme.of(context)),
+                    textMessageBuilder: builders.textMessageBuilder,
+                    textStreamMessageBuilder:
+                        builders.textStreamMessageBuilder,
+                    toolCallBuilder: builders.toolCallBuilder,
+                    permissionBuilder: builders.permissionBuilder,
+                    elicitationBuilder: builders.elicitationBuilder,
+                    toolRequestBuilder: builders.toolRequestBuilder,
+                    composerBuilder: (context) => ChatComposer(
+                      controller: _inputController,
+                      focusNode: _inputFocusNode,
+                      enabled: !widget.isLoading && widget.chatId != null,
+                      isLoading: widget.isLoading,
+                      onSubmitted: _submit,
+                    ),
                   ),
                 ),
               ],

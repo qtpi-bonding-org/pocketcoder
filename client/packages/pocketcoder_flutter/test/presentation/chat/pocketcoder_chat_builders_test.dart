@@ -17,6 +17,7 @@ import 'package:pocketcoder_flutter/presentation/chat/elicitation_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/typewriter_text.dart';
 
 void main() {
   Widget host(BuildContext context, StackedChatBuilders builders,
@@ -46,8 +47,7 @@ void main() {
         home: Scaffold(body: body),
       );
 
-  testWidgets('roleHeaderBuilder renders COMMANDER for the current user',
-      (tester) async {
+  testWidgets('renders a terminal prompt for the current user', (tester) async {
     late StackedChatBuilders builders;
     await tester.pumpWidget(wrap(
       Builder(builder: (context) {
@@ -72,8 +72,38 @@ void main() {
       }),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('COMMANDER'), findsOneWidget);
+    expect(find.text('root@device \$ '), findsOneWidget);
     expect(find.byType(TerminalConversationFrame), findsOneWidget);
+  });
+
+  testWidgets('assistant responses use a Poco terminal prefix', (tester) async {
+    late StackedChatBuilders builders;
+    await tester.pumpWidget(wrap(
+      Builder(builder: (context) {
+        builders = pocketcoderChatBuilders(
+          context,
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+        );
+        return host(
+          context,
+          builders,
+          const Conversation(timeline: [
+            TimelineItem.text(
+              id: 'assistant-1',
+              kind: ChatMessageKind.text,
+              role: 'assistant',
+              text: 'The deployment is healthy.',
+              order: OrderKey(1),
+            ),
+          ]),
+        );
+      }),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('[poco] '), findsOneWidget);
+    expect(find.byType(TypewriterText), findsOneWidget);
   });
 
   testWidgets('permissionCardBuilder renders pocketcoder\'s own PermissionCard',

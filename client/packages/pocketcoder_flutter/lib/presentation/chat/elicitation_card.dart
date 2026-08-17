@@ -99,10 +99,14 @@ class _ElicitationCardState extends State<ElicitationCard> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.assignment_outlined,
-                color: terminalColors.attention,
-                size: 20,
+              Text(
+                'FORM',
+                style: TextStyle(
+                  color: terminalColors.attention,
+                  fontSize: AppSizes.fontTiny,
+                  fontWeight: AppFonts.heavy,
+                  letterSpacing: 2,
+                ),
               ),
               HSpace.x2,
               Expanded(
@@ -164,18 +168,19 @@ class _ElicitationCardState extends State<ElicitationCard> {
             children: [
               Expanded(
                 child: TerminalButton(
-                  label: context.l10n.chatDecline,
+                  label: context.l10n.actionCancel,
                   isPrimary: false,
                   color: terminalColors.danger,
-                  onTap: () => _submit(context, ElicitationResponse.decline()),
+                  onTap: () => _submit(context, ElicitationResponse.cancel()),
                 ),
               ),
               HSpace.x2,
               Expanded(
                 child: TerminalButton(
-                  label: context.l10n.actionCancel,
+                  label: context.l10n.chatDecline,
                   isPrimary: false,
-                  onTap: () => _submit(context, ElicitationResponse.cancel()),
+                  color: terminalColors.danger,
+                  onTap: () => _submit(context, ElicitationResponse.decline()),
                 ),
               ),
               HSpace.x2,

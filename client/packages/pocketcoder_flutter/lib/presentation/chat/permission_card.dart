@@ -44,12 +44,16 @@ class PermissionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.security_outlined,
-                color: terminalColors.warning,
-                size: 20,
+              Text(
+                'SECURITY',
+                style: TextStyle(
+                  color: terminalColors.warning,
+                  fontSize: AppSizes.fontTiny,
+                  fontWeight: AppFonts.heavy,
+                  letterSpacing: 2,
+                ),
               ),
-              HSpace.x2,
+              HSpace.x1,
               Expanded(
                 child: Text(
                   context.l10n.permissionSignoffTitle,
@@ -103,57 +107,30 @@ class PermissionCard extends StatelessWidget {
           ],
           VSpace.x3,
           if (options.isEmpty)
-            Row(
-              children: [
-                Expanded(
-                  child: TerminalButton(
-                    label: context.l10n.actionDeny,
-                    isPrimary: false,
-                    color: terminalColors.danger,
-                    onTap: () => onSelect(requestId, cancelled: true),
-                  ),
-                ),
-                HSpace.x2,
-                Expanded(
-                  child: TerminalButton(
-                    label: context.l10n.actionAuthorize,
-                    onTap: () => onSelect(requestId, optionId: ''),
-                  ),
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: TerminalButton(
+                label: context.l10n.actionDeny,
+                isPrimary: false,
+                color: terminalColors.warning,
+                onTap: () => onSelect(requestId, cancelled: true),
+              ),
             )
           else
-            for (final option in options) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      option.label.toUpperCase(),
-                      style: TextStyle(
-                        color: terminalColors.attention,
-                        fontFamily: AppFonts.bodyFamily,
-                        fontSize: AppSizes.fontStandard,
-                      ),
-                    ),
-                  ),
+            Wrap(
+              spacing: AppSizes.space,
+              runSpacing: AppSizes.space,
+              children: [
+                for (final option in options)
                   TerminalButton(
-                    label: context.l10n.actionAuthorize,
+                    label: option.label,
                     onTap: () => onSelect(
                       requestId,
                       optionId: option.optionId,
                     ),
                   ),
-                ],
-              ),
-              VSpace.x1,
-            ],
-          VSpace.x1,
-          TerminalButton(
-            label: context.l10n.actionDeny,
-            isPrimary: false,
-            color: terminalColors.danger,
-            onTap: () => onSelect(requestId, cancelled: true),
-          ),
+              ],
+            ),
         ],
       ),
     );

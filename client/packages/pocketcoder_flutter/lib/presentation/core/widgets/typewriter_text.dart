@@ -11,7 +11,7 @@ class TypewriterText extends StatefulWidget {
     super.key,
     required this.text,
     this.style,
-    this.speed = const Duration(milliseconds: 30),
+    this.speed = const Duration(milliseconds: 10),
     this.onComplete,
   });
 
@@ -23,6 +23,7 @@ class _TypewriterTextState extends State<TypewriterText> {
   String _displayedText = '';
   Timer? _timer;
   int _currentIndex = 0;
+  int _elapsedMicros = 0;
 
   @override
   void initState() {
@@ -42,16 +43,30 @@ class _TypewriterTextState extends State<TypewriterText> {
     _timer?.cancel();
     _displayedText = '';
     _currentIndex = 0;
+    _elapsedMicros = 0;
 
-    _timer = Timer.periodic(widget.speed, (timer) {
+    // Flutter can only paint at frame rate. Scheduling a setState for every
+    // character (especially at 1 ms) overloads the UI thread and can feel
+    // slower than a larger delay. Sample at frame cadence and reveal all
+    // characters that should have appeared since the last frame instead.
+    _timer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       if (!mounted) return;
 
-      if (_currentIndex < widget.text.length) {
+      _elapsedMicros += const Duration(milliseconds: 16).inMicroseconds;
+      final speedMicros = widget.speed.inMicroseconds.clamp(1, 1 << 30);
+      final targetIndex = (_elapsedMicros / speedMicros)
+          .floor()
+          .clamp(0, widget.text.length)
+          .toInt();
+
+      if (_currentIndex < targetIndex) {
         setState(() {
-          _displayedText += widget.text[_currentIndex];
-          _currentIndex++;
+          _currentIndex = targetIndex;
+          _displayedText = widget.text.substring(0, _currentIndex);
         });
-      } else {
+      }
+
+      if (_currentIndex >= widget.text.length) {
         timer.cancel();
         widget.onComplete?.call();
       }
