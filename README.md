@@ -51,6 +51,24 @@ The deployment also removes a traditionally annoying setup step: the provisioned
 
 This is different from the common mobile-agent pattern where a user must already have a running desktop, CLI session, or VPS and then pair a phone to it. PocketCoder’s open/self-hosted path remains available through [`deploy.sh`](deploy.sh); mobile VPS provisioning is a separate proprietary convenience layer.
 
+### What is public and what is Pro
+
+This repository is the complete public Core/FOSS product. It includes the
+PocketCoder backend, Compose services, Pocket Memory, MCP gateway integration,
+release manager, NixOS and standard-Linux deployment scripts, Cloudflare Worker
+source, schemas, tests, and the FOSS Flutter client. A self-hoster can inspect,
+build, deploy, update, and operate that path from this repository.
+
+PocketCoder Pro is maintained in a separate private repository. Pro adds the
+commercial mobile shell and convenience services: hosted provider
+provisioning, billing, app-store distribution, and hosted push integrations.
+The Pro shell consumes this repository's public Flutter package and public
+deployment/release contracts; it does not replace or conceal the server code
+that runs on a user's machine. The proprietary onboarding screens and Pro
+service adapters are therefore not auditable from this repository by design.
+That boundary is intentional and should not be read as claiming that the
+one-tap commercial client is fully open-source.
+
 ## Architecture
 
 The agent core is three containers connected by open protocols:
@@ -286,7 +304,10 @@ through the existing-server onboarding flow.
 
 The FOSS target can be compiled independently for Android and is intended to
 remain suitable for F-Droid distribution. The separate private PocketCoder Pro
-repository consumes this workspace as a pinned Git submodule.
+repository consumes this workspace as a pinned Git dependency/submodule. The
+public checkout intentionally contains only `apps/pocketcoder_foss`; Pro's
+`apps/pocketcoder`, `packages/pocketcoder_pro`, and app-store integrations are
+not present here.
 
 Every script and template executed on a user's VPS is kept in this public
 repository. Managed clients may orchestrate those files, but the deployed
@@ -351,4 +372,9 @@ other third-party dependencies retain their own FOSS licenses and provenance.
 The client and backend here are free software and fully self-hostable. The
 separate PocketCoder Pro distribution adds managed one-tap VPS provisioning,
 commercial billing, app-store integrations, and hosted push convenience;
-self-hosters skip it entirely by running `deploy.sh` directly.
+self-hosters skip it entirely by running `deploy.sh` directly. The public
+deployment source and the exact release source commit used by a server remain
+inspectable even when that server was provisioned by Pro.
+
+For a provider-independent route to the same deployment state, see the
+[manual deployment guide](deploy/README.md).
