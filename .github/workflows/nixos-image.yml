@@ -30,7 +30,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: nixos-image-${{ github.event.inputs.operation || 'build_candidate' }}
+  # Includes the ref so a manual vps-test candidate build (see the
+  # `candidate` job below) can never share a group -- and therefore never
+  # cancel-in-progress -- with a real main/staging release build.
+  group: nixos-image-${{ github.event.inputs.operation || 'build_candidate' }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -192,9 +195,17 @@ jobs:
 
   # Assemble and publish the immutable candidate after both the NixOS image
   # and split Docker artifacts exist. This job cannot move public pointers.
+  #
+  # vps-test/* is a deliberate carve-out: it lets the VPS suite mint a real,
+  # attested candidate pinned to a NixOS version other than staging/main's
+  # current one (e.g. an older nixos-version.nix/flake.nix pair) so
+  # upgrade-os's live round trip has a real "release B" to upgrade from,
+  # without ever touching staging's or main's actual pointer. Nothing
+  # outside this job's own publish step treats a vps-test/* build as a
+  # promotable release -- promotion/channel movement is untouched.
   candidate:
     needs: [build, release-artifacts]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/vps-test/')
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
