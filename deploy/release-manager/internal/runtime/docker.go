@@ -17,6 +17,18 @@ type Docker struct {
 	Stderr      io.Writer
 }
 
+func (docker Docker) Stop(container string) error {
+	command := exec.Command("docker", "stop", container)
+	command.Stdout, command.Stderr = docker.Stdout, docker.Stderr
+	return command.Run()
+}
+
+func (docker Docker) Start(container string) error {
+	command := exec.Command("docker", "start", container)
+	command.Stdout, command.Stderr = docker.Stdout, docker.Stderr
+	return command.Run()
+}
+
 func (docker Docker) ImageExists(image string) bool {
 	return exec.Command("docker", "image", "inspect", image).Run() == nil
 }

@@ -57,6 +57,12 @@ func run(args []string) error {
 		cmd := exec.Command("docker", "exec", container, "/app/backup_db.sh")
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 		return cmd.Run()
+	case "restore-data":
+		container := envOr("POCKETCODER_POCKETBASE_CONTAINER", "pocketcoder-pocketbase")
+		return managercontract.RestoreData(managercontract.RestoreDataConfig{
+			DataDir: "/app/pb_data", BackupDir: "/app/pb_backups", Container: container,
+			Docker: runtime.Docker{Stdout: os.Stdout, Stderr: os.Stderr},
+		})
 	case "update-os":
 		cmd := exec.Command("nixos-rebuild", "switch", "--upgrade")
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
