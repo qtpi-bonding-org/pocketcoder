@@ -384,6 +384,7 @@ class L10nKeyResolver {
       'onboarding.connected' => _l10n.onboardingConnected,
       'onboarding.create.server' => _l10n.onboardingCreateServer,
       'onboarding.deploy' => _l10n.onboardingDeploy,
+      'onboarding.deploy.credentials.poco' => _l10n.onboardingDeployCredentialsPoco,
       'onboarding.deploy.title' => _l10n.onboardingDeployTitle,
       'onboarding.docker.intro.action.start' => _l10n.onboardingDockerIntroActionStart,
       'onboarding.docker.intro.chip.component' => _l10n.onboardingDockerIntroChipComponent,
@@ -1245,6 +1246,7 @@ class L10nKeyResolver {
     'onboarding.connected',
     'onboarding.create.server',
     'onboarding.deploy',
+    'onboarding.deploy.credentials.poco',
     'onboarding.deploy.title',
     'onboarding.docker.intro.action.start',
     'onboarding.docker.intro.chip.component',
@@ -2066,6 +2068,7 @@ class L10nKeyResolver {
     'onboardingConnected': 'onboarding.connected',
     'onboardingCreateServer': 'onboarding.create.server',
     'onboardingDeploy': 'onboarding.deploy',
+    'onboardingDeployCredentialsPoco': 'onboarding.deploy.credentials.poco',
     'onboardingDeployTitle': 'onboarding.deploy.title',
     'onboardingDockerIntroActionStart': 'onboarding.docker.intro.action.start',
     'onboardingDockerIntroChipComponent': 'onboarding.docker.intro.chip.component',
@@ -2884,6 +2887,7 @@ class L10nKeyResolver {
     'onboarding.connected': 'onboardingConnected',
     'onboarding.create.server': 'onboardingCreateServer',
     'onboarding.deploy': 'onboardingDeploy',
+    'onboarding.deploy.credentials.poco': 'onboardingDeployCredentialsPoco',
     'onboarding.deploy.title': 'onboardingDeployTitle',
     'onboarding.docker.intro.action.start': 'onboardingDockerIntroActionStart',
     'onboarding.docker.intro.chip.component': 'onboardingDockerIntroChipComponent',
@@ -3709,6 +3713,7 @@ abstract class L10nKeys {
   static const onboardingConnected = 'onboarding.connected';
   static const onboardingCreateServer = 'onboarding.create.server';
   static const onboardingDeploy = 'onboarding.deploy';
+  static const onboardingDeployCredentialsPoco = 'onboarding.deploy.credentials.poco';
   static const onboardingDeployTitle = 'onboarding.deploy.title';
   static const onboardingDockerIntroActionStart = 'onboarding.docker.intro.action.start';
   static const onboardingDockerIntroChipComponent = 'onboarding.docker.intro.chip.component';
