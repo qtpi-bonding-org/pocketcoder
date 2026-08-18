@@ -321,6 +321,49 @@ esac'
   PATH="$phase_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
 check_rc "90-nixos-update: absent config skips with 78 (F9)" 78 "$?"
 
+# --- 92-nixos-upgrade: stateful offline upgrade/rollback and fail-closed
+# channel failure. Direct release-manager commands are matched separately.
+upgrade_stub_dir="$TEST_TMP/upgradebin"
+upgrade_state="$TEST_TMP/upgrade-nixos-version"
+stub_bin "$upgrade_stub_dir" curl 'exit 0'
+stub_bin "$upgrade_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'cat /etc/nixos/nixos-version'*) cat '$upgrade_state' ;;
+  *'upgrade-os --channel pocketcoder-test-nonexistent-channel-00-01'*) exit 9 ;;
+  *'upgrade-os'*) [ \"\${STUB_UPGRADE_FAIL:-0}\" -eq 0 ] || exit 9; echo 25.11 > '$upgrade_state' ;;
+  *'rollback-os'*) [ \"\${STUB_ROLLBACK_FAIL:-0}\" -eq 0 ] || exit 9; echo 26.05 > '$upgrade_state' ;;
+  *) echo '' ;;
+esac"
+echo 26.05 > "$upgrade_state"
+(
+  . "$VPS_DIR/phases/92-nixos-upgrade.sh"
+  PATH="$upgrade_stub_dir:$PATH" VPS_RELEASE_B_DIGEST=abc123 \
+    VPS_RELEASE_B_NIXOS_VERSION=25.11 VPS_HEALTH_DEADLINE=0 phase_run >/dev/null 2>&1
+)
+check_rc "92-nixos-upgrade: upgrade, rollback, and forced failure pass" 0 "$?"
+( . "$VPS_DIR/phases/92-nixos-upgrade.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier92"
+check "92-nixos-upgrade: is disruptive" "disruptive" "$(cat "$TEST_TMP/tier92")"
+
+(
+  . "$VPS_DIR/phases/92-nixos-upgrade.sh"
+  PATH="$upgrade_stub_dir:$PATH" VPS_RELEASE_B_DIGEST=abc123 VPS_RELEASE_B_NIXOS_VERSION=25.11 \
+    STUB_UPGRADE_FAIL=1 phase_run >/dev/null 2>&1
+)
+check_rc "92-nixos-upgrade: upgrade failure fails the phase" 1 "$?"
+echo 26.05 > "$upgrade_state"
+(
+  . "$VPS_DIR/phases/92-nixos-upgrade.sh"
+  PATH="$upgrade_stub_dir:$PATH" VPS_RELEASE_B_DIGEST=abc123 VPS_RELEASE_B_NIXOS_VERSION=25.11 \
+    STUB_ROLLBACK_FAIL=1 phase_run >/dev/null 2>&1
+)
+check_rc "92-nixos-upgrade: rollback failure fails the phase" 1 "$?"
+(
+  unset VPS_RELEASE_B_DIGEST VPS_RELEASE_B_NIXOS_VERSION
+  . "$VPS_DIR/phases/92-nixos-upgrade.sh"; phase_precondition >/dev/null 2>&1
+)
+check_rc "92-nixos-upgrade: missing candidate release B skips" 1 "$?"
+
 . "$VPS_DIR/phases/70-post-update.sh"
 
 # The precondition must read ON-BOX state, so `--only post-update` against an
