@@ -28,6 +28,7 @@ class _FakeRunner implements IRootSshCommandRunner {
     required String host,
     required RootSshCommand command,
     Uint8List? stdin,
+    String? shellEnvPrefix,
   }) async {
     lastCommand = command;
     lastStdin = stdin;
