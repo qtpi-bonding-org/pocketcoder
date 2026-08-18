@@ -52,6 +52,10 @@ func run(args []string) error {
 		return restartPocketCoder(args[1:])
 	case "restart-os":
 		return exec.Command("systemctl", "reboot").Run()
+	case "update-os":
+		cmd := exec.Command("nixos-rebuild", "switch", "--upgrade")
+		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+		return cmd.Run()
 	default:
 		return usage()
 	}

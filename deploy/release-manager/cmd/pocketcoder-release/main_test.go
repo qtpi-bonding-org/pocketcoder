@@ -30,6 +30,26 @@ func TestRestartOsRunsSystemctlReboot(t *testing.T) {
 	}
 }
 
+func TestUpdateOsRunsNixosRebuildSwitchUpgrade(t *testing.T) {
+	stub := t.TempDir()
+	captured := filepath.Join(stub, "captured-args")
+	script := "#!/bin/sh\nprintf '%s' \"$*\" > " + captured + "\n"
+	if err := os.WriteFile(filepath.Join(stub, "nixos-rebuild"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", stub+":"+os.Getenv("PATH"))
+	if err := run([]string{"update-os"}); err != nil {
+		t.Fatalf("update-os: %v", err)
+	}
+	got, err := os.ReadFile(captured)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "switch --upgrade" {
+		t.Fatalf("nixos-rebuild args = %q, want %q", got, "switch --upgrade")
+	}
+}
+
 func TestSelectedChannel(t *testing.T) {
 	tests := []struct {
 		name, requested, current, want string
