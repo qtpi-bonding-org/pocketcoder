@@ -37,7 +37,7 @@ built_at=${POCKETCODER_BUILT_AT:-$(date -u '+%Y-%m-%dT%H:%M:%SZ')}
 # value computed by the module they build). Cross-check them here rather
 # than trusting either alone -- see the "must be kept in sync" comments in
 # both files.
-configuration_nixos_version=$(grep -oE 'nixosVersion = "[0-9]{2}\.[0-9]{2}"' deploy/nixos/configuration.nix | grep -oE '[0-9]{2}\.[0-9]{2}')
+configuration_nixos_version=$(sed -n 's/^"\(.*\)"$/\1/p' deploy/nixos/nixos-version.nix)
 flake_nixos_version=$(grep -oE 'nixpkgs\.url = "github:NixOS/nixpkgs/nixos-[0-9]{2}\.[0-9]{2}"' deploy/nixos/flake.nix | grep -oE '[0-9]{2}\.[0-9]{2}')
 if [ -z "$configuration_nixos_version" ] || [ -z "$flake_nixos_version" ]; then
   echo "could not extract a NixOS version from configuration.nix and/or flake.nix" >&2

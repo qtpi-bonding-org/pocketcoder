@@ -43,6 +43,7 @@ let
   releaseManagerModule = persisted "release-manager.nix" ./release-manager.nix;
   releaseCommitModule = persisted "release-commit.nix" ./release-commit.nix;
   releaseBranchModule = persisted "release-branch.nix" ./release-branch.nix;
+  nixosVersionModule = persisted "nixos-version.nix" ./nixos-version.nix;
   bootstrapScript = persisted "bootstrap.sh" ./bootstrap.sh;
   statusScript = persisted "status.sh" ./status.sh;
   caddyTemplate = persisted "Caddyfile.template"
@@ -54,16 +55,7 @@ let
   releaseBranch = import releaseBranchModule;
   releaseManager = import releaseManagerModule { inherit pkgs releaseManagerSrc; };
 
-  # The single source of truth for which NixOS release line this image
-  # pins. Used below to build the NIX_PATH nixpkgs entry a live
-  # `nixos-rebuild switch --upgrade` reads, and exposed as a plain
-  # /etc/nixos/nixos-version file so pocketcoder-release can read it without
-  # parsing Nix. flake.nix's `nixpkgs.url` input must be kept in sync with
-  # this value by hand -- flake inputs have to be static string literals,
-  # they can't reference a value computed by the module they're building --
-  # but deploy/ci/assemble-release-manifest.sh cross-checks the two at
-  # publish time and fails the build if they ever drift apart.
-  nixosVersion = "26.05";
+  nixosVersion = import nixosVersionModule;
 in
 {
   imports = [
@@ -89,6 +81,7 @@ in
   environment.etc."nixos/release-manager.nix".source = releaseManagerModule;
   environment.etc."nixos/release-commit.nix".source = releaseCommitModule;
   environment.etc."nixos/release-branch.nix".source = releaseBranchModule;
+  environment.etc."nixos/nixos-version.nix".source = nixosVersionModule;
   environment.etc."nixos/bootstrap.sh".source = bootstrapScript;
   environment.etc."nixos/status.sh".source = statusScript;
   environment.etc."nixos/Caddyfile.template".source = caddyTemplate;
