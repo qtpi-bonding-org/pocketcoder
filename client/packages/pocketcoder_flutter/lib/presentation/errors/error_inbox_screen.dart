@@ -27,49 +27,49 @@ class ErrorInboxScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
+      title: context.l10n.errorsTitle,
+      activePillar: NavPillar.configure,
+      showBack: true,
+      body: BiosFrame(
         title: context.l10n.errorsTitle,
-        activePillar: NavPillar.configure,
-        showBack: true,
-        body: BiosFrame(
-          title: context.l10n.errorsTitle,
-          child: Builder(builder: (context) {
-              if (errors.isEmpty) {
-                return Padding(
-                  padding: EdgeInsets.all(AppSizes.space * 2),
-                  child: TerminalText(
-                    context.l10n.errorsEmpty,
-                    size: TerminalTextSize.small,
-                  ),
-                );
-              }
-              return Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(AppSizes.space),
-                    child: Wrap(
-                      alignment: WrapAlignment.end,
-                      spacing: AppSizes.space,
-                      children: [
-                        TerminalButton(
-                          label: context.l10n.errorsCopyAll,
-                          isPrimary: true,
-                          onTap: onCopyAll,
-                        ),
-                        TerminalButton(
-                          label: context.l10n.errorsClearAll,
-                          isPrimary: false,
-                          onTap: onClearAll,
-                        ),
-                      ],
+        child: Builder(builder: (context) {
+          if (errors.isEmpty) {
+            return Padding(
+              padding: EdgeInsets.all(AppSizes.space * 2),
+              child: TerminalText(
+                context.l10n.errorsEmpty,
+                size: TerminalTextSize.small,
+              ),
+            );
+          }
+          return Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(AppSizes.space),
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: AppSizes.space,
+                  children: [
+                    TerminalButton(
+                      label: context.l10n.errorsCopyAll,
+                      isPrimary: true,
+                      onTap: onCopyAll,
                     ),
-                  ),
-                  for (final entry in errors)
-                    _ErrorTile(entry: entry, onCopy: onCopy, onDelete: onDelete),
-                ],
-              );
-            }),
-        ),
-      );
+                    TerminalButton(
+                      label: context.l10n.errorsClearAll,
+                      isPrimary: false,
+                      onTap: onClearAll,
+                    ),
+                  ],
+                ),
+              ),
+              for (final entry in errors)
+                _ErrorTile(entry: entry, onCopy: onCopy, onDelete: onDelete),
+            ],
+          );
+        }),
+      ),
+    );
   }
 }
 
@@ -102,8 +102,8 @@ class _ErrorTile extends StatelessWidget {
           '${context.l10n.errorsOccurred(entry.occurrenceCount)}',
           size: TerminalTextSize.mini,
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline),
+        trailing: TextButton(
+          child: const Text('DELETE'),
           onPressed: () => onDelete(entry.id),
         ),
         children: [

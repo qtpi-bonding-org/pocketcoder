@@ -90,10 +90,9 @@ class BiosListTile extends StatelessWidget {
                 ),
               ),
             ] else
-              Icon(
-                Icons.chevron_right,
-                size: 16,
-                color: textColor.withValues(alpha: 0.5),
+              Text(
+                '[>]',
+                style: TextStyle(color: textColor.withValues(alpha: 0.5)),
               ),
           ],
         ),

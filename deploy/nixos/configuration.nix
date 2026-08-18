@@ -43,21 +43,25 @@ let
   releaseManagerModule = persisted "release-manager.nix" ./release-manager.nix;
   releaseCommitModule = persisted "release-commit.nix" ./release-commit.nix;
   releaseBranchModule = persisted "release-branch.nix" ./release-branch.nix;
+  nixosVersionModule = persisted "nixos-version.nix" ./nixos-version.nix;
   bootstrapScript = persisted "bootstrap.sh" ./bootstrap.sh;
   statusScript = persisted "status.sh" ./status.sh;
   caddyTemplate = persisted "Caddyfile.template"
     ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
+  tlsStatusScript = persisted "tls-status.sh" ../scripts/tls-status.sh;
   releaseManagerSrc = persisted "release-manager-src" ../release-manager;
 
   sourceCommit = import releaseCommitModule;
   releaseBranch = import releaseBranchModule;
   releaseManager = import releaseManagerModule { inherit pkgs releaseManagerSrc; };
+
+  nixosVersion = import nixosVersionModule;
 in
 {
   imports = [
     # Linode uses KVM — virtio drivers, QEMU guest agent
     "${modulesPath}/profiles/qemu-guest.nix"
-    (import caddyModule { inherit config pkgs caddyTemplate; })
+    (import caddyModule { inherit config pkgs caddyTemplate tlsStatusScript; })
     (import bootstrapModule {
       inherit config pkgs sourceCommit releaseBranch releaseManager bootstrapScript statusScript;
     })
@@ -77,14 +81,17 @@ in
   environment.etc."nixos/release-manager.nix".source = releaseManagerModule;
   environment.etc."nixos/release-commit.nix".source = releaseCommitModule;
   environment.etc."nixos/release-branch.nix".source = releaseBranchModule;
+  environment.etc."nixos/nixos-version.nix".source = nixosVersionModule;
   environment.etc."nixos/bootstrap.sh".source = bootstrapScript;
   environment.etc."nixos/status.sh".source = statusScript;
   environment.etc."nixos/Caddyfile.template".source = caddyTemplate;
+  environment.etc."nixos/tls-status.sh".source = tlsStatusScript;
   environment.etc."nixos/release-manager-src".source = releaseManagerSrc;
+  environment.etc."nixos/nixos-version".text = nixosVersion;
 
   nix.nixPath = [
     "nixos-config=/etc/nixos/configuration.nix"
-    "nixpkgs=https://github.com/NixOS/nixpkgs/archive/nixos-26.05.tar.gz"
+    "nixpkgs=https://github.com/NixOS/nixpkgs/archive/nixos-${nixosVersion}.tar.gz"
   ];
 
   system.stateVersion = "25.05";
@@ -249,6 +256,17 @@ in
     curl
     jq
     htop
+    # ssh_root_command_runner.dart's exportCaddyCertificate/
+    # restoreCaddyCertificate commands shell out to `openssl x509`/`openssl
+    # pkey` directly over a bare root SSH session -- confirmed missing live:
+    # openssl is pulled into the store transitively (a build dependency of
+    # something else) but was never symlinked onto the system-wide PATH, so
+    # a real owner running the actual shipped TLS-recovery commands would
+    # have hit "openssl: command not found" in production. Caught by
+    # deploy/release-manager/tests/vps/phases/47-tls-cert-recovery.sh, the
+    # first thing to ever exercise that command live rather than just at
+    # the Dart-unit-test layer.
+    openssl
   ];
 
   # --- LISH serial console ---

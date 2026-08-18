@@ -68,7 +68,7 @@ class FileBrowserView extends StatelessWidget {
 
   Widget _entryRow(BuildContext context, FileBrowserState state, FileEntry entry) {
     return ListTile(
-      leading: Icon(entry.isDir ? Icons.folder : Icons.insert_drive_file),
+      leading: TerminalText(entry.isDir ? '[DIR]' : '[FILE]'),
       title: TerminalText(entry.name),
       onTap: () {
         if (entry.isDir) {

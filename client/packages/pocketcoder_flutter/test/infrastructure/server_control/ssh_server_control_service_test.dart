@@ -23,6 +23,7 @@ class _FakeRunner implements IRootSshCommandRunner {
     required String host,
     required RootSshCommand command,
     Uint8List? stdin,
+    String? shellEnvPrefix,
   }) async {
     calls.add((instanceId: instanceId, host: host, command: command));
     if (error case final error?) throw error;

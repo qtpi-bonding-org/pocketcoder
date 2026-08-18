@@ -9,6 +9,7 @@ class TerminalInput extends StatefulWidget {
   final bool enabled;
   final bool showSendButton;
   final String? sendTooltip;
+  final FocusNode? focusNode;
 
   const TerminalInput({
     super.key,
@@ -18,6 +19,7 @@ class TerminalInput extends StatefulWidget {
     this.enabled = true,
     this.showSendButton = false,
     this.sendTooltip,
+    this.focusNode,
   });
 
   @override
@@ -71,22 +73,28 @@ class _TerminalInputState extends State<TerminalInput> {
       ),
       child: Row(
         children: [
-          Text(
-            '${widget.prompt} ',
-            style: TextStyle(
-              color: widget.enabled
-                  ? terminalColors.attention
-                  : colors.onSurface.withValues(alpha: 0.3),
-              fontFamily: AppFonts.bodyFamily,
-              package: 'pocketcoder_flutter',
-              fontSize: AppSizes.fontStandard,
-              fontWeight: AppFonts.heavy,
+          Flexible(
+            fit: FlexFit.loose,
+            child: Text(
+              '${widget.prompt} ',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: widget.enabled
+                    ? terminalColors.attention
+                    : colors.onSurface.withValues(alpha: 0.3),
+                fontFamily: AppFonts.bodyFamily,
+                package: 'pocketcoder_flutter',
+                fontSize: AppSizes.fontStandard,
+                fontWeight: AppFonts.heavy,
+              ),
             ),
           ),
           Expanded(
             child: TextField(
               enabled: widget.enabled,
               controller: widget.controller,
+              focusNode: widget.focusNode,
               onSubmitted: (_) => widget.onSubmitted(),
               autofocus: true,
               style: TextStyle(
@@ -113,17 +121,15 @@ class _TerminalInputState extends State<TerminalInput> {
             ),
           ),
           if (widget.showSendButton)
-            IconButton(
+            TextButton(
               onPressed: widget.enabled ? widget.onSubmitted : null,
-              tooltip: widget.sendTooltip ?? context.l10n.chatSendTooltip,
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: BoxConstraints(
-                minWidth: AppSizes.buttonHeight,
-                minHeight: AppSizes.buttonHeight,
+              style: TextButton.styleFrom(
+                minimumSize: Size.zero,
+                padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              icon: Text(
-                '>',
+              child: Text(
+                'SEND',
                 style: TextStyle(
                   color: widget.enabled
                       ? terminalColors.attention

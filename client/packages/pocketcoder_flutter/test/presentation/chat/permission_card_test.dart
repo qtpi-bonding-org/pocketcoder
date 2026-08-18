@@ -157,7 +157,7 @@ void main() {
         expect(find.text('run shell'), findsOneWidget);
         expect(find.text('ALLOW ONCE'), findsOneWidget);
 
-        await tester.tap(find.text('AUTHORIZE').last);
+        await tester.tap(find.text('ALLOW ONCE').last);
         await _settle(tester);
 
         expect(repo.respondPermissionCalls, hasLength(1));
@@ -183,13 +183,7 @@ void main() {
             item: PermissionRequestTimelineItem(
               requestId: 'req-2',
               order: const OrderKey(1),
-              options: [
-                PermissionOption(
-                  optionId: 'allow-once',
-                  label: 'Allow',
-                  kind: 'allow',
-                ),
-              ],
+              options: const [],
             ),
           ),
         ),

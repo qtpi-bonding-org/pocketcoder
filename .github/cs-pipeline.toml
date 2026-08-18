@@ -9,7 +9,7 @@ model = "deepseek/deepseek-v4-flash"
 
 [syndication]
 tone = "shipping-update"
-hashtags = ["#BuildInPublic", "#Shipaton", "#selfhosted"]
+hashtags = ["#Shipaton", "#BuildInPublic", "#selfhosted", "#FOSS"]
 max_posts = 1
 max_characters = 280
 

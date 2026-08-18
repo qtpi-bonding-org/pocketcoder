@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
@@ -59,6 +60,10 @@ class _DeployCredentialsViewState extends State<DeployCredentialsView> {
               padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
               child: Column(
                 children: [
+                  PocoBubble(
+                    message: context.l10n.onboardingDeployCredentialsPoco,
+                  ),
+                  VSpace.x3,
                   TerminalTextField(
                     controller: _emailController,
                     label: context.l10n.onboardingPocketbaseAdminEmail,

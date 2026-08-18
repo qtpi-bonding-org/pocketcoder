@@ -17,6 +17,25 @@ fi
 source /etc/pocketcoder/status.sh
 trap 'pc_status_error "$PC_CURRENT_PHASE" "step failed at line ${BASH_LINENO[0]}"' ERR
 pc_status_init
+# pc_retry <attempts> <sleep_seconds> -- <command...>
+# Runs <command...> up to <attempts> times, sleeping <sleep_seconds> between
+# failures. Prints the same "Attempt N: ... retrying in Ss" shape on every
+# failure. Returns the last exit code.
+pc_retry() {
+  local attempts=$1 sleep_seconds=$2 attempt rc
+  shift 2
+  [ "$1" = "--" ] && shift
+  for attempt in $(seq 1 "$attempts"); do
+    set +e
+    "$@"
+    rc=$?
+    set -e
+    [ "$rc" -eq 0 ] && return 0
+    echo "Attempt $attempt: $* failed (exit $rc); retrying in ${sleep_seconds}s" >&2
+    [ "$attempt" -eq "$attempts" ] || sleep "$sleep_seconds"
+  done
+  return "$rc"
+}
 umask 077
 install -d -m 0755 "$RELEASES_DIR" "$RELEASE_STATE/manifests"
 install -d -m 0700 "$ARTIFACT_DIR" /var/lib/pocketcoder/config
@@ -35,21 +54,23 @@ elif [ -f "$RUNTIME_ENV" ]; then
   chmod 600 "$RUNTIME_ENV"
 else
   USER_DATA=""
-  for attempt in 1 2 3 4 5; do
-    TOKEN=$(curl -sf --max-time 5 -X PUT \
+  _pc_fetch_metadata() {
+    local metadata_token
+    metadata_token=$(curl -sf --max-time 5 -X PUT \
       -H 'Metadata-Token-Expiry-Seconds: 300' \
       http://169.254.169.254/v1/token || true)
-    if [ -n "$TOKEN" ]; then
-      USER_DATA=$(curl -sf --max-time 10 \
-        -H "Metadata-Token: $TOKEN" \
-        http://169.254.169.254/v1/user-data || true)
-    fi
-    [ -n "$USER_DATA" ] && break
-    echo "Attempt $attempt: metadata unavailable; retrying in 5s"
-    sleep 5
-  done
+
+    [ -n "$metadata_token" ] || return 1
+    USER_DATA=$(curl -sf --max-time 10 \
+      -H "Metadata-Token: $metadata_token" \
+      http://169.254.169.254/v1/user-data || true)
+
+    [ -n "$USER_DATA" ]
+  }
+  pc_retry 5 5 -- _pc_fetch_metadata || true
   if [ -z "$USER_DATA" ]; then
     echo "No owner configuration was delivered; refusing an unreachable deployment" >&2
+    pc_status_error configuring_operating_system owner_config_undelivered
     exit 1
   fi
   install -m 600 /dev/null "$RUNTIME_ENV"
@@ -59,6 +80,7 @@ fi
 ROOT_SSH_KEY=$(sed -n 's/^root_ssh_key=//p' "$RUNTIME_ENV")
 if [ -z "$ROOT_SSH_KEY" ] && [ ! -s /root/.ssh/authorized_keys ]; then
   echo "No root SSH key was delivered; refusing an unreachable deployment" >&2
+  pc_status_error configuring_operating_system ssh_key_undelivered
   exit 1
 fi
 install -d -m 700 /root/.ssh
@@ -113,8 +135,7 @@ export POCKETCODER_INITIALIZED_MARKER="$MARKER"
 # single failed attempt would otherwise never be retried. Retry a few times
 # before giving up for real.
 install_ok=0
-for attempt in 1 2 3; do
-  set +e
+_pc_install_release() {
   RELEASE_BASE="$RELEASE_BASE" \
   POCKETCODER_RELEASE_CHANNEL="$RELEASE_CHANNEL" \
   POCKETCODER_RELEASE_DIGEST="$EXPECTED_DIGEST" \
@@ -124,15 +145,8 @@ for attempt in 1 2 3; do
   POCKETCODER_STATUS_FILE="$PC_STATUS_FILE" \
   POCKETCODER_STATUS_RUN_ID="$PC_RUN_ID" \
     pocketcoder-release install
-  rc=$?
-  set -e
-  if [ "$rc" -eq 0 ]; then
-    install_ok=1
-    break
-  fi
-  echo "Attempt $attempt: pocketcoder-release install failed (exit $rc); retrying in 5s" >&2
-  sleep 5
-done
+}
+pc_retry 3 5 -- _pc_install_release && install_ok=1
 pc_status_heartbeat_stop
 if [ "$install_ok" != 1 ]; then
   pc_status_error fetching_release release_install_failed

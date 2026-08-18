@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:meta/meta.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_command_runner.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_credentials_provider.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
@@ -14,57 +15,34 @@ const _updatePocketCoderCommand =
     'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
 
 const _restartPocketCoderCommand =
-    'if [ -f /opt/pocketcoder/current/docker-compose.prebuilt.yml ]; '
-    'then if docker compose version >/dev/null 2>&1; '
-    'then docker compose --project-name pocketcoder '
-    '--env-file /var/lib/pocketcoder/config/runtime.env '
-    '-f /opt/pocketcoder/current/docker-compose.prebuilt.yml restart; '
-    'else docker-compose --project-name pocketcoder '
-    '--env-file /var/lib/pocketcoder/config/runtime.env '
-    '-f /opt/pocketcoder/current/docker-compose.prebuilt.yml restart; fi; '
-    'else echo "PocketCoder Compose release was not found" >&2; exit 1; fi';
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release restart-pocketcoder; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
 
-const _restartNixOsCommand = 'systemctl reboot';
-const _updateNixOsCommand = 'nixos-rebuild switch --upgrade';
+const _restartNixOsCommand =
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release restart-os; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
+const _updateNixOsCommand =
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release update-os; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
 const _saveBackupCommand =
-    'docker exec pocketcoder-pocketbase /app/backup_db.sh';
-const _exportCaddyCertificateCommand = r'''set -eu
-domain=$(sed -n 's/^BASE_DOMAIN=//p' /etc/pocketcoder/domain.env)
-for root in /var/lib/caddy/.local/share/caddy/certificates /var/lib/caddy/.config/caddy/certificates /var/lib/caddy/.local/share/caddy /var/lib/caddy/.config/caddy; do
-  cert=$(find "$root" -type f -path "*/$domain/$domain.crt" -print -quit 2>/dev/null || true)
-  key=${cert%.crt}.key
-  if [ -n "$cert" ] && [ -r "$key" ] && openssl x509 -in "$cert" -checkend 0 -noout >/dev/null 2>&1; then
-    issuer=$(basename "$(dirname "$(dirname "$cert")")")
-    jq -n --arg hostname "$domain" --arg issuer "$issuer" --arg cert "$(base64 -w0 "$cert" 2>/dev/null || base64 < "$cert" | tr -d '\n')" --arg key "$(base64 -w0 "$key" 2>/dev/null || base64 < "$key" | tr -d '\n')" '{hostname:$hostname,issuer:$issuer,certificatePemBase64:$cert,privateKeyPemBase64:$key}'
-    exit 0
-  fi
-done
-exit 1''';
-const _restoreCaddyCertificateCommand = r'''set -eu
-tmp=$(mktemp)
-key_tmp=$(mktemp)
-trap 'rm -f "$tmp" "$tmp.crt" "$key_tmp"' EXIT
-cat > "$tmp"
-domain=$(jq -r '.hostname // empty' "$tmp")
-cert=$(jq -r '.certificatePemBase64 // empty' "$tmp" | base64 -d)
-key=$(jq -r '.privateKeyPemBase64 // empty' "$tmp" | base64 -d)
-test -n "$domain" -a -n "$cert" -a -n "$key"
-case "$domain" in *[!A-Za-z0-9.-]*|'') exit 1 ;; esac
-printf '%s' "$cert" > "$tmp.crt"
-printf '%s' "$key" > "$key_tmp"
-openssl x509 -in "$tmp.crt" -checkend 0 -noout
-cert_pub=$(openssl x509 -in "$tmp.crt" -pubkey -noout | openssl pkey -pubin -outform DER | sha256sum)
-key_pub=$(openssl pkey -in "$key_tmp" -pubout -outform DER | sha256sum)
-test "$cert_pub" = "$key_pub"
-issuer=$(jq -r '.issuer // "acme-v02.api.letsencrypt.org-directory"' "$tmp")
-case "$issuer" in *[!A-Za-z0-9._-]*|'') exit 1 ;; esac
-cert_dir=/var/lib/caddy/.local/share/caddy/certificates/$issuer/$domain
-install -d -m 0700 "$cert_dir"
-cp "$tmp.crt" "$cert_dir/$domain.crt"
-cp "$key_tmp" "$cert_dir/$domain.key"
-chmod 0600 "$cert_dir/$domain.key"
-systemctl restart caddy
-''';
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release backup-data; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
+const _exportCaddyCertificateCommand =
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release export-cert; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
+const _restoreCaddyCertificateCommand =
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release import-cert; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
+const _rollbackCommand =
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release rollback; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
 
 /// Root SSH transport shared by the small set of owner recovery operations.
 ///
@@ -87,6 +65,7 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
     required String host,
     required RootSshCommand command,
     Uint8List? stdin,
+    String? shellEnvPrefix,
   }) async {
     if (host.isEmpty) {
       throw const RootSshException('No known server host to connect to.');
@@ -101,7 +80,7 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
       );
     }
 
-    final expectedFingerprint = _parseFingerprint(
+    final expectedFingerprint = parseFingerprint(
       credentials.hostKeyFingerprint,
     );
     if (credentials.hostKeyType.isEmpty || expectedFingerprint == null) {
@@ -136,7 +115,12 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
 
     try {
       await client.authenticated;
-      final session = await client.execute(_shellCommand(command));
+      final shellCommand = _shellCommand(command);
+      final session = await client.execute(
+        shellEnvPrefix != null && shellEnvPrefix.isNotEmpty
+            ? '$shellEnvPrefix$shellCommand'
+            : shellCommand,
+      );
       if (stdin != null) {
         await Stream<Uint8List>.value(stdin).pipe(session.stdin);
       }
@@ -169,21 +153,25 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
     RootSshCommand.saveBackup => _saveBackupCommand,
     RootSshCommand.exportCaddyCertificate => _exportCaddyCertificateCommand,
     RootSshCommand.restoreCaddyCertificate => _restoreCaddyCertificateCommand,
+    RootSshCommand.rollback => _rollbackCommand,
   };
 
-  static Uint8List? _parseFingerprint(String value) {
-    final normalized = value.startsWith('MD5:') ? value.substring(4) : value;
-    final components = normalized.split(':');
-    if (components.length != 16) return null;
-    final bytes = Uint8List(components.length);
-    for (var index = 0; index < components.length; index += 1) {
-      final component = components[index];
-      if (component.length != 2) return null;
-      final byte = int.tryParse(component, radix: 16);
-      if (byte == null) return null;
-      bytes[index] = byte;
+  // dartssh2's onVerifyHostKey passes the SHA256 fingerprint as the literal
+  // UTF-8 bytes of "SHA256:<base64>" (see SSHHostkeyVerifyHandler's doc
+  // comment and _hostkeyFingerprint in its own ssh_transport.dart) -- not
+  // a decoded MD5 digest. Confirmed live: comparing against a decoded MD5
+  // digest meant this could never match, so every host-key verification
+  // silently failed and dartssh2 closed the connection before ever
+  // attempting authentication. Not private (but not part of the public
+  // API contract either) so a test can assert this produces exactly what
+  // dartssh2 itself compares against -- that's the one guarantee that
+  // actually matters here, and this bug shipped once already without it.
+  @visibleForTesting
+  static Uint8List? parseFingerprint(String value) {
+    if (!value.startsWith('SHA256:') || value.length <= 'SHA256:'.length) {
+      return null;
     }
-    return bytes;
+    return Uint8List.fromList(utf8.encode(value));
   }
 
   static bool _constantTimeEquals(Uint8List actual, Uint8List expected) {

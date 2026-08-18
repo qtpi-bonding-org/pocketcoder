@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -14,11 +15,14 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/artifact"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/contract"
 	managercontract "github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/manager"
+	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/osctl"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/progress"
 	releasecontract "github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/release"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/runtime"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/snapshot"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/state"
+	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/tlscert"
+	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/transaction"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/trust"
 )
 
@@ -47,6 +51,52 @@ func run(args []string) error {
 		return update(args[0], args[1:])
 	case "rollback":
 		return rollback(args[1:])
+	case "restart-pocketcoder":
+		return restartPocketCoder(args[1:])
+	case "restart-os":
+		return osctl.NixOSController{}.Restart()
+	case "backup-data":
+		container := envOr("POCKETCODER_POCKETBASE_CONTAINER", "pocketcoder-pocketbase")
+		cmd := exec.Command("docker", "exec", container, "/app/backup_db.sh")
+		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+		return cmd.Run()
+	case "restore-data":
+		container := envOr("POCKETCODER_POCKETBASE_CONTAINER", "pocketcoder-pocketbase")
+		// pb_data/pb_backups are named Docker volumes, not host bind mounts --
+		// "/app/pb_data"/"/app/pb_backups" are only valid paths inside the
+		// container's own mount namespace, not on the host where this binary
+		// runs. Resolve the real host-side mountpoints the same way
+		// snapshot.Manager already does for the update/rollback path.
+		dataDir, err := snapshot.VolumeMountpoint(envOr("POCKETCODER_DATA_VOLUME", "pocketcoder_pb_data"))
+		if err != nil {
+			return err
+		}
+		backupDir, err := snapshot.VolumeMountpoint(envOr("POCKETCODER_BACKUP_VOLUME", "pocketcoder_pb_backups"))
+		if err != nil {
+			return err
+		}
+		return managercontract.RestoreData(managercontract.RestoreDataConfig{
+			DataDir: dataDir, BackupDir: backupDir, Container: container,
+			Docker: runtime.Docker{Stdout: os.Stdout, Stderr: os.Stderr},
+		})
+	case "export-cert":
+		bundle, err := tlscert.ExportBundle()
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(bundle)
+	case "import-cert":
+		var bundle tlscert.Bundle
+		if err := json.NewDecoder(os.Stdin).Decode(&bundle); err != nil {
+			return fmt.Errorf("decode certificate bundle: %w", err)
+		}
+		return tlscert.ImportBundle(bundle)
+	case "update-os":
+		return osctl.NixOSController{}.Update()
+	case "upgrade-os":
+		return upgradeOs(args[1:])
+	case "rollback-os":
+		return osctl.NixOSController{}.RestorePrevious()
 	default:
 		return usage()
 	}
@@ -234,7 +284,10 @@ func rollback(args []string) error {
 			return err
 		}
 	}
-	resolved := releasecontract.Resolved{ManifestSHA256: previous.ReleaseDigest, ManifestURL: previous.ManifestURL, ChannelSequence: previous.ChannelSequence, RevocationSequence: previous.RevocationSequence, Manifest: manifest, Revocations: revocations}
+	resolved, err := resolvedFromPrevious(paths, previous, manifest, revocations)
+	if err != nil {
+		return err
+	}
 	updateManager := newUpdateManager(options, paths, current, resolved, manifestBytes, nil)
 	if err := updateManager.Transaction().UpdateLocked(updateManager.Previous(), updateManager.Candidate()); err != nil {
 		return err
@@ -244,6 +297,59 @@ func rollback(args []string) error {
 	}
 	fmt.Printf("PocketCoder rollback complete: %s\n", previous.ReleaseDigest)
 	return nil
+}
+
+func restartPocketCoder(args []string) error {
+	flags := flag.NewFlagSet("restart-pocketcoder", flag.ContinueOnError)
+	currentLink := flags.String("current-link", envOr("POCKETCODER_CURRENT_LINK", "/opt/pocketcoder/current"), "active release symlink")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	compose := filepath.Join(*currentLink, "docker-compose.prebuilt.yml")
+	if _, err := os.Stat(compose); err != nil {
+		return fmt.Errorf("PocketCoder Compose release was not found: %w", err)
+	}
+	docker := runtime.Docker{ProjectName: envOr("POCKETCODER_COMPOSE_PROJECT", "pocketcoder"), Stdout: os.Stdout, Stderr: os.Stderr}
+	return docker.ComposeRestart(compose, envOr("POCKETCODER_RUNTIME_ENV", "/var/lib/pocketcoder/config/runtime.env"))
+}
+
+func upgradeOs(args []string) error {
+	flags := flag.NewFlagSet("upgrade-os", flag.ContinueOnError)
+	releaseBase := flags.String("release-base", envOr("RELEASE_BASE", "https://images.relay.pocketcoder.org"), "release service base URL")
+	channel := flags.String("channel", envOr("POCKETCODER_RELEASE_CHANNEL", "stable"), "release channel")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	stateRoot := envOr("POCKETCODER_RELEASE_STATE_DIR", "/var/lib/pocketcoder/release")
+	paths := state.NewPaths(stateRoot, envOr("POCKETCODER_RELEASES_DIR", "/opt/pocketcoder/releases"), envOr("POCKETCODER_ARTIFACT_DIR", "/var/lib/pocketcoder/artifacts"), envOr("POCKETCODER_CURRENT_LINK", "/opt/pocketcoder/current"))
+	lock, err := state.AcquireLock(paths.Lock)
+	if err != nil {
+		return err
+	}
+	defer lock.Close()
+	resolved, err := (releasecontract.Resolver{Config: releasecontract.Config{
+		ReleaseBase: *releaseBase, Channel: *channel, State: paths,
+		Fetcher: artifact.Fetcher{}, Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")},
+	}}).Resolve()
+	if err != nil {
+		return fmt.Errorf("resolve target release: %w", err)
+	}
+	target := resolved.Manifest.Compatibility.OS.NixosVersion
+	if target == "" {
+		return fmt.Errorf("resolved manifest has no compatibility.os.nixosVersion")
+	}
+	controller := osctl.NixOSController{}
+	current, err := controller.CurrentVersion()
+	if err != nil {
+		return fmt.Errorf("read current NixOS version: %w", err)
+	}
+	if current == target {
+		fmt.Println("already on the target NixOS version")
+		return nil
+	}
+	ops := osctl.TransactionOperations{Controller: controller}
+	manager := transaction.Manager{JournalPath: filepath.Join(stateRoot, "os-transaction.json"), LockPath: paths.Lock, Operations: ops}
+	return manager.UpdateLocked(ops.Candidate(current), ops.Candidate(target))
 }
 
 func newUpdateManager(options mutationOptions, paths state.Paths, current releasecontract.Current, resolved releasecontract.Resolved, manifestBytes []byte, progressSink progress.Sink) *managercontract.Update {
@@ -257,6 +363,28 @@ func resolveLocked(options mutationOptions, paths state.Paths, allowRevoked bool
 	}
 	manifestBytes, err := os.ReadFile(resolved.ManifestPath)
 	return resolved, manifestBytes, err
+}
+
+// resolvedFromPrevious builds the Resolved value rollback activates,
+// loading the attestation bundle Resolve() persisted for this digest when
+// the release was originally installed. Rollback must not require a
+// network round-trip, so this proves prior verification from local state
+// rather than re-fetching it.
+func resolvedFromPrevious(paths state.Paths, previous releasecontract.Current, manifest contract.Manifest, revocations contract.Revocations) (releasecontract.Resolved, error) {
+	bundle, err := releasecontract.LoadBundle(paths.Root, previous.ReleaseDigest)
+	if err != nil {
+		return releasecontract.Resolved{}, err
+	}
+	return releasecontract.Resolved{
+		ManifestSHA256:     previous.ReleaseDigest,
+		ManifestURL:        previous.ManifestURL,
+		ChannelSequence:    previous.ChannelSequence,
+		RevocationSequence: previous.RevocationSequence,
+		Manifest:           manifest,
+		Revocations:        revocations,
+		ReleaseBundle:      bundle,
+		Verifier:           trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")},
+	}, nil
 }
 
 func loadCurrent(path string) (releasecontract.Current, bool, error) {
@@ -344,7 +472,8 @@ func checkMetadata(args []string) error {
 			return fmt.Errorf("measure PocketBase data volume: %w", err)
 		}
 	}
-	metadata, err := releasecontract.BuildMetadataStatus(current, resolved, snapshotBytes, *reserveBytes, time.Now())
+	hostNixosVersion := readHostNixosVersion()
+	metadata, err := releasecontract.BuildMetadataStatus(current, resolved, snapshotBytes, *reserveBytes, hostNixosVersion, time.Now())
 	if err != nil {
 		return err
 	}
@@ -381,6 +510,21 @@ func status(args []string) error {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(result)
+}
+
+// readHostNixosVersion reads the box's own currently-pinned NixOS version,
+// written at build/rebuild time to /etc/nixos/nixos-version (see
+// deploy/nixos/configuration.nix). Missing/unreadable is not an error here
+// -- older already-provisioned images built before this file existed won't
+// have it, and status reporting should degrade to "unknown" rather than
+// fail the whole status check over a file that's allowed to be absent.
+func readHostNixosVersion() string {
+	path := envOr("POCKETCODER_NIXOS_VERSION_FILE", "/etc/nixos/nixos-version")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
 }
 
 func envOr(name, fallback string) string {

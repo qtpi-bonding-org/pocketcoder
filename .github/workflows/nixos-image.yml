@@ -30,13 +30,16 @@ permissions:
   contents: read
 
 concurrency:
-  group: nixos-image-${{ github.event.inputs.operation || 'build_candidate' }}
+  # Includes the ref so a manual vps-test candidate build (see the
+  # `candidate` job below) can never share a group -- and therefore never
+  # cancel-in-progress -- with a real main/staging release build.
+  group: nixos-image-${{ github.event.inputs.operation || 'build_candidate' }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     if: github.event_name == 'push' || inputs.operation == 'build_candidate'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -63,8 +66,22 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: NixOS ordering check
-        run: nix build ./deploy/nixos#checks.x86_64-linux.ordering -L
+      - name: status.sh bats tests
+        # deploy/nixos/tests/status-json.bats already exercises
+        # pc_status_init (every fresh box's very first status write) and
+        # would have caught the "jq: error: Could not open file {}"
+        # first-boot crash this session found live -- it just was never
+        # wired into any CI job. Runs on plain bash + jq, no docker/compose
+        # services needed, so it's cheap to run directly here rather than
+        # through the docker-compose bats setup the acceptance suites use.
+        run: nix run nixpkgs#bats -- deploy/nixos/tests/status-json.bats
+
+      - name: NixOS flake checks
+        # Runs every check.${system} declared in flake.nix together (today:
+        # ordering, caddyfile-validate, systemd-units), so a new check added
+        # later is picked up automatically instead of needing this workflow
+        # edited to name it explicitly.
+        run: nix flake check ./deploy/nixos --system x86_64-linux -L
 
       - name: Build Linode image
         working-directory: deploy/nixos
@@ -130,7 +147,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     steps:
       - name: Download artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -148,7 +165,7 @@ jobs:
   # NixOS image so every candidate manifest names one complete release.
   release-artifacts:
     if: github.event_name == 'push' || inputs.operation == 'build_candidate'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -157,6 +174,7 @@ jobs:
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version-file: deploy/release-manager/go.mod
+          cache-dependency-path: deploy/release-manager/go.sum
 
       - name: Test native OS release manager
         working-directory: deploy/release-manager
@@ -178,10 +196,18 @@ jobs:
 
   # Assemble and publish the immutable candidate after both the NixOS image
   # and split Docker artifacts exist. This job cannot move public pointers.
+  #
+  # vps-test/* is a deliberate carve-out: it lets the VPS suite mint a real,
+  # attested candidate pinned to a NixOS version other than staging/main's
+  # current one (e.g. an older nixos-version.nix/flake.nix pair) so
+  # upgrade-os's live round trip has a real "release B" to upgrade from,
+  # without ever touching staging's or main's actual pointer. Nothing
+  # outside this job's own publish step treats a vps-test/* build as a
+  # promotable release -- promotion/channel movement is untouched.
   candidate:
     needs: [build, release-artifacts]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/vps-test/')
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -194,6 +220,7 @@ jobs:
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version-file: deploy/release-manager/go.mod
+          cache-dependency-path: deploy/release-manager/go.sum
 
       - name: Download NixOS metadata
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4

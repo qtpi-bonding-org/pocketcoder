@@ -114,7 +114,7 @@ class McpManagementView extends StatelessWidget {
             ...Map<String, dynamic>.from(server.configSchema as Map).keys.map(
                   (key) => Padding(
                     padding: EdgeInsets.only(left: AppSizes.space),
-                    child: TerminalText.mini('• $key', alpha: .6),
+                    child: TerminalText.mini('- $key', alpha: .6),
                   ),
                 ),
           ],
@@ -170,10 +170,13 @@ class McpManagementView extends StatelessWidget {
                                 : onConnectOAuth(server))),
                     if (!server.status.isPending) ...[
                       HSpace.x2,
-                      TerminalButton(
+                      Expanded(
+                        child: TerminalButton(
                           label: context.l10n.mcpRevoke,
                           onTap: () => onDeny(server.id),
-                          color: context.colorScheme.error)
+                          color: context.colorScheme.error,
+                        ),
+                      )
                     ],
                   ]),
               ]);
@@ -191,10 +194,13 @@ class McpManagementView extends StatelessWidget {
                 isPrimary: !edit,
                 onTap: () => _configDialog(context, server))),
         HSpace.x2,
-        TerminalButton(
+        Expanded(
+          child: TerminalButton(
             label: pendingLabel(context, server),
             onTap: () => onDeny(server.id),
-            color: context.colorScheme.error),
+            color: context.colorScheme.error,
+          ),
+        ),
       ]);
 
   String pendingLabel(BuildContext context, McpServer server) =>

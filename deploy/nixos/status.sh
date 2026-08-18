@@ -16,9 +16,17 @@ _pc_status_write() {
   mkdir -p "$PC_STATUS_DIR"
   exec 9>>"$PC_STATUS_LOCK"
   flock 9
+  # $existing must always be JSON *content*, never a file path -- jq's CLI
+  # treats a trailing positional argument as a file to open, so passing the
+  # literal string "{}" (the correct fallback on a fresh box, which is
+  # every box's very first pc_status_init call) made jq try to open a file
+  # literally named "{}" and fail immediately. Confirmed live: this broke
+  # bootstrap.sh's first-ever status write on every single fresh boot.
+  # Feeding content through a herestring instead of a positional filename
+  # sidesteps the ambiguity entirely.
   existing='{}'
   if [ -s "$PC_STATUS_FILE" ] && jq -e . "$PC_STATUS_FILE" >/dev/null 2>&1; then
-    existing="$PC_STATUS_FILE"
+    existing=$(cat "$PC_STATUS_FILE")
   fi
   tmp=$(mktemp -p "$PC_STATUS_DIR" .status.XXXXXX)
   jq \
@@ -38,7 +46,7 @@ _pc_status_write() {
         then null
         else {type:$sshHostKeyType,fingerprint:$sshHostKeyFingerprint}
         end),
-      error:(if $error == "" then null else $error end)})' "$existing" > "$tmp"
+      error:(if $error == "" then null else $error end)})' <<<"$existing" > "$tmp"
   chmod 0644 "$tmp"
   mv -f "$tmp" "$PC_STATUS_FILE"
   flock -u 9
@@ -50,8 +58,18 @@ pc_status_capture_ssh_host_key() {
   if [ ! -r "$public_key" ] || ! command -v ssh-keygen >/dev/null 2>&1; then
     return
   fi
-  fingerprint=$(ssh-keygen -E md5 -lf "$public_key" 2>/dev/null | awk '{print $2}')
-  case "$fingerprint" in MD5:*:*:*:*:*:*:*:*:*:*:*:*:*:*:*:*) ;;
+  # dartssh2's onVerifyHostKey callback (the only consumer of this field,
+  # via SshRootCommandRunner) is documented to pass "OpenSSH-style SHA256
+  # fingerprint... UTF-8 encoded as SHA256:<base64>" -- confirmed live:
+  # publishing an MD5 fingerprint here meant the comparison could never
+  # succeed, so onVerifyHostKey always returned false and dartssh2 closed
+  # every connection before ever attempting authentication (visible
+  # server-side as sshd's srclimit_penalise "connections without
+  # attempting authentication"). Every root SSH command -- restart,
+  # update, backup, cert export/restore, rollback -- was silently unusable
+  # since this was written.
+  fingerprint=$(ssh-keygen -E sha256 -lf "$public_key" 2>/dev/null | awk '{print $2}')
+  case "$fingerprint" in SHA256:?*) ;;
     *) return ;;
   esac
   export POCKETCODER_SSH_HOST_KEY_TYPE=ssh-ed25519

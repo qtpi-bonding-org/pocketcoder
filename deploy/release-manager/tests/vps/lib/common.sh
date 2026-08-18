@@ -57,6 +57,48 @@ vps_connect() {
   VPS_KNOWN_HOSTS=$3
 }
 
+# dispatch_ssh_command <name> [shell_env_prefix]
+# (stdin is inherited from the caller's stdin)
+# Runs a reviewed RootSshCommand through the shared Dart CLI.
+dispatch_ssh_command() {
+  local name=$1 shell_env_prefix=${2:-} flutter_bin dart_bin repo_root fingerprint_line fingerprint
+  flutter_bin=$(resolve_flutter_bin) || return 1
+  # `flutter dart run ...` isn't a real subcommand on every Flutter
+  # release -- confirmed live: "Could not find a command named 'dart'" on
+  # 3.47.0-0.4.pre (beta). The Dart SDK bundled with any Flutter install
+  # ships a sibling `dart` executable in the same bin/ directory; invoke
+  # that directly instead of going through flutter's own CLI dispatch.
+  dart_bin="$(dirname "$flutter_bin")/dart"
+  repo_root=$(CDPATH= cd -- "$vps_dir/../../../.." && pwd)
+  # dartssh2's onVerifyHostKey expects a SHA256 fingerprint (the literal
+  # "SHA256:<base64>" string), not MD5 -- confirmed live: an MD5
+  # fingerprint here made every dispatched command fail to connect,
+  # closed before ever attempting authentication.
+  fingerprint_line=$(ssh-keygen -E sha256 -lf "$VPS_KNOWN_HOSTS" 2>/dev/null | head -1)
+  fingerprint=$(printf '%s' "$fingerprint_line" | grep -o 'SHA256:[A-Za-z0-9+/]*')
+
+  if [ -z "$fingerprint" ]; then
+    echo "could not derive a host key fingerprint from $VPS_KNOWN_HOSTS" >&2
+    return 1
+  fi
+  (
+    cd "$repo_root/client/packages/pocketcoder_flutter" || exit 1
+    "$flutter_bin" pub get >/dev/null 2>&1 || exit 1
+    if [ -n "$shell_env_prefix" ]; then
+      "$dart_bin" run bin/root_ssh_command.dart \
+        --command "$name" --host "$VPS_HOST" --key "$VPS_KEY_PATH" \
+        --host-key-type "ssh-ed25519" \
+        --host-key-fingerprint "$fingerprint" \
+        --shell-env-prefix "$shell_env_prefix"
+    else
+      "$dart_bin" run bin/root_ssh_command.dart \
+        --command "$name" --host "$VPS_HOST" --key "$VPS_KEY_PATH" \
+        --host-key-type "ssh-ed25519" \
+        --host-key-fingerprint "$fingerprint"
+    fi
+  )
+}
+
 # pin_host_key — trust on first use. The Aeroform handoff carries no host
 # key, so capture it once and pin it for the rest of the run. Host keys live
 # on the persistent root disk and survive reboot, so this holds across the
@@ -84,20 +126,44 @@ _ssh_options() {
 # ssh_exec <timeout_seconds> <remote_script>
 # The remote script is passed as one argument with no added wrapper, so
 # nested single-quoted snippets port over unchanged.
+#
+# Retries only a connection-level failure (rc=255 with a recognized
+# "never even reached the remote command" stderr pattern) a few times
+# with a short backoff -- confirmed live: a freshly-provisioned box's
+# public IP draws internet-wide SSH scanner traffic within minutes, which
+# contends with OpenSSH's own per-source connection penalties
+# (srclimit_penalise) and legitimate reconnection attempts alike, causing
+# transient "Connection refused"/"Connection reset by peer" failures that
+# have nothing to do with the box's actual state. Never retries a
+# same-rc-255 auth failure or (any other rc) a real remote command
+# failure -- only this specific, narrowly-matched connectivity class.
 ssh_exec() {
   local timeout_seconds=$1 script=$2
-  local stderr_file rc options
-  stderr_file=$(mktemp "${TMPDIR:-/tmp}/pocketcoder-ssh-err.XXXXXX")
+  local stderr_file rc options attempt
   options=$(_ssh_options)
-  # shellcheck disable=SC2086
-  with_timeout "$timeout_seconds" ssh $options "root@$VPS_HOST" "$script" \
-    2>"$stderr_file"
-  rc=$?
-  if grep -q 'REMOTE HOST IDENTIFICATION HAS CHANGED' "$stderr_file"; then
-    echo "host key changed for $VPS_HOST — refusing to continue" >&2
-    rm -f "$stderr_file"
-    return 3
-  fi
+  for attempt in 1 2 3 4; do
+    stderr_file=$(mktemp "${TMPDIR:-/tmp}/pocketcoder-ssh-err.XXXXXX")
+    # shellcheck disable=SC2086
+    with_timeout "$timeout_seconds" ssh $options "root@$VPS_HOST" "$script" \
+      2>"$stderr_file"
+    rc=$?
+    if grep -q 'REMOTE HOST IDENTIFICATION HAS CHANGED' "$stderr_file"; then
+      echo "host key changed for $VPS_HOST — refusing to continue" >&2
+      rm -f "$stderr_file"
+      return 3
+    fi
+    if [ "$rc" -eq 255 ] && grep -Eq \
+        'Connection refused|Connection reset by peer|kex_exchange_identification' \
+        "$stderr_file"; then
+      if [ "$attempt" -lt 4 ]; then
+        echo "ssh_exec: transient connection failure (attempt $attempt), retrying in 5s" >&2
+        rm -f "$stderr_file"
+        sleep 5
+        continue
+      fi
+    fi
+    break
+  done
   cat "$stderr_file" >&2
   rm -f "$stderr_file"
   return "$rc"
@@ -205,4 +271,52 @@ tls_expiry_days() {
     end_epoch=$(date -d "$end_date" +%s 2>/dev/null) || return 1
   fi
   echo $(( (end_epoch - $(date +%s)) / 86400 ))
+}
+
+# start_memory_sampler <run_dir>
+start_memory_sampler() {
+  local run_dir=$1 repo_root
+  repo_root=$(CDPATH= cd -- "$vps_dir/../../../.." && pwd)
+  # /usr/local/sbin doesn't exist on this NixOS image (confirmed live:
+  # scp fails with "No such file or directory") -- NixOS's filesystem
+  # layout has no FHS /usr/local by default. /root always exists;
+  # /var/lib/pocketcoder is already relied on by this same function for
+  # the phase/stop-file paths below, so it's already guaranteed present.
+  local remote_script=/root/pocketcoder-live-memory
+  scp -q -i "$VPS_KEY_PATH" -o UserKnownHostsFile="$run_dir/known_hosts" \
+    "$repo_root/deploy/release-manager/tests/sample-live-memory.sh" \
+    "root@$VPS_HOST:$remote_script" || return 1
+  ssh_exec 15 "chmod 0555 $remote_script; \
+    rm -f /var/lib/pocketcoder/live-memory.stop; \
+    nohup $remote_script /var/lib/pocketcoder/live-memory.tsv \
+      /var/lib/pocketcoder/live-test-phase \
+      /var/lib/pocketcoder/live-memory.stop 5 \
+      >/var/lib/pocketcoder/live-memory.log 2>&1 &" || return 1
+}
+
+# collect_memory_sampler <run_dir>
+collect_memory_sampler() {
+  local run_dir=$1
+  ssh_exec 15 "touch /var/lib/pocketcoder/live-memory.stop; sleep 3" || return 0
+  scp -q -i "$VPS_KEY_PATH" -o UserKnownHostsFile="$run_dir/known_hosts" \
+    "root@$VPS_HOST:/var/lib/pocketcoder/live-memory.tsv" \
+    "$run_dir/memory.tsv" || return 0
+  python3 - "$run_dir/memory.tsv" "$run_dir/memory-summary.json" <<'PYEOF'
+import sys, csv, json
+maxima = {}
+with open(sys.argv[1]) as f:
+    reader = csv.reader(f, delimiter='\t')
+    next(reader, None)
+    for row in reader:
+        if len(row) != 5:
+            continue
+        key = f"{row[1]}/{row[2]}/{row[3]}"
+        try:
+            b = int(row[4])
+        except ValueError:
+            continue
+        maxima[key] = max(maxima.get(key, 0), b)
+with open(sys.argv[2], "w") as f:
+    json.dump({"schemaVersion": 1, "maximumBytesByPhaseAndComponent": maxima}, f, indent=2)
+PYEOF
 }

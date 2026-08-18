@@ -123,10 +123,12 @@ class SkillsView extends StatelessWidget {
                   ),
                 ),
                 HSpace.x2,
-                TerminalButton(
-                  label: context.l10n.skillsDeleteButton,
-                  color: context.colorScheme.error,
-                  onTap: () => onDelete(skill.id),
+                Expanded(
+                  child: TerminalButton(
+                    label: context.l10n.skillsDeleteButton,
+                    color: context.colorScheme.error,
+                    onTap: () => onDelete(skill.id),
+                  ),
                 ),
               ],
             ),

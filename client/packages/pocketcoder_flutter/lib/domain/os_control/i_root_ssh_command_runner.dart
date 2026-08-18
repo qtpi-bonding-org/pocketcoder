@@ -10,5 +10,10 @@ abstract interface class IRootSshCommandRunner {
     required String host,
     required RootSshCommand command,
     Uint8List? stdin,
+    /// Narrow escape hatch for branch selection on updatePocketCoder, whose
+    /// reviewed command text does not set the required remote environment
+    /// variable. This is not a general shell-injection API: callers still
+    /// cannot supply arbitrary commands, only an environment-variable prefix.
+    String? shellEnvPrefix,
   });
 }

@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
@@ -34,8 +33,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text(r'$ '), findsOneWidget);
-    expect(find.text('>'), findsOneWidget);
+    expect(find.text('root@device \$ '), findsOneWidget);
+    expect(find.text('SEND'), findsOneWidget);
     final field = tester.widget<TextField>(find.byType(TextField));
     field.onSubmitted?.call('hello');
     expect(submitted, isTrue);
@@ -59,10 +58,18 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.byType(TerminalStatusGlyph), findsOneWidget);
     expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
     expect(
-        tester.widget<IconButton>(find.byType(IconButton)).onPressed, isNull);
+      tester
+          .widget<TextButton>(
+            find.ancestor(
+              of: find.text('SEND'),
+              matching: find.byType(TextButton),
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
     controller.dispose();
   });
 

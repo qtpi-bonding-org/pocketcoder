@@ -89,7 +89,7 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 	var pointer contract.ChannelPointer
-	if err := contract.DecodeStrict(pointerBytes, &pointer); err != nil {
+	if err := contract.DecodeForward(pointerBytes, &pointer); err != nil {
 		return Resolved{}, err
 	}
 	if err := contract.ValidatePointer(pointer, c.Channel, channelPath, c.ReleaseBase, maximumManifestBytes); err != nil {
@@ -129,7 +129,7 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 	var manifest contract.Manifest
-	if err := contract.DecodeStrict(manifestBytes, &manifest); err != nil {
+	if err := contract.DecodeForward(manifestBytes, &manifest); err != nil {
 		return Resolved{}, err
 	}
 	if err := contract.ValidateManifest(manifest); err != nil {
@@ -142,7 +142,7 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 	var revocations contract.Revocations
-	if err := contract.DecodeStrict(revocationBytes, &revocations); err != nil {
+	if err := contract.DecodeForward(revocationBytes, &revocations); err != nil {
 		return Resolved{}, err
 	}
 	if err := contract.ValidateRevocations(revocations); err != nil {
@@ -172,6 +172,9 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 	if err := state.WriteAtomic(manifestPath, manifestBytes, 0o644); err != nil {
 		return Resolved{}, err
 	}
+	if err := state.WriteAtomic(BundlePath(c.State.Root, pointer.Manifest.SHA256), releaseBundle, 0o644); err != nil {
+		return Resolved{}, err
+	}
 	if err := state.WriteAtomic(filepath.Join(c.State.Root, "resolved", "revocations.json"), revocationBytes, 0o644); err != nil {
 		return Resolved{}, err
 	}
@@ -181,6 +184,19 @@ func (resolver Resolver) Resolve() (Resolved, error) {
 		return Resolved{}, err
 	}
 	return Resolved{SchemaVersion: contract.SchemaVersion, Channel: c.Channel, ChannelSequence: pointer.Sequence, RevocationSequence: revocations.Sequence, ManifestSHA256: pointer.Manifest.SHA256, ManifestPath: manifestPath, ManifestURL: pointer.Manifest.URL, Revoked: revoked, Manifest: manifest, Revocations: revocations, ReleaseBundle: releaseBundle, Verifier: c.Verifier}, nil
+}
+
+// BundlePath returns where a resolved release's attestation bundle is
+// persisted, keyed by manifest digest so an offline rollback can find and
+// re-verify the exact bundle that verified this release when it was first
+// installed, without a network round-trip.
+func BundlePath(root, digest string) string {
+	return filepath.Join(root, "manifests", digest+".attestation")
+}
+
+// LoadBundle reads back a bundle previously persisted by Resolve().
+func LoadBundle(root, digest string) ([]byte, error) {
+	return os.ReadFile(BundlePath(root, digest))
 }
 
 func ReadCurrent(path string) (map[string]any, error) {

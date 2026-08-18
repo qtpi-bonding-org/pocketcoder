@@ -88,6 +88,9 @@ func CleanupRetainedReleases(paths state.Paths, runtime CleanupRuntime) error {
 		if err := state.RemoveDurable(manifestPath); err != nil {
 			return err
 		}
+		if err := state.RemoveDurable(BundlePath(paths.Root, digest)); err != nil {
+			return err
+		}
 	}
 	return nil
 }

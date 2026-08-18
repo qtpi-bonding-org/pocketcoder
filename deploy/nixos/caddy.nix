@@ -1,4 +1,4 @@
-{ config, pkgs, caddyTemplate ? ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template, ... }:
+{ config, pkgs, caddyTemplate ? ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template, tlsStatusScript ? ../scripts/tls-status.sh, ... }:
 
 {
 
@@ -65,7 +65,7 @@
   };
   # POCO:END caddy-address
 
-  environment.etc."pocketcoder/tls-status.sh".source = ../../deploy/scripts/tls-status.sh;
+  environment.etc."pocketcoder/tls-status.sh".source = tlsStatusScript;
 
   systemd.services.pocketcoder-tls-status = {
     description = "Publish Caddy certificate state to PocketCoder status";

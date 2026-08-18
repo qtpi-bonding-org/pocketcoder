@@ -13,6 +13,7 @@ var (
 	digestPattern        = regexp.MustCompile(`^[0-9a-f]{64}$`)
 	commitPattern        = regexp.MustCompile(`^[0-9a-f]{40}$`)
 	registryImagePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9./_-]*(?::[A-Za-z0-9._-]+)?@sha256:[0-9a-f]{64}$`)
+	nixosVersionPattern  = regexp.MustCompile(`^[0-9]{2}\.[0-9]{2}$`)
 )
 
 func ValidateManifest(manifest Manifest) error {
@@ -33,6 +34,9 @@ func ValidateManifest(manifest Manifest) error {
 	}
 	if manifest.Compatibility.App.ContractVersion < 1 || manifest.Compatibility.Server.APIVersion < 1 || manifest.Compatibility.Provisioning.ContractVersion < 1 || manifest.Compatibility.Deployment.ContractVersion < 1 {
 		return fmt.Errorf("invalid compatibility versions")
+	}
+	if !nixosVersionPattern.MatchString(manifest.Compatibility.OS.NixosVersion) {
+		return fmt.Errorf("invalid NixOS compatibility version")
 	}
 	for _, worker := range []string{"image-relay", "push-relay", "oauth-relay"} {
 		if manifest.Compatibility.Workers[worker] < 1 {

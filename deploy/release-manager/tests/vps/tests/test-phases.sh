@@ -1,7 +1,19 @@
 . "$VPS_DIR/lib/common.sh"
-. "$VPS_DIR/lib/commands.sh"
 
 phase_stub_dir="$TEST_TMP/phasebin"
+
+# Keep phase tests offline: replace the production Dart dispatcher with a
+# transport stub while preserving each command's expected SSH payload.
+dispatch_ssh_command() {
+  case $1 in
+    saveBackup) ssh_exec 300 'docker exec pocketcoder-pocketbase /app/backup_db.sh' ;;
+    restartPocketCoder) ssh_exec 300 'docker compose restart' ;;
+    updatePocketCoder) ssh_exec 3600 'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; then /opt/pocketcoder/current/bin/pocketcoder-release update; else exit 1; fi' ;;
+    restartNixOs) ssh_exec 30 'systemctl reboot' ;;
+    updateNixOs) ssh_exec 1800 'nixos-rebuild switch --upgrade' ;;
+    *) return 1 ;;
+  esac
+}
 vps_connect 203.0.113.10 "$TEST_TMP/key" "$TEST_TMP/known_hosts"
 : > "$TEST_TMP/key"
 VPS_HOSTNAME=vps.example.test
@@ -29,6 +41,214 @@ check_rc "40-backup: STALE artifact fails" 1 "$?"
 
 ( . "$VPS_DIR/phases/40-backup.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier40"
 check "40-backup: is safe-mutating, not disruptive" "safe-mutating" "$(cat "$TEST_TMP/tier40")"
+
+# --- 45-nixos-version: real conditions pass, a simulated mismatch is
+# detected, and the box's own state file ends up restored to real
+# conditions afterward. The stub simulates metadata-status.json as a real
+# file so check-metadata's writes and the phase's own cat reads observe the
+# same sequence a real box would.
+nixos_stub_dir="$TEST_TMP/nixosbin"
+metadata_state="$TEST_TMP/metadata-status.json"
+echo '{}' > "$metadata_state"
+stub_bin "$nixos_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'test -f /etc/nixos/nixos-version'*) exit 0 ;;
+  *'cat /etc/nixos/nixos-version'*) echo '26.05' ;;
+  *'POCKETCODER_NIXOS_VERSION_FILE='*'check-metadata'*)
+    echo '{\"hostNixosVersion\":\"00.01\",\"availableNixosVersion\":\"26.05\"}' > '$metadata_state' ;;
+  *check-metadata*)
+    echo '{}' > '$metadata_state' ;;
+  *'cat /var/lib/pocketcoder/release/metadata-status.json'*)
+    cat '$metadata_state' ;;
+  *) echo '' ;;
+esac"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"
+  PATH="$nixos_stub_dir:$PATH" VPS_NIXOS_VERSION_RETRY_DEADLINE=0 VPS_NIXOS_VERSION_RETRY_INTERVAL=0 phase_run >/dev/null 2>&1 )
+check_rc "45-nixos-version: happy path detects and restores a simulated mismatch" 0 "$?"
+
+check "45-nixos-version: metadata-status.json ends restored to real conditions" \
+  '{}' "$(cat "$metadata_state")"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier45"
+check "45-nixos-version: is safe-mutating, not disruptive" "safe-mutating" "$(cat "$TEST_TMP/tier45")"
+
+# --- 45-nixos-version: a broken detector (never reports a mismatch) must
+# fail the phase rather than pass silently ---
+echo '{}' > "$metadata_state"
+stub_bin "$nixos_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'test -f /etc/nixos/nixos-version'*) exit 0 ;;
+  *'cat /etc/nixos/nixos-version'*) echo '26.05' ;;
+  *check-metadata*) echo '{}' > '$metadata_state' ;;
+  *'cat /var/lib/pocketcoder/release/metadata-status.json'*) cat '$metadata_state' ;;
+  *) echo '' ;;
+esac"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"
+  PATH="$nixos_stub_dir:$PATH" VPS_NIXOS_VERSION_RETRY_DEADLINE=0 VPS_NIXOS_VERSION_RETRY_INTERVAL=0 phase_run >/dev/null 2>&1 )
+check_rc "45-nixos-version: an undetected mismatch fails the phase" 1 "$?"
+
+# --- 45-nixos-version: a pre-feature box (no /etc/nixos/nixos-version at
+# all -- release A is whatever the channel already had promoted before this
+# suite run, which may predate this feature entirely) must pass by verifying
+# graceful degradation, not fail just because the file is absent ---
+echo '{}' > "$metadata_state"
+stub_bin "$nixos_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'test -f /etc/nixos/nixos-version'*) exit 1 ;;
+  *check-metadata*) echo '{}' > '$metadata_state' ;;
+  *'cat /var/lib/pocketcoder/release/metadata-status.json'*) cat '$metadata_state' ;;
+  *) echo '' ;;
+esac"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"
+  PATH="$nixos_stub_dir:$PATH" VPS_NIXOS_VERSION_RETRY_DEADLINE=0 VPS_NIXOS_VERSION_RETRY_INTERVAL=0 phase_run >/dev/null 2>&1 )
+check_rc "45-nixos-version: a missing version file degrades gracefully" 0 "$?"
+
+# --- 45-nixos-version: a missing version file that STILL reports mismatch
+# fields (a broken degrade path) must fail ---
+echo '{"hostNixosVersion":"","availableNixosVersion":"26.05"}' > "$metadata_state"
+stub_bin "$nixos_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'test -f /etc/nixos/nixos-version'*) exit 1 ;;
+  *check-metadata*) : ;;
+  *'cat /var/lib/pocketcoder/release/metadata-status.json'*) cat '$metadata_state' ;;
+  *) echo '' ;;
+esac"
+
+( . "$VPS_DIR/phases/45-nixos-version.sh"
+  PATH="$nixos_stub_dir:$PATH" VPS_NIXOS_VERSION_RETRY_DEADLINE=0 VPS_NIXOS_VERSION_RETRY_INTERVAL=0 phase_run >/dev/null 2>&1 )
+check_rc "45-nixos-version: a broken degrade path fails the phase" 1 "$?"
+
+# --- 47-tls-cert-recovery: happy path round-trips a cert bundle without
+# ever touching real ACME issuance -- fingerprint stays identical
+# throughout, and the exact bytes exported get relayed verbatim to
+# restoreCaddyCertificate's stdin. openssl is stubbed to return the SAME
+# fixed fingerprint for every x509 invocation (both the bundle's own PEM and
+# the "live" TLS handshake), which is exactly the happy-path condition.
+cert_stub_dir="$TEST_TMP/certbin"
+stub_bin "$cert_stub_dir" curl 'exit 0'
+restore_capture="$TEST_TMP/captured-restore-bundle.json"
+export_bundle='{"hostname":"vps.example.test","issuer":"test-issuer","certificatePemBase64":"Y2VydC1wZW0=","privateKeyPemBase64":"a2V5LXBlbQ=="}'
+# The x509 -fingerprint invocation is used from two different contexts
+# (decoding the bundle's own embedded PEM, and reading a live TLS
+# handshake's cert) -- distinguish them by stdin content, since s_client's
+# own stub always produces empty output, so its chain always feeds x509 an
+# empty stdin while the bundle-decode chain always feeds it real content.
+stub_bin "$cert_stub_dir" openssl '
+case "$1" in
+  s_client) cat >/dev/null; exit 0 ;;
+  x509)
+    input=$(cat)
+    if [ -n "$input" ]; then
+      echo "SHA256 Fingerprint=${STUB_FINGERPRINT_BUNDLE:-AA:BB:CC:DD}"
+    else
+      echo "SHA256 Fingerprint=${STUB_FINGERPRINT_LIVE:-AA:BB:CC:DD}"
+    fi
+    ;;
+  *) exit 1 ;;
+esac'
+
+(
+  dispatch_ssh_command() {
+    case $1 in
+      exportCaddyCertificate) printf '%s' "$export_bundle" ;;
+      restoreCaddyCertificate) cat > "$restore_capture" ;;
+      *) return 1 ;;
+    esac
+  }
+  . "$VPS_DIR/phases/47-tls-cert-recovery.sh"
+  PATH="$cert_stub_dir:$PATH" VPS_HEALTH_DEADLINE=0 phase_run >/dev/null 2>&1
+)
+check_rc "47-tls-cert-recovery: happy path round-trips cleanly" 0 "$?"
+
+check "47-tls-cert-recovery: restore receives exactly what was exported" \
+  "$export_bundle" "$(cat "$restore_capture")"
+
+( . "$VPS_DIR/phases/47-tls-cert-recovery.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier47"
+check "47-tls-cert-recovery: is safe-mutating, not disruptive" "safe-mutating" "$(cat "$TEST_TMP/tier47")"
+
+# --- 47-tls-cert-recovery: export failure must fail the phase, not silently
+# skip straight to restore ---
+(
+  dispatch_ssh_command() { return 1; }
+  . "$VPS_DIR/phases/47-tls-cert-recovery.sh"
+  PATH="$cert_stub_dir:$PATH" VPS_HEALTH_DEADLINE=0 phase_run >/dev/null 2>&1
+)
+check_rc "47-tls-cert-recovery: export failure fails the phase" 1 "$?"
+
+# --- 47-tls-cert-recovery: a bundle that doesn't match the live cert
+# (corrupted export, or a box serving something else entirely) must fail
+# before ever attempting a restore ---
+mismatch_restore_capture="$TEST_TMP/should-not-be-written.json"
+rm -f "$mismatch_restore_capture"
+(
+  dispatch_ssh_command() {
+    case $1 in
+      exportCaddyCertificate) printf '%s' "$export_bundle" ;;
+      restoreCaddyCertificate) cat > "$mismatch_restore_capture" ;;
+      *) return 1 ;;
+    esac
+  }
+  . "$VPS_DIR/phases/47-tls-cert-recovery.sh"
+  PATH="$cert_stub_dir:$PATH" VPS_HEALTH_DEADLINE=0 STUB_FINGERPRINT_LIVE=EE:FF:00:11 phase_run >/dev/null 2>&1
+)
+check_rc "47-tls-cert-recovery: fingerprint mismatch fails the phase" 1 "$?"
+check_rc "47-tls-cert-recovery: fingerprint mismatch never attempts a restore" 1 \
+  "$([ -f "$mismatch_restore_capture" ] && echo 0 || echo 1)"
+
+# --- 48-restore-data: backup, live corruption, direct restore-data, and
+# live integrity verification all succeed. The restore command is deliberately
+# matched independently from the dispatched backup command: restore-data has
+# no RootSshCommand enum member and must use the release binary directly.
+restore_stub_dir="$TEST_TMP/restorebin"
+stub_bin "$restore_stub_dir" curl 'exit 0'
+stub_bin "$restore_stub_dir" ssh '
+for arg in "$@"; do last=$arg; done
+case $last in
+  *backup_db.sh*) echo "backup written" ;;
+  *"echo garbage > /app/pb_data/data.db"*) echo "corrupted" ;;
+  *"pocketcoder-release restore-data"*)
+    [ "${STUB_RESTORE_FAIL:-0}" -eq 0 ] || exit 9
+    echo "restored" ;;
+  *integrity_check*) echo ok ;;
+  *) echo "" ;;
+esac'
+
+(
+  dispatch_ssh_command() {
+    case $1 in
+      saveBackup) ssh_exec 300 'docker exec pocketcoder-pocketbase /app/backup_db.sh' ;;
+      *) return 1 ;;
+    esac
+  }
+  . "$VPS_DIR/phases/48-restore-data.sh"
+  PATH="$restore_stub_dir:$PATH" VPS_HEALTH_DEADLINE=0 phase_run >/dev/null 2>&1
+)
+check_rc "48-restore-data: happy path restores and verifies live database" 0 "$?"
+
+( . "$VPS_DIR/phases/48-restore-data.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier48"
+check "48-restore-data: is safe-mutating, not disruptive" "safe-mutating" "$(cat "$TEST_TMP/tier48")"
+
+# A failed direct restore must not be hidden by the subsequent health or
+# integrity checks.
+(
+  dispatch_ssh_command() {
+    case $1 in
+      saveBackup) ssh_exec 300 'docker exec pocketcoder-pocketbase /app/backup_db.sh' ;;
+      *) return 1 ;;
+    esac
+  }
+  . "$VPS_DIR/phases/48-restore-data.sh"
+  PATH="$restore_stub_dir:$PATH" STUB_RESTORE_FAIL=1 VPS_HEALTH_DEADLINE=0 \
+    phase_run >/dev/null 2>&1
+)
+check_rc "48-restore-data: restore failure fails cleanly" 1 "$?"
 
 # --- 20-topology: an unhealthy container must fail ---
 stub_bin "$phase_stub_dir" curl 'exit 0'
@@ -101,6 +321,49 @@ esac'
   PATH="$phase_stub_dir:$PATH" phase_run >/dev/null 2>&1 )
 check_rc "90-nixos-update: absent config skips with 78 (F9)" 78 "$?"
 
+# --- 92-nixos-upgrade: stateful offline upgrade/rollback and fail-closed
+# channel failure. Direct release-manager commands are matched separately.
+upgrade_stub_dir="$TEST_TMP/upgradebin"
+upgrade_state="$TEST_TMP/upgrade-nixos-version"
+stub_bin "$upgrade_stub_dir" curl 'exit 0'
+stub_bin "$upgrade_stub_dir" ssh "
+for arg in \"\$@\"; do last=\$arg; done
+case \$last in
+  *'cat /etc/nixos/nixos-version'*) cat '$upgrade_state' ;;
+  *'upgrade-os --channel pocketcoder-test-nonexistent-channel-00-01'*) exit 9 ;;
+  *'upgrade-os'*) [ \"\${STUB_UPGRADE_FAIL:-0}\" -eq 0 ] || exit 9; echo 25.11 > '$upgrade_state' ;;
+  *'rollback-os'*) [ \"\${STUB_ROLLBACK_FAIL:-0}\" -eq 0 ] || exit 9; echo 26.05 > '$upgrade_state' ;;
+  *) echo '' ;;
+esac"
+echo 26.05 > "$upgrade_state"
+(
+  . "$VPS_DIR/phases/92-nixos-upgrade.sh"
+  PATH="$upgrade_stub_dir:$PATH" VPS_RELEASE_B_DIGEST=abc123 \
+    VPS_RELEASE_B_NIXOS_VERSION=25.11 VPS_HEALTH_DEADLINE=0 phase_run >/dev/null 2>&1
+)
+check_rc "92-nixos-upgrade: upgrade, rollback, and forced failure pass" 0 "$?"
+( . "$VPS_DIR/phases/92-nixos-upgrade.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier92"
+check "92-nixos-upgrade: is disruptive" "disruptive" "$(cat "$TEST_TMP/tier92")"
+
+(
+  . "$VPS_DIR/phases/92-nixos-upgrade.sh"
+  PATH="$upgrade_stub_dir:$PATH" VPS_RELEASE_B_DIGEST=abc123 VPS_RELEASE_B_NIXOS_VERSION=25.11 \
+    STUB_UPGRADE_FAIL=1 phase_run >/dev/null 2>&1
+)
+check_rc "92-nixos-upgrade: upgrade failure fails the phase" 1 "$?"
+echo 26.05 > "$upgrade_state"
+(
+  . "$VPS_DIR/phases/92-nixos-upgrade.sh"
+  PATH="$upgrade_stub_dir:$PATH" VPS_RELEASE_B_DIGEST=abc123 VPS_RELEASE_B_NIXOS_VERSION=25.11 \
+    STUB_ROLLBACK_FAIL=1 phase_run >/dev/null 2>&1
+)
+check_rc "92-nixos-upgrade: rollback failure fails the phase" 1 "$?"
+(
+  unset VPS_RELEASE_B_DIGEST VPS_RELEASE_B_NIXOS_VERSION
+  . "$VPS_DIR/phases/92-nixos-upgrade.sh"; phase_precondition >/dev/null 2>&1
+)
+check_rc "92-nixos-upgrade: missing candidate release B skips" 1 "$?"
+
 . "$VPS_DIR/phases/70-post-update.sh"
 
 # The precondition must read ON-BOX state, so `--only post-update` against an
@@ -158,7 +421,7 @@ check_rc "70-post-update: status=update-available with the field passes" 0 "$?"
     phase_run >/dev/null 2>&1 )
 check_rc "70-post-update: status=update-available without the field fails" 1 "$?"
 
-# --- 10-provision: vps_provision's stdout must be ONLY the handoff path ---
+# --- 10-provision: vps_provision's stdout must be ONLY the handoff JSON ---
 # Regression test for a bug found live: tee's passthrough copy went to
 # stdout, so the whole flutter test log leaked into $handoff when the
 # orchestrator captures this function via `handoff=$(vps_provision ...)`.
@@ -166,29 +429,41 @@ check_rc "70-post-update: status=update-available without the field fails" 1 "$?
 . "$VPS_DIR/lib/teardown.sh"
 . "$VPS_DIR/phases/10-provision.sh"
 
-fake_aeroform="$TEST_TMP/fake-aeroform"
-mkdir -p "$fake_aeroform/test/integration"
-: > "$fake_aeroform/test/integration/golden_path_provision_test.dart"
-
-fake_handoff="$TEST_TMP/fake-handoff.json"
-echo '{"hostname":"example.test"}' > "$fake_handoff"
-
-stub_bin "$phase_stub_dir" flutter "
-echo 'noisy line one of test output'
-echo 'noisy line two of test output'
-echo 'VPS SCRIPT: retained update handoff $fake_handoff'
-echo 'noisy trailing diagnostics line'
+provisioner="$TEST_TMP/fake-provisioner"
+stub_bin "$TEST_TMP" fake-provisioner "
+echo 'noisy line one of test output' >&2
+echo 'noisy line two of test output' >&2
+printf '%s' '{\"instanceId\":\"instance-1\",\"ipAddress\":\"192.0.2.1\",\"hostname\":\"example.test\",\"sshPrivateKeyPath\":\"/tmp/key\",\"releaseDigest\":\"digest-1\"}'
 "
 
 provision_run_dir="$TEST_TMP/provision-run"
 mkdir -p "$provision_run_dir"
 
 result=$(
-  FLUTTER_BIN="$phase_stub_dir/flutter" AEROFORM_ROOT="$fake_aeroform" \
-    PATH="$phase_stub_dir:$PATH" \
+  VPS_PROVISIONER="$provisioner" \
     vps_provision "$TEST_TMP" "$provision_run_dir" "test-provision-label"
 )
-check "vps_provision: stdout is exactly the handoff path, not the log" "$fake_handoff" "$result"
+check "vps_provision: stdout is exactly the handoff JSON, not the log" \
+  '{"instanceId":"instance-1","ipAddress":"192.0.2.1","hostname":"example.test","sshPrivateKeyPath":"/tmp/key","releaseDigest":"digest-1"}' "$result"
+
+# --- 10-provision: the checked-out branch is forwarded to the provisioner ---
+# Regression test for a bug found live: the provisioner had no way to know
+# which branch pocketcoder was on, so golden_path_provision_test.dart always
+# provisioned from the bare (production) nightly channel regardless of
+# branch -- a staging run could never dry-run against the branch-isolated
+# nightly-testing channel the way 55-promote.sh already does.
+branch_repo="$TEST_TMP/branch-repo"
+mkdir -p "$branch_repo"
+git -C "$branch_repo" init -q
+git -C "$branch_repo" checkout -q -b staging
+stub_bin "$TEST_TMP" branch-capturing-provisioner "
+printf '%s' \"\$POCKETCODER_GITHUB_WORKFLOW_BRANCH\" > '$TEST_TMP/captured-branch'
+printf '%s' '{\"instanceId\":\"instance-1\",\"ipAddress\":\"192.0.2.1\",\"hostname\":\"example.test\",\"sshPrivateKeyPath\":\"/tmp/key\",\"releaseDigest\":\"digest-1\"}'
+"
+VPS_PROVISIONER="$TEST_TMP/branch-capturing-provisioner" \
+  vps_provision "$branch_repo" "$provision_run_dir" "test-provision-label-2" >/dev/null
+check "vps_provision: forwards the checked-out branch to the provisioner" \
+  "staging" "$(cat "$TEST_TMP/captured-branch")"
 
 # --- 60-update: the remote command must actually be valid shell (F-live) ---
 # Regression test for a bug found live: `VAR=val <compound-command>` is

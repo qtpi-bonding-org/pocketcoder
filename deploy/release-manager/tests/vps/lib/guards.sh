@@ -61,12 +61,15 @@ resolve_flutter_bin() {
   return 1
 }
 
-resolve_aeroform_root() {
-  local repo_root=$1 candidate=${AEROFORM_ROOT:-"$1/../flutter_aeroform"}
-  if [ -d "$candidate" ]; then
-    (CDPATH= cd -- "$candidate" && pwd)
-    return 0
+resolve_provisioner() {
+  local candidate=${VPS_PROVISIONER:-}
+  if [ -z "$candidate" ]; then
+    echo "no provisioner configured; set VPS_PROVISIONER to an executable that prints handoff JSON on stdout" >&2
+    return 1
   fi
-  echo "flutter_aeroform checkout not found at $candidate; set AEROFORM_ROOT" >&2
-  return 1
+  if [ ! -x "$candidate" ]; then
+    echo "VPS_PROVISIONER=$candidate is not an executable file" >&2
+    return 1
+  fi
+  printf '%s' "$candidate"
 }

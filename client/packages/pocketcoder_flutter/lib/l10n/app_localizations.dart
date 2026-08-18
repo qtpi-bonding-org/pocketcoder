@@ -3712,6 +3712,12 @@ abstract class AppLocalizations {
   /// **'SET UP YOUR SIGN-IN'**
   String get onboardingSignInTitle;
 
+  /// No description provided for @onboardingDeployCredentialsPoco.
+  ///
+  /// In en, this message translates to:
+  /// **'These are the administrator credentials for PocketCoder on the server we are about to provision.\n\nThey are separate from your Linode password. I will use them to finish setup, and you will use them to sign in to PocketCoder when the server is ready. Keep them safe.'**
+  String get onboardingDeployCredentialsPoco;
+
   /// No description provided for @onboardingProviderPoco.
   ///
   /// In en, this message translates to:

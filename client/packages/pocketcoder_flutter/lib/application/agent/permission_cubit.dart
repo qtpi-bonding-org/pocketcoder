@@ -66,7 +66,7 @@ class PermissionCubit extends AppCubit<PermissionState> {
   /// Approve the pending permission with [optionId]. No-op (with a warning
   /// log) when there is no pending permission — guards against a stale tap
   /// after the request has already cleared in the watched stream.
-  Future<void> authorize(String optionId) async {
+  Future<void> authorize(String optionId, {String? requestId}) async {
     final chatId = _chatId;
     final permission = state.permission;
     if (chatId == null || permission == null) {
@@ -74,8 +74,8 @@ class PermissionCubit extends AppCubit<PermissionState> {
           '🤖 [PermissionCubit] authorize called with no pending permission');
       return;
     }
-    final requestId = permission['requestId'];
-    if (requestId is! String) {
+    final pendingRequestId = permission['requestId'];
+    if (pendingRequestId is! String) {
       logWarning(
           '🤖 [PermissionCubit] authorize: pending permission missing requestId');
       return;
@@ -83,7 +83,7 @@ class PermissionCubit extends AppCubit<PermissionState> {
     await tryOperation(() async {
       await _repository.respondPermission(
         chatId,
-        requestId,
+        requestId ?? pendingRequestId,
         optionId: optionId,
       );
       return state.copyWith(
@@ -95,15 +95,15 @@ class PermissionCubit extends AppCubit<PermissionState> {
 
   /// Cancel/deny the pending permission. No-op (with a warning log) when
   /// there is no pending permission.
-  Future<void> deny() async {
+  Future<void> deny({String? requestId}) async {
     final chatId = _chatId;
     final permission = state.permission;
     if (chatId == null || permission == null) {
       logWarning('🤖 [PermissionCubit] deny called with no pending permission');
       return;
     }
-    final requestId = permission['requestId'];
-    if (requestId is! String) {
+    final pendingRequestId = permission['requestId'];
+    if (pendingRequestId is! String) {
       logWarning(
           '🤖 [PermissionCubit] deny: pending permission missing requestId');
       return;
@@ -111,7 +111,7 @@ class PermissionCubit extends AppCubit<PermissionState> {
     await tryOperation(() async {
       await _repository.respondPermission(
         chatId,
-        requestId,
+        requestId ?? pendingRequestId,
         cancelled: true,
       );
       return state.copyWith(

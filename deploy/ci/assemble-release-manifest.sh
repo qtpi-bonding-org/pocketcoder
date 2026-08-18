@@ -31,6 +31,24 @@ foss_minimum_version=${POCKETCODER_FOSS_MINIMUM_VERSION:-1.0.0}
 base_url=${POCKETCODER_RELEASE_BASE:-https://images.relay.pocketcoder.org}
 built_at=${POCKETCODER_BUILT_AT:-$(date -u '+%Y-%m-%dT%H:%M:%SZ')}
 
+# configuration.nix's nixosVersion is the single source of truth for a live
+# box's NIX_PATH pin; flake.nix's nixpkgs input has to independently repeat
+# the same value as a static string literal (flake inputs can't reference a
+# value computed by the module they build). Cross-check them here rather
+# than trusting either alone -- see the "must be kept in sync" comments in
+# both files.
+configuration_nixos_version=$(sed -n 's/^"\(.*\)"$/\1/p' deploy/nixos/nixos-version.nix)
+flake_nixos_version=$(grep -oE 'nixpkgs\.url = "github:NixOS/nixpkgs/nixos-[0-9]{2}\.[0-9]{2}"' deploy/nixos/flake.nix | grep -oE '[0-9]{2}\.[0-9]{2}')
+if [ -z "$configuration_nixos_version" ] || [ -z "$flake_nixos_version" ]; then
+  echo "could not extract a NixOS version from configuration.nix and/or flake.nix" >&2
+  exit 1
+fi
+if [ "$configuration_nixos_version" != "$flake_nixos_version" ]; then
+  echo "configuration.nix (nixosVersion=$configuration_nixos_version) and flake.nix (nixpkgs.url=nixos-$flake_nixos_version) have drifted apart" >&2
+  exit 1
+fi
+nixos_version=$configuration_nixos_version
+
 mkdir -p "$document_output_dir"
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -116,6 +134,7 @@ jq -S -n \
   --argjson maximumSourceContract "$maximum_source_contract" \
   --argjson dataVersion "$data_version" \
   --argjson minimumDataVersion "$minimum_data_version" \
+  --arg nixosVersion "$nixos_version" \
   --slurpfile documents "$tmp_dir/documents.json" \
   --slurpfile nixos "$nixos_metadata" \
   --slurpfile artifacts "$artifact_metadata" '
@@ -137,7 +156,8 @@ jq -S -n \
       provisioning:{contractVersion:$provisioningContractVersion},
       deployment:{contractVersion:$deploymentContractVersion,
         supportedSourceContractVersions:{minimum:$minimumSourceContract,
-          maximum:$maximumSourceContract}}
+          maximum:$maximumSourceContract}},
+      os:{nixosVersion:$nixosVersion}
     },
     documents:$documents[0],
     osImages:{

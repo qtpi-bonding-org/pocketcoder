@@ -35,6 +35,12 @@ stub_bin "$flutter_dir" flutter 'echo flutter'
 check "guards: resolve_flutter_bin falls back to PATH" "$flutter_dir/flutter" \
   "$(FLUTTER_BIN= PATH="$flutter_dir:$PATH" resolve_flutter_bin)"
 
-err=$(FLUTTER_BIN=/nonexistent/flutter resolve_aeroform_root /nonexistent 2>&1)
-check_rc "guards: missing aeroform root fails" 1 "$?"
-check_contains "guards: aeroform failure is actionable" "AEROFORM_ROOT" "$err"
+err=$(VPS_PROVISIONER= resolve_provisioner 2>&1)
+check_rc "guards: resolve_provisioner fails with no VPS_PROVISIONER set" 1 "$?"
+check_contains "guards: resolve_provisioner failure is actionable" \
+  "no provisioner configured" "$err"
+
+err=$(VPS_PROVISIONER=/nonexistent/path resolve_provisioner 2>&1)
+check_rc "guards: resolve_provisioner fails on a non-executable path" 1 "$?"
+check_contains "guards: resolve_provisioner failure is actionable" \
+  "is not an executable file" "$err"

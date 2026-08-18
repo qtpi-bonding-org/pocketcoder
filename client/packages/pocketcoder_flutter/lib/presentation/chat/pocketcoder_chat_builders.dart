@@ -20,6 +20,7 @@ import 'permission_card.dart';
 import 'thinking_block.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_terminal_response.dart';
 import 'widgets/terminal_command_card.dart';
 
 /// Builds this app's `StackedChatBuilders` config: pocketcoder's theme
@@ -49,12 +50,14 @@ StackedChatBuilders pocketcoderChatBuilders(
     textStyle: TextStyle(
       color: colors.onSurface,
       fontFamily: AppFonts.bodyFamily,
+      package: 'pocketcoder_flutter',
       fontSize: AppSizes.fontStandard,
       height: 1.4,
     ),
     reasoningTextStyle: TextStyle(
       color: colors.onSurface.withValues(alpha: 0.7),
       fontFamily: AppFonts.bodyFamily,
+      package: 'pocketcoder_flutter',
       fontSize: AppSizes.fontStandard,
       fontStyle: FontStyle.italic,
       height: 1.4,
@@ -126,15 +129,28 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
             isStreaming: false,
           );
         }
-        return TerminalConversationFrame(
-          speaker: isSentByMe
-              ? TerminalConversationSpeaker.user
-              : TerminalConversationSpeaker.poco,
-          roleLabel: isSentByMe
-              ? context.l10n.chatCommanderRole
-              : context.l10n.chatPocoRole,
-          child: chatMarkdownBody(context, message.text),
-        );
+        if (isSentByMe) {
+          return TerminalConversationFrame(
+            speaker: TerminalConversationSpeaker.user,
+            showUserBorder: false,
+            child: TerminalTranscriptLine(
+              prefix: 'root@device \$ ',
+              color: context.terminalColors.attention,
+              child: Text(
+                message.text,
+                style: TextStyle(
+                  color: context.terminalColors.attention,
+                  fontFamily: AppFonts.bodyFamily,
+                  package: 'pocketcoder_flutter',
+                  fontSize: AppSizes.fontStandard,
+                  fontWeight: AppFonts.medium,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          );
+        }
+        return PocoTerminalResponse(message: message.text);
       };
 
   @override
@@ -151,19 +167,36 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
             isStreaming: true,
           );
         }
+        final child = chat_stream.FlyerChatTextStreamMessage(
+          message: message,
+          index: index,
+          streamState: streamState,
+          padding: EdgeInsets.zero,
+          showTime: false,
+          showStatus: false,
+          sentTextStyle: style.textStyle.copyWith(
+            color: context.terminalColors.attention,
+            fontWeight: AppFonts.medium,
+          ),
+          receivedTextStyle: style.textStyle,
+        );
+        if (isSentByMe) {
+          return TerminalConversationFrame(
+            speaker: TerminalConversationSpeaker.user,
+            showUserBorder: false,
+            child: TerminalTranscriptLine(
+              prefix: 'root@device \$ ',
+              color: context.terminalColors.attention,
+              child: child,
+            ),
+          );
+        }
         return TerminalConversationFrame(
-          speaker: isSentByMe
-              ? TerminalConversationSpeaker.user
-              : TerminalConversationSpeaker.poco,
-          roleLabel: isSentByMe
-              ? context.l10n.chatCommanderRole
-              : context.l10n.chatPocoRole,
-          child: chat_stream.FlyerChatTextStreamMessage(
-            message: message,
-            index: index,
-            streamState: streamState,
-            sentTextStyle: style.textStyle,
-            receivedTextStyle: style.textStyle,
+          speaker: TerminalConversationSpeaker.poco,
+          child: TerminalTranscriptLine(
+            prefix: '[poco] ',
+            color: context.colorScheme.primary,
+            child: child,
           ),
         );
       };

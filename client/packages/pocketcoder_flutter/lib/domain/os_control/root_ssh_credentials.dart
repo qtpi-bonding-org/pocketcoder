@@ -13,7 +13,7 @@ final class RootSshCredentials {
   final String privateKeyPem;
   final String hostKeyType;
 
-  /// OpenSSH MD5 fingerprint (`MD5:aa:bb:...`) supplied by dartssh2's host-key
-  /// verification callback.
+  /// OpenSSH SHA256 fingerprint (`SHA256:<base64>`) as dartssh2's host-key
+  /// verification callback expects it.
   final String hostKeyFingerprint;
 }
