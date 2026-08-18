@@ -62,8 +62,21 @@ func run(args []string) error {
 		return cmd.Run()
 	case "restore-data":
 		container := envOr("POCKETCODER_POCKETBASE_CONTAINER", "pocketcoder-pocketbase")
+		// pb_data/pb_backups are named Docker volumes, not host bind mounts --
+		// "/app/pb_data"/"/app/pb_backups" are only valid paths inside the
+		// container's own mount namespace, not on the host where this binary
+		// runs. Resolve the real host-side mountpoints the same way
+		// snapshot.Manager already does for the update/rollback path.
+		dataDir, err := snapshot.VolumeMountpoint(envOr("POCKETCODER_DATA_VOLUME", "pocketcoder_pb_data"))
+		if err != nil {
+			return err
+		}
+		backupDir, err := snapshot.VolumeMountpoint(envOr("POCKETCODER_BACKUP_VOLUME", "pocketcoder_pb_backups"))
+		if err != nil {
+			return err
+		}
 		return managercontract.RestoreData(managercontract.RestoreDataConfig{
-			DataDir: "/app/pb_data", BackupDir: "/app/pb_backups", Container: container,
+			DataDir: dataDir, BackupDir: backupDir, Container: container,
 			Docker: runtime.Docker{Stdout: os.Stdout, Stderr: os.Stderr},
 		})
 	case "export-cert":

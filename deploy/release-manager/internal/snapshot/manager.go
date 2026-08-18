@@ -37,11 +37,11 @@ type Metadata struct {
 }
 
 func (manager Manager) Create(releaseDigest string, dataVersion int) (string, error) {
-	dataRoot, err := volumeMountpoint(manager.dataVolume())
+	dataRoot, err := VolumeMountpoint(manager.dataVolume())
 	if err != nil {
 		return "", err
 	}
-	backupRoot, err := volumeMountpoint(manager.backupVolume())
+	backupRoot, err := VolumeMountpoint(manager.backupVolume())
 	if err != nil {
 		return "", err
 	}
@@ -84,11 +84,11 @@ func (manager Manager) Restore(metadataPath string) error {
 	if err := json.Unmarshal(data, &metadata); err != nil {
 		return err
 	}
-	dataRoot, err := volumeMountpoint(manager.dataVolume())
+	dataRoot, err := VolumeMountpoint(manager.dataVolume())
 	if err != nil {
 		return err
 	}
-	backupRoot, err := volumeMountpoint(manager.backupVolume())
+	backupRoot, err := VolumeMountpoint(manager.backupVolume())
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (manager Manager) container() string {
 	return "pocketcoder-pocketbase"
 }
 
-func volumeMountpoint(volume string) (string, error) {
+func VolumeMountpoint(volume string) (string, error) {
 	output, err := exec.Command("docker", "volume", "inspect", "--format", "{{.Mountpoint}}", volume).Output()
 	if err != nil {
 		return "", fmt.Errorf("inspect Docker volume %s: %w", volume, err)
@@ -151,7 +151,7 @@ func volumeMountpoint(volume string) (string, error) {
 // It is used during update preflight so a data-version-changing release can
 // reserve enough disk for the PocketBase snapshot before stopping services.
 func (manager Manager) VolumeBytes() (int64, error) {
-	root, err := volumeMountpoint(manager.dataVolume())
+	root, err := VolumeMountpoint(manager.dataVolume())
 	if err != nil {
 		return 0, err
 	}
