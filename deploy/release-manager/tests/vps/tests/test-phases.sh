@@ -202,6 +202,54 @@ check_rc "47-tls-cert-recovery: fingerprint mismatch fails the phase" 1 "$?"
 check_rc "47-tls-cert-recovery: fingerprint mismatch never attempts a restore" 1 \
   "$([ -f "$mismatch_restore_capture" ] && echo 0 || echo 1)"
 
+# --- 48-restore-data: backup, live corruption, direct restore-data, and
+# live integrity verification all succeed. The restore command is deliberately
+# matched independently from the dispatched backup command: restore-data has
+# no RootSshCommand enum member and must use the release binary directly.
+restore_stub_dir="$TEST_TMP/restorebin"
+stub_bin "$restore_stub_dir" curl 'exit 0'
+stub_bin "$restore_stub_dir" ssh '
+for arg in "$@"; do last=$arg; done
+case $last in
+  *backup_db.sh*) echo "backup written" ;;
+  *"echo garbage > /app/pb_data/data.db"*) echo "corrupted" ;;
+  *"pocketcoder-release restore-data"*)
+    [ "${STUB_RESTORE_FAIL:-0}" -eq 0 ] || exit 9
+    echo "restored" ;;
+  *integrity_check*) echo ok ;;
+  *) echo "" ;;
+esac'
+
+(
+  dispatch_ssh_command() {
+    case $1 in
+      saveBackup) ssh_exec 300 'docker exec pocketcoder-pocketbase /app/backup_db.sh' ;;
+      *) return 1 ;;
+    esac
+  }
+  . "$VPS_DIR/phases/48-restore-data.sh"
+  PATH="$restore_stub_dir:$PATH" VPS_HEALTH_DEADLINE=0 phase_run >/dev/null 2>&1
+)
+check_rc "48-restore-data: happy path restores and verifies live database" 0 "$?"
+
+( . "$VPS_DIR/phases/48-restore-data.sh"; echo "$phase_tier" ) > "$TEST_TMP/tier48"
+check "48-restore-data: is safe-mutating, not disruptive" "safe-mutating" "$(cat "$TEST_TMP/tier48")"
+
+# A failed direct restore must not be hidden by the subsequent health or
+# integrity checks.
+(
+  dispatch_ssh_command() {
+    case $1 in
+      saveBackup) ssh_exec 300 'docker exec pocketcoder-pocketbase /app/backup_db.sh' ;;
+      *) return 1 ;;
+    esac
+  }
+  . "$VPS_DIR/phases/48-restore-data.sh"
+  PATH="$restore_stub_dir:$PATH" STUB_RESTORE_FAIL=1 VPS_HEALTH_DEADLINE=0 \
+    phase_run >/dev/null 2>&1
+)
+check_rc "48-restore-data: restore failure fails cleanly" 1 "$?"
+
 # --- 20-topology: an unhealthy container must fail ---
 stub_bin "$phase_stub_dir" curl 'exit 0'
 stub_bin "$phase_stub_dir" openssl 'echo'
