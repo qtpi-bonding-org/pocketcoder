@@ -102,8 +102,9 @@ func TestNixOSControllerUpgradeWritesThePinAndSwitches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(args) != "switch" {
-		t.Fatalf("nixos-rebuild args = %q, want %q", args, "switch")
+	wantArgs := "switch -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/nixos-26.05.tar.gz"
+	if string(args) != wantArgs {
+		t.Fatalf("nixos-rebuild args = %q, want %q", args, wantArgs)
 	}
 }
 
