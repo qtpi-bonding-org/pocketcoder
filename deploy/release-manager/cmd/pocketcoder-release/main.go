@@ -15,6 +15,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/artifact"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/contract"
 	managercontract "github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/manager"
+	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/osctl"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/progress"
 	releasecontract "github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/release"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/runtime"
@@ -52,7 +53,7 @@ func run(args []string) error {
 	case "restart-pocketcoder":
 		return restartPocketCoder(args[1:])
 	case "restart-os":
-		return exec.Command("systemctl", "reboot").Run()
+		return osctl.NixOSController{}.Restart()
 	case "backup-data":
 		container := envOr("POCKETCODER_POCKETBASE_CONTAINER", "pocketcoder-pocketbase")
 		cmd := exec.Command("docker", "exec", container, "/app/backup_db.sh")
@@ -77,9 +78,7 @@ func run(args []string) error {
 		}
 		return tlscert.ImportBundle(bundle)
 	case "update-os":
-		cmd := exec.Command("nixos-rebuild", "switch", "--upgrade")
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-		return cmd.Run()
+		return osctl.NixOSController{}.Update()
 	default:
 		return usage()
 	}
