@@ -31,7 +31,7 @@ jobs:
     # never nightly-testing.json (the everyday VPS suite's own pointer) or
     # any bare, main-trust-reachable pointer.
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/heads/vps-test/')
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
