@@ -30,6 +30,27 @@ func TestRestartOsRunsSystemctlReboot(t *testing.T) {
 	}
 }
 
+func TestBackupDataRunsDockerExecBackupScript(t *testing.T) {
+	stub := t.TempDir()
+	captured := filepath.Join(stub, "captured-args")
+	script := "#!/bin/sh\nprintf '%s' \"$*\" > " + captured + "\n"
+	if err := os.WriteFile(filepath.Join(stub, "docker"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", stub+":"+os.Getenv("PATH"))
+	t.Setenv("POCKETCODER_POCKETBASE_CONTAINER", "")
+	if err := run([]string{"backup-data"}); err != nil {
+		t.Fatalf("backup-data: %v", err)
+	}
+	got, err := os.ReadFile(captured)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "exec pocketcoder-pocketbase /app/backup_db.sh" {
+		t.Fatalf("docker args = %q, want %q", got, "exec pocketcoder-pocketbase /app/backup_db.sh")
+	}
+}
+
 func TestUpdateOsRunsNixosRebuildSwitchUpgrade(t *testing.T) {
 	stub := t.TempDir()
 	captured := filepath.Join(stub, "captured-args")
