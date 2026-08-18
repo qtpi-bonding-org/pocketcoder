@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -49,6 +50,8 @@ func run(args []string) error {
 		return rollback(args[1:])
 	case "restart-pocketcoder":
 		return restartPocketCoder(args[1:])
+	case "restart-os":
+		return exec.Command("systemctl", "reboot").Run()
 	default:
 		return usage()
 	}
