@@ -9,10 +9,24 @@ case "$channel" in stable | beta | nightly) ;; *) echo "invalid channel" >&2; ex
 api='https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions'
 auth="Authorization: Bearer $GH_TOKEN"
 ref=$(git symbolic-ref --short HEAD 2>/dev/null || true)
-case "$ref" in main | staging) ;; *)
-  echo "candidate promotion requires a checked-out main or staging branch" >&2
-  exit 64
-  ;;
+case "$ref" in
+  main | staging) ;;
+  vps-test/*)
+    # vps-test/* is reserved for the upgrade-os NixOS-version round-trip
+    # (see 92-nixos-upgrade.sh) and must never share nightly-testing.json
+    # with the everyday VPS suite's own staging-branch promotions (see
+    # 55-promote.sh) -- beta-testing.json is the dedicated, otherwise-
+    # unused pointer for this flow. Real beta users are unaffected: they
+    # trust main and poll the bare beta.json, never the "-testing" one.
+    case "$channel" in
+      beta) ;;
+      *) echo "vps-test/* branches may only promote to the beta channel" >&2; exit 1 ;;
+    esac
+    ;;
+  *)
+    echo "candidate promotion requires a checked-out main, staging, or vps-test/* branch" >&2
+    exit 64
+    ;;
 esac
 source_commit=$(git rev-parse HEAD)
 run=$(curl -sf -H "$auth" "$api/workflows/nixos-image.yml/runs?branch=$ref&status=completed&per_page=20" |

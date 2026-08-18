@@ -3,9 +3,12 @@
 
 Keeps two things, unioned:
   1. Everything currently referenced by any live channel pointer
-     (v1/channels/{stable,beta,nightly,nightly-testing}.json), regardless
-     of age -- this is the correctness guarantee, a box updating to
-     whatever a channel currently points at must never 404.
+     (v1/channels/{stable,beta,nightly,nightly-testing,beta-testing}.json),
+     regardless of age -- this is the correctness guarantee, a box updating
+     to whatever a channel currently points at must never 404.
+     beta-testing is reserved for vps-test/* NixOS-version round-trip
+     candidates (see 92-nixos-upgrade.sh) -- distinct from nightly-testing,
+     which the everyday VPS suite already owns.
   2. Everything uploaded within RETENTION_DAYS, regardless of whether it's
      referenced -- rollback/crash-recovery headroom for a box that's
      already running an older, no-longer-promoted release, plus a buffer
@@ -28,7 +31,7 @@ import urllib.request
 
 BUCKET = "pocketcoder-images"
 RELAY_BASE = "https://images.relay.pocketcoder.org/v1"
-CHANNELS = ("stable", "beta", "nightly", "nightly-testing")
+CHANNELS = ("stable", "beta", "nightly", "nightly-testing", "beta-testing")
 RETENTION_DAYS = 90
 
 # Objects under these prefixes are candidates for pruning if they're

@@ -5,12 +5,19 @@ phase_tier=disruptive
 # always upgrades to whatever compatibility.os.nixosVersion the currently
 # promoted channel release declares. A real round-trip test therefore needs
 # a second, distinct candidate release B whose deploy/nixos/nixos-version.nix
-# pin differs from the box's current one, promoted onto the channel the same
-# way 55-promote.sh/60-update.sh already promote an app-level candidate
-# release B -- that publish-time plumbing is outside this phase's scope.
-# This phase self-skips via phase_precondition when no such candidate is
-# available, rather than hardcoding "25.11"/"26.05" literals it cannot
-# actually control.
+# pin differs from the box's current one.
+#
+# That release B is built and promoted from a dedicated vps-test/* branch
+# (see .github/workflows/nixos-image.yml's candidate job and
+# promote-latest-candidate.sh), always on the beta channel -- never nightly,
+# which 55-promote.sh/60-update.sh already own for the everyday app-level
+# release B, and never stable. This keeps the round-trip's candidate on its
+# own beta-testing.json pointer, unreachable by any main-trust (real user)
+# box and never colliding with the ordinary VPS suite's own test candidate.
+# Promoting it is a manual, out-of-band step before running this phase --
+# not automated here -- so this phase self-skips via phase_precondition
+# when no such candidate has been promoted yet, rather than hardcoding
+# "25.11"/"26.05" literals it cannot actually control.
 
 phase_precondition() {
   local current
@@ -43,8 +50,10 @@ phase_run() {
     return 1
   }
 
-  # 1. Real upgrade to candidate release B's NixOS version pin.
-  ssh_exec 1800 "${branch_env}${binary} upgrade-os" || {
+  # 1. Real upgrade to candidate release B's NixOS version pin. --channel
+  # beta is explicit, not the box's default channel: release B only ever
+  # lives on beta-testing.json (see the header comment above).
+  ssh_exec 1800 "${branch_env}${binary} upgrade-os --channel beta" || {
     echo "upgrade-os failed" >&2
     return 1
   }
