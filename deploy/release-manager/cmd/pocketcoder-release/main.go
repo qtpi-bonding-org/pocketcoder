@@ -47,6 +47,8 @@ func run(args []string) error {
 		return update(args[0], args[1:])
 	case "rollback":
 		return rollback(args[1:])
+	case "restart-pocketcoder":
+		return restartPocketCoder(args[1:])
 	default:
 		return usage()
 	}
@@ -247,6 +249,20 @@ func rollback(args []string) error {
 	}
 	fmt.Printf("PocketCoder rollback complete: %s\n", previous.ReleaseDigest)
 	return nil
+}
+
+func restartPocketCoder(args []string) error {
+	flags := flag.NewFlagSet("restart-pocketcoder", flag.ContinueOnError)
+	currentLink := flags.String("current-link", envOr("POCKETCODER_CURRENT_LINK", "/opt/pocketcoder/current"), "active release symlink")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	compose := filepath.Join(*currentLink, "docker-compose.prebuilt.yml")
+	if _, err := os.Stat(compose); err != nil {
+		return fmt.Errorf("PocketCoder Compose release was not found: %w", err)
+	}
+	docker := runtime.Docker{ProjectName: envOr("POCKETCODER_COMPOSE_PROJECT", "pocketcoder"), Stdout: os.Stdout, Stderr: os.Stderr}
+	return docker.ComposeRestart(compose, envOr("POCKETCODER_RUNTIME_ENV", "/var/lib/pocketcoder/config/runtime.env"))
 }
 
 func newUpdateManager(options mutationOptions, paths state.Paths, current releasecontract.Current, resolved releasecontract.Resolved, manifestBytes []byte, progressSink progress.Sink) *managercontract.Update {

@@ -87,6 +87,11 @@ func (docker Docker) ComposeDown(composeFile, environmentFile string) error {
 	return docker.runCompose(arguments)
 }
 
+func (docker Docker) ComposeRestart(composeFile, environmentFile string) error {
+	arguments := []string{"compose", "--project-name", docker.projectName(), "--env-file", environmentFile, "-f", composeFile, "restart"}
+	return docker.runCompose(arguments)
+}
+
 // runCompose chooses the legacy binary only when the Compose plugin is
 // unavailable. A failed `docker compose up` is a deployment failure, not a
 // reason to retry an unrelated command and hide its useful error.

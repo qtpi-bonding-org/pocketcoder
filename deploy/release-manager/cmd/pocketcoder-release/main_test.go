@@ -83,3 +83,45 @@ func TestResolvedFromPreviousFailsWithoutAPersistedBundle(t *testing.T) {
 		t.Fatal("expected an error when no bundle was persisted")
 	}
 }
+
+func TestRestartPocketCoderFallsBackToStandaloneCompose(t *testing.T) {
+	dir := t.TempDir()
+	releaseDir := filepath.Join(dir, "current")
+	if err := os.MkdirAll(releaseDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	compose := filepath.Join(releaseDir, "docker-compose.prebuilt.yml")
+	if err := os.WriteFile(compose, []byte("services: {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stub := t.TempDir()
+	captured := filepath.Join(stub, "captured-args")
+	dockerScript := "#!/bin/sh\n" +
+		"if [ \"$1\" = compose ] && [ \"$2\" = version ]; then exit 1; fi\n" +
+		"printf '%s' \"$*\" > " + captured + "-docker\n"
+	if err := os.WriteFile(filepath.Join(stub, "docker"), []byte(dockerScript), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	composeScript := "#!/bin/sh\nprintf '%s' \"$*\" > " + captured + "-docker-compose\n"
+	if err := os.WriteFile(filepath.Join(stub, "docker-compose"), []byte(composeScript), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", stub+":"+os.Getenv("PATH"))
+	t.Setenv("POCKETCODER_CURRENT_LINK", releaseDir)
+	if err := run([]string{"restart-pocketcoder"}); err != nil {
+		t.Fatalf("restart-pocketcoder: %v", err)
+	}
+	if _, err := os.Stat(captured + "-docker-compose"); err != nil {
+		t.Fatalf("expected the docker-compose fallback to run: %v", err)
+	}
+	if _, err := os.Stat(captured + "-docker"); err == nil {
+		t.Fatal("docker compose's own restart should not have run after version failed")
+	}
+}
+
+func TestRestartPocketCoderFailsWithNoComposeFile(t *testing.T) {
+	t.Setenv("POCKETCODER_CURRENT_LINK", t.TempDir())
+	if err := run([]string{"restart-pocketcoder"}); err == nil {
+		t.Fatal("expected an error when docker-compose.prebuilt.yml is missing")
+	}
+}
