@@ -22,6 +22,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/snapshot"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/state"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/tlscert"
+	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/transaction"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/trust"
 )
 
@@ -79,6 +80,10 @@ func run(args []string) error {
 		return tlscert.ImportBundle(bundle)
 	case "update-os":
 		return osctl.NixOSController{}.Update()
+	case "upgrade-os":
+		return upgradeOs(args[1:])
+	case "rollback-os":
+		return osctl.NixOSController{}.RestorePrevious()
 	default:
 		return usage()
 	}
@@ -293,6 +298,45 @@ func restartPocketCoder(args []string) error {
 	}
 	docker := runtime.Docker{ProjectName: envOr("POCKETCODER_COMPOSE_PROJECT", "pocketcoder"), Stdout: os.Stdout, Stderr: os.Stderr}
 	return docker.ComposeRestart(compose, envOr("POCKETCODER_RUNTIME_ENV", "/var/lib/pocketcoder/config/runtime.env"))
+}
+
+func upgradeOs(args []string) error {
+	flags := flag.NewFlagSet("upgrade-os", flag.ContinueOnError)
+	releaseBase := flags.String("release-base", envOr("RELEASE_BASE", "https://images.relay.pocketcoder.org"), "release service base URL")
+	channel := flags.String("channel", envOr("POCKETCODER_RELEASE_CHANNEL", "stable"), "release channel")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	stateRoot := envOr("POCKETCODER_RELEASE_STATE_DIR", "/var/lib/pocketcoder/release")
+	paths := state.NewPaths(stateRoot, envOr("POCKETCODER_RELEASES_DIR", "/opt/pocketcoder/releases"), envOr("POCKETCODER_ARTIFACT_DIR", "/var/lib/pocketcoder/artifacts"), envOr("POCKETCODER_CURRENT_LINK", "/opt/pocketcoder/current"))
+	lock, err := state.AcquireLock(paths.Lock)
+	if err != nil {
+		return err
+	}
+	defer lock.Close()
+	resolved, err := (releasecontract.Resolver{Config: releasecontract.Config{
+		ReleaseBase: *releaseBase, Channel: *channel, State: paths,
+		Fetcher: artifact.Fetcher{}, Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")},
+	}}).Resolve()
+	if err != nil {
+		return fmt.Errorf("resolve target release: %w", err)
+	}
+	target := resolved.Manifest.Compatibility.OS.NixosVersion
+	if target == "" {
+		return fmt.Errorf("resolved manifest has no compatibility.os.nixosVersion")
+	}
+	controller := osctl.NixOSController{}
+	current, err := controller.CurrentVersion()
+	if err != nil {
+		return fmt.Errorf("read current NixOS version: %w", err)
+	}
+	if current == target {
+		fmt.Println("already on the target NixOS version")
+		return nil
+	}
+	ops := osctl.TransactionOperations{Controller: controller}
+	manager := transaction.Manager{JournalPath: filepath.Join(stateRoot, "os-transaction.json"), LockPath: paths.Lock, Operations: ops}
+	return manager.UpdateLocked(ops.Candidate(current), ops.Candidate(target))
 }
 
 func newUpdateManager(options mutationOptions, paths state.Paths, current releasecontract.Current, resolved releasecontract.Resolved, manifestBytes []byte, progressSink progress.Sink) *managercontract.Update {

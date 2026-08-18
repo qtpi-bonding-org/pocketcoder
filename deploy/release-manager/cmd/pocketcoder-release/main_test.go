@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +11,18 @@ import (
 	releasecontract "github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/release"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/state"
 )
+
+func TestUpgradeOsFailsClosedWhenTheReleaseCannotBeResolved(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+	t.Setenv("RELEASE_BASE", server.URL)
+	t.Setenv("POCKETCODER_RELEASE_STATE_DIR", t.TempDir())
+	if err := run([]string{"upgrade-os"}); err == nil {
+		t.Fatal("expected upgrade-os to fail when the release cannot be resolved")
+	}
+}
 
 func TestRestartOsRunsSystemctlReboot(t *testing.T) {
 	stub := t.TempDir()
