@@ -20,6 +20,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/runtime"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/snapshot"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/state"
+	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/tlscert"
 	"github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager/internal/trust"
 )
 
@@ -63,6 +64,18 @@ func run(args []string) error {
 			DataDir: "/app/pb_data", BackupDir: "/app/pb_backups", Container: container,
 			Docker: runtime.Docker{Stdout: os.Stdout, Stderr: os.Stderr},
 		})
+	case "export-cert":
+		bundle, err := tlscert.ExportBundle()
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(bundle)
+	case "import-cert":
+		var bundle tlscert.Bundle
+		if err := json.NewDecoder(os.Stdin).Decode(&bundle); err != nil {
+			return fmt.Errorf("decode certificate bundle: %w", err)
+		}
+		return tlscert.ImportBundle(bundle)
 	case "update-os":
 		cmd := exec.Command("nixos-rebuild", "switch", "--upgrade")
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
