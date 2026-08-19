@@ -128,8 +128,8 @@ _pc_install_release() {
   POCKETCODER_STATUS_RUN_ID="$PC_RUN_ID" \
     pocketcoder-release install
 }
-pc_retry 3 5 -- _pc_install_release && install_ok=1
 pc_status_heartbeat_stop
+pc_retry 3 5 -- _pc_install_release && install_ok=1
 if [ "$install_ok" != 1 ]; then
   last_operation=$(pc_status_last_operation)
   pc_status_error "${last_operation:-fetching_release}" release_install_failed
