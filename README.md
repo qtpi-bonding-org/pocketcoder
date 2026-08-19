@@ -1,6 +1,6 @@
 # PocketCoder
 
-**A sovereign, mobile-first coding agent you run on your own infrastructure.** Use local models through Ollama or a hosted provider, receive private notifications through ntfy, and approve consequential actions from your phone before they run — without routing commands through a chat app.
+**PocketCoder enables you to set up your own private server and deploy an agent with one tap from your phone.** You own the server and its data. Once it is running, you can use a coding-focused personal agent from anywhere, review its proposed actions, and approve or deny them from the mobile app — without becoming a systems administrator or routing commands through a chat app.
 
 PocketCoder is a solo research project built in the open. It follows an **Alpine Linux** philosophy — a tiny original surface area standing on FOSS "giant's shoulders" rather than hand-rolled glue: **PocketBase** for state and auth, **Goose** as the default harness, and open agent protocols (**ACP**, **AG-UI**, **MCP**) for everything in between.
 
@@ -29,9 +29,9 @@ connecting sensitive accounts.
 Two patterns have emerged for working with autonomous agents, and PocketCoder aims for the secure middle ground:
 
 - **Mission-control on the go.** Tools like Google Antigravity showed that a lot of agent work is *reviewing plans and approving executions*, not typing syntax. That subset fits a phone perfectly — assign tasks, review plans, approve deployments while away from your keyboard.
-- **A safe alternative to chat-bridge agents.** Tools like OpenClaw let you message a personal agent to do real work, but route system commands through unauthenticated chat apps — a documented security nightmare. PocketCoder gives you the same convenience inside a proper authenticated app where **every tool call is gated by an explicit, human-inspectable approval** before it executes.
+- **A safer alternative to chat-bridge agents.** Chat is convenient, but it is a poor permission and interruption interface for an agent with terminal, filesystem, and network access. PocketCoder puts the interaction inside an authenticated app and exposes the harness's permission requests as explicit, human-inspectable approve/deny choices. The default is human-in-the-loop; configured “always allow” rules and the security limitations of the current c2 runtime are documented in [`SECURITY.md`](SECURITY.md).
 
-**Core principles:** scoped for mobile (orchestration, not 500-line diffs on a phone) · human-in-the-loop by default · open protocols instead of bespoke glue · local-first when desired, provider-independent when useful.
+**Core principles:** scoped for mobile (orchestration, review, and control rather than 500-line diffs on a phone) · least privilege and human-in-the-loop by default · Docker as the hard runtime boundary · open protocols instead of bespoke glue · local-first when desired, provider-independent when useful.
 
 ## Mobile-first provisioning
 
@@ -108,7 +108,31 @@ ask an agent to remember its own identity. The service is local and always on;
 if its bundled embedding model is unavailable, canonical writes and FTS5 recall
 continue in an explicitly degraded mode.
 
-The selected harness is the **system of record** for its conversation history. PocketBase stores authentication and the `chat_id → external harness session` mapping — it is not a conversation or approval ledger. The Flutter client keeps a local Drift cache as an offline mirror refreshed from the selected harness.
+The selected harness is the **system of record** for its conversation and session history. PocketBase stores authentication, configuration, permission rules, and the `chat_id → external harness session` mapping — it is not a second conversation database or durable approval ledger. The Flutter client keeps a local Drift cache as an offline mirror refreshed from the selected harness.
+
+### What is current, and what is experimental
+
+PocketCoder has gone through two related designs. An earlier prototype explored a
+separate Rust execution gateway, an orchestrator, and multiple subagent
+containers. That work tested the security model—especially the combination of
+sensitive-data access, untrusted-content ingestion, and external execution—but
+the transport wiring (tmux, Unix sockets, WebSockets, and OpenCode SSE) became
+too fragile for the MVP. The old sandbox and orchestration code remains under
+[`dormant/`](dormant/) as future work.
+
+The current runtime is deliberately smaller: a selected ACP-compatible harness
+executes inside c2, c1 translates ACP to AG-UI, and Docker/network isolation
+provides the hard boundary. The harness owns the conversation; PocketBase owns
+the control-plane configuration around it. This is a strong approval and scope
+boundary, not an air-gapped sandbox—see [`SECURITY.md`](SECURITY.md) for the
+current limitations.
+
+PocketCoder also includes **Pocket Memory**, a Rust/SQLite service exposed to
+the agent through MCP. It stores agent-authored observations and interpretations,
+supports FTS5 plus optional local multilingual embeddings, and keeps provenance
+so a remembered interpretation can be traced back to an observation. SQLPage is
+provided for inspection and observability; it is not an additional agent or a
+write-time security filter.
 
 The security model and its honest limits (tool execution currently lives inside c2; the hardened sandbox is dormant) are documented in [`SECURITY.md`](SECURITY.md); the full design and open questions in [`docs/architecture-refactor.md`](docs/architecture-refactor.md).
 
@@ -123,7 +147,7 @@ The security model and its honest limits (tool execution currently lives inside 
 | **LLM provider** | Ollama locally or any hosted provider | Usually one vendor | Any |
 | **Sharing model** | Trusted users sharing one deployment; not hostile multi-tenant isolation | Single session | Single user |
 | **Data sovereignty** | Fully self-hosted, no telemetry | Routes through a vendor | Self-hosted, but commands via chat apps |
-| **Security posture** | Every action gated by explicit approval | Permission modes, no mobile override | Approval bolted on, if any |
+| **Security posture** | Harness permission requests surfaced for explicit approval by default; configurable rules; c2 is not yet a hardened sandbox | Permission modes, no mobile override | Approval bolted on, if any |
 
 ## Quick Start
 
