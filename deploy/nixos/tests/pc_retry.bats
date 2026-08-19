@@ -35,3 +35,23 @@ setup() {
   [ "$status" -eq 0 ]
   [ "$(cat "$count_file")" = 2 ]
 }
+
+@test "pc_retry exports PC_RETRY_ATTEMPT/PC_RETRY_ATTEMPTS during the call and unsets them after" {
+  seen_file="$BATS_TEST_TMPDIR/seen"
+  check_and_fail_once() {
+    echo "attempt=${PC_RETRY_ATTEMPT:-unset} attempts=${PC_RETRY_ATTEMPTS:-unset}" >> "$seen_file"
+    [ "${PC_RETRY_ATTEMPT:-}" = 2 ]
+  }
+  pc_retry 2 0 -- check_and_fail_once || true
+  [ "$(sed -n 1p "$seen_file")" = "attempt=1 attempts=2" ]
+  [ "$(sed -n 2p "$seen_file")" = "attempt=2 attempts=2" ]
+  [ -z "${PC_RETRY_ATTEMPT:-}" ]
+  [ -z "${PC_RETRY_ATTEMPTS:-}" ]
+}
+
+@test "a status write outside any pc_retry block never sees stale attempt values" {
+  fails_once() { [ -n "${PC_RETRY_ATTEMPT:-}" ] || return 1; return 1; }
+  pc_retry 2 0 -- fails_once || true
+  [ -z "${PC_RETRY_ATTEMPT:-}" ]
+  [ -z "${PC_RETRY_ATTEMPTS:-}" ]
+}
