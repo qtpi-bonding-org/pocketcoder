@@ -16,6 +16,7 @@ func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 		"unknown",
 		"ssh-ed25519",
 		"MD5:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff",
+		1, 1,
 		nil,
 	)
 	reporter.SetSourceCommit("0123456789abcdef")
@@ -42,7 +43,7 @@ func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 
 func TestReporterHeartbeatRefreshesStatus(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "status.json")
-	reporter := New(path, "run-2", "commit", "", "", nil)
+	reporter := New(path, "run-2", "commit", "", "", 1, 1, nil)
 	reporter.Report("compose_up", "starting")
 	first := readDocument(t, path).UpdatedAt
 
@@ -55,11 +56,41 @@ func TestReporterHeartbeatRefreshesStatus(t *testing.T) {
 	}
 }
 
+func TestReporterWritesAttemptAndMaxAttempts(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "status.json")
+	reporter := New(path, "run-4", "commit", "", "", 2, 3, nil)
+	reporter.Report("loading_images", "required.core")
+
+	value := readDocument(t, path)
+	if value.Attempt != 2 || value.MaxAttempts != 3 {
+		t.Fatalf("unexpected attempt tracking: %#v", value)
+	}
+
+	reporter.Fail("release_install_failed")
+	value = readDocument(t, path)
+	if value.Attempt != 2 || value.MaxAttempts != 3 {
+		t.Fatalf("attempt tracking not preserved on failure: %#v", value)
+	}
+}
+
+func TestReporterDefaultsAttemptToOneOfOne(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "status.json")
+	reporter := New(path, "run-5", "commit", "", "", 0, 0, nil)
+	reporter.Report("fetching_release", "")
+
+	value := readDocument(t, path)
+	if value.Attempt != 1 || value.MaxAttempts != 1 {
+		t.Fatalf("expected default 1/1, got attempt=%d maxAttempts=%d", value.Attempt, value.MaxAttempts)
+	}
+}
+
 type testDocument struct {
 	Schema       int         `json:"schema"`
 	RunID        string      `json:"runId"`
 	Operation    string      `json:"operation"`
 	Detail       string      `json:"detail"`
+	Attempt      int         `json:"attempt"`
+	MaxAttempts  int         `json:"maxAttempts"`
 	SourceCommit string      `json:"sourceCommit"`
 	UpdatedAt    string      `json:"updatedAt"`
 	ErrorCode    string      `json:"errorCode"`
@@ -85,7 +116,7 @@ func TestReporterPreservesUnknownFields(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`{"schema":2,"tls":{"state":"ready"},"future":true}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	reporter := New(path, "run-3", "commit", "", "", nil)
+	reporter := New(path, "run-3", "commit", "", "", 1, 1, nil)
 	reporter.Report("compose_up", "starting")
 	var value map[string]json.RawMessage
 	data, err := os.ReadFile(path)

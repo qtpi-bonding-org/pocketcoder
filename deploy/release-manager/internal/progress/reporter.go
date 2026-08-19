@@ -35,10 +35,12 @@ type Reporter struct {
 	phase        string
 	detail       string
 	sourceCommit string
+	attempt      int
+	maxAttempts  int
 	sshHostKey   *sshHostKey
 }
 
-func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, errorWriter io.Writer) *Reporter {
+func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, attempt, maxAttempts int, errorWriter io.Writer) *Reporter {
 	if errorWriter == nil {
 		errorWriter = io.Discard
 	}
@@ -48,6 +50,12 @@ func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, erro
 	if sourceCommit == "" {
 		sourceCommit = "unknown"
 	}
+	if attempt < 1 {
+		attempt = 1
+	}
+	if maxAttempts < 1 {
+		maxAttempts = 1
+	}
 	var hostKey *sshHostKey
 	if hostKeyType != "" && hostKeyFingerprint != "" {
 		hostKey = &sshHostKey{Type: hostKeyType, Fingerprint: hostKeyFingerprint}
@@ -55,6 +63,7 @@ func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, erro
 	return &Reporter{
 		path: path, runID: runID, sourceCommit: sourceCommit,
 		errorWriter: errorWriter, phase: "fetching_release", sshHostKey: hostKey,
+		attempt: attempt, maxAttempts: maxAttempts,
 	}
 }
 
@@ -159,6 +168,8 @@ func (reporter *Reporter) writeLocked(errorCode string) {
 			} else {
 				set("detail", reporter.detail)
 			}
+			set("attempt", reporter.attempt)
+			set("maxAttempts", reporter.maxAttempts)
 			set("sourceCommit", reporter.sourceCommit)
 			set("updatedAt", time.Now().UTC().Format(time.RFC3339))
 			if errorCode == "" {
