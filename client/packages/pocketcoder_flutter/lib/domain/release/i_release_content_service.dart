@@ -33,9 +33,10 @@ abstract interface class IReleaseContentService {
 }
 
 class ReleaseContentException implements Exception {
-  const ReleaseContentException(this.message, [this.cause]);
+  const ReleaseContentException(this.message, [this.cause, this.statusCode]);
   final String message;
   final Object? cause;
+  final int? statusCode;
 
   @override
   String toString() => 'ReleaseContentException: $message';

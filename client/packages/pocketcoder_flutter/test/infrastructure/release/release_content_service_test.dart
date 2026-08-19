@@ -20,6 +20,28 @@ void main() {
     expect(utf8.decode(await service.fetchDocument(release, 'walkthrough')),
         'hello from poco');
   });
+  test('retries a 404 once with a cache-busting query', () async {
+    final fixture = await _Fixture.create();
+    var requests = 0;
+    Uri? retryUri;
+    final service = fixture.service(client: MockClient((request) async {
+      requests++;
+      if (requests == 1) {
+        return http.Response('not published yet', 404);
+      }
+      if (requests == 2) retryUri = request.url;
+      final body = fixture.routes[request.url.path];
+      return body == null
+          ? http.Response('missing', 404)
+          : http.Response.bytes(body, 200);
+    }));
+
+    final release = await service.resolve();
+
+    expect(release.digest, fixture.digest);
+    expect(requests, 4);
+    expect(retryUri?.queryParameters['_refresh'], isNotEmpty);
+  });
   test('rejects a replayed pointer', () async {
     final fixture = await _Fixture.create();
     FlutterSecureStorage.setMockInitialValues(
@@ -44,13 +66,16 @@ class _Fixture {
   final Map<String, Uint8List> routes;
   final String digest;
   static const base = 'https://images.relay.pocketcoder.org/v1';
-  ReleaseContentService service() =>
-      ReleaseContentService(MockClient((request) async {
-        final body = routes[request.url.path];
-        return body == null
-            ? http.Response('missing', 404)
-            : http.Response.bytes(body, 200);
-      }), const FlutterSecureStorage(), base);
+  ReleaseContentService service({http.Client? client}) => ReleaseContentService(
+      client ??
+          MockClient((request) async {
+            final body = routes[request.url.path];
+            return body == null
+                ? http.Response('missing', 404)
+                : http.Response.bytes(body, 200);
+          }),
+      const FlutterSecureStorage(),
+      base);
   static Future<_Fixture> create(
       {bool revoked = false, bool tampered = false}) async {
     final document = Uint8List.fromList(utf8.encode('hello from poco'));

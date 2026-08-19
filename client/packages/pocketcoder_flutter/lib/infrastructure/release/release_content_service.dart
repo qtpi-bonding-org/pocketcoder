@@ -141,10 +141,28 @@ class ReleaseContentService implements IReleaseContentService {
   }
 
   Future<Uint8List> _getBounded(Uri uri, int maximumBytes) async {
-    final response = await _http.send(http.Request('GET', uri));
+    var requestUri = uri;
+    var retriedNotFound = false;
+    late http.StreamedResponse response;
+    while (true) {
+      response = await _http.send(http.Request('GET', requestUri));
+      if (response.statusCode != 404 || retriedNotFound) break;
+
+      // Release metadata can briefly return 404 while the release service's
+      // pointer/object cache catches up. Retry once without reusing a cached
+      // response; all other HTTP errors remain terminal.
+      retriedNotFound = true;
+      requestUri = requestUri.replace(queryParameters: {
+        ...requestUri.queryParameters,
+        '_refresh': DateTime.now().microsecondsSinceEpoch.toString(),
+      });
+    }
     if (response.statusCode != 200) {
       throw ReleaseContentException(
-          'Release service returned ${response.statusCode}');
+        'Release service returned ${response.statusCode}',
+        null,
+        response.statusCode,
+      );
     }
     final builder = BytesBuilder(copy: false);
     var length = 0;
