@@ -53,3 +53,22 @@ setup() {
 @test "pc_status_last_operation prints nothing before any write" {
   [ -z "$(pc_status_last_operation)" ]
 }
+
+@test "attempt/maxAttempts default to 1/1 outside pc_retry" {
+  pc_status_init
+  [ "$(jq -r .attempt "$PC_STATUS_DIR/status.json")" = 1 ]
+  [ "$(jq -r .maxAttempts "$PC_STATUS_DIR/status.json")" = 1 ]
+}
+
+@test "attempt/maxAttempts reflect PC_RETRY_ATTEMPT/PC_RETRY_ATTEMPTS when set" {
+  PC_RETRY_ATTEMPT=2 PC_RETRY_ATTEMPTS=3 pc_status_phase loading_images
+  [ "$(jq -r .attempt "$PC_STATUS_DIR/status.json")" = 2 ]
+  [ "$(jq -r .maxAttempts "$PC_STATUS_DIR/status.json")" = 3 ]
+}
+
+@test "attempt/maxAttempts do not stick after PC_RETRY_ATTEMPT is unset" {
+  PC_RETRY_ATTEMPT=3 PC_RETRY_ATTEMPTS=3 pc_status_phase loading_images
+  pc_status_phase bootstrap_complete
+  [ "$(jq -r .attempt "$PC_STATUS_DIR/status.json")" = 1 ]
+  [ "$(jq -r .maxAttempts "$PC_STATUS_DIR/status.json")" = 1 ]
+}

@@ -39,6 +39,8 @@ _pc_status_write() {
     --arg sshHostKeyFingerprint "$ssh_host_key_fingerprint" \
     --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg errorCode "$error" \
+    --argjson attempt "${PC_RETRY_ATTEMPT:-1}" \
+    --argjson maxAttempts "${PC_RETRY_ATTEMPTS:-1}" \
     '(. + {schema:$schema,runId:$runId,operation:$operation,
       detail:(if $detail == "" then null else $detail end),
       sourceCommit:$sourceCommit,updatedAt:$updatedAt,
@@ -47,7 +49,7 @@ _pc_status_write() {
         else {type:$sshHostKeyType,fingerprint:$sshHostKeyFingerprint}
         end),
       errorCode:(if $errorCode == "" then null else $errorCode end),
-      errorMessage:null})' <<<"$existing" > "$tmp"
+      errorMessage:null,attempt:$attempt,maxAttempts:$maxAttempts})' <<<"$existing" > "$tmp"
   chmod 0644 "$tmp"
   mv -f "$tmp" "$PC_STATUS_FILE"
   flock -u 9
