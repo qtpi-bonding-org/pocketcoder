@@ -190,4 +190,21 @@ void main() {
       );
     }
   });
+
+  test('holds waitingForConnection when the very first poll is unparseable', () async {
+    final client = MockClient((request) async {
+      if (request.url.path.contains('status.json')) {
+        return http.Response(
+          '{"schema":3,"runId":"r1","operation":"some_future_phase","updatedAt":"2026-08-16T00:00:00Z"}',
+          200,
+        );
+      }
+      return http.Response('not found', 404);
+    });
+
+    final monitor = DeploymentReadinessMonitor(client: client, pollInterval: Duration.zero);
+    final update = await monitor.monitor(hostname: 'example.com').first;
+
+    expect(update.operationKey, DeployOperationKey.waitingForConnection);
+  });
 }

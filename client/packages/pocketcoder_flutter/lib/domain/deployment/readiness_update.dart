@@ -19,4 +19,14 @@ class ReadinessUpdate {
   final int pollingAttempt;
   final bool statusTransportAuthenticated;
   final ServerStatusDocument? statusDocument;
+
+  /// True when [statusDocument] carries an error that has exhausted its
+  /// retries (`attempt >= maxAttempts`) -- the point at which the monitor's
+  /// stream actually terminates. A non-null `statusDocument?.errorCode` with
+  /// this false means a transient, still-retrying error: the monitor is
+  /// still polling and a consumer must not treat it as a failure yet.
+  bool get isTerminalError {
+    final doc = statusDocument;
+    return doc?.errorCode != null && doc!.attempt >= doc.maxAttempts;
+  }
 }

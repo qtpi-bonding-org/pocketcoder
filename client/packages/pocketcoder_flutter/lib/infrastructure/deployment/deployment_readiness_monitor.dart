@@ -77,9 +77,7 @@ class DeploymentReadinessMonitor {
               statusDocument: doc,
             );
             emittedThisAttempt = true;
-            final isTerminalError = doc.errorCode != null &&
-                doc.runId == adoptedRunId &&
-                doc.attempt >= doc.maxAttempts;
+            final isTerminalError = doc.errorCode != null && doc.attempt >= doc.maxAttempts;
             if (isTerminalError) {
               return;
             }

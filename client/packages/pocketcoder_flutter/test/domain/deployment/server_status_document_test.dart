@@ -9,7 +9,7 @@ void main() {
     final document = ServerStatusDocument.tryParse(jsonEncode({
       'schema': 3,
       'runId': 'run-1',
-      'operation': 'waiting_for_caddy',
+      'operation': 'compose_up',
       'updatedAt': '2026-08-15T00:00:00Z',
       'tls': {
         'state': 'ready',
