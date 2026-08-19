@@ -3,23 +3,28 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
-import 'package:pocketcoder_flutter/domain/deployment/readiness_phase.dart';
+import 'package:pocketcoder_flutter/domain/deployment/deploy_operation_key.dart';
 import 'package:pocketcoder_flutter/domain/deployment/readiness_update.dart';
 import 'package:pocketcoder_flutter/domain/deployment/server_status_document.dart';
 
 class DeploymentReadinessMonitor {
-  DeploymentReadinessMonitor({required http.Client client, DateTime Function()? now})
-    : _client = client,
-      _now = now ?? DateTime.now;
+  DeploymentReadinessMonitor({
+    required http.Client client,
+    DateTime Function()? now,
+    Duration pollInterval = const Duration(seconds: 3),
+  }) : _client = client,
+       _now = now ?? DateTime.now,
+       _pollInterval = pollInterval;
 
   final http.Client _client;
   final DateTime Function() _now;
+  final Duration _pollInterval;
 
   Stream<ReadinessUpdate> monitor({required String hostname}) async* {
     final started = _now();
     var adoptedRunId = '';
     var fallback = false;
-    var lastPhase = ReadinessPhase.waitingForCaddy;
+    var currentKey = DeployOperationKey.waitingForConnection;
     ServerStatusDocument? lastStatusDocument;
     var lastStatusTransportAuthenticated = false;
     var firstPoll = true;
@@ -56,26 +61,30 @@ class DeploymentReadinessMonitor {
             if (adoptedRunId.isEmpty || adoptedRunId != doc.runId) {
               adoptedRunId = doc.runId;
             }
-            final phase = ReadinessPhaseX.fromWireName(doc.phase);
-            if (phase.index >= lastPhase.index) {
-              lastPhase = phase;
+            // No monotonic clamp: mirror whatever the server reports,
+            // including a real retry-driven regression to an earlier key.
+            // Hold the previous key rather than falling back to a default
+            // when the wire value is unparseable (e.g. a newer server
+            // reporting a phase this client predates).
+            final parsedKey = DeployOperationKeyX.fromWireName(doc.operation);
+            if (parsedKey != null) {
+              currentKey = parsedKey;
             }
             yield ReadinessUpdate(
-              phase: lastPhase,
+              operationKey: currentKey,
               pollingAttempt: pollingAttempt,
               statusTransportAuthenticated: statusTransportAuthenticated,
               statusDocument: doc,
             );
             emittedThisAttempt = true;
-            if (doc.error != null && doc.runId == adoptedRunId) {
-              yield ReadinessUpdate(
-                phase: ReadinessPhase.failed,
-                pollingAttempt: pollingAttempt,
-                statusTransportAuthenticated: statusTransportAuthenticated,
-                statusDocument: doc,
-              );
+            final isTerminalError = doc.errorCode != null &&
+                doc.runId == adoptedRunId &&
+                doc.attempt >= doc.maxAttempts;
+            if (isTerminalError) {
               return;
             }
+            // A transient error (attempt < maxAttempts) already got its
+            // operation-key update above; the stream simply keeps polling.
           }
         }
       }
@@ -84,7 +93,7 @@ class DeploymentReadinessMonitor {
         final health = await _client.get(Uri.https(hostname, '/api/health'));
         if (health.statusCode == 200) {
           yield ReadinessUpdate(
-            phase: ReadinessPhase.ready,
+            operationKey: DeployOperationKey.ready,
             pollingAttempt: pollingAttempt,
             statusTransportAuthenticated: lastStatusTransportAuthenticated,
             statusDocument: lastStatusDocument,
@@ -97,7 +106,7 @@ class DeploymentReadinessMonitor {
 
       if (!emittedThisAttempt) {
         yield ReadinessUpdate(
-          phase: lastPhase,
+          operationKey: currentKey,
           pollingAttempt: pollingAttempt,
           statusTransportAuthenticated: false,
           statusDocument: lastStatusDocument,
@@ -105,15 +114,15 @@ class DeploymentReadinessMonitor {
       }
 
       if (!firstPoll) {
-        await Future<void>.delayed(const Duration(seconds: 3));
+        await Future<void>.delayed(_pollInterval);
       }
       firstPoll = false;
     }
-    yield ReadinessUpdate(
-      phase: ReadinessPhase.timedOut,
-      pollingAttempt: pollingAttempt,
-      statusTransportAuthenticated: false,
-      statusDocument: lastStatusDocument,
-    );
+    // Budget exhausted with no ready/terminal-error outcome. This does not
+    // introduce a new "timedOut" key -- DeployOperationKey has none, by
+    // design (see spec: readiness timeout is a Pro-level terminal outcome,
+    // not a server-reported operation). Pro's consumer applies its own
+    // 30-minute-elapsed-with-no-terminal-update rule; this stream simply
+    // ends.
   }
 }
