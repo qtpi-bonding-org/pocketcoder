@@ -1,5 +1,6 @@
 { config, pkgs, sourceCommit ? "main", releaseBranch ? "main", releaseManager
-, bootstrapScript ? ./bootstrap.sh, statusScript ? ./status.sh, ... }:
+, bootstrapScript ? ./bootstrap.sh, statusScript ? ./status.sh
+, pcRetryScript ? ./pc_retry.sh, ... }:
 
 {
   systemd.services.pocketcoder-bootstrap = {
@@ -54,6 +55,7 @@
   };
 
   environment.etc."pocketcoder/status.sh".source = statusScript;
+  environment.etc."pocketcoder/pc_retry.sh".source = pcRetryScript;
 
   systemd.services.pocketcoder-release-metadata = {
     description = "Check GitHub-attested PocketCoder release metadata";
