@@ -637,13 +637,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPocketbaseAdminEmail.
   ///
   /// In en, this message translates to:
-  /// **'POCKETBASE ADMIN EMAIL'**
+  /// **'POCKETCODER ADMIN EMAIL'**
   String get onboardingPocketbaseAdminEmail;
 
   /// No description provided for @onboardingPocketbaseAdminPassword.
   ///
   /// In en, this message translates to:
-  /// **'POCKETBASE ADMIN PASSWORD'**
+  /// **'POCKETCODER ADMIN PASSWORD'**
   String get onboardingPocketbaseAdminPassword;
 
   /// No description provided for @homeTitle.
@@ -3091,8 +3091,8 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentPlanPoco.
   ///
   /// In en, this message translates to:
-  /// **'The {minimumMemory} option is the minimum for remote models. I recommend {recommendedMemory} for builds, tests, and updates. You can choose either or go larger.'**
-  String deploymentPlanPoco(String minimumMemory, String recommendedMemory);
+  /// **'The {minimumMemory} option is the minimum for remote models. Choose it or go larger for builds, tests, and updates.'**
+  String deploymentPlanPoco(String minimumMemory);
 
   /// No description provided for @deploymentRegionPoco.
   ///
@@ -4984,6 +4984,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Occurred {count}x'**
   String errorsOccurred(int count);
+
+  /// Label for the reset deployment state action on the config screen recovery section
+  ///
+  /// In en, this message translates to:
+  /// **'RESET DEPLOYMENT STATE'**
+  String get deploymentResetAction;
+
+  /// Title of the reset confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Reset local deployment state?'**
+  String get deploymentResetConfirmationTitle;
+
+  /// Body of the reset confirmation dialog explaining local-only scope
+  ///
+  /// In en, this message translates to:
+  /// **'This clears local deployment state only: the saved session, instance id, and credentials stored on this device. It does NOT delete your cloud server.'**
+  String get deploymentResetConfirmationBody;
+
+  /// Cloud-unaffected warning in the reset confirmation
+  ///
+  /// In en, this message translates to:
+  /// **'Your cloud instance is unaffected. Use your provider console to inspect or delete it.'**
+  String get deploymentResetConfirmationWarnCloud;
+
+  /// Optional checkbox label to also clear OAuth credentials during reset
+  ///
+  /// In en, this message translates to:
+  /// **'Also sign out of the cloud provider (clear OAuth tokens)'**
+  String get deploymentResetAlsoClearOAuth;
+
+  /// Confirm button label on the reset dialog
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get deploymentResetConfirm;
+
+  /// Cancel button label on the reset dialog
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get deploymentResetCancel;
+
+  /// Snack/banner shown after a successful reset
+  ///
+  /// In en, this message translates to:
+  /// **'Local deployment state cleared.'**
+  String get deploymentResetComplete;
+
+  /// Cleanup outcome shown when the cloud server was deleted successfully
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud server deleted.'**
+  String get deploymentCleanupSucceeded;
+
+  /// Cleanup outcome shown when deleting the cloud server failed
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the cloud server. Use your provider console to remove it.'**
+  String get deploymentCleanupFailed;
+
+  /// Cleanup outcome shown when cleanup is pending manual action
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup could not run automatically. Use your provider console to remove the cloud server.'**
+  String get deploymentCleanupPending;
+
+  /// Cleanup outcome shown when no cloud server needed cleanup
+  ///
+  /// In en, this message translates to:
+  /// **'No cloud server to clean up.'**
+  String get deploymentCleanupNotNeeded;
 }
 
 class _AppLocalizationsDelegate

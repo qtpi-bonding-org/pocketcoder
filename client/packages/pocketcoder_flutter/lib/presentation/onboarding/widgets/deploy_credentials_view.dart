@@ -12,6 +12,7 @@ class DeployCredentialsView extends StatefulWidget {
     required this.password,
     required this.onEmailChanged,
     required this.onPasswordChanged,
+    required this.isValid,
     required this.onContinue,
   });
 
@@ -19,6 +20,7 @@ class DeployCredentialsView extends StatefulWidget {
   final String password;
   final ValueChanged<String> onEmailChanged;
   final ValueChanged<String> onPasswordChanged;
+  final bool isValid;
   final VoidCallback onContinue;
 
   @override
@@ -51,7 +53,8 @@ class _DeployCredentialsViewState extends State<DeployCredentialsView> {
               label: context.l10n.actionBack,
               onTap: () => Navigator.of(context).maybePop()),
           TerminalAction(
-              label: context.l10n.actionContinue, onTap: widget.onContinue),
+              label: context.l10n.actionContinue,
+              onTap: widget.isValid ? widget.onContinue : () {}),
         ],
         body: Center(
           child: ConstrainedBox(

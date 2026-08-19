@@ -28,8 +28,14 @@ class DeployCredentialsAdapter
         password: value.password,
         onEmailChanged: cubit.setEmail,
         onPasswordChanged: cubit.setPassword,
+        isValid: value.email.trim().isNotEmpty &&
+            value.password.trim().isNotEmpty,
         onContinue: () {
           final current = cubit.state;
+          if (current.email.trim().isEmpty ||
+              current.password.trim().isEmpty) {
+            return;
+          }
           final credentials = DeployCredentials(
             email: current.email.trim(),
             password: current.password,

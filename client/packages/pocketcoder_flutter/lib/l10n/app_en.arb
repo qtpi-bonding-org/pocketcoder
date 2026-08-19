@@ -109,8 +109,8 @@
     "placeholders": {"error": {"type": "String"}}
   },
   "onboardingDeployTitle": "DEPLOY SERVER",
-  "onboardingPocketbaseAdminEmail": "POCKETBASE ADMIN EMAIL",
-  "onboardingPocketbaseAdminPassword": "POCKETBASE ADMIN PASSWORD",
+  "onboardingPocketbaseAdminEmail": "POCKETCODER ADMIN EMAIL",
+  "onboardingPocketbaseAdminPassword": "POCKETCODER ADMIN PASSWORD",
 
   "homeTitle": "CHATS",
   "homeLoadingChats": "LOADING CHATS",
@@ -695,13 +695,10 @@
   "deploymentWorkloadLocalReply": "A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.",
   "deploymentUseCloudModels": "USE CLOUD MODELS",
   "deploymentRunLocalModel": "RUN A LOCAL MODEL",
-  "deploymentPlanPoco": "The {minimumMemory} option is the minimum for remote models. I recommend {recommendedMemory} for builds, tests, and updates. You can choose either or go larger.",
+  "deploymentPlanPoco": "The {minimumMemory} option is the minimum for remote models. Choose it or go larger for builds, tests, and updates.",
   "@deploymentPlanPoco": {
     "placeholders": {
       "minimumMemory": {
-        "type": "String"
-      },
-      "recommendedMemory": {
         "type": "String"
       }
     }
@@ -1123,5 +1120,29 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "deploymentResetAction": "RESET DEPLOYMENT STATE",
+  "@deploymentResetAction": { "description": "Label for the reset deployment state action on the config screen recovery section" },
+  "deploymentResetConfirmationTitle": "Reset local deployment state?",
+  "@deploymentResetConfirmationTitle": { "description": "Title of the reset confirmation dialog" },
+  "deploymentResetConfirmationBody": "This clears local deployment state only: the saved session, instance id, and credentials stored on this device. It does NOT delete your cloud server.",
+  "@deploymentResetConfirmationBody": { "description": "Body of the reset confirmation dialog explaining local-only scope" },
+  "deploymentResetConfirmationWarnCloud": "Your cloud instance is unaffected. Use your provider console to inspect or delete it.",
+  "@deploymentResetConfirmationWarnCloud": { "description": "Cloud-unaffected warning in the reset confirmation" },
+  "deploymentResetAlsoClearOAuth": "Also sign out of the cloud provider (clear OAuth tokens)",
+  "@deploymentResetAlsoClearOAuth": { "description": "Optional checkbox label to also clear OAuth credentials during reset" },
+  "deploymentResetConfirm": "RESET",
+  "@deploymentResetConfirm": { "description": "Confirm button label on the reset dialog" },
+  "deploymentResetCancel": "CANCEL",
+  "@deploymentResetCancel": { "description": "Cancel button label on the reset dialog" },
+  "deploymentResetComplete": "Local deployment state cleared.",
+  "@deploymentResetComplete": { "description": "Snack/banner shown after a successful reset" },
+  "deploymentCleanupSucceeded": "Cloud server deleted.",
+  "@deploymentCleanupSucceeded": { "description": "Cleanup outcome shown when the cloud server was deleted successfully" },
+  "deploymentCleanupFailed": "Could not delete the cloud server. Use your provider console to remove it.",
+  "@deploymentCleanupFailed": { "description": "Cleanup outcome shown when deleting the cloud server failed" },
+  "deploymentCleanupPending": "Cleanup could not run automatically. Use your provider console to remove the cloud server.",
+  "@deploymentCleanupPending": { "description": "Cleanup outcome shown when cleanup is pending manual action" },
+  "deploymentCleanupNotNeeded": "No cloud server to clean up.",
+  "@deploymentCleanupNotNeeded": { "description": "Cleanup outcome shown when no cloud server needed cleanup" }
 }

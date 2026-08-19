@@ -3,6 +3,11 @@ set -eu
 
 # Publish Caddy's local certificate state into the existing public snapshot.
 # This intentionally never exposes Caddy's private-key path or key material.
+#
+# NOTE: this script is also invoked directly by deploy/standard-linux's Caddy
+# setup, which shares this same status.json file with a bootstrap writer that
+# is still on schema 2 (phase/error keys). Standard Linux is not a supported
+# deployment target, so that schema mismatch is not being reconciled here.
 status_file=${POCKETCODER_STATUS_FILE:-/var/lib/pocketcoder/public/status.json}
 domain=${1:-}
 status_dir=$(dirname -- "$status_file")

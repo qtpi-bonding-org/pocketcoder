@@ -7,12 +7,14 @@ class TerminalAction {
   final VoidCallback onTap;
   final bool hasBadge;
   final bool isActive;
+  final Color? color;
 
   TerminalAction({
     required this.label,
     required this.onTap,
     this.hasBadge = false,
     this.isActive = false,
+    this.color,
   });
 }
 
@@ -58,7 +60,9 @@ class TerminalFooter extends StatelessWidget {
     final terminalColors = context.terminalColors;
 
     final bgColor = action.isActive ? colors.onSurface : Colors.transparent;
-    final fgColor = action.isActive ? colors.surface : colors.onSurface;
+    final fgColor = action.isActive
+        ? colors.surface
+        : action.color ?? colors.onSurface;
 
     return Material(
       color: Colors.transparent,

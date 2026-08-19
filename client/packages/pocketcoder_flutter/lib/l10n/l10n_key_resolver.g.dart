@@ -787,7 +787,7 @@ class L10nKeyResolver {
       'deployment.memory.gb' => _l10n.deploymentMemoryGb(args?['value'] as int? ?? 0),
       'deployment.memory.mb' => _l10n.deploymentMemoryMb(args?['value'] as int? ?? 0),
       'deployment.monthly.price' => _l10n.deploymentMonthlyPrice(args?['price'] as String? ?? ''),
-      'deployment.plan.poco' => _l10n.deploymentPlanPoco(args?['minimumMemory'] as String? ?? '', args?['recommendedMemory'] as String? ?? ''),
+      'deployment.plan.poco' => _l10n.deploymentPlanPoco(args?['minimumMemory'] as String? ?? ''),
       'deployment.plan.specs' => _l10n.deploymentPlanSpecs(args?['vcpus'] as int? ?? 0, args?['memory'] as String? ?? '', args?['diskGb'] as int? ?? 0),
       'deployment.ready' => _l10n.deploymentReady(args?['ipAddress'] as String? ?? ''),
       'deployment.status.prefix' => _l10n.deploymentStatusPrefix(args?['status'] as String? ?? ''),
@@ -3501,7 +3501,7 @@ abstract class L10nKeys {
   static const deploymentNixosDescription = 'deployment.nixos.description';
   static const deploymentNoSuitablePlans = 'deployment.no.suitable.plans';
   static const deploymentOperatingSystem = 'deployment.operating.system';
-  static (String, Map<String, dynamic>) deploymentPlanPoco(String minimumMemory, String recommendedMemory) => ('deployment.plan.poco', {'minimumMemory': minimumMemory, 'recommendedMemory': recommendedMemory});
+  static (String, Map<String, dynamic>) deploymentPlanPoco(String minimumMemory) => ('deployment.plan.poco', {'minimumMemory': minimumMemory});
   static (String, Map<String, dynamic>) deploymentPlanSpecs(int vcpus, String memory, int diskGb) => ('deployment.plan.specs', {'vcpus': vcpus, 'memory': memory, 'diskGb': diskGb});
   static const deploymentProviderLinode = 'deployment.provider.linode';
   static const deploymentProvisioned = 'deployment.provisioned';

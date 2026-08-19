@@ -291,10 +291,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingDeployTitle => 'DEPLOY SERVER';
 
   @override
-  String get onboardingPocketbaseAdminEmail => 'POCKETBASE ADMIN EMAIL';
+  String get onboardingPocketbaseAdminEmail => 'POCKETCODER ADMIN EMAIL';
 
   @override
-  String get onboardingPocketbaseAdminPassword => 'POCKETBASE ADMIN PASSWORD';
+  String get onboardingPocketbaseAdminPassword => 'POCKETCODER ADMIN PASSWORD';
 
   @override
   String get homeTitle => 'CHATS';
@@ -1629,8 +1629,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentRunLocalModel => 'RUN A LOCAL MODEL';
 
   @override
-  String deploymentPlanPoco(String minimumMemory, String recommendedMemory) {
-    return 'The $minimumMemory option is the minimum for remote models. I recommend $recommendedMemory for builds, tests, and updates. You can choose either or go larger.';
+  String deploymentPlanPoco(String minimumMemory) {
+    return 'The $minimumMemory option is the minimum for remote models. Choose it or go larger for builds, tests, and updates.';
   }
 
   @override
@@ -2744,4 +2744,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String errorsOccurred(int count) {
     return 'Occurred ${count}x';
   }
+
+  @override
+  String get deploymentResetAction => 'RESET DEPLOYMENT STATE';
+
+  @override
+  String get deploymentResetConfirmationTitle =>
+      'Reset local deployment state?';
+
+  @override
+  String get deploymentResetConfirmationBody =>
+      'This clears local deployment state only: the saved session, instance id, and credentials stored on this device. It does NOT delete your cloud server.';
+
+  @override
+  String get deploymentResetConfirmationWarnCloud =>
+      'Your cloud instance is unaffected. Use your provider console to inspect or delete it.';
+
+  @override
+  String get deploymentResetAlsoClearOAuth =>
+      'Also sign out of the cloud provider (clear OAuth tokens)';
+
+  @override
+  String get deploymentResetConfirm => 'RESET';
+
+  @override
+  String get deploymentResetCancel => 'CANCEL';
+
+  @override
+  String get deploymentResetComplete => 'Local deployment state cleared.';
+
+  @override
+  String get deploymentCleanupSucceeded => 'Cloud server deleted.';
+
+  @override
+  String get deploymentCleanupFailed =>
+      'Could not delete the cloud server. Use your provider console to remove it.';
+
+  @override
+  String get deploymentCleanupPending =>
+      'Cleanup could not run automatically. Use your provider console to remove the cloud server.';
+
+  @override
+  String get deploymentCleanupNotNeeded => 'No cloud server to clean up.';
 }
