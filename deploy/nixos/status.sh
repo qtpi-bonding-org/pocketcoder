@@ -30,23 +30,24 @@ _pc_status_write() {
   fi
   tmp=$(mktemp -p "$PC_STATUS_DIR" .status.XXXXXX)
   jq \
-    --argjson schema 2 \
+    --argjson schema 3 \
     --arg runId "$PC_RUN_ID" \
-    --arg phase "$phase" \
+    --arg operation "$phase" \
     --arg detail "$detail" \
     --arg sourceCommit "${PC_SOURCE_COMMIT:-unknown}" \
     --arg sshHostKeyType "$ssh_host_key_type" \
     --arg sshHostKeyFingerprint "$ssh_host_key_fingerprint" \
     --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    --arg error "$error" \
-    '(. + {schema:$schema,runId:$runId,phase:$phase,
+    --arg errorCode "$error" \
+    '(. + {schema:$schema,runId:$runId,operation:$operation,
       detail:(if $detail == "" then null else $detail end),
       sourceCommit:$sourceCommit,updatedAt:$updatedAt,
       sshHostKey:(if $sshHostKeyType == "" or $sshHostKeyFingerprint == ""
         then null
         else {type:$sshHostKeyType,fingerprint:$sshHostKeyFingerprint}
         end),
-      error:(if $error == "" then null else $error end)})' <<<"$existing" > "$tmp"
+      errorCode:(if $errorCode == "" then null else $errorCode end),
+      errorMessage:null})' <<<"$existing" > "$tmp"
   chmod 0644 "$tmp"
   mv -f "$tmp" "$PC_STATUS_FILE"
   flock -u 9
