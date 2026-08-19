@@ -48,14 +48,14 @@ fi
 exec 9>>"$status_dir/.status.lock"
 flock 9
 existing='{}'
-if [ -s "$status_file" ] && jq -e . "$status_file" >/dev/null 2>&1; then existing="$status_file"; fi
+if [ -s "$status_file" ] && jq -e . "$status_file" >/dev/null 2>&1; then existing=$(cat "$status_file"); fi
 tmp=$(mktemp -p "$status_dir" .status.XXXXXX)
-jq --argjson schema 2 --arg state "$state" --arg hostname "$domain" \
+jq --argjson schema 3 --arg state "$state" --arg hostname "$domain" \
   --arg issuer "$issuer" --arg expiresAt "$expires" --arg reason "$reason" \
   '(. + {schema:$schema,tls:{state:$state,hostname:(if $hostname == "" then null else $hostname end),
     issuer:(if $issuer == "" then null else $issuer end),
     expiresAt:(if $expiresAt == "" then null else $expiresAt end),reason:$reason}})' \
-  "$existing" > "$tmp"
+  <<<"$existing" > "$tmp"
 chmod 0644 "$tmp"
 mv -f "$tmp" "$status_file"
 flock -u 9
