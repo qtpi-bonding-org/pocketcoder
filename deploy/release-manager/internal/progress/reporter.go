@@ -151,9 +151,9 @@ func (reporter *Reporter) writeLocked(errorCode string) {
 				}
 				value[key] = data
 			}
-			set("schema", 2)
+			set("schema", 3)
 			set("runId", reporter.runID)
-			set("phase", reporter.phase)
+			set("operation", reporter.phase)
 			if reporter.detail == "" {
 				set("detail", nil)
 			} else {
@@ -162,10 +162,11 @@ func (reporter *Reporter) writeLocked(errorCode string) {
 			set("sourceCommit", reporter.sourceCommit)
 			set("updatedAt", time.Now().UTC().Format(time.RFC3339))
 			if errorCode == "" {
-				set("error", nil)
+				set("errorCode", nil)
 			} else {
-				set("error", errorCode)
+				set("errorCode", errorCode)
 			}
+			set("errorMessage", nil)
 			if reporter.sshHostKey != nil {
 				set("sshHostKey", reporter.sshHostKey)
 			}

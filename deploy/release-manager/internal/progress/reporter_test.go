@@ -22,12 +22,12 @@ func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 	reporter.Report("loading_images", "required.core")
 
 	value := readDocument(t, path)
-	if value.RunID != "run-1" || value.Phase != "loading_images" ||
+	if value.Schema != 3 || value.RunID != "run-1" || value.Operation != "loading_images" ||
 		value.Detail != "required.core" || value.SourceCommit != "0123456789abcdef" {
 		t.Fatalf("unexpected status document: %#v", value)
 	}
-	if value.Error != "" {
-		t.Fatalf("unexpected error: %q", value.Error)
+	if value.ErrorCode != "" {
+		t.Fatalf("unexpected error: %q", value.ErrorCode)
 	}
 	if value.SSHHostKey == nil || value.SSHHostKey.Type != "ssh-ed25519" {
 		t.Fatalf("SSH host identity was not retained: %#v", value.SSHHostKey)
@@ -35,7 +35,7 @@ func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 
 	reporter.Fail("release_install_failed")
 	value = readDocument(t, path)
-	if value.Phase != "loading_images" || value.Error != "release_install_failed" {
+	if value.Operation != "loading_images" || value.ErrorCode != "release_install_failed" {
 		t.Fatalf("unexpected failure document: %#v", value)
 	}
 }
@@ -58,11 +58,12 @@ func TestReporterHeartbeatRefreshesStatus(t *testing.T) {
 type testDocument struct {
 	Schema       int         `json:"schema"`
 	RunID        string      `json:"runId"`
-	Phase        string      `json:"phase"`
+	Operation    string      `json:"operation"`
 	Detail       string      `json:"detail"`
 	SourceCommit string      `json:"sourceCommit"`
 	UpdatedAt    string      `json:"updatedAt"`
-	Error        string      `json:"error"`
+	ErrorCode    string      `json:"errorCode"`
+	ErrorMessage string      `json:"errorMessage"`
 	SSHHostKey   *sshHostKey `json:"sshHostKey"`
 }
 
