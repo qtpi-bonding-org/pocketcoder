@@ -131,7 +131,8 @@ _pc_install_release() {
 pc_retry 3 5 -- _pc_install_release && install_ok=1
 pc_status_heartbeat_stop
 if [ "$install_ok" != 1 ]; then
-  pc_status_error fetching_release release_install_failed
+  last_operation=$(pc_status_last_operation)
+  pc_status_error "${last_operation:-fetching_release}" release_install_failed
   exit 1
 fi
 # POCO:END bootstrap-release-source

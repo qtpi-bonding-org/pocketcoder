@@ -93,6 +93,11 @@ pc_status_error() {
   _pc_status_write "$1" "" "$2"
 }
 
+pc_status_last_operation() {
+  [ -s "$PC_STATUS_FILE" ] || return 0
+  jq -r '.operation // empty' "$PC_STATUS_FILE" 2>/dev/null || true
+}
+
 pc_status_heartbeat_start() {
   (while true; do sleep 60; _pc_status_write "$PC_CURRENT_PHASE" working ""; done) &
   PC_HEARTBEAT_PID=$!

@@ -43,3 +43,13 @@ setup() {
   [ "$(jq -r .errorCode "$PC_STATUS_DIR/status.json")" = "git clone failed" ]
   [ "$(jq -r .operation "$PC_STATUS_DIR/status.json")" = fetching_release ]
 }
+
+@test "pc_status_last_operation reads back the current operation" {
+  pc_status_init
+  pc_status_phase compose_up "starting_services"
+  [ "$(pc_status_last_operation)" = compose_up ]
+}
+
+@test "pc_status_last_operation prints nothing before any write" {
+  [ -z "$(pc_status_last_operation)" ]
+}
