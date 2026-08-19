@@ -5,11 +5,11 @@ import 'package:pocketcoder_flutter/domain/deployment/server_status_document.dar
 import 'package:pocketcoder_flutter/domain/deployment/server_tls_status.dart';
 
 void main() {
-  test('parses a schema-2 document\'s tls state', () {
+  test('parses a schema-3 document\'s tls state', () {
     final document = ServerStatusDocument.tryParse(jsonEncode({
-      'schema': 2,
+      'schema': 3,
       'runId': 'run-1',
-      'phase': 'waiting_for_caddy',
+      'operation': 'waiting_for_caddy',
       'updatedAt': '2026-08-15T00:00:00Z',
       'tls': {
         'state': 'ready',
@@ -24,9 +24,9 @@ void main() {
 
   test('leaves tls null when the server has not published it yet', () {
     final document = ServerStatusDocument.tryParse(jsonEncode({
-      'schema': 1,
+      'schema': 3,
       'runId': 'run-1',
-      'phase': 'configuring_operating_system',
+      'operation': 'configuring_operating_system',
       'updatedAt': '2026-08-15T00:00:00Z',
     }));
 
@@ -39,9 +39,9 @@ void main() {
   // real fingerprint the box ever published, with no test catching it.
   test('parses a SHA256-formatted ssh host key fingerprint', () {
     final document = ServerStatusDocument.tryParse(jsonEncode({
-      'schema': 2,
+      'schema': 3,
       'runId': 'run-1',
-      'phase': 'bootstrap_complete',
+      'operation': 'bootstrap_complete',
       'updatedAt': '2026-08-15T00:00:00Z',
       'sshHostKey': {
         'type': 'ssh-ed25519',
@@ -58,9 +58,9 @@ void main() {
 
   test('rejects an MD5-formatted ssh host key fingerprint', () {
     final document = ServerStatusDocument.tryParse(jsonEncode({
-      'schema': 2,
+      'schema': 3,
       'runId': 'run-1',
-      'phase': 'bootstrap_complete',
+      'operation': 'bootstrap_complete',
       'updatedAt': '2026-08-15T00:00:00Z',
       'sshHostKey': {
         'type': 'ssh-ed25519',
@@ -69,5 +69,36 @@ void main() {
     }));
 
     expect(document?.sshHostKey, isNull);
+  });
+
+  test('parses errorCode, errorMessage, attempt, and maxAttempts', () {
+    final document = ServerStatusDocument.tryParse(jsonEncode({
+      'schema': 3,
+      'runId': 'run-1',
+      'operation': 'loading_images',
+      'updatedAt': '2026-08-15T00:00:00Z',
+      'errorCode': 'release_install_failed',
+      'errorMessage': 'docker compose up exited 1',
+      'attempt': 2,
+      'maxAttempts': 3,
+    }));
+
+    expect(document?.operation, 'loading_images');
+    expect(document?.errorCode, 'release_install_failed');
+    expect(document?.errorMessage, 'docker compose up exited 1');
+    expect(document?.attempt, 2);
+    expect(document?.maxAttempts, 3);
+  });
+
+  test('defaults attempt and maxAttempts to 1 when the document omits them', () {
+    final document = ServerStatusDocument.tryParse(jsonEncode({
+      'schema': 3,
+      'runId': 'run-1',
+      'operation': 'fetching_release',
+      'updatedAt': '2026-08-15T00:00:00Z',
+    }));
+
+    expect(document?.attempt, 1);
+    expect(document?.maxAttempts, 1);
   });
 }
