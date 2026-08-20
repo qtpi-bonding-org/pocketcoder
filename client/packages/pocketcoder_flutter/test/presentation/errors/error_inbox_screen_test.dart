@@ -93,7 +93,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.tap(find.text('DELETE'));
     await tester.pumpAndSettle();
 
     verify(() => storage.deleteError('e1')).called(1);
