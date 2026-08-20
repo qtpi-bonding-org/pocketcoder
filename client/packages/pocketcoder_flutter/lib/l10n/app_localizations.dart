@@ -2578,6 +2578,42 @@ abstract class AppLocalizations {
   /// **'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.'**
   String get deploymentFaultGeneric;
 
+  /// No description provided for @deploymentFaultProvisionInterruptedNoResource.
+  ///
+  /// In en, this message translates to:
+  /// **'Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local deployment state.'**
+  String get deploymentFaultProvisionInterruptedNoResource;
+
+  /// No description provided for @deploymentFaultProvisionResourceStillExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Provisioning was interrupted after a provider resource was created. The resource still exists and was not recreated automatically. Use cleanup or resume from the provider account before trying again.'**
+  String get deploymentFaultProvisionResourceStillExists;
+
+  /// No description provided for @deploymentFaultProvisionResourceNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The tracked provider resource is no longer found in your account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.'**
+  String get deploymentFaultProvisionResourceNotFound;
+
+  /// No description provided for @deploymentFaultDeploymentInstanceNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The tracked deployment instance is no longer found in your provider account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.'**
+  String get deploymentFaultDeploymentInstanceNotFound;
+
+  /// No description provided for @deploymentFaultResourceAlreadyExists.
+  ///
+  /// In en, this message translates to:
+  /// **'A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.'**
+  String get deploymentFaultResourceAlreadyExists;
+
+  /// No description provided for @deploymentFaultMaxRetriesExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Max retry attempts ({maxAttempts}) exceeded.'**
+  String deploymentFaultMaxRetriesExceeded(int maxAttempts);
+
   /// No description provided for @deploymentFailed.
   ///
   /// In en, this message translates to:

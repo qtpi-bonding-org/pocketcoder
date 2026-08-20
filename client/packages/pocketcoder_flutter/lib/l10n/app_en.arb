@@ -604,6 +604,13 @@
   "deploymentGeoGrid": "GEO GRID",
   "deploymentFaultDetected": "FAULT DETECTED: {error}",
   "deploymentFaultGeneric": "SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.",
+  "deploymentFaultProvisionInterruptedNoResource": "Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local deployment state.",
+  "deploymentFaultProvisionResourceStillExists": "Provisioning was interrupted after a provider resource was created. The resource still exists and was not recreated automatically. Use cleanup or resume from the provider account before trying again.",
+  "deploymentFaultProvisionResourceNotFound": "The tracked provider resource is no longer found in your account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.",
+  "deploymentFaultDeploymentInstanceNotFound": "The tracked deployment instance is no longer found in your provider account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.",
+  "deploymentFaultResourceAlreadyExists": "A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.",
+  "deploymentFaultMaxRetriesExceeded": "Max retry attempts ({maxAttempts}) exceeded.",
+  "@deploymentFaultMaxRetriesExceeded": {"placeholders": {"maxAttempts": {"type": "int"}}},
   "deploymentFailed": "SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.",
   "deploymentReady": "SERVER READY AT {ipAddress}.",
   "@deploymentReady": {

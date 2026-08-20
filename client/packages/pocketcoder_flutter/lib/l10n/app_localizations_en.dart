@@ -1345,6 +1345,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
 
   @override
+  String get deploymentFaultProvisionInterruptedNoResource =>
+      'Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local deployment state.';
+
+  @override
+  String get deploymentFaultProvisionResourceStillExists =>
+      'Provisioning was interrupted after a provider resource was created. The resource still exists and was not recreated automatically. Use cleanup or resume from the provider account before trying again.';
+
+  @override
+  String get deploymentFaultProvisionResourceNotFound =>
+      'The tracked provider resource is no longer found in your account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.';
+
+  @override
+  String get deploymentFaultDeploymentInstanceNotFound =>
+      'The tracked deployment instance is no longer found in your provider account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.';
+
+  @override
+  String get deploymentFaultResourceAlreadyExists =>
+      'A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.';
+
+  @override
+  String deploymentFaultMaxRetriesExceeded(int maxAttempts) {
+    return 'Max retry attempts ($maxAttempts) exceeded.';
+  }
+
+  @override
   String get deploymentFailed =>
       'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
 
