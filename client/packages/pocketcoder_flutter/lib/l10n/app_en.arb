@@ -10,6 +10,7 @@
   "errorAuthUnauthorized": "Unauthorized access",
   "errorAuthFailed": "Authentication failed",
   "errorGeneric": "Something went wrong",
+  "errorCouldNotOpenBrowser": "Could not open the browser. Please try again.",
 
   "authLoginFailed": "Login failed",
   "authNotAuthenticated": "Please log in",
@@ -97,6 +98,11 @@
   "@onboardingHarnessLoginTitle": {
     "placeholders": {"provider": {"type": "String"}}
   },
+  "onboardingHarnessAccountVisibilityTitle": "Who uses this harness account?",
+  "onboardingHarnessAccountVisibilityBody": "Shared reuses this login across profiles on this server. Personal keeps a separate login for this profile.",
+  "onboardingHarnessAccountVisibilityPersonal": "Personal",
+  "onboardingHarnessAccountVisibilityShared": "Shared",
+  "onboardingHarnessAccountVisibilityCancel": "Cancel",
   "onboardingConnected": "CONNECTED",
   "onboardingAccountLogin": "ACCOUNT LOGIN",
   "onboardingAuthorizationCode": "AUTHORIZATION CODE",
@@ -104,10 +110,7 @@
   "onboardingSubmitCode": "SUBMIT CODE",
   "onboardingOpenAuthorization": "OPEN AUTHORIZATION",
   "onboardingCheckStatus": "CHECK STATUS",
-  "onboardingOpenChatFailed": "Could not open a new chat: {error}",
-  "@onboardingOpenChatFailed": {
-    "placeholders": {"error": {"type": "String"}}
-  },
+  "onboardingOpenChatFailed": "Could not open a new chat. Please try again.",
   "onboardingDeployTitle": "DEPLOY SERVER",
   "onboardingPocketbaseAdminEmail": "POCKETCODER ADMIN EMAIL",
   "onboardingPocketbaseAdminPassword": "POCKETCODER ADMIN PASSWORD",

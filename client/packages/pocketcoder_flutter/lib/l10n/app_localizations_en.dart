@@ -27,6 +27,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorGeneric => 'Something went wrong';
 
   @override
+  String get errorCouldNotOpenBrowser =>
+      'Could not open the browser. Please try again.';
+
+  @override
   String get authLoginFailed => 'Login failed';
 
   @override
@@ -262,6 +266,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get onboardingHarnessAccountVisibilityTitle =>
+      'Who uses this harness account?';
+
+  @override
+  String get onboardingHarnessAccountVisibilityBody =>
+      'Shared reuses this login across profiles on this server. Personal keeps a separate login for this profile.';
+
+  @override
+  String get onboardingHarnessAccountVisibilityPersonal => 'Personal';
+
+  @override
+  String get onboardingHarnessAccountVisibilityShared => 'Shared';
+
+  @override
+  String get onboardingHarnessAccountVisibilityCancel => 'Cancel';
+
+  @override
   String get onboardingConnected => 'CONNECTED';
 
   @override
@@ -283,9 +304,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingCheckStatus => 'CHECK STATUS';
 
   @override
-  String onboardingOpenChatFailed(String error) {
-    return 'Could not open a new chat: $error';
-  }
+  String get onboardingOpenChatFailed =>
+      'Could not open a new chat. Please try again.';
 
   @override
   String get onboardingDeployTitle => 'DEPLOY SERVER';

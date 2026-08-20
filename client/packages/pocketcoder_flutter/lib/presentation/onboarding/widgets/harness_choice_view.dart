@@ -42,9 +42,12 @@ class HarnessChoiceView extends StatelessWidget {
       return const Center(child: TerminalLoadingIndicator());
     }
     if (status == UiFlowStatus.failure && supported.isEmpty) {
+      // Never surfaces `error`'s raw text -- it may carry an unpredictable
+      // underlying exception that client/AGENTS.md requires stay out of
+      // user-facing copy.
       return Center(
         child: TerminalText(
-          error?.toString() ?? context.l10n.errorGeneric,
+          context.l10n.errorGeneric,
           color: context.colorScheme.error,
           textAlign: TextAlign.center,
         ),

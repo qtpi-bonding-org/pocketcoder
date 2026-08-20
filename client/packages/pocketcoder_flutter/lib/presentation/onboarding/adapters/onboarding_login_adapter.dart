@@ -75,8 +75,10 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
         if (context.mounted) context.goNamed(RouteNames.onboardingHarnessAuth);
       });
     } else if (state.status == UiFlowStatus.failure) {
-      _pocoMessage.value =
-          state.error?.toString() ?? context.l10n.onboardingAccessDenied;
+      // Never surfaces state.error's raw text -- it may carry an
+      // unpredictable underlying exception (network, decoding, etc.) that
+      // client/AGENTS.md requires stay out of user-facing copy.
+      _pocoMessage.value = context.l10n.onboardingAccessDenied;
       _pocoSequence.value = PocoExpressions.nervous;
     }
   }
@@ -97,9 +99,9 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     });
     try {
       await context.read<AuthCubit>().login(url, email, password);
-    } catch (error) {
+    } catch (_) {
       if (context.mounted) {
-        VimToast.show(context, error.toString(),
+        VimToast.show(context, context.l10n.onboardingAccessDenied,
             color: context.colorScheme.error);
       }
     }

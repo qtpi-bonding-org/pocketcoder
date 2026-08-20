@@ -59,6 +59,9 @@ class HarnessAuthorizationAdapter
         listenerContext.go('${AppRoutes.chat}/$chatId');
       } catch (error) {
         _openedChat.value = false;
+        // The raw exception is logged (technical detail, not user-facing)
+        // but never shown in the toast -- client/AGENTS.md requires user
+        // messages stay generic; only the diagnostic log carries detail.
         OnboardingLogger.event('first chat creation failed', {
           'harness': harnessId,
           'error': error.toString(),
@@ -66,7 +69,7 @@ class HarnessAuthorizationAdapter
         if (listenerContext.mounted) {
           VimToast.show(
             listenerContext,
-            listenerContext.l10n.onboardingOpenChatFailed(error.toString()),
+            listenerContext.l10n.onboardingOpenChatFailed,
             color: listenerContext.colorScheme.error,
           );
         }
@@ -118,16 +121,23 @@ class HarnessAuthorizationAdapter
                 );
               }
             },
-            onOpenChallenge: (challenge) {
+            onOpenChallenge: (challenge) async {
               final target = challenge.target;
               if (target == null || target.isEmpty) return;
               OnboardingLogger.event('authorization challenge opened', {
                 'type': challenge.type,
               });
-              launchUrl(
+              final opened = await launchUrl(
                 Uri.tryParse(target) ?? Uri(),
                 mode: LaunchMode.externalApplication,
               );
+              if (!opened && context.mounted) {
+                VimToast.show(
+                  context,
+                  context.l10n.errorCouldNotOpenBrowser,
+                  color: context.colorScheme.error,
+                );
+              }
             },
           ),
         ),
@@ -138,24 +148,24 @@ class HarnessAuthorizationAdapter
   Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
         context: context,
         builder: (dialogContext) => TerminalDialog(
-          title: 'Who uses this harness account?',
-          content: const Text(
-            'Shared reuses this login across profiles on this server. Personal keeps a separate login for this profile.',
+          title: context.l10n.onboardingHarnessAccountVisibilityTitle,
+          content: Text(
+            context.l10n.onboardingHarnessAccountVisibilityBody,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext)
                   .pop(harnessAccountVisibilityPersonal),
-              child: const Text('Personal'),
+              child: Text(context.l10n.onboardingHarnessAccountVisibilityPersonal),
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext)
                   .pop(harnessAccountVisibilityDeployment),
-              child: const Text('Shared'),
+              child: Text(context.l10n.onboardingHarnessAccountVisibilityShared),
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.onboardingHarnessAccountVisibilityCancel),
             ),
           ],
         ),

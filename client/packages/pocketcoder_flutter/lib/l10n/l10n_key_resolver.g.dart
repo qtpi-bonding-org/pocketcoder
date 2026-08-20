@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-08-19T21:23:07.893948
 
 import 'app_localizations.dart';
 
@@ -145,6 +146,10 @@ class L10nKeyResolver {
       'deployment.admin.identity' => _l10n.deploymentAdminIdentity,
       'deployment.admin.password' => _l10n.deploymentAdminPassword,
       'deployment.backend' => _l10n.deploymentBackend,
+      'deployment.cleanup.failed' => _l10n.deploymentCleanupFailed,
+      'deployment.cleanup.not.needed' => _l10n.deploymentCleanupNotNeeded,
+      'deployment.cleanup.pending' => _l10n.deploymentCleanupPending,
+      'deployment.cleanup.succeeded' => _l10n.deploymentCleanupSucceeded,
       'deployment.cloud.region' => _l10n.deploymentCloudRegion,
       'deployment.coding.agents.title' => _l10n.deploymentCodingAgentsTitle,
       'deployment.coding.harnesses' => _l10n.deploymentCodingHarnesses,
@@ -172,7 +177,12 @@ class L10nKeyResolver {
       'deployment.distribution' => _l10n.deploymentDistribution,
       'deployment.error.code' => _l10n.deploymentErrorCode,
       'deployment.failed' => _l10n.deploymentFailed,
+      'deployment.fault.deployment.instance.not.found' => _l10n.deploymentFaultDeploymentInstanceNotFound,
       'deployment.fault.generic' => _l10n.deploymentFaultGeneric,
+      'deployment.fault.provision.interrupted.no.resource' => _l10n.deploymentFaultProvisionInterruptedNoResource,
+      'deployment.fault.provision.resource.not.found' => _l10n.deploymentFaultProvisionResourceNotFound,
+      'deployment.fault.provision.resource.still.exists' => _l10n.deploymentFaultProvisionResourceStillExists,
+      'deployment.fault.resource.already.exists' => _l10n.deploymentFaultResourceAlreadyExists,
       'deployment.geo.grid' => _l10n.deploymentGeoGrid,
       'deployment.gpu.badge' => _l10n.deploymentGpuBadge,
       'deployment.hardware.geography' => _l10n.deploymentHardwareGeography,
@@ -202,6 +212,14 @@ class L10nKeyResolver {
       'deployment.recommended' => _l10n.deploymentRecommended,
       'deployment.region' => _l10n.deploymentRegion,
       'deployment.region.poco' => _l10n.deploymentRegionPoco,
+      'deployment.reset.action' => _l10n.deploymentResetAction,
+      'deployment.reset.also.clear.o.auth' => _l10n.deploymentResetAlsoClearOAuth,
+      'deployment.reset.cancel' => _l10n.deploymentResetCancel,
+      'deployment.reset.complete' => _l10n.deploymentResetComplete,
+      'deployment.reset.confirm' => _l10n.deploymentResetConfirm,
+      'deployment.reset.confirmation.body' => _l10n.deploymentResetConfirmationBody,
+      'deployment.reset.confirmation.title' => _l10n.deploymentResetConfirmationTitle,
+      'deployment.reset.confirmation.warn.cloud' => _l10n.deploymentResetConfirmationWarnCloud,
       'deployment.review.poco' => _l10n.deploymentReviewPoco,
       'deployment.review.title' => _l10n.deploymentReviewTitle,
       'deployment.run.id' => _l10n.deploymentRunId,
@@ -242,6 +260,7 @@ class L10nKeyResolver {
       'deployment.workload.poco' => _l10n.deploymentWorkloadPoco,
       'error.auth.failed' => _l10n.errorAuthFailed,
       'error.auth.unauthorized' => _l10n.errorAuthUnauthorized,
+      'error.could.not.open.browser' => _l10n.errorCouldNotOpenBrowser,
       'error.generic' => _l10n.errorGeneric,
       'error.network' => _l10n.errorNetwork,
       'error.timeout' => _l10n.errorTimeout,
@@ -403,6 +422,11 @@ class L10nKeyResolver {
       'onboarding.failure.action.technical.details' => _l10n.onboardingFailureActionTechnicalDetails,
       'onboarding.failure.action.view.server.details' => _l10n.onboardingFailureActionViewServerDetails,
       'onboarding.failure.create.poco' => _l10n.onboardingFailureCreatePoco,
+      'onboarding.harness.account.visibility.body' => _l10n.onboardingHarnessAccountVisibilityBody,
+      'onboarding.harness.account.visibility.cancel' => _l10n.onboardingHarnessAccountVisibilityCancel,
+      'onboarding.harness.account.visibility.personal' => _l10n.onboardingHarnessAccountVisibilityPersonal,
+      'onboarding.harness.account.visibility.shared' => _l10n.onboardingHarnessAccountVisibilityShared,
+      'onboarding.harness.account.visibility.title' => _l10n.onboardingHarnessAccountVisibilityTitle,
       'onboarding.harness.not.found' => _l10n.onboardingHarnessNotFound,
       'onboarding.harness.poco' => _l10n.onboardingHarnessPoco,
       'onboarding.harness.title' => _l10n.onboardingHarnessTitle,
@@ -417,6 +441,7 @@ class L10nKeyResolver {
       'onboarding.no.server.looking.poco' => _l10n.onboardingNoServerLookingPoco,
       'onboarding.no.server.poco' => _l10n.onboardingNoServerPoco,
       'onboarding.open.authorization' => _l10n.onboardingOpenAuthorization,
+      'onboarding.open.chat.failed' => _l10n.onboardingOpenChatFailed,
       'onboarding.orientation.action.continue' => _l10n.onboardingOrientationActionContinue,
       'onboarding.orientation.action.skip' => _l10n.onboardingOrientationActionSkip,
       'onboarding.orientation.title' => _l10n.onboardingOrientationTitle,
@@ -784,6 +809,7 @@ class L10nKeyResolver {
       'deployment.copied.to.buffer' => _l10n.deploymentCopiedToBuffer(args?['label'] as String? ?? ''),
       'deployment.copy.label' => _l10n.deploymentCopyLabel(args?['label'] as String? ?? ''),
       'deployment.fault.detected' => _l10n.deploymentFaultDetected(args?['error'] as String? ?? ''),
+      'deployment.fault.max.retries.exceeded' => _l10n.deploymentFaultMaxRetriesExceeded(args?['maxAttempts'] as int? ?? 0),
       'deployment.memory.gb' => _l10n.deploymentMemoryGb(args?['value'] as int? ?? 0),
       'deployment.memory.mb' => _l10n.deploymentMemoryMb(args?['value'] as int? ?? 0),
       'deployment.monthly.price' => _l10n.deploymentMonthlyPrice(args?['price'] as String? ?? ''),
@@ -813,7 +839,6 @@ class L10nKeyResolver {
       'notification.signal.received' => _l10n.notificationSignalReceived(args?['title'] as String? ?? ''),
       'onboarding.failure.connection.poco' => _l10n.onboardingFailureConnectionPoco(args?['providerName'] as String? ?? ''),
       'onboarding.harness.login.title' => _l10n.onboardingHarnessLoginTitle(args?['provider'] as String? ?? ''),
-      'onboarding.open.chat.failed' => _l10n.onboardingOpenChatFailed(args?['error'] as String? ?? ''),
       'onboarding.os.debian.description' => _l10n.onboardingOsDebianDescription(args?['minutes'] as int? ?? 0),
       'onboarding.os.nixos.description' => _l10n.onboardingOsNixosDescription(args?['minutes'] as int? ?? 0),
       'onboarding.plan.poco' => _l10n.onboardingPlanPoco(args?['providerName'] as String? ?? ''),
@@ -977,6 +1002,10 @@ class L10nKeyResolver {
     'deployment.admin.identity',
     'deployment.admin.password',
     'deployment.backend',
+    'deployment.cleanup.failed',
+    'deployment.cleanup.not.needed',
+    'deployment.cleanup.pending',
+    'deployment.cleanup.succeeded',
     'deployment.cloud.region',
     'deployment.coding.agents.title',
     'deployment.coding.harnesses',
@@ -1006,8 +1035,14 @@ class L10nKeyResolver {
     'deployment.distribution',
     'deployment.error.code',
     'deployment.failed',
+    'deployment.fault.deployment.instance.not.found',
     'deployment.fault.detected',
     'deployment.fault.generic',
+    'deployment.fault.max.retries.exceeded',
+    'deployment.fault.provision.interrupted.no.resource',
+    'deployment.fault.provision.resource.not.found',
+    'deployment.fault.provision.resource.still.exists',
+    'deployment.fault.resource.already.exists',
     'deployment.geo.grid',
     'deployment.gpu.badge',
     'deployment.hardware.geography',
@@ -1043,6 +1078,14 @@ class L10nKeyResolver {
     'deployment.recommended',
     'deployment.region',
     'deployment.region.poco',
+    'deployment.reset.action',
+    'deployment.reset.also.clear.o.auth',
+    'deployment.reset.cancel',
+    'deployment.reset.complete',
+    'deployment.reset.confirm',
+    'deployment.reset.confirmation.body',
+    'deployment.reset.confirmation.title',
+    'deployment.reset.confirmation.warn.cloud',
     'deployment.review.poco',
     'deployment.review.title',
     'deployment.run.id',
@@ -1085,6 +1128,7 @@ class L10nKeyResolver {
     'deployment.workload.poco',
     'error.auth.failed',
     'error.auth.unauthorized',
+    'error.could.not.open.browser',
     'error.generic',
     'error.network',
     'error.timeout',
@@ -1266,6 +1310,11 @@ class L10nKeyResolver {
     'onboarding.failure.action.view.server.details',
     'onboarding.failure.connection.poco',
     'onboarding.failure.create.poco',
+    'onboarding.harness.account.visibility.body',
+    'onboarding.harness.account.visibility.cancel',
+    'onboarding.harness.account.visibility.personal',
+    'onboarding.harness.account.visibility.shared',
+    'onboarding.harness.account.visibility.title',
     'onboarding.harness.login.title',
     'onboarding.harness.not.found',
     'onboarding.harness.poco',
@@ -1799,6 +1848,10 @@ class L10nKeyResolver {
     'deploymentAdminIdentity': 'deployment.admin.identity',
     'deploymentAdminPassword': 'deployment.admin.password',
     'deploymentBackend': 'deployment.backend',
+    'deploymentCleanupFailed': 'deployment.cleanup.failed',
+    'deploymentCleanupNotNeeded': 'deployment.cleanup.not.needed',
+    'deploymentCleanupPending': 'deployment.cleanup.pending',
+    'deploymentCleanupSucceeded': 'deployment.cleanup.succeeded',
     'deploymentCloudRegion': 'deployment.cloud.region',
     'deploymentCodingAgentsTitle': 'deployment.coding.agents.title',
     'deploymentCodingHarnesses': 'deployment.coding.harnesses',
@@ -1828,8 +1881,14 @@ class L10nKeyResolver {
     'deploymentDistribution': 'deployment.distribution',
     'deploymentErrorCode': 'deployment.error.code',
     'deploymentFailed': 'deployment.failed',
+    'deploymentFaultDeploymentInstanceNotFound': 'deployment.fault.deployment.instance.not.found',
     'deploymentFaultDetected': 'deployment.fault.detected',
     'deploymentFaultGeneric': 'deployment.fault.generic',
+    'deploymentFaultMaxRetriesExceeded': 'deployment.fault.max.retries.exceeded',
+    'deploymentFaultProvisionInterruptedNoResource': 'deployment.fault.provision.interrupted.no.resource',
+    'deploymentFaultProvisionResourceNotFound': 'deployment.fault.provision.resource.not.found',
+    'deploymentFaultProvisionResourceStillExists': 'deployment.fault.provision.resource.still.exists',
+    'deploymentFaultResourceAlreadyExists': 'deployment.fault.resource.already.exists',
     'deploymentGeoGrid': 'deployment.geo.grid',
     'deploymentGpuBadge': 'deployment.gpu.badge',
     'deploymentHardwareGeography': 'deployment.hardware.geography',
@@ -1865,6 +1924,14 @@ class L10nKeyResolver {
     'deploymentRecommended': 'deployment.recommended',
     'deploymentRegion': 'deployment.region',
     'deploymentRegionPoco': 'deployment.region.poco',
+    'deploymentResetAction': 'deployment.reset.action',
+    'deploymentResetAlsoClearOAuth': 'deployment.reset.also.clear.o.auth',
+    'deploymentResetCancel': 'deployment.reset.cancel',
+    'deploymentResetComplete': 'deployment.reset.complete',
+    'deploymentResetConfirm': 'deployment.reset.confirm',
+    'deploymentResetConfirmationBody': 'deployment.reset.confirmation.body',
+    'deploymentResetConfirmationTitle': 'deployment.reset.confirmation.title',
+    'deploymentResetConfirmationWarnCloud': 'deployment.reset.confirmation.warn.cloud',
     'deploymentReviewPoco': 'deployment.review.poco',
     'deploymentReviewTitle': 'deployment.review.title',
     'deploymentRunId': 'deployment.run.id',
@@ -1907,6 +1974,7 @@ class L10nKeyResolver {
     'deploymentWorkloadPoco': 'deployment.workload.poco',
     'errorAuthFailed': 'error.auth.failed',
     'errorAuthUnauthorized': 'error.auth.unauthorized',
+    'errorCouldNotOpenBrowser': 'error.could.not.open.browser',
     'errorGeneric': 'error.generic',
     'errorNetwork': 'error.network',
     'errorTimeout': 'error.timeout',
@@ -2088,6 +2156,11 @@ class L10nKeyResolver {
     'onboardingFailureActionViewServerDetails': 'onboarding.failure.action.view.server.details',
     'onboardingFailureConnectionPoco': 'onboarding.failure.connection.poco',
     'onboardingFailureCreatePoco': 'onboarding.failure.create.poco',
+    'onboardingHarnessAccountVisibilityBody': 'onboarding.harness.account.visibility.body',
+    'onboardingHarnessAccountVisibilityCancel': 'onboarding.harness.account.visibility.cancel',
+    'onboardingHarnessAccountVisibilityPersonal': 'onboarding.harness.account.visibility.personal',
+    'onboardingHarnessAccountVisibilityShared': 'onboarding.harness.account.visibility.shared',
+    'onboardingHarnessAccountVisibilityTitle': 'onboarding.harness.account.visibility.title',
     'onboardingHarnessLoginTitle': 'onboarding.harness.login.title',
     'onboardingHarnessNotFound': 'onboarding.harness.not.found',
     'onboardingHarnessPoco': 'onboarding.harness.poco',
@@ -2618,6 +2691,10 @@ class L10nKeyResolver {
     'deployment.admin.identity': 'deploymentAdminIdentity',
     'deployment.admin.password': 'deploymentAdminPassword',
     'deployment.backend': 'deploymentBackend',
+    'deployment.cleanup.failed': 'deploymentCleanupFailed',
+    'deployment.cleanup.not.needed': 'deploymentCleanupNotNeeded',
+    'deployment.cleanup.pending': 'deploymentCleanupPending',
+    'deployment.cleanup.succeeded': 'deploymentCleanupSucceeded',
     'deployment.cloud.region': 'deploymentCloudRegion',
     'deployment.coding.agents.title': 'deploymentCodingAgentsTitle',
     'deployment.coding.harnesses': 'deploymentCodingHarnesses',
@@ -2647,8 +2724,14 @@ class L10nKeyResolver {
     'deployment.distribution': 'deploymentDistribution',
     'deployment.error.code': 'deploymentErrorCode',
     'deployment.failed': 'deploymentFailed',
+    'deployment.fault.deployment.instance.not.found': 'deploymentFaultDeploymentInstanceNotFound',
     'deployment.fault.detected': 'deploymentFaultDetected',
     'deployment.fault.generic': 'deploymentFaultGeneric',
+    'deployment.fault.max.retries.exceeded': 'deploymentFaultMaxRetriesExceeded',
+    'deployment.fault.provision.interrupted.no.resource': 'deploymentFaultProvisionInterruptedNoResource',
+    'deployment.fault.provision.resource.not.found': 'deploymentFaultProvisionResourceNotFound',
+    'deployment.fault.provision.resource.still.exists': 'deploymentFaultProvisionResourceStillExists',
+    'deployment.fault.resource.already.exists': 'deploymentFaultResourceAlreadyExists',
     'deployment.geo.grid': 'deploymentGeoGrid',
     'deployment.gpu.badge': 'deploymentGpuBadge',
     'deployment.hardware.geography': 'deploymentHardwareGeography',
@@ -2684,6 +2767,14 @@ class L10nKeyResolver {
     'deployment.recommended': 'deploymentRecommended',
     'deployment.region': 'deploymentRegion',
     'deployment.region.poco': 'deploymentRegionPoco',
+    'deployment.reset.action': 'deploymentResetAction',
+    'deployment.reset.also.clear.o.auth': 'deploymentResetAlsoClearOAuth',
+    'deployment.reset.cancel': 'deploymentResetCancel',
+    'deployment.reset.complete': 'deploymentResetComplete',
+    'deployment.reset.confirm': 'deploymentResetConfirm',
+    'deployment.reset.confirmation.body': 'deploymentResetConfirmationBody',
+    'deployment.reset.confirmation.title': 'deploymentResetConfirmationTitle',
+    'deployment.reset.confirmation.warn.cloud': 'deploymentResetConfirmationWarnCloud',
     'deployment.review.poco': 'deploymentReviewPoco',
     'deployment.review.title': 'deploymentReviewTitle',
     'deployment.run.id': 'deploymentRunId',
@@ -2726,6 +2817,7 @@ class L10nKeyResolver {
     'deployment.workload.poco': 'deploymentWorkloadPoco',
     'error.auth.failed': 'errorAuthFailed',
     'error.auth.unauthorized': 'errorAuthUnauthorized',
+    'error.could.not.open.browser': 'errorCouldNotOpenBrowser',
     'error.generic': 'errorGeneric',
     'error.network': 'errorNetwork',
     'error.timeout': 'errorTimeout',
@@ -2907,6 +2999,11 @@ class L10nKeyResolver {
     'onboarding.failure.action.view.server.details': 'onboardingFailureActionViewServerDetails',
     'onboarding.failure.connection.poco': 'onboardingFailureConnectionPoco',
     'onboarding.failure.create.poco': 'onboardingFailureCreatePoco',
+    'onboarding.harness.account.visibility.body': 'onboardingHarnessAccountVisibilityBody',
+    'onboarding.harness.account.visibility.cancel': 'onboardingHarnessAccountVisibilityCancel',
+    'onboarding.harness.account.visibility.personal': 'onboardingHarnessAccountVisibilityPersonal',
+    'onboarding.harness.account.visibility.shared': 'onboardingHarnessAccountVisibilityShared',
+    'onboarding.harness.account.visibility.title': 'onboardingHarnessAccountVisibilityTitle',
     'onboarding.harness.login.title': 'onboardingHarnessLoginTitle',
     'onboarding.harness.not.found': 'onboardingHarnessNotFound',
     'onboarding.harness.poco': 'onboardingHarnessPoco',
@@ -3444,6 +3541,10 @@ abstract class L10nKeys {
   static const deploymentAdminIdentity = 'deployment.admin.identity';
   static const deploymentAdminPassword = 'deployment.admin.password';
   static const deploymentBackend = 'deployment.backend';
+  static const deploymentCleanupFailed = 'deployment.cleanup.failed';
+  static const deploymentCleanupNotNeeded = 'deployment.cleanup.not.needed';
+  static const deploymentCleanupPending = 'deployment.cleanup.pending';
+  static const deploymentCleanupSucceeded = 'deployment.cleanup.succeeded';
   static const deploymentCloudRegion = 'deployment.cloud.region';
   static const deploymentCodingAgentsTitle = 'deployment.coding.agents.title';
   static const deploymentCodingHarnesses = 'deployment.coding.harnesses';
@@ -3473,8 +3574,14 @@ abstract class L10nKeys {
   static const deploymentDistribution = 'deployment.distribution';
   static const deploymentErrorCode = 'deployment.error.code';
   static const deploymentFailed = 'deployment.failed';
+  static const deploymentFaultDeploymentInstanceNotFound = 'deployment.fault.deployment.instance.not.found';
   static (String, Map<String, dynamic>) deploymentFaultDetected(String error) => ('deployment.fault.detected', {'error': error});
   static const deploymentFaultGeneric = 'deployment.fault.generic';
+  static (String, Map<String, dynamic>) deploymentFaultMaxRetriesExceeded(int maxAttempts) => ('deployment.fault.max.retries.exceeded', {'maxAttempts': maxAttempts});
+  static const deploymentFaultProvisionInterruptedNoResource = 'deployment.fault.provision.interrupted.no.resource';
+  static const deploymentFaultProvisionResourceNotFound = 'deployment.fault.provision.resource.not.found';
+  static const deploymentFaultProvisionResourceStillExists = 'deployment.fault.provision.resource.still.exists';
+  static const deploymentFaultResourceAlreadyExists = 'deployment.fault.resource.already.exists';
   static const deploymentGeoGrid = 'deployment.geo.grid';
   static const deploymentGpuBadge = 'deployment.gpu.badge';
   static const deploymentHardwareGeography = 'deployment.hardware.geography';
@@ -3510,6 +3617,14 @@ abstract class L10nKeys {
   static const deploymentRecommended = 'deployment.recommended';
   static const deploymentRegion = 'deployment.region';
   static const deploymentRegionPoco = 'deployment.region.poco';
+  static const deploymentResetAction = 'deployment.reset.action';
+  static const deploymentResetAlsoClearOAuth = 'deployment.reset.also.clear.o.auth';
+  static const deploymentResetCancel = 'deployment.reset.cancel';
+  static const deploymentResetComplete = 'deployment.reset.complete';
+  static const deploymentResetConfirm = 'deployment.reset.confirm';
+  static const deploymentResetConfirmationBody = 'deployment.reset.confirmation.body';
+  static const deploymentResetConfirmationTitle = 'deployment.reset.confirmation.title';
+  static const deploymentResetConfirmationWarnCloud = 'deployment.reset.confirmation.warn.cloud';
   static const deploymentReviewPoco = 'deployment.review.poco';
   static const deploymentReviewTitle = 'deployment.review.title';
   static const deploymentRunId = 'deployment.run.id';
@@ -3552,6 +3667,7 @@ abstract class L10nKeys {
   static const deploymentWorkloadPoco = 'deployment.workload.poco';
   static const errorAuthFailed = 'error.auth.failed';
   static const errorAuthUnauthorized = 'error.auth.unauthorized';
+  static const errorCouldNotOpenBrowser = 'error.could.not.open.browser';
   static const errorGeneric = 'error.generic';
   static const errorNetwork = 'error.network';
   static const errorTimeout = 'error.timeout';
@@ -3733,6 +3849,11 @@ abstract class L10nKeys {
   static const onboardingFailureActionViewServerDetails = 'onboarding.failure.action.view.server.details';
   static (String, Map<String, dynamic>) onboardingFailureConnectionPoco(String providerName) => ('onboarding.failure.connection.poco', {'providerName': providerName});
   static const onboardingFailureCreatePoco = 'onboarding.failure.create.poco';
+  static const onboardingHarnessAccountVisibilityBody = 'onboarding.harness.account.visibility.body';
+  static const onboardingHarnessAccountVisibilityCancel = 'onboarding.harness.account.visibility.cancel';
+  static const onboardingHarnessAccountVisibilityPersonal = 'onboarding.harness.account.visibility.personal';
+  static const onboardingHarnessAccountVisibilityShared = 'onboarding.harness.account.visibility.shared';
+  static const onboardingHarnessAccountVisibilityTitle = 'onboarding.harness.account.visibility.title';
   static (String, Map<String, dynamic>) onboardingHarnessLoginTitle(String provider) => ('onboarding.harness.login.title', {'provider': provider});
   static const onboardingHarnessNotFound = 'onboarding.harness.not.found';
   static const onboardingHarnessPoco = 'onboarding.harness.poco';
@@ -3748,7 +3869,7 @@ abstract class L10nKeys {
   static const onboardingNoServerLookingPoco = 'onboarding.no.server.looking.poco';
   static const onboardingNoServerPoco = 'onboarding.no.server.poco';
   static const onboardingOpenAuthorization = 'onboarding.open.authorization';
-  static (String, Map<String, dynamic>) onboardingOpenChatFailed(String error) => ('onboarding.open.chat.failed', {'error': error});
+  static const onboardingOpenChatFailed = 'onboarding.open.chat.failed';
   static const onboardingOrientationActionContinue = 'onboarding.orientation.action.continue';
   static const onboardingOrientationActionSkip = 'onboarding.orientation.action.skip';
   static const onboardingOrientationTitle = 'onboarding.orientation.title';

@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import "package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart";
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
@@ -47,7 +48,7 @@ class AuthCubit extends AppCubit<AuthState> {
       await _authRepository.verifyServerCompatibility();
       final success = await _authRepository.login(email, password);
       if (!success) {
-        throw 'ACCESS DENIED. CHECK CREDENTIALS.';
+        throw AuthException.loginFailed();
       }
       OnboardingLogger.event('server login succeeded');
       return createSuccessState();

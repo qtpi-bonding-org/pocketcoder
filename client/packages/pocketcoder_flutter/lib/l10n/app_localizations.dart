@@ -130,6 +130,12 @@ abstract class AppLocalizations {
   /// **'Something went wrong'**
   String get errorGeneric;
 
+  /// No description provided for @errorCouldNotOpenBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the browser. Please try again.'**
+  String get errorCouldNotOpenBrowser;
+
   /// No description provided for @authLoginFailed.
   ///
   /// In en, this message translates to:
@@ -580,6 +586,36 @@ abstract class AppLocalizations {
   /// **'{provider} LOGIN'**
   String onboardingHarnessLoginTitle(String provider);
 
+  /// No description provided for @onboardingHarnessAccountVisibilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who uses this harness account?'**
+  String get onboardingHarnessAccountVisibilityTitle;
+
+  /// No description provided for @onboardingHarnessAccountVisibilityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared reuses this login across profiles on this server. Personal keeps a separate login for this profile.'**
+  String get onboardingHarnessAccountVisibilityBody;
+
+  /// No description provided for @onboardingHarnessAccountVisibilityPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal'**
+  String get onboardingHarnessAccountVisibilityPersonal;
+
+  /// No description provided for @onboardingHarnessAccountVisibilityShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get onboardingHarnessAccountVisibilityShared;
+
+  /// No description provided for @onboardingHarnessAccountVisibilityCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get onboardingHarnessAccountVisibilityCancel;
+
   /// No description provided for @onboardingConnected.
   ///
   /// In en, this message translates to:
@@ -625,8 +661,8 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingOpenChatFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not open a new chat: {error}'**
-  String onboardingOpenChatFailed(String error);
+  /// **'Could not open a new chat. Please try again.'**
+  String get onboardingOpenChatFailed;
 
   /// No description provided for @onboardingDeployTitle.
   ///
