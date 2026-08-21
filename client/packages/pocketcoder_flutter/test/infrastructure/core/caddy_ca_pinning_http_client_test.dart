@@ -2,9 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketcoder_flutter/infrastructure/core/caddy_ca_pinning_http_client.dart';
 
-http.StreamedResponse _okResponse() =>
-    http.StreamedResponse(Stream<List<int>>.value('ok'.codeUnits), 200);
-
 void main() {
   group('CaddyCaPinningHttpClient', () {
     test('close() is a no-op -- send() still works afterward', () async {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
@@ -14,7 +15,8 @@ import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dar
 @LazySingleton(as: IReleaseContentService)
 class ReleaseContentService implements IReleaseContentService {
   ReleaseContentService(
-      this._http, this._storage, @Named('releaseBaseUrl') this._baseUrl);
+      this._http, this._storage, @Named('releaseBaseUrl') this._baseUrl,
+      [@Named('useTestingChannel') this._useTestingChannel = false]);
 
   static const _maximumManifestBytes = 1024 * 1024;
   static const _maximumMetadataBytes = 256 * 1024;
@@ -23,6 +25,7 @@ class ReleaseContentService implements IReleaseContentService {
   final http.Client _http;
   final FlutterSecureStorage _storage;
   final String _baseUrl;
+  final bool _useTestingChannel;
 
   @override
   Future<ReleaseSelection> resolve({String channel = 'stable'}) =>
@@ -30,8 +33,16 @@ class ReleaseContentService implements IReleaseContentService {
         if (!const {'stable', 'beta', 'nightly'}.contains(channel)) {
           throw const ReleaseContentException('Unsupported release channel');
         }
+        // kReleaseMode is a second, independent guard: even if
+        // useTestingChannel were ever somehow true in a real release build,
+        // a genuine `--release` build ignores it and only ever fetches the
+        // real channel. The pointer's own "channel" field always holds the
+        // unqualified name regardless of which path served it, so identity
+        // verification below is unaffected by this path choice.
+        final pathSegment =
+            _useTestingChannel && !kReleaseMode ? '$channel-testing' : channel;
         final pointerBytes = await _getBounded(
-            Uri.parse('$_baseUrl/channels/$channel.json'),
+            Uri.parse('$_baseUrl/channels/$pathSegment.json'),
             _maximumMetadataBytes);
         final pointer = _decodeObject(pointerBytes);
         if (pointer['schemaVersion'] != 1 || pointer['channel'] != channel) {
@@ -42,9 +53,9 @@ class ReleaseContentService implements IReleaseContentService {
         _allowlistedUri(
             _object(pointer['attestation'])['url'],
             RegExp(
-                '/attestations/channels/$channel/[1-9][0-9]*[.]sigstore[.]json'
+                '/attestations/channels/$pathSegment/[1-9][0-9]*[.]sigstore[.]json'
                 r'$'));
-        final persisted = await _readSequence('channel-$channel');
+        final persisted = await _readSequence('channel-$pathSegment');
         final floor = channel == 'stable' && persisted < _stableFloor
             ? _stableFloor
             : persisted;
@@ -96,7 +107,7 @@ class ReleaseContentService implements IReleaseContentService {
           throw const ReleaseContentException(
               'The selected release is revoked');
         }
-        await _writeSequence('channel-$channel', sequence);
+        await _writeSequence('channel-$pathSegment', sequence);
         await _writeSequence('revocation', revocationSequence);
         return ReleaseSelection(
             channel: channel,

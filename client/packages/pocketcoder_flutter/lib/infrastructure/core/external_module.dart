@@ -150,6 +150,17 @@ abstract class ExternalModule {
   @lazySingleton
   String get releaseBaseUrl => 'https://images.relay.pocketcoder.org/v1';
 
+  /// Dev/debug-only: request the `-testing` variant of whatever release
+  /// channel would otherwise be fetched, so a `staging`-branch build can be
+  /// tested on a real device without ever touching `main` or the real
+  /// `stable`/`nightly` channels. See ReleaseContentService.resolve's doc
+  /// comment for the second, independent guard (kReleaseMode) that keeps
+  /// this inert in a real release build even if this were ever set there.
+  @Named('useTestingChannel')
+  @lazySingleton
+  bool get useTestingChannel =>
+      const bool.fromEnvironment('USE_TESTING_CHANNEL');
+
   /// Local-only storage for the on-device error inbox. Never synced or
   /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.
   @lazySingleton
