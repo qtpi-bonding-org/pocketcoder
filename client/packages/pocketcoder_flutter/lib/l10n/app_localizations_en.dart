@@ -2046,6 +2046,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'These are the administrator credentials for PocketCoder on the server we are about to provision.\n\nThey are separate from your Linode password. I will use them to finish setup, and you will use them to sign in to PocketCoder when the server is ready. Keep them safe.';
 
   @override
+  String get onboardingPasswordTooShort => 'Must be at least 8 characters';
+
+  @override
   String get onboardingProviderPoco =>
       'Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.';
 

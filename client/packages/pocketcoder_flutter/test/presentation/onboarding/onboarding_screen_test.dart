@@ -172,6 +172,50 @@ void main() {
     expect(captured!.password, 'chosen-password');
   });
 
+  testWidgets(
+      'deploy credentials rejects a password under 8 characters -- '
+      "PocketBase's own migration hard-fails on this server-side, minutes "
+      'into a live deploy, if the client lets it through', (tester) async {
+    DeployCredentials? captured;
+    final router = GoRouter(
+      initialLocation: AppRoutes.onboardingDeploy,
+      routes: [
+        GoRoute(
+          path: AppRoutes.onboardingDeploy,
+          builder: (_, __) => const OnboardingDeployCredentialsScreen(),
+        ),
+        GoRoute(
+          name: RouteNames.deploy,
+          path: AppRoutes.deploy,
+          builder: (_, state) {
+            captured = state.extra as DeployCredentials?;
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: router,
+    ));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'admin@example.com');
+    await tester.enterText(find.byType(TextField).last, 'short7c');
+    await tester.pump();
+
+    expect(find.text('Must be at least 8 characters'), findsOneWidget);
+
+    await tester.tap(find.text('CONTINUE'));
+    await tester.pumpAndSettle();
+
+    expect(captured, isNull,
+        reason: 'a too-short password must never reach the deploy route');
+  });
+
   testWidgets('deploy credentials continue to the selected provider',
       (tester) async {
     DeployCredentials? captured;

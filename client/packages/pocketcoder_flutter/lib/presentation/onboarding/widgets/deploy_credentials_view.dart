@@ -14,6 +14,7 @@ class DeployCredentialsView extends StatefulWidget {
     required this.onPasswordChanged,
     required this.isValid,
     required this.onContinue,
+    this.passwordErrorText,
   });
 
   final String email;
@@ -22,6 +23,7 @@ class DeployCredentialsView extends StatefulWidget {
   final ValueChanged<String> onPasswordChanged;
   final bool isValid;
   final VoidCallback onContinue;
+  final String? passwordErrorText;
 
   @override
   State<DeployCredentialsView> createState() => _DeployCredentialsViewState();
@@ -80,6 +82,7 @@ class _DeployCredentialsViewState extends State<DeployCredentialsView> {
                     obscureText: true,
                     onChanged: widget.onPasswordChanged,
                     onSubmitted: (_) => widget.onContinue(),
+                    errorText: widget.passwordErrorText,
                   ),
                 ],
               ),
