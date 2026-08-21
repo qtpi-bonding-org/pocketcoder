@@ -79,18 +79,12 @@ func run(args []string) error {
 			DataDir: dataDir, BackupDir: backupDir, Container: container,
 			Docker: runtime.Docker{Stdout: os.Stdout, Stderr: os.Stderr},
 		})
-	case "export-cert":
-		bundle, err := tlscert.ExportBundle()
+	case "export-ca-fingerprint":
+		fingerprint, err := tlscert.ExportCAFingerprint()
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(os.Stdout).Encode(bundle)
-	case "import-cert":
-		var bundle tlscert.Bundle
-		if err := json.NewDecoder(os.Stdin).Decode(&bundle); err != nil {
-			return fmt.Errorf("decode certificate bundle: %w", err)
-		}
-		return tlscert.ImportBundle(bundle)
+		return json.NewEncoder(os.Stdout).Encode(fingerprint)
 	case "update-os":
 		return osctl.NixOSController{}.Update()
 	case "upgrade-os":
