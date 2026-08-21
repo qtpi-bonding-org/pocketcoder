@@ -92,12 +92,70 @@ for required_field in host_ssh_private_key host_ssh_public_key public_ip \
   fi
 done
 
+# A field can pass the presence check above yet still be corrupt (truncated
+# in transit, wrong encoding, a mismatched key pair) -- and because
+# hostKeys=[] means sshd has no fallback of its own, a bad host key written
+# to disk here permanently bricks SSH on this box with no self-heal. So
+# every SSH-relevant field is validated for well-formedness -- and the host
+# keypair is cross-checked against itself -- before anything is written, and
+# each failure gets its own errorCode so it's diagnosable from status.json
+# even when SSH itself is what's unreachable.
 ROOT_SSH_KEY=$(sed -n 's/^root_ssh_key=//p' "$RUNTIME_ENV")
 if [ -z "$ROOT_SSH_KEY" ] && [ ! -s /root/.ssh/authorized_keys ]; then
   echo "No root SSH key was delivered; refusing an unreachable deployment" >&2
   pc_status_error configuring_operating_system ssh_key_undelivered
   exit 1
 fi
+if [ -n "$ROOT_SSH_KEY" ]; then
+  case "$ROOT_SSH_KEY" in
+    ssh-ed25519\ *|ssh-rsa\ *|ecdsa-sha2-*\ *) ;;
+    *)
+      echo "root_ssh_key is not a recognized SSH public key" >&2
+      pc_status_error configuring_operating_system boot_env_root_key_invalid
+      exit 1
+      ;;
+  esac
+fi
+
+HOST_SSH_PRIVATE_KEY=$(sed -n 's/^host_ssh_private_key=//p' "$RUNTIME_ENV")
+HOST_SSH_PUBLIC_KEY=$(sed -n 's/^host_ssh_public_key=//p' "$RUNTIME_ENV")
+case "$HOST_SSH_PUBLIC_KEY" in
+  ssh-ed25519\ *) ;;
+  *)
+    echo "host_ssh_public_key is not a recognized ssh-ed25519 public key" >&2
+    pc_status_error configuring_operating_system boot_env_host_key_invalid
+    exit 1
+    ;;
+esac
+VALIDATE_DIR=$(mktemp -d /run/pc-hostkey-validate.XXXXXX)
+trap 'rm -rf "$VALIDATE_DIR"' EXIT
+chmod 700 "$VALIDATE_DIR"
+if ! printf '%s' "$HOST_SSH_PRIVATE_KEY" | base64 -d > "$VALIDATE_DIR/key" 2>/dev/null \
+  || ! grep -q '^-----BEGIN OPENSSH PRIVATE KEY-----$' "$VALIDATE_DIR/key"; then
+  echo "host_ssh_private_key does not decode to an OpenSSH private key" >&2
+  pc_status_error configuring_operating_system boot_env_host_key_invalid
+  exit 1
+fi
+chmod 600 "$VALIDATE_DIR/key"
+DERIVED_PUBLIC_KEY=$(ssh-keygen -y -f "$VALIDATE_DIR/key" 2>/dev/null || true)
+if [ -z "$DERIVED_PUBLIC_KEY" ] \
+  || [ "$(awk '{print $1, $2}' <<<"$DERIVED_PUBLIC_KEY")" != "$(awk '{print $1, $2}' <<<"$HOST_SSH_PUBLIC_KEY")" ]; then
+  echo "host_ssh_private_key does not match host_ssh_public_key" >&2
+  pc_status_error configuring_operating_system boot_env_host_key_mismatch
+  exit 1
+fi
+rm -rf "$VALIDATE_DIR"
+trap - EXIT
+
+PUBLIC_IP=$(sed -n 's/^public_ip=//p' "$RUNTIME_ENV")
+case "$PUBLIC_IP" in
+  *[!0-9.]*)
+    echo "public_ip is not a valid IPv4 address: $PUBLIC_IP" >&2
+    pc_status_error configuring_operating_system boot_env_field_invalid
+    exit 1
+    ;;
+esac
+
 install -d -m 700 /root/.ssh
 if [ -n "$ROOT_SSH_KEY" ]; then
   printf '%s\n' "$ROOT_SSH_KEY" > /root/.ssh/authorized_keys
@@ -107,8 +165,6 @@ fi
 
 # The phone supplies the SSH host key as part of the root-of-trust blob.
 # hostKeys=[] in configuration.nix prevents sshd-keygen from racing this.
-HOST_SSH_PRIVATE_KEY=$(sed -n 's/^host_ssh_private_key=//p' "$RUNTIME_ENV")
-HOST_SSH_PUBLIC_KEY=$(sed -n 's/^host_ssh_public_key=//p' "$RUNTIME_ENV")
 install -d -m 0755 /etc/ssh
 printf '%s' "$HOST_SSH_PRIVATE_KEY" | base64 -d > /etc/ssh/ssh_host_ed25519_key
 printf '%s\n' "$HOST_SSH_PUBLIC_KEY" > /etc/ssh/ssh_host_ed25519_key.pub
