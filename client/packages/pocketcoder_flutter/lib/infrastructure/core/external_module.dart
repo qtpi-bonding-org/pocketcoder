@@ -8,11 +8,15 @@ import 'package:http/http.dart' as http;
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'auth_aware_http_client.dart';
 import 'auth_store.dart';
+import 'caddy_ca_pinning_http_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 
 @module
 abstract class ExternalModule {
   final _authHttpState = AuthHttpState();
+  CaddyCaPinningHttpClient? _caddyCaPinningHttpClient;
+  CaddyCaPinStore? _caddyCaPinStore;
 
   @preResolve
   @singleton
@@ -60,7 +64,10 @@ abstract class ExternalModule {
       baseUrl,
       requestPolicy: RequestPolicy.cacheAndNetwork,
       authStore: authStore,
-      httpClientFactory: () => AuthAwareHttpClient(_authHttpState),
+      httpClientFactory: () => AuthAwareHttpClient(
+        _authHttpState,
+        inner: caddyCaPinningHttpClient,
+      ),
     );
 
     if (schemaJson != null && schemaJson.isNotEmpty && schemaJson != '[]') {
@@ -115,13 +122,24 @@ abstract class ExternalModule {
     return const FlutterSecureStorage();
   }
 
+  @singleton
+  CaddyCaPinningHttpClient get caddyCaPinningHttpClient =>
+      _caddyCaPinningHttpClient ??= CaddyCaPinningHttpClient();
+
+  @singleton
+  CaddyCaPinStore get caddyCaPinStore =>
+      _caddyCaPinStore ??= CaddyCaPinStore(const FlutterSecureStorage());
+
   @lazySingleton
   PocketCoderApiClient pocketCoderApiClient(PocketBase pocketBase) =>
       PocketCoderApiClient.fromPocketBase(pocketBase);
 
   /// HTTP client for API requests
   @lazySingleton
-  http.Client get httpClient => AuthAwareHttpClient(_authHttpState);
+  http.Client get httpClient => AuthAwareHttpClient(
+        _authHttpState,
+        inner: caddyCaPinningHttpClient,
+      );
 
   /// Base URL of the shared OAuth relay. No trailing slash.
   @Named('oauthRelayBaseUrl')

@@ -130,12 +130,16 @@ import 'package:pocketcoder_flutter/infrastructure/communication/communication_d
     as _i464;
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart'
     as _i520;
+import 'package:pocketcoder_flutter/infrastructure/core/caddy_ca_pinning_http_client.dart'
+    as _i7;
 import 'package:pocketcoder_flutter/infrastructure/core/external_module.dart'
     as _i1059;
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart'
     as _i72;
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart'
     as _i935;
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart'
+    as _i888;
 import 'package:pocketcoder_flutter/infrastructure/feedback/exception_mapper.dart'
     as _i976;
 import 'package:pocketcoder_flutter/infrastructure/feedback/feedback_service.dart'
@@ -220,6 +224,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i520.AuthStoreConfig>(() => externalModule.authStoreConfig);
     gh.singleton<_i558.FlutterSecureStorage>(
         () => externalModule.flutterSecureStorage);
+    gh.singleton<_i7.CaddyCaPinningHttpClient>(
+        () => externalModule.caddyCaPinningHttpClient);
+    gh.singleton<_i888.CaddyCaPinStore>(() => externalModule.caddyCaPinStore);
     gh.lazySingleton<_i992.PocoCubit>(() => _i992.PocoCubit());
     gh.lazySingleton<_i619.AgentCacheDb>(() => _i619.AgentCacheDb());
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
