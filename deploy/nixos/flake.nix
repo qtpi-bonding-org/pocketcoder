@@ -73,10 +73,19 @@
         sed \
           -e 's|{{CADDY_GLOBAL_OPTIONS}}||g' \
           -e 's|{{DOMAIN}}|test.sslip.io|g' \
+          -e 's|{{PUBLIC_IP}}|203.0.113.1|g' \
           -e 's|{{STATUS_ROOT}}|/var/lib/pocketcoder/public|g' \
           -e 's|{{UPSTREAM}}|127.0.0.1:8090|g' \
           ${../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template} \
           > Caddyfile
+        # `issuer internal` makes `caddy validate` actually provision a local
+        # CA (writes under $HOME) as part of loading the TLS app -- not just
+        # parse -- so it needs a real writable $HOME. The build sandbox's
+        # default $HOME (/homeless-shelter) is unwritable by design, which
+        # otherwise fails this with "mkdir /homeless-shelter: permission
+        # denied" (confirmed live once the Caddyfile started using
+        # `issuer internal`, added for cert pinning).
+        export HOME=$(mktemp -d)
         ${pkgs.caddy}/bin/caddy validate --config Caddyfile --adapter caddyfile
         touch $out
       '';

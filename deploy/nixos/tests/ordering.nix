@@ -19,6 +19,7 @@ pkgs.testers.runNixOSTest {
     _module.args.tlsStatusScript = ../../scripts/tls-status.sh;
     _module.args.bootstrapScript = ../bootstrap.sh;
     _module.args.statusScript = ../status.sh;
+    _module.args.pcRetryScript = ../pc_retry.sh;
     imports = [ ../caddy.nix ../bootstrap.nix ];
     systemd.services.detect-public-ip.script = pkgs.lib.mkForce ''
       mkdir -p /etc/caddy /etc/pocketcoder
