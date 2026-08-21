@@ -73,7 +73,16 @@ if [ "$BOOT_ENV_SCHEMA" != "1" ]; then
   pc_status_error configuring_operating_system boot_env_schema_invalid
   exit 1
 fi
-for required_field in root_ssh_key host_ssh_private_key host_ssh_public_key public_ip \
+# root_ssh_key is deliberately NOT in this list: it's scrubbed from
+# RUNTIME_ENV below once consumed (line ~96), so an unconditional
+# requirement here would reject every retry after the first with a
+# misleading boot_env_field_missing -- masking whatever the retry's real
+# failure is. Its own idempotency-safe check (below) already requires it
+# unless /root/.ssh/authorized_keys is already populated -- confirmed
+# live: a bootstrap.service restart (systemd's Restart=on-failure, e.g.
+# after a transient release-fetch failure) hit exactly this before the
+# fix, on every attempt after the first.
+for required_field in host_ssh_private_key host_ssh_public_key public_ip \
   POCKETCODER_RELEASE_CHANNEL POCKETCODER_RELEASE_DIGEST POCKETCODER_RELEASE_SEQUENCE \
   POCKETCODER_SELECTED_HARNESSES; do
   if ! grep -q "^${required_field}=\S" "$RUNTIME_ENV"; then
