@@ -10,6 +10,7 @@
   "errorAuthUnauthorized": "Unauthorized access",
   "errorAuthFailed": "Authentication failed",
   "errorGeneric": "Something went wrong",
+  "errorCouldNotOpenBrowser": "Could not open the browser. Please try again.",
 
   "authLoginFailed": "Login failed",
   "authNotAuthenticated": "Please log in",
@@ -97,6 +98,11 @@
   "@onboardingHarnessLoginTitle": {
     "placeholders": {"provider": {"type": "String"}}
   },
+  "onboardingHarnessAccountVisibilityTitle": "Who uses this harness account?",
+  "onboardingHarnessAccountVisibilityBody": "Shared reuses this login across profiles on this server. Personal keeps a separate login for this profile.",
+  "onboardingHarnessAccountVisibilityPersonal": "Personal",
+  "onboardingHarnessAccountVisibilityShared": "Shared",
+  "onboardingHarnessAccountVisibilityCancel": "Cancel",
   "onboardingConnected": "CONNECTED",
   "onboardingAccountLogin": "ACCOUNT LOGIN",
   "onboardingAuthorizationCode": "AUTHORIZATION CODE",
@@ -104,13 +110,10 @@
   "onboardingSubmitCode": "SUBMIT CODE",
   "onboardingOpenAuthorization": "OPEN AUTHORIZATION",
   "onboardingCheckStatus": "CHECK STATUS",
-  "onboardingOpenChatFailed": "Could not open a new chat: {error}",
-  "@onboardingOpenChatFailed": {
-    "placeholders": {"error": {"type": "String"}}
-  },
+  "onboardingOpenChatFailed": "Could not open a new chat. Please try again.",
   "onboardingDeployTitle": "DEPLOY SERVER",
-  "onboardingPocketbaseAdminEmail": "POCKETBASE ADMIN EMAIL",
-  "onboardingPocketbaseAdminPassword": "POCKETBASE ADMIN PASSWORD",
+  "onboardingPocketbaseAdminEmail": "POCKETCODER ADMIN EMAIL",
+  "onboardingPocketbaseAdminPassword": "POCKETCODER ADMIN PASSWORD",
 
   "homeTitle": "CHATS",
   "homeLoadingChats": "LOADING CHATS",
@@ -604,6 +607,13 @@
   "deploymentGeoGrid": "GEO GRID",
   "deploymentFaultDetected": "FAULT DETECTED: {error}",
   "deploymentFaultGeneric": "SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.",
+  "deploymentFaultProvisionInterruptedNoResource": "Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local deployment state.",
+  "deploymentFaultProvisionResourceStillExists": "Provisioning was interrupted after a provider resource was created. The resource still exists and was not recreated automatically. Use cleanup or resume from the provider account before trying again.",
+  "deploymentFaultProvisionResourceNotFound": "The tracked provider resource is no longer found in your account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.",
+  "deploymentFaultDeploymentInstanceNotFound": "The tracked deployment instance is no longer found in your provider account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.",
+  "deploymentFaultResourceAlreadyExists": "A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.",
+  "deploymentFaultMaxRetriesExceeded": "Max retry attempts ({maxAttempts}) exceeded.",
+  "@deploymentFaultMaxRetriesExceeded": {"placeholders": {"maxAttempts": {"type": "int"}}},
   "deploymentFailed": "SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.",
   "deploymentReady": "SERVER READY AT {ipAddress}.",
   "@deploymentReady": {
@@ -695,13 +705,10 @@
   "deploymentWorkloadLocalReply": "A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.",
   "deploymentUseCloudModels": "USE CLOUD MODELS",
   "deploymentRunLocalModel": "RUN A LOCAL MODEL",
-  "deploymentPlanPoco": "The {minimumMemory} option is the minimum for remote models. I recommend {recommendedMemory} for builds, tests, and updates. You can choose either or go larger.",
+  "deploymentPlanPoco": "The {minimumMemory} option is the minimum for remote models. Choose it or go larger for builds, tests, and updates.",
   "@deploymentPlanPoco": {
     "placeholders": {
       "minimumMemory": {
-        "type": "String"
-      },
-      "recommendedMemory": {
         "type": "String"
       }
     }
@@ -1123,5 +1130,29 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "deploymentResetAction": "RESET DEPLOYMENT STATE",
+  "@deploymentResetAction": { "description": "Label for the reset deployment state action on the config screen recovery section" },
+  "deploymentResetConfirmationTitle": "Reset local deployment state?",
+  "@deploymentResetConfirmationTitle": { "description": "Title of the reset confirmation dialog" },
+  "deploymentResetConfirmationBody": "This clears local deployment state only: the saved session, instance id, and credentials stored on this device. It does NOT delete your cloud server.",
+  "@deploymentResetConfirmationBody": { "description": "Body of the reset confirmation dialog explaining local-only scope" },
+  "deploymentResetConfirmationWarnCloud": "Your cloud instance is unaffected. Use your provider console to inspect or delete it.",
+  "@deploymentResetConfirmationWarnCloud": { "description": "Cloud-unaffected warning in the reset confirmation" },
+  "deploymentResetAlsoClearOAuth": "Also sign out of the cloud provider (clear OAuth tokens)",
+  "@deploymentResetAlsoClearOAuth": { "description": "Optional checkbox label to also clear OAuth credentials during reset" },
+  "deploymentResetConfirm": "RESET",
+  "@deploymentResetConfirm": { "description": "Confirm button label on the reset dialog" },
+  "deploymentResetCancel": "CANCEL",
+  "@deploymentResetCancel": { "description": "Cancel button label on the reset dialog" },
+  "deploymentResetComplete": "Local deployment state cleared.",
+  "@deploymentResetComplete": { "description": "Snack/banner shown after a successful reset" },
+  "deploymentCleanupSucceeded": "Cloud server deleted.",
+  "@deploymentCleanupSucceeded": { "description": "Cleanup outcome shown when the cloud server was deleted successfully" },
+  "deploymentCleanupFailed": "Could not delete the cloud server. Use your provider console to remove it.",
+  "@deploymentCleanupFailed": { "description": "Cleanup outcome shown when deleting the cloud server failed" },
+  "deploymentCleanupPending": "Cleanup could not run automatically. Use your provider console to remove the cloud server.",
+  "@deploymentCleanupPending": { "description": "Cleanup outcome shown when cleanup is pending manual action" },
+  "deploymentCleanupNotNeeded": "No cloud server to clean up.",
+  "@deploymentCleanupNotNeeded": { "description": "Cleanup outcome shown when no cloud server needed cleanup" }
 }

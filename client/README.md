@@ -1,21 +1,25 @@
 # PocketCoder Mobile (Flutter)
 
-The official mobile client for PocketCoder—your local-first, privacy-focused AI coding assistant.
+The public Core/FOSS mobile client for PocketCoder—your local-first,
+privacy-focused AI coding assistant.
 
 ## 🚀 Overview
 
 PocketCoder Mobile is a Flutter client designed to connect to your personal
-PocketCoder backend. The workspace provides a shared FOSS core plus two app
-targets: the Pro shell (`apps/pocketcoder`) and the FOSS/F-Droid-compatible app
-(`apps/pocketcoder_foss`).
+PocketCoder backend. This public checkout provides the shared FOSS core and
+the FOSS/F-Droid-compatible app target (`apps/pocketcoder_foss`). The
+commercial Pro shell and its `pocketcoder_pro` package live in the separate
+private `pocketcoder-pro` repository and consume this workspace as a pinned
+dependency.
 
 ### Core Philosophy
 - **Local-First**: Your data stays on your infrastructure.
 - **Privacy-Centric**: Anonymous error reporting and secure credential storage.
 - **FOSS Core**: Shared application logic and the FOSS app target are kept free
   of proprietary integrations.
-- **Pro Features**: The Pro shell adds Firebase push, RevenueCat billing, and
-  deployment integrations.
+- **Pro boundary**: the private Pro shell adds hosted provisioning, billing,
+  app-store integration, and hosted push services without adding proprietary
+  dependencies to this public core.
 
 ## ✨ Features
 
@@ -39,8 +43,9 @@ This project is a workspace managed by [Melos](https://melos.invertase.dev).
 
 ### Architecture
 1. **`packages/pocketcoder_flutter`**: The core FOSS-pure logic and UI components.
-2. **`packages/pocketcoder_pro`**: Proprietary integrations (Optional).
-3. **`apps/pocketcoder`**: The mobile application shell that assembles the pieces.
+2. **`apps/pocketcoder_foss`**: The public app shell for this checkout.
+3. **Private Pro repository**: proprietary integrations and the commercial app
+   shell, maintained separately.
 
 ### Quick Start
 ```bash
@@ -54,11 +59,12 @@ melos bootstrap
 # 3. Generate code
 melos run build_gen
 
-# 4. Run an app target
-melos run run_app       # Pro
+# 4. Run the public app target
 melos run run_foss      # FOSS/F-Droid-compatible target
-melos run run_incognito # Pro in Chrome Incognito
 ```
+
+The private Pro repository has its own app commands and adds the deployment
+and billing packages around this public core.
 
 ### Purity Check
 To ensure the core package remains FOSS-pure (no proprietary SDK leaks):

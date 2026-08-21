@@ -48,10 +48,19 @@ class AppRouter {
 
   /// Additional routes injected by the proprietary package (e.g. Linode flow).
   static List<RouteBase> _additionalRoutes = const [];
+  static DeployProviderSelectionHandler? _deployProviderSelectionHandler;
 
   /// Call before accessing [router] to inject proprietary routes.
   static void setAdditionalRoutes(List<RouteBase> routes) {
     _additionalRoutes = routes;
+  }
+
+  /// Lets a distribution launch provider authorization directly from the
+  /// provider picker without adding another onboarding page.
+  static void setDeployProviderSelectionHandler(
+    DeployProviderSelectionHandler handler,
+  ) {
+    _deployProviderSelectionHandler = handler;
   }
 
   static final GoRouter _router = GoRouter(
@@ -348,6 +357,7 @@ class AppRouter {
                 : null,
             deployOptionService: getIt<IDeployOptionService>(),
             onHasProAccess: getIt<BillingService>().hasProAccess,
+            onProviderSelected: _deployProviderSelectionHandler,
           ),
         ),
       ),
@@ -540,3 +550,9 @@ class AppNavigation {
     }
   }
 }
+
+typedef DeployProviderSelectionHandler = Future<void> Function(
+  BuildContext context,
+  DeployOption option,
+  DeployCredentials? credentials,
+);

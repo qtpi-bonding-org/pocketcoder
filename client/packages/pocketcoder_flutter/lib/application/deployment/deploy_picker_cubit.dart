@@ -14,9 +14,23 @@ class DeployPickerState with UiFlowStateMixin {
   final UiFlowStatus status;
   @override
   final Object? error;
+
+  DeployPickerState copyWith({
+    UiFlowStatus? status,
+    Object? error,
+  }) =>
+      DeployPickerState(
+        options: options,
+        status: status ?? this.status,
+        error: error ?? this.error,
+      );
 }
 
 class DeployPickerCubit extends AppCubit<DeployPickerState> {
   DeployPickerCubit(IDeployOptionService service)
       : super(DeployPickerState(options: service.getAvailableProviders()));
+
+  void fail(Object error) {
+    emit(state.copyWith(status: UiFlowStatus.failure, error: error));
+  }
 }

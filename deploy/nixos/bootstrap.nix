@@ -1,11 +1,13 @@
 { config, pkgs, sourceCommit ? "main", releaseBranch ? "main", releaseManager
-, bootstrapScript ? ./bootstrap.sh, statusScript ? ./status.sh, ... }:
+, bootstrapScript ? ./bootstrap.sh, statusScript ? ./status.sh
+, pcRetryScript ? ./pc_retry.sh, ... }:
 
 {
   systemd.services.pocketcoder-bootstrap = {
     description = "PocketCoder first-boot provisioning";
     wantedBy = [ "multi-user.target" ];
     after = [ "docker.service" "network-online.target" "caddy.service" ];
+    before = [ "sshd.service" "sshd-keygen@ed25519.service" ];
     wants = [ "network-online.target" ];
     requires = [ "docker.service" ];
     environment.POCKETCODER_REF = sourceCommit;
@@ -54,6 +56,7 @@
   };
 
   environment.etc."pocketcoder/status.sh".source = statusScript;
+  environment.etc."pocketcoder/pc_retry.sh".source = pcRetryScript;
 
   systemd.services.pocketcoder-release-metadata = {
     description = "Check GitHub-attested PocketCoder release metadata";

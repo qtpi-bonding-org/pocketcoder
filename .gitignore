@@ -90,6 +90,7 @@ audit-status/
 audit/
 .worktrees/
 .agent/
+**/.agent/
 docs/
 !website/src/content/docs/
 !website/src/content/docs/**

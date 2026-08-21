@@ -130,12 +130,16 @@ import 'package:pocketcoder_flutter/infrastructure/communication/communication_d
     as _i464;
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart'
     as _i520;
+import 'package:pocketcoder_flutter/infrastructure/core/caddy_ca_pinning_http_client.dart'
+    as _i7;
 import 'package:pocketcoder_flutter/infrastructure/core/external_module.dart'
     as _i1059;
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart'
     as _i72;
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart'
     as _i935;
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart'
+    as _i888;
 import 'package:pocketcoder_flutter/infrastructure/feedback/exception_mapper.dart'
     as _i976;
 import 'package:pocketcoder_flutter/infrastructure/feedback/feedback_service.dart'
@@ -220,6 +224,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i520.AuthStoreConfig>(() => externalModule.authStoreConfig);
     gh.singleton<_i558.FlutterSecureStorage>(
         () => externalModule.flutterSecureStorage);
+    gh.singleton<_i7.CaddyCaPinningHttpClient>(
+        () => externalModule.caddyCaPinningHttpClient);
+    gh.singleton<_i888.CaddyCaPinStore>(() => externalModule.caddyCaPinStore);
     gh.lazySingleton<_i992.PocoCubit>(() => _i992.PocoCubit());
     gh.lazySingleton<_i619.AgentCacheDb>(() => _i619.AgentCacheDb());
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
@@ -235,6 +242,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
         () => _i976.AppExceptionKeyMapper());
+    gh.lazySingleton<bool>(
+      () => externalModule.useTestingChannel,
+      instanceName: 'useTestingChannel',
+    );
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
     gh.lazySingleton<String>(
       () => externalModule.oauthRelayBaseUrl,
@@ -305,6 +316,13 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
         ));
+    gh.lazySingleton<_i1033.IReleaseContentService>(
+        () => _i456.ReleaseContentService(
+              gh<_i519.Client>(),
+              gh<_i558.FlutterSecureStorage>(),
+              gh<String>(instanceName: 'releaseBaseUrl'),
+              gh<bool>(instanceName: 'useTestingChannel'),
+            ));
     gh.factory<_i464.AuthCubit>(
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i767.IToolPermissionRepository>(
@@ -354,12 +372,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i190.IStatusRepository>(
         () => _i907.StatusRepository(gh<_i824.PocketBase>()));
-    gh.lazySingleton<_i1033.IReleaseContentService>(
-        () => _i456.ReleaseContentService(
-              gh<_i519.Client>(),
-              gh<_i558.FlutterSecureStorage>(),
-              gh<String>(instanceName: 'releaseBaseUrl'),
-            ));
     gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
           gh<_i294.HarnesseDao>(),
           gh<_i294.ModelDao>(),

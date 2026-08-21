@@ -100,10 +100,9 @@ class HarnessAuthAdapter
       final chatId = chats.state.lastCreatedChatId;
       if (!context.mounted || chatId == null || chatId.isEmpty) return;
       router.go('${AppRoutes.chat}/$chatId');
-    } catch (error) {
+    } catch (_) {
       if (context.mounted) {
-        VimToast.showOn(
-            messenger, l10n.onboardingOpenChatFailed(error.toString()));
+        VimToast.showOn(messenger, l10n.onboardingOpenChatFailed);
       }
     }
   }

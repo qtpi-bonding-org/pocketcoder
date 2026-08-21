@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/deployment/deploy_picker_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
@@ -16,11 +17,13 @@ class DeployPickerScreen extends StatelessWidget {
     this.credentials,
     required this.deployOptionService,
     required this.onHasProAccess,
+    this.onProviderSelected,
   });
 
   final DeployCredentials? credentials;
   final IDeployOptionService deployOptionService;
   final Future<bool> Function() onHasProAccess;
+  final DeployProviderSelectionHandler? onProviderSelected;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -28,6 +31,7 @@ class DeployPickerScreen extends StatelessWidget {
         child: DeployPickerAdapter(
           credentials: credentials,
           onHasProAccess: onHasProAccess,
+          onProviderSelected: onProviderSelected,
         ),
       );
 }

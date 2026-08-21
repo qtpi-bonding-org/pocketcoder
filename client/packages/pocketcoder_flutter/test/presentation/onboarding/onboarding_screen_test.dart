@@ -163,6 +163,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
+    await tester.pump();
     await tester.tap(find.text('CONTINUE'));
     await tester.pumpAndSettle();
 
@@ -209,6 +210,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
+    await tester.pump();
     await tester.tap(find.text('CONTINUE'));
     await tester.pumpAndSettle();
 

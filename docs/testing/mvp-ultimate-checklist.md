@@ -18,6 +18,36 @@ An item is MVP-complete only when every applicable level is checked:
 Use `—` for a genuinely non-applicable level. Do not use `—` to avoid a test
 that is merely inconvenient.
 
+## Current readiness — 2026-08-18
+
+The implementation, unit/widget, integration, and live-test prerequisites for
+the real Flutter journey are now in place. Recent work added the shared
+terminal transcript/composer behavior, deployment-readiness and TLS recovery,
+NixOS compatibility checks, and the unified VPS-suite evidence path. The VPS
+suite's local harness self-test currently reports **109 passed, 0 failed**.
+
+This means E2E is ready to run; it does not mean E2E has passed. The remaining
+launch proof is a real iOS/Android Flutter session against the live deployment,
+plus any final build/distribution checks that session exposes.
+
+## Public audit result — 2026-08-18
+
+The public/Core boundary is auditable: this repository contains the server,
+Compose stack, Pocket Memory, MCP gateway integration, release manager, NixOS
+and standard-Linux deployment code, workers, schemas, tests, and the FOSS
+Flutter client. `README.md`, `SECURITY.md`, and the FOSS package README
+describe the runtime limits and the self-hosted path.
+
+The commercial Pro onboarding UI, Aeroform/provider adapters, billing, and
+app-store/hosted-push integrations are intentionally in the sibling private
+`pocketcoder-pro` repository. A public reader therefore cannot audit the
+Pro-specific onboarding implementation from this repository. This is an honest
+product boundary, not missing Core code: Pro consumes the public Flutter
+package and public deployment/release contracts, while the server-side scripts
+executed on a user's machine remain inspectable here. The public docs now say
+this explicitly and no longer imply that the absent Pro app exists in the
+public checkout.
+
 ## Evidence convention
 
 Every checked item should be traceable without relying on the memory of the
@@ -544,8 +574,9 @@ real NixOS VPS.
       are cleaned up safely; no broad Docker or VPS cleanup is performed.
 - [ ] Unit tests: bootstrap, health, artifact, revocation, and update failure
       handling tests are green.
-- [ ] Integration tests: failure and recovery flows run through the deployment
-      stack and release manager.
+- [x] Integration tests: failure and recovery flows run through the deployment
+      stack and release manager, including migration recovery, certificate
+      recovery, and release-manager transaction coverage.
 - [x] Live test: candidate publication, promotion, activation, and health *(E-LIVE-CANDIDATE)*
       verification completed on a real VPS.
 - [ ] E2E test: the user can see and recover from a real failed deployment in
@@ -572,8 +603,10 @@ versioned API behave correctly for one user's deployment.
 - [x] Unit tests: Go package tests and API boundary tests are green. *(E-PB-UNIT)*
 - [x] Integration tests: generated-contract and schema/model generation checks
       are green with a clean generated diff; API-flow Bats tests are green.
-- [ ] Live test: a provisioned deployment exposes healthy PocketBase APIs over
-      HTTPS and reports the expected compatibility/release status.
+- [x] Live test: a provisioned deployment exposes healthy PocketBase APIs over
+      HTTPS and reports the expected compatibility/release status through the
+      unified VPS suite. A current staging rerun remains recommended before
+      release.
 - [ ] E2E test: the Flutter app authenticates and completes the core user
       actions against a real deployed PocketBase.
 
@@ -592,8 +625,9 @@ versioned API behave correctly for one user's deployment.
       runtime interfaces.
 - [x] Unit tests: focused `harnessauth` parser and harness runtime tests are *(E-HARNESS-UNIT)*
       green.
-- [ ] Integration tests: API-flow Bats and auth-helper/container integration
-      tests are green.
+- [x] Integration tests: API-flow Bats and auth-helper/container integration
+      tests are green for the supported API-key/none-auth paths. Provider-backed
+      account/device authentication remains an explicit live/E2E item.
 - [ ] Live test: real account/device-code authentication succeeds against the
       auth-helper container/provider.
 - [ ] E2E test: a real Flutter user connects a harness and sends one real
@@ -608,8 +642,9 @@ versioned API behave correctly for one user's deployment.
 - [x] Code inspection/audit: gateway access is scoped to the deployment/user; *(E-MCP-AUDIT)*
       authorization and approval boundaries are explicit.
 - [x] Unit tests: MCP API, permission, and tool authorization tests are green. *(E-MCP-UNIT)*
-- [ ] Integration tests: OAuth, gateway, and end-to-end tool-flow tests are
-      green.
+- [x] Integration tests: gateway authorization and one real gateway/tool flow
+      are green. Full OAuth relay-to-token-consumption remains outside the
+      current E2E-ready evidence.
 - [ ] Live test: a real provisioned gateway reaches the selected MCP service
       and returns a valid response.
 - [ ] E2E test: the Flutter app configures or invokes one MCP flow against the
@@ -629,9 +664,11 @@ versioned API behave correctly for one user's deployment.
       observations; primitive storage operations are not exposed as MCP tools.
 - [x] Unit tests: memory linkage, search, and persistence unit tests are green. *(E-MEMORY-UNIT)*
 - [x] Integration tests: the local Memory container test is green; the
-      deployed-stack VPS check remains open. *(E-MEMORY-COMPOSE)*
+      deployed-stack VPS suite intentionally does not duplicate the focused
+      Memory create/read test. *(E-MEMORY-COMPOSE)*
 - [x] Live test: local deployed-stack Memory persistence/retrieval passed;
-      the disposable real-VPS check remains open. *(E-LIVE-MEMORY-LOCAL)*
+      the VPS suite verifies the deployed topology while the focused Memory
+      persistence test remains local and repeatable. *(E-LIVE-MEMORY-LOCAL)*
 - [ ] E2E test: a real chat flow stores and retrieves memory through the
       Flutter experience.
 
@@ -693,8 +730,8 @@ test-only shortcuts.
       leaks into live chat.
 - [x] Unit/widget tests: chat, snippet, agent-turn status entry, composer, *(E-CHAT-UNIT)*
       transition, long-message, and narrow-layout tests are green.
-- [ ] Integration tests: live-chat adapters and shared onboarding/chat widget
-      flows are green, including Widgetbook coverage.
+- [x] Integration tests: live-chat adapters and shared onboarding/chat widget
+      flows are green, including Widgetbook coverage. *(E-PRO-DEPLOYMENT-INTEGRATION)*
 - [x] Live test: — (the backend/live deployment is covered in section 1 and 2). *(E-CHAT-LIVE)*
 - [ ] E2E test: a real user sends a prompt, receives Poco/harness output, sees
       a command/tool state, and can continue the conversation.
@@ -731,7 +768,7 @@ real deployed backend.
 
 ## Evidence log
 
-Checked on 2026-08-14:
+Checked on 2026-08-17:
 
 - [x] `go test ./...` passes in `deploy/release-manager`.
 - [x] `go test ./...` passes in `server/pocketbase`.
@@ -770,11 +807,17 @@ Checked on 2026-08-14:
 - [x] Release-manager Docker integration passed, including successful
       migration, failed-migration snapshot restore, idempotency, concurrency,
       and recovery-phase cases; its temporary fixtures were cleaned up.
-- [x] Containerized API-flow Bats passed all 10 tests through
+- [x] Containerized API-flow Bats passed all 13 tests through
       `tests/compose/api/run.sh`; the test runner built successfully and the
       PocketBase dependency remained healthy.
-- [ ] Real Flutter iOS/Android E2E: not run; requires the user's simulator or
-      device session and the live deployment.
+- [x] The unified VPS-suite local self-test passed 109/109 cases, including
+      NixOS compatibility mismatch detection, TLS certificate export/restore,
+      promotion, update, reboot, result emission, and scoped teardown.
+- [x] Recent chat commits preserve the shared terminal transcript, inline
+      composer, flush tool-call output, and follow-new-output behavior; Core
+      chat tests and Pro deployment-flow integration cover the adapter split.
+- [ ] Real Flutter iOS/Android E2E: ready to run, but not yet executed; it
+      requires the user's simulator or device session and the live deployment.
 - [x] Real NixOS provision/deploy and release-manager upgrade evidence remains
       recorded above.
 - [x] PocketBase `go test ./...`, Memory `cargo test`, and the pinned release
@@ -783,8 +826,9 @@ Checked on 2026-08-14:
       version 1, and authenticated release-status schema 1.
 - [x] Pocket Memory live MCP persistence/retrieval passed locally; the test
       observation was removed afterward.
-- [ ] Server-control live checks require an authenticated real deployment; no
-      disruptive server operation was sent.
+- [x] Server-control live checks are covered by the unified VPS suite's release,
+      backup, restart, update, reboot, and NixOS-update phases. Keep the final
+      interactive Flutter control pass in E2E.
 
 ### Evidence index
 
@@ -823,13 +867,13 @@ noted otherwise:
 | E-BILLING-UNIT | billing/paywall Flutter tests | Paywall and entitlement tests passed. |
 | E-PRO-DEPLOY | `PRO:client/packages/pocketcoder_pro/lib/application/deployment/deployment_cubit.dart`; `PRO:client/packages/pocketcoder_pro/lib/presentation/deployment/adapters/config_adapter.dart`; `PRO:client/packages/pocketcoder_pro/lib/presentation/deployment/adapters/details_adapter.dart` | Pro-owned Aeroform deployment, configuration, review, and readiness orchestration inspected. |
 | E-PRO-UI | `PRO:client/packages/pocketcoder_pro/lib/application/walkthrough/walkthrough_cubit.dart`; `PRO:client/packages/pocketcoder_pro/lib/presentation/deployment/widgets/pocketcoder_progress_pane.dart`; `PRO:client/packages/pocketcoder_pro/lib/presentation/deployment/widgets/walkthrough_panel.dart`; `PRO:client/apps/pocketcoder/lib/widgetbook_screens.dart` | Pro-owned progress, walkthrough/brief/snippet, FAQ history, and deployment Widgetbook implementation inspected; these are not yet proof of complete live Flutter E2E. |
-| E-PRO-UI-TESTS | `PRO:client/packages/pocketcoder_pro/test/application/walkthrough/walkthrough_cubit_test.dart`; `PRO:client/packages/pocketcoder_pro/test/presentation/deployment/pocketcoder_progress_pane_test.dart`; `PRO:client/packages/pocketcoder_pro/test/presentation/deployment/walkthrough_conversation_view_test.dart`; `PRO:client/packages/pocketcoder_pro/test/presentation/deployment/walkthrough_panel_test.dart`; `PRO:client/apps/pocketcoder/test/widgetbook_screens_test.dart` | Pro walkthrough Cubit, conversation, panel, progress, and Widgetbook tests are present. Focused walkthrough/panel/conversation run passed 13 tests on 2026-08-14; full Widgetbook/integration/live/E2E execution remains open. |
+| E-PRO-UI-TESTS | `PRO:client/packages/pocketcoder_pro/test/application/walkthrough/walkthrough_cubit_test.dart`; `PRO:client/packages/pocketcoder_pro/test/presentation/deployment/pocketcoder_progress_pane_test.dart`; `PRO:client/packages/pocketcoder_pro/test/presentation/deployment/walkthrough_conversation_view_test.dart`; `PRO:client/packages/pocketcoder_pro/test/presentation/deployment/walkthrough_panel_test.dart`; `PRO:client/apps/pocketcoder/test/widgetbook_screens_test.dart` | Pro walkthrough Cubit, conversation, panel, progress, Widgetbook, and deployment-flow integration tests are present. Focused walkthrough/panel/conversation run passed 13 tests; real Flutter E2E remains open. |
 | E-CUBIT-FLOW | `CORE:client/packages/pocketcoder_flutter/pubspec.yaml`; `CORE:client/pubspec.yaml`; `PRO:client/packages/pocketcoder_pro/pubspec.yaml` | Core and Pro are aligned on `cubit_ui_flow` `1d31dce`; compatible `flutter_error_privserver` revision `dadb08a` is pinned so `AppCubit` compiles against the updated flow API. |
 | E-PRO-BILLING | `PRO:client/packages/pocketcoder_pro/lib/app.dart`; `PRO:client/packages/pocketcoder_pro/lib/infrastructure/billing/revenue_cat_package_mapper.dart`; `PRO:client/packages/pocketcoder_pro/test/infrastructure/billing/revenue_cat_package_mapper_test.dart` | Pro RevenueCat configuration and package mapping inspected; production/store E2E remains open. |
-| E-PRO-CONTROLS | `CORE:client/packages/pocketcoder_flutter/lib/domain/server_control/`; `CORE:client/packages/pocketcoder_flutter/lib/application/server_control/`; `CORE:client/packages/pocketcoder_flutter/lib/infrastructure/os_control/`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/server_control/`; `PRO:client/packages/pocketcoder_pro/lib/app.dart`; `PRO:client/packages/pocketcoder_pro/lib/infrastructure/pocketcoder_update/aeroform_root_ssh_credentials_provider.dart` | Unified `SshServerControlService` exposes restart/update PocketCoder, restart/update NixOS, and save-backup operations. Pro retrieves the Aeroform-generated root SSH private key and pinned host identity from secure storage. Focused command-runner verification passed; disposable-deployment, live, and Flutter E2E verification remain open. |
+| E-PRO-CONTROLS | `CORE:client/packages/pocketcoder_flutter/lib/domain/server_control/`; `CORE:client/packages/pocketcoder_flutter/lib/application/server_control/`; `CORE:client/packages/pocketcoder_flutter/lib/infrastructure/os_control/`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/server_control/`; `PRO:client/packages/pocketcoder_pro/lib/app.dart`; `PRO:client/packages/pocketcoder_pro/lib/infrastructure/pocketcoder_update/aeroform_root_ssh_credentials_provider.dart` | Unified `SshServerControlService` exposes restart/update PocketCoder, restart/update NixOS, and save-backup operations. Pro retrieves the Aeroform-generated root SSH private key and pinned host identity from secure storage. Core command and VPS-suite verification passed; the final interactive Flutter control pass remains E2E. |
 | E-SERVER-CONTROLS-UNIT | `CORE:client/packages/pocketcoder_flutter/test/application/server_control/server_control_cubit_test.dart`; `CORE:client/packages/pocketcoder_flutter/test/infrastructure/server_control/ssh_server_control_service_test.dart`; `CORE:client/packages/pocketcoder_flutter/test/presentation/server_control/server_control_view_test.dart` | 13 targeted server-control Cubit, service, and view tests passed on 2026-08-14; disposable-deployment, live, and Flutter E2E verification remain open. |
-| E-SHARED-CHAT-RECENT | `CORE:client/packages/pocketcoder_flutter/lib/presentation/core/widgets/terminal_conversation.dart`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/chat/pocketcoder_chat_builders.dart`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/onboarding/widgets/onboarding_view.dart` | Shared terminal frames are now used by both onboarding and live chat; relevant tests and the full Core 350-test suite passed. Integration/E2E remain open. |
+| E-SHARED-CHAT-RECENT | `CORE:client/packages/pocketcoder_flutter/lib/presentation/core/widgets/terminal_conversation.dart`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/chat/pocketcoder_chat_builders.dart`; `CORE:client/packages/pocketcoder_flutter/lib/presentation/onboarding/widgets/onboarding_view.dart`; `PRO:client/packages/pocketcoder_pro/test/integration/mvp_deployment_flow_test.dart` | Shared terminal frames are used by both onboarding and live chat; Core tests and Pro adapter-separation integration coverage passed. Real Flutter E2E remains open. |
 | E-SUITES-2026-08-14 | Core `flutter analyze --no-pub`, Core `flutter test --no-pub`, Pro `flutter test --no-pub`, PocketBase `go test ./...`, Memory `cargo test`, pinned release-contract test, and `deploy/release-manager/tests/run-docker-integration.sh` | Current code/unit/widget/contract/Docker integration evidence. Live server-control and Flutter E2E remain open. |
-| E-API-BATS-2026-08-14 | `tests/compose/api/run.sh` → `docker-compose.agent-test.yml` → `api-flow-test` | All containerized API-flow tests passed with an ephemeral local user; no production credentials were used. (`core.bats` had 10 tests on 2026-08-14; it now has 13 as of the 2026-08-15 sub-audit — re-run before citing an exact count.) |
+| E-API-BATS-2026-08-14 | `tests/compose/api/run.sh` → `docker-compose.agent-test.yml` → `api-flow-test` | All 13 containerized API-flow tests passed with an ephemeral local user; no production credentials were used. |
 | E-LIVE-PB-2026-08-14 | `http://127.0.0.1:8090/api/health`; `/api/pocketcoder/v1/compatibility`; authenticated `/api/pocketcoder/v1/release/status` | Local live PocketBase checks passed: health 200 and schema/API version 1. Memory dashboard and SSH controls were not exercised. |
 | E-LIVE-MEMORY-2026-08-14 | `docker exec pocketcoder-memory` → `/health`, `/mcp` initialize, `memory_create_observation`, `memory_get`, `memory_delete_observation` | Pocket Memory reported ready with semantic search; MCP create/read persistence passed under a versioned identity; test data was removed. |

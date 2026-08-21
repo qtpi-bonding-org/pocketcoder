@@ -9,8 +9,10 @@ setup() {
 
 @test "init writes a clean document" {
   pc_status_init
-  [ "$(jq -r .phase "$PC_STATUS_DIR/status.json")" = configuring_operating_system ]
-  [ "$(jq -r '.error // "null"' "$PC_STATUS_DIR/status.json")" = null ]
+  [ "$(jq -r .schema "$PC_STATUS_DIR/status.json")" = 3 ]
+  [ "$(jq -r .operation "$PC_STATUS_DIR/status.json")" = configuring_operating_system ]
+  [ "$(jq -r '.errorCode // "null"' "$PC_STATUS_DIR/status.json")" = null ]
+  [ "$(jq -r '.errorMessage // "null"' "$PC_STATUS_DIR/status.json")" = null ]
   [ -n "$(jq -r .runId "$PC_STATUS_DIR/status.json")" ]
 }
 
@@ -35,9 +37,38 @@ setup() {
   wait
 }
 
-@test "error is retained" {
+@test "error is retained as errorCode" {
   pc_status_init
   pc_status_error fetching_release "git clone failed"
-  [ "$(jq -r .error "$PC_STATUS_DIR/status.json")" = "git clone failed" ]
-  [ "$(jq -r .phase "$PC_STATUS_DIR/status.json")" = fetching_release ]
+  [ "$(jq -r .errorCode "$PC_STATUS_DIR/status.json")" = "git clone failed" ]
+  [ "$(jq -r .operation "$PC_STATUS_DIR/status.json")" = fetching_release ]
+}
+
+@test "pc_status_last_operation reads back the current operation" {
+  pc_status_init
+  pc_status_phase compose_up "starting_services"
+  [ "$(pc_status_last_operation)" = compose_up ]
+}
+
+@test "pc_status_last_operation prints nothing before any write" {
+  [ -z "$(pc_status_last_operation)" ]
+}
+
+@test "attempt/maxAttempts default to 1/1 outside pc_retry" {
+  pc_status_init
+  [ "$(jq -r .attempt "$PC_STATUS_DIR/status.json")" = 1 ]
+  [ "$(jq -r .maxAttempts "$PC_STATUS_DIR/status.json")" = 1 ]
+}
+
+@test "attempt/maxAttempts reflect PC_RETRY_ATTEMPT/PC_RETRY_ATTEMPTS when set" {
+  PC_RETRY_ATTEMPT=2 PC_RETRY_ATTEMPTS=3 pc_status_phase loading_images
+  [ "$(jq -r .attempt "$PC_STATUS_DIR/status.json")" = 2 ]
+  [ "$(jq -r .maxAttempts "$PC_STATUS_DIR/status.json")" = 3 ]
+}
+
+@test "attempt/maxAttempts do not stick after PC_RETRY_ATTEMPT is unset" {
+  PC_RETRY_ATTEMPT=3 PC_RETRY_ATTEMPTS=3 pc_status_phase loading_images
+  pc_status_phase bootstrap_complete
+  [ "$(jq -r .attempt "$PC_STATUS_DIR/status.json")" = 1 ]
+  [ "$(jq -r .maxAttempts "$PC_STATUS_DIR/status.json")" = 1 ]
 }

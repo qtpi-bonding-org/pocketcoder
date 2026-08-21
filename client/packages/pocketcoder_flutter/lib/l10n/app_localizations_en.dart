@@ -27,6 +27,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorGeneric => 'Something went wrong';
 
   @override
+  String get errorCouldNotOpenBrowser =>
+      'Could not open the browser. Please try again.';
+
+  @override
   String get authLoginFailed => 'Login failed';
 
   @override
@@ -262,6 +266,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get onboardingHarnessAccountVisibilityTitle =>
+      'Who uses this harness account?';
+
+  @override
+  String get onboardingHarnessAccountVisibilityBody =>
+      'Shared reuses this login across profiles on this server. Personal keeps a separate login for this profile.';
+
+  @override
+  String get onboardingHarnessAccountVisibilityPersonal => 'Personal';
+
+  @override
+  String get onboardingHarnessAccountVisibilityShared => 'Shared';
+
+  @override
+  String get onboardingHarnessAccountVisibilityCancel => 'Cancel';
+
+  @override
   String get onboardingConnected => 'CONNECTED';
 
   @override
@@ -283,18 +304,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingCheckStatus => 'CHECK STATUS';
 
   @override
-  String onboardingOpenChatFailed(String error) {
-    return 'Could not open a new chat: $error';
-  }
+  String get onboardingOpenChatFailed =>
+      'Could not open a new chat. Please try again.';
 
   @override
   String get onboardingDeployTitle => 'DEPLOY SERVER';
 
   @override
-  String get onboardingPocketbaseAdminEmail => 'POCKETBASE ADMIN EMAIL';
+  String get onboardingPocketbaseAdminEmail => 'POCKETCODER ADMIN EMAIL';
 
   @override
-  String get onboardingPocketbaseAdminPassword => 'POCKETBASE ADMIN PASSWORD';
+  String get onboardingPocketbaseAdminPassword => 'POCKETCODER ADMIN PASSWORD';
 
   @override
   String get homeTitle => 'CHATS';
@@ -1345,6 +1365,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
 
   @override
+  String get deploymentFaultProvisionInterruptedNoResource =>
+      'Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local deployment state.';
+
+  @override
+  String get deploymentFaultProvisionResourceStillExists =>
+      'Provisioning was interrupted after a provider resource was created. The resource still exists and was not recreated automatically. Use cleanup or resume from the provider account before trying again.';
+
+  @override
+  String get deploymentFaultProvisionResourceNotFound =>
+      'The tracked provider resource is no longer found in your account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.';
+
+  @override
+  String get deploymentFaultDeploymentInstanceNotFound =>
+      'The tracked deployment instance is no longer found in your provider account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.';
+
+  @override
+  String get deploymentFaultResourceAlreadyExists =>
+      'A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.';
+
+  @override
+  String deploymentFaultMaxRetriesExceeded(int maxAttempts) {
+    return 'Max retry attempts ($maxAttempts) exceeded.';
+  }
+
+  @override
   String get deploymentFailed =>
       'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
 
@@ -1629,8 +1674,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentRunLocalModel => 'RUN A LOCAL MODEL';
 
   @override
-  String deploymentPlanPoco(String minimumMemory, String recommendedMemory) {
-    return 'The $minimumMemory option is the minimum for remote models. I recommend $recommendedMemory for builds, tests, and updates. You can choose either or go larger.';
+  String deploymentPlanPoco(String minimumMemory) {
+    return 'The $minimumMemory option is the minimum for remote models. Choose it or go larger for builds, tests, and updates.';
   }
 
   @override
@@ -2744,4 +2789,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String errorsOccurred(int count) {
     return 'Occurred ${count}x';
   }
+
+  @override
+  String get deploymentResetAction => 'RESET DEPLOYMENT STATE';
+
+  @override
+  String get deploymentResetConfirmationTitle =>
+      'Reset local deployment state?';
+
+  @override
+  String get deploymentResetConfirmationBody =>
+      'This clears local deployment state only: the saved session, instance id, and credentials stored on this device. It does NOT delete your cloud server.';
+
+  @override
+  String get deploymentResetConfirmationWarnCloud =>
+      'Your cloud instance is unaffected. Use your provider console to inspect or delete it.';
+
+  @override
+  String get deploymentResetAlsoClearOAuth =>
+      'Also sign out of the cloud provider (clear OAuth tokens)';
+
+  @override
+  String get deploymentResetConfirm => 'RESET';
+
+  @override
+  String get deploymentResetCancel => 'CANCEL';
+
+  @override
+  String get deploymentResetComplete => 'Local deployment state cleared.';
+
+  @override
+  String get deploymentCleanupSucceeded => 'Cloud server deleted.';
+
+  @override
+  String get deploymentCleanupFailed =>
+      'Could not delete the cloud server. Use your provider console to remove it.';
+
+  @override
+  String get deploymentCleanupPending =>
+      'Cleanup could not run automatically. Use your provider console to remove the cloud server.';
+
+  @override
+  String get deploymentCleanupNotNeeded => 'No cloud server to clean up.';
 }

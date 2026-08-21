@@ -46,6 +46,7 @@ let
   nixosVersionModule = persisted "nixos-version.nix" ./nixos-version.nix;
   bootstrapScript = persisted "bootstrap.sh" ./bootstrap.sh;
   statusScript = persisted "status.sh" ./status.sh;
+  pcRetryScript = persisted "pc_retry.sh" ./pc_retry.sh;
   caddyTemplate = persisted "Caddyfile.template"
     ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
   tlsStatusScript = persisted "tls-status.sh" ../scripts/tls-status.sh;
@@ -63,7 +64,8 @@ in
     "${modulesPath}/profiles/qemu-guest.nix"
     (import caddyModule { inherit config pkgs caddyTemplate tlsStatusScript; })
     (import bootstrapModule {
-      inherit config pkgs sourceCommit releaseBranch releaseManager bootstrapScript statusScript;
+      inherit config pkgs sourceCommit releaseBranch releaseManager bootstrapScript statusScript
+        pcRetryScript;
     })
   ];
 
@@ -84,6 +86,7 @@ in
   environment.etc."nixos/nixos-version.nix".source = nixosVersionModule;
   environment.etc."nixos/bootstrap.sh".source = bootstrapScript;
   environment.etc."nixos/status.sh".source = statusScript;
+  environment.etc."nixos/pc_retry.sh".source = pcRetryScript;
   environment.etc."nixos/Caddyfile.template".source = caddyTemplate;
   environment.etc."nixos/tls-status.sh".source = tlsStatusScript;
   environment.etc."nixos/release-manager-src".source = releaseManagerSrc;
@@ -208,6 +211,9 @@ in
   # POCO:BEGIN vps-key-only-ssh
   services.openssh = {
     enable = true;
+    # The phone supplies the host key in the boot-env. Prevent the NixOS
+    # sshd-keygen service from generating a different key before bootstrap.
+    hostKeys = [];
     settings = {
       PermitRootLogin = "prohibit-password";
       PasswordAuthentication = false;
