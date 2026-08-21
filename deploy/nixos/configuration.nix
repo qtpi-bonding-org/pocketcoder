@@ -208,6 +208,9 @@ in
   # POCO:BEGIN vps-key-only-ssh
   services.openssh = {
     enable = true;
+    # The phone supplies the host key in the boot-env. Prevent the NixOS
+    # sshd-keygen service from generating a different key before bootstrap.
+    hostKeys = [];
     settings = {
       PermitRootLogin = "prohibit-password";
       PasswordAuthentication = false;

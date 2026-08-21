@@ -3,6 +3,9 @@
 # <UDF name="IMAGE_SHA256" label="Expected sha256 of the gzip" />
 # <UDF name="IMAGE_UNCOMPRESSED_BYTES" label="Expected uncompressed size in bytes" />
 # <UDF name="ADMIN_USER_DATA" label="Base64-encoded admin config (was Linode metadata.user_data)" />
+# ADMIN_USER_DATA follows the BOOT-ENV SCHEMA documented and validated in
+# deploy/nixos/bootstrap.sh (currently SCHEMA=1), including the phone-planted
+# host_ssh_private_key (base64), host_ssh_public_key, and public_ip fields.
 set -euo pipefail
 
 command -v curl >/dev/null || { apt-get update && apt-get install -y curl; }
@@ -59,8 +62,9 @@ until [ "$attempt" -ge 3 ]; do
       WRITTEN_B64=$(base64 -w0 /mnt/target/var/lib/pocketcoder-bootstrap-env 2>/dev/null || base64 /mnt/target/var/lib/pocketcoder-bootstrap-env | tr -d '\n')
       if [ "$WRITTEN_B64" != "$ADMIN_USER_DATA" ]; then
         echo "FATAL: bootstrap-env write verification failed -- leaving instance online for inspection"
-        echo "Wrote to /mnt/target/var/lib/pocketcoder-bootstrap-env, re-read and re-encoded, got:"
-        echo "$WRITTEN_B64"
+        # Never print WRITTEN_B64: it includes the delivered host private key.
+        WRITTEN_SHA=$(printf '%s' "$WRITTEN_B64" | sha256sum | awk '{print $1}')
+        echo "Wrote to /mnt/target/var/lib/pocketcoder-bootstrap-env; re-read byte count $(wc -c < /mnt/target/var/lib/pocketcoder-bootstrap-env), sha256 $WRITTEN_SHA"
         exit 1
       fi
       echo "bootstrap-env write verified OK ($(wc -c < /mnt/target/var/lib/pocketcoder-bootstrap-env) bytes)"

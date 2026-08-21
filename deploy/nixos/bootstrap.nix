@@ -7,6 +7,7 @@
     description = "PocketCoder first-boot provisioning";
     wantedBy = [ "multi-user.target" ];
     after = [ "docker.service" "network-online.target" "caddy.service" ];
+    before = [ "sshd.service" "sshd-keygen@ed25519.service" ];
     wants = [ "network-online.target" ];
     requires = [ "docker.service" ];
     environment.POCKETCODER_REF = sourceCommit;

@@ -26,6 +26,14 @@ install -d -m 0700 "$ARTIFACT_DIR" /var/lib/pocketcoder/config
 # NixOS accepts owner configuration from the one-shot file written by the
 # image installer. A compatibility fallback can still read Linode metadata,
 # and an interrupted boot resumes from the protected environment file.
+#
+# BOOT-ENV SCHEMA (the single authoritative schema; the image installer must
+# write exactly these fields): SCHEMA=1, root_ssh_key, host_ssh_private_key
+# (base64-encoded OpenSSH private key), host_ssh_public_key, public_ip,
+# POCKETCODER_RELEASE_CHANNEL, POCKETCODER_RELEASE_DIGEST,
+# POCKETCODER_RELEASE_SEQUENCE, and POCKETCODER_SELECTED_HARNESSES. Fields
+# are single-line KEY=value records. Adding or changing fields requires a
+# schema version bump and an explicit validator here.
 BOOTSTRAP_ENV_FILE=/var/lib/pocketcoder-bootstrap-env
 if [ -f "$BOOTSTRAP_ENV_FILE" ]; then
   install -m 600 /dev/null "$RUNTIME_ENV"
@@ -59,6 +67,22 @@ else
   printf '%s' "$USER_DATA" | base64 -d > "$RUNTIME_ENV"
 fi
 
+BOOT_ENV_SCHEMA=$(sed -n 's/^SCHEMA=//p' "$RUNTIME_ENV")
+if [ "$BOOT_ENV_SCHEMA" != "1" ]; then
+  echo "Invalid or missing boot-env SCHEMA (expected 1); refusing bootstrap" >&2
+  pc_status_error configuring_operating_system boot_env_schema_invalid
+  exit 1
+fi
+for required_field in root_ssh_key host_ssh_private_key host_ssh_public_key public_ip \
+  POCKETCODER_RELEASE_CHANNEL POCKETCODER_RELEASE_DIGEST POCKETCODER_RELEASE_SEQUENCE \
+  POCKETCODER_SELECTED_HARNESSES; do
+  if ! grep -q "^${required_field}=\S" "$RUNTIME_ENV"; then
+    echo "Required boot-env field is missing or empty: ${required_field}" >&2
+    pc_status_error configuring_operating_system boot_env_field_missing
+    exit 1
+  fi
+done
+
 ROOT_SSH_KEY=$(sed -n 's/^root_ssh_key=//p' "$RUNTIME_ENV")
 if [ -z "$ROOT_SSH_KEY" ] && [ ! -s /root/.ssh/authorized_keys ]; then
   echo "No root SSH key was delivered; refusing an unreachable deployment" >&2
@@ -71,6 +95,19 @@ if [ -n "$ROOT_SSH_KEY" ]; then
   chmod 600 /root/.ssh/authorized_keys
   sed -i '/^root_ssh_key=/d' "$RUNTIME_ENV"
 fi
+
+# The phone supplies the SSH host key as part of the root-of-trust blob.
+# hostKeys=[] in configuration.nix prevents sshd-keygen from racing this.
+HOST_SSH_PRIVATE_KEY=$(sed -n 's/^host_ssh_private_key=//p' "$RUNTIME_ENV")
+HOST_SSH_PUBLIC_KEY=$(sed -n 's/^host_ssh_public_key=//p' "$RUNTIME_ENV")
+install -d -m 0755 /etc/ssh
+printf '%s' "$HOST_SSH_PRIVATE_KEY" | base64 -d > /etc/ssh/ssh_host_ed25519_key
+printf '%s\n' "$HOST_SSH_PUBLIC_KEY" > /etc/ssh/ssh_host_ed25519_key.pub
+chmod 600 /etc/ssh/ssh_host_ed25519_key
+chmod 644 /etc/ssh/ssh_host_ed25519_key.pub
+install -d -m 0755 /run/pocketcoder
+printf '%s\n' "$(sed -n 's/^public_ip=//p' "$RUNTIME_ENV")" > /run/pocketcoder/public-ip
+chmod 644 /run/pocketcoder/public-ip
 # POCO:END bootstrap-owner-config
 
 # POCO:BEGIN bootstrap-release-source
