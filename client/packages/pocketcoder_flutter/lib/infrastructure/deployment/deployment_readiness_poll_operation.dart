@@ -41,7 +41,20 @@ class DeploymentReadinessPollOperation extends IdempotentOperation<bool> {
     final instance = context.get(instanceContextKey);
     ReadinessUpdate? lastUpdate;
 
-    await for (final update in readinessSource(hostname: instance.ipAddress)) {
+    // Must be the sslip.io hostname, not the bare IP: Caddy serves a
+    // *third*, separate site block for the bare-IP host that only ever
+    // presents the self-signed internal-CA certificate (no ACME issuer at
+    // all), which an unpinned client here can never trust -- confirmed
+    // live, this made /api/health readiness checks fail forever (no HTTP
+    // fallback exists for that endpoint, unlike status.json's), hanging
+    // every real deployment's readiness poll indefinitely even once the
+    // box was fully healthy. The sslip.io hostname's site block obtains a
+    // real ACME certificate (falling back to the same self-signed cert
+    // only if ACME itself is unavailable, e.g. rate-limited) and is what
+    // every other readiness-adjacent check in this codebase already uses.
+    final hostname = '${instance.ipAddress.replaceAll('.', '-')}.sslip.io';
+
+    await for (final update in readinessSource(hostname: hostname)) {
       if (cancel.isRequested) {
         throw StateError('cancelled while waiting for deploy readiness');
       }

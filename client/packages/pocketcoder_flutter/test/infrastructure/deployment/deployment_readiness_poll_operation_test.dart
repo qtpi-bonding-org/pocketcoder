@@ -151,6 +151,20 @@ void main() {
     await controller.close();
   });
 
+  test('passes the sslip.io hostname, not the bare IP, to readinessSource',
+      () async {
+    String? capturedHostname;
+    Stream<ReadinessUpdate> source({required String hostname}) {
+      capturedHostname = hostname;
+      return Stream.fromIterable([_update(DeployOperationKey.ready)]);
+    }
+
+    final op = makeOperation(source);
+    final context = OperationContext()..set(instanceContextKey, _instance());
+    await op.run(context, CancellationToken());
+    expect(capturedHostname, '203-0-113-10.sslip.io');
+  });
+
   test('recover() is always Absent', () async {
     final op = makeOperation(FakeReadinessSource([]).monitor);
     final outcome = await op.recover(OperationContext(), CancellationToken());
