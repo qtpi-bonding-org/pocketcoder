@@ -402,6 +402,67 @@ isn't preventable by code (can't stop a peer session from promoting), only
 by cross-session coordination once you notice it (see the peer messages
 in this session's transcript around this timestamp for the live example).
 
+### 2026-08-22: `trigger-ci-build.sh --attest-branch` sent `attest_branch` as a raw JSON boolean — GitHub silently ignored it
+
+**Real code bug, not friction — logged here because it was found via this
+exact live-testing loop and explains several confusing failures above.**
+`deploy/nixos/scripts/trigger-ci-build.sh` (called by `55-promote.sh` for
+every suite run's mid-run "release B" candidate) POSTed to GitHub's
+`workflow_dispatch` REST API with `"attest_branch":$attest_branch`
+unquoted — a raw JSON `true`/`false` literal, not a string. GitHub's API
+silently accepted the malformed input but never actually flipped
+`inputs.attest_branch` away from its declared default (`false`), so
+`release-branch.nix` was never overwritten and the resulting NixOS image
+always baked `POCKETCODER_GITHUB_WORKFLOW_BRANCH=main` — regardless of
+`--attest-branch` being passed. Confirmed live by SSHing into a freshly
+provisioned box and reading its `pocketcoder-bootstrap.service` unit:
+`Environment="POCKETCODER_GITHUB_WORKFLOW_BRANCH=main"` even though
+`POCKETCODER_REF` correctly showed the staging commit that built it. The
+box's own `pocketcoder-release install` then requested the bare
+`nightly.json` (404, since only `nightly-testing.json` gets written for
+staging) and bootstrap failed with `release_install_failed`.
+
+This silently poisoned `nightly-testing.json` for every subsequent run's
+**Phase 1 initial provisioning** too (which just reads whatever's
+currently on that pointer) — so once one run's mid-run promote landed a
+mis-attested "release B" onto `nightly-testing.json`, every later run's
+very first box failed at `fetching_release`, looking exactly like a fresh
+infra/channel problem rather than a stale-and-wrong pointer. The
+secrets-daemon's own separate `trigger_nixos_ci_build_attest_branch`
+action does NOT go through this script and was unaffected (confirmed: the
+very first manually-triggered build in this session correctly baked
+`staging` and let that run's box provision cleanly through several
+phases) — only the suite's own internal mid-run promotion path was
+broken, which is why this went unnoticed until specifically diagnosed via
+SSH.
+
+**Fixed** in `pocketcoder` `248277c03`: quote the value
+(`\"attest_branch\":\"$attest_branch\"`) so GitHub receives the string
+`"true"`/`"false"` its `workflow_dispatch` API actually requires for
+input values, regardless of the YAML-declared `type:`.
+
+**Do this next time a channel-fetch/release-install failure looks like
+infra flakiness:** SSH in and check
+`systemctl cat pocketcoder-bootstrap.service | grep WORKFLOW_BRANCH`
+before assuming the channel pointer itself is broken — a `main`-baked
+box on a staging run will always 404 on `nightly.json`, and that's
+indistinguishable from the outside until you look at what's actually
+baked into the box.
+
+**Recovery note:** fixing the script doesn't retroactively un-poison an
+already-promoted `nightly-testing.json`. Re-run
+`trigger_nixos_ci_build_attest_branch` (the known-good daemon action) and
+`promote_latest_nixos_candidate` manually once after landing the fix,
+before relaunching the suite — otherwise Phase 1 keeps reading the stale,
+mis-attested pointer. A side effect of doing this manually with no new
+commit since: `55-promote.sh`'s own mid-run build for the same HEAD
+produces a byte-identical digest, so it correctly refuses to promote
+("candidate is identical to the provisioned baseline") and
+`update`/`post-update`/`rollback` all skip for that one run. Not a bug —
+just something to expect on the run immediately after a manual
+recovery promotion; the next run (once any new commit lands, e.g. this
+very friction-log update) gets a genuinely distinct release B again.
+
 ### Known from the prior runbook, still true
 
 - `nightly.json`/`nightly-testing.json` reads can be edge-cache-stale for a
