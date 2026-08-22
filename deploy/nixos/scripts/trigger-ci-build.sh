@@ -33,6 +33,6 @@ curl -sf -X POST \
   -H "Authorization: Bearer $GH_TOKEN" \
   -H "Accept: application/vnd.github+json" \
   "https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions/workflows/nixos-image.yml/dispatches" \
-  -d "{\"ref\":\"$ref\",\"inputs\":{\"operation\":\"build_candidate\",\"attest_branch\":$attest_branch}}"
+  -d "{\"ref\":\"$ref\",\"inputs\":{\"operation\":\"build_candidate\",\"attest_branch\":\"$attest_branch\"}}"
 
 echo "candidate build dispatched: ref=$ref attest_branch=$attest_branch"
