@@ -344,6 +344,29 @@ or equivalent) covers every real need.
 
 Only a broad label-prefix sweep existed. See "Deleting instances" above.
 
+### 2026-08-22: `create_instance` 400'd on every run — Linode instance label exceeded 64 chars
+
+`golden_path_provision_test.dart`'s NixOS scenario passed
+`labelPrefix: 'nixos-vps-script-$scenario-${start.millisecondsSinceEpoch}'`
+into `planLinodeProvisioning`, but also passed the *same*
+`'$scenario-${start.millisecondsSinceEpoch}'` as `attemptId`.
+`CreateInstanceOperation._label` builds the actual Linode label as
+`'$labelPrefix-$attemptId'`, so the scenario+timestamp ended up embedded
+twice, producing a ~67-68 char label — over Linode's 64-char limit. Every
+run failed instantly (before any billable resource was created) with
+`CloudProviderAPIError[400]: {reason: Length must be 3-64 characters,
+field: label}`. Fast to catch via the "immediate check right after
+launch" step — no need to wait out a full phase timeout for this one.
+Fixed in `flutter_aeroform` (`d859812`) by passing a bare static
+`labelPrefix: 'nixos-vps-script'` — `CreateInstanceOperation` already
+appends `-$attemptId` for uniqueness, so the prefix only needs to be
+short and stable (it still matches the `nixos-vps-script-` prefix the
+orphaned-instance sweep expects). No `pocketcoder`/`.nix` changes
+involved, so no CI image rebuild was needed before relaunching — this
+lives entirely in `flutter_aeroform`, which pushes directly to `main`
+(see ops-runbook.md §1), not through the `pocketcoder` standalone-clone
+workflow.
+
 ### Known from the prior runbook, still true
 
 - `nightly.json`/`nightly-testing.json` reads can be edge-cache-stale for a
