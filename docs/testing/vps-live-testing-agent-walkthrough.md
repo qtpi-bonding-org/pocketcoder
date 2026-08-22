@@ -367,6 +367,41 @@ lives entirely in `flutter_aeroform`, which pushes directly to `main`
 (see ops-runbook.md §1), not through the `pocketcoder` standalone-clone
 workflow.
 
+### 2026-08-22: a concurrent peer session's `promote_latest_nixos_candidate` call raced the `update` phase's sequence check
+
+Ran the full suite concurrently with another agent session running the
+`pocketcoder_pro` full-engine VPS script test — both sharing the 2-VPS
+ceiling. That session called `promote_latest_nixos_candidate --var
+channel=nightly` (intending to reach the bare `nightly.json` its own test
+needed) while this run's own mid-run `55-promote.sh` had already promoted
+and recorded `VPS_RELEASE_B_SEQUENCE=11`. `60-update.sh`'s post-update
+check found `active sequence 12` on the box instead, and the `update`
+phase failed with `active sequence 12 is not the expected 11`
+(`post-update`/`reboot`/`rollback` all still ran and passed afterward —
+this suite doesn't hard-gate later disruptive phases on `update` having
+succeeded). Confirmed via cross-session message: the peer's promotion
+landed on `nightly-testing.json`, bumping its sequence from 11 to 12,
+even though they passed `channel=nightly` and built with
+`attest_branch=false`.
+
+**Real infra gap surfaced by this collision** (not fixable from either
+agent session — needs a human): `promote_latest_nixos_candidate`'s
+checkout is apparently pinned to `staging` regardless of the `channel`
+arg or the candidate build's `attest_branch` flag, so per Gotcha 4 it
+*always* writes `nightly-testing.json` — there is currently no daemon
+action that can write the bare `nightly.json` a `main`-trust box needs.
+Both agent sessions flagging channel/nightly work should raise this
+before assuming their own promotion succeeded at reaching `nightly.json`.
+
+**Do this next time:** before starting a live suite run that includes the
+`update`/`post-update` phases, check `ListAgents`/coordinate with any
+other session that might also be promoting to `nightly`/`nightly-testing`
+during your run's window — a same-window promotion from *either* session
+can move the sequence out from under the other's `update` phase. This
+isn't preventable by code (can't stop a peer session from promoting), only
+by cross-session coordination once you notice it (see the peer messages
+in this session's transcript around this timestamp for the live example).
+
 ### Known from the prior runbook, still true
 
 - `nightly.json`/`nightly-testing.json` reads can be edge-cache-stale for a
