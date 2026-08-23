@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_exception.dart';
@@ -8,6 +9,7 @@ import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 enum _HarnessAuthOperation { status, start, poll, submit, cancel, disconnect }
 
+@LazySingleton(as: IHarnessAuthRepository)
 class HarnessAuthRepository implements IHarnessAuthRepository {
   HarnessAuthRepository(this._api, this._authRepo);
 

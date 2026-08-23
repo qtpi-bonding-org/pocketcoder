@@ -36,6 +36,8 @@ import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart'
     as _i110;
 import 'package:pocketcoder_flutter/application/files/file_viewer_cubit.dart'
     as _i90;
+import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart'
+    as _i681;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart'
     as _i921;
@@ -76,6 +78,8 @@ import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart'
     as _i209;
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_accounts_repository.dart'
     as _i255;
+import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart'
+    as _i14;
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart'
     as _i623;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart'
@@ -156,6 +160,8 @@ import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_account_
     as _i730;
 import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_accounts_repository.dart'
     as _i467;
+import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_auth_repository.dart'
+    as _i417;
 import 'package:pocketcoder_flutter/infrastructure/healthcheck/healthcheck_repository.dart'
     as _i40;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_daos.dart' as _i444;
@@ -400,6 +406,11 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
+    gh.lazySingleton<_i14.IHarnessAuthRepository>(
+        () => _i417.HarnessAuthRepository(
+              gh<_i935.PocketCoderApiClient>(),
+              gh<_i50.IAuthRepository>(),
+            ));
     gh.factory<_i614.ReleaseStatusCubit>(() =>
         _i614.ReleaseStatusCubit(gh<_i472.IServerReleaseStatusService>()));
     gh.lazySingleton<_i470.ISchedulerRepository>(
@@ -430,6 +441,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
+    gh.factory<_i681.HarnessAuthCubit>(() => _i681.HarnessAuthCubit(
+          providerRepository: gh<_i422.IProviderRepository>(),
+          authRepository: gh<_i14.IHarnessAuthRepository>(),
+        ));
     gh.factory<_i710.ElicitationCubit>(
         () => _i710.ElicitationCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i225.PermissionCubit>(

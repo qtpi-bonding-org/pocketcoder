@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-21T12:13:45.935758
+// Generated at: 2026-08-23T08:20:21.892383
 
 import 'app_localizations.dart';
 
@@ -174,6 +174,12 @@ class L10nKeyResolver {
       'deployment.description.tls.ready' => _l10n.deploymentDescriptionTlsReady,
       'deployment.description.tls.zero.ssl' => _l10n.deploymentDescriptionTlsZeroSsl,
       'deployment.description.validating' => _l10n.deploymentDescriptionValidating,
+      'deployment.discard.attempt.body' => _l10n.deploymentDiscardAttemptBody,
+      'deployment.discard.attempt.cancel' => _l10n.deploymentDiscardAttemptCancel,
+      'deployment.discard.attempt.check.link' => _l10n.deploymentDiscardAttemptCheckLink,
+      'deployment.discard.attempt.confirm' => _l10n.deploymentDiscardAttemptConfirm,
+      'deployment.discard.attempt.confirm.checkbox' => _l10n.deploymentDiscardAttemptConfirmCheckbox,
+      'deployment.discard.attempt.title' => _l10n.deploymentDiscardAttemptTitle,
       'deployment.distribution' => _l10n.deploymentDistribution,
       'deployment.error.code' => _l10n.deploymentErrorCode,
       'deployment.failed' => _l10n.deploymentFailed,
@@ -452,6 +458,7 @@ class L10nKeyResolver {
       'onboarding.passphrase.label' => _l10n.onboardingPassphraseLabel,
       'onboarding.password' => _l10n.onboardingPassword,
       'onboarding.password.hint' => _l10n.onboardingPasswordHint,
+      'onboarding.password.too.short' => _l10n.onboardingPasswordTooShort,
       'onboarding.plan.title' => _l10n.onboardingPlanTitle,
       'onboarding.pocketbase.admin.email' => _l10n.onboardingPocketbaseAdminEmail,
       'onboarding.pocketbase.admin.password' => _l10n.onboardingPocketbaseAdminPassword,
@@ -808,6 +815,7 @@ class L10nKeyResolver {
       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
       'deployment.copied.to.buffer' => _l10n.deploymentCopiedToBuffer(args?['label'] as String? ?? ''),
       'deployment.copy.label' => _l10n.deploymentCopyLabel(args?['label'] as String? ?? ''),
+      'deployment.discard.attempt.resource.id' => _l10n.deploymentDiscardAttemptResourceId(args?['resourceId'] as String? ?? ''),
       'deployment.fault.detected' => _l10n.deploymentFaultDetected(args?['error'] as String? ?? ''),
       'deployment.fault.max.retries.exceeded' => _l10n.deploymentFaultMaxRetriesExceeded(args?['maxAttempts'] as int? ?? 0),
       'deployment.memory.gb' => _l10n.deploymentMemoryGb(args?['value'] as int? ?? 0),
@@ -1032,6 +1040,13 @@ class L10nKeyResolver {
     'deployment.description.tls.ready',
     'deployment.description.tls.zero.ssl',
     'deployment.description.validating',
+    'deployment.discard.attempt.body',
+    'deployment.discard.attempt.cancel',
+    'deployment.discard.attempt.check.link',
+    'deployment.discard.attempt.confirm',
+    'deployment.discard.attempt.confirm.checkbox',
+    'deployment.discard.attempt.resource.id',
+    'deployment.discard.attempt.title',
     'deployment.distribution',
     'deployment.error.code',
     'deployment.failed',
@@ -1343,6 +1358,7 @@ class L10nKeyResolver {
     'onboarding.passphrase.label',
     'onboarding.password',
     'onboarding.password.hint',
+    'onboarding.password.too.short',
     'onboarding.plan.poco',
     'onboarding.plan.title',
     'onboarding.pocketbase.admin.email',
@@ -1878,6 +1894,13 @@ class L10nKeyResolver {
     'deploymentDescriptionTlsReady': 'deployment.description.tls.ready',
     'deploymentDescriptionTlsZeroSsl': 'deployment.description.tls.zero.ssl',
     'deploymentDescriptionValidating': 'deployment.description.validating',
+    'deploymentDiscardAttemptBody': 'deployment.discard.attempt.body',
+    'deploymentDiscardAttemptCancel': 'deployment.discard.attempt.cancel',
+    'deploymentDiscardAttemptCheckLink': 'deployment.discard.attempt.check.link',
+    'deploymentDiscardAttemptConfirm': 'deployment.discard.attempt.confirm',
+    'deploymentDiscardAttemptConfirmCheckbox': 'deployment.discard.attempt.confirm.checkbox',
+    'deploymentDiscardAttemptResourceId': 'deployment.discard.attempt.resource.id',
+    'deploymentDiscardAttemptTitle': 'deployment.discard.attempt.title',
     'deploymentDistribution': 'deployment.distribution',
     'deploymentErrorCode': 'deployment.error.code',
     'deploymentFailed': 'deployment.failed',
@@ -2189,6 +2212,7 @@ class L10nKeyResolver {
     'onboardingPassphraseLabel': 'onboarding.passphrase.label',
     'onboardingPassword': 'onboarding.password',
     'onboardingPasswordHint': 'onboarding.password.hint',
+    'onboardingPasswordTooShort': 'onboarding.password.too.short',
     'onboardingPlanPoco': 'onboarding.plan.poco',
     'onboardingPlanTitle': 'onboarding.plan.title',
     'onboardingPocketbaseAdminEmail': 'onboarding.pocketbase.admin.email',
@@ -2721,6 +2745,13 @@ class L10nKeyResolver {
     'deployment.description.tls.ready': 'deploymentDescriptionTlsReady',
     'deployment.description.tls.zero.ssl': 'deploymentDescriptionTlsZeroSsl',
     'deployment.description.validating': 'deploymentDescriptionValidating',
+    'deployment.discard.attempt.body': 'deploymentDiscardAttemptBody',
+    'deployment.discard.attempt.cancel': 'deploymentDiscardAttemptCancel',
+    'deployment.discard.attempt.check.link': 'deploymentDiscardAttemptCheckLink',
+    'deployment.discard.attempt.confirm': 'deploymentDiscardAttemptConfirm',
+    'deployment.discard.attempt.confirm.checkbox': 'deploymentDiscardAttemptConfirmCheckbox',
+    'deployment.discard.attempt.resource.id': 'deploymentDiscardAttemptResourceId',
+    'deployment.discard.attempt.title': 'deploymentDiscardAttemptTitle',
     'deployment.distribution': 'deploymentDistribution',
     'deployment.error.code': 'deploymentErrorCode',
     'deployment.failed': 'deploymentFailed',
@@ -3032,6 +3063,7 @@ class L10nKeyResolver {
     'onboarding.passphrase.label': 'onboardingPassphraseLabel',
     'onboarding.password': 'onboardingPassword',
     'onboarding.password.hint': 'onboardingPasswordHint',
+    'onboarding.password.too.short': 'onboardingPasswordTooShort',
     'onboarding.plan.poco': 'onboardingPlanPoco',
     'onboarding.plan.title': 'onboardingPlanTitle',
     'onboarding.pocketbase.admin.email': 'onboardingPocketbaseAdminEmail',
@@ -3571,6 +3603,13 @@ abstract class L10nKeys {
   static const deploymentDescriptionTlsReady = 'deployment.description.tls.ready';
   static const deploymentDescriptionTlsZeroSsl = 'deployment.description.tls.zero.ssl';
   static const deploymentDescriptionValidating = 'deployment.description.validating';
+  static const deploymentDiscardAttemptBody = 'deployment.discard.attempt.body';
+  static const deploymentDiscardAttemptCancel = 'deployment.discard.attempt.cancel';
+  static const deploymentDiscardAttemptCheckLink = 'deployment.discard.attempt.check.link';
+  static const deploymentDiscardAttemptConfirm = 'deployment.discard.attempt.confirm';
+  static const deploymentDiscardAttemptConfirmCheckbox = 'deployment.discard.attempt.confirm.checkbox';
+  static (String, Map<String, dynamic>) deploymentDiscardAttemptResourceId(String resourceId) => ('deployment.discard.attempt.resource.id', {'resourceId': resourceId});
+  static const deploymentDiscardAttemptTitle = 'deployment.discard.attempt.title';
   static const deploymentDistribution = 'deployment.distribution';
   static const deploymentErrorCode = 'deployment.error.code';
   static const deploymentFailed = 'deployment.failed';
@@ -3882,6 +3921,7 @@ abstract class L10nKeys {
   static const onboardingPassphraseLabel = 'onboarding.passphrase.label';
   static const onboardingPassword = 'onboarding.password';
   static const onboardingPasswordHint = 'onboarding.password.hint';
+  static const onboardingPasswordTooShort = 'onboarding.password.too.short';
   static (String, Map<String, dynamic>) onboardingPlanPoco(String providerName) => ('onboarding.plan.poco', {'providerName': providerName});
   static const onboardingPlanTitle = 'onboarding.plan.title';
   static const onboardingPocketbaseAdminEmail = 'onboarding.pocketbase.admin.email';

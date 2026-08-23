@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
@@ -12,6 +13,7 @@ import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 import 'harness_auth_state.dart';
 
+@injectable
 class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
   HarnessAuthCubit({
     required IProviderRepository providerRepository,
