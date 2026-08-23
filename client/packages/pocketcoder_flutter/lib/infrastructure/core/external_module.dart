@@ -161,6 +161,16 @@ abstract class ExternalModule {
   bool get useTestingChannel =>
       const bool.fromEnvironment('USE_TESTING_CHANNEL');
 
+  /// Dev/debug-only: which release channel to resolve when a caller doesn't
+  /// pin one explicitly. Defaults to 'stable' -- forgetting to set this
+  /// dart-define must always fall back to the real channel, never a
+  /// testing one. See ReleaseContentService.resolve's kReleaseMode guard,
+  /// which forces 'stable' regardless of this value in a real release build.
+  @Named('releaseChannel')
+  @lazySingleton
+  String get releaseChannel =>
+      const String.fromEnvironment('RELEASE_CHANNEL', defaultValue: 'stable');
+
   /// Local-only storage for the on-device error inbox. Never synced or
   /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.
   @lazySingleton

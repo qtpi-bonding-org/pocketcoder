@@ -16,7 +16,8 @@ import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dar
 class ReleaseContentService implements IReleaseContentService {
   ReleaseContentService(
       this._http, this._storage, @Named('releaseBaseUrl') this._baseUrl,
-      [@Named('useTestingChannel') this._useTestingChannel = false]);
+      [@Named('useTestingChannel') this._useTestingChannel = false,
+      @Named('releaseChannel') this._defaultChannel = 'stable']);
 
   static const _maximumManifestBytes = 1024 * 1024;
   static const _maximumMetadataBytes = 256 * 1024;
@@ -26,26 +27,31 @@ class ReleaseContentService implements IReleaseContentService {
   final FlutterSecureStorage _storage;
   final String _baseUrl;
   final bool _useTestingChannel;
+  final String _defaultChannel;
 
   @override
-  Future<ReleaseSelection> resolve({String channel = 'stable'}) =>
-      tryMethod(() async {
-        if (!const {'stable', 'beta', 'nightly'}.contains(channel)) {
+  Future<ReleaseSelection> resolve({String? channel}) => tryMethod(() async {
+        // kReleaseMode is a second, independent guard on BOTH knobs below:
+        // even if a debug-only dart-define somehow leaked into a release
+        // build, a genuine `--release` build ignores it and only ever
+        // fetches the real, non-testing 'stable' channel. The pointer's own
+        // "channel" field always holds the unqualified name regardless of
+        // which path served it, so identity verification below is
+        // unaffected by this path choice.
+        final resolvedChannel =
+            kReleaseMode ? 'stable' : (channel ?? _defaultChannel);
+        if (!const {'stable', 'beta', 'nightly'}.contains(resolvedChannel)) {
           throw const ReleaseContentException('Unsupported release channel');
         }
-        // kReleaseMode is a second, independent guard: even if
-        // useTestingChannel were ever somehow true in a real release build,
-        // a genuine `--release` build ignores it and only ever fetches the
-        // real channel. The pointer's own "channel" field always holds the
-        // unqualified name regardless of which path served it, so identity
-        // verification below is unaffected by this path choice.
-        final pathSegment =
-            _useTestingChannel && !kReleaseMode ? '$channel-testing' : channel;
+        final pathSegment = _useTestingChannel && !kReleaseMode
+            ? '$resolvedChannel-testing'
+            : resolvedChannel;
         final pointerBytes = await _getBounded(
             Uri.parse('$_baseUrl/channels/$pathSegment.json'),
             _maximumMetadataBytes);
         final pointer = _decodeObject(pointerBytes);
-        if (pointer['schemaVersion'] != 1 || pointer['channel'] != channel) {
+        if (pointer['schemaVersion'] != 1 ||
+            pointer['channel'] != resolvedChannel) {
           throw const ReleaseContentException(
               'Unsupported release channel pointer');
         }
@@ -56,7 +62,7 @@ class ReleaseContentService implements IReleaseContentService {
                 '/attestations/channels/$pathSegment/[1-9][0-9]*[.]sigstore[.]json'
                 r'$'));
         final persisted = await _readSequence('channel-$pathSegment');
-        final floor = channel == 'stable' && persisted < _stableFloor
+        final floor = resolvedChannel == 'stable' && persisted < _stableFloor
             ? _stableFloor
             : persisted;
         if (sequence < floor) {
@@ -110,7 +116,7 @@ class ReleaseContentService implements IReleaseContentService {
         await _writeSequence('channel-$pathSegment', sequence);
         await _writeSequence('revocation', revocationSequence);
         return ReleaseSelection(
-            channel: channel,
+            channel: resolvedChannel,
             sequence: sequence,
             revocationSequence: revocationSequence,
             digest: digest,

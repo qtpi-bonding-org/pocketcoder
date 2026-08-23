@@ -234,6 +234,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => externalModule.errorBoxStorage);
     gh.lazySingleton<_i72.NetworkRecoverySignal>(
         () => _i72.NetworkRecoverySignal());
+    gh.lazySingleton<String>(
+      () => externalModule.releaseChannel,
+      instanceName: 'releaseChannel',
+    );
     gh.lazySingleton<_i935.PocketCoderApiClient>(
         () => externalModule.pocketCoderApiClient(gh<_i824.PocketBase>()));
     gh.lazySingleton<_i611.IObservabilityRepository>(
@@ -316,13 +320,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
         ));
-    gh.lazySingleton<_i1033.IReleaseContentService>(
-        () => _i456.ReleaseContentService(
-              gh<_i519.Client>(),
-              gh<_i558.FlutterSecureStorage>(),
-              gh<String>(instanceName: 'releaseBaseUrl'),
-              gh<bool>(instanceName: 'useTestingChannel'),
-            ));
     gh.factory<_i464.AuthCubit>(
         () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i767.IToolPermissionRepository>(
@@ -338,6 +335,14 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i444.McpServerDao>(),
           gh<_i935.PocketCoderApiClient>(),
         ));
+    gh.lazySingleton<_i1033.IReleaseContentService>(
+        () => _i456.ReleaseContentService(
+              gh<_i519.Client>(),
+              gh<_i558.FlutterSecureStorage>(),
+              gh<String>(instanceName: 'releaseBaseUrl'),
+              gh<bool>(instanceName: 'useTestingChannel'),
+              gh<String>(instanceName: 'releaseChannel'),
+            ));
     gh.factory<_i506.StatusCubit>(() => _i506.StatusCubit(
           gh<_i50.IAuthRepository>(),
           gh<_i72.NetworkRecoverySignal>(),

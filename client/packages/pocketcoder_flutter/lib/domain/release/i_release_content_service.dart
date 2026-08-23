@@ -24,7 +24,10 @@ class ReleaseSelection {
 typedef VerifiedRelease = ReleaseSelection;
 
 abstract interface class IReleaseContentService {
-  Future<ReleaseSelection> resolve({String channel = 'stable'});
+  /// A null channel defers to the implementation's own default (debug-only
+  /// RELEASE_CHANNEL dart-define, 'stable' otherwise) -- see
+  /// ReleaseContentService.resolve.
+  Future<ReleaseSelection> resolve({String? channel});
 
   Future<Uint8List> fetchDocument(
     ReleaseSelection release,
