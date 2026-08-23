@@ -1,6 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-23T08:20:21.892383
 
 import 'app_localizations.dart';
 
@@ -257,6 +256,27 @@ class L10nKeyResolver {
       'deployment.status.tls.ready' => _l10n.deploymentStatusTlsReady,
       'deployment.status.tls.zero.ssl' => _l10n.deploymentStatusTlsZeroSsl,
       'deployment.status.validating' => _l10n.deploymentStatusValidating,
+      'deployment.step.boot.final' => _l10n.deploymentStepBootFinal,
+      'deployment.step.boot.installer' => _l10n.deploymentStepBootInstaller,
+      'deployment.step.bootstrap.complete' => _l10n.deploymentStepBootstrapComplete,
+      'deployment.step.compose.up' => _l10n.deploymentStepComposeUp,
+      'deployment.step.configuring.operating.system' => _l10n.deploymentStepConfiguringOperatingSystem,
+      'deployment.step.create.final.config' => _l10n.deploymentStepCreateFinalConfig,
+      'deployment.step.create.installer.config' => _l10n.deploymentStepCreateInstallerConfig,
+      'deployment.step.create.installer.disk' => _l10n.deploymentStepCreateInstallerDisk,
+      'deployment.step.create.instance' => _l10n.deploymentStepCreateInstance,
+      'deployment.step.create.target.disk' => _l10n.deploymentStepCreateTargetDisk,
+      'deployment.step.fetching.release' => _l10n.deploymentStepFetchingRelease,
+      'deployment.step.final.instance.fetch' => _l10n.deploymentStepFinalInstanceFetch,
+      'deployment.step.loading.images' => _l10n.deploymentStepLoadingImages,
+      'deployment.step.plan.lookup' => _l10n.deploymentStepPlanLookup,
+      'deployment.step.pre.boot.shutdown' => _l10n.deploymentStepPreBootShutdown,
+      'deployment.step.ready' => _l10n.deploymentStepReady,
+      'deployment.step.remove.installer.resources' => _l10n.deploymentStepRemoveInstallerResources,
+      'deployment.step.wait.installer.completion' => _l10n.deploymentStepWaitInstallerCompletion,
+      'deployment.step.wait.installer.disk.ready' => _l10n.deploymentStepWaitInstallerDiskReady,
+      'deployment.step.wait.target.disk.ready' => _l10n.deploymentStepWaitTargetDiskReady,
+      'deployment.step.waiting.for.connection' => _l10n.deploymentStepWaitingForConnection,
       'deployment.system.parameters' => _l10n.deploymentSystemParameters,
       'deployment.ubuntu' => _l10n.deploymentUbuntu,
       'deployment.unknown' => _l10n.deploymentUnknown,
@@ -1133,6 +1153,27 @@ class L10nKeyResolver {
     'deployment.status.tls.ready',
     'deployment.status.tls.zero.ssl',
     'deployment.status.validating',
+    'deployment.step.boot.final',
+    'deployment.step.boot.installer',
+    'deployment.step.bootstrap.complete',
+    'deployment.step.compose.up',
+    'deployment.step.configuring.operating.system',
+    'deployment.step.create.final.config',
+    'deployment.step.create.installer.config',
+    'deployment.step.create.installer.disk',
+    'deployment.step.create.instance',
+    'deployment.step.create.target.disk',
+    'deployment.step.fetching.release',
+    'deployment.step.final.instance.fetch',
+    'deployment.step.loading.images',
+    'deployment.step.plan.lookup',
+    'deployment.step.pre.boot.shutdown',
+    'deployment.step.ready',
+    'deployment.step.remove.installer.resources',
+    'deployment.step.wait.installer.completion',
+    'deployment.step.wait.installer.disk.ready',
+    'deployment.step.wait.target.disk.ready',
+    'deployment.step.waiting.for.connection',
     'deployment.sync.attempt',
     'deployment.system.parameters',
     'deployment.ubuntu',
@@ -1987,6 +2028,27 @@ class L10nKeyResolver {
     'deploymentStatusTlsReady': 'deployment.status.tls.ready',
     'deploymentStatusTlsZeroSsl': 'deployment.status.tls.zero.ssl',
     'deploymentStatusValidating': 'deployment.status.validating',
+    'deploymentStepBootFinal': 'deployment.step.boot.final',
+    'deploymentStepBootInstaller': 'deployment.step.boot.installer',
+    'deploymentStepBootstrapComplete': 'deployment.step.bootstrap.complete',
+    'deploymentStepComposeUp': 'deployment.step.compose.up',
+    'deploymentStepConfiguringOperatingSystem': 'deployment.step.configuring.operating.system',
+    'deploymentStepCreateFinalConfig': 'deployment.step.create.final.config',
+    'deploymentStepCreateInstallerConfig': 'deployment.step.create.installer.config',
+    'deploymentStepCreateInstallerDisk': 'deployment.step.create.installer.disk',
+    'deploymentStepCreateInstance': 'deployment.step.create.instance',
+    'deploymentStepCreateTargetDisk': 'deployment.step.create.target.disk',
+    'deploymentStepFetchingRelease': 'deployment.step.fetching.release',
+    'deploymentStepFinalInstanceFetch': 'deployment.step.final.instance.fetch',
+    'deploymentStepLoadingImages': 'deployment.step.loading.images',
+    'deploymentStepPlanLookup': 'deployment.step.plan.lookup',
+    'deploymentStepPreBootShutdown': 'deployment.step.pre.boot.shutdown',
+    'deploymentStepReady': 'deployment.step.ready',
+    'deploymentStepRemoveInstallerResources': 'deployment.step.remove.installer.resources',
+    'deploymentStepWaitInstallerCompletion': 'deployment.step.wait.installer.completion',
+    'deploymentStepWaitInstallerDiskReady': 'deployment.step.wait.installer.disk.ready',
+    'deploymentStepWaitTargetDiskReady': 'deployment.step.wait.target.disk.ready',
+    'deploymentStepWaitingForConnection': 'deployment.step.waiting.for.connection',
     'deploymentSyncAttempt': 'deployment.sync.attempt',
     'deploymentSystemParameters': 'deployment.system.parameters',
     'deploymentUbuntu': 'deployment.ubuntu',
@@ -2838,6 +2900,27 @@ class L10nKeyResolver {
     'deployment.status.tls.ready': 'deploymentStatusTlsReady',
     'deployment.status.tls.zero.ssl': 'deploymentStatusTlsZeroSsl',
     'deployment.status.validating': 'deploymentStatusValidating',
+    'deployment.step.boot.final': 'deploymentStepBootFinal',
+    'deployment.step.boot.installer': 'deploymentStepBootInstaller',
+    'deployment.step.bootstrap.complete': 'deploymentStepBootstrapComplete',
+    'deployment.step.compose.up': 'deploymentStepComposeUp',
+    'deployment.step.configuring.operating.system': 'deploymentStepConfiguringOperatingSystem',
+    'deployment.step.create.final.config': 'deploymentStepCreateFinalConfig',
+    'deployment.step.create.installer.config': 'deploymentStepCreateInstallerConfig',
+    'deployment.step.create.installer.disk': 'deploymentStepCreateInstallerDisk',
+    'deployment.step.create.instance': 'deploymentStepCreateInstance',
+    'deployment.step.create.target.disk': 'deploymentStepCreateTargetDisk',
+    'deployment.step.fetching.release': 'deploymentStepFetchingRelease',
+    'deployment.step.final.instance.fetch': 'deploymentStepFinalInstanceFetch',
+    'deployment.step.loading.images': 'deploymentStepLoadingImages',
+    'deployment.step.plan.lookup': 'deploymentStepPlanLookup',
+    'deployment.step.pre.boot.shutdown': 'deploymentStepPreBootShutdown',
+    'deployment.step.ready': 'deploymentStepReady',
+    'deployment.step.remove.installer.resources': 'deploymentStepRemoveInstallerResources',
+    'deployment.step.wait.installer.completion': 'deploymentStepWaitInstallerCompletion',
+    'deployment.step.wait.installer.disk.ready': 'deploymentStepWaitInstallerDiskReady',
+    'deployment.step.wait.target.disk.ready': 'deploymentStepWaitTargetDiskReady',
+    'deployment.step.waiting.for.connection': 'deploymentStepWaitingForConnection',
     'deployment.sync.attempt': 'deploymentSyncAttempt',
     'deployment.system.parameters': 'deploymentSystemParameters',
     'deployment.ubuntu': 'deploymentUbuntu',
@@ -3696,6 +3779,27 @@ abstract class L10nKeys {
   static const deploymentStatusTlsReady = 'deployment.status.tls.ready';
   static const deploymentStatusTlsZeroSsl = 'deployment.status.tls.zero.ssl';
   static const deploymentStatusValidating = 'deployment.status.validating';
+  static const deploymentStepBootFinal = 'deployment.step.boot.final';
+  static const deploymentStepBootInstaller = 'deployment.step.boot.installer';
+  static const deploymentStepBootstrapComplete = 'deployment.step.bootstrap.complete';
+  static const deploymentStepComposeUp = 'deployment.step.compose.up';
+  static const deploymentStepConfiguringOperatingSystem = 'deployment.step.configuring.operating.system';
+  static const deploymentStepCreateFinalConfig = 'deployment.step.create.final.config';
+  static const deploymentStepCreateInstallerConfig = 'deployment.step.create.installer.config';
+  static const deploymentStepCreateInstallerDisk = 'deployment.step.create.installer.disk';
+  static const deploymentStepCreateInstance = 'deployment.step.create.instance';
+  static const deploymentStepCreateTargetDisk = 'deployment.step.create.target.disk';
+  static const deploymentStepFetchingRelease = 'deployment.step.fetching.release';
+  static const deploymentStepFinalInstanceFetch = 'deployment.step.final.instance.fetch';
+  static const deploymentStepLoadingImages = 'deployment.step.loading.images';
+  static const deploymentStepPlanLookup = 'deployment.step.plan.lookup';
+  static const deploymentStepPreBootShutdown = 'deployment.step.pre.boot.shutdown';
+  static const deploymentStepReady = 'deployment.step.ready';
+  static const deploymentStepRemoveInstallerResources = 'deployment.step.remove.installer.resources';
+  static const deploymentStepWaitInstallerCompletion = 'deployment.step.wait.installer.completion';
+  static const deploymentStepWaitInstallerDiskReady = 'deployment.step.wait.installer.disk.ready';
+  static const deploymentStepWaitTargetDiskReady = 'deployment.step.wait.target.disk.ready';
+  static const deploymentStepWaitingForConnection = 'deployment.step.waiting.for.connection';
   static (String, Map<String, dynamic>) deploymentSyncAttempt(int attempt) => ('deployment.sync.attempt', {'attempt': attempt});
   static const deploymentSystemParameters = 'deployment.system.parameters';
   static const deploymentUbuntu = 'deployment.ubuntu';

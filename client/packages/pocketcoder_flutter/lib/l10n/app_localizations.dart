@@ -2566,6 +2566,132 @@ abstract class AppLocalizations {
   /// **'INITIALIZING'**
   String get pocketCoderProgressInitializing;
 
+  /// No description provided for @deploymentStepCreateInstance.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating server'**
+  String get deploymentStepCreateInstance;
+
+  /// No description provided for @deploymentStepPlanLookup.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking up plan details'**
+  String get deploymentStepPlanLookup;
+
+  /// No description provided for @deploymentStepCreateInstallerDisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing installer disk'**
+  String get deploymentStepCreateInstallerDisk;
+
+  /// No description provided for @deploymentStepWaitInstallerDiskReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for installer disk'**
+  String get deploymentStepWaitInstallerDiskReady;
+
+  /// No description provided for @deploymentStepCreateTargetDisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing target disk'**
+  String get deploymentStepCreateTargetDisk;
+
+  /// No description provided for @deploymentStepWaitTargetDiskReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for target disk'**
+  String get deploymentStepWaitTargetDiskReady;
+
+  /// No description provided for @deploymentStepCreateInstallerConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuring installer boot'**
+  String get deploymentStepCreateInstallerConfig;
+
+  /// No description provided for @deploymentStepBootInstaller.
+  ///
+  /// In en, this message translates to:
+  /// **'Booting installer'**
+  String get deploymentStepBootInstaller;
+
+  /// No description provided for @deploymentStepWaitInstallerCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing operating system'**
+  String get deploymentStepWaitInstallerCompletion;
+
+  /// No description provided for @deploymentStepRemoveInstallerResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning up installer'**
+  String get deploymentStepRemoveInstallerResources;
+
+  /// No description provided for @deploymentStepCreateFinalConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuring server boot'**
+  String get deploymentStepCreateFinalConfig;
+
+  /// No description provided for @deploymentStepPreBootShutdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Restarting server'**
+  String get deploymentStepPreBootShutdown;
+
+  /// No description provided for @deploymentStepBootFinal.
+  ///
+  /// In en, this message translates to:
+  /// **'Booting server'**
+  String get deploymentStepBootFinal;
+
+  /// No description provided for @deploymentStepFinalInstanceFetch.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirming server is up'**
+  String get deploymentStepFinalInstanceFetch;
+
+  /// No description provided for @deploymentStepWaitingForConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to server'**
+  String get deploymentStepWaitingForConnection;
+
+  /// No description provided for @deploymentStepConfiguringOperatingSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuring operating system'**
+  String get deploymentStepConfiguringOperatingSystem;
+
+  /// No description provided for @deploymentStepFetchingRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching PocketCoder release'**
+  String get deploymentStepFetchingRelease;
+
+  /// No description provided for @deploymentStepLoadingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading container images'**
+  String get deploymentStepLoadingImages;
+
+  /// No description provided for @deploymentStepComposeUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting services'**
+  String get deploymentStepComposeUp;
+
+  /// No description provided for @deploymentStepBootstrapComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing setup'**
+  String get deploymentStepBootstrapComplete;
+
+  /// No description provided for @deploymentStepReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get deploymentStepReady;
+
   /// No description provided for @deploymentScreenTitle.
   ///
   /// In en, this message translates to:

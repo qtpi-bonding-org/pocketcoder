@@ -1338,6 +1338,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pocketCoderProgressInitializing => 'INITIALIZING';
 
   @override
+  String get deploymentStepCreateInstance => 'Creating server';
+
+  @override
+  String get deploymentStepPlanLookup => 'Looking up plan details';
+
+  @override
+  String get deploymentStepCreateInstallerDisk => 'Preparing installer disk';
+
+  @override
+  String get deploymentStepWaitInstallerDiskReady =>
+      'Waiting for installer disk';
+
+  @override
+  String get deploymentStepCreateTargetDisk => 'Preparing target disk';
+
+  @override
+  String get deploymentStepWaitTargetDiskReady => 'Waiting for target disk';
+
+  @override
+  String get deploymentStepCreateInstallerConfig =>
+      'Configuring installer boot';
+
+  @override
+  String get deploymentStepBootInstaller => 'Booting installer';
+
+  @override
+  String get deploymentStepWaitInstallerCompletion =>
+      'Installing operating system';
+
+  @override
+  String get deploymentStepRemoveInstallerResources => 'Cleaning up installer';
+
+  @override
+  String get deploymentStepCreateFinalConfig => 'Configuring server boot';
+
+  @override
+  String get deploymentStepPreBootShutdown => 'Restarting server';
+
+  @override
+  String get deploymentStepBootFinal => 'Booting server';
+
+  @override
+  String get deploymentStepFinalInstanceFetch => 'Confirming server is up';
+
+  @override
+  String get deploymentStepWaitingForConnection => 'Connecting to server';
+
+  @override
+  String get deploymentStepConfiguringOperatingSystem =>
+      'Configuring operating system';
+
+  @override
+  String get deploymentStepFetchingRelease => 'Fetching PocketCoder release';
+
+  @override
+  String get deploymentStepLoadingImages => 'Loading container images';
+
+  @override
+  String get deploymentStepComposeUp => 'Starting services';
+
+  @override
+  String get deploymentStepBootstrapComplete => 'Finishing setup';
+
+  @override
+  String get deploymentStepReady => 'Ready';
+
+  @override
   String get deploymentScreenTitle => 'DEPLOYMENT IN PROGRESS';
 
   @override
