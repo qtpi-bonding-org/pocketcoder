@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'package:pocketcoder_flutter/domain/deployment/deploy_operation_key.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/domain/deployment/readiness_update.dart';
 import 'package:pocketcoder_flutter/domain/deployment/server_status_document.dart';
 
@@ -34,8 +35,7 @@ class DeploymentReadinessMonitor {
   void _log(Stopwatch sw, String message) {
     final line = 'DeploymentReadinessMonitor [+${sw.elapsed.inSeconds}s]: $message';
     if (_printLogs) {
-      // ignore: avoid_print
-      print(line);
+      AppLogger.debug(line);
     }
     _onLog?.call(line);
   }
@@ -110,6 +110,11 @@ class DeploymentReadinessMonitor {
             emittedThisAttempt = true;
             final isTerminalError = doc.errorCode != null && doc.attempt >= doc.maxAttempts;
             if (isTerminalError) {
+              AppLogger.warning('DeploymentReadinessMonitor: terminal error', {
+                'hostname': hostname,
+                'errorCode': doc.errorCode,
+                'pollingAttempt': pollingAttempt,
+              });
               _log(sw, 'status-poll $pollingAttempt: terminal error ${doc.errorCode} -- ending monitor');
               return;
             }
@@ -132,6 +137,11 @@ class DeploymentReadinessMonitor {
       try {
         final health = await _client.get(Uri.https(hostname, '/api/health'));
         if (health.statusCode == 200) {
+          AppLogger.info('DeploymentReadinessMonitor: server reported ready', {
+            'hostname': hostname,
+            'pollingAttempt': pollingAttempt,
+            'elapsedSeconds': sw.elapsed.inSeconds,
+          });
           _log(sw, 'health-poll $pollingAttempt: /api/health 200 -- ready');
           yield ReadinessUpdate(
             operationKey: DeployOperationKey.ready,
@@ -168,6 +178,11 @@ class DeploymentReadinessMonitor {
     // not a server-reported operation). Pro's consumer applies its own
     // 30-minute-elapsed-with-no-terminal-update rule; this stream simply
     // ends.
+    AppLogger.warning(
+        'DeploymentReadinessMonitor: 30-minute polling budget exhausted', {
+      'hostname': hostname,
+      'pollingAttempt': pollingAttempt,
+    });
     _log(sw, '30-minute polling budget exhausted with no ready/terminal outcome');
   }
 }
