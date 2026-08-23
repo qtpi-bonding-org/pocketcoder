@@ -2822,6 +2822,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentResetComplete => 'Local deployment state cleared.';
 
   @override
+  String get deploymentDiscardAttemptTitle => 'DISCARD THIS DEPLOYMENT RECORD?';
+
+  @override
+  String get deploymentDiscardAttemptBody =>
+      'PocketCoder still has a record of a provider resource from a previous attempt. Discarding this record does NOT delete anything in your provider account -- it only clears PocketCoder\'s own bookkeeping, so a new deployment can start.';
+
+  @override
+  String deploymentDiscardAttemptResourceId(String resourceId) {
+    return 'Recorded resource: $resourceId';
+  }
+
+  @override
+  String get deploymentDiscardAttemptCheckLink =>
+      'Open provider dashboard to check';
+
+  @override
+  String get deploymentDiscardAttemptConfirmCheckbox =>
+      'I checked and this won\'t create a duplicate charge';
+
+  @override
+  String get deploymentDiscardAttemptCancel => 'CANCEL';
+
+  @override
+  String get deploymentDiscardAttemptConfirm => 'DISCARD RECORD';
+
+  @override
   String get deploymentCleanupSucceeded => 'Cloud server deleted.';
 
   @override

@@ -5111,6 +5111,48 @@ abstract class AppLocalizations {
   /// **'Local deployment state cleared.'**
   String get deploymentResetComplete;
 
+  /// Title of the confirmation dialog for discarding a stuck local deployment record
+  ///
+  /// In en, this message translates to:
+  /// **'DISCARD THIS DEPLOYMENT RECORD?'**
+  String get deploymentDiscardAttemptTitle;
+
+  /// Body copy explaining what discarding a stuck deployment record does and does not do
+  ///
+  /// In en, this message translates to:
+  /// **'PocketCoder still has a record of a provider resource from a previous attempt. Discarding this record does NOT delete anything in your provider account -- it only clears PocketCoder\'s own bookkeeping, so a new deployment can start.'**
+  String get deploymentDiscardAttemptBody;
+
+  /// Shows the provider resource id the app has on file, so the user can look it up themselves
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded resource: {resourceId}'**
+  String deploymentDiscardAttemptResourceId(String resourceId);
+
+  /// Link that opens the cloud provider's own dashboard so the user can verify the resource
+  ///
+  /// In en, this message translates to:
+  /// **'Open provider dashboard to check'**
+  String get deploymentDiscardAttemptCheckLink;
+
+  /// Checkbox the user must tick before the discard confirmation button enables
+  ///
+  /// In en, this message translates to:
+  /// **'I checked and this won\'t create a duplicate charge'**
+  String get deploymentDiscardAttemptConfirmCheckbox;
+
+  /// Cancel button on the discard-stale-attempt confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get deploymentDiscardAttemptCancel;
+
+  /// Confirm button on the discard-stale-attempt confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'DISCARD RECORD'**
+  String get deploymentDiscardAttemptConfirm;
+
   /// Cleanup outcome shown when the cloud server was deleted successfully
   ///
   /// In en, this message translates to:
