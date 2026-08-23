@@ -10,7 +10,7 @@ import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_deploy_credentials_screen.dart';
@@ -219,7 +219,7 @@ void main() {
   testWidgets('deploy credentials continue to the selected provider',
       (tester) async {
     DeployCredentials? captured;
-    const provider = DeployOption(
+    const provider = ProviderOption(
       id: 'linode',
       name: 'Linode',
       description: 'Managed deployment',

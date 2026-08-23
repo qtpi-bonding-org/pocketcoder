@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/deployment/deploy_picker_cubit.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/presentation/billing/pro_paywall_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
@@ -44,7 +44,7 @@ class DeployPickerAdapter
 
   Future<void> _select(
     BuildContext context,
-    DeployOption option,
+    ProviderOption option,
     CubitAdapterState<DeployPickerCubit, DeployPickerState> adapter,
   ) async {
     if (!option.isAvailable) return;

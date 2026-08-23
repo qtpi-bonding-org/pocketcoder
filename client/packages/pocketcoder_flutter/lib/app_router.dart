@@ -36,7 +36,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 
 /// App routing configuration.
@@ -139,8 +139,8 @@ class AppRouter {
           context: context,
           state: state,
           child: OnboardingDeployCredentialsScreen(
-            provider: state.extra is DeployOption
-                ? state.extra as DeployOption
+            provider: state.extra is ProviderOption
+                ? state.extra as ProviderOption
                 : null,
           ),
         ),
@@ -355,7 +355,7 @@ class AppRouter {
             credentials: state.extra is DeployCredentials
                 ? state.extra as DeployCredentials
                 : null,
-            deployOptionService: getIt<IDeployOptionService>(),
+            deployOptionService: getIt<IProviderOptionService>(),
             onHasProAccess: getIt<BillingService>().hasProAccess,
             onProviderSelected: _deployProviderSelectionHandler,
           ),
@@ -553,6 +553,6 @@ class AppNavigation {
 
 typedef DeployProviderSelectionHandler = Future<void> Function(
   BuildContext context,
-  DeployOption option,
+  ProviderOption option,
   DeployCredentials? credentials,
 );

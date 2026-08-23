@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/deployment/deploy_picker_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
@@ -21,7 +21,7 @@ class DeployPickerScreen extends StatelessWidget {
   });
 
   final DeployCredentials? credentials;
-  final IDeployOptionService deployOptionService;
+  final IProviderOptionService deployOptionService;
   final Future<bool> Function() onHasProAccess;
   final DeployProviderSelectionHandler? onProviderSelected;
 
@@ -43,8 +43,8 @@ class DeployPickerView extends StatelessWidget {
     required this.onSelected,
   });
 
-  final List<DeployOption> options;
-  final Future<void> Function(DeployOption option) onSelected;
+  final List<ProviderOption> options;
+  final Future<void> Function(ProviderOption option) onSelected;
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
@@ -90,7 +90,7 @@ class DeployPickerView extends StatelessWidget {
 class _UnavailableProvider extends StatelessWidget {
   const _UnavailableProvider({required this.option});
 
-  final DeployOption option;
+  final ProviderOption option;
 
   @override
   Widget build(BuildContext context) {

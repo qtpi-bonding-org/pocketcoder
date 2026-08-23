@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/onboarding/deploy_credentials_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/deploy_credentials_view.dart';
 
@@ -20,7 +20,7 @@ class DeployCredentialsAdapter
     extends CubitAdapter<DeployCredentialsCubit, DeployCredentialsState> {
   const DeployCredentialsAdapter({super.key, this.provider});
 
-  final DeployOption? provider;
+  final ProviderOption? provider;
 
   @override
   Widget buildAdapter(

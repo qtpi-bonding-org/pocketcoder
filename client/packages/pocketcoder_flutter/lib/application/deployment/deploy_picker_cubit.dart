@@ -1,5 +1,5 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 
 class DeployPickerState with UiFlowStateMixin {
@@ -9,7 +9,7 @@ class DeployPickerState with UiFlowStateMixin {
     this.error,
   });
 
-  final List<DeployOption> options;
+  final List<ProviderOption> options;
   @override
   final UiFlowStatus status;
   @override
@@ -27,7 +27,7 @@ class DeployPickerState with UiFlowStateMixin {
 }
 
 class DeployPickerCubit extends AppCubit<DeployPickerState> {
-  DeployPickerCubit(IDeployOptionService service)
+  DeployPickerCubit(IProviderOptionService service)
       : super(DeployPickerState(options: service.getAvailableProviders()));
 
   void fail(Object error) {

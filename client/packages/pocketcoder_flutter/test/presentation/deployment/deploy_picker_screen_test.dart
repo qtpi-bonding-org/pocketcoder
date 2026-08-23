@@ -4,28 +4,28 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
-class FakeDeployOptionService implements IDeployOptionService {
+class FakeProviderOptionService implements IProviderOptionService {
   @override
-  List<DeployOption> getAvailableProviders() => const [
-        DeployOption(
+  List<ProviderOption> getAvailableProviders() => const [
+        ProviderOption(
           id: 'linode',
           name: 'Linode (Akamai)',
           description: 'One-tap deploy via OAuth. 24h access included.',
           routePath: '/auth',
           requiresPro: true,
         ),
-        DeployOption(
+        ProviderOption(
           id: 'elestio',
           name: 'Elestio',
           description: 'Managed hosting integration is not supported yet.',
-          availability: DeployOptionAvailability.comingSoon,
+          availability: ProviderOptionAvailability.comingSoon,
         ),
       ];
 }
@@ -33,7 +33,7 @@ class FakeDeployOptionService implements IDeployOptionService {
 void main() {
   setUp(() {
     GetIt.I
-        .registerFactory<IDeployOptionService>(() => FakeDeployOptionService());
+        .registerFactory<IProviderOptionService>(() => FakeProviderOptionService());
   });
 
   tearDown(() {
@@ -54,7 +54,7 @@ void main() {
               email: 'reviewer@example.com',
               password: 'test-pass',
             ),
-            deployOptionService: FakeDeployOptionService(),
+            deployOptionService: FakeProviderOptionService(),
             onHasProAccess: () async => true,
           ),
         ),
@@ -89,14 +89,14 @@ void main() {
 
   testWidgets('sends onboarding to credentials after provider selection',
       (tester) async {
-    DeployOption? selectedProvider;
+    ProviderOption? selectedProvider;
     final router = GoRouter(
       initialLocation: '/deploy',
       routes: [
         GoRoute(
           path: '/deploy',
           builder: (context, state) => DeployPickerScreen(
-            deployOptionService: FakeDeployOptionService(),
+            deployOptionService: FakeProviderOptionService(),
             onHasProAccess: () async => true,
           ),
         ),
@@ -104,7 +104,7 @@ void main() {
           name: RouteNames.onboardingDeploy,
           path: AppRoutes.onboardingDeploy,
           builder: (context, state) {
-            selectedProvider = state.extra as DeployOption?;
+            selectedProvider = state.extra as ProviderOption?;
             return const SizedBox.shrink();
           },
         ),
@@ -135,7 +135,7 @@ void main() {
         GoRoute(
           path: '/deploy',
           builder: (context, state) => DeployPickerScreen(
-            deployOptionService: FakeDeployOptionService(),
+            deployOptionService: FakeProviderOptionService(),
             onHasProAccess: () async {
               selectionChecks += 1;
               return true;

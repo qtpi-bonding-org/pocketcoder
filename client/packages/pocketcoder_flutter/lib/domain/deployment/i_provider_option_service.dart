@@ -1,12 +1,12 @@
 /// Interface for providing available deploy options.
 ///
 /// Each build returns the providers it can currently expose to the user.
-abstract class IDeployOptionService {
-  List<DeployOption> getAvailableProviders();
+abstract class IProviderOptionService {
+  List<ProviderOption> getAvailableProviders();
 }
 
 /// A single deployment provider option shown in the deploy picker.
-class DeployOption {
+class ProviderOption {
   final String id;
   final String name;
   final String description;
@@ -21,19 +21,19 @@ class DeployOption {
   final bool requiresPro;
 
   /// Unavailable options stay visible for roadmap context, but cannot launch.
-  final DeployOptionAvailability availability;
+  final ProviderOptionAvailability availability;
 
-  const DeployOption({
+  const ProviderOption({
     required this.id,
     required this.name,
     required this.description,
     this.url,
     this.routePath,
     this.requiresPro = false,
-    this.availability = DeployOptionAvailability.available,
+    this.availability = ProviderOptionAvailability.available,
   });
 
-  bool get isAvailable => availability == DeployOptionAvailability.available;
+  bool get isAvailable => availability == ProviderOptionAvailability.available;
 }
 
-enum DeployOptionAvailability { available, comingSoon }
+enum ProviderOptionAvailability { available, comingSoon }
