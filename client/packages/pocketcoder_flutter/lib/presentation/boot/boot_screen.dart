@@ -142,9 +142,9 @@ class _BootScreenState extends State<BootScreen> {
     // stack back to onboarding a few seconds after the user had already
     // reached the deployment details screen).
     if (getIt.isRegistered<IActiveDeploymentGate>() &&
-        getIt<IActiveDeploymentGate>().hasReadyDeployment) {
+        getIt<IActiveDeploymentGate>().hasActiveDeployment) {
       OnboardingLogger.event(
-        'boot connection check skipped -- ready managed deployment present',
+        'boot connection check skipped -- active managed deployment present',
       );
       return;
     }
