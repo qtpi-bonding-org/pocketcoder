@@ -27,4 +27,13 @@ void main() {
     expect(find.byType(TerminalHeader), findsOneWidget);
     expect(find.text('MY TITLE'), findsOneWidget);
   });
+
+  testWidgets('has no floatingActionButton constructor parameter', (tester) async {
+    await tester.pumpWidget(wrap(const TerminalScaffold(
+      title: 'X',
+      body: Text('BODY'),
+    )));
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffold.floatingActionButton, isNull);
+  });
 }

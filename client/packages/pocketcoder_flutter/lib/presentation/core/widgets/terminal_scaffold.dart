@@ -9,7 +9,6 @@ class TerminalScaffold extends StatelessWidget {
   final Widget body;
   final List<TerminalAction>? actions;
   final List<TerminalAction>? headerActions;
-  final Widget? floatingActionButton;
   final bool showFooter;
   final EdgeInsets? padding;
 
@@ -19,7 +18,6 @@ class TerminalScaffold extends StatelessWidget {
     required this.body,
     this.actions,
     this.headerActions,
-    this.floatingActionButton,
     this.showFooter = true,
     this.padding,
   });
@@ -81,7 +79,6 @@ class TerminalScaffold extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: floatingActionButton,
       bottomNavigationBar: showFooter && actions != null
           ? TerminalFooter(actions: actions ?? [])
           : null,
