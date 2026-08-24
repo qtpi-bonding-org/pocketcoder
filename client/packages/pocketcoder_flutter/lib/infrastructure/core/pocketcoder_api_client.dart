@@ -1,11 +1,13 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/json_object.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 
 import 'auth_retry_interceptor.dart';
+import 'caddy_ca_pinning_http_client.dart';
 import 'retry_interceptor.dart';
 
 /// Shared transport boundary for generated PocketCoder operation APIs.
@@ -28,8 +30,28 @@ class PocketCoderApiClient {
         push = generated.PushApi(dio, generated.standardSerializers),
         schedules = generated.SchedulesApi(dio, generated.standardSerializers);
 
-  factory PocketCoderApiClient.fromPocketBase(PocketBase pocketBase) {
+  /// [caddyCaPinningHttpClient] is this app's single source of truth for
+  /// deployment TLS trust (see its class doc) -- this Dio instance's
+  /// transport is derived from it, and rebuilt whenever the pin changes,
+  /// specifically so this client can never again drift into having its
+  /// own independent, un-pinned trust the way it used to (a bare `Dio()`
+  /// with Dio's own default `HttpClientAdapter`, which could never
+  /// validate a deployment's self-signed CA regardless of what was
+  /// pinned elsewhere in the app).
+  factory PocketCoderApiClient.fromPocketBase(
+    PocketBase pocketBase,
+    CaddyCaPinningHttpClient caddyCaPinningHttpClient,
+  ) {
     final dio = Dio(BaseOptions(baseUrl: pocketBase.baseURL));
+    void applyCurrentTrust() {
+      dio.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: caddyCaPinningHttpClient.createHttpClient,
+      );
+    }
+
+    applyCurrentTrust();
+    caddyCaPinningHttpClient.onPinChanged.listen((_) => applyCurrentTrust());
+
     final authRetryInterceptor = AuthRetryInterceptor(dio);
     dio.interceptors.add(SafeGetRetryInterceptor(dio));
     dio.interceptors.add(authRetryInterceptor);

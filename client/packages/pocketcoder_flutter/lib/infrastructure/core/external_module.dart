@@ -131,8 +131,11 @@ abstract class ExternalModule {
       _caddyCaPinStore ??= CaddyCaPinStore(const FlutterSecureStorage());
 
   @lazySingleton
-  PocketCoderApiClient pocketCoderApiClient(PocketBase pocketBase) =>
-      PocketCoderApiClient.fromPocketBase(pocketBase);
+  PocketCoderApiClient pocketCoderApiClient(
+    PocketBase pocketBase,
+    CaddyCaPinningHttpClient caddyCaPinningHttpClient,
+  ) =>
+      PocketCoderApiClient.fromPocketBase(pocketBase, caddyCaPinningHttpClient);
 
   /// HTTP client for API requests
   @lazySingleton

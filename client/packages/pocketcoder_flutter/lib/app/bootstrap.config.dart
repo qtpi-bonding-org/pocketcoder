@@ -244,8 +244,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.releaseChannel,
       instanceName: 'releaseChannel',
     );
-    gh.lazySingleton<_i935.PocketCoderApiClient>(
-        () => externalModule.pocketCoderApiClient(gh<_i824.PocketBase>()));
     gh.lazySingleton<_i611.IObservabilityRepository>(
         () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i623.IHealthcheckRepository>(
@@ -261,20 +259,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.oauthRelayBaseUrl,
       instanceName: 'oauthRelayBaseUrl',
     );
-    gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
-          gh<_i824.PocketBase>(),
-          gh<_i520.AuthStoreConfig>(),
-          gh<_i558.FlutterSecureStorage>(),
-          gh<_i619.BillingService>(),
-          gh<_i178.PushService>(),
-          gh<_i935.PocketCoderApiClient>(),
-        ));
     gh.lazySingleton<_i653.ILoadingService>(() => _i976.AppLoadingService());
-    gh.lazySingleton<_i810.OllamaApi>(() => _i810.OllamaApi(
-          gh<_i169.PocketBase>(),
-          gh<_i519.Client>(),
-          gh<_i935.PocketCoderApiClient>(),
-        ));
     gh.lazySingleton<String>(
       () => externalModule.releaseBaseUrl,
       instanceName: 'releaseBaseUrl',
@@ -322,12 +307,15 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i398.ToolPermissionDao(gh<_i169.PocketBase>()));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
+    gh.lazySingleton<_i935.PocketCoderApiClient>(
+        () => externalModule.pocketCoderApiClient(
+              gh<_i824.PocketBase>(),
+              gh<_i7.CaddyCaPinningHttpClient>(),
+            ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
         ));
-    gh.factory<_i464.AuthCubit>(
-        () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i767.IToolPermissionRepository>(
         () => _i220.ToolPermissionRepository(gh<_i398.ToolPermissionDao>()));
     gh.lazySingleton<_i821.INotificationRuleRepository>(
@@ -349,14 +337,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),
             ));
-    gh.factory<_i506.StatusCubit>(() => _i506.StatusCubit(
-          gh<_i50.IAuthRepository>(),
-          gh<_i72.NetworkRecoverySignal>(),
-        ));
-    gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
-          gh<_i199.ChatDao>(),
-          gh<_i50.IAuthRepository>(),
-        ));
     gh.lazySingleton<_i472.IServerReleaseStatusService>(
         () => _i175.ServerReleaseStatusService(
               gh<_i824.PocketBase>(),
@@ -406,18 +386,26 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
-    gh.lazySingleton<_i14.IHarnessAuthRepository>(
-        () => _i417.HarnessAuthRepository(
-              gh<_i935.PocketCoderApiClient>(),
-              gh<_i50.IAuthRepository>(),
-            ));
     gh.factory<_i614.ReleaseStatusCubit>(() =>
         _i614.ReleaseStatusCubit(gh<_i472.IServerReleaseStatusService>()));
+    gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
+          gh<_i824.PocketBase>(),
+          gh<_i520.AuthStoreConfig>(),
+          gh<_i558.FlutterSecureStorage>(),
+          gh<_i619.BillingService>(),
+          gh<_i178.PushService>(),
+          gh<_i935.PocketCoderApiClient>(),
+        ));
     gh.lazySingleton<_i470.ISchedulerRepository>(
         () => _i715.SchedulerRepository(
               gh<_i935.PocketCoderApiClient>(),
               gh<_i479.ScheduleOwnerDao>(),
             ));
+    gh.lazySingleton<_i810.OllamaApi>(() => _i810.OllamaApi(
+          gh<_i169.PocketBase>(),
+          gh<_i519.Client>(),
+          gh<_i935.PocketCoderApiClient>(),
+        ));
     gh.lazySingleton<_i165.ISkillsRepository>(
         () => _i675.SkillsRepository(gh<_i9.SkillDao>()));
     gh.factory<_i67.SkillsCubit>(() => _i67.SkillsCubit(
@@ -430,21 +418,25 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i110.FileBrowserCubit(gh<_i209.IFilesRepository>()));
     gh.factory<_i90.FileViewerCubit>(
         () => _i90.FileViewerCubit(gh<_i209.IFilesRepository>()));
+    gh.factory<_i464.AuthCubit>(
+        () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i763.AgentChatRepository>(() => _i763.AgentChatRepository(
           gh<_i313.AgentStreamClient>(),
           gh<_i619.AgentCacheDb>(),
           gh<_i300.AgentActionsApi>(),
         ));
+    gh.factory<_i506.StatusCubit>(() => _i506.StatusCubit(
+          gh<_i50.IAuthRepository>(),
+          gh<_i72.NetworkRecoverySignal>(),
+        ));
     gh.factory<_i1031.ProviderCubit>(
         () => _i1031.ProviderCubit(gh<_i422.IProviderRepository>()));
-    gh.factory<_i606.ChatListCubit>(
-        () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
+    gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
+          gh<_i199.ChatDao>(),
+          gh<_i50.IAuthRepository>(),
+        ));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
-    gh.factory<_i681.HarnessAuthCubit>(() => _i681.HarnessAuthCubit(
-          providerRepository: gh<_i422.IProviderRepository>(),
-          authRepository: gh<_i14.IHarnessAuthRepository>(),
-        ));
     gh.factory<_i710.ElicitationCubit>(
         () => _i710.ElicitationCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i225.PermissionCubit>(
@@ -455,8 +447,19 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i763.AgentChatRepository>(),
           gh<_i72.NetworkRecoverySignal>(),
         ));
+    gh.lazySingleton<_i14.IHarnessAuthRepository>(
+        () => _i417.HarnessAuthRepository(
+              gh<_i935.PocketCoderApiClient>(),
+              gh<_i50.IAuthRepository>(),
+            ));
     gh.factory<_i490.SchedulerCubit>(
         () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
+    gh.factory<_i606.ChatListCubit>(
+        () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
+    gh.factory<_i681.HarnessAuthCubit>(() => _i681.HarnessAuthCubit(
+          providerRepository: gh<_i422.IProviderRepository>(),
+          authRepository: gh<_i14.IHarnessAuthRepository>(),
+        ));
     return this;
   }
 }
