@@ -22,11 +22,26 @@ import 'logger.dart';
 final class CaddyCaPinningHttpClient extends http.BaseClient {
   http.Client _delegate = http.Client();
 
-  /// Trust only the supplied internal CA certificate for subsequent requests.
+  /// Additionally trust the supplied internal CA certificate for
+  /// subsequent requests, on top of normal system/platform trust.
+  ///
+  /// `withTrustedRoots: true` must be passed explicitly -- Dart's
+  /// [SecurityContext] constructor defaults it to `false`. Getting this
+  /// wrong (whether by passing `false` or simply omitting it) is not
+  /// obviously wrong at a glance: this client is a shared, app-lifetime
+  /// singleton used for every HTTP consumer in the app, including ones
+  /// with nothing to do with any deployment (Linode OAuth, the OAuth
+  /// relay, image relay, etc. -- see the class doc), so an implicit
+  /// `false` here silently discards normal system CA trust entirely the
+  /// moment any deployment's pin is applied, breaking every one of those
+  /// unrelated HTTPS calls app-wide for the rest of the process's life --
+  /// confirmed live, a Linode API call started failing with
+  /// `HandshakeException: CERTIFICATE_VERIFY_FAILED` immediately after a
+  /// deployment's pin was fetched and applied for the first time.
   void updatePin(String certificatePem) {
     logDebug('CaddyCaPinningHttpClient: updatePin (${certificatePem.length} '
         'byte PEM)');
-    final context = SecurityContext(withTrustedRoots: false)
+    final context = SecurityContext(withTrustedRoots: true)
       ..setTrustedCertificatesBytes(utf8.encode(certificatePem));
     final replacement = IOClient(HttpClient(context: context));
     final previous = _delegate;
