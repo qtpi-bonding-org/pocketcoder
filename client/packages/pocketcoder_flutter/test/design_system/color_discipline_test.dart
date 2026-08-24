@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _allowedDangerSites = {
-  'lib/presentation/core/widgets/bios_list_tile.dart',
+  'lib/presentation/core/widgets/bios_row.dart',
   'lib/presentation/provider/adapters/provider_adapter.dart',
   'lib/presentation/mcp/widgets/mcp_management_view.dart',
 };

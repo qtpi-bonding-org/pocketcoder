@@ -1,0 +1,174 @@
+import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+
+/// The trailing affordance a BiosRow renders. One row shape, four trailing
+/// behaviors -- see docs/superpowers/specs/2026-08-23-bios-widget-generalization.md
+/// section 2.1. `expand` covers two different reveal mechanics (opens a picker
+/// dialog, or expands an inline accordion body) that share the same glyph;
+/// BiosRow only renders `[v]`/`[^]` off the caller-owned `isExpanded` flag,
+/// it never flips it itself -- the caller decides what "expand" means.
+enum BiosRowVariant { row, toggle, input, expand }
+
+class BiosRow extends StatelessWidget {
+  const BiosRow({
+    super.key,
+    required this.label,
+    this.value,
+    this.onTap,
+    this.isSelected = false,
+    this.isDestructive = false,
+    this.hasBadge = false,
+    this.variant = BiosRowVariant.row,
+    this.toggleValue = false,
+    this.onToggleChanged,
+    this.inputController,
+    this.onInputChanged,
+    this.inputHint,
+    this.isExpanded = false,
+  });
+
+  final String label;
+  final String? value;
+
+  /// Nullable -- a `row`-variant instance with no `onTap` renders as a
+  /// static, non-interactive label/value pair (no InkWell, no chevron even
+  /// when value is null). Needed by pocketcoder_pro's review-screen rows,
+  /// which display data but never navigate/act on tap.
+  final VoidCallback? onTap;
+  final bool isSelected;
+  final bool isDestructive;
+  final bool hasBadge;
+  final BiosRowVariant variant;
+
+  // toggle
+  final bool toggleValue;
+  final ValueChanged<bool>? onToggleChanged;
+
+  // input
+  final TextEditingController? inputController;
+  final ValueChanged<String>? onInputChanged;
+  final String? inputHint;
+
+  // expand
+  final bool isExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final terminalColors = context.terminalColors;
+
+    final textColor = isSelected
+        ? colors.surface
+        : (isDestructive ? terminalColors.danger : colors.onSurface);
+    final bgColor = isSelected ? colors.onSurface : Colors.transparent;
+
+    final row = Container(
+      color: bgColor,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.space * 2,
+        vertical: AppSizes.space,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    label.toUpperCase(),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.bodyFamily,
+                      color: textColor,
+                      fontSize: AppSizes.fontStandard,
+                      fontWeight: AppFonts.heavy,
+                      package: 'pocketcoder_flutter',
+                    ),
+                  ),
+                ),
+                if (hasBadge) ...[
+                  HSpace.x1,
+                  Text(
+                    '[!]',
+                    style: TextStyle(
+                      fontFamily: AppFonts.bodyFamily,
+                      color:
+                          isSelected ? colors.surface : terminalColors.warning,
+                      fontSize: AppSizes.fontStandard,
+                      fontWeight: AppFonts.heavy,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          HSpace.x2,
+          Flexible(child: _trailing(context, textColor)),
+        ],
+      ),
+    );
+
+    if (variant == BiosRowVariant.toggle || variant == BiosRowVariant.input) {
+      // Trailing slot owns its own gesture surface (Switch/TextField) --
+      // wrapping the whole row in an outer InkWell would fight it for taps.
+      return row;
+    }
+    if (onTap == null) return row;
+    return InkWell(onTap: onTap, child: row);
+  }
+
+  Widget _trailing(BuildContext context, Color textColor) {
+    switch (variant) {
+      case BiosRowVariant.toggle:
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Switch(value: toggleValue, onChanged: onToggleChanged),
+        );
+      case BiosRowVariant.input:
+        return TextField(
+          controller: inputController,
+          onChanged: onInputChanged,
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            fontFamily: AppFonts.bodyFamily,
+            color: textColor,
+            fontSize: AppSizes.fontStandard,
+            fontWeight: AppFonts.heavy,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            border: InputBorder.none,
+            hintText: inputHint,
+          ),
+        );
+      case BiosRowVariant.expand:
+        return Text(
+          isExpanded ? '[^]' : '[v]',
+          textAlign: TextAlign.right,
+          style: TextStyle(color: textColor.withValues(alpha: 0.7)),
+        );
+      case BiosRowVariant.row:
+        if (value != null) {
+          return Text(
+            value!.toUpperCase(),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontFamily: AppFonts.bodyFamily,
+              color: textColor,
+              fontSize: AppSizes.fontStandard,
+              fontWeight: AppFonts.heavy,
+              package: 'pocketcoder_flutter',
+            ),
+          );
+        }
+        if (onTap == null) return const SizedBox.shrink();
+        return Text(
+          '[>]',
+          textAlign: TextAlign.right,
+          style: TextStyle(color: textColor.withValues(alpha: 0.5)),
+        );
+    }
+  }
+}

@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -67,7 +67,7 @@ class AgentConfigView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final config = state.configs[index];
                     final isDefault = config.isDefault ?? false;
-                    return BiosListTile(
+                    return BiosRow(
                       label: config.name.toUpperCase(),
                       value: isDefault
                           ? context.l10n.agentConfigDefaultBadge
@@ -469,7 +469,7 @@ Future<T?> _showListDialog<T extends Object>(
             : ListView(
                 children: [
                   for (final item in items)
-                    BiosListTile(
+                    BiosRow(
                       label: item.label,
                       isSelected:
                           initialValue != null && initialValue == item.id,
