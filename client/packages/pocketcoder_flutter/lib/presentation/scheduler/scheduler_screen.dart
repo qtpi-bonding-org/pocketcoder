@@ -64,7 +64,6 @@ class SchedulerView extends StatelessWidget {
         title: context.l10n.schedulerRegistryTitle,
         child: Builder(
           builder: (context) {
-            final colors = context.colorScheme;
             if (state.status == UiFlowStatus.loading) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -72,7 +71,7 @@ class SchedulerView extends StatelessWidget {
               return Center(
                 child: Text(
                   'ERROR: ${state.error}',
-                  style: TextStyle(color: colors.error),
+                  style: TextStyle(color: context.terminalColors.warning),
                 ),
               );
             }
@@ -167,7 +166,7 @@ class SchedulerView extends StatelessWidget {
               Expanded(
                 child: TerminalButton(
                   label: context.l10n.schedulerDeleteButton,
-                  color: context.colorScheme.error,
+                  color: context.terminalColors.warning,
                   onTap: () => onDelete(schedule.id),
                 ),
               ),

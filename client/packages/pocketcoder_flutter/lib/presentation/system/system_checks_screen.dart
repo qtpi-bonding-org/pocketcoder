@@ -103,7 +103,7 @@ class SystemChecksView extends StatelessWidget {
           ),
           TerminalText(
             '[$status]',
-            color: isOk ? colors.primary : colors.error,
+            color: isOk ? colors.primary : context.terminalColors.warning,
             weight: TerminalTextWeight.heavy,
           ),
         ],

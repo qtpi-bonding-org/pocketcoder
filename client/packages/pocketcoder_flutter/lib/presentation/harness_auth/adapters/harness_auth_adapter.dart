@@ -179,6 +179,6 @@ class HarnessAuthAdapter
       );
 
   void _showError(BuildContext context, String message) {
-    VimToast.show(context, message, color: context.colorScheme.error);
+    VimToast.show(context, message, color: context.terminalColors.warning);
   }
 }

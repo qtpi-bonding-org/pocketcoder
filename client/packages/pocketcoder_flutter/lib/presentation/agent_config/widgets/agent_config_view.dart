@@ -39,7 +39,7 @@ class AgentConfigView extends StatelessWidget {
           context.l10n.agentConfigErrorPrefix(
             state.error?.toString() ?? context.l10n.errorGeneric,
           ),
-          color: context.colorScheme.error,
+          color: context.terminalColors.warning,
           textAlign: TextAlign.center,
         ),
       );

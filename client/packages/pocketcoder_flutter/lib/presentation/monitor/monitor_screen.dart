@@ -40,8 +40,6 @@ class MonitorView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, ObservabilityState state) {
-    final colors = context.colorScheme;
-
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.space),
       child: Column(
@@ -92,7 +90,7 @@ class MonitorView extends StatelessWidget {
             Center(
               child: TerminalText.label(
                 context.l10n.monitorTelemetryUnavailable,
-                color: colors.error,
+                color: context.terminalColors.warning,
               ),
             )
           else
@@ -122,7 +120,7 @@ class MonitorView extends StatelessWidget {
             TerminalText.label('BACKEND STATUS'),
             TerminalText.label(
               '[ ${stats.backendStatus.toUpperCase()} ]',
-              color: isHealthy ? colors.primary : colors.error,
+              color: isHealthy ? colors.primary : context.terminalColors.warning,
             ),
           ],
         ),

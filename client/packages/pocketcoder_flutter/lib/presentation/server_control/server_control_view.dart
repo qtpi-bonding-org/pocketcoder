@@ -51,7 +51,7 @@ class ServerControlView extends StatelessWidget {
             if (state.error case final error?)
               Text(
                 'ERROR: $error',
-                style: TextStyle(color: context.colorScheme.error),
+                style: TextStyle(color: context.terminalColors.warning),
               ),
             if (state.result case final result?) ...[
               VSpace.x2,

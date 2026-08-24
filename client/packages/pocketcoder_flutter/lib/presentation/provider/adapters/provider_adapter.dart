@@ -77,8 +77,6 @@ class ProviderView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, ProviderState state) {
-    final colors = context.colorScheme;
-
     if (state.isLoading &&
         state.harnessModels.isEmpty &&
         state.harnesses.isEmpty &&
@@ -99,7 +97,7 @@ class ProviderView extends StatelessWidget {
           context.l10n.providerScreenErrorPrefix(
             state.error?.toString() ?? context.l10n.errorGeneric,
           ),
-          color: colors.error,
+          color: context.terminalColors.warning,
           textAlign: TextAlign.center,
         ),
       );

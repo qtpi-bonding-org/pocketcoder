@@ -32,7 +32,7 @@ class BootView extends StatelessWidget {
                   final logEntry = logs[index];
                   Color? textColor = colors.primary;
                   if (logEntry.startsWith('[!]') || logEntry.contains('ERROR')) {
-                    textColor = colors.error;
+                    textColor = context.terminalColors.warning;
                   } else if (logEntry.startsWith('[sys]')) {
                     textColor = colors.tertiary;
                   } else if (logEntry.startsWith('[net]')) {

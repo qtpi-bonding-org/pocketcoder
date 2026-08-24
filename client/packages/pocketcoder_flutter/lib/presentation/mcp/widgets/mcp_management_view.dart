@@ -156,7 +156,7 @@ class McpManagementView extends StatelessWidget {
                   TerminalText.mini(
                       context.l10n.mcpOauthProviderNotConfiguredLabel(
                           oauthProvider ?? ''),
-                      color: context.colorScheme.error,
+                      color: context.terminalColors.warning,
                       alpha: .8)
                 else
                   Row(children: [

@@ -21,7 +21,7 @@ class OnboardingSelfHostAdapter extends StatelessWidget {
       VimToast.show(
         context,
         context.l10n.errorCouldNotOpenBrowser,
-        color: context.colorScheme.error,
+        color: context.terminalColors.warning,
       );
     }
   }

@@ -210,7 +210,7 @@ class AgentObservabilityView extends StatelessWidget {
     final terminal = context.terminalColors;
     final upper = log.toUpperCase();
     if (upper.contains('ERR') || upper.contains('FAIL')) {
-      return terminal.danger;
+      return terminal.warning;
     }
     if (upper.contains('WARN')) return terminal.warning;
     if (upper.contains('INFO')) return colors.primary;

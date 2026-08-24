@@ -67,7 +67,7 @@ StackedChatBuilders pocketcoderChatBuilders(
         horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
     cardBorderColor: colors.secondary.withValues(alpha: 0.3),
     diffAddedColor: colors.secondary,
-    diffRemovedColor: terminalColors.danger,
+    diffRemovedColor: terminalColors.warning,
   );
 
   final callbacks = ChatActionCallbacks(

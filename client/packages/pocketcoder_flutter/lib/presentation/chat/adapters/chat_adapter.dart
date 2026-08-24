@@ -34,7 +34,7 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
       listener: (context, value) {
         if (value.error != null) {
           VimToast.show(context, '${value.error}',
-              color: context.colorScheme.error);
+              color: context.terminalColors.warning);
         }
       },
       child: ValueListenableBuilder<ChatState>(

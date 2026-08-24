@@ -102,7 +102,7 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     } catch (_) {
       if (context.mounted) {
         VimToast.show(context, context.l10n.onboardingAccessDenied,
-            color: context.colorScheme.error);
+            color: context.terminalColors.warning);
       }
     }
   }

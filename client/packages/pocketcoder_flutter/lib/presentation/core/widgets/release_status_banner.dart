@@ -41,7 +41,7 @@ class ReleaseStatusBanner extends StatelessWidget {
     final critical =
         snapshot.status == ServerReleaseStatus.criticalReleaseWarning;
     final color =
-        critical ? context.colorScheme.error : context.colorScheme.primary;
+        critical ? context.terminalColors.warning : context.colorScheme.primary;
     final label = critical
         ? context.l10n.pocketCoderUpdateCriticalStatus
         : context.l10n.pocketCoderUpdateAvailableStatus;

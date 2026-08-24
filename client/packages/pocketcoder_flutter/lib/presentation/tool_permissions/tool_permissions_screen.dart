@@ -52,7 +52,6 @@ class ToolPermissionsView extends StatelessWidget {
         title: context.l10n.toolPermissionsRulesRegistry,
         child: Builder(
           builder: (context) {
-            final colors = context.colorScheme;
             if (state.status == UiFlowStatus.loading) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -60,7 +59,7 @@ class ToolPermissionsView extends StatelessWidget {
               return Center(
                 child: Text(
                   'ERROR: ${state.error}',
-                  style: TextStyle(color: colors.error),
+                  style: TextStyle(color: context.terminalColors.warning),
                 ),
               );
             }

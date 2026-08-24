@@ -220,10 +220,10 @@ class _ChatViewState extends State<ChatView> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: context.colorScheme.errorContainer,
+              color: context.terminalColors.warning.withValues(alpha: 0.15),
               child: Text(
                 context.l10n.providerReauthenticationRequired,
-                style: TextStyle(color: context.colorScheme.onErrorContainer),
+                style: TextStyle(color: context.terminalColors.warning),
               ),
             ),
           if (_sessionPanelExpanded) ...[

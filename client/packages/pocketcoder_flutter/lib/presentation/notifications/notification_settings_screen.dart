@@ -66,7 +66,7 @@ class NotificationSettingsView extends StatelessWidget {
           UiFlowStatus.failure => Center(
               child: Text(
                 'ERROR: ${state.error}',
-                style: TextStyle(color: context.colorScheme.error),
+                style: TextStyle(color: context.terminalColors.warning),
               ),
             ),
           UiFlowStatus.success => ListView(
