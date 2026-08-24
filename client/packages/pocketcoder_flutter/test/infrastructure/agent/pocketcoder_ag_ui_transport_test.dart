@@ -67,6 +67,45 @@ void main() {
     await transport.dispose();
   });
 
+  test(
+      'a same-length replay that corrects an already-seen event (e.g. a '
+      'reconnect finalizing a chunk at an existing seq) is not treated as '
+      'a no-op just because the list length is unchanged', () async {
+    final fakeRepo = FakeAgentChatRepository();
+    final transport = PocketcoderAgUiTransport(fakeRepo, chatId: 'c1');
+
+    final received = <BaseEvent>[];
+    final sub = transport.events.listen(received.add);
+
+    fakeRepo.emitRawEvents([
+      const TextMessageStartEvent(messageId: 'm1', role: TextMessageRole.assistant),
+      const TextMessageContentEvent(messageId: 'm1', delta: 'partial'),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    expect(received, hasLength(2));
+
+    // The cache upserts by seq: the row at the SAME position is replaced
+    // with corrected content, so the list length never changes -- this is
+    // exactly the "reconnect replays an existing sequence with a
+    // corrected/finalized payload" scenario, not a shrink.
+    fakeRepo.emitRawEvents([
+      const TextMessageStartEvent(messageId: 'm1', role: TextMessageRole.assistant),
+      const TextMessageContentEvent(messageId: 'm1', delta: 'final corrected text'),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+
+    final contentEvents = received.whereType<TextMessageContentEvent>().toList();
+    expect(
+      contentEvents.any((e) => e.delta == 'final corrected text'),
+      isTrue,
+      reason: 'the corrected content must reach downstream consumers, not '
+          'be silently dropped as a same-length no-op',
+    );
+
+    await sub.cancel();
+    await transport.dispose();
+  });
+
   test('sendMessage/cancel/respondPermission delegate to the repository', () async {
     final fakeRepo = FakeAgentChatRepository();
     final transport = PocketcoderAgUiTransport(fakeRepo, chatId: 'c1');

@@ -169,6 +169,12 @@ class ChatCubit extends AppCubit<ChatState> {
       logWarning('🤖 [ChatCubit] sendPrompt called before open()');
       return;
     }
+    // Incoming stream events are already generation-guarded against a
+    // stale chat (see the events.listen callback in open()) -- this send
+    // itself wasn't: if the user switches chats before it resolves, its
+    // late result (success or failure) must not stomp the new chat's
+    // state.
+    final myGeneration = _generation;
     _lastPrompt = text;
     logDebug('🤖 [ChatCubit] sendPrompt', {'chatId': chatId, 'length': text.length});
     await tryOperation(() async {
@@ -177,8 +183,10 @@ class ChatCubit extends AppCubit<ChatState> {
       } catch (error, stackTrace) {
         logError('🤖 [ChatCubit] sendPrompt failed | {chatId: $chatId, '
             'error: $error}', error, stackTrace);
+        if (myGeneration != _generation) return state;
         rethrow;
       }
+      if (myGeneration != _generation) return state;
       return state.copyWith(
           status: UiFlowStatus.success,
           lastOperation: AgentChatOperation.sendPrompt);

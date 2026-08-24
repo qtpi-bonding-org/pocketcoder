@@ -9,6 +9,7 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
+import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 
@@ -24,11 +25,21 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   final List<int> cursorForCalls = [];
   final List<int> ingestCalls = [];
   int _nextCursor = 0;
+  Completer<void>? _sendPromptGate;
 
   StreamController<List<agui.BaseEvent>> controllerFor(String chatId) =>
       _controllers.putIfAbsent(chatId, () => StreamController.broadcast());
 
   void setNextCursor(int cursor) => _nextCursor = cursor;
+
+  /// Lets a test hold `sendPrompt` pending until it explicitly releases it,
+  /// to simulate a slow network round-trip that resolves after the user has
+  /// already moved on to a different chat.
+  Completer<void> gateSendPrompt() {
+    final gate = Completer<void>();
+    _sendPromptGate = gate;
+    return gate;
+  }
 
   @override
   Stream<List<agui.BaseEvent>> watchRawEvents(String chatId) =>
@@ -57,6 +68,8 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   @override
   Future<String> sendPrompt(String chatId, String text) async {
     promptCalls.add(text);
+    final gate = _sendPromptGate;
+    if (gate != null) await gate.future;
     return 'run-123';
   }
 
@@ -134,6 +147,37 @@ void main() {
     // the conversation exactly where the reducer left it — empty, since the
     // fake never pushed events in this test.
     expect(cubit.state.conversation, agui_widgets.Conversation.empty);
+  });
+
+  test(
+      'a sendPrompt that resolves after the user has switched chats does '
+      "not stomp the new chat's state", () async {
+    cubit.open('chat-1');
+    await _settle();
+
+    final gate = repo.gateSendPrompt();
+    final send = cubit.sendPrompt('slow message for chat-1');
+    // sendPrompt is now pending inside the repository call, gated open.
+
+    cubit.open('chat-2');
+    await _settle();
+    expect(cubit.state.chatId, 'chat-2');
+    expect(cubit.state.lastOperation, AgentChatOperation.open);
+
+    // Now let chat-1's send resolve, well after the switch. Chat-2 hasn't
+    // received any events yet, so its status is still loading -- a stale
+    // sendPrompt success must not flip it to success/sendPrompt.
+    gate.complete();
+    await send;
+    await _settle();
+
+    expect(cubit.state.chatId, 'chat-2');
+    expect(cubit.state.lastOperation, AgentChatOperation.open,
+        reason: "chat-1's late-resolving sendPrompt must not overwrite "
+            "chat-2's lastOperation");
+    expect(cubit.state.status, UiFlowStatus.loading,
+        reason: "chat-1's late-resolving sendPrompt must not flip "
+            "chat-2's status to success");
   });
 
   test('the ingest loop reconnects using cursorFor as the cursor', () async {
