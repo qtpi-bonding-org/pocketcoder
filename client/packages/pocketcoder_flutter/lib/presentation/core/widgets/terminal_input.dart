@@ -55,8 +55,6 @@ class _TerminalInputState extends State<TerminalInput> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: AppSizes.space * 2,
@@ -81,7 +79,7 @@ class _TerminalInputState extends State<TerminalInput> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: widget.enabled
-                    ? terminalColors.attention
+                    ? colors.secondary
                     : colors.onSurface.withValues(alpha: 0.3),
                 fontFamily: AppFonts.bodyFamily,
                 package: 'pocketcoder_flutter',
@@ -98,7 +96,7 @@ class _TerminalInputState extends State<TerminalInput> {
               onSubmitted: (_) => widget.onSubmitted(),
               autofocus: true,
               style: TextStyle(
-                color: terminalColors.attention,
+                color: colors.secondary,
                 fontFamily: AppFonts.bodyFamily,
                 package: 'pocketcoder_flutter',
                 fontSize: AppSizes.fontStandard,
@@ -106,7 +104,7 @@ class _TerminalInputState extends State<TerminalInput> {
               // We simulate the terminal block cursor by using a custom color toggle
               // and a wider cursor width.
               cursorColor: _cursorVisible && widget.enabled
-                  ? terminalColors.attention
+                  ? colors.secondary
                   : colors.surface.withValues(alpha: 0),
               cursorWidth: 10,
               cursorHeight: AppSizes.fontStandard,
@@ -132,7 +130,7 @@ class _TerminalInputState extends State<TerminalInput> {
                 'SEND',
                 style: TextStyle(
                   color: widget.enabled
-                      ? terminalColors.attention
+                      ? colors.secondary
                       : colors.onSurface.withValues(alpha: 0.3),
                   fontFamily: AppFonts.bodyFamily,
                   package: 'pocketcoder_flutter',

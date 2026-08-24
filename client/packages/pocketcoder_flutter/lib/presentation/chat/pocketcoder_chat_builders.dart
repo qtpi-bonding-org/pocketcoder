@@ -65,8 +65,8 @@ StackedChatBuilders pocketcoderChatBuilders(
     roleHeaderBuilder: pocketcoderRoleHeader,
     padding: EdgeInsets.symmetric(
         horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
-    cardBorderColor: terminalColors.attention.withValues(alpha: 0.3),
-    diffAddedColor: terminalColors.attention,
+    cardBorderColor: colors.secondary.withValues(alpha: 0.3),
+    diffAddedColor: colors.secondary,
     diffRemovedColor: terminalColors.danger,
   );
 

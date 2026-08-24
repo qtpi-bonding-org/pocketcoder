@@ -87,9 +87,9 @@ class _ElicitationCardState extends State<ElicitationCard> {
       margin: EdgeInsets.all(AppSizes.space),
       padding: EdgeInsets.all(AppSizes.space * 2),
       decoration: BoxDecoration(
-        color: terminalColors.attention.withValues(alpha: 0.05),
+        color: colors.secondary.withValues(alpha: 0.05),
         border: Border.all(
-          color: terminalColors.attention.withValues(alpha: 0.3),
+          color: colors.secondary.withValues(alpha: 0.3),
           width: AppSizes.borderWidth,
         ),
       ),
@@ -102,7 +102,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
               Text(
                 'FORM',
                 style: TextStyle(
-                  color: terminalColors.attention,
+                  color: colors.secondary,
                   fontSize: AppSizes.fontTiny,
                   fontWeight: AppFonts.heavy,
                   letterSpacing: 2,
@@ -113,7 +113,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
                 child: Text(
                   context.l10n.chatElicitationRequest,
                   style: TextStyle(
-                    color: terminalColors.attention,
+                    color: colors.secondary,
                     fontSize: AppSizes.fontTiny,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
@@ -127,7 +127,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             Text(
               message,
               style: TextStyle(
-                color: terminalColors.attention,
+                color: colors.secondary,
                 fontFamily: AppFonts.bodyFamily,
                 fontSize: AppSizes.fontStandard,
               ),
@@ -138,7 +138,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             Text(
               '[$elicitationId]',
               style: TextStyle(
-                color: terminalColors.attention.withValues(alpha: 0.5),
+                color: colors.secondary.withValues(alpha: 0.5),
                 fontSize: AppSizes.fontMini,
               ),
             ),
