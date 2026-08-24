@@ -406,37 +406,11 @@ class _SelectionField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return InkWell(
+    return BiosRow(
+      label: label,
+      value: currentValue,
+      variant: BiosRowVariant.expand,
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TerminalText.tiny(label, color: colors.onSurface),
-          VSpace.x1,
-          Container(
-            padding: EdgeInsets.all(AppSizes.space),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: colors.onSurface.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: TerminalText(
-                    currentValue,
-                    color: colors.onSurface,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text('[v]', style: TextStyle(color: colors.onSurface)),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

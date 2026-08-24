@@ -143,10 +143,33 @@ class BiosRow extends StatelessWidget {
           ),
         );
       case BiosRowVariant.expand:
-        return Text(
-          isExpanded ? '[^]' : '[v]',
-          textAlign: TextAlign.right,
-          style: TextStyle(color: textColor.withValues(alpha: 0.7)),
+        return Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            if (value != null) ...[
+              Expanded(
+                child: Text(
+                  value!.toUpperCase(),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontFamily: AppFonts.bodyFamily,
+                    color: textColor,
+                    fontSize: AppSizes.fontStandard,
+                    fontWeight: AppFonts.heavy,
+                    package: 'pocketcoder_flutter',
+                  ),
+                ),
+              ),
+              HSpace.x1,
+            ],
+            Text(
+              isExpanded ? '[^]' : '[v]',
+              textAlign: TextAlign.right,
+              style: TextStyle(color: textColor.withValues(alpha: 0.7)),
+            ),
+          ],
         );
       case BiosRowVariant.row:
         if (value != null) {
