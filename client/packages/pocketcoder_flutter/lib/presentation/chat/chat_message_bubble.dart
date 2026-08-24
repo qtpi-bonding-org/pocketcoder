@@ -27,8 +27,8 @@ Widget pocketcoderRoleHeader(
   final terminalColors = context.terminalColors;
   final accent = isReasoning
       ? terminalColors.warning
-      : isSentByMe
-          ? terminalColors.user
+      : selectable(colors.secondary, selected: isSentByMe).text == Colors.black
+          ? colors.secondary
           : colors.primary;
   final label = isSentByMe
       ? context.l10n.chatCommanderRole

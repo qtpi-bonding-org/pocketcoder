@@ -131,4 +131,57 @@ void main() {
     final bubble = tester.getRect(find.byType(PocoBubble));
     expect(bubble.left, AppSizes.space);
   });
+
+  testWidgets('a user turn renders as a full-bleed phosphor fill with black text',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const Scaffold(
+          body: TerminalConversationTurn(
+            speaker: TerminalConversationSpeaker.user,
+            message: 'Why does Docker need rules?',
+          ),
+        ),
+      ),
+    );
+
+    final text = tester.widget<Text>(
+      find.text('\$ Why does Docker need rules?'),
+    );
+    expect(text.style?.color, Colors.black);
+
+    final frame = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(TerminalConversationFrame),
+        matching: find.byType(Container),
+      ).first,
+    );
+    final decoration = frame.decoration as BoxDecoration;
+    expect(decoration.color, isNot(anyOf(isNull, Colors.transparent)));
+  });
+
+  testWidgets('a poco turn is never inverted', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const Scaffold(
+          body: TerminalConversationTurn(
+            speaker: TerminalConversationSpeaker.poco,
+            message: 'hello',
+            showPocoFace: false,
+          ),
+        ),
+      ),
+    );
+
+    final frame = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(TerminalConversationFrame),
+        matching: find.byType(Container),
+      ).first,
+    );
+    final decoration = frame.decoration as BoxDecoration?;
+    expect(decoration?.color, anyOf(isNull, Colors.transparent));
+  });
 }
