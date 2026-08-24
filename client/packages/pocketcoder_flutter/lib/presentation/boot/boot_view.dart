@@ -4,6 +4,15 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 
+/// The app's very first screen -- deliberately outside PocketCoderShell's/
+/// TerminalScaffold's vocabulary, not an oversight. See the page-scaffold
+/// plan (docs/superpowers/plans/2026-08-23-page-scaffold.md, Task 9) for the
+/// full reasoning: this runs before there is a session, a route to go
+/// "back" to, or any NavPillar destination to show, and its full-bleed
+/// animated-log-plus-overlay layout doesn't fit TerminalScaffold's
+/// header/body/footer column model. If a future change gives this screen a
+/// title, a back target, or footer actions, that's the signal to revisit
+/// this decision -- until then, stays a raw Scaffold on purpose.
 class BootView extends StatelessWidget {
   const BootView({super.key, required this.logs, required this.logsDimmed, required this.pocoVisible, required this.pocoState, required this.scrollController});
 
