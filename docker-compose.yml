@@ -488,12 +488,6 @@ networks:
     driver: bridge
   pocketcoder-tailscale:
     driver: bridge
-  # Private ACP network shared only by PocketBase (c1) and Goose (c2). Goose is
-  # reached over an authenticated WebSocket; it publishes no host port and joins
-  # no other PocketBase network, so this is its sole path to/from c1.
-  pocketcoder-agent:
-    driver: bridge
-    name: pocketcoder-agent
   # Shared provider/internet egress for every dynamically provisioned harness.
   # Goose is the default harness, not a separate network trust tier.
   pocketcoder-harness-egress:
@@ -520,3 +514,11 @@ networks:
     driver: bridge
     name: pocketcoder-ollama-control
 # POCO:END compose-private-networks
+  # POCO:BEGIN compose-agent
+  # Private ACP network shared only by PocketBase (c1) and Goose (c2). Goose is
+  # reached over an authenticated WebSocket; it publishes no host port and joins
+  # no other PocketBase network, so this is its sole path to/from c1.
+  pocketcoder-agent:
+    driver: bridge
+    name: pocketcoder-agent
+  # POCO:END compose-agent
