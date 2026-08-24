@@ -67,6 +67,7 @@ class AgentStreamClient {
   /// Owns the underlying HTTP I/O. Tests inject a fake whose `.send` returns
   /// a [http.StreamedResponse] over a synthetic byte stream.
   final http.Client _http;
+  final Set<Future<void> Function()> _cancellers = {};
 
   AgentStreamClient({
     required PocketBase pocketBase,
@@ -88,6 +89,17 @@ class AgentStreamClient {
   Stream<StreamFrame> connect(String chatId, {required int cursor}) {
     final controller = StreamController<StreamFrame>();
     StreamSubscription<String>? lineSub;
+    var cancelled = false;
+
+    Future<void> cancelConnection() async {
+      cancelled = true;
+      await lineSub?.cancel();
+    }
+
+    // Install this before starting the asynchronous HTTP request. A caller
+    // can cancel the returned stream while send() is still in flight.
+    controller.onCancel = cancelConnection;
+    _cancellers.add(cancelConnection);
 
     // Run the async work out-of-band from the controller construction so
     // that returning the stream is synchronous (callers don't need to
@@ -106,6 +118,12 @@ class AgentStreamClient {
         request.headers['Authorization'] = _pb.authStore.token;
 
         final response = await _http.send(request);
+        if (cancelled) {
+          // An SSE response is intentionally unbounded; cancelling this
+          // subscription aborts the response instead of draining it.
+          await response.stream.listen(null).cancel();
+          return;
+        }
         if (response.statusCode < 200 || response.statusCode >= 300) {
           await response.stream.drain<void>();
           throw AgentStreamException(response.statusCode);
@@ -144,6 +162,7 @@ class AgentStreamClient {
             .transform(const LineSplitter())
             .listen(
           (line) {
+            if (cancelled) return;
             if (line.isEmpty) {
               // Record terminator.
               dispatch();
@@ -193,15 +212,24 @@ class AgentStreamClient {
           cancelOnError: false,
         );
 
-        controller.onCancel = () async {
-          await lineSub?.cancel();
-        };
+        if (cancelled) await lineSub?.cancel();
       } catch (e, st) {
-        controller.addError(e, st);
-        await controller.close();
+        if (!cancelled) {
+          controller.addError(e, st);
+          await controller.close();
+        }
+      } finally {
+        _cancellers.remove(cancelConnection);
       }
     });
 
     return controller.stream;
+  }
+
+  /// Aborts all currently connecting/streaming SSE requests owned by this
+  /// client. This is intentionally separate from closing the shared HTTP
+  /// client, which would break unrelated API calls.
+  Future<void> cancel() async {
+    await Future.wait(_cancellers.map((cancel) => cancel()));
   }
 }

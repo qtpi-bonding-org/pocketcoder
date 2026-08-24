@@ -28,15 +28,19 @@ class ChatCubit extends AppCubit<ChatState> {
   StreamSubscription<void>? _recoverySub;
   Completer<void>? _retryWake;
   int _generation = 0;
+  bool _closed = false;
   String? _lastPrompt;
 
   @override
   Future<void> close() {
+    if (_closed) return Future<void>.value();
+    _closed = true;
     _generation++;
     _eventSub?.cancel();
     _recoverySub?.cancel();
     _retryWake?.complete();
     _transport?.dispose();
+    unawaited(_repository.cancelStreams());
     return super.close();
   }
 
@@ -57,6 +61,7 @@ class ChatCubit extends AppCubit<ChatState> {
     _recoverySub?.cancel();
     _retryWake?.complete();
     _transport?.dispose();
+    unawaited(_repository.cancelStreams());
     _reducer = ConversationReducer();
     _transport = PocketcoderAgUiTransport(_repository, chatId: chatId);
     final transport = _transport;

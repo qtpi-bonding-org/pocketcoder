@@ -25,6 +25,7 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   final List<int> cursorForCalls = [];
   final List<int> ingestCalls = [];
   int _nextCursor = 0;
+  int cancelStreamsCalls = 0;
   Completer<void>? _sendPromptGate;
 
   StreamController<List<agui.BaseEvent>> controllerFor(String chatId) =>
@@ -75,6 +76,11 @@ class _FakeAgentChatRepository implements AgentChatRepository {
 
   @override
   Future<void> cancel(String chatId) async {}
+
+  @override
+  Future<void> cancelStreams() async {
+    cancelStreamsCalls++;
+  }
 
   @override
   Future<void> setMode(String chatId, String modeId) async {}
@@ -193,5 +199,15 @@ void main() {
     expect(repo.cursorForCalls.first, 42);
     expect(repo.ingestCalls, isNotEmpty);
     expect(repo.ingestCalls.first, 42);
+  });
+
+  test('close cancels the active ingest stream', () async {
+    cubit.open('chat-1');
+    // open() tears down any connection left by a prior chat. Ignore that
+    // initial no-op teardown and verify close() performs its own cancellation.
+    repo.cancelStreamsCalls = 0;
+    await cubit.close();
+
+    expect(repo.cancelStreamsCalls, 1);
   });
 }
