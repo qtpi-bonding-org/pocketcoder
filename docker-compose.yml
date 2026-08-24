@@ -323,7 +323,7 @@ services:
     container_name: pocketcoder-sqlpage
     environment:
       - SQLPAGE_ENVIRONMENT=production
-      - SQLPAGE_SITE_PREFIX=/api/pocketcoder/proxy/observability/
+      - SQLPAGE_SITE_PREFIX=/api/pocketcoder/v1/proxy/observability/
     volumes:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
       - ./server/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards

@@ -25,6 +25,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -47,10 +48,40 @@ type inspector interface {
 }
 
 // ModelNetwork is a compose-pinned name rather than a database value. Every
-// dynamically provisioned peer joins it during the initial Docker create call
-// so it can reach the always-on local Ollama service, while the socket proxy
-// still forbids arbitrary post-create network attachment.
+// dynamically provisioned peer joins it during the initial Docker create
+// call so it can reach the local Ollama service -- but only when Ollama is
+// actually running (see ollamaRunning): the compose file's own `ollama`
+// service is gated behind the `local-models` profile, off by default, and
+// Docker Compose never creates a network unless at least one active
+// service references it. Unconditionally requesting this network on every
+// harness create failed 100% of default (no-local-models) deployments --
+// confirmed live: `failed to set up container networking: network
+// pocketcoder-model not found`, leaving every harness container stuck at
+// Created, never started.
 const ModelNetwork = "pocketcoder-model"
+
+// ollamaContainerName mirrors ollama.ollamaContainerName (unexported in
+// that package) -- both are the same compose-pinned container_name, kept
+// as a local constant here rather than an import to avoid a dependency
+// this package otherwise has no reason to take on.
+const ollamaContainerName = "pocketcoder-ollama"
+
+// ollamaRunning reports whether the local Ollama service is actually up,
+// used to decide whether a harness should request ModelNetwork at all.
+// Deliberately checked via Inspect (CONTAINERS=1 on docker-socket-proxy-
+// write) rather than a network-existence call: that proxy has NETWORKS=0
+// set deliberately ("PocketBase's own proxy... only ever restarts/
+// inspects containers it already trusts" -- see docker-compose.yml), so a
+// direct network inspect would be rejected by the proxy itself.
+func ollamaRunning(ctx context.Context, client inspector) (bool, error) {
+	if _, err := client.Inspect(ctx, ollamaContainerName); err != nil {
+		if errors.Is(err, dockerapi.ErrContainerNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
 
 // HarnessEgressNetwork is shared by every harness. A harness being the catalog
 // default must not grant it a different Docker network trust tier.
@@ -299,7 +330,12 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		"XDG_DATA_HOME="+harnessvolume.AuthHomeMount+"/.local/share",
 	)
 	env = append(env, "GIT_SSH_COMMAND=ssh -F "+harnessvolume.GitSSHMount+"/current/ssh_config")
-	networkNames := []string{networkName, HarnessEgressNetwork, ModelNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
+	networkNames := []string{networkName, HarnessEgressNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
+	if running, err := ollamaRunning(ctx, client); err != nil {
+		return fail(fmt.Errorf("check local-models availability: %w", err))
+	} else if running {
+		networkNames = append(networkNames, ModelNetwork)
+	}
 	_, err = client.Create(ctx, containerName, dockerapi.CreateSpec{
 		Image:        image,
 		Cmd:          launch.Cmd,

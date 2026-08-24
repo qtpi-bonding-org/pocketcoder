@@ -142,6 +142,12 @@ type fakeDockerClient struct {
 	createErr   error
 	startErr    error
 
+	// ollamaMissing simulates the default (no local-models) deployment: no
+	// "pocketcoder-ollama" container exists. Defaults to false (Ollama
+	// "running") so every pre-existing test that doesn't care about this
+	// keeps seeing ModelNetwork in its network list, unchanged.
+	ollamaMissing bool
+
 	pulledImages      []string
 	createdContainers []string
 	startedContainers []string
@@ -154,6 +160,9 @@ func newFakeDockerClient() *fakeDockerClient {
 }
 
 func (f *fakeDockerClient) Inspect(ctx context.Context, containerName string) (dockerapi.ContainerInspect, error) {
+	if containerName == ollamaContainerName && f.ollamaMissing {
+		return dockerapi.ContainerInspect{}, dockerapi.ErrContainerNotFound
+	}
 	insp := dockerapi.ContainerInspect{
 		Mounts: []dockerapi.Mount{{Destination: "/workspace", Name: "test_workspace"}},
 	}
@@ -242,6 +251,55 @@ func TestProvisionHarnessInstanceCreatesAndStartsContainer(t *testing.T) {
 	if !fake.started(rec.GetString("container_name")) {
 		t.Error("expected the created container to be started")
 	}
+}
+
+// TestProvisionHarnessInstanceJoinsModelNetworkOnlyWhenOllamaIsRunning is
+// the regression test for a real incident: harness creation unconditionally
+// requested ModelNetwork ("pocketcoder-model"), but Docker Compose only
+// creates that network when the `ollama` service (profile-gated behind
+// `local-models`, off by default) is actually started -- so every default
+// deployment failed 100% of harness creations with "failed to set up
+// container networking: network pocketcoder-model not found", leaving the
+// container stuck at Created, never started. Confirmed live via SSH before
+// this fix.
+func TestProvisionHarnessInstanceJoinsModelNetworkOnlyWhenOllamaIsRunning(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{
+		"container_image": "example.com/harness:1.0",
+		"launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000},
+	})
+
+	t.Run("Ollama running: joins ModelNetwork", func(t *testing.T) {
+		userID := testUser(t, app, "model-net-on-"+uuid.NewString()[:8]+"@example.com").Id
+		fake := newFakeDockerClient()
+		if _, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID); err != nil {
+			t.Fatal(err)
+		}
+		if !containsString(fake.lastCreateSpec.NetworkNames, ModelNetwork) {
+			t.Fatalf("networks = %v, want ModelNetwork included", fake.lastCreateSpec.NetworkNames)
+		}
+	})
+
+	t.Run("Ollama not running (default deployment): omits ModelNetwork, still succeeds", func(t *testing.T) {
+		userID := testUser(t, app, "model-net-off-"+uuid.NewString()[:8]+"@example.com").Id
+		fake := newFakeDockerClient()
+		fake.ollamaMissing = true
+		rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rec.GetString("status") != "running" {
+			t.Fatalf("status = %q, want running", rec.GetString("status"))
+		}
+		if containsString(fake.lastCreateSpec.NetworkNames, ModelNetwork) {
+			t.Fatalf("networks = %v, want ModelNetwork omitted when Ollama isn't running",
+				fake.lastCreateSpec.NetworkNames)
+		}
+		if !containsString(fake.lastCreateSpec.NetworkNames, HarnessEgressNetwork) {
+			t.Fatalf("networks = %v, want the other networks still present",
+				fake.lastCreateSpec.NetworkNames)
+		}
+	})
 }
 
 func TestProvisionHarnessInstanceReusesLocalImageWithoutPulling(t *testing.T) {

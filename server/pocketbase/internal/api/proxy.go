@@ -35,6 +35,17 @@ type ProxyDeps struct {
 	TargetURL string
 }
 
+// ObservabilityProxyPrefix is the path this proxy is mounted at, exported
+// so config_consistency_test.go can assert docker-compose.yml's
+// SQLPAGE_SITE_PREFIX actually matches it. It has to: the reverse proxy
+// strips this prefix before forwarding, so SQLPage sees an unprefixed
+// path and 308-redirects to whatever site prefix IT was told to expect --
+// a mismatch there sends that redirect to a path this proxy never
+// registered at all, 404ing. Confirmed live: SQLPAGE_SITE_PREFIX had
+// drifted to a stale pre-v1 path (missing this route's "v1" segment),
+// breaking the Monitor screen's observability dashboard 100% of the time.
+const ObservabilityProxyPrefix = "/api/pocketcoder/v1/proxy/observability"
+
 func AddProxyOperations(registry *operation.Registry, deps ProxyDeps) {
 	target := strings.TrimSpace(deps.TargetURL)
 	if target == "" {
@@ -50,10 +61,10 @@ func AddProxyOperations(registry *operation.Registry, deps ProxyDeps) {
 	registry.Add(operation.Route{
 		OperationID: "proxyObservability",
 		Method:      http.MethodGet,
-		Path:        "/api/pocketcoder/v1/proxy/observability/{path...}",
+		Path:        ObservabilityProxyPrefix + "/{path...}",
 		Auth:        true,
 		Direct:      true,
-		Action:      createProxyHandler(target, "/api/pocketcoder/v1/proxy/observability", transport),
+		Action:      createProxyHandler(target, ObservabilityProxyPrefix, transport),
 	})
 }
 
