@@ -20,8 +20,10 @@ class _FakeLocalizationService implements ILocalizationService {
 void main() {
   setUp(() {
     GetIt.instance.reset();
-    GetIt.instance.registerSingleton<IExceptionKeyMapper>(AppExceptionKeyMapper());
-    GetIt.instance.registerSingleton<ILocalizationService>(_FakeLocalizationService());
+    GetIt.instance
+        .registerSingleton<IExceptionKeyMapper>(AppExceptionKeyMapper());
+    GetIt.instance
+        .registerSingleton<ILocalizationService>(_FakeLocalizationService());
   });
 
   test('returns null for a null error (no toast to show)', () {

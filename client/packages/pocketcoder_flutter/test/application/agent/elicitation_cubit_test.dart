@@ -26,6 +26,9 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   Stream<List<BaseEvent>> watchRawEvents(String chatId) => const Stream.empty();
 
   @override
+  Future<void> cancelStreams() async {}
+
+  @override
   Future<int> cursorFor(String chatId) async => 0;
 
   @override
@@ -196,6 +199,19 @@ void main() {
     await cubit.submit(const ElicitationResponse.cancel());
 
     expect(repo.respondElicitationCalls, isEmpty);
+    expect(cubit.state.elicitation, isNull);
+  });
+
+  test('a queued old-chat emission cannot update the newly opened chat',
+      () async {
+    cubit.open('chat-1');
+    repo.controllerFor('chat-1').add(Conversation(
+          sessionState: SessionState(elicitation: {'elicitationId': 'old'}),
+        ));
+    cubit.open('chat-2');
+    await _settle();
+
+    expect(cubit.state.chatId, 'chat-2');
     expect(cubit.state.elicitation, isNull);
   });
 }

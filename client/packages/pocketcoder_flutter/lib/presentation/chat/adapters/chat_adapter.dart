@@ -5,7 +5,9 @@ import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
 import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart';
+import 'package:pocketcoder_flutter/application/agent/elicitation_state.dart';
 import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart';
+import 'package:pocketcoder_flutter/application/agent/permission_state.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_state.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
@@ -16,47 +18,85 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.d
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/application/agent/provider_reauthentication_required.dart';
 
-/// The toast message for [error], or null if no toast should be shown.
-///
-/// Returns null for [ProviderReauthenticationRequired]: ChatView already
-/// renders a dedicated inline banner for it (see
-/// `requiresProviderReauthentication` below), so a toast on top would be
-/// redundant -- and previously showed the raw, unmapped
-/// "Instance of 'ProviderReauthenticationRequired'" text, since this
-/// listener rendered `'${value.error}'` directly instead of going through
-/// the exception mapper the rest of the app uses.
 String? chatErrorToastMessage(Object? error) {
-  if (error == null) return null;
-  if (error is ProviderReauthenticationRequired) return null;
-
-  var messageKey = MessageKey.genericError;
+  if (error == null || error is ProviderReauthenticationRequired) return null;
+  var key = MessageKey.genericError;
   try {
-    messageKey = GetIt.instance<IExceptionKeyMapper>().map(error) ?? messageKey;
+    key = GetIt.instance<IExceptionKeyMapper>().map(error) ?? key;
   } catch (_) {}
-
   try {
     return GetIt.instance<ILocalizationService>()
-        .translate(messageKey.key, args: messageKey.args);
+        .translate(key.key, args: key.args);
   } catch (_) {
-    return messageKey.key;
+    return key.key;
   }
 }
 
 class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
   const ChatAdapter({super.key, this.chatId});
-
   final String? chatId;
-
   static ChatState _selectState(ChatState state) => state;
 
   @override
   Widget buildAdapter(
-    BuildContext context,
-    CubitAdapterState<ChatCubit, ChatState> adapter,
-  ) {
+      BuildContext context, CubitAdapterState<ChatCubit, ChatState> adapter) {
     final state = adapter.cubitField(_selectState);
     final chatCubit = context.read<ChatCubit>();
     final controls = context.read<SessionControlsCubit>();
+    final view = ValueListenableBuilder<ChatState>(
+      valueListenable: state,
+      builder: (context, value, _) => StreamBuilder<SessionControlsState>(
+        stream: controls.stream,
+        initialData: controls.state,
+        builder: (context, snapshot) {
+          final c = snapshot.data ?? controls.state;
+          return ChatView(
+            chatId: chatId,
+            conversation: value.conversation,
+            title: value.conversation.sessionState.title ??
+                context.l10n.chatSessionTitle,
+            isLoading: value.isLoading,
+            isRunning: value.conversation.sessionState.isRunning,
+            requiresProviderReauthentication:
+                value.error is ProviderReauthenticationRequired,
+            modes: c.modes,
+            config: c.config,
+            onOpen: (id) {
+              chatCubit.open(id);
+              context.read<PermissionCubit>().open(id);
+              context.read<ElicitationCubit>().open(id);
+              controls.open(id);
+            },
+            onSendPrompt: chatCubit.sendPrompt,
+            onCancel: chatCubit.cancel,
+            onSelectMode: controls.selectMode,
+            onSetOption: controls.setOption,
+            onPermissionOptionSelected: (requestId,
+                {optionId, cancelled = false}) {
+              final cubit = context.read<PermissionCubit>();
+              if (cancelled || optionId == null) {
+                cubit.deny(requestId: requestId);
+              } else {
+                cubit.authorize(optionId, requestId: requestId);
+              }
+            },
+            onElicitationRespond: (requestId, response) {
+              final action = response['action'] as String?;
+              final content = response['content'];
+              final result = switch (action) {
+                'accept' => ElicitationResponse.accept(content is Map
+                    ? Map<String, dynamic>.from(content)
+                    : const {}),
+                'decline' => const ElicitationResponse.decline(),
+                _ => const ElicitationResponse.cancel(),
+              };
+              context.read<ElicitationCubit>().submit(result);
+            },
+            onFiles: () => AppNavigation.toFiles(context),
+          );
+        },
+      ),
+    );
     return UiFlowListener<ChatCubit, ChatState>(
       listener: (context, value) {
         final message = chatErrorToastMessage(value.error);
@@ -65,61 +105,8 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
               color: context.terminalColors.warning);
         }
       },
-      child: ValueListenableBuilder<ChatState>(
-        valueListenable: state,
-        builder: (context, value, _) => StreamBuilder<SessionControlsState>(
-          stream: controls.stream,
-          initialData: controls.state,
-          builder: (context, controlsSnapshot) {
-            final controlsValue = controlsSnapshot.data ?? controls.state;
-            return ChatView(
-              chatId: chatId,
-              conversation: value.conversation,
-              title: value.conversation.sessionState.title ??
-                  context.l10n.chatSessionTitle,
-              isLoading: value.isLoading,
-              isRunning: value.conversation.sessionState.isRunning,
-              requiresProviderReauthentication:
-                  value.error is ProviderReauthenticationRequired,
-              modes: controlsValue.modes,
-              config: controlsValue.config,
-              onOpen: (id) {
-                chatCubit.open(id);
-                context.read<PermissionCubit>().open(id);
-                context.read<ElicitationCubit>().open(id);
-                controls.open(id);
-              },
-              onSendPrompt: chatCubit.sendPrompt,
-              onCancel: chatCubit.cancel,
-              onSelectMode: controls.selectMode,
-              onSetOption: controls.setOption,
-              onPermissionOptionSelected: (requestId,
-                  {optionId, cancelled = false}) {
-                final cubit = context.read<PermissionCubit>();
-                if (cancelled || optionId == null) {
-                  cubit.deny(requestId: requestId);
-                } else {
-                  cubit.authorize(optionId, requestId: requestId);
-                }
-              },
-              onElicitationRespond: (requestId, response) {
-                final action = response['action'] as String?;
-                final content = response['content'];
-                final elicitationResponse = switch (action) {
-                  'accept' => ElicitationResponse.accept(
-                      content is Map
-                          ? Map<String, dynamic>.from(content)
-                          : const <String, dynamic>{},
-                    ),
-                  'decline' => const ElicitationResponse.decline(),
-                  _ => const ElicitationResponse.cancel(),
-                };
-                context.read<ElicitationCubit>().submit(elicitationResponse);
-              },
-              onFiles: () => AppNavigation.toFiles(context),
-            );
-          },
-        ),
+      child: UiFlowListener<PermissionCubit, PermissionState>(
+        child: UiFlowListener<ElicitationCubit, ElicitationState>(child: view),
       ),
     );
   }

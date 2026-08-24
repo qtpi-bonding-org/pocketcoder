@@ -25,9 +25,11 @@ class ElicitationCubit extends AppCubit<ElicitationState> {
 
   StreamSubscription? _watchSub;
   String? _chatId;
+  int _generation = 0;
 
   @override
   Future<void> close() {
+    _generation++;
     _watchSub?.cancel();
     return super.close();
   }
@@ -37,6 +39,8 @@ class ElicitationCubit extends AppCubit<ElicitationState> {
   /// again with a different chatId tears down the previous subscription
   /// first.
   void open(String chatId) {
+    _generation++;
+    final myGeneration = _generation;
     _chatId = chatId;
     _watchSub?.cancel();
     emit(state.copyWith(
@@ -47,12 +51,14 @@ class ElicitationCubit extends AppCubit<ElicitationState> {
 
     _watchSub = _repository.watch(chatId).listen(
       (conversation) {
+        if (myGeneration != _generation) return;
         emit(state.copyWith(
           sessionState: conversation.sessionState,
           status: UiFlowStatus.success,
         ));
       },
       onError: (Object e) {
+        if (myGeneration != _generation) return;
         unawaited(pocketCoderDiagnosticCapture.capture(
           error: e,
           source: 'ElicitationCubit',

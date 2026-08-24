@@ -26,6 +26,9 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   Stream<List<BaseEvent>> watchRawEvents(String chatId) => const Stream.empty();
 
   @override
+  Future<void> cancelStreams() async {}
+
+  @override
   Future<int> cursorFor(String chatId) async => 0;
 
   @override
@@ -174,6 +177,34 @@ void main() {
     await cubit.deny();
 
     expect(repo.respondPermissionCalls, isEmpty);
+    expect(cubit.state.permission, isNull);
+  });
+
+  test('a requestId supplied by a stale permission card is rejected', () async {
+    cubit.open('chat-1');
+    repo.controllerFor('chat-1').add(Conversation(
+          sessionState: SessionState(
+            permission: {'requestId': 'current', 'options': []},
+          ),
+        ));
+    await _settle();
+
+    await cubit.authorize('allow', requestId: 'stale');
+    await cubit.deny(requestId: 'stale');
+
+    expect(repo.respondPermissionCalls, isEmpty);
+  });
+
+  test('a queued old-chat emission cannot update the newly opened chat',
+      () async {
+    cubit.open('chat-1');
+    repo.controllerFor('chat-1').add(Conversation(
+          sessionState: SessionState(permission: {'requestId': 'old'}),
+        ));
+    cubit.open('chat-2');
+    await _settle();
+
+    expect(cubit.state.chatId, 'chat-2');
     expect(cubit.state.permission, isNull);
   });
 

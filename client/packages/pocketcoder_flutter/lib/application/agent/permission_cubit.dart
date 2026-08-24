@@ -25,9 +25,11 @@ class PermissionCubit extends AppCubit<PermissionState> {
 
   StreamSubscription? _watchSub;
   String? _chatId;
+  int _generation = 0;
 
   @override
   Future<void> close() {
+    _generation++;
     _watchSub?.cancel();
     return super.close();
   }
@@ -36,6 +38,8 @@ class PermissionCubit extends AppCubit<PermissionState> {
   /// `sessionState.permission` slice in [PermissionState]. Calling this again
   /// with a different chatId tears down the previous subscription first.
   void open(String chatId) {
+    _generation++;
+    final myGeneration = _generation;
     _chatId = chatId;
     _watchSub?.cancel();
     emit(state.copyWith(
@@ -46,12 +50,14 @@ class PermissionCubit extends AppCubit<PermissionState> {
 
     _watchSub = _repository.watch(chatId).listen(
       (conversation) {
+        if (myGeneration != _generation) return;
         emit(state.copyWith(
           sessionState: conversation.sessionState,
           status: UiFlowStatus.success,
         ));
       },
       onError: (Object e) {
+        if (myGeneration != _generation) return;
         unawaited(pocketCoderDiagnosticCapture.capture(
           error: e,
           source: 'PermissionCubit',
@@ -80,6 +86,11 @@ class PermissionCubit extends AppCubit<PermissionState> {
           '🤖 [PermissionCubit] authorize: pending permission missing requestId');
       return;
     }
+    if (requestId != null && requestId != pendingRequestId) {
+      logWarning(
+          '🤖 [PermissionCubit] authorize requestId does not match pending permission');
+      return;
+    }
     await tryOperation(() async {
       await _repository.respondPermission(
         chatId,
@@ -106,6 +117,11 @@ class PermissionCubit extends AppCubit<PermissionState> {
     if (pendingRequestId is! String) {
       logWarning(
           '🤖 [PermissionCubit] deny: pending permission missing requestId');
+      return;
+    }
+    if (requestId != null && requestId != pendingRequestId) {
+      logWarning(
+          '🤖 [PermissionCubit] deny requestId does not match pending permission');
       return;
     }
     await tryOperation(() async {
