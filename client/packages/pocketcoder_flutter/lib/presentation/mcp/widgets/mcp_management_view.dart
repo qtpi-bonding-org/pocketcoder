@@ -198,7 +198,9 @@ class McpManagementView extends StatelessWidget {
           child: TerminalButton(
             label: pendingLabel(context, server),
             onTap: () => onDeny(server.id),
-            color: context.colorScheme.error,
+            color: server.status == McpServerStatus.pending
+                ? context.terminalColors.warning
+                : context.terminalColors.danger,
           ),
         ),
       ]);
