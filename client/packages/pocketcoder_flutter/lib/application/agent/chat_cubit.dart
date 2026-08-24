@@ -170,8 +170,15 @@ class ChatCubit extends AppCubit<ChatState> {
       return;
     }
     _lastPrompt = text;
+    logDebug('🤖 [ChatCubit] sendPrompt', {'chatId': chatId, 'length': text.length});
     await tryOperation(() async {
-      await transport.sendMessage(text);
+      try {
+        await transport.sendMessage(text);
+      } catch (error, stackTrace) {
+        logError('🤖 [ChatCubit] sendPrompt failed | {chatId: $chatId, '
+            'error: $error}', error, stackTrace);
+        rethrow;
+      }
       return state.copyWith(
           status: UiFlowStatus.success,
           lastOperation: AgentChatOperation.sendPrompt);

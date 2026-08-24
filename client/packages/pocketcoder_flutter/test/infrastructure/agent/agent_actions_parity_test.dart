@@ -194,5 +194,24 @@ void main() {
         throwsA(isA<AgentUnavailableFailure>()),
       );
     });
+
+    test(
+        'an unmapped status -> UnknownAgentActionFailure whose toString() '
+        'is the real message, not the default Object.toString() -- '
+        "confirmed live: without this, an unmapped AgentActionFailure "
+        'reaching the UI (no IExceptionKeyMapper entry for this type) '
+        'rendered as literally "Instance of \'UnknownAgentActionFailure\'"',
+        () async {
+      nextStatusCode = 500;
+      nextResponseBody = {'message': 'goose backend exploded'};
+      try {
+        await api.cancel('chat-1');
+        fail('expected AgentActionFailure');
+      } on AgentActionFailure catch (e) {
+        expect(e, isA<UnknownAgentActionFailure>());
+        expect(e.toString(), 'goose backend exploded');
+        expect(e.toString(), isNot(contains('Instance of')));
+      }
+    });
   });
 }

@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 
 /// Typed failures for the up-channel, mapped from c1's documented HTTP
@@ -14,6 +15,13 @@ import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.d
 sealed class AgentActionFailure implements Exception {
   const AgentActionFailure(this.message);
   final String message;
+
+  // Without this, an unmapped AgentActionFailure reaching UiFlowListener's
+  // fallback (no IExceptionKeyMapper entry -- see AppExceptionKeyMapper)
+  // renders as Dart's default Object.toString(), "Instance of
+  // 'UnknownAgentActionFailure'", directly in the UI -- confirmed live.
+  @override
+  String toString() => message;
 }
 
 class BadRequestFailure extends AgentActionFailure {
@@ -127,7 +135,17 @@ class AgentActionsApi {
     final message = data is Map<String, dynamic>
         ? data['message'] as String? ?? e.message ?? e.toString()
         : e.message ?? e.toString();
-    switch (e.response?.statusCode) {
+    final statusCode = e.response?.statusCode;
+    AppLogger.error('AgentActionsApi request failed', e, e.stackTrace);
+    logDebug('AgentActionsApi request failed', {
+      'statusCode': statusCode,
+      'path': e.requestOptions.path,
+      'method': e.requestOptions.method,
+      'dioErrorType': e.type.name,
+      'responseData': data,
+      'message': message,
+    });
+    switch (statusCode) {
       case 400:
         return BadRequestFailure(message);
       case 401:
