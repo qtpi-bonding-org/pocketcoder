@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 
@@ -53,9 +54,9 @@ class _MemoryDashboardScreenState extends State<MemoryDashboardScreen> {
         children: [
           WebViewWidget(controller: _controller),
           if (_loading)
-            const Positioned.fill(
+            Positioned.fill(
               child: ColoredBox(
-                color: Colors.black,
+                color: context.colorScheme.surface,
                 child: Center(child: TerminalLoadingIndicator()),
               ),
             ),
