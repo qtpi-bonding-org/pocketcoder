@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_pro/infrastructure/deployment/ca_pin_mutex.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_mutex.dart';
 
 void main() {
   test('serializes two concurrent synchronized() calls', () async {

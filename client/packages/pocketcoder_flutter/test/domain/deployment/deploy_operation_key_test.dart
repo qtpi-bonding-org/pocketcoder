@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_pro/domain/deployment/deploy_operation_key.dart';
+import 'package:pocketcoder_flutter/domain/deployment/deploy_operation_key.dart';
 
 void main() {
   test('maps every known wire value to its operation key', () {

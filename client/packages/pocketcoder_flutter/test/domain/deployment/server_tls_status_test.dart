@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_pro/domain/deployment/server_tls_status.dart';
+import 'package:pocketcoder_flutter/domain/deployment/server_tls_status.dart';
 
 void main() {
   test('parses trusted and rate-limited TLS states', () {

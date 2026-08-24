@@ -7,8 +7,8 @@ import 'package:pocketcoder_flutter/domain/deployment/caddy_ca_pin.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_command_runner.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command_result.dart';
-import 'package:pocketcoder_pro/infrastructure/deployment/ca_pin_fetcher.dart';
-import 'package:pocketcoder_pro/infrastructure/deployment/ca_pin_mutex.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_fetcher.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_mutex.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 
 class MockSshRunner extends Mock implements IRootSshCommandRunner {}

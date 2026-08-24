@@ -1,5 +1,5 @@
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
-import 'package:pocketcoder_pro/domain/deployment/readiness_update.dart';
+import 'package:pocketcoder_flutter/domain/deployment/readiness_update.dart';
 
 /// Never overwrites an already-pinned fingerprint (TOFU -- trust on first
 /// use only).

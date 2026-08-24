@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:pocketcoder_pro/domain/deployment/server_tls_status.dart';
+import 'package:pocketcoder_flutter/domain/deployment/server_tls_status.dart';
 
 class ServerStatusDocument {
   ServerStatusDocument({

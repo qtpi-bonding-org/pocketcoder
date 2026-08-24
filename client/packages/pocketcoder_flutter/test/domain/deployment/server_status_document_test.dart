@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_pro/domain/deployment/server_status_document.dart';
-import 'package:pocketcoder_pro/domain/deployment/server_tls_status.dart';
+import 'package:pocketcoder_flutter/domain/deployment/server_status_document.dart';
+import 'package:pocketcoder_flutter/domain/deployment/server_tls_status.dart';
 
 void main() {
   test('parses a schema-3 document\'s tls state', () {

@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_aeroform/domain/models/instance_credentials.dart';
 import 'package:flutter_aeroform/domain/storage/i_secure_storage.dart';
-import 'package:pocketcoder_pro/domain/deployment/deploy_operation_key.dart';
-import 'package:pocketcoder_pro/domain/deployment/readiness_update.dart';
-import 'package:pocketcoder_pro/domain/deployment/server_status_document.dart';
-import 'package:pocketcoder_pro/infrastructure/deployment/ssh_host_identity_capture.dart';
+import 'package:pocketcoder_flutter/domain/deployment/deploy_operation_key.dart';
+import 'package:pocketcoder_flutter/domain/deployment/readiness_update.dart';
+import 'package:pocketcoder_flutter/domain/deployment/server_status_document.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ssh_host_identity_capture.dart';
 
 class MockSecureStorage extends Mock implements ISecureStorage {}
 
