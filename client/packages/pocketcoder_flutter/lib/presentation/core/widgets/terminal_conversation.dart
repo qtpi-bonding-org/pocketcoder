@@ -89,7 +89,8 @@ class TerminalConversationFrame extends StatelessWidget {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
     final isUser = speaker == TerminalConversationSpeaker.user;
-    final resolved = selectable(colors.secondary, selected: isUser);
+    final resolved =
+        emphasize(colors.secondary, isUser ? Emphasis.selected : Emphasis.plain);
     final accent = isReasoning ? terminalColors.warning : resolved.text;
 
     final content = Column(
@@ -172,7 +173,7 @@ class TerminalConversationTurn extends StatelessWidget {
       child: Text(
         '\$ $message',
         style: TextStyle(
-          color: selectable(context.colorScheme.secondary, selected: true).text,
+          color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
           fontFamily: AppFonts.bodyFamily,
           fontSize: AppSizes.fontStandard,
         ),

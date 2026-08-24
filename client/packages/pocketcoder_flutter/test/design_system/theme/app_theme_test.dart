@@ -3,23 +3,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 void main() {
-  group('selectable', () {
-    test('unselected returns no fill and the base color as text', () {
-      const base = Color(0xFF00B82A);
-      final result = selectable(base, selected: false);
+  group('emphasize', () {
+    const base = Color(0xFF00B82A);
+
+    test('plain has no fill, no border, base color text', () {
+      final result = emphasize(base, Emphasis.plain);
       expect(result.fill, isNull);
+      expect(result.border, isNull);
       expect(result.text, base);
     });
 
-    test('selected returns the base color as fill and black text', () {
-      const base = Color(0xFF00B82A);
-      final result = selectable(base, selected: true);
+    test('outlined has no fill, a base-color border, base color text', () {
+      final result = emphasize(base, Emphasis.outlined);
+      expect(result.fill, isNull);
+      expect(result.border, base);
+      expect(result.text, base);
+    });
+
+    test('selected has base-color fill, no border, black text', () {
+      final result = emphasize(base, Emphasis.selected);
       expect(result.fill, base);
+      expect(result.border, isNull);
       expect(result.text, Colors.black);
     });
-  });
-
-  test('TerminalColors no longer exposes user/attention fields', () {
-    expect(TerminalColors.new, isNotNull);
   });
 }

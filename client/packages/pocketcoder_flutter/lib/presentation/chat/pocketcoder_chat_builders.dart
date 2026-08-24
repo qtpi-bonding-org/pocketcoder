@@ -134,11 +134,11 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
             speaker: TerminalConversationSpeaker.user,
             child: TerminalTranscriptLine(
               prefix: 'root@device \$ ',
-              color: selectable(context.colorScheme.secondary, selected: true).text,
+              color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
               child: Text(
                 message.text,
                 style: TextStyle(
-                  color: selectable(context.colorScheme.secondary, selected: true).text,
+                  color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
                   fontFamily: AppFonts.bodyFamily,
                   package: 'pocketcoder_flutter',
                   fontSize: AppSizes.fontStandard,
@@ -174,7 +174,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           showTime: false,
           showStatus: false,
           sentTextStyle: style.textStyle.copyWith(
-            color: selectable(context.colorScheme.secondary, selected: true).text,
+            color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
             fontWeight: AppFonts.medium,
           ),
           receivedTextStyle: style.textStyle,
@@ -184,7 +184,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
             speaker: TerminalConversationSpeaker.user,
             child: TerminalTranscriptLine(
               prefix: 'root@device \$ ',
-              color: selectable(context.colorScheme.secondary, selected: true).text,
+              color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
               child: child,
             ),
           );

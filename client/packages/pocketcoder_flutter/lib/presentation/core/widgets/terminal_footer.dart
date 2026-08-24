@@ -10,12 +10,18 @@ class TerminalAction {
   final bool isActive;
   final Color? color;
 
+  /// Overrides the emphasis derived from [isActive] -- lets a footer
+  /// button read as the recommended next action (.outlined) without being
+  /// the active tab. See the emphasis-states spec (2026-08-23).
+  final Emphasis? emphasis;
+
   TerminalAction({
     required this.label,
     required this.onTap,
     this.hasBadge = false,
     this.isActive = false,
     this.color,
+    this.emphasis,
   });
 
   BiosActionStripItem get _asStripItem => BiosActionStripItem(
@@ -24,6 +30,7 @@ class TerminalAction {
         hasBadge: hasBadge,
         isActive: isActive,
         color: color,
+        emphasis: emphasis,
       );
 }
 
@@ -55,16 +62,21 @@ class TerminalFooter extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: actions.map((action) {
+                final stripItem = action._asStripItem;
+                final showDivider =
+                    stripItem.resolvedEmphasis != Emphasis.outlined;
                 return Container(
                   decoration: BoxDecoration(
-                    border: Border(
-                      right: BorderSide(
-                        color: colors.onSurface.withValues(alpha: 0.1),
-                        width: AppSizes.borderWidth,
-                      ),
-                    ),
+                    border: showDivider
+                        ? Border(
+                            right: BorderSide(
+                              color: colors.onSurface.withValues(alpha: 0.1),
+                              width: AppSizes.borderWidth,
+                            ),
+                          )
+                        : null,
                   ),
-                  child: BiosActionButton(action: action._asStripItem),
+                  child: BiosActionButton(action: stripItem),
                 );
               }).toList(),
             ),

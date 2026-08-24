@@ -13,6 +13,7 @@ class BiosActionStripItem {
     this.isActive = false,
     this.hasBadge = false,
     this.color,
+    this.emphasis,
   });
 
   final String label;
@@ -20,6 +21,16 @@ class BiosActionStripItem {
   final bool isActive;
   final bool hasBadge;
   final Color? color;
+
+  /// Overrides the emphasis derived from [isActive] -- lets a button read
+  /// as the recommended next action (.outlined) without being the active
+  /// tab/selection. See the emphasis-states spec (2026-08-23).
+  final Emphasis? emphasis;
+
+  /// The emphasis this button actually renders with: an explicit override
+  /// if set, otherwise derived from [isActive].
+  Emphasis get resolvedEmphasis =>
+      emphasis ?? (isActive ? Emphasis.selected : Emphasis.plain);
 }
 
 /// A bare row of [BiosActionStripItem] buttons -- no outer border/SafeArea
@@ -58,10 +69,8 @@ class BiosActionButton extends StatelessWidget {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
 
-    final resolved = selectable(
-      action.color ?? colors.onSurface,
-      selected: action.isActive,
-    );
+    final emphasis = action.resolvedEmphasis;
+    final resolved = emphasize(action.color ?? colors.onSurface, emphasis);
     final bgColor = resolved.fill ?? Colors.transparent;
     final fgColor = resolved.text;
 
@@ -74,7 +83,12 @@ class BiosActionButton extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(
               horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
-          decoration: BoxDecoration(color: bgColor),
+          decoration: BoxDecoration(
+            color: bgColor,
+            border: resolved.border != null
+                ? Border.all(color: resolved.border!, width: AppSizes.borderWidth)
+                : null,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -98,7 +112,7 @@ class BiosActionButton extends StatelessWidget {
                   '[!]',
                   style: TextStyle(
                     fontFamily: AppFonts.bodyFamily,
-                    color: action.isActive
+                    color: emphasis == Emphasis.selected
                         ? Colors.black
                         : terminalColors.warning,
                     fontSize: AppSizes.fontMini,

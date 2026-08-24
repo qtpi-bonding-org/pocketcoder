@@ -41,4 +41,34 @@ void main() {
     final text = tester.widget<Text>(find.text('CHAT'));
     expect(text.style?.color, isNot(Colors.black));
   });
+
+  testWidgets(
+      'an explicit outlined action renders a border in its own color, no fill, even when not active',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: TerminalFooter(
+            actions: [
+              TerminalAction(
+                  label: 'connect', onTap: () {}, emphasis: Emphasis.outlined),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final text = tester.widget<Text>(find.text('CONNECT'));
+    expect(text.style?.color, isNot(Colors.black));
+
+    final container = tester.widget<Container>(
+      find
+          .descendant(of: find.byType(InkWell), matching: find.byType(Container))
+          .first,
+    );
+    final decoration = container.decoration as BoxDecoration;
+    expect(decoration.color, anyOf(isNull, Colors.transparent));
+    expect(decoration.border, isNotNull);
+  });
 }

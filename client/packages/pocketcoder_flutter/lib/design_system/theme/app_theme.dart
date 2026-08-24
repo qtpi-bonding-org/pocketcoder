@@ -10,8 +10,32 @@ export '../primitives/app_sizes.dart';
 export '../primitives/app_motion.dart';
 export '../primitives/spacers.dart';
 
-({Color? fill, Color text}) selectable(Color base, {required bool selected}) =>
-    selected ? (fill: base, text: Colors.black) : (fill: null, text: base);
+/// How an element should read: not yet acted on (plain), the recommended
+/// next action or current reading-position (outlined), or already-true --
+/// the active tab, a sent message, the user's current selection (selected).
+/// Per the emphasis-states spec (2026-08-23), `outlined` is deliberately NOT
+/// a variant of `selected` -- applying the invert treatment to a button you
+/// haven't pressed yet reads as "you're already here," which is wrong for a
+/// primary CTA or a stepper's current-position marker.
+enum Emphasis { plain, outlined, selected }
+
+/// Given a color and how this instance should read, returns what to
+/// render. This is the ONLY place "invert" or "outline" happens -- every
+/// emphasis-aware widget (TerminalFooter's tab buttons, a primary CTA not
+/// yet pressed, the chat transcript's user-turn rows, a stepper's
+/// current-position marker) calls this directly and inline, passing its
+/// own base color and the Emphasis it already knows, instead of hand-
+/// rolling its own two- or three-way ternary -- which is exactly how
+/// `attention`/`userCyan` diverged in the color-system spec's audit.
+({Color? fill, Color? border, Color text}) emphasize(
+  Color base,
+  Emphasis emphasis,
+) =>
+    switch (emphasis) {
+      Emphasis.plain => (fill: null, border: null, text: base),
+      Emphasis.outlined => (fill: null, border: base, text: base),
+      Emphasis.selected => (fill: base, border: null, text: Colors.black),
+    };
 
 /// Extension for terminal-specific colors that don't fit into standard ColorScheme.
 class TerminalColors extends ThemeExtension<TerminalColors> {
