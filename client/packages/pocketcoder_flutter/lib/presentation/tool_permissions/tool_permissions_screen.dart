@@ -5,9 +5,11 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_cubit.dart';
@@ -105,56 +107,33 @@ class ToolPermissionsView extends StatelessWidget {
   Widget _buildRuleItem(BuildContext context, ToolPermission rule) {
     final isActive = rule.active == true;
 
-    return TerminalCard(
+    return BiosCard(
       isActive: isActive,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: TerminalText(
-                  rule.tool.toUpperCase(),
-                  weight: TerminalTextWeight.heavy,
-                ),
-              ),
-              Switch(
-                value: isActive,
-                onChanged: (value) => onSetActive(rule.id, value),
-              ),
-            ],
-          ),
-          VSpace.x1,
-          _buildActionSelector(context, rule),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionSelector(BuildContext context, ToolPermission rule) {
-    Widget actionButton(String label, ToolPermissionAction action, String value) {
-      return Expanded(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSizes.space / 2),
-          child: TerminalButton(
-            label: label,
-            isPrimary: rule.action == action,
-            onTap: () => onUpdateAction(rule.id, value),
-          ),
+      header: [
+        BiosRow(
+          label: rule.tool,
+          variant: BiosRowVariant.toggle,
+          toggleValue: isActive,
+          onToggleChanged: (value) => onSetActive(rule.id, value),
         ),
-      );
-    }
-
-    return Row(
-      children: [
-        actionButton(context.l10n.toolPermissionsAllowLabel,
-            ToolPermissionAction.allow, 'allow'),
-        actionButton(context.l10n.toolPermissionsAskLabel,
-            ToolPermissionAction.ask, 'ask'),
-        actionButton(context.l10n.toolPermissionsDenyLabel,
-            ToolPermissionAction.deny, 'deny'),
       ],
+      footer: BiosActionStrip(actions: [
+        BiosActionStripItem(
+          label: context.l10n.toolPermissionsAllowLabel,
+          isActive: rule.action == ToolPermissionAction.allow,
+          onTap: () => onUpdateAction(rule.id, 'allow'),
+        ),
+        BiosActionStripItem(
+          label: context.l10n.toolPermissionsAskLabel,
+          isActive: rule.action == ToolPermissionAction.ask,
+          onTap: () => onUpdateAction(rule.id, 'ask'),
+        ),
+        BiosActionStripItem(
+          label: context.l10n.toolPermissionsDenyLabel,
+          isActive: rule.action == ToolPermissionAction.deny,
+          onTap: () => onUpdateAction(rule.id, 'deny'),
+        ),
+      ]),
     );
   }
 

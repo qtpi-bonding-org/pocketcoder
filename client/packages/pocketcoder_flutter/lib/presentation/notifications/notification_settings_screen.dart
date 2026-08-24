@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'adapters/notification_settings_adapter.dart';
@@ -80,10 +81,11 @@ class NotificationSettingsView extends StatelessWidget {
                   child: Column(
                     children: [
                       for (final (type, key) in types)
-                        _SwitchTile(
+                        BiosRow(
                           label: _labelFor(context, key),
-                          value: state.rules[type] ?? true,
-                          onChanged: (value) => onChanged(type, value),
+                          variant: BiosRowVariant.toggle,
+                          toggleValue: state.rules[type] ?? true,
+                          onToggleChanged: (value) => onChanged(type, value),
                         ),
                     ],
                   ),
@@ -95,42 +97,4 @@ class NotificationSettingsView extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SwitchTile extends StatelessWidget {
-  const _SwitchTile({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.space,
-          vertical: AppSizes.space / 2,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: context.colorScheme.onSurface,
-                  fontSize: AppSizes.fontStandard,
-                  fontWeight: AppFonts.heavy,
-                  package: 'pocketcoder_flutter',
-                ),
-              ),
-            ),
-            Switch(value: value, onChanged: onChanged),
-          ],
-        ),
-      );
 }
