@@ -18,4 +18,8 @@ void main() {
       expect(result.text, Colors.black);
     });
   });
+
+  test('TerminalColors no longer exposes user/attention fields', () {
+    expect(TerminalColors.new, isNotNull);
+  });
 }

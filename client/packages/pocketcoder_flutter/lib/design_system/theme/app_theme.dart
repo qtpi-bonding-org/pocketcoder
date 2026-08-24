@@ -20,18 +20,14 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
   final double scanlineOpacity;
 
   // ANSI Accents
-  final Color user;
   final Color danger;
-  final Color attention;
   final Color warning;
 
   const TerminalColors({
     required this.glow,
     required this.scanline,
     required this.scanlineOpacity,
-    required this.user,
     required this.danger,
-    required this.attention,
     required this.warning,
   });
 
@@ -40,18 +36,14 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
     Color? glow,
     Color? scanline,
     double? scanlineOpacity,
-    Color? user,
     Color? danger,
-    Color? attention,
     Color? warning,
   }) {
     return TerminalColors(
       glow: glow ?? this.glow,
       scanline: scanline ?? this.scanline,
       scanlineOpacity: scanlineOpacity ?? this.scanlineOpacity,
-      user: user ?? this.user,
       danger: danger ?? this.danger,
-      attention: attention ?? this.attention,
       warning: warning ?? this.warning,
     );
   }
@@ -64,9 +56,7 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
       scanline: Color.lerp(scanline, other.scanline, t) ?? scanline,
       scanlineOpacity: lerpDouble(scanlineOpacity, other.scanlineOpacity, t) ??
           scanlineOpacity,
-      user: Color.lerp(user, other.user, t) ?? user,
       danger: Color.lerp(danger, other.danger, t) ?? danger,
-      attention: Color.lerp(attention, other.attention, t) ?? attention,
       warning: Color.lerp(warning, other.warning, t) ?? warning,
     );
   }
@@ -109,9 +99,7 @@ class AppTheme {
           glow: palette.vividGreen.withValues(alpha: 0.1),
           scanline: palette.vividGreen.withValues(alpha: 0.05),
           scanlineOpacity: 0.05,
-          user: palette.userCyan,
           danger: palette.dangerRed,
-          attention: palette.infoWhite,
           warning: palette.warningAmber,
         ),
       ],
