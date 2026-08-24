@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,10 +31,23 @@ class HarnessAuthAdapter
   ) {
     final state = adapter.cubitField(_selectState);
     final cubit = context.read<HarnessAuthCubit>();
+    // Whether a harness is connected lives in the per-harness `statuses`
+    // map, not the cubit's top-level status/error -- those routinely stay
+    // success/null across a connect/poll transition, so this must fire on
+    // every emission (see UiFlowListener's listenWhen doc). `openedFirstChat`
+    // is the one-shot guard that then keeps a persisted-connected state
+    // from re-triggering chat creation on every later emission.
+    final openedFirstChat = adapter.keep<ValueNotifier<bool>>(
+      'openedFirstChat',
+      () => ValueNotifier(false),
+      dispose: (notifier) => notifier.dispose(),
+    );
     return UiFlowListener<HarnessAuthCubit, HarnessAuthState>(
+      listenWhen: (_, __) => true,
       listener: (context, value) {
-        if (onboarding && _hasConnected(value)) {
-          _openFirstChat(context, value);
+        if (onboarding && !openedFirstChat.value && _hasConnected(value)) {
+          openedFirstChat.value = true;
+          unawaited(_openFirstChat(context, value, openedFirstChat));
         }
       },
       child: ValueListenableBuilder<HarnessAuthState>(
@@ -85,7 +100,10 @@ class HarnessAuthAdapter
       .any((h) => state.statuses[h.id]?.isConnected == true);
 
   Future<void> _openFirstChat(
-      BuildContext context, HarnessAuthState state) async {
+    BuildContext context,
+    HarnessAuthState state,
+    ValueNotifier<bool> openedFirstChat,
+  ) async {
     final connected = state.harnesses
         .where((h) =>
             !onboarding ||
@@ -101,6 +119,9 @@ class HarnessAuthAdapter
       if (!context.mounted || chatId == null || chatId.isEmpty) return;
       router.go('${AppRoutes.chat}/$chatId');
     } catch (_) {
+      // Retryable on the next connected emission, not permanently locked
+      // out by one failed attempt.
+      openedFirstChat.value = false;
       if (context.mounted) {
         VimToast.showOn(messenger, l10n.onboardingOpenChatFailed);
       }

@@ -77,6 +77,13 @@ class HarnessAuthorizationAdapter
     }
 
     return UiFlowListener<HarnessAuthCubit, HarnessAuthState>(
+      // This listener depends on the per-harness statuses map, not the
+      // cubit's top-level status/error -- those can (and typically do)
+      // stay success/null across a connect/poll transition, so this must
+      // fire on every emission and let the guards below (`_openedChat`,
+      // `_pollTimer`) own de-duplication instead of relying on the
+      // default status/error-only gate.
+      listenWhen: (_, __) => true,
       listener: (listenerContext, nextState) {
         final status = nextState.statuses[harnessId];
         if (status?.isConnected == true) {

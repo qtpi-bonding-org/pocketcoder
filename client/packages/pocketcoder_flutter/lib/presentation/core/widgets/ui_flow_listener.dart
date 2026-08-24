@@ -10,6 +10,7 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
   final B? bloc;
   final IStateMessageMapper<S>? mapper;
   final void Function(BuildContext context, S state)? listener;
+  final bool Function(S previous, S current)? listenWhen;
   final bool showSuccessToasts;
   final String? successMessage;
   final bool autoDismissLoading;
@@ -20,19 +21,41 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
     this.bloc,
     this.mapper,
     this.listener,
+    this.listenWhen,
     this.showSuccessToasts = false,
     this.successMessage,
     this.autoDismissLoading = true,
   });
 
+  static bool _defaultListenWhen(IUiFlowState previous, IUiFlowState current) {
+    return previous.status != current.status || previous.error != current.error;
+  }
+
   @override
   Widget build(BuildContext context) {
+    Widget content = child;
+
+    // The custom `listener` callback often depends on fields other than
+    // status/error (a connection-status map, a per-item field, ...) that
+    // can change while status/error stay put -- gating it on the same
+    // status/error-only condition as the built-in toast/loading handling
+    // below silently drops those side effects. A second, independent
+    // BlocListener subscribes to the same bloc so the custom callback gets
+    // its own previous-state tracking and its own (optionally
+    // caller-supplied) listenWhen, entirely decoupled from when the
+    // built-in handlers fire.
+    if (listener != null) {
+      content = BlocListener<B, S>(
+        bloc: bloc,
+        listenWhen: listenWhen ?? _defaultListenWhen,
+        listener: (context, state) => listener!(context, state),
+        child: content,
+      );
+    }
+
     return BlocListener<B, S>(
       bloc: bloc,
-      listenWhen: (previous, current) {
-        return previous.status != current.status ||
-            previous.error != current.error;
-      },
+      listenWhen: _defaultListenWhen,
       listener: (context, state) {
         _handleLoadingState(state);
 
@@ -42,10 +65,8 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
           _handleErrorState(state);
           _handleSuccessState(state);
         }
-
-        listener?.call(context, state);
       },
-      child: child,
+      child: content,
     );
   }
 
