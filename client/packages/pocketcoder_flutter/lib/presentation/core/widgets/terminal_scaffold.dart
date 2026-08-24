@@ -5,12 +5,11 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_header.dart';
 
 class TerminalScaffold extends StatelessWidget {
-  final String title;
+  final String? title;
   final Widget body;
   final List<TerminalAction>? actions;
   final List<TerminalAction>? headerActions;
   final Widget? floatingActionButton;
-  final bool showHeader;
   final bool showFooter;
   final EdgeInsets? padding;
 
@@ -21,7 +20,6 @@ class TerminalScaffold extends StatelessWidget {
     this.actions,
     this.headerActions,
     this.floatingActionButton,
-    this.showHeader = true,
     this.showFooter = true,
     this.padding,
   });
@@ -65,7 +63,7 @@ class TerminalScaffold extends StatelessWidget {
                     ],
                   ),
                 ),
-              if (showHeader) ...[
+              if (title case final title?) ...[
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSizes.space * 2),
                   child: TerminalHeader(title: title),

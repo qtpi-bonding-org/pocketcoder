@@ -15,7 +15,7 @@ enum NavPillar { chats, monitor, configure }
 /// Screens never touch [TerminalScaffold], [TerminalFooter], or nav logic
 /// directly. Instead they declare their title, active pillar, and body content.
 class PocketCoderShell extends StatelessWidget {
-  final String title;
+  final String? title;
   final NavPillar activePillar;
   final Widget body;
   final bool showBack;
