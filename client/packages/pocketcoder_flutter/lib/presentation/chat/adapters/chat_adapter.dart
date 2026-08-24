@@ -1,6 +1,7 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
 import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart';
@@ -14,6 +15,32 @@ import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/application/agent/provider_reauthentication_required.dart';
+
+/// The toast message for [error], or null if no toast should be shown.
+///
+/// Returns null for [ProviderReauthenticationRequired]: ChatView already
+/// renders a dedicated inline banner for it (see
+/// `requiresProviderReauthentication` below), so a toast on top would be
+/// redundant -- and previously showed the raw, unmapped
+/// "Instance of 'ProviderReauthenticationRequired'" text, since this
+/// listener rendered `'${value.error}'` directly instead of going through
+/// the exception mapper the rest of the app uses.
+String? chatErrorToastMessage(Object? error) {
+  if (error == null) return null;
+  if (error is ProviderReauthenticationRequired) return null;
+
+  var messageKey = MessageKey.genericError;
+  try {
+    messageKey = GetIt.instance<IExceptionKeyMapper>().map(error) ?? messageKey;
+  } catch (_) {}
+
+  try {
+    return GetIt.instance<ILocalizationService>()
+        .translate(messageKey.key, args: messageKey.args);
+  } catch (_) {
+    return messageKey.key;
+  }
+}
 
 class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
   const ChatAdapter({super.key, this.chatId});
@@ -32,8 +59,9 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
     final controls = context.read<SessionControlsCubit>();
     return UiFlowListener<ChatCubit, ChatState>(
       listener: (context, value) {
-        if (value.error != null) {
-          VimToast.show(context, '${value.error}',
+        final message = chatErrorToastMessage(value.error);
+        if (message != null) {
+          VimToast.show(context, message,
               color: context.terminalColors.warning);
         }
       },
