@@ -59,10 +59,12 @@ class TerminalFooter extends StatelessWidget {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
 
-    final bgColor = action.isActive ? colors.onSurface : Colors.transparent;
-    final fgColor = action.isActive
-        ? colors.surface
-        : action.color ?? colors.onSurface;
+    final resolved = selectable(
+      action.color ?? colors.onSurface,
+      selected: action.isActive,
+    );
+    final bgColor = resolved.fill ?? Colors.transparent;
+    final fgColor = resolved.text;
 
     return Material(
       color: Colors.transparent,
@@ -100,7 +102,7 @@ class TerminalFooter extends StatelessWidget {
                   '[!]',
                   style: TextStyle(
                     fontFamily: AppFonts.bodyFamily,
-                    color: action.isActive ? colors.surface : terminalColors.warning,
+                    color: action.isActive ? Colors.black : terminalColors.warning,
                     fontSize: AppSizes.fontMini,
                     fontWeight: AppFonts.heavy,
                   ),
