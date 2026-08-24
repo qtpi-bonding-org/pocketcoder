@@ -8,7 +8,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'adapters/notification_settings_adapter.dart';
@@ -71,11 +70,6 @@ class NotificationSettingsView extends StatelessWidget {
             ),
           UiFlowStatus.success => ListView(
               children: [
-                PocoBubble(
-                  message: context.l10n.notificationSettingsPoco,
-                  pocoSize: AppSizes.fontLarge,
-                ),
-                VSpace.x3,
                 TerminalButton(
                   label: context.l10n.notificationSettingsEnableDevice,
                   onTap: onEnableDevice,

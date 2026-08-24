@@ -19,6 +19,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 
 class MockNotificationRuleCubit extends Mock implements NotificationRuleCubit {}
 
@@ -148,5 +149,16 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => cubit.setTypeEnabled('chat_reply', false)).called(1);
+  });
+
+  testWidgets('has no PocoBubble -- this is a plain settings screen',
+      (tester) async {
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
+
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PocoBubble), findsNothing);
   });
 }
