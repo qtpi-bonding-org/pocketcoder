@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -1824,6 +1823,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkthroughAskPoco => 'ASK POCO';
 
   @override
+  String get walkthroughActionSkip => 'SKIP';
+
+  @override
   String get walkthroughBriefDivider => 'BRIEF';
 
   @override
@@ -2852,9 +2854,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pocketCoderUpdateDataBoundary(
-    int currentVersion,
-    int availableVersion,
-  ) {
+      int currentVersion, int availableVersion) {
     return 'DATA VERSION $currentVersion → $availableVersion';
   }
 

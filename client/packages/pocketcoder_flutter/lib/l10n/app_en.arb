@@ -779,6 +779,7 @@
     }
   },
   "walkthroughAskPoco": "ASK POCO",
+  "walkthroughActionSkip": "SKIP",
   "walkthroughBriefDivider": "BRIEF",
   "walkthroughTransitionProvisioning": "Let’s follow this next part of the server setup together.",
   "walkthroughTransitionDeployment": "Now we’ll follow the verified release onto the host.",

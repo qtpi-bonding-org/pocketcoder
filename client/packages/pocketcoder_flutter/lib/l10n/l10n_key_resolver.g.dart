@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-24T00:39:10.712873
+// Generated at: 2026-08-24T00:45:24.583803
 
 import 'app_localizations.dart';
 
@@ -739,6 +739,7 @@ class L10nKeyResolver {
       'tool.permissions.update.failed' => _l10n.toolPermissionsUpdateFailed,
       'walkthrough.action.show.concise.code' => _l10n.walkthroughActionShowConciseCode,
       'walkthrough.action.show.full.code' => _l10n.walkthroughActionShowFullCode,
+      'walkthrough.action.skip' => _l10n.walkthroughActionSkip,
       'walkthrough.activation.health.poco' => _l10n.walkthroughActivationHealthPoco,
       'walkthrough.activation.health.title' => _l10n.walkthroughActivationHealthTitle,
       'walkthrough.activation.prepare.poco' => _l10n.walkthroughActivationPreparePoco,
@@ -1682,6 +1683,7 @@ class L10nKeyResolver {
     'tool.permissions.update.failed',
     'walkthrough.action.show.concise.code',
     'walkthrough.action.show.full.code',
+    'walkthrough.action.skip',
     'walkthrough.activation.health.poco',
     'walkthrough.activation.health.title',
     'walkthrough.activation.prepare.poco',
@@ -2557,6 +2559,7 @@ class L10nKeyResolver {
     'toolPermissionsUpdateFailed': 'tool.permissions.update.failed',
     'walkthroughActionShowConciseCode': 'walkthrough.action.show.concise.code',
     'walkthroughActionShowFullCode': 'walkthrough.action.show.full.code',
+    'walkthroughActionSkip': 'walkthrough.action.skip',
     'walkthroughActivationHealthPoco': 'walkthrough.activation.health.poco',
     'walkthroughActivationHealthTitle': 'walkthrough.activation.health.title',
     'walkthroughActivationPreparePoco': 'walkthrough.activation.prepare.poco',
@@ -3429,6 +3432,7 @@ class L10nKeyResolver {
     'tool.permissions.update.failed': 'toolPermissionsUpdateFailed',
     'walkthrough.action.show.concise.code': 'walkthroughActionShowConciseCode',
     'walkthrough.action.show.full.code': 'walkthroughActionShowFullCode',
+    'walkthrough.action.skip': 'walkthroughActionSkip',
     'walkthrough.activation.health.poco': 'walkthroughActivationHealthPoco',
     'walkthrough.activation.health.title': 'walkthroughActivationHealthTitle',
     'walkthrough.activation.prepare.poco': 'walkthroughActivationPreparePoco',
@@ -4308,6 +4312,7 @@ abstract class L10nKeys {
   static const toolPermissionsUpdateFailed = 'tool.permissions.update.failed';
   static const walkthroughActionShowConciseCode = 'walkthrough.action.show.concise.code';
   static const walkthroughActionShowFullCode = 'walkthrough.action.show.full.code';
+  static const walkthroughActionSkip = 'walkthrough.action.skip';
   static const walkthroughActivationHealthPoco = 'walkthrough.activation.health.poco';
   static const walkthroughActivationHealthTitle = 'walkthrough.activation.health.title';
   static const walkthroughActivationPreparePoco = 'walkthrough.activation.prepare.poco';
