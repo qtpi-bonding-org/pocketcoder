@@ -113,6 +113,9 @@ abstract class ExternalModule {
   }
 
   @singleton
+  AuthHttpState get authHttpState => _authHttpState;
+
+  @singleton
   AuthStoreConfig get authStoreConfig {
     return AuthStoreConfig(const FlutterSecureStorage());
   }

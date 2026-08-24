@@ -98,4 +98,37 @@ void main() {
     expect(response.statusCode, 401);
     expect(refreshes, 0);
   });
+
+  test(
+      'updateDeploymentOrigin retargets 401 recovery to a new origin without '
+      'losing the existing tokenProvider/refresh', () async {
+    final state = AuthHttpState();
+    state.configureDeployment(
+      'http://127.0.0.1:8090',
+      tokenProvider: () => 'old-token',
+    );
+    var refreshes = 0;
+    state.refresh = () async {
+      refreshes++;
+      return AuthRefreshResult.refreshed;
+    };
+
+    // The real login flow: the app was talking to the local default origin,
+    // then the user logs into their actual deployment at a different host.
+    state.updateDeploymentOrigin('https://deployment.example');
+
+    final inner = _QueueClient([
+      _response(401, 'expired'),
+      _response(200, 'ok'),
+    ]);
+    final client = AuthAwareHttpClient(state, inner: inner);
+
+    final response = await client.send(
+      http.Request('GET', Uri.parse('https://deployment.example/health')),
+    );
+
+    expect(response.statusCode, 200);
+    expect(refreshes, 1, reason: 'the new origin must be recoverable');
+    expect(inner.requests.last.headers['Authorization'], 'old-token');
+  });
 }

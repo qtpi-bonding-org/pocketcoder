@@ -51,12 +51,17 @@ void main() {
   });
 
   group('AuthCubit.login', () {
-    test('checks compatibility before sending credentials', () async {
+    test('checks compatibility before sending credentials, persists the '
+        'URL only after a successful login', () async {
       when(() => repo.updateBaseUrl('https://server.example'))
           .thenAnswer((_) async {});
       when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
       when(() => repo.login('owner@example.com', 'secret'))
           .thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl('https://server.example'))
+          .thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl())
+          .thenAnswer((_) async => 'https://old-good-server.example');
       final cubit = buildCubit();
 
       await cubit.login(
@@ -69,15 +74,21 @@ void main() {
         () => repo.updateBaseUrl('https://server.example'),
         () => repo.verifyServerCompatibility(),
         () => repo.login('owner@example.com', 'secret'),
+        () => repo.persistBaseUrl('https://server.example'),
       ]);
       expect(cubit.state.status, UiFlowStatus.success);
     });
 
-    test('does not send credentials to an incompatible server', () async {
+    test('does not send credentials to an incompatible server, and never '
+        'persists the unverified URL', () async {
       when(() => repo.updateBaseUrl('https://server.example'))
           .thenAnswer((_) async {});
       when(() => repo.verifyServerCompatibility())
           .thenThrow(Exception('incompatible server'));
+      when(() => repo.getSavedBaseUrl())
+          .thenAnswer((_) async => 'https://old-good-server.example');
+      when(() => repo.updateBaseUrl('https://old-good-server.example'))
+          .thenAnswer((_) async {});
       final cubit = buildCubit();
 
       await cubit.login(
@@ -87,6 +98,34 @@ void main() {
       );
 
       verifyNever(() => repo.login(any(), any()));
+      verifyNever(() => repo.persistBaseUrl(any()));
+      expect(cubit.state.status, UiFlowStatus.failure);
+      expect(cubit.state.error.toString(), contains('incompatible server'),
+          reason: 'the original failure reason must survive the revert');
+    });
+
+    test(
+        'a wrong-credentials failure against a typo\'d URL never persists '
+        'it, and reverts the in-memory URL back to the last known good one '
+        '-- one bad URL must not permanently strand the user away from '
+        'their real, working deployment', () async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
+      when(() => repo.login('owner@example.com', 'wrong-password'))
+          .thenAnswer((_) async => false);
+      when(() => repo.getSavedBaseUrl())
+          .thenAnswer((_) async => 'https://old-good-server.example');
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://typo-server.example',
+        'owner@example.com',
+        'wrong-password',
+      );
+
+      verifyNever(() => repo.persistBaseUrl(any()));
+      verify(() => repo.updateBaseUrl('https://old-good-server.example'))
+          .called(1);
       expect(cubit.state.status, UiFlowStatus.failure);
     });
   });

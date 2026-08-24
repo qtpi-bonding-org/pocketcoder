@@ -23,6 +23,7 @@ class AuthRepository implements IAuthRepository {
   final BillingService _billingService;
   final PushService _pushService;
   final PocketCoderApiClient _api;
+  final AuthHttpState _authHttpState;
 
   AuthRepository(
     this._pocketBase,
@@ -31,6 +32,7 @@ class AuthRepository implements IAuthRepository {
     this._billingService,
     this._pushService,
     this._api,
+    this._authHttpState,
   );
 
   @override
@@ -160,9 +162,19 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<void> updateBaseUrl(String url) async {
+    // In-memory only, deliberately not persisted here -- a candidate URL
+    // needs to be active for verifyServerCompatibility()/login() to target
+    // it, but persisting an unverified URL let one typo on the login
+    // screen permanently overwrite the last-known-good saved URL. Callers
+    // persist explicitly via persistBaseUrl() once the candidate is
+    // actually confirmed good.
     _pocketBase.baseURL = url;
-    await _storage.write(key: 'pb_server_url', value: url);
+    _authHttpState.updateDeploymentOrigin(url);
   }
+
+  @override
+  Future<void> persistBaseUrl(String url) =>
+      _storage.write(key: 'pb_server_url', value: url);
 
   @override
   Future<String?> getSavedBaseUrl() => _storage.read(key: 'pb_server_url');
