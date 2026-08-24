@@ -10,6 +10,9 @@ export '../primitives/app_sizes.dart';
 export '../primitives/app_motion.dart';
 export '../primitives/spacers.dart';
 
+({Color? fill, Color text}) selectable(Color base, {required bool selected}) =>
+    selected ? (fill: base, text: Colors.black) : (fill: null, text: base);
+
 /// Extension for terminal-specific colors that don't fit into standard ColorScheme.
 class TerminalColors extends ThemeExtension<TerminalColors> {
   final Color glow;
