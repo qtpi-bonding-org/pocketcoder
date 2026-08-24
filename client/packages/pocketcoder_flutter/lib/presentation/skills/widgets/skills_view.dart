@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/domain/models/skill.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 
 class SkillsViewData {
   const SkillsViewData({
@@ -17,7 +18,7 @@ class SkillsViewData {
 
   final List<Skill> skills;
   final bool isLoading;
-  final String? error;
+  final Object? error;
 }
 
 class SkillsView extends StatelessWidget {
@@ -62,7 +63,7 @@ class SkillsView extends StatelessWidget {
     }
     if (data.error != null) {
       return Center(
-        child: Text(context.l10n.homeErrorPrefix(data.error.toString()),
+        child: Text(safeErrorMessage(data.error),
             style: TextStyle(color: context.terminalColors.warning)),
       );
     }

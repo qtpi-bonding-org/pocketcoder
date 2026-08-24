@@ -15,6 +15,7 @@ import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
 import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 
 import 'adapters/scheduler_adapter.dart';
 
@@ -75,7 +76,7 @@ class SchedulerView extends StatelessWidget {
             if (state.status == UiFlowStatus.failure) {
               return Center(
                 child: Text(
-                  'ERROR: ${state.error}',
+                  safeErrorMessage(state.error),
                   style: TextStyle(color: context.terminalColors.warning),
                 ),
               );

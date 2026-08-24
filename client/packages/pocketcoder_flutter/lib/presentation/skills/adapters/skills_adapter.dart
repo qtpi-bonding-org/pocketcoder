@@ -27,7 +27,7 @@ class SkillsAdapter extends CubitAdapter<SkillsCubit, SkillsState> {
           data: switch (value.status) {
             UiFlowStatus.loading => const SkillsViewData(isLoading: true),
             UiFlowStatus.failure =>
-              SkillsViewData(error: value.error?.toString()),
+              SkillsViewData(error: value.error),
             UiFlowStatus.success => SkillsViewData(skills: value.skills),
             UiFlowStatus.idle => const SkillsViewData(),
           },

@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_i
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 
 class HarnessAuthScreenView extends StatelessWidget {
   const HarnessAuthScreenView({
@@ -152,7 +153,7 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
       if (widget.error != null)
         Padding(
             padding: EdgeInsets.only(bottom: AppSizes.space),
-            child: TerminalText(widget.error.toString(),
+            child: TerminalText(safeErrorMessage(widget.error),
                 color: context.terminalColors.warning, alpha: .9)),
       for (final h in harnesses)
         HarnessAuthCard(

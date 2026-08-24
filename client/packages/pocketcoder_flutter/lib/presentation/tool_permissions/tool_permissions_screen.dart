@@ -16,6 +16,7 @@ import 'package:pocketcoder_flutter/application/tool_permissions/tool_permission
 import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_state.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'adapters/tool_permissions_adapter.dart';
 
 class ToolPermissionsScreen extends StatelessWidget {
@@ -60,7 +61,7 @@ class ToolPermissionsView extends StatelessWidget {
             if (state.status == UiFlowStatus.failure) {
               return Center(
                 child: Text(
-                  'ERROR: ${state.error}',
+                  safeErrorMessage(state.error),
                   style: TextStyle(color: context.terminalColors.warning),
                 ),
               );

@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart'
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'adapters/notification_settings_adapter.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
@@ -65,7 +66,7 @@ class NotificationSettingsView extends StatelessWidget {
             const Center(child: CircularProgressIndicator()),
           UiFlowStatus.failure => Center(
               child: Text(
-                'ERROR: ${state.error}',
+                safeErrorMessage(state.error),
                 style: TextStyle(color: context.terminalColors.warning),
               ),
             ),
