@@ -30,6 +30,7 @@ _Chat _$ChatFromJson(Map<String, dynamic> json) => _Chat(
       ollamaModelOverride: json['ollama_model_override'] as String?,
       harness: json['harness'] as String?,
       workspaceOverride: json['workspace_override'],
+      monitored: json['monitored'] as bool?,
     );
 
 Map<String, dynamic> _$ChatToJson(_Chat instance) => <String, dynamic>{
@@ -49,6 +50,7 @@ Map<String, dynamic> _$ChatToJson(_Chat instance) => <String, dynamic>{
       'ollama_model_override': instance.ollamaModelOverride,
       'harness': instance.harness,
       'workspace_override': instance.workspaceOverride,
+      'monitored': instance.monitored,
     };
 
 const _$ChatTurnEnumMap = {

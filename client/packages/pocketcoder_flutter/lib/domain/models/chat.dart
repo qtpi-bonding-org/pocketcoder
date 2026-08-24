@@ -23,6 +23,7 @@ abstract class Chat with _$Chat {
     String? ollamaModelOverride,
     String? harness,
     dynamic workspaceOverride,
+    bool? monitored,
   }) = _Chat;
 
   factory Chat.fromRecord(RecordModel record) =>

@@ -13,6 +13,7 @@ class Collections {
   static const String harnessModels = 'harness_models';
   static const String harnesses = 'harnesses';
   static const String healthchecks = 'healthchecks';
+  static const String liveActivities = 'live_activities';
   static const String mcpServers = 'mcp_servers';
   static const String models = 'models';
   static const String notificationRules = 'notification_rules';
@@ -39,6 +40,7 @@ class Collections {
     harnessModels,
     harnesses,
     healthchecks,
+    liveActivities,
     mcpServers,
     models,
     notificationRules,
