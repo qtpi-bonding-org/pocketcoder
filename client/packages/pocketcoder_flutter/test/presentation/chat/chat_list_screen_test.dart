@@ -39,6 +39,14 @@ void main() {
   setUp(() {
     repo = MockChatListRepository();
     when(() => repo.watchChats()).thenAnswer((_) => const Stream.empty());
+    // ChatListAdapter.buildAdapter now triggers
+    // checkEmptyAndMaybeAutoCreate() itself (via adapter.keep()) rather
+    // than relying on the screen's old BlocProvider(create: ...) cascade
+    // -- ChatListCubit is provided app-wide now, not freshly created per
+    // screen-visit. Stub it as "already has chats" so these tests, which
+    // emit their own fixture state directly onto the cubit, don't race an
+    // unstubbed hasAnyChats() call auto-creating an unwanted chat.
+    when(() => repo.hasAnyChats()).thenAnswer((_) async => true);
 
     providerRepo = MockProviderRepository();
     getIt.registerSingleton<IProviderRepository>(providerRepo);

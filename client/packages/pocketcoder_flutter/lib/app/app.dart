@@ -5,6 +5,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/application/system/status_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
@@ -36,6 +37,21 @@ class App extends StatelessWidget {
             ),
             BlocProvider(
               create: (context) => getIt<PocoCubit>(),
+            ),
+            // Bare instance only -- watchChats()/checkEmptyAndMaybeAutoCreate()
+            // must NOT run here: this MultiBlocProvider's create callbacks
+            // fire once at app boot, before login/onboarding ever completes,
+            // and checkEmptyAndMaybeAutoCreate() needs an authenticated
+            // session to mean anything (a boot-time failure would never get
+            // a second chance to run). ChatListScreenAdapter's
+            // adapter.keep() triggers them instead, once the chat list is
+            // actually reached. Provided here (rather than scoped to that
+            // one screen) so onboarding's HarnessAuthorizationAdapter can
+            // also read it, for createAndOpen() on a freshly-connected
+            // harness -- see ChatListAdapter.buildAdapter's comment for
+            // the incident this fixes.
+            BlocProvider(
+              create: (context) => getIt<ChatListCubit>(),
             ),
             BlocProvider(
               create: (context) => getIt<McpCubit>()..watchServers(),

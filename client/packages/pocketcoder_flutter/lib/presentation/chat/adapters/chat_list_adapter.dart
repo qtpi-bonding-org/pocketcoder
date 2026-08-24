@@ -36,6 +36,24 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
     BuildContext context,
     CubitAdapterState<ChatListCubit, ChatListState> adapter,
   ) {
+    // Runs exactly once per time this screen is reached (adapter.keep()
+    // memoizes by key for this adapter's lifetime -- see progress_adapter
+    // .dart for the same pattern) -- ChatListCubit is now a single,
+    // app-lifetime instance provided at the app root (see App's
+    // MultiBlocProvider) rather than freshly created by this screen's own
+    // BlocProvider, specifically so onboarding's HarnessAuthorizationAdapter
+    // can also read it (createAndOpen() for the first-connected-harness's
+    // first chat) without needing its own separate instance. Deliberately
+    // NOT chained onto the cubit's own creation any more: that now happens
+    // at app boot, before login/onboarding ever completes, and
+    // checkEmptyAndMaybeAutoCreate() must run against an authenticated
+    // session to mean anything.
+    adapter.keep<bool>('chatListCubitStarted', () {
+      adapter.cubit
+        ..watchChats()
+        ..checkEmptyAndMaybeAutoCreate();
+      return true;
+    });
     final state = adapter.cubitField(_selectState);
     final createdChat = adapter.cubitField(_selectCreatedChat);
     adapter.listenTo(#createdChat, createdChat, () {
@@ -113,14 +131,13 @@ class ChatListScreenAdapter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<ChatListCubit>()
-        ..watchChats()
-        ..checkEmptyAndMaybeAutoCreate(),
-      child: ChatListAdapter(
-        providerRepository: getIt<IProviderRepository>(),
-        loadOllamaModels: getIt<OllamaApi>().listModels,
-      ),
+    // ChatListCubit is provided app-wide at the root (see App's
+    // MultiBlocProvider), not scoped here any more -- see
+    // ChatListAdapter.buildAdapter's adapter.keep() for where
+    // watchChats()/checkEmptyAndMaybeAutoCreate() now run instead.
+    return ChatListAdapter(
+      providerRepository: getIt<IProviderRepository>(),
+      loadOllamaModels: getIt<OllamaApi>().listModels,
     );
   }
 }
