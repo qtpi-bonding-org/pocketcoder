@@ -17,13 +17,14 @@ func TestFinalSchemaCollectionsExist(t *testing.T) {
 
 	expected := map[string][]string{
 		"users":                      {"role"},
-		"chats":                      {"title", "user", "agent_profile", "harness_model_override", "ollama_model_override"},
+		"chats":                      {"title", "user", "agent_profile", "harness_model_override", "ollama_model_override", "monitored"},
 		"sandbox_agents":             {"sandbox_agent_id", "delegating_agent_id", "chat"},
 		"permission_modes":           {"name", "description", "base_session_mode", "user", "is_system", "is_default"},
 		"permission_mode_tools":      {"tool", "pattern", "action", "permission_mode"},
 		"healthchecks":               {"name", "status"},
 		"mcp_servers":                {"name", "status", "config"},
-		"devices":                    {"user", "push_token", "push_service"},
+		"devices":                    {"user", "push_token", "push_service", "created", "updated", "platform", "push_to_start_token"},
+		"live_activities":             {"device", "chat", "user", "platform", "status", "content_state_version"},
 		"notification_rules":         {"user", "rules"},
 		"harnesses":                  {"name", "cli_id", "acp_transport"},
 		"models":                     {"name", "provider"},

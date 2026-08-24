@@ -434,10 +434,20 @@
         "required": false,
         "system": false,
         "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "bool_chats_monitored",
+        "name": "monitored",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
       }
     ],
     "indexes": [
-      "CREATE INDEX idx_chats_user_archived ON chats (user, archived)"
+      "CREATE INDEX idx_chats_user_archived ON chats (user, archived)",
+      "CREATE INDEX idx_chats_user_monitored ON chats (user, monitored)"
     ],
     "created": "2026-07-24 05:34:49.759Z",
     "updated": "2026-07-24 05:34:50.238Z",
@@ -1110,6 +1120,54 @@
         "required": false,
         "system": false,
         "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_dev_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_dev_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "select_dev_platform",
+        "maxSelect": 1,
+        "name": "platform",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "select",
+        "values": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_dev_push_to_start_token",
+        "max": 0,
+        "min": 0,
+        "name": "push_to_start_token",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
       }
     ],
     "indexes": [],
@@ -2758,5 +2816,202 @@
     ],
     "indexes": ["CREATE UNIQUE INDEX idx_git_repository_access_owner_repo ON git_repository_access (user, provider, repository)","CREATE INDEX idx_git_repository_access_credential ON git_repository_access (credential)"],
     "created":"2026-08-13 00:00:00.000Z","updated":"2026-08-13 00:00:00.000Z","system":false
+  },
+  {
+    "id": "pc_live_activities",
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
+    "createRule": "@request.auth.id != '' && user = @request.auth.id",
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "live_activities",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_devices",
+        "hidden": false,
+        "id": "relation_la_device",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "device",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_chats",
+        "hidden": false,
+        "id": "relation_la_chat",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "chat",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_la_user",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "user",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select_la_platform",
+        "maxSelect": 1,
+        "name": "platform",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "select_la_status",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "active",
+          "ended",
+          "expired",
+          "failed"
+        ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_la_activity_push_token",
+        "max": 0,
+        "min": 0,
+        "name": "activity_push_token",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "number_la_content_state_version",
+        "max": null,
+        "min": 1,
+        "name": "content_state_version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_la_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_la_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "date_la_expires_at",
+        "max": "",
+        "min": "",
+        "name": "expires_at",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date_la_last_push_at",
+        "max": "",
+        "min": "",
+        "name": "last_push_at",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date_la_ended_at",
+        "max": "",
+        "min": "",
+        "name": "ended_at",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": true,
+        "id": "text_la_last_error",
+        "max": 0,
+        "min": 0,
+        "name": "last_error",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_live_activities_device_status ON live_activities (device, status)",
+      "CREATE INDEX idx_live_activities_chat_status ON live_activities (chat, status)",
+      "CREATE INDEX idx_live_activities_status_expires ON live_activities (status, expires_at)",
+      "CREATE UNIQUE INDEX idx_live_activities_one_active_per_device_chat ON live_activities (device, chat) WHERE status = 'active'"
+    ],
+    "created": "2026-08-23 00:00:00.000Z",
+    "updated": "2026-08-23 00:00:00.000Z",
+    "system": false
   }
 ]
