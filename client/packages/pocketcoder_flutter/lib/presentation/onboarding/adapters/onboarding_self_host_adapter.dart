@@ -28,7 +28,6 @@ class OnboardingSelfHostAdapter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => OnboardingSelfHostView(
-        onBack: () => AppNavigation.back(context),
         onOpenGuide: () => _openGuide(context),
         onConnect: () => context.pushNamed(RouteNames.onboardingLogin),
       );

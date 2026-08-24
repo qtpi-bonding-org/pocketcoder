@@ -1,29 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 
 class OnboardingWelcomeView extends StatelessWidget {
   const OnboardingWelcomeView({
     super.key,
-    required this.onBack,
     required this.showGuidedSetup,
     required this.onGuidedSetup,
     required this.onSelfHost,
   });
 
-  final VoidCallback onBack;
   final bool showGuidedSetup;
   final VoidCallback onGuidedSetup;
   final VoidCallback onSelfHost;
 
   @override
-  Widget build(BuildContext context) => TerminalScaffold(
+  Widget build(BuildContext context) => PocketCoderShell(
         title: context.l10n.onboardingWelcomeTitle,
-        actions: [
-          TerminalAction(label: context.l10n.actionBack, onTap: onBack),
-        ],
+        activePillar: NavPillar.configure,
+        showBack: true,
+        showNavigation: false,
         body: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),

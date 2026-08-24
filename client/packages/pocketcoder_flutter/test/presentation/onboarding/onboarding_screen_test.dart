@@ -73,7 +73,6 @@ void main() {
   testWidgets('welcome defines a server and promises guided setup',
       (tester) async {
     await tester.pumpWidget(buildTestable(OnboardingWelcomeView(
-      onBack: () {},
       showGuidedSetup: true,
       onGuidedSetup: () {},
       onSelfHost: () {},
@@ -91,7 +90,6 @@ void main() {
 
   testWidgets('self-host information explains prerequisites', (tester) async {
     await tester.pumpWidget(buildTestable(OnboardingSelfHostView(
-      onBack: () {},
       onOpenGuide: () {},
       onConnect: () {},
     )));

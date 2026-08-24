@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 
@@ -17,7 +17,6 @@ class OnboardingLoginView extends StatefulWidget {
     required this.pocoMessage,
     required this.pocoSequence,
     required this.pocoHistory,
-    required this.onBack,
     required this.onDeploy,
     required this.onLogin,
   });
@@ -29,7 +28,6 @@ class OnboardingLoginView extends StatefulWidget {
   final String pocoMessage;
   final List<(String, int)> pocoSequence;
   final List<String> pocoHistory;
-  final VoidCallback onBack;
   final VoidCallback onDeploy;
   final Future<void> Function(String url, String email, String password)
       onLogin;
@@ -62,10 +60,12 @@ class _OnboardingLoginViewState extends State<OnboardingLoginView> {
   @override
   Widget build(BuildContext context) {
     final loading = widget.status == UiFlowStatus.loading;
-    return TerminalScaffold(
+    return PocketCoderShell(
       title: context.l10n.onboardingServerLoginTitle,
+      activePillar: NavPillar.configure,
+      showBack: true,
+      showNavigation: false,
       actions: [
-        TerminalAction(label: context.l10n.actionBack, onTap: widget.onBack),
         TerminalAction(
           label: loading
               ? context.l10n.onboardingServerConnecting

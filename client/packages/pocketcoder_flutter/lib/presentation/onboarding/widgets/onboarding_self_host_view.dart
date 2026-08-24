@@ -2,27 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class OnboardingSelfHostView extends StatelessWidget {
   const OnboardingSelfHostView({
     super.key,
-    required this.onBack,
     required this.onOpenGuide,
     required this.onConnect,
   });
 
-  final VoidCallback onBack;
   final VoidCallback onOpenGuide;
   final VoidCallback onConnect;
 
   @override
-  Widget build(BuildContext context) => TerminalScaffold(
+  Widget build(BuildContext context) => PocketCoderShell(
         title: context.l10n.onboardingSelfHostTitle,
+        activePillar: NavPillar.configure,
+        showBack: true,
+        showNavigation: false,
         actions: [
-          TerminalAction(label: context.l10n.actionBack, onTap: onBack),
           TerminalAction(
             label: context.l10n.onboardingSelfHostActionGuide,
             onTap: onOpenGuide,
