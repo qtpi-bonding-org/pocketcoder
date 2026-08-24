@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 
 /// A configuration object for a single footer button
 class TerminalAction {
@@ -16,6 +17,14 @@ class TerminalAction {
     this.isActive = false,
     this.color,
   });
+
+  BiosActionStripItem get _asStripItem => BiosActionStripItem(
+        label: label,
+        onTap: onTap,
+        hasBadge: hasBadge,
+        isActive: isActive,
+        color: color,
+      );
 }
 
 class TerminalFooter extends StatelessWidget {
@@ -46,69 +55,19 @@ class TerminalFooter extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: actions.map((action) {
-                return _buildActionButton(context, action);
+                return Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      right: BorderSide(
+                        color: colors.onSurface.withValues(alpha: 0.1),
+                        width: AppSizes.borderWidth,
+                      ),
+                    ),
+                  ),
+                  child: BiosActionButton(action: action._asStripItem),
+                );
               }).toList(),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton(BuildContext context, TerminalAction action) {
-    final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-
-    final resolved = selectable(
-      action.color ?? colors.onSurface,
-      selected: action.isActive,
-    );
-    final bgColor = resolved.fill ?? Colors.transparent;
-    final fgColor = resolved.text;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: action.onTap,
-        splashColor: colors.onSurface.withValues(alpha: 0.2),
-        highlightColor: colors.onSurface.withValues(alpha: 0.1),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
-          decoration: BoxDecoration(
-            color: bgColor,
-            border: Border(
-              right: BorderSide(
-                  color: colors.onSurface.withValues(alpha: 0.1),
-                  width: AppSizes.borderWidth),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                action.label.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: fgColor,
-                  fontSize: AppSizes.fontMini,
-                  fontWeight: AppFonts.heavy,
-                  letterSpacing: 2,
-                ),
-              ),
-              if (action.hasBadge) ...[
-                HSpace.x1,
-                Text(
-                  '[!]',
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: action.isActive ? Colors.black : terminalColors.warning,
-                    fontSize: AppSizes.fontMini,
-                    fontWeight: AppFonts.heavy,
-                  ),
-                ),
-              ],
-            ],
           ),
         ),
       ),
