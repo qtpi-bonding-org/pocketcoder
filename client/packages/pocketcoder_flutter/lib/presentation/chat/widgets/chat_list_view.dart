@@ -28,7 +28,7 @@ class ChatListView extends StatelessWidget {
     return PocketCoderShell(
       title: context.l10n.navChats,
       activePillar: NavPillar.chats,
-      extraHeaderActions: [
+      actions: [
         TerminalAction(
           label: context.l10n.chatListNewChat,
           onTap: onNewChat,

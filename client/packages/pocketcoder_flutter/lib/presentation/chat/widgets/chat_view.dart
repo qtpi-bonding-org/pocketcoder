@@ -200,7 +200,7 @@ class _ChatViewState extends State<ChatView> {
       title: widget.title,
       activePillar: NavPillar.chats,
       showBack: true,
-      extraHeaderActions: [
+      actions: [
         TerminalAction(
             label: context.l10n.chatFilesAction, onTap: widget.onFiles),
         TerminalAction(

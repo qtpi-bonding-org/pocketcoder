@@ -23,9 +23,7 @@ class PocketCoderShell extends StatelessWidget {
   final bool showNavigation;
   final bool configureBadge;
   final EdgeInsets? padding;
-
-  /// Extra actions that intentionally belong in the compact header row.
-  final List<TerminalAction>? extraHeaderActions;
+  final List<TerminalAction>? actions;
 
   const PocketCoderShell({
     super.key,
@@ -37,12 +35,13 @@ class PocketCoderShell extends StatelessWidget {
     this.showNavigation = true,
     this.configureBadge = false,
     this.padding,
-    this.extraHeaderActions,
+    this.actions,
   });
 
   @override
   Widget build(BuildContext context) {
     final footerActions = <TerminalAction>[
+      ...?actions,
       if (showBack)
         TerminalAction(
           label: backLabel ?? context.l10n.actionBack,
@@ -73,7 +72,6 @@ class PocketCoderShell extends StatelessWidget {
     return TerminalScaffold(
       title: title,
       padding: padding,
-      headerActions: extraHeaderActions,
       actions: footerActions.isNotEmpty ? footerActions : null,
       body: Column(
         children: [
