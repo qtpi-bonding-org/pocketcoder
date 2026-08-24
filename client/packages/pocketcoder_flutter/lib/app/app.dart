@@ -46,7 +46,7 @@ class App extends StatelessWidget {
             // a second chance to run). ChatListScreenAdapter's
             // adapter.keep() triggers them instead, once the chat list is
             // actually reached. Provided here (rather than scoped to that
-            // one screen) so onboarding's HarnessAuthorizationAdapter can
+            // one screen) so onboarding's AgentLoginAdapter can
             // also read it, for createAndOpen() on a freshly-connected
             // harness -- see ChatListAdapter.buildAdapter's comment for
             // the incident this fixes.

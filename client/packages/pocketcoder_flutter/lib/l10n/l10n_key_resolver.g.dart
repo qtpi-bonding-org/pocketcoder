@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-24T15:54:20.295110
+// Generated at: 2026-08-24T16:39:04.359760
 
 import 'app_localizations.dart';
 
@@ -128,32 +128,24 @@ class L10nKeyResolver {
       'chat.thinking.role' => _l10n.chatThinkingRole,
       'chat.thought' => _l10n.chatThought,
       'chat.use.global.default' => _l10n.chatUseGlobalDefault,
+      'choose.provider.coming.soon' => _l10n.chooseProviderComingSoon,
+      'choose.provider.pro.badge' => _l10n.chooseProviderProBadge,
       'choose.provider.title' => _l10n.chooseProviderTitle,
       'deploy.choose.provider' => _l10n.deployChooseProvider,
-      'deploy.coming.soon' => _l10n.deployComingSoon,
-      'deploy.pro.badge' => _l10n.deployProBadge,
       'deploy.select.provider' => _l10n.deploySelectProvider,
-      'deployment.action.abort' => _l10n.deploymentActionAbort,
       'deployment.action.back' => _l10n.deploymentActionBack,
       'deployment.action.deploy.instance' => _l10n.deploymentActionDeployInstance,
       'deployment.action.dismiss' => _l10n.deploymentActionDismiss,
       'deployment.action.initialize' => _l10n.deploymentActionInitialize,
-      'deployment.action.login.now' => _l10n.deploymentActionLoginNow,
       'deployment.action.refresh' => _l10n.deploymentActionRefresh,
-      'deployment.action.retry.scan' => _l10n.deploymentActionRetryScan,
       'deployment.action.update' => _l10n.deploymentActionUpdate,
-      'deployment.admin.identity' => _l10n.deploymentAdminIdentity,
-      'deployment.admin.password' => _l10n.deploymentAdminPassword,
       'deployment.backend' => _l10n.deploymentBackend,
       'deployment.cleanup.failed' => _l10n.deploymentCleanupFailed,
       'deployment.cleanup.not.needed' => _l10n.deploymentCleanupNotNeeded,
       'deployment.cleanup.pending' => _l10n.deploymentCleanupPending,
       'deployment.cleanup.succeeded' => _l10n.deploymentCleanupSucceeded,
-      'deployment.cloud.region' => _l10n.deploymentCloudRegion,
       'deployment.coding.agents.title' => _l10n.deploymentCodingAgentsTitle,
       'deployment.coding.harnesses' => _l10n.deploymentCodingHarnesses,
-      'deployment.connection.parameters' => _l10n.deploymentConnectionParameters,
-      'deployment.current.operation' => _l10n.deploymentCurrentOperation,
       'deployment.debian' => _l10n.deploymentDebian,
       'deployment.debian.description' => _l10n.deploymentDebianDescription,
       'deployment.default.agent' => _l10n.deploymentDefaultAgent,
@@ -162,7 +154,6 @@ class L10nKeyResolver {
       'deployment.description.failed' => _l10n.deploymentDescriptionFailed,
       'deployment.description.fetching' => _l10n.deploymentDescriptionFetching,
       'deployment.description.finishing' => _l10n.deploymentDescriptionFinishing,
-      'deployment.description.initializing' => _l10n.deploymentDescriptionInitializing,
       'deployment.description.loading.images' => _l10n.deploymentDescriptionLoadingImages,
       'deployment.description.preparing.operating.system' => _l10n.deploymentDescriptionPreparingOperatingSystem,
       'deployment.description.ready' => _l10n.deploymentDescriptionReady,
@@ -180,35 +171,17 @@ class L10nKeyResolver {
       'deployment.discard.attempt.confirm.checkbox' => _l10n.deploymentDiscardAttemptConfirmCheckbox,
       'deployment.discard.attempt.title' => _l10n.deploymentDiscardAttemptTitle,
       'deployment.distribution' => _l10n.deploymentDistribution,
-      'deployment.error.code' => _l10n.deploymentErrorCode,
-      'deployment.failed' => _l10n.deploymentFailed,
-      'deployment.fault.authentication.expired' => _l10n.deploymentFaultAuthenticationExpired,
       'deployment.fault.deployment.instance.not.found' => _l10n.deploymentFaultDeploymentInstanceNotFound,
-      'deployment.fault.generic' => _l10n.deploymentFaultGeneric,
-      'deployment.fault.provision.interrupted.no.resource' => _l10n.deploymentFaultProvisionInterruptedNoResource,
-      'deployment.fault.provision.resource.not.found' => _l10n.deploymentFaultProvisionResourceNotFound,
-      'deployment.fault.provision.resource.still.exists' => _l10n.deploymentFaultProvisionResourceStillExists,
-      'deployment.fault.resource.already.exists' => _l10n.deploymentFaultResourceAlreadyExists,
-      'deployment.geo.grid' => _l10n.deploymentGeoGrid,
       'deployment.gpu.badge' => _l10n.deploymentGpuBadge,
       'deployment.hardware.geography' => _l10n.deploymentHardwareGeography,
-      'deployment.hardware.plan' => _l10n.deploymentHardwarePlan,
       'deployment.harness.poco' => _l10n.deploymentHarnessPoco,
       'deployment.harness.selection.description' => _l10n.deploymentHarnessSelectionDescription,
-      'deployment.https.endpoint' => _l10n.deploymentHttpsEndpoint,
-      'deployment.in.progress' => _l10n.deploymentInProgress,
       'deployment.initializing.hardware' => _l10n.deploymentInitializingHardware,
-      'deployment.initializing.title' => _l10n.deploymentInitializingTitle,
-      'deployment.instance.manifest' => _l10n.deploymentInstanceManifest,
       'deployment.instance.plan' => _l10n.deploymentInstancePlan,
-      'deployment.ip.address' => _l10n.deploymentIpAddress,
-      'deployment.last.signal' => _l10n.deploymentLastSignal,
       'deployment.linux.poco' => _l10n.deploymentLinuxPoco,
       'deployment.linux.system.title' => _l10n.deploymentLinuxSystemTitle,
       'deployment.manifest.configuration' => _l10n.deploymentManifestConfiguration,
-      'deployment.metadata.registry' => _l10n.deploymentMetadataRegistry,
       'deployment.minimum' => _l10n.deploymentMinimum,
-      'deployment.network.ip' => _l10n.deploymentNetworkIp,
       'deployment.nixos' => _l10n.deploymentNixos,
       'deployment.nixos.description' => _l10n.deploymentNixosDescription,
       'deployment.no.suitable.plans' => _l10n.deploymentNoSuitablePlans,
@@ -229,27 +202,21 @@ class L10nKeyResolver {
       'deployment.reset.confirmation.warn.cloud' => _l10n.deploymentResetConfirmationWarnCloud,
       'deployment.review.poco' => _l10n.deploymentReviewPoco,
       'deployment.review.title' => _l10n.deploymentReviewTitle,
-      'deployment.run.id' => _l10n.deploymentRunId,
       'deployment.run.local.model' => _l10n.deploymentRunLocalModel,
       'deployment.scanning.regions' => _l10n.deploymentScanningRegions,
-      'deployment.secure' => _l10n.deploymentSecure,
-      'deployment.security.notice' => _l10n.deploymentSecurityNotice,
       'deployment.server.provider' => _l10n.deploymentServerProvider,
       'deployment.server.region.title' => _l10n.deploymentServerRegionTitle,
       'deployment.server.size.title' => _l10n.deploymentServerSizeTitle,
       'deployment.setup.type.title' => _l10n.deploymentSetupTypeTitle,
-      'deployment.source.commit' => _l10n.deploymentSourceCommit,
       'deployment.standard.linux' => _l10n.deploymentStandardLinux,
       'deployment.status.configuring.operating.system' => _l10n.deploymentStatusConfiguringOperatingSystem,
       'deployment.status.constructing' => _l10n.deploymentStatusConstructing,
       'deployment.status.failed' => _l10n.deploymentStatusFailed,
       'deployment.status.fetching' => _l10n.deploymentStatusFetching,
       'deployment.status.finishing' => _l10n.deploymentStatusFinishing,
-      'deployment.status.initializing' => _l10n.deploymentStatusInitializing,
       'deployment.status.loading.images' => _l10n.deploymentStatusLoadingImages,
       'deployment.status.preparing.operating.system' => _l10n.deploymentStatusPreparingOperatingSystem,
       'deployment.status.ready' => _l10n.deploymentStatusReady,
-      'deployment.status.schema' => _l10n.deploymentStatusSchema,
       'deployment.status.securing' => _l10n.deploymentStatusSecuring,
       'deployment.status.starting' => _l10n.deploymentStatusStarting,
       'deployment.status.tls.failed' => _l10n.deploymentStatusTlsFailed,
@@ -279,9 +246,7 @@ class L10nKeyResolver {
       'deployment.step.wait.target.disk.ready' => _l10n.deploymentStepWaitTargetDiskReady,
       'deployment.step.waiting.for.connection' => _l10n.deploymentStepWaitingForConnection,
       'deployment.system.parameters' => _l10n.deploymentSystemParameters,
-      'deployment.technical.details.toggle' => _l10n.deploymentTechnicalDetailsToggle,
       'deployment.ubuntu' => _l10n.deploymentUbuntu,
-      'deployment.unknown' => _l10n.deploymentUnknown,
       'deployment.use.cloud.models' => _l10n.deploymentUseCloudModels,
       'deployment.workload.cloud.reply' => _l10n.deploymentWorkloadCloudReply,
       'deployment.workload.local.reply' => _l10n.deploymentWorkloadLocalReply,
@@ -336,6 +301,48 @@ class L10nKeyResolver {
       'home.new.chat' => _l10n.homeNewChat,
       'home.no.chats' => _l10n.homeNoChats,
       'home.title' => _l10n.homeTitle,
+      'initialization.action.abort' => _l10n.initializationActionAbort,
+      'initialization.action.login' => _l10n.initializationActionLogin,
+      'initialization.action.retry' => _l10n.initializationActionRetry,
+      'initialization.admin.identity' => _l10n.initializationAdminIdentity,
+      'initialization.admin.password' => _l10n.initializationAdminPassword,
+      'initialization.cloud.region' => _l10n.initializationCloudRegion,
+      'initialization.connection.parameters' => _l10n.initializationConnectionParameters,
+      'initialization.copied.to.buffer' => _l10n.initializationCopiedToBuffer,
+      'initialization.copy.label' => _l10n.initializationCopyLabel,
+      'initialization.current.operation' => _l10n.initializationCurrentOperation,
+      'initialization.description.initializing' => _l10n.initializationDescriptionInitializing,
+      'initialization.error.code' => _l10n.initializationErrorCode,
+      'initialization.failed' => _l10n.initializationFailed,
+      'initialization.fault.authentication.expired' => _l10n.initializationFaultAuthenticationExpired,
+      'initialization.fault.detected' => _l10n.initializationFaultDetected,
+      'initialization.fault.generic' => _l10n.initializationFaultGeneric,
+      'initialization.fault.max.retries.exceeded' => _l10n.initializationFaultMaxRetriesExceeded,
+      'initialization.fault.provision.interrupted.no.resource' => _l10n.initializationFaultProvisionInterruptedNoResource,
+      'initialization.fault.provision.resource.not.found' => _l10n.initializationFaultProvisionResourceNotFound,
+      'initialization.fault.provision.resource.still.exists' => _l10n.initializationFaultProvisionResourceStillExists,
+      'initialization.fault.resource.already.exists' => _l10n.initializationFaultResourceAlreadyExists,
+      'initialization.geo.grid' => _l10n.initializationGeoGrid,
+      'initialization.hardware.plan' => _l10n.initializationHardwarePlan,
+      'initialization.https.endpoint' => _l10n.initializationHttpsEndpoint,
+      'initialization.in.progress' => _l10n.initializationInProgress,
+      'initialization.instance.manifest' => _l10n.initializationInstanceManifest,
+      'initialization.ip.address' => _l10n.initializationIpAddress,
+      'initialization.last.signal' => _l10n.initializationLastSignal,
+      'initialization.metadata.registry' => _l10n.initializationMetadataRegistry,
+      'initialization.network.ip' => _l10n.initializationNetworkIp,
+      'initialization.ready' => _l10n.initializationReady,
+      'initialization.run.id' => _l10n.initializationRunId,
+      'initialization.screen.title' => _l10n.initializationScreenTitle,
+      'initialization.secure' => _l10n.initializationSecure,
+      'initialization.security.notice' => _l10n.initializationSecurityNotice,
+      'initialization.source.commit' => _l10n.initializationSourceCommit,
+      'initialization.status.initializing' => _l10n.initializationStatusInitializing,
+      'initialization.status.prefix' => _l10n.initializationStatusPrefix,
+      'initialization.status.schema' => _l10n.initializationStatusSchema,
+      'initialization.sync.attempt' => _l10n.initializationSyncAttempt,
+      'initialization.technical.details.toggle' => _l10n.initializationTechnicalDetailsToggle,
+      'initialization.unknown' => _l10n.initializationUnknown,
       'llm.active.model.section' => _l10n.llmActiveModelSection,
       'llm.add.key' => _l10n.llmAddKey,
       'llm.add.key.hint' => _l10n.llmAddKeyHint,
@@ -431,7 +438,6 @@ class L10nKeyResolver {
       'onboarding.connected' => _l10n.onboardingConnected,
       'onboarding.create.server' => _l10n.onboardingCreateServer,
       'onboarding.deploy' => _l10n.onboardingDeploy,
-      'onboarding.deploy.credentials.poco' => _l10n.onboardingDeployCredentialsPoco,
       'onboarding.docker.intro.action.start' => _l10n.onboardingDockerIntroActionStart,
       'onboarding.docker.intro.chip.component' => _l10n.onboardingDockerIntroChipComponent,
       'onboarding.docker.intro.chip.connections' => _l10n.onboardingDockerIntroChipConnections,
@@ -517,6 +523,7 @@ class L10nKeyResolver {
       'onboarding.self.host.requirements.title' => _l10n.onboardingSelfHostRequirementsTitle,
       'onboarding.self.host.title' => _l10n.onboardingSelfHostTitle,
       'onboarding.server.connecting' => _l10n.onboardingServerConnecting,
+      'onboarding.server.credentials.poco' => _l10n.onboardingServerCredentialsPoco,
       'onboarding.server.credentials.title' => _l10n.onboardingServerCredentialsTitle,
       'onboarding.server.login.title' => _l10n.onboardingServerLoginTitle,
       'onboarding.server.url' => _l10n.onboardingServerUrl,
@@ -837,19 +844,12 @@ class L10nKeyResolver {
       'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
-      'deployment.copied.to.buffer' => _l10n.deploymentCopiedToBuffer(args?['label'] as String? ?? ''),
-      'deployment.copy.label' => _l10n.deploymentCopyLabel(args?['label'] as String? ?? ''),
       'deployment.discard.attempt.resource.id' => _l10n.deploymentDiscardAttemptResourceId(args?['resourceId'] as String? ?? ''),
-      'deployment.fault.detected' => _l10n.deploymentFaultDetected(args?['error'] as String? ?? ''),
-      'deployment.fault.max.retries.exceeded' => _l10n.deploymentFaultMaxRetriesExceeded(args?['maxAttempts'] as int? ?? 0),
       'deployment.memory.gb' => _l10n.deploymentMemoryGb(args?['value'] as int? ?? 0),
       'deployment.memory.mb' => _l10n.deploymentMemoryMb(args?['value'] as int? ?? 0),
       'deployment.monthly.price' => _l10n.deploymentMonthlyPrice(args?['price'] as String? ?? ''),
       'deployment.plan.poco' => _l10n.deploymentPlanPoco(args?['minimumMemory'] as String? ?? ''),
       'deployment.plan.specs' => _l10n.deploymentPlanSpecs(args?['vcpus'] as int? ?? 0, args?['memory'] as String? ?? '', args?['diskGb'] as int? ?? 0),
-      'deployment.ready' => _l10n.deploymentReady(args?['ipAddress'] as String? ?? ''),
-      'deployment.status.prefix' => _l10n.deploymentStatusPrefix(args?['status'] as String? ?? ''),
-      'deployment.sync.attempt' => _l10n.deploymentSyncAttempt(args?['attempt'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'harness.auth.account' => _l10n.harnessAuthAccount(args?['account'] as String? ?? '', args?['visibility'] as String? ?? ''),
       'harness.auth.attempt' => _l10n.harnessAuthAttempt(args?['id'] as String? ?? ''),
@@ -1015,34 +1015,24 @@ class L10nKeyResolver {
     'chat.thinking.role',
     'chat.thought',
     'chat.use.global.default',
+    'choose.provider.coming.soon',
+    'choose.provider.pro.badge',
     'choose.provider.title',
     'deploy.choose.provider',
-    'deploy.coming.soon',
-    'deploy.pro.badge',
     'deploy.select.provider',
-    'deployment.action.abort',
     'deployment.action.back',
     'deployment.action.deploy.instance',
     'deployment.action.dismiss',
     'deployment.action.initialize',
-    'deployment.action.login.now',
     'deployment.action.refresh',
-    'deployment.action.retry.scan',
     'deployment.action.update',
-    'deployment.admin.identity',
-    'deployment.admin.password',
     'deployment.backend',
     'deployment.cleanup.failed',
     'deployment.cleanup.not.needed',
     'deployment.cleanup.pending',
     'deployment.cleanup.succeeded',
-    'deployment.cloud.region',
     'deployment.coding.agents.title',
     'deployment.coding.harnesses',
-    'deployment.connection.parameters',
-    'deployment.copied.to.buffer',
-    'deployment.copy.label',
-    'deployment.current.operation',
     'deployment.debian',
     'deployment.debian.description',
     'deployment.default.agent',
@@ -1051,7 +1041,6 @@ class L10nKeyResolver {
     'deployment.description.failed',
     'deployment.description.fetching',
     'deployment.description.finishing',
-    'deployment.description.initializing',
     'deployment.description.loading.images',
     'deployment.description.preparing.operating.system',
     'deployment.description.ready',
@@ -1070,40 +1059,20 @@ class L10nKeyResolver {
     'deployment.discard.attempt.resource.id',
     'deployment.discard.attempt.title',
     'deployment.distribution',
-    'deployment.error.code',
-    'deployment.failed',
-    'deployment.fault.authentication.expired',
     'deployment.fault.deployment.instance.not.found',
-    'deployment.fault.detected',
-    'deployment.fault.generic',
-    'deployment.fault.max.retries.exceeded',
-    'deployment.fault.provision.interrupted.no.resource',
-    'deployment.fault.provision.resource.not.found',
-    'deployment.fault.provision.resource.still.exists',
-    'deployment.fault.resource.already.exists',
-    'deployment.geo.grid',
     'deployment.gpu.badge',
     'deployment.hardware.geography',
-    'deployment.hardware.plan',
     'deployment.harness.poco',
     'deployment.harness.selection.description',
-    'deployment.https.endpoint',
-    'deployment.in.progress',
     'deployment.initializing.hardware',
-    'deployment.initializing.title',
-    'deployment.instance.manifest',
     'deployment.instance.plan',
-    'deployment.ip.address',
-    'deployment.last.signal',
     'deployment.linux.poco',
     'deployment.linux.system.title',
     'deployment.manifest.configuration',
     'deployment.memory.gb',
     'deployment.memory.mb',
-    'deployment.metadata.registry',
     'deployment.minimum',
     'deployment.monthly.price',
-    'deployment.network.ip',
     'deployment.nixos',
     'deployment.nixos.description',
     'deployment.no.suitable.plans',
@@ -1113,7 +1082,6 @@ class L10nKeyResolver {
     'deployment.provider.linode',
     'deployment.provisioned',
     'deployment.provisioning.summary',
-    'deployment.ready',
     'deployment.recommended',
     'deployment.region',
     'deployment.region.poco',
@@ -1127,28 +1095,21 @@ class L10nKeyResolver {
     'deployment.reset.confirmation.warn.cloud',
     'deployment.review.poco',
     'deployment.review.title',
-    'deployment.run.id',
     'deployment.run.local.model',
     'deployment.scanning.regions',
-    'deployment.secure',
-    'deployment.security.notice',
     'deployment.server.provider',
     'deployment.server.region.title',
     'deployment.server.size.title',
     'deployment.setup.type.title',
-    'deployment.source.commit',
     'deployment.standard.linux',
     'deployment.status.configuring.operating.system',
     'deployment.status.constructing',
     'deployment.status.failed',
     'deployment.status.fetching',
     'deployment.status.finishing',
-    'deployment.status.initializing',
     'deployment.status.loading.images',
-    'deployment.status.prefix',
     'deployment.status.preparing.operating.system',
     'deployment.status.ready',
-    'deployment.status.schema',
     'deployment.status.securing',
     'deployment.status.starting',
     'deployment.status.tls.failed',
@@ -1177,11 +1138,8 @@ class L10nKeyResolver {
     'deployment.step.wait.installer.disk.ready',
     'deployment.step.wait.target.disk.ready',
     'deployment.step.waiting.for.connection',
-    'deployment.sync.attempt',
     'deployment.system.parameters',
-    'deployment.technical.details.toggle',
     'deployment.ubuntu',
-    'deployment.unknown',
     'deployment.use.cloud.models',
     'deployment.workload.cloud.reply',
     'deployment.workload.local.reply',
@@ -1244,6 +1202,48 @@ class L10nKeyResolver {
     'home.new.chat',
     'home.no.chats',
     'home.title',
+    'initialization.action.abort',
+    'initialization.action.login',
+    'initialization.action.retry',
+    'initialization.admin.identity',
+    'initialization.admin.password',
+    'initialization.cloud.region',
+    'initialization.connection.parameters',
+    'initialization.copied.to.buffer',
+    'initialization.copy.label',
+    'initialization.current.operation',
+    'initialization.description.initializing',
+    'initialization.error.code',
+    'initialization.failed',
+    'initialization.fault.authentication.expired',
+    'initialization.fault.detected',
+    'initialization.fault.generic',
+    'initialization.fault.max.retries.exceeded',
+    'initialization.fault.provision.interrupted.no.resource',
+    'initialization.fault.provision.resource.not.found',
+    'initialization.fault.provision.resource.still.exists',
+    'initialization.fault.resource.already.exists',
+    'initialization.geo.grid',
+    'initialization.hardware.plan',
+    'initialization.https.endpoint',
+    'initialization.in.progress',
+    'initialization.instance.manifest',
+    'initialization.ip.address',
+    'initialization.last.signal',
+    'initialization.metadata.registry',
+    'initialization.network.ip',
+    'initialization.ready',
+    'initialization.run.id',
+    'initialization.screen.title',
+    'initialization.secure',
+    'initialization.security.notice',
+    'initialization.source.commit',
+    'initialization.status.initializing',
+    'initialization.status.prefix',
+    'initialization.status.schema',
+    'initialization.sync.attempt',
+    'initialization.technical.details.toggle',
+    'initialization.unknown',
     'llm.active.model.section',
     'llm.add.key',
     'llm.add.key.hint',
@@ -1350,7 +1350,6 @@ class L10nKeyResolver {
     'onboarding.connected',
     'onboarding.create.server',
     'onboarding.deploy',
-    'onboarding.deploy.credentials.poco',
     'onboarding.docker.intro.action.start',
     'onboarding.docker.intro.chip.component',
     'onboarding.docker.intro.chip.connections',
@@ -1442,6 +1441,7 @@ class L10nKeyResolver {
     'onboarding.self.host.requirements.title',
     'onboarding.self.host.title',
     'onboarding.server.connecting',
+    'onboarding.server.credentials.poco',
     'onboarding.server.credentials.title',
     'onboarding.server.login.title',
     'onboarding.server.url',
@@ -1892,34 +1892,24 @@ class L10nKeyResolver {
     'chatThinkingRole': 'chat.thinking.role',
     'chatThought': 'chat.thought',
     'chatUseGlobalDefault': 'chat.use.global.default',
+    'chooseProviderComingSoon': 'choose.provider.coming.soon',
+    'chooseProviderProBadge': 'choose.provider.pro.badge',
     'chooseProviderTitle': 'choose.provider.title',
     'deployChooseProvider': 'deploy.choose.provider',
-    'deployComingSoon': 'deploy.coming.soon',
-    'deployProBadge': 'deploy.pro.badge',
     'deploySelectProvider': 'deploy.select.provider',
-    'deploymentActionAbort': 'deployment.action.abort',
     'deploymentActionBack': 'deployment.action.back',
     'deploymentActionDeployInstance': 'deployment.action.deploy.instance',
     'deploymentActionDismiss': 'deployment.action.dismiss',
     'deploymentActionInitialize': 'deployment.action.initialize',
-    'deploymentActionLoginNow': 'deployment.action.login.now',
     'deploymentActionRefresh': 'deployment.action.refresh',
-    'deploymentActionRetryScan': 'deployment.action.retry.scan',
     'deploymentActionUpdate': 'deployment.action.update',
-    'deploymentAdminIdentity': 'deployment.admin.identity',
-    'deploymentAdminPassword': 'deployment.admin.password',
     'deploymentBackend': 'deployment.backend',
     'deploymentCleanupFailed': 'deployment.cleanup.failed',
     'deploymentCleanupNotNeeded': 'deployment.cleanup.not.needed',
     'deploymentCleanupPending': 'deployment.cleanup.pending',
     'deploymentCleanupSucceeded': 'deployment.cleanup.succeeded',
-    'deploymentCloudRegion': 'deployment.cloud.region',
     'deploymentCodingAgentsTitle': 'deployment.coding.agents.title',
     'deploymentCodingHarnesses': 'deployment.coding.harnesses',
-    'deploymentConnectionParameters': 'deployment.connection.parameters',
-    'deploymentCopiedToBuffer': 'deployment.copied.to.buffer',
-    'deploymentCopyLabel': 'deployment.copy.label',
-    'deploymentCurrentOperation': 'deployment.current.operation',
     'deploymentDebian': 'deployment.debian',
     'deploymentDebianDescription': 'deployment.debian.description',
     'deploymentDefaultAgent': 'deployment.default.agent',
@@ -1928,7 +1918,6 @@ class L10nKeyResolver {
     'deploymentDescriptionFailed': 'deployment.description.failed',
     'deploymentDescriptionFetching': 'deployment.description.fetching',
     'deploymentDescriptionFinishing': 'deployment.description.finishing',
-    'deploymentDescriptionInitializing': 'deployment.description.initializing',
     'deploymentDescriptionLoadingImages': 'deployment.description.loading.images',
     'deploymentDescriptionPreparingOperatingSystem': 'deployment.description.preparing.operating.system',
     'deploymentDescriptionReady': 'deployment.description.ready',
@@ -1947,40 +1936,20 @@ class L10nKeyResolver {
     'deploymentDiscardAttemptResourceId': 'deployment.discard.attempt.resource.id',
     'deploymentDiscardAttemptTitle': 'deployment.discard.attempt.title',
     'deploymentDistribution': 'deployment.distribution',
-    'deploymentErrorCode': 'deployment.error.code',
-    'deploymentFailed': 'deployment.failed',
-    'deploymentFaultAuthenticationExpired': 'deployment.fault.authentication.expired',
     'deploymentFaultDeploymentInstanceNotFound': 'deployment.fault.deployment.instance.not.found',
-    'deploymentFaultDetected': 'deployment.fault.detected',
-    'deploymentFaultGeneric': 'deployment.fault.generic',
-    'deploymentFaultMaxRetriesExceeded': 'deployment.fault.max.retries.exceeded',
-    'deploymentFaultProvisionInterruptedNoResource': 'deployment.fault.provision.interrupted.no.resource',
-    'deploymentFaultProvisionResourceNotFound': 'deployment.fault.provision.resource.not.found',
-    'deploymentFaultProvisionResourceStillExists': 'deployment.fault.provision.resource.still.exists',
-    'deploymentFaultResourceAlreadyExists': 'deployment.fault.resource.already.exists',
-    'deploymentGeoGrid': 'deployment.geo.grid',
     'deploymentGpuBadge': 'deployment.gpu.badge',
     'deploymentHardwareGeography': 'deployment.hardware.geography',
-    'deploymentHardwarePlan': 'deployment.hardware.plan',
     'deploymentHarnessPoco': 'deployment.harness.poco',
     'deploymentHarnessSelectionDescription': 'deployment.harness.selection.description',
-    'deploymentHttpsEndpoint': 'deployment.https.endpoint',
-    'deploymentInProgress': 'deployment.in.progress',
     'deploymentInitializingHardware': 'deployment.initializing.hardware',
-    'deploymentInitializingTitle': 'deployment.initializing.title',
-    'deploymentInstanceManifest': 'deployment.instance.manifest',
     'deploymentInstancePlan': 'deployment.instance.plan',
-    'deploymentIpAddress': 'deployment.ip.address',
-    'deploymentLastSignal': 'deployment.last.signal',
     'deploymentLinuxPoco': 'deployment.linux.poco',
     'deploymentLinuxSystemTitle': 'deployment.linux.system.title',
     'deploymentManifestConfiguration': 'deployment.manifest.configuration',
     'deploymentMemoryGb': 'deployment.memory.gb',
     'deploymentMemoryMb': 'deployment.memory.mb',
-    'deploymentMetadataRegistry': 'deployment.metadata.registry',
     'deploymentMinimum': 'deployment.minimum',
     'deploymentMonthlyPrice': 'deployment.monthly.price',
-    'deploymentNetworkIp': 'deployment.network.ip',
     'deploymentNixos': 'deployment.nixos',
     'deploymentNixosDescription': 'deployment.nixos.description',
     'deploymentNoSuitablePlans': 'deployment.no.suitable.plans',
@@ -1990,7 +1959,6 @@ class L10nKeyResolver {
     'deploymentProviderLinode': 'deployment.provider.linode',
     'deploymentProvisioned': 'deployment.provisioned',
     'deploymentProvisioningSummary': 'deployment.provisioning.summary',
-    'deploymentReady': 'deployment.ready',
     'deploymentRecommended': 'deployment.recommended',
     'deploymentRegion': 'deployment.region',
     'deploymentRegionPoco': 'deployment.region.poco',
@@ -2004,28 +1972,21 @@ class L10nKeyResolver {
     'deploymentResetConfirmationWarnCloud': 'deployment.reset.confirmation.warn.cloud',
     'deploymentReviewPoco': 'deployment.review.poco',
     'deploymentReviewTitle': 'deployment.review.title',
-    'deploymentRunId': 'deployment.run.id',
     'deploymentRunLocalModel': 'deployment.run.local.model',
     'deploymentScanningRegions': 'deployment.scanning.regions',
-    'deploymentSecure': 'deployment.secure',
-    'deploymentSecurityNotice': 'deployment.security.notice',
     'deploymentServerProvider': 'deployment.server.provider',
     'deploymentServerRegionTitle': 'deployment.server.region.title',
     'deploymentServerSizeTitle': 'deployment.server.size.title',
     'deploymentSetupTypeTitle': 'deployment.setup.type.title',
-    'deploymentSourceCommit': 'deployment.source.commit',
     'deploymentStandardLinux': 'deployment.standard.linux',
     'deploymentStatusConfiguringOperatingSystem': 'deployment.status.configuring.operating.system',
     'deploymentStatusConstructing': 'deployment.status.constructing',
     'deploymentStatusFailed': 'deployment.status.failed',
     'deploymentStatusFetching': 'deployment.status.fetching',
     'deploymentStatusFinishing': 'deployment.status.finishing',
-    'deploymentStatusInitializing': 'deployment.status.initializing',
     'deploymentStatusLoadingImages': 'deployment.status.loading.images',
-    'deploymentStatusPrefix': 'deployment.status.prefix',
     'deploymentStatusPreparingOperatingSystem': 'deployment.status.preparing.operating.system',
     'deploymentStatusReady': 'deployment.status.ready',
-    'deploymentStatusSchema': 'deployment.status.schema',
     'deploymentStatusSecuring': 'deployment.status.securing',
     'deploymentStatusStarting': 'deployment.status.starting',
     'deploymentStatusTlsFailed': 'deployment.status.tls.failed',
@@ -2054,11 +2015,8 @@ class L10nKeyResolver {
     'deploymentStepWaitInstallerDiskReady': 'deployment.step.wait.installer.disk.ready',
     'deploymentStepWaitTargetDiskReady': 'deployment.step.wait.target.disk.ready',
     'deploymentStepWaitingForConnection': 'deployment.step.waiting.for.connection',
-    'deploymentSyncAttempt': 'deployment.sync.attempt',
     'deploymentSystemParameters': 'deployment.system.parameters',
-    'deploymentTechnicalDetailsToggle': 'deployment.technical.details.toggle',
     'deploymentUbuntu': 'deployment.ubuntu',
-    'deploymentUnknown': 'deployment.unknown',
     'deploymentUseCloudModels': 'deployment.use.cloud.models',
     'deploymentWorkloadCloudReply': 'deployment.workload.cloud.reply',
     'deploymentWorkloadLocalReply': 'deployment.workload.local.reply',
@@ -2121,6 +2079,48 @@ class L10nKeyResolver {
     'homeNewChat': 'home.new.chat',
     'homeNoChats': 'home.no.chats',
     'homeTitle': 'home.title',
+    'initializationActionAbort': 'initialization.action.abort',
+    'initializationActionLogin': 'initialization.action.login',
+    'initializationActionRetry': 'initialization.action.retry',
+    'initializationAdminIdentity': 'initialization.admin.identity',
+    'initializationAdminPassword': 'initialization.admin.password',
+    'initializationCloudRegion': 'initialization.cloud.region',
+    'initializationConnectionParameters': 'initialization.connection.parameters',
+    'initializationCopiedToBuffer': 'initialization.copied.to.buffer',
+    'initializationCopyLabel': 'initialization.copy.label',
+    'initializationCurrentOperation': 'initialization.current.operation',
+    'initializationDescriptionInitializing': 'initialization.description.initializing',
+    'initializationErrorCode': 'initialization.error.code',
+    'initializationFailed': 'initialization.failed',
+    'initializationFaultAuthenticationExpired': 'initialization.fault.authentication.expired',
+    'initializationFaultDetected': 'initialization.fault.detected',
+    'initializationFaultGeneric': 'initialization.fault.generic',
+    'initializationFaultMaxRetriesExceeded': 'initialization.fault.max.retries.exceeded',
+    'initializationFaultProvisionInterruptedNoResource': 'initialization.fault.provision.interrupted.no.resource',
+    'initializationFaultProvisionResourceNotFound': 'initialization.fault.provision.resource.not.found',
+    'initializationFaultProvisionResourceStillExists': 'initialization.fault.provision.resource.still.exists',
+    'initializationFaultResourceAlreadyExists': 'initialization.fault.resource.already.exists',
+    'initializationGeoGrid': 'initialization.geo.grid',
+    'initializationHardwarePlan': 'initialization.hardware.plan',
+    'initializationHttpsEndpoint': 'initialization.https.endpoint',
+    'initializationInProgress': 'initialization.in.progress',
+    'initializationInstanceManifest': 'initialization.instance.manifest',
+    'initializationIpAddress': 'initialization.ip.address',
+    'initializationLastSignal': 'initialization.last.signal',
+    'initializationMetadataRegistry': 'initialization.metadata.registry',
+    'initializationNetworkIp': 'initialization.network.ip',
+    'initializationReady': 'initialization.ready',
+    'initializationRunId': 'initialization.run.id',
+    'initializationScreenTitle': 'initialization.screen.title',
+    'initializationSecure': 'initialization.secure',
+    'initializationSecurityNotice': 'initialization.security.notice',
+    'initializationSourceCommit': 'initialization.source.commit',
+    'initializationStatusInitializing': 'initialization.status.initializing',
+    'initializationStatusPrefix': 'initialization.status.prefix',
+    'initializationStatusSchema': 'initialization.status.schema',
+    'initializationSyncAttempt': 'initialization.sync.attempt',
+    'initializationTechnicalDetailsToggle': 'initialization.technical.details.toggle',
+    'initializationUnknown': 'initialization.unknown',
     'llmActiveModelSection': 'llm.active.model.section',
     'llmAddKey': 'llm.add.key',
     'llmAddKeyHint': 'llm.add.key.hint',
@@ -2227,7 +2227,6 @@ class L10nKeyResolver {
     'onboardingConnected': 'onboarding.connected',
     'onboardingCreateServer': 'onboarding.create.server',
     'onboardingDeploy': 'onboarding.deploy',
-    'onboardingDeployCredentialsPoco': 'onboarding.deploy.credentials.poco',
     'onboardingDockerIntroActionStart': 'onboarding.docker.intro.action.start',
     'onboardingDockerIntroChipComponent': 'onboarding.docker.intro.chip.component',
     'onboardingDockerIntroChipConnections': 'onboarding.docker.intro.chip.connections',
@@ -2319,6 +2318,7 @@ class L10nKeyResolver {
     'onboardingSelfHostRequirementsTitle': 'onboarding.self.host.requirements.title',
     'onboardingSelfHostTitle': 'onboarding.self.host.title',
     'onboardingServerConnecting': 'onboarding.server.connecting',
+    'onboardingServerCredentialsPoco': 'onboarding.server.credentials.poco',
     'onboardingServerCredentialsTitle': 'onboarding.server.credentials.title',
     'onboardingServerLoginTitle': 'onboarding.server.login.title',
     'onboardingServerUrl': 'onboarding.server.url',
@@ -2766,34 +2766,24 @@ class L10nKeyResolver {
     'chat.thinking.role': 'chatThinkingRole',
     'chat.thought': 'chatThought',
     'chat.use.global.default': 'chatUseGlobalDefault',
+    'choose.provider.coming.soon': 'chooseProviderComingSoon',
+    'choose.provider.pro.badge': 'chooseProviderProBadge',
     'choose.provider.title': 'chooseProviderTitle',
     'deploy.choose.provider': 'deployChooseProvider',
-    'deploy.coming.soon': 'deployComingSoon',
-    'deploy.pro.badge': 'deployProBadge',
     'deploy.select.provider': 'deploySelectProvider',
-    'deployment.action.abort': 'deploymentActionAbort',
     'deployment.action.back': 'deploymentActionBack',
     'deployment.action.deploy.instance': 'deploymentActionDeployInstance',
     'deployment.action.dismiss': 'deploymentActionDismiss',
     'deployment.action.initialize': 'deploymentActionInitialize',
-    'deployment.action.login.now': 'deploymentActionLoginNow',
     'deployment.action.refresh': 'deploymentActionRefresh',
-    'deployment.action.retry.scan': 'deploymentActionRetryScan',
     'deployment.action.update': 'deploymentActionUpdate',
-    'deployment.admin.identity': 'deploymentAdminIdentity',
-    'deployment.admin.password': 'deploymentAdminPassword',
     'deployment.backend': 'deploymentBackend',
     'deployment.cleanup.failed': 'deploymentCleanupFailed',
     'deployment.cleanup.not.needed': 'deploymentCleanupNotNeeded',
     'deployment.cleanup.pending': 'deploymentCleanupPending',
     'deployment.cleanup.succeeded': 'deploymentCleanupSucceeded',
-    'deployment.cloud.region': 'deploymentCloudRegion',
     'deployment.coding.agents.title': 'deploymentCodingAgentsTitle',
     'deployment.coding.harnesses': 'deploymentCodingHarnesses',
-    'deployment.connection.parameters': 'deploymentConnectionParameters',
-    'deployment.copied.to.buffer': 'deploymentCopiedToBuffer',
-    'deployment.copy.label': 'deploymentCopyLabel',
-    'deployment.current.operation': 'deploymentCurrentOperation',
     'deployment.debian': 'deploymentDebian',
     'deployment.debian.description': 'deploymentDebianDescription',
     'deployment.default.agent': 'deploymentDefaultAgent',
@@ -2802,7 +2792,6 @@ class L10nKeyResolver {
     'deployment.description.failed': 'deploymentDescriptionFailed',
     'deployment.description.fetching': 'deploymentDescriptionFetching',
     'deployment.description.finishing': 'deploymentDescriptionFinishing',
-    'deployment.description.initializing': 'deploymentDescriptionInitializing',
     'deployment.description.loading.images': 'deploymentDescriptionLoadingImages',
     'deployment.description.preparing.operating.system': 'deploymentDescriptionPreparingOperatingSystem',
     'deployment.description.ready': 'deploymentDescriptionReady',
@@ -2821,40 +2810,20 @@ class L10nKeyResolver {
     'deployment.discard.attempt.resource.id': 'deploymentDiscardAttemptResourceId',
     'deployment.discard.attempt.title': 'deploymentDiscardAttemptTitle',
     'deployment.distribution': 'deploymentDistribution',
-    'deployment.error.code': 'deploymentErrorCode',
-    'deployment.failed': 'deploymentFailed',
-    'deployment.fault.authentication.expired': 'deploymentFaultAuthenticationExpired',
     'deployment.fault.deployment.instance.not.found': 'deploymentFaultDeploymentInstanceNotFound',
-    'deployment.fault.detected': 'deploymentFaultDetected',
-    'deployment.fault.generic': 'deploymentFaultGeneric',
-    'deployment.fault.max.retries.exceeded': 'deploymentFaultMaxRetriesExceeded',
-    'deployment.fault.provision.interrupted.no.resource': 'deploymentFaultProvisionInterruptedNoResource',
-    'deployment.fault.provision.resource.not.found': 'deploymentFaultProvisionResourceNotFound',
-    'deployment.fault.provision.resource.still.exists': 'deploymentFaultProvisionResourceStillExists',
-    'deployment.fault.resource.already.exists': 'deploymentFaultResourceAlreadyExists',
-    'deployment.geo.grid': 'deploymentGeoGrid',
     'deployment.gpu.badge': 'deploymentGpuBadge',
     'deployment.hardware.geography': 'deploymentHardwareGeography',
-    'deployment.hardware.plan': 'deploymentHardwarePlan',
     'deployment.harness.poco': 'deploymentHarnessPoco',
     'deployment.harness.selection.description': 'deploymentHarnessSelectionDescription',
-    'deployment.https.endpoint': 'deploymentHttpsEndpoint',
-    'deployment.in.progress': 'deploymentInProgress',
     'deployment.initializing.hardware': 'deploymentInitializingHardware',
-    'deployment.initializing.title': 'deploymentInitializingTitle',
-    'deployment.instance.manifest': 'deploymentInstanceManifest',
     'deployment.instance.plan': 'deploymentInstancePlan',
-    'deployment.ip.address': 'deploymentIpAddress',
-    'deployment.last.signal': 'deploymentLastSignal',
     'deployment.linux.poco': 'deploymentLinuxPoco',
     'deployment.linux.system.title': 'deploymentLinuxSystemTitle',
     'deployment.manifest.configuration': 'deploymentManifestConfiguration',
     'deployment.memory.gb': 'deploymentMemoryGb',
     'deployment.memory.mb': 'deploymentMemoryMb',
-    'deployment.metadata.registry': 'deploymentMetadataRegistry',
     'deployment.minimum': 'deploymentMinimum',
     'deployment.monthly.price': 'deploymentMonthlyPrice',
-    'deployment.network.ip': 'deploymentNetworkIp',
     'deployment.nixos': 'deploymentNixos',
     'deployment.nixos.description': 'deploymentNixosDescription',
     'deployment.no.suitable.plans': 'deploymentNoSuitablePlans',
@@ -2864,7 +2833,6 @@ class L10nKeyResolver {
     'deployment.provider.linode': 'deploymentProviderLinode',
     'deployment.provisioned': 'deploymentProvisioned',
     'deployment.provisioning.summary': 'deploymentProvisioningSummary',
-    'deployment.ready': 'deploymentReady',
     'deployment.recommended': 'deploymentRecommended',
     'deployment.region': 'deploymentRegion',
     'deployment.region.poco': 'deploymentRegionPoco',
@@ -2878,28 +2846,21 @@ class L10nKeyResolver {
     'deployment.reset.confirmation.warn.cloud': 'deploymentResetConfirmationWarnCloud',
     'deployment.review.poco': 'deploymentReviewPoco',
     'deployment.review.title': 'deploymentReviewTitle',
-    'deployment.run.id': 'deploymentRunId',
     'deployment.run.local.model': 'deploymentRunLocalModel',
     'deployment.scanning.regions': 'deploymentScanningRegions',
-    'deployment.secure': 'deploymentSecure',
-    'deployment.security.notice': 'deploymentSecurityNotice',
     'deployment.server.provider': 'deploymentServerProvider',
     'deployment.server.region.title': 'deploymentServerRegionTitle',
     'deployment.server.size.title': 'deploymentServerSizeTitle',
     'deployment.setup.type.title': 'deploymentSetupTypeTitle',
-    'deployment.source.commit': 'deploymentSourceCommit',
     'deployment.standard.linux': 'deploymentStandardLinux',
     'deployment.status.configuring.operating.system': 'deploymentStatusConfiguringOperatingSystem',
     'deployment.status.constructing': 'deploymentStatusConstructing',
     'deployment.status.failed': 'deploymentStatusFailed',
     'deployment.status.fetching': 'deploymentStatusFetching',
     'deployment.status.finishing': 'deploymentStatusFinishing',
-    'deployment.status.initializing': 'deploymentStatusInitializing',
     'deployment.status.loading.images': 'deploymentStatusLoadingImages',
-    'deployment.status.prefix': 'deploymentStatusPrefix',
     'deployment.status.preparing.operating.system': 'deploymentStatusPreparingOperatingSystem',
     'deployment.status.ready': 'deploymentStatusReady',
-    'deployment.status.schema': 'deploymentStatusSchema',
     'deployment.status.securing': 'deploymentStatusSecuring',
     'deployment.status.starting': 'deploymentStatusStarting',
     'deployment.status.tls.failed': 'deploymentStatusTlsFailed',
@@ -2928,11 +2889,8 @@ class L10nKeyResolver {
     'deployment.step.wait.installer.disk.ready': 'deploymentStepWaitInstallerDiskReady',
     'deployment.step.wait.target.disk.ready': 'deploymentStepWaitTargetDiskReady',
     'deployment.step.waiting.for.connection': 'deploymentStepWaitingForConnection',
-    'deployment.sync.attempt': 'deploymentSyncAttempt',
     'deployment.system.parameters': 'deploymentSystemParameters',
-    'deployment.technical.details.toggle': 'deploymentTechnicalDetailsToggle',
     'deployment.ubuntu': 'deploymentUbuntu',
-    'deployment.unknown': 'deploymentUnknown',
     'deployment.use.cloud.models': 'deploymentUseCloudModels',
     'deployment.workload.cloud.reply': 'deploymentWorkloadCloudReply',
     'deployment.workload.local.reply': 'deploymentWorkloadLocalReply',
@@ -2995,6 +2953,48 @@ class L10nKeyResolver {
     'home.new.chat': 'homeNewChat',
     'home.no.chats': 'homeNoChats',
     'home.title': 'homeTitle',
+    'initialization.action.abort': 'initializationActionAbort',
+    'initialization.action.login': 'initializationActionLogin',
+    'initialization.action.retry': 'initializationActionRetry',
+    'initialization.admin.identity': 'initializationAdminIdentity',
+    'initialization.admin.password': 'initializationAdminPassword',
+    'initialization.cloud.region': 'initializationCloudRegion',
+    'initialization.connection.parameters': 'initializationConnectionParameters',
+    'initialization.copied.to.buffer': 'initializationCopiedToBuffer',
+    'initialization.copy.label': 'initializationCopyLabel',
+    'initialization.current.operation': 'initializationCurrentOperation',
+    'initialization.description.initializing': 'initializationDescriptionInitializing',
+    'initialization.error.code': 'initializationErrorCode',
+    'initialization.failed': 'initializationFailed',
+    'initialization.fault.authentication.expired': 'initializationFaultAuthenticationExpired',
+    'initialization.fault.detected': 'initializationFaultDetected',
+    'initialization.fault.generic': 'initializationFaultGeneric',
+    'initialization.fault.max.retries.exceeded': 'initializationFaultMaxRetriesExceeded',
+    'initialization.fault.provision.interrupted.no.resource': 'initializationFaultProvisionInterruptedNoResource',
+    'initialization.fault.provision.resource.not.found': 'initializationFaultProvisionResourceNotFound',
+    'initialization.fault.provision.resource.still.exists': 'initializationFaultProvisionResourceStillExists',
+    'initialization.fault.resource.already.exists': 'initializationFaultResourceAlreadyExists',
+    'initialization.geo.grid': 'initializationGeoGrid',
+    'initialization.hardware.plan': 'initializationHardwarePlan',
+    'initialization.https.endpoint': 'initializationHttpsEndpoint',
+    'initialization.in.progress': 'initializationInProgress',
+    'initialization.instance.manifest': 'initializationInstanceManifest',
+    'initialization.ip.address': 'initializationIpAddress',
+    'initialization.last.signal': 'initializationLastSignal',
+    'initialization.metadata.registry': 'initializationMetadataRegistry',
+    'initialization.network.ip': 'initializationNetworkIp',
+    'initialization.ready': 'initializationReady',
+    'initialization.run.id': 'initializationRunId',
+    'initialization.screen.title': 'initializationScreenTitle',
+    'initialization.secure': 'initializationSecure',
+    'initialization.security.notice': 'initializationSecurityNotice',
+    'initialization.source.commit': 'initializationSourceCommit',
+    'initialization.status.initializing': 'initializationStatusInitializing',
+    'initialization.status.prefix': 'initializationStatusPrefix',
+    'initialization.status.schema': 'initializationStatusSchema',
+    'initialization.sync.attempt': 'initializationSyncAttempt',
+    'initialization.technical.details.toggle': 'initializationTechnicalDetailsToggle',
+    'initialization.unknown': 'initializationUnknown',
     'llm.active.model.section': 'llmActiveModelSection',
     'llm.add.key': 'llmAddKey',
     'llm.add.key.hint': 'llmAddKeyHint',
@@ -3101,7 +3101,6 @@ class L10nKeyResolver {
     'onboarding.connected': 'onboardingConnected',
     'onboarding.create.server': 'onboardingCreateServer',
     'onboarding.deploy': 'onboardingDeploy',
-    'onboarding.deploy.credentials.poco': 'onboardingDeployCredentialsPoco',
     'onboarding.docker.intro.action.start': 'onboardingDockerIntroActionStart',
     'onboarding.docker.intro.chip.component': 'onboardingDockerIntroChipComponent',
     'onboarding.docker.intro.chip.connections': 'onboardingDockerIntroChipConnections',
@@ -3193,6 +3192,7 @@ class L10nKeyResolver {
     'onboarding.self.host.requirements.title': 'onboardingSelfHostRequirementsTitle',
     'onboarding.self.host.title': 'onboardingSelfHostTitle',
     'onboarding.server.connecting': 'onboardingServerConnecting',
+    'onboarding.server.credentials.poco': 'onboardingServerCredentialsPoco',
     'onboarding.server.credentials.title': 'onboardingServerCredentialsTitle',
     'onboarding.server.login.title': 'onboardingServerLoginTitle',
     'onboarding.server.url': 'onboardingServerUrl',
@@ -3647,34 +3647,24 @@ abstract class L10nKeys {
   static const chatThinkingRole = 'chat.thinking.role';
   static const chatThought = 'chat.thought';
   static const chatUseGlobalDefault = 'chat.use.global.default';
+  static const chooseProviderComingSoon = 'choose.provider.coming.soon';
+  static const chooseProviderProBadge = 'choose.provider.pro.badge';
   static const chooseProviderTitle = 'choose.provider.title';
   static const deployChooseProvider = 'deploy.choose.provider';
-  static const deployComingSoon = 'deploy.coming.soon';
-  static const deployProBadge = 'deploy.pro.badge';
   static const deploySelectProvider = 'deploy.select.provider';
-  static const deploymentActionAbort = 'deployment.action.abort';
   static const deploymentActionBack = 'deployment.action.back';
   static const deploymentActionDeployInstance = 'deployment.action.deploy.instance';
   static const deploymentActionDismiss = 'deployment.action.dismiss';
   static const deploymentActionInitialize = 'deployment.action.initialize';
-  static const deploymentActionLoginNow = 'deployment.action.login.now';
   static const deploymentActionRefresh = 'deployment.action.refresh';
-  static const deploymentActionRetryScan = 'deployment.action.retry.scan';
   static const deploymentActionUpdate = 'deployment.action.update';
-  static const deploymentAdminIdentity = 'deployment.admin.identity';
-  static const deploymentAdminPassword = 'deployment.admin.password';
   static const deploymentBackend = 'deployment.backend';
   static const deploymentCleanupFailed = 'deployment.cleanup.failed';
   static const deploymentCleanupNotNeeded = 'deployment.cleanup.not.needed';
   static const deploymentCleanupPending = 'deployment.cleanup.pending';
   static const deploymentCleanupSucceeded = 'deployment.cleanup.succeeded';
-  static const deploymentCloudRegion = 'deployment.cloud.region';
   static const deploymentCodingAgentsTitle = 'deployment.coding.agents.title';
   static const deploymentCodingHarnesses = 'deployment.coding.harnesses';
-  static const deploymentConnectionParameters = 'deployment.connection.parameters';
-  static (String, Map<String, dynamic>) deploymentCopiedToBuffer(String label) => ('deployment.copied.to.buffer', {'label': label});
-  static (String, Map<String, dynamic>) deploymentCopyLabel(String label) => ('deployment.copy.label', {'label': label});
-  static const deploymentCurrentOperation = 'deployment.current.operation';
   static const deploymentDebian = 'deployment.debian';
   static const deploymentDebianDescription = 'deployment.debian.description';
   static const deploymentDefaultAgent = 'deployment.default.agent';
@@ -3683,7 +3673,6 @@ abstract class L10nKeys {
   static const deploymentDescriptionFailed = 'deployment.description.failed';
   static const deploymentDescriptionFetching = 'deployment.description.fetching';
   static const deploymentDescriptionFinishing = 'deployment.description.finishing';
-  static const deploymentDescriptionInitializing = 'deployment.description.initializing';
   static const deploymentDescriptionLoadingImages = 'deployment.description.loading.images';
   static const deploymentDescriptionPreparingOperatingSystem = 'deployment.description.preparing.operating.system';
   static const deploymentDescriptionReady = 'deployment.description.ready';
@@ -3702,40 +3691,20 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) deploymentDiscardAttemptResourceId(String resourceId) => ('deployment.discard.attempt.resource.id', {'resourceId': resourceId});
   static const deploymentDiscardAttemptTitle = 'deployment.discard.attempt.title';
   static const deploymentDistribution = 'deployment.distribution';
-  static const deploymentErrorCode = 'deployment.error.code';
-  static const deploymentFailed = 'deployment.failed';
-  static const deploymentFaultAuthenticationExpired = 'deployment.fault.authentication.expired';
   static const deploymentFaultDeploymentInstanceNotFound = 'deployment.fault.deployment.instance.not.found';
-  static (String, Map<String, dynamic>) deploymentFaultDetected(String error) => ('deployment.fault.detected', {'error': error});
-  static const deploymentFaultGeneric = 'deployment.fault.generic';
-  static (String, Map<String, dynamic>) deploymentFaultMaxRetriesExceeded(int maxAttempts) => ('deployment.fault.max.retries.exceeded', {'maxAttempts': maxAttempts});
-  static const deploymentFaultProvisionInterruptedNoResource = 'deployment.fault.provision.interrupted.no.resource';
-  static const deploymentFaultProvisionResourceNotFound = 'deployment.fault.provision.resource.not.found';
-  static const deploymentFaultProvisionResourceStillExists = 'deployment.fault.provision.resource.still.exists';
-  static const deploymentFaultResourceAlreadyExists = 'deployment.fault.resource.already.exists';
-  static const deploymentGeoGrid = 'deployment.geo.grid';
   static const deploymentGpuBadge = 'deployment.gpu.badge';
   static const deploymentHardwareGeography = 'deployment.hardware.geography';
-  static const deploymentHardwarePlan = 'deployment.hardware.plan';
   static const deploymentHarnessPoco = 'deployment.harness.poco';
   static const deploymentHarnessSelectionDescription = 'deployment.harness.selection.description';
-  static const deploymentHttpsEndpoint = 'deployment.https.endpoint';
-  static const deploymentInProgress = 'deployment.in.progress';
   static const deploymentInitializingHardware = 'deployment.initializing.hardware';
-  static const deploymentInitializingTitle = 'deployment.initializing.title';
-  static const deploymentInstanceManifest = 'deployment.instance.manifest';
   static const deploymentInstancePlan = 'deployment.instance.plan';
-  static const deploymentIpAddress = 'deployment.ip.address';
-  static const deploymentLastSignal = 'deployment.last.signal';
   static const deploymentLinuxPoco = 'deployment.linux.poco';
   static const deploymentLinuxSystemTitle = 'deployment.linux.system.title';
   static const deploymentManifestConfiguration = 'deployment.manifest.configuration';
   static (String, Map<String, dynamic>) deploymentMemoryGb(int value) => ('deployment.memory.gb', {'value': value});
   static (String, Map<String, dynamic>) deploymentMemoryMb(int value) => ('deployment.memory.mb', {'value': value});
-  static const deploymentMetadataRegistry = 'deployment.metadata.registry';
   static const deploymentMinimum = 'deployment.minimum';
   static (String, Map<String, dynamic>) deploymentMonthlyPrice(String price) => ('deployment.monthly.price', {'price': price});
-  static const deploymentNetworkIp = 'deployment.network.ip';
   static const deploymentNixos = 'deployment.nixos';
   static const deploymentNixosDescription = 'deployment.nixos.description';
   static const deploymentNoSuitablePlans = 'deployment.no.suitable.plans';
@@ -3745,7 +3714,6 @@ abstract class L10nKeys {
   static const deploymentProviderLinode = 'deployment.provider.linode';
   static const deploymentProvisioned = 'deployment.provisioned';
   static const deploymentProvisioningSummary = 'deployment.provisioning.summary';
-  static (String, Map<String, dynamic>) deploymentReady(String ipAddress) => ('deployment.ready', {'ipAddress': ipAddress});
   static const deploymentRecommended = 'deployment.recommended';
   static const deploymentRegion = 'deployment.region';
   static const deploymentRegionPoco = 'deployment.region.poco';
@@ -3759,28 +3727,21 @@ abstract class L10nKeys {
   static const deploymentResetConfirmationWarnCloud = 'deployment.reset.confirmation.warn.cloud';
   static const deploymentReviewPoco = 'deployment.review.poco';
   static const deploymentReviewTitle = 'deployment.review.title';
-  static const deploymentRunId = 'deployment.run.id';
   static const deploymentRunLocalModel = 'deployment.run.local.model';
   static const deploymentScanningRegions = 'deployment.scanning.regions';
-  static const deploymentSecure = 'deployment.secure';
-  static const deploymentSecurityNotice = 'deployment.security.notice';
   static const deploymentServerProvider = 'deployment.server.provider';
   static const deploymentServerRegionTitle = 'deployment.server.region.title';
   static const deploymentServerSizeTitle = 'deployment.server.size.title';
   static const deploymentSetupTypeTitle = 'deployment.setup.type.title';
-  static const deploymentSourceCommit = 'deployment.source.commit';
   static const deploymentStandardLinux = 'deployment.standard.linux';
   static const deploymentStatusConfiguringOperatingSystem = 'deployment.status.configuring.operating.system';
   static const deploymentStatusConstructing = 'deployment.status.constructing';
   static const deploymentStatusFailed = 'deployment.status.failed';
   static const deploymentStatusFetching = 'deployment.status.fetching';
   static const deploymentStatusFinishing = 'deployment.status.finishing';
-  static const deploymentStatusInitializing = 'deployment.status.initializing';
   static const deploymentStatusLoadingImages = 'deployment.status.loading.images';
-  static (String, Map<String, dynamic>) deploymentStatusPrefix(String status) => ('deployment.status.prefix', {'status': status});
   static const deploymentStatusPreparingOperatingSystem = 'deployment.status.preparing.operating.system';
   static const deploymentStatusReady = 'deployment.status.ready';
-  static const deploymentStatusSchema = 'deployment.status.schema';
   static const deploymentStatusSecuring = 'deployment.status.securing';
   static const deploymentStatusStarting = 'deployment.status.starting';
   static const deploymentStatusTlsFailed = 'deployment.status.tls.failed';
@@ -3809,11 +3770,8 @@ abstract class L10nKeys {
   static const deploymentStepWaitInstallerDiskReady = 'deployment.step.wait.installer.disk.ready';
   static const deploymentStepWaitTargetDiskReady = 'deployment.step.wait.target.disk.ready';
   static const deploymentStepWaitingForConnection = 'deployment.step.waiting.for.connection';
-  static (String, Map<String, dynamic>) deploymentSyncAttempt(int attempt) => ('deployment.sync.attempt', {'attempt': attempt});
   static const deploymentSystemParameters = 'deployment.system.parameters';
-  static const deploymentTechnicalDetailsToggle = 'deployment.technical.details.toggle';
   static const deploymentUbuntu = 'deployment.ubuntu';
-  static const deploymentUnknown = 'deployment.unknown';
   static const deploymentUseCloudModels = 'deployment.use.cloud.models';
   static const deploymentWorkloadCloudReply = 'deployment.workload.cloud.reply';
   static const deploymentWorkloadLocalReply = 'deployment.workload.local.reply';
@@ -3876,6 +3834,48 @@ abstract class L10nKeys {
   static const homeNewChat = 'home.new.chat';
   static const homeNoChats = 'home.no.chats';
   static const homeTitle = 'home.title';
+  static const initializationActionAbort = 'initialization.action.abort';
+  static const initializationActionLogin = 'initialization.action.login';
+  static const initializationActionRetry = 'initialization.action.retry';
+  static const initializationAdminIdentity = 'initialization.admin.identity';
+  static const initializationAdminPassword = 'initialization.admin.password';
+  static const initializationCloudRegion = 'initialization.cloud.region';
+  static const initializationConnectionParameters = 'initialization.connection.parameters';
+  static const initializationCopiedToBuffer = 'initialization.copied.to.buffer';
+  static const initializationCopyLabel = 'initialization.copy.label';
+  static const initializationCurrentOperation = 'initialization.current.operation';
+  static const initializationDescriptionInitializing = 'initialization.description.initializing';
+  static const initializationErrorCode = 'initialization.error.code';
+  static const initializationFailed = 'initialization.failed';
+  static const initializationFaultAuthenticationExpired = 'initialization.fault.authentication.expired';
+  static const initializationFaultDetected = 'initialization.fault.detected';
+  static const initializationFaultGeneric = 'initialization.fault.generic';
+  static const initializationFaultMaxRetriesExceeded = 'initialization.fault.max.retries.exceeded';
+  static const initializationFaultProvisionInterruptedNoResource = 'initialization.fault.provision.interrupted.no.resource';
+  static const initializationFaultProvisionResourceNotFound = 'initialization.fault.provision.resource.not.found';
+  static const initializationFaultProvisionResourceStillExists = 'initialization.fault.provision.resource.still.exists';
+  static const initializationFaultResourceAlreadyExists = 'initialization.fault.resource.already.exists';
+  static const initializationGeoGrid = 'initialization.geo.grid';
+  static const initializationHardwarePlan = 'initialization.hardware.plan';
+  static const initializationHttpsEndpoint = 'initialization.https.endpoint';
+  static const initializationInProgress = 'initialization.in.progress';
+  static const initializationInstanceManifest = 'initialization.instance.manifest';
+  static const initializationIpAddress = 'initialization.ip.address';
+  static const initializationLastSignal = 'initialization.last.signal';
+  static const initializationMetadataRegistry = 'initialization.metadata.registry';
+  static const initializationNetworkIp = 'initialization.network.ip';
+  static const initializationReady = 'initialization.ready';
+  static const initializationRunId = 'initialization.run.id';
+  static const initializationScreenTitle = 'initialization.screen.title';
+  static const initializationSecure = 'initialization.secure';
+  static const initializationSecurityNotice = 'initialization.security.notice';
+  static const initializationSourceCommit = 'initialization.source.commit';
+  static const initializationStatusInitializing = 'initialization.status.initializing';
+  static const initializationStatusPrefix = 'initialization.status.prefix';
+  static const initializationStatusSchema = 'initialization.status.schema';
+  static const initializationSyncAttempt = 'initialization.sync.attempt';
+  static const initializationTechnicalDetailsToggle = 'initialization.technical.details.toggle';
+  static const initializationUnknown = 'initialization.unknown';
   static const llmActiveModelSection = 'llm.active.model.section';
   static const llmAddKey = 'llm.add.key';
   static const llmAddKeyHint = 'llm.add.key.hint';
@@ -3982,7 +3982,6 @@ abstract class L10nKeys {
   static const onboardingConnected = 'onboarding.connected';
   static const onboardingCreateServer = 'onboarding.create.server';
   static const onboardingDeploy = 'onboarding.deploy';
-  static const onboardingDeployCredentialsPoco = 'onboarding.deploy.credentials.poco';
   static const onboardingDockerIntroActionStart = 'onboarding.docker.intro.action.start';
   static const onboardingDockerIntroChipComponent = 'onboarding.docker.intro.chip.component';
   static const onboardingDockerIntroChipConnections = 'onboarding.docker.intro.chip.connections';
@@ -4074,6 +4073,7 @@ abstract class L10nKeys {
   static const onboardingSelfHostRequirementsTitle = 'onboarding.self.host.requirements.title';
   static const onboardingSelfHostTitle = 'onboarding.self.host.title';
   static const onboardingServerConnecting = 'onboarding.server.connecting';
+  static const onboardingServerCredentialsPoco = 'onboarding.server.credentials.poco';
   static const onboardingServerCredentialsTitle = 'onboarding.server.credentials.title';
   static const onboardingServerLoginTitle = 'onboarding.server.login.title';
   static const onboardingServerUrl = 'onboarding.server.url';

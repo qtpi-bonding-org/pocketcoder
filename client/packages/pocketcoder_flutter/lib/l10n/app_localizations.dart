@@ -2506,17 +2506,17 @@ abstract class AppLocalizations {
   /// **'CHOOSE WHERE TO DEPLOY YOUR INSTANCE'**
   String get deployChooseProvider;
 
-  /// No description provided for @deployProBadge.
+  /// No description provided for @chooseProviderProBadge.
   ///
   /// In en, this message translates to:
   /// **'PRO'**
-  String get deployProBadge;
+  String get chooseProviderProBadge;
 
-  /// No description provided for @deployComingSoon.
+  /// No description provided for @chooseProviderComingSoon.
   ///
   /// In en, this message translates to:
   /// **'COMING SOON'**
-  String get deployComingSoon;
+  String get chooseProviderComingSoon;
 
   /// No description provided for @pocketCoderProgressProvisionServer.
   ///
@@ -2686,77 +2686,77 @@ abstract class AppLocalizations {
   /// **'Ready'**
   String get deploymentStepReady;
 
-  /// No description provided for @deploymentInitializingTitle.
+  /// No description provided for @initializationScreenTitle.
   ///
   /// In en, this message translates to:
   /// **'INITIALIZING SERVER'**
-  String get deploymentInitializingTitle;
+  String get initializationScreenTitle;
 
-  /// No description provided for @deploymentActionAbort.
+  /// No description provided for @initializationActionAbort.
   ///
   /// In en, this message translates to:
   /// **'ABORT'**
-  String get deploymentActionAbort;
+  String get initializationActionAbort;
 
-  /// No description provided for @deploymentActionRetryScan.
+  /// No description provided for @initializationActionRetry.
   ///
   /// In en, this message translates to:
   /// **'RETRY'**
-  String get deploymentActionRetryScan;
+  String get initializationActionRetry;
 
-  /// No description provided for @deploymentUnknown.
+  /// No description provided for @initializationUnknown.
   ///
   /// In en, this message translates to:
   /// **'UNKNOWN'**
-  String get deploymentUnknown;
+  String get initializationUnknown;
 
-  /// No description provided for @deploymentTechnicalDetailsToggle.
+  /// No description provided for @initializationTechnicalDetailsToggle.
   ///
   /// In en, this message translates to:
   /// **'TECHNICAL DETAILS'**
-  String get deploymentTechnicalDetailsToggle;
+  String get initializationTechnicalDetailsToggle;
 
-  /// No description provided for @deploymentNetworkIp.
+  /// No description provided for @initializationNetworkIp.
   ///
   /// In en, this message translates to:
   /// **'NETWORK IP'**
-  String get deploymentNetworkIp;
+  String get initializationNetworkIp;
 
-  /// No description provided for @deploymentGeoGrid.
+  /// No description provided for @initializationGeoGrid.
   ///
   /// In en, this message translates to:
   /// **'GEO GRID'**
-  String get deploymentGeoGrid;
+  String get initializationGeoGrid;
 
-  /// No description provided for @deploymentFaultDetected.
+  /// No description provided for @initializationFaultDetected.
   ///
   /// In en, this message translates to:
   /// **'FAULT DETECTED: {error}'**
-  String deploymentFaultDetected(String error);
+  String initializationFaultDetected(Object error);
 
-  /// No description provided for @deploymentFaultGeneric.
+  /// No description provided for @initializationFaultGeneric.
   ///
   /// In en, this message translates to:
   /// **'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.'**
-  String get deploymentFaultGeneric;
+  String get initializationFaultGeneric;
 
-  /// No description provided for @deploymentFaultProvisionInterruptedNoResource.
+  /// No description provided for @initializationFaultProvisionInterruptedNoResource.
   ///
   /// In en, this message translates to:
-  /// **'Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local deployment state.'**
-  String get deploymentFaultProvisionInterruptedNoResource;
+  /// **'Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local initialization state.'**
+  String get initializationFaultProvisionInterruptedNoResource;
 
-  /// No description provided for @deploymentFaultProvisionResourceStillExists.
+  /// No description provided for @initializationFaultProvisionResourceStillExists.
   ///
   /// In en, this message translates to:
   /// **'Provisioning was interrupted after a provider resource was created. The resource still exists and was not recreated automatically. Use cleanup or resume from the provider account before trying again.'**
-  String get deploymentFaultProvisionResourceStillExists;
+  String get initializationFaultProvisionResourceStillExists;
 
-  /// No description provided for @deploymentFaultProvisionResourceNotFound.
+  /// No description provided for @initializationFaultProvisionResourceNotFound.
   ///
   /// In en, this message translates to:
   /// **'The tracked provider resource is no longer found in your account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.'**
-  String get deploymentFaultProvisionResourceNotFound;
+  String get initializationFaultProvisionResourceNotFound;
 
   /// No description provided for @deploymentFaultDeploymentInstanceNotFound.
   ///
@@ -2764,41 +2764,41 @@ abstract class AppLocalizations {
   /// **'The tracked deployment instance is no longer found in your provider account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.'**
   String get deploymentFaultDeploymentInstanceNotFound;
 
-  /// No description provided for @deploymentFaultResourceAlreadyExists.
+  /// No description provided for @initializationFaultResourceAlreadyExists.
   ///
   /// In en, this message translates to:
   /// **'A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.'**
-  String get deploymentFaultResourceAlreadyExists;
+  String get initializationFaultResourceAlreadyExists;
 
-  /// No description provided for @deploymentFaultAuthenticationExpired.
+  /// No description provided for @initializationFaultAuthenticationExpired.
   ///
   /// In en, this message translates to:
-  /// **'Your Linode connection has expired or was revoked. Reconnect your account, then restart the deployment.'**
-  String get deploymentFaultAuthenticationExpired;
+  /// **'Your Linode connection has expired or was revoked. Reconnect your account, then restart the initialization.'**
+  String get initializationFaultAuthenticationExpired;
 
-  /// No description provided for @deploymentFaultMaxRetriesExceeded.
+  /// No description provided for @initializationFaultMaxRetriesExceeded.
   ///
   /// In en, this message translates to:
   /// **'Max retry attempts ({maxAttempts}) exceeded.'**
-  String deploymentFaultMaxRetriesExceeded(int maxAttempts);
+  String initializationFaultMaxRetriesExceeded(Object maxAttempts);
 
-  /// No description provided for @deploymentFailed.
+  /// No description provided for @initializationFailed.
   ///
   /// In en, this message translates to:
   /// **'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.'**
-  String get deploymentFailed;
+  String get initializationFailed;
 
-  /// No description provided for @deploymentReady.
+  /// No description provided for @initializationReady.
   ///
   /// In en, this message translates to:
   /// **'SERVER READY AT {ipAddress}.'**
-  String deploymentReady(String ipAddress);
+  String initializationReady(Object ipAddress);
 
-  /// No description provided for @deploymentInProgress.
+  /// No description provided for @initializationInProgress.
   ///
   /// In en, this message translates to:
   /// **'SERVER SETUP STARTED.'**
-  String get deploymentInProgress;
+  String get initializationInProgress;
 
   /// No description provided for @deploymentStatusValidating.
   ///
@@ -2890,11 +2890,11 @@ abstract class AppLocalizations {
   /// **'DEPLOYMENT ABORTED'**
   String get deploymentStatusFailed;
 
-  /// No description provided for @deploymentStatusInitializing.
+  /// No description provided for @initializationStatusInitializing.
   ///
   /// In en, this message translates to:
   /// **'INITIALIZING STACK'**
-  String get deploymentStatusInitializing;
+  String get initializationStatusInitializing;
 
   /// No description provided for @deploymentDescriptionValidating.
   ///
@@ -2986,41 +2986,41 @@ abstract class AppLocalizations {
   /// **'SETUP STOPPED BEFORE COMPLETION. NO LATER STEP WILL CONTINUE.'**
   String get deploymentDescriptionFailed;
 
-  /// No description provided for @deploymentDescriptionInitializing.
+  /// No description provided for @initializationDescriptionInitializing.
   ///
   /// In en, this message translates to:
-  /// **'PREPARING DEPLOYMENT MANIFEST.'**
-  String get deploymentDescriptionInitializing;
+  /// **'PREPARING INITIALIZATION MANIFEST.'**
+  String get initializationDescriptionInitializing;
 
-  /// No description provided for @deploymentStatusPrefix.
+  /// No description provided for @initializationStatusPrefix.
   ///
   /// In en, this message translates to:
   /// **'STATUS: {status}'**
-  String deploymentStatusPrefix(String status);
+  String initializationStatusPrefix(Object status);
 
-  /// No description provided for @deploymentSecure.
+  /// No description provided for @initializationSecure.
   ///
   /// In en, this message translates to:
   /// **'[SECURE]'**
-  String get deploymentSecure;
+  String get initializationSecure;
 
-  /// No description provided for @deploymentConnectionParameters.
+  /// No description provided for @initializationConnectionParameters.
   ///
   /// In en, this message translates to:
   /// **'CONNECTION PARAMETERS'**
-  String get deploymentConnectionParameters;
+  String get initializationConnectionParameters;
 
-  /// No description provided for @deploymentMetadataRegistry.
+  /// No description provided for @initializationMetadataRegistry.
   ///
   /// In en, this message translates to:
   /// **'METADATA REGISTRY'**
-  String get deploymentMetadataRegistry;
+  String get initializationMetadataRegistry;
 
-  /// No description provided for @deploymentActionLoginNow.
+  /// No description provided for @initializationActionLogin.
   ///
   /// In en, this message translates to:
   /// **'LOGIN'**
-  String get deploymentActionLoginNow;
+  String get initializationActionLogin;
 
   /// No description provided for @deploymentActionRefresh.
   ///
@@ -3040,35 +3040,35 @@ abstract class AppLocalizations {
   /// **'DISMISS'**
   String get deploymentActionDismiss;
 
-  /// No description provided for @deploymentInstanceManifest.
+  /// No description provided for @initializationInstanceManifest.
   ///
   /// In en, this message translates to:
   /// **'INSTANCE MANIFEST'**
-  String get deploymentInstanceManifest;
+  String get initializationInstanceManifest;
 
-  /// No description provided for @deploymentIpAddress.
+  /// No description provided for @initializationIpAddress.
   ///
   /// In en, this message translates to:
   /// **'IP ADDRESS'**
-  String get deploymentIpAddress;
+  String get initializationIpAddress;
 
-  /// No description provided for @deploymentHttpsEndpoint.
+  /// No description provided for @initializationHttpsEndpoint.
   ///
   /// In en, this message translates to:
   /// **'HTTPS ENDPOINT'**
-  String get deploymentHttpsEndpoint;
+  String get initializationHttpsEndpoint;
 
-  /// No description provided for @deploymentAdminIdentity.
+  /// No description provided for @initializationAdminIdentity.
   ///
   /// In en, this message translates to:
   /// **'ADMIN IDENTITY'**
-  String get deploymentAdminIdentity;
+  String get initializationAdminIdentity;
 
-  /// No description provided for @deploymentAdminPassword.
+  /// No description provided for @initializationAdminPassword.
   ///
   /// In en, this message translates to:
   /// **'ADMIN PASSWORD'**
-  String get deploymentAdminPassword;
+  String get initializationAdminPassword;
 
   /// No description provided for @deploymentProvisioned.
   ///
@@ -3076,35 +3076,35 @@ abstract class AppLocalizations {
   /// **'PROVISIONED'**
   String get deploymentProvisioned;
 
-  /// No description provided for @deploymentCloudRegion.
+  /// No description provided for @initializationCloudRegion.
   ///
   /// In en, this message translates to:
   /// **'CLOUD REGION'**
-  String get deploymentCloudRegion;
+  String get initializationCloudRegion;
 
-  /// No description provided for @deploymentHardwarePlan.
+  /// No description provided for @initializationHardwarePlan.
   ///
   /// In en, this message translates to:
   /// **'HARDWARE PLAN'**
-  String get deploymentHardwarePlan;
+  String get initializationHardwarePlan;
 
-  /// No description provided for @deploymentSecurityNotice.
+  /// No description provided for @initializationSecurityNotice.
   ///
   /// In en, this message translates to:
   /// **'SECURITY NOTICE: CREDENTIALS ARE STORED IN LOCAL SECURE ENCLAVE. PASSPHRASE RETAINS ENCRYPTION AT REST.'**
-  String get deploymentSecurityNotice;
+  String get initializationSecurityNotice;
 
-  /// No description provided for @deploymentCopiedToBuffer.
+  /// No description provided for @initializationCopiedToBuffer.
   ///
   /// In en, this message translates to:
   /// **'{label} COPIED TO BUFFER'**
-  String deploymentCopiedToBuffer(String label);
+  String initializationCopiedToBuffer(Object label);
 
-  /// No description provided for @deploymentCopyLabel.
+  /// No description provided for @initializationCopyLabel.
   ///
   /// In en, this message translates to:
   /// **'COPY {label}'**
-  String deploymentCopyLabel(String label);
+  String initializationCopyLabel(Object label);
 
   /// No description provided for @deploymentManifestConfiguration.
   ///
@@ -3442,47 +3442,47 @@ abstract class AppLocalizations {
   /// **'Now we’ll follow the verified release onto the host.'**
   String get walkthroughTransitionDeployment;
 
-  /// No description provided for @deploymentSyncAttempt.
+  /// No description provided for @initializationSyncAttempt.
   ///
   /// In en, this message translates to:
   /// **'SYNC ATTEMPT: {attempt}'**
-  String deploymentSyncAttempt(int attempt);
+  String initializationSyncAttempt(Object attempt);
 
-  /// No description provided for @deploymentCurrentOperation.
+  /// No description provided for @initializationCurrentOperation.
   ///
   /// In en, this message translates to:
   /// **'CURRENT OPERATION'**
-  String get deploymentCurrentOperation;
+  String get initializationCurrentOperation;
 
-  /// No description provided for @deploymentSourceCommit.
+  /// No description provided for @initializationSourceCommit.
   ///
   /// In en, this message translates to:
   /// **'SOURCE COMMIT'**
-  String get deploymentSourceCommit;
+  String get initializationSourceCommit;
 
-  /// No description provided for @deploymentRunId.
+  /// No description provided for @initializationRunId.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOYMENT RUN'**
-  String get deploymentRunId;
+  /// **'INITIALIZATION RUN'**
+  String get initializationRunId;
 
-  /// No description provided for @deploymentStatusSchema.
+  /// No description provided for @initializationStatusSchema.
   ///
   /// In en, this message translates to:
   /// **'STATUS SCHEMA'**
-  String get deploymentStatusSchema;
+  String get initializationStatusSchema;
 
-  /// No description provided for @deploymentLastSignal.
+  /// No description provided for @initializationLastSignal.
   ///
   /// In en, this message translates to:
   /// **'LAST SERVER SIGNAL'**
-  String get deploymentLastSignal;
+  String get initializationLastSignal;
 
-  /// No description provided for @deploymentErrorCode.
+  /// No description provided for @initializationErrorCode.
   ///
   /// In en, this message translates to:
   /// **'SERVER ERROR CODE'**
-  String get deploymentErrorCode;
+  String get initializationErrorCode;
 
   /// No description provided for @pocoProvisioningTourTitle.
   ///
@@ -3922,11 +3922,11 @@ abstract class AppLocalizations {
   /// **'SET UP YOUR SIGN-IN'**
   String get onboardingSignInTitle;
 
-  /// No description provided for @onboardingDeployCredentialsPoco.
+  /// No description provided for @onboardingServerCredentialsPoco.
   ///
   /// In en, this message translates to:
   /// **'These are the administrator credentials for PocketCoder on the server we are about to provision.\n\nThey are separate from your Linode password. I will use them to finish setup, and you will use them to sign in to PocketCoder when the server is ready. Keep them safe.'**
-  String get onboardingDeployCredentialsPoco;
+  String get onboardingServerCredentialsPoco;
 
   /// No description provided for @onboardingPasswordTooShort.
   ///

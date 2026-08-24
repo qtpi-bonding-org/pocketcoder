@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_login_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_deploy_credentials_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_welcome_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_self_host_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/get_started_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/self_host_login_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/create_account_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/welcome_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/self_host_setup_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
@@ -19,14 +19,14 @@ import 'package:pocketcoder_flutter/presentation/notifications/notification_sett
 import 'package:pocketcoder_flutter/presentation/skills/skills_screen.dart';
 import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
-import 'package:pocketcoder_flutter/presentation/billing/pro_paywall_screen.dart';
+import 'package:pocketcoder_flutter/presentation/billing/paywall_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/harness_auth_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/harness_choice_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/harness_authorization_screen.dart';
-import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
-import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/choose_agent_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/agent_login_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/choose_provider_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/server_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_box_page_builder.dart';
@@ -94,7 +94,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: OnboardingScreen(
+          child: GetStartedScreen(
             prefill: state.extra is OnboardingPrefill
                 ? state.extra as OnboardingPrefill
                 : null,
@@ -107,7 +107,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: OnboardingLoginScreen(
+          child: SelfHostLoginScreen(
             prefill: state.extra is OnboardingPrefill
                 ? state.extra as OnboardingPrefill
                 : null,
@@ -120,7 +120,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const OnboardingWelcomeScreen(),
+          child: const WelcomeScreen(),
         ),
       ),
       GoRoute(
@@ -129,7 +129,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const OnboardingSelfHostScreen(),
+          child: const SelfHostSetupScreen(),
         ),
       ),
       GoRoute(
@@ -138,7 +138,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: OnboardingDeployCredentialsScreen(
+          child: CreateAccountScreen(
             provider: state.extra is ProviderOption
                 ? state.extra as ProviderOption
                 : null,
@@ -151,7 +151,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const HarnessChoiceScreen(),
+          child: const ChooseAgentScreen(),
         ),
       ),
       GoRoute(
@@ -160,7 +160,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: HarnessAuthorizationScreen(
+          child: AgentLoginScreen(
             harnessId: state.extra?.toString() ?? '',
             provider: 'claude-code',
           ),
@@ -172,7 +172,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: HarnessAuthorizationScreen(
+          child: AgentLoginScreen(
             harnessId: state.extra?.toString() ?? '',
             provider: 'codex',
           ),
@@ -293,7 +293,7 @@ class AppRouter {
           return TerminalTransition.buildPage(
             context: context,
             state: state,
-            child: ProPaywallScreen(
+            child: PaywallScreen(
               returnOnUnlock: arguments.returnOnUnlock,
             ),
           );
@@ -351,9 +351,9 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: DeployPickerScreen(
-            credentials: state.extra is DeployCredentials
-                ? state.extra as DeployCredentials
+          child: ChooseProviderScreen(
+            credentials: state.extra is ServerCredentials
+                ? state.extra as ServerCredentials
                 : null,
             deployOptionService: getIt<IProviderOptionService>(),
             onHasProAccess: getIt<BillingService>().hasProAccess,
@@ -554,5 +554,5 @@ class AppNavigation {
 typedef DeployProviderSelectionHandler = Future<void> Function(
   BuildContext context,
   ProviderOption option,
-  DeployCredentials? credentials,
+  ServerCredentials? credentials,
 );

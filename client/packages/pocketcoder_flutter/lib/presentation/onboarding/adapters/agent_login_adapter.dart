@@ -1,0 +1,188 @@
+import 'dart:async';
+
+import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
+import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
+import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/agent_login_view.dart';
+import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+class AgentLoginAdapter
+    extends CubitAdapter<HarnessAuthCubit, HarnessAuthState> {
+  AgentLoginAdapter({
+    super.key,
+    required this.harnessId,
+    required this.provider,
+  });
+
+  final String harnessId;
+  final String provider;
+  final _pollTimer = ValueNotifier<Timer?>(null);
+  final _openedChat = ValueNotifier<bool>(false);
+
+  static HarnessAuthState _selectState(HarnessAuthState state) => state;
+
+  @override
+  Widget buildAdapter(
+    BuildContext context,
+    CubitAdapterState<HarnessAuthCubit, HarnessAuthState> adapter,
+  ) {
+    final state = adapter.cubitField(_selectState);
+    final cubit = context.read<HarnessAuthCubit>();
+    final chats = context.read<ChatListCubit>();
+    Future<void> openFirstChat(BuildContext listenerContext) async {
+      if (_openedChat.value) return;
+      _openedChat.value = true;
+      OnboardingLogger.event('harness connected; creating first chat', {
+        'harness': harnessId,
+      });
+      try {
+        await chats.createAndOpen(harness: harnessId);
+        final chatId = chats.state.lastCreatedChatId;
+        if (!listenerContext.mounted || chatId == null || chatId.isEmpty) {
+          return;
+        }
+        OnboardingLogger.event('first chat created; entering chat', {
+          'harness': harnessId,
+        });
+        listenerContext.go('${AppRoutes.chat}/$chatId');
+      } catch (error) {
+        _openedChat.value = false;
+        // The raw exception is logged (technical detail, not user-facing)
+        // but never shown in the toast -- client/AGENTS.md requires user
+        // messages stay generic; only the diagnostic log carries detail.
+        OnboardingLogger.event('first chat creation failed', {
+          'harness': harnessId,
+          'error': error.toString(),
+        });
+        if (listenerContext.mounted) {
+          VimToast.show(
+            listenerContext,
+            listenerContext.l10n.onboardingOpenChatFailed,
+            color: listenerContext.terminalColors.warning,
+          );
+        }
+      }
+    }
+
+    return UiFlowListener<HarnessAuthCubit, HarnessAuthState>(
+      // This listener depends on the per-harness statuses map, not the
+      // cubit's top-level status/error -- those can (and typically do)
+      // stay success/null across a connect/poll transition, so this must
+      // fire on every emission and let the guards below (`_openedChat`,
+      // `_pollTimer`) own de-duplication instead of relying on the
+      // default status/error-only gate.
+      listenWhen: (_, __) => true,
+      listener: (listenerContext, nextState) {
+        final status = nextState.statuses[harnessId];
+        if (status?.isConnected == true) {
+          OnboardingLogger.event('harness authorization connected', {
+            'harness': harnessId,
+            'provider': provider,
+          });
+          unawaited(openFirstChat(listenerContext));
+        } else if (status?.isConnecting == true) {
+          _pollTimer.value ??= Timer(const Duration(seconds: 1), () {
+            _pollTimer.value = Timer.periodic(const Duration(seconds: 4), (_) {
+              if (!cubit.state.isBusy) unawaited(cubit.poll(harnessId));
+            });
+            if (!cubit.state.isBusy) unawaited(cubit.poll(harnessId));
+          });
+        }
+      },
+      child: ValueListenableBuilder<HarnessAuthState>(
+        valueListenable: state,
+        builder: (context, value, _) => StreamBuilder<ChatListState>(
+          initialData: chats.state,
+          stream: chats.stream,
+          builder: (context, _) => AgentLoginView(
+            harnessId: harnessId,
+            provider: provider,
+            isLoading: value.isLoading,
+            harnessExists: value.harnesses.any((h) => h.id == harnessId),
+            status: value.statuses[harnessId],
+            isBusy: value.isHarnessBusy(harnessId),
+            onPoll: () => cubit.poll(harnessId),
+            onSubmit: (code) => cubit.submitCode(
+              harnessId: harnessId,
+              code: code,
+            ),
+            onStartLogin: () async {
+              final visibility = await _chooseVisibility(context);
+              if (visibility != null) {
+                await cubit.startWithAccount(
+                  harnessId: harnessId,
+                  provider: provider,
+                  visibility: visibility,
+                );
+              }
+            },
+            onOpenChallenge: (challenge) async {
+              final target = challenge.target;
+              if (target == null || target.isEmpty) return;
+              OnboardingLogger.event('authorization challenge opened', {
+                'type': challenge.type,
+              });
+              final opened = await launchUrl(
+                Uri.tryParse(target) ?? Uri(),
+                mode: LaunchMode.externalApplication,
+              );
+              if (!opened && context.mounted) {
+                VimToast.show(
+                  context,
+                  context.l10n.errorCouldNotOpenBrowser,
+                  color: context.terminalColors.warning,
+                );
+              }
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
+        context: context,
+        builder: (dialogContext) => TerminalDialog(
+          title: context.l10n.onboardingHarnessAccountVisibilityTitle,
+          content: Text(
+            context.l10n.onboardingHarnessAccountVisibilityBody,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext)
+                  .pop(harnessAccountVisibilityPersonal),
+              child: Text(context.l10n.onboardingHarnessAccountVisibilityPersonal),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext)
+                  .pop(harnessAccountVisibilityDeployment),
+              child: Text(context.l10n.onboardingHarnessAccountVisibilityShared),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(context.l10n.onboardingHarnessAccountVisibilityCancel),
+            ),
+          ],
+        ),
+      );
+
+  @override
+  void disposeAdapter() {
+    _pollTimer.value?.cancel();
+    _pollTimer.dispose();
+    _openedChat.dispose();
+    super.disposeAdapter();
+  }
+}

@@ -1,12 +1,13 @@
-// Regression test for the same UiFlowListener listenWhen gap fixed in
-// agent_login_adapter_test.dart: HarnessAuthAdapter's connected
-// check depends on the per-harness `statuses` map, not the cubit's
-// top-level status/error, which stay success/null across a connect
-// transition once the harness list has already loaded once. Also covers
-// the guard added alongside the fix -- unlike the sibling onboarding
-// adapter, this one previously had no one-shot guard at all, so simply
-// making the listener fire on every emission (without a guard) would have
-// created a new chat on every subsequent "still connected" emission.
+// Regression test for a real crash: AgentLoginAdapter (reached
+// during onboarding, before the user has ever visited the chat-list
+// screen) reads ChatListCubit via context.read() to auto-create/open the
+// first chat once a harness connects. ChatListCubit used to be provided
+// ONLY by ChatListScreenAdapter's own scoped BlocProvider -- so reaching
+// this screen without first visiting the chat list threw
+// ProviderNotFoundException building this exact widget. ChatListCubit is
+// now provided app-wide (see App's root MultiBlocProvider in app.dart),
+// so this widget must build fine with it available from an ordinary
+// ancestor provider, independent of the chat-list screen ever existing.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -25,7 +26,7 @@ import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/harness_auth/adapters/harness_auth_adapter.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/adapters/agent_login_adapter.dart';
 
 class MockChatListRepository extends Mock implements IChatListRepository {}
 
@@ -45,14 +46,63 @@ HarnessAuthStatus _status(String status) => HarnessAuthStatus(
 
 void main() {
   testWidgets(
-      'opens the first chat exactly once when a harness reaches connected, '
-      'even though status/error never change across the transition, and '
-      'does not re-open on a later still-connected emission',
+      'builds without ProviderNotFoundException when ChatListCubit is '
+      "provided by an ordinary ancestor -- NOT nested under the chat-list "
+      "screen's own provider, matching how onboarding actually reaches "
+      'this widget before the chat list has ever been visited',
+      (tester) async {
+    final providerRepo = MockProviderRepository();
+    when(() => providerRepo.watchHarnesses())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => providerRepo.watchProviderKeys())
+        .thenAnswer((_) => Stream.value(const []));
+
+    final harnessAuthCubit = HarnessAuthCubit(
+      providerRepository: providerRepo,
+      authRepository: MockHarnessAuthRepository(),
+    );
+
+    final chatRepo = MockChatListRepository();
+    when(() => chatRepo.watchChats()).thenAnswer((_) => const Stream.empty());
+    final chatListCubit = ChatListCubit(chatRepo);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<HarnessAuthCubit>.value(value: harnessAuthCubit),
+            BlocProvider<ChatListCubit>.value(value: chatListCubit),
+          ],
+          child: AgentLoginAdapter(
+            harnessId: 'harness-1',
+            provider: 'anthropic',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+
+    await harnessAuthCubit.close();
+    await chatListCubit.close();
+  });
+
+  testWidgets(
+      'a harness reaching connected opens the first chat even though the '
+      "cubit's top-level status/error never change across the "
+      'transition -- UiFlowListener used to gate its listener callback on '
+      'status/error only, so this side effect (which depends on the '
+      'per-harness statuses map, not the top-level status) silently never '
+      'ran once the harness list had already loaded once',
       (tester) async {
     final harness = Harnesse(
       id: 'harness-1',
-      name: 'Claude Code',
-      cliId: 'claude-code',
+      name: 'Harness One',
+      cliId: 'harness-1',
       acpTransport: HarnesseAcpTransport.stdio,
     );
 
@@ -63,6 +113,11 @@ void main() {
         .thenAnswer((_) => const Stream.empty());
 
     final authRepo = MockHarnessAuthRepository();
+    // The initial post-load refresh (HarnessAuthCubit._refreshStatuses)
+    // reports "disconnected" -- this is the emission that already
+    // establishes status:success/error:null as the baseline, matching
+    // production: submitCode()'s later "connected" emission changes only
+    // the statuses map, not status/error.
     when(() => authRepo.status(
           harnessId: 'harness-1',
           accountId: any(named: 'accountId'),
@@ -95,9 +150,12 @@ void main() {
         ));
     final chatListCubit = ChatListCubit(chatRepo);
 
-    // Establish status:success/error:null as the baseline BEFORE the
-    // widget mounts -- matching production, where HarnessAuthCubit is
-    // provided app-wide and has typically already loaded.
+    // Load the harness list and let the initial "disconnected" refresh
+    // settle BEFORE the widget ever mounts -- matching production, where
+    // HarnessAuthCubit is provided app-wide and has typically already
+    // loaded by the time onboarding reaches this screen. This is what
+    // establishes status:success/error:null as the baseline BlocListener
+    // captures at its own initState, exactly as it would live.
     harnessAuthCubit.watchData();
     for (var i = 0; i < 5; i++) {
       await Future<void>.value();
@@ -113,7 +171,10 @@ void main() {
               BlocProvider<HarnessAuthCubit>.value(value: harnessAuthCubit),
               BlocProvider<ChatListCubit>.value(value: chatListCubit),
             ],
-            child: const HarnessAuthAdapter(onboarding: true),
+            child: AgentLoginAdapter(
+              harnessId: 'harness-1',
+              provider: 'anthropic',
+            ),
           ),
         ),
         GoRoute(
@@ -145,14 +206,9 @@ void main() {
           workspaceOverride: any(named: 'workspaceOverride'),
         ));
 
-    unawaited(
-        harnessAuthCubit.submitCode(harnessId: 'harness-1', code: '123456'));
-    for (var i = 0; i < 5; i++) {
-      await tester.pump();
-    }
-
-    // A later emission that still reports the harness as connected (e.g.
-    // a duplicate poll tick) must not re-open a second chat.
+    // The user submits their auth code; the harness transitions to
+    // "connected". The cubit's top-level status/error do not change (they
+    // were already success/null) -- only the statuses map does.
     unawaited(
         harnessAuthCubit.submitCode(harnessId: 'harness-1', code: '123456'));
     for (var i = 0; i < 5; i++) {

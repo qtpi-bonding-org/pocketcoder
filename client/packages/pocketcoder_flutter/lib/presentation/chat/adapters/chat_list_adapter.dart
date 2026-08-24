@@ -41,7 +41,7 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
     // .dart for the same pattern) -- ChatListCubit is now a single,
     // app-lifetime instance provided at the app root (see App's
     // MultiBlocProvider) rather than freshly created by this screen's own
-    // BlocProvider, specifically so onboarding's HarnessAuthorizationAdapter
+    // BlocProvider, specifically so onboarding's AgentLoginAdapter
     // can also read it (createAndOpen() for the first-connected-harness's
     // first chat) without needing its own separate instance. Deliberately
     // NOT chained onto the cubit's own creation any more: that now happens

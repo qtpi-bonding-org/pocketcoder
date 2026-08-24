@@ -1308,10 +1308,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deployChooseProvider => 'CHOOSE WHERE TO DEPLOY YOUR INSTANCE';
 
   @override
-  String get deployProBadge => 'PRO';
+  String get chooseProviderProBadge => 'PRO';
 
   @override
-  String get deployComingSoon => 'COMING SOON';
+  String get chooseProviderComingSoon => 'COMING SOON';
 
   @override
   String get pocketCoderProgressProvisionServer => 'PROVISION SERVER';
@@ -1402,45 +1402,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentStepReady => 'Ready';
 
   @override
-  String get deploymentInitializingTitle => 'INITIALIZING SERVER';
+  String get initializationScreenTitle => 'INITIALIZING SERVER';
 
   @override
-  String get deploymentActionAbort => 'ABORT';
+  String get initializationActionAbort => 'ABORT';
 
   @override
-  String get deploymentActionRetryScan => 'RETRY';
+  String get initializationActionRetry => 'RETRY';
 
   @override
-  String get deploymentUnknown => 'UNKNOWN';
+  String get initializationUnknown => 'UNKNOWN';
 
   @override
-  String get deploymentTechnicalDetailsToggle => 'TECHNICAL DETAILS';
+  String get initializationTechnicalDetailsToggle => 'TECHNICAL DETAILS';
 
   @override
-  String get deploymentNetworkIp => 'NETWORK IP';
+  String get initializationNetworkIp => 'NETWORK IP';
 
   @override
-  String get deploymentGeoGrid => 'GEO GRID';
+  String get initializationGeoGrid => 'GEO GRID';
 
   @override
-  String deploymentFaultDetected(String error) {
+  String initializationFaultDetected(Object error) {
     return 'FAULT DETECTED: $error';
   }
 
   @override
-  String get deploymentFaultGeneric =>
+  String get initializationFaultGeneric =>
       'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
 
   @override
-  String get deploymentFaultProvisionInterruptedNoResource =>
-      'Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local deployment state.';
+  String get initializationFaultProvisionInterruptedNoResource =>
+      'Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local initialization state.';
 
   @override
-  String get deploymentFaultProvisionResourceStillExists =>
+  String get initializationFaultProvisionResourceStillExists =>
       'Provisioning was interrupted after a provider resource was created. The resource still exists and was not recreated automatically. Use cleanup or resume from the provider account before trying again.';
 
   @override
-  String get deploymentFaultProvisionResourceNotFound =>
+  String get initializationFaultProvisionResourceNotFound =>
       'The tracked provider resource is no longer found in your account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.';
 
   @override
@@ -1448,29 +1448,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'The tracked deployment instance is no longer found in your provider account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.';
 
   @override
-  String get deploymentFaultResourceAlreadyExists =>
+  String get initializationFaultResourceAlreadyExists =>
       'A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.';
 
   @override
-  String get deploymentFaultAuthenticationExpired =>
-      'Your Linode connection has expired or was revoked. Reconnect your account, then restart the deployment.';
+  String get initializationFaultAuthenticationExpired =>
+      'Your Linode connection has expired or was revoked. Reconnect your account, then restart the initialization.';
 
   @override
-  String deploymentFaultMaxRetriesExceeded(int maxAttempts) {
+  String initializationFaultMaxRetriesExceeded(Object maxAttempts) {
     return 'Max retry attempts ($maxAttempts) exceeded.';
   }
 
   @override
-  String get deploymentFailed =>
+  String get initializationFailed =>
       'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
 
   @override
-  String deploymentReady(String ipAddress) {
+  String initializationReady(Object ipAddress) {
     return 'SERVER READY AT $ipAddress.';
   }
 
   @override
-  String get deploymentInProgress => 'SERVER SETUP STARTED.';
+  String get initializationInProgress => 'SERVER SETUP STARTED.';
 
   @override
   String get deploymentStatusValidating => 'VALIDATING CONFIGURATION';
@@ -1519,7 +1519,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentStatusFailed => 'DEPLOYMENT ABORTED';
 
   @override
-  String get deploymentStatusInitializing => 'INITIALIZING STACK';
+  String get initializationStatusInitializing => 'INITIALIZING STACK';
 
   @override
   String get deploymentDescriptionValidating =>
@@ -1578,25 +1578,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'SETUP STOPPED BEFORE COMPLETION. NO LATER STEP WILL CONTINUE.';
 
   @override
-  String get deploymentDescriptionInitializing =>
-      'PREPARING DEPLOYMENT MANIFEST.';
+  String get initializationDescriptionInitializing =>
+      'PREPARING INITIALIZATION MANIFEST.';
 
   @override
-  String deploymentStatusPrefix(String status) {
+  String initializationStatusPrefix(Object status) {
     return 'STATUS: $status';
   }
 
   @override
-  String get deploymentSecure => '[SECURE]';
+  String get initializationSecure => '[SECURE]';
 
   @override
-  String get deploymentConnectionParameters => 'CONNECTION PARAMETERS';
+  String get initializationConnectionParameters => 'CONNECTION PARAMETERS';
 
   @override
-  String get deploymentMetadataRegistry => 'METADATA REGISTRY';
+  String get initializationMetadataRegistry => 'METADATA REGISTRY';
 
   @override
-  String get deploymentActionLoginNow => 'LOGIN';
+  String get initializationActionLogin => 'LOGIN';
 
   @override
   String get deploymentActionRefresh => 'REFRESH';
@@ -1608,40 +1608,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentActionDismiss => 'DISMISS';
 
   @override
-  String get deploymentInstanceManifest => 'INSTANCE MANIFEST';
+  String get initializationInstanceManifest => 'INSTANCE MANIFEST';
 
   @override
-  String get deploymentIpAddress => 'IP ADDRESS';
+  String get initializationIpAddress => 'IP ADDRESS';
 
   @override
-  String get deploymentHttpsEndpoint => 'HTTPS ENDPOINT';
+  String get initializationHttpsEndpoint => 'HTTPS ENDPOINT';
 
   @override
-  String get deploymentAdminIdentity => 'ADMIN IDENTITY';
+  String get initializationAdminIdentity => 'ADMIN IDENTITY';
 
   @override
-  String get deploymentAdminPassword => 'ADMIN PASSWORD';
+  String get initializationAdminPassword => 'ADMIN PASSWORD';
 
   @override
   String get deploymentProvisioned => 'PROVISIONED';
 
   @override
-  String get deploymentCloudRegion => 'CLOUD REGION';
+  String get initializationCloudRegion => 'CLOUD REGION';
 
   @override
-  String get deploymentHardwarePlan => 'HARDWARE PLAN';
+  String get initializationHardwarePlan => 'HARDWARE PLAN';
 
   @override
-  String get deploymentSecurityNotice =>
+  String get initializationSecurityNotice =>
       'SECURITY NOTICE: CREDENTIALS ARE STORED IN LOCAL SECURE ENCLAVE. PASSPHRASE RETAINS ENCRYPTION AT REST.';
 
   @override
-  String deploymentCopiedToBuffer(String label) {
+  String initializationCopiedToBuffer(Object label) {
     return '$label COPIED TO BUFFER';
   }
 
   @override
-  String deploymentCopyLabel(String label) {
+  String initializationCopyLabel(Object label) {
     return 'COPY $label';
   }
 
@@ -1841,27 +1841,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Now we’ll follow the verified release onto the host.';
 
   @override
-  String deploymentSyncAttempt(int attempt) {
+  String initializationSyncAttempt(Object attempt) {
     return 'SYNC ATTEMPT: $attempt';
   }
 
   @override
-  String get deploymentCurrentOperation => 'CURRENT OPERATION';
+  String get initializationCurrentOperation => 'CURRENT OPERATION';
 
   @override
-  String get deploymentSourceCommit => 'SOURCE COMMIT';
+  String get initializationSourceCommit => 'SOURCE COMMIT';
 
   @override
-  String get deploymentRunId => 'DEPLOYMENT RUN';
+  String get initializationRunId => 'INITIALIZATION RUN';
 
   @override
-  String get deploymentStatusSchema => 'STATUS SCHEMA';
+  String get initializationStatusSchema => 'STATUS SCHEMA';
 
   @override
-  String get deploymentLastSignal => 'LAST SERVER SIGNAL';
+  String get initializationLastSignal => 'LAST SERVER SIGNAL';
 
   @override
-  String get deploymentErrorCode => 'SERVER ERROR CODE';
+  String get initializationErrorCode => 'SERVER ERROR CODE';
 
   @override
   String get pocoProvisioningTourTitle => 'POCO WALKTHROUGH';
@@ -2116,7 +2116,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSignInTitle => 'SET UP YOUR SIGN-IN';
 
   @override
-  String get onboardingDeployCredentialsPoco =>
+  String get onboardingServerCredentialsPoco =>
       'These are the administrator credentials for PocketCoder on the server we are about to provision.\n\nThey are separate from your Linode password. I will use them to finish setup, and you will use them to sign in to PocketCoder when the server is ready. Keep them safe.';
 
   @override
