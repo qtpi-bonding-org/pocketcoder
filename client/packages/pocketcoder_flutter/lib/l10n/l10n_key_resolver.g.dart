@@ -114,7 +114,6 @@ class L10nKeyResolver {
       'chat.run.outcome.failed.body' => _l10n.chatRunOutcomeFailedBody,
       'chat.run.outcome.failed.title' => _l10n.chatRunOutcomeFailedTitle,
       'chat.run.outcome.interrupted.body' => _l10n.chatRunOutcomeInterruptedBody,
-      'chat.run.outcome.interrupted.retry' => _l10n.chatRunOutcomeInterruptedRetry,
       'chat.run.outcome.interrupted.title' => _l10n.chatRunOutcomeInterruptedTitle,
       'chat.select.model.title' => _l10n.chatSelectModelTitle,
       'chat.send.failed' => _l10n.chatSendFailed,
@@ -999,7 +998,6 @@ class L10nKeyResolver {
     'chat.run.outcome.failed.body',
     'chat.run.outcome.failed.title',
     'chat.run.outcome.interrupted.body',
-    'chat.run.outcome.interrupted.retry',
     'chat.run.outcome.interrupted.title',
     'chat.select.model.title',
     'chat.send.failed',
@@ -1874,7 +1872,6 @@ class L10nKeyResolver {
     'chatRunOutcomeFailedBody': 'chat.run.outcome.failed.body',
     'chatRunOutcomeFailedTitle': 'chat.run.outcome.failed.title',
     'chatRunOutcomeInterruptedBody': 'chat.run.outcome.interrupted.body',
-    'chatRunOutcomeInterruptedRetry': 'chat.run.outcome.interrupted.retry',
     'chatRunOutcomeInterruptedTitle': 'chat.run.outcome.interrupted.title',
     'chatSelectModelTitle': 'chat.select.model.title',
     'chatSendFailed': 'chat.send.failed',
@@ -2746,7 +2743,6 @@ class L10nKeyResolver {
     'chat.run.outcome.failed.body': 'chatRunOutcomeFailedBody',
     'chat.run.outcome.failed.title': 'chatRunOutcomeFailedTitle',
     'chat.run.outcome.interrupted.body': 'chatRunOutcomeInterruptedBody',
-    'chat.run.outcome.interrupted.retry': 'chatRunOutcomeInterruptedRetry',
     'chat.run.outcome.interrupted.title': 'chatRunOutcomeInterruptedTitle',
     'chat.select.model.title': 'chatSelectModelTitle',
     'chat.send.failed': 'chatSendFailed',
@@ -3625,7 +3621,6 @@ abstract class L10nKeys {
   static const chatRunOutcomeFailedBody = 'chat.run.outcome.failed.body';
   static const chatRunOutcomeFailedTitle = 'chat.run.outcome.failed.title';
   static const chatRunOutcomeInterruptedBody = 'chat.run.outcome.interrupted.body';
-  static const chatRunOutcomeInterruptedRetry = 'chat.run.outcome.interrupted.retry';
   static const chatRunOutcomeInterruptedTitle = 'chat.run.outcome.interrupted.title';
   static const chatSelectModelTitle = 'chat.select.model.title';
   static const chatSendFailed = 'chat.send.failed';

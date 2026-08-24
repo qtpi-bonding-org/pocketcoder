@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 void main() {
   Widget wrap(Widget child) => MaterialApp(
@@ -28,7 +29,6 @@ void main() {
     bool isLoading = false,
     bool isRunning = false,
     void Function(String)? onSendPrompt,
-    VoidCallback? onRetry,
   }) =>
       wrap(ChatView(
         chatId: chatId,
@@ -41,7 +41,6 @@ void main() {
         config: null,
         onOpen: (_) {},
         onSendPrompt: onSendPrompt ?? (_) {},
-        onRetry: onRetry ?? () {},
         onCancel: () {},
         onSelectMode: (_) {},
         onSetOption: (_) {},
@@ -91,16 +90,10 @@ void main() {
         greaterThan(tester.getTopLeft(find.text('a response')).dy));
   });
 
-  testWidgets('shows interrupted outcome and retries the last prompt',
+  testWidgets('interrupted outcome transition shows a VimToast',
       (tester) async {
-    var retried = false;
-    final conversation = ag_ui_widgets.Conversation(
-      sessionState: const ag_ui_widgets.SessionState(
-        runOutcome: ag_ui_widgets.RunOutcome.interrupted,
-      ),
-    );
-
-    await tester.pumpWidget(wrap(ChatView(
+    final conversation = ag_ui_widgets.Conversation();
+    Widget build(bool interrupted) => wrap(ChatView(
       chatId: 'chat-1',
       conversation: conversation,
       title: 'CHAT',
@@ -111,21 +104,51 @@ void main() {
       config: null,
       onOpen: (_) {},
       onSendPrompt: (_) {},
-      onRetry: () => retried = true,
       onCancel: () {},
       onSelectMode: (_) {},
       onSetOption: (_) {},
       onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
       onElicitationRespond: (_, __) {},
       onFiles: () {},
-    )));
+    ));
+    await tester.pumpWidget(build(false));
     await tester.pumpAndSettle();
+    await tester.pumpWidget(wrap(ChatView(
+      chatId: 'chat-1',
+      conversation: ag_ui_widgets.Conversation(
+        sessionState: const ag_ui_widgets.SessionState(
+          runOutcome: ag_ui_widgets.RunOutcome.interrupted,
+        ),
+      ),
+      title: 'CHAT', isLoading: false, isRunning: false,
+      requiresProviderReauthentication: false, modes: null, config: null,
+      onOpen: (_) {}, onSendPrompt: (_) {}, onCancel: () {},
+      onSelectMode: (_) {}, onSetOption: (_) {},
+      onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+      onElicitationRespond: (_, __) {}, onFiles: () {},
+    )));
+    await tester.pump();
+    expect(find.byType(VimToast), findsOneWidget);
+    expect(find.textContaining('RUN INTERRUPTED'), findsOneWidget);
+  });
 
-    expect(find.text('RUN INTERRUPTED'), findsOneWidget);
-    expect(find.text('The connection ended before the run finished.'),
-        findsOneWidget);
-    await tester.tap(find.text('RETRY'));
-    expect(retried, isTrue);
+  testWidgets('reauth-required transition shows a VimToast, not an inline banner',
+      (tester) async {
+    final conversation = ag_ui_widgets.Conversation();
+    Widget build(bool requiresReauth) => wrap(ChatView(
+          chatId: 'chat-1', conversation: conversation, title: 'CHAT',
+          isLoading: false, isRunning: false,
+          requiresProviderReauthentication: requiresReauth,
+          modes: null, config: null, onOpen: (_) {}, onSendPrompt: (_) {},
+          onCancel: () {}, onSelectMode: (_) {}, onSetOption: (_) {},
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {}, onFiles: () {},
+        ));
+    await tester.pumpWidget(build(false));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(build(true));
+    await tester.pump();
+    expect(find.byType(VimToast), findsOneWidget);
   });
 
   testWidgets('haptics once when a run completes', (tester) async {
@@ -154,7 +177,6 @@ void main() {
           config: null,
           onOpen: (_) {},
           onSendPrompt: (_) {},
-          onRetry: () {},
           onCancel: () {},
           onSelectMode: (_) {},
           onSetOption: (_) {},

@@ -75,6 +75,14 @@ class PocketCoderShell extends StatelessWidget {
       actions: footerActions.isNotEmpty ? footerActions : null,
       body: Column(
         children: [
+          // This is the banner slot from the page-scaffold spec (see
+          // docs/superpowers/specs/2026-08-23-page-scaffold.md §2, §3):
+          // persistent, app-level, dismissible notices only. It is
+          // deliberately NOT exposed as a per-screen constructor parameter
+          // -- ReleaseStatusBanner is the only thing that has ever earned
+          // this slot. A screen-local, transient notice (an error, a
+          // status change, a one-off announcement) belongs in VimToast
+          // (lib/presentation/core/widgets/vim_toast.dart), not here.
           ReleaseStatusBanner(
             state: releaseState,
             onDismiss: onDismiss ?? () {},

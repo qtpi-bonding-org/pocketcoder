@@ -62,7 +62,6 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                 controls.open(id);
               },
               onSendPrompt: chatCubit.sendPrompt,
-              onRetry: chatCubit.retryLastPrompt,
               onCancel: chatCubit.cancel,
               onSelectMode: controls.selectMode,
               onSetOption: controls.setOption,
