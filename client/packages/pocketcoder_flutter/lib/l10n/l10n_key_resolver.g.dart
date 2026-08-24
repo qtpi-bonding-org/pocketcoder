@@ -1,6 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-24T00:45:24.583803
 
 import 'app_localizations.dart';
 
@@ -182,6 +181,7 @@ class L10nKeyResolver {
       'deployment.distribution' => _l10n.deploymentDistribution,
       'deployment.error.code' => _l10n.deploymentErrorCode,
       'deployment.failed' => _l10n.deploymentFailed,
+      'deployment.fault.authentication.expired' => _l10n.deploymentFaultAuthenticationExpired,
       'deployment.fault.deployment.instance.not.found' => _l10n.deploymentFaultDeploymentInstanceNotFound,
       'deployment.fault.generic' => _l10n.deploymentFaultGeneric,
       'deployment.fault.provision.interrupted.no.resource' => _l10n.deploymentFaultProvisionInterruptedNoResource,
@@ -486,6 +486,7 @@ class L10nKeyResolver {
       'onboarding.poco.challenge.message' => _l10n.onboardingPocoChallengeMessage,
       'onboarding.poco.welcome' => _l10n.onboardingPocoWelcome,
       'onboarding.processing' => _l10n.onboardingProcessing,
+      'onboarding.provider.authorization.action' => _l10n.onboardingProviderAuthorizationAction,
       'onboarding.provider.authorization.cancelled' => _l10n.onboardingProviderAuthorizationCancelled,
       'onboarding.provider.authorization.error' => _l10n.onboardingProviderAuthorizationError,
       'onboarding.provider.authorization.failed' => _l10n.onboardingProviderAuthorizationFailed,
@@ -872,7 +873,6 @@ class L10nKeyResolver {
       'onboarding.os.debian.description' => _l10n.onboardingOsDebianDescription(args?['minutes'] as int? ?? 0),
       'onboarding.os.nixos.description' => _l10n.onboardingOsNixosDescription(args?['minutes'] as int? ?? 0),
       'onboarding.plan.poco' => _l10n.onboardingPlanPoco(args?['providerName'] as String? ?? ''),
-      'onboarding.provider.authorization.action' => _l10n.onboardingProviderAuthorizationAction(args?['providerName'] as String? ?? ''),
       'onboarding.review.poco' => _l10n.onboardingReviewPoco(args?['providerName'] as String? ?? ''),
       'onboarding.trial.poco' => _l10n.onboardingTrialPoco(args?['trialDuration'] as int? ?? 0),
       'permission.requesting.label' => _l10n.permissionRequestingLabel(args?['source'] as String? ?? ''),
@@ -1071,6 +1071,7 @@ class L10nKeyResolver {
     'deployment.distribution',
     'deployment.error.code',
     'deployment.failed',
+    'deployment.fault.authentication.expired',
     'deployment.fault.deployment.instance.not.found',
     'deployment.fault.detected',
     'deployment.fault.generic',
@@ -1947,6 +1948,7 @@ class L10nKeyResolver {
     'deploymentDistribution': 'deployment.distribution',
     'deploymentErrorCode': 'deployment.error.code',
     'deploymentFailed': 'deployment.failed',
+    'deploymentFaultAuthenticationExpired': 'deployment.fault.authentication.expired',
     'deploymentFaultDeploymentInstanceNotFound': 'deployment.fault.deployment.instance.not.found',
     'deploymentFaultDetected': 'deployment.fault.detected',
     'deploymentFaultGeneric': 'deployment.fault.generic',
@@ -2820,6 +2822,7 @@ class L10nKeyResolver {
     'deployment.distribution': 'deploymentDistribution',
     'deployment.error.code': 'deploymentErrorCode',
     'deployment.failed': 'deploymentFailed',
+    'deployment.fault.authentication.expired': 'deploymentFaultAuthenticationExpired',
     'deployment.fault.deployment.instance.not.found': 'deploymentFaultDeploymentInstanceNotFound',
     'deployment.fault.detected': 'deploymentFaultDetected',
     'deployment.fault.generic': 'deploymentFaultGeneric',
@@ -3700,6 +3703,7 @@ abstract class L10nKeys {
   static const deploymentDistribution = 'deployment.distribution';
   static const deploymentErrorCode = 'deployment.error.code';
   static const deploymentFailed = 'deployment.failed';
+  static const deploymentFaultAuthenticationExpired = 'deployment.fault.authentication.expired';
   static const deploymentFaultDeploymentInstanceNotFound = 'deployment.fault.deployment.instance.not.found';
   static (String, Map<String, dynamic>) deploymentFaultDetected(String error) => ('deployment.fault.detected', {'error': error});
   static const deploymentFaultGeneric = 'deployment.fault.generic';
@@ -4038,7 +4042,7 @@ abstract class L10nKeys {
   static const onboardingPocoChallengeMessage = 'onboarding.poco.challenge.message';
   static const onboardingPocoWelcome = 'onboarding.poco.welcome';
   static const onboardingProcessing = 'onboarding.processing';
-  static (String, Map<String, dynamic>) onboardingProviderAuthorizationAction(String providerName) => ('onboarding.provider.authorization.action', {'providerName': providerName});
+  static const onboardingProviderAuthorizationAction = 'onboarding.provider.authorization.action';
   static const onboardingProviderAuthorizationCancelled = 'onboarding.provider.authorization.cancelled';
   static const onboardingProviderAuthorizationError = 'onboarding.provider.authorization.error';
   static const onboardingProviderAuthorizationFailed = 'onboarding.provider.authorization.failed';
