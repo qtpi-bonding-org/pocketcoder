@@ -78,14 +78,18 @@ class BiosActionButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                action.label.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: fgColor,
-                  fontSize: AppSizes.fontMini,
-                  fontWeight: AppFonts.heavy,
-                  letterSpacing: 2,
+              Flexible(
+                child: Text(
+                  action.label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppFonts.bodyFamily,
+                    color: fgColor,
+                    fontSize: AppSizes.fontMini,
+                    fontWeight: AppFonts.heavy,
+                    letterSpacing: 2,
+                  ),
                 ),
               ),
               if (action.hasBadge) ...[
