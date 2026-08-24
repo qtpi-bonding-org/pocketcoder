@@ -4,8 +4,7 @@ import 'package:pocketcoder_flutter/application/server_control/server_control_cu
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 class ServerControlView extends StatelessWidget {
@@ -20,14 +19,10 @@ class ServerControlView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<ServerControlCubit>();
     return BlocBuilder<ServerControlCubit, ServerControlState>(
-      builder: (context, state) => TerminalScaffold(
+      builder: (context, state) => PocketCoderShell(
         title: 'SERVER CONTROLS',
-        actions: [
-          TerminalAction(
-            label: 'BACK',
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-        ],
+        activePillar: NavPillar.configure,
+        showBack: true,
         body: ListView(
           children: [
             _ReleaseLine(state: state),
