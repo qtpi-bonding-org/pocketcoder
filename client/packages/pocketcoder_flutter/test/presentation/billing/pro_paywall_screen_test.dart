@@ -93,7 +93,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TerminalFooter), findsOneWidget);
-    expect(find.text('NOT NOW'), findsOneWidget);
+    expect(find.text('SKIP'), findsOneWidget);
     expect(find.text('CHATS'), findsNothing);
     expect(find.text('MONITOR'), findsNothing);
     expect(find.text('CONFIGURE'), findsNothing);

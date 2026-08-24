@@ -98,8 +98,8 @@ void main() {
     expect(find.text('SELF-HOST SETUP'), findsOneWidget);
     expect(find.text('A LINUX SERVER OR VPS YOU CONTROL'), findsOneWidget);
     expect(find.text('DOCKER COMPOSE V2'), findsOneWidget);
-    expect(find.text('OPEN SETUP GUIDE'), findsOneWidget);
-    expect(find.text('CONNECT TO MY SERVER'), findsOneWidget);
+    expect(find.text('GUIDE'), findsOneWidget);
+    expect(find.text('CONNECT'), findsOneWidget);
   });
 
   testWidgets('login adapter renders the challenge and form without a server',

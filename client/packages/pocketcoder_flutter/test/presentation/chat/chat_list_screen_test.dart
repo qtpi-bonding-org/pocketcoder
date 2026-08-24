@@ -112,7 +112,7 @@ void main() {
     await tester.pumpWidget(_wrap(cubit, providerRepo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('+ NEW CHAT'));
+    await tester.tap(find.text('NEW'));
     await tester.pumpAndSettle();
 
     expect(find.byType(NewChatDialog), findsOneWidget);

@@ -14,7 +14,8 @@ void main() {
       );
 
   testWidgets(
-      'contextual actions render leftmost in the footer, ahead of back and nav',
+      'BACK renders leftmost in the footer, ahead of contextual actions; '
+      'nav pillars are hidden on a showBack sub-screen by default',
       (tester) async {
     await tester.pumpWidget(wrap(PocketCoderShell(
       title: 'CHAT',
@@ -30,11 +31,10 @@ void main() {
         .map((t) => t.data)
         .toList();
 
-    final files = labels.indexOf('FILES');
     final back = labels.indexOf('BACK');
-    final chats = labels.indexOf('CHATS');
-    expect(files, greaterThanOrEqualTo(0));
-    expect(files, lessThan(back));
-    expect(back, lessThan(chats));
+    final files = labels.indexOf('FILES');
+    expect(back, 0);
+    expect(files, greaterThan(back));
+    expect(labels, isNot(contains('CHATS')));
   });
 }
