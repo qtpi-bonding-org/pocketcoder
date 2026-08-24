@@ -119,7 +119,6 @@ flutter:
     - assets/pb_schema.json
     - assets/boot_log.txt
     - assets/deployment/Caddyfile.template
-    - assets/deployment/standard_linux_bootstrap.sh
 
   fonts:
     - family: Share Tech Mono
