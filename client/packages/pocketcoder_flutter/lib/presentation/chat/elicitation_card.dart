@@ -78,7 +78,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
     Map<String, dynamic>? properties,
   ) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
 
     final elicitationId = widget.item.requestId;
     final fields = properties?.entries.toList() ?? const [];
@@ -170,7 +169,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
                 child: TerminalButton(
                   label: context.l10n.actionCancel,
                   isPrimary: false,
-                  color: terminalColors.danger,
                   onTap: () => _submit(context, ElicitationResponse.cancel()),
                 ),
               ),
@@ -179,7 +177,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
                 child: TerminalButton(
                   label: context.l10n.chatDecline,
                   isPrimary: false,
-                  color: terminalColors.danger,
                   onTap: () => _submit(context, ElicitationResponse.decline()),
                 ),
               ),
