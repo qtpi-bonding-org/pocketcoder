@@ -65,9 +65,9 @@ StackedChatBuilders pocketcoderChatBuilders(
     roleHeaderBuilder: pocketcoderRoleHeader,
     padding: EdgeInsets.symmetric(
         horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
-    cardBorderColor: terminalColors.attention.withValues(alpha: 0.3),
-    diffAddedColor: terminalColors.attention,
-    diffRemovedColor: terminalColors.danger,
+    cardBorderColor: colors.secondary.withValues(alpha: 0.3),
+    diffAddedColor: colors.secondary,
+    diffRemovedColor: terminalColors.warning,
   );
 
   final callbacks = ChatActionCallbacks(
@@ -132,14 +132,13 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         if (isSentByMe) {
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
-            showUserBorder: false,
             child: TerminalTranscriptLine(
               prefix: 'root@device \$ ',
-              color: context.terminalColors.attention,
+              color: selectable(context.colorScheme.secondary, selected: true).text,
               child: Text(
                 message.text,
                 style: TextStyle(
-                  color: context.terminalColors.attention,
+                  color: selectable(context.colorScheme.secondary, selected: true).text,
                   fontFamily: AppFonts.bodyFamily,
                   package: 'pocketcoder_flutter',
                   fontSize: AppSizes.fontStandard,
@@ -175,7 +174,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           showTime: false,
           showStatus: false,
           sentTextStyle: style.textStyle.copyWith(
-            color: context.terminalColors.attention,
+            color: selectable(context.colorScheme.secondary, selected: true).text,
             fontWeight: AppFonts.medium,
           ),
           receivedTextStyle: style.textStyle,
@@ -183,10 +182,9 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         if (isSentByMe) {
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
-            showUserBorder: false,
             child: TerminalTranscriptLine(
               prefix: 'root@device \$ ',
-              color: context.terminalColors.attention,
+              color: selectable(context.colorScheme.secondary, selected: true).text,
               child: child,
             ),
           );

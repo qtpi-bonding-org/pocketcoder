@@ -63,7 +63,7 @@ class SkillsView extends StatelessWidget {
     if (data.error != null) {
       return Center(
         child: Text(context.l10n.homeErrorPrefix(data.error.toString()),
-            style: TextStyle(color: colors.error)),
+            style: TextStyle(color: context.terminalColors.warning)),
       );
     }
 
@@ -126,7 +126,7 @@ class SkillsView extends StatelessWidget {
                 Expanded(
                   child: TerminalButton(
                     label: context.l10n.skillsDeleteButton,
-                    color: context.colorScheme.error,
+                    color: context.terminalColors.warning,
                     onTap: () => onDelete(skill.id),
                   ),
                 ),

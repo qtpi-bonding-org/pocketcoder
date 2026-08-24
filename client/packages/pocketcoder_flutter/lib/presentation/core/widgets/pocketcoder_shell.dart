@@ -15,7 +15,7 @@ enum NavPillar { chats, monitor, configure }
 /// Screens never touch [TerminalScaffold], [TerminalFooter], or nav logic
 /// directly. Instead they declare their title, active pillar, and body content.
 class PocketCoderShell extends StatelessWidget {
-  final String title;
+  final String? title;
   final NavPillar activePillar;
   final Widget body;
   final bool showBack;
@@ -23,9 +23,7 @@ class PocketCoderShell extends StatelessWidget {
   final bool showNavigation;
   final bool configureBadge;
   final EdgeInsets? padding;
-
-  /// Extra actions that intentionally belong in the compact header row.
-  final List<TerminalAction>? extraHeaderActions;
+  final List<TerminalAction>? actions;
 
   const PocketCoderShell({
     super.key,
@@ -37,12 +35,13 @@ class PocketCoderShell extends StatelessWidget {
     this.showNavigation = true,
     this.configureBadge = false,
     this.padding,
-    this.extraHeaderActions,
+    this.actions,
   });
 
   @override
   Widget build(BuildContext context) {
     final footerActions = <TerminalAction>[
+      ...?actions,
       if (showBack)
         TerminalAction(
           label: backLabel ?? context.l10n.actionBack,
@@ -73,10 +72,17 @@ class PocketCoderShell extends StatelessWidget {
     return TerminalScaffold(
       title: title,
       padding: padding,
-      headerActions: extraHeaderActions,
       actions: footerActions.isNotEmpty ? footerActions : null,
       body: Column(
         children: [
+          // This is the banner slot from the page-scaffold spec (see
+          // docs/superpowers/specs/2026-08-23-page-scaffold.md §2, §3):
+          // persistent, app-level, dismissible notices only. It is
+          // deliberately NOT exposed as a per-screen constructor parameter
+          // -- ReleaseStatusBanner is the only thing that has ever earned
+          // this slot. A screen-local, transient notice (an error, a
+          // status change, a one-off announcement) belongs in VimToast
+          // (lib/presentation/core/widgets/vim_toast.dart), not here.
           ReleaseStatusBanner(
             state: releaseState,
             onDismiss: onDismiss ?? () {},

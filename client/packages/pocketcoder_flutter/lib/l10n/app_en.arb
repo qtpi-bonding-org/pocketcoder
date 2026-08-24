@@ -181,7 +181,6 @@
   "chatNoFieldsRequested": "(no fields requested)",
   "chatRunOutcomeInterruptedTitle": "RUN INTERRUPTED",
   "chatRunOutcomeInterruptedBody": "The connection ended before the run finished.",
-  "chatRunOutcomeInterruptedRetry": "RETRY",
   "chatRunOutcomeCancelledTitle": "RUN STOPPED",
   "chatRunOutcomeCancelledBody": "The run was stopped.",
   "chatRunOutcomeFailedTitle": "RUN FAILED",

@@ -89,11 +89,8 @@ class TerminalConversationFrame extends StatelessWidget {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
     final isUser = speaker == TerminalConversationSpeaker.user;
-    final accent = isReasoning
-        ? terminalColors.warning
-        : isUser
-            ? terminalColors.user
-            : colors.primary;
+    final resolved = selectable(colors.secondary, selected: isUser);
+    final accent = isReasoning ? terminalColors.warning : resolved.text;
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,12 +108,7 @@ class TerminalConversationFrame extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
       padding: EdgeInsets.all(AppSizes.space),
       decoration: isUser && showUserBorder
-          ? BoxDecoration(
-              border: Border.all(
-                color: terminalColors.user.withValues(alpha: 0.45),
-              ),
-              color: colors.surfaceContainerHighest.withValues(alpha: 0.2),
-            )
+          ? BoxDecoration(color: resolved.fill)
           : null,
       child: content,
     );
@@ -180,7 +172,7 @@ class TerminalConversationTurn extends StatelessWidget {
       child: Text(
         '\$ $message',
         style: TextStyle(
-          color: context.terminalColors.user,
+          color: selectable(context.colorScheme.secondary, selected: true).text,
           fontFamily: AppFonts.bodyFamily,
           fontSize: AppSizes.fontStandard,
         ),

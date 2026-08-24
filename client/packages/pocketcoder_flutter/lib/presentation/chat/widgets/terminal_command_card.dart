@@ -70,7 +70,6 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
     final output =
         widget.output == null ? '' : _prettyOutput(widget.output ?? '');
     final diffOutput = widget.diffs
@@ -94,7 +93,7 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                 child: Text(
                   '\$ ${widget.command}',
                   style: TextStyle(
-                    color: terminalColors.attention,
+                    color: colors.secondary,
                     fontFamily: AppFonts.bodyFamily,
                     fontSize: AppSizes.fontSmall,
                     fontWeight: AppFonts.heavy,
@@ -117,7 +116,7 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                     Text(
                       _outputExpanded ? '▾' : '▸',
                       style: TextStyle(
-                        color: terminalColors.attention,
+                        color: colors.secondary,
                         fontFamily: AppFonts.bodyFamily,
                         fontSize: AppSizes.fontSmall,
                         fontWeight: AppFonts.heavy,

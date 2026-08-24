@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_i
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 import 'adapters/monitor_adapter.dart';
@@ -40,8 +41,6 @@ class MonitorView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, ObservabilityState state) {
-    final colors = context.colorScheme;
-
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppSizes.space),
       child: Column(
@@ -92,7 +91,7 @@ class MonitorView extends StatelessWidget {
             Center(
               child: TerminalText.label(
                 context.l10n.monitorTelemetryUnavailable,
-                color: colors.error,
+                color: context.terminalColors.warning,
               ),
             )
           else
@@ -108,24 +107,15 @@ class MonitorView extends StatelessWidget {
   }
 
   Widget _buildHealthStatus(BuildContext context, SystemStats stats) {
-    final colors = context.colorScheme;
     final isHealthy = stats.backendStatus.toLowerCase() == 'healthy' ||
         stats.backendStatus.toLowerCase() == 'ready';
 
     return BiosFrame(
       title: 'BACKEND',
-      child: Padding(
-        padding: EdgeInsets.all(AppSizes.space),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TerminalText.label('BACKEND STATUS'),
-            TerminalText.label(
-              '[ ${stats.backendStatus.toUpperCase()} ]',
-              color: isHealthy ? colors.primary : colors.error,
-            ),
-          ],
-        ),
+      child: BiosRow(
+        label: 'BACKEND STATUS',
+        value: '[ ${stats.backendStatus.toUpperCase()} ]',
+        isDestructive: !isHealthy,
       ),
     );
   }
@@ -152,28 +142,11 @@ class MonitorView extends StatelessWidget {
   }
 
   Widget _buildTokenUsage(BuildContext context, List<TokenUsage> usage) {
-    final colors = context.colorScheme;
     return Column(
       children: usage.map((entry) {
-        return Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: TerminalText(
-                  entry.model.toUpperCase(),
-                  weight: TerminalTextWeight.heavy,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              TerminalText(
-                _formatNumber(entry.tokens),
-                color: colors.primary,
-                weight: TerminalTextWeight.heavy,
-              ),
-            ],
-          ),
+        return BiosRow(
+          label: entry.model,
+          value: _formatNumber(entry.tokens),
         );
       }).toList(),
     );

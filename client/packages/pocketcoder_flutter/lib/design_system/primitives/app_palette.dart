@@ -12,9 +12,7 @@ class AppPalette {
       'neutral1': Color(0xFF003B00), // Trace Green (Subtle UI)
 
       // PocketCoder ANSI Accents
-      'userCyan': Color(0xFF00FFFF),
       'dangerRed': Color(0xFFFF3333),
-      'infoWhite': Color(0xFFE4E4E4),
       'warningAmber': Color(0xFFFFB100),
 
       // Interactable color
@@ -59,9 +57,7 @@ extension AppColors on IColorPalette {
   Color get primaryColor => phosphorGreen;
 
   // ANSI Accents
-  Color get userCyan => getColor('userCyan') ?? const Color(0xFF00FFFF);
   Color get dangerRed => getColor('dangerRed') ?? const Color(0xFFFF3333);
-  Color get infoWhite => getColor('infoWhite') ?? const Color(0xFFE4E4E4);
   Color get warningAmber => getColor('warningAmber') ?? const Color(0xFFFFB100);
 
   // Interactable

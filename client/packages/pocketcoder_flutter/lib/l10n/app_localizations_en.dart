@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -460,9 +461,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get chatRunOutcomeInterruptedBody =>
       'The connection ended before the run finished.';
-
-  @override
-  String get chatRunOutcomeInterruptedRetry => 'RETRY';
 
   @override
   String get chatRunOutcomeCancelledTitle => 'RUN STOPPED';
@@ -2851,7 +2849,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pocketCoderUpdateDataBoundary(
-      int currentVersion, int availableVersion) {
+    int currentVersion,
+    int availableVersion,
+  ) {
     return 'DATA VERSION $currentVersion → $availableVersion';
   }
 

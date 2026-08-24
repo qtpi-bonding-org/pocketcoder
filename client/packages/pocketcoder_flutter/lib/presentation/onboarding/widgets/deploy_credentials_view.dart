@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 
 class DeployCredentialsView extends StatefulWidget {
@@ -48,12 +48,12 @@ class _DeployCredentialsViewState extends State<DeployCredentialsView> {
   }
 
   @override
-  Widget build(BuildContext context) => TerminalScaffold(
+  Widget build(BuildContext context) => PocketCoderShell(
         title: context.l10n.onboardingDeployTitle,
+        activePillar: NavPillar.configure,
+        showBack: true,
+        showNavigation: false,
         actions: [
-          TerminalAction(
-              label: context.l10n.actionBack,
-              onTap: () => Navigator.of(context).maybePop()),
           TerminalAction(
               label: context.l10n.actionContinue,
               onTap: widget.isValid ? widget.onContinue : () {}),

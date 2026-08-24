@@ -153,7 +153,7 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
         Padding(
             padding: EdgeInsets.only(bottom: AppSizes.space),
             child: TerminalText(widget.error.toString(),
-                color: Theme.of(context).colorScheme.error, alpha: .9)),
+                color: context.terminalColors.warning, alpha: .9)),
       for (final h in harnesses)
         HarnessAuthCard(
             harness: h,
@@ -229,7 +229,7 @@ class HarnessAuthCard extends StatelessWidget {
                   when lastError.isNotEmpty) ...[
                 VSpace.x1,
                 TerminalText(lastError,
-                    color: Theme.of(context).colorScheme.error)
+                    color: context.terminalColors.warning)
               ],
               if (s.credentialMode.isNotEmpty) ...[
                 VSpace.x1,

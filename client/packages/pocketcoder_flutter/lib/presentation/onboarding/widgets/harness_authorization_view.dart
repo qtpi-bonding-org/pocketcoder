@@ -101,7 +101,7 @@ class _HarnessAuthorizationViewState extends State<HarnessAuthorizationView> {
                   VSpace.x2,
                   if (current.lastError case final error?) ...[
                     Text(error,
-                        style: TextStyle(color: context.colorScheme.error)),
+                        style: TextStyle(color: context.terminalColors.warning)),
                     VSpace.x2,
                   ],
                   if (current.isConnecting) ...[

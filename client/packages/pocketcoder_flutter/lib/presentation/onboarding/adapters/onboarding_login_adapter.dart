@@ -43,7 +43,6 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
         pocoMessage: _pocoMessage.value,
         pocoSequence: _pocoSequence.value,
         pocoHistory: _pocoHistory,
-        onBack: () => AppNavigation.back(context),
         onDeploy: () => context.pushNamed(RouteNames.onboardingWelcome),
         onLogin: (url, email, password) =>
             _login(context, url, email, password),
@@ -102,7 +101,7 @@ class OnboardingLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     } catch (_) {
       if (context.mounted) {
         VimToast.show(context, context.l10n.onboardingAccessDenied,
-            color: context.colorScheme.error);
+            color: context.terminalColors.warning);
       }
     }
   }

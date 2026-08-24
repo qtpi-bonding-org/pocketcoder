@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 
@@ -77,8 +78,6 @@ class ProviderView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, ProviderState state) {
-    final colors = context.colorScheme;
-
     if (state.isLoading &&
         state.harnessModels.isEmpty &&
         state.harnesses.isEmpty &&
@@ -99,7 +98,7 @@ class ProviderView extends StatelessWidget {
           context.l10n.providerScreenErrorPrefix(
             state.error?.toString() ?? context.l10n.errorGeneric,
           ),
-          color: colors.error,
+          color: context.terminalColors.warning,
           textAlign: TextAlign.center,
         ),
       );
@@ -165,8 +164,6 @@ class ProviderView extends StatelessWidget {
     ProviderState state,
     HarnessModel hm,
   ) {
-    final colors = context.colorScheme;
-
     String harnessName = hm.harness;
     for (final h in state.harnesses) {
       if (h.id == hm.harness) {
@@ -186,33 +183,10 @@ class ProviderView extends StatelessWidget {
 
     final isDefault = hm.isDefault ?? false;
 
-    return TerminalCard(
-      isActive: isDefault,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TerminalText(
-                  harnessName.toUpperCase(),
-                  weight: TerminalTextWeight.heavy,
-                ),
-                TerminalText.mini(
-                  modelName.toUpperCase(),
-                  alpha: 0.7,
-                ),
-              ],
-            ),
-          ),
-          if (isDefault)
-            TerminalText.label(
-              context.l10n.providerScreenDefaultBadge,
-              color: colors.primary,
-            ),
-        ],
-      ),
+    return BiosRow(
+      label: harnessName,
+      value: modelName,
+      hasBadge: isDefault,
     );
   }
 

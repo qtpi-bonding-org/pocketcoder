@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'adapters/agent_observability_adapter.dart';
 
@@ -144,37 +145,12 @@ class AgentObservabilityView extends StatelessWidget {
     String? current,
     ValueChanged<String?> onSelect,
   ) {
-    final colors = context.colorScheme;
     final isSelected = current == containerId;
-
-    return InkWell(
+    return BiosRow(
+      label: label,
+      value: containerId,
+      isSelected: isSelected,
       onTap: () => onSelect(isSelected ? null : containerId),
-      child: Container(
-        margin: EdgeInsets.only(bottom: AppSizes.space),
-        padding: EdgeInsets.all(AppSizes.space),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: isSelected
-                ? colors.primary
-                : colors.onSurface.withValues(alpha: 0.2),
-          ),
-          color: isSelected ? colors.primary.withValues(alpha: 0.1) : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TerminalText.label(
-              label.toUpperCase(),
-              color: isSelected ? colors.primary : null,
-            ),
-            TerminalText.mini(
-              containerId,
-              alpha: 0.5,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -210,7 +186,7 @@ class AgentObservabilityView extends StatelessWidget {
     final terminal = context.terminalColors;
     final upper = log.toUpperCase();
     if (upper.contains('ERR') || upper.contains('FAIL')) {
-      return terminal.danger;
+      return terminal.warning;
     }
     if (upper.contains('WARN')) return terminal.warning;
     if (upper.contains('INFO')) return colors.primary;

@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -39,7 +39,7 @@ class AgentConfigView extends StatelessWidget {
           context.l10n.agentConfigErrorPrefix(
             state.error?.toString() ?? context.l10n.errorGeneric,
           ),
-          color: context.colorScheme.error,
+          color: context.terminalColors.warning,
           textAlign: TextAlign.center,
         ),
       );
@@ -67,7 +67,7 @@ class AgentConfigView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final config = state.configs[index];
                     final isDefault = config.isDefault ?? false;
-                    return BiosListTile(
+                    return BiosRow(
                       label: config.name.toUpperCase(),
                       value: isDefault
                           ? context.l10n.agentConfigDefaultBadge
@@ -406,37 +406,11 @@ class _SelectionField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return InkWell(
+    return BiosRow(
+      label: label,
+      value: currentValue,
+      variant: BiosRowVariant.expand,
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TerminalText.tiny(label, color: colors.onSurface),
-          VSpace.x1,
-          Container(
-            padding: EdgeInsets.all(AppSizes.space),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: colors.onSurface.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: TerminalText(
-                    currentValue,
-                    color: colors.onSurface,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text('[v]', style: TextStyle(color: colors.onSurface)),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -469,7 +443,7 @@ Future<T?> _showListDialog<T extends Object>(
             : ListView(
                 children: [
                   for (final item in items)
-                    BiosListTile(
+                    BiosRow(
                       label: item.label,
                       isSelected:
                           initialValue != null && initialValue == item.id,

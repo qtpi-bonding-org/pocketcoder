@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_list_tile.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 
@@ -89,7 +89,7 @@ class SettingsView extends StatelessWidget {
               child: Column(
                 children: [
                   for (final item in section.$2)
-                    BiosListTile(
+                    BiosRow(
                       label: item.$1,
                       value: item.$2,
                       hasBadge: item.$3 == 'configureMcp' && hasPendingMcp,

@@ -21,14 +21,13 @@ class OnboardingSelfHostAdapter extends StatelessWidget {
       VimToast.show(
         context,
         context.l10n.errorCouldNotOpenBrowser,
-        color: context.colorScheme.error,
+        color: context.terminalColors.warning,
       );
     }
   }
 
   @override
   Widget build(BuildContext context) => OnboardingSelfHostView(
-        onBack: () => AppNavigation.back(context),
         onOpenGuide: () => _openGuide(context),
         onConnect: () => context.pushNamed(RouteNames.onboardingLogin),
       );

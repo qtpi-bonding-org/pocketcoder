@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 
 /// Stateful edit dialog body for a single [ProviderKey].
 ///
@@ -211,18 +212,11 @@ class ProviderHarnessPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TerminalText.tiny(
-          'HARNESS',
-          color: colors.onSurface,
-        ),
-        VSpace.x1,
-        InkWell(
-          onTap: () async {
+    return BiosRow(
+      label: 'HARNESS',
+      value: _currentValueLabel(context),
+      variant: BiosRowVariant.expand,
+      onTap: () async {
             final picked = await showDialog<Harnesse>(
               context: context,
               builder: (dialogContext) => TerminalDialog(
@@ -259,29 +253,6 @@ class ProviderHarnessPicker extends StatelessWidget {
             );
             if (picked != null) onSelected(picked);
           },
-          child: Container(
-            padding: EdgeInsets.all(AppSizes.space),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: colors.onSurface.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: TerminalText(
-                    _currentValueLabel(context),
-                    color: colors.onSurface,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text('[v]', style: TextStyle(color: colors.onSurface)),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 

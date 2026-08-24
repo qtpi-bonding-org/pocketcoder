@@ -15,6 +15,7 @@ import 'package:pocketcoder_flutter/presentation/chat/thinking_block.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 class ChatView extends StatefulWidget {
   const ChatView({
@@ -29,7 +30,6 @@ class ChatView extends StatefulWidget {
     required this.config,
     required this.onOpen,
     required this.onSendPrompt,
-    required this.onRetry,
     required this.onCancel,
     required this.onSelectMode,
     required this.onSetOption,
@@ -48,7 +48,6 @@ class ChatView extends StatefulWidget {
   final Map<String, dynamic>? config;
   final ValueChanged<String> onOpen;
   final ValueChanged<String> onSendPrompt;
-  final VoidCallback onRetry;
   final VoidCallback onCancel;
   final ValueChanged<String> onSelectMode;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
@@ -68,6 +67,7 @@ class _ChatViewState extends State<ChatView> {
   final _transcriptKey = GlobalKey<ag_ui_widgets.AgUiTranscriptState>();
   bool _opened = false;
   bool _sessionPanelExpanded = false;
+  bool _reauthAnnounced = false;
 
   @override
   void initState() {
@@ -84,6 +84,9 @@ class _ChatViewState extends State<ChatView> {
       return;
     }
     _provideRunCompletionHaptic(oldWidget);
+    if (!widget.requiresProviderReauthentication) _reauthAnnounced = false;
+    _announceReauthIfNeeded(oldWidget);
+    _announceRunOutcomeIfNeeded(oldWidget);
   }
 
   void _provideRunCompletionHaptic(ChatView oldWidget) {
@@ -97,6 +100,48 @@ class _ChatViewState extends State<ChatView> {
       ag_ui_widgets.RunOutcome.success => HapticFeedback.lightImpact(),
       _ => HapticFeedback.mediumImpact(),
     }));
+  }
+
+  void _announceReauthIfNeeded(ChatView oldWidget) {
+    if (oldWidget.requiresProviderReauthentication ||
+        !widget.requiresProviderReauthentication ||
+        _reauthAnnounced) {
+      return;
+    }
+    _reauthAnnounced = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      VimToast.show(
+        context,
+        context.l10n.providerReauthenticationRequired,
+        color: context.terminalColors.warning,
+      );
+    });
+  }
+
+  void _announceRunOutcomeIfNeeded(ChatView oldWidget) {
+    final outcome = widget.conversation.sessionState.runOutcome;
+    if (outcome == null || outcome == ag_ui_widgets.RunOutcome.success) return;
+    if (oldWidget.conversation.sessionState.runOutcome == outcome) return;
+
+    final (title, body) = switch (outcome) {
+      ag_ui_widgets.RunOutcome.interrupted => (
+          context.l10n.chatRunOutcomeInterruptedTitle,
+          context.l10n.chatRunOutcomeInterruptedBody,
+        ),
+      ag_ui_widgets.RunOutcome.cancelled => (
+          context.l10n.chatRunOutcomeCancelledTitle,
+          context.l10n.chatRunOutcomeCancelledBody,
+        ),
+      ag_ui_widgets.RunOutcome.failed => (
+          context.l10n.chatRunOutcomeFailedTitle,
+          context.l10n.chatRunOutcomeFailedBody,
+        ),
+      ag_ui_widgets.RunOutcome.success => ('', ''),
+    };
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) VimToast.show(context, '$title: $body');
+    });
   }
 
   void _openIfNeeded() {
@@ -140,56 +185,8 @@ class _ChatViewState extends State<ChatView> {
     _inputController.clear();
   }
 
-  Widget? _runOutcomeBanner(BuildContext context) {
-    final outcome = widget.conversation.sessionState.runOutcome;
-    final banner = switch (outcome) {
-      ag_ui_widgets.RunOutcome.interrupted => (
-          context.l10n.chatRunOutcomeInterruptedTitle,
-          context.l10n.chatRunOutcomeInterruptedBody,
-          true,
-        ),
-      ag_ui_widgets.RunOutcome.cancelled => (
-          context.l10n.chatRunOutcomeCancelledTitle,
-          context.l10n.chatRunOutcomeCancelledBody,
-          false,
-        ),
-      ag_ui_widgets.RunOutcome.failed => (
-          context.l10n.chatRunOutcomeFailedTitle,
-          context.l10n.chatRunOutcomeFailedBody,
-          false,
-        ),
-      null || ag_ui_widgets.RunOutcome.success => null,
-    };
-    if (banner == null) return null;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: context.colorScheme.surfaceContainerHighest,
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(banner.$1,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(banner.$2),
-              ],
-            ),
-          ),
-          if (banner.$3)
-            TextButton(
-              onPressed: widget.onRetry,
-              child: Text(context.l10n.chatRunOutcomeInterruptedRetry),
-            ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final outcomeBanner = _runOutcomeBanner(context);
     final builders = pocketcoderChatBuilders(
       context,
       latestReasoningId: _latestReasoningId(widget.conversation.timeline),
@@ -200,7 +197,7 @@ class _ChatViewState extends State<ChatView> {
       title: widget.title,
       activePillar: NavPillar.chats,
       showBack: true,
-      extraHeaderActions: [
+      actions: [
         TerminalAction(
             label: context.l10n.chatFilesAction, onTap: widget.onFiles),
         TerminalAction(
@@ -216,16 +213,6 @@ class _ChatViewState extends State<ChatView> {
       padding: EdgeInsets.zero,
       body: Column(
         children: [
-          if (widget.requiresProviderReauthentication)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: context.colorScheme.errorContainer,
-              child: Text(
-                context.l10n.providerReauthenticationRequired,
-                style: TextStyle(color: context.colorScheme.onErrorContainer),
-              ),
-            ),
           if (_sessionPanelExpanded) ...[
             PlanPanel(plan: widget.conversation.sessionState.plan),
             ModeSwitcher(
@@ -236,7 +223,6 @@ class _ChatViewState extends State<ChatView> {
           Expanded(
             child: Column(
               children: [
-                if (outcomeBanner != null) outcomeBanner,
                 if (widget.isLoading &&
                     _latestReasoningId(widget.conversation.timeline) == null)
                   const Center(

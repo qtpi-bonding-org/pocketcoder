@@ -48,7 +48,7 @@ class HarnessChoiceView extends StatelessWidget {
       return Center(
         child: TerminalText(
           context.l10n.errorGeneric,
-          color: context.colorScheme.error,
+          color: context.terminalColors.warning,
           textAlign: TextAlign.center,
         ),
       );

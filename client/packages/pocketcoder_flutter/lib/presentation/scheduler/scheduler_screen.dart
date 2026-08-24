@@ -4,15 +4,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
 import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
+
 import 'adapters/scheduler_adapter.dart';
 
 class SchedulerScreen extends StatelessWidget {
@@ -46,13 +49,15 @@ class SchedulerView extends StatelessWidget {
   final ValueChanged<String> onRunNow;
   final ValueChanged<String> onDelete;
   final Future<void> Function({required String id, required String displayName})
-      onRename;
+  onRename;
   final Future<void> Function({required String id, required String cron})
-      onUpdateCron;
-  final Future<void> Function(
-      {required String displayName,
-      required String cron,
-      required String prompt}) onCreate;
+  onUpdateCron;
+  final Future<void> Function({
+    required String displayName,
+    required String cron,
+    required String prompt,
+  })
+  onCreate;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +69,6 @@ class SchedulerView extends StatelessWidget {
         title: context.l10n.schedulerRegistryTitle,
         child: Builder(
           builder: (context) {
-            final colors = context.colorScheme;
             if (state.status == UiFlowStatus.loading) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -72,7 +76,7 @@ class SchedulerView extends StatelessWidget {
               return Center(
                 child: Text(
                   'ERROR: ${state.error}',
-                  style: TextStyle(color: colors.error),
+                  style: TextStyle(color: context.terminalColors.warning),
                 ),
               );
             }
@@ -110,68 +114,36 @@ class SchedulerView extends StatelessWidget {
   }
 
   Widget _buildScheduleItem(BuildContext context, ScheduleOwner schedule) {
-    return TerminalCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: TerminalText(
-                  schedule.displayName.toUpperCase(),
-                  weight: TerminalTextWeight.heavy,
-                ),
-              ),
-              if (schedule.paused ?? false)
-                TerminalText.mini(context.l10n.schedulerPausedBadge,
-                    alpha: 0.5),
-            ],
+    final paused = schedule.paused ?? false;
+    return BiosCard(
+      header: [
+        BiosRow(
+          label: schedule.displayName,
+          value: schedule.cron ?? '',
+          hasBadge: paused,
+        ),
+      ],
+      footer: BiosActionStrip(
+        actions: [
+          BiosActionStripItem(
+            label: paused
+                ? context.l10n.schedulerResumeButton
+                : context.l10n.schedulerPauseButton,
+            onTap: () => paused ? onUnpause(schedule.id) : onPause(schedule.id),
           ),
-          VSpace.x1,
-          TerminalText.mini(schedule.cron ?? '', alpha: 0.6),
-          VSpace.x1,
-          Row(
-            children: [
-              Expanded(
-                child: TerminalButton(
-                  label: (schedule.paused ?? false)
-                      ? context.l10n.schedulerResumeButton
-                      : context.l10n.schedulerPauseButton,
-                  isPrimary: false,
-                  onTap: () => (schedule.paused ?? false)
-                      ? onUnpause(schedule.id)
-                      : onPause(schedule.id),
-                ),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.schedulerRunNowButton,
-                  isPrimary: false,
-                  onTap: () => onRunNow(schedule.id),
-                ),
-              ),
-            ],
+          BiosActionStripItem(
+            label: context.l10n.schedulerRunNowButton,
+            onTap: () => onRunNow(schedule.id),
           ),
-          VSpace.x1,
-          Row(
-            children: [
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.schedulerEditButton,
-                  isPrimary: false,
-                  onTap: () => _showEditScheduleDialog(context, schedule),
-                ),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.schedulerDeleteButton,
-                  color: context.colorScheme.error,
-                  onTap: () => onDelete(schedule.id),
-                ),
-              ),
-            ],
+          BiosActionStripItem(
+            label: context.l10n.schedulerEditButton,
+            onTap: () => _showEditScheduleDialog(context, schedule),
+          ),
+          BiosActionStripItem(
+            label: context.l10n.schedulerDeleteButton,
+            // Schedules can be recreated, so deletion is warning-level here.
+            color: context.terminalColors.warning,
+            onTap: () => onDelete(schedule.id),
           ),
         ],
       ),
@@ -186,8 +158,9 @@ class SchedulerView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: context.l10n
-            .schedulerEditDialogTitle(schedule.displayName.toUpperCase()),
+        title: context.l10n.schedulerEditDialogTitle(
+          schedule.displayName.toUpperCase(),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,8 +184,9 @@ class SchedulerView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.onSurface,
               side: BorderSide(color: colors.onSurface.withValues(alpha: 0.3)),
-              shape:
-                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
             ),
             child: Text(context.l10n.actionCancel),
           ),
@@ -235,8 +209,9 @@ class SchedulerView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.primary,
               side: BorderSide(color: colors.primary),
-              shape:
-                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
             ),
             child: Text(context.l10n.schedulerSaveButton),
           ),
@@ -285,8 +260,9 @@ class SchedulerView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.onSurface,
               side: BorderSide(color: colors.onSurface.withValues(alpha: 0.3)),
-              shape:
-                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
             ),
             child: Text(context.l10n.actionCancel),
           ),
@@ -305,8 +281,9 @@ class SchedulerView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.primary,
               side: BorderSide(color: colors.primary),
-              shape:
-                  const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
             ),
             child: Text(context.l10n.actionAdd),
           ),

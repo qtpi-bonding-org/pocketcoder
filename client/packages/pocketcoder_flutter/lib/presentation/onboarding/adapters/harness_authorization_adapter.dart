@@ -70,7 +70,7 @@ class HarnessAuthorizationAdapter
           VimToast.show(
             listenerContext,
             listenerContext.l10n.onboardingOpenChatFailed,
-            color: listenerContext.colorScheme.error,
+            color: listenerContext.terminalColors.warning,
           );
         }
       }
@@ -135,7 +135,7 @@ class HarnessAuthorizationAdapter
                 VimToast.show(
                   context,
                   context.l10n.errorCouldNotOpenBrowser,
-                  color: context.colorScheme.error,
+                  color: context.terminalColors.warning,
                 );
               }
             },

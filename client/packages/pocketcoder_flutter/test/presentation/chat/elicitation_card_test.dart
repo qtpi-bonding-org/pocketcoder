@@ -220,5 +220,22 @@ void main() {
         expect(find.text('blue'), findsNothing);
       },
     );
+
+    testWidgets('uses phosphor form chrome and does not use danger for cancel',
+        (tester) async {
+      await tester.pumpWidget(_wrap(
+        ElicitationCard(
+          item: item,
+          onRespond: (_, __) {},
+        ),
+      ));
+      await _settle(tester);
+
+      final form = tester.widget<Text>(find.text('FORM'));
+      expect(form.style?.color, const Color(0xFF00B82A));
+
+      final cancel = tester.widget<Text>(find.text('CANCEL'));
+      expect(cancel.style?.color, isNot(const Color(0xFFFF3333)));
+    });
   });
 }
