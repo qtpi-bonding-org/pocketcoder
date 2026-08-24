@@ -189,14 +189,23 @@ class TerminalPromptSuggestion extends StatelessWidget {
     super.key,
     required this.label,
     required this.onSelected,
+    this.emphasis,
   });
 
   final String label;
   final VoidCallback onSelected;
 
+  /// When set, routes the border/text color through emphasize() instead
+  /// of the default alpha-0.3 border. See the emphasis-states spec
+  /// (2026-08-23).
+  final Emphasis? emphasis;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final resolved = emphasis == null ? null : emphasize(colors.primary, emphasis!);
+    final borderColor = resolved?.border ?? colors.primary.withValues(alpha: 0.3);
+    final textColor = resolved?.text ?? colors.primary;
     return SizedBox(
       width: double.infinity,
       child: TextButton(
@@ -208,16 +217,14 @@ class TerminalPromptSuggestion extends StatelessWidget {
             vertical: AppSizes.space,
           ),
           shape: RoundedRectangleBorder(
-            side: BorderSide(
-              color: colors.primary.withValues(alpha: 0.3),
-            ),
+            side: BorderSide(color: borderColor),
             borderRadius: BorderRadius.zero,
           ),
         ),
         child: Text(
           '> ${label.toUpperCase()}',
           style: TextStyle(
-            color: colors.primary,
+            color: textColor,
             fontFamily: AppFonts.bodyFamily,
             fontSize: AppSizes.fontTiny,
             fontWeight: AppFonts.heavy,

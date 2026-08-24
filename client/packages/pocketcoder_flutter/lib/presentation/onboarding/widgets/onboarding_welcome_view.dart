@@ -38,6 +38,7 @@ class OnboardingWelcomeView extends StatelessWidget {
                     TerminalPromptSuggestion(
                       label: context.l10n.onboardingWelcomeActionGuided,
                       onSelected: onGuidedSetup,
+                      emphasis: Emphasis.outlined,
                     ),
                     VSpace.x1,
                   ],

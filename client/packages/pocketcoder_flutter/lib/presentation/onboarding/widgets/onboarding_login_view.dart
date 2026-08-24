@@ -71,6 +71,7 @@ class _OnboardingLoginViewState extends State<OnboardingLoginView> {
               ? context.l10n.onboardingServerConnecting
               : context.l10n.onboardingLogin,
           onTap: loading ? () {} : _login,
+          emphasis: Emphasis.outlined,
         ),
       ],
       body: Center(
