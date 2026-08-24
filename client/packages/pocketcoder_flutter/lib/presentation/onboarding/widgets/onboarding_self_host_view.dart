@@ -21,7 +21,6 @@ class OnboardingSelfHostView extends StatelessWidget {
         title: context.l10n.onboardingSelfHostTitle,
         activePillar: NavPillar.configure,
         showBack: true,
-        showNavigation: false,
         actions: [
           TerminalAction(
             label: context.l10n.onboardingSelfHostActionGuide,

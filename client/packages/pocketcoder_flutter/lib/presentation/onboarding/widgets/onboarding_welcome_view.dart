@@ -20,7 +20,6 @@ class OnboardingWelcomeView extends StatelessWidget {
         title: context.l10n.onboardingWelcomeTitle,
         activePillar: NavPillar.configure,
         showBack: true,
-        showNavigation: false,
         body: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),

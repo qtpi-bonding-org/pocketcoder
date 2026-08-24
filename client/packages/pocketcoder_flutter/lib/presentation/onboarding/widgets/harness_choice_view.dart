@@ -32,7 +32,6 @@ class HarnessChoiceView extends StatelessWidget {
       title: context.l10n.onboardingChooseHarnessTitle,
       activePillar: NavPillar.configure,
       showBack: true,
-      showNavigation: false,
       body: _buildBody(context, supported),
     );
   }

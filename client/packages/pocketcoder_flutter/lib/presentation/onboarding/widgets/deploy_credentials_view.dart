@@ -52,7 +52,6 @@ class _DeployCredentialsViewState extends State<DeployCredentialsView> {
         title: context.l10n.onboardingDeployTitle,
         activePillar: NavPillar.configure,
         showBack: true,
-        showNavigation: false,
         actions: [
           TerminalAction(
               label: context.l10n.actionContinue,

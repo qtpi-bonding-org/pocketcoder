@@ -64,7 +64,6 @@ class _OnboardingLoginViewState extends State<OnboardingLoginView> {
       title: context.l10n.onboardingServerLoginTitle,
       activePillar: NavPillar.configure,
       showBack: true,
-      showNavigation: false,
       actions: [
         TerminalAction(
           label: loading
