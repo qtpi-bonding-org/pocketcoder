@@ -30,6 +30,7 @@ class OnboardingSelfHostView extends StatelessWidget {
           TerminalAction(
             label: context.l10n.onboardingSelfHostActionConnect,
             onTap: onConnect,
+            emphasis: Emphasis.outlined,
           ),
         ],
         body: Center(

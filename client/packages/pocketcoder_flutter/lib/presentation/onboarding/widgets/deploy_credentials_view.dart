@@ -56,7 +56,8 @@ class _DeployCredentialsViewState extends State<DeployCredentialsView> {
         actions: [
           TerminalAction(
               label: context.l10n.actionContinue,
-              onTap: widget.isValid ? widget.onContinue : () {}),
+              onTap: widget.isValid ? widget.onContinue : () {},
+              emphasis: widget.isValid ? Emphasis.outlined : null),
         ],
         body: Center(
           child: ConstrainedBox(

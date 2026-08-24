@@ -32,6 +32,7 @@ class ChatListView extends StatelessWidget {
         TerminalAction(
           label: context.l10n.chatListNewChat,
           onTap: onNewChat,
+          emphasis: Emphasis.outlined,
         ),
       ],
       body: state.chats.isEmpty

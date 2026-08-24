@@ -340,7 +340,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatTerminalAction => 'TERMINAL';
 
   @override
-  String get chatListNewChat => '+ NEW CHAT';
+  String get chatListNewChat => 'NEW';
 
   @override
   String get chatListNoMessages => 'No messages yet';
@@ -1256,7 +1256,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proRestore => 'RESTORE PURCHASES';
 
   @override
-  String get proNotNow => 'NOT NOW';
+  String get proNotNow => 'SKIP';
 
   @override
   String proTerms(String price) {
@@ -1408,7 +1408,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentActionAbort => 'ABORT';
 
   @override
-  String get deploymentActionRetryScan => 'RETRY SCAN';
+  String get deploymentActionRetryScan => 'RETRY';
 
   @override
   String get deploymentUnknown => 'UNKNOWN';
@@ -1450,6 +1450,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deploymentFaultResourceAlreadyExists =>
       'A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.';
+
+  @override
+  String get deploymentFaultAuthenticationExpired =>
+      'Your Linode connection has expired or was revoked. Reconnect your account, then restart the deployment.';
 
   @override
   String deploymentFaultMaxRetriesExceeded(int maxAttempts) {
@@ -1592,7 +1596,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentMetadataRegistry => 'METADATA REGISTRY';
 
   @override
-  String get deploymentActionLoginNow => 'LOG IN NOW';
+  String get deploymentActionLoginNow => 'LOGIN';
 
   @override
   String get deploymentActionRefresh => 'REFRESH';
@@ -1651,7 +1655,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentActionDeployInstance => 'DEPLOY INSTANCE';
 
   @override
-  String get deploymentActionProvisionServer => 'PROVISION SERVER';
+  String get deploymentActionProvisionServer => 'DEPLOY';
 
   @override
   String get deploymentSystemParameters => 'SYSTEM PARAMETERS';
@@ -2099,10 +2103,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSelfHostRequirementAccess => 'SSH ACCESS TO THE SERVER';
 
   @override
-  String get onboardingSelfHostActionGuide => 'OPEN SETUP GUIDE';
+  String get onboardingSelfHostActionGuide => 'GUIDE';
 
   @override
-  String get onboardingSelfHostActionConnect => 'CONNECT TO MY SERVER';
+  String get onboardingSelfHostActionConnect => 'CONNECT';
 
   @override
   String get onboardingSignInPoco =>
@@ -2151,13 +2155,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'CONNECT YOUR SERVER PROVIDER';
 
   @override
-  String onboardingProviderAuthorizationAction(String providerName) {
-    return 'CONTINUE WITH $providerName';
-  }
+  String get onboardingProviderAuthorizationAction => 'CONTINUE';
 
   @override
-  String get onboardingProviderAuthorizationWaiting =>
-      'WAITING FOR PROVIDER SIGN-IN';
+  String get onboardingProviderAuthorizationWaiting => 'CONNECTING';
 
   @override
   String get onboardingProviderAuthorizationError => 'CONNECTION STOPPED';
@@ -2864,7 +2865,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get deploymentResetAction => 'RESET DEPLOYMENT STATE';
+  String get deploymentResetAction => 'RESET';
 
   @override
   String get deploymentResetConfirmationTitle =>
@@ -2915,7 +2916,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentDiscardAttemptCancel => 'CANCEL';
 
   @override
-  String get deploymentDiscardAttemptConfirm => 'DISCARD RECORD';
+  String get deploymentDiscardAttemptConfirm => 'DISCARD';
 
   @override
   String get deploymentCleanupSucceeded => 'Cloud server deleted.';

@@ -727,7 +727,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatListNewChat.
   ///
   /// In en, this message translates to:
-  /// **'+ NEW CHAT'**
+  /// **'NEW'**
   String get chatListNewChat;
 
   /// No description provided for @chatListNoMessages.
@@ -2419,7 +2419,7 @@ abstract class AppLocalizations {
   /// No description provided for @proNotNow.
   ///
   /// In en, this message translates to:
-  /// **'NOT NOW'**
+  /// **'SKIP'**
   String get proNotNow;
 
   /// No description provided for @proTerms.
@@ -2701,7 +2701,7 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentActionRetryScan.
   ///
   /// In en, this message translates to:
-  /// **'RETRY SCAN'**
+  /// **'RETRY'**
   String get deploymentActionRetryScan;
 
   /// No description provided for @deploymentUnknown.
@@ -2769,6 +2769,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.'**
   String get deploymentFaultResourceAlreadyExists;
+
+  /// No description provided for @deploymentFaultAuthenticationExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Linode connection has expired or was revoked. Reconnect your account, then restart the deployment.'**
+  String get deploymentFaultAuthenticationExpired;
 
   /// No description provided for @deploymentFaultMaxRetriesExceeded.
   ///
@@ -3013,7 +3019,7 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentActionLoginNow.
   ///
   /// In en, this message translates to:
-  /// **'LOG IN NOW'**
+  /// **'LOGIN'**
   String get deploymentActionLoginNow;
 
   /// No description provided for @deploymentActionRefresh.
@@ -3121,7 +3127,7 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentActionProvisionServer.
   ///
   /// In en, this message translates to:
-  /// **'PROVISION SERVER'**
+  /// **'DEPLOY'**
   String get deploymentActionProvisionServer;
 
   /// No description provided for @deploymentSystemParameters.
@@ -3895,13 +3901,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSelfHostActionGuide.
   ///
   /// In en, this message translates to:
-  /// **'OPEN SETUP GUIDE'**
+  /// **'GUIDE'**
   String get onboardingSelfHostActionGuide;
 
   /// No description provided for @onboardingSelfHostActionConnect.
   ///
   /// In en, this message translates to:
-  /// **'CONNECT TO MY SERVER'**
+  /// **'CONNECT'**
   String get onboardingSelfHostActionConnect;
 
   /// No description provided for @onboardingSignInPoco.
@@ -3985,13 +3991,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingProviderAuthorizationAction.
   ///
   /// In en, this message translates to:
-  /// **'CONTINUE WITH {providerName}'**
-  String onboardingProviderAuthorizationAction(String providerName);
+  /// **'CONTINUE'**
+  String get onboardingProviderAuthorizationAction;
 
   /// No description provided for @onboardingProviderAuthorizationWaiting.
   ///
   /// In en, this message translates to:
-  /// **'WAITING FOR PROVIDER SIGN-IN'**
+  /// **'CONNECTING'**
   String get onboardingProviderAuthorizationWaiting;
 
   /// No description provided for @onboardingProviderAuthorizationError.
@@ -5198,7 +5204,7 @@ abstract class AppLocalizations {
   /// Label for the reset deployment state action on the config screen recovery section
   ///
   /// In en, this message translates to:
-  /// **'RESET DEPLOYMENT STATE'**
+  /// **'RESET'**
   String get deploymentResetAction;
 
   /// Title of the reset confirmation dialog
@@ -5282,7 +5288,7 @@ abstract class AppLocalizations {
   /// Confirm button on the discard-stale-attempt confirmation dialog
   ///
   /// In en, this message translates to:
-  /// **'DISCARD RECORD'**
+  /// **'DISCARD'**
   String get deploymentDiscardAttemptConfirm;
 
   /// Cleanup outcome shown when the cloud server was deleted successfully
