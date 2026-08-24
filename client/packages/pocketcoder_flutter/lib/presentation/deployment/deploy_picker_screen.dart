@@ -48,7 +48,7 @@ class DeployPickerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: context.l10n.deployTitle,
+        title: context.l10n.chooseProviderTitle,
         activePillar: NavPillar.configure,
         showBack: true,
         body: Center(

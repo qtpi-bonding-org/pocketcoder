@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-08-24T15:54:20.295110
 
 import 'app_localizations.dart';
 
@@ -127,17 +128,17 @@ class L10nKeyResolver {
       'chat.thinking.role' => _l10n.chatThinkingRole,
       'chat.thought' => _l10n.chatThought,
       'chat.use.global.default' => _l10n.chatUseGlobalDefault,
+      'choose.provider.title' => _l10n.chooseProviderTitle,
       'deploy.choose.provider' => _l10n.deployChooseProvider,
       'deploy.coming.soon' => _l10n.deployComingSoon,
       'deploy.pro.badge' => _l10n.deployProBadge,
       'deploy.select.provider' => _l10n.deploySelectProvider,
-      'deploy.title' => _l10n.deployTitle,
       'deployment.action.abort' => _l10n.deploymentActionAbort,
       'deployment.action.back' => _l10n.deploymentActionBack,
       'deployment.action.deploy.instance' => _l10n.deploymentActionDeployInstance,
       'deployment.action.dismiss' => _l10n.deploymentActionDismiss,
+      'deployment.action.initialize' => _l10n.deploymentActionInitialize,
       'deployment.action.login.now' => _l10n.deploymentActionLoginNow,
-      'deployment.action.provision.server' => _l10n.deploymentActionProvisionServer,
       'deployment.action.refresh' => _l10n.deploymentActionRefresh,
       'deployment.action.retry.scan' => _l10n.deploymentActionRetryScan,
       'deployment.action.update' => _l10n.deploymentActionUpdate,
@@ -197,6 +198,7 @@ class L10nKeyResolver {
       'deployment.https.endpoint' => _l10n.deploymentHttpsEndpoint,
       'deployment.in.progress' => _l10n.deploymentInProgress,
       'deployment.initializing.hardware' => _l10n.deploymentInitializingHardware,
+      'deployment.initializing.title' => _l10n.deploymentInitializingTitle,
       'deployment.instance.manifest' => _l10n.deploymentInstanceManifest,
       'deployment.instance.plan' => _l10n.deploymentInstancePlan,
       'deployment.ip.address' => _l10n.deploymentIpAddress,
@@ -230,7 +232,6 @@ class L10nKeyResolver {
       'deployment.run.id' => _l10n.deploymentRunId,
       'deployment.run.local.model' => _l10n.deploymentRunLocalModel,
       'deployment.scanning.regions' => _l10n.deploymentScanningRegions,
-      'deployment.screen.title' => _l10n.deploymentScreenTitle,
       'deployment.secure' => _l10n.deploymentSecure,
       'deployment.security.notice' => _l10n.deploymentSecurityNotice,
       'deployment.server.provider' => _l10n.deploymentServerProvider,
@@ -431,7 +432,6 @@ class L10nKeyResolver {
       'onboarding.create.server' => _l10n.onboardingCreateServer,
       'onboarding.deploy' => _l10n.onboardingDeploy,
       'onboarding.deploy.credentials.poco' => _l10n.onboardingDeployCredentialsPoco,
-      'onboarding.deploy.title' => _l10n.onboardingDeployTitle,
       'onboarding.docker.intro.action.start' => _l10n.onboardingDockerIntroActionStart,
       'onboarding.docker.intro.chip.component' => _l10n.onboardingDockerIntroChipComponent,
       'onboarding.docker.intro.chip.connections' => _l10n.onboardingDockerIntroChipConnections,
@@ -517,6 +517,7 @@ class L10nKeyResolver {
       'onboarding.self.host.requirements.title' => _l10n.onboardingSelfHostRequirementsTitle,
       'onboarding.self.host.title' => _l10n.onboardingSelfHostTitle,
       'onboarding.server.connecting' => _l10n.onboardingServerConnecting,
+      'onboarding.server.credentials.title' => _l10n.onboardingServerCredentialsTitle,
       'onboarding.server.login.title' => _l10n.onboardingServerLoginTitle,
       'onboarding.server.url' => _l10n.onboardingServerUrl,
       'onboarding.server.url.hint' => _l10n.onboardingServerUrlHint,
@@ -1014,17 +1015,17 @@ class L10nKeyResolver {
     'chat.thinking.role',
     'chat.thought',
     'chat.use.global.default',
+    'choose.provider.title',
     'deploy.choose.provider',
     'deploy.coming.soon',
     'deploy.pro.badge',
     'deploy.select.provider',
-    'deploy.title',
     'deployment.action.abort',
     'deployment.action.back',
     'deployment.action.deploy.instance',
     'deployment.action.dismiss',
+    'deployment.action.initialize',
     'deployment.action.login.now',
-    'deployment.action.provision.server',
     'deployment.action.refresh',
     'deployment.action.retry.scan',
     'deployment.action.update',
@@ -1089,6 +1090,7 @@ class L10nKeyResolver {
     'deployment.https.endpoint',
     'deployment.in.progress',
     'deployment.initializing.hardware',
+    'deployment.initializing.title',
     'deployment.instance.manifest',
     'deployment.instance.plan',
     'deployment.ip.address',
@@ -1128,7 +1130,6 @@ class L10nKeyResolver {
     'deployment.run.id',
     'deployment.run.local.model',
     'deployment.scanning.regions',
-    'deployment.screen.title',
     'deployment.secure',
     'deployment.security.notice',
     'deployment.server.provider',
@@ -1350,7 +1351,6 @@ class L10nKeyResolver {
     'onboarding.create.server',
     'onboarding.deploy',
     'onboarding.deploy.credentials.poco',
-    'onboarding.deploy.title',
     'onboarding.docker.intro.action.start',
     'onboarding.docker.intro.chip.component',
     'onboarding.docker.intro.chip.connections',
@@ -1442,6 +1442,7 @@ class L10nKeyResolver {
     'onboarding.self.host.requirements.title',
     'onboarding.self.host.title',
     'onboarding.server.connecting',
+    'onboarding.server.credentials.title',
     'onboarding.server.login.title',
     'onboarding.server.url',
     'onboarding.server.url.hint',
@@ -1891,17 +1892,17 @@ class L10nKeyResolver {
     'chatThinkingRole': 'chat.thinking.role',
     'chatThought': 'chat.thought',
     'chatUseGlobalDefault': 'chat.use.global.default',
+    'chooseProviderTitle': 'choose.provider.title',
     'deployChooseProvider': 'deploy.choose.provider',
     'deployComingSoon': 'deploy.coming.soon',
     'deployProBadge': 'deploy.pro.badge',
     'deploySelectProvider': 'deploy.select.provider',
-    'deployTitle': 'deploy.title',
     'deploymentActionAbort': 'deployment.action.abort',
     'deploymentActionBack': 'deployment.action.back',
     'deploymentActionDeployInstance': 'deployment.action.deploy.instance',
     'deploymentActionDismiss': 'deployment.action.dismiss',
+    'deploymentActionInitialize': 'deployment.action.initialize',
     'deploymentActionLoginNow': 'deployment.action.login.now',
-    'deploymentActionProvisionServer': 'deployment.action.provision.server',
     'deploymentActionRefresh': 'deployment.action.refresh',
     'deploymentActionRetryScan': 'deployment.action.retry.scan',
     'deploymentActionUpdate': 'deployment.action.update',
@@ -1966,6 +1967,7 @@ class L10nKeyResolver {
     'deploymentHttpsEndpoint': 'deployment.https.endpoint',
     'deploymentInProgress': 'deployment.in.progress',
     'deploymentInitializingHardware': 'deployment.initializing.hardware',
+    'deploymentInitializingTitle': 'deployment.initializing.title',
     'deploymentInstanceManifest': 'deployment.instance.manifest',
     'deploymentInstancePlan': 'deployment.instance.plan',
     'deploymentIpAddress': 'deployment.ip.address',
@@ -2005,7 +2007,6 @@ class L10nKeyResolver {
     'deploymentRunId': 'deployment.run.id',
     'deploymentRunLocalModel': 'deployment.run.local.model',
     'deploymentScanningRegions': 'deployment.scanning.regions',
-    'deploymentScreenTitle': 'deployment.screen.title',
     'deploymentSecure': 'deployment.secure',
     'deploymentSecurityNotice': 'deployment.security.notice',
     'deploymentServerProvider': 'deployment.server.provider',
@@ -2227,7 +2228,6 @@ class L10nKeyResolver {
     'onboardingCreateServer': 'onboarding.create.server',
     'onboardingDeploy': 'onboarding.deploy',
     'onboardingDeployCredentialsPoco': 'onboarding.deploy.credentials.poco',
-    'onboardingDeployTitle': 'onboarding.deploy.title',
     'onboardingDockerIntroActionStart': 'onboarding.docker.intro.action.start',
     'onboardingDockerIntroChipComponent': 'onboarding.docker.intro.chip.component',
     'onboardingDockerIntroChipConnections': 'onboarding.docker.intro.chip.connections',
@@ -2319,6 +2319,7 @@ class L10nKeyResolver {
     'onboardingSelfHostRequirementsTitle': 'onboarding.self.host.requirements.title',
     'onboardingSelfHostTitle': 'onboarding.self.host.title',
     'onboardingServerConnecting': 'onboarding.server.connecting',
+    'onboardingServerCredentialsTitle': 'onboarding.server.credentials.title',
     'onboardingServerLoginTitle': 'onboarding.server.login.title',
     'onboardingServerUrl': 'onboarding.server.url',
     'onboardingServerUrlHint': 'onboarding.server.url.hint',
@@ -2765,17 +2766,17 @@ class L10nKeyResolver {
     'chat.thinking.role': 'chatThinkingRole',
     'chat.thought': 'chatThought',
     'chat.use.global.default': 'chatUseGlobalDefault',
+    'choose.provider.title': 'chooseProviderTitle',
     'deploy.choose.provider': 'deployChooseProvider',
     'deploy.coming.soon': 'deployComingSoon',
     'deploy.pro.badge': 'deployProBadge',
     'deploy.select.provider': 'deploySelectProvider',
-    'deploy.title': 'deployTitle',
     'deployment.action.abort': 'deploymentActionAbort',
     'deployment.action.back': 'deploymentActionBack',
     'deployment.action.deploy.instance': 'deploymentActionDeployInstance',
     'deployment.action.dismiss': 'deploymentActionDismiss',
+    'deployment.action.initialize': 'deploymentActionInitialize',
     'deployment.action.login.now': 'deploymentActionLoginNow',
-    'deployment.action.provision.server': 'deploymentActionProvisionServer',
     'deployment.action.refresh': 'deploymentActionRefresh',
     'deployment.action.retry.scan': 'deploymentActionRetryScan',
     'deployment.action.update': 'deploymentActionUpdate',
@@ -2840,6 +2841,7 @@ class L10nKeyResolver {
     'deployment.https.endpoint': 'deploymentHttpsEndpoint',
     'deployment.in.progress': 'deploymentInProgress',
     'deployment.initializing.hardware': 'deploymentInitializingHardware',
+    'deployment.initializing.title': 'deploymentInitializingTitle',
     'deployment.instance.manifest': 'deploymentInstanceManifest',
     'deployment.instance.plan': 'deploymentInstancePlan',
     'deployment.ip.address': 'deploymentIpAddress',
@@ -2879,7 +2881,6 @@ class L10nKeyResolver {
     'deployment.run.id': 'deploymentRunId',
     'deployment.run.local.model': 'deploymentRunLocalModel',
     'deployment.scanning.regions': 'deploymentScanningRegions',
-    'deployment.screen.title': 'deploymentScreenTitle',
     'deployment.secure': 'deploymentSecure',
     'deployment.security.notice': 'deploymentSecurityNotice',
     'deployment.server.provider': 'deploymentServerProvider',
@@ -3101,7 +3102,6 @@ class L10nKeyResolver {
     'onboarding.create.server': 'onboardingCreateServer',
     'onboarding.deploy': 'onboardingDeploy',
     'onboarding.deploy.credentials.poco': 'onboardingDeployCredentialsPoco',
-    'onboarding.deploy.title': 'onboardingDeployTitle',
     'onboarding.docker.intro.action.start': 'onboardingDockerIntroActionStart',
     'onboarding.docker.intro.chip.component': 'onboardingDockerIntroChipComponent',
     'onboarding.docker.intro.chip.connections': 'onboardingDockerIntroChipConnections',
@@ -3193,6 +3193,7 @@ class L10nKeyResolver {
     'onboarding.self.host.requirements.title': 'onboardingSelfHostRequirementsTitle',
     'onboarding.self.host.title': 'onboardingSelfHostTitle',
     'onboarding.server.connecting': 'onboardingServerConnecting',
+    'onboarding.server.credentials.title': 'onboardingServerCredentialsTitle',
     'onboarding.server.login.title': 'onboardingServerLoginTitle',
     'onboarding.server.url': 'onboardingServerUrl',
     'onboarding.server.url.hint': 'onboardingServerUrlHint',
@@ -3646,17 +3647,17 @@ abstract class L10nKeys {
   static const chatThinkingRole = 'chat.thinking.role';
   static const chatThought = 'chat.thought';
   static const chatUseGlobalDefault = 'chat.use.global.default';
+  static const chooseProviderTitle = 'choose.provider.title';
   static const deployChooseProvider = 'deploy.choose.provider';
   static const deployComingSoon = 'deploy.coming.soon';
   static const deployProBadge = 'deploy.pro.badge';
   static const deploySelectProvider = 'deploy.select.provider';
-  static const deployTitle = 'deploy.title';
   static const deploymentActionAbort = 'deployment.action.abort';
   static const deploymentActionBack = 'deployment.action.back';
   static const deploymentActionDeployInstance = 'deployment.action.deploy.instance';
   static const deploymentActionDismiss = 'deployment.action.dismiss';
+  static const deploymentActionInitialize = 'deployment.action.initialize';
   static const deploymentActionLoginNow = 'deployment.action.login.now';
-  static const deploymentActionProvisionServer = 'deployment.action.provision.server';
   static const deploymentActionRefresh = 'deployment.action.refresh';
   static const deploymentActionRetryScan = 'deployment.action.retry.scan';
   static const deploymentActionUpdate = 'deployment.action.update';
@@ -3721,6 +3722,7 @@ abstract class L10nKeys {
   static const deploymentHttpsEndpoint = 'deployment.https.endpoint';
   static const deploymentInProgress = 'deployment.in.progress';
   static const deploymentInitializingHardware = 'deployment.initializing.hardware';
+  static const deploymentInitializingTitle = 'deployment.initializing.title';
   static const deploymentInstanceManifest = 'deployment.instance.manifest';
   static const deploymentInstancePlan = 'deployment.instance.plan';
   static const deploymentIpAddress = 'deployment.ip.address';
@@ -3760,7 +3762,6 @@ abstract class L10nKeys {
   static const deploymentRunId = 'deployment.run.id';
   static const deploymentRunLocalModel = 'deployment.run.local.model';
   static const deploymentScanningRegions = 'deployment.scanning.regions';
-  static const deploymentScreenTitle = 'deployment.screen.title';
   static const deploymentSecure = 'deployment.secure';
   static const deploymentSecurityNotice = 'deployment.security.notice';
   static const deploymentServerProvider = 'deployment.server.provider';
@@ -3982,7 +3983,6 @@ abstract class L10nKeys {
   static const onboardingCreateServer = 'onboarding.create.server';
   static const onboardingDeploy = 'onboarding.deploy';
   static const onboardingDeployCredentialsPoco = 'onboarding.deploy.credentials.poco';
-  static const onboardingDeployTitle = 'onboarding.deploy.title';
   static const onboardingDockerIntroActionStart = 'onboarding.docker.intro.action.start';
   static const onboardingDockerIntroChipComponent = 'onboarding.docker.intro.chip.component';
   static const onboardingDockerIntroChipConnections = 'onboarding.docker.intro.chip.connections';
@@ -4074,6 +4074,7 @@ abstract class L10nKeys {
   static const onboardingSelfHostRequirementsTitle = 'onboarding.self.host.requirements.title';
   static const onboardingSelfHostTitle = 'onboarding.self.host.title';
   static const onboardingServerConnecting = 'onboarding.server.connecting';
+  static const onboardingServerCredentialsTitle = 'onboarding.server.credentials.title';
   static const onboardingServerLoginTitle = 'onboarding.server.login.title';
   static const onboardingServerUrl = 'onboarding.server.url';
   static const onboardingServerUrlHint = 'onboarding.server.url.hint';

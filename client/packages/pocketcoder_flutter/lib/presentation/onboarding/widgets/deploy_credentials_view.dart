@@ -49,7 +49,7 @@ class _DeployCredentialsViewState extends State<DeployCredentialsView> {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: context.l10n.onboardingDeployTitle,
+        title: context.l10n.onboardingServerCredentialsTitle,
         activePillar: NavPillar.configure,
         showBack: true,
         actions: [

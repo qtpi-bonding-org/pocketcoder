@@ -664,11 +664,11 @@ abstract class AppLocalizations {
   /// **'Could not open a new chat. Please try again.'**
   String get onboardingOpenChatFailed;
 
-  /// No description provided for @onboardingDeployTitle.
+  /// No description provided for @onboardingServerCredentialsTitle.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOY SERVER'**
-  String get onboardingDeployTitle;
+  /// **'SERVER CREDENTIALS'**
+  String get onboardingServerCredentialsTitle;
 
   /// No description provided for @onboardingPocketbaseAdminEmail.
   ///
@@ -2488,11 +2488,11 @@ abstract class AppLocalizations {
   /// **'[STATUS]'**
   String get proSettingsStatus;
 
-  /// No description provided for @deployTitle.
+  /// No description provided for @chooseProviderTitle.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOY POCKETCODER'**
-  String get deployTitle;
+  /// **'CHOOSE PROVIDER'**
+  String get chooseProviderTitle;
 
   /// No description provided for @deploySelectProvider.
   ///
@@ -2686,11 +2686,11 @@ abstract class AppLocalizations {
   /// **'Ready'**
   String get deploymentStepReady;
 
-  /// No description provided for @deploymentScreenTitle.
+  /// No description provided for @deploymentInitializingTitle.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOYMENT IN PROGRESS'**
-  String get deploymentScreenTitle;
+  /// **'INITIALIZING SERVER'**
+  String get deploymentInitializingTitle;
 
   /// No description provided for @deploymentActionAbort.
   ///
@@ -3124,11 +3124,11 @@ abstract class AppLocalizations {
   /// **'DEPLOY INSTANCE'**
   String get deploymentActionDeployInstance;
 
-  /// No description provided for @deploymentActionProvisionServer.
+  /// No description provided for @deploymentActionInitialize.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOY'**
-  String get deploymentActionProvisionServer;
+  /// **'INITIALIZE'**
+  String get deploymentActionInitialize;
 
   /// No description provided for @deploymentSystemParameters.
   ///

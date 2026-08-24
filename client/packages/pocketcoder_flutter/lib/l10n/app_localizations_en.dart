@@ -308,7 +308,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not open a new chat. Please try again.';
 
   @override
-  String get onboardingDeployTitle => 'DEPLOY SERVER';
+  String get onboardingServerCredentialsTitle => 'SERVER CREDENTIALS';
 
   @override
   String get onboardingPocketbaseAdminEmail => 'POCKETCODER ADMIN EMAIL';
@@ -1299,7 +1299,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proSettingsStatus => '[STATUS]';
 
   @override
-  String get deployTitle => 'DEPLOY POCKETCODER';
+  String get chooseProviderTitle => 'CHOOSE PROVIDER';
 
   @override
   String get deploySelectProvider => 'SELECT PROVIDER';
@@ -1402,7 +1402,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentStepReady => 'Ready';
 
   @override
-  String get deploymentScreenTitle => 'DEPLOYMENT IN PROGRESS';
+  String get deploymentInitializingTitle => 'INITIALIZING SERVER';
 
   @override
   String get deploymentActionAbort => 'ABORT';
@@ -1655,7 +1655,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentActionDeployInstance => 'DEPLOY INSTANCE';
 
   @override
-  String get deploymentActionProvisionServer => 'DEPLOY';
+  String get deploymentActionInitialize => 'INITIALIZE';
 
   @override
   String get deploymentSystemParameters => 'SYSTEM PARAMETERS';
