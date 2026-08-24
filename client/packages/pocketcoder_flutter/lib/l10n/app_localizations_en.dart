@@ -1415,6 +1415,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentUnknown => 'UNKNOWN';
 
   @override
+  String get deploymentTechnicalDetailsToggle => 'TECHNICAL DETAILS';
+
+  @override
   String get deploymentNetworkIp => 'NETWORK IP';
 
   @override

@@ -623,6 +623,7 @@
   "deploymentActionAbort": "ABORT",
   "deploymentActionRetryScan": "RETRY SCAN",
   "deploymentUnknown": "UNKNOWN",
+  "deploymentTechnicalDetailsToggle": "TECHNICAL DETAILS",
   "deploymentNetworkIp": "NETWORK IP",
   "deploymentGeoGrid": "GEO GRID",
   "deploymentFaultDetected": "FAULT DETECTED: {error}",

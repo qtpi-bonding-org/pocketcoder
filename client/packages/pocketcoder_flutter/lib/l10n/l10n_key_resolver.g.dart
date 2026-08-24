@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-08-24T00:39:10.712873
 
 import 'app_localizations.dart';
 
@@ -277,6 +278,7 @@ class L10nKeyResolver {
       'deployment.step.wait.target.disk.ready' => _l10n.deploymentStepWaitTargetDiskReady,
       'deployment.step.waiting.for.connection' => _l10n.deploymentStepWaitingForConnection,
       'deployment.system.parameters' => _l10n.deploymentSystemParameters,
+      'deployment.technical.details.toggle' => _l10n.deploymentTechnicalDetailsToggle,
       'deployment.ubuntu' => _l10n.deploymentUbuntu,
       'deployment.unknown' => _l10n.deploymentUnknown,
       'deployment.use.cloud.models' => _l10n.deploymentUseCloudModels,
@@ -1174,6 +1176,7 @@ class L10nKeyResolver {
     'deployment.step.waiting.for.connection',
     'deployment.sync.attempt',
     'deployment.system.parameters',
+    'deployment.technical.details.toggle',
     'deployment.ubuntu',
     'deployment.unknown',
     'deployment.use.cloud.models',
@@ -2048,6 +2051,7 @@ class L10nKeyResolver {
     'deploymentStepWaitingForConnection': 'deployment.step.waiting.for.connection',
     'deploymentSyncAttempt': 'deployment.sync.attempt',
     'deploymentSystemParameters': 'deployment.system.parameters',
+    'deploymentTechnicalDetailsToggle': 'deployment.technical.details.toggle',
     'deploymentUbuntu': 'deployment.ubuntu',
     'deploymentUnknown': 'deployment.unknown',
     'deploymentUseCloudModels': 'deployment.use.cloud.models',
@@ -2919,6 +2923,7 @@ class L10nKeyResolver {
     'deployment.step.waiting.for.connection': 'deploymentStepWaitingForConnection',
     'deployment.sync.attempt': 'deploymentSyncAttempt',
     'deployment.system.parameters': 'deploymentSystemParameters',
+    'deployment.technical.details.toggle': 'deploymentTechnicalDetailsToggle',
     'deployment.ubuntu': 'deploymentUbuntu',
     'deployment.unknown': 'deploymentUnknown',
     'deployment.use.cloud.models': 'deploymentUseCloudModels',
@@ -3797,6 +3802,7 @@ abstract class L10nKeys {
   static const deploymentStepWaitingForConnection = 'deployment.step.waiting.for.connection';
   static (String, Map<String, dynamic>) deploymentSyncAttempt(int attempt) => ('deployment.sync.attempt', {'attempt': attempt});
   static const deploymentSystemParameters = 'deployment.system.parameters';
+  static const deploymentTechnicalDetailsToggle = 'deployment.technical.details.toggle';
   static const deploymentUbuntu = 'deployment.ubuntu';
   static const deploymentUnknown = 'deployment.unknown';
   static const deploymentUseCloudModels = 'deployment.use.cloud.models';

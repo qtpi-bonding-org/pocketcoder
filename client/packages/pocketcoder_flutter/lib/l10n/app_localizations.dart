@@ -2710,6 +2710,12 @@ abstract class AppLocalizations {
   /// **'UNKNOWN'**
   String get deploymentUnknown;
 
+  /// No description provided for @deploymentTechnicalDetailsToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'TECHNICAL DETAILS'**
+  String get deploymentTechnicalDetailsToggle;
+
   /// No description provided for @deploymentNetworkIp.
   ///
   /// In en, this message translates to:
