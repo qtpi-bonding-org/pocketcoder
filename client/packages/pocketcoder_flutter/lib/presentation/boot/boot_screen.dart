@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_active_deployment_gate.dart';
 import 'boot_view.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import '../../app_router.dart';
@@ -130,6 +131,24 @@ class _BootScreenState extends State<BootScreen> {
 
   Future<void> _checkConnection() async {
     OnboardingLogger.event('boot connection check started');
+
+    // A managed deployment engine (pocketcoder_pro) resumes and reconciles
+    // its own route independently of this boot check, racing it -- if it
+    // already won that race and a deployment is ready, this check's own
+    // goNamed() calls below must not clobber that route with the
+    // onboarding/login flow (see the incident this guards: BootScreen used
+    // to check PocketBase health against a stale/default `pb_server_url`
+    // left over from local dev testing, fail, and reset the whole nav
+    // stack back to onboarding a few seconds after the user had already
+    // reached the deployment details screen).
+    if (getIt.isRegistered<IActiveDeploymentGate>() &&
+        getIt<IActiveDeploymentGate>().hasReadyDeployment) {
+      OnboardingLogger.event(
+        'boot connection check skipped -- ready managed deployment present',
+      );
+      return;
+    }
+
     if (mounted) {
       context
           .read<PocoCubit>()
