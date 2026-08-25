@@ -1201,5 +1201,15 @@
   "deploymentCleanupPending": "Cleanup could not run automatically. Use your provider console to remove the cloud server.",
   "@deploymentCleanupPending": { "description": "Cleanup outcome shown when cleanup is pending manual action" },
   "deploymentCleanupNotNeeded": "No cloud server to clean up.",
+  "serverControlTitle": "SERVER CONTROLS",
+  "serverControlConnectionDetails": "CONNECTION DETAILS",
+  "serverControlIpAddress": "IP ADDRESS",
+  "serverControlHttpsEndpoint": "HTTPS ENDPOINT",
+  "serverControlAdminIdentity": "ADMIN IDENTITY",
+  "serverControlAdminPassword": "ADMIN PASSWORD",
+  "serverControlRevealPassword": "REVEAL PASSWORD",
+  "serverControlHidePassword": "HIDE PASSWORD",
+  "serverControlCopy": "COPY",
+  "serverControlCopied": "COPIED",
   "@deploymentCleanupNotNeeded": { "description": "Cleanup outcome shown when no cloud server needed cleanup" }
 }

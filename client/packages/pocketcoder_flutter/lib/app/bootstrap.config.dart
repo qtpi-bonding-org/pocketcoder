@@ -103,6 +103,8 @@ import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_reposit
     as _i184;
 import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart'
     as _i470;
+import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart'
+    as _i990;
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart'
     as _i789;
 import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart'
@@ -247,6 +249,10 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.releaseChannel,
       instanceName: 'releaseChannel',
     );
+    gh.factory<_i898.ServerControlCubit>(() => _i898.ServerControlCubit(
+          gh<_i789.IServerControlService>(),
+          gh<_i990.IServerConnectionDetailsProvider>(),
+        ));
     gh.lazySingleton<_i611.IObservabilityRepository>(
         () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i623.IHealthcheckRepository>(
@@ -370,8 +376,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i300.AgentActionsApi(gh<_i935.PocketCoderApiClient>()));
     gh.lazySingleton<_i209.IFilesRepository>(
         () => _i369.FilesRepository(gh<_i935.PocketCoderApiClient>()));
-    gh.factory<_i898.ServerControlCubit>(
-        () => _i898.ServerControlCubit(gh<_i789.IServerControlService>()));
     gh.lazySingleton<_i630.IAgentConfigRepository>(
         () => _i857.AgentConfigRepository(
               gh<_i810.PocoConfigDao>(),

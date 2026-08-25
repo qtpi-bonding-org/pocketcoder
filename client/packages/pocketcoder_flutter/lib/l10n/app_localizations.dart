@@ -5350,6 +5350,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No cloud server to clean up.'**
   String get deploymentCleanupNotNeeded;
+
+  /// No description provided for @serverControlTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER CONTROLS'**
+  String get serverControlTitle;
+
+  /// No description provided for @serverControlConnectionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECTION DETAILS'**
+  String get serverControlConnectionDetails;
+
+  /// No description provided for @serverControlIpAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'IP ADDRESS'**
+  String get serverControlIpAddress;
+
+  /// No description provided for @serverControlHttpsEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTPS ENDPOINT'**
+  String get serverControlHttpsEndpoint;
+
+  /// No description provided for @serverControlAdminIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'ADMIN IDENTITY'**
+  String get serverControlAdminIdentity;
+
+  /// No description provided for @serverControlAdminPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'ADMIN PASSWORD'**
+  String get serverControlAdminPassword;
+
+  /// No description provided for @serverControlRevealPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'REVEAL PASSWORD'**
+  String get serverControlRevealPassword;
+
+  /// No description provided for @serverControlHidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'HIDE PASSWORD'**
+  String get serverControlHidePassword;
+
+  /// No description provided for @serverControlCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'COPY'**
+  String get serverControlCopy;
+
+  /// No description provided for @serverControlCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'COPIED'**
+  String get serverControlCopied;
 }
 
 class _AppLocalizationsDelegate

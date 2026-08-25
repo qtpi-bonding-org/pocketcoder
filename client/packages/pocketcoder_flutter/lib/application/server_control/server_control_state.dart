@@ -1,6 +1,7 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 
 enum ServerControlOperation {
   restartPocketCoder,
@@ -17,6 +18,7 @@ class ServerControlState with UiFlowStateMixin {
     this.release,
     this.operation,
     this.result,
+    this.connectionDetails,
   });
 
   @override
@@ -26,6 +28,7 @@ class ServerControlState with UiFlowStateMixin {
   final ServerReleaseStatusSnapshot? release;
   final ServerControlOperation? operation;
   final ServerControlResult? result;
+  final IServerConnectionDetailsProvider? connectionDetails;
 
   bool get isBusy => status == UiFlowStatus.loading;
 
@@ -37,6 +40,7 @@ class ServerControlState with UiFlowStateMixin {
     ServerControlOperation? operation,
     ServerControlResult? result,
     bool clearResult = false,
+    IServerConnectionDetailsProvider? connectionDetails,
   }) =>
       ServerControlState(
         status: status ?? this.status,
@@ -44,5 +48,6 @@ class ServerControlState with UiFlowStateMixin {
         release: release ?? this.release,
         operation: operation ?? this.operation,
         result: clearResult ? null : result ?? this.result,
+        connectionDetails: connectionDetails ?? this.connectionDetails,
       );
 }

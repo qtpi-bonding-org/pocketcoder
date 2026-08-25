@@ -2953,4 +2953,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentCleanupNotNeeded => 'No cloud server to clean up.';
+
+  @override
+  String get serverControlTitle => 'SERVER CONTROLS';
+
+  @override
+  String get serverControlConnectionDetails => 'CONNECTION DETAILS';
+
+  @override
+  String get serverControlIpAddress => 'IP ADDRESS';
+
+  @override
+  String get serverControlHttpsEndpoint => 'HTTPS ENDPOINT';
+
+  @override
+  String get serverControlAdminIdentity => 'ADMIN IDENTITY';
+
+  @override
+  String get serverControlAdminPassword => 'ADMIN PASSWORD';
+
+  @override
+  String get serverControlRevealPassword => 'REVEAL PASSWORD';
+
+  @override
+  String get serverControlHidePassword => 'HIDE PASSWORD';
+
+  @override
+  String get serverControlCopy => 'COPY';
+
+  @override
+  String get serverControlCopied => 'COPIED';
 }

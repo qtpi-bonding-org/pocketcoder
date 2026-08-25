@@ -2,12 +2,14 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'server_control_state.dart';
 
 @injectable
 class ServerControlCubit extends AppCubit<ServerControlState> {
-  ServerControlCubit(this._service) : super(const ServerControlState());
+  ServerControlCubit(this._service, [IServerConnectionDetailsProvider? connectionDetails])
+      : super(ServerControlState(connectionDetails: connectionDetails));
 
   final IServerControlService _service;
 

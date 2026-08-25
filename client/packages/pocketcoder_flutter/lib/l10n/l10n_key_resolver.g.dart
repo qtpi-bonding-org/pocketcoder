@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-24T17:48:15.284855
+// Generated at: 2026-08-24T18:22:03.869575
 
 import 'app_localizations.dart';
 
@@ -685,6 +685,16 @@ class L10nKeyResolver {
       'scheduler.running.badge' => _l10n.schedulerRunningBadge,
       'scheduler.save.button' => _l10n.schedulerSaveButton,
       'scheduler.title' => _l10n.schedulerTitle,
+      'server.control.admin.identity' => _l10n.serverControlAdminIdentity,
+      'server.control.admin.password' => _l10n.serverControlAdminPassword,
+      'server.control.connection.details' => _l10n.serverControlConnectionDetails,
+      'server.control.copied' => _l10n.serverControlCopied,
+      'server.control.copy' => _l10n.serverControlCopy,
+      'server.control.hide.password' => _l10n.serverControlHidePassword,
+      'server.control.https.endpoint' => _l10n.serverControlHttpsEndpoint,
+      'server.control.ip.address' => _l10n.serverControlIpAddress,
+      'server.control.reveal.password' => _l10n.serverControlRevealPassword,
+      'server.control.title' => _l10n.serverControlTitle,
       'settings.account.section' => _l10n.settingsAccountSection,
       'settings.ai.agents.section' => _l10n.settingsAiAgentsSection,
       'settings.automation.section' => _l10n.settingsAutomationSection,
@@ -1627,6 +1637,16 @@ class L10nKeyResolver {
     'scheduler.running.badge',
     'scheduler.save.button',
     'scheduler.title',
+    'server.control.admin.identity',
+    'server.control.admin.password',
+    'server.control.connection.details',
+    'server.control.copied',
+    'server.control.copy',
+    'server.control.hide.password',
+    'server.control.https.endpoint',
+    'server.control.ip.address',
+    'server.control.reveal.password',
+    'server.control.title',
     'settings.account.section',
     'settings.ai.agents.section',
     'settings.automation.section',
@@ -2510,6 +2530,16 @@ class L10nKeyResolver {
     'schedulerRunningBadge': 'scheduler.running.badge',
     'schedulerSaveButton': 'scheduler.save.button',
     'schedulerTitle': 'scheduler.title',
+    'serverControlAdminIdentity': 'server.control.admin.identity',
+    'serverControlAdminPassword': 'server.control.admin.password',
+    'serverControlConnectionDetails': 'server.control.connection.details',
+    'serverControlCopied': 'server.control.copied',
+    'serverControlCopy': 'server.control.copy',
+    'serverControlHidePassword': 'server.control.hide.password',
+    'serverControlHttpsEndpoint': 'server.control.https.endpoint',
+    'serverControlIpAddress': 'server.control.ip.address',
+    'serverControlRevealPassword': 'server.control.reveal.password',
+    'serverControlTitle': 'server.control.title',
     'settingsAccountSection': 'settings.account.section',
     'settingsAiAgentsSection': 'settings.ai.agents.section',
     'settingsAutomationSection': 'settings.automation.section',
@@ -3390,6 +3420,16 @@ class L10nKeyResolver {
     'scheduler.running.badge': 'schedulerRunningBadge',
     'scheduler.save.button': 'schedulerSaveButton',
     'scheduler.title': 'schedulerTitle',
+    'server.control.admin.identity': 'serverControlAdminIdentity',
+    'server.control.admin.password': 'serverControlAdminPassword',
+    'server.control.connection.details': 'serverControlConnectionDetails',
+    'server.control.copied': 'serverControlCopied',
+    'server.control.copy': 'serverControlCopy',
+    'server.control.hide.password': 'serverControlHidePassword',
+    'server.control.https.endpoint': 'serverControlHttpsEndpoint',
+    'server.control.ip.address': 'serverControlIpAddress',
+    'server.control.reveal.password': 'serverControlRevealPassword',
+    'server.control.title': 'serverControlTitle',
     'settings.account.section': 'settingsAccountSection',
     'settings.ai.agents.section': 'settingsAiAgentsSection',
     'settings.automation.section': 'settingsAutomationSection',
@@ -4277,6 +4317,16 @@ abstract class L10nKeys {
   static const schedulerRunningBadge = 'scheduler.running.badge';
   static const schedulerSaveButton = 'scheduler.save.button';
   static const schedulerTitle = 'scheduler.title';
+  static const serverControlAdminIdentity = 'server.control.admin.identity';
+  static const serverControlAdminPassword = 'server.control.admin.password';
+  static const serverControlConnectionDetails = 'server.control.connection.details';
+  static const serverControlCopied = 'server.control.copied';
+  static const serverControlCopy = 'server.control.copy';
+  static const serverControlHidePassword = 'server.control.hide.password';
+  static const serverControlHttpsEndpoint = 'server.control.https.endpoint';
+  static const serverControlIpAddress = 'server.control.ip.address';
+  static const serverControlRevealPassword = 'server.control.reveal.password';
+  static const serverControlTitle = 'server.control.title';
   static const settingsAccountSection = 'settings.account.section';
   static const settingsAiAgentsSection = 'settings.ai.agents.section';
   static const settingsAutomationSection = 'settings.automation.section';
