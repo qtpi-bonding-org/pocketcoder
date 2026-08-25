@@ -109,3 +109,8 @@ client/apps/pocketcoder/ios/**/xcshareddata/swiftpm/
 # Local-only artifacts pulled from disposable VPS-script-test boxes
 # (TLS certs, etc.) -- never committed, machine-local debugging aid only.
 deploy/release-manager/tests/vps/.local/
+
+# Live/structured diagnostics from the pocketcoder_pro golden-path VPS
+# script test -- lives in-repo (not /tmp) so it survives process exit and
+# is trivial to find; never committed, machine-local debugging aid only.
+client/packages/pocketcoder_pro/test/integration/.local/
