@@ -82,6 +82,8 @@ import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repositor
     as _i14;
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart'
     as _i623;
+import 'package:pocketcoder_flutter/domain/live_activities/i_live_activity_repository.dart'
+    as _i199;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart'
     as _i904;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
@@ -95,10 +97,10 @@ import 'package:pocketcoder_flutter/domain/observability/i_observability_reposit
     as _i611;
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
     as _i422;
+import 'package:pocketcoder_flutter/domain/release/i_image_relay_proof_provider.dart'
+    as _i705;
 import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dart'
     as _i1033;
-import 'package:pocketcoder_flutter/domain/release/i_image_relay_proof_provider.dart'
-    as _i1034;
 import 'package:pocketcoder_flutter/domain/release/i_server_release_status_service.dart'
     as _i472;
 import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_repository.dart'
@@ -170,6 +172,10 @@ import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_auth_rep
     as _i417;
 import 'package:pocketcoder_flutter/infrastructure/healthcheck/healthcheck_repository.dart'
     as _i40;
+import 'package:pocketcoder_flutter/infrastructure/live_activities/live_activity_dao.dart'
+    as _i423;
+import 'package:pocketcoder_flutter/infrastructure/live_activities/live_activity_repository.dart'
+    as _i259;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_daos.dart' as _i444;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_oauth_service.dart'
     as _i732;
@@ -251,16 +257,16 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.releaseChannel,
       instanceName: 'releaseChannel',
     );
-    gh.factory<_i898.ServerControlCubit>(() => _i898.ServerControlCubit(
-          gh<_i789.IServerControlService>(),
-          gh<_i990.IServerConnectionDetailsProvider>(),
-        ));
     gh.lazySingleton<_i611.IObservabilityRepository>(
         () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i623.IHealthcheckRepository>(
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
         () => _i976.AppExceptionKeyMapper());
+    gh.factory<_i898.ServerControlCubit>(() => _i898.ServerControlCubit(
+          gh<_i789.IServerControlService>(),
+          gh<_i990.IServerConnectionDetailsProvider>(),
+        ));
     gh.lazySingleton<bool>(
       () => externalModule.useTestingChannel,
       instanceName: 'useTestingChannel',
@@ -295,6 +301,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i730.HarnessAccountDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i730.HarnessAccountSelectionDao>(
         () => _i730.HarnessAccountSelectionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i423.LiveActivityDao>(
+        () => _i423.LiveActivityDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i444.McpServerDao>(
         () => _i444.McpServerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i849.DeviceDao>(
@@ -349,15 +357,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i935.PocketCoderApiClient>(),
           gh<_i36.AuthHttpState>(),
         ));
-    gh.lazySingleton<_i1033.IReleaseContentService>(
-        () => _i456.ReleaseContentService(
-              gh<_i519.Client>(),
-              gh<_i558.FlutterSecureStorage>(),
-              gh<_i1034.IImageRelayProofProvider>(),
-              gh<String>(instanceName: 'releaseBaseUrl'),
-              gh<bool>(instanceName: 'useTestingChannel'),
-              gh<String>(instanceName: 'releaseChannel'),
-            ));
     gh.factory<_i506.StatusCubit>(() => _i506.StatusCubit(
           gh<_i50.IAuthRepository>(),
           gh<_i72.NetworkRecoverySignal>(),
@@ -370,6 +369,15 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i175.ServerReleaseStatusService(
               gh<_i824.PocketBase>(),
               gh<_i935.PocketCoderApiClient>(),
+            ));
+    gh.lazySingleton<_i1033.IReleaseContentService>(
+        () => _i456.ReleaseContentService(
+              gh<_i519.Client>(),
+              gh<_i558.FlutterSecureStorage>(),
+              gh<_i705.IImageRelayProofProvider>(),
+              gh<String>(instanceName: 'releaseBaseUrl'),
+              gh<bool>(instanceName: 'useTestingChannel'),
+              gh<String>(instanceName: 'releaseChannel'),
             ));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
@@ -413,6 +421,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
+    gh.lazySingleton<_i199.ILiveActivityRepository>(
+        () => _i259.LiveActivityRepository(
+              gh<_i423.LiveActivityDao>(),
+              gh<_i935.PocketCoderApiClient>(),
+              gh<_i169.PocketBase>(),
+            ));
     gh.lazySingleton<_i14.IHarnessAuthRepository>(
         () => _i417.HarnessAuthRepository(
               gh<_i935.PocketCoderApiClient>(),

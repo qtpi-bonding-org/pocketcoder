@@ -22,6 +22,8 @@ class PocketCoderApiClient {
         files = generated.FilesApi(dio, generated.standardSerializers),
         harnessAuth =
             generated.HarnessAuthApi(dio, generated.standardSerializers),
+        liveActivities =
+            generated.LiveActivitiesApi(dio, generated.standardSerializers),
         logs = generated.LogsApi(dio, generated.standardSerializers),
         mcp = generated.McpApi(dio, generated.standardSerializers),
         observability =
@@ -82,6 +84,7 @@ class PocketCoderApiClient {
   final generated.AgentApi agent;
   final generated.FilesApi files;
   final generated.HarnessAuthApi harnessAuth;
+  final generated.LiveActivitiesApi liveActivities;
   final generated.LogsApi logs;
   final generated.McpApi mcp;
   final generated.ObservabilityApi observability;
