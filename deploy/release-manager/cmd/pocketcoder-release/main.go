@@ -105,6 +105,7 @@ type mutationOptions struct {
 	expectedDigest                                     string
 	expectedSequence                                   int64
 	harnesses, optional                                []string
+	proofSigner                                        *artifact.ProofSigner
 }
 
 func mutationFlags(name string, args []string) (mutationOptions, error) {
@@ -138,6 +139,11 @@ func mutationFlags(name string, args []string) (mutationOptions, error) {
 	}
 	result.harnesses = splitList(*harnesses)
 	result.optional = splitList(*optional)
+	var signerErr error
+	result.proofSigner, signerErr = loadProofSigner(result.runtimeEnvironment)
+	if signerErr != nil {
+		return mutationOptions{}, signerErr
+	}
 	return result, nil
 }
 
@@ -313,7 +319,12 @@ func upgradeOs(args []string) error {
 	flags := flag.NewFlagSet("upgrade-os", flag.ContinueOnError)
 	releaseBase := flags.String("release-base", envOr("RELEASE_BASE", "https://images.relay.pocketcoder.org"), "release service base URL")
 	channel := flags.String("channel", envOr("POCKETCODER_RELEASE_CHANNEL", "stable"), "release channel")
+	runtimeEnv := flags.String("runtime-env", envOr("POCKETCODER_RUNTIME_ENV", "/var/lib/pocketcoder/config/runtime.env"), "runtime environment file")
 	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	proofSigner, err := loadProofSigner(*runtimeEnv)
+	if err != nil {
 		return err
 	}
 	stateRoot := envOr("POCKETCODER_RELEASE_STATE_DIR", "/var/lib/pocketcoder/release")
@@ -325,7 +336,7 @@ func upgradeOs(args []string) error {
 	defer lock.Close()
 	resolved, err := (releasecontract.Resolver{Config: releasecontract.Config{
 		ReleaseBase: *releaseBase, Channel: *channel, State: paths,
-		Fetcher: artifact.Fetcher{}, Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")},
+		Fetcher: artifact.Fetcher{Signer: proofSigner}, Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")},
 	}}).Resolve()
 	if err != nil {
 		return fmt.Errorf("resolve target release: %w", err)
@@ -349,11 +360,11 @@ func upgradeOs(args []string) error {
 }
 
 func newUpdateManager(options mutationOptions, paths state.Paths, current releasecontract.Current, resolved releasecontract.Resolved, manifestBytes []byte, progressSink progress.Sink) *managercontract.Update {
-	return &managercontract.Update{Resolved: resolved, ManifestBytes: manifestBytes, Current: current, Paths: paths, RuntimeEnvironment: options.runtimeEnvironment, Fetcher: artifact.Fetcher{}, Docker: runtime.Docker{ProjectName: envOr("POCKETCODER_COMPOSE_PROJECT", "pocketcoder"), Stdout: os.Stdout, Stderr: os.Stderr}, Snapshot: snapshot.Manager{StateRoot: options.stateRoot, DataVolume: envOr("POCKETCODER_DATA_VOLUME", "pocketcoder_pb_data"), BackupVolume: envOr("POCKETCODER_BACKUP_VOLUME", "pocketcoder_pb_backups"), Container: envOr("POCKETCODER_POCKETBASE_CONTAINER", "pocketcoder-pocketbase")}, ReserveBytes: options.reserveBytes, UpdaterContract: 1, Progress: progressSink, HealthURL: envOr("POCKETCODER_HEALTH_URL", ""), HealthTimeout: envDuration("POCKETCODER_HEALTH_TIMEOUT", 0)}
+	return &managercontract.Update{Resolved: resolved, ManifestBytes: manifestBytes, Current: current, Paths: paths, RuntimeEnvironment: options.runtimeEnvironment, Fetcher: artifact.Fetcher{Signer: options.proofSigner}, Docker: runtime.Docker{ProjectName: envOr("POCKETCODER_COMPOSE_PROJECT", "pocketcoder"), Stdout: os.Stdout, Stderr: os.Stderr}, Snapshot: snapshot.Manager{StateRoot: options.stateRoot, DataVolume: envOr("POCKETCODER_DATA_VOLUME", "pocketcoder_pb_data"), BackupVolume: envOr("POCKETCODER_BACKUP_VOLUME", "pocketcoder_pb_backups"), Container: envOr("POCKETCODER_POCKETBASE_CONTAINER", "pocketcoder-pocketbase")}, ReserveBytes: options.reserveBytes, UpdaterContract: 1, Progress: progressSink, HealthURL: envOr("POCKETCODER_HEALTH_URL", ""), HealthTimeout: envDuration("POCKETCODER_HEALTH_TIMEOUT", 0)}
 }
 
 func resolveLocked(options mutationOptions, paths state.Paths, allowRevoked bool) (releasecontract.Resolved, []byte, error) {
-	resolved, resolveErr := (releasecontract.Resolver{Config: releasecontract.Config{ReleaseBase: options.releaseBase, Channel: options.channel, StableSequenceFloor: options.stableFloor, State: paths, AllowRevoked: allowRevoked, Fetcher: artifact.Fetcher{}, Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")}}}).Resolve()
+	resolved, resolveErr := (releasecontract.Resolver{Config: releasecontract.Config{ReleaseBase: options.releaseBase, Channel: options.channel, StableSequenceFloor: options.stableFloor, State: paths, AllowRevoked: allowRevoked, Fetcher: artifact.Fetcher{Signer: options.proofSigner}, Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")}}}).Resolve()
 	if resolveErr != nil {
 		return releasecontract.Resolved{}, nil, resolveErr
 	}
@@ -397,6 +408,30 @@ func loadCurrent(path string) (releasecontract.Current, bool, error) {
 	}
 	return current, true, nil
 }
+
+func loadProofSigner(runtimeEnvPath string) (*artifact.ProofSigner, error) {
+	data, err := os.ReadFile(runtimeEnvPath)
+	if err != nil {
+		return nil, fmt.Errorf("read runtime env: %w", err)
+	}
+	values := map[string]string{}
+	for _, line := range strings.Split(string(data), "\n") {
+		key, value, found := strings.Cut(line, "=")
+		if found {
+			values[key] = value
+		}
+	}
+	privateKey, ok := values["BOX_PRIVATE_KEY_PKCS8"]
+	if !ok || privateKey == "" {
+		return nil, fmt.Errorf("BOX_PRIVATE_KEY_PKCS8 missing from runtime env")
+	}
+	credential, ok := values["BOX_CREDENTIAL"]
+	if !ok || credential == "" {
+		return nil, fmt.Errorf("BOX_CREDENTIAL missing from runtime env")
+	}
+	return artifact.NewProofSignerFromPKCS8Base64(privateKey, credential)
+}
+
 func splitList(value string) []string {
 	result := make([]string, 0)
 	for _, item := range strings.Split(value, ",") {
@@ -424,9 +459,14 @@ func checkMetadata(args []string) error {
 	artifactRoot := flags.String("artifact-dir", envOr("POCKETCODER_ARTIFACT_DIR", "/var/lib/pocketcoder/artifacts"), "artifact directory")
 	releaseBase := flags.String("release-base", envOr("RELEASE_BASE", "https://images.relay.pocketcoder.org"), "release service base URL")
 	channel := flags.String("channel", envOr("POCKETCODER_RELEASE_CHANNEL", "stable"), "release channel")
+	runtimeEnv := flags.String("runtime-env", envOr("POCKETCODER_RUNTIME_ENV", "/var/lib/pocketcoder/config/runtime.env"), "runtime environment file")
 	stableFloor := flags.Int64("stable-sequence-floor", envInt64("POCKETCODER_STABLE_SEQUENCE_FLOOR", 1), "stable sequence floor")
 	reserveBytes := flags.Int64("reserve-bytes", envInt64("POCKETCODER_DISK_RESERVE_BYTES", 1<<30), "required free-space reserve")
 	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	proofSigner, err := loadProofSigner(*runtimeEnv)
+	if err != nil {
 		return err
 	}
 	channelExplicit := os.Getenv("POCKETCODER_RELEASE_CHANNEL") != ""
@@ -455,7 +495,7 @@ func checkMetadata(args []string) error {
 	*channel = selectedChannel(channelExplicit, *channel, current.Channel)
 	resolved, err := (releasecontract.Resolver{Config: releasecontract.Config{
 		ReleaseBase: *releaseBase, Channel: *channel, StableSequenceFloor: *stableFloor,
-		State: paths, AllowRevoked: true, Fetcher: artifact.Fetcher{},
+		State: paths, AllowRevoked: true, Fetcher: artifact.Fetcher{Signer: proofSigner},
 		Verifier: trust.GitHubVerifier{CachePath: filepath.Join(paths.Root, "sigstore-tuf")},
 	}}).Resolve()
 	if err != nil {

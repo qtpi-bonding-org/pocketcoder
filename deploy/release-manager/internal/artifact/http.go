@@ -14,6 +14,7 @@ import (
 
 type Fetcher struct {
 	Client *http.Client
+	Signer *ProofSigner
 }
 
 func (fetcher Fetcher) ArtifactToFile(descriptor contract.Artifact, directory string) (string, error) {
@@ -41,7 +42,19 @@ func (fetcher Fetcher) ArtifactToFile(descriptor contract.Artifact, directory st
 	if client == nil {
 		client = http.DefaultClient
 	}
-	response, err := client.Get(descriptor.URL)
+	request, err := http.NewRequest(http.MethodGet, descriptor.URL, nil)
+	if err != nil {
+		return "", fmt.Errorf("build request for %s: %w", descriptor.URL, err)
+	}
+	if fetcher.Signer != nil {
+		proof, err := fetcher.Signer.SignProof(request.Method, descriptor.URL)
+		if err != nil {
+			return "", fmt.Errorf("sign proof: %w", err)
+		}
+		request.Header.Set("Pocketcoder-Credential", fetcher.Signer.Credential)
+		request.Header.Set("Pocketcoder-Proof", proof)
+	}
+	response, err := client.Do(request)
 	if err != nil {
 		return "", fmt.Errorf("fetch %s: %w", descriptor.URL, err)
 	}
@@ -84,6 +97,14 @@ func (fetcher Fetcher) Bounded(url string, maximum int64) ([]byte, error) {
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
+	}
+	if fetcher.Signer != nil {
+		proof, err := fetcher.Signer.SignProof(request.Method, url)
+		if err != nil {
+			return nil, fmt.Errorf("sign proof: %w", err)
+		}
+		request.Header.Set("Pocketcoder-Credential", fetcher.Signer.Credential)
+		request.Header.Set("Pocketcoder-Proof", proof)
 	}
 	response, err := client.Do(request)
 	if err != nil {
