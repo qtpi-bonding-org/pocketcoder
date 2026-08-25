@@ -13,6 +13,7 @@ export 'package:pocketcoder_api/src/model/date.dart';
 export 'package:pocketcoder_api/src/api/agent_api.dart';
 export 'package:pocketcoder_api/src/api/files_api.dart';
 export 'package:pocketcoder_api/src/api/harness_auth_api.dart';
+export 'package:pocketcoder_api/src/api/live_activities_api.dart';
 export 'package:pocketcoder_api/src/api/logs_api.dart';
 export 'package:pocketcoder_api/src/api/mcp_api.dart';
 export 'package:pocketcoder_api/src/api/observability_api.dart';

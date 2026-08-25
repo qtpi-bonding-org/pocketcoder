@@ -12,6 +12,7 @@ import 'package:pocketcoder_api/src/auth/oauth.dart';
 import 'package:pocketcoder_api/src/api/agent_api.dart';
 import 'package:pocketcoder_api/src/api/files_api.dart';
 import 'package:pocketcoder_api/src/api/harness_auth_api.dart';
+import 'package:pocketcoder_api/src/api/live_activities_api.dart';
 import 'package:pocketcoder_api/src/api/logs_api.dart';
 import 'package:pocketcoder_api/src/api/mcp_api.dart';
 import 'package:pocketcoder_api/src/api/observability_api.dart';
@@ -130,6 +131,12 @@ class PocketcoderApi {
   /// by doing that all interceptors will not be executed
   HarnessAuthApi getHarnessAuthApi() {
     return HarnessAuthApi(dio, serializers);
+  }
+
+  /// Get LiveActivitiesApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  LiveActivitiesApi getLiveActivitiesApi() {
+    return LiveActivitiesApi(dio, serializers);
   }
 
   /// Get LogsApi instance, base route and serializer can be overridden by a given but be careful,

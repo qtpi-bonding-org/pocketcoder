@@ -10,6 +10,7 @@ doc/FileEntry.md
 doc/FileListResponse.md
 doc/FilesApi.md
 doc/HarnessAuthApi.md
+doc/LiveActivitiesApi.md
 doc/LogsApi.md
 doc/McpApi.md
 doc/ModeRequest.md
@@ -26,6 +27,7 @@ lib/src/api.dart
 lib/src/api/agent_api.dart
 lib/src/api/files_api.dart
 lib/src/api/harness_auth_api.dart
+lib/src/api/live_activities_api.dart
 lib/src/api/logs_api.dart
 lib/src/api/mcp_api.dart
 lib/src/api/observability_api.dart
@@ -53,3 +55,4 @@ lib/src/model/prompt_request.dart
 lib/src/model/schedule_run_accepted_response.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/live_activities_api_test.dart

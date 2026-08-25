@@ -62,6 +62,7 @@ for dart_file in \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/agent_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/files_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/harness_auth_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/live_activities_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/logs_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/mcp_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/observability_api.dart" \

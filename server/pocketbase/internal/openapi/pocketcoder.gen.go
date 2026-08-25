@@ -365,6 +365,9 @@ type ServerInterface interface {
 	// (POST /api/pocketcoder/v1/harness-auth/submit)
 	SubmitHarnessAuth(w http.ResponseWriter, r *http.Request)
 
+	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
+	EndLiveActivity(w http.ResponseWriter, r *http.Request, id RequestId)
+
 	// (GET /api/pocketcoder/v1/logs/{containerName})
 	StreamContainerLogs(w http.ResponseWriter, r *http.Request, containerName ContainerName)
 
@@ -385,9 +388,6 @@ type ServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/push)
 	SendPushNotification(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
-	EndLiveActivity(w http.ResponseWriter, r *http.Request, id string)
 
 	// (GET /api/pocketcoder/v1/release/status)
 	GetReleaseStatus(w http.ResponseWriter, r *http.Request)
@@ -875,6 +875,38 @@ func (siw *ServerInterfaceWrapper) SubmitHarnessAuth(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// EndLiveActivity operation middleware
+func (siw *ServerInterfaceWrapper) EndLiveActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RequestId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EndLiveActivity(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // StreamContainerLogs operation middleware
 func (siw *ServerInterfaceWrapper) StreamContainerLogs(w http.ResponseWriter, r *http.Request) {
 
@@ -1227,6 +1259,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/start", wrapper.StartHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/status", wrapper.GetHarnessAuthStatus)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/submit", wrapper.SubmitHarnessAuth)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/live-activities/{id}/end", wrapper.EndLiveActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/logs/{containerName}", wrapper.StreamContainerLogs)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/oauth/store", wrapper.StoreMcpOAuthToken)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/request", wrapper.ExecuteMcpRequest)
@@ -1234,7 +1267,6 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/ollama/pull", wrapper.PullOllamaModel)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/proxy/observability/{path}", wrapper.ProxyObservability)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/push", wrapper.SendPushNotification)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/live-activities/{id}/end", wrapper.EndLiveActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/release/status", wrapper.GetReleaseStatus)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/schedules/{scheduleId}/run", wrapper.RunScheduleNow)
 
@@ -2463,6 +2495,78 @@ func (response SubmitHarnessAuth500JSONResponse) VisitSubmitHarnessAuthResponse(
 	return err
 }
 
+type EndLiveActivityRequestObject struct {
+	Id RequestId `json:"id"`
+}
+
+type EndLiveActivityResponseObject interface {
+	VisitEndLiveActivityResponse(w http.ResponseWriter) error
+}
+
+type EndLiveActivity200JSONResponse struct{ JsonSuccessJSONResponse }
+
+func (response EndLiveActivity200JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivity400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response EndLiveActivity400JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivity401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response EndLiveActivity401JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivity404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response EndLiveActivity404JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivity409Response struct {
+}
+
+func (response EndLiveActivity409Response) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 type StreamContainerLogsRequestObject struct {
 	ContainerName ContainerName `json:"containerName"`
 }
@@ -3245,6 +3349,9 @@ type StrictServerInterface interface {
 	// (POST /api/pocketcoder/v1/harness-auth/submit)
 	SubmitHarnessAuth(ctx context.Context, request SubmitHarnessAuthRequestObject) (SubmitHarnessAuthResponseObject, error)
 
+	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
+	EndLiveActivity(ctx context.Context, request EndLiveActivityRequestObject) (EndLiveActivityResponseObject, error)
+
 	// (GET /api/pocketcoder/v1/logs/{containerName})
 	StreamContainerLogs(ctx context.Context, request StreamContainerLogsRequestObject) (StreamContainerLogsResponseObject, error)
 
@@ -3265,7 +3372,6 @@ type StrictServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/push)
 	SendPushNotification(ctx context.Context, request SendPushNotificationRequestObject) (SendPushNotificationResponseObject, error)
-	EndLiveActivity(ctx context.Context, request EndLiveActivityRequestObject) (EndLiveActivityResponseObject, error)
 
 	// (GET /api/pocketcoder/v1/release/status)
 	GetReleaseStatus(ctx context.Context, request GetReleaseStatusRequestObject) (GetReleaseStatusResponseObject, error)
@@ -3778,6 +3884,32 @@ func (sh *strictHandler) SubmitHarnessAuth(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SubmitHarnessAuthResponseObject); ok {
 		if err := validResponse.VisitSubmitHarnessAuthResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EndLiveActivity operation middleware
+func (sh *strictHandler) EndLiveActivity(w http.ResponseWriter, r *http.Request, id RequestId) {
+	var request EndLiveActivityRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EndLiveActivity(ctx, request.(EndLiveActivityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EndLiveActivity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EndLiveActivityResponseObject); ok {
+		if err := validResponse.VisitEndLiveActivityResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
