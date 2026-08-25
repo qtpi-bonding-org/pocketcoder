@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/release/i_image_relay_proof_provider.dart';
 import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dart';
 
 /// Selects bounded release metadata for the UI. This is intentionally not a
@@ -15,7 +16,8 @@ import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dar
 @LazySingleton(as: IReleaseContentService)
 class ReleaseContentService implements IReleaseContentService {
   ReleaseContentService(
-      this._http, this._storage, @Named('releaseBaseUrl') this._baseUrl,
+      this._http, this._storage, this._proofProvider,
+      @Named('releaseBaseUrl') this._baseUrl,
       [@Named('useTestingChannel') this._useTestingChannel = false,
       @Named('releaseChannel') this._defaultChannel = 'stable']);
 
@@ -25,6 +27,7 @@ class ReleaseContentService implements IReleaseContentService {
   static const _appContractVersion = 1;
   final http.Client _http;
   final FlutterSecureStorage _storage;
+  final IImageRelayProofProvider _proofProvider;
   final String _baseUrl;
   final bool _useTestingChannel;
   final String _defaultChannel;
@@ -158,11 +161,19 @@ class ReleaseContentService implements IReleaseContentService {
   }
 
   Future<Uint8List> _getBounded(Uri uri, int maximumBytes) async {
+    final credential = await _proofProvider.credential();
     var requestUri = uri;
     var retriedNotFound = false;
     late http.StreamedResponse response;
     while (true) {
-      response = await _http.send(http.Request('GET', requestUri));
+      final proof = await _proofProvider.proof(
+        method: 'GET',
+        url: requestUri.toString(),
+      );
+      final request = http.Request('GET', requestUri)
+        ..headers['Pocketcoder-Credential'] = credential
+        ..headers['Pocketcoder-Proof'] = proof;
+      response = await _http.send(request);
       if (response.statusCode != 404 || retriedNotFound) break;
 
       // Release metadata can briefly return 404 while the release service's

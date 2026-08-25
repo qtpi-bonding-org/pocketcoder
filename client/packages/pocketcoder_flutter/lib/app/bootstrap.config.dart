@@ -97,6 +97,8 @@ import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
     as _i422;
 import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dart'
     as _i1033;
+import 'package:pocketcoder_flutter/domain/release/i_image_relay_proof_provider.dart'
+    as _i1034;
 import 'package:pocketcoder_flutter/domain/release/i_server_release_status_service.dart'
     as _i472;
 import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_repository.dart'
@@ -351,6 +353,7 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i456.ReleaseContentService(
               gh<_i519.Client>(),
               gh<_i558.FlutterSecureStorage>(),
+              gh<_i1034.IImageRelayProofProvider>(),
               gh<String>(instanceName: 'releaseBaseUrl'),
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),

@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:pocketcoder_flutter/domain/release/i_image_relay_proof_provider.dart';
 import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dart';
 import 'package:pocketcoder_flutter/infrastructure/release/release_content_service.dart';
 
@@ -119,6 +120,7 @@ class _Fixture {
                     : http.Response.bytes(body, 200);
               }),
           const FlutterSecureStorage(),
+          _FakeImageRelayProofProvider(),
           base,
           useTestingChannel);
   static Future<_Fixture> create(
@@ -187,4 +189,13 @@ class _Fixture {
       '/v1/documents/$documentDigest.txt': document
     }, digest);
   }
+}
+
+class _FakeImageRelayProofProvider implements IImageRelayProofProvider {
+  @override
+  Future<String> credential() async => 'test-credential';
+
+  @override
+  Future<String> proof({required String method, required String url}) async =>
+      'test-proof';
 }
