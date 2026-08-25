@@ -20,8 +20,17 @@ TARGET_BYTES=$(blockdev --getsize64 /dev/sdb)
   exit 1
 }
 
+# 6 attempts, not 3 -- live-confirmed 2026-08-25: a real run failed 3/3
+# times in under a second total (curl HTTP/2 stream reset, 0 bytes each
+# attempt) purely from a transient Cloudflare/R2-edge hiccup, not a code
+# bug -- the identical request (headers, pipeline, target disk) succeeded
+# cleanly, full checksum match, on the very next try. 3 rapid-fire
+# attempts with no backoff can all land on the same bad edge connection;
+# more attempts AND a real gap between them (see MAX_ATTEMPTS below) give
+# a brief edge issue time to clear instead of hammering it identically.
+MAX_ATTEMPTS=6
 attempt=0
-until [ "$attempt" -ge 3 ]; do
+until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
   attempt=$((attempt + 1))
   echo "Attempt $attempt..."
   mkfifo /tmp/sumpipe
@@ -133,6 +142,11 @@ until [ "$attempt" -ge 3 ]; do
     wait "$SUMPID" 2>/dev/null || true
     rm -f /tmp/sumpipe
     echo "Transfer failed on attempt $attempt"
+  fi
+  if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+    backoff=$((attempt * 10))
+    echo "Waiting ${backoff}s before retrying..."
+    sleep "$backoff"
   fi
 done
 
