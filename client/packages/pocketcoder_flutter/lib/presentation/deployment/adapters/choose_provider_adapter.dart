@@ -70,15 +70,20 @@ class ChooseProviderAdapter
         final url = option.url;
         if (url == null) return;
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      } else if (option.routePath != null && context.mounted) {
+      } else if (context.mounted) {
+        // routePath is no longer required to trigger a selection: the
+        // provider's OAuth flow is now shown in-place (see
+        // ChooseProviderScreen's tap-to-auto-auth behavior), driven by
+        // onProviderSelected rather than a navigable route. routePath, if
+        // still set, is only a fallback for a provider with no registered
+        // handler.
         final routePath = option.routePath;
-        if (routePath == null) return;
         final currentCredentials = credentials;
         if (currentCredentials == null) {
           context.pushNamed(RouteNames.onboardingDeploy, extra: option);
         } else if (onProviderSelected != null) {
           await onProviderSelected!(context, option, currentCredentials);
-        } else {
+        } else if (routePath != null) {
           context.push(routePath, extra: currentCredentials);
         }
       }

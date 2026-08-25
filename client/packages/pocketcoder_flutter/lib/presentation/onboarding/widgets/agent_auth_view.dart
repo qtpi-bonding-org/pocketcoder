@@ -7,8 +7,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
-class ChooseAgentView extends StatelessWidget {
-  const ChooseAgentView({
+class AgentAuthView extends StatelessWidget {
+  const AgentAuthView({
     super.key,
     required this.status,
     required this.harnesses,

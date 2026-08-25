@@ -23,8 +23,7 @@ import 'package:pocketcoder_flutter/presentation/billing/paywall_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/harness_auth_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/choose_agent_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/agent_login_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/agent_auth_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/choose_provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/server_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
@@ -151,31 +150,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const ChooseAgentScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.onboardingClaudeAuth,
-        name: RouteNames.onboardingClaudeAuth,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: AgentLoginScreen(
-            harnessId: state.extra?.toString() ?? '',
-            provider: 'claude-code',
-          ),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.onboardingCodexAuth,
-        name: RouteNames.onboardingCodexAuth,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: AgentLoginScreen(
-            harnessId: state.extra?.toString() ?? '',
-            provider: 'codex',
-          ),
+          child: const AgentAuthScreen(),
         ),
       ),
       // ── CHATS pillar ──
@@ -418,8 +393,6 @@ class AppRoutes {
   static const String onboardingSelfHost = '/onboarding/self-host';
   static const String onboardingDeploy = '/onboarding/deploy';
   static const String onboardingHarnessAuth = '/onboarding/harness-auth';
-  static const String onboardingClaudeAuth = '/onboarding/harness-auth/claude';
-  static const String onboardingCodexAuth = '/onboarding/harness-auth/codex';
   static const String boot = '/boot';
   static const String files = '/files';
   static const String serverControls = '/server-controls';
@@ -470,8 +443,6 @@ class RouteNames {
   static const String onboardingSelfHost = 'onboardingSelfHost';
   static const String onboardingDeploy = 'onboardingDeploy';
   static const String onboardingHarnessAuth = 'onboardingHarnessAuth';
-  static const String onboardingClaudeAuth = 'onboardingClaudeAuth';
-  static const String onboardingCodexAuth = 'onboardingCodexAuth';
   static const String boot = 'boot';
   static const String files = 'files';
   static const String serverControls = 'serverControls';
