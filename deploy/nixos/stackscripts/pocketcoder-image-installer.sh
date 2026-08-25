@@ -3,12 +3,15 @@
 # <UDF name="IMAGE_SHA256" label="Expected sha256 of the gzip" />
 # <UDF name="IMAGE_UNCOMPRESSED_BYTES" label="Expected uncompressed size in bytes" />
 # <UDF name="ADMIN_USER_DATA" label="Base64-encoded admin config (was Linode metadata.user_data)" />
+# <UDF name="BOX_PRIVATE_KEY_PKCS8" label="Box's own P-256 private key, PKCS8 DER, base64" />
+# <UDF name="BOX_CREDENTIAL" label="Root-signed credential (compact JWS) naming this box's key" />
 # ADMIN_USER_DATA follows the BOOT-ENV SCHEMA documented and validated in
 # deploy/nixos/bootstrap.sh (currently SCHEMA=1), including the phone-planted
 # host_ssh_private_key (base64), host_ssh_public_key, and public_ip fields.
 set -euo pipefail
 
 command -v curl >/dev/null || { apt-get update && apt-get install -y curl; }
+command -v xxd >/dev/null || { apt-get update && apt-get install -y xxd; }
 
 [ -b /dev/sdb ] || { echo "FATAL: /dev/sdb not found"; exit 1; }
 TARGET_BYTES=$(blockdev --getsize64 /dev/sdb)
@@ -25,7 +28,59 @@ until [ "$attempt" -ge 3 ]; do
   sha256sum < /tmp/sumpipe > /tmp/sum &
   SUMPID=$!
 
+  # Sign the DPoP-style proof by hand -- see docs/superpowers/specs/
+  # 2026-08-24-image-relay-auth-protocol.md for the exact claim shape.
+  # This is the box's OWN key (not the root) -- BOX_PRIVATE_KEY_PKCS8.
+  printf '%s' "$BOX_PRIVATE_KEY_PKCS8" | base64 -d > /tmp/box_key.der
+  openssl pkey -inform DER -in /tmp/box_key.der -pubout -outform DER -out /tmp/box_pub.der 2>/dev/null
+
+  # A P-256 SPKI DER (algorithm id-ecPublicKey + curve prime256v1) is
+  # ALWAYS exactly 91 bytes total. The point itself is the file's last
+  # 65 bytes (0x04 || X || Y).
+  tail -c 65 /tmp/box_pub.der > /tmp/box_pub_point.bin
+  tail -c 64 /tmp/box_pub_point.bin > /tmp/box_pub_xy.bin
+  head -c 32 /tmp/box_pub_xy.bin > /tmp/box_pub_x.bin
+  tail -c 32 /tmp/box_pub_xy.bin > /tmp/box_pub_y.bin
+
+  b64u_file() { base64 < "$1" | tr '+/' '-_' | tr -d '=' | tr -d '\n'; }
+  b64u_str() { printf '%s' "$1" | base64 | tr '+/' '-_' | tr -d '=' | tr -d '\n'; }
+
+  BOX_PUB_X=$(b64u_file /tmp/box_pub_x.bin)
+  BOX_PUB_Y=$(b64u_file /tmp/box_pub_y.bin)
+
+  # The Worker verifies htu against TRUSTED_ORIGIN + pathname, never the
+  # request's own Host. Strip scheme+host and query/fragment before joining.
+  TRUSTED_ORIGIN="https://images.relay.pocketcoder.org"
+  IMAGE_URL_PATH=$(printf '%s' "$IMAGE_URL" | sed -E 's#^[A-Za-z][A-Za-z0-9+.-]*://[^/]+##; s#[?#].*$##')
+  PROOF_HTU="${TRUSTED_ORIGIN}${IMAGE_URL_PATH}"
+
+  PROOF_HEADER=$(b64u_str "$(printf '{\"alg\":\"ES256\",\"typ\":\"dpop+jwt\",\"jwk\":{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"%s\",\"y\":\"%s\"}}' "$BOX_PUB_X" "$BOX_PUB_Y")")
+  PROOF_JTI=$(head -c 16 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=')
+  PROOF_IAT=$(date +%s)
+  PROOF_CLAIMS=$(b64u_str "$(printf '{\"htm\":\"GET\",\"htu\":\"%s\",\"iat\":%s,\"jti\":\"%s\"}' "$PROOF_HTU" "$PROOF_IAT" "$PROOF_JTI")")
+  PROOF_SIGNING_INPUT="${PROOF_HEADER}.${PROOF_CLAIMS}"
+
+  # OpenSSL emits DER ECDSA-Sig-Value. Parse its short-form TLV structure;
+  # P-256 signatures are always short enough for one-byte lengths.
+  printf '%s' "$PROOF_SIGNING_INPUT" | openssl dgst -sha256 -sign /tmp/box_key.der -keyform DER -out /tmp/proof_sig.der
+  SIG_HEX=$(xxd -p -c 999 /tmp/proof_sig.der | tr -d '\n')
+  RLEN=$((16#${SIG_HEX:6:2}))
+  R_HEX=${SIG_HEX:8:$((RLEN * 2))}
+  S_TAG_OFFSET=$((8 + RLEN * 2))
+  SLEN=$((16#${SIG_HEX:$((S_TAG_OFFSET + 2)):2}))
+  S_HEX=${SIG_HEX:$((S_TAG_OFFSET + 4)):$((SLEN * 2))}
+  # DER may pad a positive integer with a leading sign byte.
+  [ "$RLEN" -eq 33 ] && R_HEX=${R_HEX:2}
+  [ "$SLEN" -eq 33 ] && S_HEX=${S_HEX:2}
+  R_HEX=$(printf '%064s' "$R_HEX" | tr ' ' '0')
+  S_HEX=$(printf '%064s' "$S_HEX" | tr ' ' '0')
+  PROOF_SIG=$(printf '%s' "${R_HEX}${S_HEX}" | xxd -r -p | base64 | tr '+/' '-_' | tr -d '=')
+  PROOF="${PROOF_SIGNING_INPUT}.${PROOF_SIG}"
+  rm -f /tmp/box_key.der /tmp/box_pub.der /tmp/box_pub_point.bin /tmp/box_pub_xy.bin /tmp/box_pub_x.bin /tmp/box_pub_y.bin /tmp/proof_sig.der
+
   if curl -fsSL --retry 0 --max-time 1800 --speed-limit 1024 --speed-time 60 \
+      -H "Pocketcoder-Credential: $BOX_CREDENTIAL" \
+      -H "Pocketcoder-Proof: $PROOF" \
       "$IMAGE_URL" \
       | tee /tmp/sumpipe \
       | gunzip \
