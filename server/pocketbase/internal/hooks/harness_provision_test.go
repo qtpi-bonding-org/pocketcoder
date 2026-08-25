@@ -311,9 +311,25 @@ func TestProvisionGooseUsesTheCommonHarnessStorageAndNetworkShape(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Goose's seeded env_template unconditionally references
+	// {{.OPENROUTER_API_KEY}}, and its provider_scope is "any" (renderEnv
+	// pulls every provider_keys row the user owns, not just one scoped to
+	// "goose") -- without a key on file the render fails and
+	// ProvisionHarnessInstance's fail() closure swallows that into the
+	// record's own status/last_error rather than returning a Go error,
+	// leaving client.Create never called and every assertion below
+	// comparing against a zero-value CreateSpec.
+	createTestProviderKey(t, app, map[string]any{
+		"provider": "any-provider-test",
+		"env_vars": map[string]any{"OPENROUTER_API_KEY": "sk-test-openrouter"},
+	}, userID)
 	fake := newFakeDockerClient()
-	if _, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID); err != nil {
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if status := rec.GetString("status"); status == "error" {
+		t.Fatalf("provisioning recorded status=error, last_error=%s", rec.GetString("last_error"))
 	}
 	foundAuthHome := false
 	for _, bind := range fake.lastCreateSpec.VolumeBinds {
@@ -350,12 +366,30 @@ func TestDefaultGooseAndPeerHarnessHaveEqualRuntimeTopology(t *testing.T) {
 		"launch_template": map[string]any{"port": 3000},
 	})
 
+	// See TestProvisionGooseUsesTheCommonHarnessStorageAndNetworkShape's
+	// comment: goose's seeded env_template needs an OPENROUTER_API_KEY
+	// from some provider_keys row (provider_scope "any"), or renderEnv
+	// fails and ProvisionHarnessInstance silently records status=error
+	// without ever calling client.Create.
+	createTestProviderKey(t, app, map[string]any{
+		"provider": "any-provider-test",
+		"env_vars": map[string]any{"OPENROUTER_API_KEY": "sk-test-openrouter"},
+	}, userID)
+
 	gooseDocker, peerDocker := newFakeDockerClient(), newFakeDockerClient()
-	if _, err := ProvisionHarnessInstance(context.Background(), app, gooseDocker, goose.Id, "", userID); err != nil {
+	gooseRec, err := ProvisionHarnessInstance(context.Background(), app, gooseDocker, goose.Id, "", userID)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ProvisionHarnessInstance(context.Background(), app, peerDocker, peer.Id, "", userID); err != nil {
+	if status := gooseRec.GetString("status"); status == "error" {
+		t.Fatalf("goose provisioning recorded status=error, last_error=%s", gooseRec.GetString("last_error"))
+	}
+	peerRec, err := ProvisionHarnessInstance(context.Background(), app, peerDocker, peer.Id, "", userID)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if status := peerRec.GetString("status"); status == "error" {
+		t.Fatalf("peer provisioning recorded status=error, last_error=%s", peerRec.GetString("last_error"))
 	}
 	if fmt.Sprint(gooseDocker.lastCreateSpec.NetworkNames) != fmt.Sprint(peerDocker.lastCreateSpec.NetworkNames) {
 		t.Fatalf("network topology differs: Goose=%v peer=%v", gooseDocker.lastCreateSpec.NetworkNames, peerDocker.lastCreateSpec.NetworkNames)
