@@ -111,7 +111,7 @@ async function checkAndRecordProofJti(keyThumbprint: string, proofJti: string): 
 }
 
 const TRUSTED_ORIGIN = 'https://images.relay.pocketcoder.org';
-async function authorizeRequest(request: Request, env: Env): Promise<
+export async function authorizeRequest(request: Request, env: Env): Promise<
 	{ ok: true; iss: string; boxJwk: import('./crypto.ts').P256PublicJwk; proofJti: string; targetJti?: string } |
 	{ ok: false; status: number; error: string }
 > {
@@ -179,7 +179,7 @@ type ReleaseObject = {
 	immutable: boolean;
 };
 
-function resolveV1ObjectPath(pathname: string): ReleaseObject | null {
+export function resolveV1ObjectPath(pathname: string): ReleaseObject | null {
 	// The `-testing` suffix is a separate, parallel channel-pointer path for
 	// the staging branch pipeline (see internal/release/resolver.go's
 	// ChannelPath) -- kept as its own literal alternative, not a generic
@@ -215,7 +215,7 @@ function resolveV1ObjectPath(pathname: string): ReleaseObject | null {
 	return null;
 }
 
-function contentTypeFor(pathname: string): string {
+export function contentTypeFor(pathname: string): string {
 	if (pathname.endsWith('.sh')) return 'text/x-shellscript; charset=utf-8';
 	if (pathname.endsWith('.go')) return 'text/x-go; charset=utf-8';
 	if (pathname.endsWith('.txt')) return 'text/plain; charset=utf-8';
