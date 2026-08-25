@@ -34,6 +34,7 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 	hooks.AddPushOperations(app, registry)
 	AddHarnessAuthOperations(app, registry, HarnessAuthDeps{})
 	AddScheduleOperations(app, registry, func() coordinator.AgentRuntime { return nil })
+	AddLiveActivityOperations(app, registry)
 
 	operation.MountForTests(e, registry.Routes())
 }
@@ -91,6 +92,7 @@ var testsByEndpoint = []struct {
 	{"streamContainerLogs", http.MethodGet, "/api/pocketcoder/v1/logs/pocketcoder-pocketbase", ""},
 	{"proxyObservability", http.MethodGet, "/api/pocketcoder/v1/proxy/observability/", ""},
 	{"sendPushNotification", http.MethodPost, "/api/pocketcoder/v1/push", `{"user_id":"test-user","type":"test"}`},
+	{"endLiveActivity", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/end", ""},
 }
 
 func TestCompatibilityEndpointIsPublicAtTheOperationBoundary(t *testing.T) {

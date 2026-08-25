@@ -386,6 +386,9 @@ type ServerInterface interface {
 	// (POST /api/pocketcoder/v1/push)
 	SendPushNotification(w http.ResponseWriter, r *http.Request)
 
+	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
+	EndLiveActivity(w http.ResponseWriter, r *http.Request, id string)
+
 	// (GET /api/pocketcoder/v1/release/status)
 	GetReleaseStatus(w http.ResponseWriter, r *http.Request)
 
@@ -1231,6 +1234,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/ollama/pull", wrapper.PullOllamaModel)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/proxy/observability/{path}", wrapper.ProxyObservability)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/push", wrapper.SendPushNotification)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/live-activities/{id}/end", wrapper.EndLiveActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/release/status", wrapper.GetReleaseStatus)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/schedules/{scheduleId}/run", wrapper.RunScheduleNow)
 
@@ -3261,6 +3265,7 @@ type StrictServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/push)
 	SendPushNotification(ctx context.Context, request SendPushNotificationRequestObject) (SendPushNotificationResponseObject, error)
+	EndLiveActivity(ctx context.Context, request EndLiveActivityRequestObject) (EndLiveActivityResponseObject, error)
 
 	// (GET /api/pocketcoder/v1/release/status)
 	GetReleaseStatus(ctx context.Context, request GetReleaseStatusRequestObject) (GetReleaseStatusResponseObject, error)

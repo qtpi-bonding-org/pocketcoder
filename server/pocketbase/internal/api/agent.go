@@ -141,7 +141,9 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 					}
 				}()
 				return nil
-			})
+			}, coordinator.WithOnRunEnded(func(ctx context.Context, chatID string, outcome coordinator.RunOutcome) {
+				go func() { _ = hooks.NotifyRunFinished(app, chatID, string(outcome)) }()
+			}))
 		if err != nil {
 			if errors.Is(err, coordinator.ErrRunInProgress) {
 				return apis.NewApiError(http.StatusConflict, "A run is already active for this chat", nil)
@@ -149,6 +151,7 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 			return apis.NewApiError(http.StatusInternalServerError, "Unable to start agent run", err)
 		}
 		result := map[string]string{"runId": runID}
+		go func() { _ = hooks.NotifyRunStarted(app, chatID) }()
 		if idemKey != "" {
 			service.RecordIdempotency(chatID, idemKey, result)
 		}

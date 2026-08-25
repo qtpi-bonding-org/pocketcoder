@@ -193,6 +193,13 @@ paths:
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/PushRequest'}}}}
       responses: {'204': {description: Operation completed}, '200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/v1/live-activities/{id}/end:
+    post:
+      operationId: endLiveActivity
+      tags: [live-activities]
+      security: [{pocketbaseToken: []}]
+      parameters: [{ $ref: '#/components/parameters/RequestId' }]
+      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {description: Activity is not active}}
 components:
   securitySchemes:
     pocketbaseToken: {type: apiKey, in: header, name: Authorization, description: Raw PocketBase token; do not prefix with Bearer.}

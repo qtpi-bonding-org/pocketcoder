@@ -22,15 +22,43 @@ package hooks
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
+
+// SendLiveActivityUpdate posts the forward-compatible live-activity payload
+// directly to push-relay. The Worker currently ignores push_type and
+// content_state; APNs live-activity handling is a later slice.
+func SendLiveActivityUpdate(token string, state LiveActivityContentState, version int, event string) error {
+	url := os.Getenv("PN_URL")
+	if url == "" {
+		return nil
+	}
+	payload := map[string]any{
+		"push_type": "live_activity", "activity_token": token,
+		"content_state": state, "content_state_version": version,
+		"event": event, "stale_date": time.Now().Add(time.Hour).Unix(),
+	}
+	body, err := json.Marshal(payload)
+	if err != nil { return err }
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	if err != nil { return err }
+	req.Header.Set("Content-Type", "application/json")
+	if secret := os.Getenv("PN_RELAY_SECRET"); secret != "" { req.Header.Set("X-Relay-Secret", secret) }
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil { return err }
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 { return fmt.Errorf("live activity relay: %s", resp.Status) }
+	return nil
+}
 
 // PushProvider defines the interface for different notification services.
 type PushProvider interface {

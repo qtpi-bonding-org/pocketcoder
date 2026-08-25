@@ -164,7 +164,7 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 		"listWorkspaceFiles", "cancelHarnessAuth", "disconnectHarnessAuth", "pollHarnessAuth",
 		"startHarnessAuth", "getHarnessAuthStatus", "submitHarnessAuth", "streamContainerLogs",
 		"storeMcpOAuthToken", "executeMcpRequest", "listOllamaModels", "pullOllamaModel",
-		"proxyObservability", "sendPushNotification", "getReleaseCompatibility", "getReleaseStatus",
+		"proxyObservability", "sendPushNotification", "endLiveActivity", "getReleaseCompatibility", "getReleaseStatus",
 		"runScheduleNow",
 	} {
 		opID := id
@@ -241,6 +241,8 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 	call("ProxyObservability", err)
 	_, err = s.SendPushNotification(newCtx(), openapi.SendPushNotificationRequestObject{})
 	call("SendPushNotification", err)
+	_, err = s.EndLiveActivity(newCtx(), openapi.EndLiveActivityRequestObject{Id: "a1"})
+	call("EndLiveActivity", err)
 	_, err = s.GetReleaseCompatibility(newCtx(), openapi.GetReleaseCompatibilityRequestObject{})
 	call("GetReleaseCompatibility", err)
 	_, err = s.GetReleaseStatus(newCtx(), openapi.GetReleaseStatusRequestObject{})
@@ -271,6 +273,7 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 		"pullOllamaModel":         {},
 		"proxyObservability":      {},
 		"sendPushNotification":    {},
+		"endLiveActivity":         {"id": "a1"},
 		"getReleaseCompatibility": {},
 		"getReleaseStatus":        {},
 		"runScheduleNow":          {"scheduleId": "s1"},

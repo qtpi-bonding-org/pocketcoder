@@ -37,6 +37,7 @@ func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() coord
 	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, api.AgentDeps{})
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
+	api.AddLiveActivityOperations(app, registry)
 	api.AddHarnessAuthOperations(app, registry, api.HarnessAuthDeps{})
 	api.AddScheduleOperations(app, registry, coord)
 
@@ -138,6 +139,7 @@ func (r rawResponse) VisitProxyObservabilityResponse(w http.ResponseWriter) erro
 func (r rawResponse) VisitSendPushNotificationResponse(w http.ResponseWriter) error {
 	return r.write(w)
 }
+func (r rawResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error { return r.write(w) }
 func (r rawResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
 	return r.write(w)
 }
@@ -209,6 +211,9 @@ func (s *server) ProxyObservability(ctx context.Context, _ openapi.ProxyObservab
 }
 func (s *server) SendPushNotification(ctx context.Context, _ openapi.SendPushNotificationRequestObject) (openapi.SendPushNotificationResponseObject, error) {
 	return s.dispatch(ctx, "sendPushNotification", nil)
+}
+func (s *server) EndLiveActivity(ctx context.Context, request openapi.EndLiveActivityRequestObject) (openapi.EndLiveActivityResponseObject, error) {
+	return s.dispatch(ctx, "endLiveActivity", map[string]string{"id": string(request.Id)})
 }
 func (s *server) GetReleaseCompatibility(ctx context.Context, _ openapi.GetReleaseCompatibilityRequestObject) (openapi.GetReleaseCompatibilityResponseObject, error) {
 	return s.dispatch(ctx, "getReleaseCompatibility", nil)

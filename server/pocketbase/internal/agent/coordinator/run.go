@@ -52,6 +52,23 @@ type Emit func(events.Event) error
 type ResolveSession func(context.Context) (string, error)
 type OnSessionCreated func(context.Context, string) error
 type OnRunFinished func(context.Context, acpsdk.StopReason) error
+type RunOutcome string
+
+const (
+	RunCompleted RunOutcome = "completed"
+	RunFailed    RunOutcome = "failed"
+	RunCancelled RunOutcome = "cancelled"
+)
+
+type RunOption func(*runOptions)
+type runOptions struct {
+	onRunEnded func(context.Context, string, RunOutcome)
+}
+
+func WithOnRunEnded(fn func(context.Context, string, RunOutcome)) RunOption {
+	return func(o *runOptions) { o.onRunEnded = fn }
+}
+
 type DialFunc func(context.Context, acpsdk.Client, Target) (acp.Conn, error)
 
 type runHandle struct {
@@ -854,7 +871,11 @@ func (c *Coordinator) Shutdown(ctx context.Context) {
 // spec N1), and returns the run id immediately. The run survives the caller
 // returning: teardown fires on Prompt return / cancel / panic, last in the
 // gate is always the release of Reserve so a second StartPrompt can take over.
-func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) (string, error) {
+func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished, opts ...RunOption) (string, error) {
+	options := &runOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
 	if err := c.Reserve(chatID); err != nil {
 		return "", err
 	}
@@ -863,7 +884,7 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 	accepting := &atomic.Bool{}
 	h := &runHandle{runID: runID, cancel: cancel, accepting: accepting}
 	c.registerRun(chatID, h)
-	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created, finished)
+	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created, finished, options.onRunEnded)
 	return runID, nil
 }
 
@@ -871,8 +892,22 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 // a single panic recover that publishes RUN_ERROR, and the publish-through-
 // hub `emit` so RequestPermission (which also calls s.emit) remains safe on
 // the detached path with no client lifetime dependency.
-func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) {
+func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished, onRunEnded func(context.Context, string, RunOutcome)) {
 	hub := c.hubFor(chatID)
+	outcome := RunFailed
+	defer func() {
+		// outcome is set inline in the function body (RunCompleted/
+		// RunCancelled right before the pre-existing `finished` call, at
+		// the true end of the happy path). Do NOT re-derive it from
+		// runCtx.Err() here: teardown() (deferred below, so it runs
+		// BEFORE this defer per LIFO order) unconditionally calls
+		// h.cancel(), so runCtx is always already cancelled by the time
+		// this fires -- re-checking it here would misclassify every
+		// completed and every failed run as "cancelled".
+		if onRunEnded != nil {
+			onRunEnded(runCtx, chatID, outcome)
+		}
+	}()
 	var once sync.Once
 	teardown := func() {
 		once.Do(func() {
@@ -965,6 +1000,11 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		switch {
 		case runCtx.Err() != nil:
 			code = "run_timeout"
+			// conn.Prompt erroring because runCtx was cancelled is exactly
+			// what happens on both an explicit user Cancel and the
+			// max-run timeout firing -- either way this is a cancelled
+			// run, not a failed one, for onRunEnded's purposes.
+			outcome = RunCancelled
 		case isConnDone(conn):
 			code = "connection_interrupted"
 		}
@@ -973,6 +1013,11 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 	for _, e := range bridge.Finished(resp.StopReason) {
 		hub.Publish(e)
+	}
+	if resp.StopReason == acpsdk.StopReasonCancelled || runCtx.Err() != nil {
+		outcome = RunCancelled
+	} else {
+		outcome = RunCompleted
 	}
 	if finished != nil && resp.StopReason != acpsdk.StopReasonCancelled && runCtx.Err() == nil {
 		_ = finished(runCtx, resp.StopReason)

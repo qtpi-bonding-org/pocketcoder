@@ -86,6 +86,7 @@ func main() {
 	// 2. Register Global Sovereign Hooks
 	hooks.RegisterGlobalTimestamps(app)
 	hooks.RegisterNotificationHooks(app)
+	hooks.RegisterLiveActivityHooks(app)
 	hooks.RegisterChatsHarnessPinHook(app)
 	harnessaccount.RegisterHooks(app)
 
