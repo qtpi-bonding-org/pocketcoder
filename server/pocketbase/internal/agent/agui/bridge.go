@@ -107,9 +107,7 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 	case update.Plan != nil:
 		return []events.Event{b.state.set("plan", map[string]any{"entries": planEntries(update.Plan.Entries)})}, nil
 	case update.PlanUpdate != nil:
-		// Unstable ACP. Verify SessionPlanUpdate's shape at impl time: if it carries
-		// entries, full-replace like Plan; otherwise surface as RAW (don't guess a merge).
-		return []events.Event{rawEvent("plan_update", nil)}, nil
+		return b.planUpdate(update.PlanUpdate), nil
 	case update.PlanRemoved != nil:
 		return []events.Event{b.state.remove("plan")}, nil
 	case update.CurrentModeUpdate != nil:
@@ -130,6 +128,25 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 	// default (no variant matched) — never-drop: surface as redacted RAW so the
 	// client still sees that an update arrived, just not the undecoded blob.
 	return []events.Event{rawEvent("session_update", nil)}, nil
+}
+
+// planUpdate decodes SessionPlanUpdate's discriminated union (Items | File |
+// Markdown). Items carries a full entry list — same full-replace semantics as
+// the Plan variant, so it's projected through planEntries the same way. File
+// and Markdown have no entries shape to reuse; they're projected under their
+// own keys so the client can still render a URI or raw markdown plan. Any
+// future union member is a soft miss: never abort the turn; surface as
+// redacted RAW.
+func (b *Bridge) planUpdate(u *acpsdk.SessionPlanUpdate) []events.Event {
+	switch {
+	case u.Plan.Items != nil:
+		return []events.Event{b.state.set("plan", map[string]any{"entries": planEntries(u.Plan.Items.Entries)})}
+	case u.Plan.File != nil:
+		return []events.Event{b.state.set("plan", map[string]any{"uri": u.Plan.File.Uri})}
+	case u.Plan.Markdown != nil:
+		return []events.Event{b.state.set("plan", map[string]any{"markdown": u.Plan.Markdown.Content})}
+	}
+	return []events.Event{rawEvent("plan_update", nil)}
 }
 
 // startTool handles the initial tool_call. tc is the FLAT SessionUpdate variant:
