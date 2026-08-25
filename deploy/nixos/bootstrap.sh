@@ -29,7 +29,8 @@ install -d -m 0700 "$ARTIFACT_DIR" /var/lib/pocketcoder/config
 #
 # BOOT-ENV SCHEMA (the single authoritative schema; the image installer must
 # write exactly these fields): SCHEMA=1, root_ssh_key, host_ssh_private_key
-# (base64-encoded OpenSSH private key), host_ssh_public_key, public_ip,
+# (base64-encoded OpenSSH private key), host_ssh_public_key, BOX_PRIVATE_KEY_PKCS8,
+# BOX_CREDENTIAL, public_ip,
 # POCKETCODER_RELEASE_CHANNEL, POCKETCODER_RELEASE_DIGEST,
 # POCKETCODER_RELEASE_SEQUENCE, and POCKETCODER_SELECTED_HARNESSES. Fields
 # are single-line KEY=value records. Adding or changing fields requires a
@@ -82,7 +83,8 @@ fi
 # live: a bootstrap.service restart (systemd's Restart=on-failure, e.g.
 # after a transient release-fetch failure) hit exactly this before the
 # fix, on every attempt after the first.
-for required_field in host_ssh_private_key host_ssh_public_key public_ip \
+for required_field in host_ssh_private_key host_ssh_public_key BOX_PRIVATE_KEY_PKCS8 \
+  BOX_CREDENTIAL public_ip \
   POCKETCODER_RELEASE_CHANNEL POCKETCODER_RELEASE_DIGEST POCKETCODER_RELEASE_SEQUENCE \
   POCKETCODER_SELECTED_HARNESSES; do
   if ! grep -q "^${required_field}=\S" "$RUNTIME_ENV"; then
