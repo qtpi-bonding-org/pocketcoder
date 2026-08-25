@@ -20,14 +20,34 @@ TARGET_BYTES=$(blockdev --getsize64 /dev/sdb)
   exit 1
 }
 
-# 6 attempts, not 3 -- live-confirmed 2026-08-25: a real run failed 3/3
-# times in under a second total (curl HTTP/2 stream reset, 0 bytes each
-# attempt) purely from a transient Cloudflare/R2-edge hiccup, not a code
-# bug -- the identical request (headers, pipeline, target disk) succeeded
-# cleanly, full checksum match, on the very next try. 3 rapid-fire
-# attempts with no backoff can all land on the same bad edge connection;
-# more attempts AND a real gap between them (see MAX_ATTEMPTS below) give
-# a brief edge issue time to clear instead of hammering it identically.
+# Live-confirmed 2026-08-25: real boot-time runs failed 9/9 times across
+# two separate test runs, always instantly (0 bytes transferred, curl
+# HTTP/2 stream reset), always during THIS StackScript's own very-early
+# boot-time execution -- while the exact same request (headers, URL,
+# pipeline) run manually over SSH minutes later, after boot fully
+# settles, succeeded cleanly every single time. Not a code/header/signing
+# bug (already separately verified). The distinguishing factor is boot
+# timing, not the request itself -- so wait for the network to prove
+# itself actually ready with a cheap real request before attempting the
+# real (large, HTTP/2) download, and prefer HTTP/1.1 for the download
+# itself, since it's less sensitive to an early-boot network stack that's
+# technically routable but not fully settled yet than HTTP/2 negotiation
+# is.
+echo "Waiting for network readiness..."
+network_ready=0
+for _ in $(seq 1 30); do
+  if curl -fsS -m 5 --http1.1 https://images.relay.pocketcoder.org/v1/health >/dev/null 2>&1; then
+    network_ready=1
+    break
+  fi
+  sleep 2
+done
+if [ "$network_ready" -eq 1 ]; then
+  echo "Network ready."
+else
+  echo "Network readiness check never succeeded after 60s -- proceeding anyway."
+fi
+
 MAX_ATTEMPTS=6
 attempt=0
 until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
@@ -87,7 +107,7 @@ until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
   PROOF="${PROOF_SIGNING_INPUT}.${PROOF_SIG}"
   rm -f /tmp/box_key.der /tmp/box_pub.der /tmp/box_pub_point.bin /tmp/box_pub_xy.bin /tmp/box_pub_x.bin /tmp/box_pub_y.bin /tmp/proof_sig.der
 
-  if curl -fsSL --retry 0 --max-time 1800 --speed-limit 1024 --speed-time 60 \
+  if curl -fsSL --http1.1 --retry 0 --max-time 1800 --speed-limit 1024 --speed-time 60 \
       -H "Pocketcoder-Credential: $BOX_CREDENTIAL" \
       -H "Pocketcoder-Proof: $PROOF" \
       "$IMAGE_URL" \
