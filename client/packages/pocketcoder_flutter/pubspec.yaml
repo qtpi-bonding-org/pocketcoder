@@ -39,7 +39,7 @@ dependencies:
   l10n_key_resolver:
     git:
       url: https://github.com/qtpi-bonding-org/dart_l10n_key_resolver.git
-      ref: d7a30dfc7922a9903c07dcb0ae15e8a6d606ea6b
+      ref: 52e2dbca293de29f140a3be76ec95a24d07ee50f
 
   # Navigation
   go_router: ^14.0.0

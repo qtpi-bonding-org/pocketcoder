@@ -1,6 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-24T18:22:03.869575
 
 import 'app_localizations.dart';
 
@@ -311,16 +310,12 @@ class L10nKeyResolver {
       'initialization.admin.password' => _l10n.initializationAdminPassword,
       'initialization.cloud.region' => _l10n.initializationCloudRegion,
       'initialization.connection.parameters' => _l10n.initializationConnectionParameters,
-      'initialization.copied.to.buffer' => _l10n.initializationCopiedToBuffer,
-      'initialization.copy.label' => _l10n.initializationCopyLabel,
       'initialization.current.operation' => _l10n.initializationCurrentOperation,
       'initialization.description.initializing' => _l10n.initializationDescriptionInitializing,
       'initialization.error.code' => _l10n.initializationErrorCode,
       'initialization.failed' => _l10n.initializationFailed,
       'initialization.fault.authentication.expired' => _l10n.initializationFaultAuthenticationExpired,
-      'initialization.fault.detected' => _l10n.initializationFaultDetected,
       'initialization.fault.generic' => _l10n.initializationFaultGeneric,
-      'initialization.fault.max.retries.exceeded' => _l10n.initializationFaultMaxRetriesExceeded,
       'initialization.fault.provision.interrupted.no.resource' => _l10n.initializationFaultProvisionInterruptedNoResource,
       'initialization.fault.provision.resource.not.found' => _l10n.initializationFaultProvisionResourceNotFound,
       'initialization.fault.provision.resource.still.exists' => _l10n.initializationFaultProvisionResourceStillExists,
@@ -334,16 +329,13 @@ class L10nKeyResolver {
       'initialization.last.signal' => _l10n.initializationLastSignal,
       'initialization.metadata.registry' => _l10n.initializationMetadataRegistry,
       'initialization.network.ip' => _l10n.initializationNetworkIp,
-      'initialization.ready' => _l10n.initializationReady,
       'initialization.run.id' => _l10n.initializationRunId,
       'initialization.screen.title' => _l10n.initializationScreenTitle,
       'initialization.secure' => _l10n.initializationSecure,
       'initialization.security.notice' => _l10n.initializationSecurityNotice,
       'initialization.source.commit' => _l10n.initializationSourceCommit,
       'initialization.status.initializing' => _l10n.initializationStatusInitializing,
-      'initialization.status.prefix' => _l10n.initializationStatusPrefix,
       'initialization.status.schema' => _l10n.initializationStatusSchema,
-      'initialization.sync.attempt' => _l10n.initializationSyncAttempt,
       'initialization.technical.details.toggle' => _l10n.initializationTechnicalDetailsToggle,
       'initialization.unknown' => _l10n.initializationUnknown,
       'llm.active.model.section' => _l10n.llmActiveModelSection,
@@ -874,6 +866,13 @@ class L10nKeyResolver {
       'harness.auth.provider.key.missing' => _l10n.harnessAuthProviderKeyMissing(args?['harness'] as String? ?? ''),
       'harness.auth.status' => _l10n.harnessAuthStatus(args?['status'] as String? ?? ''),
       'home.error.prefix' => _l10n.homeErrorPrefix(args?['error'] as String? ?? ''),
+      'initialization.copied.to.buffer' => _l10n.initializationCopiedToBuffer(args?['label'] as String? ?? ''),
+      'initialization.copy.label' => _l10n.initializationCopyLabel(args?['label'] as String? ?? ''),
+      'initialization.fault.detected' => _l10n.initializationFaultDetected(args?['error'] as String? ?? ''),
+      'initialization.fault.max.retries.exceeded' => _l10n.initializationFaultMaxRetriesExceeded(args?['maxAttempts'] as String? ?? ''),
+      'initialization.ready' => _l10n.initializationReady(args?['ipAddress'] as String? ?? ''),
+      'initialization.status.prefix' => _l10n.initializationStatusPrefix(args?['status'] as String? ?? ''),
+      'initialization.sync.attempt' => _l10n.initializationSyncAttempt(args?['attempt'] as String? ?? ''),
       'llm.api.key.dialog.title' => _l10n.llmApiKeyDialogTitle(args?['provider'] as String? ?? ''),
       'llm.enter.credentials' => _l10n.llmEnterCredentials(args?['provider'] as String? ?? ''),
       'llm.models.available' => _l10n.llmModelsAvailable(args?['count'] as int? ?? 0),
@@ -3909,16 +3908,16 @@ abstract class L10nKeys {
   static const initializationAdminPassword = 'initialization.admin.password';
   static const initializationCloudRegion = 'initialization.cloud.region';
   static const initializationConnectionParameters = 'initialization.connection.parameters';
-  static const initializationCopiedToBuffer = 'initialization.copied.to.buffer';
-  static const initializationCopyLabel = 'initialization.copy.label';
+  static (String, Map<String, dynamic>) initializationCopiedToBuffer(String label) => ('initialization.copied.to.buffer', {'label': label});
+  static (String, Map<String, dynamic>) initializationCopyLabel(String label) => ('initialization.copy.label', {'label': label});
   static const initializationCurrentOperation = 'initialization.current.operation';
   static const initializationDescriptionInitializing = 'initialization.description.initializing';
   static const initializationErrorCode = 'initialization.error.code';
   static const initializationFailed = 'initialization.failed';
   static const initializationFaultAuthenticationExpired = 'initialization.fault.authentication.expired';
-  static const initializationFaultDetected = 'initialization.fault.detected';
+  static (String, Map<String, dynamic>) initializationFaultDetected(String error) => ('initialization.fault.detected', {'error': error});
   static const initializationFaultGeneric = 'initialization.fault.generic';
-  static const initializationFaultMaxRetriesExceeded = 'initialization.fault.max.retries.exceeded';
+  static (String, Map<String, dynamic>) initializationFaultMaxRetriesExceeded(String maxAttempts) => ('initialization.fault.max.retries.exceeded', {'maxAttempts': maxAttempts});
   static const initializationFaultProvisionInterruptedNoResource = 'initialization.fault.provision.interrupted.no.resource';
   static const initializationFaultProvisionResourceNotFound = 'initialization.fault.provision.resource.not.found';
   static const initializationFaultProvisionResourceStillExists = 'initialization.fault.provision.resource.still.exists';
@@ -3932,16 +3931,16 @@ abstract class L10nKeys {
   static const initializationLastSignal = 'initialization.last.signal';
   static const initializationMetadataRegistry = 'initialization.metadata.registry';
   static const initializationNetworkIp = 'initialization.network.ip';
-  static const initializationReady = 'initialization.ready';
+  static (String, Map<String, dynamic>) initializationReady(String ipAddress) => ('initialization.ready', {'ipAddress': ipAddress});
   static const initializationRunId = 'initialization.run.id';
   static const initializationScreenTitle = 'initialization.screen.title';
   static const initializationSecure = 'initialization.secure';
   static const initializationSecurityNotice = 'initialization.security.notice';
   static const initializationSourceCommit = 'initialization.source.commit';
   static const initializationStatusInitializing = 'initialization.status.initializing';
-  static const initializationStatusPrefix = 'initialization.status.prefix';
+  static (String, Map<String, dynamic>) initializationStatusPrefix(String status) => ('initialization.status.prefix', {'status': status});
   static const initializationStatusSchema = 'initialization.status.schema';
-  static const initializationSyncAttempt = 'initialization.sync.attempt';
+  static (String, Map<String, dynamic>) initializationSyncAttempt(String attempt) => ('initialization.sync.attempt', {'attempt': attempt});
   static const initializationTechnicalDetailsToggle = 'initialization.technical.details.toggle';
   static const initializationUnknown = 'initialization.unknown';
   static const llmActiveModelSection = 'llm.active.model.section';
