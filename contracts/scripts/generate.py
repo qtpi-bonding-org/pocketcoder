@@ -71,7 +71,7 @@ def main():
     (OUT/'validators.js').write_text(generated_validators(data))
     (OUT/'validators.d.ts').write_text("export declare function validateRecord(recordName: string, value: unknown): any;\nexport declare function redactForLog(recordName: string, value: Record<string, unknown>): Record<string, unknown>;\n")
     privacy_path=ROOT/'website/src/content/docs/privacy.md'; privacy_path.parent.mkdir(parents=True,exist_ok=True)
-    existing=privacy_path.read_text() if privacy_path.exists() else "# Privacy\n\nPocketCoder documents hosted data flows below. Legal prose outside generated sections is maintained manually.\n\n"
+    existing=privacy_path.read_text() if privacy_path.exists() else "---\ntitle: Privacy\ndescription: PocketCoder's hosted data flows and privacy inventory.\nhead: []\n---\n\nPocketCoder documents hosted data flows below. Legal prose outside generated sections is maintained manually.\n\n"
     block=privacy(data)+"\n"+destinations(data)
     pattern=re.compile(r"<!-- BEGIN GENERATED DATA INVENTORY -->.*?<!-- END GENERATED DATA INVENTORY -->\n?",re.S)
     existing=pattern.sub('', existing); pattern2=re.compile(r"<!-- BEGIN GENERATED DATA DESTINATIONS -->.*?<!-- END GENERATED DATA DESTINATIONS -->\n?",re.S)
