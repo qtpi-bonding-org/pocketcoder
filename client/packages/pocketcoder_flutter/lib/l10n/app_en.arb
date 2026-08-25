@@ -45,13 +45,20 @@
   "actionAuthorize": "AUTHORIZE",
   "actionRefresh": "REFRESH",
   "actionBack": "BACK",
-  "actionContinue": "CONTINUE",
+  "actionContinue": "NEXT",
   "actionChange": "CHANGE",
   "actionCreate": "CREATE",
   "actionAddNew": "ADD NEW",
   "actionRestore": "RESTORE",
   "actionConfigure": "CONFIGURE",
   "actionReject": "REJECT",
+  "externalAuthTitle": "EXTERNAL AUTHENTICATION",
+  "externalAuthConnecting": "Connecting to {label}...",
+  "@externalAuthConnecting": {
+    "placeholders": {"label": {"type": "String"}}
+  },
+  "externalAuthRetry": "RETRY",
+  "externalAuthCancel": "CANCEL",
 
   "navChats": "CHATS",
   "navMonitor": "MONITOR",
@@ -538,6 +545,8 @@
   "@proTrialDuration": {
     "placeholders": {"days": {"type": "int"}}
   },
+  "proTrialNoPaymentInfo": "STARTS A FREE WEEK. NO PAYMENT INFO IS COLLECTED NOW.",
+  "proTrialLapseExplainer": "IF YOU DO NOT KEEP PRO, ONLY HOSTED PUSH NOTIFICATIONS STOP. YOUR SERVER KEEPS RUNNING.",
   "proPrice": "{price}",
   "@proPrice": {
     "placeholders": {"price": {"type": "String"}}

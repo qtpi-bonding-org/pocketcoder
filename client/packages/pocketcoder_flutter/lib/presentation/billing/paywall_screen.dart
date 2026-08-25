@@ -7,11 +7,8 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/billing/adapters/paywall_adapter.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -71,22 +68,9 @@ class PaywallView extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-            child: Column(
-              children: [
-                if (isOnboarding && state.package?.freeTrialDays != null) ...[
-                  PocoBubble(
-                    message: context.l10n.onboardingTrialPoco(
-                      state.package?.freeTrialDays ?? 0,
-                    ),
-                    pocoSize: AppSizes.fontLarge,
-                  ),
-                  VSpace.x3,
-                ],
-                BiosFrame(
-                  title: context.l10n.proPlanTitle,
-                  child: _buildContent(context),
-                ),
-              ],
+            child: BiosFrame(
+              title: context.l10n.proPlanTitle,
+              child: _buildContent(context),
             ),
           ),
         ),
@@ -138,44 +122,29 @@ class _ProOffer extends StatelessWidget {
   Widget build(BuildContext context) {
     final trialDays = package.freeTrialDays;
     final recurringPrice = _recurringPrice(context, package);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AsciiLogo(
-          text: AppAscii.pocketCoderProLogo,
-          color: context.colorScheme.primary,
-          fontSize: AppSizes.fontTiny,
-          alignment: Alignment.center,
-        ),
-        VSpace.x3,
-        TerminalText(
-          context.l10n.proUnlockCommand,
-          size: TerminalTextSize.base,
-          weight: TerminalTextWeight.heavy,
-          color: context.colorScheme.primary,
-        ),
-        VSpace.x2,
-        TerminalText(context.l10n.proSummary, alpha: 0.8),
-        VSpace.x3,
-        _ProFeature(label: context.l10n.proFeatureDeploy),
-        _ProFeature(label: context.l10n.proFeaturePush),
-        _ProFeature(label: context.l10n.proFeatureConsole),
-        VSpace.x3,
         if (trialDays != null) ...[
           TerminalText(
-            context.l10n.proTrialDuration(trialDays),
-            size: TerminalTextSize.large,
+            context.l10n.proTrialNoPaymentInfo,
+            size: TerminalTextSize.base,
             weight: TerminalTextWeight.heavy,
             color: context.colorScheme.primary,
           ),
           VSpace.x1,
-        ],
-        TerminalText(
-          trialDays == null
-              ? context.l10n.proPrice(recurringPrice)
-              : context.l10n.proPriceAfterTrial(recurringPrice),
-          weight: TerminalTextWeight.heavy,
-        ),
+          TerminalText(
+            context.l10n.proTrialLapseExplainer,
+            alpha: 0.8,
+          ),
+        ] else
+          TerminalText(
+            context.l10n.proSubscribe,
+            size: TerminalTextSize.base,
+            weight: TerminalTextWeight.heavy,
+            color: context.colorScheme.primary,
+          ),
         VSpace.x3,
         TerminalButton(
           label: trialDays == null
@@ -183,21 +152,20 @@ class _ProOffer extends StatelessWidget {
               : context.l10n.proStartTrial(trialDays),
           onTap: onPurchase,
         ),
-        VSpace.x2,
+        VSpace.x1,
         Center(
           child: TextButton(
             onPressed: onRestore,
             child: Text(context.l10n.proRestore),
           ),
         ),
-        TerminalText.tiny(
-          trialDays == null
-              ? context.l10n.proTerms(recurringPrice)
-              : context.l10n.proTrialTerms(trialDays, recurringPrice),
-          alpha: 0.65,
-          textAlign: TextAlign.center,
-          height: 1.4,
-        ),
+        if (trialDays == null)
+          TerminalText.tiny(
+            context.l10n.proTerms(recurringPrice),
+            alpha: 0.65,
+            textAlign: TextAlign.center,
+            height: 1.4,
+          ),
         if (showSelfHostedOption) ...[
           VSpace.x3,
           _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
@@ -213,30 +181,6 @@ class _ProOffer extends StatelessWidget {
       BillingPeriod.year => context.l10n.proPricePerYear(package.priceString),
       BillingPeriod.unknown => package.priceString,
     };
-  }
-}
-
-class _ProFeature extends StatelessWidget {
-  const _ProFeature({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: AppSizes.space),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TerminalText.label(
-            context.l10n.proFeatureReady,
-            color: context.colorScheme.primary,
-          ),
-          HSpace.x1,
-          Expanded(child: TerminalText(label)),
-        ],
-      ),
-    );
   }
 }
 

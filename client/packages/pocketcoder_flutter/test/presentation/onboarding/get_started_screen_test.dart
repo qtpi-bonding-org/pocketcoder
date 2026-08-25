@@ -162,7 +162,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
     await tester.pump();
-    await tester.tap(find.text('CONTINUE'));
+    await tester.tap(find.text('NEXT'));
     await tester.pumpAndSettle();
 
     expect(captured, isNotNull);
@@ -207,7 +207,7 @@ void main() {
 
     expect(find.text('Must be at least 8 characters'), findsOneWidget);
 
-    await tester.tap(find.text('CONTINUE'));
+    await tester.tap(find.text('NEXT'));
     await tester.pumpAndSettle();
 
     expect(captured, isNull,
@@ -253,7 +253,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
     await tester.pump();
-    await tester.tap(find.text('CONTINUE'));
+    await tester.tap(find.text('NEXT'));
     await tester.pumpAndSettle();
 
     expect(captured?.email, 'admin@example.com');

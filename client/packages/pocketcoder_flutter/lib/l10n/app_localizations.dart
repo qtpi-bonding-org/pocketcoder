@@ -307,7 +307,7 @@ abstract class AppLocalizations {
   /// No description provided for @actionContinue.
   ///
   /// In en, this message translates to:
-  /// **'CONTINUE'**
+  /// **'NEXT'**
   String get actionContinue;
 
   /// No description provided for @actionChange.
@@ -345,6 +345,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'REJECT'**
   String get actionReject;
+
+  /// No description provided for @externalAuthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'EXTERNAL AUTHENTICATION'**
+  String get externalAuthTitle;
+
+  /// No description provided for @externalAuthConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {label}...'**
+  String externalAuthConnecting(String label);
+
+  /// No description provided for @externalAuthRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get externalAuthRetry;
+
+  /// No description provided for @externalAuthCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get externalAuthCancel;
 
   /// No description provided for @navChats.
   ///
@@ -2367,6 +2391,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{days} DAYS FREE'**
   String proTrialDuration(int days);
+
+  /// No description provided for @proTrialNoPaymentInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'STARTS A FREE WEEK. NO PAYMENT INFO IS COLLECTED NOW.'**
+  String get proTrialNoPaymentInfo;
+
+  /// No description provided for @proTrialLapseExplainer.
+  ///
+  /// In en, this message translates to:
+  /// **'IF YOU DO NOT KEEP PRO, ONLY HOSTED PUSH NOTIFICATIONS STOP. YOUR SERVER KEEPS RUNNING.'**
+  String get proTrialLapseExplainer;
 
   /// No description provided for @proPrice.
   ///

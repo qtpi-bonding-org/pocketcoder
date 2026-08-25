@@ -116,7 +116,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionBack => 'BACK';
 
   @override
-  String get actionContinue => 'CONTINUE';
+  String get actionContinue => 'NEXT';
 
   @override
   String get actionChange => 'CHANGE';
@@ -135,6 +135,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionReject => 'REJECT';
+
+  @override
+  String get externalAuthTitle => 'EXTERNAL AUTHENTICATION';
+
+  @override
+  String externalAuthConnecting(String label) {
+    return 'Connecting to $label...';
+  }
+
+  @override
+  String get externalAuthRetry => 'RETRY';
+
+  @override
+  String get externalAuthCancel => 'CANCEL';
 
   @override
   String get navChats => 'CHATS';
@@ -1218,6 +1232,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String proTrialDuration(int days) {
     return '$days DAYS FREE';
   }
+
+  @override
+  String get proTrialNoPaymentInfo =>
+      'STARTS A FREE WEEK. NO PAYMENT INFO IS COLLECTED NOW.';
+
+  @override
+  String get proTrialLapseExplainer =>
+      'IF YOU DO NOT KEEP PRO, ONLY HOSTED PUSH NOTIFICATIONS STOP. YOUR SERVER KEEPS RUNNING.';
 
   @override
   String proPrice(String price) {

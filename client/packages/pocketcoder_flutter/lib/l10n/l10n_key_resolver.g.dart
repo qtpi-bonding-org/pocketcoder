@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-24T16:39:04.359760
+// Generated at: 2026-08-24T17:48:15.284855
 
 import 'app_localizations.dart';
 
@@ -263,6 +263,9 @@ class L10nKeyResolver {
       'errors.copy.all' => _l10n.errorsCopyAll,
       'errors.empty' => _l10n.errorsEmpty,
       'errors.title' => _l10n.errorsTitle,
+      'external.auth.cancel' => _l10n.externalAuthCancel,
+      'external.auth.retry' => _l10n.externalAuthRetry,
+      'external.auth.title' => _l10n.externalAuthTitle,
       'file.clear.action' => _l10n.fileClearAction,
       'file.dashboard.action' => _l10n.fileDashboardAction,
       'file.empty' => _l10n.fileEmpty,
@@ -645,6 +648,8 @@ class L10nKeyResolver {
       'pro.subscribe' => _l10n.proSubscribe,
       'pro.summary' => _l10n.proSummary,
       'pro.title' => _l10n.proTitle,
+      'pro.trial.lapse.explainer' => _l10n.proTrialLapseExplainer,
+      'pro.trial.no.payment.info' => _l10n.proTrialNoPaymentInfo,
       'pro.unavailable' => _l10n.proUnavailable,
       'pro.unavailable.body' => _l10n.proUnavailableBody,
       'pro.unlock.command' => _l10n.proUnlockCommand,
@@ -851,6 +856,7 @@ class L10nKeyResolver {
       'deployment.plan.poco' => _l10n.deploymentPlanPoco(args?['minimumMemory'] as String? ?? ''),
       'deployment.plan.specs' => _l10n.deploymentPlanSpecs(args?['vcpus'] as int? ?? 0, args?['memory'] as String? ?? '', args?['diskGb'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
+      'external.auth.connecting' => _l10n.externalAuthConnecting(args?['label'] as String? ?? ''),
       'harness.auth.account' => _l10n.harnessAuthAccount(args?['account'] as String? ?? '', args?['visibility'] as String? ?? ''),
       'harness.auth.attempt' => _l10n.harnessAuthAttempt(args?['id'] as String? ?? ''),
       'harness.auth.details' => _l10n.harnessAuthDetails(args?['details'] as String? ?? ''),
@@ -1157,6 +1163,10 @@ class L10nKeyResolver {
     'errors.empty',
     'errors.occurred',
     'errors.title',
+    'external.auth.cancel',
+    'external.auth.connecting',
+    'external.auth.retry',
+    'external.auth.title',
     'file.clear.action',
     'file.dashboard.action',
     'file.empty',
@@ -1575,6 +1585,8 @@ class L10nKeyResolver {
     'pro.terms',
     'pro.title',
     'pro.trial.duration',
+    'pro.trial.lapse.explainer',
+    'pro.trial.no.payment.info',
     'pro.trial.terms',
     'pro.unavailable',
     'pro.unavailable.body',
@@ -2034,6 +2046,10 @@ class L10nKeyResolver {
     'errorsEmpty': 'errors.empty',
     'errorsOccurred': 'errors.occurred',
     'errorsTitle': 'errors.title',
+    'externalAuthCancel': 'external.auth.cancel',
+    'externalAuthConnecting': 'external.auth.connecting',
+    'externalAuthRetry': 'external.auth.retry',
+    'externalAuthTitle': 'external.auth.title',
     'fileClearAction': 'file.clear.action',
     'fileDashboardAction': 'file.dashboard.action',
     'fileEmpty': 'file.empty',
@@ -2452,6 +2468,8 @@ class L10nKeyResolver {
     'proTerms': 'pro.terms',
     'proTitle': 'pro.title',
     'proTrialDuration': 'pro.trial.duration',
+    'proTrialLapseExplainer': 'pro.trial.lapse.explainer',
+    'proTrialNoPaymentInfo': 'pro.trial.no.payment.info',
     'proTrialTerms': 'pro.trial.terms',
     'proUnavailable': 'pro.unavailable',
     'proUnavailableBody': 'pro.unavailable.body',
@@ -2908,6 +2926,10 @@ class L10nKeyResolver {
     'errors.empty': 'errorsEmpty',
     'errors.occurred': 'errorsOccurred',
     'errors.title': 'errorsTitle',
+    'external.auth.cancel': 'externalAuthCancel',
+    'external.auth.connecting': 'externalAuthConnecting',
+    'external.auth.retry': 'externalAuthRetry',
+    'external.auth.title': 'externalAuthTitle',
     'file.clear.action': 'fileClearAction',
     'file.dashboard.action': 'fileDashboardAction',
     'file.empty': 'fileEmpty',
@@ -3326,6 +3348,8 @@ class L10nKeyResolver {
     'pro.terms': 'proTerms',
     'pro.title': 'proTitle',
     'pro.trial.duration': 'proTrialDuration',
+    'pro.trial.lapse.explainer': 'proTrialLapseExplainer',
+    'pro.trial.no.payment.info': 'proTrialNoPaymentInfo',
     'pro.trial.terms': 'proTrialTerms',
     'pro.unavailable': 'proUnavailable',
     'pro.unavailable.body': 'proUnavailableBody',
@@ -3789,6 +3813,10 @@ abstract class L10nKeys {
   static const errorsEmpty = 'errors.empty';
   static (String, Map<String, dynamic>) errorsOccurred(int count) => ('errors.occurred', {'count': count});
   static const errorsTitle = 'errors.title';
+  static const externalAuthCancel = 'external.auth.cancel';
+  static (String, Map<String, dynamic>) externalAuthConnecting(String label) => ('external.auth.connecting', {'label': label});
+  static const externalAuthRetry = 'external.auth.retry';
+  static const externalAuthTitle = 'external.auth.title';
   static const fileClearAction = 'file.clear.action';
   static const fileDashboardAction = 'file.dashboard.action';
   static const fileEmpty = 'file.empty';
@@ -4207,6 +4235,8 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) proTerms(String price) => ('pro.terms', {'price': price});
   static const proTitle = 'pro.title';
   static (String, Map<String, dynamic>) proTrialDuration(int days) => ('pro.trial.duration', {'days': days});
+  static const proTrialLapseExplainer = 'pro.trial.lapse.explainer';
+  static const proTrialNoPaymentInfo = 'pro.trial.no.payment.info';
   static (String, Map<String, dynamic>) proTrialTerms(int days, String price) => ('pro.trial.terms', {'days': days, 'price': price});
   static const proUnavailable = 'pro.unavailable';
   static const proUnavailableBody = 'pro.unavailable.body';
