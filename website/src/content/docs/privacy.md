@@ -1,4 +1,8 @@
-# Privacy
+---
+title: Privacy
+description: PocketCoder's hosted data flows and privacy inventory.
+head: []
+---
 
 PocketCoder documents hosted data flows below. Legal prose outside generated sections is maintained manually.
 
