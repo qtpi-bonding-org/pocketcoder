@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-08-25T16:18:26.722269
 
 import 'app_localizations.dart';
 
@@ -324,11 +325,13 @@ class L10nKeyResolver {
       'initialization.hardware.plan' => _l10n.initializationHardwarePlan,
       'initialization.https.endpoint' => _l10n.initializationHttpsEndpoint,
       'initialization.in.progress' => _l10n.initializationInProgress,
+      'initialization.instance.id' => _l10n.initializationInstanceId,
       'initialization.instance.manifest' => _l10n.initializationInstanceManifest,
       'initialization.ip.address' => _l10n.initializationIpAddress,
       'initialization.last.signal' => _l10n.initializationLastSignal,
       'initialization.metadata.registry' => _l10n.initializationMetadataRegistry,
       'initialization.network.ip' => _l10n.initializationNetworkIp,
+      'initialization.retry.attempt' => _l10n.initializationRetryAttempt,
       'initialization.run.id' => _l10n.initializationRunId,
       'initialization.screen.title' => _l10n.initializationScreenTitle,
       'initialization.secure' => _l10n.initializationSecure,
@@ -679,12 +682,22 @@ class L10nKeyResolver {
       'scheduler.title' => _l10n.schedulerTitle,
       'server.control.admin.identity' => _l10n.serverControlAdminIdentity,
       'server.control.admin.password' => _l10n.serverControlAdminPassword,
+      'server.control.confirm.cancel' => _l10n.serverControlConfirmCancel,
+      'server.control.confirm.confirm' => _l10n.serverControlConfirmConfirm,
+      'server.control.confirm.title' => _l10n.serverControlConfirmTitle,
       'server.control.connection.details' => _l10n.serverControlConnectionDetails,
       'server.control.copied' => _l10n.serverControlCopied,
       'server.control.copy' => _l10n.serverControlCopy,
       'server.control.hide.password' => _l10n.serverControlHidePassword,
       'server.control.https.endpoint' => _l10n.serverControlHttpsEndpoint,
       'server.control.ip.address' => _l10n.serverControlIpAddress,
+      'server.control.open.chat' => _l10n.serverControlOpenChat,
+      'server.control.operation.restart.nix.os' => _l10n.serverControlOperationRestartNixOs,
+      'server.control.operation.restart.pocket.coder' => _l10n.serverControlOperationRestartPocketCoder,
+      'server.control.operation.save.backup' => _l10n.serverControlOperationSaveBackup,
+      'server.control.operation.update.nix.os' => _l10n.serverControlOperationUpdateNixOs,
+      'server.control.operation.update.pocket.coder' => _l10n.serverControlOperationUpdatePocketCoder,
+      'server.control.release.checking' => _l10n.serverControlReleaseChecking,
       'server.control.reveal.password' => _l10n.serverControlRevealPassword,
       'server.control.title' => _l10n.serverControlTitle,
       'settings.account.section' => _l10n.settingsAccountSection,
@@ -907,6 +920,9 @@ class L10nKeyResolver {
       'provider.screen.add.key.title' => _l10n.providerScreenAddKeyTitle(args?['provider'] as String? ?? ''),
       'provider.screen.error.prefix' => _l10n.providerScreenErrorPrefix(args?['error'] as String? ?? ''),
       'scheduler.edit.dialog.title' => _l10n.schedulerEditDialogTitle(args?['name'] as String? ?? ''),
+      'server.control.confirm.body' => _l10n.serverControlConfirmBody(args?['operation'] as String? ?? ''),
+      'server.control.release.current' => _l10n.serverControlReleaseCurrent(args?['version'] as String? ?? ''),
+      'server.control.release.status' => _l10n.serverControlReleaseStatus(args?['status'] as String? ?? ''),
       'skills.edit.dialog.title' => _l10n.skillsEditDialogTitle(args?['name'] as String? ?? ''),
       'terminal.ssh.link' => _l10n.terminalSshLink(args?['host'] as String? ?? '', args?['port'] as String? ?? ''),
       'walkthrough.header' => _l10n.walkthroughHeader(args?['os'] as String? ?? '', args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
@@ -1246,12 +1262,14 @@ class L10nKeyResolver {
     'initialization.hardware.plan',
     'initialization.https.endpoint',
     'initialization.in.progress',
+    'initialization.instance.id',
     'initialization.instance.manifest',
     'initialization.ip.address',
     'initialization.last.signal',
     'initialization.metadata.registry',
     'initialization.network.ip',
     'initialization.ready',
+    'initialization.retry.attempt',
     'initialization.run.id',
     'initialization.screen.title',
     'initialization.secure',
@@ -1638,12 +1656,25 @@ class L10nKeyResolver {
     'scheduler.title',
     'server.control.admin.identity',
     'server.control.admin.password',
+    'server.control.confirm.body',
+    'server.control.confirm.cancel',
+    'server.control.confirm.confirm',
+    'server.control.confirm.title',
     'server.control.connection.details',
     'server.control.copied',
     'server.control.copy',
     'server.control.hide.password',
     'server.control.https.endpoint',
     'server.control.ip.address',
+    'server.control.open.chat',
+    'server.control.operation.restart.nix.os',
+    'server.control.operation.restart.pocket.coder',
+    'server.control.operation.save.backup',
+    'server.control.operation.update.nix.os',
+    'server.control.operation.update.pocket.coder',
+    'server.control.release.checking',
+    'server.control.release.current',
+    'server.control.release.status',
     'server.control.reveal.password',
     'server.control.title',
     'settings.account.section',
@@ -2139,12 +2170,14 @@ class L10nKeyResolver {
     'initializationHardwarePlan': 'initialization.hardware.plan',
     'initializationHttpsEndpoint': 'initialization.https.endpoint',
     'initializationInProgress': 'initialization.in.progress',
+    'initializationInstanceId': 'initialization.instance.id',
     'initializationInstanceManifest': 'initialization.instance.manifest',
     'initializationIpAddress': 'initialization.ip.address',
     'initializationLastSignal': 'initialization.last.signal',
     'initializationMetadataRegistry': 'initialization.metadata.registry',
     'initializationNetworkIp': 'initialization.network.ip',
     'initializationReady': 'initialization.ready',
+    'initializationRetryAttempt': 'initialization.retry.attempt',
     'initializationRunId': 'initialization.run.id',
     'initializationScreenTitle': 'initialization.screen.title',
     'initializationSecure': 'initialization.secure',
@@ -2531,12 +2564,25 @@ class L10nKeyResolver {
     'schedulerTitle': 'scheduler.title',
     'serverControlAdminIdentity': 'server.control.admin.identity',
     'serverControlAdminPassword': 'server.control.admin.password',
+    'serverControlConfirmBody': 'server.control.confirm.body',
+    'serverControlConfirmCancel': 'server.control.confirm.cancel',
+    'serverControlConfirmConfirm': 'server.control.confirm.confirm',
+    'serverControlConfirmTitle': 'server.control.confirm.title',
     'serverControlConnectionDetails': 'server.control.connection.details',
     'serverControlCopied': 'server.control.copied',
     'serverControlCopy': 'server.control.copy',
     'serverControlHidePassword': 'server.control.hide.password',
     'serverControlHttpsEndpoint': 'server.control.https.endpoint',
     'serverControlIpAddress': 'server.control.ip.address',
+    'serverControlOpenChat': 'server.control.open.chat',
+    'serverControlOperationRestartNixOs': 'server.control.operation.restart.nix.os',
+    'serverControlOperationRestartPocketCoder': 'server.control.operation.restart.pocket.coder',
+    'serverControlOperationSaveBackup': 'server.control.operation.save.backup',
+    'serverControlOperationUpdateNixOs': 'server.control.operation.update.nix.os',
+    'serverControlOperationUpdatePocketCoder': 'server.control.operation.update.pocket.coder',
+    'serverControlReleaseChecking': 'server.control.release.checking',
+    'serverControlReleaseCurrent': 'server.control.release.current',
+    'serverControlReleaseStatus': 'server.control.release.status',
     'serverControlRevealPassword': 'server.control.reveal.password',
     'serverControlTitle': 'server.control.title',
     'settingsAccountSection': 'settings.account.section',
@@ -3029,12 +3075,14 @@ class L10nKeyResolver {
     'initialization.hardware.plan': 'initializationHardwarePlan',
     'initialization.https.endpoint': 'initializationHttpsEndpoint',
     'initialization.in.progress': 'initializationInProgress',
+    'initialization.instance.id': 'initializationInstanceId',
     'initialization.instance.manifest': 'initializationInstanceManifest',
     'initialization.ip.address': 'initializationIpAddress',
     'initialization.last.signal': 'initializationLastSignal',
     'initialization.metadata.registry': 'initializationMetadataRegistry',
     'initialization.network.ip': 'initializationNetworkIp',
     'initialization.ready': 'initializationReady',
+    'initialization.retry.attempt': 'initializationRetryAttempt',
     'initialization.run.id': 'initializationRunId',
     'initialization.screen.title': 'initializationScreenTitle',
     'initialization.secure': 'initializationSecure',
@@ -3421,12 +3469,25 @@ class L10nKeyResolver {
     'scheduler.title': 'schedulerTitle',
     'server.control.admin.identity': 'serverControlAdminIdentity',
     'server.control.admin.password': 'serverControlAdminPassword',
+    'server.control.confirm.body': 'serverControlConfirmBody',
+    'server.control.confirm.cancel': 'serverControlConfirmCancel',
+    'server.control.confirm.confirm': 'serverControlConfirmConfirm',
+    'server.control.confirm.title': 'serverControlConfirmTitle',
     'server.control.connection.details': 'serverControlConnectionDetails',
     'server.control.copied': 'serverControlCopied',
     'server.control.copy': 'serverControlCopy',
     'server.control.hide.password': 'serverControlHidePassword',
     'server.control.https.endpoint': 'serverControlHttpsEndpoint',
     'server.control.ip.address': 'serverControlIpAddress',
+    'server.control.open.chat': 'serverControlOpenChat',
+    'server.control.operation.restart.nix.os': 'serverControlOperationRestartNixOs',
+    'server.control.operation.restart.pocket.coder': 'serverControlOperationRestartPocketCoder',
+    'server.control.operation.save.backup': 'serverControlOperationSaveBackup',
+    'server.control.operation.update.nix.os': 'serverControlOperationUpdateNixOs',
+    'server.control.operation.update.pocket.coder': 'serverControlOperationUpdatePocketCoder',
+    'server.control.release.checking': 'serverControlReleaseChecking',
+    'server.control.release.current': 'serverControlReleaseCurrent',
+    'server.control.release.status': 'serverControlReleaseStatus',
     'server.control.reveal.password': 'serverControlRevealPassword',
     'server.control.title': 'serverControlTitle',
     'settings.account.section': 'settingsAccountSection',
@@ -3926,12 +3987,14 @@ abstract class L10nKeys {
   static const initializationHardwarePlan = 'initialization.hardware.plan';
   static const initializationHttpsEndpoint = 'initialization.https.endpoint';
   static const initializationInProgress = 'initialization.in.progress';
+  static const initializationInstanceId = 'initialization.instance.id';
   static const initializationInstanceManifest = 'initialization.instance.manifest';
   static const initializationIpAddress = 'initialization.ip.address';
   static const initializationLastSignal = 'initialization.last.signal';
   static const initializationMetadataRegistry = 'initialization.metadata.registry';
   static const initializationNetworkIp = 'initialization.network.ip';
   static (String, Map<String, dynamic>) initializationReady(String ipAddress) => ('initialization.ready', {'ipAddress': ipAddress});
+  static const initializationRetryAttempt = 'initialization.retry.attempt';
   static const initializationRunId = 'initialization.run.id';
   static const initializationScreenTitle = 'initialization.screen.title';
   static const initializationSecure = 'initialization.secure';
@@ -4318,12 +4381,25 @@ abstract class L10nKeys {
   static const schedulerTitle = 'scheduler.title';
   static const serverControlAdminIdentity = 'server.control.admin.identity';
   static const serverControlAdminPassword = 'server.control.admin.password';
+  static (String, Map<String, dynamic>) serverControlConfirmBody(String operation) => ('server.control.confirm.body', {'operation': operation});
+  static const serverControlConfirmCancel = 'server.control.confirm.cancel';
+  static const serverControlConfirmConfirm = 'server.control.confirm.confirm';
+  static const serverControlConfirmTitle = 'server.control.confirm.title';
   static const serverControlConnectionDetails = 'server.control.connection.details';
   static const serverControlCopied = 'server.control.copied';
   static const serverControlCopy = 'server.control.copy';
   static const serverControlHidePassword = 'server.control.hide.password';
   static const serverControlHttpsEndpoint = 'server.control.https.endpoint';
   static const serverControlIpAddress = 'server.control.ip.address';
+  static const serverControlOpenChat = 'server.control.open.chat';
+  static const serverControlOperationRestartNixOs = 'server.control.operation.restart.nix.os';
+  static const serverControlOperationRestartPocketCoder = 'server.control.operation.restart.pocket.coder';
+  static const serverControlOperationSaveBackup = 'server.control.operation.save.backup';
+  static const serverControlOperationUpdateNixOs = 'server.control.operation.update.nix.os';
+  static const serverControlOperationUpdatePocketCoder = 'server.control.operation.update.pocket.coder';
+  static const serverControlReleaseChecking = 'server.control.release.checking';
+  static (String, Map<String, dynamic>) serverControlReleaseCurrent(String version) => ('server.control.release.current', {'version': version});
+  static (String, Map<String, dynamic>) serverControlReleaseStatus(String status) => ('server.control.release.status', {'status': status});
   static const serverControlRevealPassword = 'server.control.reveal.password';
   static const serverControlTitle = 'server.control.title';
   static const settingsAccountSection = 'settings.account.section';
