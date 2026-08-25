@@ -2983,4 +2983,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverControlCopied => 'COPIED';
+
+  @override
+  String get serverControlConfirmTitle => 'CONFIRM SERVER CONTROL';
+
+  @override
+  String serverControlConfirmBody(String operation) {
+    return '$operation will run on your server.';
+  }
+
+  @override
+  String get serverControlConfirmCancel => 'CANCEL';
+
+  @override
+  String get serverControlConfirmConfirm => 'CONFIRM';
+
+  @override
+  String get serverControlReleaseChecking => 'RELEASE STATUS: CHECKING';
+
+  @override
+  String serverControlReleaseStatus(String status) {
+    return 'RELEASE STATUS: $status';
+  }
+
+  @override
+  String serverControlReleaseCurrent(String version) {
+    return 'CURRENT: $version';
+  }
+
+  @override
+  String get serverControlOperationRestartPocketCoder => 'Restart PocketCoder';
+
+  @override
+  String get serverControlOperationUpdatePocketCoder => 'Update PocketCoder';
+
+  @override
+  String get serverControlOperationRestartNixOs => 'Restart NixOS';
+
+  @override
+  String get serverControlOperationUpdateNixOs => 'Update NixOS';
+
+  @override
+  String get serverControlOperationSaveBackup => 'Save backup';
+
+  @override
+  String get serverControlOpenChat => 'OPEN CHAT';
+
+  @override
+  String get initializationInstanceId => 'INSTANCE ID';
+
+  @override
+  String get initializationRetryAttempt => 'RETRY ATTEMPT';
 }

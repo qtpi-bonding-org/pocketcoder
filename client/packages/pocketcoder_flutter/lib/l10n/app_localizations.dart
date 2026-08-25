@@ -5410,6 +5410,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'COPIED'**
   String get serverControlCopied;
+
+  /// No description provided for @serverControlConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIRM SERVER CONTROL'**
+  String get serverControlConfirmTitle;
+
+  /// No description provided for @serverControlConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{operation} will run on your server.'**
+  String serverControlConfirmBody(String operation);
+
+  /// No description provided for @serverControlConfirmCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get serverControlConfirmCancel;
+
+  /// No description provided for @serverControlConfirmConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIRM'**
+  String get serverControlConfirmConfirm;
+
+  /// No description provided for @serverControlReleaseChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'RELEASE STATUS: CHECKING'**
+  String get serverControlReleaseChecking;
+
+  /// No description provided for @serverControlReleaseStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'RELEASE STATUS: {status}'**
+  String serverControlReleaseStatus(String status);
+
+  /// No description provided for @serverControlReleaseCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT: {version}'**
+  String serverControlReleaseCurrent(String version);
+
+  /// No description provided for @serverControlOperationRestartPocketCoder.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart PocketCoder'**
+  String get serverControlOperationRestartPocketCoder;
+
+  /// No description provided for @serverControlOperationUpdatePocketCoder.
+  ///
+  /// In en, this message translates to:
+  /// **'Update PocketCoder'**
+  String get serverControlOperationUpdatePocketCoder;
+
+  /// No description provided for @serverControlOperationRestartNixOs.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart NixOS'**
+  String get serverControlOperationRestartNixOs;
+
+  /// No description provided for @serverControlOperationUpdateNixOs.
+  ///
+  /// In en, this message translates to:
+  /// **'Update NixOS'**
+  String get serverControlOperationUpdateNixOs;
+
+  /// No description provided for @serverControlOperationSaveBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Save backup'**
+  String get serverControlOperationSaveBackup;
+
+  /// No description provided for @serverControlOpenChat.
+  ///
+  /// In en, this message translates to:
+  /// **'OPEN CHAT'**
+  String get serverControlOpenChat;
+
+  /// No description provided for @initializationInstanceId.
+  ///
+  /// In en, this message translates to:
+  /// **'INSTANCE ID'**
+  String get initializationInstanceId;
+
+  /// No description provided for @initializationRetryAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY ATTEMPT'**
+  String get initializationRetryAttempt;
 }
 
 class _AppLocalizationsDelegate

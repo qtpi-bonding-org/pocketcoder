@@ -1,13 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+
+String _localizedOperationLabel(
+  BuildContext context,
+  ServerControlOperation operation,
+) =>
+    switch (operation) {
+      ServerControlOperation.restartPocketCoder =>
+        context.l10n.serverControlOperationRestartPocketCoder,
+      ServerControlOperation.updatePocketCoder =>
+        context.l10n.serverControlOperationUpdatePocketCoder,
+      ServerControlOperation.restartNixOs =>
+        context.l10n.serverControlOperationRestartNixOs,
+      ServerControlOperation.updateNixOs =>
+        context.l10n.serverControlOperationUpdateNixOs,
+      ServerControlOperation.saveBackup =>
+        context.l10n.serverControlOperationSaveBackup,
+    };
 
 class ServerControlView extends StatelessWidget {
   const ServerControlView({
@@ -31,6 +50,12 @@ class ServerControlView extends StatelessWidget {
               _ConnectionDetails(details: state.connectionDetails!),
               VSpace.x2,
             ],
+            TerminalButton(
+              label: context.l10n.serverControlOpenChat,
+              isPrimary: true,
+              onTap: () => AppNavigation.toHome(context),
+            ),
+            VSpace.x2,
             _ReleaseLine(state: state),
             VSpace.x2,
             for (final operation in ServerControlOperation.values)
@@ -79,16 +104,20 @@ class ServerControlView extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('CONFIRM SERVER CONTROL'),
-        content: Text('${_label(operation)} will run on your server.'),
+        title: Text(context.l10n.serverControlConfirmTitle),
+        content: Text(
+          context.l10n.serverControlConfirmBody(
+            _localizedOperationLabel(context, operation),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('CANCEL'),
+            child: Text(context.l10n.serverControlConfirmCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('CONFIRM'),
+            child: Text(context.l10n.serverControlConfirmConfirm),
           ),
         ],
       ),
@@ -98,14 +127,6 @@ class ServerControlView extends StatelessWidget {
 
   String _output(String stdout, String stderr) =>
       stderr.isEmpty ? stdout : '$stdout\nSTDERR\n$stderr';
-
-  static String _label(ServerControlOperation operation) => switch (operation) {
-        ServerControlOperation.restartPocketCoder => 'Restart PocketCoder',
-        ServerControlOperation.updatePocketCoder => 'Update PocketCoder',
-        ServerControlOperation.restartNixOs => 'Restart NixOS',
-        ServerControlOperation.updateNixOs => 'Update NixOS',
-        ServerControlOperation.saveBackup => 'Save backup',
-      };
 }
 
 class _ConnectionDetails extends StatefulWidget {
@@ -136,9 +157,11 @@ class _ConnectionDetailsState extends State<_ConnectionDetails> {
         if (details.ipAddress case final value?)
           _DetailRow(label: context.l10n.serverControlIpAddress, value: value),
         if (details.httpsEndpoint case final value?)
-          _DetailRow(label: context.l10n.serverControlHttpsEndpoint, value: value),
+          _DetailRow(
+              label: context.l10n.serverControlHttpsEndpoint, value: value),
         if (details.adminIdentity case final value?)
-          _DetailRow(label: context.l10n.serverControlAdminIdentity, value: value),
+          _DetailRow(
+              label: context.l10n.serverControlAdminIdentity, value: value),
         if (details.adminPassword case final value?)
           _DetailRow(
             label: context.l10n.serverControlAdminPassword,
@@ -215,9 +238,9 @@ class _ReleaseLine extends StatelessWidget {
     final release = state.release;
     return Text(
       release == null
-          ? 'RELEASE STATUS: CHECKING'
-          : 'RELEASE STATUS: ${release.status.name.toUpperCase()}\n'
-              'CURRENT: ${release.currentVersion}',
+          ? context.l10n.serverControlReleaseChecking
+          : '${context.l10n.serverControlReleaseStatus(release.status.name.toUpperCase())}\n'
+              '${context.l10n.serverControlReleaseCurrent(release.currentVersion)}',
       style: TextStyle(
         color: context.colorScheme.primary,
         fontFamily: AppFonts.bodyFamily,
@@ -243,12 +266,9 @@ class _ControlButton extends StatelessWidget {
         onPressed: disabled ? null : onPressed,
         child: Align(
           alignment: Alignment.centerLeft,
-          child: Text(operation.name
-              .replaceAllMapped(
-                RegExp(r'([A-Z])'),
-                (match) => ' ${match.group(1)}',
-              )
-              .toUpperCase()),
+          child: Text(
+            _localizedOperationLabel(context, operation).toUpperCase(),
+          ),
         ),
       );
 }
