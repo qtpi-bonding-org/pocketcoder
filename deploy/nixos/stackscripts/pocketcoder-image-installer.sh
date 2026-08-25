@@ -20,19 +20,28 @@ TARGET_BYTES=$(blockdev --getsize64 /dev/sdb)
   exit 1
 }
 
-# Live-confirmed 2026-08-25: real boot-time runs failed 9/9 times across
-# two separate test runs, always instantly (0 bytes transferred, curl
+# Live-confirmed 2026-08-25: real boot-time runs failed 10/10 times across
+# three separate test runs, always instantly (0 bytes transferred, curl
 # HTTP/2 stream reset), always during THIS StackScript's own very-early
 # boot-time execution -- while the exact same request (headers, URL,
 # pipeline) run manually over SSH minutes later, after boot fully
-# settles, succeeded cleanly every single time. Not a code/header/signing
-# bug (already separately verified). The distinguishing factor is boot
-# timing, not the request itself -- so wait for the network to prove
-# itself actually ready with a cheap real request before attempting the
-# real (large, HTTP/2) download, and prefer HTTP/1.1 for the download
-# itself, since it's less sensitive to an early-boot network stack that's
-# technically routable but not fully settled yet than HTTP/2 negotiation
-# is.
+# settles, succeeded cleanly every single time (confirmed again on the
+# third run's own box: HTTP/2, HTTP/1.1, and a HEAD on the real artifact
+# all succeeded immediately post-boot). Not a code/header/signing bug, and
+# not a bad/stale artifact either (both separately verified -- the
+# artifact's own bytes were independently confirmed correct via
+# verify_release_artifact_test.dart minutes before the third run started,
+# and it still failed with 0 bytes). This network-readiness pre-check +
+# preferring HTTP/1.1 for the main download was the first attempted
+# mitigation and did NOT fix it (the third run still failed after both
+# were already in place) -- kept anyway since it's harmless, but don't
+# treat its presence as evidence the timing issue is handled. The
+# distinguishing factor is still boot timing specifically, and still
+# unexplained. What WAS missing every time this was investigated: the
+# actual curl error (exit code, -v trace) was never captured anywhere --
+# once the box reaches steady state the detail is gone. Now captured to
+# DEBUG_LOG below on every attempt, so the next failure can be read
+# directly instead of reconstructed after the fact.
 echo "Waiting for network readiness..."
 network_ready=0
 for _ in $(seq 1 30); do
@@ -107,13 +116,32 @@ until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
   PROOF="${PROOF_SIGNING_INPUT}.${PROOF_SIG}"
   rm -f /tmp/box_key.der /tmp/box_pub.der /tmp/box_pub_point.bin /tmp/box_pub_xy.bin /tmp/box_pub_x.bin /tmp/box_pub_y.bin /tmp/proof_sig.der
 
-  if curl -fsSL --http1.1 --retry 0 --max-time 1800 --speed-limit 1024 --speed-time 60 \
+  # Every prior live failure of this download has been an instant, 0-byte
+  # curl error during this StackScript's own very-early boot-time
+  # execution, with the pipeline's overall exit status (via pipefail)
+  # correctly detected but curl's OWN specific error (its exit code, and
+  # -v's TLS/HTTP negotiation trace) never captured anywhere -- once the
+  # box reaches steady state and this script exits, that detail is gone
+  # for good, unlike /tmp/sum or a mount check, which survive. This is the
+  # gap that made every past investigation reconstruct after the fact
+  # instead of just reading what actually happened: append curl's real
+  # exit code and full -v trace to a fixed, persistent log file (survives
+  # exactly like /tmp/sum does -- the instance stays online on failure) on
+  # every attempt, not just on final failure.
+  DEBUG_LOG=/root/pocketcoder-installer-debug.log
+  {
+    echo "=== attempt $attempt at $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+  } >> "$DEBUG_LOG"
+  if curl -v -fSL --http1.1 --retry 0 --max-time 1800 --speed-limit 1024 --speed-time 60 \
       -H "Pocketcoder-Credential: $BOX_CREDENTIAL" \
       -H "Pocketcoder-Proof: $PROOF" \
       "$IMAGE_URL" \
+      2>> "$DEBUG_LOG" \
       | tee /tmp/sumpipe \
       | gunzip \
       | dd of=/dev/sdb bs=16M conv=fsync status=progress; then
+    CURL_EXIT="${PIPESTATUS[0]}"
+    echo "curl exit code: $CURL_EXIT" >> "$DEBUG_LOG"
     wait "$SUMPID"
     rm -f /tmp/sumpipe
     read -r ACTUAL_SHA _ < /tmp/sum
@@ -159,9 +187,11 @@ until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
     fi
     echo "Checksum mismatch on attempt $attempt (got $ACTUAL_SHA)"
   else
+    CURL_EXIT="${PIPESTATUS[0]}"
+    echo "curl exit code: $CURL_EXIT" >> "$DEBUG_LOG"
     wait "$SUMPID" 2>/dev/null || true
     rm -f /tmp/sumpipe
-    echo "Transfer failed on attempt $attempt"
+    echo "Transfer failed on attempt $attempt (curl exit $CURL_EXIT -- see $DEBUG_LOG)"
   fi
   if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
     backoff=$((attempt * 10))
