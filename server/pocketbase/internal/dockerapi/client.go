@@ -507,11 +507,14 @@ func (c *Client) Events(ctx context.Context) (<-chan Event, error) {
 }
 
 type ContainerSummary struct {
-	Names []string
-	State string
+	ID     string   `json:"Id"`
+	Names  []string `json:"Names"`
+	Image  string   `json:"Image"`
+	State  string   `json:"State"`
+	Status string   `json:"Status"`
 }
 
-func (c *Client) ListAll(ctx context.Context) ([]ContainerSummary, error) {
+func (c *Client) ListContainers(ctx context.Context) ([]ContainerSummary, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/containers/json?all=1", nil)
 	if err != nil {
 		return nil, err
@@ -521,11 +524,21 @@ func (c *Client) ListAll(ctx context.Context) ([]ContainerSummary, error) {
 		return nil, fmt.Errorf("list containers: %w", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("list containers: docker API returned %s: %s", resp.Status, string(body))
+	}
 	var out []ContainerSummary
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("decode list response: %w", err)
 	}
 	return out, nil
+}
+
+// ListAll is retained for callers that use the older name for the same
+// Docker API operation.
+func (c *Client) ListAll(ctx context.Context) ([]ContainerSummary, error) {
+	return c.ListContainers(ctx)
 }
 
 // Remove deletes a managed container after it has stopped. The socket proxy
