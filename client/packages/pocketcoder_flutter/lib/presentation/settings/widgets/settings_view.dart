@@ -55,7 +55,6 @@ class SettingsView extends StatelessWidget {
       (
         context.l10n.settingsObservabilitySection,
         [
-          ('AGENT OBSERVABILITY', '[MANAGE]', 'configureObservability'),
           ('POCKET MEMORY', '[VIEW]', 'configureMemory'),
         ]
       ),

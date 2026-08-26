@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_metric_box.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 import 'adapters/monitor_adapter.dart';
@@ -25,10 +21,12 @@ class MonitorView extends StatelessWidget {
     super.key,
     required this.state,
     required this.onRefresh,
+    required this.onSelectContainer,
   });
 
   final ObservabilityState state;
   final VoidCallback onRefresh;
+  final ValueChanged<String?> onSelectContainer;
 
   @override
   Widget build(BuildContext context) {
@@ -36,18 +34,20 @@ class MonitorView extends StatelessWidget {
       title: context.l10n.monitorTitle,
       activePillar: NavPillar.monitor,
       showBack: false,
-      body: _buildBody(context, state),
+      body: _buildBody(context),
     );
   }
 
-  Widget _buildBody(BuildContext context, ObservabilityState state) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(AppSizes.space),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Inline REFRESH button
-          Align(
+  Widget _buildBody(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSizes.space,
+            vertical: AppSizes.space * 0.5,
+          ),
+          child: Align(
             alignment: Alignment.centerRight,
             child: TerminalButton(
               label: context.l10n.actionRefresh,
@@ -55,153 +55,114 @@ class MonitorView extends StatelessWidget {
               onTap: onRefresh,
             ),
           ),
-          VSpace.x2,
+        ),
+        _buildHealthStatus(context),
+        VSpace.x2,
+        Expanded(child: _buildRegistryAndLogs(context)),
+      ],
+    );
+  }
 
-          if (state.isLoading && state.stats == null)
-            Center(
-              child: TerminalLoadingIndicator(label: context.l10n.monitorFetchingTelemetry),
-            )
-          else if (state.stats case final stats?) ...[
-            // System Health
-            BiosSection(
-              title: context.l10n.monitorSystemHealth,
-              child: _buildHealthStatus(context, stats),
+  Widget _buildHealthStatus(BuildContext context) {
+    final stats = state.stats;
+    if (stats == null) return const SizedBox.shrink();
+    final isHealthy = stats.backendStatus.toLowerCase() == 'healthy' ||
+        stats.backendStatus.toLowerCase() == 'ready';
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+      child: BiosFrame(
+        title: 'BACKEND',
+        child: BiosRow(
+          label: 'BACKEND STATUS',
+          value: '[ ${stats.backendStatus.toUpperCase()} ]',
+          isDestructive: !isHealthy,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegistryAndLogs(BuildContext context) {
+    if (state.hasError && state.containers.isEmpty) {
+      return Center(
+        child: TerminalText.label(
+          context.l10n.monitorTelemetryUnavailable,
+          color: context.terminalColors.warning,
+        ),
+      );
+    }
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 250,
+            child: BiosFrame(
+              title: context.l10n.observabilityRegistry,
+              child: ListView(
+                padding: EdgeInsets.all(AppSizes.space),
+                children: state.containers
+                    .map((c) => _buildContainerTile(context, c))
+                    .toList(),
+              ),
             ),
-
-            // Key Metrics
-            BiosSection(
-              title: context.l10n.monitorKeyMetrics,
-              child: _buildMetricsGrid(context, stats),
+          ),
+          HSpace.x2,
+          Expanded(
+            child: BiosFrame(
+              title: state.currentContainer != null
+                  ? 'LOGS: ${state.currentContainer}'
+                  : context.l10n.observabilityLogTerminal,
+              child: _buildLogTerminal(context),
             ),
-
-            // Token Usage by Model
-            if (stats.tokenUsage.isNotEmpty)
-              BiosSection(
-                title: context.l10n.monitorTokenUsage,
-                child: _buildTokenUsage(context, stats.tokenUsage),
-              ),
-
-            // Agent Activity (CAO Tasks)
-            if (stats.tasks.isNotEmpty)
-              BiosSection(
-                title: context.l10n.monitorAgentActivity,
-                child: _buildAgentActivity(context, stats.tasks),
-              ),
-          ] else if (state.hasError)
-            Center(
-              child: TerminalText.label(
-                context.l10n.monitorTelemetryUnavailable,
-                color: context.terminalColors.warning,
-              ),
-            )
-          else
-            Center(
-              child: TerminalText(
-                context.l10n.monitorNoData,
-                alpha: 0.5,
-              ),
-            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildHealthStatus(BuildContext context, SystemStats stats) {
-    final isHealthy = stats.backendStatus.toLowerCase() == 'healthy' ||
-        stats.backendStatus.toLowerCase() == 'ready';
-
-    return BiosFrame(
-      title: 'BACKEND',
-      child: BiosRow(
-        label: 'BACKEND STATUS',
-        value: '[ ${stats.backendStatus.toUpperCase()} ]',
-        isDestructive: !isHealthy,
-      ),
+  Widget _buildContainerTile(BuildContext context, ContainerInfo container) {
+    final isSelected = state.currentContainer == container.name;
+    return BiosRow(
+      label: container.name,
+      value: container.state.toUpperCase(),
+      isSelected: isSelected,
+      onTap: () => onSelectContainer(isSelected ? null : container.name),
     );
   }
 
-  Widget _buildMetricsGrid(BuildContext context, SystemStats stats) {
-    return Row(
-      children: [
-        TerminalMetricBox(
-          label: context.l10n.monitorMessagesLabel,
-          value: stats.totalMessages.toString(),
+  Widget _buildLogTerminal(BuildContext context) {
+    if (state.currentContainer == null) {
+      return Center(
+        child: TerminalText(
+          context.l10n.observabilitySelectContainer,
+          textAlign: TextAlign.center,
+          alpha: 0.3,
         ),
-        HSpace.x1,
-        TerminalMetricBox(
-          label: context.l10n.monitorCostLabel,
-          value: stats.cumulativeCost,
-        ),
-        HSpace.x1,
-        TerminalMetricBox(
-          label: context.l10n.monitorTokensLabel,
-          value: _formatNumber(stats.cumulativeTokens),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTokenUsage(BuildContext context, List<TokenUsage> usage) {
-    return Column(
-      children: usage.map((entry) {
-        return BiosRow(
-          label: entry.model,
-          value: _formatNumber(entry.tokens),
+      );
+    }
+    return ListView.builder(
+      reverse: true,
+      padding: EdgeInsets.all(AppSizes.space),
+      itemCount: state.logs.length,
+      itemBuilder: (context, index) {
+        final logLine = state.logs[state.logs.length - 1 - index];
+        return TerminalText.mini(
+          logLine,
+          color: _getLogColor(context, logLine),
         );
-      }).toList(),
+      },
     );
   }
 
-  Widget _buildAgentActivity(
-      BuildContext context, List<OperationalTask> tasks) {
+  Color _getLogColor(BuildContext context, String log) {
     final colors = context.colorScheme;
-    return Column(
-      children: tasks.map((task) {
-        final isActive = task.status.toLowerCase() == 'active' ||
-            task.status.toLowerCase() == 'running';
-        return TerminalCard(
-          isActive: isActive,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TerminalText(
-                    '${task.sender} -> ${task.receiver}'.toUpperCase(),
-                    weight: TerminalTextWeight.heavy,
-                  ),
-                  TerminalText.label(
-                    '[ ${task.status.toUpperCase()} ]',
-                    color: isActive ? colors.primary : null,
-                    alpha: isActive ? null : 0.5,
-                  ),
-                ],
-              ),
-              if (task.summary.isNotEmpty) ...[
-                VSpace.x1,
-                TerminalText.mini(
-                  task.summary,
-                  alpha: 0.7,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              VSpace.x1,
-              TerminalText.mini(
-                task.timestamp,
-                alpha: 0.3,
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  String _formatNumber(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toString();
+    final terminal = context.terminalColors;
+    final upper = log.toUpperCase();
+    if (upper.contains('ERR') || upper.contains('FAIL')) return terminal.warning;
+    if (upper.contains('WARN')) return terminal.warning;
+    if (upper.contains('INFO')) return colors.primary;
+    if (upper.contains('DEBUG')) return colors.secondary;
+    return colors.onSurface.withValues(alpha: 0.7);
   }
 }

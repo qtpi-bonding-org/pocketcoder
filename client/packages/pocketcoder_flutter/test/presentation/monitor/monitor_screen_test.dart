@@ -15,21 +15,69 @@ Widget _app(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('renders health and token usage entries as BiosRows',
+  testWidgets('renders backend health and the discovered container registry',
       (tester) async {
     await tester.pumpWidget(_app(MonitorView(
-      state: ObservabilityState(
-        stats: SystemStats(
-          backendStatus: 'ready',
-          tokenUsage: [TokenUsage(model: 'gpt-4', tokens: 1234)],
-        ),
+      state: const ObservabilityState(
+        stats: SystemStats(backendStatus: 'ready'),
+        containers: [
+          ContainerInfo(name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h'),
+          ContainerInfo(name: 'pocketcoder-ollama', state: 'exited', status: 'Exited (0)'),
+        ],
       ),
       onRefresh: () {},
+      onSelectContainer: (_) {},
     )));
 
-    expect(find.byType(BiosRow), findsNWidgets(2));
+    expect(find.byType(BiosRow), findsWidgets);
     expect(find.text('BACKEND STATUS'), findsOneWidget);
-    expect(find.text('GPT-4'), findsOneWidget);
-    expect(find.text('1.2K'), findsOneWidget);
+    // BiosRow uppercases its label before rendering.
+    expect(find.text('POCKETCODER-SQLPAGE'), findsOneWidget);
+    expect(find.text('POCKETCODER-OLLAMA'), findsOneWidget);
+  });
+
+  testWidgets('selecting a container drives onSelectContainer', (tester) async {
+    String? selected;
+    await tester.pumpWidget(_app(MonitorView(
+      state: const ObservabilityState(
+        containers: [ContainerInfo(name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h')],
+      ),
+      onRefresh: () {},
+      onSelectContainer: (c) => selected = c,
+    )));
+
+    await tester.tap(find.text('POCKETCODER-SQLPAGE'));
+    expect(selected, 'pocketcoder-sqlpage');
+  });
+
+  testWidgets('shows the log terminal for the currently selected container',
+      (tester) async {
+    await tester.pumpWidget(_app(MonitorView(
+      state: const ObservabilityState(
+        currentContainer: 'pocketcoder-sqlpage',
+        logs: ['line one', 'line two'],
+      ),
+      onRefresh: () {},
+      onSelectContainer: (_) {},
+    )));
+
+    expect(find.text('line one'), findsOneWidget);
+    expect(find.text('line two'), findsOneWidget);
+  });
+
+  testWidgets('no key metrics, token usage, or agent activity sections remain',
+      (tester) async {
+    await tester.pumpWidget(_app(MonitorView(
+      state: const ObservabilityState(
+        stats: SystemStats(backendStatus: 'ready', tokenUsage: [TokenUsage(model: 'gpt-4', tokens: 1)]),
+      ),
+      onRefresh: () {},
+      onSelectContainer: (_) {},
+    )));
+
+    // These l10n labels belonged only to the removed sections.
+    expect(find.text('KEY METRICS'), findsNothing);
+    expect(find.text('TOKEN USAGE BY MODEL'), findsNothing);
+    expect(find.text('AGENT ACTIVITY'), findsNothing);
   });
 }

@@ -11,7 +11,6 @@ import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.d
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
-import 'package:pocketcoder_flutter/presentation/observability/agent_observability_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/memory_dashboard_screen.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
@@ -74,7 +73,6 @@ class AppRouter {
       if (loc == '/mcp') return AppRoutes.configureMcp;
       if (loc == '/system-checks') return AppRoutes.configureSystemChecks;
       if (loc == '/paywall') return AppRoutes.configurePaywall;
-      if (loc == '/observability') return AppRoutes.configureObservability;
       return null;
     },
     routes: [
@@ -284,15 +282,6 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.configureObservability,
-        name: RouteNames.configureObservability,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const AgentObservabilityScreen(),
-        ),
-      ),
-      GoRoute(
         path: AppRoutes.configureMemory,
         name: RouteNames.configureMemory,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -406,7 +395,6 @@ class AppRoutes {
   static const String configureMcp = '/configure/mcp';
   static const String configureSystemChecks = '/configure/system-checks';
   static const String configurePaywall = '/configure/paywall';
-  static const String configureObservability = '/configure/observability';
   static const String configureMemory = '/configure/memory';
   static const String configureLlm = '/configure/llm';
   static const String configureErrors = '/configure/errors';
@@ -415,7 +403,6 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String aiRegistry = '/settings/ai';
   static const String toolPermissions = '/settings/whitelist';
-  static const String agentObservability = '/observability';
   static const String mcpManagement = '/mcp';
   static const String systemChecks = '/system-checks';
   static const String paywall = '/paywall';
@@ -456,7 +443,6 @@ class RouteNames {
   static const String configureMcp = 'configureMcp';
   static const String configureSystemChecks = 'configureSystemChecks';
   static const String configurePaywall = 'configurePaywall';
-  static const String configureObservability = 'configureObservability';
   static const String configureMemory = 'configureMemory';
   static const String configureLlm = 'configureLlm';
   static const String configureErrors = 'configureErrors';
@@ -464,7 +450,6 @@ class RouteNames {
   // Legacy aliases
   static const String aiRegistry = 'configureAi';
   static const String toolPermissions = 'configureToolPermissions';
-  static const String agentObservability = 'configureObservability';
   static const String mcpManagement = 'configureMcp';
   static const String systemChecks = 'configureSystemChecks';
   static const String paywall = 'configurePaywall';

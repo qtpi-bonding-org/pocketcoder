@@ -17,13 +17,30 @@ class MonitorAdapter
     BuildContext context,
     CubitAdapterState<ObservabilityCubit, ObservabilityState> adapter,
   ) {
+    adapter.keep<bool>('observabilityStarted', () {
+      adapter.cubit
+        ..refreshStats()
+        ..loadContainers();
+      return true;
+    });
+    final cubit = context.read<ObservabilityCubit>();
     final state = adapter.cubitField(_selectState);
     return UiFlowListener<ObservabilityCubit, ObservabilityState>(
       child: ValueListenableBuilder<ObservabilityState>(
         valueListenable: state,
         builder: (context, value, _) => MonitorView(
           state: value,
-          onRefresh: context.read<ObservabilityCubit>().refreshStats,
+          onRefresh: () {
+            cubit.refreshStats();
+            cubit.loadContainers();
+          },
+          onSelectContainer: (container) {
+            if (container == null) {
+              cubit.stopLogStreaming();
+            } else {
+              cubit.startLogStreaming(container);
+            }
+          },
         ),
       ),
     );
