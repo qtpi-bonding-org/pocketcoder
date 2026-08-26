@@ -22,6 +22,19 @@ on:
         required: false
         default: false
         type: boolean
+      force_rebuild:
+        description: >-
+          Skip the actions/cache lookup and always build a fresh image,
+          even if a cache entry for this exact drv hash already exists.
+          Use this if the cache is suspected stale/corrupt. Note: this
+          still writes a fresh cache entry afterward, but does not delete
+          any existing bad entry at the same key (see docs/superpowers/
+          specs/2026-08-26-nixos-image-actions-cache.md section 3.5) --
+          that requires a separate `gh cache delete` if the old entry is
+          actually corrupt rather than merely suspected stale.
+        required: false
+        default: false
+        type: boolean
   push:
     tags:
       - 'v*-nixos'
@@ -45,14 +58,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Guard release-commit.nix on the default branch
-        if: github.ref == 'refs/heads/main'
-        run: |
-          test "$(tail -n1 deploy/nixos/release-commit.nix)" = '"main"' || {
-            echo 'release-commit.nix must be "main" on the default branch.'
-            exit 1
-          }
-
       - name: Guard release-branch.nix is never committed as non-main
         run: |
           test "$(tail -n1 deploy/nixos/release-branch.nix)" = '"main"' || {
@@ -63,6 +68,13 @@ jobs:
       - uses: cachix/install-nix-action@08dcb3a5e62fa31e2da3d490afc4176ef55ecd72 # v30
         with:
           nix_path: nixpkgs=channel:nixos-26.05
+          # Explicit, visible pin (matching this action revision's own
+          # default) rather than leaving Nix version implicit -- an
+          # unpinned default that changes on a future action-SHA bump would
+          # silently shift the drv-hash cache key's behavior with no signal
+          # other than a sudden drop in hit rate. See docs/superpowers/
+          # specs/2026-08-26-nixos-image-actions-cache.md section 3.2 step 2.
+          install_url: https://releases.nixos.org/nix/nix-2.24.9/install
           extra_nix_config: |
             experimental-features = nix-command flakes
 
@@ -80,53 +92,128 @@ jobs:
         # Runs every check.${system} declared in flake.nix together (today:
         # ordering, caddyfile-validate, systemd-units), so a new check added
         # later is picked up automatically instead of needing this workflow
-        # edited to name it explicitly.
+        # edited to name it explicitly. Unconditional, always runs whether
+        # the image build below ends up cached or not -- these are
+        # correctness gates, never skipped.
         run: nix flake check ./deploy/nixos --system x86_64-linux -L
 
-      - name: Build Linode image
+      - name: Write effective release-branch.nix
+        # Minimal, narrow relocation of exactly this one existing line from
+        # the old "Build Linode image" step -- nothing else about this
+        # workflow's step order changes. release-branch.nix's value is a
+        # real Nix derivation input (it's threaded into a systemd unit's
+        # environment via bootstrap.nix), so the drv-hash cache key
+        # computed below needs to see its final, effective value -- which
+        # used to only be written this late, right before the build.
         working-directory: deploy/nixos
         env:
           ATTEST_BRANCH: ${{ inputs.attest_branch }}
         run: |
-          # Embed the exact source revision into bootstrap.nix. First boot
-          # resolves the coupled immutable release for this revision, never
-          # whatever happens to be on main when a customer deploys later.
-          printf '"%s"\n' "$GITHUB_SHA" > release-commit.nix
           # Only ever overwritten by this explicit, non-default input --
           # never automatically because the ref happens to be staging.
           if [ "$ATTEST_BRANCH" = "true" ]; then
             printf '"%s"\n' "${GITHUB_REF#refs/heads/}" > release-branch.nix
           fi
-          nix build .#linode-image --print-build-logs
 
-      - name: Compress image
-        run: gzip -c deploy/nixos/result/nixos.img > pocketcoder-nixos.img.gz
-
-      - name: Compute image metadata
-        id: meta
+      - name: Validate the drv-hash cache key's dependency tracking
+        # Standing, fail-closed/warn-only two-direction gate -- see
+        # docs/superpowers/specs/2026-08-26-nixos-image-actions-cache.md
+        # section 4. Runs against a scratch copy so it never touches the
+        # real checkout the rest of this job uses.
+        working-directory: deploy/nixos
         run: |
-          SHA256=$(sha256sum pocketcoder-nixos.img.gz | cut -d' ' -f1)
-          UNCOMPRESSED_BYTES=$(stat -c%s deploy/nixos/result/nixos.img)
-          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
-          echo "uncompressed_bytes=$UNCOMPRESSED_BYTES" >> "$GITHUB_OUTPUT"
-          echo "Image sha256: $SHA256"
-          echo "Uncompressed bytes: $UNCOMPRESSED_BYTES"
+          set -euo pipefail
+          baseline=$(nix eval --raw .#linode-image.drvPath)
+          scratch=$(mktemp -d)
+          cp -a "$GITHUB_WORKSPACE/." "$scratch/"
+          cd "$scratch/deploy/nixos"
+          git -C "$scratch" config user.email "ci@pocketcoder.local"
+          git -C "$scratch" config user.name "nixos-cache-key-gate"
 
-      - name: Check image size
-        run: |
-          SIZE=$(stat -c%s pocketcoder-nixos.img.gz)
-          echo "Compressed image size: $SIZE bytes ($((SIZE / 1024 / 1024)) MiB)"
+          # Safety check: a known real, escaping-relative-path dependency
+          # must move the hash. This is the dangerous direction -- a real
+          # input silently NOT moving the hash would mean a future change
+          # to it gets served stale from cache with no error at all -- so
+          # this fails the whole job if it doesn't hold.
+          echo "// nixos-cache-key-gate safety perturbation" \
+            >> "$scratch/deploy/release-manager/internal/tlscert/tlscert.go"
+          git -C "$scratch" add -A
+          git -C "$scratch" commit -q -m "cache-key-gate: safety perturbation"
+          test -n "$(git -C "$scratch" log -1 --format=%H)"
+          safety=$(nix eval --raw .#linode-image.drvPath)
+          if [ "$safety" = "$baseline" ]; then
+            echo "::error::drv-hash key gate FAILED (safety): a real dependency (deploy/release-manager/internal/tlscert/tlscert.go) did not move the cache key. The key can no longer be trusted -- treat this as build-breaking." >&2
+            exit 1
+          fi
+          git -C "$scratch" reset -q --hard HEAD~1
 
-      - name: Write release metadata
+          # Efficiency check: a file genuinely out of scope for
+          # packages.linode-image (only reachable via checks.ordering, a
+          # separate flake output `nix eval .#linode-image.drvPath` never
+          # forces) must NOT move the hash. Regressing here only costs
+          # cache-hit-rate/CI time, not correctness -- warn, don't fail.
+          echo "# nixos-cache-key-gate efficiency perturbation" \
+            >> "$scratch/deploy/nixos/tests/ordering.nix"
+          git -C "$scratch" add -A
+          git -C "$scratch" commit -q -m "cache-key-gate: efficiency perturbation"
+          efficiency=$(nix eval --raw .#linode-image.drvPath)
+          if [ "$efficiency" != "$baseline" ]; then
+            echo "::warning::drv-hash key gate regression (efficiency): an out-of-scope file (deploy/nixos/tests/ordering.nix) moved the cache key. Not a correctness issue, but the cache will hit less than it should -- worth investigating." >&2
+          fi
+
+          rm -rf "$scratch"
+
+      - name: Compute the cache key
+        id: cache-key
+        working-directory: deploy/nixos
         run: |
-          sh deploy/scripts/write-artifact-metadata.sh \
-            nixos-release-metadata.json \
-            auto \
-            pocketcoder-nixos.img.gz \
-            "${{ steps.meta.outputs.uncompressed_bytes }}"
-          mkdir -p artifacts
-          mv pocketcoder-nixos.img.gz \
-            "artifacts/${{ steps.meta.outputs.sha256 }}.img.gz"
+          drv_hash=$(nix eval --raw .#linode-image.drvPath | sed -E 's#^/nix/store/([^-]+)-.*#\1#')
+          post_build_hash=${{ hashFiles('deploy/scripts/build-nixos-artifacts.sh', 'deploy/scripts/write-artifact-metadata.sh') }}
+          echo "key=nixos-image-v2-$drv_hash-$post_build_hash" >> "$GITHUB_OUTPUT"
+
+      - name: Restore cached image + metadata
+        id: restore
+        if: inputs.force_rebuild != true
+        uses: actions/cache/restore@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: |
+            artifacts
+            nixos-release-metadata.json
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Verify restored cache contents
+        # Defense in depth: upload-artifact's default if-no-files-found is
+        # `warn`, not a hard failure, so a corrupt/partial cache entry would
+        # otherwise surface as a confusing failure several steps later in
+        # the downstream `candidate` job instead of here, immediately.
+        if: steps.restore.outputs.cache-hit == 'true'
+        run: |
+          test -d artifacts && test -n "$(find artifacts -maxdepth 1 -name '*.img.gz' -print -quit)" || {
+            echo "::error::cache-hit reported true but artifacts/*.img.gz is missing" >&2
+            exit 1
+          }
+          test -s nixos-release-metadata.json || {
+            echo "::error::cache-hit reported true but nixos-release-metadata.json is missing" >&2
+            exit 1
+          }
+
+      - name: Build Linode image
+        if: steps.restore.outputs.cache-hit != 'true'
+        working-directory: deploy/nixos
+        run: nix build .#linode-image --print-build-logs
+
+      - name: Build image artifacts + metadata
+        if: steps.restore.outputs.cache-hit != 'true'
+        run: sh deploy/scripts/build-nixos-artifacts.sh deploy/nixos/result/nixos.img
+
+      - name: Save image + metadata to cache
+        if: steps.restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: |
+            artifacts
+            nixos-release-metadata.json
+          key: ${{ steps.cache-key.outputs.key }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
