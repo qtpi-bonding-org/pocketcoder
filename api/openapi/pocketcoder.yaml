@@ -145,7 +145,7 @@ paths:
     post:
       operationId: executeMcpRequest
       tags: [mcp]
-      x-pocketcoder-roles: [admin]
+      x-pocketcoder-roles: [agent, admin]
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/McpRequest'}}}}
       responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/Unprocessable'}, '500': {$ref: '#/components/responses/InternalError'} }
@@ -172,6 +172,7 @@ paths:
     get:
       operationId: streamContainerLogs
       tags: [logs]
+      x-pocketcoder-roles: [admin]
       x-pocketcoder-transport: sse
       security: [{pocketbaseToken: []}]
       parameters: [{ $ref: '#/components/parameters/ContainerName' }]
@@ -197,6 +198,7 @@ paths:
     post:
       operationId: sendPushNotification
       tags: [push]
+      x-pocketcoder-roles: [agent, admin]
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/PushRequest'}}}}
       responses: {'204': {description: Operation completed}, '200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
