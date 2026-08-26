@@ -43,7 +43,8 @@ void main() {
         'certificatePemBase64': base64.encode(utf8.encode(pem)),
       });
 
-  test('fetches via SSH, writes to the durable store, and updates the pin', () async {
+  test('fetches via SSH, writes to the durable store, and updates the pin',
+      () async {
     when(() => sshRunner.run(
           instanceId: any(named: 'instanceId'),
           host: any(named: 'host'),
@@ -66,11 +67,12 @@ void main() {
     verify(() => pinningHttpClient.updatePin(stored.certificatePem)).called(1);
   });
 
-  test('skips SSH when a pin is already durably stored', () async {
+  test('restores an existing pin and skips SSH', () async {
     await pinStore.write(
       deploymentId: '999',
       pin: const CaddyCaPin(fingerprint: 'already-pinned', certificatePem: 'x'),
     );
+    when(() => pinningHttpClient.updatePin(any())).thenReturn(null);
 
     await fetcher.fetchAndPin(
       instanceId: '999',
@@ -83,6 +85,7 @@ void main() {
           host: any(named: 'host'),
           command: any(named: 'command'),
         ));
+    verify(() => pinningHttpClient.updatePin('x')).called(1);
   });
 
   test('writes when the attempt is still current', () async {
@@ -91,7 +94,9 @@ void main() {
           host: any(named: 'host'),
           command: RootSshCommand.exportCaddyCaFingerprint,
         )).thenAnswer((_) async => RootSshCommandResult(
-          exitCode: 0, stdout: exportJson('abc123', 'pem'), stderr: '',
+          exitCode: 0,
+          stdout: exportJson('abc123', 'pem'),
+          stderr: '',
         ));
     when(() => pinningHttpClient.updatePin(any())).thenReturn(null);
 
@@ -104,13 +109,16 @@ void main() {
     expect(await pinStore.read(deploymentId: '999'), isNotNull);
   });
 
-  test('discards the fetched pin when the attempt is no longer current', () async {
+  test('discards the fetched pin when the attempt is no longer current',
+      () async {
     when(() => sshRunner.run(
           instanceId: any(named: 'instanceId'),
           host: any(named: 'host'),
           command: RootSshCommand.exportCaddyCaFingerprint,
         )).thenAnswer((_) async => RootSshCommandResult(
-          exitCode: 0, stdout: exportJson('abc123', 'pem'), stderr: '',
+          exitCode: 0,
+          stdout: exportJson('abc123', 'pem'),
+          stderr: '',
         ));
 
     await fetcher.fetchAndPin(
@@ -125,11 +133,12 @@ void main() {
 
   test('does not throw on a non-zero SSH exit code', () async {
     when(() => sshRunner.run(
-          instanceId: any(named: 'instanceId'),
-          host: any(named: 'host'),
-          command: RootSshCommand.exportCaddyCaFingerprint,
-        )).thenAnswer((_) async =>
-        const RootSshCommandResult(exitCode: 1, stdout: '', stderr: 'no such file'));
+              instanceId: any(named: 'instanceId'),
+              host: any(named: 'host'),
+              command: RootSshCommand.exportCaddyCaFingerprint,
+            ))
+        .thenAnswer((_) async => const RootSshCommandResult(
+            exitCode: 1, stdout: '', stderr: 'no such file'));
 
     await expectLater(
       fetcher.fetchAndPin(
@@ -151,15 +160,21 @@ void main() {
       sshCallCount++;
       await Future<void>.delayed(const Duration(milliseconds: 20));
       return RootSshCommandResult(
-        exitCode: 0, stdout: exportJson('abc123', 'pem'), stderr: '',
+        exitCode: 0,
+        stdout: exportJson('abc123', 'pem'),
+        stderr: '',
       );
     });
     when(() => pinningHttpClient.updatePin(any())).thenReturn(null);
 
     await Future.wait([
-      fetcher.fetchAndPin(instanceId: '999', host: '203.0.113.10',
+      fetcher.fetchAndPin(
+          instanceId: '999',
+          host: '203.0.113.10',
           isCurrentAttemptStillLive: () async => true),
-      fetcher.fetchAndPin(instanceId: '999', host: '203.0.113.10',
+      fetcher.fetchAndPin(
+          instanceId: '999',
+          host: '203.0.113.10',
           isCurrentAttemptStillLive: () async => true),
     ]);
 

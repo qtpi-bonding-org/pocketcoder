@@ -45,7 +45,10 @@ class CaPinFetcher {
     required Future<bool> Function() isCurrentAttemptStillLive,
   }) async {
     final existing = await pinStore.read(deploymentId: instanceId);
-    if (existing != null) return;
+    if (existing != null) {
+      pinningHttpClient.updatePin(existing.certificatePem);
+      return;
+    }
 
     try {
       final result = await sshCommandRunner.run(
