@@ -33,6 +33,10 @@ class AuthSessionEffects {
   }
 
   void _enqueue(AuthSessionSnapshot snapshot) {
+    if (snapshot.state == AuthSessionState.signedIn) {
+      _signedOutScheduled = false;
+    }
+
     if (snapshot.state == AuthSessionState.signedIn &&
         snapshot.userId != null) {
       final userId = snapshot.userId;
@@ -61,6 +65,7 @@ class AuthSessionEffects {
     if (snapshot.state == AuthSessionState.signedOut && !_signedOutScheduled) {
       _signedOutScheduled = true;
       _handledIdentities.clear();
+      _scheduledIdentities.clear();
       _queue = _queue.then((_) async {
         try {
           await _pushService.unregisterAuthenticatedDevice();
@@ -70,8 +75,6 @@ class AuthSessionEffects {
           debugPrint('$stack');
         }
       });
-    } else if (snapshot.state == AuthSessionState.signedIn) {
-      _signedOutScheduled = false;
     }
   }
 

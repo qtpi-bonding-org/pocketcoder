@@ -46,6 +46,12 @@ void main() {
     await pumpEventQueue();
   }
 
+  Future<void> signOut() async {
+    userId = null;
+    changes.add(null);
+    await pumpEventQueue();
+  }
+
   test('a transient identify failure remains retryable', () async {
     var attempts = 0;
     when(() => billing.identify('user-1')).thenAnswer((_) {
@@ -107,5 +113,32 @@ void main() {
 
     verify(() => billing.identify('user-1')).called(1);
     verify(() => push.syncAuthenticatedDevice()).called(1);
+  });
+
+  test('re-signing in to the same identity re-runs its effects', () async {
+    when(() => billing.identify('user-1')).thenAnswer((_) async {});
+    final effects = AuthSessionEffects(coordinator, billing, push);
+    effects.start();
+
+    await signIn('user-1');
+    await signOut();
+    await signIn('user-1');
+
+    verify(() => billing.identify('user-1')).called(2);
+    verify(() => push.syncAuthenticatedDevice()).called(2);
+  });
+
+  test('a later sign-out re-runs its effects', () async {
+    when(() => billing.identify('user-1')).thenAnswer((_) async {});
+    final effects = AuthSessionEffects(coordinator, billing, push);
+    effects.start();
+
+    // The replayed initial signed-out snapshot schedules the first sign-out.
+    await pumpEventQueue();
+    await signIn('user-1');
+    await signOut();
+
+    verify(() => push.unregisterAuthenticatedDevice()).called(2);
+    verify(() => billing.reset()).called(2);
   });
 }
