@@ -73,12 +73,25 @@ void main() {
   late _Repository repository;
   late AuthSessionCoordinator coordinator;
   late DeploymentCacheEffects effects;
+  Future<void> Function()? clearOverride;
 
   setUp(() async {
     client = await _client();
-    repository = _Repository(authenticated: true, baseUrl: 'https://one.example');
+    repository =
+        _Repository(authenticated: true, baseUrl: 'https://one.example');
     coordinator = AuthSessionCoordinator(repository);
-    effects = DeploymentCacheEffects(coordinator, client);
+    effects = DeploymentCacheEffects(
+      coordinator,
+      client,
+      clearCache: () async {
+        final override = clearOverride;
+        if (override != null) {
+          await override();
+        } else {
+          await client.db.clearAllData();
+        }
+      },
+    );
     effects.start();
     await pumpEventQueue();
   });
@@ -109,7 +122,8 @@ void main() {
     expect((await client.db.$query('healthchecks').get()).length, 1);
   });
 
-  test('null base URL does not clear or corrupt the previous deployment URL', () async {
+  test('null base URL does not clear or corrupt the previous deployment URL',
+      () async {
     await _seed(client);
     repository.baseUrl = null;
     repository.authenticated = false;
@@ -130,5 +144,51 @@ void main() {
     await coordinator.restore();
     await pumpEventQueue();
     expect((await client.db.$query('healthchecks').get()).length, 1);
+  });
+
+  test('serializes and de-duplicates a clear while it is in flight', () async {
+    final clearStarted = Completer<void>();
+    final allowClear = Completer<void>();
+    var clearCalls = 0;
+    clearOverride = () async {
+      clearCalls++;
+      clearStarted.complete();
+      await allowClear.future;
+    };
+
+    repository.baseUrl = 'https://two.example';
+    repository.publish();
+    await clearStarted.future;
+
+    // The first clear has not completed, so this must not schedule another
+    // clear for the same target deployment.
+    repository.publish();
+    await pumpEventQueue();
+    expect(clearCalls, 1);
+
+    allowClear.complete();
+    await pumpEventQueue();
+    expect(clearCalls, 1);
+  });
+
+  test('retries a failed clear on a later snapshot', () async {
+    var clearCalls = 0;
+    clearOverride = () async {
+      clearCalls++;
+      if (clearCalls == 1) {
+        throw StateError('temporary clear failure');
+      }
+    };
+
+    repository.baseUrl = 'https://two.example';
+    repository.publish();
+    await pumpEventQueue();
+    expect(clearCalls, 1);
+
+    // The failed attempt did not advance the previous URL, so the same
+    // transition remains eligible for retry.
+    repository.publish();
+    await pumpEventQueue();
+    expect(clearCalls, 2);
   });
 }
