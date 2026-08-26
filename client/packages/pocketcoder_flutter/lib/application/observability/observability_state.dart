@@ -11,6 +11,7 @@ sealed class ObservabilityState with _$ObservabilityState, UiFlowStateMixin {
   const factory ObservabilityState({
     SystemStats? stats,
     @Default([]) List<String> logs,
+    @Default([]) List<ContainerInfo> containers,
     @Default(UiFlowStatus.idle) UiFlowStatus status,
     String? currentContainer,
     Object? error,

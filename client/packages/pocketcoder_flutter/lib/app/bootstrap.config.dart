@@ -330,6 +330,11 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i519.Client>(),
           gh<_i935.PocketCoderApiClient>(),
         ));
+    gh.lazySingleton<_i611.IObservabilityRepository>(
+        () => _i310.ObservabilityRepository(
+              gh<_i169.PocketBase>(),
+              gh<_i935.PocketCoderApiClient>(),
+            ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
@@ -380,8 +385,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i190.IStatusRepository>(
         () => _i907.StatusRepository(gh<_i824.PocketBase>()));
-    gh.lazySingleton<_i611.IObservabilityRepository>(
-        () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
           gh<_i294.HarnesseDao>(),
           gh<_i294.ModelDao>(),

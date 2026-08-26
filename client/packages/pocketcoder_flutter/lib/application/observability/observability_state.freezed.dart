@@ -16,6 +16,7 @@ T _$identity<T>(T value) => value;
 mixin _$ObservabilityState {
   SystemStats? get stats;
   List<String> get logs;
+  List<ContainerInfo> get containers;
   UiFlowStatus get status;
   String? get currentContainer;
   Object? get error;
@@ -35,6 +36,8 @@ mixin _$ObservabilityState {
             other is ObservabilityState &&
             (identical(other.stats, stats) || other.stats == stats) &&
             const DeepCollectionEquality().equals(other.logs, logs) &&
+            const DeepCollectionEquality()
+                .equals(other.containers, containers) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.currentContainer, currentContainer) ||
                 other.currentContainer == currentContainer) &&
@@ -46,13 +49,14 @@ mixin _$ObservabilityState {
       runtimeType,
       stats,
       const DeepCollectionEquality().hash(logs),
+      const DeepCollectionEquality().hash(containers),
       status,
       currentContainer,
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'ObservabilityState(stats: $stats, logs: $logs, status: $status, currentContainer: $currentContainer, error: $error)';
+    return 'ObservabilityState(stats: $stats, logs: $logs, containers: $containers, status: $status, currentContainer: $currentContainer, error: $error)';
   }
 }
 
@@ -65,6 +69,7 @@ abstract mixin class $ObservabilityStateCopyWith<$Res> {
   $Res call(
       {SystemStats? stats,
       List<String> logs,
+      List<ContainerInfo> containers,
       UiFlowStatus status,
       String? currentContainer,
       Object? error});
@@ -87,6 +92,7 @@ class _$ObservabilityStateCopyWithImpl<$Res>
   $Res call({
     Object? stats = freezed,
     Object? logs = null,
+    Object? containers = null,
     Object? status = null,
     Object? currentContainer = freezed,
     Object? error = freezed,
@@ -100,6 +106,10 @@ class _$ObservabilityStateCopyWithImpl<$Res>
           ? _self.logs
           : logs // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      containers: null == containers
+          ? _self.containers
+          : containers // ignore: cast_nullable_to_non_nullable
+              as List<ContainerInfo>,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -218,15 +228,20 @@ extension ObservabilityStatePatterns on ObservabilityState {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(SystemStats? stats, List<String> logs, UiFlowStatus status,
-            String? currentContainer, Object? error)?
+    TResult Function(
+            SystemStats? stats,
+            List<String> logs,
+            List<ContainerInfo> containers,
+            UiFlowStatus status,
+            String? currentContainer,
+            Object? error)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _ObservabilityState() when $default != null:
-        return $default(_that.stats, _that.logs, _that.status,
+        return $default(_that.stats, _that.logs, _that.containers, _that.status,
             _that.currentContainer, _that.error);
       case _:
         return orElse();
@@ -248,14 +263,19 @@ extension ObservabilityStatePatterns on ObservabilityState {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(SystemStats? stats, List<String> logs, UiFlowStatus status,
-            String? currentContainer, Object? error)
+    TResult Function(
+            SystemStats? stats,
+            List<String> logs,
+            List<ContainerInfo> containers,
+            UiFlowStatus status,
+            String? currentContainer,
+            Object? error)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ObservabilityState():
-        return $default(_that.stats, _that.logs, _that.status,
+        return $default(_that.stats, _that.logs, _that.containers, _that.status,
             _that.currentContainer, _that.error);
     }
   }
@@ -274,14 +294,19 @@ extension ObservabilityStatePatterns on ObservabilityState {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(SystemStats? stats, List<String> logs,
-            UiFlowStatus status, String? currentContainer, Object? error)?
+    TResult? Function(
+            SystemStats? stats,
+            List<String> logs,
+            List<ContainerInfo> containers,
+            UiFlowStatus status,
+            String? currentContainer,
+            Object? error)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ObservabilityState() when $default != null:
-        return $default(_that.stats, _that.logs, _that.status,
+        return $default(_that.stats, _that.logs, _that.containers, _that.status,
             _that.currentContainer, _that.error);
       case _:
         return null;
@@ -295,10 +320,12 @@ class _ObservabilityState extends ObservabilityState {
   const _ObservabilityState(
       {this.stats,
       final List<String> logs = const [],
+      final List<ContainerInfo> containers = const [],
       this.status = UiFlowStatus.idle,
       this.currentContainer,
       this.error})
       : _logs = logs,
+        _containers = containers,
         super._();
 
   @override
@@ -310,6 +337,15 @@ class _ObservabilityState extends ObservabilityState {
     if (_logs is EqualUnmodifiableListView) return _logs;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_logs);
+  }
+
+  final List<ContainerInfo> _containers;
+  @override
+  @JsonKey()
+  List<ContainerInfo> get containers {
+    if (_containers is EqualUnmodifiableListView) return _containers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_containers);
   }
 
   @override
@@ -335,6 +371,8 @@ class _ObservabilityState extends ObservabilityState {
             other is _ObservabilityState &&
             (identical(other.stats, stats) || other.stats == stats) &&
             const DeepCollectionEquality().equals(other._logs, _logs) &&
+            const DeepCollectionEquality()
+                .equals(other._containers, _containers) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.currentContainer, currentContainer) ||
                 other.currentContainer == currentContainer) &&
@@ -346,13 +384,14 @@ class _ObservabilityState extends ObservabilityState {
       runtimeType,
       stats,
       const DeepCollectionEquality().hash(_logs),
+      const DeepCollectionEquality().hash(_containers),
       status,
       currentContainer,
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'ObservabilityState(stats: $stats, logs: $logs, status: $status, currentContainer: $currentContainer, error: $error)';
+    return 'ObservabilityState(stats: $stats, logs: $logs, containers: $containers, status: $status, currentContainer: $currentContainer, error: $error)';
   }
 }
 
@@ -367,6 +406,7 @@ abstract mixin class _$ObservabilityStateCopyWith<$Res>
   $Res call(
       {SystemStats? stats,
       List<String> logs,
+      List<ContainerInfo> containers,
       UiFlowStatus status,
       String? currentContainer,
       Object? error});
@@ -390,6 +430,7 @@ class __$ObservabilityStateCopyWithImpl<$Res>
   $Res call({
     Object? stats = freezed,
     Object? logs = null,
+    Object? containers = null,
     Object? status = null,
     Object? currentContainer = freezed,
     Object? error = freezed,
@@ -403,6 +444,10 @@ class __$ObservabilityStateCopyWithImpl<$Res>
           ? _self._logs
           : logs // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      containers: null == containers
+          ? _self._containers
+          : containers // ignore: cast_nullable_to_non_nullable
+              as List<ContainerInfo>,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable

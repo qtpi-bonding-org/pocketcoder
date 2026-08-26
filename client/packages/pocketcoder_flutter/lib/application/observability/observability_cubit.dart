@@ -29,6 +29,16 @@ class ObservabilityCubit extends AppCubit<ObservabilityState> {
     });
   }
 
+  Future<void> loadContainers() async {
+    await tryOperation(() async {
+      final containers = await _repository.listContainers();
+      return state.copyWith(
+        containers: containers,
+        status: UiFlowStatus.success,
+      );
+    });
+  }
+
   void startLogStreaming(String containerName) {
     logInfo('📈 [ObservabilityCubit] Starting container log stream');
     _logSub?.cancel();

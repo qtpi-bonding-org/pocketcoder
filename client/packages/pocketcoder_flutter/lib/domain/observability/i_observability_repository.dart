@@ -9,6 +9,24 @@ abstract class IObservabilityRepository {
 
   /// Fetches the system stats from the SQLPage dashboard.
   Future<SystemStats> fetchSystemStats();
+
+  /// Lists this deployment's containers for the observability registry.
+  Future<List<ContainerInfo>> listContainers();
+}
+
+@freezed
+sealed class ContainerInfo with _$ContainerInfo {
+  const factory ContainerInfo({
+    required String name,
+    required String state,
+    required String status,
+  }) = _ContainerInfo;
+
+  factory ContainerInfo.fromJson(Map<String, dynamic> json) => ContainerInfo(
+        name: json['name'] as String? ?? '',
+        state: json['state'] as String? ?? '',
+        status: json['status'] as String? ?? '',
+      );
 }
 
 @freezed

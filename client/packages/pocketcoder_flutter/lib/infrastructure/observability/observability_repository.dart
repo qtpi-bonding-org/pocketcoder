@@ -7,14 +7,18 @@ import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:built_collection/built_collection.dart';
+import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 import '../core/api_endpoints.dart';
 import '../core/pocketbase_auth_header.dart';
+import '../core/pocketcoder_api_client.dart';
 
 @LazySingleton(as: IObservabilityRepository)
 class ObservabilityRepository implements IObservabilityRepository {
   final PocketBase _pb;
+  final PocketCoderApiClient _api;
 
-  ObservabilityRepository(this._pb);
+  ObservabilityRepository(this._pb, this._api);
 
   @override
   Stream<String> watchLogs(String containerName) {
@@ -89,6 +93,26 @@ class ObservabilityRepository implements IObservabilityRepository {
       },
       ObservabilityException.new,
       'fetchSystemStats',
+    );
+  }
+
+  @override
+  Future<List<ContainerInfo>> listContainers() {
+    return tryMethod(
+      () async {
+        final response = await _api.logs.listContainers();
+        final containers = response.data?.containers ??
+            BuiltList<generated.ContainerSummary>();
+        return containers
+            .map((c) => ContainerInfo(
+                  name: c.name,
+                  state: c.state,
+                  status: c.status,
+                ))
+            .toList();
+      },
+      ObservabilityException.new,
+      'listContainers',
     );
   }
 }
