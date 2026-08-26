@@ -44,7 +44,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get providerReauthenticationRequired =>
-      'Claude Code needs to be reauthenticated. Your saved login was kept.';
+      'Your provider needs to be reauthenticated. Your saved login was kept.';
 
   @override
   String get chatFetchFailed => 'Unable to load chats';

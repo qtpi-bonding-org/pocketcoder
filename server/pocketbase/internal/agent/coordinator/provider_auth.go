@@ -5,12 +5,21 @@ import (
 	"strings"
 )
 
-// providerAuthFailure deliberately classifies only errors from the provider
-// session path. It does not modify the provider's durable auth volume: a
-// failed request is a signal to reauthenticate, not permission to erase a
-// user's saved login.
-func providerAuthFailure(provider string, err error) bool {
-	if err == nil || (provider != "claude" && provider != "claude-code") {
+// providerAuthFailure deliberately classifies only errors from a session
+// whose harness account uses an account-owned login rather than a bare API
+// key (SessionProfile.AccountLogin, set from harness_accounts.credential_mode
+// == harnessaccount.ModeAccount). That flag comes from the account row
+// itself, not a hardcoded per-provider name list -- a name list is what this
+// used to be (claude/claude-code only), and it silently left Codex's own
+// account-login errors misclassified as a generic failure with no reauth
+// path, even though harness_provision.go's renderEnv had already started
+// treating Codex the same as Claude Code for credential purposes. Keying off
+// the account's real credential mode means any future account-login harness
+// is covered automatically. It does not modify the provider's durable auth
+// volume: a failed request is a signal to reauthenticate, not permission to
+// erase a user's saved login.
+func providerAuthFailure(accountLogin bool, err error) bool {
+	if err == nil || !accountLogin {
 		return false
 	}
 	message := strings.ToLower(fmt.Sprintf("%v", err))

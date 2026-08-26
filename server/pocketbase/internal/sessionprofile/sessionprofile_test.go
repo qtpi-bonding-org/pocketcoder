@@ -753,6 +753,83 @@ func TestBuildSessionProfileOmitsMcpGatewayWithoutToken(t *testing.T) {
 	}
 }
 
+// TestBuildSessionProfileSetsAccountLoginForEveryAccountModeHarness is a
+// regression test for the bug where Codex's account-login auth failures
+// were silently misclassified as a generic "run failed" error instead of
+// the reauthentication flow: coordinator.providerAuthFailure used to gate
+// on a hardcoded list of provider name strings ("claude", "claude-code")
+// that nobody updated when Codex grew its own account-owned login. Iterating
+// every seeded harness here (rather than hardcoding just "codex") means a
+// future harness that adds account-login support is covered automatically
+// -- exactly the class of gap that let Codex slip through unnoticed.
+func TestBuildSessionProfileSetsAccountLoginForEveryAccountModeHarness(t *testing.T) {
+	app := testApp(t)
+	for _, cliID := range []string{"claude-code", "codex"} {
+		t.Run(cliID, func(t *testing.T) {
+			userID := testUser(t, app, "acctlogin-"+cliID+"-"+randomSuffix()+"@example.com").Id
+			harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:c}", map[string]any{"c": cliID})
+			if err != nil {
+				t.Fatal(err)
+			}
+			runningInstanceFor(t, app, harness, userID)
+
+			account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harness.Id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			account.Set("credential_mode", harnessaccount.ModeAccount)
+			if err := app.Save(account); err != nil {
+				t.Fatal(err)
+			}
+
+			chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+			profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !profile.AccountLogin {
+				t.Errorf("AccountLogin = false for %s with credential_mode=account, want true", cliID)
+			}
+			if profile.HarnessName != harness.GetString("name") {
+				t.Errorf("HarnessName = %q, want %q", profile.HarnessName, harness.GetString("name"))
+			}
+		})
+	}
+}
+
+// TestBuildSessionProfileLeavesAccountLoginFalseForApiKeyMode guards the
+// other direction: a harness account still on api_key (or none) credential
+// mode must not be treated as account-login, or a bad API key would
+// incorrectly surface the "your saved login was kept" reauth flow instead of
+// a message that actually points at rotating the key.
+func TestBuildSessionProfileLeavesAccountLoginFalseForApiKeyMode(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "acctlogin-apikey-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runningInstanceFor(t, app, harness, userID)
+
+	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harness.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account.Set("credential_mode", harnessaccount.ModeAPIKey)
+	if err := app.Save(account); err != nil {
+		t.Fatal(err)
+	}
+
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if profile.AccountLogin {
+		t.Error("AccountLogin = true for a credential_mode=api_key account, want false")
+	}
+}
+
 func TestSaveAgentSessionStampsHarnessInstance(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {

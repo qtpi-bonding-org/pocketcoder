@@ -48,6 +48,17 @@ type SessionProfile struct {
 	AgentProfileID                     string
 	AgentName                          string
 
+	// AccountLogin is true when the resolved harness_account uses an
+	// account/OAuth login (harnessaccount.ModeAccount) rather than a bare
+	// API key. This is the real signal for whether an auth-shaped error
+	// from the harness should map to the "reauthenticate" flow -- it comes
+	// from the account row itself, not a hardcoded per-provider allowlist,
+	// so a new harness that adds account-login support is covered
+	// automatically instead of silently falling through to a generic
+	// failure the way Codex did before this field existed.
+	AccountLogin  bool
+	HarnessName   string // display name (harnesses.name, e.g. "Codex"), for user-facing reauth copy
+
 	Target                        Target
 	ResolvedInstanceID            string // the harness_instances id this chat resolves to right now
 	PinnedInstanceID              string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)

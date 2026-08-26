@@ -960,7 +960,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	conn, sessionID, modes, configOptions, _, wasNew, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
 	if err != nil {
 		log.Printf("coordinator: establishSession failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
-		hub.Publish(providerRunError(profile.Provider, "session init", err))
+		hub.Publish(providerRunError(profile.AccountLogin, profile.HarnessName, "session init", err))
 		return
 	}
 	h.conn = conn
@@ -985,7 +985,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	applier := selectApplier(profile)
 	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
 		log.Printf("coordinator: applier.Apply failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
-		hub.Publish(providerRunError(profile.Provider, "session init", err))
+		hub.Publish(providerRunError(profile.AccountLogin, profile.HarnessName, "session init", err))
 		return
 	}
 	h.accepting.Store(true)
@@ -1001,9 +1001,9 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	if err != nil {
 		code := "goose_unavailable"
 		message := "goose turn failed"
-		if providerAuthFailure(profile.Provider, err) {
+		if providerAuthFailure(profile.AccountLogin, err) {
 			code = providerAuthRequiredCode
-			message = "Claude Code reauthentication required. Your saved login was kept."
+			message = reauthRequiredMessage(profile.HarnessName)
 		}
 		switch {
 		case runCtx.Err() != nil:
@@ -1033,12 +1033,24 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 }
 
-func providerRunError(provider, fallback string, err error) events.Event {
-	if providerAuthFailure(provider, err) {
+func providerRunError(accountLogin bool, harnessName, fallback string, err error) events.Event {
+	if providerAuthFailure(accountLogin, err) {
 		return events.NewRunErrorEvent(
-			"Claude Code reauthentication required. Your saved login was kept.",
+			reauthRequiredMessage(harnessName),
 			events.WithErrorCode(providerAuthRequiredCode),
 		)
 	}
 	return events.NewRunErrorEvent(fallback, events.WithErrorCode("goose_unavailable"))
+}
+
+// reauthRequiredMessage builds the reauth-required copy for whichever
+// account-login harness actually failed, rather than a name hardcoded for
+// one harness -- the client only keys off the event's error code today (see
+// chat_cubit.dart), but this message is still surfaced through logs and any
+// future client that reads it, so it should name the right harness.
+func reauthRequiredMessage(harnessName string) string {
+	if harnessName == "" {
+		harnessName = "Your provider"
+	}
+	return harnessName + " reauthentication required. Your saved login was kept."
 }

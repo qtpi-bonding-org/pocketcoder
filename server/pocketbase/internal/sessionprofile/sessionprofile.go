@@ -283,6 +283,8 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	if err != nil {
 		return p, fmt.Errorf("resolve harness account: %w", err)
 	}
+	p.AccountLogin = account.GetString("credential_mode") == harnessaccount.ModeAccount
+	p.HarnessName = harnessRec.GetString("name")
 
 	// Shared with hooks.ProvisionHarnessInstance's own lookup — see
 	// hooks.FindHarnessInstance's doc comment for why this can't be a
