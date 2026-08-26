@@ -7,6 +7,7 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketbase_auth_header.dart';
 
 /// PocketBase proxy for the private Ollama control network. The app never
 /// receives Ollama's hostname or a host-published port.
@@ -36,8 +37,8 @@ class OllamaApi {
       ..headers['Content-Type'] = 'application/json'
       ..headers['Accept'] = 'application/x-ndjson'
       ..body = jsonEncode({'model': model});
-    final token = _pb.authStore.token;
-    if (token.isNotEmpty) request.headers['Authorization'] = 'Bearer $token';
+    final authHeader = pocketBaseAuthHeaderValue(_pb);
+    if (authHeader != null) request.headers['Authorization'] = authHeader;
 
     final response = await _http.send(request);
     if (response.statusCode < 200 || response.statusCode >= 300) {

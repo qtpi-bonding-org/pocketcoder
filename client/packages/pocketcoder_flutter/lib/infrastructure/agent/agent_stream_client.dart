@@ -29,6 +29,7 @@ import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agui_decode.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketbase_auth_header.dart';
 
 /// One decoded SSE frame: the hub-allocated seq (parsed from the `id:` line),
 /// the verbatim `data:` JSON (carried through to the cache so it never gets
@@ -112,10 +113,13 @@ class AgentStreamClient {
             '${_pb.baseURL}${StreamingEndpoints.agentStream(chatId)}?cursor=$cursor',
           ),
         );
-        // c1 only checks the raw token value, so we mirror what
-        // PocketBase's own client does internally (see PocketBase.send
-        // around `if (!headers.containsKey("Authorization") ...)`).
-        request.headers['Authorization'] = _pb.authStore.token;
+        // This endpoint requires authentication, so fail before opening a
+        // connection when there is no current session.
+        final authHeader = pocketBaseAuthHeaderValue(_pb);
+        if (authHeader == null) {
+          throw StateError('Agent stream requires an authenticated session');
+        }
+        request.headers['Authorization'] = authHeader;
 
         final response = await _http.send(request);
         if (cancelled) {

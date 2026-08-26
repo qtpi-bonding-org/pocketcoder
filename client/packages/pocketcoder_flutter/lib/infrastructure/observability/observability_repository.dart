@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketbase/pocketbase.dart';
 import '../core/api_endpoints.dart';
+import '../core/pocketbase_auth_header.dart';
 
 @LazySingleton(as: IObservabilityRepository)
 class ObservabilityRepository implements IObservabilityRepository {
@@ -22,14 +23,19 @@ class ObservabilityRepository implements IObservabilityRepository {
 
     logInfo('📈 [Observability] Subscribing to container log stream');
 
+    final headers = <String, String>{
+      "Accept": "text/event-stream",
+      "Cache-Control": "no-cache",
+    };
+    // This stream historically attempted anonymously when signed out, so
+    // preserve that behavior by omitting Authorization when there is no token.
+    final authHeader = pocketBaseAuthHeaderValue(_pb);
+    if (authHeader != null) headers["Authorization"] = authHeader;
+
     final subscription = SSEClient.subscribeToSSE(
       method: SSERequestType.GET,
       url: url,
-      header: {
-        "Accept": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Authorization": "Bearer ${_pb.authStore.token}",
-      },
+      header: headers,
     ).listen((event) {
       final data = event.data;
       if (data != null) {
