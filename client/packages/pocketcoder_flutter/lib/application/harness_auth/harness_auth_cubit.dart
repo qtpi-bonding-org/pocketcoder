@@ -38,6 +38,7 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
   void _loadHarnesses() {
     _harnessSub?.cancel();
     _harnessSub = _providerRepository.watchHarnesses().listen((harnesses) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           harnesses: harnesses,
@@ -54,6 +55,7 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
         source: 'HarnessAuthCubit',
         operation: 'watchHarnesses',
       ));
+      if (isClosed) return;
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
       OnboardingLogger.event('harness list failed', {'error': e.toString()});
     });
@@ -62,13 +64,17 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
   void _loadProviderKeys() {
     _providerKeysSub?.cancel();
     _providerKeysSub = _providerRepository.watchProviderKeys().listen(
-      (providerKeys) => emit(state.copyWith(providerKeys: providerKeys)),
+      (providerKeys) {
+        if (isClosed) return;
+        emit(state.copyWith(providerKeys: providerKeys));
+      },
       onError: (Object e) {
         unawaited(pocketCoderDiagnosticCapture.capture(
           error: e,
           source: 'HarnessAuthCubit',
           operation: 'watchProviderKeys',
         ));
+        if (isClosed) return;
         emit(state.copyWith(status: UiFlowStatus.failure, error: e));
         OnboardingLogger.event(
             'provider key list failed', {'error': e.toString()});
@@ -77,6 +83,7 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
   }
 
   Future<void> _setBusy(String harnessId, bool busy) async {
+    if (isClosed) return;
     final nextBusy = Set<String>.from(state.busyHarnesses);
     if (busy) {
       nextBusy.add(harnessId);
@@ -91,6 +98,7 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
     await _setBusy(harnessId, true);
     try {
       await action();
+      if (isClosed) return;
       emit(state.copyWith(status: UiFlowStatus.success, error: null));
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(
@@ -98,6 +106,7 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
         source: 'HarnessAuthCubit',
         operation: 'harnessOperation',
       );
+      if (isClosed) return;
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
       OnboardingLogger.event('harness auth operation failed', {
         'harness': harnessId,
@@ -109,6 +118,7 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
   }
 
   void _updateStatus(String harnessId, HarnessAuthStatus status) {
+    if (isClosed) return;
     final next = Map<String, HarnessAuthStatus>.from(state.statuses);
     next[harnessId] = status;
     emit(state.copyWith(
@@ -142,6 +152,7 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
         source: 'HarnessAuthCubit',
         operation: 'refreshStatus',
       );
+      if (isClosed) return;
       emit(state.copyWith(status: UiFlowStatus.failure, error: e));
     }
   }
