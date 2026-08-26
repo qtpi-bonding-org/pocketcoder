@@ -102,7 +102,9 @@ func applyStatus(app core.App, containerName, status string) {
 		return // never touch the compose-managed default Goose row
 	}
 	rec.Set("status", status)
-	app.Save(rec)
+	if err := app.Save(rec); err != nil {
+		log.Printf("[HarnessWatcher] failed to save status for %s: %v", containerName, err)
+	}
 }
 
 func reconcile(ctx context.Context, app core.App, client eventSource) {
@@ -130,7 +132,9 @@ func reconcile(ctx context.Context, app core.App, client eventSource) {
 		}
 		if inst.GetString("status") != status {
 			inst.Set("status", status)
-			app.Save(inst)
+			if err := app.Save(inst); err != nil {
+				log.Printf("[HarnessWatcher] failed to save status for %s: %v", name, err)
+			}
 		}
 	}
 }

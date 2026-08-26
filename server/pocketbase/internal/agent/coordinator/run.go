@@ -439,7 +439,9 @@ func (s *sessionClient) SessionUpdate(_ context.Context, n acpsdk.SessionNotific
 	updates, err := s.bridge.Update(n.Update)
 	// Soft-miss: the bridge already emitted redacted RAW for unmapped shapes;
 	// a returned error is non-fatal, so publish what we have and keep going.
-	_ = err
+	if err != nil {
+		log.Printf("coordinator: session update bridge failed: %v", err)
+	}
 	for _, e := range updates {
 		if emitErr := s.emit(e); emitErr != nil {
 			return emitErr
@@ -928,6 +930,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	defer teardown()
 	defer func() {
 		if r := recover(); r != nil {
+			log.Printf("coordinator: run %s panicked: %v", runID, r)
 			hub.Publish(events.NewRunErrorEvent("internal error", events.WithErrorCode("protocol_error")))
 		}
 	}()

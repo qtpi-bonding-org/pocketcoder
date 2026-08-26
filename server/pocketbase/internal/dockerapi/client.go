@@ -491,6 +491,7 @@ func (c *Client) Events(ctx context.Context) (<-chan Event, error) {
 				}
 			}
 			if err := json.Unmarshal(scanner.Bytes(), &raw); err != nil {
+				log.Printf("dockerapi: failed to unmarshal event: %v", err)
 				continue
 			}
 			select {

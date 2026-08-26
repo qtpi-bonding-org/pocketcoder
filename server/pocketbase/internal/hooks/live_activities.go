@@ -38,7 +38,9 @@ func NotifyRunFinished(app core.App, chatID, outcome string) error {
 			r.Set("status", "ended")
 			r.Set("ended_at", time.Now())
 			r.Set("last_push_at", time.Now())
-			_ = app.Save(r)
+			if err := app.Save(r); err != nil {
+				log.Printf("live activities: save finished activity: %v", err)
+			}
 		}
 	}
 	return nil
@@ -65,7 +67,9 @@ func dispatchLiveActivityUpdate(app core.App, activity *core.Record, state LiveA
 	} else {
 		activity.Set("last_error", "")
 	}
-	_ = app.Save(activity)
+	if err := app.Save(activity); err != nil {
+		log.Printf("live activities: save activity: %v", err)
+	}
 	return nil
 }
 

@@ -43,7 +43,7 @@ echo "📦 Starting automatic backup service..."
     sleep 30
     
     while true; do
-        /app/backup_db.sh
+        /app/backup_db.sh || echo "ERROR: backup_db.sh failed (exit $?)" >&2
         sleep 300  # 5 minutes
     done
 ) &

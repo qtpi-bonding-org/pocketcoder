@@ -25,6 +25,7 @@ import (
 	"bufio"
 	"context"
 	"io"
+	"log"
 	"net/http"
 	"os/exec"
 	"sync"
@@ -47,6 +48,7 @@ func newAdapterHandler(cfg adapterConfig) http.Handler {
 		}
 		conn, err := websocket.Accept(w, r, nil)
 		if err != nil {
+			log.Printf("harness-adapter: websocket accept failed: %v", err)
 			return
 		}
 		conn.SetReadLimit(cfg.MaxLineBytes)
@@ -80,20 +82,26 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 	cmd := exec.Command(cfg.Cmd[0], cfg.Cmd[1:]...) // NOT CommandContext: teardown() below kills it on our own terms, so a ctx cancellation racing a normal exit is handled the same way as every other exit path, not as a special case
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
+		log.Printf("harness-adapter: create stdin pipe failed: %v", err)
 		return
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
+		log.Printf("harness-adapter: create stdout pipe failed: %v", err)
 		return
 	}
 	if err := cmd.Start(); err != nil {
+		log.Printf("harness-adapter: start command failed: %v", err)
 		return
 	}
 
 	var once sync.Once
+	var killed bool
 	teardown := func() {
 		once.Do(func() {
-			_ = cmd.Process.Kill()                                          // unblocks a stuck stdout read or stdin write
+			if err := cmd.Process.Kill(); err == nil {
+				killed = true
+			} // unblocks a stuck stdout read or stdin write
 			_ = conn.Close(websocket.StatusInternalError, "bridge closing") // unblocks a stuck conn.Read/Write
 		})
 	}
@@ -110,12 +118,14 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 		for {
 			line, err := readUnboundedLine(reader, cfg.MaxLineBytes)
 			if err != nil {
+				log.Printf("harness-adapter: read subprocess stdout failed: %v", err)
 				return
 			}
 			if len(line) == 0 {
 				continue
 			}
 			if err := conn.Write(ctx, websocket.MessageText, line); err != nil {
+				log.Printf("harness-adapter: write stdout to websocket failed: %v", err)
 				return
 			}
 		}
@@ -129,16 +139,20 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 		for {
 			_, data, err := conn.Read(ctx)
 			if err != nil {
+				log.Printf("harness-adapter: read websocket failed: %v", err)
 				return
 			}
 			if _, err := stdin.Write(append(data, '\n')); err != nil {
+				log.Printf("harness-adapter: write websocket data to stdin failed: %v", err)
 				return
 			}
 		}
 	}()
 
 	wg.Wait()  // both directions have stopped — guaranteed by teardown() unblocking whichever side didn't exit on its own
-	cmd.Wait() // reap; a non-nil exit error here is expected and ignored in the common (intentionally-killed) case
+	if err := cmd.Wait(); err != nil && !killed {
+		log.Printf("harness-adapter: subprocess exited unexpectedly: %v", err)
+	}
 }
 
 // readUnboundedLine reads up to a '\n' without Go's bufio.Scanner 64KB

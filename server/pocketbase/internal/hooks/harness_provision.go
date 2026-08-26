@@ -28,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"text/template"
@@ -265,9 +266,12 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		return nil, fmt.Errorf("save pending harness_instances row: %w", err)
 	}
 	fail := func(err error) (*core.Record, error) {
+		log.Printf("[HarnessProvision] harness=%s container=%s failed: %v", harnessID, containerName, err)
 		rec.Set("status", "error")
 		rec.Set("last_error", err.Error())
-		app.Save(rec)
+		if saveErr := app.Save(rec); saveErr != nil {
+			log.Printf("[HarnessProvision] harness=%s container=%s: failed to persist error status: %v", harnessID, containerName, saveErr)
+		}
 		return rec, nil
 	}
 
@@ -282,7 +286,9 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		Port        int               `json:"port"`
 		EnvTemplate map[string]string `json:"env_template"`
 	}
-	_ = harness.UnmarshalJSONField("launch_template", &launch)
+	if err := harness.UnmarshalJSONField("launch_template", &launch); err != nil {
+		log.Printf("[HarnessProvision] harness=%s: failed to parse launch_template: %v", harnessID, err)
+	}
 
 	providerID, modelID := "", ""
 	if launchKey != "" {

@@ -12,6 +12,9 @@ if [ -r "$GOOSE_KEYS_ENV" ]; then
   . "$GOOSE_KEYS_ENV"
   set +a
 fi
+if [ -r "$GOOSE_KEYS_ENV" ] && ! grep -qE '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=' "$GOOSE_KEYS_ENV"; then
+  echo "WARNING: $GOOSE_KEYS_ENV was read but contains no KEY=VALUE assignments" >&2
+fi
 
 # Do not maintain a second provider allowlist here. Goose owns provider
 # discovery and validation; this wrapper must not reject providers that Goose

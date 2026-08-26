@@ -142,7 +142,11 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 				}()
 				return nil
 			}, coordinator.WithOnRunEnded(func(ctx context.Context, chatID string, outcome coordinator.RunOutcome) {
-				go func() { _ = hooks.NotifyRunFinished(app, chatID, string(outcome)) }()
+				go func() {
+					if err := hooks.NotifyRunFinished(app, chatID, string(outcome)); err != nil {
+						log.Printf("[Push] run finished: %v", err)
+					}
+				}()
 			}))
 		if err != nil {
 			if errors.Is(err, coordinator.ErrRunInProgress) {
@@ -151,7 +155,11 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 			return apis.NewApiError(http.StatusInternalServerError, "Unable to start agent run", err)
 		}
 		result := map[string]string{"runId": runID}
-		go func() { _ = hooks.NotifyRunStarted(app, chatID) }()
+		go func() {
+			if err := hooks.NotifyRunStarted(app, chatID); err != nil {
+				log.Printf("[Push] run started: %v", err)
+			}
+		}()
 		if idemKey != "" {
 			service.RecordIdempotency(chatID, idemKey, result)
 		}

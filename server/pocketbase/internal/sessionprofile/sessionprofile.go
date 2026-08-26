@@ -294,7 +294,9 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	if instance != nil {
 		if instance.GetBool("managed") {
 			instance.Set("last_used", time.Now().UTC().Format(time.RFC3339))
-			_ = app.Save(instance)
+			if err := app.Save(instance); err != nil {
+				log.Printf("[Profile] save last_used: %v", err)
+			}
 		}
 		p.ResolvedInstanceID = instance.Id
 		p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
