@@ -113,6 +113,13 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
+  Future<void> clearSession() async {
+    _pocketBase.authStore.clear();
+    await _authStoreConfig.clear();
+    await _storage.delete(key: 'pb_server_url');
+  }
+
+  @override
   Future<AuthRefreshResult> refreshToken() async {
     try {
       // Deliberate exception: this is the auth refresh operation itself and

@@ -6,6 +6,7 @@ abstract class IAuthRepository {
 
   Future<bool> login(String email, String password);
   Future<void> logout();
+  Future<void> clearSession();
   Future<AuthRefreshResult> refreshToken();
 
   /// Rejects a server whose public contract cannot be spoken by this app.

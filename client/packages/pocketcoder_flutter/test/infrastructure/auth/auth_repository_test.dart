@@ -16,6 +16,8 @@ import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.d
 
 class MockPocketBase extends Mock implements PocketBase {}
 
+class MockAuthStore extends Mock implements AuthStore {}
+
 class MockAuthStoreConfig extends Mock implements AuthStoreConfig {}
 
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
@@ -24,29 +26,48 @@ class MockPocketCoderApiClient extends Mock implements PocketCoderApiClient {}
 
 void main() {
   late MockPocketBase pocketBase;
+  late MockAuthStore authStore;
   late MockFlutterSecureStorage storage;
+  late MockAuthStoreConfig authStoreConfig;
   late AuthHttpState authHttpState;
   late AuthRepository repository;
 
   setUp(() {
     pocketBase = MockPocketBase();
+    authStore = MockAuthStore();
     storage = MockFlutterSecureStorage();
+    authStoreConfig = MockAuthStoreConfig();
     authHttpState = AuthHttpState();
     authHttpState.configureDeployment(
       'http://127.0.0.1:8090',
       tokenProvider: () => 'token',
     );
+    when(() => pocketBase.authStore).thenReturn(authStore);
     when(() => storage.write(
           key: any(named: 'key'),
           value: any(named: 'value'),
         )).thenAnswer((_) async {});
     repository = AuthRepository(
       pocketBase,
-      MockAuthStoreConfig(),
+      authStoreConfig,
       storage,
       MockPocketCoderApiClient(),
       authHttpState,
     );
+  });
+
+  test('clearSession clears auth state and the persisted server URL',
+      () async {
+    when(() => authStore.clear()).thenReturn(null);
+    when(() => authStoreConfig.clear()).thenAnswer((_) async {});
+    when(() => storage.delete(key: 'pb_server_url'))
+        .thenAnswer((_) async {});
+
+    await repository.clearSession();
+
+    verify(() => authStore.clear()).called(1);
+    verify(() => authStoreConfig.clear()).called(1);
+    verify(() => storage.delete(key: 'pb_server_url')).called(1);
   });
 
   test('updateBaseUrl retargets AuthHttpState.deploymentOrigin to the new host',
