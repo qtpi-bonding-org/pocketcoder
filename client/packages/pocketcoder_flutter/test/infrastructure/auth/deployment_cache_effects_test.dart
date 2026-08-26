@@ -35,6 +35,8 @@ class _Repository implements IAuthRepository {
   @override
   Future<void> logout() async {}
   @override
+  Future<void> clearSession() async {}
+  @override
   Future<AuthRefreshResult> refreshToken() async => refreshResult;
   @override
   Future<void> verifyServerCompatibility() async {}

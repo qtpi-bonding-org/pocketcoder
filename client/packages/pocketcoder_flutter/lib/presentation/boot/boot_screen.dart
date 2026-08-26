@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_active_deployment_gate.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
 import 'boot_view.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import '../../app_router.dart';
@@ -28,6 +29,7 @@ class _BootScreenState extends State<BootScreen> {
   // Data
   final List<String> _logs = [];
   final ScrollController _scrollController = ScrollController();
+  Timer? _backgroundLogTimer;
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _BootScreenState extends State<BootScreen> {
 
   @override
   void dispose() {
+    _backgroundLogTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -108,7 +111,7 @@ class _BootScreenState extends State<BootScreen> {
     }
   }
 
-  void _startBackgroundLogs() async {
+  void _startBackgroundLogs() {
     final noise = [
       '[sys] heartbeat: ok',
       '[net] keepalive sent',
@@ -117,16 +120,16 @@ class _BootScreenState extends State<BootScreen> {
       '[agent] reasoning_engine: idle',
     ];
 
-    int i = 0;
-    while (mounted) {
-      await Future.delayed(const Duration(seconds: 2));
+    var i = 0;
+    _backgroundLogTimer?.cancel();
+    _backgroundLogTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted) {
         setState(() {
           _logs.add(noise[i % noise.length]);
         });
         i++;
       }
-    }
+    });
   }
 
   Future<void> _checkConnection() async {
@@ -161,6 +164,29 @@ class _BootScreenState extends State<BootScreen> {
       final hasLocalSession = sessionState != AuthSessionState.signedOut;
 
       if (hasLocalSession) {
+        var staleSessionResolved = false;
+        if (sessionState == AuthSessionState.temporarilyUnavailable &&
+            getIt.isRegistered<IInstanceExistenceResolver>()) {
+          staleSessionResolved = await getIt<IInstanceExistenceResolver>()
+              .resolveStaleSessionIfInstanceGone();
+          if (!mounted) return;
+        }
+
+        if (staleSessionResolved) {
+          context.read<PocoCubit>().updateMessage(
+                context.l10n.bootConnectionFailed,
+                sequence: [
+                  (PocoExpression.nervous, 500),
+                  (PocoExpression.lookRight, 1000),
+                  (PocoExpression.awake, 1000),
+                ],
+              );
+          // Wait a bit longer to let the user read before moving.
+          await Future.delayed(const Duration(seconds: 3));
+          if (mounted) context.goNamed(RouteNames.onboarding);
+          return;
+        }
+
         OnboardingLogger.event(
           sessionState == AuthSessionState.signedIn
               ? 'PocketBase session restored'
