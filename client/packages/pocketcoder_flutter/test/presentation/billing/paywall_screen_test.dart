@@ -5,7 +5,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/billing/paywall_screen.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 
 void main() {
@@ -41,22 +40,26 @@ void main() {
     );
   }
 
-  testWidgets('presents one Pro plan with store-derived trial and price',
-      (tester) async {
+  testWidgets('presents the trial offer and store-derived price for a '
+      'trial-eligible package', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(subject());
     await tester.pumpAndSettle();
 
-    expect(find.text('7 DAYS FREE'), findsOneWidget);
-    expect(find.text(AppAscii.pocketCoderProLogo), findsOneWidget);
-    expect(find.text(r'THEN $9.99 / MONTH'), findsOneWidget);
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    expect(find.text(l10n.proTrialNoPaymentInfo), findsOneWidget);
+    expect(find.text(l10n.proTrialLapseExplainer), findsOneWidget);
+    expect(find.text(l10n.proStartTrial(7)), findsOneWidget);
+    expect(find.text(l10n.proRestore), findsOneWidget);
+    expect(find.text(l10n.proSelfHostedPushTitle), findsOneWidget);
+    // The terms/price line only renders once there's no trial to offer -- a
+    // trial-eligible package must not show it.
     expect(
-      find.text('PROVISION AND DEPLOY POCKETCODER SERVERS'),
-      findsOneWidget,
+      find.text(l10n.proTerms(l10n.proPricePerMonth(r'$9.99'))),
+      findsNothing,
     );
-    expect(find.text('RECEIVE HOSTED AGENT NOTIFICATIONS'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

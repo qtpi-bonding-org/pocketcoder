@@ -160,7 +160,7 @@ class _ErrorContent extends StatelessWidget {
         children: [
           TerminalText.label(label),
           VSpace.x2,
-          TerminalText(message, color: context.colorScheme.error),
+          TerminalText(message, color: context.terminalColors.warning),
         ],
       );
 }

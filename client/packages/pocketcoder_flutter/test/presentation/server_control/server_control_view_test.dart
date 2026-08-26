@@ -105,15 +105,20 @@ void main() {
     await tester.pumpWidget(_app(cubit));
 
     expect(find.text('RELEASE STATUS: CHECKING'), findsOneWidget);
-    for (final operation in ServerControlOperation.values) {
-      expect(
-          find.text(operation.name
-              .replaceAllMapped(
-                RegExp(r'([A-Z])'),
-                (match) => ' ${match.group(1)}',
-              )
-              .toUpperCase()),
-          findsOneWidget);
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    final operationLabels = [
+      l10n.serverControlOperationRestartPocketCoder,
+      l10n.serverControlOperationUpdatePocketCoder,
+      l10n.serverControlOperationRestartNixOs,
+      l10n.serverControlOperationUpdateNixOs,
+      l10n.serverControlOperationSaveBackup,
+    ];
+    expect(operationLabels.length, ServerControlOperation.values.length,
+        reason:
+            'a new ServerControlOperation needs its label added here too');
+    for (final label in operationLabels) {
+      // TerminalButton uppercases its label before rendering.
+      expect(find.text(label.toUpperCase()), findsOneWidget);
     }
     await cubit.inspectRelease();
     await tester.pump();
