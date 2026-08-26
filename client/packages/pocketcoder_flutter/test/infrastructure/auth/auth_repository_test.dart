@@ -9,8 +9,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
-import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
-import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/infrastructure/auth/auth_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/auth_aware_http_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
@@ -21,10 +19,6 @@ class MockPocketBase extends Mock implements PocketBase {}
 class MockAuthStoreConfig extends Mock implements AuthStoreConfig {}
 
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
-
-class MockBillingService extends Mock implements BillingService {}
-
-class MockPushService extends Mock implements PushService {}
 
 class MockPocketCoderApiClient extends Mock implements PocketCoderApiClient {}
 
@@ -50,8 +44,6 @@ void main() {
       pocketBase,
       MockAuthStoreConfig(),
       storage,
-      MockBillingService(),
-      MockPushService(),
       MockPocketCoderApiClient(),
       authHttpState,
     );

@@ -3,7 +3,6 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
-import 'package:pocketbase_drift/pocketbase_drift.dart';
 
 import 'bootstrap.config.dart';
 import 'app_dependency_module.dart';
@@ -19,6 +18,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/infrastructure/auth/auth_session_effects.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 
 /// Global service locator instance
@@ -77,27 +77,18 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
     final billingService = getIt<BillingService>();
     await billingService.initialize();
 
-    // If a session persisted from a previous launch, restore the billing
-    // provider's identity now. AuthRepository.login() will not run again
-    // during this launch.
-    try {
-      final pocketBase = getIt<PocketBase>();
-      final userId = pocketBase.authStore.record?.id;
-      if (pocketBase.authStore.isValid && userId != null) {
-        await billingService.identify(userId);
-        await pushService.syncAuthenticatedDevice();
-      }
-    } catch (e, stack) {
-      debugPrint(
-        'Bootstrap: Warning - billing identify on session restore failed: $e',
-      );
-      await pocketCoderDiagnosticCapture.capture(
-        error: e,
-        stackTrace: stack,
-        source: 'Bootstrap',
-        operation: 'billingIdentify',
+    // Start after push and billing initialization. The coordinator replay
+    // handles an already-persisted session without blocking bootstrap.
+    if (!getIt.isRegistered<AuthSessionEffects>()) {
+      getIt.registerLazySingleton<AuthSessionEffects>(
+        () => AuthSessionEffects(
+          getIt<AuthSessionCoordinator>(),
+          billingService,
+          pushService,
+        ),
       );
     }
+    getIt<AuthSessionEffects>().start();
 
     // 2. Register UI flow service (depends on localization/feedback/loading)
     debugPrint('Bootstrap: Registering UI flow service...');

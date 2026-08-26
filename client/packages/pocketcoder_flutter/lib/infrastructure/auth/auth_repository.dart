@@ -2,8 +2,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
-import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
-import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
@@ -20,8 +18,6 @@ class AuthRepository implements IAuthRepository {
   final PocketBase _pocketBase;
   final AuthStoreConfig _authStoreConfig;
   final FlutterSecureStorage _storage;
-  final BillingService _billingService;
-  final PushService _pushService;
   final PocketCoderApiClient _api;
   final AuthHttpState _authHttpState;
 
@@ -29,8 +25,6 @@ class AuthRepository implements IAuthRepository {
     this._pocketBase,
     this._authStoreConfig,
     this._storage,
-    this._billingService,
-    this._pushService,
     this._api,
     this._authHttpState,
   );
@@ -54,11 +48,9 @@ class AuthRepository implements IAuthRepository {
             .collection(Collections.users)
             .authWithPassword(email, password);
         await _refireConnectivityCheck();
-        final userId = _pocketBase.authStore.record?.id;
-        if (userId != null) {
-          await _billingService.identify(userId);
-          await _pushService.syncAuthenticatedDevice();
-        }
+        // Authentication success is intentionally independent of provider
+        // effects: AuthSessionEffects runs best-effort after login returns and
+        // retries on a later qualifying session transition.
         return true;
       },
       AuthException.new,
@@ -116,10 +108,8 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<void> logout() async {
-    await _pushService.unregisterAuthenticatedDevice();
     _pocketBase.authStore.clear();
     await _authStoreConfig.clear();
-    await _billingService.reset();
   }
 
   @override

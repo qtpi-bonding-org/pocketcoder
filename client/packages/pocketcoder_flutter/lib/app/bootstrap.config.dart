@@ -91,8 +91,6 @@ import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dar
     as _i148;
 import 'package:pocketcoder_flutter/domain/notifications/i_notification_rule_repository.dart'
     as _i821;
-import 'package:pocketcoder_flutter/domain/notifications/push_service.dart'
-    as _i178;
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart'
     as _i611;
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
@@ -348,23 +346,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i444.McpServerDao>(),
           gh<_i935.PocketCoderApiClient>(),
         ));
-    gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
-          gh<_i824.PocketBase>(),
-          gh<_i520.AuthStoreConfig>(),
-          gh<_i558.FlutterSecureStorage>(),
-          gh<_i619.BillingService>(),
-          gh<_i178.PushService>(),
-          gh<_i935.PocketCoderApiClient>(),
-          gh<_i36.AuthHttpState>(),
-        ));
-    gh.factory<_i506.StatusCubit>(() => _i506.StatusCubit(
-          gh<_i50.IAuthRepository>(),
-          gh<_i72.NetworkRecoverySignal>(),
-        ));
-    gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
-          gh<_i199.ChatDao>(),
-          gh<_i50.IAuthRepository>(),
-        ));
     gh.lazySingleton<_i472.IServerReleaseStatusService>(
         () => _i175.ServerReleaseStatusService(
               gh<_i824.PocketBase>(),
@@ -406,6 +387,13 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i800.IHealthRepository>(
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
+    gh.lazySingleton<_i50.IAuthRepository>(() => _i617.AuthRepository(
+          gh<_i824.PocketBase>(),
+          gh<_i520.AuthStoreConfig>(),
+          gh<_i558.FlutterSecureStorage>(),
+          gh<_i935.PocketCoderApiClient>(),
+          gh<_i36.AuthHttpState>(),
+        ));
     gh.factory<_i89.ToolPermissionsCubit>(
         () => _i89.ToolPermissionsCubit(gh<_i767.IToolPermissionRepository>()));
     gh.factory<_i328.McpCubit>(() => _i328.McpCubit(
@@ -463,10 +451,16 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i619.AgentCacheDb>(),
           gh<_i300.AgentActionsApi>(),
         ));
+    gh.factory<_i506.StatusCubit>(() => _i506.StatusCubit(
+          gh<_i50.IAuthRepository>(),
+          gh<_i72.NetworkRecoverySignal>(),
+        ));
     gh.factory<_i1031.ProviderCubit>(
         () => _i1031.ProviderCubit(gh<_i422.IProviderRepository>()));
-    gh.factory<_i606.ChatListCubit>(
-        () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
+    gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
+          gh<_i199.ChatDao>(),
+          gh<_i50.IAuthRepository>(),
+        ));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     gh.factory<_i681.HarnessAuthCubit>(() => _i681.HarnessAuthCubit(
@@ -485,6 +479,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i490.SchedulerCubit>(
         () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
+    gh.factory<_i606.ChatListCubit>(
+        () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
     return this;
   }
 }
