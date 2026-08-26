@@ -56,6 +56,13 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 	}
 
 	registry.Add(operation.Route{OperationID: "listOllamaModels", Method: http.MethodGet, Path: "/api/pocketcoder/v1/ollama/models", Auth: true, Action: func(re *core.RequestEvent) error {
+		// Model inventory exposes deployment configuration; keep this admin-only
+		// even though single-user Pro deployments always authenticate as admin.
+		// This deliberate restriction also applies to FOSS users seeded with the
+		// user role, rather than treating the model picker as generally readable.
+		if err := requireRole(re, "admin"); err != nil {
+			return err
+		}
 		models, err := ollama.FetchTags(re.Request.Context(), client, config.BaseURL)
 		if err != nil {
 			return re.JSON(http.StatusOK, map[string]any{

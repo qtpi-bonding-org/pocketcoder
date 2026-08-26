@@ -50,7 +50,7 @@ var authorizationBoundaryTable = []authorizationBoundaryCase{
 	// skipRoleGateCheck's doc comment.
 	{operationID: "getWorkspaceFile", skipRoleGateCheck: true},
 	{operationID: "listWorkspaceFiles", skipRoleGateCheck: true},
-	{operationID: "listOllamaModels"},
+	{operationID: "listOllamaModels", adminOnly: true},
 	{operationID: "pullOllamaModel", adminOnly: true},
 	{operationID: "executeMcpRequest", agentOrAdmin: true},
 	{operationID: "storeMcpOAuthToken"},
