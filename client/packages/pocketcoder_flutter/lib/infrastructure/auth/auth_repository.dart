@@ -115,6 +115,8 @@ class AuthRepository implements IAuthRepository {
   @override
   Future<AuthRefreshResult> refreshToken() async {
     try {
+      // Deliberate exception: this is the auth refresh operation itself and
+      // necessarily runs before DAO session guards can apply.
       await _pocketBase.collection(Collections.users).authRefresh(
         headers: {AuthAwareHttpClient.skipRefreshHeader: '1'},
       );

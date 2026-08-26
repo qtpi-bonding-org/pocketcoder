@@ -32,6 +32,7 @@ class StatusRepository implements IStatusRepository {
   @override
   Future<List<Healthcheck>> getHealthchecks() async {
     try {
+      // Deliberate exception: health status is required before login.
       final records =
           await _pb.collection(Collections.healthchecks).getFullList(
                 sort: 'name',
@@ -56,6 +57,7 @@ class StatusRepository implements IStatusRepository {
     final initial = await getHealthchecks();
     controller.add(initial);
 
+    // Deliberate exception: this is a pre-login deployment status stream.
     final unsubscribe = await _pb
         .collection(Collections.healthchecks)
         .subscribe('*', (e) async {

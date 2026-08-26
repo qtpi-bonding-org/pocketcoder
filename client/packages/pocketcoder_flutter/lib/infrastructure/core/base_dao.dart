@@ -1,12 +1,28 @@
 import 'dart:async';
+
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 
 /// A generic Data Access Object (DAO) for PocketBase collections.
 ///
 /// This provides standard CRUD and reactive capabilities, backed by Drift for
 /// offline-first local persistence.
 abstract class BaseDao<T> {
+  static AuthSessionCoordinator? _coordinator;
+
+  /// Supplies the live session source to DAO streams.
+  static void configureSessionCoordinator(AuthSessionCoordinator coordinator) {
+    _coordinator = coordinator;
+  }
+
+  /// Clears the process-wide session source, primarily for lifecycle teardown
+  /// and isolated tests.
+  static void clearSessionCoordinator() {
+    _coordinator = null;
+  }
+
   final PocketBase _pb;
   final String _collection;
   final T Function(Map<String, dynamic> json) _fromJson;
@@ -28,14 +44,69 @@ abstract class BaseDao<T> {
     String? filter,
     String? sort,
     String? expand,
+    RequestPolicy? requestPolicy,
   }) {
-    return service
+    if (_pb.authStore.token.isEmpty) {
+      return Stream<List<T>>.error(AuthException.notAuthenticated());
+    }
+    // DAO reads are cache-first so a recoverable expired token never hides an
+    // already persisted snapshot. Callers opt into network authentication by
+    // passing cacheAndNetwork or networkOnly.
+    final policy = requestPolicy ?? RequestPolicy.cacheFirst;
+    Stream<List<T>> records = service
         .watchRecords(
           filter: filter,
           sort: sort,
           expand: expand,
+          requestPolicy: policy,
         )
         .map(_mapRecords);
+    if (!_pb.authStore.isValid && policy.isNetwork) {
+      records = _cachedThenAuthError(records);
+    }
+    final coordinator = _coordinator;
+    if (coordinator == null) return records;
+    return _withSessionChanges(records, coordinator);
+  }
+
+  Stream<List<T>> _cachedThenAuthError(Stream<List<T>> records) {
+    return Stream.multi((multi) {
+      var emittedCachedSnapshot = false;
+      final subscription = records.listen(
+        (value) {
+          multi.add(value);
+          if (!emittedCachedSnapshot) {
+            emittedCachedSnapshot = true;
+            multi.addError(AuthException.tokenExpired());
+          }
+        },
+        onError: multi.addError,
+        onDone: multi.close,
+      );
+      multi.onCancel = subscription.cancel;
+    });
+  }
+
+  Stream<List<T>> _withSessionChanges(
+    Stream<List<T>> records,
+    AuthSessionCoordinator coordinator,
+  ) {
+    return Stream.multi((multi) {
+      final recordSubscription = records.listen(
+        multi.add,
+        onError: multi.addError,
+        onDone: multi.close,
+      );
+      final sessionSubscription = coordinator.sessionChanges.listen((snapshot) {
+        if (snapshot.state == AuthSessionState.signedOut) {
+          multi.addError(AuthException.notAuthenticated());
+        }
+      });
+      multi.onCancel = () async {
+        await recordSubscription.cancel();
+        await sessionSubscription.cancel();
+      };
+    });
   }
 
   /// Fetches a one-time list of all records.
@@ -45,6 +116,9 @@ abstract class BaseDao<T> {
     String? expand,
     RequestPolicy? requestPolicy,
   }) async {
+    if (_pb.authStore.token.isEmpty) {
+      throw AuthException.notAuthenticated();
+    }
     logDebug(
         'DAO [$_collection]: getFullList(filter: $filter, policy: $requestPolicy)');
     try {
@@ -74,6 +148,9 @@ abstract class BaseDao<T> {
     String? expand,
     RequestPolicy? requestPolicy,
   }) async {
+    if (_pb.authStore.token.isEmpty) {
+      throw AuthException.notAuthenticated();
+    }
     logDebug('DAO [$_collection]: getOne(id: $id, policy: $requestPolicy)');
     try {
       final record = await service

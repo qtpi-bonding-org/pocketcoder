@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
@@ -19,6 +20,8 @@ import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/infrastructure/auth/auth_session_effects.dart';
+import 'package:pocketcoder_flutter/infrastructure/auth/deployment_cache_effects.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 
 /// Global service locator instance
@@ -63,6 +66,16 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
     getIt<PocketCoderApiClient>().setAuthSessionCoordinator(
       getIt<AuthSessionCoordinator>(),
     );
+    BaseDao.configureSessionCoordinator(getIt<AuthSessionCoordinator>());
+    if (!getIt.isRegistered<DeploymentCacheEffects>()) {
+      getIt.registerLazySingleton<DeploymentCacheEffects>(
+        () => DeploymentCacheEffects(
+          getIt<AuthSessionCoordinator>(),
+          getIt<PocketBase>(),
+        ),
+      );
+    }
+    getIt<DeploymentCacheEffects>().start();
     final httpClient = getIt<http.Client>();
     if (httpClient is AuthAwareHttpClient) {
       httpClient.state.refresh = getIt<AuthSessionCoordinator>().refresh;
