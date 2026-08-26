@@ -1116,34 +1116,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorTitle => 'MONITOR';
 
   @override
-  String get monitorFetchingTelemetry => 'FETCHING TELEMETRY';
-
-  @override
-  String get monitorSystemHealth => 'SYSTEM HEALTH';
-
-  @override
-  String get monitorKeyMetrics => 'KEY METRICS';
-
-  @override
-  String get monitorTokenUsage => 'TOKEN USAGE BY MODEL';
-
-  @override
-  String get monitorAgentActivity => 'AGENT ACTIVITY';
-
-  @override
   String get monitorTelemetryUnavailable => 'TELEMETRY UNAVAILABLE';
-
-  @override
-  String get monitorNoData => 'NO DATA — TAP REFRESH';
-
-  @override
-  String get monitorMessagesLabel => 'MESSAGES';
-
-  @override
-  String get monitorCostLabel => 'COST';
-
-  @override
-  String get monitorTokensLabel => 'TOKENS';
 
   @override
   String get fileTitle => 'SOURCE OUTPUT MANIFEST';
@@ -1176,25 +1149,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get systemChecksEmpty => 'NO DIAGNOSTICS AVAILABLE';
 
   @override
-  String get observabilityTitle => 'PLATFORM OBSERVABILITY';
-
-  @override
   String get observabilityRegistry => 'REGISTRY';
 
   @override
   String get observabilityLogTerminal => 'SYSTEM LOG TERMINAL';
-
-  @override
-  String get observabilityCost => 'COST';
-
-  @override
-  String get observabilityTokens => 'TOKENS';
-
-  @override
-  String get observabilityMsgs => 'MSGS';
-
-  @override
-  String get observabilityBackend => 'BACKEND';
 
   @override
   String get observabilitySelectContainer =>

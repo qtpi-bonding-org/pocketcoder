@@ -500,16 +500,7 @@
   "terminalOffline": "OFFLINE",
 
   "monitorTitle": "MONITOR",
-  "monitorFetchingTelemetry": "FETCHING TELEMETRY",
-  "monitorSystemHealth": "SYSTEM HEALTH",
-  "monitorKeyMetrics": "KEY METRICS",
-  "monitorTokenUsage": "TOKEN USAGE BY MODEL",
-  "monitorAgentActivity": "AGENT ACTIVITY",
   "monitorTelemetryUnavailable": "TELEMETRY UNAVAILABLE",
-  "monitorNoData": "NO DATA — TAP REFRESH",
-  "monitorMessagesLabel": "MESSAGES",
-  "monitorCostLabel": "COST",
-  "monitorTokensLabel": "TOKENS",
 
   "fileTitle": "SOURCE OUTPUT MANIFEST",
   "fileDashboardAction": "DASHBOARD",
@@ -523,13 +514,8 @@
   "systemChecksDiagnostics": "SYSTEM DIAGNOSTICS",
   "systemChecksEmpty": "NO DIAGNOSTICS AVAILABLE",
 
-  "observabilityTitle": "PLATFORM OBSERVABILITY",
   "observabilityRegistry": "REGISTRY",
   "observabilityLogTerminal": "SYSTEM LOG TERMINAL",
-  "observabilityCost": "COST",
-  "observabilityTokens": "TOKENS",
-  "observabilityMsgs": "MSGS",
-  "observabilityBackend": "BACKEND",
   "observabilitySelectContainer": ">> SELECT CONTAINER FOR LOG STREAM",
 
   "proTitle": "POCKETCODER PRO",

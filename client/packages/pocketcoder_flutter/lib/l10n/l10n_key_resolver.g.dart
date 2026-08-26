@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-25T16:18:26.722269
+// Generated at: 2026-08-26T02:20:07.766453
 
 import 'app_localizations.dart';
 
@@ -380,17 +380,8 @@ class L10nKeyResolver {
       'mcp.revoke' => _l10n.mcpRevoke,
       'mcp.server.name.label' => _l10n.mcpServerNameLabel,
       'mcp.title' => _l10n.mcpTitle,
-      'monitor.agent.activity' => _l10n.monitorAgentActivity,
-      'monitor.cost.label' => _l10n.monitorCostLabel,
-      'monitor.fetching.telemetry' => _l10n.monitorFetchingTelemetry,
-      'monitor.key.metrics' => _l10n.monitorKeyMetrics,
-      'monitor.messages.label' => _l10n.monitorMessagesLabel,
-      'monitor.no.data' => _l10n.monitorNoData,
-      'monitor.system.health' => _l10n.monitorSystemHealth,
       'monitor.telemetry.unavailable' => _l10n.monitorTelemetryUnavailable,
       'monitor.title' => _l10n.monitorTitle,
-      'monitor.token.usage' => _l10n.monitorTokenUsage,
-      'monitor.tokens.label' => _l10n.monitorTokensLabel,
       'nav.chats' => _l10n.navChats,
       'nav.configure' => _l10n.navConfigure,
       'nav.monitor' => _l10n.navMonitor,
@@ -414,14 +405,9 @@ class L10nKeyResolver {
       'notification.settings.screen.title' => _l10n.notificationSettingsScreenTitle,
       'notification.settings.task.complete.label' => _l10n.notificationSettingsTaskCompleteLabel,
       'notification.settings.task.error.label' => _l10n.notificationSettingsTaskErrorLabel,
-      'observability.backend' => _l10n.observabilityBackend,
-      'observability.cost' => _l10n.observabilityCost,
       'observability.log.terminal' => _l10n.observabilityLogTerminal,
-      'observability.msgs' => _l10n.observabilityMsgs,
       'observability.registry' => _l10n.observabilityRegistry,
       'observability.select.container' => _l10n.observabilitySelectContainer,
-      'observability.title' => _l10n.observabilityTitle,
-      'observability.tokens' => _l10n.observabilityTokens,
       'onboarding.access.denied' => _l10n.onboardingAccessDenied,
       'onboarding.account.login' => _l10n.onboardingAccountLogin,
       'onboarding.authenticating' => _l10n.onboardingAuthenticating,
@@ -1330,17 +1316,8 @@ class L10nKeyResolver {
     'mcp.server.name.label',
     'mcp.title',
     'mcp.update.config.dialog.title',
-    'monitor.agent.activity',
-    'monitor.cost.label',
-    'monitor.fetching.telemetry',
-    'monitor.key.metrics',
-    'monitor.messages.label',
-    'monitor.no.data',
-    'monitor.system.health',
     'monitor.telemetry.unavailable',
     'monitor.title',
-    'monitor.token.usage',
-    'monitor.tokens.label',
     'nav.chats',
     'nav.configure',
     'nav.monitor',
@@ -1365,14 +1342,9 @@ class L10nKeyResolver {
     'notification.settings.task.complete.label',
     'notification.settings.task.error.label',
     'notification.signal.received',
-    'observability.backend',
-    'observability.cost',
     'observability.log.terminal',
-    'observability.msgs',
     'observability.registry',
     'observability.select.container',
-    'observability.title',
-    'observability.tokens',
     'onboarding.access.denied',
     'onboarding.account.login',
     'onboarding.authenticating',
@@ -2238,17 +2210,8 @@ class L10nKeyResolver {
     'mcpServerNameLabel': 'mcp.server.name.label',
     'mcpTitle': 'mcp.title',
     'mcpUpdateConfigDialogTitle': 'mcp.update.config.dialog.title',
-    'monitorAgentActivity': 'monitor.agent.activity',
-    'monitorCostLabel': 'monitor.cost.label',
-    'monitorFetchingTelemetry': 'monitor.fetching.telemetry',
-    'monitorKeyMetrics': 'monitor.key.metrics',
-    'monitorMessagesLabel': 'monitor.messages.label',
-    'monitorNoData': 'monitor.no.data',
-    'monitorSystemHealth': 'monitor.system.health',
     'monitorTelemetryUnavailable': 'monitor.telemetry.unavailable',
     'monitorTitle': 'monitor.title',
-    'monitorTokenUsage': 'monitor.token.usage',
-    'monitorTokensLabel': 'monitor.tokens.label',
     'navChats': 'nav.chats',
     'navConfigure': 'nav.configure',
     'navMonitor': 'nav.monitor',
@@ -2273,14 +2236,9 @@ class L10nKeyResolver {
     'notificationSettingsTaskCompleteLabel': 'notification.settings.task.complete.label',
     'notificationSettingsTaskErrorLabel': 'notification.settings.task.error.label',
     'notificationSignalReceived': 'notification.signal.received',
-    'observabilityBackend': 'observability.backend',
-    'observabilityCost': 'observability.cost',
     'observabilityLogTerminal': 'observability.log.terminal',
-    'observabilityMsgs': 'observability.msgs',
     'observabilityRegistry': 'observability.registry',
     'observabilitySelectContainer': 'observability.select.container',
-    'observabilityTitle': 'observability.title',
-    'observabilityTokens': 'observability.tokens',
     'onboardingAccessDenied': 'onboarding.access.denied',
     'onboardingAccountLogin': 'onboarding.account.login',
     'onboardingAuthenticating': 'onboarding.authenticating',
@@ -3143,17 +3101,8 @@ class L10nKeyResolver {
     'mcp.server.name.label': 'mcpServerNameLabel',
     'mcp.title': 'mcpTitle',
     'mcp.update.config.dialog.title': 'mcpUpdateConfigDialogTitle',
-    'monitor.agent.activity': 'monitorAgentActivity',
-    'monitor.cost.label': 'monitorCostLabel',
-    'monitor.fetching.telemetry': 'monitorFetchingTelemetry',
-    'monitor.key.metrics': 'monitorKeyMetrics',
-    'monitor.messages.label': 'monitorMessagesLabel',
-    'monitor.no.data': 'monitorNoData',
-    'monitor.system.health': 'monitorSystemHealth',
     'monitor.telemetry.unavailable': 'monitorTelemetryUnavailable',
     'monitor.title': 'monitorTitle',
-    'monitor.token.usage': 'monitorTokenUsage',
-    'monitor.tokens.label': 'monitorTokensLabel',
     'nav.chats': 'navChats',
     'nav.configure': 'navConfigure',
     'nav.monitor': 'navMonitor',
@@ -3178,14 +3127,9 @@ class L10nKeyResolver {
     'notification.settings.task.complete.label': 'notificationSettingsTaskCompleteLabel',
     'notification.settings.task.error.label': 'notificationSettingsTaskErrorLabel',
     'notification.signal.received': 'notificationSignalReceived',
-    'observability.backend': 'observabilityBackend',
-    'observability.cost': 'observabilityCost',
     'observability.log.terminal': 'observabilityLogTerminal',
-    'observability.msgs': 'observabilityMsgs',
     'observability.registry': 'observabilityRegistry',
     'observability.select.container': 'observabilitySelectContainer',
-    'observability.title': 'observabilityTitle',
-    'observability.tokens': 'observabilityTokens',
     'onboarding.access.denied': 'onboardingAccessDenied',
     'onboarding.account.login': 'onboardingAccountLogin',
     'onboarding.authenticating': 'onboardingAuthenticating',
@@ -4055,17 +3999,8 @@ abstract class L10nKeys {
   static const mcpServerNameLabel = 'mcp.server.name.label';
   static const mcpTitle = 'mcp.title';
   static (String, Map<String, dynamic>) mcpUpdateConfigDialogTitle(String name) => ('mcp.update.config.dialog.title', {'name': name});
-  static const monitorAgentActivity = 'monitor.agent.activity';
-  static const monitorCostLabel = 'monitor.cost.label';
-  static const monitorFetchingTelemetry = 'monitor.fetching.telemetry';
-  static const monitorKeyMetrics = 'monitor.key.metrics';
-  static const monitorMessagesLabel = 'monitor.messages.label';
-  static const monitorNoData = 'monitor.no.data';
-  static const monitorSystemHealth = 'monitor.system.health';
   static const monitorTelemetryUnavailable = 'monitor.telemetry.unavailable';
   static const monitorTitle = 'monitor.title';
-  static const monitorTokenUsage = 'monitor.token.usage';
-  static const monitorTokensLabel = 'monitor.tokens.label';
   static const navChats = 'nav.chats';
   static const navConfigure = 'nav.configure';
   static const navMonitor = 'nav.monitor';
@@ -4090,14 +4025,9 @@ abstract class L10nKeys {
   static const notificationSettingsTaskCompleteLabel = 'notification.settings.task.complete.label';
   static const notificationSettingsTaskErrorLabel = 'notification.settings.task.error.label';
   static (String, Map<String, dynamic>) notificationSignalReceived(String title) => ('notification.signal.received', {'title': title});
-  static const observabilityBackend = 'observability.backend';
-  static const observabilityCost = 'observability.cost';
   static const observabilityLogTerminal = 'observability.log.terminal';
-  static const observabilityMsgs = 'observability.msgs';
   static const observabilityRegistry = 'observability.registry';
   static const observabilitySelectContainer = 'observability.select.container';
-  static const observabilityTitle = 'observability.title';
-  static const observabilityTokens = 'observability.tokens';
   static const onboardingAccessDenied = 'onboarding.access.denied';
   static const onboardingAccountLogin = 'onboarding.account.login';
   static const onboardingAuthenticating = 'onboarding.authenticating';

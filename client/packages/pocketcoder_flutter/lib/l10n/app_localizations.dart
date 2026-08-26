@@ -2164,65 +2164,11 @@ abstract class AppLocalizations {
   /// **'MONITOR'**
   String get monitorTitle;
 
-  /// No description provided for @monitorFetchingTelemetry.
-  ///
-  /// In en, this message translates to:
-  /// **'FETCHING TELEMETRY'**
-  String get monitorFetchingTelemetry;
-
-  /// No description provided for @monitorSystemHealth.
-  ///
-  /// In en, this message translates to:
-  /// **'SYSTEM HEALTH'**
-  String get monitorSystemHealth;
-
-  /// No description provided for @monitorKeyMetrics.
-  ///
-  /// In en, this message translates to:
-  /// **'KEY METRICS'**
-  String get monitorKeyMetrics;
-
-  /// No description provided for @monitorTokenUsage.
-  ///
-  /// In en, this message translates to:
-  /// **'TOKEN USAGE BY MODEL'**
-  String get monitorTokenUsage;
-
-  /// No description provided for @monitorAgentActivity.
-  ///
-  /// In en, this message translates to:
-  /// **'AGENT ACTIVITY'**
-  String get monitorAgentActivity;
-
   /// No description provided for @monitorTelemetryUnavailable.
   ///
   /// In en, this message translates to:
   /// **'TELEMETRY UNAVAILABLE'**
   String get monitorTelemetryUnavailable;
-
-  /// No description provided for @monitorNoData.
-  ///
-  /// In en, this message translates to:
-  /// **'NO DATA — TAP REFRESH'**
-  String get monitorNoData;
-
-  /// No description provided for @monitorMessagesLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'MESSAGES'**
-  String get monitorMessagesLabel;
-
-  /// No description provided for @monitorCostLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'COST'**
-  String get monitorCostLabel;
-
-  /// No description provided for @monitorTokensLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'TOKENS'**
-  String get monitorTokensLabel;
 
   /// No description provided for @fileTitle.
   ///
@@ -2284,12 +2230,6 @@ abstract class AppLocalizations {
   /// **'NO DIAGNOSTICS AVAILABLE'**
   String get systemChecksEmpty;
 
-  /// No description provided for @observabilityTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'PLATFORM OBSERVABILITY'**
-  String get observabilityTitle;
-
   /// No description provided for @observabilityRegistry.
   ///
   /// In en, this message translates to:
@@ -2301,30 +2241,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SYSTEM LOG TERMINAL'**
   String get observabilityLogTerminal;
-
-  /// No description provided for @observabilityCost.
-  ///
-  /// In en, this message translates to:
-  /// **'COST'**
-  String get observabilityCost;
-
-  /// No description provided for @observabilityTokens.
-  ///
-  /// In en, this message translates to:
-  /// **'TOKENS'**
-  String get observabilityTokens;
-
-  /// No description provided for @observabilityMsgs.
-  ///
-  /// In en, this message translates to:
-  /// **'MSGS'**
-  String get observabilityMsgs;
-
-  /// No description provided for @observabilityBackend.
-  ///
-  /// In en, this message translates to:
-  /// **'BACKEND'**
-  String get observabilityBackend;
 
   /// No description provided for @observabilitySelectContainer.
   ///
