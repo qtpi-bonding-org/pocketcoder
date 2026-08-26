@@ -15,6 +15,7 @@ import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 @module
 abstract class ExternalModule {
   final _authHttpState = AuthHttpState();
+  AuthStoreConfig? _authStoreConfig;
   CaddyCaPinningHttpClient? _caddyCaPinningHttpClient;
   CaddyCaPinStore? _caddyCaPinStore;
 
@@ -52,8 +53,8 @@ abstract class ExternalModule {
     }
 
     // Create secure auth store (reuses storage from above)
-    final authStoreConfig = AuthStoreConfig(storage);
-    final authStore = authStoreConfig.createAuthStore();
+    final authStoreConfig = _authStoreConfig ??= AuthStoreConfig(storage);
+    final authStore = await authStoreConfig.createAuthStore();
     _authHttpState.configureDeployment(
       baseUrl,
       tokenProvider: () => authStore.token,
@@ -117,7 +118,7 @@ abstract class ExternalModule {
 
   @singleton
   AuthStoreConfig get authStoreConfig {
-    return AuthStoreConfig(const FlutterSecureStorage());
+    return _authStoreConfig ??= AuthStoreConfig(const FlutterSecureStorage());
   }
 
   @singleton
