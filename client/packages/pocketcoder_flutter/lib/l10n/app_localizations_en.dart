@@ -2873,7 +2873,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentResetComplete => 'Local deployment state cleared.';
 
   @override
-  String get deploymentDisconnectAction => 'DISCONNECT THIS INSTANCE';
+  String get deploymentDisconnectAction => 'DISCONNECT';
 
   @override
   String get deploymentDisconnectConfirmationTitle =>

@@ -1163,7 +1163,7 @@
   "@deploymentResetCancel": { "description": "Cancel button label on the reset dialog" },
   "deploymentResetComplete": "Local deployment state cleared.",
   "@deploymentResetComplete": { "description": "Snack/banner shown after a successful reset" },
-  "deploymentDisconnectAction": "DISCONNECT THIS INSTANCE",
+  "deploymentDisconnectAction": "DISCONNECT",
   "@deploymentDisconnectAction": { "description": "Label for manually disconnecting the current managed instance" },
   "deploymentDisconnectConfirmationTitle": "Disconnect this instance?",
   "@deploymentDisconnectConfirmationTitle": { "description": "Title of the disconnect confirmation dialog" },

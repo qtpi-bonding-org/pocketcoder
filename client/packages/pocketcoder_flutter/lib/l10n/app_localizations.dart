@@ -5204,7 +5204,7 @@ abstract class AppLocalizations {
   /// Label for manually disconnecting the current managed instance
   ///
   /// In en, this message translates to:
-  /// **'DISCONNECT THIS INSTANCE'**
+  /// **'DISCONNECT'**
   String get deploymentDisconnectAction;
 
   /// Title of the disconnect confirmation dialog
