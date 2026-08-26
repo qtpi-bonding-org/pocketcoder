@@ -4822,6 +4822,18 @@ abstract class AppLocalizations {
   /// **'CHALLENGE TARGET COPIED'**
   String get harnessAuthChallengeTargetCopied;
 
+  /// No description provided for @harnessAuthCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'[COPY]'**
+  String get harnessAuthCopy;
+
+  /// No description provided for @harnessAuthChallengeDetailsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'CODE COPIED'**
+  String get harnessAuthChallengeDetailsCopied;
+
   /// No description provided for @harnessAuthLoading.
   ///
   /// In en, this message translates to:

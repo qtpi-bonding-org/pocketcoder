@@ -376,7 +376,25 @@ class HarnessChallengePanel extends StatelessWidget {
         ],
         if (challenge.details case final details? when details.isNotEmpty) ...[
           VSpace.x1,
-          TerminalText(context.l10n.harnessAuthDetails(details), alpha: .7)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TerminalText(
+                    context.l10n.harnessAuthDetails(details), alpha: .7),
+              ),
+              HSpace.x1,
+              GestureDetector(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: details));
+                  VimToast.show(
+                      context, context.l10n.harnessAuthChallengeDetailsCopied);
+                },
+                child: TerminalText(context.l10n.harnessAuthCopy,
+                    color: Theme.of(context).colorScheme.primary),
+              ),
+            ],
+          ),
         ],
       ]));
 }

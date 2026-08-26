@@ -2655,6 +2655,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get harnessAuthChallengeTargetCopied => 'CHALLENGE TARGET COPIED';
 
   @override
+  String get harnessAuthCopy => '[COPY]';
+
+  @override
+  String get harnessAuthChallengeDetailsCopied => 'CODE COPIED';
+
+  @override
   String get harnessAuthLoading => 'Loading harnesses';
 
   @override

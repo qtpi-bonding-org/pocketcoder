@@ -1070,6 +1070,8 @@
   "errorsCopied": "DIAGNOSTIC REPORT COPIED",
   "errorsClearAll": "CLEAR ALL",
   "harnessAuthChallengeTargetCopied": "CHALLENGE TARGET COPIED",
+  "harnessAuthCopy": "[COPY]",
+  "harnessAuthChallengeDetailsCopied": "CODE COPIED",
   "harnessAuthLoading": "Loading harnesses",
   "harnessAuthConnections": "Harness connections",
   "harnessAuthUnavailable": "Claude Code and Codex are not available on this server.",
