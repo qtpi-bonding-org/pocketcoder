@@ -131,6 +131,7 @@ func (r rawResponse) VisitGetHarnessAuthStatusResponse(w http.ResponseWriter) er
 }
 func (r rawResponse) VisitSubmitHarnessAuthResponse(w http.ResponseWriter) error   { return r.write(w) }
 func (r rawResponse) VisitStreamContainerLogsResponse(w http.ResponseWriter) error { return r.write(w) }
+func (r rawResponse) VisitListContainersResponse(w http.ResponseWriter) error      { return r.write(w) }
 func (r rawResponse) VisitStoreMcpOAuthTokenResponse(w http.ResponseWriter) error  { return r.write(w) }
 func (r rawResponse) VisitExecuteMcpRequestResponse(w http.ResponseWriter) error   { return r.write(w) }
 func (r rawResponse) VisitListOllamaModelsResponse(w http.ResponseWriter) error    { return r.write(w) }
@@ -193,6 +194,9 @@ func (s *server) SubmitHarnessAuth(ctx context.Context, _ openapi.SubmitHarnessA
 }
 func (s *server) StreamContainerLogs(ctx context.Context, _ openapi.StreamContainerLogsRequestObject) (openapi.StreamContainerLogsResponseObject, error) {
 	return s.dispatch(ctx, "streamContainerLogs", nil)
+}
+func (s *server) ListContainers(ctx context.Context, _ openapi.ListContainersRequestObject) (openapi.ListContainersResponseObject, error) {
+	return s.dispatch(ctx, "listContainers", nil)
 }
 func (s *server) StoreMcpOAuthToken(ctx context.Context, _ openapi.StoreMcpOAuthTokenRequestObject) (openapi.StoreMcpOAuthTokenResponseObject, error) {
 	return s.dispatch(ctx, "storeMcpOAuthToken", nil)

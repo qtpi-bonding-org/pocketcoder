@@ -163,7 +163,7 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 		"setChatConfigOption", "setChatMode", "streamChatEvents", "getWorkspaceFile",
 		"listWorkspaceFiles", "cancelHarnessAuth", "disconnectHarnessAuth", "pollHarnessAuth",
 		"startHarnessAuth", "getHarnessAuthStatus", "submitHarnessAuth", "streamContainerLogs",
-		"storeMcpOAuthToken", "executeMcpRequest", "listOllamaModels", "pullOllamaModel",
+		"listContainers", "storeMcpOAuthToken", "executeMcpRequest", "listOllamaModels", "pullOllamaModel",
 		"proxyObservability", "sendPushNotification", "endLiveActivity", "getReleaseCompatibility", "getReleaseStatus",
 		"runScheduleNow",
 	} {
@@ -229,6 +229,8 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 	call("SubmitHarnessAuth", err)
 	_, err = s.StreamContainerLogs(newCtx(), openapi.StreamContainerLogsRequestObject{})
 	call("StreamContainerLogs", err)
+	_, err = s.ListContainers(newCtx(), openapi.ListContainersRequestObject{})
+	call("ListContainers", err)
 	_, err = s.StoreMcpOAuthToken(newCtx(), openapi.StoreMcpOAuthTokenRequestObject{})
 	call("StoreMcpOAuthToken", err)
 	_, err = s.ExecuteMcpRequest(newCtx(), openapi.ExecuteMcpRequestRequestObject{})
@@ -267,6 +269,7 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 		"getHarnessAuthStatus":    {},
 		"submitHarnessAuth":       {},
 		"streamContainerLogs":     {},
+		"listContainers":          {},
 		"storeMcpOAuthToken":      {},
 		"executeMcpRequest":       {},
 		"listOllamaModels":        {},
