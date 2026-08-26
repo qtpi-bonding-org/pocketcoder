@@ -69,7 +69,10 @@ func restartContainer(containerName string, timeout time.Duration) error {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
+		body, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			log.Printf("❌ [Docker] Failed to read error response body: %v", readErr)
+		}
 		return fmt.Errorf("Docker API returned error %s: %s", resp.Status, string(body))
 	}
 

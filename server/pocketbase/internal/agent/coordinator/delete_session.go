@@ -23,6 +23,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"sync/atomic"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
@@ -63,7 +64,11 @@ func (c *Coordinator) DeleteSession(ctx context.Context, app core.App, chatID st
 				if harness.GetString("cli_id") != "opencode" && !harness.GetBool("supports_session_delete") {
 					supportsDelete = true
 				}
+			} else {
+				log.Printf("[Coordinator] look up harness %q: %v", inst.GetString("harness"), err)
 			}
+		} else {
+			log.Printf("[Coordinator] look up harness instance %q: %v", instID, err)
 		}
 	}
 	if !supportsDelete {
@@ -75,7 +80,11 @@ func (c *Coordinator) DeleteSession(ctx context.Context, app core.App, chatID st
 	if err != nil {
 		return fmt.Errorf("dial agent for session delete: %w", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Printf("[Coordinator] close agent connection: %v", err)
+		}
+	}()
 	if _, err := conn.Initialize(ctx, initializeRequest()); err != nil {
 		return fmt.Errorf("initialize agent for session delete: %w", err)
 	}

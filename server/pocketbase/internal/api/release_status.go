@@ -4,6 +4,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -84,6 +85,7 @@ func AddReleaseStatusOperations(registry *operation.Registry) {
 		var pointer releasePointerResponse
 		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil &&
 			!errors.Is(err, os.ErrNotExist) {
+			log.Printf("[ReleaseStatus] read release state failed: %v", err)
 			return pocketCoderError(re, 500, "release state unavailable")
 		}
 		var metadataStatus map[string]any

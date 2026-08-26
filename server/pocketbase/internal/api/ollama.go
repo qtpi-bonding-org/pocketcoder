@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -65,6 +66,7 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 		}
 		models, err := ollama.FetchTags(re.Request.Context(), client, config.BaseURL)
 		if err != nil {
+			log.Printf("[Ollama] fetch tags failed: %v", err)
 			return re.JSON(http.StatusOK, map[string]any{
 				"models":  []ollama.Model{},
 				"enabled": false,
@@ -82,21 +84,28 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 			return pocketCoderError(re, http.StatusBadRequest, "model must be a valid Ollama model name")
 		}
 		if err := ollama.EnsureRuntime(re.Request.Context(), docker, client, config, nil, runtimeMu); err != nil {
+			log.Printf("[Ollama] ensure runtime failed: %v", err)
 			return pocketCoderError(re, http.StatusServiceUnavailable, err.Error())
 		}
-		payload, _ := json.Marshal(map[string]string{"model": input.Model})
+		payload, err := json.Marshal(map[string]string{"model": input.Model})
+		if err != nil {
+			log.Printf("[Ollama] marshal pull request payload failed: %v", err)
+		}
 		request, err := http.NewRequestWithContext(re.Request.Context(), http.MethodPost, config.BaseURL+"/api/pull", bytes.NewReader(payload))
 		if err != nil {
+			log.Printf("[Ollama] create pull request failed: %v", err)
 			return pocketCoderError(re, http.StatusInternalServerError, "create Ollama pull request")
 		}
 		request.Header.Set("Content-Type", "application/json")
 		response, err := streamClient.Do(request)
 		if err != nil {
+			log.Printf("[Ollama] pull request failed: %v", err)
 			return pocketCoderError(re, http.StatusBadGateway, "Ollama is unavailable")
 		}
 		defer response.Body.Close()
 		if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 			body, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
+			log.Printf("[Ollama] pull request returned status %d: %q", response.StatusCode, strings.TrimSpace(string(body)))
 			return pocketCoderError(re, http.StatusBadGateway, strings.TrimSpace(string(body)))
 		}
 
@@ -108,12 +117,17 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 		for scanner.Scan() {
 			line := scanner.Bytes()
 			if _, err := re.Response.Write(append(line, '\n')); err != nil {
+				log.Printf("[Ollama] ollama pull stream write failed (client likely disconnected): %v", err)
 				return nil
 			}
 			if flusher, ok := re.Response.(http.Flusher); ok {
 				flusher.Flush()
 			}
 		}
-		return scanner.Err()
+		if err := scanner.Err(); err != nil {
+			log.Printf("[Ollama] ollama pull stream scan failed: %v", err)
+			return err
+		}
+		return nil
 	}})
 }

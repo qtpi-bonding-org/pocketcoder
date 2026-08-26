@@ -23,6 +23,7 @@ package agui
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
@@ -167,6 +168,8 @@ func (b *Bridge) startTool(tc *acpsdk.SessionUpdateToolCall) []events.Event {
 	if tc.RawInput != nil {
 		if in, err := json.Marshal(tc.RawInput); err == nil {
 			result = append(result, events.NewToolCallArgsEvent(id, string(in)))
+		} else {
+			log.Printf("[AGUI] marshal tool call input %q: %v", id, err)
 		}
 	}
 	kind := string(tc.Kind)
@@ -195,6 +198,8 @@ func (b *Bridge) updateTool(u *acpsdk.SessionToolCallUpdate) []events.Event {
 	if u.RawInput != nil {
 		if in, err := json.Marshal(u.RawInput); err == nil {
 			result = append(result, events.NewToolCallArgsEvent(id, string(in)))
+		} else {
+			log.Printf("[AGUI] marshal tool call update input %q: %v", id, err)
 		}
 	}
 	if len(u.Content) > 0 {

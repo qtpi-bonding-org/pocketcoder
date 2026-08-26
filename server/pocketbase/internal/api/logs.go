@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -136,6 +137,7 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 			if errors.Is(err, errLogsUnavailable) {
 				return re.NotFoundError("Logs unavailable", nil)
 			}
+			log.Printf("[Logs] stream logs failed: %v", err)
 			return re.InternalServerError("Failed to connect to docker proxy", err)
 		}
 		defer body.Close()
@@ -155,6 +157,9 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 			_, payload, err := dockerapi.DecodeLogFrame(reader)
 			if err != nil {
 				// Connection closed, truncated, or malformed upstream frame.
+				if !errors.Is(err, io.EOF) {
+					log.Printf("[Logs] decode log frame failed: %v", err)
+				}
 				break
 			}
 

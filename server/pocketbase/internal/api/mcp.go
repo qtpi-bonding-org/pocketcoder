@@ -21,6 +21,7 @@ package api
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -48,6 +49,7 @@ func AddMcpOperations(app core.App, registry *operation.Registry, deps McpDeps) 
 		}
 		result, err := mcpserver.RequestServer(re.Request.Context(), app, resolveImage, req)
 		if err != nil {
+			log.Printf("[MCP] request server failed: %v", err)
 			var rse *mcpserver.RequestServerError
 			if errors.As(err, &rse) {
 				switch rse.Kind {

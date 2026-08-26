@@ -262,6 +262,7 @@ func isNotificationTypeEnabled(app core.App, userID, notifType string) bool {
 	switch v := rulesRaw.(type) {
 	case string:
 		if err := json.Unmarshal([]byte(v), &rules); err != nil {
+			log.Printf("⚠️ [Push] Failed to parse notification rules: %v", err)
 			return true
 		}
 	case map[string]any:
