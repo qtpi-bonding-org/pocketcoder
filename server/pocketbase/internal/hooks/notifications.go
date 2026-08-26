@@ -48,15 +48,25 @@ func SendLiveActivityUpdate(token string, state LiveActivityContentState, versio
 		"event": event, "stale_date": time.Now().Add(time.Hour).Unix(),
 	}
 	body, err := json.Marshal(payload)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Content-Type", "application/json")
-	if secret := os.Getenv("PN_RELAY_SECRET"); secret != "" { req.Header.Set("X-Relay-Secret", secret) }
+	if secret := os.Getenv("PN_RELAY_SECRET"); secret != "" {
+		req.Header.Set("X-Relay-Secret", secret)
+	}
 	resp, err := (&http.Client{}).Do(req)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 { return fmt.Errorf("live activity relay: %s", resp.Status) }
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("live activity relay: %s", resp.Status)
+	}
 	return nil
 }
 
@@ -191,6 +201,16 @@ func AddPushOperations(app core.App, registry *operation.Registry) {
 		}
 
 		go func() {
+			// This response has already been sent by the time this runs, so
+			// a panic here (e.g. the app tearing down mid-flight, which a
+			// test reproduced as a nil-pointer panic inside PocketBase's own
+			// query path) would otherwise escape unrecovered and crash the
+			// whole process instead of just failing to notify.
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("[Push] dispatch panic: %v", r)
+				}
+			}()
 			if err := SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID); err != nil {
 				log.Printf("[Push] dispatch: %v", err)
 			}

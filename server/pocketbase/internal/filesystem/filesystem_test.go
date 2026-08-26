@@ -314,6 +314,91 @@ func TestFilesListEndpoint_ReturnsImmediateChildren(t *testing.T) {
 	scenario.Test(t)
 }
 
+func TestFilesReadEndpoint_ReturnsFileContent(t *testing.T) {
+	dir := t.TempDir()
+	withTestWorkspaceRoot(t, dir)
+	if err := os.WriteFile(filepath.Join(dir, "hello.txt"), []byte("hello workspace"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	headers := map[string]string{}
+	scenario := tests.ApiScenario{
+		Name:            "files read returns the requested file's content",
+		Method:          http.MethodGet,
+		URL:             "/api/pocketcoder/v1/files?path=hello.txt",
+		Headers:         headers,
+		ExpectedStatus:  200,
+		ExpectedContent: []string{"hello workspace"},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			mountFileOperations(e)
+			user := newFilesTestUser(t, app, "files-read@example.com")
+			token, err := user.NewAuthToken()
+			if err != nil {
+				t.Fatal(err)
+			}
+			headers["Authorization"] = token
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestFilesReadEndpoint_SetsContentTypeByExtension(t *testing.T) {
+	dir := t.TempDir()
+	withTestWorkspaceRoot(t, dir)
+	if err := os.WriteFile(filepath.Join(dir, "notes.txt"), []byte("plain text notes"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	headers := map[string]string{}
+	scenario := tests.ApiScenario{
+		Name:            "files read sets Content-Type based on the file extension",
+		Method:          http.MethodGet,
+		URL:             "/api/pocketcoder/v1/files?path=notes.txt",
+		Headers:         headers,
+		ExpectedStatus:  200,
+		ExpectedContent: []string{"plain text notes"},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			mountFileOperations(e)
+			user := newFilesTestUser(t, app, "files-read-content-type@example.com")
+			token, err := user.NewAuthToken()
+			if err != nil {
+				t.Fatal(err)
+			}
+			headers["Authorization"] = token
+		},
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+			if got := res.Header.Get("Content-Type"); got != "text/plain" {
+				t.Fatalf("Content-Type = %q, want %q", got, "text/plain")
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestFilesReadEndpoint_ReturnsNotFoundForMissingFile(t *testing.T) {
+	withTestWorkspaceRoot(t, t.TempDir())
+
+	headers := map[string]string{}
+	scenario := tests.ApiScenario{
+		Name:            "files read 404s for a file that does not exist",
+		Method:          http.MethodGet,
+		URL:             "/api/pocketcoder/v1/files?path=does-not-exist.txt",
+		Headers:         headers,
+		ExpectedStatus:  404,
+		ExpectedContent: []string{"File not found"},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			mountFileOperations(e)
+			user := newFilesTestUser(t, app, "files-read-missing@example.com")
+			token, err := user.NewAuthToken()
+			if err != nil {
+				t.Fatal(err)
+			}
+			headers["Authorization"] = token
+		},
+	}
+	scenario.Test(t)
+}
+
 func TestFilesListEndpoint_RejectsSymlinkEscape(t *testing.T) {
 	root := t.TempDir()
 	outside := t.TempDir()
