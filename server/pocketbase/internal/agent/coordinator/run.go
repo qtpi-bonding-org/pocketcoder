@@ -934,11 +934,13 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 
 	sessionID, err := resolve(runCtx)
 	if err != nil {
+		log.Printf("coordinator: session mapping failed for chat %s run %s: %v", chatID, runID, err)
 		hub.Publish(events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
 		return
 	}
 	profile, err := profileFn(runCtx)
 	if err != nil {
+		log.Printf("coordinator: profile resolution failed for chat %s run %s: %v", chatID, runID, err)
 		hub.Publish(events.NewRunErrorEvent("profile resolution", events.WithErrorCode("goose_unavailable")))
 		return
 	}
@@ -954,6 +956,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 
 	conn, sessionID, modes, configOptions, _, wasNew, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
 	if err != nil {
+		log.Printf("coordinator: establishSession failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
 		hub.Publish(providerRunError(profile.Provider, "session init", err))
 		return
 	}
@@ -967,6 +970,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 			if _, dErr := conn.UnstableDeleteSession(runCtx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)}); dErr != nil {
 				log.Printf("coordinator: orphan session delete failed: %v", dErr)
 			}
+			log.Printf("coordinator: created() failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
 			hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 			return
 		}
@@ -977,6 +981,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 	applier := selectApplier(profile)
 	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
+		log.Printf("coordinator: applier.Apply failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
 		hub.Publish(providerRunError(profile.Provider, "session init", err))
 		return
 	}
@@ -1008,6 +1013,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		case isConnDone(conn):
 			code = "connection_interrupted"
 		}
+		log.Printf("coordinator: conn.Prompt failed for chat %s run %s (provider %s, code %s): %v", chatID, runID, profile.Provider, code, err)
 		hub.Publish(events.NewRunErrorEvent(message, events.WithErrorCode(code)))
 		return
 	}
