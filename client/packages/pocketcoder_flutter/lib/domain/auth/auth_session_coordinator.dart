@@ -9,19 +9,74 @@ enum AuthSessionState {
   temporarilyUnavailable,
 }
 
+/// The session identity, including the deployment that owns its token.
+class AuthSessionSnapshot {
+  const AuthSessionSnapshot({
+    required this.state,
+    required this.userId,
+    required this.baseUrl,
+  });
+
+  final AuthSessionState state;
+  final String? userId;
+  final String? baseUrl;
+}
+
 /// Owns silent session restoration and its failure policy.
-///
-/// Temporary transport failures preserve the local session. Only the auth
-/// repository can classify a server response as a definitively invalid session.
 class AuthSessionCoordinator {
   AuthSessionCoordinator(
     this._authRepository, {
     this.refreshTimeout = const Duration(seconds: 8),
-  });
+  }) {
+    // Subscribe before taking the initial snapshot. This prevents a change
+    // between subscription and the first replay from being missed.
+    _authRepository.authChanges.listen((_) {
+      _publish(_snapshotFor(
+        _authRepository.isAuthenticated
+            ? AuthSessionState.signedIn
+            : AuthSessionState.signedOut,
+      ));
+    });
+    _latestSnapshot = _snapshotFor(
+      _authRepository.isAuthenticated
+          ? AuthSessionState.signedIn
+          : AuthSessionState.signedOut,
+    );
+  }
 
   final IAuthRepository _authRepository;
   final Duration refreshTimeout;
   Future<AuthRefreshResult>? _refreshInFlight;
+  late AuthSessionSnapshot _latestSnapshot;
+  final StreamController<AuthSessionSnapshot> _liveChanges =
+      StreamController<AuthSessionSnapshot>.broadcast();
+
+  /// A broadcast stream replaying the latest snapshot to each listener.
+  Stream<AuthSessionSnapshot> get sessionChanges => Stream.multi(
+        (multi) {
+          // Attach first, then replay. A synchronous source change cannot fall
+          // through the gap between these operations.
+          final subscription = _liveChanges.stream.listen(multi.add);
+          scheduleMicrotask(() => multi.add(_latestSnapshot));
+          multi.onCancel = subscription.cancel;
+        },
+        isBroadcast: true,
+      );
+
+  AuthSessionSnapshot _snapshotFor(AuthSessionState state) {
+    return AuthSessionSnapshot(
+      state: state,
+      userId: state == AuthSessionState.signedOut
+          ? null
+          : _authRepository.currentUserId,
+      baseUrl: _authRepository.currentBaseUrl,
+    );
+  }
+
+  void _publish(AuthSessionSnapshot snapshot) {
+    _latestSnapshot = snapshot;
+    _liveChanges.add(snapshot);
+  }
 
   /// Shares one refresh operation across simultaneous 401 responses.
   Future<AuthRefreshResult> refresh() {
@@ -40,17 +95,19 @@ class AuthSessionCoordinator {
 
   Future<AuthSessionState> restore() async {
     if (!_authRepository.isAuthenticated) {
+      _publish(_snapshotFor(AuthSessionState.signedOut));
       return AuthSessionState.signedOut;
     }
 
     final result = await refresh();
-
-    return switch (result) {
+    final state = switch (result) {
       AuthRefreshResult.refreshed => AuthSessionState.signedIn,
       AuthRefreshResult.temporarilyUnavailable =>
         AuthSessionState.temporarilyUnavailable,
       AuthRefreshResult.invalidSession => AuthSessionState.signedOut,
     };
+    _publish(_snapshotFor(state));
+    return state;
   }
 
   Future<AuthRefreshResult> _refreshWithTimeout() {

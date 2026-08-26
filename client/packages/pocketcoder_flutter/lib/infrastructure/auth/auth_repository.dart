@@ -44,6 +44,9 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
+  Stream<void> get authChanges => _pocketBase.authStore.onChange.map((_) {});
+
+  @override
   Future<bool> login(String email, String password) async {
     return tryMethod(
       () async {
@@ -159,6 +162,9 @@ class AuthRepository implements IAuthRepository {
   @override
   String? get currentUserRole =>
       _pocketBase.authStore.record?.getStringValue('role');
+
+  @override
+  String? get currentBaseUrl => _pocketBase.baseURL;
 
   @override
   Future<void> updateBaseUrl(String url) async {

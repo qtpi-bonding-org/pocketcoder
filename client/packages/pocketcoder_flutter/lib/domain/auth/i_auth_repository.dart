@@ -1,6 +1,9 @@
 abstract class IAuthRepository {
   Stream<bool> get connectionStatus;
 
+  /// Notifications from the underlying auth store.
+  Stream<void> get authChanges;
+
   Future<bool> login(String email, String password);
   Future<void> logout();
   Future<AuthRefreshResult> refreshToken();
@@ -13,6 +16,7 @@ abstract class IAuthRepository {
   String? get currentUserId;
   String? get currentUserEmail;
   String? get currentUserRole;
+  String? get currentBaseUrl;
 
   /// Sets the active base URL for subsequent calls (e.g.
   /// verifyServerCompatibility/login), in memory only -- not persisted.
