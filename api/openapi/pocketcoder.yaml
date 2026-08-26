@@ -180,9 +180,9 @@ paths:
     get:
       operationId: proxyObservability
       tags: [observability]
-      x-pocketcoder-roles: [admin]
       x-pocketcoder-transport: opaque-proxy
       x-pocketcoder-router-path: /api/pocketcoder/v1/proxy/observability/{path...}
+      description: Authenticated users may access exactly `memory.sql`, the read-only memory dashboard. Every other SQLPage sub-path under this wildcard is restricted to administrators.
       security: [{pocketbaseToken: []}]
       parameters: [{name: path, in: path, required: true, schema: {type: string}}]
       responses: {'200': {description: Opaque SQLPage response, content: {'*/*': {}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '403': {$ref: '#/components/responses/Forbidden'} }

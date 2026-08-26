@@ -120,7 +120,7 @@ func TestObservabilityProxyUsesInjectedTransport(t *testing.T) {
 	}
 }
 
-func TestMemoryDashboardIsAvailableToAuthenticatedUser(t *testing.T) {
+func TestAuthorizationBoundaryMemoryDashboardIsAvailableToAuthenticatedUser(t *testing.T) {
 	var gotPath string
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
@@ -159,6 +159,43 @@ func TestMemoryDashboardIsAvailableToAuthenticatedUser(t *testing.T) {
 	mux.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK || gotPath != "/memory.sql" {
 		t.Fatalf("status=%d path=%q", rec.Code, gotPath)
+	}
+}
+
+func TestAuthorizationBoundaryMemoryDashboardCarveoutRejectsSiblingSQLPage(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	user := testUser(t, app, "proxy-memory-sibling-"+randomSuffix()+"@example.com")
+	token, err := user.NewAuthToken()
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := operation.NewRegistry()
+	AddProxyOperations(reg, ProxyDeps{TargetURL: backend.URL})
+	router, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := &core.ServeEvent{App: app, Router: router}
+	operation.MountForTests(e, reg.Routes())
+	req := httptest.NewRequest(http.MethodGet, "/api/pocketcoder/v1/proxy/observability/other.sql", nil)
+	req.Header.Set("Authorization", token)
+	mux, err := e.Router.BuildMux()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("sibling SQLPage path status=%d, want 403", rec.Code)
 	}
 }
 
