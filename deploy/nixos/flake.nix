@@ -14,16 +14,15 @@
   outputs = { self, nixpkgs }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
-    sourceCommit = import ./release-commit.nix;
     releaseManager = import ./release-manager.nix { inherit pkgs; };
   in {
     nixosConfigurations.pocketcoder = nixpkgs.lib.nixosSystem {
       inherit system;
       # configuration.nix imports caddy.nix and bootstrap.nix itself (with
-      # sourceCommit/releaseManager computed the same way as below), so a
-      # live on-box `nixos-rebuild switch --upgrade` -- no --flake, no
-      # specialArgs -- resolves the identical module set. Listing them here
-      # too would double-import them.
+      # releaseManager computed the same way as below), so a live on-box
+      # `nixos-rebuild switch --upgrade` -- no --flake, no specialArgs --
+      # resolves the identical module set. Listing them here too would
+      # double-import them.
       modules = [
         ./configuration.nix
       ];

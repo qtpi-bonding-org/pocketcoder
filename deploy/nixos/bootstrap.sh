@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${POCKETCODER_REF:?NixOS image release reference is required}"
 RELEASES_DIR=/opt/pocketcoder/releases
 RELEASE_STATE=/var/lib/pocketcoder/release
 ARTIFACT_DIR=/var/lib/pocketcoder/artifacts
 RUNTIME_ENV=/var/lib/pocketcoder/config/runtime.env
 MARKER="$RELEASE_STATE/.initialized"
-export PC_SOURCE_COMMIT="$POCKETCODER_REF"
 
 if [ -f "$MARKER" ]; then
   echo "PocketCoder already initialized, skipping bootstrap"

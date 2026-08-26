@@ -12,7 +12,6 @@ pkgs.testers.runNixOSTest {
     # not apply a module function's own `?` default for an argument it
     # doesn't otherwise recognize, so every such argument must be supplied
     # explicitly here.
-    _module.args.sourceCommit = "main";
     _module.args.releaseBranch = "main";
     _module.args.releaseManager = self.packages.${system}.release-manager;
     _module.args.caddyTemplate = ../../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;

@@ -41,7 +41,6 @@ let
   caddyModule = persisted "caddy.nix" ./caddy.nix;
   bootstrapModule = persisted "bootstrap.nix" ./bootstrap.nix;
   releaseManagerModule = persisted "release-manager.nix" ./release-manager.nix;
-  releaseCommitModule = persisted "release-commit.nix" ./release-commit.nix;
   releaseBranchModule = persisted "release-branch.nix" ./release-branch.nix;
   nixosVersionModule = persisted "nixos-version.nix" ./nixos-version.nix;
   bootstrapScript = persisted "bootstrap.sh" ./bootstrap.sh;
@@ -52,7 +51,6 @@ let
   tlsStatusScript = persisted "tls-status.sh" ../scripts/tls-status.sh;
   releaseManagerSrc = persisted "release-manager-src" ../release-manager;
 
-  sourceCommit = import releaseCommitModule;
   releaseBranch = import releaseBranchModule;
   releaseManager = import releaseManagerModule { inherit pkgs releaseManagerSrc; };
 
@@ -64,7 +62,7 @@ in
     "${modulesPath}/profiles/qemu-guest.nix"
     (import caddyModule { inherit config pkgs caddyTemplate tlsStatusScript; })
     (import bootstrapModule {
-      inherit config pkgs sourceCommit releaseBranch releaseManager bootstrapScript statusScript
+      inherit config pkgs releaseBranch releaseManager bootstrapScript statusScript
         pcRetryScript;
     })
   ];
@@ -81,7 +79,6 @@ in
   environment.etc."nixos/caddy.nix".source = caddyModule;
   environment.etc."nixos/bootstrap.nix".source = bootstrapModule;
   environment.etc."nixos/release-manager.nix".source = releaseManagerModule;
-  environment.etc."nixos/release-commit.nix".source = releaseCommitModule;
   environment.etc."nixos/release-branch.nix".source = releaseBranchModule;
   environment.etc."nixos/nixos-version.nix".source = nixosVersionModule;
   environment.etc."nixos/bootstrap.sh".source = bootstrapScript;

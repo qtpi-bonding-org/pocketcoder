@@ -1,4 +1,4 @@
-{ config, pkgs, sourceCommit ? "main", releaseBranch ? "main", releaseManager
+{ config, pkgs, releaseBranch ? "main", releaseManager
 , bootstrapScript ? ./bootstrap.sh, statusScript ? ./status.sh
 , pcRetryScript ? ./pc_retry.sh, ... }:
 
@@ -10,7 +10,6 @@
     before = [ "sshd.service" "sshd-keygen@ed25519.service" ];
     wants = [ "network-online.target" ];
     requires = [ "docker.service" ];
-    environment.POCKETCODER_REF = sourceCommit;
     environment.POCKETCODER_GITHUB_WORKFLOW_BRANCH = releaseBranch;
     # Any `nixos-rebuild switch` (not just first boot) restarts this unit,
     # since its unit definition is rebuilt every time. Without a guard it
