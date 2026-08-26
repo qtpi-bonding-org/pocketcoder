@@ -417,6 +417,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -564,15 +566,34 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/pocketcoder/v1/containers:
+    get:
+      operationId: listContainers
+      tags:
+        - logs
+      x-pocketcoder-roles:
+        - admin
+      security:
+        - pocketbaseToken: []
+      responses:
+        '200':
+          description: This deployment's containers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/pocketcoder/v1/proxy/observability/{path}:
     get:
       operationId: proxyObservability
       tags:
         - observability
-      x-pocketcoder-roles:
-        - admin
       x-pocketcoder-transport: opaque-proxy
       x-pocketcoder-router-path: /api/pocketcoder/v1/proxy/observability/{path...}
+      description: Authenticated users may access exactly `memory.sql`, the read-only memory dashboard. Every other SQLPage sub-path under this wildcard is restricted to administrators.
       security:
         - pocketbaseToken: []
       parameters:
@@ -874,6 +895,30 @@ components:
           type: integer
           format: int64
         modTime:
+          type: string
+    ContainerListResponse:
+      type: object
+      required:
+        - containers
+      additionalProperties: false
+      properties:
+        containers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerSummary'
+    ContainerSummary:
+      type: object
+      required:
+        - name
+        - state
+        - status
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        state:
+          type: string
+        status:
           type: string
     OllamaProgress:
       type: object

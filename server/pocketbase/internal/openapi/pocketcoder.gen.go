@@ -50,6 +50,18 @@ type ConfigOptionRequest struct {
 	Value    string `json:"value"`
 }
 
+// ContainerListResponse defines model for ContainerListResponse.
+type ContainerListResponse struct {
+	Containers []ContainerSummary `json:"containers"`
+}
+
+// ContainerSummary defines model for ContainerSummary.
+type ContainerSummary struct {
+	Name   string `json:"name"`
+	State  string `json:"state"`
+	Status string `json:"status"`
+}
+
 // ContentBlock defines model for ContentBlock.
 type ContentBlock struct {
 	Text                 *string                `json:"text,omitempty"`
@@ -340,6 +352,9 @@ type ServerInterface interface {
 
 	// (GET /api/pocketcoder/v1/compatibility)
 	GetReleaseCompatibility(w http.ResponseWriter, r *http.Request)
+
+	// (GET /api/pocketcoder/v1/containers)
+	ListContainers(w http.ResponseWriter, r *http.Request)
 
 	// (GET /api/pocketcoder/v1/files)
 	GetWorkspaceFile(w http.ResponseWriter, r *http.Request, params GetWorkspaceFileParams)
@@ -668,6 +683,26 @@ func (siw *ServerInterfaceWrapper) GetReleaseCompatibility(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetReleaseCompatibility(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListContainers operation middleware
+func (siw *ServerInterfaceWrapper) ListContainers(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListContainers(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1251,6 +1286,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/session/set-mode", wrapper.SetChatMode)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/stream", wrapper.StreamChatEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/compatibility", wrapper.GetReleaseCompatibility)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/containers", wrapper.ListContainers)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files", wrapper.GetWorkspaceFile)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files-list", wrapper.ListWorkspaceFiles)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/cancel", wrapper.CancelHarnessAuth)
@@ -1917,6 +1953,55 @@ func (response GetReleaseCompatibility500JSONResponse) VisitGetReleaseCompatibil
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContainersRequestObject struct {
+}
+
+type ListContainersResponseObject interface {
+	VisitListContainersResponse(w http.ResponseWriter) error
+}
+
+type ListContainers200JSONResponse ContainerListResponse
+
+func (response ListContainers200JSONResponse) VisitListContainersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContainers401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListContainers401JSONResponse) VisitListContainersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContainers403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListContainers403JSONResponse) VisitListContainersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -2879,6 +2964,20 @@ func (response ListOllamaModels401JSONResponse) VisitListOllamaModelsResponse(w 
 	return err
 }
 
+type ListOllamaModels403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListOllamaModels403JSONResponse) VisitListOllamaModelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListOllamaModels404JSONResponse struct{ NotFoundJSONResponse }
 
 func (response ListOllamaModels404JSONResponse) VisitListOllamaModelsResponse(w http.ResponseWriter) error {
@@ -3325,6 +3424,9 @@ type StrictServerInterface interface {
 	// (GET /api/pocketcoder/v1/compatibility)
 	GetReleaseCompatibility(ctx context.Context, request GetReleaseCompatibilityRequestObject) (GetReleaseCompatibilityResponseObject, error)
 
+	// (GET /api/pocketcoder/v1/containers)
+	ListContainers(ctx context.Context, request ListContainersRequestObject) (ListContainersResponseObject, error)
+
 	// (GET /api/pocketcoder/v1/files)
 	GetWorkspaceFile(ctx context.Context, request GetWorkspaceFileRequestObject) (GetWorkspaceFileResponseObject, error)
 
@@ -3646,6 +3748,30 @@ func (sh *strictHandler) GetReleaseCompatibility(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetReleaseCompatibilityResponseObject); ok {
 		if err := validResponse.VisitGetReleaseCompatibilityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListContainers operation middleware
+func (sh *strictHandler) ListContainers(w http.ResponseWriter, r *http.Request) {
+	var request ListContainersRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListContainers(ctx, request.(ListContainersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListContainers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListContainersResponseObject); ok {
+		if err := validResponse.VisitListContainersResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

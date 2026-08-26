@@ -16,6 +16,8 @@ import 'package:pocketcoder_api/src/model/date.dart';
 
 import 'package:pocketcoder_api/src/model/accepted_response.dart';
 import 'package:pocketcoder_api/src/model/config_option_request.dart';
+import 'package:pocketcoder_api/src/model/container_list_response.dart';
+import 'package:pocketcoder_api/src/model/container_summary.dart';
 import 'package:pocketcoder_api/src/model/content_block.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
 import 'package:pocketcoder_api/src/model/file_entry.dart';
@@ -30,6 +32,8 @@ part 'serializers.g.dart';
 @SerializersFor([
   AcceptedResponse,
   ConfigOptionRequest,
+  ContainerListResponse,
+  ContainerSummary,
   ContentBlock,
   ErrorResponse,
   FileEntry,
@@ -43,6 +47,10 @@ Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(FileEntry)]),
         () => ListBuilder<FileEntry>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(ContainerSummary)]),
+        () => ListBuilder<ContainerSummary>(),
       )
       ..addBuilderFactory(
         const FullType(BuiltMap, [FullType(String), FullType.nullable(JsonObject)]),

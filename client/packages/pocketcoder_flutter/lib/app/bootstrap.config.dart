@@ -255,8 +255,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.releaseChannel,
       instanceName: 'releaseChannel',
     );
-    gh.lazySingleton<_i611.IObservabilityRepository>(
-        () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i623.IHealthcheckRepository>(
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
@@ -322,13 +320,16 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i398.ToolPermissionDao>(
         () => _i398.ToolPermissionDao(gh<_i169.PocketBase>()));
-    gh.factory<_i273.ObservabilityCubit>(
-        () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
     gh.lazySingleton<_i935.PocketCoderApiClient>(
         () => externalModule.pocketCoderApiClient(
               gh<_i824.PocketBase>(),
               gh<_i7.CaddyCaPinningHttpClient>(),
             ));
+    gh.lazySingleton<_i810.OllamaApi>(() => _i810.OllamaApi(
+          gh<_i169.PocketBase>(),
+          gh<_i519.Client>(),
+          gh<_i935.PocketCoderApiClient>(),
+        ));
     gh.lazySingleton<_i148.IDeviceRepository>(() => _i301.DeviceRepository(
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
@@ -360,12 +361,12 @@ extension GetItInjectableX on _i174.GetIt {
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),
             ));
+    gh.lazySingleton<_i300.AgentActionsApi>(
+        () => _i300.AgentActionsApi(gh<_i935.PocketCoderApiClient>()));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
           httpClient: gh<_i519.Client>(),
         ));
-    gh.lazySingleton<_i300.AgentActionsApi>(
-        () => _i300.AgentActionsApi(gh<_i935.PocketCoderApiClient>()));
     gh.lazySingleton<_i209.IFilesRepository>(
         () => _i369.FilesRepository(gh<_i935.PocketCoderApiClient>()));
     gh.lazySingleton<_i630.IAgentConfigRepository>(
@@ -379,6 +380,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i190.IStatusRepository>(
         () => _i907.StatusRepository(gh<_i824.PocketBase>()));
+    gh.lazySingleton<_i611.IObservabilityRepository>(
+        () => _i310.ObservabilityRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
           gh<_i294.HarnesseDao>(),
           gh<_i294.ModelDao>(),
@@ -427,13 +430,10 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i935.PocketCoderApiClient>(),
               gh<_i479.ScheduleOwnerDao>(),
             ));
-    gh.lazySingleton<_i810.OllamaApi>(() => _i810.OllamaApi(
-          gh<_i169.PocketBase>(),
-          gh<_i519.Client>(),
-          gh<_i935.PocketCoderApiClient>(),
-        ));
     gh.lazySingleton<_i165.ISkillsRepository>(
         () => _i675.SkillsRepository(gh<_i9.SkillDao>()));
+    gh.factory<_i273.ObservabilityCubit>(
+        () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
     gh.factory<_i67.SkillsCubit>(() => _i67.SkillsCubit(
           gh<_i165.ISkillsRepository>(),
           gh<_i630.IAgentConfigRepository>(),

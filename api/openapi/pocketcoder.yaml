@@ -176,6 +176,13 @@ paths:
       security: [{pocketbaseToken: []}]
       parameters: [{ $ref: '#/components/parameters/ContainerName' }]
       responses: {'200': {description: Incremental container log events, content: {text/event-stream: {schema: {$ref: '#/components/schemas/LogEvent'}}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/v1/containers:
+    get:
+      operationId: listContainers
+      tags: [logs]
+      x-pocketcoder-roles: [admin]
+      security: [{pocketbaseToken: []}]
+      responses: {'200': {description: This deployment's containers, content: {application/json: {schema: {$ref: '#/components/schemas/ContainerListResponse'}}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '403': {$ref: '#/components/responses/Forbidden'} }
   /api/pocketcoder/v1/proxy/observability/{path}:
     get:
       operationId: proxyObservability
@@ -237,6 +244,8 @@ components:
     PushRequest: {type: object, additionalProperties: true}
     FileListResponse: {type: object, required: [path, entries], additionalProperties: false, properties: {path: {type: string}, entries: {type: array, items: {$ref: '#/components/schemas/FileEntry'}}}}
     FileEntry: {type: object, required: [name, isDir, size, modTime], additionalProperties: false, properties: {name: {type: string}, isDir: {type: boolean}, size: {type: integer, format: int64}, modTime: {type: string}}}
+    ContainerListResponse: {type: object, required: [containers], additionalProperties: false, properties: {containers: {type: array, items: {$ref: '#/components/schemas/ContainerSummary'}}}}
+    ContainerSummary: {type: object, required: [name, state, status], additionalProperties: false, properties: {name: {type: string}, state: {type: string}, status: {type: string}}}
     OllamaProgress: {type: object, additionalProperties: true}
     AgentEvent: {type: object, additionalProperties: true}
     LogEvent: {type: object, additionalProperties: true}

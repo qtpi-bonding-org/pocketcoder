@@ -90,6 +90,7 @@ var testsByEndpoint = []struct {
 	{"storeMcpOAuthToken", http.MethodPost, "/api/pocketcoder/v1/mcp/oauth/store", `{"server_name":"test-server","access_token":"test-token"}`},
 	{"getReleaseStatus", http.MethodGet, "/api/pocketcoder/v1/release/status", ""},
 	{"streamContainerLogs", http.MethodGet, "/api/pocketcoder/v1/logs/pocketcoder-pocketbase", ""},
+	{"listContainers", http.MethodGet, "/api/pocketcoder/v1/containers", ""},
 	{"proxyObservability", http.MethodGet, "/api/pocketcoder/v1/proxy/observability/", ""},
 	{"sendPushNotification", http.MethodPost, "/api/pocketcoder/v1/push", `{"user_id":"test-user","type":"test"}`},
 	{"endLiveActivity", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/end", ""},

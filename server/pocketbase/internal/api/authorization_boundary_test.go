@@ -57,6 +57,7 @@ var authorizationBoundaryTable = []authorizationBoundaryCase{
 	{operationID: "getReleaseCompatibility", public: true},
 	{operationID: "getReleaseStatus"},
 	{operationID: "streamContainerLogs", adminOnly: true},
+	{operationID: "listContainers", adminOnly: true},
 	// proxyObservability has a narrow authenticated-user carve-out for
 	// memory.sql; its exact-path boundary is covered separately.
 	{operationID: "proxyObservability", skipRoleGateCheck: true},

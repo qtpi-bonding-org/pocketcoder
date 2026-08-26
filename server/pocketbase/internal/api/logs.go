@@ -42,6 +42,20 @@ type dockerLogSource interface {
 	StreamLogs(ctx context.Context, containerName string) (io.ReadCloser, error)
 }
 
+// containerLister lists this deployment's containers -- separate interface
+// from dockerLogSource so tests can fake list and stream independently.
+type containerLister interface {
+	ListContainers(ctx context.Context) ([]dockerapi.ContainerSummary, error)
+}
+
+// dockerProxyContainerLister is the production containerLister, backed by
+// the internal docker-socket-proxy.
+type dockerProxyContainerLister struct{}
+
+func (dockerProxyContainerLister) ListContainers(ctx context.Context) ([]dockerapi.ContainerSummary, error) {
+	return dockerapi.New().ListContainers(ctx)
+}
+
 // errLogsUnavailable indicates the upstream Docker proxy responded, but not
 // with a usable log stream (e.g. unknown container) -- distinct from a
 // connection failure to the proxy itself.
@@ -61,6 +75,7 @@ func (dockerProxyLogSource) StreamLogs(ctx context.Context, containerName string
 
 type LogsDeps struct {
 	Source dockerLogSource // nil -> dockerProxyLogSource{}
+	Lister containerLister // nil -> dockerProxyContainerLister{}
 }
 
 func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
@@ -68,6 +83,35 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 	if source == nil {
 		source = dockerProxyLogSource{}
 	}
+	lister := deps.Lister
+	if lister == nil {
+		lister = dockerProxyContainerLister{}
+	}
+
+	// 📦 List Containers
+	// Discoverability for the observability UI's container registry -- no
+	// more hardcoding which 4 containers exist client-side.
+	registry.Add(operation.Route{OperationID: "listContainers", Method: http.MethodGet, Path: "/api/pocketcoder/v1/containers", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
+		if err := requireRole(re, "admin"); err != nil {
+			return err
+		}
+		summaries, err := lister.ListContainers(re.Request.Context())
+		if err != nil {
+			return re.InternalServerError("Failed to list containers", err)
+		}
+		containers := make([]map[string]any, 0, len(summaries))
+		for _, s := range summaries {
+			if len(s.Names) == 0 {
+				continue
+			}
+			containers = append(containers, map[string]any{
+				"name":   strings.TrimPrefix(s.Names[0], "/"),
+				"state":  s.State,
+				"status": s.Status,
+			})
+		}
+		return re.JSON(http.StatusOK, map[string]any{"containers": containers})
+	}})
 
 	// 📜 Stream Container Logs (SSE)
 	// This endpoint replaces Dozzle by providing a native SSE stream that the Flutter
