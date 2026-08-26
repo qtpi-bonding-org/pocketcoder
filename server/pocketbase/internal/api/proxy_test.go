@@ -62,8 +62,14 @@ func TestObservabilityProxyForwardsPathHeadersAndQuery(t *testing.T) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	if gotPath != "/some/path" || gotQuery != "x=1&y=two" {
-		t.Fatalf("backend path/query = %q?%s", gotPath, gotQuery)
+	// The prefix must reach the backend intact -- SQLPage's own site_prefix
+	// config expects to see it in the request path and handles routing
+	// internally; stripping it here (as this proxy used to) causes SQLPage
+	// to 308-redirect back to the prefixed path, which loops forever
+	// through this same proxy. See the comment in createProxyHandler.
+	wantPath := "/api/pocketcoder/v1/proxy/observability/some/path"
+	if gotPath != wantPath || gotQuery != "x=1&y=two" {
+		t.Fatalf("backend path/query = %q?%s, want %q", gotPath, gotQuery, wantPath)
 	}
 	if gotHost != "public.example" || gotPrefix != "/api/pocketcoder/v1/proxy/observability" {
 		t.Fatalf("forwarded headers host=%q prefix=%q", gotHost, gotPrefix)
@@ -157,8 +163,9 @@ func TestAuthorizationBoundaryMemoryDashboardIsAvailableToAuthenticatedUser(t *t
 	}
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || gotPath != "/memory.sql" {
-		t.Fatalf("status=%d path=%q", rec.Code, gotPath)
+	wantPath := "/api/pocketcoder/v1/proxy/observability/memory.sql"
+	if rec.Code != http.StatusOK || gotPath != wantPath {
+		t.Fatalf("status=%d path=%q, want %q", rec.Code, gotPath, wantPath)
 	}
 }
 

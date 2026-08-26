@@ -282,8 +282,19 @@ services:
     container_name: pocketcoder-docker-proxy-write
     environment:
       # Enable container operations for PocketBase restart capability
-      - CONTAINERS=1          # Allow container operations (list, inspect, restart)
-      - POST=1                # Allow POST requests (for restart)
+      - CONTAINERS=1          # Allow container operations (list, inspect)
+      - POST=1                # Allow POST requests generally (e.g. container create)
+      # CONTAINERS=1 + POST=1 alone do NOT cover container lifecycle actions --
+      # this proxy (Tecnativa/docker-socket-proxy) gates those behind their
+      # own dedicated variables, independent of the general POST switch.
+      # Confirmed live: harness provisioning's Create() succeeded (201) but
+      # every subsequent Start() 404'd, because ALLOW_START was never set --
+      # every harness container got stuck permanently at "Created" and never
+      # actually ran. restartContainer() (hooks/docker.go) has the same gap
+      # via ALLOW_RESTARTS -- the "for PocketBase restart capability" comment
+      # above was true only in intent, not in what was actually enabled.
+      - ALLOW_START=1         # Required for container start (harness provisioning)
+      - ALLOW_RESTARTS=1      # Required for container restart (existing restart capability)
       - EVENTS=1              # Allow streaming events (for Dozzle)
       - INFO=1                # Required for Dozzle to detect Docker version
       - IMAGES=1              # Allow image operations (for harness provisioning)

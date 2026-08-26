@@ -98,14 +98,21 @@ func createProxyHandler(target string, prefix string, transport http.RoundTrippe
 		req.Header.Set("X-Forwarded-Prefix", prefix)
 		req.Host = targetUrl.Host
 
-		// Strip prefix from the path so the target service sees its own root
-		path := req.URL.Path
-		if strings.HasPrefix(path, prefix) {
-			req.URL.Path = strings.TrimPrefix(path, prefix)
-			if req.URL.Path == "" {
-				req.URL.Path = "/"
-			}
-		}
+		// Deliberately NOT stripping prefix from the path here. SQLPage's own
+		// site_prefix config (SQLPAGE_SITE_PREFIX) expects to see this prefix
+		// still present in the request path -- it strips/routes internally
+		// itself, and any request that arrives WITHOUT its configured prefix
+		// gets a 308 redirect TO that prefix (its own "you're missing my
+		// mount point" recovery). Confirmed live: stripping here caused an
+		// infinite redirect loop -- our proxy stripped the prefix before
+		// forwarding, SQLPage saw an unprefixed path and 308-redirected back
+		// to the (correctly-configured, matching) prefixed path, which
+		// re-entered this same proxy, which stripped the prefix again, ad
+		// infinitum, until the client's own HTTP stack gave up with
+		// "Redirect loop detected". See sql-page.com's own nginx reverse-
+		// proxy guide: the documented pattern is `proxy_pass` with the
+		// prefixed path left completely intact, matched by
+		// `"site_prefix": "<same prefix>"` in sqlpage.json.
 
 		// Perform the proxying
 		proxy.ServeHTTP(re.Response, req)
