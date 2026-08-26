@@ -25,14 +25,15 @@ class AuthRetryInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final request = err.requestOptions;
+    final refresh = _refresh;
     if (err.response?.statusCode != 401 ||
         request.extra[retryMarker] == true ||
-        _refresh == null) {
+        refresh == null) {
       handler.next(err);
       return;
     }
 
-    final refreshResult = await _refresh!();
+    final refreshResult = await refresh();
     if (refreshResult != AuthRefreshResult.refreshed || !canReplay(request)) {
       handler.next(err);
       return;

@@ -54,6 +54,6 @@ void main() {
     await repository.updateBaseUrl('https://real-deployment.example');
 
     expect(authHttpState.deploymentOrigin, isNotNull);
-    expect(authHttpState.deploymentOrigin!.host, 'real-deployment.example');
+    expect(authHttpState.deploymentOrigin?.host, 'real-deployment.example');
   });
 }
