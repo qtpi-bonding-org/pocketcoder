@@ -2873,6 +2873,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentResetComplete => 'Local deployment state cleared.';
 
   @override
+  String get deploymentDisconnectAction => 'DISCONNECT THIS INSTANCE';
+
+  @override
+  String get deploymentDisconnectConfirmationTitle =>
+      'Disconnect this instance?';
+
+  @override
+  String get deploymentDisconnectConfirmationBody =>
+      'This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.';
+
+  @override
+  String get deploymentDisconnectConfirm => 'DISCONNECT';
+
+  @override
+  String get deploymentDisconnectCancel => 'CANCEL';
+
+  @override
   String get deploymentDiscardAttemptTitle => 'DISCARD THIS DEPLOYMENT RECORD?';
 
   @override

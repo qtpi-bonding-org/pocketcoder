@@ -5201,6 +5201,36 @@ abstract class AppLocalizations {
   /// **'Local deployment state cleared.'**
   String get deploymentResetComplete;
 
+  /// Label for manually disconnecting the current managed instance
+  ///
+  /// In en, this message translates to:
+  /// **'DISCONNECT THIS INSTANCE'**
+  String get deploymentDisconnectAction;
+
+  /// Title of the disconnect confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect this instance?'**
+  String get deploymentDisconnectConfirmationTitle;
+
+  /// Body of the disconnect confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.'**
+  String get deploymentDisconnectConfirmationBody;
+
+  /// Confirm button label on the disconnect dialog
+  ///
+  /// In en, this message translates to:
+  /// **'DISCONNECT'**
+  String get deploymentDisconnectConfirm;
+
+  /// Cancel button label on the disconnect dialog
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get deploymentDisconnectCancel;
+
   /// Title of the confirmation dialog for discarding a stuck local deployment record
   ///
   /// In en, this message translates to:
