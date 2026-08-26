@@ -21,21 +21,32 @@ class ObservabilityCubit extends AppCubit<ObservabilityState> {
 
   Future<void> refreshStats() async {
     await tryOperation(() async {
-      final stats = await _repository.fetchSystemStats();
-      return state.copyWith(
-        stats: stats,
-        status: UiFlowStatus.success,
-      );
+      try {
+        final stats = await _repository.fetchSystemStats();
+        return state.copyWith(
+          stats: stats,
+          status: UiFlowStatus.success,
+        );
+      } catch (e, stackTrace) {
+        logError('📈 [ObservabilityCubit] refreshStats failed', e, stackTrace);
+        rethrow;
+      }
     });
   }
 
   Future<void> loadContainers() async {
     await tryOperation(() async {
-      final containers = await _repository.listContainers();
-      return state.copyWith(
-        containers: containers,
-        status: UiFlowStatus.success,
-      );
+      try {
+        final containers = await _repository.listContainers();
+        return state.copyWith(
+          containers: containers,
+          status: UiFlowStatus.success,
+        );
+      } catch (e, stackTrace) {
+        logError(
+            '📈 [ObservabilityCubit] loadContainers failed', e, stackTrace);
+        rethrow;
+      }
     });
   }
 

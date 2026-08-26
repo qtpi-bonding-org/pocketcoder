@@ -62,10 +62,16 @@ class ObservabilityRepository implements IObservabilityRepository {
   Future<SystemStats> fetchSystemStats() async {
     return tryMethod(
       () async {
-        final response = await _pb.send(
-          StreamingEndpoints.observability,
-          method: 'GET',
-        );
+        final response = await _pb
+            .send(
+              StreamingEndpoints.observability,
+              method: 'GET',
+            )
+            .catchError((Object e, StackTrace stackTrace) {
+          logError('📈 [Observability] fetchSystemStats request failed', e,
+              stackTrace);
+          throw e;
+        });
 
         if (response is List) {
           // SQLPage might return a list of objects if multiple statements are used
@@ -96,7 +102,12 @@ class ObservabilityRepository implements IObservabilityRepository {
   Future<List<ContainerInfo>> listContainers() {
     return tryMethod(
       () async {
-        final response = await _api.logs.listContainers();
+        final response = await _api.logs.listContainers().catchError(
+            (Object e, StackTrace stackTrace) {
+          logError('📈 [Observability] listContainers request failed', e,
+              stackTrace);
+          throw e;
+        });
         final containers = response.data?.containers ??
             BuiltList<generated.ContainerSummary>();
         return containers
