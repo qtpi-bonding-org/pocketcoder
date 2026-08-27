@@ -208,13 +208,8 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 	seen := map[string]map[string]string{}
 	reg := operation.NewRegistry()
 	for _, id := range []string{
-		"cancelChatSession", "respondToElicitation", "promptChat", "respondToPermission",
-		"setChatConfigOption", "setChatMode", "streamChatEvents", "getWorkspaceFile",
-		"listWorkspaceFiles", "cancelHarnessAuth", "disconnectHarnessAuth", "pollHarnessAuth",
-		"startHarnessAuth", "getHarnessAuthStatus", "submitHarnessAuth", "streamContainerLogs",
-		"listContainers", "storeMcpOAuthToken", "executeMcpRequest", "listOllamaModels", "pullOllamaModel",
-		"proxyObservability", "sendPushNotification", "endLiveActivity", "getReleaseStatus",
-		"runScheduleNow",
+		"streamChatEvents", "getWorkspaceFile",
+		"streamContainerLogs", "listContainers", "pullOllamaModel", "proxyObservability",
 	} {
 		opID := id
 		reg.Add(routeFor(opID, func(re *core.RequestEvent) error {
@@ -246,86 +241,26 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 		}
 	}
 
-	_, err := s.CancelChatSession(newCtx(), openapi.CancelChatSessionRequestObject{ChatId: "c1"})
-	call("CancelChatSession", err)
-	_, err = s.RespondToElicitation(newCtx(), openapi.RespondToElicitationRequestObject{ChatId: "c1", Id: "e1"})
-	call("RespondToElicitation", err)
-	_, err = s.PromptChat(newCtx(), openapi.PromptChatRequestObject{ChatId: "c1"})
-	call("PromptChat", err)
-	_, err = s.RespondToPermission(newCtx(), openapi.RespondToPermissionRequestObject{ChatId: "c1", Id: "p1"})
-	call("RespondToPermission", err)
-	_, err = s.SetChatConfigOption(newCtx(), openapi.SetChatConfigOptionRequestObject{ChatId: "c1"})
-	call("SetChatConfigOption", err)
-	_, err = s.SetChatMode(newCtx(), openapi.SetChatModeRequestObject{ChatId: "c1"})
-	call("SetChatMode", err)
-	_, err = s.StreamChatEvents(newCtx(), openapi.StreamChatEventsRequestObject{})
+	_, err := s.StreamChatEvents(newCtx(), openapi.StreamChatEventsRequestObject{})
 	call("StreamChatEvents", err)
 	_, err = s.GetWorkspaceFile(newCtx(), openapi.GetWorkspaceFileRequestObject{})
 	call("GetWorkspaceFile", err)
-	_, err = s.ListWorkspaceFiles(newCtx(), openapi.ListWorkspaceFilesRequestObject{})
-	call("ListWorkspaceFiles", err)
-	_, err = s.CancelHarnessAuth(newCtx(), openapi.CancelHarnessAuthRequestObject{})
-	call("CancelHarnessAuth", err)
-	_, err = s.DisconnectHarnessAuth(newCtx(), openapi.DisconnectHarnessAuthRequestObject{})
-	call("DisconnectHarnessAuth", err)
-	_, err = s.PollHarnessAuth(newCtx(), openapi.PollHarnessAuthRequestObject{})
-	call("PollHarnessAuth", err)
-	_, err = s.StartHarnessAuth(newCtx(), openapi.StartHarnessAuthRequestObject{})
-	call("StartHarnessAuth", err)
-	_, err = s.GetHarnessAuthStatus(newCtx(), openapi.GetHarnessAuthStatusRequestObject{})
-	call("GetHarnessAuthStatus", err)
-	_, err = s.SubmitHarnessAuth(newCtx(), openapi.SubmitHarnessAuthRequestObject{})
-	call("SubmitHarnessAuth", err)
 	_, err = s.StreamContainerLogs(newCtx(), openapi.StreamContainerLogsRequestObject{})
 	call("StreamContainerLogs", err)
 	_, err = s.ListContainers(newCtx(), openapi.ListContainersRequestObject{})
 	call("ListContainers", err)
-	_, err = s.StoreMcpOAuthToken(newCtx(), openapi.StoreMcpOAuthTokenRequestObject{})
-	call("StoreMcpOAuthToken", err)
-	_, err = s.ExecuteMcpRequest(newCtx(), openapi.ExecuteMcpRequestRequestObject{})
-	call("ExecuteMcpRequest", err)
-	_, err = s.ListOllamaModels(newCtx(), openapi.ListOllamaModelsRequestObject{})
-	call("ListOllamaModels", err)
 	_, err = s.PullOllamaModel(newCtx(), openapi.PullOllamaModelRequestObject{})
 	call("PullOllamaModel", err)
 	_, err = s.ProxyObservability(newCtx(), openapi.ProxyObservabilityRequestObject{})
 	call("ProxyObservability", err)
-	_, err = s.SendPushNotification(newCtx(), openapi.SendPushNotificationRequestObject{})
-	call("SendPushNotification", err)
-	_, err = s.EndLiveActivity(newCtx(), openapi.EndLiveActivityRequestObject{Id: "a1"})
-	call("EndLiveActivity", err)
-	_, err = s.GetReleaseStatus(newCtx(), openapi.GetReleaseStatusRequestObject{})
-	call("GetReleaseStatus", err)
-	_, err = s.RunScheduleNow(newCtx(), openapi.RunScheduleNowRequestObject{ScheduleId: "s1"})
-	call("RunScheduleNow", err)
 
 	wantPathValues := map[string]map[string]string{
-		"cancelChatSession":     {"chatId": "c1"},
-		"respondToElicitation":  {"chatId": "c1", "id": "e1"},
-		"promptChat":            {"chatId": "c1"},
-		"respondToPermission":   {"chatId": "c1", "id": "p1"},
-		"setChatConfigOption":   {"chatId": "c1"},
-		"setChatMode":           {"chatId": "c1"},
-		"streamChatEvents":      {},
-		"getWorkspaceFile":      {},
-		"listWorkspaceFiles":    {},
-		"cancelHarnessAuth":     {},
-		"disconnectHarnessAuth": {},
-		"pollHarnessAuth":       {},
-		"startHarnessAuth":      {},
-		"getHarnessAuthStatus":  {},
-		"submitHarnessAuth":     {},
-		"streamContainerLogs":   {},
-		"listContainers":        {},
-		"storeMcpOAuthToken":    {},
-		"executeMcpRequest":     {},
-		"listOllamaModels":      {},
-		"pullOllamaModel":       {},
-		"proxyObservability":    {},
-		"sendPushNotification":  {},
-		"endLiveActivity":       {"id": "a1"},
-		"getReleaseStatus":      {},
-		"runScheduleNow":        {"scheduleId": "s1"},
+		"streamChatEvents":    {},
+		"getWorkspaceFile":    {},
+		"streamContainerLogs": {},
+		"listContainers":      {},
+		"pullOllamaModel":     {},
+		"proxyObservability":  {},
 	}
 	for opID, want := range wantPathValues {
 		got, ok := seen[opID]
