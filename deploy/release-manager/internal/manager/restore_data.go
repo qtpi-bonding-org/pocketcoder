@@ -3,6 +3,7 @@ package manager
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -34,7 +35,9 @@ func RestoreData(config RestoreDataConfig) error {
 	restartOnError := true
 	defer func() {
 		if restartOnError {
-			_ = config.Docker.Start(config.Container)
+			if err := config.Docker.Start(config.Container); err != nil {
+				log.Printf("[RestoreData] failed to restart container %s after restore failure: %v", config.Container, err)
+			}
 		}
 	}()
 	for _, suffix := range []string{"", "-wal", "-shm"} {
@@ -60,7 +63,11 @@ func copyIfExists(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() {
+		if err := out.Close(); err != nil {
+			log.Printf("[RestoreData] failed to close destination file %s: %v", dst, err)
+		}
+	}()
 	_, err = io.Copy(out, in)
 	return err
 }

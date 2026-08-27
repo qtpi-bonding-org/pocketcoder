@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -138,11 +139,19 @@ func (reporter *Reporter) writeLocked(errorCode string) {
 	lockPath := filepath.Join(filepath.Dir(reporter.path), ".status.lock")
 	lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o600)
 	if err == nil {
-		defer lockFile.Close()
+		defer func() {
+			if err := lockFile.Close(); err != nil {
+				log.Printf("[Progress] failed to close lock file: %v", err)
+			}
+		}()
 		err = syscall.Flock(int(lockFile.Fd()), syscall.LOCK_EX)
 	}
 	if err == nil {
-		defer syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
+		defer func() {
+			if err := syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN); err != nil {
+				log.Printf("[Progress] failed to release lock file: %v", err)
+			}
+		}()
 		value := map[string]json.RawMessage{}
 		if data, readErr := os.ReadFile(reporter.path); readErr == nil && len(data) != 0 {
 			if readErr = json.Unmarshal(data, &value); readErr != nil {

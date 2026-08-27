@@ -31,7 +31,15 @@ async function getPremiumEntitlementId(env: Env): Promise<string> {
 		{ headers: { Authorization: `Bearer ${env.REVENUECAT_SECRET_KEY}`, 'Content-Type': 'application/json' } },
 	);
 	if (!resp.ok) throw new Error(`Failed to list RevenueCat entitlements: ${resp.status}`);
-	const data = (await resp.json()) as { items?: { id: string; lookup_key: string }[] };
+	let data: { items?: { id: string; lookup_key: string }[] };
+	try {
+		data = (await resp.json()) as { items?: { id: string; lookup_key: string }[] };
+	} catch (e) {
+		// Deliberately not logging the parse error's message: it may embed a
+		// snippet of the raw response body.
+		console.error(`RevenueCat entitlements response was not valid JSON (HTTP ${resp.status})`);
+		throw e;
+	}
 	const entitlement = (data.items || []).find((e) => e.lookup_key === PREMIUM_LOOKUP_KEY);
 	if (!entitlement) throw new Error(`No RevenueCat entitlement with lookup_key "${PREMIUM_LOOKUP_KEY}"`);
 	entitlementIdCache = { id: entitlement.id, expiry: Date.now() + 3_600_000 };
@@ -77,10 +85,16 @@ async function isRevoked(jti: string, env: Env): Promise<boolean> {
 	const cache = (caches as unknown as { default: Cache }).default;
 	const cached = await cache.match(cacheKey);
 	if (cached) return ((await cached.json()) as { revoked: boolean }).revoked;
-	const resp = await fetch(
-		`${env.SUPABASE_URL}/rest/v1/image_relay_revocations?jti=eq.${encodeURIComponent(jti)}&select=jti`,
-		{ headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` } },
-	);
+	let resp: Response;
+	try {
+		resp = await fetch(
+			`${env.SUPABASE_URL}/rest/v1/image_relay_revocations?jti=eq.${encodeURIComponent(jti)}&select=jti`,
+			{ headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` } },
+		);
+	} catch (e) {
+		console.error(`Revocation lookup request failed at ${env.SUPABASE_URL}/rest/v1/image_relay_revocations:`, (e as Error).message);
+		return true;
+	}
 	if (!resp.ok) {
 		console.error(`Revocation lookup failed: HTTP ${resp.status}`);
 		return true;
@@ -120,12 +134,18 @@ export async function authorizeRequest(request: Request, env: Env): Promise<
 	if (!credentialHeader || !proofHeader) return { ok: false, status: 401, error: 'Missing credential or proof' };
 	let credential;
 	try { credential = await verifyCredential(credentialHeader); }
-	catch (e) { return { ok: false, status: 401, error: `Invalid credential: ${(e as Error).message}` }; }
+	catch (e) {
+		console.error('Credential verification failed:', (e as Error).message);
+		return { ok: false, status: 401, error: `Invalid credential: ${(e as Error).message}` };
+	}
 	if (await isRevoked(credential.jti, env)) return { ok: false, status: 403, error: 'Credential revoked' };
 	const expectedUrl = `${TRUSTED_ORIGIN}${new URL(request.url).pathname}`;
 	let proof;
 	try { proof = await verifyProof(proofHeader, credential.boxJwk, request.method, expectedUrl, Math.floor(Date.now() / 1000)); }
-	catch (e) { return { ok: false, status: 401, error: `Invalid proof: ${(e as Error).message}` }; }
+	catch (e) {
+		console.error('Proof verification failed:', (e as Error).message);
+		return { ok: false, status: 401, error: `Invalid proof: ${(e as Error).message}` };
+	}
 	const boxThumbprint = await rfc7638Thumbprint(credential.boxJwk);
 	if (!(await checkAndRecordProofJti(boxThumbprint, proof.jti))) return { ok: false, status: 401, error: 'Proof jti already used (replay)' };
 	if (!(await checkSubscription(credential.iss, env))) return { ok: false, status: 403, error: 'Subscription required' };
@@ -152,7 +172,13 @@ export default {
 			const auth = await authorizeRequest(request, env);
 			if (!auth.ok) return json({ error: auth.error }, auth.status);
 			const credentialHeader = request.headers.get('Pocketcoder-Credential')!;
-			const credential = await verifyCredential(credentialHeader);
+			let credential;
+			try {
+				credential = await verifyCredential(credentialHeader);
+			} catch (e) {
+				console.error('Revocation credential verification failed:', (e as Error).message);
+				return json({ error: `Invalid credential: ${(e as Error).message}` }, 401);
+			}
 			if (!credential.isSelfIssued) return json({ error: 'Only a root credential may revoke' }, 403);
 			let body: { jti?: string };
 			try {
@@ -163,7 +189,12 @@ export default {
 			if (!body.jti || body.jti !== auth.targetJti) {
 				return json({ error: 'target_jti in proof must match jti in body' }, 400);
 			}
-			await recordRevocation(body.jti, env);
+			try {
+				await recordRevocation(body.jti, env);
+			} catch (e) {
+				console.error(`Failed to record revocation for jti ${body.jti}:`, (e as Error).message);
+				return json({ error: 'Failed to record revocation' }, 500);
+			}
 			return json({ status: 'revoked' }, 200);
 		}
 		if (url.pathname === '/health' && request.method === 'GET') {

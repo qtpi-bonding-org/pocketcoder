@@ -70,6 +70,7 @@ fn health(service: &MemoryService) -> Json<HealthResponse> {
 
 async fn require_identity(mut request: Request, next: Next) -> Response {
     if request.headers().contains_key("origin") {
+        tracing::warn!("browser-origin request rejected");
         return (
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
@@ -83,12 +84,15 @@ async fn require_identity(mut request: Request, next: Next) -> Response {
             request.extensions_mut().insert(identity);
             next.run(request).await
         }
-        Err(error) => (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: error.to_string(),
-            }),
-        )
-            .into_response(),
+        Err(error) => {
+            tracing::warn!(error = %error, "MCP identity header rejected");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    error: error.to_string(),
+                }),
+            )
+                .into_response()
+        }
     }
 }

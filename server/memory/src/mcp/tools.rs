@@ -295,16 +295,25 @@ fn identity(context: &RequestContext<RoleServer>) -> Result<AgentIdentity, McpEr
 
 fn map_error(error: MemoryError) -> McpError {
     match error {
-        MemoryError::InvalidInput(message) | MemoryError::InvalidIdentity(message) => {
+        MemoryError::InvalidInput(message) => {
+            tracing::debug!(message = %message, "invalid memory tool input");
+            McpError::invalid_params(message, None)
+        }
+        MemoryError::InvalidIdentity(message) => {
+            tracing::debug!(message = %message, "invalid memory tool identity");
             McpError::invalid_params(message, None)
         }
         MemoryError::NotFound { kind, id } => {
+            tracing::debug!(kind = %kind, id = %id, "memory tool record not found");
             McpError::invalid_params(format!("{kind} {id} was not found"), None)
         }
-        MemoryError::CrossAccountLink => McpError::invalid_params(
-            "observation and interpretation must belong to the active account",
-            None,
-        ),
+        MemoryError::CrossAccountLink => {
+            tracing::warn!("cross-account link attempt rejected");
+            McpError::invalid_params(
+                "observation and interpretation must belong to the active account",
+                None,
+            )
+        }
         internal => {
             tracing::error!(error = %internal, "memory tool failed");
             McpError::internal_error("memory service failed", None)
