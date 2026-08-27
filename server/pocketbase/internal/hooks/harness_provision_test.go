@@ -819,3 +819,99 @@ func TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace(t *testing
 		t.Errorf("expected exactly one Create call (only the winner should provision a container), got %d", fake.createCallCount)
 	}
 }
+
+// TestProvisionGooseAcceptsTheGenericAPIKeyTheClientActuallyWrites is a
+// regression test for a bug where Goose could never actually be given a
+// working API key through the app: its seeded env_template required a
+// literally-named "OPENROUTER_API_KEY" provider_keys entry, but the only
+// shape the real Flutter UI ever writes is the generic
+// envVars: {'API_KEY': value} (provider_widgets.dart's single API_KEY
+// field, same convention every other harness already uses). Rendering
+// against the literal placeholder failed outright (missingkey=error) for
+// every real key a user could actually create, which would have meant the
+// Apple review build's Goose harness could never authenticate.
+func TestProvisionGooseAcceptsTheGenericAPIKeyTheClientActuallyWrites(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "goose-generic-key-"+uuid.NewString()[:8]+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createTestProviderKey(t, app, map[string]any{
+		"provider": "goose",
+		"env_vars": map[string]any{"API_KEY": "sk-or-real-shape"},
+	}, userID)
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := rec.GetString("status"); status == "error" {
+		t.Fatalf("provisioning failed with a client-shaped API_KEY: %s", rec.GetString("last_error"))
+	}
+	// No __provider was resolved (no harness_models launchKey), so renderEnv
+	// falls back to its documented default of "anthropic" -- the key must
+	// land under ANTHROPIC_API_KEY, matching Goose's own <PROVIDER>_API_KEY
+	// convention for that provider.
+	if !containsString(fake.lastCreateSpec.Env, "ANTHROPIC_API_KEY=sk-or-real-shape") {
+		t.Errorf("env = %v, want ANTHROPIC_API_KEY=sk-or-real-shape (default provider)", fake.lastCreateSpec.Env)
+	}
+	for _, kv := range fake.lastCreateSpec.Env {
+		if strings.HasPrefix(kv, "API_KEY=") {
+			t.Errorf("env = %v, the generic API_KEY entry should not leak into the container once translated", fake.lastCreateSpec.Env)
+		}
+	}
+}
+
+// TestProvisionGooseRoutesTheAPIKeyToWhicheverProviderIsSelected verifies
+// the env var name follows GOOSE_PROVIDER, not just the anthropic default --
+// Goose supports many providers (OpenAI, Anthropic, OpenRouter, etc.), each
+// reading its key from a differently-named env var, so a single hardcoded
+// name would have been wrong for anyone not on the default provider.
+func TestProvisionGooseRoutesTheAPIKeyToWhicheverProviderIsSelected(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "goose-openai-key-"+uuid.NewString()[:8]+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	modelsColl, err := app.FindCollectionByNameOrId("models")
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := core.NewRecord(modelsColl)
+	model.Set("name", "gpt-test")
+	model.Set("provider", "openai")
+	if err := app.Save(model); err != nil {
+		t.Fatal(err)
+	}
+	hmColl, err := app.FindCollectionByNameOrId("harness_models")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hm := core.NewRecord(hmColl)
+	hm.Set("harness", harness.Id)
+	hm.Set("model", model.Id)
+	hm.Set("harness_model_id", "gpt-test")
+	if err := app.Save(hm); err != nil {
+		t.Fatal(err)
+	}
+	createTestProviderKey(t, app, map[string]any{
+		"provider": "goose",
+		"env_vars": map[string]any{"API_KEY": "sk-openai-shape"},
+	}, userID)
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, hm.Id, userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := rec.GetString("status"); status == "error" {
+		t.Fatalf("provisioning failed: %s", rec.GetString("last_error"))
+	}
+	if !containsString(fake.lastCreateSpec.Env, "OPENAI_API_KEY=sk-openai-shape") {
+		t.Errorf("env = %v, want OPENAI_API_KEY=sk-openai-shape for a model catalog row with provider=openai", fake.lastCreateSpec.Env)
+	}
+	if !containsString(fake.lastCreateSpec.Env, "GOOSE_PROVIDER=openai") {
+		t.Errorf("env = %v, want GOOSE_PROVIDER=openai", fake.lastCreateSpec.Env)
+	}
+}

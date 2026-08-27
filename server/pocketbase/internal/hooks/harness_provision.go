@@ -480,6 +480,23 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 			values[k] = v
 		}
 	}
+	// Goose picks its provider at runtime (GOOSE_PROVIDER), and each provider
+	// it supports reads its key from a differently-named env var --
+	// OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY, and so on,
+	// following <PROVIDER>_API_KEY (see Goose's own environment-variables
+	// docs). There is no single static name env_template could declare for
+	// this. Every provider_keys row the app can actually create names its
+	// value generically as "API_KEY" (provider_widgets.dart's one API_KEY
+	// field), so derive the real env var name Goose needs for whichever
+	// provider actually got resolved and inject it directly -- this is what
+	// providerScopeAny's leftover-value pass below then carries into env,
+	// without needing a template entry.
+	if provider == "goose" {
+		if key := values["API_KEY"]; key != "" {
+			values[strings.ToUpper(values["__provider"])+"_API_KEY"] = key
+		}
+		delete(values, "API_KEY")
+	}
 
 	env := make([]string, 0, len(envTemplate))
 	for name, tmplStr := range envTemplate {

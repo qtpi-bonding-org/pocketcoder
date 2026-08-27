@@ -153,7 +153,18 @@ func init() {
 				"GOOSE_SERVER__SECRET_KEY": "{{.__adapter_secret}}",
 				"GOOSE_PROVIDER":           "{{.__provider}}",
 				"GOOSE_MODEL":              "{{.__model}}",
-				"OPENROUTER_API_KEY":       "{{.OPENROUTER_API_KEY}}",
+				// No static *_API_KEY entry here: Goose's actual env var name
+				// depends on which provider is selected (GOOSE_PROVIDER=openai
+				// wants OPENAI_API_KEY, =anthropic wants ANTHROPIC_API_KEY,
+				// =openrouter wants OPENROUTER_API_KEY, etc. -- see Goose's own
+				// docs). A single hardcoded "OPENROUTER_API_KEY" placeholder
+				// here both required a literally-named provider_keys entry
+				// nothing in the app ever writes (every key the UI creates is
+				// generically named "API_KEY") and would have been wrong for
+				// any provider other than OpenRouter anyway. renderEnv derives
+				// the correct <PROVIDER>_API_KEY name for the resolved
+				// provider and injects it directly, so no template entry is
+				// needed for it at all.
 				"GOOSE_PATH_ROOT":          "/workspace/.pocketcoder_auth",
 				"GOOSE_DISABLE_KEYRING":    "1",
 				"GOOSE_TELEMETRY_ENABLED":  "false",
