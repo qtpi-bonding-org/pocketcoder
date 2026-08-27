@@ -154,7 +154,7 @@ func TestSyncUpsertsAllProvidersRegardlessOfHarnessUsage(t *testing.T) {
 	}
 }
 
-func TestSyncPopulatesModelsForSelfScopedHarnessFromItsPinnedProvider(t *testing.T) {
+func TestSyncPopulatesModelsForSelfScopedHarnessFromItsPinnedProviderEdge(t *testing.T) {
 	app := testApp(t)
 	srv := fixtureServer(t)
 	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
@@ -164,18 +164,50 @@ func TestSyncPopulatesModelsForSelfScopedHarnessFromItsPinnedProvider(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	if codex.GetString("models_dev_provider") != "openai" {
-		t.Fatalf("codex.models_dev_provider = %q, want openai (seed data)", codex.GetString("models_dev_provider"))
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edge, err := app.FindFirstRecordByFilter("harness_providers", "harness = {:h} && provider = {:p}", map[string]any{"h": codex.Id, "p": openai.Id})
+	if err != nil {
+		t.Fatalf("expected the seeded pinned edge to still exist after a sync: %v", err)
+	}
+	if !edge.GetBool("is_pinned") {
+		t.Error("sync must never clear is_pinned on an existing pinned edge")
 	}
 	hms, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": codex.Id})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(hms) != 1 {
-		t.Fatalf("got %d harness_models for codex, want 1 (only its pinned openai provider's model)", len(hms))
+	if len(hms) != 1 || hms[0].GetString("harness_model_id") != "gpt-5.2" {
+		t.Errorf("harness_models for codex = %+v, want exactly one row for gpt-5.2", hms)
 	}
-	if hms[0].GetString("harness_model_id") != "gpt-5.2" {
-		t.Errorf("harness_model_id = %q, want gpt-5.2", hms[0].GetString("harness_model_id"))
+}
+
+func TestSyncFansOutOnProviderFanoutFlagNotLegacyProviderScope(t *testing.T) {
+	app := testApp(t)
+	coll, err := app.FindCollectionByNameOrId("harnesses")
+	if err != nil {
+		t.Fatal(err)
+	}
+	future := core.NewRecord(coll)
+	future.Set("name", "Future Fanout Harness")
+	future.Set("cli_id", "future-fanout-harness")
+	future.Set("acp_transport", "stdio")
+	future.Set("provider_fanout", true)
+	if err := app.Save(future); err != nil {
+		t.Fatal(err)
+	}
+	srv := fixtureServer(t)
+	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+		t.Fatal(err)
+	}
+	hms, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": future.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hms) != 3 {
+		t.Fatalf("got %d harness_models, want 3 (every fetched provider's models)", len(hms))
 	}
 }
 
@@ -217,8 +249,8 @@ func TestSyncPopulatesModelsForAnyScopedHarnessFromEveryProvider(t *testing.T) {
 
 // TestSyncCoversAnyFutureAnyScopedHarnessNotJustGooseOrOpenCode proves the
 // sync isn't special-cased to today's two multi-provider harnesses: it
-// keys purely off harnesses.provider_scope, so a brand-new harness seeded
-// with provider_scope="any" (never mentioned anywhere in this package)
+// keys purely off harnesses.provider_fanout, so a brand-new harness seeded
+// with provider_fanout=true (never mentioned anywhere in this package)
 // gets the exact same full-catalog treatment automatically.
 func TestSyncCoversAnyFutureAnyScopedHarnessNotJustGooseOrOpenCode(t *testing.T) {
 	app := testApp(t)
@@ -230,7 +262,7 @@ func TestSyncCoversAnyFutureAnyScopedHarnessNotJustGooseOrOpenCode(t *testing.T)
 	future.Set("name", "Future Agnostic Harness")
 	future.Set("cli_id", "future-agnostic-harness")
 	future.Set("acp_transport", "stdio")
-	future.Set("provider_scope", "any")
+	future.Set("provider_fanout", true)
 	if err := app.Save(future); err != nil {
 		t.Fatal(err)
 	}
@@ -365,4 +397,3 @@ func TestSyncNeverDeletesRowsForProvidersRemovedUpstream(t *testing.T) {
 		t.Error("goose's harness_models row for reseller-model was deleted -- this would break any chat.harness_model_override still pointing at it")
 	}
 }
-

@@ -145,16 +145,15 @@ func Fetch(ctx context.Context, client *http.Client, url string) (map[string]Pro
 // collections from it:
 //   - providers: every fetched provider, so the Provider Keys screen always
 //     has an up-to-date list to build its provider dropdown from.
-//   - models + harness_models: for each harnesses row, either its one pinned
-//     models_dev_provider (provider_scope == "self", e.g. Claude Code ->
-//     "anthropic") or every fetched provider (provider_scope == "any", e.g.
+//   - models + harness_models: for each harnesses row, either its pinned
+//     harness_providers edge (provider_fanout == false) or every fetched
+//     provider (provider_fanout == true, e.g.
 //     Goose/OpenCode -- both already let a user pick from models.dev's full
 //     catalog themselves, so there is no principled place to cut it down;
 //     the resulting few thousand rows are trivial for SQLite, and the
 //     client's own picker is expected to offer search/filtering rather than
-//     PocketCoder pre-curating the list). A harness with provider_scope ==
-//     "self" and no models_dev_provider set is left untouched -- nothing to
-//     sync it from.
+//     PocketCoder pre-curating the list). A self-scoped harness with no
+//     harness_providers edge is left untouched -- nothing to sync it from.
 //
 // A single malformed upstream row is logged and skipped, not fatal to the
 // rest of the sync: models.dev is an external, community-edited registry,
@@ -185,14 +184,21 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 			return ctx.Err()
 		}
 		var providerIDs []string
-		switch h.GetString("provider_scope") {
-		case "any":
+		if h.GetBool("provider_fanout") {
 			for pid := range providers {
 				providerIDs = append(providerIDs, pid)
 			}
-		default: // "self", or unset
-			if pid := h.GetString("models_dev_provider"); pid != "" {
-				providerIDs = []string{pid}
+		} else {
+			edges, err := app.FindRecordsByFilter("harness_providers", "harness = {:h}", "", 0, 0, map[string]any{"h": h.Id})
+			if err != nil {
+				return fmt.Errorf("list harness_providers for %s: %w", h.GetString("cli_id"), err)
+			}
+			for _, edge := range edges {
+				providerRec, err := app.FindRecordById("providers", edge.GetString("provider"))
+				if err != nil {
+					continue
+				}
+				providerIDs = append(providerIDs, providerRec.GetString("provider_id"))
 			}
 		}
 		for _, pid := range providerIDs {
@@ -203,8 +209,17 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
+			providerRec, err := app.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": pid})
+			if err != nil {
+				continue
+			}
+			if h.GetBool("provider_fanout") {
+				if err := upsertHarnessProviderEdge(app, h, providerRec); err != nil {
+					log.Printf("[ModelCatalog] skipping harness_providers edge %s/%s: %v", h.GetString("cli_id"), pid, err)
+				}
+			}
 			for _, m := range p.Models {
-				modelRec, err := upsertModel(app, p, m)
+				modelRec, err := upsertModel(app, providerRec, p, m)
 				if err != nil {
 					log.Printf("[ModelCatalog] skipping model %s/%s: %v", p.ID, m.ID, err)
 					continue
@@ -300,18 +315,35 @@ func upsertProvider(app core.App, p ProviderInfo) error {
 	rec.Set("name", fields["name"])
 	rec.Set("api_key_env", fields["api_key_env"])
 	rec.Set("api_key_envs", fields["api_key_envs"])
+	rec.Set("synced_at", time.Now().UTC())
 	return app.Save(rec)
 }
 
-func upsertModel(app core.App, p ProviderInfo, m ModelInfo) (*core.Record, error) {
-	rec, err := app.FindFirstRecordByFilter("models", "provider = {:p} && name = {:n}", map[string]any{"p": p.ID, "n": m.ID})
+func upsertHarnessProviderEdge(app core.App, harness, provider *core.Record) error {
+	rec, err := app.FindFirstRecordByFilter("harness_providers", "harness = {:h} && provider = {:p}", map[string]any{"h": harness.Id, "p": provider.Id})
+	if err == nil {
+		return nil
+	}
+	coll, collErr := app.FindCollectionByNameOrId("harness_providers")
+	if collErr != nil {
+		return collErr
+	}
+	rec = core.NewRecord(coll)
+	rec.Set("harness", harness.Id)
+	rec.Set("provider", provider.Id)
+	rec.Set("is_pinned", false)
+	return app.Save(rec)
+}
+
+func upsertModel(app core.App, providerRec *core.Record, p ProviderInfo, m ModelInfo) (*core.Record, error) {
+	rec, err := app.FindFirstRecordByFilter("models", "provider = {:p} && name = {:n}", map[string]any{"p": providerRec.Id, "n": m.ID})
 	if err != nil {
 		coll, collErr := app.FindCollectionByNameOrId("models")
 		if collErr != nil {
 			return nil, collErr
 		}
 		rec = core.NewRecord(coll)
-		rec.Set("provider", p.ID)
+		rec.Set("provider", providerRec.Id)
 		rec.Set("name", m.ID)
 	}
 	fields := map[string]any{
