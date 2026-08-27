@@ -19,8 +19,9 @@ channels/, and revocations/ are never candidates for deletion -- those are
 the pointers themselves and their audit trail, not superseded content.
 
 Usage:
-  prune_r2_releases.py            # dry run, prints what would be deleted
-  prune_r2_releases.py --execute  # actually deletes
+  prune_r2_releases.py                        # dry run, prints what would be deleted
+  prune_r2_releases.py --execute              # actually deletes
+  prune_r2_releases.py --retention-days N     # override the 90-day grace window
 """
 import datetime
 import json
@@ -147,11 +148,21 @@ def delete_keys(s3, keys, bucket=BUCKET):
             print(f"FAILED\t{err['Key']}\t{err.get('Message', '')}", file=sys.stderr)
 
 
+def _parse_retention_days(argv):
+    for i, arg in enumerate(argv):
+        if arg == "--retention-days" and i + 1 < len(argv):
+            return int(argv[i + 1])
+    return RETENTION_DAYS
+
+
 def main():
     import boto3
 
+    retention_days = _parse_retention_days(sys.argv)
+
     live_keep_hashes = fetch_live_keep_hashes()
     print(f"# {len(live_keep_hashes)} live-referenced sha256 hashes", file=sys.stderr)
+    print(f"# retention window: {retention_days} day(s)", file=sys.stderr)
 
     s3 = boto3.client(
         "s3",
@@ -163,7 +174,7 @@ def main():
 
     now = datetime.datetime.now(datetime.timezone.utc)
     _keep, to_delete = compute_prune_plan(
-        list_bucket(s3), live_keep_hashes, RETENTION_DAYS, now
+        list_bucket(s3), live_keep_hashes, retention_days, now
     )
 
     print(f"# {len(to_delete)} object(s) to delete", file=sys.stderr)
