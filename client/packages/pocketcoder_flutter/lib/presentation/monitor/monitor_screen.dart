@@ -90,33 +90,54 @@ class MonitorView extends StatelessWidget {
         ),
       );
     }
+    final registry = BiosFrame(
+      title: context.l10n.observabilityRegistry,
+      child: ListView(
+        padding: EdgeInsets.all(AppSizes.space),
+        children: state.containers
+            .map((c) => _buildContainerTile(context, c))
+            .toList(),
+      ),
+    );
+    final logs = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TerminalText.label(
+          state.currentContainer != null
+              ? _displayName(state.currentContainer!)
+              : context.l10n.observabilityLogTerminal,
+        ),
+        VSpace.x1,
+        Expanded(child: _buildLogTerminal(context)),
+      ],
+    );
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: 250,
-            child: BiosFrame(
-              title: context.l10n.observabilityRegistry,
-              child: ListView(
-                padding: EdgeInsets.all(AppSizes.space),
-                children: state.containers
-                    .map((c) => _buildContainerTile(context, c))
-                    .toList(),
-              ),
-            ),
-          ),
-          HSpace.x2,
-          Expanded(
-            child: BiosFrame(
-              title: state.currentContainer != null
-                  ? 'LOGS: ${state.currentContainer}'
-                  : context.l10n.observabilityLogTerminal,
-              child: _buildLogTerminal(context),
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Side-by-side needs enough width for the registry column and a
+          // readable log panel; below that, a phone-width screen truncates
+          // container names and wraps the log panel's title unreadably.
+          final isNarrow = constraints.maxWidth < 600;
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 220, child: registry),
+                VSpace.x2,
+                Expanded(child: logs),
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(width: 250, child: registry),
+              HSpace.x2,
+              Expanded(child: logs),
+            ],
+          );
+        },
       ),
     );
   }
@@ -124,11 +145,24 @@ class MonitorView extends StatelessWidget {
   Widget _buildContainerTile(BuildContext context, ContainerInfo container) {
     final isSelected = state.currentContainer == container.name;
     return BiosRow(
-      label: container.name,
+      label: _displayName(container.name),
       value: container.state.toUpperCase(),
       isSelected: isSelected,
+      labelFontSize: AppSizes.fontSmall,
       onTap: () => onSelectContainer(isSelected ? null : container.name),
     );
+  }
+
+  /// Every container in this deployment's docker-compose is named with a
+  /// `pocketcoder-` prefix (see `docker-compose.yml`); it's redundant on a
+  /// screen that only ever shows this deployment's own containers, so strip
+  /// it for display. The underlying name (with prefix) is still what's used
+  /// to select/query the container.
+  String _displayName(String containerName) {
+    const prefix = 'pocketcoder-';
+    return containerName.toLowerCase().startsWith(prefix)
+        ? containerName.substring(prefix.length)
+        : containerName;
   }
 
   Widget _buildLogTerminal(BuildContext context) {

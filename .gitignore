@@ -30,6 +30,8 @@ build/
 # Only ignore binaries, not directories
 **/pocketbase
 !server/pocketbase/
+**/harness-adapter
+!server/harness-adapter/
 /pocketcoder
 *.bun-build
 
@@ -91,6 +93,8 @@ audit/
 .worktrees/
 .agent/
 **/.agent/
+.claude/settings.local.json
+.claude/worktrees/
 docs/
 !website/src/content/docs/
 !website/src/content/docs/**

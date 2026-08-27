@@ -25,10 +25,16 @@ class BiosRow extends StatelessWidget {
     this.onInputChanged,
     this.inputHint,
     this.isExpanded = false,
+    this.labelFontSize,
   });
 
   final String label;
   final String? value;
+
+  /// Overrides the label's font size. Defaults to [AppSizes.fontStandard]
+  /// when null -- set explicitly for rows packed more densely than usual
+  /// (e.g. the Monitor registry list), where the default size truncates.
+  final double? labelFontSize;
 
   /// Nullable -- a `row`-variant instance with no `onTap` renders as a
   /// static, non-interactive label/value pair (no InkWell, no chevron even
@@ -81,7 +87,7 @@ class BiosRow extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: AppFonts.bodyFamily,
                       color: textColor,
-                      fontSize: AppSizes.fontStandard,
+                      fontSize: labelFontSize ?? AppSizes.fontStandard,
                       fontWeight: AppFonts.heavy,
                       package: 'pocketcoder_flutter',
                     ),
