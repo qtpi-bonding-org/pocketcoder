@@ -1360,17 +1360,12 @@
       },
       {
         "hidden": false,
-        "id": "select_harnesses_provider_scope",
-        "maxSelect": 1,
-        "name": "provider_scope",
+        "id": "bool_harnesses_provider_fanout",
+        "name": "provider_fanout",
         "presentable": false,
         "required": false,
         "system": false,
-        "type": "select",
-        "values": [
-          "any",
-          "self"
-        ]
+        "type": "bool"
       },
       {
         "hidden": false,
@@ -1398,20 +1393,6 @@
         "required": false,
         "system": false,
         "type": "bool"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text_harnesses_models_dev_provider",
-        "max": 0,
-        "min": 0,
-        "name": "models_dev_provider",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": false,
-        "system": false,
-        "type": "text"
       }
     ],
     "indexes": [
@@ -1474,18 +1455,17 @@
         "type": "text"
       },
       {
-        "autogeneratePattern": "",
+        "cascadeDelete": true,
+        "collectionId": "pc_providers",
         "hidden": false,
         "id": "text2462348188",
-        "max": 0,
-        "min": 0,
+        "maxSelect": 1,
+        "minSelect": 1,
         "name": "provider",
-        "pattern": "",
         "presentable": false,
-        "primaryKey": false,
         "required": true,
         "system": false,
-        "type": "text"
+        "type": "relation"
       },
       {
         "hidden": false,
@@ -1514,7 +1494,9 @@
         "type": "text"
       }
     ],
-    "indexes": [],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_models_provider_name ON models (provider, name)"
+    ],
     "created": "2026-07-24 05:34:49.844Z",
     "updated": "2026-07-24 05:34:49.844Z",
     "system": false
@@ -1598,75 +1580,6 @@
     ],
     "created": "2026-07-24 05:34:49.849Z",
     "updated": "2026-07-24 05:34:49.849Z",
-    "system": false
-  },
-  {
-    "id": "pc_provider_keys",
-    "listRule": "user = @request.auth.id || @request.auth.role = 'admin'",
-    "viewRule": "user = @request.auth.id || @request.auth.role = 'admin'",
-    "createRule": "@request.auth.id != '' && user = @request.auth.id",
-    "updateRule": "user = @request.auth.id || @request.auth.role = 'admin'",
-    "deleteRule": "user = @request.auth.id || @request.auth.role = 'admin'",
-    "name": "provider_keys",
-    "type": "base",
-    "fields": [
-      {
-        "autogeneratePattern": "[a-z0-9]{15}",
-        "hidden": false,
-        "id": "text3208210256",
-        "max": 15,
-        "min": 15,
-        "name": "id",
-        "pattern": "^[a-z0-9]+$",
-        "presentable": false,
-        "primaryKey": true,
-        "required": true,
-        "system": true,
-        "type": "text"
-      },
-      {
-        "cascadeDelete": false,
-        "collectionId": "_pb_users_auth_",
-        "hidden": false,
-        "id": "relation2375276105",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "user",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text2462348188",
-        "max": 0,
-        "min": 0,
-        "name": "provider",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "hidden": false,
-        "id": "json2463929709",
-        "maxSize": 0,
-        "name": "env_vars",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "json"
-      }
-    ],
-    "indexes": [
-      "CREATE UNIQUE INDEX idx_provider_keys_user_provider ON provider_keys (user, provider)"
-    ],
-    "created": "2026-07-24 05:34:49.854Z",
-    "updated": "2026-07-24 05:34:49.854Z",
     "system": false
   },
   {
@@ -2276,12 +2189,12 @@
       },
       {
         "cascadeDelete": false,
-        "collectionId": "pc_harness_accounts",
+        "collectionId": "pc_harness_oauth_accounts",
         "hidden": false,
         "id": "relation_hi_harness_account",
         "maxSelect": 1,
         "minSelect": 0,
-        "name": "harness_account",
+        "name": "oauth_account",
         "presentable": false,
         "required": false,
         "system": false,
@@ -2419,277 +2332,20 @@
     ],
     "indexes": [
       "CREATE UNIQUE INDEX idx_harness_instances_name ON harness_instances (container_name)",
-      "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (user, harness, harness_account, launch_key)"
+      "CREATE UNIQUE INDEX idx_harness_instances_pair ON harness_instances (user, harness, oauth_account, launch_key)"
     ],
     "created": "2026-07-29 00:00:00.000Z",
     "updated": "2026-07-29 00:00:00.000Z",
     "system": false
   },
   {
-    "id": "pc_harness_accounts",
-    "listRule": "@request.auth.id != '' && (owner = @request.auth.id || visibility = 'deployment')",
-    "viewRule": "@request.auth.id != '' && (owner = @request.auth.id || visibility = 'deployment')",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != '' && owner = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' && owner = @request.auth.id",
-    "name": "harness_accounts",
-    "type": "base",
-    "fields": [
-      {
-        "autogeneratePattern": "[a-z0-9]{15}",
-        "hidden": false,
-        "id": "text_ha_id",
-        "max": 15,
-        "min": 15,
-        "name": "id",
-        "pattern": "^[a-z0-9]+$",
-        "presentable": false,
-        "primaryKey": true,
-        "required": true,
-        "system": true,
-        "type": "text"
-      },
-      {
-        "cascadeDelete": false,
-        "collectionId": "pc_harnesses",
-        "hidden": false,
-        "id": "relation_ha_harness",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "harness",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "cascadeDelete": false,
-        "collectionId": "_pb_users_auth_",
-        "hidden": false,
-        "id": "relation_ha_owner",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "owner",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text_ha_name",
-        "max": 120,
-        "min": 1,
-        "name": "name",
-        "pattern": "",
-        "presentable": true,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "hidden": false,
-        "id": "select_ha_visibility",
-        "maxSelect": 1,
-        "name": "visibility",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "values": [
-          "personal",
-          "deployment"
-        ]
-      },
-      {
-        "hidden": false,
-        "id": "select_ha_mode",
-        "maxSelect": 1,
-        "name": "credential_mode",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "values": [
-          "account",
-          "api_key",
-          "none"
-        ]
-      },
-      {
-        "cascadeDelete": false,
-        "collectionId": "pc_provider_keys",
-        "hidden": false,
-        "id": "relation_ha_provider_key",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "provider_key",
-        "presentable": false,
-        "required": false,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "hidden": false,
-        "id": "select_ha_status",
-        "maxSelect": 1,
-        "name": "status",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "select",
-        "values": [
-          "disconnected",
-          "connecting",
-          "connected",
-          "error",
-          "needs_api_key"
-        ]
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": true,
-        "id": "text_ha_last_error",
-        "max": 0,
-        "min": 0,
-        "name": "last_error",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": false,
-        "system": false,
-        "type": "text"
-      },
-      {
-        "hidden": false,
-        "id": "autodate_ha_created",
-        "name": "created",
-        "onCreate": true,
-        "onUpdate": false,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      },
-      {
-        "hidden": false,
-        "id": "autodate_ha_updated",
-        "name": "updated",
-        "onCreate": true,
-        "onUpdate": true,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      }
-    ],
-    "indexes": [
-      "CREATE INDEX idx_harness_accounts_harness_visibility ON harness_accounts (harness, visibility)"
-    ],
-    "created": "2026-08-04 10:00:00.000Z",
-    "updated": "2026-08-04 10:00:00.000Z",
-    "system": false
-  },
-  {
-    "id": "pc_harness_account_selections",
-    "listRule": "@request.auth.id != '' && user = @request.auth.id",
-    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != '' && user = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' && user = @request.auth.id",
-    "name": "harness_account_selections",
-    "type": "base",
-    "fields": [
-      {
-        "autogeneratePattern": "[a-z0-9]{15}",
-        "hidden": false,
-        "id": "text_has_id",
-        "max": 15,
-        "min": 15,
-        "name": "id",
-        "pattern": "^[a-z0-9]+$",
-        "presentable": false,
-        "primaryKey": true,
-        "required": true,
-        "system": true,
-        "type": "text"
-      },
-      {
-        "cascadeDelete": true,
-        "collectionId": "_pb_users_auth_",
-        "hidden": false,
-        "id": "relation_has_user",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "user",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "cascadeDelete": true,
-        "collectionId": "pc_harnesses",
-        "hidden": false,
-        "id": "relation_has_harness",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "harness",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "cascadeDelete": true,
-        "collectionId": "pc_harness_accounts",
-        "hidden": false,
-        "id": "relation_has_account",
-        "maxSelect": 1,
-        "minSelect": 1,
-        "name": "account",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "relation"
-      },
-      {
-        "hidden": false,
-        "id": "autodate_has_created",
-        "name": "created",
-        "onCreate": true,
-        "onUpdate": false,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      },
-      {
-        "hidden": false,
-        "id": "autodate_has_updated",
-        "name": "updated",
-        "onCreate": true,
-        "onUpdate": true,
-        "presentable": false,
-        "system": false,
-        "type": "autodate"
-      }
-    ],
-    "indexes": [
-      "CREATE UNIQUE INDEX idx_harness_account_selections_user_harness ON harness_account_selections (user, harness)",
-      "CREATE INDEX idx_harness_account_selections_account ON harness_account_selections (account)"
-    ],
-    "created": "2026-08-04 10:00:00.000Z",
-    "updated": "2026-08-04 10:00:00.000Z",
-    "system": false
-  },
-  {
-    "id": "pc_harness_auth_attempts",
+    "id": "pc_harness_oauth_attempts",
     "listRule": null,
     "viewRule": null,
     "createRule": null,
     "updateRule": null,
     "deleteRule": null,
-    "name": "harness_auth_attempts",
+    "name": "harness_oauth_attempts",
     "type": "base",
     "fields": [
       {
@@ -2708,7 +2364,7 @@
       },
       {
         "cascadeDelete": true,
-        "collectionId": "pc_harness_accounts",
+        "collectionId": "pc_harness_oauth_accounts",
         "hidden": false,
         "id": "relation_haa_account",
         "maxSelect": 1,
@@ -2718,20 +2374,6 @@
         "required": true,
         "system": false,
         "type": "relation"
-      },
-      {
-        "autogeneratePattern": "",
-        "hidden": false,
-        "id": "text_haa_provider",
-        "max": 0,
-        "min": 0,
-        "name": "provider",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": true,
-        "system": false,
-        "type": "text"
       },
       {
         "hidden": false,
@@ -2799,7 +2441,7 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX idx_harness_auth_attempts_account_status ON harness_auth_attempts (account, status)"
+      "CREATE INDEX idx_harness_oauth_attempts_account_status ON harness_oauth_attempts (account, status)"
     ],
     "created": "2026-08-04 10:00:00.000Z",
     "updated": "2026-08-04 10:00:00.000Z",
@@ -3425,6 +3067,31 @@
         "required": false,
         "system": false,
         "type": "json"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_providers_base_url_env",
+        "max": 0,
+        "min": 0,
+        "name": "base_url_env",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "date_providers_synced_at",
+        "max": "",
+        "min": "",
+        "name": "synced_at",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
       }
     ],
     "indexes": [
@@ -3432,6 +3099,528 @@
     ],
     "created": "2026-08-26 00:00:00.000Z",
     "updated": "2026-08-26 00:00:00.000Z",
+    "system": false
+  },
+  {
+    "id": "pc_harness_providers",
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "harness_providers",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_harnesses",
+        "hidden": false,
+        "id": "relation_hp_harness",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "harness",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_providers",
+        "hidden": false,
+        "id": "relation_hp_provider",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "provider",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "bool_hp_supports_oauth",
+        "name": "supports_oauth",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hp_oauth_authenticator",
+        "max": 0,
+        "min": 0,
+        "name": "oauth_authenticator",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hp_api_key_env_override",
+        "max": 0,
+        "min": 0,
+        "name": "api_key_env_override",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "bool_hp_is_pinned",
+        "name": "is_pinned",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_hp_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_hp_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_harness_providers_pair ON harness_providers (harness, provider)",
+      "CREATE INDEX idx_harness_providers_oauth ON harness_providers (harness, supports_oauth)"
+    ],
+    "created": "2026-08-26 12:00:00.000Z",
+    "updated": "2026-08-26 12:00:00.000Z",
+    "system": false
+  },
+  {
+    "id": "pc_provider_api_keys",
+    "listRule": "owner = @request.auth.id || @request.auth.role = 'admin'",
+    "viewRule": "owner = @request.auth.id || @request.auth.role = 'admin'",
+    "createRule": "@request.auth.id != '' && owner = @request.auth.id",
+    "updateRule": "owner = @request.auth.id || @request.auth.role = 'admin'",
+    "deleteRule": "owner = @request.auth.id || @request.auth.role = 'admin'",
+    "name": "provider_api_keys",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_pak_owner",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "owner",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pc_providers",
+        "hidden": false,
+        "id": "relation_pak_provider",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "provider",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": true,
+        "id": "text_pak_api_key",
+        "max": 0,
+        "min": 0,
+        "name": "api_key",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_pak_base_url",
+        "max": 0,
+        "min": 0,
+        "name": "base_url",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "json_pak_extra_env",
+        "maxSize": 0,
+        "name": "extra_env",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "date_pak_last_verified",
+        "max": "",
+        "min": "",
+        "name": "last_verified",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_pak_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_pak_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_provider_api_keys_owner_provider ON provider_api_keys (owner, provider)"
+    ],
+    "created": "2026-08-26 12:00:00.000Z",
+    "updated": "2026-08-26 12:00:00.000Z",
+    "system": false
+  },
+  {
+    "id": "pc_harness_oauth_accounts",
+    "listRule": "@request.auth.id != '' && (owner = @request.auth.id || visibility = 'deployment')",
+    "viewRule": "@request.auth.id != '' && (owner = @request.auth.id || visibility = 'deployment')",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != '' && owner = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && owner = @request.auth.id",
+    "name": "harness_oauth_accounts",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_harnesses",
+        "hidden": false,
+        "id": "relation_hoa_harness",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "harness",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pc_providers",
+        "hidden": false,
+        "id": "relation_hoa_provider",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "provider",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_hoa_owner",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "owner",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hoa_name",
+        "max": 120,
+        "min": 1,
+        "name": "name",
+        "pattern": "",
+        "presentable": true,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "select_hoa_visibility",
+        "maxSelect": 1,
+        "name": "visibility",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "personal",
+          "deployment"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "select_hoa_status",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "disconnected",
+          "connecting",
+          "connected",
+          "error"
+        ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": true,
+        "id": "text_hoa_last_error",
+        "max": 0,
+        "min": 0,
+        "name": "last_error",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_hoa_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_hoa_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_harness_oauth_accounts_pair ON harness_oauth_accounts (owner, harness, provider, name)",
+      "CREATE INDEX idx_harness_oauth_accounts_scope ON harness_oauth_accounts (harness, provider, visibility)"
+    ],
+    "created": "2026-08-26 12:00:00.000Z",
+    "updated": "2026-08-26 12:00:00.000Z",
+    "system": false
+  },
+  {
+    "id": "pc_credential_selections",
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != '' && user = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && user = @request.auth.id",
+    "name": "credential_selections",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "relation_cs_user",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "user",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_harnesses",
+        "hidden": false,
+        "id": "relation_cs_harness",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "harness",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_providers",
+        "hidden": false,
+        "id": "relation_cs_provider",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "provider",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select_cs_mode",
+        "maxSelect": 1,
+        "name": "mode",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "oauth",
+          "api_key",
+          "none"
+        ]
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "pc_harness_oauth_accounts",
+        "hidden": false,
+        "id": "relation_cs_oauth_account",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "oauth_account",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_cs_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_cs_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_credential_selections_pair ON credential_selections (user, harness, provider)",
+      "CREATE INDEX idx_credential_selections_oauth_account ON credential_selections (oauth_account)"
+    ],
+    "created": "2026-08-26 12:00:00.000Z",
+    "updated": "2026-08-26 12:00:00.000Z",
     "system": false
   }
 ]
