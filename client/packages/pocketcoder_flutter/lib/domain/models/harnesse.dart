@@ -16,11 +16,10 @@ abstract class Harnesse with _$Harnesse {
     String? containerImage,
     dynamic launchTemplate,
     bool? supportsLiveConfig,
-    @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown) HarnesseProviderScope? providerScope,
+    bool? providerFanout,
     bool? supportsOllama,
     bool? supportsSessionDelete,
     bool? supportsAdditionalDirectories,
-    String? modelsDevProvider,
   }) = _Harnesse;
 
   factory Harnesse.fromRecord(RecordModel record) =>
@@ -37,15 +36,6 @@ enum HarnesseAcpTransport {
   stdio,
   @JsonValue('http')
   http,
-  @JsonValue('__unknown__')
-  unknown,
-}
-
-enum HarnesseProviderScope {
-  @JsonValue('any')
-  any,
-  @JsonValue('self')
-  self,
   @JsonValue('__unknown__')
   unknown,
 }

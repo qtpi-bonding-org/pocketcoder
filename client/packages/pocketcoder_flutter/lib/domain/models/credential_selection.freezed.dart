@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'harness_account_selection.dart';
+part of 'credential_selection.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -13,73 +13,83 @@ part of 'harness_account_selection.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$HarnessAccountSelection {
+mixin _$CredentialSelection {
   String get id;
   String get user;
   String get harness;
-  String get account;
+  String get provider;
+  @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
+  CredentialSelectionMode get mode;
+  String? get oauthAccount;
   DateTime? get created;
   DateTime? get updated;
 
-  /// Create a copy of HarnessAccountSelection
+  /// Create a copy of CredentialSelection
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  $HarnessAccountSelectionCopyWith<HarnessAccountSelection> get copyWith =>
-      _$HarnessAccountSelectionCopyWithImpl<HarnessAccountSelection>(
-          this as HarnessAccountSelection, _$identity);
+  $CredentialSelectionCopyWith<CredentialSelection> get copyWith =>
+      _$CredentialSelectionCopyWithImpl<CredentialSelection>(
+          this as CredentialSelection, _$identity);
 
-  /// Serializes this HarnessAccountSelection to a JSON map.
+  /// Serializes this CredentialSelection to a JSON map.
   Map<String, dynamic> toJson();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is HarnessAccountSelection &&
+            other is CredentialSelection &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.user, user) || other.user == user) &&
             (identical(other.harness, harness) || other.harness == harness) &&
-            (identical(other.account, account) || other.account == account) &&
+            (identical(other.provider, provider) ||
+                other.provider == provider) &&
+            (identical(other.mode, mode) || other.mode == mode) &&
+            (identical(other.oauthAccount, oauthAccount) ||
+                other.oauthAccount == oauthAccount) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, user, harness, account, created, updated);
+  int get hashCode => Object.hash(runtimeType, id, user, harness, provider,
+      mode, oauthAccount, created, updated);
 
   @override
   String toString() {
-    return 'HarnessAccountSelection(id: $id, user: $user, harness: $harness, account: $account, created: $created, updated: $updated)';
+    return 'CredentialSelection(id: $id, user: $user, harness: $harness, provider: $provider, mode: $mode, oauthAccount: $oauthAccount, created: $created, updated: $updated)';
   }
 }
 
 /// @nodoc
-abstract mixin class $HarnessAccountSelectionCopyWith<$Res> {
-  factory $HarnessAccountSelectionCopyWith(HarnessAccountSelection value,
-          $Res Function(HarnessAccountSelection) _then) =
-      _$HarnessAccountSelectionCopyWithImpl;
+abstract mixin class $CredentialSelectionCopyWith<$Res> {
+  factory $CredentialSelectionCopyWith(
+          CredentialSelection value, $Res Function(CredentialSelection) _then) =
+      _$CredentialSelectionCopyWithImpl;
   @useResult
   $Res call(
       {String id,
       String user,
       String harness,
-      String account,
+      String provider,
+      @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
+      CredentialSelectionMode mode,
+      String? oauthAccount,
       DateTime? created,
       DateTime? updated});
 }
 
 /// @nodoc
-class _$HarnessAccountSelectionCopyWithImpl<$Res>
-    implements $HarnessAccountSelectionCopyWith<$Res> {
-  _$HarnessAccountSelectionCopyWithImpl(this._self, this._then);
+class _$CredentialSelectionCopyWithImpl<$Res>
+    implements $CredentialSelectionCopyWith<$Res> {
+  _$CredentialSelectionCopyWithImpl(this._self, this._then);
 
-  final HarnessAccountSelection _self;
-  final $Res Function(HarnessAccountSelection) _then;
+  final CredentialSelection _self;
+  final $Res Function(CredentialSelection) _then;
 
-  /// Create a copy of HarnessAccountSelection
+  /// Create a copy of CredentialSelection
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -87,7 +97,9 @@ class _$HarnessAccountSelectionCopyWithImpl<$Res>
     Object? id = null,
     Object? user = null,
     Object? harness = null,
-    Object? account = null,
+    Object? provider = null,
+    Object? mode = null,
+    Object? oauthAccount = freezed,
     Object? created = freezed,
     Object? updated = freezed,
   }) {
@@ -104,10 +116,18 @@ class _$HarnessAccountSelectionCopyWithImpl<$Res>
           ? _self.harness
           : harness // ignore: cast_nullable_to_non_nullable
               as String,
-      account: null == account
-          ? _self.account
-          : account // ignore: cast_nullable_to_non_nullable
+      provider: null == provider
+          ? _self.provider
+          : provider // ignore: cast_nullable_to_non_nullable
               as String,
+      mode: null == mode
+          ? _self.mode
+          : mode // ignore: cast_nullable_to_non_nullable
+              as CredentialSelectionMode,
+      oauthAccount: freezed == oauthAccount
+          ? _self.oauthAccount
+          : oauthAccount // ignore: cast_nullable_to_non_nullable
+              as String?,
       created: freezed == created
           ? _self.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -120,8 +140,8 @@ class _$HarnessAccountSelectionCopyWithImpl<$Res>
   }
 }
 
-/// Adds pattern-matching-related methods to [HarnessAccountSelection].
-extension HarnessAccountSelectionPatterns on HarnessAccountSelection {
+/// Adds pattern-matching-related methods to [CredentialSelection].
+extension CredentialSelectionPatterns on CredentialSelection {
   /// A variant of `map` that fallback to returning `orElse`.
   ///
   /// It is equivalent to doing:
@@ -136,12 +156,12 @@ extension HarnessAccountSelectionPatterns on HarnessAccountSelection {
 
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>(
-    TResult Function(_HarnessAccountSelection value)? $default, {
+    TResult Function(_CredentialSelection value)? $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
-      case _HarnessAccountSelection() when $default != null:
+      case _CredentialSelection() when $default != null:
         return $default(_that);
       case _:
         return orElse();
@@ -163,11 +183,11 @@ extension HarnessAccountSelectionPatterns on HarnessAccountSelection {
 
   @optionalTypeArgs
   TResult map<TResult extends Object?>(
-    TResult Function(_HarnessAccountSelection value) $default,
+    TResult Function(_CredentialSelection value) $default,
   ) {
     final _that = this;
     switch (_that) {
-      case _HarnessAccountSelection():
+      case _CredentialSelection():
         return $default(_that);
       case _:
         throw StateError('Unexpected subclass');
@@ -188,11 +208,11 @@ extension HarnessAccountSelectionPatterns on HarnessAccountSelection {
 
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>(
-    TResult? Function(_HarnessAccountSelection value)? $default,
+    TResult? Function(_CredentialSelection value)? $default,
   ) {
     final _that = this;
     switch (_that) {
-      case _HarnessAccountSelection() when $default != null:
+      case _CredentialSelection() when $default != null:
         return $default(_that);
       case _:
         return null;
@@ -213,16 +233,24 @@ extension HarnessAccountSelectionPatterns on HarnessAccountSelection {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String id, String user, String harness, String account,
-            DateTime? created, DateTime? updated)?
+    TResult Function(
+            String id,
+            String user,
+            String harness,
+            String provider,
+            @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
+            CredentialSelectionMode mode,
+            String? oauthAccount,
+            DateTime? created,
+            DateTime? updated)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
-      case _HarnessAccountSelection() when $default != null:
-        return $default(_that.id, _that.user, _that.harness, _that.account,
-            _that.created, _that.updated);
+      case _CredentialSelection() when $default != null:
+        return $default(_that.id, _that.user, _that.harness, _that.provider,
+            _that.mode, _that.oauthAccount, _that.created, _that.updated);
       case _:
         return orElse();
     }
@@ -243,15 +271,23 @@ extension HarnessAccountSelectionPatterns on HarnessAccountSelection {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String id, String user, String harness, String account,
-            DateTime? created, DateTime? updated)
+    TResult Function(
+            String id,
+            String user,
+            String harness,
+            String provider,
+            @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
+            CredentialSelectionMode mode,
+            String? oauthAccount,
+            DateTime? created,
+            DateTime? updated)
         $default,
   ) {
     final _that = this;
     switch (_that) {
-      case _HarnessAccountSelection():
-        return $default(_that.id, _that.user, _that.harness, _that.account,
-            _that.created, _that.updated);
+      case _CredentialSelection():
+        return $default(_that.id, _that.user, _that.harness, _that.provider,
+            _that.mode, _that.oauthAccount, _that.created, _that.updated);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -271,15 +307,23 @@ extension HarnessAccountSelectionPatterns on HarnessAccountSelection {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String id, String user, String harness, String account,
-            DateTime? created, DateTime? updated)?
+    TResult? Function(
+            String id,
+            String user,
+            String harness,
+            String provider,
+            @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
+            CredentialSelectionMode mode,
+            String? oauthAccount,
+            DateTime? created,
+            DateTime? updated)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
-      case _HarnessAccountSelection() when $default != null:
-        return $default(_that.id, _that.user, _that.harness, _that.account,
-            _that.created, _that.updated);
+      case _CredentialSelection() when $default != null:
+        return $default(_that.id, _that.user, _that.harness, _that.provider,
+            _that.mode, _that.oauthAccount, _that.created, _that.updated);
       case _:
         return null;
     }
@@ -288,16 +332,19 @@ extension HarnessAccountSelectionPatterns on HarnessAccountSelection {
 
 /// @nodoc
 @JsonSerializable()
-class _HarnessAccountSelection implements HarnessAccountSelection {
-  const _HarnessAccountSelection(
+class _CredentialSelection implements CredentialSelection {
+  const _CredentialSelection(
       {required this.id,
       required this.user,
       required this.harness,
-      required this.account,
+      required this.provider,
+      @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
+      required this.mode,
+      this.oauthAccount,
       this.created,
       this.updated});
-  factory _HarnessAccountSelection.fromJson(Map<String, dynamic> json) =>
-      _$HarnessAccountSelectionFromJson(json);
+  factory _CredentialSelection.fromJson(Map<String, dynamic> json) =>
+      _$CredentialSelectionFromJson(json);
 
   @override
   final String id;
@@ -306,24 +353,29 @@ class _HarnessAccountSelection implements HarnessAccountSelection {
   @override
   final String harness;
   @override
-  final String account;
+  final String provider;
+  @override
+  @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
+  final CredentialSelectionMode mode;
+  @override
+  final String? oauthAccount;
   @override
   final DateTime? created;
   @override
   final DateTime? updated;
 
-  /// Create a copy of HarnessAccountSelection
+  /// Create a copy of CredentialSelection
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  _$HarnessAccountSelectionCopyWith<_HarnessAccountSelection> get copyWith =>
-      __$HarnessAccountSelectionCopyWithImpl<_HarnessAccountSelection>(
+  _$CredentialSelectionCopyWith<_CredentialSelection> get copyWith =>
+      __$CredentialSelectionCopyWithImpl<_CredentialSelection>(
           this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$HarnessAccountSelectionToJson(
+    return _$CredentialSelectionToJson(
       this,
     );
   }
@@ -332,52 +384,59 @@ class _HarnessAccountSelection implements HarnessAccountSelection {
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _HarnessAccountSelection &&
+            other is _CredentialSelection &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.user, user) || other.user == user) &&
             (identical(other.harness, harness) || other.harness == harness) &&
-            (identical(other.account, account) || other.account == account) &&
+            (identical(other.provider, provider) ||
+                other.provider == provider) &&
+            (identical(other.mode, mode) || other.mode == mode) &&
+            (identical(other.oauthAccount, oauthAccount) ||
+                other.oauthAccount == oauthAccount) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, user, harness, account, created, updated);
+  int get hashCode => Object.hash(runtimeType, id, user, harness, provider,
+      mode, oauthAccount, created, updated);
 
   @override
   String toString() {
-    return 'HarnessAccountSelection(id: $id, user: $user, harness: $harness, account: $account, created: $created, updated: $updated)';
+    return 'CredentialSelection(id: $id, user: $user, harness: $harness, provider: $provider, mode: $mode, oauthAccount: $oauthAccount, created: $created, updated: $updated)';
   }
 }
 
 /// @nodoc
-abstract mixin class _$HarnessAccountSelectionCopyWith<$Res>
-    implements $HarnessAccountSelectionCopyWith<$Res> {
-  factory _$HarnessAccountSelectionCopyWith(_HarnessAccountSelection value,
-          $Res Function(_HarnessAccountSelection) _then) =
-      __$HarnessAccountSelectionCopyWithImpl;
+abstract mixin class _$CredentialSelectionCopyWith<$Res>
+    implements $CredentialSelectionCopyWith<$Res> {
+  factory _$CredentialSelectionCopyWith(_CredentialSelection value,
+          $Res Function(_CredentialSelection) _then) =
+      __$CredentialSelectionCopyWithImpl;
   @override
   @useResult
   $Res call(
       {String id,
       String user,
       String harness,
-      String account,
+      String provider,
+      @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
+      CredentialSelectionMode mode,
+      String? oauthAccount,
       DateTime? created,
       DateTime? updated});
 }
 
 /// @nodoc
-class __$HarnessAccountSelectionCopyWithImpl<$Res>
-    implements _$HarnessAccountSelectionCopyWith<$Res> {
-  __$HarnessAccountSelectionCopyWithImpl(this._self, this._then);
+class __$CredentialSelectionCopyWithImpl<$Res>
+    implements _$CredentialSelectionCopyWith<$Res> {
+  __$CredentialSelectionCopyWithImpl(this._self, this._then);
 
-  final _HarnessAccountSelection _self;
-  final $Res Function(_HarnessAccountSelection) _then;
+  final _CredentialSelection _self;
+  final $Res Function(_CredentialSelection) _then;
 
-  /// Create a copy of HarnessAccountSelection
+  /// Create a copy of CredentialSelection
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
@@ -385,11 +444,13 @@ class __$HarnessAccountSelectionCopyWithImpl<$Res>
     Object? id = null,
     Object? user = null,
     Object? harness = null,
-    Object? account = null,
+    Object? provider = null,
+    Object? mode = null,
+    Object? oauthAccount = freezed,
     Object? created = freezed,
     Object? updated = freezed,
   }) {
-    return _then(_HarnessAccountSelection(
+    return _then(_CredentialSelection(
       id: null == id
           ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -402,10 +463,18 @@ class __$HarnessAccountSelectionCopyWithImpl<$Res>
           ? _self.harness
           : harness // ignore: cast_nullable_to_non_nullable
               as String,
-      account: null == account
-          ? _self.account
-          : account // ignore: cast_nullable_to_non_nullable
+      provider: null == provider
+          ? _self.provider
+          : provider // ignore: cast_nullable_to_non_nullable
               as String,
+      mode: null == mode
+          ? _self.mode
+          : mode // ignore: cast_nullable_to_non_nullable
+              as CredentialSelectionMode,
+      oauthAccount: freezed == oauthAccount
+          ? _self.oauthAccount
+          : oauthAccount // ignore: cast_nullable_to_non_nullable
+              as String?,
       created: freezed == created
           ? _self.created
           : created // ignore: cast_nullable_to_non_nullable

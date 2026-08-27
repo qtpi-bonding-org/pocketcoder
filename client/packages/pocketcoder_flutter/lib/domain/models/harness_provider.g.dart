@@ -1,18 +1,20 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'harness_account_selection.dart';
+part of 'harness_provider.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_HarnessAccountSelection _$HarnessAccountSelectionFromJson(
-        Map<String, dynamic> json) =>
-    _HarnessAccountSelection(
+_HarnessProvider _$HarnessProviderFromJson(Map<String, dynamic> json) =>
+    _HarnessProvider(
       id: json['id'] as String,
-      user: json['user'] as String,
       harness: json['harness'] as String,
-      account: json['account'] as String,
+      provider: json['provider'] as String,
+      supportsOauth: json['supports_oauth'] as bool?,
+      oauthAuthenticator: json['oauth_authenticator'] as String?,
+      apiKeyEnvOverride: json['api_key_env_override'] as String?,
+      isPinned: json['is_pinned'] as bool?,
       created: json['created'] == null
           ? null
           : DateTime.parse(json['created'] as String),
@@ -21,13 +23,15 @@ _HarnessAccountSelection _$HarnessAccountSelectionFromJson(
           : DateTime.parse(json['updated'] as String),
     );
 
-Map<String, dynamic> _$HarnessAccountSelectionToJson(
-        _HarnessAccountSelection instance) =>
+Map<String, dynamic> _$HarnessProviderToJson(_HarnessProvider instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'user': instance.user,
       'harness': instance.harness,
-      'account': instance.account,
+      'provider': instance.provider,
+      'supports_oauth': instance.supportsOauth,
+      'oauth_authenticator': instance.oauthAuthenticator,
+      'api_key_env_override': instance.apiKeyEnvOverride,
+      'is_pinned': instance.isPinned,
       'created': instance.created?.toIso8601String(),
       'updated': instance.updated?.toIso8601String(),
     };

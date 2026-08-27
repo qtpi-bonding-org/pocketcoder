@@ -18,14 +18,11 @@ _Harnesse _$HarnesseFromJson(Map<String, dynamic> json) => _Harnesse(
       containerImage: json['container_image'] as String?,
       launchTemplate: json['launch_template'],
       supportsLiveConfig: json['supports_live_config'] as bool?,
-      providerScope: $enumDecodeNullable(
-          _$HarnesseProviderScopeEnumMap, json['provider_scope'],
-          unknownValue: HarnesseProviderScope.unknown),
+      providerFanout: json['provider_fanout'] as bool?,
       supportsOllama: json['supports_ollama'] as bool?,
       supportsSessionDelete: json['supports_session_delete'] as bool?,
       supportsAdditionalDirectories:
           json['supports_additional_directories'] as bool?,
-      modelsDevProvider: json['models_dev_provider'] as String?,
     );
 
 Map<String, dynamic> _$HarnesseToJson(_Harnesse instance) => <String, dynamic>{
@@ -38,11 +35,10 @@ Map<String, dynamic> _$HarnesseToJson(_Harnesse instance) => <String, dynamic>{
       'container_image': instance.containerImage,
       'launch_template': instance.launchTemplate,
       'supports_live_config': instance.supportsLiveConfig,
-      'provider_scope': _$HarnesseProviderScopeEnumMap[instance.providerScope],
+      'provider_fanout': instance.providerFanout,
       'supports_ollama': instance.supportsOllama,
       'supports_session_delete': instance.supportsSessionDelete,
       'supports_additional_directories': instance.supportsAdditionalDirectories,
-      'models_dev_provider': instance.modelsDevProvider,
     };
 
 const _$HarnesseAcpTransportEnumMap = {
@@ -50,10 +46,4 @@ const _$HarnesseAcpTransportEnumMap = {
   HarnesseAcpTransport.stdio: 'stdio',
   HarnesseAcpTransport.http: 'http',
   HarnesseAcpTransport.unknown: '__unknown__',
-};
-
-const _$HarnesseProviderScopeEnumMap = {
-  HarnesseProviderScope.any: 'any',
-  HarnesseProviderScope.self: 'self',
-  HarnesseProviderScope.unknown: '__unknown__',
 };

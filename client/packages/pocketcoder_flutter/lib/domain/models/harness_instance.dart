@@ -11,7 +11,7 @@ abstract class HarnessInstance with _$HarnessInstance {
     required String harness,
     String? user,
     String? harnessModel,
-    String? harnessAccount,
+    String? oauthAccount,
     String? launchKey,
     required String containerName,
     String? acpEndpoint,

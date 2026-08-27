@@ -18,6 +18,9 @@ mixin _$Provider {
   String get providerId;
   String get name;
   String? get apiKeyEnv;
+  dynamic get apiKeyEnvs;
+  String? get baseUrlEnv;
+  DateTime? get syncedAt;
 
   /// Create a copy of Provider
   /// with the given fields replaced by the non-null parameter values.
@@ -39,16 +42,23 @@ mixin _$Provider {
                 other.providerId == providerId) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.apiKeyEnv, apiKeyEnv) ||
-                other.apiKeyEnv == apiKeyEnv));
+                other.apiKeyEnv == apiKeyEnv) &&
+            const DeepCollectionEquality()
+                .equals(other.apiKeyEnvs, apiKeyEnvs) &&
+            (identical(other.baseUrlEnv, baseUrlEnv) ||
+                other.baseUrlEnv == baseUrlEnv) &&
+            (identical(other.syncedAt, syncedAt) ||
+                other.syncedAt == syncedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, providerId, name, apiKeyEnv);
+  int get hashCode => Object.hash(runtimeType, id, providerId, name, apiKeyEnv,
+      const DeepCollectionEquality().hash(apiKeyEnvs), baseUrlEnv, syncedAt);
 
   @override
   String toString() {
-    return 'Provider(id: $id, providerId: $providerId, name: $name, apiKeyEnv: $apiKeyEnv)';
+    return 'Provider(id: $id, providerId: $providerId, name: $name, apiKeyEnv: $apiKeyEnv, apiKeyEnvs: $apiKeyEnvs, baseUrlEnv: $baseUrlEnv, syncedAt: $syncedAt)';
   }
 }
 
@@ -57,7 +67,14 @@ abstract mixin class $ProviderCopyWith<$Res> {
   factory $ProviderCopyWith(Provider value, $Res Function(Provider) _then) =
       _$ProviderCopyWithImpl;
   @useResult
-  $Res call({String id, String providerId, String name, String? apiKeyEnv});
+  $Res call(
+      {String id,
+      String providerId,
+      String name,
+      String? apiKeyEnv,
+      dynamic apiKeyEnvs,
+      String? baseUrlEnv,
+      DateTime? syncedAt});
 }
 
 /// @nodoc
@@ -76,6 +93,9 @@ class _$ProviderCopyWithImpl<$Res> implements $ProviderCopyWith<$Res> {
     Object? providerId = null,
     Object? name = null,
     Object? apiKeyEnv = freezed,
+    Object? apiKeyEnvs = freezed,
+    Object? baseUrlEnv = freezed,
+    Object? syncedAt = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -94,6 +114,18 @@ class _$ProviderCopyWithImpl<$Res> implements $ProviderCopyWith<$Res> {
           ? _self.apiKeyEnv
           : apiKeyEnv // ignore: cast_nullable_to_non_nullable
               as String?,
+      apiKeyEnvs: freezed == apiKeyEnvs
+          ? _self.apiKeyEnvs
+          : apiKeyEnvs // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      baseUrlEnv: freezed == baseUrlEnv
+          ? _self.baseUrlEnv
+          : baseUrlEnv // ignore: cast_nullable_to_non_nullable
+              as String?,
+      syncedAt: freezed == syncedAt
+          ? _self.syncedAt
+          : syncedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -192,15 +224,21 @@ extension ProviderPatterns on Provider {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-            String id, String providerId, String name, String? apiKeyEnv)?
+            String id,
+            String providerId,
+            String name,
+            String? apiKeyEnv,
+            dynamic apiKeyEnvs,
+            String? baseUrlEnv,
+            DateTime? syncedAt)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _Provider() when $default != null:
-        return $default(
-            _that.id, _that.providerId, _that.name, _that.apiKeyEnv);
+        return $default(_that.id, _that.providerId, _that.name, _that.apiKeyEnv,
+            _that.apiKeyEnvs, _that.baseUrlEnv, _that.syncedAt);
       case _:
         return orElse();
     }
@@ -222,14 +260,20 @@ extension ProviderPatterns on Provider {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-            String id, String providerId, String name, String? apiKeyEnv)
+            String id,
+            String providerId,
+            String name,
+            String? apiKeyEnv,
+            dynamic apiKeyEnvs,
+            String? baseUrlEnv,
+            DateTime? syncedAt)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Provider():
-        return $default(
-            _that.id, _that.providerId, _that.name, _that.apiKeyEnv);
+        return $default(_that.id, _that.providerId, _that.name, _that.apiKeyEnv,
+            _that.apiKeyEnvs, _that.baseUrlEnv, _that.syncedAt);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -250,14 +294,20 @@ extension ProviderPatterns on Provider {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-            String id, String providerId, String name, String? apiKeyEnv)?
+            String id,
+            String providerId,
+            String name,
+            String? apiKeyEnv,
+            dynamic apiKeyEnvs,
+            String? baseUrlEnv,
+            DateTime? syncedAt)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Provider() when $default != null:
-        return $default(
-            _that.id, _that.providerId, _that.name, _that.apiKeyEnv);
+        return $default(_that.id, _that.providerId, _that.name, _that.apiKeyEnv,
+            _that.apiKeyEnvs, _that.baseUrlEnv, _that.syncedAt);
       case _:
         return null;
     }
@@ -271,7 +321,10 @@ class _Provider implements Provider {
       {required this.id,
       required this.providerId,
       required this.name,
-      this.apiKeyEnv});
+      this.apiKeyEnv,
+      this.apiKeyEnvs,
+      this.baseUrlEnv,
+      this.syncedAt});
   factory _Provider.fromJson(Map<String, dynamic> json) =>
       _$ProviderFromJson(json);
 
@@ -283,6 +336,12 @@ class _Provider implements Provider {
   final String name;
   @override
   final String? apiKeyEnv;
+  @override
+  final dynamic apiKeyEnvs;
+  @override
+  final String? baseUrlEnv;
+  @override
+  final DateTime? syncedAt;
 
   /// Create a copy of Provider
   /// with the given fields replaced by the non-null parameter values.
@@ -309,16 +368,23 @@ class _Provider implements Provider {
                 other.providerId == providerId) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.apiKeyEnv, apiKeyEnv) ||
-                other.apiKeyEnv == apiKeyEnv));
+                other.apiKeyEnv == apiKeyEnv) &&
+            const DeepCollectionEquality()
+                .equals(other.apiKeyEnvs, apiKeyEnvs) &&
+            (identical(other.baseUrlEnv, baseUrlEnv) ||
+                other.baseUrlEnv == baseUrlEnv) &&
+            (identical(other.syncedAt, syncedAt) ||
+                other.syncedAt == syncedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, providerId, name, apiKeyEnv);
+  int get hashCode => Object.hash(runtimeType, id, providerId, name, apiKeyEnv,
+      const DeepCollectionEquality().hash(apiKeyEnvs), baseUrlEnv, syncedAt);
 
   @override
   String toString() {
-    return 'Provider(id: $id, providerId: $providerId, name: $name, apiKeyEnv: $apiKeyEnv)';
+    return 'Provider(id: $id, providerId: $providerId, name: $name, apiKeyEnv: $apiKeyEnv, apiKeyEnvs: $apiKeyEnvs, baseUrlEnv: $baseUrlEnv, syncedAt: $syncedAt)';
   }
 }
 
@@ -329,7 +395,14 @@ abstract mixin class _$ProviderCopyWith<$Res>
       __$ProviderCopyWithImpl;
   @override
   @useResult
-  $Res call({String id, String providerId, String name, String? apiKeyEnv});
+  $Res call(
+      {String id,
+      String providerId,
+      String name,
+      String? apiKeyEnv,
+      dynamic apiKeyEnvs,
+      String? baseUrlEnv,
+      DateTime? syncedAt});
 }
 
 /// @nodoc
@@ -348,6 +421,9 @@ class __$ProviderCopyWithImpl<$Res> implements _$ProviderCopyWith<$Res> {
     Object? providerId = null,
     Object? name = null,
     Object? apiKeyEnv = freezed,
+    Object? apiKeyEnvs = freezed,
+    Object? baseUrlEnv = freezed,
+    Object? syncedAt = freezed,
   }) {
     return _then(_Provider(
       id: null == id
@@ -366,6 +442,18 @@ class __$ProviderCopyWithImpl<$Res> implements _$ProviderCopyWith<$Res> {
           ? _self.apiKeyEnv
           : apiKeyEnv // ignore: cast_nullable_to_non_nullable
               as String?,
+      apiKeyEnvs: freezed == apiKeyEnvs
+          ? _self.apiKeyEnvs
+          : apiKeyEnvs // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      baseUrlEnv: freezed == baseUrlEnv
+          ? _self.baseUrlEnv
+          : baseUrlEnv // ignore: cast_nullable_to_non_nullable
+              as String?,
+      syncedAt: freezed == syncedAt
+          ? _self.syncedAt
+          : syncedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }

@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'harness_auth_attempt.dart';
+part of 'harness_oauth_account.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -13,94 +13,104 @@ part of 'harness_auth_attempt.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$HarnessAuthAttempt {
+mixin _$HarnessOauthAccount {
   String get id;
-  String get account;
+  String get harness;
   String get provider;
-  @JsonKey(unknownEnumValue: HarnessAuthAttemptStatus.unknown)
-  HarnessAuthAttemptStatus get status;
+  String get owner;
+  String get name;
+  @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+  HarnessOauthAccountVisibility get visibility;
+  @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
+  HarnessOauthAccountStatus get status;
   String? get lastError;
-  DateTime? get expiresAt;
   DateTime? get created;
   DateTime? get updated;
 
-  /// Create a copy of HarnessAuthAttempt
+  /// Create a copy of HarnessOauthAccount
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  $HarnessAuthAttemptCopyWith<HarnessAuthAttempt> get copyWith =>
-      _$HarnessAuthAttemptCopyWithImpl<HarnessAuthAttempt>(
-          this as HarnessAuthAttempt, _$identity);
+  $HarnessOauthAccountCopyWith<HarnessOauthAccount> get copyWith =>
+      _$HarnessOauthAccountCopyWithImpl<HarnessOauthAccount>(
+          this as HarnessOauthAccount, _$identity);
 
-  /// Serializes this HarnessAuthAttempt to a JSON map.
+  /// Serializes this HarnessOauthAccount to a JSON map.
   Map<String, dynamic> toJson();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is HarnessAuthAttempt &&
+            other is HarnessOauthAccount &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.account, account) || other.account == account) &&
+            (identical(other.harness, harness) || other.harness == harness) &&
             (identical(other.provider, provider) ||
                 other.provider == provider) &&
+            (identical(other.owner, owner) || other.owner == owner) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.visibility, visibility) ||
+                other.visibility == visibility) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.lastError, lastError) ||
                 other.lastError == lastError) &&
-            (identical(other.expiresAt, expiresAt) ||
-                other.expiresAt == expiresAt) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, account, provider, status,
-      lastError, expiresAt, created, updated);
+  int get hashCode => Object.hash(runtimeType, id, harness, provider, owner,
+      name, visibility, status, lastError, created, updated);
 
   @override
   String toString() {
-    return 'HarnessAuthAttempt(id: $id, account: $account, provider: $provider, status: $status, lastError: $lastError, expiresAt: $expiresAt, created: $created, updated: $updated)';
+    return 'HarnessOauthAccount(id: $id, harness: $harness, provider: $provider, owner: $owner, name: $name, visibility: $visibility, status: $status, lastError: $lastError, created: $created, updated: $updated)';
   }
 }
 
 /// @nodoc
-abstract mixin class $HarnessAuthAttemptCopyWith<$Res> {
-  factory $HarnessAuthAttemptCopyWith(
-          HarnessAuthAttempt value, $Res Function(HarnessAuthAttempt) _then) =
-      _$HarnessAuthAttemptCopyWithImpl;
+abstract mixin class $HarnessOauthAccountCopyWith<$Res> {
+  factory $HarnessOauthAccountCopyWith(
+          HarnessOauthAccount value, $Res Function(HarnessOauthAccount) _then) =
+      _$HarnessOauthAccountCopyWithImpl;
   @useResult
   $Res call(
       {String id,
-      String account,
+      String harness,
       String provider,
-      @JsonKey(unknownEnumValue: HarnessAuthAttemptStatus.unknown)
-      HarnessAuthAttemptStatus status,
+      String owner,
+      String name,
+      @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+      HarnessOauthAccountVisibility visibility,
+      @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
+      HarnessOauthAccountStatus status,
       String? lastError,
-      DateTime? expiresAt,
       DateTime? created,
       DateTime? updated});
 }
 
 /// @nodoc
-class _$HarnessAuthAttemptCopyWithImpl<$Res>
-    implements $HarnessAuthAttemptCopyWith<$Res> {
-  _$HarnessAuthAttemptCopyWithImpl(this._self, this._then);
+class _$HarnessOauthAccountCopyWithImpl<$Res>
+    implements $HarnessOauthAccountCopyWith<$Res> {
+  _$HarnessOauthAccountCopyWithImpl(this._self, this._then);
 
-  final HarnessAuthAttempt _self;
-  final $Res Function(HarnessAuthAttempt) _then;
+  final HarnessOauthAccount _self;
+  final $Res Function(HarnessOauthAccount) _then;
 
-  /// Create a copy of HarnessAuthAttempt
+  /// Create a copy of HarnessOauthAccount
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
-    Object? account = null,
+    Object? harness = null,
     Object? provider = null,
+    Object? owner = null,
+    Object? name = null,
+    Object? visibility = null,
     Object? status = null,
     Object? lastError = freezed,
-    Object? expiresAt = freezed,
     Object? created = freezed,
     Object? updated = freezed,
   }) {
@@ -109,26 +119,34 @@ class _$HarnessAuthAttemptCopyWithImpl<$Res>
           ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      account: null == account
-          ? _self.account
-          : account // ignore: cast_nullable_to_non_nullable
+      harness: null == harness
+          ? _self.harness
+          : harness // ignore: cast_nullable_to_non_nullable
               as String,
       provider: null == provider
           ? _self.provider
           : provider // ignore: cast_nullable_to_non_nullable
               as String,
+      owner: null == owner
+          ? _self.owner
+          : owner // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      visibility: null == visibility
+          ? _self.visibility
+          : visibility // ignore: cast_nullable_to_non_nullable
+              as HarnessOauthAccountVisibility,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
-              as HarnessAuthAttemptStatus,
+              as HarnessOauthAccountStatus,
       lastError: freezed == lastError
           ? _self.lastError
           : lastError // ignore: cast_nullable_to_non_nullable
               as String?,
-      expiresAt: freezed == expiresAt
-          ? _self.expiresAt
-          : expiresAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
       created: freezed == created
           ? _self.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -141,8 +159,8 @@ class _$HarnessAuthAttemptCopyWithImpl<$Res>
   }
 }
 
-/// Adds pattern-matching-related methods to [HarnessAuthAttempt].
-extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
+/// Adds pattern-matching-related methods to [HarnessOauthAccount].
+extension HarnessOauthAccountPatterns on HarnessOauthAccount {
   /// A variant of `map` that fallback to returning `orElse`.
   ///
   /// It is equivalent to doing:
@@ -157,12 +175,12 @@ extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
 
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>(
-    TResult Function(_HarnessAuthAttempt value)? $default, {
+    TResult Function(_HarnessOauthAccount value)? $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
-      case _HarnessAuthAttempt() when $default != null:
+      case _HarnessOauthAccount() when $default != null:
         return $default(_that);
       case _:
         return orElse();
@@ -184,11 +202,11 @@ extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
 
   @optionalTypeArgs
   TResult map<TResult extends Object?>(
-    TResult Function(_HarnessAuthAttempt value) $default,
+    TResult Function(_HarnessOauthAccount value) $default,
   ) {
     final _that = this;
     switch (_that) {
-      case _HarnessAuthAttempt():
+      case _HarnessOauthAccount():
         return $default(_that);
       case _:
         throw StateError('Unexpected subclass');
@@ -209,11 +227,11 @@ extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
 
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>(
-    TResult? Function(_HarnessAuthAttempt value)? $default,
+    TResult? Function(_HarnessOauthAccount value)? $default,
   ) {
     final _that = this;
     switch (_that) {
-      case _HarnessAuthAttempt() when $default != null:
+      case _HarnessOauthAccount() when $default != null:
         return $default(_that);
       case _:
         return null;
@@ -236,12 +254,15 @@ extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
             String id,
-            String account,
+            String harness,
             String provider,
-            @JsonKey(unknownEnumValue: HarnessAuthAttemptStatus.unknown)
-            HarnessAuthAttemptStatus status,
+            String owner,
+            String name,
+            @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+            HarnessOauthAccountVisibility visibility,
+            @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
+            HarnessOauthAccountStatus status,
             String? lastError,
-            DateTime? expiresAt,
             DateTime? created,
             DateTime? updated)?
         $default, {
@@ -249,9 +270,18 @@ extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
   }) {
     final _that = this;
     switch (_that) {
-      case _HarnessAuthAttempt() when $default != null:
-        return $default(_that.id, _that.account, _that.provider, _that.status,
-            _that.lastError, _that.expiresAt, _that.created, _that.updated);
+      case _HarnessOauthAccount() when $default != null:
+        return $default(
+            _that.id,
+            _that.harness,
+            _that.provider,
+            _that.owner,
+            _that.name,
+            _that.visibility,
+            _that.status,
+            _that.lastError,
+            _that.created,
+            _that.updated);
       case _:
         return orElse();
     }
@@ -274,21 +304,33 @@ extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
   TResult when<TResult extends Object?>(
     TResult Function(
             String id,
-            String account,
+            String harness,
             String provider,
-            @JsonKey(unknownEnumValue: HarnessAuthAttemptStatus.unknown)
-            HarnessAuthAttemptStatus status,
+            String owner,
+            String name,
+            @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+            HarnessOauthAccountVisibility visibility,
+            @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
+            HarnessOauthAccountStatus status,
             String? lastError,
-            DateTime? expiresAt,
             DateTime? created,
             DateTime? updated)
         $default,
   ) {
     final _that = this;
     switch (_that) {
-      case _HarnessAuthAttempt():
-        return $default(_that.id, _that.account, _that.provider, _that.status,
-            _that.lastError, _that.expiresAt, _that.created, _that.updated);
+      case _HarnessOauthAccount():
+        return $default(
+            _that.id,
+            _that.harness,
+            _that.provider,
+            _that.owner,
+            _that.name,
+            _that.visibility,
+            _that.status,
+            _that.lastError,
+            _that.created,
+            _that.updated);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -310,21 +352,33 @@ extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
             String id,
-            String account,
+            String harness,
             String provider,
-            @JsonKey(unknownEnumValue: HarnessAuthAttemptStatus.unknown)
-            HarnessAuthAttemptStatus status,
+            String owner,
+            String name,
+            @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+            HarnessOauthAccountVisibility visibility,
+            @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
+            HarnessOauthAccountStatus status,
             String? lastError,
-            DateTime? expiresAt,
             DateTime? created,
             DateTime? updated)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
-      case _HarnessAuthAttempt() when $default != null:
-        return $default(_that.id, _that.account, _that.provider, _that.status,
-            _that.lastError, _that.expiresAt, _that.created, _that.updated);
+      case _HarnessOauthAccount() when $default != null:
+        return $default(
+            _that.id,
+            _that.harness,
+            _that.provider,
+            _that.owner,
+            _that.name,
+            _that.visibility,
+            _that.status,
+            _that.lastError,
+            _that.created,
+            _that.updated);
       case _:
         return null;
     }
@@ -333,49 +387,58 @@ extension HarnessAuthAttemptPatterns on HarnessAuthAttempt {
 
 /// @nodoc
 @JsonSerializable()
-class _HarnessAuthAttempt implements HarnessAuthAttempt {
-  const _HarnessAuthAttempt(
+class _HarnessOauthAccount implements HarnessOauthAccount {
+  const _HarnessOauthAccount(
       {required this.id,
-      required this.account,
+      required this.harness,
       required this.provider,
-      @JsonKey(unknownEnumValue: HarnessAuthAttemptStatus.unknown)
+      required this.owner,
+      required this.name,
+      @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+      required this.visibility,
+      @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
       required this.status,
       this.lastError,
-      this.expiresAt,
       this.created,
       this.updated});
-  factory _HarnessAuthAttempt.fromJson(Map<String, dynamic> json) =>
-      _$HarnessAuthAttemptFromJson(json);
+  factory _HarnessOauthAccount.fromJson(Map<String, dynamic> json) =>
+      _$HarnessOauthAccountFromJson(json);
 
   @override
   final String id;
   @override
-  final String account;
+  final String harness;
   @override
   final String provider;
   @override
-  @JsonKey(unknownEnumValue: HarnessAuthAttemptStatus.unknown)
-  final HarnessAuthAttemptStatus status;
+  final String owner;
+  @override
+  final String name;
+  @override
+  @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+  final HarnessOauthAccountVisibility visibility;
+  @override
+  @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
+  final HarnessOauthAccountStatus status;
   @override
   final String? lastError;
-  @override
-  final DateTime? expiresAt;
   @override
   final DateTime? created;
   @override
   final DateTime? updated;
 
-  /// Create a copy of HarnessAuthAttempt
+  /// Create a copy of HarnessOauthAccount
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  _$HarnessAuthAttemptCopyWith<_HarnessAuthAttempt> get copyWith =>
-      __$HarnessAuthAttemptCopyWithImpl<_HarnessAuthAttempt>(this, _$identity);
+  _$HarnessOauthAccountCopyWith<_HarnessOauthAccount> get copyWith =>
+      __$HarnessOauthAccountCopyWithImpl<_HarnessOauthAccount>(
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$HarnessAuthAttemptToJson(
+    return _$HarnessOauthAccountToJson(
       this,
     );
   }
@@ -384,98 +447,113 @@ class _HarnessAuthAttempt implements HarnessAuthAttempt {
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _HarnessAuthAttempt &&
+            other is _HarnessOauthAccount &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.account, account) || other.account == account) &&
+            (identical(other.harness, harness) || other.harness == harness) &&
             (identical(other.provider, provider) ||
                 other.provider == provider) &&
+            (identical(other.owner, owner) || other.owner == owner) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.visibility, visibility) ||
+                other.visibility == visibility) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.lastError, lastError) ||
                 other.lastError == lastError) &&
-            (identical(other.expiresAt, expiresAt) ||
-                other.expiresAt == expiresAt) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, account, provider, status,
-      lastError, expiresAt, created, updated);
+  int get hashCode => Object.hash(runtimeType, id, harness, provider, owner,
+      name, visibility, status, lastError, created, updated);
 
   @override
   String toString() {
-    return 'HarnessAuthAttempt(id: $id, account: $account, provider: $provider, status: $status, lastError: $lastError, expiresAt: $expiresAt, created: $created, updated: $updated)';
+    return 'HarnessOauthAccount(id: $id, harness: $harness, provider: $provider, owner: $owner, name: $name, visibility: $visibility, status: $status, lastError: $lastError, created: $created, updated: $updated)';
   }
 }
 
 /// @nodoc
-abstract mixin class _$HarnessAuthAttemptCopyWith<$Res>
-    implements $HarnessAuthAttemptCopyWith<$Res> {
-  factory _$HarnessAuthAttemptCopyWith(
-          _HarnessAuthAttempt value, $Res Function(_HarnessAuthAttempt) _then) =
-      __$HarnessAuthAttemptCopyWithImpl;
+abstract mixin class _$HarnessOauthAccountCopyWith<$Res>
+    implements $HarnessOauthAccountCopyWith<$Res> {
+  factory _$HarnessOauthAccountCopyWith(_HarnessOauthAccount value,
+          $Res Function(_HarnessOauthAccount) _then) =
+      __$HarnessOauthAccountCopyWithImpl;
   @override
   @useResult
   $Res call(
       {String id,
-      String account,
+      String harness,
       String provider,
-      @JsonKey(unknownEnumValue: HarnessAuthAttemptStatus.unknown)
-      HarnessAuthAttemptStatus status,
+      String owner,
+      String name,
+      @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+      HarnessOauthAccountVisibility visibility,
+      @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
+      HarnessOauthAccountStatus status,
       String? lastError,
-      DateTime? expiresAt,
       DateTime? created,
       DateTime? updated});
 }
 
 /// @nodoc
-class __$HarnessAuthAttemptCopyWithImpl<$Res>
-    implements _$HarnessAuthAttemptCopyWith<$Res> {
-  __$HarnessAuthAttemptCopyWithImpl(this._self, this._then);
+class __$HarnessOauthAccountCopyWithImpl<$Res>
+    implements _$HarnessOauthAccountCopyWith<$Res> {
+  __$HarnessOauthAccountCopyWithImpl(this._self, this._then);
 
-  final _HarnessAuthAttempt _self;
-  final $Res Function(_HarnessAuthAttempt) _then;
+  final _HarnessOauthAccount _self;
+  final $Res Function(_HarnessOauthAccount) _then;
 
-  /// Create a copy of HarnessAuthAttempt
+  /// Create a copy of HarnessOauthAccount
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $Res call({
     Object? id = null,
-    Object? account = null,
+    Object? harness = null,
     Object? provider = null,
+    Object? owner = null,
+    Object? name = null,
+    Object? visibility = null,
     Object? status = null,
     Object? lastError = freezed,
-    Object? expiresAt = freezed,
     Object? created = freezed,
     Object? updated = freezed,
   }) {
-    return _then(_HarnessAuthAttempt(
+    return _then(_HarnessOauthAccount(
       id: null == id
           ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      account: null == account
-          ? _self.account
-          : account // ignore: cast_nullable_to_non_nullable
+      harness: null == harness
+          ? _self.harness
+          : harness // ignore: cast_nullable_to_non_nullable
               as String,
       provider: null == provider
           ? _self.provider
           : provider // ignore: cast_nullable_to_non_nullable
               as String,
+      owner: null == owner
+          ? _self.owner
+          : owner // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      visibility: null == visibility
+          ? _self.visibility
+          : visibility // ignore: cast_nullable_to_non_nullable
+              as HarnessOauthAccountVisibility,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
-              as HarnessAuthAttemptStatus,
+              as HarnessOauthAccountStatus,
       lastError: freezed == lastError
           ? _self.lastError
           : lastError // ignore: cast_nullable_to_non_nullable
               as String?,
-      expiresAt: freezed == expiresAt
-          ? _self.expiresAt
-          : expiresAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
       created: freezed == created
           ? _self.created
           : created // ignore: cast_nullable_to_non_nullable

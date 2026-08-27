@@ -1,18 +1,17 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'harness_auth_attempt.dart';
+part of 'harness_oauth_attempt.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_HarnessAuthAttempt _$HarnessAuthAttemptFromJson(Map<String, dynamic> json) =>
-    _HarnessAuthAttempt(
+_HarnessOauthAttempt _$HarnessOauthAttemptFromJson(Map<String, dynamic> json) =>
+    _HarnessOauthAttempt(
       id: json['id'] as String,
       account: json['account'] as String,
-      provider: json['provider'] as String,
-      status: $enumDecode(_$HarnessAuthAttemptStatusEnumMap, json['status'],
-          unknownValue: HarnessAuthAttemptStatus.unknown),
+      status: $enumDecode(_$HarnessOauthAttemptStatusEnumMap, json['status'],
+          unknownValue: HarnessOauthAttemptStatus.unknown),
       lastError: json['last_error'] as String?,
       expiresAt: json['expires_at'] == null
           ? null
@@ -25,24 +24,24 @@ _HarnessAuthAttempt _$HarnessAuthAttemptFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['updated'] as String),
     );
 
-Map<String, dynamic> _$HarnessAuthAttemptToJson(_HarnessAuthAttempt instance) =>
+Map<String, dynamic> _$HarnessOauthAttemptToJson(
+        _HarnessOauthAttempt instance) =>
     <String, dynamic>{
       'id': instance.id,
       'account': instance.account,
-      'provider': instance.provider,
-      'status': _$HarnessAuthAttemptStatusEnumMap[instance.status]!,
+      'status': _$HarnessOauthAttemptStatusEnumMap[instance.status]!,
       'last_error': instance.lastError,
       'expires_at': instance.expiresAt?.toIso8601String(),
       'created': instance.created?.toIso8601String(),
       'updated': instance.updated?.toIso8601String(),
     };
 
-const _$HarnessAuthAttemptStatusEnumMap = {
-  HarnessAuthAttemptStatus.starting: 'starting',
-  HarnessAuthAttemptStatus.awaitingInput: 'awaiting_input',
-  HarnessAuthAttemptStatus.succeeded: 'succeeded',
-  HarnessAuthAttemptStatus.failed: 'failed',
-  HarnessAuthAttemptStatus.expired: 'expired',
-  HarnessAuthAttemptStatus.cancelled: 'cancelled',
-  HarnessAuthAttemptStatus.unknown: '__unknown__',
+const _$HarnessOauthAttemptStatusEnumMap = {
+  HarnessOauthAttemptStatus.starting: 'starting',
+  HarnessOauthAttemptStatus.awaitingInput: 'awaiting_input',
+  HarnessOauthAttemptStatus.succeeded: 'succeeded',
+  HarnessOauthAttemptStatus.failed: 'failed',
+  HarnessOauthAttemptStatus.expired: 'expired',
+  HarnessOauthAttemptStatus.cancelled: 'cancelled',
+  HarnessOauthAttemptStatus.unknown: '__unknown__',
 };

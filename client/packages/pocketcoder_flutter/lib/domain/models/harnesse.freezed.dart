@@ -24,12 +24,10 @@ mixin _$Harnesse {
   String? get containerImage;
   dynamic get launchTemplate;
   bool? get supportsLiveConfig;
-  @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-  HarnesseProviderScope? get providerScope;
+  bool? get providerFanout;
   bool? get supportsOllama;
   bool? get supportsSessionDelete;
   bool? get supportsAdditionalDirectories;
-  String? get modelsDevProvider;
 
   /// Create a copy of Harnesse
   /// with the given fields replaced by the non-null parameter values.
@@ -60,8 +58,8 @@ mixin _$Harnesse {
                 .equals(other.launchTemplate, launchTemplate) &&
             (identical(other.supportsLiveConfig, supportsLiveConfig) ||
                 other.supportsLiveConfig == supportsLiveConfig) &&
-            (identical(other.providerScope, providerScope) ||
-                other.providerScope == providerScope) &&
+            (identical(other.providerFanout, providerFanout) ||
+                other.providerFanout == providerFanout) &&
             (identical(other.supportsOllama, supportsOllama) ||
                 other.supportsOllama == supportsOllama) &&
             (identical(other.supportsSessionDelete, supportsSessionDelete) ||
@@ -69,9 +67,7 @@ mixin _$Harnesse {
             (identical(other.supportsAdditionalDirectories,
                     supportsAdditionalDirectories) ||
                 other.supportsAdditionalDirectories ==
-                    supportsAdditionalDirectories) &&
-            (identical(other.modelsDevProvider, modelsDevProvider) ||
-                other.modelsDevProvider == modelsDevProvider));
+                    supportsAdditionalDirectories));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -87,15 +83,14 @@ mixin _$Harnesse {
       containerImage,
       const DeepCollectionEquality().hash(launchTemplate),
       supportsLiveConfig,
-      providerScope,
+      providerFanout,
       supportsOllama,
       supportsSessionDelete,
-      supportsAdditionalDirectories,
-      modelsDevProvider);
+      supportsAdditionalDirectories);
 
   @override
   String toString() {
-    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerScope: $providerScope, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories, modelsDevProvider: $modelsDevProvider)';
+    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerFanout: $providerFanout, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
   }
 }
 
@@ -115,12 +110,10 @@ abstract mixin class $HarnesseCopyWith<$Res> {
       String? containerImage,
       dynamic launchTemplate,
       bool? supportsLiveConfig,
-      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-      HarnesseProviderScope? providerScope,
+      bool? providerFanout,
       bool? supportsOllama,
       bool? supportsSessionDelete,
-      bool? supportsAdditionalDirectories,
-      String? modelsDevProvider});
+      bool? supportsAdditionalDirectories});
 }
 
 /// @nodoc
@@ -144,11 +137,10 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
     Object? containerImage = freezed,
     Object? launchTemplate = freezed,
     Object? supportsLiveConfig = freezed,
-    Object? providerScope = freezed,
+    Object? providerFanout = freezed,
     Object? supportsOllama = freezed,
     Object? supportsSessionDelete = freezed,
     Object? supportsAdditionalDirectories = freezed,
-    Object? modelsDevProvider = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -187,10 +179,10 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
           ? _self.supportsLiveConfig
           : supportsLiveConfig // ignore: cast_nullable_to_non_nullable
               as bool?,
-      providerScope: freezed == providerScope
-          ? _self.providerScope
-          : providerScope // ignore: cast_nullable_to_non_nullable
-              as HarnesseProviderScope?,
+      providerFanout: freezed == providerFanout
+          ? _self.providerFanout
+          : providerFanout // ignore: cast_nullable_to_non_nullable
+              as bool?,
       supportsOllama: freezed == supportsOllama
           ? _self.supportsOllama
           : supportsOllama // ignore: cast_nullable_to_non_nullable
@@ -203,10 +195,6 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
           ? _self.supportsAdditionalDirectories
           : supportsAdditionalDirectories // ignore: cast_nullable_to_non_nullable
               as bool?,
-      modelsDevProvider: freezed == modelsDevProvider
-          ? _self.modelsDevProvider
-          : modelsDevProvider // ignore: cast_nullable_to_non_nullable
-              as String?,
     ));
   }
 }
@@ -315,12 +303,10 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
-            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-            HarnesseProviderScope? providerScope,
+            bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
-            bool? supportsAdditionalDirectories,
-            String? modelsDevProvider)?
+            bool? supportsAdditionalDirectories)?
         $default, {
     required TResult orElse(),
   }) {
@@ -337,11 +323,10 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.providerScope,
+            _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
-            _that.supportsAdditionalDirectories,
-            _that.modelsDevProvider);
+            _that.supportsAdditionalDirectories);
       case _:
         return orElse();
     }
@@ -373,12 +358,10 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
-            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-            HarnesseProviderScope? providerScope,
+            bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
-            bool? supportsAdditionalDirectories,
-            String? modelsDevProvider)
+            bool? supportsAdditionalDirectories)
         $default,
   ) {
     final _that = this;
@@ -394,11 +377,10 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.providerScope,
+            _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
-            _that.supportsAdditionalDirectories,
-            _that.modelsDevProvider);
+            _that.supportsAdditionalDirectories);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -429,12 +411,10 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
-            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-            HarnesseProviderScope? providerScope,
+            bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
-            bool? supportsAdditionalDirectories,
-            String? modelsDevProvider)?
+            bool? supportsAdditionalDirectories)?
         $default,
   ) {
     final _that = this;
@@ -450,11 +430,10 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.providerScope,
+            _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
-            _that.supportsAdditionalDirectories,
-            _that.modelsDevProvider);
+            _that.supportsAdditionalDirectories);
       case _:
         return null;
     }
@@ -475,12 +454,10 @@ class _Harnesse implements Harnesse {
       this.containerImage,
       this.launchTemplate,
       this.supportsLiveConfig,
-      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-      this.providerScope,
+      this.providerFanout,
       this.supportsOllama,
       this.supportsSessionDelete,
-      this.supportsAdditionalDirectories,
-      this.modelsDevProvider});
+      this.supportsAdditionalDirectories});
   factory _Harnesse.fromJson(Map<String, dynamic> json) =>
       _$HarnesseFromJson(json);
 
@@ -504,16 +481,13 @@ class _Harnesse implements Harnesse {
   @override
   final bool? supportsLiveConfig;
   @override
-  @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-  final HarnesseProviderScope? providerScope;
+  final bool? providerFanout;
   @override
   final bool? supportsOllama;
   @override
   final bool? supportsSessionDelete;
   @override
   final bool? supportsAdditionalDirectories;
-  @override
-  final String? modelsDevProvider;
 
   /// Create a copy of Harnesse
   /// with the given fields replaced by the non-null parameter values.
@@ -549,8 +523,8 @@ class _Harnesse implements Harnesse {
                 .equals(other.launchTemplate, launchTemplate) &&
             (identical(other.supportsLiveConfig, supportsLiveConfig) ||
                 other.supportsLiveConfig == supportsLiveConfig) &&
-            (identical(other.providerScope, providerScope) ||
-                other.providerScope == providerScope) &&
+            (identical(other.providerFanout, providerFanout) ||
+                other.providerFanout == providerFanout) &&
             (identical(other.supportsOllama, supportsOllama) ||
                 other.supportsOllama == supportsOllama) &&
             (identical(other.supportsSessionDelete, supportsSessionDelete) ||
@@ -558,9 +532,7 @@ class _Harnesse implements Harnesse {
             (identical(other.supportsAdditionalDirectories,
                     supportsAdditionalDirectories) ||
                 other.supportsAdditionalDirectories ==
-                    supportsAdditionalDirectories) &&
-            (identical(other.modelsDevProvider, modelsDevProvider) ||
-                other.modelsDevProvider == modelsDevProvider));
+                    supportsAdditionalDirectories));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -576,15 +548,14 @@ class _Harnesse implements Harnesse {
       containerImage,
       const DeepCollectionEquality().hash(launchTemplate),
       supportsLiveConfig,
-      providerScope,
+      providerFanout,
       supportsOllama,
       supportsSessionDelete,
-      supportsAdditionalDirectories,
-      modelsDevProvider);
+      supportsAdditionalDirectories);
 
   @override
   String toString() {
-    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerScope: $providerScope, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories, modelsDevProvider: $modelsDevProvider)';
+    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerFanout: $providerFanout, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
   }
 }
 
@@ -606,12 +577,10 @@ abstract mixin class _$HarnesseCopyWith<$Res>
       String? containerImage,
       dynamic launchTemplate,
       bool? supportsLiveConfig,
-      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-      HarnesseProviderScope? providerScope,
+      bool? providerFanout,
       bool? supportsOllama,
       bool? supportsSessionDelete,
-      bool? supportsAdditionalDirectories,
-      String? modelsDevProvider});
+      bool? supportsAdditionalDirectories});
 }
 
 /// @nodoc
@@ -635,11 +604,10 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
     Object? containerImage = freezed,
     Object? launchTemplate = freezed,
     Object? supportsLiveConfig = freezed,
-    Object? providerScope = freezed,
+    Object? providerFanout = freezed,
     Object? supportsOllama = freezed,
     Object? supportsSessionDelete = freezed,
     Object? supportsAdditionalDirectories = freezed,
-    Object? modelsDevProvider = freezed,
   }) {
     return _then(_Harnesse(
       id: null == id
@@ -678,10 +646,10 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
           ? _self.supportsLiveConfig
           : supportsLiveConfig // ignore: cast_nullable_to_non_nullable
               as bool?,
-      providerScope: freezed == providerScope
-          ? _self.providerScope
-          : providerScope // ignore: cast_nullable_to_non_nullable
-              as HarnesseProviderScope?,
+      providerFanout: freezed == providerFanout
+          ? _self.providerFanout
+          : providerFanout // ignore: cast_nullable_to_non_nullable
+              as bool?,
       supportsOllama: freezed == supportsOllama
           ? _self.supportsOllama
           : supportsOllama // ignore: cast_nullable_to_non_nullable
@@ -694,10 +662,6 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
           ? _self.supportsAdditionalDirectories
           : supportsAdditionalDirectories // ignore: cast_nullable_to_non_nullable
               as bool?,
-      modelsDevProvider: freezed == modelsDevProvider
-          ? _self.modelsDevProvider
-          : modelsDevProvider // ignore: cast_nullable_to_non_nullable
-              as String?,
     ));
   }
 }

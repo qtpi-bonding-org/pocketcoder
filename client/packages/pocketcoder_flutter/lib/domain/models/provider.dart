@@ -11,6 +11,9 @@ abstract class Provider with _$Provider {
     required String providerId,
     required String name,
     String? apiKeyEnv,
+    dynamic apiKeyEnvs,
+    String? baseUrlEnv,
+    DateTime? syncedAt,
   }) = _Provider;
 
   factory Provider.fromRecord(RecordModel record) =>

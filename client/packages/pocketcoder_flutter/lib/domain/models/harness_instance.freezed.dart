@@ -18,7 +18,7 @@ mixin _$HarnessInstance {
   String get harness;
   String? get user;
   String? get harnessModel;
-  String? get harnessAccount;
+  String? get oauthAccount;
   String? get launchKey;
   String get containerName;
   String? get acpEndpoint;
@@ -52,8 +52,8 @@ mixin _$HarnessInstance {
             (identical(other.user, user) || other.user == user) &&
             (identical(other.harnessModel, harnessModel) ||
                 other.harnessModel == harnessModel) &&
-            (identical(other.harnessAccount, harnessAccount) ||
-                other.harnessAccount == harnessAccount) &&
+            (identical(other.oauthAccount, oauthAccount) ||
+                other.oauthAccount == oauthAccount) &&
             (identical(other.launchKey, launchKey) ||
                 other.launchKey == launchKey) &&
             (identical(other.containerName, containerName) ||
@@ -79,7 +79,7 @@ mixin _$HarnessInstance {
       harness,
       user,
       harnessModel,
-      harnessAccount,
+      oauthAccount,
       launchKey,
       containerName,
       acpEndpoint,
@@ -93,7 +93,7 @@ mixin _$HarnessInstance {
 
   @override
   String toString() {
-    return 'HarnessInstance(id: $id, harness: $harness, user: $user, harnessModel: $harnessModel, harnessAccount: $harnessAccount, launchKey: $launchKey, containerName: $containerName, acpEndpoint: $acpEndpoint, secret: $secret, status: $status, lastError: $lastError, managed: $managed, lastUsed: $lastUsed, created: $created, updated: $updated)';
+    return 'HarnessInstance(id: $id, harness: $harness, user: $user, harnessModel: $harnessModel, oauthAccount: $oauthAccount, launchKey: $launchKey, containerName: $containerName, acpEndpoint: $acpEndpoint, secret: $secret, status: $status, lastError: $lastError, managed: $managed, lastUsed: $lastUsed, created: $created, updated: $updated)';
   }
 }
 
@@ -108,7 +108,7 @@ abstract mixin class $HarnessInstanceCopyWith<$Res> {
       String harness,
       String? user,
       String? harnessModel,
-      String? harnessAccount,
+      String? oauthAccount,
       String? launchKey,
       String containerName,
       String? acpEndpoint,
@@ -139,7 +139,7 @@ class _$HarnessInstanceCopyWithImpl<$Res>
     Object? harness = null,
     Object? user = freezed,
     Object? harnessModel = freezed,
-    Object? harnessAccount = freezed,
+    Object? oauthAccount = freezed,
     Object? launchKey = freezed,
     Object? containerName = null,
     Object? acpEndpoint = freezed,
@@ -168,9 +168,9 @@ class _$HarnessInstanceCopyWithImpl<$Res>
           ? _self.harnessModel
           : harnessModel // ignore: cast_nullable_to_non_nullable
               as String?,
-      harnessAccount: freezed == harnessAccount
-          ? _self.harnessAccount
-          : harnessAccount // ignore: cast_nullable_to_non_nullable
+      oauthAccount: freezed == oauthAccount
+          ? _self.oauthAccount
+          : oauthAccount // ignore: cast_nullable_to_non_nullable
               as String?,
       launchKey: freezed == launchKey
           ? _self.launchKey
@@ -314,7 +314,7 @@ extension HarnessInstancePatterns on HarnessInstance {
             String harness,
             String? user,
             String? harnessModel,
-            String? harnessAccount,
+            String? oauthAccount,
             String? launchKey,
             String containerName,
             String? acpEndpoint,
@@ -337,7 +337,7 @@ extension HarnessInstancePatterns on HarnessInstance {
             _that.harness,
             _that.user,
             _that.harnessModel,
-            _that.harnessAccount,
+            _that.oauthAccount,
             _that.launchKey,
             _that.containerName,
             _that.acpEndpoint,
@@ -373,7 +373,7 @@ extension HarnessInstancePatterns on HarnessInstance {
             String harness,
             String? user,
             String? harnessModel,
-            String? harnessAccount,
+            String? oauthAccount,
             String? launchKey,
             String containerName,
             String? acpEndpoint,
@@ -395,7 +395,7 @@ extension HarnessInstancePatterns on HarnessInstance {
             _that.harness,
             _that.user,
             _that.harnessModel,
-            _that.harnessAccount,
+            _that.oauthAccount,
             _that.launchKey,
             _that.containerName,
             _that.acpEndpoint,
@@ -430,7 +430,7 @@ extension HarnessInstancePatterns on HarnessInstance {
             String harness,
             String? user,
             String? harnessModel,
-            String? harnessAccount,
+            String? oauthAccount,
             String? launchKey,
             String containerName,
             String? acpEndpoint,
@@ -452,7 +452,7 @@ extension HarnessInstancePatterns on HarnessInstance {
             _that.harness,
             _that.user,
             _that.harnessModel,
-            _that.harnessAccount,
+            _that.oauthAccount,
             _that.launchKey,
             _that.containerName,
             _that.acpEndpoint,
@@ -477,7 +477,7 @@ class _HarnessInstance implements HarnessInstance {
       required this.harness,
       this.user,
       this.harnessModel,
-      this.harnessAccount,
+      this.oauthAccount,
       this.launchKey,
       required this.containerName,
       this.acpEndpoint,
@@ -501,7 +501,7 @@ class _HarnessInstance implements HarnessInstance {
   @override
   final String? harnessModel;
   @override
-  final String? harnessAccount;
+  final String? oauthAccount;
   @override
   final String? launchKey;
   @override
@@ -549,8 +549,8 @@ class _HarnessInstance implements HarnessInstance {
             (identical(other.user, user) || other.user == user) &&
             (identical(other.harnessModel, harnessModel) ||
                 other.harnessModel == harnessModel) &&
-            (identical(other.harnessAccount, harnessAccount) ||
-                other.harnessAccount == harnessAccount) &&
+            (identical(other.oauthAccount, oauthAccount) ||
+                other.oauthAccount == oauthAccount) &&
             (identical(other.launchKey, launchKey) ||
                 other.launchKey == launchKey) &&
             (identical(other.containerName, containerName) ||
@@ -576,7 +576,7 @@ class _HarnessInstance implements HarnessInstance {
       harness,
       user,
       harnessModel,
-      harnessAccount,
+      oauthAccount,
       launchKey,
       containerName,
       acpEndpoint,
@@ -590,7 +590,7 @@ class _HarnessInstance implements HarnessInstance {
 
   @override
   String toString() {
-    return 'HarnessInstance(id: $id, harness: $harness, user: $user, harnessModel: $harnessModel, harnessAccount: $harnessAccount, launchKey: $launchKey, containerName: $containerName, acpEndpoint: $acpEndpoint, secret: $secret, status: $status, lastError: $lastError, managed: $managed, lastUsed: $lastUsed, created: $created, updated: $updated)';
+    return 'HarnessInstance(id: $id, harness: $harness, user: $user, harnessModel: $harnessModel, oauthAccount: $oauthAccount, launchKey: $launchKey, containerName: $containerName, acpEndpoint: $acpEndpoint, secret: $secret, status: $status, lastError: $lastError, managed: $managed, lastUsed: $lastUsed, created: $created, updated: $updated)';
   }
 }
 
@@ -607,7 +607,7 @@ abstract mixin class _$HarnessInstanceCopyWith<$Res>
       String harness,
       String? user,
       String? harnessModel,
-      String? harnessAccount,
+      String? oauthAccount,
       String? launchKey,
       String containerName,
       String? acpEndpoint,
@@ -638,7 +638,7 @@ class __$HarnessInstanceCopyWithImpl<$Res>
     Object? harness = null,
     Object? user = freezed,
     Object? harnessModel = freezed,
-    Object? harnessAccount = freezed,
+    Object? oauthAccount = freezed,
     Object? launchKey = freezed,
     Object? containerName = null,
     Object? acpEndpoint = freezed,
@@ -667,9 +667,9 @@ class __$HarnessInstanceCopyWithImpl<$Res>
           ? _self.harnessModel
           : harnessModel // ignore: cast_nullable_to_non_nullable
               as String?,
-      harnessAccount: freezed == harnessAccount
-          ? _self.harnessAccount
-          : harnessAccount // ignore: cast_nullable_to_non_nullable
+      oauthAccount: freezed == oauthAccount
+          ? _self.oauthAccount
+          : oauthAccount // ignore: cast_nullable_to_non_nullable
               as String?,
       launchKey: freezed == launchKey
           ? _self.launchKey
