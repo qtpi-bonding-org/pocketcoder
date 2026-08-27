@@ -33,7 +33,6 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/pocoprompt"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 )
@@ -217,6 +216,7 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	// Resolve harness: chat.harness wins; else the model's harness; else
 	// the seeded default (§5.6.1).
 	var harnessRec *core.Record
+	var providerRec *core.Record
 	if harnessID != "" {
 		if harnessRec, err = app.FindRecordById("harnesses", harnessID); err != nil {
 			return p, err
@@ -227,7 +227,10 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		if err == nil {
 			p.Model = hm.GetString("harness_model_id")
 			if m, err := app.FindRecordById("models", hm.GetString("model")); err == nil {
-				p.Provider = m.GetString("provider")
+				if pr, err := app.FindRecordById("providers", m.GetString("provider")); err == nil {
+					providerRec = pr
+					p.Provider = pr.GetString("provider_id")
+				}
 			}
 			if harnessRec == nil {
 				if hr, err := app.FindRecordById("harnesses", hm.GetString("harness")); err == nil {
@@ -257,6 +260,7 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		}
 		p.Provider = "ollama"
 		p.Model = ollamaModel
+		providerRec = nil
 	}
 
 	p.SupportsLiveConfig = harnessRec.GetBool("supports_live_config")
@@ -279,17 +283,23 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	if !p.SupportsLiveConfig && hmID != "" && ollamaModel == "" {
 		launchKey = hmID
 	}
-	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harnessRec.Id)
-	if err != nil {
-		return p, fmt.Errorf("resolve harness account: %w", err)
-	}
-	p.AccountLogin = account.GetString("credential_mode") == harnessaccount.ModeAccount
+	oauthAccountID := ""
 	p.HarnessName = harnessRec.GetString("name")
+	if providerRec != nil {
+		account, err := hooks.ResolveOAuthAccountForLaunch(app, userID, harnessRec.Id, providerRec.Id)
+		if err != nil {
+			return p, err
+		}
+		if account != nil {
+			p.AccountLogin = true
+			oauthAccountID = account.Id
+		}
+	}
 
 	// Shared with hooks.ProvisionHarnessInstance's own lookup — see
 	// hooks.FindHarnessInstance's doc comment for why this can't be a
 	// single `harness = {:h} && launch_key = {:k}` filter.
-	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey, userID, account.Id)
+	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey, userID, oauthAccountID)
 	if err != nil {
 		return p, err
 	}
