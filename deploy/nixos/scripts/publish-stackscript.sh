@@ -12,8 +12,25 @@
 set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SCRIPT_BODY=$(cat "$SCRIPT_DIR/stackscripts/pocketcoder-image-installer.sh")
+SCRIPT_PATH="$SCRIPT_DIR/stackscripts/pocketcoder-image-installer.sh"
+SCRIPT_BODY=$(cat "$SCRIPT_PATH")
 AUTH="Authorization: Bearer $LINODE_STACKSCRIPT_TOKEN"
+
+# Fail closed rather than silently publishing an empty/truncated script --
+# live-confirmed 2026-08-27: a box booted the real installer disk with a
+# genuinely empty StackScript payload (Linode's own metadata delivered a
+# valid MIME envelope with a zero-byte part-001), and nothing anywhere
+# caught it before or after publish. 500 bytes is well under the real
+# script's size (~6KB) but well above any truncation/empty-read accident.
+SCRIPT_BYTES=$(wc -c < "$SCRIPT_PATH")
+if [ "$SCRIPT_BYTES" -lt 500 ]; then
+  echo "FATAL: $SCRIPT_PATH is only $SCRIPT_BYTES bytes -- refusing to publish an empty/truncated StackScript" >&2
+  exit 1
+fi
+case "$SCRIPT_BODY" in
+  '#!'*) ;;
+  *) echo "FATAL: $SCRIPT_PATH does not start with a shebang -- refusing to publish" >&2; exit 1 ;;
+esac
 
 # Server-side filter (not client-side page scan): without this, the
 # unfiltered first page of a potentially-huge public StackScript listing
@@ -52,12 +69,28 @@ print(json.dumps({
 
 if [ -n "$EXISTING_ID" ]; then
   echo "Updating existing StackScript $EXISTING_ID"
-  curl -sf --show-error -X PUT -H "$AUTH" -H "Content-Type: application/json" \
+  RESULT=$(curl -sf --show-error -X PUT -H "$AUTH" -H "Content-Type: application/json" \
     "https://api.linode.com/v4/linode/stackscripts/$EXISTING_ID" \
-    -d "$BODY" | python3 -m json.tool
+    -d "$BODY")
+  PUBLISHED_ID="$EXISTING_ID"
 else
   echo "Creating new StackScript"
-  curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  RESULT=$(curl -sf --show-error -X POST -H "$AUTH" -H "Content-Type: application/json" \
     "https://api.linode.com/v4/linode/stackscripts" \
-    -d "$BODY" | python3 -m json.tool
+    -d "$BODY")
+  PUBLISHED_ID=$(printf '%s' "$RESULT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
 fi
+printf '%s' "$RESULT" | python3 -m json.tool
+
+# Read back what Linode actually stored -- the create/update response
+# already echoes the object, but reading it back via a fresh GET confirms
+# what other callers (i.e. the next real boot) will actually receive,
+# not just what this same request round-tripped.
+LIVE_SCRIPT=$(curl -sf --show-error -H "$AUTH" \
+  "https://api.linode.com/v4/linode/stackscripts/$PUBLISHED_ID" \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["script"], end="")')
+if [ "$LIVE_SCRIPT" != "$SCRIPT_BODY" ]; then
+  echo "FATAL: live StackScript $PUBLISHED_ID content does not match $SCRIPT_PATH after publish -- Linode may have stored something else" >&2
+  exit 1
+fi
+echo "Verified: live StackScript $PUBLISHED_ID matches $SCRIPT_PATH ($SCRIPT_BYTES bytes)"
