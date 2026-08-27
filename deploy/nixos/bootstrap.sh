@@ -240,6 +240,16 @@ fi
 # POCO:END bootstrap-release-source
 
 date -u +%Y-%m-%dT%H:%M:%SZ > "$MARKER"
+# The release-manager's own status writes (loading_images, etc.) already
+# report the real resolved commit via its in-process Reporter. This
+# script's own status writes go through status.sh's _pc_status_write
+# instead, which has no way to see that in-process value -- so read back
+# the same current.json the release-manager just wrote (it always
+# succeeds before this line is ever reached, since a failed install exits
+# above) rather than leaving this final, most-likely-to-be-checked status
+# permanently reporting "unknown".
+PC_SOURCE_COMMIT=$(jq -r '.sourceCommit // empty' "$RELEASE_STATE/current.json" 2>/dev/null || true)
+export PC_SOURCE_COMMIT
 pc_status_phase bootstrap_complete
 
 trap - EXIT
