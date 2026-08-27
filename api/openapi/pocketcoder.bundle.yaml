@@ -846,7 +846,47 @@ components:
       additionalProperties: true
     HarnessRequest:
       type: object
-      additionalProperties: true
+      required:
+        - harness
+        - provider
+      additionalProperties: false
+      properties:
+        harness:
+          type: string
+          minLength: 1
+        provider:
+          type: string
+          minLength: 1
+          description: PocketBase providers record id
+        accountId:
+          type: string
+        accountName:
+          type: string
+        visibility:
+          type: string
+        mode:
+          type: string
+          enum:
+            - oauth
+            - none
+        attemptId:
+          type: string
+        code:
+          type: string
+    HarnessAuthStatus:
+      type: object
+      required: [harness, provider, mode, status]
+      properties:
+        harness: {type: string}
+        provider: {type: string}
+        accountId: {type: string}
+        accountName: {type: string}
+        visibility: {type: string}
+        mode: {type: string, enum: [oauth, none]}
+        status: {type: string}
+        lastError: {type: string}
+        attempt: {type: object}
+        challenge: {type: object}
     ModelRequest:
       type: object
       required:

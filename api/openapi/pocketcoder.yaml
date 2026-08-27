@@ -67,42 +67,42 @@ paths:
       tags: [harness-auth]
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+      responses: {'200': {description: Harness authentication status, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessAuthStatus'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
   /api/pocketcoder/v1/harness-auth/start:
     post:
       operationId: startHarnessAuth
       tags: [harness-auth]
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+      responses: {'200': {description: Harness authentication status, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessAuthStatus'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
   /api/pocketcoder/v1/harness-auth/poll:
     post:
       operationId: pollHarnessAuth
       tags: [harness-auth]
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+      responses: {'200': {description: Harness authentication status, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessAuthStatus'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
   /api/pocketcoder/v1/harness-auth/submit:
     post:
       operationId: submitHarnessAuth
       tags: [harness-auth]
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+      responses: {'200': {description: Harness authentication status, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessAuthStatus'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
   /api/pocketcoder/v1/harness-auth/cancel:
     post:
       operationId: cancelHarnessAuth
       tags: [harness-auth]
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+      responses: {'200': {description: Harness authentication status, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessAuthStatus'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
   /api/pocketcoder/v1/harness-auth/disconnect:
     post:
       operationId: disconnectHarnessAuth
       tags: [harness-auth]
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/JsonSuccess'}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
+      responses: {'200': {description: Harness authentication status, content: {application/json: {schema: {$ref: '#/components/schemas/HarnessAuthStatus'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'}, '500': {$ref: '#/components/responses/InternalError'} }
   /api/pocketcoder/v1/schedules/{scheduleId}/run:
     post:
       operationId: runScheduleNow
@@ -239,7 +239,7 @@ components:
     ModeRequest: {type: object, required: [modeId], additionalProperties: false, properties: {modeId: {type: string, minLength: 1}}}
     ConfigOptionRequest: {type: object, required: [configId, value], additionalProperties: false, properties: {configId: {type: string, minLength: 1}, value: {type: string}}}
     DecisionRequest: {type: object, additionalProperties: true}
-    HarnessRequest: {type: object, additionalProperties: true}
+    HarnessRequest: {type: object, required: [harness, provider], additionalProperties: false, properties: {harness: {type: string, minLength: 1}, provider: {type: string, minLength: 1, description: PocketBase providers record id}, accountId: {type: string}, accountName: {type: string}, visibility: {type: string}, mode: {type: string, enum: [oauth, none]}, attemptId: {type: string}, code: {type: string}}}
     ModelRequest: {type: object, required: [model], additionalProperties: false, properties: {model: {type: string, minLength: 1}}}
     McpRequest: {type: object, additionalProperties: true}
     McpOAuthRequest: {type: object, additionalProperties: true}
