@@ -22,6 +22,44 @@ import (
 
 type requestEventContextKey struct{}
 
+// authMiddleware enforces operation.Route.Auth uniformly for every
+// operation reachable through the strict server, converted or not -- this
+// replaces dispatch()'s inline "if route.Auth && re.Auth == nil" check,
+// which becomes redundant once every operation runs through this
+// middleware and is removed once all operations are converted off the
+// rawResponse bridge.
+//
+// One deliberate, accepted behavior change: the generated strict-server
+// wrapper decodes a JSON request body BEFORE any StrictMiddlewareFunc
+// runs (see e.g. pocketcoder.gen.go's PromptChat wrapper). So an
+// unauthenticated request with a malformed JSON body now gets 400 (bad
+// request body) instead of 401 (unauthorized) -- previously, dispatch()
+// checked auth first and never reached body-binding for an unauthenticated
+// caller. This is a minor, common, and accepted information-disclosure
+// nuance (confirms "this endpoint parses JSON" to an unauthenticated
+// caller, nothing more) -- not a security regression worth blocking this
+// migration over.
+func authMiddleware(registry *operation.Registry) openapi.StrictMiddlewareFunc {
+	return func(f openapi.StrictHandlerFunc, operationID string) openapi.StrictHandlerFunc {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+			route, ok := registry.Get(operationID)
+			if !ok {
+				return nil, errors.New("operation is not registered: " + operationID)
+			}
+			if route.Auth {
+				re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
+				if !ok {
+					return nil, errors.New("PocketBase request context is unavailable")
+				}
+				if re.Auth == nil {
+					return nil, apis.NewUnauthorizedError("Authentication required", nil)
+				}
+			}
+			return f(ctx, w, r, request)
+		}
+	}
+}
+
 // Register installs every PocketCoder operation from one registry. Ordinary
 // request/response operations cross the generated strict server interface.
 // Streaming, proxy, and binary operations remain direct because buffering
@@ -42,7 +80,19 @@ func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() coord
 	api.AddScheduleOperations(app, registry, coord)
 
 	operation.MountDirect(e, registry.Routes())
-	strict := openapi.NewStrictHandler(&server{registry: registry}, nil)
+	strict := openapi.NewStrictHandlerWithOptions(
+		&server{registry: registry},
+		[]openapi.StrictMiddlewareFunc{authMiddleware(registry)},
+		openapi.StrictHTTPServerOptions{
+			// router.ErrorHandler already produces this project's
+			// ErrorResponse shape ({status, message, data}) as of the
+			// 2026-08-27 OpenAPI schema fix -- both function signatures
+			// are identical (func(http.ResponseWriter, *http.Request,
+			// error)), so no wrapper is needed.
+			RequestErrorHandlerFunc:  router.ErrorHandler,
+			ResponseErrorHandlerFunc: router.ErrorHandler,
+		},
+	)
 	handler := openapi.Handler(strict)
 	e.Router.Route("", "/api/pocketcoder/v1/{path...}", func(re *core.RequestEvent) error {
 		request := re.Request.WithContext(context.WithValue(re.Request.Context(), requestEventContextKey{}, re))
@@ -82,9 +132,7 @@ func (s *server) dispatch(ctx context.Context, operationID string, pathValues ma
 	re.Response = response
 	defer func() { re.Response = previousResponse }()
 
-	if route.Auth && re.Auth == nil {
-		router.ErrorHandler(response, re.Request, apis.NewUnauthorizedError("Authentication required", nil))
-	} else if err := route.Action(re); err != nil {
+	if err := route.Action(re); err != nil {
 		router.ErrorHandler(response, re.Request, err)
 	}
 	result := recorder.Result()

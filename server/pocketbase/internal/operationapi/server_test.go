@@ -74,7 +74,15 @@ func TestDispatchSetsPathValues(t *testing.T) {
 	}
 }
 
-func TestDispatchUnauthorizedDoesNotInvokeAction(t *testing.T) {
+// TestDispatchNoLongerGatesAuthItself documents a deliberate relocation:
+// auth gating moved to authMiddleware (see the two tests below), which
+// runs before any strict operation ever reaches dispatch() in production.
+// dispatch(), called directly and in isolation (as every other test in
+// this file does), now runs the action regardless of Auth/re.Auth -- if
+// this test ever starts failing because dispatch() silently started
+// gating auth again, that's a real regression (duplicated, and possibly
+// inconsistent, auth logic in two places).
+func TestDispatchNoLongerGatesAuthItself(t *testing.T) {
 	called := false
 	reg := operation.NewRegistry()
 	route := routeFor("private", func(*core.RequestEvent) error { called = true; return nil })
@@ -85,11 +93,52 @@ func TestDispatchUnauthorizedDoesNotInvokeAction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if response.status != http.StatusUnauthorized {
+	if !called {
+		t.Fatal("action was not called -- auth gating unexpectedly still happens inside dispatch")
+	}
+	if response.status != http.StatusOK {
 		t.Fatalf("status=%d", response.status)
 	}
+}
+
+func TestAuthMiddlewareRejectsUnauthenticatedRequestForAuthRequiredOperation(t *testing.T) {
+	reg := operation.NewRegistry()
+	route := routeFor("private", func(*core.RequestEvent) error { return nil })
+	route.Auth = true
+	reg.Add(route)
+	called := false
+	inner := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		called = true
+		return nil, nil
+	}
+	re, _ := dispatchEvent()
+	_, err := authMiddleware(reg)(inner, "private")(dispatchContext(re), re.Response, re.Request, nil)
+	if err == nil {
+		t.Fatal("expected an error for an unauthenticated request to an Auth: true operation")
+	}
 	if called {
-		t.Fatal("action called without authentication")
+		t.Fatal("inner handler called without authentication")
+	}
+}
+
+func TestAuthMiddlewareAllowsOperationsThatDoNotRequireAuth(t *testing.T) {
+	reg := operation.NewRegistry()
+	reg.Add(routeFor("public", func(*core.RequestEvent) error { return nil }))
+	called := false
+	inner := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		called = true
+		return "ok", nil
+	}
+	re, _ := dispatchEvent()
+	result, err := authMiddleware(reg)(inner, "public")(dispatchContext(re), re.Response, re.Request, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !called {
+		t.Fatal("inner handler was not called for a public operation")
+	}
+	if result != "ok" {
+		t.Fatalf("result=%v", result)
 	}
 }
 
