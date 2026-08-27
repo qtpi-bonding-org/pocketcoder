@@ -288,6 +288,7 @@ class ProviderView extends StatelessWidget {
       builder: (dialogContext) {
         return ProviderKeyEditorDialog(
           harnesses: state.harnesses,
+          providerCatalog: state.providerCatalog,
           existing: existing,
           onSave: (key) {
             onSave(key);

@@ -820,6 +820,25 @@ func TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace(t *testing
 	}
 }
 
+// createTestProviderCatalogEntry inserts a "providers" row (the
+// models.dev-synced cache internal/modelcatalog maintains), so tests can
+// verify renderEnv's real catalog lookup instead of only its
+// uppercase-guess fallback.
+func createTestProviderCatalogEntry(t *testing.T, app core.App, providerID, apiKeyEnv string) {
+	t.Helper()
+	coll, err := app.FindCollectionByNameOrId("providers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := core.NewRecord(coll)
+	rec.Set("provider_id", providerID)
+	rec.Set("name", providerID)
+	rec.Set("api_key_env", apiKeyEnv)
+	if err := app.Save(rec); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // TestProvisionGooseAcceptsTheGenericAPIKeyTheClientActuallyWrites is a
 // regression test for a bug where Goose could never actually be given a
 // working API key through the app: its seeded env_template required a
@@ -837,8 +856,12 @@ func TestProvisionGooseAcceptsTheGenericAPIKeyTheClientActuallyWrites(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
+	createTestProviderCatalogEntry(t, app, "anthropic", "ANTHROPIC_API_KEY")
+	// provider now names the actual LLM provider the key is for (what the
+	// Provider Keys screen's provider dropdown writes for a multi-provider
+	// harness), not the harness itself.
 	createTestProviderKey(t, app, map[string]any{
-		"provider": "goose",
+		"provider": "anthropic",
 		"env_vars": map[string]any{"API_KEY": "sk-or-real-shape"},
 	}, userID)
 	fake := newFakeDockerClient()
@@ -849,12 +872,8 @@ func TestProvisionGooseAcceptsTheGenericAPIKeyTheClientActuallyWrites(t *testing
 	if status := rec.GetString("status"); status == "error" {
 		t.Fatalf("provisioning failed with a client-shaped API_KEY: %s", rec.GetString("last_error"))
 	}
-	// No __provider was resolved (no harness_models launchKey), so renderEnv
-	// falls back to its documented default of "anthropic" -- the key must
-	// land under ANTHROPIC_API_KEY, matching Goose's own <PROVIDER>_API_KEY
-	// convention for that provider.
 	if !containsString(fake.lastCreateSpec.Env, "ANTHROPIC_API_KEY=sk-or-real-shape") {
-		t.Errorf("env = %v, want ANTHROPIC_API_KEY=sk-or-real-shape (default provider)", fake.lastCreateSpec.Env)
+		t.Errorf("env = %v, want ANTHROPIC_API_KEY=sk-or-real-shape", fake.lastCreateSpec.Env)
 	}
 	for _, kv := range fake.lastCreateSpec.Env {
 		if strings.HasPrefix(kv, "API_KEY=") {
@@ -864,10 +883,12 @@ func TestProvisionGooseAcceptsTheGenericAPIKeyTheClientActuallyWrites(t *testing
 }
 
 // TestProvisionGooseRoutesTheAPIKeyToWhicheverProviderIsSelected verifies
-// the env var name follows GOOSE_PROVIDER, not just the anthropic default --
-// Goose supports many providers (OpenAI, Anthropic, OpenRouter, etc.), each
-// reading its key from a differently-named env var, so a single hardcoded
-// name would have been wrong for anyone not on the default provider.
+// the env var name follows the provider_keys row's own provider field, not
+// just one default -- Goose supports many providers (OpenAI, Anthropic,
+// OpenRouter, etc.), each reading its key from a differently-named env var,
+// so a single hardcoded name would have been wrong for anyone not on the
+// default provider, and a single "currently resolved" provider would have
+// been wrong the moment a user holds keys for more than one.
 func TestProvisionGooseRoutesTheAPIKeyToWhicheverProviderIsSelected(t *testing.T) {
 	app := testApp(t)
 	userID := testUser(t, app, "goose-openai-key-"+uuid.NewString()[:8]+"@example.com").Id
@@ -896,8 +917,9 @@ func TestProvisionGooseRoutesTheAPIKeyToWhicheverProviderIsSelected(t *testing.T
 	if err := app.Save(hm); err != nil {
 		t.Fatal(err)
 	}
+	createTestProviderCatalogEntry(t, app, "openai", "OPENAI_API_KEY")
 	createTestProviderKey(t, app, map[string]any{
-		"provider": "goose",
+		"provider": "openai",
 		"env_vars": map[string]any{"API_KEY": "sk-openai-shape"},
 	}, userID)
 	fake := newFakeDockerClient()
@@ -909,7 +931,7 @@ func TestProvisionGooseRoutesTheAPIKeyToWhicheverProviderIsSelected(t *testing.T
 		t.Fatalf("provisioning failed: %s", rec.GetString("last_error"))
 	}
 	if !containsString(fake.lastCreateSpec.Env, "OPENAI_API_KEY=sk-openai-shape") {
-		t.Errorf("env = %v, want OPENAI_API_KEY=sk-openai-shape for a model catalog row with provider=openai", fake.lastCreateSpec.Env)
+		t.Errorf("env = %v, want OPENAI_API_KEY=sk-openai-shape for a provider_keys row with provider=openai", fake.lastCreateSpec.Env)
 	}
 	if !containsString(fake.lastCreateSpec.Env, "GOOSE_PROVIDER=openai") {
 		t.Errorf("env = %v, want GOOSE_PROVIDER=openai", fake.lastCreateSpec.Env)

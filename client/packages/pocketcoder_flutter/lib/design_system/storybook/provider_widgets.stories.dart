@@ -14,12 +14,13 @@ Widget _app(Widget child) => MaterialApp(
 @wb.UseCase(name: 'no provider selected', type: ProviderKeyEditorDialog)
 Widget providerEditorEmpty(BuildContext context) => _app(ProviderKeyEditorDialog(
       harnesses: const [],
+      providerCatalog: const [],
       onSave: (_) {},
     ));
 
-@wb.UseCase(name: 'provider picker with choices', type: ProviderHarnessPicker)
-Widget providerPickerChoices(BuildContext context) => _app(ProviderHarnessPicker(
-      harnesses: const [],
-      selectedHarnessId: null,
+@wb.UseCase(name: 'provider picker with choices', type: ProviderTargetPicker)
+Widget providerPickerChoices(BuildContext context) => _app(ProviderTargetPicker(
+      targets: const [],
+      selectedProvider: null,
       onSelected: (_) {},
     ));

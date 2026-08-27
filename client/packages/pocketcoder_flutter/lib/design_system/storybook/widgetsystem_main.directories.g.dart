@@ -261,17 +261,6 @@ final directories = <_widgetbook.WidgetbookNode>[
             name: 'widgets',
             children: [
               _widgetbook.WidgetbookComponent(
-                name: 'ProviderHarnessPicker',
-                useCases: [
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'provider picker with choices',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_provider_widgets_stories
-                            .providerPickerChoices,
-                  )
-                ],
-              ),
-              _widgetbook.WidgetbookComponent(
                 name: 'ProviderKeyEditorDialog',
                 useCases: [
                   _widgetbook.WidgetbookUseCase(
@@ -279,6 +268,17 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _pocketcoder_flutter_design_system_storybook_provider_widgets_stories
                             .providerEditorEmpty,
+                  )
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'ProviderTargetPicker',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'provider picker with choices',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_provider_widgets_stories
+                            .providerPickerChoices,
                   )
                 ],
               ),

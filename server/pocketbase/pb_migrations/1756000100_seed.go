@@ -183,10 +183,22 @@ func init() {
 		// Peer ACP harnesses are catalog entries, not compose services. Their
 		// images are built during bootstrap and PocketBase creates the actual
 		// container lazily when a user first selects the harness for a chat.
-		seedManagedHarness := func(name, cliID, version, description, image, command, apiKeyEnv string) error {
+		// apiKeyEnv is the one fixed env var a single-provider harness (Claude
+		// Code, Codex) needs its key delivered under. Pass "" for a
+		// multi-provider (provider_scope "any") harness like OpenCode --
+		// there is no single fixed name (it depends on whichever provider
+		// gets selected), so renderEnv's providerScopeAny branch derives and
+		// injects the right <PROVIDER>_API_KEY name at runtime instead.
+		// modelsDevProvider pins which models.dev provider a self-scoped
+		// harness's model catalog is synced from (internal/modelcatalog) --
+		// its cli_id doesn't necessarily match the models.dev provider id
+		// (e.g. "codex" vs "openai"), so this must be explicit rather than
+		// inferred. Pass "" for a multi-provider (provider_scope "any")
+		// harness like OpenCode, which draws from modelcatalog's curated
+		// multi-provider allowlist instead of one pinned provider.
+		seedManagedHarness := func(name, cliID, version, description, image, command, apiKeyEnv, modelsDevProvider string) error {
 			rec := core.NewRecord(harnessesColl)
 			envTemplate := map[string]string{
-				apiKeyEnv:                "{{.API_KEY}}",
 				"HARNESS_ADAPTER_SECRET": "{{.__adapter_secret}}",
 				// entrypoint.sh's per-harness branching used to key off the
 				// container's $1, which is always "--cmd" (main.go parses it
@@ -196,6 +208,9 @@ func init() {
 				// plain string with no {{}} renders as itself), so
 				// entrypoint.sh can branch on it directly and correctly.
 				"POCKETCODER_HARNESS_CLI_ID": cliID,
+			}
+			if apiKeyEnv != "" {
+				envTemplate[apiKeyEnv] = "{{.API_KEY}}"
 			}
 			if cliID == "opencode" {
 				// The peer entrypoint discovers installed models through this
@@ -208,6 +223,7 @@ func init() {
 			rec.Set("description", description)
 			rec.Set("acp_transport", "stdio")
 			rec.Set("container_image", image)
+			rec.Set("models_dev_provider", modelsDevProvider)
 			rec.Set("launch_template", map[string]any{
 				"cmd":          []string{"--cmd", command, "--port", "3000"},
 				"port":         3000,
@@ -230,21 +246,21 @@ func init() {
 		if err := seedManagedHarness(
 			"Claude Code", "claude-code", "0.64.2",
 			"Claude Agent SDK through the official ACP adapter.",
-			"pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp", "ANTHROPIC_API_KEY",
+			"pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp", "ANTHROPIC_API_KEY", "anthropic",
 		); err != nil {
 			return err
 		}
 		if err := seedManagedHarness(
 			"Codex", "codex", "1.1.9",
 			"OpenAI Codex through the official ACP adapter.",
-			"pocketcoder-harness-codex:1.1.9", "codex-acp", "OPENAI_API_KEY",
+			"pocketcoder-harness-codex:1.1.9", "codex-acp", "OPENAI_API_KEY", "openai",
 		); err != nil {
 			return err
 		}
 		if err := seedManagedHarness(
 			"OpenCode", "opencode", "1.18.11",
 			"OpenCode through its native ACP server.",
-			"pocketcoder-harness-opencode:1.18.11", "opencode acp", "OPENCODE_API_KEY",
+			"pocketcoder-harness-opencode:1.18.11", "opencode acp", "", "",
 		); err != nil {
 			return err
 		}

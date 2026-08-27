@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 
@@ -51,6 +52,13 @@ void main() {
     provider: 'anthropic',
   );
 
+  final testProviderCatalogEntry = domain.Provider(
+    id: 'p-1',
+    providerId: 'anthropic',
+    name: 'Anthropic',
+    apiKeyEnv: 'ANTHROPIC_API_KEY',
+  );
+
   setUpAll(() {
     registerFallbackValue(_FakeProviderKey());
   });
@@ -78,13 +86,14 @@ void main() {
       expect(state.models, isEmpty);
       expect(state.harnessModels, isEmpty);
       expect(state.providerKeys, isEmpty);
+      expect(state.providerCatalog, isEmpty);
       expect(state.error, isNull);
     });
   });
 
   group('ProviderCubit.watchAll', () {
     test(
-      'subscribe yields loading then loaded with all four collections',
+      'subscribe yields loading then loaded with all five collections',
       () async {
         final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
         final modelsCtrl = StreamController<List<Model>>.broadcast();
@@ -92,11 +101,14 @@ void main() {
             StreamController<List<HarnessModel>>.broadcast();
         final providerKeysCtrl =
             StreamController<List<ProviderKey>>.broadcast();
+        final providerCatalogCtrl =
+            StreamController<List<domain.Provider>>.broadcast();
         addTearDown(() async {
           await harnessesCtrl.close();
           await modelsCtrl.close();
           await harnessModelsCtrl.close();
           await providerKeysCtrl.close();
+          await providerCatalogCtrl.close();
         });
 
         when(() => repo.watchHarnesses())
@@ -106,6 +118,8 @@ void main() {
             .thenAnswer((_) => harnessModelsCtrl.stream);
         when(() => repo.watchProviderKeys())
             .thenAnswer((_) => providerKeysCtrl.stream);
+        when(() => repo.watchProviderCatalog())
+            .thenAnswer((_) => providerCatalogCtrl.stream);
 
         final cubit = buildCubit();
         cubit.watchAll();
@@ -117,6 +131,7 @@ void main() {
         modelsCtrl.add([testModel]);
         harnessModelsCtrl.add([testHarnessModel]);
         providerKeysCtrl.add([testProviderKey]);
+        providerCatalogCtrl.add([testProviderCatalogEntry]);
 
         // Let the microtasks drain so listen() callbacks fire.
         await Future<void>.delayed(Duration.zero);
@@ -126,11 +141,13 @@ void main() {
         expect(cubit.state.models, [testModel]);
         expect(cubit.state.harnessModels, [testHarnessModel]);
         expect(cubit.state.providerKeys, [testProviderKey]);
+        expect(cubit.state.providerCatalog, [testProviderCatalogEntry]);
         expect(cubit.state.isSuccess, isTrue);
         verify(() => repo.watchHarnesses()).called(1);
         verify(() => repo.watchModels()).called(1);
         verify(() => repo.watchHarnessModels()).called(1);
         verify(() => repo.watchProviderKeys()).called(1);
+        verify(() => repo.watchProviderCatalog()).called(1);
       },
     );
 
@@ -143,11 +160,14 @@ void main() {
             StreamController<List<HarnessModel>>.broadcast();
         final providerKeysCtrl =
             StreamController<List<ProviderKey>>.broadcast();
+        final providerCatalogCtrl =
+            StreamController<List<domain.Provider>>.broadcast();
         addTearDown(() async {
           await harnessesCtrl.close();
           await modelsCtrl.close();
           await harnessModelsCtrl.close();
           await providerKeysCtrl.close();
+          await providerCatalogCtrl.close();
         });
 
         when(() => repo.watchHarnesses())
@@ -157,6 +177,8 @@ void main() {
             .thenAnswer((_) => harnessModelsCtrl.stream);
         when(() => repo.watchProviderKeys())
             .thenAnswer((_) => providerKeysCtrl.stream);
+        when(() => repo.watchProviderCatalog())
+            .thenAnswer((_) => providerCatalogCtrl.stream);
 
         final cubit = buildCubit();
         cubit.watchAll();

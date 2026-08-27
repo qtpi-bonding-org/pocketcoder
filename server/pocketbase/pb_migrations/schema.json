@@ -162,7 +162,7 @@
       "enabled": true,
       "emailTemplate": {
         "subject": "Login from a new location",
-        "body": "\u003cp\u003eHello,\u003c/p\u003e\n\u003cp\u003eWe noticed a login to your {APP_NAME} account from a new location:\u003c/p\u003e\n\u003cp\u003e\u003cem\u003e{ALERT_INFO}\u003c/em\u003e\u003c/p\u003e\n\u003cp\u003e\u003cstrong\u003eIf this wasn't you, you should immediately change your {APP_NAME} account password to revoke access from all other locations.\u003c/strong\u003e\u003c/p\u003e\n\u003cp\u003eIf this was you, you may disregard this email.\u003c/p\u003e\n\u003cp\u003e\n  Thanks,\u003cbr/\u003e\n  {APP_NAME} team\n\u003c/p\u003e"
+        "body": "<p>Hello,</p>\n<p>We noticed a login to your {APP_NAME} account from a new location:</p>\n<p><em>{ALERT_INFO}</em></p>\n<p><strong>If this wasn't you, you should immediately change your {APP_NAME} account password to revoke access from all other locations.</strong></p>\n<p>If this was you, you may disregard this email.</p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
       }
     },
     "oauth2": {
@@ -192,7 +192,7 @@
       "length": 8,
       "emailTemplate": {
         "subject": "OTP for {APP_NAME}",
-        "body": "\u003cp\u003eHello,\u003c/p\u003e\n\u003cp\u003eYour one-time password is: \u003cstrong\u003e{OTP}\u003c/strong\u003e\u003c/p\u003e\n\u003cp\u003e\u003ci\u003eIf you didn't ask for the one-time password, you can ignore this email.\u003c/i\u003e\u003c/p\u003e\n\u003cp\u003e\n  Thanks,\u003cbr/\u003e\n  {APP_NAME} team\n\u003c/p\u003e"
+        "body": "<p>Hello,</p>\n<p>Your one-time password is: <strong>{OTP}</strong></p>\n<p><i>If you didn't ask for the one-time password, you can ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
       }
     },
     "authToken": {
@@ -212,21 +212,21 @@
     },
     "verificationTemplate": {
       "subject": "Verify your {APP_NAME} email",
-      "body": "\u003cp\u003eHello,\u003c/p\u003e\n\u003cp\u003eThank you for joining us at {APP_NAME}.\u003c/p\u003e\n\u003cp\u003eClick on the button below to verify your email address.\u003c/p\u003e\n\u003cp\u003e\n  \u003ca class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-verification/{TOKEN}\" target=\"_blank\" rel=\"noopener\"\u003eVerify\u003c/a\u003e\n\u003c/p\u003e\n\u003cp\u003e\n  Thanks,\u003cbr/\u003e\n  {APP_NAME} team\n\u003c/p\u003e"
+      "body": "<p>Hello,</p>\n<p>Thank you for joining us at {APP_NAME}.</p>\n<p>Click on the button below to verify your email address.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-verification/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Verify</a>\n</p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
     },
     "resetPasswordTemplate": {
       "subject": "Reset your {APP_NAME} password",
-      "body": "\u003cp\u003eHello,\u003c/p\u003e\n\u003cp\u003eClick on the button below to reset your password.\u003c/p\u003e\n\u003cp\u003e\n  \u003ca class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-password-reset/{TOKEN}\" target=\"_blank\" rel=\"noopener\"\u003eReset password\u003c/a\u003e\n\u003c/p\u003e\n\u003cp\u003e\u003ci\u003eIf you didn't ask to reset your password, you can ignore this email.\u003c/i\u003e\u003c/p\u003e\n\u003cp\u003e\n  Thanks,\u003cbr/\u003e\n  {APP_NAME} team\n\u003c/p\u003e"
+      "body": "<p>Hello,</p>\n<p>Click on the button below to reset your password.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-password-reset/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Reset password</a>\n</p>\n<p><i>If you didn't ask to reset your password, you can ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
     },
     "confirmEmailChangeTemplate": {
       "subject": "Confirm your {APP_NAME} new email address",
-      "body": "\u003cp\u003eHello,\u003c/p\u003e\n\u003cp\u003eClick on the button below to confirm your new email address.\u003c/p\u003e\n\u003cp\u003e\n  \u003ca class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-email-change/{TOKEN}\" target=\"_blank\" rel=\"noopener\"\u003eConfirm new email\u003c/a\u003e\n\u003c/p\u003e\n\u003cp\u003e\u003ci\u003eIf you didn't ask to change your email address, you can ignore this email.\u003c/i\u003e\u003c/p\u003e\n\u003cp\u003e\n  Thanks,\u003cbr/\u003e\n  {APP_NAME} team\n\u003c/p\u003e"
+      "body": "<p>Hello,</p>\n<p>Click on the button below to confirm your new email address.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-email-change/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Confirm new email</a>\n</p>\n<p><i>If you didn't ask to change your email address, you can ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
     }
   },
   {
     "id": "pc_chats",
-    "listRule": "@request.auth.id != '' \u0026\u0026 (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')",
-    "viewRule": "@request.auth.id != '' \u0026\u0026 (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')",
+    "listRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')",
+    "viewRule": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin')",
     "createRule": "@request.auth.id != '' && @request.body.user = @request.auth.id && @request.body.is_system != true",
     "updateRule": "user = @request.auth.id || @request.auth.role = 'agent' || @request.auth.role = 'admin'",
     "deleteRule": "user = @request.auth.id || @request.auth.role = 'admin'",
@@ -1035,11 +1035,11 @@
   },
   {
     "id": "pc_devices",
-    "listRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "viewRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "createRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "updateRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
+    "createRule": "@request.auth.id != '' && user = @request.auth.id",
+    "updateRule": "@request.auth.id != '' && user = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && user = @request.auth.id",
     "name": "devices",
     "type": "base",
     "fields": [
@@ -1177,11 +1177,11 @@
   },
   {
     "id": "pc_notification_rules",
-    "listRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "viewRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "createRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "updateRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
+    "createRule": "@request.auth.id != '' && user = @request.auth.id",
+    "updateRule": "@request.auth.id != '' && user = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && user = @request.auth.id",
     "name": "notification_rules",
     "type": "base",
     "fields": [
@@ -1398,6 +1398,20 @@
         "required": false,
         "system": false,
         "type": "bool"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_harnesses_models_dev_provider",
+        "max": 0,
+        "min": 0,
+        "name": "models_dev_provider",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
       }
     ],
     "indexes": [
@@ -1590,7 +1604,7 @@
     "id": "pc_provider_keys",
     "listRule": "user = @request.auth.id || @request.auth.role = 'admin'",
     "viewRule": "user = @request.auth.id || @request.auth.role = 'admin'",
-    "createRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
+    "createRule": "@request.auth.id != '' && user = @request.auth.id",
     "updateRule": "user = @request.auth.id || @request.auth.role = 'admin'",
     "deleteRule": "user = @request.auth.id || @request.auth.role = 'admin'",
     "name": "provider_keys",
@@ -1977,8 +1991,8 @@
   },
   {
     "id": "pc_agent_sessions",
-    "listRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "viewRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
     "createRule": null,
     "updateRule": null,
     "deleteRule": null,
@@ -2091,11 +2105,11 @@
   },
   {
     "id": "pc_schedule_owners",
-    "listRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "viewRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
     "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
+    "updateRule": "@request.auth.id != '' && user = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && user = @request.auth.id",
     "name": "schedule_owners",
     "type": "base",
     "fields": [
@@ -2192,8 +2206,7 @@
         "type": "text"
       }
     ],
-    "indexes": [
-    ],
+    "indexes": [],
     "created": "2026-07-24 05:34:50.291Z",
     "updated": "2026-07-24 05:34:50.291Z",
     "system": false
@@ -2339,7 +2352,12 @@
         "required": true,
         "system": false,
         "type": "select",
-        "values": ["pending", "running", "stopped", "error"]
+        "values": [
+          "pending",
+          "running",
+          "stopped",
+          "error"
+        ]
       },
       {
         "autogeneratePattern": "",
@@ -2409,11 +2427,11 @@
   },
   {
     "id": "pc_harness_accounts",
-    "listRule": "@request.auth.id != '' \u0026\u0026 (owner = @request.auth.id || visibility = 'deployment')",
-    "viewRule": "@request.auth.id != '' \u0026\u0026 (owner = @request.auth.id || visibility = 'deployment')",
+    "listRule": "@request.auth.id != '' && (owner = @request.auth.id || visibility = 'deployment')",
+    "viewRule": "@request.auth.id != '' && (owner = @request.auth.id || visibility = 'deployment')",
     "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != '' \u0026\u0026 owner = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' \u0026\u0026 owner = @request.auth.id",
+    "updateRule": "@request.auth.id != '' && owner = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && owner = @request.auth.id",
     "name": "harness_accounts",
     "type": "base",
     "fields": [
@@ -2480,7 +2498,10 @@
         "required": true,
         "system": false,
         "type": "select",
-        "values": ["personal", "deployment"]
+        "values": [
+          "personal",
+          "deployment"
+        ]
       },
       {
         "hidden": false,
@@ -2491,7 +2512,11 @@
         "required": true,
         "system": false,
         "type": "select",
-        "values": ["account", "api_key", "none"]
+        "values": [
+          "account",
+          "api_key",
+          "none"
+        ]
       },
       {
         "cascadeDelete": false,
@@ -2515,7 +2540,13 @@
         "required": true,
         "system": false,
         "type": "select",
-        "values": ["disconnected", "connecting", "connected", "error", "needs_api_key"]
+        "values": [
+          "disconnected",
+          "connecting",
+          "connected",
+          "error",
+          "needs_api_key"
+        ]
       },
       {
         "autogeneratePattern": "",
@@ -2561,11 +2592,11 @@
   },
   {
     "id": "pc_harness_account_selections",
-    "listRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "viewRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
+    "listRule": "@request.auth.id != '' && user = @request.auth.id",
+    "viewRule": "@request.auth.id != '' && user = @request.auth.id",
     "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
-    "deleteRule": "@request.auth.id != '' \u0026\u0026 user = @request.auth.id",
+    "updateRule": "@request.auth.id != '' && user = @request.auth.id",
+    "deleteRule": "@request.auth.id != '' && user = @request.auth.id",
     "name": "harness_account_selections",
     "type": "base",
     "fields": [
@@ -2711,7 +2742,14 @@
         "required": true,
         "system": false,
         "type": "select",
-        "values": ["starting", "awaiting_input", "succeeded", "failed", "expired", "cancelled"]
+        "values": [
+          "starting",
+          "awaiting_input",
+          "succeeded",
+          "failed",
+          "expired",
+          "cancelled"
+        ]
       },
       {
         "autogeneratePattern": "",
@@ -2777,20 +2815,169 @@
     "name": "git_ssh_credentials",
     "type": "base",
     "fields": [
-      {"autogeneratePattern":"[a-z0-9]{15}","hidden":false,"id":"text_gitcred_id","max":15,"min":15,"name":"id","pattern":"^[a-z0-9]+$","presentable":false,"primaryKey":true,"required":true,"system":true,"type":"text"},
-      {"cascadeDelete":true,"collectionId":"_pb_users_auth_","hidden":false,"id":"rel_gitcred_user","maxSelect":1,"minSelect":1,"name":"user","presentable":false,"required":true,"system":false,"type":"relation"},
-      {"autogeneratePattern":"","hidden":false,"id":"txt_gitcred_label","max":200,"min":1,"name":"label","pattern":"","presentable":false,"primaryKey":false,"required":true,"system":false,"type":"text"},
-      {"maxSelect":1,"values":["deploy","account"],"hidden":false,"id":"sel_gitcred_kind","name":"kind","presentable":false,"required":true,"system":false,"type":"select"},
-      {"maxSelect":1,"values":["generated","imported"],"hidden":false,"id":"sel_gitcred_source","name":"source","presentable":false,"required":true,"system":false,"type":"select"},
-      {"maxSelect":1,"values":["ed25519"],"hidden":false,"id":"sel_gitcred_algorithm","name":"algorithm","presentable":false,"required":true,"system":false,"type":"select"},
-      {"autogeneratePattern":"","hidden":false,"id":"txt_gitcred_public","max":0,"min":0,"name":"public_key","pattern":"","presentable":false,"primaryKey":false,"required":false,"system":false,"type":"text"},
-      {"autogeneratePattern":"","hidden":false,"id":"txt_gitcred_fingerprint","max":0,"min":0,"name":"fingerprint","pattern":"","presentable":false,"primaryKey":false,"required":false,"system":false,"type":"text"},
-      {"maxSelect":1,"values":["pending","materializing","ready","error","retiring"],"hidden":false,"id":"sel_gitcred_status","name":"status","presentable":false,"required":true,"system":false,"type":"select"},
-      {"autogeneratePattern":"","hidden":false,"id":"txt_gitcred_error","max":2000,"min":0,"name":"last_error","pattern":"","presentable":false,"primaryKey":false,"required":false,"system":false,"type":"text"},
-      {"autogeneratePattern":"","hidden":false,"id":"txt_gitcred_generation","max":200,"min":0,"name":"materialized_generation","pattern":"","presentable":false,"primaryKey":false,"required":false,"system":false,"type":"text"}
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text_gitcred_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "rel_gitcred_user",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "user",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "txt_gitcred_label",
+        "max": 200,
+        "min": 1,
+        "name": "label",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "deploy",
+          "account"
+        ],
+        "hidden": false,
+        "id": "sel_gitcred_kind",
+        "name": "kind",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "generated",
+          "imported"
+        ],
+        "hidden": false,
+        "id": "sel_gitcred_source",
+        "name": "source",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "ed25519"
+        ],
+        "hidden": false,
+        "id": "sel_gitcred_algorithm",
+        "name": "algorithm",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "txt_gitcred_public",
+        "max": 0,
+        "min": 0,
+        "name": "public_key",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "txt_gitcred_fingerprint",
+        "max": 0,
+        "min": 0,
+        "name": "fingerprint",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "pending",
+          "materializing",
+          "ready",
+          "error",
+          "retiring"
+        ],
+        "hidden": false,
+        "id": "sel_gitcred_status",
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "txt_gitcred_error",
+        "max": 2000,
+        "min": 0,
+        "name": "last_error",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "txt_gitcred_generation",
+        "max": 200,
+        "min": 0,
+        "name": "materialized_generation",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      }
     ],
-    "indexes": ["CREATE INDEX idx_git_ssh_credentials_user ON git_ssh_credentials (user)","CREATE UNIQUE INDEX idx_git_ssh_credentials_user_fingerprint ON git_ssh_credentials (user, fingerprint) WHERE fingerprint != ''"],
-    "created":"2026-08-13 00:00:00.000Z","updated":"2026-08-13 00:00:00.000Z","system":false
+    "indexes": [
+      "CREATE INDEX idx_git_ssh_credentials_user ON git_ssh_credentials (user)",
+      "CREATE UNIQUE INDEX idx_git_ssh_credentials_user_fingerprint ON git_ssh_credentials (user, fingerprint) WHERE fingerprint != ''"
+    ],
+    "created": "2026-08-13 00:00:00.000Z",
+    "updated": "2026-08-13 00:00:00.000Z",
+    "system": false
   },
   {
     "id": "pc_git_repository_access",
@@ -2802,20 +2989,169 @@
     "name": "git_repository_access",
     "type": "base",
     "fields": [
-      {"autogeneratePattern":"[a-z0-9]{15}","hidden":false,"id":"text_gitaccess_id","max":15,"min":15,"name":"id","pattern":"^[a-z0-9]+$","presentable":false,"primaryKey":true,"required":true,"system":true,"type":"text"},
-      {"cascadeDelete":true,"collectionId":"_pb_users_auth_","hidden":false,"id":"rel_gitaccess_user","maxSelect":1,"minSelect":1,"name":"user","presentable":false,"required":true,"system":false,"type":"relation"},
-      {"maxSelect":1,"values":["github","gitlab","codeberg"],"hidden":false,"id":"sel_gitaccess_provider","name":"provider","presentable":false,"required":true,"system":false,"type":"select"},
-      {"autogeneratePattern":"","hidden":false,"id":"txt_gitaccess_repo","max":200,"min":1,"name":"repository","pattern":"","presentable":false,"primaryKey":false,"required":true,"system":false,"type":"text"},
-      {"autogeneratePattern":"","hidden":false,"id":"txt_gitaccess_purpose","max":500,"min":1,"name":"purpose","pattern":"","presentable":false,"primaryKey":false,"required":true,"system":false,"type":"text"},
-      {"maxSelect":1,"values":["generated_deploy","existing_account"],"hidden":false,"id":"sel_gitaccess_mode","name":"credential_mode","presentable":false,"required":true,"system":false,"type":"select"},
-      {"cascadeDelete":false,"collectionId":"pc_git_ssh_credentials","hidden":false,"id":"rel_gitaccess_credential","maxSelect":1,"minSelect":0,"name":"credential","presentable":false,"required":false,"system":false,"type":"relation"},
-      {"maxSelect":1,"values":["read_only","read_write"],"hidden":false,"id":"sel_gitaccess_requested","name":"requested_access","presentable":false,"required":true,"system":false,"type":"select"},
-      {"maxSelect":1,"values":["needs_registration","registered","revoked"],"hidden":false,"id":"sel_gitaccess_registration","name":"registration_status","presentable":false,"required":true,"system":false,"type":"select"},
-      {"maxSelect":1,"values":["pending","ready","error"],"hidden":false,"id":"sel_gitaccess_status","name":"status","presentable":false,"required":true,"system":false,"type":"select"},
-      {"autogeneratePattern":"","hidden":false,"id":"txt_gitaccess_error","max":2000,"min":0,"name":"last_error","pattern":"","presentable":false,"primaryKey":false,"required":false,"system":false,"type":"text"}
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text_gitaccess_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": true,
+        "collectionId": "_pb_users_auth_",
+        "hidden": false,
+        "id": "rel_gitaccess_user",
+        "maxSelect": 1,
+        "minSelect": 1,
+        "name": "user",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "github",
+          "gitlab",
+          "codeberg"
+        ],
+        "hidden": false,
+        "id": "sel_gitaccess_provider",
+        "name": "provider",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "txt_gitaccess_repo",
+        "max": 200,
+        "min": 1,
+        "name": "repository",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "txt_gitaccess_purpose",
+        "max": 500,
+        "min": 1,
+        "name": "purpose",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "generated_deploy",
+          "existing_account"
+        ],
+        "hidden": false,
+        "id": "sel_gitaccess_mode",
+        "name": "credential_mode",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "pc_git_ssh_credentials",
+        "hidden": false,
+        "id": "rel_gitaccess_credential",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "credential",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "read_only",
+          "read_write"
+        ],
+        "hidden": false,
+        "id": "sel_gitaccess_requested",
+        "name": "requested_access",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "needs_registration",
+          "registered",
+          "revoked"
+        ],
+        "hidden": false,
+        "id": "sel_gitaccess_registration",
+        "name": "registration_status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "maxSelect": 1,
+        "values": [
+          "pending",
+          "ready",
+          "error"
+        ],
+        "hidden": false,
+        "id": "sel_gitaccess_status",
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "txt_gitaccess_error",
+        "max": 2000,
+        "min": 0,
+        "name": "last_error",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      }
     ],
-    "indexes": ["CREATE UNIQUE INDEX idx_git_repository_access_owner_repo ON git_repository_access (user, provider, repository)","CREATE INDEX idx_git_repository_access_credential ON git_repository_access (credential)"],
-    "created":"2026-08-13 00:00:00.000Z","updated":"2026-08-13 00:00:00.000Z","system":false
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_git_repository_access_owner_repo ON git_repository_access (user, provider, repository)",
+      "CREATE INDEX idx_git_repository_access_credential ON git_repository_access (credential)"
+    ],
+    "created": "2026-08-13 00:00:00.000Z",
+    "updated": "2026-08-13 00:00:00.000Z",
+    "system": false
   },
   {
     "id": "pc_live_activities",
@@ -3012,6 +3348,80 @@
     ],
     "created": "2026-08-23 00:00:00.000Z",
     "updated": "2026-08-23 00:00:00.000Z",
+    "system": false
+  },
+  {
+    "id": "pc_providers",
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "providers",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text_providers_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_providers_provider_id",
+        "max": 0,
+        "min": 0,
+        "name": "provider_id",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_providers_name",
+        "max": 0,
+        "min": 0,
+        "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_providers_api_key_env",
+        "max": 0,
+        "min": 0,
+        "name": "api_key_env",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_providers_provider_id ON providers (provider_id)"
+    ],
+    "created": "2026-08-26 00:00:00.000Z",
+    "updated": "2026-08-26 00:00:00.000Z",
     "system": false
   }
 ]

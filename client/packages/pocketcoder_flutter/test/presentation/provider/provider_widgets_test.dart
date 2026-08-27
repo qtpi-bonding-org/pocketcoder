@@ -15,16 +15,15 @@ Widget _app(Widget child) => MaterialApp(
 
 void main() {
   testWidgets('renders as an expand-variant BiosRow', (tester) async {
-    await tester.pumpWidget(_app(ProviderHarnessPicker(
-      harnesses: const [
-        Harnesse(
-          id: 'h1',
-          name: 'Claude',
-          cliId: 'claude',
-          acpTransport: HarnesseAcpTransport.unknown,
-        ),
-      ],
-      selectedHarnessId: 'h1',
+    const harness = Harnesse(
+      id: 'h1',
+      name: 'Claude',
+      cliId: 'claude',
+      acpTransport: HarnesseAcpTransport.unknown,
+    );
+    await tester.pumpWidget(_app(ProviderTargetPicker(
+      targets: const [HarnessKeyTarget(harness)],
+      selectedProvider: 'claude',
       onSelected: (_) {},
     )));
 

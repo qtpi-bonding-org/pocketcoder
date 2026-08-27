@@ -25,6 +25,7 @@ _Harnesse _$HarnesseFromJson(Map<String, dynamic> json) => _Harnesse(
       supportsSessionDelete: json['supports_session_delete'] as bool?,
       supportsAdditionalDirectories:
           json['supports_additional_directories'] as bool?,
+      modelsDevProvider: json['models_dev_provider'] as String?,
     );
 
 Map<String, dynamic> _$HarnesseToJson(_Harnesse instance) => <String, dynamic>{
@@ -41,6 +42,7 @@ Map<String, dynamic> _$HarnesseToJson(_Harnesse instance) => <String, dynamic>{
       'supports_ollama': instance.supportsOllama,
       'supports_session_delete': instance.supportsSessionDelete,
       'supports_additional_directories': instance.supportsAdditionalDirectories,
+      'models_dev_provider': instance.modelsDevProvider,
     };
 
 const _$HarnesseAcpTransportEnumMap = {

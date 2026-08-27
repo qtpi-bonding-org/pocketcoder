@@ -20,6 +20,7 @@ abstract class Harnesse with _$Harnesse {
     bool? supportsOllama,
     bool? supportsSessionDelete,
     bool? supportsAdditionalDirectories,
+    String? modelsDevProvider,
   }) = _Harnesse;
 
   factory Harnesse.fromRecord(RecordModel record) =>

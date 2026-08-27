@@ -124,7 +124,13 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 	}{
 		{"claude-code", "0.64.2", "pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp", "ANTHROPIC_API_KEY"},
 		{"codex", "1.1.9", "pocketcoder-harness-codex:1.1.9", "codex-acp", "OPENAI_API_KEY"},
-		{"opencode", "1.18.11", "pocketcoder-harness-opencode:1.18.11", "opencode acp", "OPENCODE_API_KEY"},
+		// OpenCode is multi-provider (provider_scope "any"): there is no
+		// single fixed env var name, so its env_template has no static
+		// per-key entry at all -- renderEnv derives the right
+		// <PROVIDER>_API_KEY name at runtime from each provider_keys row's
+		// own provider field instead. apiKeyEnv left "" here means "skip
+		// this check", not "expect a literal OPENCODE_API_KEY".
+		{"opencode", "1.18.11", "pocketcoder-harness-opencode:1.18.11", "opencode acp", ""},
 	}
 	for _, tc := range tests {
 		t.Run(tc.cliID, func(t *testing.T) {
@@ -150,8 +156,11 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 			if len(launch.Cmd) < 2 || launch.Cmd[1] != tc.command || launch.Port != 3000 {
 				t.Errorf("launch template = %+v, want command %q on port 3000", launch, tc.command)
 			}
-			if launch.EnvTemplate[tc.apiKeyEnv] != "{{.API_KEY}}" || launch.EnvTemplate["HARNESS_ADAPTER_SECRET"] != "{{.__adapter_secret}}" {
-				t.Errorf("env_template = %v, missing API key or adapter secret mapping", launch.EnvTemplate)
+			if launch.EnvTemplate["HARNESS_ADAPTER_SECRET"] != "{{.__adapter_secret}}" {
+				t.Errorf("env_template = %v, missing adapter secret mapping", launch.EnvTemplate)
+			}
+			if tc.apiKeyEnv != "" && launch.EnvTemplate[tc.apiKeyEnv] != "{{.API_KEY}}" {
+				t.Errorf("env_template = %v, missing API key mapping", launch.EnvTemplate)
 			}
 			if tc.cliID == "opencode" && launch.EnvTemplate["OLLAMA_HOST"] != "{{.__ollama_host}}" {
 				t.Errorf("OpenCode env_template = %v, missing private Ollama endpoint", launch.EnvTemplate)

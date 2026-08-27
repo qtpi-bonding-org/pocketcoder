@@ -398,6 +398,22 @@ func mintSecret() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
+// apiKeyEnvVarName returns the env var name a provider_keys row's API_KEY
+// value should actually be delivered under for providerID, from the
+// models.dev-synced providers cache (internal/modelcatalog). Falls back to
+// the mechanical <PROVIDER>_API_KEY guess -- correct for the large majority
+// of providers -- when the cache has no entry (not yet synced, or a
+// provider id the cache doesn't recognize, e.g. the pre-catalog value
+// literally naming a harness like "goose" or "opencode").
+func apiKeyEnvVarName(app core.App, providerID string) string {
+	if rec, err := app.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": providerID}); err == nil {
+		if env := rec.GetString("api_key_env"); env != "" {
+			return env
+		}
+	}
+	return strings.ToUpper(providerID) + "_API_KEY"
+}
+
 // renderEnv merges provider_keys according to the catalog harness's
 // provider_scope. ProviderKey.provider stores harnesses.cli_id in the Flutter
 // UI; provider-locked harnesses receive only their own keys, while
@@ -465,37 +481,38 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 			values["OPENROUTER_API_KEY"] = os.Getenv("POCKETCODER_AGENT_TEST_API_KEY")
 		}
 	}
-	// Only OpenCode can run with the local Ollama provider and no cloud key.
-	// Keep missing keys fatal for the Claude/Codex harnesses so their existing
-	// provisioning guardrail remains intact.
-	if provider == "opencode" {
-		values["API_KEY"] = ""
-	}
 	for _, r := range keyRecs {
 		var vars map[string]string
 		if err := r.UnmarshalJSONField("env_vars", &vars); err != nil {
 			continue
 		}
+		// Every multi-provider harness (provider_scope "any": today Goose
+		// and OpenCode) picks its actual LLM provider at runtime, and each
+		// provider it supports reads its key from a differently-named env
+		// var -- OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY, and
+		// so on (both Goose's and OpenCode's own docs agree on this
+		// convention; OpenCode auto-detects whichever is present). There is
+		// no single static name env_template could declare for this, and
+		// keying it off a literal "goose"/"opencode" string would just
+		// reintroduce the same hardcoded-allowlist gap that let Codex's
+		// reauth classification silently miss it earlier. Every
+		// provider_keys row the app can actually create names its value
+		// generically as "API_KEY" (provider_widgets.dart's one API_KEY
+		// field), with the real target provider recorded in the row's own
+		// `provider` field instead -- so translate per-key, from that field,
+		// via the models.dev-synced providers cache (internal/modelcatalog).
+		// Doing this per-key (not from one single resolved "current"
+		// provider) means a user can hold keys for several providers at
+		// once and whichever the harness actually ends up using just works.
+		if providerScopeAny {
+			if key, ok := vars["API_KEY"]; ok && key != "" {
+				values[apiKeyEnvVarName(app, r.GetString("provider"))] = key
+				delete(vars, "API_KEY")
+			}
+		}
 		for k, v := range vars {
 			values[k] = v
 		}
-	}
-	// Goose picks its provider at runtime (GOOSE_PROVIDER), and each provider
-	// it supports reads its key from a differently-named env var --
-	// OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY, and so on,
-	// following <PROVIDER>_API_KEY (see Goose's own environment-variables
-	// docs). There is no single static name env_template could declare for
-	// this. Every provider_keys row the app can actually create names its
-	// value generically as "API_KEY" (provider_widgets.dart's one API_KEY
-	// field), so derive the real env var name Goose needs for whichever
-	// provider actually got resolved and inject it directly -- this is what
-	// providerScopeAny's leftover-value pass below then carries into env,
-	// without needing a template entry.
-	if provider == "goose" {
-		if key := values["API_KEY"]; key != "" {
-			values[strings.ToUpper(values["__provider"])+"_API_KEY"] = key
-		}
-		delete(values, "API_KEY")
 	}
 
 	env := make([]string, 0, len(envTemplate))

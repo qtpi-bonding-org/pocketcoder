@@ -17,6 +17,7 @@ class ProviderCubit extends AppCubit<ProviderState> {
   StreamSubscription? _modelsSub;
   StreamSubscription? _harnessModelsSub;
   StreamSubscription? _providerKeysSub;
+  StreamSubscription? _providerCatalogSub;
 
   @override
   Future<void> close() {
@@ -24,6 +25,7 @@ class ProviderCubit extends AppCubit<ProviderState> {
     _modelsSub?.cancel();
     _harnessModelsSub?.cancel();
     _providerKeysSub?.cancel();
+    _providerCatalogSub?.cancel();
     return super.close();
   }
 
@@ -69,6 +71,16 @@ class ProviderCubit extends AppCubit<ProviderState> {
     _providerKeysSub = _repo.watchProviderKeys().listen(
           (providerKeys) => emit(state.copyWith(
             providerKeys: providerKeys,
+            status: UiFlowStatus.success,
+          )),
+          onError: (Object e) =>
+              emit(state.copyWith(error: e, status: UiFlowStatus.failure)),
+        );
+
+    _providerCatalogSub?.cancel();
+    _providerCatalogSub = _repo.watchProviderCatalog().listen(
+          (providerCatalog) => emit(state.copyWith(
+            providerCatalog: providerCatalog,
             status: UiFlowStatus.success,
           )),
           onError: (Object e) =>

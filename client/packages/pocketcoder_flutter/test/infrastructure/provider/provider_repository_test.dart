@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/domain/exceptions/provider_exception.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
@@ -17,6 +18,8 @@ class MockHarnessModelDao extends Mock implements HarnessModelDao {}
 
 class MockProviderKeyDao extends Mock implements ProviderKeyDao {}
 
+class MockProviderCatalogDao extends Mock implements ProviderCatalogDao {}
+
 class _FakeProviderKey extends Fake implements ProviderKey {}
 
 void main() {
@@ -25,6 +28,7 @@ void main() {
   late MockModelDao modelDao;
   late MockHarnessModelDao harnessModelDao;
   late MockProviderKeyDao providerKeyDao;
+  late MockProviderCatalogDao providerCatalogDao;
 
   final testHarnesse = Harnesse(
     id: 'h-1',
@@ -53,6 +57,13 @@ void main() {
     envVars: {'ANTHROPIC_API_KEY': 'sk-test'},
   );
 
+  final testProviderCatalogEntry = domain.Provider(
+    id: 'p-1',
+    providerId: 'anthropic',
+    name: 'Anthropic',
+    apiKeyEnv: 'ANTHROPIC_API_KEY',
+  );
+
   setUpAll(() {
     registerFallbackValue(<String, dynamic>{});
     registerFallbackValue(_FakeProviderKey());
@@ -63,11 +74,13 @@ void main() {
     modelDao = MockModelDao();
     harnessModelDao = MockHarnessModelDao();
     providerKeyDao = MockProviderKeyDao();
+    providerCatalogDao = MockProviderCatalogDao();
     repo = ProviderRepository(
       harnesseDao,
       modelDao,
       harnessModelDao,
       providerKeyDao,
+      providerCatalogDao,
     );
   });
 
@@ -101,6 +114,15 @@ void main() {
 
     expect(repo.watchProviderKeys(), emits([testProviderKey]));
     verify(() => providerKeyDao.watch()).called(1);
+  });
+
+  test('watchProviderCatalog forwards providerCatalogDao.watch()', () {
+    final stream =
+        Stream<List<domain.Provider>>.value([testProviderCatalogEntry]);
+    when(() => providerCatalogDao.watch()).thenAnswer((_) => stream);
+
+    expect(repo.watchProviderCatalog(), emits([testProviderCatalogEntry]));
+    verify(() => providerCatalogDao.watch()).called(1);
   });
 
   test(

@@ -35,6 +35,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/modelcatalog"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operationapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseidentity"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
@@ -117,6 +118,12 @@ func main() {
 		if err != nil {
 			app.Logger().Warn("agent API not configured; agent profile disabled", "error", err)
 		}
+
+		// A2. Keep the providers/models/harness_models catalog in sync with
+		// models.dev (the same source Goose and OpenCode themselves build
+		// their catalogs from), so API key entry and model selection reflect
+		// real current data instead of a hand-seeded snapshot.
+		modelcatalog.RegisterSync(app)
 
 		// F. Harness instance status watcher: subscribes to the Docker
 		// event stream and reconciles harness_instances.status against

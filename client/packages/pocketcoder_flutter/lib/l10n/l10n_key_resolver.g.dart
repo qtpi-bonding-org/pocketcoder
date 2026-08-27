@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-26T04:22:08.425151
+// Generated at: 2026-08-26T18:03:23.320976
 
 import 'app_localizations.dart';
 
@@ -170,6 +170,11 @@ class L10nKeyResolver {
       'deployment.discard.attempt.confirm' => _l10n.deploymentDiscardAttemptConfirm,
       'deployment.discard.attempt.confirm.checkbox' => _l10n.deploymentDiscardAttemptConfirmCheckbox,
       'deployment.discard.attempt.title' => _l10n.deploymentDiscardAttemptTitle,
+      'deployment.disconnect.action' => _l10n.deploymentDisconnectAction,
+      'deployment.disconnect.cancel' => _l10n.deploymentDisconnectCancel,
+      'deployment.disconnect.confirm' => _l10n.deploymentDisconnectConfirm,
+      'deployment.disconnect.confirmation.body' => _l10n.deploymentDisconnectConfirmationBody,
+      'deployment.disconnect.confirmation.title' => _l10n.deploymentDisconnectConfirmationTitle,
       'deployment.distribution' => _l10n.deploymentDistribution,
       'deployment.fault.deployment.instance.not.found' => _l10n.deploymentFaultDeploymentInstanceNotFound,
       'deployment.gpu.badge' => _l10n.deploymentGpuBadge,
@@ -281,9 +286,11 @@ class L10nKeyResolver {
       'harness.auth.api.key' => _l10n.harnessAuthApiKey,
       'harness.auth.cancel' => _l10n.harnessAuthCancel,
       'harness.auth.challenge' => _l10n.harnessAuthChallenge,
+      'harness.auth.challenge.details.copied' => _l10n.harnessAuthChallengeDetailsCopied,
       'harness.auth.challenge.target.copied' => _l10n.harnessAuthChallengeTargetCopied,
       'harness.auth.choose.provider.key' => _l10n.harnessAuthChooseProviderKey,
       'harness.auth.connections' => _l10n.harnessAuthConnections,
+      'harness.auth.copy' => _l10n.harnessAuthCopy,
       'harness.auth.disconnect' => _l10n.harnessAuthDisconnect,
       'harness.auth.empty' => _l10n.harnessAuthEmpty,
       'harness.auth.loading' => _l10n.harnessAuthLoading,
@@ -1075,6 +1082,11 @@ class L10nKeyResolver {
     'deployment.discard.attempt.confirm.checkbox',
     'deployment.discard.attempt.resource.id',
     'deployment.discard.attempt.title',
+    'deployment.disconnect.action',
+    'deployment.disconnect.cancel',
+    'deployment.disconnect.confirm',
+    'deployment.disconnect.confirmation.body',
+    'deployment.disconnect.confirmation.title',
     'deployment.distribution',
     'deployment.fault.deployment.instance.not.found',
     'deployment.gpu.badge',
@@ -1195,9 +1207,11 @@ class L10nKeyResolver {
     'harness.auth.attempt',
     'harness.auth.cancel',
     'harness.auth.challenge',
+    'harness.auth.challenge.details.copied',
     'harness.auth.challenge.target.copied',
     'harness.auth.choose.provider.key',
     'harness.auth.connections',
+    'harness.auth.copy',
     'harness.auth.details',
     'harness.auth.disconnect',
     'harness.auth.empty',
@@ -1969,6 +1983,11 @@ class L10nKeyResolver {
     'deploymentDiscardAttemptConfirmCheckbox': 'deployment.discard.attempt.confirm.checkbox',
     'deploymentDiscardAttemptResourceId': 'deployment.discard.attempt.resource.id',
     'deploymentDiscardAttemptTitle': 'deployment.discard.attempt.title',
+    'deploymentDisconnectAction': 'deployment.disconnect.action',
+    'deploymentDisconnectCancel': 'deployment.disconnect.cancel',
+    'deploymentDisconnectConfirm': 'deployment.disconnect.confirm',
+    'deploymentDisconnectConfirmationBody': 'deployment.disconnect.confirmation.body',
+    'deploymentDisconnectConfirmationTitle': 'deployment.disconnect.confirmation.title',
     'deploymentDistribution': 'deployment.distribution',
     'deploymentFaultDeploymentInstanceNotFound': 'deployment.fault.deployment.instance.not.found',
     'deploymentGpuBadge': 'deployment.gpu.badge',
@@ -2089,9 +2108,11 @@ class L10nKeyResolver {
     'harnessAuthAttempt': 'harness.auth.attempt',
     'harnessAuthCancel': 'harness.auth.cancel',
     'harnessAuthChallenge': 'harness.auth.challenge',
+    'harnessAuthChallengeDetailsCopied': 'harness.auth.challenge.details.copied',
     'harnessAuthChallengeTargetCopied': 'harness.auth.challenge.target.copied',
     'harnessAuthChooseProviderKey': 'harness.auth.choose.provider.key',
     'harnessAuthConnections': 'harness.auth.connections',
+    'harnessAuthCopy': 'harness.auth.copy',
     'harnessAuthDetails': 'harness.auth.details',
     'harnessAuthDisconnect': 'harness.auth.disconnect',
     'harnessAuthEmpty': 'harness.auth.empty',
@@ -2860,6 +2881,11 @@ class L10nKeyResolver {
     'deployment.discard.attempt.confirm.checkbox': 'deploymentDiscardAttemptConfirmCheckbox',
     'deployment.discard.attempt.resource.id': 'deploymentDiscardAttemptResourceId',
     'deployment.discard.attempt.title': 'deploymentDiscardAttemptTitle',
+    'deployment.disconnect.action': 'deploymentDisconnectAction',
+    'deployment.disconnect.cancel': 'deploymentDisconnectCancel',
+    'deployment.disconnect.confirm': 'deploymentDisconnectConfirm',
+    'deployment.disconnect.confirmation.body': 'deploymentDisconnectConfirmationBody',
+    'deployment.disconnect.confirmation.title': 'deploymentDisconnectConfirmationTitle',
     'deployment.distribution': 'deploymentDistribution',
     'deployment.fault.deployment.instance.not.found': 'deploymentFaultDeploymentInstanceNotFound',
     'deployment.gpu.badge': 'deploymentGpuBadge',
@@ -2980,9 +3006,11 @@ class L10nKeyResolver {
     'harness.auth.attempt': 'harnessAuthAttempt',
     'harness.auth.cancel': 'harnessAuthCancel',
     'harness.auth.challenge': 'harnessAuthChallenge',
+    'harness.auth.challenge.details.copied': 'harnessAuthChallengeDetailsCopied',
     'harness.auth.challenge.target.copied': 'harnessAuthChallengeTargetCopied',
     'harness.auth.choose.provider.key': 'harnessAuthChooseProviderKey',
     'harness.auth.connections': 'harnessAuthConnections',
+    'harness.auth.copy': 'harnessAuthCopy',
     'harness.auth.details': 'harnessAuthDetails',
     'harness.auth.disconnect': 'harnessAuthDisconnect',
     'harness.auth.empty': 'harnessAuthEmpty',
@@ -3758,6 +3786,11 @@ abstract class L10nKeys {
   static const deploymentDiscardAttemptConfirmCheckbox = 'deployment.discard.attempt.confirm.checkbox';
   static (String, Map<String, dynamic>) deploymentDiscardAttemptResourceId(String resourceId) => ('deployment.discard.attempt.resource.id', {'resourceId': resourceId});
   static const deploymentDiscardAttemptTitle = 'deployment.discard.attempt.title';
+  static const deploymentDisconnectAction = 'deployment.disconnect.action';
+  static const deploymentDisconnectCancel = 'deployment.disconnect.cancel';
+  static const deploymentDisconnectConfirm = 'deployment.disconnect.confirm';
+  static const deploymentDisconnectConfirmationBody = 'deployment.disconnect.confirmation.body';
+  static const deploymentDisconnectConfirmationTitle = 'deployment.disconnect.confirmation.title';
   static const deploymentDistribution = 'deployment.distribution';
   static const deploymentFaultDeploymentInstanceNotFound = 'deployment.fault.deployment.instance.not.found';
   static const deploymentGpuBadge = 'deployment.gpu.badge';
@@ -3878,9 +3911,11 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) harnessAuthAttempt(String id) => ('harness.auth.attempt', {'id': id});
   static const harnessAuthCancel = 'harness.auth.cancel';
   static const harnessAuthChallenge = 'harness.auth.challenge';
+  static const harnessAuthChallengeDetailsCopied = 'harness.auth.challenge.details.copied';
   static const harnessAuthChallengeTargetCopied = 'harness.auth.challenge.target.copied';
   static const harnessAuthChooseProviderKey = 'harness.auth.choose.provider.key';
   static const harnessAuthConnections = 'harness.auth.connections';
+  static const harnessAuthCopy = 'harness.auth.copy';
   static (String, Map<String, dynamic>) harnessAuthDetails(String details) => ('harness.auth.details', {'details': details});
   static const harnessAuthDisconnect = 'harness.auth.disconnect';
   static const harnessAuthEmpty = 'harness.auth.empty';

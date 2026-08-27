@@ -21,6 +21,7 @@ class Collections {
   static const String permissionModes = 'permission_modes';
   static const String prompts = 'prompts';
   static const String providerKeys = 'provider_keys';
+  static const String providers = 'providers';
   static const String sandboxAgents = 'sandbox_agents';
   static const String scheduleOwners = 'schedule_owners';
   static const String skills = 'skills';
@@ -48,6 +49,7 @@ class Collections {
     permissionModes,
     prompts,
     providerKeys,
+    providers,
     sandboxAgents,
     scheduleOwners,
     skills,

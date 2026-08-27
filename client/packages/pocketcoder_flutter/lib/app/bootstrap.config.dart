@@ -313,6 +313,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i294.HarnessModelDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i294.ProviderKeyDao>(
         () => _i294.ProviderKeyDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i294.ProviderCatalogDao>(
+        () => _i294.ProviderCatalogDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i479.ScheduleOwnerDao>(
         () => _i479.ScheduleOwnerDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i9.SkillDao>(() => _i9.SkillDao(gh<_i169.PocketBase>()));
@@ -380,12 +382,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i190.IStatusRepository>(
         () => _i907.StatusRepository(gh<_i824.PocketBase>()));
-    gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
-          gh<_i294.HarnesseDao>(),
-          gh<_i294.ModelDao>(),
-          gh<_i294.HarnessModelDao>(),
-          gh<_i294.ProviderKeyDao>(),
-        ));
     gh.lazySingleton<_i611.IObservabilityRepository>(
         () => _i310.ObservabilityRepository(
               gh<_i169.PocketBase>(),
@@ -422,6 +418,13 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i935.PocketCoderApiClient>(),
               gh<_i169.PocketBase>(),
             ));
+    gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
+          gh<_i294.HarnesseDao>(),
+          gh<_i294.ModelDao>(),
+          gh<_i294.HarnessModelDao>(),
+          gh<_i294.ProviderKeyDao>(),
+          gh<_i294.ProviderCatalogDao>(),
+        ));
     gh.lazySingleton<_i14.IHarnessAuthRepository>(
         () => _i417.HarnessAuthRepository(
               gh<_i935.PocketCoderApiClient>(),

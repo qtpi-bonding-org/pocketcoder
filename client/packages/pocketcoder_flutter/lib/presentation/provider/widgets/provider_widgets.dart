@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -8,21 +9,65 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 
+/// One selectable target for a [ProviderKey]: either a single-provider
+/// ("self"-scoped) harness like Claude Code or Codex -- where `provider`
+/// must equal that harness's own `cliId` -- or a models.dev catalog entry
+/// (Anthropic, OpenAI, OpenRouter, ...) covering every multi-provider
+/// ("any"-scoped) harness at once, e.g. Goose and OpenCode -- where
+/// `provider` must equal the models.dev provider id, since renderEnv
+/// (harness_provision.go) derives the real env var name for a multi-provider
+/// harness from that id via internal/modelcatalog's synced cache, not from
+/// which harness happened to be selected.
+sealed class ProviderKeyTarget {
+  const ProviderKeyTarget();
+
+  /// The value stored in `ProviderKey.provider`.
+  String get storedProvider;
+
+  /// The display label for this target.
+  String get label;
+}
+
+class HarnessKeyTarget extends ProviderKeyTarget {
+  const HarnessKeyTarget(this.harness);
+  final Harnesse harness;
+
+  @override
+  String get storedProvider => harness.cliId;
+
+  @override
+  String get label => harness.name.toUpperCase();
+}
+
+class CatalogProviderKeyTarget extends ProviderKeyTarget {
+  const CatalogProviderKeyTarget(this.provider);
+  final domain.Provider provider;
+
+  @override
+  String get storedProvider => provider.providerId;
+
+  @override
+  String get label => provider.name.toUpperCase();
+}
+
 /// Stateful edit dialog body for a single [ProviderKey].
 ///
-/// Lets the user pick a harness (by `cliId`, which is what
-/// `ProviderKey.provider` holds) and enter a single generic `API_KEY` env
-/// var value — there's no HarnessModel/Harnesse schema-driven env var list
-/// in the seeded catalog, so a single field is the right scope.
+/// Lets the user pick a target (a single-provider harness, or a
+/// models.dev-cataloged LLM provider shared by every multi-provider
+/// harness -- see [ProviderKeyTarget]) and enter a single generic
+/// `API_KEY` env var value. The backend translates that generic value into
+/// whichever real env var name the target actually needs.
 class ProviderKeyEditorDialog extends StatefulWidget {
   const ProviderKeyEditorDialog({
     super.key,
     required this.harnesses,
+    required this.providerCatalog,
     required this.onSave,
     this.existing,
   });
 
   final List<Harnesse> harnesses;
+  final List<domain.Provider> providerCatalog;
   final ProviderKey? existing;
   final void Function(ProviderKey updated) onSave;
 
@@ -33,7 +78,16 @@ class ProviderKeyEditorDialog extends StatefulWidget {
 
 class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
   late final TextEditingController _apiKeyController;
-  Harnesse? _selectedHarness;
+  ProviderKeyTarget? _selectedTarget;
+
+  /// Single-provider harnesses selectable directly; multi-provider harnesses
+  /// (Goose, OpenCode, ...) are represented by the provider catalog instead
+  /// -- one key covers all of them for that provider.
+  List<ProviderKeyTarget> get _targets => [
+        for (final h in widget.harnesses)
+          if (h.providerScope != HarnesseProviderScope.any) HarnessKeyTarget(h),
+        for (final p in widget.providerCatalog) CatalogProviderKeyTarget(p),
+      ];
 
   @override
   void initState() {
@@ -45,9 +99,9 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
     }
     final initialEnvValue = _envValueFrom(existing.envVars);
     _apiKeyController.text = initialEnvValue ?? '';
-    for (final h in widget.harnesses) {
-      if (h.cliId == existing.provider) {
-        _selectedHarness = h;
+    for (final target in _targets) {
+      if (target.storedProvider == existing.provider) {
+        _selectedTarget = target;
         break;
       }
     }
@@ -62,14 +116,15 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
   void _handleSave() {
     final value = _apiKeyController.text.trim();
     if (value.isEmpty) return;
-    if (_selectedHarness == null) return;
+    final target = _selectedTarget;
+    if (target == null) return;
 
     final existing = widget.existing;
     widget.onSave(
       ProviderKey(
         id: existing?.id ?? '',
         user: existing?.user ?? '',
-        provider: _selectedHarness?.cliId ?? '',
+        provider: target.storedProvider,
         envVars: <String, dynamic>{'API_KEY': value},
       ),
     );
@@ -78,12 +133,11 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final harnesses = widget.harnesses;
-    final selected = _selectedHarness;
+    final selected = _selectedTarget;
 
     final title = selected == null
         ? context.l10n.providerScreenSelectProvider
-        : context.l10n.providerScreenAddKeyTitle(selected.name.toUpperCase());
+        : context.l10n.providerScreenAddKeyTitle(selected.label);
 
     final initialEntry =
         widget.existing == null ? <String, String>{} : <String, String>{};
@@ -102,14 +156,14 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
             TerminalText(
               selected == null
                   ? context.l10n.providerScreenAddKey
-                  : context.l10n.providerScreenAddKeyBody(selected.name),
+                  : context.l10n.providerScreenAddKeyBody(selected.label),
               alpha: 0.7,
             ),
             VSpace.x2,
-            ProviderHarnessPicker(
-              harnesses: harnesses,
-              selectedHarnessId: selected?.id,
-              onSelected: (h) => setState(() => _selectedHarness = h),
+            ProviderTargetPicker(
+              targets: _targets,
+              selectedProvider: selected?.storedProvider,
+              onSelected: (t) => setState(() => _selectedTarget = t),
             ),
             VSpace.x2,
             TerminalTextField(
@@ -198,33 +252,33 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
   }
 }
 
-class ProviderHarnessPicker extends StatelessWidget {
-  const ProviderHarnessPicker({
+class ProviderTargetPicker extends StatelessWidget {
+  const ProviderTargetPicker({
     super.key,
-    required this.harnesses,
-    required this.selectedHarnessId,
+    required this.targets,
+    required this.selectedProvider,
     required this.onSelected,
   });
 
-  final List<Harnesse> harnesses;
-  final String? selectedHarnessId;
-  final ValueChanged<Harnesse> onSelected;
+  final List<ProviderKeyTarget> targets;
+  final String? selectedProvider;
+  final ValueChanged<ProviderKeyTarget> onSelected;
 
   @override
   Widget build(BuildContext context) {
     return BiosRow(
-      label: 'HARNESS',
+      label: 'PROVIDER',
       value: _currentValueLabel(context),
       variant: BiosRowVariant.expand,
       onTap: () async {
-            final picked = await showDialog<Harnesse>(
+            final picked = await showDialog<ProviderKeyTarget>(
               context: context,
               builder: (dialogContext) => TerminalDialog(
                 title: context.l10n.providerScreenSelectProvider,
                 content: SizedBox(
                   width: double.maxFinite,
                   height: 300,
-                  child: harnesses.isEmpty
+                  child: targets.isEmpty
                       ? Center(
                           child: TerminalText(
                             context.l10n.providerScreenNoProviders,
@@ -233,11 +287,11 @@ class ProviderHarnessPicker extends StatelessWidget {
                         )
                       : ListView(
                           children: [
-                            for (final h in harnesses)
-                              ProviderHarnessOption(
-                                harness: h,
-                                isSelected: selectedHarnessId == h.id,
-                                onTap: () => Navigator.of(dialogContext).pop(h),
+                            for (final t in targets)
+                              ProviderTargetOption(
+                                target: t,
+                                isSelected: selectedProvider == t.storedProvider,
+                                onTap: () => Navigator.of(dialogContext).pop(t),
                               ),
                           ],
                         ),
@@ -257,24 +311,24 @@ class ProviderHarnessPicker extends StatelessWidget {
   }
 
   String _currentValueLabel(BuildContext context) {
-    for (final h in harnesses) {
-      if (h.id == selectedHarnessId) {
-        return h.name.toUpperCase();
+    for (final t in targets) {
+      if (t.storedProvider == selectedProvider) {
+        return t.label;
       }
     }
     return context.l10n.providerScreenSelectProvider.toUpperCase();
   }
 }
 
-class ProviderHarnessOption extends StatelessWidget {
-  const ProviderHarnessOption({
+class ProviderTargetOption extends StatelessWidget {
+  const ProviderTargetOption({
     super.key,
-    required this.harness,
+    required this.target,
     required this.isSelected,
     required this.onTap,
   });
 
-  final Harnesse harness;
+  final ProviderKeyTarget target;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -297,13 +351,13 @@ class ProviderHarnessOption extends StatelessWidget {
           children: [
             Expanded(
               child: TerminalText(
-                harness.name.toUpperCase(),
+                target.label,
                 weight: TerminalTextWeight.heavy,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             TerminalText.mini(
-              harness.cliId,
+              target.storedProvider,
               alpha: 0.5,
             ),
           ],
