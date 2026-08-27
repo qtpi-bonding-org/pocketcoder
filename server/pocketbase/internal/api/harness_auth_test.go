@@ -74,7 +74,7 @@ func TestHarnessAuthOperationsRequireProvider(t *testing.T) {
 	runtime := &fakeHarnessAuthRuntime{}
 	for _, path := range []string{"status", "start", "poll", "submit", "cancel", "disconnect"} {
 		code, body := harnessRequest(t, app, runtime, user, "/api/pocketcoder/v1/harness-auth/"+path, `{}`)
-		if code != http.StatusBadRequest || !strings.Contains(body, "provider") {
+		if code != http.StatusBadRequest || !strings.Contains(strings.ToLower(body), "provider") {
 			t.Errorf("%s: status=%d body=%q, want 400 mentioning provider", path, code, body)
 		}
 	}

@@ -45,37 +45,44 @@ var (
 
 func AddMcpOAuthOperations(app core.App, registry *operation.Registry) {
 	registry.Add(operation.Route{OperationID: "storeMcpOAuthToken", Method: http.MethodPost, Path: "/api/pocketcoder/v1/mcp/oauth/store", Auth: true, Action: func(re *core.RequestEvent) error {
-		if re.Auth == nil {
-			return pocketCoderError(re, 401, "Authentication required")
+		if err := StoreMcpOAuthToken(app, re); err != nil {
+			return err
 		}
-
-		var input struct {
-			ServerName   string `json:"server_name"`
-			AccessToken  string `json:"access_token"`
-			RefreshToken string `json:"refresh_token"`
-		}
-		if err := re.BindBody(&input); err != nil {
-			return pocketCoderError(re, 400, "Invalid request body")
-		}
-		if input.ServerName == "" || input.AccessToken == "" {
-			return pocketCoderError(re, 400, "server_name and access_token are required")
-		}
-
-		if err := storeOAuthToken(app, input.ServerName, input.AccessToken, input.RefreshToken); err != nil {
-			switch err {
-			case errOAuthServerNotFound:
-				return pocketCoderError(re, 404, "mcp server not found")
-			case errOAuthNotConfigured:
-				return pocketCoderError(re, 400, "mcp server is not configured for OAuth (oauth_token_env_var unset)")
-			default:
-				log.Printf("❌ [MCPOAuth] store failed for %q: %v", input.ServerName, err)
-				return pocketCoderError(re, 500, "internal error")
-			}
-		}
-
-		log.Printf("✅ [MCPOAuth] stored OAuth token for server %q", input.ServerName)
 		return re.JSON(200, map[string]any{"stored": true})
 	}})
+}
+
+func StoreMcpOAuthToken(app core.App, re *core.RequestEvent) error {
+	if re.Auth == nil {
+		return re.UnauthorizedError("Authentication required", nil)
+	}
+
+	var input struct {
+		ServerName   string `json:"server_name"`
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := re.BindBody(&input); err != nil {
+		return re.BadRequestError("Invalid request body", nil)
+	}
+	if input.ServerName == "" || input.AccessToken == "" {
+		return re.BadRequestError("server_name and access_token are required", nil)
+	}
+
+	if err := storeOAuthToken(app, input.ServerName, input.AccessToken, input.RefreshToken); err != nil {
+		switch err {
+		case errOAuthServerNotFound:
+			return re.NotFoundError("mcp server not found", nil)
+		case errOAuthNotConfigured:
+			return re.BadRequestError("mcp server is not configured for OAuth (oauth_token_env_var unset)", nil)
+		default:
+			log.Printf("❌ [MCPOAuth] store failed for %q: %v", input.ServerName, err)
+			return re.InternalServerError("internal error", nil)
+		}
+	}
+
+	log.Printf("✅ [MCPOAuth] stored OAuth token for server %q", input.ServerName)
+	return nil
 }
 
 // storeOAuthToken merges access_token (and, if present, refresh_token) into

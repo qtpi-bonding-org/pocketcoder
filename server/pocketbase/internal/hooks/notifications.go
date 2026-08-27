@@ -178,46 +178,53 @@ func RegisterNotificationHooks(app core.App) {
 
 func AddPushOperations(app core.App, registry *operation.Registry) {
 	registry.Add(operation.Route{OperationID: "sendPushNotification", Method: http.MethodPost, Path: "/api/pocketcoder/v1/push", Auth: true, Action: func(re *core.RequestEvent) error {
-		// Only agent or admin can send push notifications
-		role := re.Auth.GetString("role")
-		if role != "agent" && role != "admin" {
-			return apis.NewApiError(403, "Insufficient permissions", nil)
+		if err := SendPushOperation(app, re); err != nil {
+			return err
 		}
-
-		var input struct {
-			UserID  string `json:"user_id"`
-			Title   string `json:"title"`
-			Message string `json:"message"`
-			Type    string `json:"type"`
-			ChatID  string `json:"chat"`
-		}
-
-		if err := re.BindBody(&input); err != nil {
-			return apis.NewApiError(400, "Invalid request body", nil)
-		}
-
-		if input.UserID == "" || input.Type == "" {
-			return apis.NewApiError(400, "user_id and type are required", nil)
-		}
-
-		go func() {
-			// This response has already been sent by the time this runs, so
-			// a panic here (e.g. the app tearing down mid-flight, which a
-			// test reproduced as a nil-pointer panic inside PocketBase's own
-			// query path) would otherwise escape unrecovered and crash the
-			// whole process instead of just failing to notify.
-			defer func() {
-				if r := recover(); r != nil {
-					log.Printf("[Push] dispatch panic: %v", r)
-				}
-			}()
-			if err := SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID); err != nil {
-				log.Printf("[Push] dispatch: %v", err)
-			}
-		}()
-
 		return re.JSON(200, map[string]any{"ok": true})
 	}})
+}
+
+func SendPushOperation(app core.App, re *core.RequestEvent) error {
+	// Only agent or admin can send push notifications
+	role := re.Auth.GetString("role")
+	if role != "agent" && role != "admin" {
+		return apis.NewApiError(403, "Insufficient permissions", nil)
+	}
+
+	var input struct {
+		UserID  string `json:"user_id"`
+		Title   string `json:"title"`
+		Message string `json:"message"`
+		Type    string `json:"type"`
+		ChatID  string `json:"chat"`
+	}
+
+	if err := re.BindBody(&input); err != nil {
+		return apis.NewApiError(400, "Invalid request body", nil)
+	}
+
+	if input.UserID == "" || input.Type == "" {
+		return apis.NewApiError(400, "user_id and type are required", nil)
+	}
+
+	go func() {
+		// This response has already been sent by the time this runs, so
+		// a panic here (e.g. the app tearing down mid-flight, which a
+		// test reproduced as a nil-pointer panic inside PocketBase's own
+		// query path) would otherwise escape unrecovered and crash the
+		// whole process instead of just failing to notify.
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[Push] dispatch panic: %v", r)
+			}
+		}()
+		if err := SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID); err != nil {
+			log.Printf("[Push] dispatch: %v", err)
+		}
+	}()
+
+	return nil
 }
 
 // SendPushNotification is the unified dispatch function.

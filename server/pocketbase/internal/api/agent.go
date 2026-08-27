@@ -165,104 +165,11 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 	}
 
 	registry.Add(operation.Route{OperationID: "promptChat", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/prompt", Auth: true, Action: requireConfigured(func(re *core.RequestEvent) error {
-		chatID := re.Request.PathValue("chatId")
-		_, err := requireOwnedRecord(app, re, "chats", chatID)
+		runID, err := PromptChat(app, service, ollamaBaseURL, re)
 		if err != nil {
 			return err
 		}
-		idemKey := re.Request.Header.Get("Idempotency-Key")
-		if idemKey != "" {
-			if cached, found := service.CheckIdempotency(chatID, idemKey); found {
-				return re.JSON(http.StatusAccepted, cached)
-			}
-		}
-		var input acpsdk.PromptRequest
-		if err := re.BindBody(&input); err != nil {
-			return re.BadRequestError("Invalid run request", err)
-		}
-		prompt := ""
-		for _, block := range input.Prompt {
-			if block.Text != nil {
-				prompt = strings.TrimSpace(block.Text.Text)
-				break
-			}
-		}
-		if prompt == "" {
-			return re.BadRequestError("prompt must include a text content block", nil)
-		}
-		// sessionprofile.Build is otherwise only invoked from inside
-		// StartPrompt's detached run goroutine (via profileFn below), whose
-		// errors are only ever surfaced as a RUN_ERROR hub event, never as
-		// this handler's HTTP response — StartPrompt returns before that
-		// goroutine runs. Resolve it once synchronously here too, but ONLY
-		// short-circuit for the two new error conditions Task 7 introduces
-		// (still provisioning / failed to start) — every other
-		// sessionprofile.Build error (e.g. a workspace-path rejection) must
-		// keep falling through to StartPrompt unchanged, so it continues to
-		// surface asynchronously via the existing RUN_ERROR SSE event exactly
-		// as it did before this task, rather than becoming a new synchronous
-		// 500 for error types this task didn't touch.
-		if _, perr := sessionprofile.Build(app, chatID, re.Request.Context(), ollamaBaseURL); perr != nil {
-			if errors.Is(perr, sessionprofile.ErrProvisioning) {
-				// 202 here would violate this operation's own OpenAPI
-				// contract: its 202 response is locked to AcceptedResponse
-				// ({runId}, additionalProperties: false), so a client
-				// deserializing this against that schema throws instead of
-				// surfacing a friendly retry state. 503/Unavailable is
-				// already documented for this exact operation and already
-				// maps client-side to AgentUnavailableFailure.
-				return apis.NewApiError(http.StatusServiceUnavailable, "Harness is starting; retry shortly", nil)
-			}
-			if errors.Is(perr, sessionprofile.ErrHarnessFailed) {
-				return apis.NewApiError(http.StatusBadGateway, "Harness failed to start", nil)
-			}
-		}
-		runID, err := service.StartPrompt(chatID, prompt,
-			func(context.Context) (string, error) { return sessionprofile.SessionForChat(app, chatID, re.Auth.Id) },
-			func(ctx context.Context) (coordinator.SessionProfile, error) {
-				return sessionprofile.Build(app, chatID, ctx, ollamaBaseURL)
-			},
-			func(ctx context.Context, sessionID string) error {
-				profile, perr := sessionprofile.Build(app, chatID, ctx, ollamaBaseURL)
-				if perr != nil {
-					return perr
-				}
-				err := sessionprofile.SaveSession(ctx, app, chatID, re.Auth.Id, sessionID, profile.ResolvedInstanceID)
-				if err == nil {
-					app.Logger().Debug("Goose session mapping created", "chat_id", chatID)
-				}
-				return err
-			},
-			func(ctx context.Context, stopReason acpsdk.StopReason) error {
-				go func() {
-					if err := hooks.SendPushNotification(app, re.Auth.Id, "PocketCoder", "Your agent replied", "chat_reply", chatID); err != nil {
-						log.Printf("[Push] chat reply: %v", err)
-					}
-				}()
-				return nil
-			}, coordinator.WithOnRunEnded(func(ctx context.Context, chatID string, outcome coordinator.RunOutcome) {
-				go func() {
-					if err := hooks.NotifyRunFinished(app, chatID, string(outcome)); err != nil {
-						log.Printf("[Push] run finished: %v", err)
-					}
-				}()
-			}))
-		if err != nil {
-			if errors.Is(err, coordinator.ErrRunInProgress) {
-				return apis.NewApiError(http.StatusConflict, "A run is already active for this chat", nil)
-			}
-			return apis.NewApiError(http.StatusInternalServerError, "Unable to start agent run", err)
-		}
-		result := map[string]string{"runId": runID}
-		go func() {
-			if err := hooks.NotifyRunStarted(app, chatID); err != nil {
-				log.Printf("[Push] run started: %v", err)
-			}
-		}()
-		if idemKey != "" {
-			service.RecordIdempotency(chatID, idemKey, result)
-		}
-		return re.JSON(http.StatusAccepted, result)
+		return re.JSON(http.StatusAccepted, map[string]string{"runId": runID})
 	})})
 
 	// GET stream is the durable subscription: it attaches to the chat's hub at
@@ -343,8 +250,7 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 
 	registry.Add(operation.Route{OperationID: "setChatMode", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/set-mode", Auth: true, Action: requireConfigured(func(re *core.RequestEvent) error {
 		chatID := re.Request.PathValue("chatId")
-		_, err := requireOwnedRecord(app, re, "chats", chatID)
-		if err != nil {
+		if _, err := requireOwnedRecord(app, re, "chats", chatID); err != nil {
 			return err
 		}
 		var input struct {
@@ -353,19 +259,15 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		if err := re.BindBody(&input); err != nil || strings.TrimSpace(input.ModeID) == "" {
 			return re.BadRequestError("modeId is required", err)
 		}
-		if err := service.SetMode(re.Request.Context(), chatID, input.ModeID); err != nil {
-			if errors.Is(err, coordinator.ErrNoActiveRun) {
-				return re.BadRequestError("No active run to set mode on", nil)
-			}
-			return apis.NewApiError(http.StatusBadGateway, "Unable to set mode", err)
+		if err := SetChatMode(re, service, chatID, input.ModeID); err != nil {
+			return err
 		}
 		return re.NoContent(http.StatusAccepted)
 	})})
 
 	registry.Add(operation.Route{OperationID: "setChatConfigOption", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/set-config-option", Auth: true, Action: requireConfigured(func(re *core.RequestEvent) error {
 		chatID := re.Request.PathValue("chatId")
-		_, err := requireOwnedRecord(app, re, "chats", chatID)
-		if err != nil {
+		if _, err := requireOwnedRecord(app, re, "chats", chatID); err != nil {
 			return err
 		}
 		var req acpsdk.SetSessionConfigOptionRequest
@@ -375,11 +277,8 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		if req.Boolean == nil && req.ValueId == nil {
 			return re.BadRequestError("a config option value is required", nil)
 		}
-		if err := service.SetConfigOption(re.Request.Context(), chatID, req); err != nil {
-			if errors.Is(err, coordinator.ErrNoActiveRun) {
-				return re.BadRequestError("No active run to set config on", nil)
-			}
-			return apis.NewApiError(http.StatusBadGateway, "Unable to set config option", err)
+		if err := SetChatConfigOption(re, service, chatID, req); err != nil {
+			return err
 		}
 		return re.NoContent(http.StatusAccepted)
 	})})
@@ -388,8 +287,7 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 	// against the exact set Goose offered before it is forwarded over ACP.
 	registry.Add(operation.Route{OperationID: "respondToPermission", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/request-permission/{id}", Auth: true, Action: requireConfigured(func(re *core.RequestEvent) error {
 		chatID := re.Request.PathValue("chatId")
-		_, err := requireOwnedRecord(app, re, "chats", chatID)
-		if err != nil {
+		if _, err := requireOwnedRecord(app, re, "chats", chatID); err != nil {
 			return err
 		}
 		var input acpsdk.RequestPermissionResponse
@@ -397,26 +295,8 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 			return re.BadRequestError("Invalid permission response", err)
 		}
 		requestID := re.Request.PathValue("id")
-		switch {
-		case input.Outcome.Selected != nil:
-			optionID := strings.TrimSpace(string(input.Outcome.Selected.OptionId))
-			if optionID == "" {
-				return re.BadRequestError("optionId is required", nil)
-			}
-			err = service.Approve(re.Request.Context(), chatID, requestID, optionID)
-		case input.Outcome.Cancelled != nil:
-			err = service.DenyPermission(chatID, requestID)
-		default:
-			return re.BadRequestError("outcome must be selected or cancelled", nil)
-		}
-		if errors.Is(err, coordinator.ErrNoPendingPermission) {
-			return re.NotFoundError("Pending permission not found", err)
-		}
-		if errors.Is(err, coordinator.ErrPermissionOptionNotOffered) {
-			return re.BadRequestError("Permission option was not offered", err)
-		}
-		if err != nil {
-			return apis.NewApiError(http.StatusBadGateway, "Unable to submit permission decision", err)
+		if err := RespondToPermission(re, service, chatID, requestID, input); err != nil {
+			return err
 		}
 		return re.NoContent(http.StatusAccepted)
 	})})
@@ -425,8 +305,7 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 	// its own id-space, its own resolution path.
 	registry.Add(operation.Route{OperationID: "respondToElicitation", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/elicitation/{id}", Auth: true, Action: requireConfigured(func(re *core.RequestEvent) error {
 		chatID := re.Request.PathValue("chatId")
-		_, err := requireOwnedRecord(app, re, "chats", chatID)
-		if err != nil {
+		if _, err := requireOwnedRecord(app, re, "chats", chatID); err != nil {
 			return err
 		}
 		var input struct {
@@ -447,12 +326,8 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		default:
 			return re.BadRequestError("action must be accept, decline, or cancel", nil)
 		}
-		err = service.ResolveElicitation(chatID, re.Request.PathValue("id"), resp)
-		if errors.Is(err, coordinator.ErrNoPendingElicitation) {
-			return re.NotFoundError("Pending elicitation not found", err)
-		}
-		if err != nil {
-			return apis.NewApiError(http.StatusBadGateway, "Unable to submit elicitation response", err)
+		if err := RespondToElicitation(re, service, chatID, re.Request.PathValue("id"), resp); err != nil {
+			return err
 		}
 		return re.NoContent(http.StatusAccepted)
 	})})
@@ -497,6 +372,71 @@ func CancelChatSession(app core.App, service coordinator.AgentRuntime, re *core.
 	}
 	if idemKey != "" {
 		service.RecordIdempotency(chatID, idemKey, struct{}{})
+	}
+	return nil
+}
+
+// SetChatMode changes the active run's mode. Shared by the registry action
+// (raw-body parsing) and the strict operation adapter (typed request body).
+func SetChatMode(re *core.RequestEvent, service coordinator.AgentRuntime, chatID, modeID string) error {
+	if err := service.SetMode(re.Request.Context(), chatID, modeID); err != nil {
+		if errors.Is(err, coordinator.ErrNoActiveRun) {
+			return re.BadRequestError("No active run to set mode on", nil)
+		}
+		return apis.NewApiError(http.StatusBadGateway, "Unable to set mode", err)
+	}
+	return nil
+}
+
+// SetChatConfigOption changes a single session config option on the active
+// run. Shared by the registry action and the strict operation adapter.
+func SetChatConfigOption(re *core.RequestEvent, service coordinator.AgentRuntime, chatID string, req acpsdk.SetSessionConfigOptionRequest) error {
+	if err := service.SetConfigOption(re.Request.Context(), chatID, req); err != nil {
+		if errors.Is(err, coordinator.ErrNoActiveRun) {
+			return re.BadRequestError("No active run to set config on", nil)
+		}
+		return apis.NewApiError(http.StatusBadGateway, "Unable to set config option", err)
+	}
+	return nil
+}
+
+// RespondToPermission resolves a pending permission request with the
+// caller's decision. Shared by the registry action and the strict operation
+// adapter.
+func RespondToPermission(re *core.RequestEvent, service coordinator.AgentRuntime, chatID, requestID string, input acpsdk.RequestPermissionResponse) error {
+	var err error
+	switch {
+	case input.Outcome.Selected != nil:
+		optionID := strings.TrimSpace(string(input.Outcome.Selected.OptionId))
+		if optionID == "" {
+			return re.BadRequestError("optionId is required", nil)
+		}
+		err = service.Approve(re.Request.Context(), chatID, requestID, optionID)
+	case input.Outcome.Cancelled != nil:
+		err = service.DenyPermission(chatID, requestID)
+	default:
+		return re.BadRequestError("outcome must be selected or cancelled", nil)
+	}
+	if errors.Is(err, coordinator.ErrNoPendingPermission) {
+		return re.NotFoundError("Pending permission not found", err)
+	}
+	if errors.Is(err, coordinator.ErrPermissionOptionNotOffered) {
+		return re.BadRequestError("Permission option was not offered", err)
+	}
+	if err != nil {
+		return apis.NewApiError(http.StatusBadGateway, "Unable to submit permission decision", err)
+	}
+	return nil
+}
+
+// RespondToElicitation resolves a pending elicitation request. Shared by the
+// registry action and the strict operation adapter.
+func RespondToElicitation(re *core.RequestEvent, service coordinator.AgentRuntime, chatID, requestID string, resp acpsdk.UnstableCreateElicitationResponse) error {
+	if err := service.ResolveElicitation(chatID, requestID, resp); err != nil {
+		if errors.Is(err, coordinator.ErrNoPendingElicitation) {
+			return re.NotFoundError("Pending elicitation not found", err)
+		}
+		return apis.NewApiError(http.StatusBadGateway, "Unable to submit elicitation response", err)
 	}
 	return nil
 }

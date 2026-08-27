@@ -2,10 +2,8 @@ package operationapi
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -29,76 +27,6 @@ func dispatchContext(re *core.RequestEvent) context.Context {
 
 func routeFor(id string, action operation.Action) operation.Route {
 	return operation.Route{OperationID: id, Method: http.MethodGet, Path: "/items/{id}", Action: action}
-}
-
-func TestDispatchRejectsUnavailableRequestContext(t *testing.T) {
-	s := &server{registry: operation.NewRegistry()}
-	_, err := s.dispatch(context.Background(), "anything", nil)
-	if err == nil || err.Error() != "PocketBase request context is unavailable" {
-		t.Fatalf("err=%v", err)
-	}
-}
-
-func TestDispatchRejectsUnknownOperation(t *testing.T) {
-	s := &server{registry: operation.NewRegistry()}
-	re, _ := dispatchEvent()
-	_, err := s.dispatch(dispatchContext(re), "unknown", nil)
-	if err == nil || err.Error() != "operation is not registered: unknown" {
-		t.Fatalf("err=%v", err)
-	}
-}
-
-func TestDispatchRejectsDirectOperation(t *testing.T) {
-	reg := operation.NewRegistry()
-	route := routeFor("direct", func(*core.RequestEvent) error { t.Fatal("action called"); return nil })
-	route.Direct = true
-	reg.Add(route)
-	re, _ := dispatchEvent()
-	_, err := (&server{registry: reg}).dispatch(dispatchContext(re), "direct", nil)
-	if err == nil || err.Error() != "direct operation reached strict server: direct" {
-		t.Fatalf("err=%v", err)
-	}
-}
-
-func TestDispatchSetsPathValues(t *testing.T) {
-	reg := operation.NewRegistry()
-	reg.Add(routeFor("path", func(re *core.RequestEvent) error {
-		if got := re.Request.PathValue("id"); got != "abc" {
-			t.Errorf("PathValue(id)=%q", got)
-		}
-		return nil
-	}))
-	re, _ := dispatchEvent()
-	if _, err := (&server{registry: reg}).dispatch(dispatchContext(re), "path", map[string]string{"id": "abc"}); err != nil {
-		t.Fatal(err)
-	}
-}
-
-// TestDispatchNoLongerGatesAuthItself documents a deliberate relocation:
-// auth gating moved to authMiddleware (see the two tests below), which
-// runs before any strict operation ever reaches dispatch() in production.
-// dispatch(), called directly and in isolation (as every other test in
-// this file does), now runs the action regardless of Auth/re.Auth -- if
-// this test ever starts failing because dispatch() silently started
-// gating auth again, that's a real regression (duplicated, and possibly
-// inconsistent, auth logic in two places).
-func TestDispatchNoLongerGatesAuthItself(t *testing.T) {
-	called := false
-	reg := operation.NewRegistry()
-	route := routeFor("private", func(*core.RequestEvent) error { called = true; return nil })
-	route.Auth = true
-	reg.Add(route)
-	re, _ := dispatchEvent()
-	response, err := (&server{registry: reg}).dispatch(dispatchContext(re), "private", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !called {
-		t.Fatal("action was not called -- auth gating unexpectedly still happens inside dispatch")
-	}
-	if response.status != http.StatusOK {
-		t.Fatalf("status=%d", response.status)
-	}
 }
 
 func TestAuthMiddlewareRejectsUnauthenticatedRequestForAuthRequiredOperation(t *testing.T) {
@@ -142,151 +70,6 @@ func TestAuthMiddlewareAllowsOperationsThatDoNotRequireAuth(t *testing.T) {
 	}
 }
 
-func TestDispatchMapsActionError(t *testing.T) {
-	reg := operation.NewRegistry()
-	reg.Add(routeFor("failure", func(*core.RequestEvent) error { return errors.New("boom") }))
-	re, _ := dispatchEvent()
-	response, err := (&server{registry: reg}).dispatch(dispatchContext(re), "failure", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// router.ErrorHandler maps a plain (non-*router.ApiError) error through
-	// router.ToApiError, which defaults to NewBadRequestError (400) rather
-	// than 500 -- every real internal/api handler always returns a typed
-	// ApiError (via pocketCoderError/apis.NewApiError/re.XxxError), so this
-	// default-mapping path is a fallback for handlers that don't, not the
-	// common case; the point of this test is that dispatch really does run
-	// the action's error through router.ErrorHandler, not that any specific
-	// status wins.
-	if response.status != http.StatusBadRequest {
-		t.Fatalf("status=%d", response.status)
-	}
-	// PocketBase's ApiError deliberately never serializes a plain action
-	// error's raw message (only *router.ApiError's own Message field is
-	// marshaled) -- a generic "Something went wrong" body is the correct,
-	// by-design outcome here, not a leak of "boom".
-	if !strings.Contains(string(response.body), "Something went wrong") {
-		t.Fatalf("body=%q", response.body)
-	}
-	if strings.Contains(string(response.body), "boom") {
-		t.Fatalf("action error text leaked into response body: %q", response.body)
-	}
-}
-
-func TestDispatchCapturesAndWritesResponse(t *testing.T) {
-	reg := operation.NewRegistry()
-	reg.Add(routeFor("success", func(re *core.RequestEvent) error {
-		re.Response.Header().Set("X-Test", "yes")
-		re.Response.WriteHeader(http.StatusCreated)
-		_, _ = re.Response.Write([]byte("hello"))
-		return nil
-	}))
-	re, _ := dispatchEvent()
-	response, err := (&server{registry: reg}).dispatch(dispatchContext(re), "success", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if response.status != http.StatusCreated || string(response.body) != "hello" || response.header.Get("X-Test") != "yes" {
-		t.Fatalf("response status=%d headers=%v body=%q", response.status, response.header, response.body)
-	}
-	out := httptest.NewRecorder()
-	if err := response.write(out); err != nil {
-		t.Fatal(err)
-	}
-	if out.Code != http.StatusCreated || out.Header().Get("X-Test") != "yes" || out.Body.String() != "hello" {
-		t.Fatalf("written status=%d headers=%v body=%q", out.Code, out.Header(), out.Body.String())
-	}
-}
-
-// TestServerMethodsDelegateToDispatch covers the ~24 mechanical
-// server.Xxx wrapper methods: each is a one-line delegation to dispatch
-// with a fixed operationID and pathValues built from the request object.
-// A spy route per operationID records what dispatch actually received, so
-// this proves each wrapper wires the right operationID/pathValues rather
-// than re-testing dispatch's own logic (already covered above).
-func TestServerMethodsDelegateToDispatch(t *testing.T) {
-	seen := map[string]map[string]string{}
-	reg := operation.NewRegistry()
-	for _, id := range []string{
-		"streamChatEvents", "getWorkspaceFile",
-		"streamContainerLogs", "listContainers", "pullOllamaModel", "proxyObservability",
-	} {
-		opID := id
-		reg.Add(routeFor(opID, func(re *core.RequestEvent) error {
-			values := map[string]string{}
-			for _, name := range []string{"chatId", "id", "scheduleId"} {
-				if v := re.Request.PathValue(name); v != "" {
-					values[name] = v
-				}
-			}
-			seen[opID] = values
-			return nil
-		}))
-	}
-
-	s := &server{registry: reg}
-
-	// Each call gets its own request/context: dispatch calls
-	// re.Request.SetPathValue on the shared underlying request, so reusing
-	// one across calls would leak earlier calls' path values into later
-	// ones with no path params of their own.
-	newCtx := func() context.Context {
-		re, _ := dispatchEvent()
-		return dispatchContext(re)
-	}
-	call := func(name string, err error) {
-		t.Helper()
-		if err != nil {
-			t.Fatalf("%s: %v", name, err)
-		}
-	}
-
-	_, err := s.StreamChatEvents(newCtx(), openapi.StreamChatEventsRequestObject{})
-	call("StreamChatEvents", err)
-	_, err = s.GetWorkspaceFile(newCtx(), openapi.GetWorkspaceFileRequestObject{})
-	call("GetWorkspaceFile", err)
-	_, err = s.StreamContainerLogs(newCtx(), openapi.StreamContainerLogsRequestObject{})
-	call("StreamContainerLogs", err)
-	_, err = s.ListContainers(newCtx(), openapi.ListContainersRequestObject{})
-	call("ListContainers", err)
-	_, err = s.PullOllamaModel(newCtx(), openapi.PullOllamaModelRequestObject{})
-	call("PullOllamaModel", err)
-	_, err = s.ProxyObservability(newCtx(), openapi.ProxyObservabilityRequestObject{})
-	call("ProxyObservability", err)
-
-	wantPathValues := map[string]map[string]string{
-		"streamChatEvents":    {},
-		"getWorkspaceFile":    {},
-		"streamContainerLogs": {},
-		"listContainers":      {},
-		"pullOllamaModel":     {},
-		"proxyObservability":  {},
-	}
-	for opID, want := range wantPathValues {
-		got, ok := seen[opID]
-		if !ok {
-			t.Errorf("%s: dispatch never invoked", opID)
-			continue
-		}
-		if len(got) != len(want) {
-			t.Errorf("%s: pathValues=%v, want %v", opID, got, want)
-			continue
-		}
-		for k, v := range want {
-			if got[k] != v {
-				t.Errorf("%s: pathValues[%s]=%q, want %q", opID, k, got[k], v)
-			}
-		}
-	}
-}
-
-// TestGetReleaseCompatibilityBuildsATypedResponseWithoutDispatch is the
-// first operation converted off the rawResponse bridge (see
-// docs/superpowers/plans/2026-08-27-strict-openapi-contract-migration.md).
-// Deliberately uses an empty registry with no "getReleaseCompatibility"
-// entry: if this method still called dispatch under the hood, it would
-// fail with "operation is not registered" -- this is the regression guard
-// that it genuinely builds its own typed response now.
 func TestGetReleaseCompatibilityBuildsATypedResponseWithoutDispatch(t *testing.T) {
 	s := &server{registry: operation.NewRegistry()}
 	response, err := s.GetReleaseCompatibility(context.Background(), openapi.GetReleaseCompatibilityRequestObject{})
@@ -302,39 +85,5 @@ func TestGetReleaseCompatibilityBuildsATypedResponseWithoutDispatch(t *testing.T
 	}
 	if typed.Compatibility == nil {
 		t.Fatal("compatibility is nil")
-	}
-}
-
-// TestVisitResponsesAllWriteThrough covers the ~24 mechanical
-// rawResponse.VisitXxxResponse methods, each of which is a one-line
-// delegation to rawResponse.write (already directly tested above via
-// TestDispatchCapturesAndWritesResponse's response.write call) -- this
-// proves every Visit* variant reaches that same write path, not just the
-// bare write method itself.
-func TestVisitResponsesAllWriteThrough(t *testing.T) {
-	r := rawResponse{status: http.StatusTeapot, body: []byte("teapot")}
-	visitors := []func(http.ResponseWriter) error{
-		r.VisitCancelChatSessionResponse, r.VisitRespondToElicitationResponse,
-		r.VisitPromptChatResponse, r.VisitRespondToPermissionResponse,
-		r.VisitSetChatConfigOptionResponse, r.VisitSetChatModeResponse,
-		r.VisitStreamChatEventsResponse, r.VisitGetWorkspaceFileResponse,
-		r.VisitListWorkspaceFilesResponse, r.VisitCancelHarnessAuthResponse,
-		r.VisitDisconnectHarnessAuthResponse, r.VisitPollHarnessAuthResponse,
-		r.VisitStartHarnessAuthResponse, r.VisitGetHarnessAuthStatusResponse,
-		r.VisitSubmitHarnessAuthResponse, r.VisitStreamContainerLogsResponse,
-		r.VisitStoreMcpOAuthTokenResponse, r.VisitExecuteMcpRequestResponse,
-		r.VisitListOllamaModelsResponse, r.VisitPullOllamaModelResponse,
-		r.VisitProxyObservabilityResponse, r.VisitSendPushNotificationResponse,
-		r.VisitGetReleaseCompatibilityResponse, r.VisitGetReleaseStatusResponse,
-		r.VisitRunScheduleNowResponse,
-	}
-	for i, visit := range visitors {
-		out := httptest.NewRecorder()
-		if err := visit(out); err != nil {
-			t.Fatalf("visitor %d: %v", i, err)
-		}
-		if out.Code != http.StatusTeapot || out.Body.String() != "teapot" {
-			t.Fatalf("visitor %d: status=%d body=%q", i, out.Code, out.Body.String())
-		}
 	}
 }

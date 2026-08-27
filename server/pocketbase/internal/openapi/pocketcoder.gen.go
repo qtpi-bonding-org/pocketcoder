@@ -110,9 +110,9 @@ type DecisionRequest map[string]interface{}
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
-	Code    int                    `json:"code"`
 	Data    map[string]interface{} `json:"data"`
 	Message string                 `json:"message"`
+	Status  int                    `json:"status"`
 }
 
 // FileEntry defines model for FileEntry.

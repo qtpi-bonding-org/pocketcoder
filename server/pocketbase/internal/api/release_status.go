@@ -24,6 +24,26 @@ type releasePointerResponse struct {
 	Compatibility             json.RawMessage `json:"compatibility"`
 }
 
+type ReleaseStatusDocument struct {
+	ReleaseDigest             string `json:"releaseDigest"`
+	SourceCommit              string `json:"sourceCommit"`
+	ServerVersion             string `json:"serverVersion"`
+	DataVersion               int    `json:"dataVersion"`
+	DeploymentContractVersion int    `json:"deploymentContractVersion"`
+}
+
+func ReleaseStatus() (ReleaseStatusDocument, map[string]any, error) {
+	var pointer releasePointerResponse
+	if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return ReleaseStatusDocument{}, nil, err
+	}
+	var metadata map[string]any
+	if err := readJSON(filepath.Join(releaseStateDir(), "metadata-status.json"), &metadata); err != nil {
+		metadata = map[string]any{"schemaVersion": 1, "status": "unknown"}
+	}
+	return ReleaseStatusDocument{pointer.ReleaseDigest, pointer.SourceCommit, pointer.ServerVersion, pointer.DataVersion, pointer.DeploymentContractVersion}, metadata, nil
+}
+
 var developmentCompatibility = map[string]any{
 	"app": map[string]any{
 		"contractVersion": 1,
@@ -90,15 +110,10 @@ func AddReleaseStatusOperations(registry *operation.Registry) {
 	}})
 
 	registry.Add(operation.Route{OperationID: "getReleaseStatus", Method: http.MethodGet, Path: "/api/pocketcoder/v1/release/status", Auth: true, Action: func(re *core.RequestEvent) error {
-		var pointer releasePointerResponse
-		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil &&
-			!errors.Is(err, os.ErrNotExist) {
+		pointer, metadataStatus, err := ReleaseStatus()
+		if err != nil {
 			log.Printf("[ReleaseStatus] read release state failed: %v", err)
 			return re.InternalServerError("release state unavailable", nil)
-		}
-		var metadataStatus map[string]any
-		if err := readJSON(filepath.Join(releaseStateDir(), "metadata-status.json"), &metadataStatus); err != nil {
-			metadataStatus = map[string]any{"schemaVersion": 1, "status": "unknown"}
 		}
 		return re.JSON(http.StatusOK, map[string]any{
 			"schemaVersion":  1,

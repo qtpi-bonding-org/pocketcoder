@@ -34,7 +34,7 @@ import (
 )
 
 // fileEntry is one immediate child of a listed directory.
-type fileEntry struct {
+type FileEntry struct {
 	Name    string `json:"name"`
 	IsDir   bool   `json:"isDir"`
 	Size    int64  `json:"size"`
@@ -80,8 +80,8 @@ func resolveWorkspacePath(pathParam string) (cleanPath string, ok bool) {
 // never populates ListObject.IsDir) into immediate-children-only entries
 // relative to prefix. Deeper descendants of a subdirectory are deduped into
 // a single directory entry.
-func groupImmediateChildren(prefix string, objects []*blob.ListObject) []fileEntry {
-	seen := map[string]fileEntry{}
+func groupImmediateChildren(prefix string, objects []*blob.ListObject) []FileEntry {
+	seen := map[string]FileEntry{}
 	order := []string{}
 	for _, obj := range objects {
 		rel := strings.TrimPrefix(obj.Key, prefix)
@@ -102,7 +102,7 @@ func groupImmediateChildren(prefix string, objects []*blob.ListObject) []fileEnt
 			continue
 		}
 
-		entry := fileEntry{Name: name, IsDir: isDir}
+		entry := FileEntry{Name: name, IsDir: isDir}
 		if !isDir {
 			entry.Size = obj.Size
 			entry.ModTime = obj.ModTime.Format(time.RFC3339)
@@ -111,11 +111,38 @@ func groupImmediateChildren(prefix string, objects []*blob.ListObject) []fileEnt
 		order = append(order, name)
 	}
 	sort.Strings(order)
-	result := make([]fileEntry, 0, len(order))
+	result := make([]FileEntry, 0, len(order))
 	for _, name := range order {
 		result = append(result, seen[name])
 	}
 	return result
+}
+
+func ListWorkspaceFiles(re *core.RequestEvent) (string, []FileEntry, error) {
+	if re.Auth == nil {
+		return "", nil, re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
+	}
+	pathParam := re.Request.URL.Query().Get("path")
+	cleanPath, ok := resolveWorkspacePath(pathParam)
+	if !ok {
+		return "", nil, re.ForbiddenError("Path escape attempt detected.", nil)
+	}
+	fsys, err := filesystem.NewLocal(workspaceRoot)
+	if err != nil {
+		return "", nil, re.InternalServerError("Sovereign storage failure.", err)
+	}
+	defer fsys.Close()
+	prefix := cleanPath
+	if prefix == "." {
+		prefix = ""
+	} else {
+		prefix += "/"
+	}
+	objects, err := fsys.List(prefix)
+	if err != nil {
+		return "", nil, re.NotFoundError("Directory not found.", err)
+	}
+	return cleanPath, groupImmediateChildren(prefix, objects), nil
 }
 
 func AddFileOperations(registry *operation.Registry) {
@@ -170,35 +197,10 @@ func AddFileOperations(registry *operation.Registry) {
 	}})
 
 	registry.Add(operation.Route{OperationID: "listWorkspaceFiles", Method: http.MethodGet, Path: "/api/pocketcoder/v1/files-list", Auth: true, Action: func(re *core.RequestEvent) error {
-		if re.Auth == nil {
-			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
-		}
-
-		pathParam := re.Request.URL.Query().Get("path")
-		cleanPath, ok := resolveWorkspacePath(pathParam)
-		if !ok {
-			return re.ForbiddenError("Path escape attempt detected.", nil)
-		}
-
-		fsys, err := filesystem.NewLocal(workspaceRoot)
+		cleanPath, entries, err := ListWorkspaceFiles(re)
 		if err != nil {
-			return re.InternalServerError("Sovereign storage failure.", err)
+			return err
 		}
-		defer fsys.Close()
-
-		prefix := cleanPath
-		if prefix == "." {
-			prefix = ""
-		} else {
-			prefix += "/"
-		}
-
-		objects, err := fsys.List(prefix)
-		if err != nil {
-			return re.NotFoundError("Directory not found.", err)
-		}
-
-		entries := groupImmediateChildren(prefix, objects)
 
 		return re.JSON(200, map[string]any{
 			"path":    cleanPath,
