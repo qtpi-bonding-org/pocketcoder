@@ -44,6 +44,98 @@ type AgentDeps struct {
 	Dial    coordinator.DialFunc
 }
 
+// RequireOwnedRecordForOperation exposes the common chat ownership check to
+// typed strict-server methods while keeping the authorization policy here.
+func RequireOwnedRecordForOperation(app core.App, re *core.RequestEvent, collection, id string) (*core.Record, error) {
+	return requireOwnedRecord(app, re, collection, id)
+}
+
+// PromptChat starts an agent run and returns its run id. It contains the
+// synchronous validation and side effects shared by the strict operation
+// adapter; the legacy registry action remains as the direct-route adapter.
+func PromptChat(app core.App, service coordinator.AgentRuntime, ollamaBaseURL string, re *core.RequestEvent) (string, error) {
+	chatID := re.Request.PathValue("chatId")
+	if _, err := requireOwnedRecord(app, re, "chats", chatID); err != nil {
+		return "", err
+	}
+	idemKey := re.Request.Header.Get("Idempotency-Key")
+	if idemKey != "" {
+		if cached, found := service.CheckIdempotency(chatID, idemKey); found {
+			if result, ok := cached.(map[string]string); ok {
+				return result["runId"], nil
+			}
+		}
+	}
+	var input acpsdk.PromptRequest
+	if err := re.BindBody(&input); err != nil {
+		return "", re.BadRequestError("Invalid run request", err)
+	}
+	prompt := ""
+	for _, block := range input.Prompt {
+		if block.Text != nil {
+			prompt = strings.TrimSpace(block.Text.Text)
+			break
+		}
+	}
+	if prompt == "" {
+		return "", re.BadRequestError("prompt must include a text content block", nil)
+	}
+	if _, err := sessionprofile.Build(app, chatID, re.Request.Context(), ollamaBaseURL); err != nil {
+		if errors.Is(err, sessionprofile.ErrProvisioning) {
+			return "", apis.NewApiError(http.StatusServiceUnavailable, "Harness is starting; retry shortly", nil)
+		}
+		if errors.Is(err, sessionprofile.ErrHarnessFailed) {
+			return "", apis.NewApiError(http.StatusBadGateway, "Harness failed to start", nil)
+		}
+	}
+	runID, err := service.StartPrompt(chatID, prompt,
+		func(context.Context) (string, error) { return sessionprofile.SessionForChat(app, chatID, re.Auth.Id) },
+		func(ctx context.Context) (coordinator.SessionProfile, error) {
+			return sessionprofile.Build(app, chatID, ctx, ollamaBaseURL)
+		},
+		func(ctx context.Context, sessionID string) error {
+			profile, err := sessionprofile.Build(app, chatID, ctx, ollamaBaseURL)
+			if err != nil {
+				return err
+			}
+			err = sessionprofile.SaveSession(ctx, app, chatID, re.Auth.Id, sessionID, profile.ResolvedInstanceID)
+			if err == nil {
+				app.Logger().Debug("Goose session mapping created", "chat_id", chatID)
+			}
+			return err
+		},
+		func(context.Context, acpsdk.StopReason) error {
+			go func() {
+				if err := hooks.SendPushNotification(app, re.Auth.Id, "PocketCoder", "Your agent replied", "chat_reply", chatID); err != nil {
+					log.Printf("[Push] chat reply: %v", err)
+				}
+			}()
+			return nil
+		}, coordinator.WithOnRunEnded(func(_ context.Context, chatID string, outcome coordinator.RunOutcome) {
+			go func() {
+				if err := hooks.NotifyRunFinished(app, chatID, string(outcome)); err != nil {
+					log.Printf("[Push] run finished: %v", err)
+				}
+			}()
+		}))
+	if err != nil {
+		if errors.Is(err, coordinator.ErrRunInProgress) {
+			return "", apis.NewApiError(http.StatusConflict, "A run is already active for this chat", nil)
+		}
+		return "", apis.NewApiError(http.StatusInternalServerError, "Unable to start agent run", err)
+	}
+	result := map[string]string{"runId": runID}
+	go func() {
+		if err := hooks.NotifyRunStarted(app, chatID); err != nil {
+			log.Printf("[Push] run started: %v", err)
+		}
+	}()
+	if idemKey != "" {
+		service.RecordIdempotency(chatID, idemKey, result)
+	}
+	return runID, nil
+}
+
 func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDeps) (coordinator.AgentRuntime, error) {
 	ollamaBaseURL := ollama.ResolveBaseURL()
 	var service coordinator.AgentRuntime = deps.Runtime
@@ -112,10 +204,17 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		// 500 for error types this task didn't touch.
 		if _, perr := sessionprofile.Build(app, chatID, re.Request.Context(), ollamaBaseURL); perr != nil {
 			if errors.Is(perr, sessionprofile.ErrProvisioning) {
-				return re.JSON(http.StatusAccepted, map[string]string{"status": "provisioning", "message": "Harness is starting; retry shortly"})
+				// 202 here would violate this operation's own OpenAPI
+				// contract: its 202 response is locked to AcceptedResponse
+				// ({runId}, additionalProperties: false), so a client
+				// deserializing this against that schema throws instead of
+				// surfacing a friendly retry state. 503/Unavailable is
+				// already documented for this exact operation and already
+				// maps client-side to AgentUnavailableFailure.
+				return apis.NewApiError(http.StatusServiceUnavailable, "Harness is starting; retry shortly", nil)
 			}
 			if errors.Is(perr, sessionprofile.ErrHarnessFailed) {
-				return apis.NewApiError(http.StatusBadGateway, "Harness failed to start", perr)
+				return apis.NewApiError(http.StatusBadGateway, "Harness failed to start", nil)
 			}
 		}
 		runID, err := service.StartPrompt(chatID, prompt,
@@ -236,25 +335,8 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 	})})
 
 	registry.Add(operation.Route{OperationID: "cancelChatSession", Method: http.MethodPost, Path: "/api/pocketcoder/v1/chats/{chatId}/session/cancel", Auth: true, Action: requireConfigured(func(re *core.RequestEvent) error {
-		chatID := re.Request.PathValue("chatId")
-		_, err := requireOwnedRecord(app, re, "chats", chatID)
-		if err != nil {
+		if err := CancelChatSession(app, service, re); err != nil {
 			return err
-		}
-		idemKey := re.Request.Header.Get("Idempotency-Key")
-		if idemKey != "" {
-			if _, found := service.CheckIdempotency(chatID, idemKey); found {
-				return re.NoContent(http.StatusAccepted)
-			}
-		}
-		if err := service.Cancel(re.Request.Context(), chatID); err != nil {
-			if errors.Is(err, coordinator.ErrNoActiveRun) {
-				return re.BadRequestError("No active run to cancel", nil)
-			}
-			return apis.NewApiError(http.StatusBadGateway, "Unable to cancel agent run", err)
-		}
-		if idemKey != "" {
-			service.RecordIdempotency(chatID, idemKey, struct{}{})
 		}
 		return re.NoContent(http.StatusAccepted)
 	})})
@@ -391,6 +473,32 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 	}
 
 	return service, configErr
+}
+
+// CancelChatSession validates ownership and cancels the active agent run.
+// The operationapi strict server uses this plain function to construct the
+// operation's typed success response without routing through dispatch.
+func CancelChatSession(app core.App, service coordinator.AgentRuntime, re *core.RequestEvent) error {
+	chatID := re.Request.PathValue("chatId")
+	if _, err := requireOwnedRecord(app, re, "chats", chatID); err != nil {
+		return err
+	}
+	idemKey := re.Request.Header.Get("Idempotency-Key")
+	if idemKey != "" {
+		if _, found := service.CheckIdempotency(chatID, idemKey); found {
+			return nil
+		}
+	}
+	if err := service.Cancel(re.Request.Context(), chatID); err != nil {
+		if errors.Is(err, coordinator.ErrNoActiveRun) {
+			return re.BadRequestError("No active run to cancel", nil)
+		}
+		return apis.NewApiError(http.StatusBadGateway, "Unable to cancel agent run", err)
+	}
+	if idemKey != "" {
+		service.RecordIdempotency(chatID, idemKey, struct{}{})
+	}
+	return nil
 }
 
 // parseCursor reads the resume cursor from ?cursor= or the Last-Event-ID
