@@ -36,7 +36,7 @@ void main() {
       expect(result.map((h) => h.id), isNot(contains('hm-c')));
     });
 
-    test('excludes a model whose provider has no provider_keys row', () {
+    test('excludes a model whose provider has no usable credential', () {
       final result = selectableModels(
         harnessId: 'h1',
         harnessModels: [hmA, hmB],
@@ -72,7 +72,7 @@ void main() {
       expect(result, isEmpty);
     });
 
-    test('returns an empty list when no provider_keys exist at all', () {
+    test('returns an empty list when no credentials exist at all', () {
       final result = selectableModels(
         harnessId: 'h1',
         harnessModels: [hmA, hmB],

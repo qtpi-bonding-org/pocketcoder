@@ -41,19 +41,16 @@ class ProviderAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   }
 }
 
-/// Read-only listing of [HarnessModel]s plus CRUD for [ProviderKey]s.
+/// Read-only listing of [HarnessModel]s plus CRUD for [ProviderApiKey]s.
 ///
 /// Two `BiosSection`s: the first lists the supported `harness_models` (read-
 /// only — they're catalog data seeded by migrations, not user-creatable), the
-/// second lists the user's `provider_keys` with add/edit/delete.
+/// second lists the user's `provider_api_keys` with add/edit/delete.
 ///
-/// Intentional differences from the legacy `llm_management_screen.dart`:
-/// - no "global default" model picker (there's no `chats.model` default in
-///   the new schema — see Task 12 description),
-/// - provider picker is by `Harnesse.cliId` (matches `ProviderKey.provider`,
-///   confirmed a free-text column in `provider_keys`),
-/// - a generic single `API_KEY` env var field per `ProviderKey` is offered
-///   (no schema-driven env var forms — `Harnesse` doesn't have one).
+/// Every credential is provider-scoped, not harness-scoped: a
+/// `ProviderApiKey.provider` is always a `providers` collection record id
+/// (never a harness cliId or a models.dev provider_id string), so one key
+/// can serve every harness with a `harness_providers` edge to that provider.
 class ProviderView extends StatelessWidget {
   const ProviderView({
     super.key,
