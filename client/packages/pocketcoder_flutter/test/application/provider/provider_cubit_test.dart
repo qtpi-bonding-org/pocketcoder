@@ -9,12 +9,13 @@ import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 
 class MockProviderRepository extends Mock implements IProviderRepository {}
 
-class _FakeProviderKey extends Fake implements ProviderKey {}
+class _FakeProviderApiKey extends Fake implements ProviderApiKey {}
 
 void main() {
   late MockProviderRepository repo;
@@ -46,10 +47,11 @@ void main() {
     harnessModelId: 'h-1::m-1',
   );
 
-  final testProviderKey = ProviderKey(
+  final testProviderApiKey = ProviderApiKey(
     id: 'pk-1',
-    user: 'u-1',
+    owner: 'u-1',
     provider: 'anthropic',
+    apiKey: '',
   );
 
   final testProviderCatalogEntry = domain.Provider(
@@ -60,7 +62,7 @@ void main() {
   );
 
   setUpAll(() {
-    registerFallbackValue(_FakeProviderKey());
+    registerFallbackValue(_FakeProviderApiKey());
   });
 
   setUp(() {
@@ -85,7 +87,7 @@ void main() {
       expect(state.harnesses, isEmpty);
       expect(state.models, isEmpty);
       expect(state.harnessModels, isEmpty);
-      expect(state.providerKeys, isEmpty);
+      expect(state.providerAPIKeys, isEmpty);
       expect(state.providerCatalog, isEmpty);
       expect(state.error, isNull);
     });
@@ -99,15 +101,18 @@ void main() {
         final modelsCtrl = StreamController<List<Model>>.broadcast();
         final harnessModelsCtrl =
             StreamController<List<HarnessModel>>.broadcast();
-        final providerKeysCtrl =
-            StreamController<List<ProviderKey>>.broadcast();
+        final harnessProvidersCtrl =
+            StreamController<List<HarnessProvider>>.broadcast();
+        final providerAPIKeysCtrl =
+            StreamController<List<ProviderApiKey>>.broadcast();
         final providerCatalogCtrl =
             StreamController<List<domain.Provider>>.broadcast();
         addTearDown(() async {
           await harnessesCtrl.close();
           await modelsCtrl.close();
           await harnessModelsCtrl.close();
-          await providerKeysCtrl.close();
+          await harnessProvidersCtrl.close();
+          await providerAPIKeysCtrl.close();
           await providerCatalogCtrl.close();
         });
 
@@ -116,8 +121,10 @@ void main() {
         when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
         when(() => repo.watchHarnessModels())
             .thenAnswer((_) => harnessModelsCtrl.stream);
-        when(() => repo.watchProviderKeys())
-            .thenAnswer((_) => providerKeysCtrl.stream);
+        when(() => repo.watchHarnessProviders())
+            .thenAnswer((_) => harnessProvidersCtrl.stream);
+        when(() => repo.watchProviderAPIKeys())
+            .thenAnswer((_) => providerAPIKeysCtrl.stream);
         when(() => repo.watchProviderCatalog())
             .thenAnswer((_) => providerCatalogCtrl.stream);
 
@@ -130,7 +137,8 @@ void main() {
         harnessesCtrl.add([testHarnesse]);
         modelsCtrl.add([testModel]);
         harnessModelsCtrl.add([testHarnessModel]);
-        providerKeysCtrl.add([testProviderKey]);
+        harnessProvidersCtrl.add(const []);
+        providerAPIKeysCtrl.add([testProviderApiKey]);
         providerCatalogCtrl.add([testProviderCatalogEntry]);
 
         // Let the microtasks drain so listen() callbacks fire.
@@ -140,13 +148,14 @@ void main() {
         expect(cubit.state.harnesses, [testHarnesse]);
         expect(cubit.state.models, [testModel]);
         expect(cubit.state.harnessModels, [testHarnessModel]);
-        expect(cubit.state.providerKeys, [testProviderKey]);
+        expect(cubit.state.providerAPIKeys, [testProviderApiKey]);
         expect(cubit.state.providerCatalog, [testProviderCatalogEntry]);
         expect(cubit.state.isSuccess, isTrue);
         verify(() => repo.watchHarnesses()).called(1);
         verify(() => repo.watchModels()).called(1);
         verify(() => repo.watchHarnessModels()).called(1);
-        verify(() => repo.watchProviderKeys()).called(1);
+        verify(() => repo.watchHarnessProviders()).called(1);
+        verify(() => repo.watchProviderAPIKeys()).called(1);
         verify(() => repo.watchProviderCatalog()).called(1);
       },
     );
@@ -158,15 +167,18 @@ void main() {
         final modelsCtrl = StreamController<List<Model>>.broadcast();
         final harnessModelsCtrl =
             StreamController<List<HarnessModel>>.broadcast();
-        final providerKeysCtrl =
-            StreamController<List<ProviderKey>>.broadcast();
+        final harnessProvidersCtrl =
+            StreamController<List<HarnessProvider>>.broadcast();
+        final providerAPIKeysCtrl =
+            StreamController<List<ProviderApiKey>>.broadcast();
         final providerCatalogCtrl =
             StreamController<List<domain.Provider>>.broadcast();
         addTearDown(() async {
           await harnessesCtrl.close();
           await modelsCtrl.close();
           await harnessModelsCtrl.close();
-          await providerKeysCtrl.close();
+          await harnessProvidersCtrl.close();
+          await providerAPIKeysCtrl.close();
           await providerCatalogCtrl.close();
         });
 
@@ -175,8 +187,10 @@ void main() {
         when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
         when(() => repo.watchHarnessModels())
             .thenAnswer((_) => harnessModelsCtrl.stream);
-        when(() => repo.watchProviderKeys())
-            .thenAnswer((_) => providerKeysCtrl.stream);
+        when(() => repo.watchHarnessProviders())
+            .thenAnswer((_) => harnessProvidersCtrl.stream);
+        when(() => repo.watchProviderAPIKeys())
+            .thenAnswer((_) => providerAPIKeysCtrl.stream);
         when(() => repo.watchProviderCatalog())
             .thenAnswer((_) => providerCatalogCtrl.stream);
 
@@ -195,44 +209,45 @@ void main() {
   });
 
   group('ProviderCubit write methods', () {
-    test('saveProviderKey delegates to repo.saveProviderKey', () async {
-      when(() => repo.saveProviderKey(any())).thenAnswer((_) async {});
+    test('saveProviderAPIKey delegates to repo.saveProviderAPIKey', () async {
+      when(() => repo.saveProviderAPIKey(any())).thenAnswer((_) async {});
 
       final cubit = buildCubit();
-      await cubit.saveProviderKey(testProviderKey);
+      await cubit.saveProviderAPIKey(testProviderApiKey);
 
-      verify(() => repo.saveProviderKey(testProviderKey)).called(1);
+      verify(() => repo.saveProviderAPIKey(testProviderApiKey)).called(1);
       expect(cubit.state.status, UiFlowStatus.success);
     });
 
-    test('saveProviderKey surfaces repo failure as state error', () async {
-      when(() => repo.saveProviderKey(any()))
+    test('saveProviderAPIKey surfaces repo failure as state error', () async {
+      when(() => repo.saveProviderAPIKey(any()))
           .thenThrow(Exception('save failed'));
 
       final cubit = buildCubit();
-      await cubit.saveProviderKey(testProviderKey);
+      await cubit.saveProviderAPIKey(testProviderApiKey);
 
       expect(cubit.state.status, UiFlowStatus.failure);
       expect(cubit.state.isFailure, isTrue);
       expect(cubit.state.error, isA<Exception>());
     });
 
-    test('deleteProviderKey delegates to repo.deleteProviderKey', () async {
-      when(() => repo.deleteProviderKey(any())).thenAnswer((_) async {});
+    test('deleteProviderAPIKey delegates to repo.deleteProviderAPIKey',
+        () async {
+      when(() => repo.deleteProviderAPIKey(any())).thenAnswer((_) async {});
 
       final cubit = buildCubit();
-      await cubit.deleteProviderKey('pk-1');
+      await cubit.deleteProviderAPIKey('pk-1');
 
-      verify(() => repo.deleteProviderKey('pk-1')).called(1);
+      verify(() => repo.deleteProviderAPIKey('pk-1')).called(1);
       expect(cubit.state.status, UiFlowStatus.success);
     });
 
-    test('deleteProviderKey surfaces repo failure as state error', () async {
-      when(() => repo.deleteProviderKey(any()))
+    test('deleteProviderAPIKey surfaces repo failure as state error', () async {
+      when(() => repo.deleteProviderAPIKey(any()))
           .thenThrow(Exception('delete failed'));
 
       final cubit = buildCubit();
-      await cubit.deleteProviderKey('pk-1');
+      await cubit.deleteProviderAPIKey('pk-1');
 
       expect(cubit.state.status, UiFlowStatus.failure);
       expect(cubit.state.error, isA<Exception>());

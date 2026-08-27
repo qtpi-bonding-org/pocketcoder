@@ -4,9 +4,8 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -34,8 +33,8 @@ class ProviderAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
         valueListenable: state,
         builder: (context, value, _) => ProviderView(
           state: value,
-          onDelete: cubit.deleteProviderKey,
-          onSave: cubit.saveProviderKey,
+          onDelete: cubit.deleteProviderAPIKey,
+          onSave: cubit.saveProviderAPIKey,
         ),
       ),
     );
@@ -65,7 +64,7 @@ class ProviderView extends StatelessWidget {
 
   final ProviderState state;
   final Future<void> Function(String id) onDelete;
-  final Future<void> Function(ProviderKey key) onSave;
+  final Future<void> Function(ProviderApiKey key) onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +80,7 @@ class ProviderView extends StatelessWidget {
     if (state.isLoading &&
         state.harnessModels.isEmpty &&
         state.harnesses.isEmpty &&
-        state.providerKeys.isEmpty) {
+        state.providerAPIKeys.isEmpty) {
       return Center(
         child: TerminalLoadingIndicator(
           label: context.l10n.providerScreenLoading,
@@ -92,7 +91,7 @@ class ProviderView extends StatelessWidget {
     if (state.isFailure &&
         state.harnessModels.isEmpty &&
         state.harnesses.isEmpty &&
-        state.providerKeys.isEmpty) {
+        state.providerAPIKeys.isEmpty) {
       return Center(
         child: TerminalText(
           context.l10n.providerScreenErrorPrefix(
@@ -106,7 +105,7 @@ class ProviderView extends StatelessWidget {
 
     final showEmptyHint = state.harnessModels.isEmpty &&
         state.harnesses.isEmpty &&
-        state.providerKeys.isEmpty;
+        state.providerAPIKeys.isEmpty;
 
     return ListView(
       padding: EdgeInsets.all(AppSizes.space),
@@ -193,7 +192,7 @@ class ProviderView extends StatelessWidget {
   // ── PROVIDER KEYS ──
 
   Widget _buildProviderKeyList(BuildContext context, ProviderState state) {
-    if (state.providerKeys.isEmpty) {
+    if (state.providerAPIKeys.isEmpty) {
       return Padding(
         padding: EdgeInsets.all(AppSizes.space * 2),
         child: Column(
@@ -213,7 +212,7 @@ class ProviderView extends StatelessWidget {
 
     return Column(
       children: [
-        for (final key in state.providerKeys)
+        for (final key in state.providerAPIKeys)
           _buildProviderKeyTile(context, state, key),
         VSpace.x2,
         _buildAddKeyButton(context, state),
@@ -224,7 +223,7 @@ class ProviderView extends StatelessWidget {
   Widget _buildAddKeyButton(BuildContext context, ProviderState state) {
     return TerminalButton(
       label: context.l10n.providerScreenAddKey,
-      onTap: state.harnesses.isEmpty
+      onTap: state.providerCatalog.isEmpty
           ? () {}
           : () => _openKeyEditor(context, state, null),
     );
@@ -233,27 +232,12 @@ class ProviderView extends StatelessWidget {
   Widget _buildProviderKeyTile(
     BuildContext context,
     ProviderState state,
-    ProviderKey key,
+    ProviderApiKey key,
   ) {
     final colors = context.colorScheme;
 
-    final harness = state.harnesses.firstWhere(
-      (h) => h.cliId == key.provider,
-      orElse: () => _emptyHarnesse,
-    );
-    // A self-scoped key's provider is a harness cliId (matches above); a
-    // multi-provider (Goose/OpenCode) key's provider is instead a
-    // models.dev catalog id, which only appears in providerCatalog, not
-    // harnesses -- fall back there before giving up and showing the raw id.
-    String providerLabel;
-    if (harness.id.isNotEmpty) {
-      providerLabel = harness.name;
-    } else {
-      final catalogEntry = state.providerCatalog
-          .where((p) => p.providerId == key.provider)
-          .firstOrNull;
-      providerLabel = catalogEntry?.name ?? key.provider;
-    }
+    final providerLabel =
+        state.providerCatalog.firstWhere((p) => p.id == key.provider).name;
 
     return TerminalCard(
       child: Row(
@@ -267,7 +251,7 @@ class ProviderView extends StatelessWidget {
                   weight: TerminalTextWeight.heavy,
                 ),
                 TerminalText.mini(
-                  _maskKeyPreview(key.envVars),
+                  _maskKeyPreview(<String, dynamic>{'API_KEY': key.apiKey}),
                   alpha: 0.5,
                 ),
               ],
@@ -293,13 +277,12 @@ class ProviderView extends StatelessWidget {
   void _openKeyEditor(
     BuildContext context,
     ProviderState state,
-    ProviderKey? existing,
+    ProviderApiKey? existing,
   ) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return ProviderKeyEditorDialog(
-          harnesses: state.harnesses,
           providerCatalog: state.providerCatalog,
           existing: existing,
           onSave: (key) {
@@ -329,14 +312,4 @@ class ProviderView extends StatelessWidget {
     }
     return '***';
   }
-
-  /// Sentinel `Harnesse` used by `firstWhere`/`orElse` to keep the
-  /// `providerLabel` lookup total without a nullable local. Empty `id`
-  /// signals "not found".
-  static const Harnesse _emptyHarnesse = Harnesse(
-    id: '',
-    name: '',
-    cliId: '',
-    acpTransport: HarnesseAcpTransport.unknown,
-  );
 }

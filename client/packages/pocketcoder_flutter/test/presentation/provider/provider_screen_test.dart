@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/provider/adapters/provider_adapter.dart';
@@ -68,8 +68,13 @@ void main() {
     // uppercased" -- before the fix, this rendered "OPENAI-COMPAT-XYZ".
     await tester.pumpWidget(_app(ProviderView(
       state: ProviderState(
-        providerKeys: const [
-          ProviderKey(id: 'pk1', user: 'u1', provider: 'openai-compat-xyz'),
+        providerAPIKeys: const [
+          ProviderApiKey(
+            id: 'pk1',
+            owner: 'u1',
+            provider: 'openai-compat-xyz',
+            apiKey: 'secret',
+          ),
         ],
         providerCatalog: const [
           domain.Provider(

@@ -4,7 +4,8 @@ import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 
 part 'provider_state.freezed.dart';
 
@@ -17,7 +18,8 @@ sealed class ProviderState with _$ProviderState, UiFlowStateMixin {
     @Default([]) List<Harnesse> harnesses,
     @Default([]) List<Model> models,
     @Default([]) List<HarnessModel> harnessModels,
-    @Default([]) List<ProviderKey> providerKeys,
+    @Default([]) List<HarnessProvider> harnessProviders,
+    @Default([]) List<ProviderApiKey> providerAPIKeys,
     @Default([]) List<domain.Provider> providerCatalog,
     Object? error,
   }) = _ProviderState;

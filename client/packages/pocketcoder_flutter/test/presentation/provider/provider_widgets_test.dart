@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
@@ -16,15 +15,11 @@ Widget _app(Widget child) => MaterialApp(
 
 void main() {
   testWidgets('renders as an expand-variant BiosRow', (tester) async {
-    const harness = Harnesse(
-      id: 'h1',
-      name: 'Claude',
-      cliId: 'claude',
-      acpTransport: HarnesseAcpTransport.unknown,
-    );
+    const provider =
+        domain.Provider(id: 'p1', providerId: 'claude', name: 'Claude');
     await tester.pumpWidget(_app(ProviderTargetPicker(
-      targets: const [HarnessKeyTarget(harness)],
-      selectedProvider: 'claude',
+      targets: const [provider],
+      selectedProvider: provider,
       onSelected: (_) {},
     )));
 
@@ -32,31 +27,30 @@ void main() {
     expect(find.text('CLAUDE'), findsOneWidget);
   });
 
-  testWidgets(
-      'search box filters a large synced provider list client-side',
+  testWidgets('search box filters a large synced provider list client-side',
       (tester) async {
     // The provider list is now synced in full from models.dev (no
     // PocketCoder-side curation), so it can run to ~200 entries -- the
     // picker dialog must let the user filter it rather than dumping an
     // unsearchable list.
     final targets = [
-      const CatalogProviderKeyTarget(domain.Provider(
+      const domain.Provider(
         id: 'p1',
         providerId: 'anthropic',
         name: 'Anthropic',
-      )),
-      const CatalogProviderKeyTarget(domain.Provider(
+      ),
+      const domain.Provider(
         id: 'p2',
         providerId: 'openai',
         name: 'OpenAI',
-      )),
-      const CatalogProviderKeyTarget(domain.Provider(
+      ),
+      const domain.Provider(
         id: 'p3',
         providerId: 'openrouter',
         name: 'OpenRouter',
-      )),
+      ),
     ];
-    ProviderKeyTarget? picked;
+    domain.Provider? picked;
     await tester.pumpWidget(_app(ProviderTargetPicker(
       targets: targets,
       selectedProvider: null,
@@ -85,14 +79,10 @@ void main() {
 
   testWidgets('search box with no matches shows an empty-state message',
       (tester) async {
-    const harness = Harnesse(
-      id: 'h1',
-      name: 'Claude',
-      cliId: 'claude',
-      acpTransport: HarnesseAcpTransport.unknown,
-    );
+    const provider =
+        domain.Provider(id: 'p1', providerId: 'claude', name: 'Claude');
     await tester.pumpWidget(_app(ProviderTargetPicker(
-      targets: const [HarnessKeyTarget(harness)],
+      targets: const [provider],
       selectedProvider: null,
       onSelected: (_) {},
     )));

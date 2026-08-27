@@ -18,7 +18,8 @@ mixin _$ProviderState {
   List<Harnesse> get harnesses;
   List<Model> get models;
   List<HarnessModel> get harnessModels;
-  List<ProviderKey> get providerKeys;
+  List<HarnessProvider> get harnessProviders;
+  List<ProviderApiKey> get providerAPIKeys;
   List<domain.Provider> get providerCatalog;
   Object? get error;
 
@@ -41,7 +42,7 @@ mixin _$ProviderState {
             const DeepCollectionEquality()
                 .equals(other.harnessModels, harnessModels) &&
             const DeepCollectionEquality()
-                .equals(other.providerKeys, providerKeys) &&
+                .equals(other.providerAPIKeys, providerAPIKeys) &&
             const DeepCollectionEquality()
                 .equals(other.providerCatalog, providerCatalog) &&
             const DeepCollectionEquality().equals(other.error, error));
@@ -54,13 +55,13 @@ mixin _$ProviderState {
       const DeepCollectionEquality().hash(harnesses),
       const DeepCollectionEquality().hash(models),
       const DeepCollectionEquality().hash(harnessModels),
-      const DeepCollectionEquality().hash(providerKeys),
+      const DeepCollectionEquality().hash(providerAPIKeys),
       const DeepCollectionEquality().hash(providerCatalog),
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'ProviderState(status: $status, harnesses: $harnesses, models: $models, harnessModels: $harnessModels, providerKeys: $providerKeys, providerCatalog: $providerCatalog, error: $error)';
+    return 'ProviderState(status: $status, harnesses: $harnesses, models: $models, harnessModels: $harnessModels, providerAPIKeys: $providerAPIKeys, providerCatalog: $providerCatalog, error: $error)';
   }
 }
 
@@ -75,7 +76,8 @@ abstract mixin class $ProviderStateCopyWith<$Res> {
       List<Harnesse> harnesses,
       List<Model> models,
       List<HarnessModel> harnessModels,
-      List<ProviderKey> providerKeys,
+      List<HarnessProvider> harnessProviders,
+      List<ProviderApiKey> providerAPIKeys,
       List<domain.Provider> providerCatalog,
       Object? error});
 }
@@ -97,7 +99,8 @@ class _$ProviderStateCopyWithImpl<$Res>
     Object? harnesses = null,
     Object? models = null,
     Object? harnessModels = null,
-    Object? providerKeys = null,
+    Object? harnessProviders = null,
+    Object? providerAPIKeys = null,
     Object? providerCatalog = null,
     Object? error = freezed,
   }) {
@@ -118,10 +121,13 @@ class _$ProviderStateCopyWithImpl<$Res>
           ? _self.harnessModels
           : harnessModels // ignore: cast_nullable_to_non_nullable
               as List<HarnessModel>,
-      providerKeys: null == providerKeys
-          ? _self.providerKeys
-          : providerKeys // ignore: cast_nullable_to_non_nullable
-              as List<ProviderKey>,
+      harnessProviders: null == harnessProviders
+          ? _self.harnessProviders
+          : harnessProviders as List<HarnessProvider>,
+      providerAPIKeys: null == providerAPIKeys
+          ? _self.providerAPIKeys
+          : providerAPIKeys // ignore: cast_nullable_to_non_nullable
+              as List<ProviderApiKey>,
       providerCatalog: null == providerCatalog
           ? _self.providerCatalog
           : providerCatalog // ignore: cast_nullable_to_non_nullable
@@ -227,7 +233,8 @@ extension ProviderStatePatterns on ProviderState {
             List<Harnesse> harnesses,
             List<Model> models,
             List<HarnessModel> harnessModels,
-            List<ProviderKey> providerKeys,
+            List<HarnessProvider> harnessProviders,
+            List<ProviderApiKey> providerAPIKeys,
             List<domain.Provider> providerCatalog,
             Object? error)?
         $default, {
@@ -241,7 +248,8 @@ extension ProviderStatePatterns on ProviderState {
             _that.harnesses,
             _that.models,
             _that.harnessModels,
-            _that.providerKeys,
+            _that.harnessProviders,
+            _that.providerAPIKeys,
             _that.providerCatalog,
             _that.error);
       case _:
@@ -269,7 +277,8 @@ extension ProviderStatePatterns on ProviderState {
             List<Harnesse> harnesses,
             List<Model> models,
             List<HarnessModel> harnessModels,
-            List<ProviderKey> providerKeys,
+            List<HarnessProvider> harnessProviders,
+            List<ProviderApiKey> providerAPIKeys,
             List<domain.Provider> providerCatalog,
             Object? error)
         $default,
@@ -282,7 +291,8 @@ extension ProviderStatePatterns on ProviderState {
             _that.harnesses,
             _that.models,
             _that.harnessModels,
-            _that.providerKeys,
+            _that.harnessProviders,
+            _that.providerAPIKeys,
             _that.providerCatalog,
             _that.error);
     }
@@ -307,7 +317,8 @@ extension ProviderStatePatterns on ProviderState {
             List<Harnesse> harnesses,
             List<Model> models,
             List<HarnessModel> harnessModels,
-            List<ProviderKey> providerKeys,
+            List<HarnessProvider> harnessProviders,
+            List<ProviderApiKey> providerAPIKeys,
             List<domain.Provider> providerCatalog,
             Object? error)?
         $default,
@@ -320,7 +331,8 @@ extension ProviderStatePatterns on ProviderState {
             _that.harnesses,
             _that.models,
             _that.harnessModels,
-            _that.providerKeys,
+            _that.harnessProviders,
+            _that.providerAPIKeys,
             _that.providerCatalog,
             _that.error);
       case _:
@@ -337,13 +349,15 @@ class _ProviderState extends ProviderState {
       final List<Harnesse> harnesses = const [],
       final List<Model> models = const [],
       final List<HarnessModel> harnessModels = const [],
-      final List<ProviderKey> providerKeys = const [],
+      final List<HarnessProvider> harnessProviders = const [],
+      final List<ProviderApiKey> providerAPIKeys = const [],
       final List<domain.Provider> providerCatalog = const [],
       this.error})
       : _harnesses = harnesses,
         _models = models,
         _harnessModels = harnessModels,
-        _providerKeys = providerKeys,
+        _harnessProviders = harnessProviders,
+        _providerAPIKeys = providerAPIKeys,
         _providerCatalog = providerCatalog,
         super._();
 
@@ -369,6 +383,7 @@ class _ProviderState extends ProviderState {
   }
 
   final List<HarnessModel> _harnessModels;
+  final List<HarnessProvider> _harnessProviders;
   @override
   @JsonKey()
   List<HarnessModel> get harnessModels {
@@ -377,13 +392,15 @@ class _ProviderState extends ProviderState {
     return EqualUnmodifiableListView(_harnessModels);
   }
 
-  final List<ProviderKey> _providerKeys;
+  final List<ProviderApiKey> _providerAPIKeys;
   @override
   @JsonKey()
-  List<ProviderKey> get providerKeys {
-    if (_providerKeys is EqualUnmodifiableListView) return _providerKeys;
+  List<HarnessProvider> get harnessProviders => _harnessProviders;
+
+  List<ProviderApiKey> get providerAPIKeys {
+    if (_providerAPIKeys is EqualUnmodifiableListView) return _providerAPIKeys;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_providerKeys);
+    return EqualUnmodifiableListView(_providerAPIKeys);
   }
 
   final List<domain.Provider> _providerCatalog;
@@ -418,7 +435,9 @@ class _ProviderState extends ProviderState {
             const DeepCollectionEquality()
                 .equals(other._harnessModels, _harnessModels) &&
             const DeepCollectionEquality()
-                .equals(other._providerKeys, _providerKeys) &&
+                .equals(other._harnessProviders, _harnessProviders) &&
+            const DeepCollectionEquality()
+                .equals(other._providerAPIKeys, _providerAPIKeys) &&
             const DeepCollectionEquality()
                 .equals(other._providerCatalog, _providerCatalog) &&
             const DeepCollectionEquality().equals(other.error, error));
@@ -431,13 +450,14 @@ class _ProviderState extends ProviderState {
       const DeepCollectionEquality().hash(_harnesses),
       const DeepCollectionEquality().hash(_models),
       const DeepCollectionEquality().hash(_harnessModels),
-      const DeepCollectionEquality().hash(_providerKeys),
+      const DeepCollectionEquality().hash(_harnessProviders),
+      const DeepCollectionEquality().hash(_providerAPIKeys),
       const DeepCollectionEquality().hash(_providerCatalog),
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'ProviderState(status: $status, harnesses: $harnesses, models: $models, harnessModels: $harnessModels, providerKeys: $providerKeys, providerCatalog: $providerCatalog, error: $error)';
+    return 'ProviderState(status: $status, harnesses: $harnesses, models: $models, harnessModels: $harnessModels, providerAPIKeys: $providerAPIKeys, providerCatalog: $providerCatalog, error: $error)';
   }
 }
 
@@ -454,7 +474,8 @@ abstract mixin class _$ProviderStateCopyWith<$Res>
       List<Harnesse> harnesses,
       List<Model> models,
       List<HarnessModel> harnessModels,
-      List<ProviderKey> providerKeys,
+      List<HarnessProvider> harnessProviders,
+      List<ProviderApiKey> providerAPIKeys,
       List<domain.Provider> providerCatalog,
       Object? error});
 }
@@ -476,7 +497,8 @@ class __$ProviderStateCopyWithImpl<$Res>
     Object? harnesses = null,
     Object? models = null,
     Object? harnessModels = null,
-    Object? providerKeys = null,
+    Object? harnessProviders = null,
+    Object? providerAPIKeys = null,
     Object? providerCatalog = null,
     Object? error = freezed,
   }) {
@@ -497,10 +519,13 @@ class __$ProviderStateCopyWithImpl<$Res>
           ? _self._harnessModels
           : harnessModels // ignore: cast_nullable_to_non_nullable
               as List<HarnessModel>,
-      providerKeys: null == providerKeys
-          ? _self._providerKeys
-          : providerKeys // ignore: cast_nullable_to_non_nullable
-              as List<ProviderKey>,
+      harnessProviders: null == harnessProviders
+          ? _self.harnessProviders
+          : harnessProviders as List<HarnessProvider>,
+      providerAPIKeys: null == providerAPIKeys
+          ? _self._providerAPIKeys
+          : providerAPIKeys // ignore: cast_nullable_to_non_nullable
+              as List<ProviderApiKey>,
       providerCatalog: null == providerCatalog
           ? _self._providerCatalog
           : providerCatalog // ignore: cast_nullable_to_non_nullable
