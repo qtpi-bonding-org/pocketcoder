@@ -55,7 +55,12 @@ import json, sys
 print(json.dumps({
     'label': 'pocketcoder-image-installer',
     'description': 'Pulls the PocketCoder NixOS image from R2 onto a raw target disk (boot-time-pull provisioning)',
-    'images': ['linode/debian12'],
+    # debian13, not debian12: see installer_disk_operations.dart's own
+    # comment on the CreateInstallerDiskOperation 'image' field --
+    # debian12's cloud-init (22.4.2) is below Akamai's documented minimum
+    # (23.3.1) for their metadata-service datasource, live-confirmed
+    # 2026-08-27 to deliver StackScript user-data as empty.
+    'images': ['linode/debian13'],
     # Deliberately public: this StackScript is published once, centrally,
     # from our own Linode account, but is REFERENCED at deploy time by
     # each end user's own Linode token/instance-create call -- a private
