@@ -82,7 +82,20 @@ func (docker Docker) LoadGzipArchive(path string) error {
 	return nil
 }
 
+// harnessEgressNetwork must match hooks.HarnessEgressNetwork in
+// server/pocketbase/internal/hooks/harness_provision.go. It is declared in
+// docker-compose.yml's top-level networks but deliberately not attached to
+// any static service there -- only dynamically-created harness containers
+// join it, outside Compose's own service graph. Compose only creates a
+// declared network if some service in the same file references it, so
+// without ensuring it here, a fresh box never gets this network at all and
+// every harness container creation fails with "network ... not found".
+const harnessEgressNetwork = "pocketcoder-harness-egress"
+
 func (docker Docker) ComposeUp(composeFile, environmentFile string, profiles []string) error {
+	if err := docker.ensureNetwork(harnessEgressNetwork); err != nil {
+		return err
+	}
 	arguments := []string{"compose", "--project-name", docker.projectName(), "--env-file", environmentFile, "-f", composeFile}
 	for _, profile := range profiles {
 		arguments = append(arguments, "--profile", profile)
@@ -90,6 +103,20 @@ func (docker Docker) ComposeUp(composeFile, environmentFile string, profiles []s
 	arguments = append(arguments, "up", "-d", "--no-build", "--remove-orphans")
 	if err := docker.runCompose(arguments); err != nil {
 		return fmt.Errorf("docker compose up: %w", err)
+	}
+	return nil
+}
+
+// ensureNetwork is idempotent: a network that already exists is left
+// untouched, matching how Compose itself treats its own declared networks.
+func (docker Docker) ensureNetwork(name string) error {
+	if exec.Command("docker", "network", "inspect", name).Run() == nil {
+		return nil
+	}
+	command := exec.Command("docker", "network", "create", "--driver", "bridge", name)
+	command.Stdout, command.Stderr = docker.Stdout, docker.Stderr
+	if err := command.Run(); err != nil {
+		return fmt.Errorf("create docker network %s: %w", name, err)
 	}
 	return nil
 }
