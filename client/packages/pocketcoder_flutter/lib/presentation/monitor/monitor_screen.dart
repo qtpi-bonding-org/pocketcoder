@@ -56,28 +56,8 @@ class MonitorView extends StatelessWidget {
             ),
           ),
         ),
-        _buildHealthStatus(context),
-        VSpace.x2,
         Expanded(child: _buildRegistryAndLogs(context)),
       ],
-    );
-  }
-
-  Widget _buildHealthStatus(BuildContext context) {
-    final stats = state.stats;
-    if (stats == null) return const SizedBox.shrink();
-    final isHealthy = stats.backendStatus.toLowerCase() == 'healthy' ||
-        stats.backendStatus.toLowerCase() == 'ready';
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-      child: BiosFrame(
-        title: 'BACKEND',
-        child: BiosRow(
-          label: 'BACKEND STATUS',
-          value: '[ ${stats.backendStatus.toUpperCase()} ]',
-          isDestructive: !isHealthy,
-        ),
-      ),
     );
   }
 

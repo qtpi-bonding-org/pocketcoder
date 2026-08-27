@@ -16,11 +16,10 @@ Widget _app(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('renders backend health and the discovered container registry',
+  testWidgets('renders the discovered container registry',
       (tester) async {
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
-        stats: SystemStats(backendStatus: 'ready'),
         containers: [
           ContainerInfo(name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h'),
           ContainerInfo(name: 'pocketcoder-ollama', state: 'exited', status: 'Exited (0)'),
@@ -31,7 +30,6 @@ void main() {
     )));
 
     expect(find.byType(BiosRow), findsWidgets);
-    expect(find.text('BACKEND STATUS'), findsOneWidget);
     // BiosRow uppercases its label before rendering; the shared
     // "pocketcoder-" compose prefix is stripped since every container on
     // this screen belongs to the same deployment.
@@ -91,7 +89,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
-        stats: SystemStats(backendStatus: 'ready', tokenUsage: [TokenUsage(model: 'gpt-4', tokens: 1)]),
+        stats: SystemStats(tokenUsage: [TokenUsage(model: 'gpt-4', tokens: 1)]),
       ),
       onRefresh: () {},
       onSelectContainer: (_) {},
