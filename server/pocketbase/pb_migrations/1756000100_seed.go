@@ -213,7 +213,13 @@ func init() {
 				"port":         3000,
 				"env_template": envTemplate,
 			})
-			rec.Set("supports_live_config", true)
+			// Only a fan-out harness can actually change provider/model
+			// live mid-session (spec §6: "For Claude Code the loop runs
+			// once, over anthropic" -- a self-scoped harness has exactly
+			// one harness_providers edge, so there is nothing to switch
+			// to). This must track provider_fanout for every managed
+			// harness that exists today.
+			rec.Set("supports_live_config", cliID == "opencode")
 			rec.Set("supports_ollama", cliID == "opencode")
 			rec.Set("supports_session_delete", cliID != "opencode")
 			rec.Set("supports_additional_directories", cliID != "opencode")
