@@ -124,10 +124,10 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 	}{
 		{"claude-code", "0.64.2", "pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp"},
 		{"codex", "1.1.9", "pocketcoder-harness-codex:1.1.9", "codex-acp"},
-		// OpenCode is multi-provider (provider_scope "any"): there is no
+		// OpenCode is multi-provider: there is no
 		// single fixed env var name, so its env_template has no static
 		// per-key entry at all -- renderEnv derives the right
-		// <PROVIDER>_API_KEY name at runtime from each provider_keys row's
+		// <PROVIDER>_API_KEY name at runtime from each provider API-key row's
 		// own provider field instead. apiKeyEnv left "" here means "skip
 		// this check", not "expect a literal OPENCODE_API_KEY".
 		{"opencode", "1.18.11", "pocketcoder-harness-opencode:1.18.11", "opencode acp"},

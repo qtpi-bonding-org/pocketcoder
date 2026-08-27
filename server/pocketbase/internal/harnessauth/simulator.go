@@ -241,9 +241,9 @@ func (c *commandAuthenticator) ensureRunningHelper(ctx context.Context, attempt 
 		VolumeBinds:   []string{authVolume + ":" + helperMountPath},
 		RestartPolicy: "no",
 		Labels: map[string]string{
-			"pc_helper":             "true",
-			"pc_helper_for":         attempt.AttemptID,
-			"pc_harness_account_id": attempt.AccountID,
+			"pc_helper":           "true",
+			"pc_helper_for":       attempt.AttemptID,
+			"pc_oauth_account_id": attempt.AccountID,
 		},
 	})
 	if err != nil {

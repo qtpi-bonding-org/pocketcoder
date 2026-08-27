@@ -7,9 +7,10 @@ import (
 
 // providerAuthFailure deliberately classifies only errors from a session
 // whose harness account uses an account-owned login rather than a bare API
-// key (SessionProfile.AccountLogin, set from harness_accounts.credential_mode
-// == harnessaccount.ModeAccount). That flag comes from the account row
-// itself, not a hardcoded per-provider name list -- a name list is what this
+// key (SessionProfile.AccountLogin, resolved from credential_selections.mode
+// == "oauth" for the session's (harness, provider) pair). That flag comes
+// from the user's actual credential selection, not a hardcoded per-provider
+// name list -- a name list is what this
 // used to be (claude/claude-code only), and it silently left Codex's own
 // account-login errors misclassified as a generic failure with no reauth
 // path, even though harness_provision.go's renderEnv had already started

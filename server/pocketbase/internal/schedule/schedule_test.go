@@ -32,9 +32,38 @@ import (
 	"github.com/pocketbase/pocketbase/tests"
 	acp "github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/acp"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
+
+// waitForHarnessProvisioning drains sessionprofile.Build's background
+// ProvisionHarnessInstance goroutine to a terminal status before the test
+// returns. A run whose chat has no explicit harness falls back to the
+// seed-migration's real "goose" harness, which has no harness_instances row
+// in a fresh test app -- Build fires this goroutine and returns
+// ErrProvisioning (recovered internally by the coordinator, so Run itself
+// doesn't fail), but t.Cleanup(app.Cleanup) can otherwise tear the app down
+// while it's still mid-flight, panicking with a nil-pointer dereference in
+// RecordQuery after Cleanup closes the underlying DB (see the identical,
+// already-fixed race in internal/sessionprofile's own tests).
+func waitForHarnessProvisioning(t *testing.T, app core.App, cliID, userID string) {
+	t.Helper()
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:c}", map[string]any{"c": cliID})
+	if err != nil {
+		return
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		rec, err := app.FindFirstRecordByFilter(
+			"harness_instances",
+			"harness = {:h} && user = {:u}",
+			map[string]any{"h": harness.Id, "u": userID},
+		)
+		if err == nil && rec != nil && rec.GetString("status") != "pending" {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
 
 func newSchedule(t *testing.T, app core.App, user, name string, paused bool) *core.Record {
 	t.Helper()
@@ -76,6 +105,7 @@ func TestScheduleRunnerRunSuccessAndClock(t *testing.T) {
 	if err := r.Run(context.Background(), s.Id); err != nil {
 		t.Fatal(err)
 	}
+	waitForHarnessProvisioning(t, app, "goose", user.Id)
 	chat, err := app.FindFirstRecordByFilter("chats", "user = {:u}", map[string]any{"u": user.Id})
 	if err != nil {
 		t.Fatal(err)
@@ -295,11 +325,6 @@ func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, 
 	instance.Set("managed", false)
 	if userID != "" {
 		instance.Set("user", userID)
-		account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harness.Id)
-		if err != nil {
-			t.Fatal(err)
-		}
-		instance.Set("harness_account", account.Id)
 	}
 	if err := app.Save(instance); err != nil {
 		t.Fatal(err)
