@@ -63,17 +63,25 @@ func readJSON(path string, target any) error {
 	return json.Unmarshal(data, target)
 }
 
+// ReleaseCompatibility computes the current release-compatibility
+// document. Exported so operationapi.server.GetReleaseCompatibility can
+// call it directly and build a typed response.
+func ReleaseCompatibility() (dataVersion int, compatibility any) {
+	dataVersion = 1
+	compatibility = any(developmentCompatibility)
+	var pointer releasePointerResponse
+	if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err == nil {
+		dataVersion = pointer.DataVersion
+		if len(pointer.Compatibility) != 0 {
+			compatibility = pointer.Compatibility
+		}
+	}
+	return dataVersion, compatibility
+}
+
 func AddReleaseStatusOperations(registry *operation.Registry) {
 	registry.Add(operation.Route{OperationID: "getReleaseCompatibility", Method: http.MethodGet, Path: "/api/pocketcoder/v1/compatibility", Action: func(re *core.RequestEvent) error {
-		dataVersion := 1
-		compatibility := any(developmentCompatibility)
-		var pointer releasePointerResponse
-		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err == nil {
-			dataVersion = pointer.DataVersion
-			if len(pointer.Compatibility) != 0 {
-				compatibility = pointer.Compatibility
-			}
-		}
+		dataVersion, compatibility := ReleaseCompatibility()
 		return re.JSON(http.StatusOK, map[string]any{
 			"schemaVersion": 1,
 			"dataVersion":   dataVersion,
@@ -86,7 +94,7 @@ func AddReleaseStatusOperations(registry *operation.Registry) {
 		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil &&
 			!errors.Is(err, os.ErrNotExist) {
 			log.Printf("[ReleaseStatus] read release state failed: %v", err)
-			return pocketCoderError(re, 500, "release state unavailable")
+			return re.InternalServerError("release state unavailable", nil)
 		}
 		var metadataStatus map[string]any
 		if err := readJSON(filepath.Join(releaseStateDir(), "metadata-status.json"), &metadataStatus); err != nil {

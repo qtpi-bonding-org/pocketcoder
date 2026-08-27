@@ -213,7 +213,7 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 		"listWorkspaceFiles", "cancelHarnessAuth", "disconnectHarnessAuth", "pollHarnessAuth",
 		"startHarnessAuth", "getHarnessAuthStatus", "submitHarnessAuth", "streamContainerLogs",
 		"listContainers", "storeMcpOAuthToken", "executeMcpRequest", "listOllamaModels", "pullOllamaModel",
-		"proxyObservability", "sendPushNotification", "endLiveActivity", "getReleaseCompatibility", "getReleaseStatus",
+		"proxyObservability", "sendPushNotification", "endLiveActivity", "getReleaseStatus",
 		"runScheduleNow",
 	} {
 		opID := id
@@ -294,41 +294,38 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 	call("SendPushNotification", err)
 	_, err = s.EndLiveActivity(newCtx(), openapi.EndLiveActivityRequestObject{Id: "a1"})
 	call("EndLiveActivity", err)
-	_, err = s.GetReleaseCompatibility(newCtx(), openapi.GetReleaseCompatibilityRequestObject{})
-	call("GetReleaseCompatibility", err)
 	_, err = s.GetReleaseStatus(newCtx(), openapi.GetReleaseStatusRequestObject{})
 	call("GetReleaseStatus", err)
 	_, err = s.RunScheduleNow(newCtx(), openapi.RunScheduleNowRequestObject{ScheduleId: "s1"})
 	call("RunScheduleNow", err)
 
 	wantPathValues := map[string]map[string]string{
-		"cancelChatSession":       {"chatId": "c1"},
-		"respondToElicitation":    {"chatId": "c1", "id": "e1"},
-		"promptChat":              {"chatId": "c1"},
-		"respondToPermission":     {"chatId": "c1", "id": "p1"},
-		"setChatConfigOption":     {"chatId": "c1"},
-		"setChatMode":             {"chatId": "c1"},
-		"streamChatEvents":        {},
-		"getWorkspaceFile":        {},
-		"listWorkspaceFiles":      {},
-		"cancelHarnessAuth":       {},
-		"disconnectHarnessAuth":   {},
-		"pollHarnessAuth":         {},
-		"startHarnessAuth":        {},
-		"getHarnessAuthStatus":    {},
-		"submitHarnessAuth":       {},
-		"streamContainerLogs":     {},
-		"listContainers":          {},
-		"storeMcpOAuthToken":      {},
-		"executeMcpRequest":       {},
-		"listOllamaModels":        {},
-		"pullOllamaModel":         {},
-		"proxyObservability":      {},
-		"sendPushNotification":    {},
-		"endLiveActivity":         {"id": "a1"},
-		"getReleaseCompatibility": {},
-		"getReleaseStatus":        {},
-		"runScheduleNow":          {"scheduleId": "s1"},
+		"cancelChatSession":     {"chatId": "c1"},
+		"respondToElicitation":  {"chatId": "c1", "id": "e1"},
+		"promptChat":            {"chatId": "c1"},
+		"respondToPermission":   {"chatId": "c1", "id": "p1"},
+		"setChatConfigOption":   {"chatId": "c1"},
+		"setChatMode":           {"chatId": "c1"},
+		"streamChatEvents":      {},
+		"getWorkspaceFile":      {},
+		"listWorkspaceFiles":    {},
+		"cancelHarnessAuth":     {},
+		"disconnectHarnessAuth": {},
+		"pollHarnessAuth":       {},
+		"startHarnessAuth":      {},
+		"getHarnessAuthStatus":  {},
+		"submitHarnessAuth":     {},
+		"streamContainerLogs":   {},
+		"listContainers":        {},
+		"storeMcpOAuthToken":    {},
+		"executeMcpRequest":     {},
+		"listOllamaModels":      {},
+		"pullOllamaModel":       {},
+		"proxyObservability":    {},
+		"sendPushNotification":  {},
+		"endLiveActivity":       {"id": "a1"},
+		"getReleaseStatus":      {},
+		"runScheduleNow":        {"scheduleId": "s1"},
 	}
 	for opID, want := range wantPathValues {
 		got, ok := seen[opID]
@@ -345,6 +342,31 @@ func TestServerMethodsDelegateToDispatch(t *testing.T) {
 				t.Errorf("%s: pathValues[%s]=%q, want %q", opID, k, got[k], v)
 			}
 		}
+	}
+}
+
+// TestGetReleaseCompatibilityBuildsATypedResponseWithoutDispatch is the
+// first operation converted off the rawResponse bridge (see
+// docs/superpowers/plans/2026-08-27-strict-openapi-contract-migration.md).
+// Deliberately uses an empty registry with no "getReleaseCompatibility"
+// entry: if this method still called dispatch under the hood, it would
+// fail with "operation is not registered" -- this is the regression guard
+// that it genuinely builds its own typed response now.
+func TestGetReleaseCompatibilityBuildsATypedResponseWithoutDispatch(t *testing.T) {
+	s := &server{registry: operation.NewRegistry()}
+	response, err := s.GetReleaseCompatibility(context.Background(), openapi.GetReleaseCompatibilityRequestObject{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	typed, ok := response.(openapi.GetReleaseCompatibility200JSONResponse)
+	if !ok {
+		t.Fatalf("response type = %T, want GetReleaseCompatibility200JSONResponse", response)
+	}
+	if typed.SchemaVersion != 1 {
+		t.Fatalf("schemaVersion = %d, want 1", typed.SchemaVersion)
+	}
+	if typed.Compatibility == nil {
+		t.Fatal("compatibility is nil")
 	}
 }
 

@@ -4,7 +4,9 @@ package operationapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"net/http"
 	"net/http/httptest"
@@ -273,8 +275,31 @@ func (s *server) SendPushNotification(ctx context.Context, _ openapi.SendPushNot
 func (s *server) EndLiveActivity(ctx context.Context, request openapi.EndLiveActivityRequestObject) (openapi.EndLiveActivityResponseObject, error) {
 	return s.dispatch(ctx, "endLiveActivity", map[string]string{"id": string(request.Id)})
 }
-func (s *server) GetReleaseCompatibility(ctx context.Context, _ openapi.GetReleaseCompatibilityRequestObject) (openapi.GetReleaseCompatibilityResponseObject, error) {
-	return s.dispatch(ctx, "getReleaseCompatibility", nil)
+func (s *server) GetReleaseCompatibility(_ context.Context, _ openapi.GetReleaseCompatibilityRequestObject) (openapi.GetReleaseCompatibilityResponseObject, error) {
+	dataVersion, compatibility := api.ReleaseCompatibility()
+	compatMap, ok := compatibility.(map[string]any)
+	if !ok {
+		// compatibility is a json.RawMessage read off disk (see
+		// api.ReleaseCompatibility) rather than the hardcoded
+		// developmentCompatibility map -- the generated
+		// ReleaseCompatibilityResponse.Compatibility field is strictly
+		// typed as map[string]interface{}, so it has to be decoded here.
+		// The old untyped re.JSON(...) call let this ambiguity pass
+		// through to the JSON encoder unexamined; the strict response type
+		// makes that shape assumption explicit.
+		raw, isRaw := compatibility.(json.RawMessage)
+		if !isRaw {
+			return nil, fmt.Errorf("unexpected release compatibility value type %T", compatibility)
+		}
+		if err := json.Unmarshal(raw, &compatMap); err != nil {
+			return nil, fmt.Errorf("decode release compatibility document: %w", err)
+		}
+	}
+	return openapi.GetReleaseCompatibility200JSONResponse{
+		SchemaVersion: 1,
+		DataVersion:   dataVersion,
+		Compatibility: compatMap,
+	}, nil
 }
 func (s *server) GetReleaseStatus(ctx context.Context, _ openapi.GetReleaseStatusRequestObject) (openapi.GetReleaseStatusResponseObject, error) {
 	return s.dispatch(ctx, "getReleaseStatus", nil)
