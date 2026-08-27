@@ -25,9 +25,8 @@ import (
 )
 
 const (
-	ProviderCodex      = "codex"
-	ProviderClaude     = "claude"
-	ProviderClaudeCode = "claude-code"
+	ProviderCodex  = "codex"
+	ProviderClaude = "claude"
 
 	AttemptStatusStarting  = "starting"
 	AttemptStatusAwaiting  = "awaiting_input"
@@ -45,7 +44,7 @@ type Challenge struct {
 	Details string `json:"details,omitempty"`
 }
 
-// AttemptState mirrors the fields persisted in harness_auth_attempts and is used
+// AttemptState mirrors the fields persisted in harness_oauth_attempts and is used
 // as an in-memory runtime state before syncing back into PocketBase.
 type AttemptState struct {
 	Status    string     `json:"status"`
@@ -94,11 +93,9 @@ func NewRuntime(providers map[string]Authenticator) *Runtime {
 }
 
 func NewDefaultRuntime() *Runtime {
-	claude := NewClaudeAuthenticator()
 	return NewRuntime(map[string]Authenticator{
-		ProviderCodex:      NewCodexAuthenticator(),
-		ProviderClaude:     claude,
-		ProviderClaudeCode: claude,
+		ProviderCodex:  NewCodexAuthenticator(),
+		ProviderClaude: NewClaudeAuthenticator(),
 	})
 }
 
