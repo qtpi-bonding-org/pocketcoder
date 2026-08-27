@@ -21,6 +21,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/api"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/mcpserver"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/openapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
@@ -500,15 +501,19 @@ func (s *server) StoreMcpOAuthToken(ctx context.Context, _ openapi.StoreMcpOAuth
 	return response, nil
 }
 func (s *server) ExecuteMcpRequest(ctx context.Context, _ openapi.ExecuteMcpRequestRequestObject) (openapi.ExecuteMcpRequestResponseObject, error) {
-	rec, err := s.invokeAction(ctx, "executeMcpRequest", nil)
+	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
+	if !ok {
+		return nil, errors.New("PocketBase request context is unavailable")
+	}
+	result, err := api.ExecuteMcpRequest(s.app, mcpserver.ResolveImageDigest, re)
 	if err != nil {
 		return nil, err
 	}
-	var response openapi.ExecuteMcpRequest200JSONResponse
-	if err := decodeAction(rec, &response); err != nil {
-		return nil, err
+	payload := openapi.JsonSuccessJSONResponse{"id": result.ID, "status": result.Status}
+	if result.Synced {
+		payload["synced"] = true
 	}
-	return response, nil
+	return openapi.ExecuteMcpRequest200JSONResponse{JsonSuccessJSONResponse: payload}, nil
 }
 func (s *server) ListOllamaModels(ctx context.Context, _ openapi.ListOllamaModelsRequestObject) (openapi.ListOllamaModelsResponseObject, error) {
 	rec, err := s.invokeAction(ctx, "listOllamaModels", nil)
